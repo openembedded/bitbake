@@ -202,6 +202,7 @@ class Cvs(Fetch):
 			else:
 				method = "pserver"
 
+			olddir = os.path.abspath(os.getcwd())
 			os.chdir(data.expand(dldir, d))
 			cvsroot = ":" + method + ":" + user
 			if pswd:
@@ -220,6 +221,7 @@ class Cvs(Fetch):
 			oe.note("fetch " + loc)
 			oe.debug(1, "Running %s" % cvscmd)
 			myret = os.system(cvscmd)
+			os.chdir(olddir)
 			if myret != 0:
 				raise FetchError(module)
 
