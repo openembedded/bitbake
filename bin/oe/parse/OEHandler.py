@@ -93,7 +93,7 @@ def handle(fn, d = {}):
 	else:
 		set_automatic_vars(fn, d)
 		set_additional_vars(fn, d)
-	data.update_data(d)
+		data.update_data(d)
 	return d
 
 def feeder(lineno, s, fn, d):
@@ -211,10 +211,14 @@ def set_automatic_vars(file, d):
 	if pkg == None:
 		fatal("package file not in valid format")
 
-	data.setVar('CATEGORY', pkg[0], d)
-	data.setVar('PN', pkg[1], d)
-	data.setVar('PV', pkg[2], d)
-	data.setVar('PR', pkg[3], d)
+	if not data.getVar('CATEGORY', d):
+		data.setVar('CATEGORY', pkg[0], d)
+	if not data.getVar('PN', d):
+		data.setVar('PN', pkg[1], d)
+	if not data.getVar('PV', d):
+		data.setVar('PV', pkg[2], d)
+	if not data.getVar('PR', d):
+		data.setVar('PR', pkg[3], d)
 	data.setVar('P', '${PN}-${PV}', d)
 	data.setVar('PF', '${P}-${PR}', d)
 
@@ -230,12 +234,16 @@ def set_automatic_vars(file, d):
 				data.setVar('FILESDIR', s, d)
 				break
 
-	data.setVar('WORKDIR', '${TMPDIR}/${CATEGORY}/${PF}', d)
-	data.setVar('T', '${WORKDIR}/temp', d)
-	data.setVar('D', '${WORKDIR}/image', d)
+	if not data.getVar('WORKDIR', d):
+		data.setVar('WORKDIR', '${TMPDIR}/${CATEGORY}/${PF}', d)
+	if not data.getVar('T', d):
+		data.setVar('T', '${WORKDIR}/temp', d)
+	if not data.getVar('D', d):
+		data.setVar('D', '${WORKDIR}/image', d)
 	if not data.getVar('S', d):
 		data.setVar('S', '${WORKDIR}/${P}', d)
-	data.setVar('SLOT', '0', d)
+	if not data.getVar('SLOT', d):
+		data.setVar('SLOT', '0', d)
 	data.inheritFromOS(3, d)
 
 def set_additional_vars(file, d):

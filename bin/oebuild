@@ -68,8 +68,6 @@ except IOError, OSError:
 if oe is None:
 	usage(1)
 
-#data.update_env(d)
-
 for var in oe.keys():
 	if data.getVarFlag(var, 'handler', oe):
 		event.register(data.getVar(var, oe))
