@@ -19,19 +19,20 @@
 
 import sys, copy, os
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
-import bb, bb.parse, bb.build
+import bb, bb.parse, bb.build, bb.make
 
 d = bb.data.init()
 try:
-    d = bb.parse.handle(os.path.join('conf', 'bitbake.conf'), d)
+    bb.make.cfg = bb.parse.handle(os.path.join('conf', 'bitbake.conf'), d)
 except IOError, e:
     bb.fatal("Unable to read conf/bitbake.conf: %s" % e)
 
 if len(sys.argv) == 2:
+    bbfile = sys.argv[1]
     try:
-        d = bb.parse.handle(sys.argv[1], d)
+        d, fromCache = bb.make.load_bbfile(bbfile)
     except IOError, e:
-        bb.fatal("Unable to read %s: %s" % (sys.argv[1], e))
+        bb.fatal("Unable to read %s: %s" % (bbfile, e))
     except Exception, e:
         bb.fatal("%s" % e)
 
