@@ -1,82 +1,192 @@
 #!/usr/bin/env python
 
-import os, sys, oe, re
-from oe import *
+#
+# This will become what oemake should be: a builder for packages, that
+# knows about dependencies and is controlled by a file. The file is
+# currently done by hand, but will eventually be made with oeconfig.
+#
+# The control file for oemakepkgs is named *.pkglist. It has the form
+#
+# <group> <flags> <package-name> [<version>]
+#
+# Group is some arbitrary group name. You can run "oemakepkgs -g opie"
+# and only the packages in the group "opie" will be (re)build. If you
+# don't want to work with groups, then put "default" into this field.
+#
+# <flags> are some flags that control the build process. The first flag
+# we will support is "ipk", this will INHERIT="build_ipk". Other flags
+# might be "image" to put the file into the initial image (once oeimage
+# will read this file, too).
+#
+# The Package name is just the name of the package. oemakepkgs will search
+# for <package-name>_*.oe files.
+#
+# When no version is specified, then the highest versioned *.oe file wins.
+# Otherwise the only one with the specified version will be used. Later
+# we'll add some > or >= flags as well.
+#
+# Here is a sample pkglist file:
+#
+#	native  -               ipkg-native
+#	native  -               ipkg-utils
+#	base    -               autoconf                2.57
+#	#base   -               automake
+#	#base   -               libtool
+#	base    ipk             glibc
+#	base    ipk             ncurses
+#
+# There are two other directives that we support so far:
+#
+#	use <dir-or-file-to-search-for-oe-files>
+#	ignore <dir-or-file-to-not-search>
+#
+
+
+
+
+
+import os, sys, re, oe, oe.data, oe.parse
+#from oe import *
 
 cfg = {}
 oefiles = {}
+ignore = {}
+selected_group = ''
 
-__pkglist_regexp__ = re.compile( r"^(\S+)\s+(\S+)\s+(\S+)\s*(\S*)" )
+
+def add_oe_file(name, dirname):
+	"""Adds one *.oe file to oefiles[]"""
+
+	try:
+		name, version = name.split('_')
+	except ValueError:
+		version = ''
+	#print dirname, name, version
+	if not oefiles.has_key(name):
+		oefiles[name] = {}
+	oefiles[name][version] = dirname
+
+def print_oefiles():
+	pkgs = oefiles.keys()
+	pkgs.sort()
+	for p in pkgs:
+		versions = oefiles[p].keys()
+		versions.sort()
+		for v in versions:
+			print "%-25s %-20s %s" % (p, v, oefiles[p][v])
 
 
 def add_oe_files(arg, dirname, names):
-	"""Adds all found *.oe files to the global oefiles{} hash, except ones in SCCS directories"""
+	"""Adds all found *.oe files to the global oefiles{} hash, except
+	ones in SCCS directories"""
 
 	global oefiles
-	try:
-		names.remove('SCCS')
-	except ValueError:
-		pass
+
+	# delete the files/directories to ignore from the list of names:
+	for i in ignore.keys():
+		try:
+			names.remove(i)
+		except ValueError:
+			pass
 	for n in names:
 		name, ext = os.path.splitext(n)
 		if ext == ".oe":
-			oefiles[n] = dirname
+			add_oe_file(name, dirname)
 
 
 def search_package(name, flags, version):
-	"""Searches in all oefiles for the right file to build"""
+	"""Search for the right specified package/version was found"""
 
-	debug(1, "Searching for package %s %s" % (name, version))
+	#print "Searching for package %s %s" % (name, version)
+	if not oefiles.has_key(name):
+		print "Package '%s' not found" % name
+		return
+
+	versions = oefiles[name].keys()
+
+	# Use highest version if none specified
+	# TOOD: this code is full tilt boogy. A string compare can't compare version numbers
+	# e.g. for sort the string "1.9" is higher than "1.10"
+	versions.sort()
+	if not version: version = versions[-1]
+
+	if not oefiles[name][version]:
+		print "Package '%s' with version '%s' not found" % (name, version)
+		return
+
+	if version:
+		fn = "%s_%s.oe" % (name, version)
+	else:
+		fn = "%s.oe" % name
+	print "Process", os.path.join(oefiles[name][version],fn)
 
 
 
+__pkglist_regexp__ = re.compile( r"^(\S+)\s+(\S+)\s+(\S+)\s*(\S*)$" )
 def parse_pkglist(fn):
-	""" Parses the *.pkglist file and process valid entries via search_package"""
+	"""Parses the *.pkglist file and process valid entries via search_package"""
 
-	debug(1, "PKG reading %s" % fn)
+	global ignore
+
+	print "reading %s" % fn
 	f = open(fn, 'r')
 	lineno = 0
 	while 1:
 		lineno = lineno + 1
-		s = f.readline()
-		if not s:
+		line = f.readline()
+		if not line:
 			break
-		s.strip()
-		if s=='' or s[0]=='#':
+		line = line.strip()
+		if line=='' or line[0]=='#':
 			continue
-		m = __pkglist_regexp__.match(s)
+
+		# key words
+		if line.startswith("use "):
+			os.path.walk(line[4:], add_oe_files, '')
+			continue
+
+		if line.startswith("ignore "):
+			ignore[line[7:]] = 1
+			continue
+
+		# normal list entry
+		m = __pkglist_regexp__.match(line)
 		if m:
 			group   = m.group(1)
 
-			# TODO: only process entries 
-			# if onlygroup and group != onlygroup: continue
+			#if selected_group and group != selected_group: continue
 
 			flags   = m.group(2)
 			name    = m.group(3)
 			version = m.group(4)
 
 			search_package(name, flags, version)
+			continue
 
-
+		error("%s:%d: wrong format" % (fn, lineno))
 
 try:
-	cfg = parse.handle("conf/oe.conf", cfg)
+	cfg = oe.parse.handle("conf/oe.conf", cfg)
 except IOError:
 	fatal("Unable to open oe.conf")
 
-# TODO: get dir from command line
-os.path.walk("/usr/src/oe-packages", add_oe_files, "")
-sys.exit(0)
 
 
+oe.data.setVar('OEDEBUG', 2)
+
+
+# TODO: probably we want to specify an *.pkglist file from the command line?
 found = False
 pkg_fn = oe.data.expand("${MACHINE}.pkglist", cfg)
 for p in ('.:'+oe.data.getVar("OEPATH", cfg)).split(':'):
 	p = oe.data.expand(p, cfg)
 	p = os.path.join(p, pkg_fn)
+	#print "Trying to read %s" % p
 	if os.access(p, os.R_OK):
 		parse_pkglist(p)
 		found = True
 		break
 if not found:
-	print "Did not find '%s' in OEPATH" % pkg_fn
+	print "'%s' not found in OEPATH" % pkg_fn
+
+print_oefiles()
