@@ -188,6 +188,9 @@ def buildPackage(item):
                 stamp = '%s/stamps/%s-%s-%s.do_populate_staging' % (tmpdir, pn, pv, pr)
                 if os.path.exists(stamp):
                         (newvers, fn) = preferred_versions[pn]
+			if not fn in eligible:
+				# package was made ineligible by already-failed check
+				continue
                         oldver = "%s-%s" % (pv, pr)
                         newver = '-'.join(newvers)
                         if (newver != oldver):
