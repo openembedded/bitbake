@@ -22,9 +22,14 @@ TODO:
 [ ] oebuild
 	[ ] Use oe.digraph for handling intertask dependency
 	[ ] Split task execution from function execution
-	[ ] Revamp the way in which stamps are implemented
 	[ ] Add a means to add a task which depends on another task's
 	    execution, but not on said task's successful completion.
+	[ ] Fetch shouldnt use stamps at all.  Hmm, due to the way
+	    I implemented override of the check functions, the stamp
+	    checker will believe unpack's stamp is always out of date,
+	    since its dependency item's stamp doesnt exist.  Need to fix
+	    that behavior, then enhance the fetch classes to check for
+	    existance.
 
 [.] oemake
 	[x] Move OEPATH follow into the individual 'handle' functions,
@@ -38,10 +43,11 @@ TODO:
 	    dependency.
 	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
-	[ ] Pull package name, version, and revision based on package metadata,
+	[x] Pull package name, version, and revision based on package metadata,
 	    rather than based on the filename in the build tools.  This belongs
 	    in the parser code.  In this way, we can more easily facilitate
 	    builds of src.rpms, .dsc's, et cetera.
+		-aside: pulled set_additional_vars into the new parser code
 
 [.] oemaked
 	[x] Autobuilder daemon, monitors files and/or directories
@@ -59,7 +65,3 @@ TODO:
     that lets you use the FILES blocks for our deployment packages to do the
     installs into the appropriate staging areas, to save time writing do_stage
     functions.
-[.] Finish up extensibility bits for the core oe code, and merge some of the
-    class implementations into something sane.
-[ ] Assuming cworth has the base ipkg libs rearchitected, start work on oemake.
-    If he hasnt, start rearchitecting ipkg.
