@@ -290,13 +290,7 @@ oeinstall() {
 }
 
 
-pkg_setup()
-{
-	return 
-}
-
-
-pkg_nofetch()
+do_nofetch()
 {
 	test -z "${SRC_URI}" && return
 
@@ -308,23 +302,34 @@ pkg_nofetch()
 
 
 
-src_unpack() { 
-	test "${A}" != "" && unpack ${A}
+do_unpack()
+{
+	test "${A}" != "" && unpack "${A}" || oenote "nothing to extract"
 }
 
 
-src_compile() { 
+
+
+do_compile()
+{ 
 	if [ -x ./configure ] ; then
 		oeconf 
 		oemake || die "oemake failed"
+	else
+		oenote "nothing to compile"
 	fi
-	return 
 }
 
 
-src_install() 
+do_stage()
 { 
-	return 
+	oenote "nothing to install into stage area"
+}
+
+
+do_install()
+{ 
+	oenote "nothing to install"
 }
 
 
@@ -410,9 +415,9 @@ inherit() {
 
 
 # Exports stub functions that call the oeclass's functions, thereby making them default.
-# For example, if OECLASS="base" and you call "EXPORT_FUNCTIONS src_unpack", the following
+# For example, if OECLASS="base" and you call "EXPORT_FUNCTIONS do_unpack", the following
 # code will be eval'd:
-# src_unpack() { base_src_unpack; }
+# do_unpack() { base_do_unpack; }
 EXPORT_FUNCTIONS() {
 	if [ -z "$OECLASS" ]; then
 		oefatal "EXPORT_FUNCTIONS without a defined OECLASS"
