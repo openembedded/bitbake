@@ -95,6 +95,7 @@ def handle(fn, d = {}):
 		classes.remove(__classname__)
 	else:
 		set_automatic_vars(fn, d)
+		data.expandKeys(d)
 		data.update_data(d)
 		set_additional_vars(fn, d)
 	return d
