@@ -12,7 +12,8 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
 import os, re
-from oe import *
+import oe
+import oe.data
 
 class FetchError(Exception):
 	"""Exception raised when a download fails"""
@@ -37,7 +38,8 @@ def init(urls = []):
 def go():
 	"""Fetch all urls"""
 	for m in methods:
-		m.go()
+		if m.urls:
+			m.go()
 
 def localpaths():
 	"""Return a list of the local filenames, assuming successful fetch"""
@@ -59,7 +61,7 @@ class Fetch(object):
 	def __init__(self, urls = []):
 		self.urls = []
 		for url in urls:
-			if self.supports(decodeurl(url)) is 1:
+			if self.supports(oe.decodeurl(url)) is 1:
 				self.urls.append(url)
 
 	def supports(url):
@@ -93,18 +95,18 @@ class Wget(Fetch):
 		"""Check to see if a given url can be fetched using wget.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		return type in ['http','https','ftp']
 	supports = staticmethod(supports)
 
 	def localpath(url):
 		# strip off parameters
-		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
-		url = encodeurl([type, host, path, user, pswd, {}])
-		return os.path.join(getenv("DL_DIR"), os.path.basename(url))
+		url = oe.encodeurl([type, host, path, user, pswd, {}])
+		return os.path.join(oe.getenv("DL_DIR"), os.path.basename(url))
 	localpath = staticmethod(localpath)
 
 	def go(self, urls = []):
@@ -113,15 +115,15 @@ class Wget(Fetch):
 			urls = self.urls
 
 		for loc in urls:
-			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
+			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
 			myfile = os.path.basename(path)
 			dlfile = self.localpath(loc)
 
-			myfetch = getenv("RESUMECOMMAND")
-			note("fetch " +loc)
-			myfetch = myfetch.replace("${URI}",encodeurl([type, host, path, user, pswd, {}]))
+			myfetch = oe.getenv("RESUMECOMMAND")
+			oe.note("fetch " +loc)
+			myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
 			myfetch = myfetch.replace("${FILE}",myfile)
-			debug(2,myfetch)
+			oe.debug(2,myfetch)
 			myret = os.system(myfetch)
 			if myret != 0:
 				raise FetchError(myfile)
@@ -137,12 +139,12 @@ class Cvs(Fetch):
 		"""Check to see if a given url can be fetched with cvs.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		return type in ['cvs', 'pserver']
 	supports = staticmethod(supports)
 
 	def localpath(url):
-		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
@@ -150,7 +152,7 @@ class Cvs(Fetch):
 		if not parm.has_key("module"):
 			return url
 		else:
-			return os.path.join(getenv("DL_DIR"), parm["module"])
+			return os.path.join(oe.getenv("DL_DIR"), parm["module"])
 	localpath = staticmethod(localpath)
 
 	def go(self, urls = []):
@@ -159,7 +161,7 @@ class Cvs(Fetch):
 			urls = self.urls
 
 		for loc in urls:
-			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
+			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
 			if not parm.has_key("module"):
 				raise MissingParameterError("cvs method needs a 'module' parameter")
 			else:
@@ -186,7 +188,7 @@ class Cvs(Fetch):
 			else:
 				method = "pserver"
 
-			os.chdir(expand(dldir))
+			os.chdir(oe.expand(dldir))
 			cvsroot = ":" + method + ":" + user
 			if pswd is not None:
 				cvsroot += ":" + pswd
@@ -201,7 +203,7 @@ class Cvs(Fetch):
 
 			cvscmd = "cvs -d" + cvsroot
 			cvscmd += " checkout " + string.join(options) + " " + module 
-			note("fetch " + loc)
+			oe.note("fetch " + loc)
 			myret = os.system(cvscmd)
 			if myret != 0:
 				raise FetchError(module)
@@ -213,7 +215,7 @@ class Bk(Fetch):
 		"""Check to see if a given url can be fetched via bitkeeper.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		return type in ['bk']
 	supports = staticmethod(supports)
 
@@ -224,7 +226,7 @@ class Local(Fetch):
 		"""Check to see if a given url can be fetched in the local filesystem.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		return type in ['file','patch']
 	supports = staticmethod(supports)
 

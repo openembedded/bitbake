@@ -1,4 +1,4 @@
 #!/usr/bin/python
 
-import oeparse
-cfg = oeparse.handle("conf/oe.conf")
+import oe.parse
+cfg = oe.parse.handle("conf/oe.conf")

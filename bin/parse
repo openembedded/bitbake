@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
-import oeparse
+import oe.parse
 
-cfgdata = oeparse.handle("conf/oe.conf")
+cfgdata = oe.parse.handle("conf/oe.conf")
 
 from copy import copy
-testdata = oeparse.handle("test.oe", copy(cfgdata))
+testdata = oe.parse.handle("test.oe", copy(cfgdata))
 
 print "testdata: "
 print "\t%s" % testdata

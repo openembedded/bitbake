@@ -8,8 +8,8 @@ python base_do_patch () {
 		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
 		if not parm.has_key("patch"):
 			continue
-		oefetch.init([url])
-		local = oefetch.localpath(url)
+		oe.fetch.init([url])
+		local = oe.fetch.localpath(url)
 		# patch!
 		dots = local.split(".")
 		if dots[-2] in ['tar']:

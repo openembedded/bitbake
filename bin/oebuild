@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys,os,string
-import oefetch
+import oe.fetch
 sys.path.append(os.path.join(sys.prefix,'share/oe'))
 from oe import *
 
@@ -198,19 +198,19 @@ def do_fetch():
 
 	if env.has_key('SRC_URI'):
 		try:
-			oefetch.init(getenv('SRC_URI').split())
-		except oefetch.NoMethodError:
+			oe.fetch.init(getenv('SRC_URI').split())
+		except oe.fetch.NoMethodError:
 			(type, value, traceback) = sys.exc_info()
 			fatal("No method: %s" % value)
 			return
 
 		try:
-			oefetch.go()
-		except oefetch.MissingParameterError:
+			oe.fetch.go()
+		except oe.fetch.MissingParameterError:
 			(type, value, traceback) = sys.exc_info()
 			fatal("Missing parameters: %s" % value)
 			return
-		except oefetch.FetchError:
+		except oe.fetch.FetchError:
 			(type, value, traceback) = sys.exc_info()
 			fatal("Fetch failed: %s" % value)
 			return

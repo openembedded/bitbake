@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from oedata import *
+from oe.data import *
 
 def niftyPrint(d = getData()):
 	for var in d.keys():
