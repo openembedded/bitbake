@@ -170,7 +170,7 @@ class Wget(Fetch):
 				return False
 
 			# supposedly complete.. write out md5sum
-			if oe.which(oe.data.getVar('PATH', d, 1), 'md5sum'):
+			if oe.which(oe.data.getVar('PATH', d), 'md5sum'):
 				md5pipe = os.popen('md5sum ' + dl)
 				md5data = md5pipe.readline().split()[0]
 				md5pipe.close()
