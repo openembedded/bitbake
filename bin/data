@@ -1,0 +1,31 @@
+#!/usr/bin/python
+
+from oedata import *
+
+def niftyPrint(d = getData()):
+	for var in d.keys():
+		print "%s = \"%s\"" % (var,getVar(var, d))
+		flags = getVarFlags(var, d)
+		if flags is not None:
+			print "flags:"
+			print flags
+		print
+
+setVar("a","b is ${b}. path is ${PATH}")
+setVar("b","heh")
+setVar("PATH","oldpath")
+test = getVar("whee")
+
+print "prior to pull from env:"
+niftyPrint()
+setVarFlag("PATH", "inherit", "1")
+inheritFromOS(1)
+
+print "prior to expansion:"
+niftyPrint()
+
+expandData()
+
+print "after expansion:"
+niftyPrint()
+
