@@ -1123,7 +1123,7 @@ class digraph:
 	def getchildren(self, item):
 		if not self.hasnode(item):
 			return []
-		children = [i for i in self.oekeys if item in self.getparents(i)]
+		children = [i for i in self.okeys if item in self.getparents(i)]
 		return children
 	
 	def walkdown(self, item, callback):
