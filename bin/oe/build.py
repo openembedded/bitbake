@@ -62,6 +62,9 @@ class TaskSucceeded(TaskBase):
 class TaskFailed(TaskBase):
 	"""Task execution failed"""
 
+class InvalidTask(TaskBase):
+	"""Invalid Task"""
+
 # functions
 
 def init(data):
@@ -70,23 +73,26 @@ def init(data):
 	_task_graph = oe.digraph()
 	_task_stack = []
 
+
 def exec_func(func, dir, d):
 	"""Execute an OE 'function'"""
 
 	exec_func_shell(func, dir, d)
 
-def exec_func_python(func, dir, d, td = _task_data):
+
+def exec_func_python(func, dir, d):
 	"""Execute a python OE 'function'"""
 
-def exec_func_shell(func, dir, d, td = _task_data):
+
+def exec_func_shell(func, dir, d):
 	"""Execute a shell OE 'function' Returns true if execution was successful.
 
 	For this, it creates a bash shell script in the tmp dectory, writes the local
 	data into it and finally executes. The output of the shell will end in a log file and stdout.
 	"""
 
-	deps = data.getVarFlag(func, 'deps', td)
-	check = data.getVarFlag(func, 'check', td)
+	deps = data.getVarFlag(func, 'deps', _task_data)
+	check = data.getVarFlag(func, 'check', _task_data)
 	if globals().has_key(check):
 		if globals()[check](func, deps):
 			return
@@ -116,22 +122,19 @@ def exec_func_shell(func, dir, d, td = _task_data):
 	if not func:
 		error("Function not specified")
 		raise FuncFailed()
-	event.fire(TaskStarted(func, d))
 	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
 	if ret==0:
 		if not data.getVar("OEDEBUG"):
 			os.remove(runfile)
 			os.remove(logfile)
-		event.fire(TaskSucceeded(func, d))
 		return
 	else:
 		error("'%s'() failed" % func);
 		error("more info in: %s" % logfile);
-		event.fire(TaskFailed(func, d))
 		raise FuncFailed()
 
 
-def exec_task(task, dir, d, td = _task_data):
+def exec_task(task, dir, d):
 	"""Execute an OE 'task'
 
 	   The primary difference between executing a task versus executing
@@ -140,7 +143,8 @@ def exec_task(task, dir, d, td = _task_data):
 
 	# check if the task is in the graph..
 	if not _task_graph.hasnode(task):
-		return 0
+		raise EventException("", InvalidTask(task, d))
+#		return 0
 
 	# check whether this task needs executing..
 
@@ -150,18 +154,24 @@ def exec_task(task, dir, d, td = _task_data):
 
 	# execute
 	try:
-		_task_graph.walk_up(task, execute)
-	except FuncFailed():
-		raise TaskFailed()
+		event.fire(TaskStarted(task, d))
+		_task_graph.walkdown(task, execute)
+		event.fire(TaskSucceeded(task, d))
+	except FuncFailed:
+		event.fire(TaskFailed(task, d))
+		raise FuncFailed()
 
 	# make stamp, or cause event and raise exception
 	mkstamp(task, d)
 
+
 def stamp_is_current(task):
 	"""Check if a stamp file for a given task is current"""
 
+
 def md5_is_current(task):
 	"""Check if a md5 file for a given task is current""" 
+
 
 def mkstamp(task, d):
 	"""Creates/updates a stamp for a given task"""
@@ -172,21 +182,29 @@ def mkstamp(task, d):
 	stamp = "%s.%s" % (stamp, task)
 	open(stamp, "w+")
 
+
 def add_task(task, content, deps):
 	data.setVar(task, content, _task_data)
 	_task_graph.addnode(task, None)
 	for dep in deps:
+		if not _task_graph.hasnode(dep):
+			_task_graph.addnode(dep, None)
 		_task_graph.addnode(task, dep)
+
 
 def remove_task(task, kill = 1, taskdata = _task_data):
 	"""Remove an OE 'task'.
 
 	   If kill is 1, also remove tasks that depend on this task."""
-	__kill = [ task ]
+
+	if not _task_graph.hasnode(task):
+		return
+
+	__kill = [ ]
 	if kill:
 		def killChild(graph, task):
 			__kill.append(task)
-		taskgraph.walkup(task, killChild)
+		_task_graph.walkup(task, killChild)
 	for t in __kill:
 		data.delVar(t, taskdata)
-		taskgraph.delnode(t)
+		_task_graph.delnode(t)
