@@ -187,7 +187,11 @@ def exec_func_shell(func, d):
 
 	# execute function
 	prevdir = os.getcwd()
-	ret = os.system('sh -e %s' % runfile)
+	if data.getVarFlag(func, "fakeroot", d):
+		maybe_fakeroot = 'fakeroot '
+	else:
+		maybe_fakeroot = ''
+	ret = os.system('%ssh -e %s' % (maybe_fakeroot, runfile))
 	os.chdir(prevdir)
 
 	# restore the backups

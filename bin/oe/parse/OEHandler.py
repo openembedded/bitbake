@@ -9,7 +9,7 @@ from oe import debug, data, fetch, fatal
 
 from oe.parse.ConfHandler import include, localpath, obtain, init
 
-__func_start_regexp__    = re.compile( r"((?P<py>python)\s*)*(?P<func>\w+)\s*\(\s*\)\s*{$" )
+__func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>\w+)\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
@@ -150,10 +150,15 @@ def feeder(lineno, s, fn, d):
 			# clean up old version of this piece of metadata, as its
 			# flags could cause problems
 			data.setVarFlag(key, 'python', None, d)
+			data.setVarFlag(key, 'fakeroot', None, d)
 		if m.group("py") is not None:
 			data.setVarFlag(key, "python", "1", d)
 		else:
 			data.setVarFlag(key, "python", None, d)
+		if m.group("fr") is not None:
+			data.setVarFlag(key, "fakeroot", "1", d)
+		else:
+			data.setVarFlag(key, "fakeroot", None, d)
 		return
 
 	m = __export_func_regexp__.match(s)

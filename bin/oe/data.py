@@ -267,11 +267,14 @@ import os
 
 def inheritFromOS(d = _data):
 	"""Inherit variables from the environment."""
+	# fakeroot needs to be able to set these
+	non_inherit_vars = [ "LD_LIBRARY_PATH", "LD_PRELOAD" ]
 	for s in os.environ.keys():
-		try:
-			setVar(s, os.environ[s], d)
-		except TypeError:
-			pass
+		if not s in non_inherit_vars:
+			try:
+				setVar(s, os.environ[s], d)
+			except TypeError:
+				pass
 
 import sys, string
 
