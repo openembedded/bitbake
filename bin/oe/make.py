@@ -10,7 +10,7 @@ This file is part of the OpenEmbedded (http://openembedded.org) build infrastruc
 """
 
 from oe import debug, digraph, data, fetch, fatal, error, note, event, parse
-import copy, oe, re, sys, os, glob
+import copy, oe, re, sys, os, glob, sre_constants
 try:
     import cPickle as pickle
 except ImportError:
@@ -152,14 +152,17 @@ def collect_oefiles( progressCallback ):
                 continue
         newfiles += glob.glob(f) or [ f ]
 
+    oemask = oe.data.getVar('OEMASK', cfg, 1)
+    try:
+        oemask_compiled = re.compile(oemask)
+    except sre_constants.error:
+        oe.fatal("OEMASK is not a valid regular expression.")
+
     for i in xrange( len( newfiles ) ):
         f = newfiles[i]
-        oemask = oe.data.getVar('OEMASK', cfg, 1)
-        if oemask:
-            if re.search(oemask, f):
-                oe.debug(1, "oemake: skipping %s" % f)
-                continue
-
+        if oemask and re.search(oemask_compiled, f):
+              oe.debug(1, "oemake: skipping %s" % f)
+              continue
         progressCallback( i + 1, len( newfiles ), f )
         debug(1, "oemake: parsing %s" % f)
 
