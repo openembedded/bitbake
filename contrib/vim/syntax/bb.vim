@@ -51,20 +51,20 @@ syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ c
 " BitBake variable metadata
 
 syn keyword bbExportFlag	export contained nextgroup=bbIdentifier skipwhite
-syn match bbVarOverrideDeref	"${[a-zA-Z0-9\-_]\+}"
+syn match bbVarOverrideDeref	"${[a-zA-Z0-9\-_\.]\+}"
 hi def link bbVarOverrideDeref		String
-syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_]\+\(_[${}a-zA-Z0-9\-_]\+\)\?\)\s*\(\(:=\)\|\(+=\)\|\(=+\)\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarOverrideDeref nextgroup=bbVarEq
+syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA-Z0-9\-_\.]\+\)\?\)\s*\(\(:=\)\|\(+=\)\|\(=+\)\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarOverrideDeref nextgroup=bbVarEq
 
-syn match bbIdentifier		"[a-zA-Z0-9\-_]\+" display contained
+syn match bbIdentifier		"[a-zA-Z0-9\-_\.]\+" display contained
 "syn keyword bbVarEq	= display contained nextgroup=bbVarValue
 syn match bbVarEq		"\(:=\)\|\(+=\)\|\(=+\)\|=" contained nextgroup=bbVarValue
 syn match bbVarValue		".*$" contained contains=bbString
 
 
 " BitBake variable metadata flags
-syn match bbVarFlagDef		"^\([a-zA-Z0-9\-_]\+\)\(\[[a-zA-Z0-9\-_]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
+syn match bbVarFlagDef		"^\([a-zA-Z0-9\-_\.]\+\)\(\[[a-zA-Z0-9\-_\.]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
 syn region bbVarFlagFlag	matchgroup=bbArrayBrackets start="\[" end="\]\s*\(=\)\@=" keepend excludenl contained contains=bbIdentifier nextgroup=bbVarEq
-"syn match bbVarFlagFlag		"\[\([a-zA-Z0-9\-_]\+\)\]\s*\(=\)\@=" contains=bbIdentifier nextgroup=bbVarEq
+"syn match bbVarFlagFlag		"\[\([a-zA-Z0-9\-_\.]\+\)\]\s*\(=\)\@=" contains=bbIdentifier nextgroup=bbVarEq
 
 
 " Functions!
@@ -104,8 +104,8 @@ syn region bbDefRegion		matchgroup=bbDelimiter start=":$" end='^$' end='^\(\s\)\
 
 
 " BitBake statements
-syn keyword bbStatement		include inherit addtask addhandler display contained
-syn match bbStatementLine	"^\(include\|inherit\|addtask\|addhandler\)\s\+" contains=bbStatement nextgroup=bbStatementRest
+syn keyword bbStatement		include inherit addtask addhandler EXPORT_FUNCTIONS display contained
+syn match bbStatementLine	"^\(include\|inherit\|addtask\|addhandler\|EXPORT_FUNCTIONS\)\s\+" contains=bbStatement nextgroup=bbStatementRest
 syn match bbStatementRest		".*$" contained contains=bbString,bbVarOverrideDeref
 
 syn match bbArrayBrackets	"[\[\]]" contained
