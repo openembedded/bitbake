@@ -282,7 +282,11 @@ def exec_task(task, d):
             try:
                 debug(1, "Executing task %s" % item)
                 event.fire(TaskStarted(item, d))
-                exec_func(item, d)
+                from copy import deepcopy
+                localdata = deepcopy(d)
+                oe.data.setVar('OVERRIDES', "%s:%s" % (item.replace('_', '-'), oe.data.getVar('OVERRIDES', localdata)), localdata)
+                oe.data.update_data(localdata)
+                exec_func(item, localdata)
                 event.fire(TaskSucceeded(item, d))
                 task_cache.append(item)
             except FuncFailed, reason:
