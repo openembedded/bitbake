@@ -130,7 +130,7 @@ def build(item, command):
 _depcmds = { "clean": None,
 	    "mrproper": None, }
 
-cmd="package"
+cmd="build"
 
 if _depcmds.has_key(cmd):
 	depcmd=depcmds[cmd]
