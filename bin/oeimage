@@ -37,7 +37,7 @@ def getopthash(l):
 
 import getopt
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'vr:t:', [ 'version', 'root=', 'type=' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'vr:t:e:', [ 'version', 'root=', 'type=', 'oefile=' ])
 except getopt.GetoptError:
 	usage()
 
@@ -58,7 +58,8 @@ if cfg_oe is None:
 	fatal("Unable to open/parse conf/oe.conf")
 	usage(1)
 
-rootfs = data.getVar('IMAGE_ROOTFS', cfg_oe, 1)
+rootfs = None
+extra_files = []
 
 if '--root' in opthash:
 	rootfs = opthash['--root']
@@ -69,6 +70,20 @@ if '--type' in opthash:
 	type = opthash['--type']
 if '-t' in opthash:
 	type = opthash['-t']
+
+if '--oefile' in opthash:
+	extra_files.append(opthash['--oefile'])
+if '-e' in opthash:
+	extra_files.append(opthash['-e'])
+
+for f in extra_files:
+	try:
+		cfg_oe = parse.handle(f, cfg_oe)
+	except IOError:
+		print "unable to open %s" % f
+	
+if not rootfs:
+	rootfs = data.getVar('IMAGE_ROOTFS', cfg_oe, 1)
 
 if not rootfs:
 	oe.fatal("IMAGE_ROOTFS not defined")
