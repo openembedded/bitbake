@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+
+import os, sys, oe, re
+from oe import *
+
+cfg = {}
+oefiles = {}
+
+__pkglist_regexp__ = re.compile( r"^(\S+)\s+(\S+)\s+(\S+)\s*(\S*)" )
+
+
+def add_oe_files(arg, dirname, names):
+	"""Adds all found *.oe files to the global oefiles{} hash, except ones in SCCS directories"""
+
+	global oefiles
+	try:
+		names.remove('SCCS')
+	except ValueError:
+		pass
+	for n in names:
+		name, ext = os.path.splitext(n)
+		if ext == ".oe":
+			oefiles[n] = dirname
+
+
+def search_package(name, flags, version):
+	"""Searches in all oefiles for the right file to build"""
+
+	debug(1, "Searching for package %s %s" % (name, version))
+
+
+
+def parse_pkglist(fn):
+	""" Parses the *.pkglist file and process valid entries via search_package"""
+
+	debug(1, "PKG reading %s" % fn)
+	f = open(fn, 'r')
+	lineno = 0
+	while 1:
+		lineno = lineno + 1
+		s = f.readline()
+		if not s:
+			break
+		s.strip()
+		if s=='' or s[0]=='#':
+			continue
+		m = __pkglist_regexp__.match(s)
+		if m:
+			group   = m.group(1)
+
+			# TODO: only process entries 
+			# if onlygroup and group != onlygroup: continue
+
+			flags   = m.group(2)
+			name    = m.group(3)
+			version = m.group(4)
+
+			search_package(name, flags, version)
+
+
+
+try:
+	cfg = parse.handle("conf/oe.conf", cfg)
+except IOError:
+	fatal("Unable to open oe.conf")
+
+# TODO: get dir from command line
+os.path.walk("/usr/src/oe-packages", add_oe_files, "")
+sys.exit(0)
+
+
+found = False
+pkg_fn = oe.data.expand("${MACHINE}.pkglist", cfg)
+for p in ('.:'+oe.data.getVar("OEPATH", cfg)).split(':'):
+	p = oe.data.expand(p, cfg)
+	p = os.path.join(p, pkg_fn)
+	if os.access(p, os.R_OK):
+		parse_pkglist(p)
+		found = True
+		break
+if not found:
+	print "Did not find '%s' in OEPATH" % pkg_fn
