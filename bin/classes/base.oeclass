@@ -3,7 +3,12 @@ PATCHES_DIR="${S}"
 python do_showdata() {
 	from oe import data, note
 	import sys
+	# emit variables and shell functions
 	data.emit_env(sys.__stdout__, d)
+	# emit the metadata which isnt valid shell
+	for e in d.keys():
+		if data.getVarFlag(e, 'python', d):
+			sys.__stdout__.write("\npython %s() {\n%s}\n" % (e, data.getVar(e, d)))
 }
 
 python base_do_clean() {
