@@ -1229,7 +1229,7 @@ __func_start_regexp__    = re.compile( r"((?P<py>python)\s*)*(?P<func>\w+)\s*\(\
 __include_regexp__       = re.compile( r"include\s+(.+)" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
-__addtask_regexp__ = re.compile( r"addtask\s+(.+)" )
+__addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
 
 __read_oe_infunc__ = ""
 __read_oe_body__   = []
@@ -1329,33 +1329,25 @@ def read_oe(oefile, inherit = False, classname = None):
 
 		m = __addtask_regexp__.match(s)
 		if m:
-			fns = m.group(1)
-			optre = re.compile(r"(?P<func>\w+)(\s+(((?P<r>['\"])(?P<Before>.*?)(?P=r))|(?P<before>\S+)))?(\s+(((?P<q>['\"])(?P<After>.*?)(?P=q))|(?P<after>\S+)))?")
-			opt = optre.match(fns)
-			if opt is not None:
-				func = opt.group("func")
-				before = opt.group("Before")
-				if before is None:
-					before =  opt.group("before")
-				after = opt.group("After")
-				if after is None:
-					after = opt.group("after")
-				if func is None:
-					return
-				var = "do_" + func
-
-				if not envflags.has_key(var):
-					envflags[var] = {}
-
-				envflags[var]["task"] = "1"
-
-				if before is not None:
-					# set up deps for function
-					envflags[var]["deps"] = before.split()
-				if after is not None:
-					# set up things that depend on this func 
-					envflags[var]["postdeps"] = after.split()
+			func = m.group("func")
+			before = m.group("before")
+			after = m.group("after")
+			if func is None:
 				return
+			var = "do_" + func
+
+			if not envflags.has_key(var):
+				envflags[var] = {}
+
+			envflags[var]["task"] = "1"
+
+			if after is not None:
+				# set up deps for function
+				envflags[var]["deps"] = after.split()
+			if before is not None:
+				# set up things that depend on this func 
+				envflags[var]["postdeps"] = before.split()
+			return
 
 		error("Unknown syntax in %s" % oefile)
 		print s
