@@ -24,11 +24,11 @@ def supports(fn):
 			return True
 	return False
 
-def handle(fn, data = {}):
+def handle(fn, data = {}, include = 0):
 	"""Call the handler that is appropriate for this file"""
 	for h in handlers:
 		if h['supports'](fn):
-			return h['handle'](fn, data)
+			return h['handle'](fn, data, include)
 	return None
 
 def init(fn, data = {}):

@@ -35,17 +35,22 @@ def inherit(files, d):
 			file = "classes/%s.oeclass" % file
 
 		if not file in __inherit_cache:
-			debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
+			debug(2, "OE %s:%d: inheriting %s" % (fn, lineno, file))
 			__inherit_cache.append(file)
 			include(fn, file, d)
 
 
-def handle(fn, d = {}):
+def handle(fn, d = {}, include = 0):
 	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__
 	__body__ = []
 	__oepath_found__ = 0
 	__infunc__ = ""
 	__classname__ = ""
+
+	if include == 0:
+		debug(2, "OE %s: handle(data)" % fn)
+	else:
+		debug(2, "OE %s: handle(data, include)" % fn)
 
 	(root, ext) = os.path.splitext(os.path.basename(fn))
 	if ext == ".oeclass":
@@ -53,7 +58,8 @@ def handle(fn, d = {}):
 		classes.append(__classname__)
 
 	init(d)
-	data.inheritFromOS(2, d)
+	if include == 0:
+		data.inheritFromOS(2, d)
 	fn = obtain(fn, d)
 	oepath = ['.']
 	if not os.path.isabs(fn):
@@ -94,10 +100,10 @@ def handle(fn, d = {}):
 	if ext == ".oeclass":
 		classes.remove(__classname__)
 	else:
-		set_automatic_vars(fn, d)
+		set_automatic_vars(fn, d, include)
 		data.expandKeys(d)
 		data.update_data(d)
-		set_additional_vars(fn, d)
+		set_additional_vars(fn, d, include)
 	return d
 
 def feeder(lineno, s, fn, d):
@@ -237,6 +243,13 @@ def vars_from_fn(mypkg, d, store=2, silent=1):
 	splitmap = [ 'CATEGORY', 'PN', 'PV', 'PR' ]
 	heh = [ "PR", "PV", "PN" ]
 	try:
+		pkgsplit = __pkgsplit_cache__[mypkg]
+		splitloc=0;
+		for i in range(len(heh)-1, 0, -1):
+			if pkgsplit[splitloc] == None:
+				break
+			data.setVar(heh[i], pkgsplit[splitloc], d)
+			splitloc += 1
 		return __pkgsplit_cache__[mypkg]
 	except KeyError:
 		pass
@@ -276,10 +289,10 @@ def vars_from_fn(mypkg, d, store=2, silent=1):
 	__pkgsplit_cache__[mypkg] = pkgsplit
 	return pkgsplit
 
-def set_automatic_vars(file, d):
+def set_automatic_vars(file, d, include):
 	"""Deduce per-package environment variables"""
 
-	debug(2, "setting automatic vars")
+	debug(2, "OE %s: setting automatic vars" % file)
 #	pkg = oe.catpkgsplit(file)
 #	pkg = vars_from_fn(file, d)
 #	if None in pkg:
@@ -329,14 +342,16 @@ def set_automatic_vars(file, d):
 		data.setVar('S', '${WORKDIR}/${P}', d)
 	if not data.getVar('SLOT', d):
 		data.setVar('SLOT', '0', d)
-	data.inheritFromOS(3, d)
+	if include == 0:
+		data.inheritFromOS(3, d)
 
-def set_additional_vars(file, d):
+def set_additional_vars(file, d, include):
 	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
 
-	debug(2,"set_additional_vars")
+	debug(2,"OE %s: set_additional_vars" % file)
 
-	data.inheritFromOS(4, d)
+	if include == 0:
+		data.inheritFromOS(4, d)
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
 		return

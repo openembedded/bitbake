@@ -3,7 +3,7 @@
    Reads the file and obtains its metadata"""
 
 import re, oe.data, os, sys
-from oe import debug
+from oe import debug, fatal
 
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_.${}]+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
@@ -155,6 +155,9 @@ def supports(fn):
 	return localpath(fn)[-5:] == ".conf"
 
 def localpath(fn):
+	if os.path.exists(fn):
+		return fn
+
 	localfn = None
 	try:
 		localfn = oe.fetch.localpath(fn)
@@ -162,7 +165,6 @@ def localpath(fn):
 		pass
 
 	if not localfn:
-		debug(2, "obtain: malformed url: %s" % fn)
 		localfn = fn
 	return localfn
 
@@ -207,14 +209,18 @@ def include(oldfn, fn, data = {}):
 
 	from oe.parse import handle
 	try:
-		debug(1, "include: handle(%s, data)" % fn)
-		ret = handle(fn, data)
+		ret = handle(fn, data, 1)
 	except IOError:
-		debug(1, "include: %s not found" % fn)
+		debug(1, "CONF %s: file not found" % fn)
 
-def handle(fn, data = {}):
+def handle(fn, data = {}, include = 0):
+	if include == 0:
+		debug(1, "CONF %s: handle(data)" % fn);
+	else:
+		debug(1, "CONF %s: handle(data, include)" % fn);
 	init(data)
-	oe.data.inheritFromOS(1, data)
+	if include == 0:
+		oe.data.inheritFromOS(1, data)
 	fn = obtain(fn, data)
 	oepath = ['.']
 	if not os.path.isabs(fn):
@@ -263,10 +269,12 @@ def feeder(lineno, s, fn, data = {}):
 	m = __include_regexp__.match(s)
 	if m:
 		s = oe.data.expand(m.group(1), data)
-		debug(2, "%s:%d: including %s" % (fn, lineno, s))
+		debug(2, "CONF %s:%d: including %s" % (fn, lineno, s))
 		oe.data.inheritFromOS(2, data)
 		include(fn, s, data)
 		return
+
+	fatal("PARSER: %s:%d: unparsed line" % (fn, lineno));
 
 # Add us to the handlers list
 from oe.parse import handlers

@@ -17,9 +17,10 @@ _srpm_vartranslate = {
 def supports(fn):
 	return fn[-8:] == ".src.rpm"
 
-def handle(fn, d = {}):
+def handle(fn, d = {}, include = 0):
 	init(d)
-	data.inheritFromOS(2, d)
+	if include == 0:
+		data.inheritFromOS(2, d)
 	oepath = ['.']
 	if not os.path.isabs(fn):
 		f = None
@@ -62,12 +63,12 @@ def handle(fn, d = {}):
 	for c in i:
 		oe.parse.handle('classes/%s.oeclass' % c, d)
 
-	set_automatic_vars(fn, d)
-	set_additional_vars(fn, d)
+	set_automatic_vars(fn, d, include)
+	set_additional_vars(fn, d, include)
 	data.update_data(d)
 	return d
 
-def set_automatic_vars(file, d):
+def set_automatic_vars(file, d, include):
 	"""Deduce per-package environment variables"""
 
 	debug(2, "setting automatic vars")
@@ -91,14 +92,16 @@ def set_automatic_vars(file, d):
 	if not data.getVar('S', d):
 		data.setVar('S', '${WORKDIR}/${P}', d)
 	data.setVar('SLOT', '0', d)
-	data.inheritFromOS(3, d)
+	if include == 0:
+		data.inheritFromOS(3, d)
 
-def set_additional_vars(file, d):
+def set_additional_vars(file, d, include):
 	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
 
 	debug(2,"set_additional_vars")
 
-	data.inheritFromOS(4, d)
+	if include == 0:
+		data.inheritFromOS(4, d)
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
 		return
