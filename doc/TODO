@@ -24,6 +24,7 @@ TODO:
 	[ ] Split task execution from function execution
 	[ ] Add a means to add a task which depends on another task's
 	    execution, but not on said task's successful completion.
+	[ ] Convert to the new parse and data clases ala oemake.
 	[x] Fetch shouldnt use stamps at all.  Hmm, due to the way
 	    I implemented override of the check functions, the stamp
 	    checker will believe unpack's stamp is always out of date,
