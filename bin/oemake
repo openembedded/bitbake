@@ -226,17 +226,21 @@ def buildPackage(item):
             # get highest priority file set
             files = pkg_pn[pn][0]
             latest = None
+            latest_p = 0
             latest_f = None
             for f in files:
                 the_data = make.pkgdata[f]
                 pv = oe.data.getVar('PV', the_data, 1)
                 pr = oe.data.getVar('PR', the_data, 1)
-                if (latest is None) or (make.vercmp(latest, (pv, pr)) < 0):
+                dp = int(oe.data.getVar('DEFAULT_PREFERENCE', the_data, 1) or "0")
+
+                if (latest is None) or ((latest_p == dp) and (make.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
                     latest = (pv, pr)
                     latest_f = f
+                    latest_p = dp
             preferred_file = latest_f
             preferred_ver = latest
-
+            
             oe.debug(1, "selecting %s as latest version of provider %s" % (preferred_file, pn))
 
         preferred_versions[pn] = (preferred_ver, preferred_file)
