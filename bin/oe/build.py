@@ -119,15 +119,20 @@ def tmpFunction(d):
 
 def exec_func_python(func, d):
 	"""Execute a python OE 'function'"""
+	import re, os
+
 	body = data.getVar(func, d)
 	if not body:
 		return
-	tmp = "def tmpFunction(d):\n%s" % body
-	comp = compile(tmp, "tmpFunction(d)", "exec")
+	tmp = "def " + func + "():\n%s" % body
+	comp = compile(tmp + '\n' + func + '()', oe.data.getVar('FILE', d, 1) + ':' + func, "exec")
 	prevdir = os.getcwd()
-	exec(comp)
+	g = {} # globals
+	g['oe'] = oe
+	g['os'] = os
+	g['d'] = d
+	exec comp in g
 	os.chdir(prevdir)
-	tmpFunction(d)
 
 def exec_func_shell(func, d):
 	"""Execute a shell OE 'function' Returns true if execution was successful.
