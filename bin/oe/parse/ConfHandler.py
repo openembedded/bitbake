@@ -154,16 +154,16 @@ def init(data):
 	
 	oe.data.setVarFlag("OEDEBUG", "inherit", "1", data)
 
-def supports(fn):
-	return localpath(fn)[-5:] == ".conf"
+def supports(fn, d):
+	return localpath(fn, d)[-5:] == ".conf"
 
-def localpath(fn):
+def localpath(fn, d):
 	if os.path.exists(fn):
 		return fn
 
 	localfn = None
 	try:
-		localfn = oe.fetch.localpath(fn)
+		localfn = oe.fetch.localpath(fn, d)
 	except oe.MalformedUrl:
 		pass
 
@@ -174,7 +174,7 @@ def localpath(fn):
 def obtain(fn, data = {}):
 	import sys, oe
 	fn = oe.data.expand(fn, data)
-	localfn = oe.data.expand(localpath(fn), data)
+	localfn = oe.data.expand(localpath(fn, data), data)
 
 	if localfn != fn:
 		dldir = oe.data.getVar('DL_DIR', data, 1)

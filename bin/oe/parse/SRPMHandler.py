@@ -120,7 +120,7 @@ def set_additional_vars(file, d, include):
 	except fetch.NoMethodError:
 		pass
 
-	a += fetch.localpaths()
+	a += fetch.localpaths(d)
 	del fetch
 	data.setVar('A', string.join(a), d)
 

@@ -17,21 +17,21 @@ import ConfHandler
 import OEHandler
 import SRPMHandler
 
-def supports(fn):
+def supports(fn, data):
 	"""Returns true if we have a handler for this file, false otherwise"""
 	for h in handlers:
-		if h['supports'](fn):
+		if h['supports'](fn, data):
 			return 1
 	return 0
 
-def handle(fn, data = {}, include = 0):
+def handle(fn, data, include = 0):
 	"""Call the handler that is appropriate for this file"""
 	for h in handlers:
-		if h['supports'](fn):
+		if h['supports'](fn, data):
 			return h['handle'](fn, data, include)
 	return None
 
-def init(fn, data = {}):
+def init(fn, data):
 	for h in handlers:
 		if h['supports'](fn):
 			return h['init'](data)

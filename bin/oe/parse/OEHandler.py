@@ -21,8 +21,8 @@ __oepath_found__ = 0
 __classname__ = ""
 classes = [ None, ]
 
-def supports(fn):
-	localfn = localpath(fn)
+def supports(fn, d):
+	localfn = localpath(fn, d)
 	return localfn[-3:] == ".oe" or localfn[-8:] == ".oeclass"
 
 def inherit(files, d):
@@ -320,7 +320,7 @@ def set_additional_vars(file, d, include):
 	except fetch.NoMethodError:
 		pass
 
-	a += fetch.localpaths()
+	a += fetch.localpaths(d)
 	del fetch
 	data.setVar('A', string.join(a), d)
 
