@@ -256,6 +256,8 @@ def build_depgraph():
 
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
+	if oe.data.getVar('BROKEN', d, 1):
+		continue
         terminal = True
         pn = oe.data.getVar('PN', d, 1)
         for p in pn_provides[pn]:
