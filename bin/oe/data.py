@@ -288,6 +288,10 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 		debug(2, "Warning, %s variable is None, not emitting" % var)
 		return 0
 
+	if var.find("-") != -1 or var.find(".") != -1:
+		debug(2, "Warning, %s variable name contains an invalid char, not emitting to shell" % var)
+		return 0
+
 	if getVarFlag(var, "func", d):
 		# NOTE: should probably check for unbalanced {} within the var
 		o.write("%s() {\n%s\n}\n" % (var, val))
