@@ -10,6 +10,11 @@ oenote () {
 	return 0
 }
 
+oewarn () {
+	echo "WARNING:" "$*"
+	return 0
+}
+
 oefatal () {
 	echo "FATAL:" "$*"
 	exit 1
