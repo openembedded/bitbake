@@ -17,7 +17,7 @@
         <pixmap>image0</pixmap>
     </property>
     <property name="caption">
-        <string>OpenEmbedded Commander 0.0.1 - http://www.openembedded.net</string>
+        <string>OpenEmbedded Commander 0.0.2 - http://www.openembedded.net</string>
     </property>
     <property name="icon">
         <pixmap>image1</pixmap>
