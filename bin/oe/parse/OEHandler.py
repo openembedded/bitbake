@@ -125,8 +125,8 @@ def handle(fn, d = {}, include = 0):
 					if t:
 						data.setVar('T', t, d)
 				except Exception, e:
-					oe.error("executing anonymous function: %s" % e)
-					pass
+					oe.debug(1, "executing anonymous function: %s" % e)
+					raise
 			data.delVar("__anonqueue", d)
 			data.delVar("__anonfunc", d)
 

@@ -16,6 +16,9 @@ handlers = []
 class ParseError(Exception):
 	"""Exception raised when parsing fails"""
 
+class SkipPackage(Exception):
+	"""Exception raised to skip this package"""
+
 import ConfHandler
 ConfHandler.ParseError = ParseError
 import OEHandler

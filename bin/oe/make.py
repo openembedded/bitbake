@@ -65,9 +65,8 @@ def load_oefile( oefile ):
         parse.handle(oefile, oe) # read .oe data
         os.chdir(oldpath)
         return oe
-    except IOError, OSError:
+    finally:
         os.chdir(oldpath)
-        return None
 
 def collect_oefiles( progressCallback ):
     """Collect all available .oe build files"""
@@ -120,6 +119,8 @@ def collect_oefiles( progressCallback ):
                         event.register(data.getVar(var, pkgdata[f]))
         except IOError:
             oe.error("opening %s" % f)
+            pass
+        except oe.parse.SkipPackage:
             pass
 
 def explode_version(s):

@@ -282,32 +282,32 @@ if __name__ == "__main__":
             oe.fatal("Unable to open %s" % f)
 
     try:
-            make.cfg = oe.parse.handle("conf/oe.conf", make.cfg)
+        make.cfg = oe.parse.handle("conf/oe.conf", make.cfg)
     except IOError:
-            oe.fatal("Unable to open oe.conf")
+        oe.fatal("Unable to open oe.conf")
 
     if not oe.data.getVar("BUILDNAME", make.cfg):
-            oe.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
+        oe.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
 
     buildname = oe.data.getVar("BUILDNAME", make.cfg)
+
+    pkgs_to_build = None
+    if args:
+        if not pkgs_to_build:
+            pkgs_to_build = []
+        pkgs_to_build.extend(args)
+    if not pkgs_to_build:
+        oepkgs = oe.data.getVar('OEPKGS', make.cfg, 1)
+        if oepkgs:
+            pkgs_to_build = oepkgs.split()
+    if not pkgs_to_build:
+        print "nothing to build"
+        sys.exit(0)
 
     try:
         make.collect_oefiles( myProgressCallback )
 	print
         build_depgraph()
-
-        pkgs_to_build = None
-        if args:
-            if not pkgs_to_build:
-                    pkgs_to_build = []
-            pkgs_to_build.extend(args)
-        if not pkgs_to_build:
-            oepkgs = oe.data.getVar('OEPKGS', make.cfg, 1)
-            if oepkgs:
-                    pkgs_to_build = oepkgs.split()
-        if not pkgs_to_build:
-            print "nothing to build"
-            sys.exit(0)
 
         if 'world' in pkgs_to_build:
             pkgs_to_build.remove('world')
