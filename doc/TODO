@@ -83,32 +83,36 @@ TODO:
 [ ] oeimage
 
 [.] packages
-	[ ] add cross binutils and binutils
-	[ ] add gcc
-	[ ] figure out where to put the glibc install into the toolchain dir,
-	    which is only needed by gcc pass 2.
-	[ ] add qtopia 1.6.1
-	[.] add qt 2.3.6
-	[ ] convert packages from OpenZaurus buildroot
-	[.] busybox
-		[x] core
-		[ ] symlinks
-		[ ] device specifics (patches, etc)
-	[.] ncurses
-		[x] core
-		[ ] staging function
-		[ ] install function
-	[.] openssl
-		[x] core
-		[ ] staging function
-		[ ] install function
-	[.] apache
-		[x] core
-		[x] dependencies
-			[x] expat
-			[x] pcre
-		[ ] staging function
-		[ ] install function
+	[.] transition packages from OpenZaurus buildroot
+		[.] busybox
+			[x] core
+			[ ] symlinks
+			[ ] device specifics (patches, etc)
+		[x] ncurses
+			[x] core
+			[x] staging function
+			[x] install function
+		[.] openssl
+			[x] core
+			[ ] staging function
+			[ ] install function
+		[x] qt 2.3.6^H7
+			[x] core
+			[x] dependencies
+				[x] libpng
+				[x] libjpeg
+		[ ] add cross binutils and binutils
+		[ ] add gcc
+		[ ] figure out where to put the glibc install into the toolchain dir,
+		    which is only needed by gcc pass 2.
+	[.] new packages
+		[.] apache
+			[x] core
+			[x] dependencies
+				[x] expat
+				[x] pcre
+			[ ] staging function
+			[ ] install function
 
 [ ] New c++ OE library (possibility -- open to debate)
 
