@@ -226,7 +226,7 @@ def check_md5(task, deptasks):
 	def read_md5(task):
 		try:
 			stamp = open(getenv('STAMP')+"."+task+'.md5', "r")
-		except IOError:
+		except Exception:
 			return None
 		digest = None
 		if stamp:
