@@ -20,7 +20,3 @@ oe.data.emit_env(sys.__stdout__, d, True)
 for e in d.keys():
     if oe.data.getVarFlag(e, 'python', d):
         sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, oe.data.getVar(e, d, 1)))
-    elif oe.data.getVarFlag(e, 'func', d):
-        sys.__stdout__.write("\n%s () {\n%s}\n" % (e, oe.data.getVar(e, d, 1)))
-    else:
-        sys.__stdout__.write("%s=%s\n" % (e, oe.data.getVar(e, d, 1)))
