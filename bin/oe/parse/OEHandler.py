@@ -77,7 +77,8 @@ def handle(fn, d = {}, include = 0):
 		f = open(fn,'r')
 
 	if ext != ".oeclass":
-		vars_from_fn(fn, d)
+		if include == 0:
+			vars_from_fn(fn, d)
 		import string
 		i = string.split(data.getVar("INHERIT", d, 1) or "")
 		if not "base" in i and __classname__ != "base":
@@ -100,10 +101,11 @@ def handle(fn, d = {}, include = 0):
 	if ext == ".oeclass":
 		classes.remove(__classname__)
 	else:
-		set_automatic_vars(fn, d, include)
-		data.expandKeys(d)
-		data.update_data(d)
-		set_additional_vars(fn, d, include)
+		if include == 0:
+			set_automatic_vars(fn, d, include)
+			data.expandKeys(d)
+			data.update_data(d)
+			set_additional_vars(fn, d, include)
 	return d
 
 def feeder(lineno, s, fn, d):
