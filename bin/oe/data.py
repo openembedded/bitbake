@@ -212,14 +212,10 @@ def expand(s, d = _data, varname = None):
             return match.group()
 
     def python_sub(match):
-        code = match.group()[3:-1]
         import oe
+        code = match.group()[3:-1]
         locals()['d'] = d
-        try:
-            s = eval(code)
-        except:
-            oe.note("%s:%s while evaluating:\n%s" % (sys.exc_info()[0], sys.exc_info()[1], code))
-            raise
+        s = eval(code)
         if type(s) == types.IntType: s = str(s)
         return s
 
@@ -228,9 +224,17 @@ def expand(s, d = _data, varname = None):
 
     while s.find('$') != -1:
         olds = s
-        s = __expand_var_regexp__.sub(var_sub, s)
-        s = __expand_python_regexp__.sub(python_sub, s)
-        if s == olds: break
+        try:
+            s = __expand_var_regexp__.sub(var_sub, s)
+            s = __expand_python_regexp__.sub(python_sub, s)
+            if s == olds: break
+            if type(s) is not types.StringType: # sanity check
+                import oe
+                oe.error('expansion of %s returned non-string %s' % (olds, s))
+        except:
+            import oe
+            oe.note("%s:%s while evaluating:\n%s" % (sys.exc_info()[0], sys.exc_info()[1], s))
+            raise
     return s
 
 def expandKeys(alterdata = _data, readdata = None):
