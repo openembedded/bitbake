@@ -222,6 +222,8 @@ def feeder(lineno, s, fn, d):
 
 __pkgsplit_cache__={}
 def vars_from_file(mypkg, d):
+	if not mypkg:
+		return (None, None, None)
 	if __pkgsplit_cache__.has_key(mypkg):
 		return __pkgsplit_cache__[mypkg]
 		
