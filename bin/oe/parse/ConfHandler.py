@@ -9,7 +9,7 @@ import re, oe.data, os, sys
 from oe import debug, fatal
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
-__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
+__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 
 def init(data):
@@ -173,7 +173,7 @@ def feeder(lineno, s, fn, data = {}):
         include(fn, s, data)
         return
 
-    raise ParseError("%s:%d: unparsed line" % (fn, lineno));
+    raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));
 
 # Add us to the handlers list
 from oe.parse import handlers
