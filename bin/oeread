@@ -5,33 +5,22 @@
 import sys, copy, oe, oe.parse, oe.build
 #from oe import *
 
-cfg = {}
-cfg = oe.parse.handle("conf/oe.conf", cfg)
-
-cfgkeys = cfg.keys()
-cfgkeys.sort()
+d = {}
+d = oe.parse.handle("conf/oe.conf", d)
 
 if len(sys.argv) == 2:
-    oefile = copy.deepcopy(cfg)
     try:
-        oefile = oe.parse.handle(sys.argv[1], oefile)
+        d = oe.parse.handle(sys.argv[1], d)
     except Exception, e:
         oe.fatal("%s" % e)
-    oefilekeys = oefile.keys()
-    oefilekeys.sort()
-    print "Variables in %s:" % sys.argv[1]
-    for k in oefilekeys:
-        if k.startswith('base_'): continue
-        if k.startswith('FILES_'): continue
-        if k.startswith('do_'): continue
-        if k.startswith('oe'): continue
-        if k in cfg:
-            if cfg[k] == oefile[k]:
-                continue
-        if 'content' in oefile[k]:
-            print k,'=',oe.data.expand(oefile[k]['content'], oefile)
-else:
-    print "Variables in conf/oe.conf & friends:"
-    for k in cfgkeys:
-        print "%-30s %s" % (k, cfg[k])
 
+# emit variables and shell functions
+oe.data.emit_env(sys.__stdout__, d, True)
+# emit the metadata which isnt valid shell
+for e in d.keys():
+    if oe.data.getVarFlag(e, 'python', d):
+        sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, oe.data.getVar(e, d, 1)))
+    elif oe.data.getVarFlag(e, 'func', d):
+        sys.__stdout__.write("\n%s () {\n%s}\n" % (e, oe.data.getVar(e, d, 1)))
+    else:
+        sys.__stdout__.write("%s=%s\n" % (e, oe.data.getVar(e, d, 1)))
