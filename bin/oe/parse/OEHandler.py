@@ -71,6 +71,7 @@ def handle(fn, d = {}):
 		f = open(fn,'r')
 
 	if ext != ".oeclass":
+		vars_from_fn(fn, d)
 		import string
 		i = string.split(data.getVar("INHERIT", d, 1) or "")
 		if not "base" in i and __classname__ != "base":
@@ -205,22 +206,75 @@ def feeder(lineno, s, fn, d):
 	from oe.parse import ConfHandler
 	return ConfHandler.feeder(lineno, s, fn, d)
 
+__pkgsplit_cache__={}
+
+def vars_from_fn(mypkg, d, store=2, silent=1):
+	"""Obtain PN,PV,PR variables from filename.
+	   If store is 0, do not store variables into the data store.
+	   If 1, store variables into data store only if not already set.
+	   If 2, store variables into data store regardless.
+
+	>>> pkgsplit('')
+	>>> pkgsplit('x')
+	>>> pkgsplit('x-')
+	>>> pkgsplit('-1')
+	>>> pkgsplit('glibc-1.2-8.9-r7')
+	>>> pkgsplit('glibc-2.2.5-r7')
+	['glibc', '2.2.5', 'r7']
+	>>> pkgsplit('foo-1.2-1')
+	>>> pkgsplit('Mesa-3.0')
+	['Mesa', '3.0', 'r0']
+	"""
+
+	map = { 0: "PN", 1: "PV", 2: "PR" }
+	try:
+		return __pkgsplit_cache__[mypkg]
+	except KeyError:
+		pass
+
+	pkgsplit = [None, None, None]
+	myfile = os.path.splitext(os.path.basename(mypkg))
+	myfile[0].replace('.oe','')
+	myparts = string.split(myfile[0],'-')
+	for i in map.keys():
+		getval = data.getVar(map[i], d) or None 
+		if store == 2 or not getval:
+			try:
+				pkgsplit[i] = myparts[i]
+				if store != 0:
+					data.setVar(map[i], myparts[i], d)
+			except IndexError:
+				pass
+		if not pkgsplit[i] and getval:
+			pkgsplit[i] = getval
+	__pkgsplit_cache__[mypkg] = pkgsplit
+	return pkgsplit
+
 def set_automatic_vars(file, d):
 	"""Deduce per-package environment variables"""
 
 	debug(2, "setting automatic vars")
-	pkg = oe.catpkgsplit(file)
-	if pkg == None:
-		fatal("package file not in valid format")
+#	pkg = oe.catpkgsplit(file)
+#	pkg = vars_from_fn(file, d)
+#	if None in pkg:
+#		fatal("package file not in valid format")
+#	if not data.getVar('CATEGORY', d):
+#		if pkg[0] is None:
+#			fatal("package file not in valid format")
+#		data.setVar('CATEGORY', pkg[0], d)
+#	if not data.getVar('PN', d):
+#		if pkg[1] is None:
+#			fatal("package file not in valid format")
+#		data.setVar('PN', pkg[1], d)
+#	if not data.getVar('PV', d):
+#		if pkg[2] is None:
+#			fatal("package file not in valid format")
+#		data.setVar('PV', pkg[2], d)
+#	if not data.getVar('PR', d):
+#		if pkg[3] is None:
+#			fatal("package file not in valid format")
+#		data.setVar('PR', pkg[3], d)
 
-	if not data.getVar('CATEGORY', d):
-		data.setVar('CATEGORY', pkg[0], d)
-	if not data.getVar('PN', d):
-		data.setVar('PN', pkg[1], d)
-	if not data.getVar('PV', d):
-		data.setVar('PV', pkg[2], d)
-	if not data.getVar('PR', d):
-		data.setVar('PR', pkg[3], d)
 	data.setVar('P', '${PN}-${PV}', d)
 	data.setVar('PF', '${P}-${PR}', d)
 
