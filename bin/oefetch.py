@@ -44,8 +44,7 @@ class FetchUrls:
 					self.__methods["Local"] = Local()
 				self.__methods["Local"].urls.append(url) 
 			else:
-				# FIXME: no fatal() calls in classes, use exceptions.
-				fatal("Warning: no fetch method for %s" % url)
+				raise NoMethodError(url)
 	
 	def go(self):
 		"""Fetch all urls"""
@@ -65,8 +64,40 @@ class FetchUrls:
 				local.append(self.__methods[method].localpath(url))
 		return local
 
+class FetchError(Exception):
+	"""Exception thrown when a download fails"""
+
+	def __init__(self, msg = ""):
+		self.__msg = msg
+		Exception.__init__(self)
+
+	def __str__(self):
+		return "%s" % self.__msg
+
+class NoMethodError(Exception):
+	"""Exception thrown when there is no method to obtain a supplied url or set of urls"""
+
+	def __init__(self, msg = ""):
+		self.__msg = msg
+		Exception.__init__(self)
+
+	def __str__(self):
+		return "%s" % self.__msg
+
+class MissingParameterError(Exception):
+	"""Exception thrown when a fetch method is missing a critical parameter in the url"""
+
+	def __init__(self, msg = ""):
+		self.__msg = msg
+		Exception.__init__(self)
+
+	def __str__(self):
+		return "%s" % self.__msg
+
+
 class Fetch(object):
 	"""Base class for 'fetch'ing data"""
+	
 	def __init__(self, urls = []):
 		self.urls = []
 		for url in urls:
@@ -98,8 +129,7 @@ class Fetch(object):
 		"""Fetch urls"""
 		if not urls:
 			urls = self.urls
-		fatal("No implementation to obtain urls: %s" % urls)
-		return 1
+		raise NoMethodError("Missing implementation for url")
 
 class Wget(Fetch):
 	"""Class to fetch urls via 'wget'"""
@@ -115,6 +145,7 @@ class Wget(Fetch):
 	supports = staticmethod(supports)
 
 	def localpath(url):
+		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
@@ -138,9 +169,7 @@ class Wget(Fetch):
 			debug(2,myfetch)
 			myret = os.system(myfetch)
 			if myret != 0:
-				error("Couldn't download "+ myfile)
-				return 0
-		return 1
+				raise FetchError(myfile)
 
 class Cvs(Fetch):
 	"""Class to fetch a module or modules from cvs repositories"""
@@ -178,8 +207,7 @@ class Cvs(Fetch):
 		for loc in urls:
 			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
 			if not parm.has_key("module"):
-				# FIXME: no fatal calls in classes, use exceptions
-				fatal("CVS fetch cannot succeed without module parameter.")
+				raise MissingParameterError
 			else:
 				module = parm["module"]
 
@@ -210,10 +238,7 @@ class Cvs(Fetch):
 			note("fetch " + loc)
 			myret = os.system(cvscmd)
 			if myret != 0:
-				error("Couldn't download %s" % module)
-				return 0
-		return 1
-			
+				raise FetchError(module)
 
 class Bk(Fetch):
 	def supports(decoded = []):

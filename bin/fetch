@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import oefetch
+import oefetch, sys
 from oe import *
 
 __oepath_found_it__ = 0
@@ -17,7 +17,16 @@ if __oepath_found_it__ == 0:
 
 grabber = oefetch.FetchUrls()
 urls = ["http://www.openzaurus.org/official/toolchain/old/cross-2.95.3.tar.bz2", "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V-99-84"]
-#urls = ["file:///tmp/test"]
 print "Obtaining urls: %s" % urls
-grabber.init(urls)
-grabber.go()
+
+try:
+	grabber.init(urls)
+except oefetch.NoMethodError:
+	fatal("No method for one or more urls in %s" % urls)
+
+try:
+	grabber.go()
+except oefetch.MissingParameterError:
+	fatal("Fetch failed due to missing parameters in the supplied urls")
+except oefetch.FetchError:
+	fatal("Download failed")
