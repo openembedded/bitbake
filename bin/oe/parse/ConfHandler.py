@@ -117,6 +117,7 @@ def init(data):
 	oe.data.setVarFlag("PF", "warnlevel", "3", data)
 	oe.data.setVarFlag("S", "warnlevel", "3", data)
 	oe.data.setVarFlag("T", "warnlevel", "3", data)
+	oe.data.setVarFlag("D", "inherit", "1", data)
 	oe.data.setVarFlag("D", "warnlevel", "3", data)
 	oe.data.setVarFlag("A", "warnlevel", "3", data)
 	oe.data.setVarFlag("CATEGORY", "warnlevel", "2", data)

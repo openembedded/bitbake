@@ -9,10 +9,11 @@ cfg_oe = data.init()
 def usage():
 	print "Usage: oeinstall [options ...]"
 	print "Installs specified files of supported types into a root filesystem."
-	print "Supported types: tar.gz, ipk, deb, rpm"
+	print "Currently only supports installing OEFILES into the rootfs directly"
+	print "using their do_install target."
 	print ""
 	print "  %s\t\t%s" % ("-r [arg], --root [arg]", "root directory (default=${IMAGE_ROOTFS})")
-	print "  %s\t\t%s" % ("-f [arg], --files [arg]", "files to install (default=${INSTALL_FILES})")
+	print "  %s\t\t%s" % ("-f [arg], --files [arg]", "files to install (default=${INSTALL_OEFILES})")
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
 	sys.exit(0)
 
@@ -61,22 +62,14 @@ if not rootfs:
 
 data.setVar('IMAGE_ROOTFS', rootfs, cfg_oe)
 
-files = string.split(data.getVar('INSTALL_FILES', cfg_oe, 1) or "")
-
-if opthash.has_key('--files'):
-	files = opthash['--files'].split()
-if opthash.has_key('-f'):
-	files = opthash['-f'].split()
-
-if not files:
-	oe.fatal("install files not specified")
-
-data.setVar('INSTALL_FILES', files, cfg_oe)
-
 # grab OEDIR
 topdir = data.getVar('TOPDIR', cfg_oe, 1) or os.getcwd()
 oedir = data.getVar('OEDIR', cfg_oe, 1) or topdir
 mkdirhier(oedir)
 
-for f in files:
-	oe.note("file is %s" % f)
+os.environ["D"] = rootfs
+oe.note("Spawning oemake to run do_install for each package.")
+ret = os.system('oemake --cmd install --force --abort')
+if ret != 0:
+	sys.exit(1)
+sys.exit(0)

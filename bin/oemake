@@ -112,7 +112,10 @@ def build(graph, item):
 	command = cmd
 	debug(1, "oebuild %s %s" % (command, fn))
 	event.fire(PkgStarted(item, pkgdata[fn]))
-	ret = os.system("oebuild %s %s" % (command, fn))
+	opts = ""
+	if force:
+		opts += " --force"
+	ret = os.system("oebuild %s %s %s" % (opts, command, fn))
 	if ret == 0:
 		event.fire(PkgSucceeded(item, pkgdata[fn]))
 		__build_cache.append(item)
@@ -134,6 +137,8 @@ def usage():
 	print ""
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
 	print "  %s\t\t%s" % ("-c [arg], --cmd [arg]", "specify command to pass to oebuild")
+	print "  %s\t\t%s" % ("-a, --abort", "abort build if any package build fails")
+	print "  %s\t\t%s" % ("-f, --force", "force run of specified cmd, regardless of status")
 	sys.exit(0)
 
 __version__ = 1.1
@@ -161,7 +166,7 @@ def get_oefile():
 
 import getopt
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'vc:', [ 'version', 'cmd=' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'vc:fa', [ 'version', 'cmd=', 'abort', 'force' ])
 except getopt.GetoptError:
 	usage()
 
@@ -181,6 +186,16 @@ if opthash.has_key('--version') or opthash.has_key('-v'):
 	version()
 	sys.exit(0)
 
+if opthash.has_key('--abort') or opthash.has_key('-a'):
+	abort = 1
+else:
+	abort = 0
+
+if opthash.has_key('--force') or opthash.has_key('-f'):
+	force = 1
+else:
+	force = 0
+
 if opthash.has_key('--cmd'):
 	cmd = opthash['--cmd']
 if opthash.has_key('-c'):
@@ -188,7 +203,8 @@ if opthash.has_key('-c'):
 
 _depcmds = { "clean": None,
 	     "mrproper": None,
-	     "build": "stage", }
+	     "build": "stage",
+	     "install": None, }
 
 if not cmd:
 	cmd = "build"
@@ -288,7 +304,7 @@ for pkg in pkgs.keys():
 
 for pkg in pkgs.keys():
 	(deps, fn) = pkgs[pkg]
-	if _depcmds[cmd] is not None:
+	if _depcmds.has_key(cmd) and _depcmds[cmd] is not None:
 		if deps is not None:
 			for d in deps:
 				if not graph.hasnode(d):
@@ -313,8 +329,12 @@ packages = args or graph.okeys
 
 for k in packages:
 	if pkgs.has_key(k):
-		graph.walkdown(k, build)
+		ret = graph.walkdown(k, build)
+		if abort and not ret:
+			oe.fatal("Build of %s failed, aborting." % k)
 	else:
 		oe.error("Unable to build %s: no .oe file provides it." % k)
+		if abort:
+			sys.exit(1)
 
 event.fire(BuildCompleted(buildname, graph.okeys, cfg))

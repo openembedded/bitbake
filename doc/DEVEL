@@ -38,13 +38,13 @@ any way, you can override any of the steps.  For example:
 		oe_runmake all
 	}
 
--or-
+or
 
 	do_install () {
 		oe_runmake 'PREFIX=${D}' install
 	}
 
-You get the picture.  See $OEDIR/bin/classes/base.oeclass for an idea
+And so on.  See $OEDIR/bin/classes/base.oeclass for an idea
 as to what tasks exist by default, and what their default behaviors are.
 The system will automatically assume that your .oe inherits base, in addition
 to whatever oeclasses you inherit manually.

@@ -20,6 +20,7 @@ def usage(errorlevel=0, txt=''):
 	print "Example: oebuild build content/glibc-2.3.1.oe"
 	print ""
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	print "  %s\t\t%s" % ("-f, --force", "forces execution of specified task")
 	sys.exit(0)
 
 __version__ = 1.0
@@ -29,7 +30,7 @@ def version():
 
 import getopt
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'vh', [ 'version', 'help' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'vhf', [ 'version', 'help', 'force' ])
 except getopt.GetoptError:
 	usage(1)
 
@@ -170,6 +171,10 @@ for var in oedata.keys():
 		pdeps.append(var)
 		data.setVarFlag(pcontent, 'deps', pdeps, oedata)
 		build.add_task(p, pcontent, pdeps)
+
+if '--force' in optsonly or '-f' in optsonly:
+	print "setting force flag"
+	data.setVarFlag('do_%s' % cmd, 'force', 1, oedata)
 
 try:
 	build.exec_task('do_%s' % cmd, oedata)

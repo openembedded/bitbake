@@ -227,8 +227,9 @@ def exec_task(task, d):
 		raise EventException("", InvalidTask(task, d))
 
 	# check whether this task needs executing..
-	if stamp_is_current(task, d):
-		return 1
+	if not data.getVarFlag(task, 'force', d):
+		if stamp_is_current(task, d):
+			return 1
 
 	# follow digraph path up, then execute our way back down
 	def execute(graph, item):
