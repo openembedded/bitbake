@@ -326,7 +326,7 @@ class Cvs(Fetch):
 
 			if os.access(os.path.join(dldir, tarfn), os.R_OK):
 				oe.debug(1, "%s already exists, skipping cvs checkout." % tarfn)
-				return
+				continue
 
 			if date:
 				options.append("-D %s" % date)
