@@ -277,8 +277,17 @@ def build_depgraph():
             __world_target.add(pn)
 
 def myProgressCallback( x, y, f ):
-        sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
-        sys.stdout.flush()
+	if os.isatty(sys.stdout.fileno()):
+	        sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
+		sys.stdout.flush()
+	else:
+		if x == 1:
+			sys.stdout.write("Parsing .oe files, please wait...")
+			sys.stdout.flush()
+		if x == y:
+			sys.stdout.write("done.\n")
+			sys.stdout.flush()
+
 
 #
 # main
