@@ -1,21 +1,19 @@
 inherit base package
 
-python base_srpm_do_set_specvar() {
-	from oe import data
-	if data.getVar('SRPMFILE', d):
-		data.setVar('SPECFILE', "${RPMBUILDPATH}/SPECS/${@os.popen('rpm -q -p %s' % oe.data.getVar('SRPMFILE', d)).read().split('-')[0]}.spec", d)
-}
+SPECFILE="${RPMBUILDPATH}/SPECS/${PN}.spec"
 
 RPMBUILDPATH="${WORKDIR}/rpm"
-#RPMTARGET="--target somethingorother"
-RPMTARGET=""
-RPM="rpm ${RPMTARGET} --rcfile=${WORKDIR}/rpmrc"
+
+RPMOPTS="--rcfile=${WORKDIR}/rpmrc"
+#RPMOPTS="--rcfile=${WORKDIR}/rpmrc --target arm-linux"
+RPM="rpm ${RPMOPTS}"
+RPMBUILD="rpmbuild --buildroot ${D} --short-circuit ${RPMOPTS}"
 
 base_srpm_do_preprpm() {
-	oenote preprpm
 	mkdir -p ${RPMBUILDPATH}/{SPECS,RPMS/{i386,i586,i686,noarch,ppc},SRPMS,SOURCES,BUILD}
 	echo 'macrofiles:/usr/lib/rpm/macros:${WORKDIR}/macros' > ${WORKDIR}/rpmrc
 	echo '%_topdir ${RPMBUILDPATH}' > ${WORKDIR}/macros
+	echo '%_repackage_dir ${WORKDIR}' >> ${WORKDIR}/macros
 }
 
 base_srpm_do_unpack() {
@@ -23,14 +21,18 @@ base_srpm_do_unpack() {
 	if ! test -e ${SPECFILE}; then
 		${RPM} -i ${SRPMFILE}
 	fi
-}
-
-base_srpm_do_package() {
 	test -e ${SPECFILE} || die "Spec file \"${SPECFILE}\" does not exist"
-	${RPM} -bb ${SPECFILE}
+	${RPMBUILD} -bp ${SPECFILE}
 }
 
-EXPORT_FUNCTIONS do_preprpm do_set_specvar do_unpack do_package
+base_srpm_do_compile() {
+	${RPMBUILD} -bc ${SPECFILE}
+}
+
+base_srpm_do_install() {
+	${RPMBUILD} -bi ${SPECFILE}
+}
+
+EXPORT_FUNCTIONS do_preprpm do_unpack do_compile
 
 addtask preprpm before do_unpack
-addtask set_specvar before do_preprpm 

@@ -6,8 +6,13 @@ import re, oe, string, os, sys
 import oe
 import oe.fetch
 from oe import debug, data, fetch, fatal
-
 from oe.parse.ConfHandler import init
+
+_srpm_vartranslate = {
+"NAME": "PN",
+"VERSION": "PV",
+"RELEASE": "PR",
+}
 
 def supports(fn):
 	return fn[-8:] == ".src.rpm"
@@ -30,7 +35,19 @@ def handle(fn, d = {}):
 	else:
 		f = open(fn,'r')
 
-	print "Setting SRPMFILE to %s" % fn
+	srpm_vars = os.popen('rpm --querytags').read().split('\n')
+	for v in srpm_vars:
+		if _srpm_vartranslate.has_key(v):
+			var = _srpm_vartranslate[v]
+		else:
+			var = v
+		querycmd = 'rpm -qp --qf \'%%{%s}\' %s 2>/dev/null' % (v, fn)
+		value = os.popen(querycmd).read().strip()
+		if value == "(none)":
+			value = None
+		if value:
+			data.setVar(var, value, d)
+
 	data.setVar("SRPMFILE", fn, d)
 
 	inheritclasses = data.getVar("INHERIT", d)
@@ -45,8 +62,65 @@ def handle(fn, d = {}):
 	for c in i:
 		oe.parse.handle('classes/%s.oeclass' % c, d)
 
+	set_automatic_vars(fn, d)
+	set_additional_vars(fn, d)
 	data.update_data(d)
 	return d
+
+def set_automatic_vars(file, d):
+	"""Deduce per-package environment variables"""
+
+	debug(2, "setting automatic vars")
+
+	data.setVar('CATEGORY', 'srpm', d)
+	data.setVar('P', '${PN}-${PV}', d)
+	data.setVar('PF', '${P}-${PR}', d)
+
+	for s in ['${TOPDIR}/${CATEGORY}/${PF}', 
+		  '${TOPDIR}/${CATEGORY}/${PN}-${PV}',
+		  '${TOPDIR}/${CATEGORY}/files',
+		  '${TOPDIR}/${CATEGORY}']:
+		s = data.expand(s, d)
+		if os.access(s, os.R_OK):
+			data.setVar('FILESDIR', s, d)
+			break
+
+	data.setVar('WORKDIR', '${TMPDIR}/${CATEGORY}/${PF}', d)
+	data.setVar('T', '${WORKDIR}/temp', d)
+	data.setVar('D', '${WORKDIR}/image', d)
+	if not data.getVar('S', d):
+		data.setVar('S', '${WORKDIR}/${P}', d)
+	data.setVar('SLOT', '0', d)
+	data.inheritFromOS(3, d)
+
+def set_additional_vars(file, d):
+	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
+
+	debug(2,"set_additional_vars")
+
+	data.inheritFromOS(4, d)
+	src_uri = data.getVar('SRC_URI', d)
+	if not src_uri:
+		return
+	src_uri = data.expand(src_uri, d)
+
+	# Do we already have something in A?
+	a = data.getVar('A', d)
+	if a:
+		a = data.expand(a, d).split()
+	else:
+		a = []
+
+	from oe import fetch
+	try:
+		fetch.init(src_uri.split())
+	except fetch.NoMethodError:
+		pass
+
+	a += fetch.localpaths()
+	del fetch
+	data.setVar('A', string.join(a), d)
+
 
 # Add us to the handlers list
 from oe.parse import handlers
