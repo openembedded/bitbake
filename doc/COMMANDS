@@ -16,6 +16,7 @@ mrproper  -        -             clean all, including downloaded files
 fetch                            fetch the sources
                    do_nofetch()  notify user on how fetch the sources
 unpack    WORKDIR  do_unpack()   unpack sources, create source directory
+patch     S        do_patch()    unpack and apply patches
 compile   S        do_compile()  cross-compile
 stage     S        do_stage()    copy headers and libraries
 install   S        do_install()  create image ready to be packaged
