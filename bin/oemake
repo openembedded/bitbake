@@ -25,6 +25,10 @@ __depcmds = { "clean": None,
 
 __stats = {}
 
+oefile_config_priorities = []
+oefile_priority = {}
+oedebug = 0
+
 def handle_options( args ):
     parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ),
     usage = """%prog [options] [package ...]
@@ -142,6 +146,8 @@ def try_build(fn, virtual):
 def buildPackage(item):
     fn = None
 
+    discriminated = False
+
     if not providers.has_key(item):
         oe.error("Nothing provides %s" % item)
         return 0
@@ -150,34 +156,91 @@ def buildPackage(item):
 
     for p in all_p:
         if p in __build_cache:
+            oe.debug(1, "already built %s in this run\n" % p)
             return 1
 
-    versions = {}
+    eligible = []
+    preferred_versions = {}
+
+    # Collate providers by PN
+    pkg_pn = {}
     for p in all_p:
         the_data = make.pkgdata[p]
         pn = oe.data.getVar('PN', the_data, 1)
-        pv = oe.data.getVar('PV', the_data, 1)
-        pr = oe.data.getVar('PR', the_data, 1)
-        if not versions.has_key(pn):
-            versions[pn] = []
-        versions[pn].append(((pv, pr), p))
+        if not pkg_pn.has_key(pn):
+            pkg_pn[pn] = []
+        pkg_pn[pn].append(p)
 
-#    # find the latest version of each provider
-    preferred_versions = {}
-    for p in versions.keys():
-        latest = None
-        latest_f = None
-        for (v, _fn) in versions[p]:
-            if (latest is None) or (make.vercmp(latest, v) < 0):
-                latest = v
-                latest_f = _fn
-        preferred_versions[p] = (latest, latest_f)
+    oe.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
-#    # build a new list with just the latest version of everything
-    eligible = []
-    for p in preferred_versions.keys():
-        (v, f) = preferred_versions[p]
-        eligible.append(f)
+    # Sort by priority
+    for pn in pkg_pn.keys():
+        files = pkg_pn[pn]
+        priorities = {}
+        for f in files:
+            priority = oefile_priority[f]
+            if not priorities.has_key(priority):
+                priorities[priority] = []
+            priorities[priority].append(f)
+        p_list = priorities.keys()
+        p_list.sort(lambda a, b: a - b)
+        pkg_pn[pn] = []
+        for p in p_list:
+            pkg_pn[pn] = [ priorities[p] ] + pkg_pn[pn]
+
+    # If there is a PREFERRED_VERSION, find the highest-priority oefile providing that
+    # version.  If not, find the latest version provided by an oefile in the
+    # highest-priority set.
+    for pn in pkg_pn.keys():
+        preferred_file = None
+        
+        preferred_v = oe.data.getVar('PREFERRED_VERSION_%s' % pn, make.cfg, 1)
+        if preferred_v:
+            preferred_r = None
+            m = re.match('(.*)-(.*)', preferred_v)
+            if m:
+                preferred_v = m.group(1)
+                preferred_r = m.group(2)
+                
+            for file_set in pkg_pn[pn]:
+                for f in file_set:
+                    the_data = make.pkgdata[f]
+                    pv = oe.data.getVar('PV', the_data, 1)
+                    pr = oe.data.getVar('PR', the_data, 1)
+                    if preferred_v == pv and (preferred_r == pr or preferred_r == None):
+                        preferred_file = f
+                        preferred_ver = (pv, pr)
+                        break
+                if preferred_file:
+                    break
+            if preferred_r:
+                pv_str = '%s-%s' % (preferred_v, preferred_r)
+            else:
+                pv_str = preferred_v
+            if preferred_file is None:
+                oe.note("preferred version %s of %s not available", pv_str, pn)
+            else:
+                oe.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
+                
+        if preferred_file is None:
+            # get highest priority file set
+            files = pkg_pn[pn][0]
+            latest = None
+            latest_f = None
+            for f in files:
+                the_data = make.pkgdata[f]
+                pv = oe.data.getVar('PV', the_data, 1)
+                pr = oe.data.getVar('PR', the_data, 1)
+                if (latest is None) or (make.vercmp(latest, (pv, pr)) < 0):
+                    latest = (pv, pr)
+                    latest_f = f
+            preferred_file = latest_f
+            preferred_ver = latest
+
+            oe.debug(1, "selecting %s as latest version of provider %s" % (preferred_file, pn))
+
+        preferred_versions[pn] = (preferred_ver, preferred_file)
+        eligible.append(preferred_file)
 
     for p in eligible:
         if p in __build_cache_fail:
@@ -188,8 +251,8 @@ def buildPackage(item):
         oe.error("no eligible providers for %s" % item)
         return 0
 
-#    # look to see if one of them is already staged, or marked as preferred.
-#    # if so, bump it to the head of the queue
+    # look to see if one of them is already staged, or marked as preferred.
+    # if so, bump it to the head of the queue
     for p in all_p:
         the_data = make.pkgdata[p]
         pn = oe.data.getVar('PN', the_data, 1)
@@ -200,7 +263,7 @@ def buildPackage(item):
         if os.path.exists(stamp):
             (newvers, fn) = preferred_versions[pn]
             if not fn in eligible:
-#                # package was made ineligible by already-failed check
+                # package was made ineligible by already-failed check
                 continue
             oldver = "%s-%s" % (pv, pr)
             newver = '-'.join(newvers)
@@ -212,6 +275,7 @@ def buildPackage(item):
                 oe.note("selecting already-staged %s to satisfy %s%s" % (pn, item, extra_chat))
             eligible.remove(fn)
             eligible = [fn] + eligible
+            discriminated = True
             break
 
     prefervar = oe.data.getVar('PREFERRED_PROVIDER_%s' % item, make.cfg, 1)
@@ -227,9 +291,17 @@ def buildPackage(item):
                     oe.note("selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
                 eligible.remove(p)
                 eligible = [p] + eligible
+                discriminated = True
                 break
 
-#    # run through the list until we find one that we can build
+    if len(eligible) > 1 and discriminated == False:
+        providers_list = []
+        for fn in eligible:
+            providers_list.append(oe.data.getVar('PN', make.pkgdata[fn], 1))
+        oe.note("multiple providers are available (%s);" % ", ".join(providers_list))
+        oe.note("consider defining PREFERRED_PROVIDER_%s" % item)
+
+    # run through the list until we find one that we can build
     for fn in eligible:
         oe.debug(2, "selecting %s to satisfy %s" % (fn, item))
         if try_build(fn, item):
@@ -243,6 +315,8 @@ def build_depgraph():
     pn_provides = {}
 
     def progress(p):
+        if oedebug:
+            return
         if os.isatty(sys.stdout.fileno()):
             sys.stdout.write("\rNOTE: Building provider hash: [")
             x = 0
@@ -261,27 +335,38 @@ def build_depgraph():
                 sys.stdout.write("done.")
                 sys.stdout.flush()
 
-    n = len(make.pkgdata.keys())
-    i = 0
+    def calc_oefile_priority(filename):
+        for (regex, pri) in oefile_config_priorities:
+            if regex.match(filename):
+                return pri
+        return 0
 
-    op = -1
-
+    # Handle PREFERRED_PROVIDERS
     for p in (oe.data.getVar('PREFERRED_PROVIDERS', make.cfg, 1) or "").split():
         (providee, provider) = p.split(':')
         if __preferred.has_key(providee) and __preferred[providee] != provider:
             oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
         __preferred[providee] = provider
 
+    # Calculate priorities for each file
+    for p in make.pkgdata.keys():
+        oefile_priority[p] = calc_oefile_priority(p)
+    
+    n = len(make.pkgdata.keys())
+    i = 0
+
+    op = -1
+
+    oe.debug(1, "OEMAKE building providers hashes")
+
+    # Build forward and reverse provider hashes
+    # Forward: virtual -> [filenames]
+    # Reverse: PN -> [virtuals]
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
 
         pn = oe.data.getVar('PN', d, 1)
-
-        deps = (oe.data.getVar("DEPENDS", d, 1) or "").split()
         provides = Set([pn] + (oe.data.getVar("PROVIDES", d, 1) or "").split())
-
-        for dep in deps:
-            all_depends.add(dep)
 
         if not pn_provides.has_key(pn):
             pn_provides[pn] = Set()
@@ -292,14 +377,21 @@ def build_depgraph():
                 providers[provide] = []
             providers[provide].append(f)
 
+        deps = (oe.data.getVar("DEPENDS", d, 1) or "").split()
+        for dep in deps:
+            all_depends.add(dep)
+
         i += 1
         p = (100 * i) / n
         if p != op:
             op = p
             progress(p)
 
-    sys.stdout.write("\n")
+    if oedebug == 0:
+        sys.stdout.write("\n")
 
+    # Build package list for "oemake world"
+    oe.debug(1, "OEMAKE collating packages for \"world\"")
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
         if oe.data.getVar('BROKEN', d, 1):
@@ -314,6 +406,8 @@ def build_depgraph():
             __world_target.add(pn)
 
 def myProgressCallback( x, y, f ):
+    if oedebug > 0:
+        return
     if os.isatty(sys.stdout.fileno()):
         sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
         sys.stdout.flush()
@@ -331,6 +425,9 @@ def myProgressCallback( x, y, f ):
 #
 
 if __name__ == "__main__":
+
+    if "OEDEBUG" in os.environ:
+        oedebug = int(os.environ["OEDEBUG"])
 
     make.options, args = handle_options( sys.argv )
 
@@ -365,6 +462,29 @@ if __name__ == "__main__":
     ignore = oe.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
     __ignored_dependencies = ignore.split()
 
+    collections = oe.data.getVar("OEFILE_COLLECTIONS", make.cfg, 1)
+    if collections:
+        collection_list = collections.split()
+        for c in collection_list:
+            regex = oe.data.getVar("OEFILE_PATTERN_%s" % c, make.cfg, 1)
+            if regex == None:
+                oe.error("OEFILE_PATTERN_%s not defined" % c)
+                continue
+            priority = oe.data.getVar("OEFILE_PRIORITY_%s" % c, make.cfg, 1)
+            if priority == None:
+                oe.error("OEFILE_PRIORITY_%s not defined" % c)
+                continue
+            try:
+                cre = re.compile(regex)
+            except re.error:
+                oe.error("OEFILE_PATTERN_%s \"%s\" is not a valid regular expression" % (c, regex))
+                continue
+            try:
+                pri = int(priority)
+                oefile_config_priorities.append((cre, pri))
+            except ValueError:
+                oe.error("invalid value for OEFILE_PRIORITY_%s: \"%s\"" % (c, priority))
+
     pkgs_to_build = None
     if args:
         if not pkgs_to_build:
@@ -388,15 +508,19 @@ if __name__ == "__main__":
         try:
             import psyco
         except ImportError:
-            print "NOTE: Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance."
+            if oedebug == 0:
+                oe.note("Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
         else:
             psyco.bind( make.collect_oefiles )
     else:
-        print "NOTE: You have disabled Psyco. This decreases performance."
+        oe.note("You have disabled Psyco. This decreases performance.")
 
     try:
+        oe.debug(1, "OEMAKE collecting .oe files")
         make.collect_oefiles( myProgressCallback )
-        print
+        oe.debug(1, "OEMAKE parsing complete")
+        if oedebug == 0:
+            print
         if make.options.parse_only:
             print "Requested parsing .oe files only.  Exiting."
             sys.exit(0)
