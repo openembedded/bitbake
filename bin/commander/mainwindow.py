@@ -2,6 +2,7 @@
 # -*- coding: iso8859-15 -*-
 
 from appinfo import *
+from packageview import *
 from mainwindowbase import *
 from aboutdialog import *
 from provideritem import *
@@ -18,7 +19,7 @@ class MainWindow( MainWindowBase ):
 
     def createStatusBar( self ):
         self.numPackages = QLabel( "No Packages available.", self.statusBar() )
-        self.statusBar().addWidget( self.numPackages )
+        self.statusBar().addWidget( self.numPackages, True )
 
     #
     # slots
