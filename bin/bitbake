@@ -472,7 +472,7 @@ def build_depgraph():
 
     op = -1
 
-    bb.debug(1, "BBMAKE building providers hashes")
+    bb.debug(1, "building providers hashes")
 
     # Build forward and reverse provider hashes
     # Forward: virtual -> [filenames]
@@ -506,22 +506,22 @@ def build_depgraph():
         sys.stdout.write("\n")
 
     # Build package list for "bitbake world"
-    bb.debug(1, "BBMAKE collating packages for \"world\"")
+    bb.debug(1, "collating packages for \"world\"")
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
         if bb.data.getVar('BROKEN', d, 1) or bb.data.getVar('EXCLUDE_FROM_WORLD', d, 1):
-            bb.debug(2, "BBMAKE skipping %s due to BROKEN/EXCLUDE_FROM_WORLD" % f)
+            bb.debug(2, "skipping %s due to BROKEN/EXCLUDE_FROM_WORLD" % f)
             continue
         terminal = True
         pn = bb.data.getVar('PN', d, 1)
         for p in pn_provides[pn]:
             if p.startswith('virtual/'):
-                bb.debug(2, "BBMAKE skipping %s due to %s provider starting with virtual/" % (f, p))
+                bb.debug(2, "skipping %s due to %s provider starting with virtual/" % (f, p))
                 terminal = False
                 break
             for pf in providers[p]:
                 if bb.data.getVar('PN', make.pkgdata[pf], 1) != pn:
-                    bb.debug(2, "BBMAKE skipping %s due to both us and %s providing %s" % (f, pf, p))
+                    bb.debug(2, "skipping %s due to both us and %s providing %s" % (f, pf, p))
                     terminal = False
                     break
         if terminal:
@@ -683,9 +683,9 @@ if __name__ == "__main__":
         bb.note("You have disabled Psyco. This decreases performance.")
 
     try:
-        bb.debug(1, "BBMAKE collecting .bb files")
+        bb.debug(1, "collecting .bb files")
         make.collect_bbfiles( myProgressCallback )
-        bb.debug(1, "BBMAKE parsing complete")
+        bb.debug(1, "parsing complete")
         if bbdebug == 0:
             print
         if make.options.parse_only:
