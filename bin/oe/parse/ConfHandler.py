@@ -14,7 +14,7 @@ def init(data):
 	if not oe.data.getVar('OEDIR', data):
 		oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
 	if not oe.data.getVar('OEPATH', data):
-		oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}:%s/share/oe" % sys.prefix, data)
+		oe.data.setVar('OEPATH', "${TOPDIR}:${HOME}/.oe:${OEDIR}/bin:${OEDIR}:%s/share/oe" % sys.prefix, data)
 
 	oe.data.setVarFlag("OEFILES", "inherit", "1", data)
 	oe.data.setVarFlag("OEPKGS", "inherit", "1", data)
@@ -24,6 +24,7 @@ def init(data):
 	oe.data.setVarFlag("PATH", "inherit", "1", data)
 	oe.data.setVarFlag("STAMP", "warnlevel", "3", data)
 	oe.data.setVarFlag("INHERIT", "inherit", "1", data)
+	oe.data.setVarFlag("HOME", "inherit", "1", data)
 
 	# directories
 	oe.data.setVarFlag("TOPDIR", "warnlevel", "3", data)
