@@ -73,10 +73,11 @@ def init(data):
 	_task_stack = []
 
 
-def exec_func(func, d):
+def exec_func(func, d, dirs = None):
 	"""Execute an OE 'function'"""
 
-	dirs = data.getVarFlag(func, 'dirs', d) or []
+	if not dirs:
+		dirs = data.getVarFlag(func, 'dirs', d) or []
 	for adir in dirs:
 		adir = data.expand(adir, d)
 		mkdirhier(adir) 
