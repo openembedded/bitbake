@@ -11,15 +11,32 @@ def usage(errorlevel=0, txt=''):
 		print
 		print txt
 
-	print "Syntax:"
-	print "\noebuild <command> <somebuildfile.oe>\n"
+	print "Usage: oebuild [options] <command> <somebuildfile.oe>\n"
+	print "  %s\t\t%s" % ("-v, --version", "display oebuild version")
 	sys.exit(0)
 
-if len(sys.argv) < 2:
+oebuild_version = 1.0
+def version():
+	print "OpenEmbedded build tool version %s" % oebuild_version
+	print "Source version: %s" % %K%
+
+import getopt
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], 'v', [ 'version' ])
+except getopt.GetoptError:
 	usage(1)
-if sys.argv[1] in ('help', 'usage'):
+
+# handle opts
+optsonly = [ opt for (opt,val) in opts]
+if '--version' in optsonly or '-v' in optsonly:
+	version()
+	sys.exit(0)
+
+if len(args) < 1:
+	usage(1)
+if args[0] in ('help', 'usage'):
 	usage(0);
-if len(sys.argv) < 3:
+if len(args) < 2:
 	usage(1)
 
 cfg = data.init()
@@ -32,15 +49,15 @@ except IOError:
 	fatal("Unable to open oe.conf: %s" % value)
 
 oepath = data.getVar('OEPATH', cfg)
-oepath += ":%s" % os.path.abspath(os.path.dirname(sys.argv[2]))
+oepath += ":%s" % os.path.abspath(os.path.dirname(args[1]))
 data.setVar('OEPATH', oepath, cfg)
 
 from copy import copy
 oe = copy(cfg)
 try:
-	oe = parse.handle(sys.argv[2], oe) # read .oe data
+	oe = parse.handle(args[1], oe) # read .oe data
 except IOError, OSError:
-	fatal("Unable to open %s" % sys.argv[2])
+	fatal("Unable to open %s" % args[1])
 
 # sanity check
 if oe is None:
@@ -68,7 +85,7 @@ for var in oe.keys():
 		build.add_task(p, pcontent, pdeps)
 
 try:
-	build.exec_task(sys.argv[1], oe)
+	build.exec_task(args[0], oe)
 except build.FuncFailed:
 	fatal("task stack execution failed")
 except build.EventException:
