@@ -266,7 +266,7 @@ class Cvs(Fetch):
         if 'date' in parm:
             date = parm['date']
         else:
-            if not tag or tag == "HEAD":
+            if not tag:
                 date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
             else:
                 date = ""
@@ -312,7 +312,7 @@ class Cvs(Fetch):
             if 'date' in parm:
                 date = parm['date']
             else:
-                if not tag or tag == "HEAD":
+                if not tag:
                     date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
                 else:
                     date = ""
