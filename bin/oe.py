@@ -1343,7 +1343,7 @@ def read_oe(oefile, inherit = False, classname = None):
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
-def expand(s):
+def expand(s, env = globals()["env"]):
 	"""Can expand variables with their values from env[]
 
 	>>> env['MID'] = 'drin'
