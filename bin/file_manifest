@@ -34,6 +34,8 @@
 #
 
 #<name>		<type>	<mode>	<uid>	<gid>	<major>	<minor>	<start>	<inc>	<count>
-libblash-1.2.3/src/.libs/libblah.so.1.2.3	${libdir}/libblah.so.1.2.3	f	0755	0	0
+blah-1.2.3/src/.libs/libblah.so.1.2.3	${libdir}/libblah.so.1.2.3	f	0755	0	0
 libblah.so.1.2.3	${libdir}/libblah.so.1	s
 libblah.so.1.2.3	${libdir}/libblah.so	s
+blah-1.2.3/include/blah.h	${includedir}/blah.h	f	0644	0	0
+blah-1.2.3/src/.libs/blah	${sbindir}/blah	f	0755	0	0

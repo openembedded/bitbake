@@ -9,23 +9,49 @@ manifest = sys.__stdin__
 if len(sys.argv) == 2:
 	manifest = file(sys.argv[1], "r")
 
-def mangle_srcpath(fields):
-	if not fields["src"]:
-		return
-	if os.path.isabs(fields["src"]):
-		return
-	if fields["src"].startswith('/'):
-		fields["src"] = fields["src"][1:]
-	fields["src"] = os.path.join(srcdir, fields["src"])
+def mangle_path_stage(field, fields):
+	path = fields[field]
+	if not path:
+		return None
+	if field == "src":
+		if os.path.isabs(path):
+			return path
+		if path.startswith('/'):
+			path = path[1:]
+		path = os.path.join(srcdir, path)
+	elif field == "dest":	
+		if os.path.isabs(path):
+			return path
+		if path.startswith('/'):
+			path = path[1:]
+		path = os.path.join(destdir, path)
+		libpath = os.path.join(destdir, '${libdir}')
+		incpath = os.path.join(destdir, '${includedir}')
+		if path.startswith(libpath):
+			path = "${STAGING_LIBDIR}" + path[len(libpath):]
+		elif path.startswith(incpath):
+			path = "${STAGING_INCDIR}" + path[len(incpath):]
+		else:
+			return None	
+	return path	
 
-def mangle_destpath(fields):
-	if not fields["dest"]:
-		return
-	if os.path.isabs(fields["dest"]):
-		return
-	if fields["dest"].startswith('/'):
-		fields["dest"] = fields["dest"][1:]
-	fields["dest"] = os.path.join(destdir, fields["dest"])
+def mangle_path_install(field, fields):
+	path = fields[field]
+	if not path:
+		return None
+	if field == "src":
+		if os.path.isabs(path):
+			return path
+		if path.startswith('/'):
+			path = path[1:]
+		path = os.path.join(srcdir, path)
+	elif field == "dest":
+		if os.path.isabs(path):
+			return path
+		if path.startswith('/'):
+			path = path[1:]
+		path = os.path.join(destdir, path)
+	return path
 
 def getfields(line):
 	fields = {}
@@ -47,53 +73,73 @@ def getfields(line):
 		pass
 	return fields
 
-def handle_directory(fields, commands):
-	if not fields["dest"]:
+def handle_directory(fields, commands, mangle_path):
+	dest = fields["dest"]
+	if not dest:
 		return
+	if os.path.isabs(dest):
+		return
+	if dest.startswith('/'):
+		dest = dest[1:]
 	cmd = "install -d "
-	cmd += os.path.join(destdir, os.path.dirname(fields["dest"])[1:])
+	dest = mangle_path("dest", fields)
+	if not dest:
+		return
+	cmd += os.path.dirname(dest)
 	if not cmd in commands:
 		commands.append(cmd)
 
-def handle_file(fields, commands):
+def handle_file(fields, commands, mangle_path):
 	if None in (fields["src"], fields["dest"]):
 		return
 
-	handle_directory(fields, commands)
-	mangle_srcpath(fields)
-	mangle_destpath(fields)
+	handle_directory(fields, commands, mangle_path)
+	src = mangle_path("src", fields)
+	if not src:
+		return
+	dest = mangle_path("dest", fields)
+	if not dest:
+		return
+	mode = fields["mode"]
 
 	cmd = "install "
-	if fields["mode"]:
-		cmd += "-m " + fields["mode"] + " "
-	cmd += fields["src"] + " " + fields["dest"]
+	if mode:
+		cmd += "-m " + mode + " "
+	cmd += src + " " + dest
 	if not cmd in commands:
 		commands.append(cmd)
 
-def handle_symbolic_link(fields, commands):
+def handle_symbolic_link(fields, commands, mangle_path):
 	if None in (fields["src"], fields["dest"]):
 		return
 
-	handle_directory(fields, commands)
-	mangle_destpath(fields)
+	handle_directory(fields, commands, mangle_path)
+	dest = mangle_path("dest", fields)
+	src = fields["src"]
+	if None in (src, dest):
+		return
 
-	cmd = "ln -sf " + fields["src"] + " " + fields["dest"]
+	cmd = "ln -sf " + src + " " + dest
 	if not cmd in commands:
 		commands.append(cmd)
 
-def handle_hard_link(fields, commands):
+def handle_hard_link(fields, commands, mangle_path):
 	if None in (fields["src"], fields["dest"]):
 		return
 
-	handle_directory(fields, commands)
-	mangle_srcpath(fields)
-	mangle_destpath(fields)
+	handle_directory(fields, commands, mangle_path)
+	src = mangle_path("src", fields)
+	dest = mangle_path("dest", fields)
+	if None in (src, dest):
+		return
 
-	cmd = "ln -f " + fields["src"] + " " + fields["dest"]
+	cmd = "ln -f " + src + " " + dest
 	if not cmd in commands:
 		commands.append(cmd)
 
 commands = list()
+commands_stage = list()
+entries = list()	
 while 1:
 	line = manifest.readline()
 	if not line:
@@ -105,14 +151,28 @@ while 1:
 	if not fields:
 		continue
 
+	if not fields in entries:
+		entries.append(fields)
+			
 	if fields["type"] == "d":
-		handle_directory(fields, commands)
+		handle_directory(fields, commands, mangle_path_install)
 	if fields["type"] == "f":
-		handle_file(fields, commands)
+		handle_file(fields, commands, mangle_path_install)
 	if fields["type"] == "s":
-		handle_symbolic_link(fields, commands)
+		handle_symbolic_link(fields, commands, mangle_path_install)
 	if fields["type"] == "h":
-		handle_hard_link(fields, commands)
+		handle_hard_link(fields, commands, mangle_path_install)
+
+	if fields["type"] == "d":
+		handle_directory(fields, commands_stage, mangle_path_stage)
+	if fields["type"] == "f":
+		handle_file(fields, commands_stage, mangle_path_stage)
+	if fields["type"] == "s":
+		handle_symbolic_link(fields, commands_stage, mangle_path_stage)
+	
+print "do_stage () {"
+print '\t' + string.join(commands_stage, '\n\t')
+print "}"
 print "do_install () {"
 print '\t' + string.join(commands, '\n\t')
 print "}"
