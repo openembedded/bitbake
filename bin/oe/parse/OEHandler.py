@@ -60,6 +60,9 @@ def handle(fn, d = {}, include = 0):
 	init(d)
 	if include == 0:
 		data.inheritFromOS(2, d)
+
+	oldfile = data.getVar('FILE', d)
+
 	fn = obtain(fn, d)
 	oepath = ['.']
 	if not os.path.isabs(fn):
@@ -76,9 +79,9 @@ def handle(fn, d = {}, include = 0):
 	else:
 		f = open(fn,'r')
 
+	data.setVar('FILE', fn, d)
+
 	if ext != ".oeclass":
-		if include == 0:
-			vars_from_fn(fn, d)
 		import string
 		i = string.split(data.getVar("INHERIT", d, 1) or "")
 		if not "base" in i and __classname__ != "base":
@@ -106,6 +109,8 @@ def handle(fn, d = {}, include = 0):
 			data.expandKeys(d)
 			data.update_data(d)
 			set_additional_vars(fn, d, include)
+	if oldfile:
+		data.setVar('FILE', oldfile, d)
 	return d
 
 def feeder(lineno, s, fn, d):
@@ -216,80 +221,20 @@ def feeder(lineno, s, fn, d):
 	return ConfHandler.feeder(lineno, s, fn, d)
 
 __pkgsplit_cache__={}
-
-def vars_from_fn(mypkg, d, store=2, silent=1):
-	"""Obtain PN,PV,PR variables from filename.
-	   If store is 0, do not store variables into the data store.
-	   If 1, store variables into data store only if not already set.
-	   If 2, store variables into data store regardless.
-
-	>>> pkgsplit('')
-	>>> pkgsplit('x')
-	>>> pkgsplit('x-')
-	>>> pkgsplit('-1')
-	>>> pkgsplit('glibc-1.2-8.9-r7')
-	>>> pkgsplit('glibc-2.2.5-r7')
-	['glibc', '2.2.5', 'r7']
-	>>> pkgsplit('foo-1.2-1')
-	>>> pkgsplit('Mesa-3.0')
-	['Mesa', '3.0', 'r0']
-	"""
-
-	def isvalid(type, str):
-		if type == "PR":
-			if str[0] != 'r':
-				return 0
-		return 1
-
-	map = { 0: "CATEGORY", 1: "PN", 2: "PV", 3: "PR" }
-	splitmap = [ 'CATEGORY', 'PN', 'PV', 'PR' ]
-	heh = [ "PR", "PV", "PN" ]
-	try:
-		pkgsplit = __pkgsplit_cache__[mypkg]
-		splitloc=0;
-		for i in range(len(heh)-1, 0, -1):
-			if pkgsplit[splitloc] == None:
-				break
-			data.setVar(heh[i], pkgsplit[splitloc], d)
-			splitloc += 1
+def vars_from_file(mypkg, d):
+	if __pkgsplit_cache__.has_key(mypkg):
 		return __pkgsplit_cache__[mypkg]
-	except KeyError:
-		pass
-
-	pkgsplit = [None, None, None, None]
+		
 	myfile = os.path.splitext(os.path.basename(mypkg))
-#	mydir = os.path.basename(os.path.dirname(mypkg))
-#	pkgsplit[splitmap.index('CATEGORY')] = mydir
-#	if store != 0:
-#		getval = data.getVar('CATEGORY', d) or None 
-#		if store == 2 or not getval:
-#			data.setVar('CATEGORY', mydir, d)
-
-	myparts = string.split(myfile[0],'-')
-	basepos = 0
-	for i in heh:
-		str = None
-		ind = heh.index(i)
-		loc = int.__neg__(ind + 1) + basepos
-		splitloc = len(heh) - basepos - ind
-		getval = data.getVar(i, d) or None 
-		if ind == len(heh) - 1:
-			if len(myparts) > 1:
-				str = string.join(myparts[0:loc + basepos], "-")
-			else:
-				str = myparts[0]
-		else:
-			str = myparts[loc]
-		if not isvalid(i, str) or len(myparts) < (splitloc + basepos):
-			basepos += 1
-			continue
-		pkgsplit[splitloc] = str
-		if store != 0:
-			if store == 1 and getval:
-				continue
-			data.setVar(i, str, d)
-	__pkgsplit_cache__[mypkg] = pkgsplit
-	return pkgsplit
+	parts = string.split(myfile[0], '_')
+	__pkgsplit_cache__[mypkg] = parts
+	exp = 3 - len(parts)
+	tmplist = []
+	while exp != 0:
+		exp -= 1
+		tmplist.append(None)
+	parts.extend(tmplist)
+	return parts
 
 def set_automatic_vars(file, d, include):
 	"""Deduce per-package environment variables"""
