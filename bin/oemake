@@ -179,7 +179,7 @@ def usage():
 	print "Options:"
 	print "  %s\t\t%s" % ("-V, --version", "output version information and exit")
 	print "  %s\t\t%s" % ("-c [arg], --cmd [arg]", "specify command to pass to oebuild")
-	print "  %s\t\t%s" % ("-a, --abort", "abort build if any package build fails")
+	print "  %s\t\t%s" % ("-k", "continue as much as possible after an error")
 	print "  %s\t\t%s" % ("-f, --force", "force run of specified cmd, regardless of status")
 	print
 	print "Examples:"
@@ -240,7 +240,7 @@ def load_oefile(oefile, cfgdata):
 #
 
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'Vc:fa', [ 'version', 'cmd=', 'abort', 'force' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'Vc:fk', [ 'version', 'cmd=', 'force' ])
 except getopt.GetoptError:
 	usage()
 
@@ -253,10 +253,10 @@ if opthash.has_key('--version') or opthash.has_key('-V'):
 	version()
 	sys.exit(0)
 
-if opthash.has_key('--abort') or opthash.has_key('-a'):
-	abort = 1
-else:
+if opthash.has_key('-k'):
 	abort = 0
+else:
+	abort = 1
 
 if opthash.has_key('--force') or opthash.has_key('-f'):
 	force = 1
