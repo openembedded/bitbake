@@ -108,14 +108,14 @@ class Wget(Fetch):
 		return type in ['http','https','ftp']
 	supports = staticmethod(supports)
 
-	def localpath(url, d = oe.data.init()):
+	def localpath(url, d):
 		# strip off parameters
 		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
 		url = oe.encodeurl([type, host, path, user, pswd, {}])
-		return os.path.join(oe.getenv("DL_DIR"), os.path.basename(url))
+		return os.path.join(oe.data.getVar("DL_DIR", d), os.path.basename(url))
 	localpath = staticmethod(localpath)
 
 	def go(self, d = oe.data.init(), urls = []):
@@ -131,7 +131,7 @@ class Wget(Fetch):
 		for loc in urls:
 			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
 			myfile = os.path.basename(path)
-			dlfile = self.localpath(loc)
+			dlfile = self.localpath(loc, d)
 			dlfile = oe.data.expand(dlfile, localdata)
 			md5file = "%s.md5" % dlfile
 
