@@ -39,6 +39,8 @@ base_do_unpack() {
 base_do_compile() {
 	if [ -x ./configure ] ; then
 		oeconf 
+	fi
+	if [ -e Makefile -o -e makefile ]; then
 		oemake || die "oemake failed"
 	else
 		oenote "nothing to compile"
