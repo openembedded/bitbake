@@ -11,46 +11,12 @@ This file is part of the OpenEmbedded (http://openembedded.org) build infrastruc
 from oe import debug, digraph, data, fetch, fatal, error, note, event, parse
 import copy, oe, re, sys, os, glob
 
-__build_cache_fail = []
-__build_cache = []
-
 # These variables are allowed to be reinitialized by client code
 pkgdata = {}
-pkgs = {}
 cfg = {}
-graph = digraph()
 
-def buildPackage(graph, item):
-    if item in __build_cache:
-        return 1
-    if item in __build_cache_fail:
-        return 0
-    fn = pkgs[item][1]
-    if fn is None:
-        return 1
-    command = options.cmd
-    debug(1, "oebuild %s %s" % (command, fn))
-    event.fire(event.PkgStarted(item, pkgdata[fn]))
-    try:
-        oe.build.exec_task('do_%s' % command, pkgdata[fn])
-        event.fire(event.PkgSucceeded(item, pkgdata[fn]))
-        __build_cache.append(item)
-        del pkgdata[fn]
-        return 1
-    except oe.build.FuncFailed:
-        error("task stack execution failed")
-        event.fire(event.PkgFailed(item, pkgdata[fn]))
-        __build_cache_fail.append(item)
-        del pkgdata[fn]
-        return 0
-    except oe.build.EventException:
-        (type, value, traceback) = sys.exc_info()
-        e = value.event
-        error("%s event exception, aborting" % event.getName(e))
-        event.fire(event.PkgFailed(item, pkgdata[fn]))
-        __build_cache_fail.append(item)
-        del pkgdata[fn]
-        return 0
+digits = "0123456789"
+ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 def get_oefiles( path = os.getcwd() ):
     """Get list of default .oe files by reading out the current directory"""
@@ -122,7 +88,7 @@ def collect_oefiles( progressCallback ):
             if dirfiles:
                 newfiles += dirfiles
                 continue
-    newfiles += glob.glob(f) or [ f ]
+        newfiles += glob.glob(f) or [ f ]
 
     for i in xrange( len( newfiles ) ):
         f = newfiles[i]
@@ -152,54 +118,53 @@ def collect_oefiles( progressCallback ):
                 for var in pkgdata[f].keys():
                     if data.getVarFlag(var, "handler", pkgdata[f]) and data.getVar(var, pkgdata[f]):
                         event.register(data.getVar(var, pkgdata[f]))
-                depstr = data.getVar("DEPENDS", pkgdata[f], 1)
-                if depstr is not None:
-                    deps = depstr.split()
-                pkg = []
-                pkg.append(data.getVar('CATEGORY', pkgdata[f], 1))
-                pkg.append(data.getVar('PN', pkgdata[f], 1))
-                pkg.append(data.getVar('PV', pkgdata[f], 1))
-                pkg.append(data.getVar('PR', pkgdata[f], 1))
-                root = "%s/%s-%s-%s" % (pkg[0], pkg[1], pkg[2], pkg[3])
-                provides = []
-                providestr = data.getVar("PROVIDES", pkgdata[f], 1)
-                if providestr is not None:
-                    provides += providestr.split()
-                for provide in provides:
-                    pkgs[provide] = [[root], None]
-                pkgs[root] = [deps, f]
         except IOError:
             oe.error("opening %s" % f)
             pass
 
-def build_depgraph( depcmd ):
-    # add every provide relationship to the dependency graph, depending
-    # on all the packages that provide it
+def explode_version(s):
+        import string
+        r = []
+        alpha_regexp = re.compile('^([a-zA-Z]+)(.*)$')
+        numeric_regexp = re.compile('^(\d+)(.*)$')
+        while (s != ''):
+            if s[0] in digits:
+                m = numeric_regexp.match(s)
+                r.append(int(m.group(1)))
+                s = m.group(2)
+                continue
+            if s[0] in ascii_letters:
+                m = alpha_regexp.match(s)
+                r.append(m.group(1))
+                s = m.group(2)
+                continue
+            s = s[1:]
+        return r
 
-    tokill = []
-    unsatisfied = []
+def vercmp_part(a, b):
+        va = explode_version(a)
+        vb = explode_version(b)
+        while True:
+            if va == []:
+                ca = None
+            else:
+                ca = va.pop(0)
+            if vb == []:
+                cb = None
+            else:
+                cb = vb.pop(0)
+            if ca == None and cb == None:
+                return 0
+            if ca > cb:
+                return 1
+            if ca < cb:
+                return -1
 
-    for pkg in pkgs.keys():
-        graph.addnode(pkg, None)
-
-    for pkg in pkgs.keys():
-        (deps, fn) = pkgs[pkg]
-        if depcmd is not None:
-            if deps is not None:
-                for d in deps:
-                    if not graph.hasnode(d):
-                        def killitem(graph, item):
-                            tokill.append(item)
-                        graph.walkup(pkg, killitem)
-                        unsatisfied.append([pkg, d])
-                        break
-                    graph.addnode(pkg, d)
-
-    for u in unsatisfied:
-        event.fire(event.UnsatisfiedDep(u[0], pkgdata[pkgs[u[0]][1]], u[1]))
-
-    for k in tokill:
-        def reallykillitem(graph, item):
-            graph.delnode(item)
-        graph.walkup(k, reallykillitem)
-
+def vercmp(ta, tb):
+        (va, ra) = ta
+        (vb, rb) = tb
+        
+        r = vercmp_part(va, vb)
+        if (r == 0):
+            r = vercmp_part(ra, rb)
+        return r

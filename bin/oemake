@@ -15,6 +15,9 @@ except ImportError: # optparse appears in Python 2.3
     from utils import optparse
 parsespin = itertools.cycle( r'|/-\-' )
 
+__build_cache_fail = []
+__build_cache = []
+
 __version__ = 1.1
 usageinfo = """%prog [options] [package ...]
 
@@ -43,6 +46,89 @@ def handle_options( args ):
     options, args = parser.parse_args( args )
     return options, args[1:]
 
+graph = digraph()
+
+def buildPackage(graph, item):
+    if item in __build_cache:
+        return 1
+    if item in __build_cache_fail:
+        return 0
+    fn = pkgs[item][1]
+    if fn is None:
+        return 1
+    command = make.options.cmd
+    debug(1, "oebuild %s %s" % (command, fn))
+    event.fire(event.PkgStarted(item, make.pkgdata[fn]))
+    try:
+        oe.build.exec_task('do_%s' % command, make.pkgdata[fn])
+        event.fire(event.PkgSucceeded(item, make.pkgdata[fn]))
+        __build_cache.append(item)
+        del make.pkgdata[fn]
+        return 1
+    except oe.build.FuncFailed:
+        error("task stack execution failed")
+        event.fire(event.PkgFailed(item, make.pkgdata[fn]))
+        __build_cache_fail.append(item)
+        del make.pkgdata[fn]
+        return 0
+    except oe.build.EventException:
+        (type, value, traceback) = sys.exc_info()
+        e = value.event
+        error("%s event exception, aborting" % event.getName(e))
+        event.fire(event.PkgFailed(item, make.pkgdata[fn]))
+        __build_cache_fail.append(item)
+        del make.pkgdata[fn]
+        return 0
+
+def build_depgraph( depcmd ):
+    for f in make.pkgdata.keys():
+        depstr = data.getVar("DEPENDS", make.pkgdata[f], 1)
+        if depstr is not None:
+            deps = depstr.split()
+        pkg = []
+        pkg.append(data.getVar('CATEGORY', make.pkgdata[f], 1))
+        pkg.append(data.getVar('PN', make.pkgdata[f], 1))
+        pkg.append(data.getVar('PV', make.pkgdata[f], 1))
+        pkg.append(data.getVar('PR', make.pkgdata[f], 1))
+        root = "%s/%s-%s-%s" % (pkg[0], pkg[1], pkg[2], pkg[3])
+        provides = []
+        providestr = data.getVar("PROVIDES", make.pkgdata[f], 1)
+        if providestr is not None:
+            provides += providestr.split()
+        for provide in provides:
+            pkgs[provide] = [[root], None]
+        pkgs[root] = [deps, f]
+    
+    # add every provide relationship to the dependency graph, depending
+    # on all the packages that provide it
+
+    tokill = []
+    unsatisfied = []
+
+    for pkg in pkgs.keys():
+        graph.addnode(pkg, None)
+
+    for pkg in pkgs.keys():
+        (deps, fn) = pkgs[pkg]
+        if depcmd is not None:
+            if deps is not None:
+                for d in deps:
+                    if not graph.hasnode(d):
+                        def killitem(graph, item):
+                            tokill.append(item)
+                        graph.walkup(pkg, killitem)
+                        unsatisfied.append([pkg, d])
+                        break
+                    graph.addnode(pkg, d)
+
+    for u in unsatisfied:
+        event.fire(event.UnsatisfiedDep(u[0], make.pkgdata[pkgs[u[0]][1]], u[1]))
+
+    for k in tokill:
+        def reallykillitem(graph, item):
+            graph.delnode(item)
+        graph.walkup(k, reallykillitem)
+
 def myProgressCallback( x, y, f ):
     sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
     sys.stdout.flush()
@@ -68,9 +154,9 @@ if __name__ == "__main__":
         depcmd=make.options.cmd
 
     make.pkgdata = {}
-    make.pkgs = {}
     make.cfg = {}
-    make.graph = digraph()
+    graph = digraph()
+    pkgs = {}
 
     try:
         make.cfg = parse.handle("conf/oe.conf", make.cfg)
@@ -87,9 +173,9 @@ if __name__ == "__main__":
     try:
         make.collect_oefiles( myProgressCallback )
         sys.stdout.write("\n")
-        make.build_depgraph( depcmd )
+        build_depgraph( depcmd )
 
-        event.fire(event.BuildStarted(buildname, make.graph.okeys, make.cfg))
+        event.fire(event.BuildStarted(buildname, graph.okeys, make.cfg))
 
         pkgs_to_build = None
         if args:
@@ -101,12 +187,12 @@ if __name__ == "__main__":
             if oepkgs:
                 pkgs_to_build = oepkgs.split()
         if not pkgs_to_build:
-            pkgs_to_build = make.graph.okeys
+            pkgs_to_build = graph.okeys
         debug(1, "building: %s" % pkgs_to_build)
 
         for k in pkgs_to_build:
-            if k in make.pkgs:
-                ret = make.graph.walkdown(k, make.buildPackage, usecache=True)
+            if k in pkgs:
+                ret = graph.walkdown(k, buildPackage, usecache=True)
                 if make.options.abort and not ret:
                     fatal("Build of %s failed, aborting." % k)
             else:
@@ -114,7 +200,7 @@ if __name__ == "__main__":
                 if make.options.abort:
                     sys.exit(1)
 
-        event.fire(event.BuildCompleted(buildname, make.graph.okeys, make.cfg))
+        event.fire(event.BuildCompleted(buildname, graph.okeys, make.cfg))
 
     except KeyboardInterrupt:
         print "\nNOTE: KeyboardInterrupt - Build not completed."
