@@ -499,7 +499,7 @@
             <string>Preferences...</string>
         </property>
         <property name="menuText">
-            <string>Edit Preferences...</string>
+            <string>Preferences...</string>
         </property>
         <property name="toolTip">
             <string>Edit Preferences...</string>
