@@ -69,11 +69,8 @@ def handle(fn, d = {}):
 		f = open(fn,'r')
 
 	if ext != ".oeclass":
-		inheritclasses = data.getVar("INHERIT", d)
-		if inheritclasses:
-			i = inheritclasses.split()
-		else:
-			i = []
+		import string
+		i = string.split(data.getVar("INHERIT", d, 1) or "")
 		if not "base" in i and __classname__ != "base":
 			i[0:0] = ["base"]
 		inherit(i, d)
@@ -228,7 +225,7 @@ def set_automatic_vars(file, d):
 			  '${PN}-${PV}',
 			  'files',
 			  '']:
-			s = data.expand(os.path.join(t, s), d)
+			s = data.expand(os.path.abspath(os.path.join(t, s)), d)
 			if os.access(s, os.R_OK):
 				data.setVar('FILESDIR', s, d)
 				break

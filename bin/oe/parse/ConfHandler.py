@@ -21,6 +21,7 @@ def init(data):
 	oe.data.setVarFlag("OEPATH", "warnlevel", "3", data)
 	oe.data.setVarFlag("PATH", "inherit", "1", data)
 	oe.data.setVarFlag("STAMP", "warnlevel", "3", data)
+	oe.data.setVarFlag("INHERIT", "inherit", "1", data)
 
 	# directories
 	oe.data.setVarFlag("TOPDIR", "warnlevel", "3", data)
