@@ -288,13 +288,13 @@ def decodeurl(url):
     else:
         user = ''
         pswd = ''
-    #note("decodeurl: %s decoded to:" % url)
-    #note("decodeurl: type = '%s'" % type)
-    #note("decodeurl: host = '%s'" % host)
-    #note("decodeurl: path = '%s'" % path)
-    #note("decodeurl: parm = '%s'" % parm)
-    #note("decodeurl: user = '%s'" % user)
-    #note("decodeurl: pswd = '%s'" % pswd)
+    note("decodeurl: %s decoded to:" % url)
+    note("decodeurl: type = '%s'" % type)
+    note("decodeurl: host = '%s'" % host)
+    note("decodeurl: path = '%s'" % path)
+    note("decodeurl: parm = '%s'" % parm)
+    note("decodeurl: user = '%s'" % user)
+    note("decodeurl: pswd = '%s'" % pswd)
     p = {}
     if parm:
         for s in parm.split(';'):
@@ -330,16 +330,17 @@ def encodeurl(decoded):
 
     (type, host, path, user, pswd, p) = decoded
 
-    if not type or not host or not path:
+    if not type or not path:
         fatal("invalid or missing parameters for url encoding")
-
     url = '%s://' % type
     if user:
         url += "%s" % user
         if pswd:
             url += ":%s" % pswd
         url += "@"
-    url += "%s%s" % (host, path)
+    if host:
+        url += "%s" % host
+    url += "%s" % path
     if p:
         for parm in p.keys():
             url += ";%s=%s" % (parm, p[parm])
