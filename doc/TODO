@@ -20,17 +20,19 @@ TODO:
 	    using our fetch classes.
 
 [ ] oebuild
-	[ ] Use oe.digraph for handling intertask dependency
-	[ ] Split task execution from function execution
-	[ ] Add a means to add a task which depends on another task's
+	[x] Use oe.digraph for handling intertask dependency
+	[x] Split task execution from function execution
+	[x] Add a means to add a task which depends on another task's
 	    execution, but not on said task's successful completion.
-	[ ] Convert to the new parse and data clases ala oemake.
+	[x] Convert to the new parse and data clases ala oemake.
 	[x] Fetch shouldnt use stamps at all.  Hmm, due to the way
 	    I implemented override of the check functions, the stamp
 	    checker will believe unpack's stamp is always out of date,
 	    since its dependency item's stamp doesnt exist.  Need to fix
 	    that behavior, then enhance the fetch classes to check for
 	    existance.
+	[ ] move set_automatic_vars into either data or parse
+	[ ] default flag set for both oe and task metadata
 
 [.] oemake
 	[x] Move OEPATH follow into the individual 'handle' functions,
@@ -60,7 +62,7 @@ TODO:
 [x] Update patcher tool to make use of our ability to use python functions.
 [x] Write package.oeclass implemented w/ a python function/task
 [x] Write src.rpm builder .oeclass
-[ ] Write ipkg.oeclass which inherits package.oeclass to produce an ipk from
+[x] Write ipkg.oeclass which inherits package.oeclass to produce an ipk from
     our metadata.
 [ ] Once we have the per package deployment code, write a staging oeclass
     that lets you use the FILES blocks for our deployment packages to do the
