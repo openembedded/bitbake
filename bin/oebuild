@@ -48,23 +48,30 @@ def exec_shell_func(func, myfatal=fatal):
 	mkdirhier(env['T'])
 	logfile = env['T'] + '/log.fetch.' + str(os.getpid())
 	runfile = env['T'] + '/run.fetch.' + str(os.getpid())
+
 	f = open(runfile, "w")
 	f.write("#!/bin/bash\n")
 	if env.has_key('OEDEBUG'): f.write("set -x\n")
+	f.write("source %s/bin/build/oebuild.sh\n" % env['OEDIR'])
+	if env.has_key('OEPATH'):
+		for s in env['OEPATH']:
+			f.write("if -f %s/oebuild.sh && source $%s/oebuild.sh\n" % (s,s));
 	emit_env(f)
 	f.write("cd %s\n" % env['DISTDIR'])
+
 	f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
 	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
 	if ret==0:
-		os.remove(runfile)
-		os.remove(logfile)
-		return true
+		if not env.has_key('OEDEBUG'): 
+			os.remove(runfile)
+			os.remove(logfile)
+		return 0
 	else:
 		error("'%s'() failed" % func);
 		myfatal("more info in: %s" % logfile);
-		return false
+		return 1
 
 
 #######################################################################
@@ -115,7 +122,7 @@ def do_unpack():
 	
 	if env.has_key('src_unpack'):
 		ret = exec_shell_func('src_unpack')
-		if ret != 0:
+		if ret:
 			error('unpacking source via src_unpack() failed');
 			fatal('more info in: %s' % logfile);
 		return
@@ -128,7 +135,7 @@ def do_unpack():
 def do_compile():
 	if env.has_key('src_compile'):
 		ret = exec_shell_func('src_compile')
-		if ret != 0:
+		if ret:
 			error('compilation via src_compile() failed');
 			fatal('more info in: %s' % logfile);
 		return
@@ -139,7 +146,7 @@ def do_compile():
 def do_install():
 	if env.has_key('src_install'):
 		ret = exec_shell_func('src_install')
-		if ret != 0:
+		if ret:
 			error('installation via src_install() failed');
 			fatal('more info in: %s' % logfile);
 		return
