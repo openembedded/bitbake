@@ -1,11 +1,6 @@
 TODO:
 
 [x] oe package
-	[x] Define CONFIG_SITE to point to a "SYS" specific config.site.
-
-	[x] .oe needs access to PROVIDES information that oemake is
-	    currently populating.  Move the default set of the .oe
-	    provides into the .oe parser rather than oemake.
 	[ ] Remove duplicated implementations, and convert everyone to the new
 	    data and parse methods.
 	[ ] API Sanity Audit.
@@ -40,10 +35,6 @@ TODO:
 			    of what files are libs, what are includes, etc, and we could
 			    then do a sane automatic population of staging based on that
 			    information. 
-		[x] Means of seeking a file within a PATH.  Something like:
-			${@oe.which('OEPATH','bin/oeimage')}
-			${OEPATH:bin/oeimage}
-			${which:OEPATH:bin/oeimage}
 	[ ] Fetch
 		[ ] Make Fetch use md5 hashing to indicate per-file download success.
 		    Or in the case of downloaded directories (cvs/svn/bk), simply a 
@@ -63,7 +54,7 @@ TODO:
 			glibc staging creates symlinks for every atom it PROVIDES,
 			and installs its staging files into the glibc-ver-rev dir.
 	[ ] Revamp category handling
-	[ ] Complete revamp packaging classes.  Swallow stdout & stderr of
+	[ ] Completely revamp packaging classes.  Swallow stdout & stderr of
 	    tool used, output our own status, and include HOST_ARCH in tarfn.
 	
 [ ] oebuild
@@ -74,33 +65,39 @@ TODO:
 	    for the entire upward path in the digraph, then builds that task.
 	    (same thing done when the md5 changes on an affected var in
 	     check_md5)
-	[ ] Add '--force'/'-f' cmdline opt that forces the specified task to be
-	    run whether or not we believe it is already complete.
 	[ ] Add '--short-circuit'/'-s' cmdline opt that skips task dependencies
 	    and calls the specified task directly.
 
 [.] oemake
 	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
-	[ ] Split oemake's knowledge of AVAILABLE OEFILES from its
-	    knowledge of which packages are to be built.
 
-[.] oemaked
+[ ] oemaked
 	[ ] Monitor the stamps for a given .oe file as well, to ensure
 	    changes in build state as well as changes to build metadata result
 	    in a rebuild.
 
-[ ] oerootfs
-	[ ] Requires oemake's knowledge of available OEFILES split from what we want.
-[ ] oeimage
-	[ ] Requires oemake's knowledge of available OEFILES split from what we want.
+[.] oeinstall
+	[.] types
+		[x] direct
+			[ ] {pre,post}{inst,rm}
+		[ ] tarball
+		[ ] rpm
+		[ ] deb
+		[ ] ipkg
+[.] oeimage
+	[.] types
+		[x] jffs2
+		[ ] ext2
+		[ ] cramfs
+		[ ] tarball
 
 [.] packages
 	[.] transition packages from OpenZaurus buildroot
 		[ ] all packages need deviceisms added
 		[ ] all packages need output packaging dealt with properly, and
 		    packaging granularity increased.
-		[.] modutils
+		[ ] modutils
 			[ ] /etc/modules & /etc/modules.conf
 
 [ ] New c++ OE library (possibility -- open to debate)
