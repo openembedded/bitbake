@@ -110,6 +110,24 @@ def handle(fn, d = {}, include = 0):
 			data.expandKeys(d)
 			data.update_data(d)
 			set_additional_vars(fn, d, include)
+			for var in d.keys():
+				if data.getVarFlag(var, 'handler', d):
+					oe.event.register(data.getVar(var, d))
+					continue
+			
+				if not data.getVarFlag(var, 'task', d):
+					continue
+				
+				deps = data.getVarFlag(var, 'deps', d) or []
+				postdeps = data.getVarFlag(var, 'postdeps', d) or []
+				oe.build.add_task(var, var, deps)
+				for p in postdeps:
+					td = oe.build.get_task_data()
+					pcontent = data.getVar(p, td) or p
+					pdeps = data.getVarFlag(pcontent, 'deps', d) or []
+					pdeps.append(var)
+					data.setVarFlag(pcontent, 'deps', pdeps, d)
+					oe.build.add_task(p, pcontent, pdeps)
 	if oldfile:
 		data.setVar('FILE', oldfile, d)
 	return d

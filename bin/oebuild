@@ -150,30 +150,6 @@ if not oedata:
 if not oedata:
 	fatal("Unable to open %s" % oefile)
 
-
-#
-# Calculate list of needed tasks
-#
-
-for var in oedata.keys():
-	if data.getVarFlag(var, 'handler', oedata):
-		event.register(data.getVar(var, oedata))
-		continue
-
-	if not data.getVarFlag(var, 'task', oedata):
-		continue
-
-	deps = data.getVarFlag(var, 'deps', oedata) or []
-	postdeps = data.getVarFlag(var, 'postdeps', oedata) or []
-	build.add_task(var, var, deps)
-	for p in postdeps:
-		d = build.get_task_data()
-		pcontent = data.getVar(p, d) or p
-		pdeps = data.getVarFlag(pcontent, 'deps', oedata) or []
-		pdeps.append(var)
-		data.setVarFlag(pcontent, 'deps', pdeps, oedata)
-		build.add_task(p, pcontent, pdeps)
-
 if '--force' in optsonly or '-f' in optsonly:
 	data.setVarFlag('do_%s' % cmd, 'force', 1, oedata)
 
