@@ -1677,7 +1677,10 @@ def emit_env(o=sys.__stdout__, env = globals()["env"]):
 			if envflags[s].has_key('export'):
 				 o.write('export ')
 
-		o.write(s+'="'+getenv(s,env)+'"\n')
+		# if we're going to output this within doublequotes,
+		# to a shell, we need to escape the quotes in the var
+		alter = re.sub('"', '\\"', getenv(s,env)) 
+		o.write(s+'="'+alter+'"\n')
 
 	for s in env:
 		if s != s.lower(): continue
@@ -1685,6 +1688,7 @@ def emit_env(o=sys.__stdout__, env = globals()["env"]):
 			if envflags[s].has_key('python') or envflags.has_key('handler'):
 				continue
 
+		# NOTE: should probably check for unbalanced {} within the var
 		o.write("\n" + s + '() {\n' + getenv(s,env) + '}\n')
 
 

@@ -203,12 +203,16 @@ def emit_env(o=sys.__stdout__, d = _data):
 		if val is None:
 			debug(2, "Warning, %s variable is None" % e)
 			continue
-		o.write(e+'="'+ val + '"\n')	
+		# if we're going to output this within doublequotes,
+		# to a shell, we need to escape the quotes in the var
+		alter = re.sub('"', '\\"', var)
+		o.write(e+'="'+ alter + '"\n')	
 
 	for e in env:
 		if not getVarFlag(e, "func", d):
 			continue
 		if getVarFlag(e, "python", d):
 			continue
+		# NOTE: should probably check for unbalanced {} within the var
 		o.write("\n" + e + '() {\n' + getVar(e, d) + '}\n')
 
