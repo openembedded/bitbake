@@ -5,7 +5,7 @@
 import re, oe.data, os, sys
 from oe import debug, fatal
 
-__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_.${}]+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
+__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 
 def init(data):
@@ -259,7 +259,11 @@ def feeder(lineno, s, fn, data = {}):
 		key = groupd["var"]
 		if groupd.has_key("exp") and groupd["exp"] != None:
 			oe.data.setVarFlag(key, "export", 1, data)
-		if groupd.has_key("colon") and groupd["colon"] != None:
+		if groupd.has_key("ques") and groupd["ques"] != None:
+			val = oe.data.getVar(key, data)
+			if not val:
+				val = groupd["value"]
+		elif groupd.has_key("colon") and groupd["colon"] != None:
 			val = oe.data.expand(groupd["value"], data)
 		else:
 			val = groupd["value"]
