@@ -9,7 +9,7 @@ from oe import debug, data, fetch, fatal
 
 from oe.parse.ConfHandler import include, localpath, obtain, init
 
-__func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>\w+)\s*\(\s*\)\s*{$" )
+__func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>\w+)?\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
@@ -79,9 +79,8 @@ def handle(fn, d = {}, include = 0):
 	else:
 		f = open(fn,'r')
 
-	data.setVar('FILE', fn, d)
-
 	if ext != ".oeclass":
+		data.setVar('FILE', fn, d)
 		import string
 		i = string.split(data.getVar("INHERIT", d, 1) or "")
 		if not "base" in i and __classname__ != "base":
@@ -105,18 +104,35 @@ def handle(fn, d = {}, include = 0):
 		classes.remove(__classname__)
 	else:
 		if include == 0:
-			set_automatic_vars(fn, d, include)
 			data.expandKeys(d)
 			data.update_data(d)
 			set_additional_vars(fn, d, include)
+			anonqueue = data.getVar("__anonqueue", d, 1) or []
+			for anon in anonqueue:
+				data.setVar("__anonfunc", anon["content"], d)
+				data.setVarFlags("__anonfunc", anon["flags"], d)
+				from oe import build
+				try:
+					t = data.getVar('T', d)
+					data.setVar('T', '${TMPDIR}/', d)
+					build.exec_func("__anonfunc", d)
+					data.delVar('T', d)
+					if t:
+						data.setVar('T', t, d)
+				except Exception, e:
+					oe.error("executing anonymous function: %s" % e)
+					pass
+			data.delVar("__anonqueue", d)
+			data.delVar("__anonfunc", d)
+
 			for var in d.keys():
 				if data.getVarFlag(var, 'handler', d):
 					oe.event.register(data.getVar(var, d))
 					continue
-			
+
 				if not data.getVarFlag(var, 'task', d):
 					continue
-				
+
 				deps = data.getVarFlag(var, 'deps', d) or []
 				postdeps = data.getVarFlag(var, 'postdeps', d) or []
 				oe.build.add_task(var, deps, d)
@@ -134,17 +150,26 @@ def feeder(lineno, s, fn, d):
 	if __infunc__:
 		if s == '}':
 			__body__.append('')
-			data.setVar(__infunc__, string.join(__body__, '\n'), d)
 			data.setVarFlag(__infunc__, "func", 1, d)
+			data.setVar(__infunc__, string.join(__body__, '\n'), d)
+			if __infunc__ == "__anonymous":
+				anonqueue = oe.data.getVar("__anonqueue", d) or []
+				anonitem = {}
+				anonitem["content"] = oe.data.getVar("__anonymous", d)
+				anonitem["flags"] = oe.data.getVarFlags("__anonymous", d)
+				anonqueue.append(anonitem)
+				oe.data.setVar("__anonqueue", anonqueue, d)
+				oe.data.delVarFlags("__anonymous", d)
+				oe.data.delVar("__anonymous", d)
 			__infunc__ = ""
 			__body__ = []
 		else:
 			__body__.append(s)
 		return
-			
+
 	m = __func_start_regexp__.match(s)
 	if m:
-		__infunc__ = m.group("func")
+		__infunc__ = m.group("func") or "__anonymous"
 		key = __infunc__
 		if data.getVar(key, d):
 			# clean up old version of this piece of metadata, as its
@@ -255,62 +280,6 @@ def vars_from_file(mypkg, d):
 		tmplist.append(None)
 	parts.extend(tmplist)
 	return parts
-
-def set_automatic_vars(file, d, include):
-	"""Deduce per-package environment variables"""
-
-	debug(2, "OE %s: setting automatic vars" % file)
-#	pkg = oe.catpkgsplit(file)
-#	pkg = vars_from_fn(file, d)
-#	if None in pkg:
-#		fatal("package file not in valid format")
-#	if not data.getVar('CATEGORY', d):
-#		if pkg[0] is None:
-#			fatal("package file not in valid format")
-#		data.setVar('CATEGORY', pkg[0], d)
-#	if not data.getVar('PN', d):
-#		if pkg[1] is None:
-#			fatal("package file not in valid format")
-#		data.setVar('PN', pkg[1], d)
-#	if not data.getVar('PV', d):
-#		if pkg[2] is None:
-#			fatal("package file not in valid format")
-#		data.setVar('PV', pkg[2], d)
-#	if not data.getVar('PR', d):
-#		if pkg[3] is None:
-#			fatal("package file not in valid format")
-#		data.setVar('PR', pkg[3], d)
-
-	data.setVar('P', '${PN}-${PV}', d)
-	data.setVar('PF', '${P}-${PR}', d)
-
-	for t in [ os.path.dirname(file), '${TOPDIR}/${CATEGORY}' ]:
-		if data.getVar('FILESDIR', d):
-			break
-		for s in [ '${PF}',
-			  '${PN}-${PV}',
-			  '${PN}',
-			  'files',
-			  '']:
-			path = data.expand(os.path.join(t, s), d)
-			if not os.path.isabs(path):
-				path = os.path.abspath(path)
-			if os.access(path, os.R_OK):
-				data.setVar('FILESDIR', path, d)
-				break
-
-	if not data.getVar('WORKDIR', d):
-		data.setVar('WORKDIR', '${TMPDIR}/${CATEGORY}/${PF}', d)
-	if not data.getVar('T', d):
-		data.setVar('T', '${WORKDIR}/temp', d)
-	if not data.getVar('D', d):
-		data.setVar('D', '${WORKDIR}/image', d)
-	if not data.getVar('S', d):
-		data.setVar('S', '${WORKDIR}/${P}', d)
-	if not data.getVar('SLOT', d):
-		data.setVar('SLOT', '0', d)
-#	for var in ['P', 'PF', 'FILESDIR', 'WORKDIR', 'T', 'D', 'S', 'SLOT']:
-#		data.setVarFlag(var, 'export', 1, d)
 
 def set_additional_vars(file, d, include):
 	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""

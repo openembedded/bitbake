@@ -149,10 +149,10 @@ def exec_func_shell(func, d):
 			return
 
 	global logfile
-	t = data.getVar('T', d)
+	t = data.getVar('T', d, 1)
 	if not t:
+		oe.error("T variable not set")
 		return 0
-	t = data.expand(t, d)
 	mkdirhier(t)
 	logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
 	runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))

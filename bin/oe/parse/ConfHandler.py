@@ -18,9 +18,6 @@ def init(data):
 		oedir = os.path.dirname(oebin)
 		oe.data.setVar('OEPATH', "${TOPDIR}:%s:%s:${HOME}/.oe:${OEDIR}/bin:${OEDIR}:%s/share/oe" % (oebin, oedir, sys.prefix), data)
 
-	# Package creation functions:
-	
-	
 def supports(fn, d):
 	return localpath(fn, d)[-5:] == ".conf"
 
