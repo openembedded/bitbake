@@ -1,5 +1,9 @@
 " Vim syntax file
 "
+" Copyright (C) 2004  Chris Larson <kergoth@handhelds.org>
+" This file is licensed under the MIT license, see COPYING.MIT in
+" this source distribution for the terms.
+"
 " Language:	BitBake
 " Maintainer:	Chris Larson <kergoth@handhelds.org>
 " Filenames:	*.bb, *.bbclass
