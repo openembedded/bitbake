@@ -5,7 +5,7 @@ OpenEmbedded 'Event' implementation
 Classes and functions for manipulating 'events' in the
 OpenEmbedded (http://openembedded.org) build infrastructure.
 
-Copyright: (c) 2003 Chris Larson
+Copyright: (c) 2003-2004 Chris Larson
 """
 
 import os, re
@@ -22,7 +22,7 @@ def tmpHandler(event):
 	return NotHandled
 
 def defaultTmpHandler():
-	tmp = "def tmpHandler(e):\n\t\"\"\"heh\"\"\"\n\treturn 0" 
+	tmp = "def tmpHandler(e):\n\t\"\"\"heh\"\"\"\n\treturn 0"
 	comp = compile(tmp, "tmpHandler(e)", "exec")
 	return comp
 
@@ -84,3 +84,106 @@ def getName(e):
 		return e.__class__.__name__
 	else:
 		return e.__name__
+
+
+class PkgBase(Event):
+        """Base class for package events"""
+
+        def __init__(self, t, d = {}):
+                self.pkg = t
+                self.data = d
+
+        def getPkg(self):
+                return self._pkg
+
+        def setPkg(self, pkg):
+                self._pkg = pkg
+
+        def getData(self):
+                return self._data
+
+        def setData(self, data):
+                self._data = data
+
+        pkg = property(getPkg, setPkg, None, "pkg property")
+        data = property(getData, setData, None, "data property")
+
+
+class BuildBase(Event):
+        """Base class for oemake run events"""
+
+        def __init__(self, n, p, c):
+                self.name = n
+                self.pkgs = p
+                self.cfg = c
+
+        def getPkgs(self):
+                return self._pkgs
+
+        def setPkgs(self, pkgs):
+                self._pkgs = pkgs
+
+        def getName(self):
+                return self._name
+
+        def setName(self, name):
+                self._name = name
+
+        def getCfg(self):
+                return self._cfg
+
+        def setCfg(self, cfg):
+                self._cfg = cfg
+
+        pkgs = property(getPkgs, setPkgs, None, "pkgs property")
+        name = property(getName, setName, None, "name property")
+        cfg = property(getCfg, setCfg, None, "cfg property")
+
+
+class DepBase(PkgBase):
+        """Base class for dependency events"""
+
+        def __init__(self, t, data, d):
+                self.dep = d
+                PkgBase.__init__(self, t, data)
+
+        def getDep(self):
+                return self._dep
+
+        def setDep(self, dep):
+                self._dep = dep
+
+        dep = property(getDep, setDep, None, "dep property")
+
+
+class PkgStarted(PkgBase):
+        """Package build started"""
+
+
+class PkgFailed(PkgBase):
+        """Package build failed"""
+
+
+class PkgSucceeded(PkgBase):
+        """Package build completed"""
+
+
+class BuildStarted(BuildBase):
+        """oemake build run started"""
+
+
+class BuildCompleted(BuildBase):
+        """oemake build run completed"""
+
+
+class UnsatisfiedDep(DepBase):
+        """Unsatisfied Dependency"""
+
+
+class RecursiveDep(DepBase):
+        """Recursive Dependency"""
+
+
+class MultipleProviders(PkgBase):
+        """Multiple Providers"""
+
