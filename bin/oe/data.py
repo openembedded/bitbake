@@ -138,7 +138,7 @@ def expand(s, d = _data):
 		if s == olds: break
 	return s
 
-def expandData(alterdata = _data, readdata = _data):
+def expandData(alterdata = _data, readdata = None):
 	"""For each variable in alterdata, expand it, and update the var contents.
 	   Replacements use data from readdata.
 
@@ -150,6 +150,9 @@ def expandData(alterdata = _data, readdata = _data):
 	   expandData(to, from)
 	   getVar("dlmsg", to) returns "dl_dir is /path/to/whatever"
 	   """
+	if readdata == None:
+		readdata = alterdata
+
 	for key in alterdata.keys():
 		val = getVar(key, alterdata)
 		if val is None:
@@ -179,9 +182,12 @@ def emit_env(o=sys.__stdout__, d = _data):
 	It is used by exec_shell_func().
 	"""
 
-#	o.write('\nPATH="' + os.path.join(projectdir, 'bin/build') + ':${PATH}"\n')
+	oedir = getVar('OEDIR', d)
+	if oedir is None:
+		oedir = "." 
+	o.write('\nPATH="' + os.path.join(oedir, 'bin/build') + ':${PATH}"\n')
 
-	expandData(d, d)
+	expandData(d)
 	env = d.keys()
 
 	for e in env:
