@@ -45,7 +45,7 @@ python base_do_mrproper() {
 
 python base_do_patch () {
 	import re, string
-	from oe import decodeurl, note
+	from oe import decodeurl, encodeurl, note
 
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
@@ -53,17 +53,18 @@ python base_do_patch () {
 		return
 	src_uri = data.expand(src_uri, d)
 	for url in src_uri.split():
-		note('url is %s' % url)
+#		note('url is %s' % url)
 		(type, host, path, user, pswd, parm) = decodeurl(url)
 		if not parm.has_key("patch"):
 			continue
 		from oe.fetch import init, localpath
 		init([url])
-		local = localpath(url)
+		url = encodeurl((type, host, path, user, pswd, []))
+		local = '/' + localpath(url)
 		# patch!
 		dots = local.split(".")
 		if dots[-1] in ['gz', 'bz2', 'Z']:
-			efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(local))
+			efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(string.join(dots[0:-1],".")))
 		else:
 			efile = local
 		efile = data.expand(efile, d)
@@ -80,9 +81,10 @@ python base_do_patch () {
 		if parm.has_key("pnum"):
 			cmd += " -p %s" % parm["pnum"]
 		cmd += " -i %s" % efile
+		oe.note('cmd is %s' % cmd)
 		ret = os.system(cmd)
 		if ret != 0:
-			raise TaskFailed("'patcher' execution failed")
+			raise FuncFailed("'patcher' execution failed")
 }
 
 python base_do_fetch() {
@@ -123,7 +125,7 @@ base_do_unpack() {
 
 
 base_do_compile() {
-	if [ -x ./configure ] ; then
+	if [ -x ${S}/configure ] ; then
 		oe_runconf 
 	fi
 	if [ -e Makefile -o -e makefile ]; then
