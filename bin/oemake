@@ -137,11 +137,11 @@ def try_build(fn, virtual):
     finally:
         __building_list.remove(fn)
         __build_path.remove(pathstr)
-        
+
 
 def buildPackage(item):
     fn = None
-    
+
     if not providers.has_key(item):
         oe.error("Nothing provides %s" % item)
         return 0
@@ -172,7 +172,7 @@ def buildPackage(item):
                 latest = v
                 latest_f = _fn
         preferred_versions[p] = (latest, latest_f)
-        
+
 #    # build a new list with just the latest version of everything
     eligible = []
     for p in preferred_versions.keys():
@@ -224,7 +224,7 @@ def buildPackage(item):
                 eligible.remove(p)
                 eligible = [p] + eligible
                 break
-        
+
 #    # run through the list until we find one that we can build
     for fn in eligible:
         oe.debug(2, "selecting %s to satisfy %s" % (fn, item))
@@ -238,10 +238,10 @@ def buildPackage(item):
 def build_depgraph():
     all_depends = Set()
     pn_provides = {}
-    
+
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
-        
+
         pn = oe.data.getVar('PN', d, 1)
 
         deps = (oe.data.getVar("DEPENDS", d, 1) or "").split()
@@ -253,7 +253,7 @@ def build_depgraph():
         if not pn_provides.has_key(pn):
             pn_provides[pn] = Set()
         pn_provides[pn] |= provides
-        
+
         for provide in provides:
             if not providers.has_key(provide):
                 providers[provide] = []
