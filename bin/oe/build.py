@@ -104,8 +104,6 @@ def exec_func(func, d, dirs = None):
 	prevdir = os.getcwd()
 	if adir and os.access(adir, os.F_OK):
 		os.chdir(adir)
-	else:
-		note("exec_func: unable to access dir %s" % adir)
 
 	if data.getVarFlag(func, "python", d):
 		exec_func_python(func, d)
