@@ -1049,7 +1049,13 @@ class digraph:
 		self.dict={}
 		#okeys = keys, in order they were added (to optimize firstzero() ordering)
 		self.okeys=[]
-	
+
+	def __str__(self):
+		str = ""
+		for key in self.okeys:
+			str += "%s:\t%s\n" % (key, self.dict[key][1])
+		return str
+
 	def addnode(self,mykey,myparent):
 		if not self.dict.has_key(mykey):
 			self.okeys.append(mykey)
