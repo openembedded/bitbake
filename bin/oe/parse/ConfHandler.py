@@ -202,7 +202,7 @@ def obtain(fn, data = {}):
 	return localfn
 
 
-def include(oldfn, fn, data = {}):
+def include(oldfn, fn, orig_fn, orig_lineno, data = {}):
 	if oldfn == fn: # prevent infinate recursion
 		return None
 
@@ -214,13 +214,13 @@ def include(oldfn, fn, data = {}):
 	try:
 		ret = handle(fn, data, 1)
 	except IOError:
-		debug(1, "CONF %s: file not found" % fn)
+		debug(2, "CONF %s:%d: file '%s' not found" % (orig_fn, orig_lineno, fn))
 
 def handle(fn, data = {}, include = 0):
-	if include == 0:
-		debug(1, "CONF %s: handle(data)" % fn);
+	if include:
+		inc_string = "including"
 	else:
-		debug(1, "CONF %s: handle(data, include)" % fn);
+		inc_string = "reading"
 	init(data)
 	if include == 0:
 		oe.data.inheritFromOS(1, data)
@@ -234,12 +234,15 @@ def handle(fn, data = {}, include = 0):
 		for p in oepath:
 			p = oe.data.expand(p, data)
 			if os.access(os.path.join(p, fn), os.R_OK):
-				f = open(os.path.join(p, fn), 'r')
+				currname = os.path.join(p, fn)
+				f = open(currname, 'r')
+				debug(1, "CONF %s %s" % (inc_string, currname))
 				break
 		if f is None:
 			raise IOError("file not found")
 	else:
 		f = open(fn,'r')
+		debug(1, "CONF %s %s" % (inc_string,fn))
 	lineno = 0
 	while 1:
 		lineno = lineno + 1
@@ -251,6 +254,7 @@ def handle(fn, data = {}, include = 0):
 		if s[0] == '#': continue	# skip comments
 		while s[-1] == '\\':
 			s2 = f.readline()[:-1].strip()
+			lineno = lineno + 1
 			s = s[:-1] + s2
 		feeder(lineno, s, fn, data)
 	return data
@@ -276,9 +280,9 @@ def feeder(lineno, s, fn, data = {}):
 	m = __include_regexp__.match(s)
 	if m:
 		s = oe.data.expand(m.group(1), data)
-		debug(2, "CONF %s:%d: including %s" % (fn, lineno, s))
+		#debug(2, "CONF %s:%d: including %s" % (fn, lineno, s))
 		oe.data.inheritFromOS(2, data)
-		include(fn, s, data)
+		include(fn, s, fn, lineno, data)
 		return
 
 	fatal("PARSER: %s:%d: unparsed line" % (fn, lineno));
