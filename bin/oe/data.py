@@ -126,6 +126,8 @@ def expand(s, d = _data):
 
 	def python_sub(match):
 		code = match.group()[3:-1]
+		import oe
+		locals()['d'] = d
 		s = eval(code)
 		import types
 		if type(s) == types.IntType: s = str(s)
@@ -325,7 +327,7 @@ def update_data(d = _data):
 				dodel.append(name)
 
 	# delete all environment vars no longer needed
-	for s in dodel:
-		delVar(s, d)
+#	for s in dodel:
+#		delVar(s, d)
 
 	inheritFromOS(5)
