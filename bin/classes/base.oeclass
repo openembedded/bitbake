@@ -1,5 +1,11 @@
 PATCHES_DIR="${S}"
 
+python do_showdata() {
+	from oe import data, note
+	import sys
+	data.emit_env(sys.__stdout__, d)
+}
+
 python base_do_clean() {
 	"""clear the build and temp directories"""
 	from oe import note
@@ -156,6 +162,7 @@ addhandler base_eventhandler
 # setup the initial task stack
 EXPORT_FUNCTIONS do_clean do_mrproper do_fetch do_unpack do_compile do_stage do_install do_package do_patch do_build
 
+addtask showdata
 addtask clean
 addtask mrproper
 addtask fetch
