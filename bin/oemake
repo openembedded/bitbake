@@ -7,18 +7,11 @@ sys.path.append('/usr/share/oe')
 import oe
 from oe import make
 from sets import Set
+import itertools, optparse
 
-try:
-    import itertools
-except ImportError: # itertools appears in Python 2.3
-    from utils import itertools
-try:
-    import optparse
-except ImportError: # optparse appears in Python 2.3
-    from utils import optparse
 parsespin = itertools.cycle( r'|/-\-' )
 
-__version__ = 1.1
+__version__ = 1.2
 __build_cache_fail = []
 __build_cache = []
 __building_list = []
@@ -48,7 +41,15 @@ Default OEFILES are the .oe files in the current directory.""" )
                action = "store_true", dest = "force", default = False )
 
 
-    parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild",
+    parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild. Valid commands are "
+                                             "'fetch' (fetch all sources), " 
+                                             "'unpack' (unpack the sources), "
+                                             "'patch' (apply the patches), "
+                                             "'configure' (configure the source tree), "
+                                             "'compile' (compile the source tree), "
+                                             "'stage' (install libraries and headers needed for subsequent packages), "
+                                             "'install' (install libraries and executables), and"
+                                             "'package' (package files into the selected package format)",
                action = "store", dest = "cmd", default = "build" )
 
     parser.add_option( "-r", "--read", help = "read the specified file before oe.conf",
