@@ -12,8 +12,12 @@ def usage(errorlevel=0, txt=''):
 		print
 		print txt
 
-	print "Usage: oebuild [options] <command> <somebuildfile.oe>\n"
-	print "  %s\t\t%s" % ("-v, --version", "display oebuild version")
+	print "Usage: oebuild [options]... task oefile"
+#	print "Run TASK on OEFILE or standard input if OEFILE is -."
+	print "Run task on oefile."
+	print "Example: oebuild do_build content/glibc-2.3.1.oe"
+	print ""
+	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
 	sys.exit(0)
 
 __version__ = 1.0
