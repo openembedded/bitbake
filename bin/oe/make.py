@@ -173,8 +173,8 @@ def collect_oefiles( progressCallback ):
                 for var in pkgdata[f].keys():
                     if data.getVarFlag(var, "handler", pkgdata[f]) and data.getVar(var, pkgdata[f]):
                         event.register(data.getVar(var, pkgdata[f]))
-        except IOError:
-            oe.error("opening %s" % f)
+        except IOError, e:
+            oe.error("opening %s: %s" % (f, e))
             pass
         except oe.parse.SkipPackage:
             pass
