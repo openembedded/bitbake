@@ -228,7 +228,7 @@ def exec_func_shell(func, d):
     else:
         error("function %s failed" % func)
         if data.getVar("OEINCLUDELOGS", d):
-            error("log data follows")
+            error("log data follows (%s)" % logfile)
             f = open(logfile, "r")
             while True:
                 l = f.readline()
