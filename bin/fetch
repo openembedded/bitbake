@@ -29,4 +29,4 @@ try:
 except oefetch.MissingParameterError:
 	fatal("Fetch failed due to missing parameters in the supplied urls")
 except oefetch.FetchError:
-	fatal("Download failed")
+	fatal("Fetch failed")
