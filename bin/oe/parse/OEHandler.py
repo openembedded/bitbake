@@ -242,12 +242,12 @@ def vars_from_fn(mypkg, d, store=2, silent=1):
 
 	pkgsplit = [None, None, None, None]
 	myfile = os.path.splitext(os.path.basename(mypkg))
-	mydir = os.path.basename(os.path.dirname(mypkg))
-	pkgsplit[splitmap.index('CATEGORY')] = mydir
-	if store != 0:
-		getval = data.getVar('CATEGORY', d) or None 
-		if store == 2 or not getval:
-			data.setVar('CATEGORY', mydir, d)
+#	mydir = os.path.basename(os.path.dirname(mypkg))
+#	pkgsplit[splitmap.index('CATEGORY')] = mydir
+#	if store != 0:
+#		getval = data.getVar('CATEGORY', d) or None 
+#		if store == 2 or not getval:
+#			data.setVar('CATEGORY', mydir, d)
 
 	myparts = string.split(myfile[0],'-')
 	basepos = 0
