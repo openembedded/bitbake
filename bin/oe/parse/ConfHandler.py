@@ -25,7 +25,9 @@ def init(data):
 
 	# directories
 	oe.data.setVarFlag("TOPDIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("TOPDIR", "inherit", "1", data)
 	oe.data.setVarFlag("TMPDIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("TMPDIR", "inherit", "1", data)
 	oe.data.setVarFlag("DL_DIR", "warnlevel", "3", data)
 	oe.data.setVarFlag("OEDIR", "inherit", "1", data)
 	oe.data.setVarFlag("OEDIR", "warnlevel", "3", data)

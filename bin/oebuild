@@ -56,20 +56,24 @@ def get_cmd():
 
 def load_oefile(oefile, cfgdata):
 	oepath = data.getVar('OEPATH', cfg)
-	topdir = os.path.abspath(os.getcwd())
+	topdir = data.getVar('TOPDIR', cfg)
+	if not topdir:
+		topdir = os.path.abspath(os.getcwd())
+		# set topdir to here
+		data.setVar('TOPDIR', topdir, cfg)
+	oefile = os.path.abspath(oefile)
 	oefile_loc = os.path.abspath(os.path.dirname(oefile))
-	# set topdir to here
-	data.setVar('TOPDIR', topdir, cfg)
 	# expand tmpdir to include this topdir
 	data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
 	# add topdir to oepath
 	oepath += ":%s" % topdir
 	# set topdir to location of .oe file
 	topdir = oefile_loc
-	data.setVar('TOPDIR', topdir, cfg)
+	#data.setVar('TOPDIR', topdir, cfg)
 	# add that topdir to oepath
 	oepath += ":%s" % topdir
 	# go there
+	print "chdiring to %s" % topdir
 	os.chdir(topdir)
 	data.setVar('OEPATH', oepath, cfg)
 	from copy import copy

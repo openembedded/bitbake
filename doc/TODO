@@ -43,7 +43,7 @@ TODO:
 			[x] Allow execution with .oe, without command
 			[x] Default .oe argument for oemake
 			[x] Allow specifying a command on oemake execution
-			[ ] Must be able to execute 'oemake' within a subpackage
+			[x] Must be able to execute 'oemake' within a subpackage
 			    of an upstream package, and yet retain access to the
 			    toplevel TMPDIR.  Perhaps specify TMPDIR through
 			    the environment.
