@@ -260,6 +260,13 @@ unpack() {
 
 
 oe_runconf() {
+	if [ "${PN}" != "libtool" ] && \
+	   [ -e ${STAGING_DIR}/share/libtool/ltmain.sh ]; then
+		oenote "Installing our ltmain.sh..."
+		for lt in `find ${S} -name ltmain.sh`; do
+			install -m 0644 ${STAGING_DIR}/share/libtool/ltmain.sh $lt
+		done
+	fi	
 	if [ -x ${S}/configure ] ; then
 		test -z "${BUILD_SYS}" || EXTRA_OECONF="--build=${BUILD_SYS} ${EXTRA_OECONF}"
 		test -z "${TARGET_SYS}" || EXTRA_OECONF="--target=${TARGET_SYS} ${EXTRA_OECONF}"
@@ -284,6 +291,10 @@ oe_runconf() {
 	else
 		die "no configure script found"
 	fi
+	for lt in `find ${S} -name libtool`; do
+		mv $lt $lt.old && \
+		cat $lt.old | sed -e 's,^sys_lib_search_path_spec=.*,sys_lib_search_path_spec="",; s,^sys_lib_dlsearch_path_spec=.*,sys_lib_dlsearch_path_spec="",' > $lt
+	done
 }
 
 oe_runmake() {
