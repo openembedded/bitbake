@@ -194,6 +194,8 @@ def feeder(lineno, s, fn, d):
             exec comp in __builtins__
             __body__ = []
             __inpython__ = False
+            funcs = data.getVar('__functions__', d) or ""
+            data.setVar('__functions__', "%s\n%s" % (funcs, text), d)
 #           fall through
 
     if s[0] == '#': return          # skip comments
@@ -219,9 +221,6 @@ def feeder(lineno, s, fn, d):
 
     m = __def_regexp__.match(s)
     if m:
-        funcname = m.group(1)
-        funcs = data.getVar('__functions', d) or ""
-        data.setVar('__functions', "%s %s" % (funcs, funcname), d)
         __body__.append(s)
         __inpython__ = True
         return

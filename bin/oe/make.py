@@ -111,15 +111,15 @@ def load_oefile( oefile ):
 def pickle_oe( oefile, oe ):
     p = pickle.Pickler( file( "%s/%s" % ( cache, oefile ), "wb" ), -1 )
     p.dump( oe )
-    funcstr = data.getVar('__functions', oe)
-    if funcstr:
-        funcs = funcstr.split()
-        for func in funcs:
-            p.dump(eval(func, globals()))
 
 def unpickle_oe( oefile ):
     p = pickle.Unpickler( file( "%s/%s" % ( cache, oefile ), "rb" ) )
-    return p.load()
+    oe = p.load()
+    funcstr = data.getVar('__functions__', oe)
+    if funcstr:
+        comp = compile(funcstr, "<pickled>", "exec")
+        exec comp in __builtins__
+    return oe
 
 def collect_oefiles( progressCallback ):
     """Collect all available .oe build files"""
