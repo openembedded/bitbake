@@ -1,0 +1,10 @@
+#!/usr/bin/python
+import oeparser
+
+a = oeparser.FileReader("conf/oe.conf")
+b = oeparser.ConfigReader("conf/oe.conf")
+
+#print "data from filereader is %s" % a.getdata()
+
+print "env is %s" % b.getEnv()
+print "envflags is %s" % b.getEnvflags()
