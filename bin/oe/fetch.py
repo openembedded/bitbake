@@ -429,7 +429,17 @@ class Local(Fetch):
     def localpath(url, d):
         """Return the local filename of a given url assuming a successful fetch.
         """
-        return url.split("://")[1]
+        path = url.split("://")[1]
+        newpath = path
+        if path[0] != "/":
+            filespath = oe.data.getVar('FILESPATH', d, 1)
+            if filespath:
+                newpath = oe.which(filespath, path)
+            if not newpath:
+                filesdir = oe.data.getVar('FILESDIR', d, 1)
+                if filesdir:
+                    newpath = os.path.join(filesdir, path)
+        return newpath
     localpath = staticmethod(localpath)
 
     def go(self, urls = []):
