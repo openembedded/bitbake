@@ -226,27 +226,48 @@ def vars_from_fn(mypkg, d, store=2, silent=1):
 	['Mesa', '3.0', 'r0']
 	"""
 
-	map = { 0: "PN", 1: "PV", 2: "PR" }
+	def isvalid(type, str):
+		if type == "PR":
+			if str[0] != 'r':
+				return 0
+		return 1
+
+	map = { 0: "CATEGORY", 1: "PN", 2: "PV", 3: "PR" }
+	splitmap = [ 'CATEGORY', 'PN', 'PV', 'PR' ]
+	heh = [ "PR", "PV", "PN" ]
 	try:
 		return __pkgsplit_cache__[mypkg]
 	except KeyError:
 		pass
 
-	pkgsplit = [None, None, None]
+	pkgsplit = [None, None, None, None]
 	myfile = os.path.splitext(os.path.basename(mypkg))
-	myfile[0].replace('.oe','')
-	myparts = string.split(myfile[0],'-')
-	for i in map.keys():
-		getval = data.getVar(map[i], d) or None 
+	mydir = os.path.basename(os.path.dirname(mypkg))
+	pkgsplit[splitmap.index('CATEGORY')] = mydir
+	if store != 0:
+		getval = data.getVar('CATEGORY', d) or None 
 		if store == 2 or not getval:
-			try:
-				pkgsplit[i] = myparts[i]
-				if store != 0:
-					data.setVar(map[i], myparts[i], d)
-			except IndexError:
-				pass
-		if not pkgsplit[i] and getval:
-			pkgsplit[i] = getval
+			data.setVar('CATEGORY', mydir, d)
+
+	myparts = string.split(myfile[0],'-')
+	basepos = 0
+	for i in heh:
+		ind = heh.index(i)
+		loc = int.__neg__(ind + 1) + basepos
+		splitloc = len(heh) - basepos - ind
+		getval = data.getVar(i, d) or None 
+		if not isvalid(i, myparts[loc]):
+			basepos += 1
+			continue
+		if ind == len(heh) - 1:
+			str = string.join(myparts[0:loc + basepos], "-")
+		else:
+			str = myparts[loc]
+		pkgsplit[splitloc] = str
+		if store != 0:
+			if store == 1 and getval:
+				continue
+			data.setVar(i, str, d)
 	__pkgsplit_cache__[mypkg] = pkgsplit
 	return pkgsplit
 
@@ -281,13 +302,17 @@ def set_automatic_vars(file, d):
 	for t in [ os.path.dirname(file), '${TOPDIR}/${CATEGORY}' ]:
 		if data.getVar('FILESDIR', d):
 			break
+		print "t is %s" % t
 		for s in [ '${PF}', 
 			  '${PN}-${PV}',
 			  'files',
 			  '']:
-			s = data.expand(os.path.abspath(os.path.join(t, s)), d)
-			if os.access(s, os.R_OK):
-				data.setVar('FILESDIR', s, d)
+			path = data.expand(os.path.join(t, s), d)
+			if not os.path.isabs(path):
+				path = os.path.abspath(path)
+			print "checking %s" % path
+			if os.access(path, os.R_OK):
+				data.setVar('FILESDIR', path, d)
 				break
 
 	if not data.getVar('WORKDIR', d):
