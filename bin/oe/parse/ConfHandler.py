@@ -9,9 +9,16 @@ __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>\w+)\s*(?P<colon>:
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 
 def init(data):
-	oe.data.setVar('TOPDIR', os.getcwd(), data)
-	oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
-	oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}", data)
+	if not oe.data.getVar('TOPDIR', data):
+		oe.data.setVar('TOPDIR', os.getcwd(), data)
+	if not oe.data.getVar('OEDIR', data):
+		oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
+	if not oe.data.getVar('OEPATH', data):
+		oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}", data)
+	oe.data.setVarFlag("OEFILES", "inherit", "1", data)
+	oe.data.setVarFlag("OEDIR", "inherit", "1", data)
+	oe.data.setVarFlag("OEPATH", "inherit", "1", data)
+	oe.data.setVarFlag("PATH", "inherit", "1", data)
 
 def supports(fn):
 	return fn[-5:] == ".conf"
