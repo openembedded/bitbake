@@ -81,7 +81,6 @@ python base_do_patch () {
 		if parm.has_key("pnum"):
 			cmd += " -p %s" % parm["pnum"]
 		cmd += " -i %s" % efile
-		oe.note('cmd is %s' % cmd)
 		ret = os.system(cmd)
 		if ret != 0:
 			raise FuncFailed("'patcher' execution failed")
