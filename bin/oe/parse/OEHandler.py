@@ -95,6 +95,7 @@ def handle(fn, d = {}):
 	else:
 		set_automatic_vars(fn, d)
 		set_additional_vars(fn, d)
+	data.update_data(d)
 	return d
 
 def feeder(lineno, s, fn, d):
@@ -147,9 +148,7 @@ def feeder(lineno, s, fn, d):
 						for v in allvars:
 							data.setVarFlag(v, flag, data.getVarFlag(__dirty, flag, d), d)
 				if data.getVarFlag(calledvar, "python", d):
-					data.setVar(var, """
-	return exec_func('%s', d)
-""" % calledvar, d)
+					data.setVar(var, "\treturn exec_func('%s', d)\n" % calledvar, d)
 				else:
 					data.setVar(var, "\t%s\n" % calledvar, d)
 
