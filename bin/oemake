@@ -25,6 +25,21 @@ class PkgBase(event.Event):
 		self._data = data
 
 	data = property(getData, setData, None, "data property")
+
+class DepBase(PkgBase):
+	"""Base class for dependency events"""
+
+	def __init__(self, t, data, d):
+		self.dep = d
+		PkgBase.__init__(self, t, data)
+
+	def getDep(self):
+		return self._dep
+
+	def setDep(self, dep):
+		self._dep = dep
+
+	dep = property(getDep, setDep, None, "dep property")
 	
 class PkgStarted(PkgBase):
 	"""Package build started"""
@@ -35,10 +50,10 @@ class PkgFailed(PkgBase):
 class PkgSucceeded(PkgBase):
 	"""Package build succeeded"""
 
-class UnsatisfiedDep(PkgBase):
+class UnsatisfiedDep(DepBase):
 	"""Unsatisfied Dependency"""
 
-class RecursiveDep(PkgBase):
+class RecursiveDep(DepBase):
 	"""Recursive Dependency"""
 
 class MultipleProviders(PkgBase):
@@ -49,7 +64,16 @@ def getParents(graph, item):
 		return None
 	return graph.dict[item][1]
 
-def follow(graph, item, callback):
+def getChildren(graph, item):
+	if not graph.hasnode(item):
+		return None
+	children = []
+	for i in graph.okeys:
+		if item in getParents(graph, i):
+			children.append(i)
+	return children
+
+def followdown(graph, item, callback):
 	if not graph.hasnode(item):
 		return 0
 	keycount = graph.dict[item][0]
@@ -60,11 +84,49 @@ def follow(graph, item, callback):
 	parents = getParents(graph, item)
 	if parents is not None:
 		for p in parents:
-			ret = follow(graph, p, callback)
+			ret = followdown(graph, p, callback)
 			if ret == 0:
 				return 0
 	return callback(item, command)
 
+def followup(graph, item, callback):
+	if not graph.hasnode(item):
+		return 0
+	children = getChildren(graph, item)
+	if children is not None:
+		for c in children:
+			ret = followup(graph, c, callback)
+			if ret == 0:
+				return 0
+	return callback(graph, item)
+
+# Then, start the build for that package.  Note that because
+# we've already loaded the files, we may as well spawn the build
+# directly.. so lets abstract the task handling bits into a
+# module that both oebuild and oemake can utilize.
+
+__build_cache_fail = []
+__build_cache = []
+def build(item, command):
+	if item in __build_cache:
+		return 1
+	if item in __build_cache_fail:
+		return 0
+	fn = pkgs[item][1]
+	if fn is None:
+		return 1
+#	note("oebuild %s %s" % (command, fn))
+	event.fire(PkgStarted(item, pkgdata[fn]))
+	ret = os.system("oebuild %s %s" % (command, fn))
+	if ret == 0:
+		event.fire(PkgSucceeded(item, pkgdata[fn]))
+		__build_cache.append(item)
+		return 1
+	else:
+		event.fire(PkgFailed(item, pkgdata[fn]))
+		__build_cache_fail.append(item)
+		return 0
+	
 _depcmds = { "clean": None,
 	    "mrproper": None, }
 
@@ -132,49 +194,37 @@ for f in files:
 		print "error opening %s" % f
 		pass
 
-# default provides.. a package provides itself, with and without
-# version and revision
-
 # add every provide relationship to the dependency graph, depending
 # on all the packages that provide it
 
+global __tokill
+global __unsatisfied
+__tokill = []
+__unsatisfied = []
+
 for pkg in pkgs.keys():
-#	print "graph.addnode(%s, %s)" % (pkg, None)
 	graph.addnode(pkg, None)
 
 for pkg in pkgs.keys():
 	(deps, fn) = pkgs[pkg]
 	if deps is not None:
 		for d in deps:
-#			print "graph.addnode(%s, %s)" % (pkg, d)
+			if not graph.hasnode(d):
+				def killitem(graph, item):
+					global __tokill
+					__tokill.append(item)
+				followup(graph, pkg, killitem)
+				__unsatisfied.append([pkg, d])
+				break
 			graph.addnode(pkg, d)
-	
-# Then, start the build for that package.  Note that because
-# we've already loaded the files, we may as well spawn the build
-# directly.. so lets abstract the task handling bits into a
-# module that both oebuild and oemake can utilize.
 
-__build_cache_fail = []
-__build_cache = []
-def build(item, command):
-	if item in __build_cache:
-		return 1
-	if item in __build_cache_fail:
-		return 0
-	fn = pkgs[item][1]
-	if fn is None:
-		return 1
-	note("oebuild %s %s" % (command, fn))
-	event.fire(PkgStarted(item, pkgdata[fn]))
-	ret = os.system("oebuild %s %s" % (command, fn))
-	if ret == 0:
-		event.fire(PkgSucceeded(item, pkgdata[fn]))
-		__build_cache.append(item)
-		return 1
-	else:
-		event.fire(PkgFailed(item, pkgdata[fn]))
-		__build_cache_fail.append(item)
-		return 0
-	
+for u in __unsatisfied:
+	event.fire(UnsatisfiedDep(u[0], pkgdata[pkgs[u[0]][1]], u[1]))
+
+for k in __tokill:
+	def reallykillitem(graph, item):
+		graph.delnode(item)
+	followup(graph, k, reallykillitem)
+
 for k in graph.okeys:
-	follow(graph, k, build)
+	followdown(graph, k, build)
