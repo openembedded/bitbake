@@ -257,9 +257,12 @@ def writedict(mydict,myfilename,writekey=1):
 	myfile.close()
 	return 1
 
+class VarExpandError(Exception):
+	pass
+
 #cache expansions of constant strings
 cexpand = {}
-def varexpand(mystring,mydict = {}):
+def varexpand(mystring,mydict = {},stripnl=0):
 	"""
 	Removes quotes, handles \n, etc.
 	This code is used by the configfile code, as well as others (parser)
@@ -294,11 +297,12 @@ def varexpand(mystring,mydict = {}):
 			continue
 		if not insing: 
 			# expansion time
-			#if mystring[pos] == "\n":
-			#	#convert newlines to spaces
-			#	newstring = newstring+" "
-			#	pos = pos+1
-			if mystring[pos] == "\\":
+			if stripnl and (mystring[pos] == "\n"):
+				#print "stripped: ",newstring
+				# convert newlines to spaces
+				newstring = newstring + " "
+				pos = pos + 1
+			elif mystring[pos] == "\\":
 				# backslash expansion time
 				if pos +1 >= len(mystring):
 					newstring = newstring+mystring[pos]
@@ -347,7 +351,9 @@ def varexpand(mystring,mydict = {}):
 					return ""
 				numvars = numvars + 1
 				if mydict.has_key(myvarname):
-					newstring = newstring + mydict[myvarname] 
+					newstring = newstring + mydict[myvarname]
+				else:
+					raise VarExpandError, "'" + myvarname + "' missing in above definition"
 			else:
 				newstring = newstring + mystring[pos]
 				pos = pos + 1
@@ -358,11 +364,8 @@ def varexpand(mystring,mydict = {}):
 		cexpand[mystring] = newstring[1:]
 	return newstring[1:]	
 
-
-
-def getconfig(mycfg,tolerant = 0):
+def getconfig(mycfg,mykeys = {},tolerant = 0):
 	import shlex
-	mykeys = {}
 	f = open(mycfg,'r')
 	lex = shlex.shlex(f)
 	lex.wordchars = string.digits + string.letters + "~!@#%*_\:;?,./-+{}"
@@ -376,21 +379,24 @@ def getconfig(mycfg,tolerant = 0):
 		val = ''
 		if equ == '':
 			# Unexpected end of file
-			lex.error_leader(self.filename,lex.lineno)
 			if not tolerant:
-				print "ERROR: Unexpected end of config file: variable",key
+				print lex.error_leader(mycfg, lex.lineno), \
+					"enexpected end of config file: variable", key
 				return None
 			else:
 				return mykeys
 		elif equ == '(':
 			equ = lex.get_token()
 			if equ != ')':
-				print "ERROR: expected ')', got '"+ equ + "'"
+				print lex.error_leader(mycfg, lex.lineno), \
+					"expected ')', got '"+ equ + "'"
 				return None
 			equ = lex.get_token()
 			if equ != '{':
-				print "ERROR: expected '{', got '"+ equ + "'"
+				print lex.error_leader(mycfg, lex.lineno), \
+					"expected '{', got '"+ equ + "'"
 				return None
+			lex.lineno = lex.lineno - 1
 			while 1:
 				equ = lex.instream.readline()
 				if equ == '':
@@ -398,22 +404,36 @@ def getconfig(mycfg,tolerant = 0):
 				equ = equ.rstrip()
 				if equ == '}':
 					break
+				lex.lineno = lex.lineno + 1
 				val = val + equ + "\n"
+			lex.lineno = lex.lineno + 2
 		elif equ != '=':
 			if not tolerant:
-				print "ERROR: expected '=', got '" + equ + "'"
+				print lex.error_leader(mycfg, lex.lineno), \
+					"expected '=', got '" + equ + "'"
 				return None
 			else:
 				return mykeys
-		if val == '': val = lex.get_token()
+		if val == '':
+			val = lex.get_token()
+			#stripnl = 1
+			stripnl = 0
+		else:
+			stripnl = 0
 		if val == '':
 			if not tolerant:
-				print "!!! Unexpected end of config file: variable",key
+				print lex.error_leader(mycfg, lex.lineno), \
+					"end of file in variable definition"
 				return None
 			else:
 				return mykeys
-		mykeys[key] = varexpand(val,mykeys)
+		try:
+			mykeys[key] = varexpand(val,mykeys,stripnl)
+		except VarExpandError, detail:
+			print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
+			
 	return mykeys
+
 def fetch(myuris, listonly=0):
 	"fetch files.  Will use digest file if available."
 	if ("mirror" in features) and ("nomirror" in settings["RESTRICT"].split()):
