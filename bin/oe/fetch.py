@@ -119,14 +119,26 @@ class Wget(Fetch):
 			myfile = os.path.basename(path)
 			dlfile = self.localpath(loc)
 
-			myfetch = oe.getenv("RESUMECOMMAND")
-			oe.note("fetch " +loc)
-			myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
-			myfetch = myfetch.replace("${FILE}",myfile)
-			oe.debug(2,myfetch)
-			myret = os.system(myfetch)
-			if myret != 0:
-				raise FetchError(myfile)
+			if os.path.exists(dlfile):
+				# if the file exists, check md5
+				# if no md5 or mismatch, attempt resume.
+				# regardless of exit code, move on.
+				myfetch = oe.getenv("RESUMECOMMAND")
+				oe.note("fetch " +loc)
+				myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
+				myfetch = myfetch.replace("${FILE}",myfile)
+				oe.debug(2,myfetch)
+				myret = os.system(myfetch)
+				continue
+			else:
+				myfetch = oe.getenv("FETCHCOMMAND")
+				oe.note("fetch " +loc)
+				myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
+				myfetch = myfetch.replace("${FILE}",myfile)
+				oe.debug(2,myfetch)
+				myret = os.system(myfetch)
+				if myret != 0:
+					raise FetchError(myfile)
 
 methods.append(Wget())
 

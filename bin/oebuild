@@ -140,9 +140,13 @@ def exec_python_func(func, dirname = None, myfatal = fatal):
 
 
 #######################################################################
+__success = []
 
 def exec_task(task, dir, deptasks = []):
 	"""Executes a given task, handling the stamps appropriately"""
+
+	if task in __success:
+		return
 
 	if not deptasks:
 		try:
@@ -155,6 +159,7 @@ def exec_task(task, dir, deptasks = []):
 			depfuncname = tasks[dep]["func"]
 			depfunc = globals()[depfuncname]
 			depfunc()
+			__success.append(dep)
 		except KeyError:
 			debug(2, "%s: invalid 'func' for task %s, running exec_task directly." % (task, dep))
 			if tasks.has_key(dep) and tasks[dep].has_key("deps"):
@@ -168,13 +173,13 @@ def exec_task(task, dir, deptasks = []):
 			raise FuncFailed()
 
 	debug(1, "Executing task '%s'" % task)
-	note("Executing task '%s'" % task)
 
 	if envflags.has_key(task) and envflags[task].has_key("python") and envflags[task]["python"] is not None:
 		# execute this function as a block of python code, not shell
 		exec_python_func(task, dir)
 	else:
 		exec_shell_func(task, dir)
+	__success.append(task)
 
 def mkstamp(task):
 	"""Creates/updates a stamp for a given task"""
@@ -195,7 +200,7 @@ def stamp_is_current(task, deptasks=""):
 	for dep in deptasks:
 		depfile = getenv('STAMP') + "." + dep
 		if not os.access(depfile, os.F_OK):
-			return False
+			return True
 		deptime = os.stat(depfile)[stat.ST_MTIME]
 		if deptime > tasktime:
 			return False
@@ -203,14 +208,14 @@ def stamp_is_current(task, deptasks=""):
 	return True
 
 def check_md5(task, deptasks):
-	md5s = [ ]
+	md5s = []
 	if env.has_key(task):
 		# this is an environment task.
-		md5s += env[task]
+		md5s.append(env[task])
 	if tasks.has_key(task) and tasks[task].has_key('md5check'):
 		for dep in tasks[task]['md5check']:
 			if env.has_key(dep):
-				md5s += env[dep]
+				md5s.append(env[dep])
 
 	import md5
 	TaskMD5 = md5.new()
@@ -218,84 +223,86 @@ def check_md5(task, deptasks):
 		TaskMD5.update(m)
 
 	def write_md5(task, digest):
-		stamp = open(getenv('STAMP')+"."+task+'.md5', "w")
-		if stamp:
-			stamp.write(digest)
-			stamp.close()
-
-	def read_md5(task):
+		path = os.path.join(os.path.dirname(getenv('STAMP')),"md5."+getenv('PF')+'.'+task)
 		try:
-			stamp = open(getenv('STAMP')+"."+task+'.md5', "r")
+			stamp = open(path, "wb+")
 		except Exception:
 			return None
-		digest = None
-		if stamp:
-			digest = stamp.read()
-			stamp.close()
+
+		stamp.write(digest)
+		stamp.close()
+
+	def read_md5(task):
+		path = os.path.join(os.path.dirname(getenv('STAMP')),"md5."+getenv('PF')+'.'+task)
+		try:
+			stamp = open(path, "rb+")
+		except Exception:
+			return None
+
+		digest = stamp.read()
+		stamp.close()
 		return digest
+	# follow dependency path, calling 'undo' functions to cleanup
+	def followdown(item, callback):
+		try:
+			deps = tasks[item]['deps']
+		except KeyError:
+			deps = None
+		if deps is not None:
+			for p in deps:
+				ret = followdown(p, callback)
+		return callback(item)
+
+	def followup(item, callback):
+		deps = []
+		for task in tasks:
+			try:
+				if item in tasks[task]['deps']:
+					deps.append(task)
+			except KeyError:
+				continue
+
+		if deps is not None:
+			for p in deps:
+				ret = followup(p, callback)
+		return callback(item)
+
+	def undo(task):
+		undo = None
+		undodeps = None
+		try:
+			undo = tasks[task]['undo']
+			undodeps = tasks[undo]['deps']
+		except KeyError:
+			pass
+		if not undo: return
+		try:
+			depfuncname = tasks[undo]["func"]
+			depfunc = globals()[depfuncname]
+			depfunc()
+		except KeyError:
+			if undodeps:
+				exec_task(undo, None, undodeps)
+			else:
+				exec_task(undo, None)
+
 
 	old = read_md5(task)
 	new = TaskMD5.digest()
 	if old is None or old != new:
 		# md5sum has changed
-		print "%s: md5sum has changed." % task
 		# remove the stamp so that next time it rebuilds regardless
 		try:
 			os.remove(getenv('STAMP')+"."+task)
 		except OSError, IOError:
 			pass
 
-		# follow dependency path, calling 'undo' functions to cleanup
-		def followdown(item, callback):
-			try:
-				deps = tasks[item]['deps']
-			except KeyError:
-				deps = None
-			if deps is not None:
-				for p in deps:
-					ret = followdown(p, callback)
-			return callback(item)
-
-		def followup(item, callback):
-			deps = []
-			for task in tasks:
-				try:
-					if item in tasks[task]['deps']:
-						deps.append(task)
-				except KeyError:
-					continue
-
-			if deps is not None:
-				for p in deps:
-					ret = followup(p, callback)
-			return callback(item)
-
-		def undo(task):
-			undo = None
-			undodeps = None
-			try:
-				undo = tasks[task]['undo']
-				undodeps = tasks[undo]['deps']
-			except KeyError:
-				pass
-			if not undo: return
-			print "calling %s to undo %s" % (undo, task)
-			try:
-				depfuncname = tasks[undo]["func"]
-				depfunc = globals()[depfuncname]
-				depfunc()
-			except KeyError:
-				if undodeps:
-					exec_task(undo, None, undodeps)
-				else:
-					exec_task(undo, None)
-
 		followup(task, undo)
 
 		# update md5
 		write_md5(task, new)
 		return 0
-	
+
 	return stamp_is_current(task, deptasks)
 
 #TODO: rmstamp
@@ -337,15 +344,6 @@ def do_mrproper():
 def do_fetch():
 	"""download needed sources"""
 
-	func = 'do_fetch'
-	if tasks.has_key(func) and tasks[func].has_key('check'):
-		checkfunc = tasks[func]['check']
-	else:
-		checkfunc = 'stamp_is_current'
-
-	if globals()[checkfunc](func, tasks[func]['deps']):
-		return
-
 	event.fire(TaskStarted('do_fetch', env))
 
 	mkdirhier(getenv("DL_DIR"))	# create file download directory
@@ -371,10 +369,8 @@ def do_fetch():
 			error("Fetch failed: %s" % value)
 			event.fire(TaskFailed('do_fetch', env))
 			raise FuncFailed()
-		mkstamp('do_fetch')
 	else:
 		note("No SRC_URI variable, nothing to be done")
-		mkstamp('do_fetch')
 	event.fire(TaskSucceeded('do_fetch', env))
 
 
