@@ -1144,14 +1144,29 @@ class digraph:
 		return children
 	
 	def walkdown(self, item, callback):
+		__down_callback_cache = []
+		__recurse_count = 0
 		if not self.hasnode(item):
 			return 0
 	
+		if __down_callback_cache.count(item):
+			return 1
+
 		parents = self.getparents(item)
+		children = self.getchildren(item)
 		for p in parents:
+			if p in children:
+				print "%s is both parent and child of %s, aborting" % (p, item)
+				return 0
+			if item == p:
+				print "eek, i'm my own parent!"
+				return 0
+#			print "walkdown => item: %s, p: %s" % (item, p)
 			ret = self.walkdown(p, callback)
 			if ret == 0:
 				return 0
+
+		__down_callback_cache.append(item)
 		return callback(self, item)
 	
 	def walkup(self, item, callback):
