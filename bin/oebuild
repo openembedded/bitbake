@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys,os,string
+import oefetch
 sys.path.append(os.path.join(sys.prefix,'share/oe'))
 from oe import *
 
@@ -139,9 +140,23 @@ def do_fetch():
 	note("Executing task 'fetch'")
 
 	if env.has_key('SRC_URI'):
-		ret = fetch(getenv('SRC_URI'))
-		if ret:
-			mkstamp('source')
+		grabber = oefetch.FetchUrls()
+		try:
+			grabber.init(getenv('SRC_URI').split())
+		except oefetch.NoMethodError:
+			note("No method for one or more urls in SRC_URI")
+			return
+
+		try:
+			grabber.go()
+		except oefetch.MissingParameterError:
+			note("Fetch failed due to missing parameters in the supplied urls")
+			return
+		except oefetch.FetchError:
+			note("Fetch failed")
+			return
+
+		mkstamp('source')
 	else:
 		note("No SRC_URI variable, not downloading anything")
 
