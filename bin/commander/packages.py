@@ -42,6 +42,9 @@ class Packages:
         else:
             return "N/A"
 
+    def getVar( self, key ):
+        return data.getVar( key, self.cfg )
+            
     def load( self, oefile ):
         """Load and parse one .oe build file"""
         oepath = data.getVar('OEPATH', self.cfg)
