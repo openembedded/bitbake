@@ -1,0 +1,12 @@
+Contents
+--------
+
+Misc documentation
+
+
+
+ebuild.*.txt
+------------
+Since I shape many things of OE like it is in Gentoo, here is the manpage
+of ebuild, Gentoo's build workhorse. It's for reference, we do some things
+differently.

@@ -1,0 +1,733 @@
+NAME
+       ebuild  - the internal format, variables, and functions in
+       an ebuild script
+
+DESCRIPTION
+       The ebuild(1) program accepts a single ebuild script as an
+       argument.   This  script  contains  variables and commands
+       that specify how  to  download,  unpack,  patch,  compile,
+       install  and  merge a particular software package from its
+       original sources.  In addition to all of this, the  ebuild
+       script  can also contain pre/post install/remove commands,
+       as required.
+
+EXAMPLES
+       Here's a simple example ebuild:
+
+       DESCRIPTION="Super-useful stream editor (sed)"
+       SRC_URI="ftp://alpha.gnu.org/pub/gnu/sed/${P}.tar.gz"
+       HOMEPAGE="http://www.gnu.org/software/sed/sed.html"
+
+       KEYWORDS="~x86"
+       SLOT="0"
+       LICENSE="GPL-2"
+       IUSE=""
+
+       DEPEND="virtual/glibc"
+       RDEPEND="virtual/glibc"
+
+       src_compile() {
+            econf || die "could not configure"
+            emake || die "emake failed"
+       }
+
+       src_install() {
+            into /usr
+            doinfo doc/sed.info
+            doman doc/sed.1
+            into /
+            dobin sed/sed
+            dodir /usr/bin
+            dosym /bin/sed /usr/bin/sed
+            dodoc  COPYING  NEWS README* THANKS TODO AUTHORS BUGS
+       ANNOUNCE
+       }
+
+VARIABLES
+       MISC USAGE NOTES
+              - PORTAGE* and PORTDIR* variables may be  found  in
+              make.conf(5).
+              -  When  assigning  values to variables in ebuilds,
+              you cannot have a space between the  variable  name
+              and the equal sign.
+
+       P      This variable contains the package name without the
+              ebuild revision.  This variable must NEVER be modi­
+              fied.
+              xfree-4.2.1-r2.ebuild --> $P=='xfree-4.2.1'
+
+       PN     Contains the name of the script without the version
+              number.
+              xfree-4.2.1-r2.ebuild --> $PN=='xfree'
+
+       PV     Contains the version number without the revision.
+              xfree-4.2.1-r2.ebuild --> $PV=='4.2.1'
+
+       PR     Contains the revision number or 'r0' if no revision
+              number exists.
+              xfree-4.2.1-r2.ebuild --> $PR=='r2'
+
+       PF     Contains the full package name [PN]-[PV]-r[PR]
+              xfree-4.2.1-r2.ebuild --> $PF=='xfree-4.2.1-r2'
+
+       A      Contains all source files required for the package.
+              This variable must not be defined. It is autogener­
+              ated from the SRC_URI variables.
+
+       WORKDIR = "${PORTAGE_TMPDIR}/portage/${PF}/work"
+              Contains  the  path  to the package build root.  Do
+              not modify this variable.
+
+       FILESDIR = "${PORTDIR}/${CATEGORY}/${PF}/files"
+              Contains the path to the 'files' sub folder in  the
+              package  specific location in the portage tree.  Do
+              not modify this variable.
+
+       S = "${WORKDIR}/${P}"
+              Contains the path to the temporary build directory.
+              This  variable is used by the functions src_compile
+              and src_install.  Both are executed with S  as  the
+              current  directory.   This variable may be modified
+              to match the extraction directory of a tarball  for
+              the package.
+
+       T = "${PORTAGE_TMPDIR}/portage/${PF}/temp"
+              Contains  the  path  to a temporary directory.  You
+              may use this for whatever you like.
+
+       D = "${PORTAGE_TMPDIR}/portage/${PF}/image"
+              Contains the path to the temporary  install  direc­
+              tory.   Every write operation that does not involve
+              the helper tools and functions (found below) should
+              be  prefixed  with  ${D}.  Do not modify this vari­
+              able.
+
+       DESCRIPTION = "A happy little package"
+              Should contain a short description of the  package.
+
+       SRC_URI = "http://happy.com/little/${P}.tar.gz"
+              Contains  a  list  of URI's for the required source
+              files.  It can contain multiple URI's for a  single
+              source file.  The fastest location is chosen if the
+              file was not found at GENTOO_MIRROR.
+
+       HOMEPAGE = "http://happy.com/"
+              Should contain a list of URL's for the sources main
+              sites  and other further package dependent informa­
+              tion.
+
+       KEYWORDS = [-~][x86,ppc,sparc,mips,alpha,arm,hppa]
+              Should contain appropriate list of arches that  the
+              ebuild is know to work/not work.  By default if you
+              do not know if an ebuild runs  under  a  particular
+              arch  simply omit that KEYWORD.  If the ebuild will
+              not work on that arch include it as -ppc for  exam­
+              ple.   If  the ebuild is being submitted for inclu­
+              sion, it must  have  ~arch  set  for  architectures
+              where  it  has been PROVEN TO WORK.  (Packages KEY­
+              WORDed this way may be unmasked for testing by set­
+              ting  ACCEPT_KEYWORDS="~arch"  on the command line,
+              or  in  make.conf(5))  For  an  authoritative  list
+              please review /usr/portage/profiles/arch.list.
+
+       SLOT   This  sets  the  SLOT for packages that may need to
+              co-exist.   By  default  you  should  set  SLOT="0"
+              unless  you  know what you are doing and need to do
+              otherwise.  This value should NEVER be  left  unde­
+              fined.
+
+       LICENSE
+              This  should  be a space delimited list of licenses
+              that the package falls under.  This _must_  be  set
+              to a matching license in /usr/portage/licenses/. If
+              the license does not exist in portage yet you  must
+              add it first.
+
+       IUSE   This should be a list of any and all USE flags that
+              are leveraged within your build script.   The  only
+              USE  flags  that should not be listed here are arch
+              related flags (see KEYWORDS).
+
+       DEPEND This should contain a list of all packages that are
+              required for the program to compile.
+
+              DEPEND Atoms
+                     A depend atom is simply a dependency that is
+                     used by portage when  calculating  relation­
+                     ships between packages.  Please note that if
+                     the atom has not already been emerged,  then
+                     the latest version available is matched.
+
+                     Atom Bases
+                             The  base  atom is just a full cate­
+                             gory/packagename.  Hence, these  are
+                             base atoms:
+
+                             sys-apps/sed
+                             sys-libs/zlib
+                             net-misc/dhcp
+
+                     Atom Versions
+                             It  is  nice to be more specific and
+                             say that only  certain  versions  of
+                             atoms  are  acceptable.   Note  that
+                             versions must  be  combined  with  a
+                             prefix  (see  below).  Hence you may
+                             add a version number as a postfix to
+                             the base:
+
+                             sys-apps/sed-4.0.5
+                             sys-libs/zlib-1.1.4-r1
+                             net-misc/dhcp-3.0_p2
+
+                     Atom Prefix Operators [> >= = <= =]
+                             Sometimes  you  want  to  be able to
+                             depend on  general  versions  rather
+                             than  specifying  exact versions all
+                             the time.  Hence we provide standard
+                             boolean operators:
+
+                             >media-libs/libgd-1.6
+                             >=media-libs/libgd-1.6
+                             =media-libs/libgd-1.6
+                             <=media-libs/libgd-1.6
+                             <media-libs/libgd-1.6
+
+                     Extended Atom Prefixes [!] and Postfixes [*]
+                             Now  to get even fancier, we provide
+                             the ability to define blocking pack­
+                             ages  and  version  range  matching.
+                             Also note that these  extended  pre­
+                             fixes/postfixes  may  be combined in
+                             any  way  with  the   atom   classes
+                             defined above.  Here are some common
+                             examples you may find in the portage
+                             tree:
+
+                             !app-text/dos2unix
+                             =dev-libs/glib-2*
+                             !net-fs/samba-2*
+
+                             !  means  block  packages from being
+                             installed at the same time.  * means
+                             match  any version of the package so
+                             long  as  the  specified   base   is
+                             matched.  So with a version of '2*',
+                             we can match '2.1', '2.2',  '2.2.1',
+                             etc...  and not match version '1.0',
+                             '3.0', '4.1', etc...
+
+              USE Variation
+                     Sometimes programs may depend  on  different
+                     things  depending  on  the USE variable.  To
+                     vary the packages the  program  depends  on,
+                     just use this syntax:
+
+                     DEPEND="media-libs/libsdl
+                          jpeg? ( >=media-libs/jpeg-6b )
+                          tiff? ( >=media-libs/tiff-3.5.5 )
+                          png? ( >=media-libs/libpng-1.2.1 )
+                          X? ( virtual/x11 )"
+
+
+       RDEPEND
+              This  should  contain  a  list of all
+              packages that are required  for  this
+              program  to run (aka runtime depend).
+              If this is not set, then it  defaults
+              to the value of DEPEND.
+              You  may  use the same syntax to vary
+              dependencies as seen above in DEPEND.
+
+       RESTRICT = [nostrip,nomirror,fetch]
+              This should be a space delimited list
+              of portage features to restrict.
+              nostrip
+                     final binaries/libraries  will
+                     not  be stripped of debug sym­
+                     bols.
+              nomirror
+                     files in SRC_URI will  not  be
+                     downloaded   from   the   GEN­
+                     TOO_MIRRORS.
+              fetch  like nomirror  but  the  files
+                     will   not   be   fetched  via
+                     SRC_URI either.
+
+       PROVIDE = "virtual/TARGET"
+              This variable  should  only  be  used
+              when  a  package  provides  a virtual
+              target.  For  example,  blackdown-jdk
+              and   sun-jdk   provide  virtual/jdk.
+              This allows for packages to depend on
+              virtual/jdk  rather than on blackdown
+              or sun specifically.
+
+FUNCTIONS
+       pkg_nofetch
+              If you turn  on  fetch  in  RESTRICT,
+              then  this  function will be run when
+              the files in SRC_URI cannot be found.
+              Useful  for displaying information to
+              the user  on  *how*  to  obtain  said
+              files.
+
+       pkg_setup
+              This  function  can  be  used  if the
+              package needs specific setup  actions
+              or checks to be preformed before any­
+              thing else.
+              Initial    working    directory    of
+              ${PORTAGE_TMPDIR}.
+
+       src_unpack
+              This  function  is used to unpack all
+              the sources in A to WORKDIR.  If  not
+              defined in the ebuild script it calls
+              unpack ${A}. Any  patches  and  other
+              pre  configure/compile  modifications
+              should be done here.
+              Initial    working    directory    of
+              $WORKDIR.
+
+       src_compile
+              All necessary steps for configuration
+              and compilation  should  be  done  in
+              here.
+              Initial working directory of $S.
+
+       src_install
+              Should contain everything required to
+              install the package in the  temporary
+              install directory.
+              Initial working directory of $S.
+
+       pkg_preinst pkg_postinst
+              All  modifications  required  on  the
+              live-filesystem before and after  the
+              package  is  merged  should be placed
+              here. Also commentary  for  the  user
+              should  be  listed here as it will be
+              displayed last.
+              Initial working directory of $PWD.
+
+       pkg_prerm pkg_postrm
+              Like the pkg_*inst functions but  for
+              unmerge.
+              Initial working directory of $PWD.
+
+       config This function should contain optional
+              basic configuration steps.
+              Initial working directory of $PWD.
+
+HELPER FUNCTIONS: GENERAL
+       die [reason]
+              Causes the current emerge process  to
+              be  aborted.  The  final display will
+              include reason.
+
+       use <USE item>
+              If USE item is in the  USE  variable,
+              USE item will be echoed and the func­
+              tion will return 0.  If USE  item  is
+              not in the USE variable, the function
+              will return 1.
+
+              Example:
+                     if [ `use gnome` ] ; then
+                          guiconf="--enable-
+                     gui=gnome --with-x"
+                     elif [ `use gtk` ] ; then
+                          guiconf="--enable-gui=gtk
+                     --with-x"
+                     elif [ `use X` ] ; then
+                          guiconf="--enable-
+                     gui=athena --with-x"
+                     else
+                          #  No gui version will be
+                     built
+                          guiconf=""
+                     fi
+
+       use_with <USE item> [configure option]
+              Useful for creating custom options to
+              pass  to  a  configure script. If USE
+              item is in the USE variable, then the
+              string --with-[configure option] will
+              be echoed.  If USE item is not in the
+              USE variable, then the string --with­
+              out-[configure   option]   will    be
+              echoed.   If  configure option is not
+              specified, than USE item will be used
+              in its place.
+
+              Example:
+                     USE="jpeg"
+                     myconf="`use_with   jpeg  lib­
+                     jpeg`"
+                     (myconf  now  has  the   value
+                     "--with-libjpeg")
+
+                     USE=""
+                     myconf="`use_with   jpeg  lib­
+                     jpeg`"
+                     (myconf  now  has  the   value
+                     "--without-libjpeg")
+
+                     USE="pic"
+                     myconf="`use_with pic`"
+                     (myconf   now  has  the  value
+                     "--with-pic")
+
+       use_enable <USE item> [configure option]
+              Useful for creating custom options to
+              pass  to  a  configure script. If USE
+              item is in the USE variable, then the
+              string   --enable-[configure  option]
+              will be echoed.  If USE item  is  not
+              in  the USE variable, then the string
+              --disable-[configure option] will  be
+              echoed.  If  configure  option is not
+              specified, than USE item will be used
+              in its place.
+              See use_with for an example.
+
+       has <item> <item list>
+              If item is in item list, then item is
+              echoed and has returns 0.  Otherwise,
+              nothing  is echoed and 1 is returned.
+              The item list is delimited by the IFS
+              variable.    This   variable   has  a
+              default value of ' ', or a space.  It
+              is a bash(1) setting.
+
+       has_version <category/package-version>
+              Check to see if category/package-ver­
+              sion is installed on the system.  The
+              parameter accepts all values that are
+              acceptable in  the  DEPEND  variable.
+              The   function  returns  0  if  cate­
+              gory/package-version is installed,  1
+              otherwise.
+
+       best_version <package name>
+              This  function  will  look up package
+              name in  the  database  of  currently
+              installed programs and echo the "best
+              version" of the package that is  cur­
+              rently   installed.    The   function
+              returns 0 if there is a package  that
+              matches package name.  Otherwise, the
+              function will return 1.
+
+              Example:
+                     VERINS=`best_version      net-
+                     ftp/glftpd`
+                     (VERINS   now  has  the  value
+                     "net-ftp/glftpd-1.27"       if
+                     glftpd-1.27 is installed)
+
+HELPER FUNCTIONS: UNPACK
+       unpack <source> [list of more sources]
+              This   function  uncompresses  and/or
+              untars a list  of  sources  into  the
+              current  directory. The function will
+              append source to  the  DISTDIR  vari­
+              able.
+
+HELPER FUNCTIONS: COMPILE
+       econf [configure options]
+              This  is  used  as  a replacement for
+              configure.  Performs:
+              configure \
+                   --prefix=/usr \
+                   --host=${CHOST} \
+                   --mandir=/usr/share/man \
+                   --infodir=/usr/share/info \
+                   --datadir=/usr/share \
+                   --sysconfdir=/etc \
+                   --localstatedir=/var/lib \
+                   configure options
+
+              *Note: There is no need  to  use  '||
+              die' because econf checks for you
+
+       emake [make options]
+              This  is  used  as  a replacement for
+              make.     Performs     default     is
+              MAKEOPTS="-j2".
+
+              ***warning***
+              if  you  are going to use emake, make
+              sure your build is  happy  with  par­
+              alell makes (make -j2).  It should be
+              tested thoroughly as  parallel  makes
+              are notorious for failing _sometimes_
+              but not always.
+
+              *Note: Be sure to use '||  die'  con­
+              structs to ensure emake success
+
+HELPER FUNCTIONS: INSTALL
+       einstall [make options]
+              This  is  used  as  a replacement for
+              make install.  Performs:
+              make prefix=${D}/usr \
+                          mandir=${D}/usr/share/man
+              \
+                          infodir=${D}/usr/share/info
+              \
+                          datadir=${D}/usr/share \
+                          sysconfdir=${D}/etc \
+                          localstate­
+              dir=${D}/var/lib \
+                          make options install
+
+              *Note:  There  is  no need to use '||
+              die' because einstall checks for you
+
+       prepall
+       prepalldocs
+       prepallinfo
+       prepallman
+       prepallstrip
+              Useful for when  a  package  installs
+              into  ${D}  via  scripts  (i.e. make­
+              files).  If you want to be sure  that
+              libraries   are  executable,  aclocal
+              files are installed  into  the  right
+              place,  doc/info/man  files  are  all
+              compressed, and that executables  are
+              all  stripped  of  debugging symbols,
+              then use these suite of functions.
+              prepall:
+                     Runs prepallman,  prepallinfo,
+                     prepallstrip,  sets  libraries
+                     +x, and  then  checks  aclocal
+                     directories.  Please note this
+                     does *not* run prepalldocs.
+              prepalldocs:
+                     Compresses all  doc  files  in
+                     ${D}/usr/share/doc.
+              prepallinfo:
+                     Compresses  all  info files in
+                     ${D}/usr/share/info.
+              prepallman:
+                     Compresses all  man  files  in
+                     ${D}/usr/share/man.
+              prepallstrip:
+                     Strips all executable files of
+                     debugging   symboles.     This
+                     includes libraries.
+
+       prepinfo [dir]
+       preplib [dir]
+       preplib.so [dir]
+       prepman [dir]
+       prepstrip [dir]
+              Similiar  to  the  prepall functions,
+              these are  subtle  in  their  differ­
+              ences.
+              prepinfo:
+                     If  a  dir  is  not specified,
+                     then prepinfo will assume  the
+                     dir  usr.  prepinfo  will then
+                     compress  all  the  files   in
+                     ${D}/dir/info.
+              preplib:
+                     If  a  dir  is  not specified,
+                     then preplib will  assume  the
+                     dir usr. preplib will then run
+                     'ldconfig    -n     -N'     on
+                     ${D}/dir/lib.
+              preplib.so:
+                     All  the  files  with '.so' in
+                     their name and  are  found  in
+                     ${D}/dir  will  be stripped of
+                     their debug symbols.  You  may
+                     specify  multiple directories.
+              prepman:
+                     If a  dir  is  not  specified,
+                     then  prepman  will assume the
+                     dir  usr.  prepman  will  then
+                     compress   all  the  files  in
+                     ${D}/dir/man/*/.
+              prepstrip:
+                     All   the   files   found   in
+                     ${D}/dir   will  be  stripped.
+                     You   may   specify   multiple
+                     directories.
+
+       dopython <commands>
+              Performs  commands  with  python  and
+              returns the result.
+
+       dosed "s:orig:change:g" <filename>
+              Performs sed (including  cp/mv  file­
+              name) on filename.
+              'dosed          "s:/usr/local:/usr:g"
+              /usr/bin/some-script'  runs  sed   on
+              ${D}/usr/bin/some-script
+
+       dodir <path>
+              Creates a directory inside of ${D}.
+              'dodir /usr/lib/apache'       creates
+              ${D}/usr/lib/apache
+
+       into <path>
+              Sets the root  (DESTTREE)  for  other
+              functions  like dobin, dosbin, doman,
+              doinfo, dolib.
+              The default root is /usr.
+
+       keepdir <path>
+              Tells portage to  leave  a  directory
+              behind   even   if   it   is   empty.
+              Functions the same as dodir.
+
+       dobin <binary> [list of more binaries]
+              Installs a binary or a list of  bina­
+              ries  into DESTTREE/bin.  Creates all
+              necessary dirs.
+
+       dosbin <binary> [list of more binaries]
+              Installs a binary or a list of  bina­
+              ries into DESTTREE/sbin.  Creates all
+              necessary dirs.
+
+       dolib <library> [list of more libraries]
+       dolib.a <library> [list of more libraries]
+       dolib.so <library> [list of more libraries]
+              Installs  a  library  or  a  list  of
+              libraries into DESTTREE/lib.  Creates
+              all necessary dirs.
+
+       doman <man-page> [list of more man-pages]
+              Installs  manual-pages   into   DEST­
+              DIR/man/man[1-8n]  depending  on  the
+              manual file  ending.  The  files  are
+              gzipped if they are not already. Cre­
+              ates all necessary dirs.
+
+       dohard <filename> <linkname>
+       dosym <filename> <linkname>
+              Performs the ln command as  either  a
+              hard link or symlink.
+
+       dohtml      [-a    filetypes]    [-r]    [-x
+       list-of-dirs-to-ignore]
+       [list-of-files-and-dirs]
+              Installs  the  files  in  the list of
+              files  (space-separated  list)   into
+              /usr/share/doc/${PF}/html    provided
+              the file ends in .html, .png, .js, -A
+              appends  to the default list, setting
+              -x sets which dirs  to  exclude  (CVS
+              excluded  by default), -r sets recur­
+              sive.
+
+       doinfo <info-file> [list of more info-files]
+              Installs   info-pages   into    DEST­
+              DIR/info.   Files  are  automatically
+              gzipped.  Creates all necessary dirs.
+
+       dojar <jar file> [list of more jar files]
+              Installs      jar      files     into
+              /usr/share/${PN}/lib and adds them to
+              /usr/share/${PN}/classpath.env.
+
+       domo    <locale-file>    [list    of    more
+       locale-files]
+              Installs   locale-files   into  DEST­
+              DIR/usr/share/locale/[LANG] depending
+              on  local-file's ending.  Creates all
+              necessary dirs.
+
+       fowners <permissions> <file> [files]
+       fperms <permissions> <file> [files]
+              Performs  chown  (fowners)  or  chmod
+              (fperms),   applying  permissions  to
+              files.
+
+       insinto [path]
+              Sets the root (INSDESTTREE)  for  the
+              doins function.
+              The default root is /.
+
+       insopts [options for install(1)]
+              Can be used to define options for the
+              install function used in doins.   The
+              default is -m0644.
+
+       doins <file> [list of more files]
+              Installs   files   into  INSDESTTREE.
+              This function uses install(1).
+
+       exeinto [path]
+              Sets the root (EXEDESTTREE)  for  the
+              doexe function.
+              The default root is /.
+
+       exeopts [options for install(1)]
+              Can be used to define options for the
+              install function used in doexe.   The
+              default is -m0755.
+
+       doexe  <executable>  [list  of more executa­
+       bles]
+              Installs  a  executable  or a list of
+              executable  into  EXEDESTTREE.   This
+              function uses install(1).
+
+       docinto [path]
+              Sets  the  relative  subdir (DOCDEST­
+              TREE) used by dodoc.
+
+       dodoc <document> [list of more documents]
+              Installs a document or a list of doc­
+              ument   into  /usr/doc/${PV}/DOCDEST­
+              TREE.    Files   are    automatically
+              gzipped.  Creates all necessary dirs.
+
+       newbin <old file> <new filename>
+       newsbin <old file> <new filename>
+       newlib <old file> <new filename>
+       newlib.so <old file> <new filename>
+       newlib.a <old file> <new filename>
+       newman <old file> <new filename>
+       newinfo <old file> <new filename>
+       newins <old file> <new filename>
+       newexe <old file> <new filename>
+       newdoc <old file> <new filename>
+              All these functions act like the  do*
+              functions,  but  they  only work with
+              one file and the file is installed as
+              [new filename].
+
+REPORTING BUGS
+       Please   report  bugs  via  http://bugs.gen­
+       too.org/
+
+SEE ALSO
+       ebuild(1), make.conf(5)
+
+       The /usr/sbin/ebuild.sh script.
+
+       The helper apps in /usr/lib/portage/bin.
+
+FILES
+       /etc/make.conf
+              Contains variables for the build-pro­
+              cess    and   overwrites   those   in
+              make.defaults.
+
+       /etc/make.globals
+              Contains the  default  variables  for
+              the  build-process,  you  should edit
+              /etc/make.conf instead.
+
+AUTHORS
+       Achim Gottinger <achim@gentoo.org>
+       Mark Guertin <gerk@gentoo.org>
+       Nicholas Jones <carpaski@gentoo.org>
+       Mike Frysinger <vapier@gentoo.org>

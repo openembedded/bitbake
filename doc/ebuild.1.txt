@@ -1,0 +1,184 @@
+NAME
+       ebuild  -  manual page for the ebuild program, a low level
+       interface to the Portage system.
+
+SYNOPSIS
+       ebuild file command [command]...
+
+DESCRIPTION
+       The ebuild program is a direct interface  to  the  Portage
+       system.  It  allows  for direct action upon an ebuild with
+       specific subcommands or groups of commands to perform in a
+       specific  ebuild's  context  and  functions.  Accepting an
+       ebuild script and one or more commands as  arguments,  the
+       ebuild  program  parses  the ebuild script and execute the
+       specified commands.   Commands  exist  to  fetch  sources,
+       unpack sources, compile sources, install object files into
+       a temporary directory "image",  merge  the  image  to  the
+       local  filesystem, create a bzipped tarball package out of
+       the image, and more.
+
+FILE
+       This must be a valid ebuild script.  For further  informa­
+       tion read ebuild(5).
+
+COMMANDS
+       help   Show  a condensed form of the man page along with a
+              lot of package specific information.
+
+       setup  Run all package specific setup actions  and  exotic
+              system checks.
+
+       clean  Cleans  the  temporary build directory that Portage
+              has created for this particular ebuild  file.   The
+              temporary  build  directory  normally  contains the
+              extracted  source  files  as  well  as  a  possible
+              "install  image" (all the files that will be merged
+              to the local filesystem or stored  in  a  package).
+              The  location  of the build directory is set by the
+              BUILD_PREFIX variable.   For  information  on  what
+              this variable is, run emerge [-v] info, or to over­
+              ride this variable, see make.conf(5).
+
+              Note: Portage cleans up almost everything  after  a
+              package  has  been  successfully merged unless FEA­
+              TURES contains 'noclean'. Adding  noclean  to  FEA­
+              TURES  will cause a lot of files to remain and will
+              consume large amounts of space, very quickly. It is
+              not  recommended  to  leave this on unless you have
+              use for the sources post-merge. Optionally one may,
+              manual clean rm -rf /var/tmp/portage will take care
+              of these files.
+
+       fetch  Checks to see  if  all  the  sources  specified  in
+              SRC_URI  are available in DISTDIR (see make.conf(5)
+              for more information) and have a valid  md5  check­
+              sum.   If  the sources aren't available, an attempt
+              is made to download them from the locations  speci­
+              fied  in  SRC_URI.   If multiple download locations
+              are listed for a  particular  file,  Portage  pings
+              each location to see which location is closer. (May
+              not be true presently.)  The Gentoo  Linux  mirrors
+              defined  by  GENTOO_MIRRORS  is  always  considered
+              first. If for some reason the current or just-down­
+              loaded  sources'  md5  digests  don't  match  those
+              recorded in files/digest-[package]-[version-rev], a
+              warning  is  printed and ebuild exits with an error
+              code of 1.
+
+       digest Creates  a  digest  file   for   the   package   in
+              /usr/portage/[category]/[package]/files/.      This
+              digest file lists the md5sum's  of  all  the  files
+              found in the SRC_URI.  If the fetched source of the
+              package is corrupt/bogus in some  way,  the  md5sum
+              will catch this.
+
+       unpack Extracts the sources to a subdirectory in the build
+              directory    (BUILD_PREFIX)    by    running    the
+              src_unpack()  function  in  the ebuild file.  If no
+              src_unpack() function has been specified, a default
+              src_unpack() function is used that extracts all the
+              files specified in SRC_URI.  The sources  are  nor­
+              mally  extracted to ${BUILD_PREFIX}/[package]-[ver­
+              sion-rev]/work. This particular  directory  can  be
+              referenced by using the ${WORKDIR} variable.
+
+              If  you're  creating an ebuild, you'll want to make
+              sure that the S (source directory) variable defined
+              at  at  the top of your ebuild script points to the
+              directory that  contains  your  extracted  sources.
+              This   directory   is  defined  by  default  to  be
+              ${WORKDIR}/${P}, so it is not often required.   The
+              src_unpack()  function is also responsible for mak­
+              ing the appropriate patches to the sources so  that
+              they're ready for compilation.
+
+       compile
+              Compiles  the  extracted sources by running the the
+              src_compile()  function  specified  in  the  ebuild
+              file.  When src_compile() starts, the current work­
+              ing directory will be set to ${S}.   When  src_com­
+              pile()  completes, the sources should be fully com­
+              piled.
+
+       preinst
+              Run package specific actions that need to  be  done
+              before  the  package  is  installed  into  the live
+              filesystem.
+
+       install
+              Installs  the  package  to  the  temporary  install
+              directory  by  running  the src_install() function.
+              When completed, the install directory (${BUILD_PRE­
+              FIX}/[package]-[version-rev]/image)   will  contain
+              all the files that should either be merged  to  the
+              local  file system or included in a binary package.
+
+       postinst
+              Run package specific actions that need to  be  done
+              after  the  package  is  installed  into  the  live
+              filesystem.  Usually  helpful  messages  are  shown
+              here.
+
+       qmerge This function installs all the files in the install
+              directory to the live filesystem. The process works
+              as  follows:  first, the pkg_preinst() function (if
+              specified) is run.  Then, the files are merged into
+              the  live  filesystem, and the installed files' md5
+              digests          are          recorded           in
+              /var/db/pkg/${CATEOGRY}/${PN}-[version-rev]/CON­
+              TENTS.  After all the files have been  merged,  the
+              pkg_postinst() function (if specified) is executed.
+
+       merge  Normally, to merge an ebuild, you  need  to  fetch,
+              unpack,  compile,  install  and  qmerge.  If you're
+              simply interested in merging the  ebuild,  you  can
+              use  this  command,  which  will  perform all these
+              steps for you, stopping along the way if a particu­
+              lar step doesn't complete successfully.
+
+       unmerge
+              This function first executes the pkg_prerm function
+              (if specified).  Then it removes all files from the
+              live  filesystem that have a valid md5 checksum and
+              mtime in the  package  contents  file.   Any  empty
+              directories  are  recursively removed.  Finally, it
+              runs pkg_postrm function  (if  specified).   It  is
+              safe  to merge a new version of a package first and
+              then unmerge the old one.  In  fact,  this  is  the
+              recommended package upgrade method.
+
+       package
+              This  command  is  a  lot  like  the merge command,
+              except that after  fetching,  unpacking,  compiling
+              and  installing,  a .tbz2 binary package tarball is
+              created and  stored  in   ${PKGDIR}/All  (${PKGDIR}
+              defaults  to  /usr/portage/packages).   A  symbolic
+              link  is  created  in  ${PKGDIR}/${CATEGORY}   that
+              points to the package in ${PKGDIR}/All.
+
+       rpm    Builds  a  RedHat RPM package from the files in the
+              temporary install directory.  At  the  moment,  the
+              ebuild's dependency information is not incorporated
+              into the RPM.
+
+REPORTING BUGS
+       Please report bugs via http://bugs.gentoo.org/
+
+SEE ALSO
+       ebuild(5), make.conf(5)
+
+       The /usr/sbin/ebuild.sh script.
+
+       The helper apps in /usr/lib/portage/bin.
+
+FILES
+       /etc/make.conf
+              Contains variables for the build-process and  over­
+              writes those in make.globals.
+
+AUTHORS
+       Achim Gottinger <achim@gentoo.org>
+       Daniel Robbins <drobbins@gentoo.org>
+       Nicholas Jones <carpaski@gentoo.org>
+       Mike Frysinger <vapier@gentoo.org>
