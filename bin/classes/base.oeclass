@@ -67,12 +67,14 @@ python base_eventhandler() {
 			name = e.__class__.__name__
 		else:
 			name = e.__name__
-		if name in ["PkgFailed", "PkgSucceeded", "PkgStarted", "TaskFailed", "TaskSucceeded", "TaskStarted"]:
+		if name in ["PkgFailed", "PkgSucceeded", "PkgStarted", "TaskFailed", "TaskSucceeded", "TaskStarted", "UnsatisfiedDep"]:
 			msg = ""
 			if name[:3] == "Pkg":
 				msg += "package %s: build %s" % (e.pkg, string.lower(name[3:]))
 			if name[:4] == "Task":
 				msg += "package %s: task %s %s" % (expand(e.data["PF"]), e.task, string.lower(name[4:]))
+			if name[-3:] == "Dep":
+				msg += "package %s: dependency %s %s" % (e.pkg, e.dep, string.lower(name[:-3]))
 			note(msg)
 #			return Handled # dont consume
 		return NotHandled
