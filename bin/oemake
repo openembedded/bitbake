@@ -410,8 +410,16 @@ if __name__ == "__main__":
         oe.event.fire(oe.event.BuildStarted(buildname, pkgs_to_build, make.cfg))
 
         for k in pkgs_to_build:
-            if buildPackage(k) == 0:
+            failed = False
+            try:
+                if buildPackage(k) == 0:
+                    # already diagnosed
+                    failed = True
+            except oe.build.EventException:
                 oe.error("Build of " + k + " failed")
+                failed = True
+
+            if failed:
                 if make.options.abort:
                     sys.exit(1)
 
