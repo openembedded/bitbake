@@ -263,7 +263,6 @@ oeconf() {
 	if [ -x ./configure ] ; then
 		test -z "${BUILD_SYS}" || EXTRA_OECONF="--build=${BUILD_SYS} ${EXTRA_OECONF}"
 		test -z "${TARGET_SYS}" || EXTRA_OECONF="--target=${TARGET_SYS} ${EXTRA_OECONF}"
-		set -x
 		./configure \
 		    --prefix=/usr \
 		    --host=${SYS} \
@@ -297,7 +296,7 @@ oeinstall() {
 		    localstatedir=${D}/var/lib \
 		    mandir=${D}/usr/share/man \
 		    sysconfdir=${D}/etc \
-		    "$@" install || die "einstall failed" 
+		    "$@" install || die "oeinstall failed" 
 	else
 		die "no Makefile found"
 	fi
@@ -314,37 +313,6 @@ do_nofetch()
 	done
 }
 
-
-
-do_unpack()
-{
-	test "${A}" != "" && unpack "${A}" || oenote "nothing to extract"
-}
-
-
-
-
-do_compile()
-{ 
-	if [ -x ./configure ] ; then
-		oeconf 
-		oemake || die "oemake failed"
-	else
-		oenote "nothing to compile"
-	fi
-}
-
-
-do_stage()
-{ 
-	oenote "nothing to install into stage area"
-}
-
-
-do_install()
-{ 
-	oenote "nothing to install"
-}
 
 
 try() {
@@ -394,56 +362,6 @@ debug-print-function() {
 debug-print-section() {
 	debug-print "now in section $*"
 }
-
-# Sources all eclasses in parameters
-inherit() {
-	unset INHERITED
-	local location
-	while [ "$1" ]
-	do
-		location="${OEDIR}/bin/build/${1}.oeclass"
-		POECLASS="$OECLASS"
-		export OECLASS="$1"
-
-		# TODO: work throught OEPATH
-		#if [ -n "$PORTDIR_OVERLAY" ]
-		#then
-		#	olocation="${PORTDIR_OVERLAY}/eclass/${1}.eclass"
-		#	if [ -e "$olocation" ]; then
-		#		location="${olocation}"
-		#	fi
-		#fi
-
-		debug-print "inherit: $1 -> $location"
-		source "$location" || die "died sourcing $location in inherit()"
-		OECLASS="$POECLASS"
-		unset POECLASS
-
-		if ! has $1 $INHERITED &>/dev/null; then
-			export INHERITED="$INHERITED $1"
-		fi
-
-		shift
-	done
-}
-
-
-# Exports stub functions that call the oeclass's functions, thereby making them default.
-# For example, if OECLASS="base" and you call "EXPORT_FUNCTIONS do_unpack", the following
-# code will be eval'd:
-# do_unpack() { base_do_unpack; }
-EXPORT_FUNCTIONS() {
-	if [ -z "$OECLASS" ]; then
-		oefatal "EXPORT_FUNCTIONS without a defined OECLASS"
-		exit 1
-	fi
-	while [ "$1" ]; do
-		debug-print "EXPORT_FUNCTIONS: ${1} -> ${OECLASS}_${1}" 
-		eval "$1() { ${OECLASS}_$1 ; }" >/dev/null
-		shift
-	done
-}
-
 
 # adds all parameters to DEPEND and RDEPEND
 newdepend() {
