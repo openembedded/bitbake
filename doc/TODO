@@ -8,43 +8,62 @@ TODO:
 	[.] Implement API testing using doctest.
 	[ ] Alter 'export' handling, to support exporting a var without
 	    defining the variable.
-	[ ] Add support for 'anonymous' OE functions in .oe{,class} files.
-	    These functions are to be executed immediately at parse time,
-	    thereby giving one the ability to exert more control over the set
-	    of variables.
-	[x] Upstream source use:
-		[ ] Split oemake's knowledge of AVAILABLE OEFILES from its
-		    knowledge of which packages are to be built.
+		format:
+		export [VAR[=value] ...]
+	[ ] More complex variable setting/conditionals
+		Options:
+		[ ] Add support for 'anonymous' OE functions in .oe{,class} files.
+		    These functions are to be executed immediately at parse time,
+		    thereby giving one the ability to exert more control over the set
+		    of variables.
+		[ ] if/else blocks for conditional variable setting
+	[ ] Split oemake's knowledge of AVAILABLE OEFILES from its
+	    knowledge of which packages are to be built.
+		[ ] Define structure and data exchange format(s) for
+		    upstream OE metadata repositories.
+		    Possibly follow an 'apt-get' style.  Cache the
+		    metadata locally, with a command to update.
 
-		* Build requirements
-			[ ] Code will not be automatically updated from CVS
-				[ ] Solve by making Fetch use md5.
-			[x] Must be able to execute 'oemake' within a subpackage
-			    of an upstream package, and yet retain access to the
-			    toplevel TMPDIR.  Perhaps specify TMPDIR through
-			    the environment.
-				[ ] Preferably also attempt to satisfy dependency,
-				    which implies a way that the .oe files in
-				    this repository are in OEFILES when built
-				    from the subpackage build area.
-			[ ] Allow switching to a debug build for the entirety
-			    of the build.  Alter CONFIG for created .pro files,
-			    and add -g to appropriate flags.
-				[ ] Requires some form of either if block,
-				    or anonymous python function to do the
-				    logic without lambda madness.
-			[ ] Tests for versioning
-				[ ] Far, far beyond the scope of what OE is
-				    designed to do.
-			[ ] Wrapper Makefile -> oemake
-				[ ] Not part of OE, only requires that we can
-				    override the path to Makefile.
-			[ ] Target device filesystem locations as metadata
-			    items so that all the packages can install things
-			    into proper locations.  This is highly distribution
-			    specific, 
-			[ ] Real life test case: Opie
-
+	* Build requirements
+		[ ] Code will not be automatically updated from CVS
+			[ ] Solve by making Fetch use md5.
+		[ ] Real life test case: Opie
+	[ ] Add "noinherit", as a means of removing an item from the
+	    list of classes to inherit.
+	[ ] Need a way to specify that you cannot build a given .oe,
+	    from the .oe.  Along the lines of portage's ability for
+	    an ebuild to specify that it isnt buildable for a given
+	    architecture or set of architectures.
+	[ ] .oe needs access to PROVIDES information that oemake is
+	    currently populating.  Move the default set of the .oe
+	    provides into the .oe parser rather than oemake.
+	[ ] Write helper functions ala ebuild's dobin/dodoc/etc and debian's dh_*.
+		[ ] Note, if we do this using actual commands within the .oe file
+		    as opposed to shell helpers, the buildsystem is then aware
+		    of what files are libs, what are includes, etc, and we could
+		    then do a sane automatic population of staging based on that
+		    information. 
+	[ ] Metadata exchange through multiple oebuild/oemake/oespawn executions
+	    (i.e. to set qpedir/qtdir for all builds from the qt/opie/qtopia .oe's)
+	[ ] Possibility: split staging by package, and maintain links based on
+	    the base atom vs base+version, that sort of thing.  Automatically add
+	    proper include and lib paths to the flags variables based on the items
+	    in DEPENDS.  This 1) prevent unintentional include/link to the wrong
+	    version of things, if multiple versions of things are floating around,
+	    and 2) gives us a means of do_clean wiping out a given package's staging
+	    items.
+	[ ] Split staging by package
+		[ ] When a package populates staging, create links for every item
+		    that this .oe Provides.
+			[ ] Wouldnt be a bad idea to make use of update-alternatives
+			    to manage buildroot's staging links, thereby allowing us
+			    to deal with multiple provides sanely (priority).
+		[ ] More complex set of FLAGS vars, to account for the various DEPENDS.
+		[ ] Example:
+			ipkg depends on virtual/libc, puts staging_dir/libc in flags.
+			glibc staging creates symlinks for every atom it PROVIDES,
+			and installs its staging files into the glibc-ver-rev dir.
+	
 [ ] oebuild
 	[ ] Implement and test check_md5, taking nostamp into account.
 	[ ] Add '--undo'/'-u' cmdline opt that calls the 'undo' task
@@ -63,6 +82,9 @@ TODO:
 	    changes in build state as well as changes to build metadata result
 	    in a rebuild.
 
+[ ] oerootfs
+[ ] oeimage
+
 [ ] packages
 	[ ] add cross binutils and binutils
 	[ ] add gcc
@@ -71,38 +93,3 @@ TODO:
 	[ ] add qtopia 1.6.1
 	[.] add qt 2.3.6
 	[ ] convert packages from OpenZaurus buildroot
-
-[.] Image creation .oe files and/or external tool
-	[x] Rootfs population .oe
-	[.] image creation .oe files that depend on virtual/rootfs
-		[x] tarball
-		[ ] jffs2
-		[ ] cramfs
-		[ ] ext2
-	[ ] NOTE: need a way to ensure rootfs gets called only after the other
-	    .oe's are built when it gets called via oemake, and need to ensure
-	    image gets called only after rootfs.  The latter is simple enough,
-	    if the do_rootfs exists in the do_build digraph path.  However, if
-	    it exists in the digraph path, we cannot use the event handling means
-	    of solving the former, we'd need to populate DEPENDS with every package
-	    in OEFILES, other than itself and things that depend on it (recursion).
-
-[ ] Once we have the per package deployment code, write a staging oeclass
-    that lets you use the FILES blocks for our deployment packages to do the
-    installs into the appropriate staging areas, to save time writing do_stage
-    functions.
-[ ] Write helper functions ala ebuild's dobin/dodoc/etc and debian's dh_*.
-	[ ] Note, if we do this using actual commands within the .oe file
-	    as opposed to shell helpers, the buildsystem is then aware
-	    of what files are libs, what are includes, etc, and we could
-	    then do a sane automatic population of staging based on that
-	    information. 
-[ ] Implement setvar, to give us the equivalent of 'staging' but for config
-    data.
-[ ] Possibility: split staging by package, and maintain links based on
-    the base atom vs base+version, that sort of thing.  Automatically add
-    proper include and lib paths to the flags variables based on the items
-    in DEPENDS.  This 1) prevent unintentional include/link to the wrong
-    version of things, if multiple versions of things are floating around,
-    and 2) gives us a means of do_clean wiping out a given package's staging
-    items.
