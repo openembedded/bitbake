@@ -102,6 +102,13 @@ TODO:
 		[x] core
 		[ ] staging function
 		[ ] install function
+	[.] apache
+		[x] core
+		[x] dependencies
+			[x] expat
+			[x] pcre
+		[ ] staging function
+		[ ] install function
 
 [ ] New c++ OE library (possibility -- open to debate)
 
