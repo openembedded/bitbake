@@ -10,7 +10,7 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 __version__ = '1.0'
 
-__all__ = [ 'handlers', 'supports', 'handle' ]
+__all__ = [ 'handlers', 'supports', 'handle', 'init' ]
 handlers = []
 
 import ConfHandler
@@ -29,3 +29,8 @@ def handle(fn, data = {}):
 		if h['supports'](fn):
 			return h['handle'](fn, data)
 	return None
+
+def init(fn, data = {}):
+	for h in handlers:
+		if h['supports'](fn):
+			return h['init'](data)

@@ -2,26 +2,28 @@
 
    Reads the file and obtains its metadata"""
 
-import re, oedata, os, sys
+import re, oe.data, os, sys
 from oe import debug
 
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>\w+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
+
+def init(data):
+	oe.data.setVar('TOPDIR', os.getcwd(), data)
+	oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
+	oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}", data)
 
 def supports(fn):
 	return fn[-5:] == ".conf"
 
 def include(oldfn, fn, data = {}):
 	if oldfn == fn: # prevent infinate recursion
-		return 1
+		return None
 
-	from oeparse import handle
+	from oe.parse import handle
 	return handle(fn, data)
 
 def handle(fn, data = {}):
-	oedata.setVar('TOPDIR', os.getcwd(), data)
-	oedata.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
-	oedata.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}", data)
 	fn = os.path.abspath(fn)
 	f = open(fn,'r')
 	lineno = 0
@@ -44,26 +46,26 @@ def feeder(lineno, s, fn, data = {}):
 		groupd = m.groupdict()
 		key = groupd["var"]
 		if groupd.has_key("exp") and groupd["exp"] != None:
-			oedata.setVarFlag(key, "export", 1, data)
+			oe.data.setVarFlag(key, "export", 1, data)
 		if groupd.has_key("colon") and groupd["colon"] != None:
-			val = oedata.expand(groupd["value"], data)
+			val = oe.data.expand(groupd["value"], data)
 		else:
 			val = groupd["value"]
-		oedata.setVar(key, val, data)
+		oe.data.setVar(key, val, data)
 		return
 
 	m = __include_regexp__.match(s)
 	if m:
-		s = oedata.expand(m.group(1), data)
+		s = oe.data.expand(m.group(1), data)
 		if os.access(os.path.abspath(s), os.R_OK):
 			debug(2, "%s:%d: including %s" % (fn, lineno, s))
-#			inherit_os_env(2, self.env)
+			oe.data.inheritFromOS(2, data)
 			include(fn, s, data)
 		else:
 			debug(1, "%s:%d: could not import %s" % (fn, lineno, s))
 		return
 
 # Add us to the handlers list
-from oeparse import handlers
-handlers.append({'supports': supports, 'handle': handle})
+from oe.parse import handlers
+handlers.append({'supports': supports, 'handle': handle, 'init': init})
 del handlers
