@@ -12,7 +12,8 @@
 #  Please visit http://www.openembedded.org/phpwiki/ for more info.
 #
 
-import sys,posixpath,string,types
+import sys,posixpath,os,string,types
+
 projectdir = posixpath.dirname(posixpath.dirname(posixpath.abspath(sys.argv[0])))
 env = {}
 env['OEDIR'] = projectdir
@@ -21,6 +22,22 @@ env['TMPDIR'] = projectdir+'/tmp'
 class VarExpandError(Exception):
 	pass
 
+
+
+prepender = ''
+def debug(lvl, *args):
+	if env.has_key('BDEBUG') and (env['BDEBUG'] >= lvl):
+		print prepender + 'DEBUG:', string.join(args, '')
+
+def note(*args):
+	print prepender + 'NOTE:', string.join(args, '')
+
+def error(*args):
+	print prepender + 'ERROR:', string.join(args, '')
+
+def fatal(*args):
+	print prepender + 'ERROR:', string.join(args, '')
+	sys.exit(1)
 
 
 #######################################################################
@@ -294,6 +311,25 @@ setenv('TMPDIR', '${OEDIR}/tmp' )
 
 #######################################################################
 #
+# This reads the the os-environment and imports variables marked as such in envdesc
+# into our environment. This happens at various places during package definition
+# read time, see comments near envdesc[] for more.
+#
+def inherit_os_env(position):
+	position = str(position)
+	for s in os.environ.keys():
+		try:
+			d = envdesc[s]
+			if d.has_key('inherit') and d['inherit'] == position:
+				env[s] = os.environ[s]
+				debug(2, 'inherit %s from os environment' % s)
+		except KeyError:
+			pass
+
+
+
+#######################################################################
+#
 # Reads some text file and returns a dictionary that is mykeys + all found definitions
 # Definitions have the form:
 #
@@ -312,10 +348,11 @@ setenv('TMPDIR', '${OEDIR}/tmp' )
 def getconfig(mycfg, mykeys={}, myexpand=0):
 	# TODO: add 'inherit', 'unset'
 
- 	print "DEBUG: trying", mycfg
 	import shlex
+
+ 	debug(2,"trying to read ", mycfg)
 	f = open(mycfg,'r')
-	print "NOTE: reading", mycfg
+	note("importing ", mycfg)
 	lex = shlex.shlex(f)
 	lex.wordchars = string.digits + string.letters + "~!@#%*_\:;?,./-+{}"
 	lex.quotes = "\"'"
@@ -687,32 +724,32 @@ def ververify(myorigval,silent=1):
 
 	if len(myorigval) == 0:
 		if not silent:
-			print "ERROR: package version is empty"
+			error("package version is empty")
 		_ververify_cache_[myorigval] = 0
 		return 0
 	myval = string.split(myorigval,'.')
 	if len(myval)==0:
 		if not silent:
-			print "ERROR: package name has empty version string"
+			error("package name has empty version string")
 		_ververify_cache_[myorigval] = 0
 		return 0
 	# all but the last version must be a numeric
 	for x in myval[:-1]:
 		if not len(x):
 			if not silent:
-				print "ERROR: package version has two points in a row"
+				error("package version has two points in a row")
 			_ververify_cache_[myorigval] = 0
 			return 0
 		try:
 			foo = string.atoi(x)
 		except:
 			if not silent:
-				print "ERROR: package version contains non-numeric '"+x+"'"
+				error("package version contains non-numeric '"+x+"'")
 			_ververify_cache_[myorigval] = 0
 			return 0
 	if not len(myval[-1]):
 			if not silent:
-				print "ERROR: package version has trailing dot"
+				error("package version has trailing dot")
 			_ververify_cache_[myorigval] = 0
 			return 0
 	try:
@@ -735,7 +772,7 @@ def ververify(myorigval,silent=1):
 	ep=string.split(myval[-1],"_")
 	if len(ep)!= 2:
 		if not silent:
-			print "ERROR: package version has more than one letter at then end"
+			error("package version has more than one letter at then end")
 		_ververify_cache_[myorigval] = 0
 		return 0
 	try:
@@ -743,7 +780,7 @@ def ververify(myorigval,silent=1):
 	except:
 		# this needs to be numeric, i.e. the "1" in "1_alpha"
 		if not silent:
-			print "ERROR: package version must have numeric part before the '_'"
+			error("package version must have numeric part before the '_'")
 		_ververify_cache_[myorigval] = 0
 		return 0
 
@@ -762,7 +799,7 @@ def ververify(myorigval,silent=1):
 					# if no _package_weights_ work, *then* we return 0
 					pass	
 	if not silent:
-		print "ERROR: package version extension after '_' is invalid"
+		error("package version extension after '_' is invalid")
 	_ververify_cache_[myorigval] = 0
 	return 0
 
@@ -821,13 +858,13 @@ def pkgsplit(mypkg, silent=1):
 	myparts = string.split(mypkg,'-')
 	if len(myparts) < 2:
 		if not silent:
-			print "ERROR: package name without name or version part" 
+			error("package name without name or version part")
 		_pkgsplit_cache_[mypkg] = None
 		return None
 	for x in myparts:
 		if len(x) == 0:
 			if not silent:
-				print "ERROR: package name with empty name or version part"
+				error("package name with empty name or version part")
 			_pkgsplit_cache_[mypkg] = None
 			return None
 	# verify rev
@@ -866,7 +903,7 @@ def pkgsplit(mypkg, silent=1):
 		else:
 			for x in myparts[:-1]:
 				if ververify(x):
-					if not silent: print "ERROR: package name has multiple version parts"
+					if not silent: error("package name has multiple version parts")
 					_pkgsplit_cache_[mypkg] = None
 					return None
 			myval = [string.join(myparts[:-1],"-"), myparts[-1],"r0"]
@@ -1079,7 +1116,7 @@ def dep_opconvert(mysplit, myuse):
 			try:
 				mynew = dep_opconvert(mysplit[mypos+1],myuse)
 			except Exception, e:
-				print "ERROR: nable to satisfy OR dependancy:", string.join(mysplit," || ")
+				error("unable to satisfy OR dependancy: " + string.join(mysplit," || "))
 				raise e
 			mynew[0:0] = ["||"]
 			newsplit.append(mynew)
@@ -1217,6 +1254,25 @@ class digraph:
 
 envdesc = {
 
+#
+# desc:        descriptional text
+#
+# warnlevel 1: notify the user that this field is missing
+# warnlevel 2: complain loudly if this field doesn't exist, but continue
+# warnlevel 3: this field is absolutely mandatory, stop working if it isn't there
+#
+# warn:        text to display when showing a warning
+#
+# inherit 1:   get this var from the environment (if possible) before global config
+# inherit 2:   between global and local config
+# inherit 3:   between local config and package definition
+# inherit 4:   after automatic variable settings
+# inherit 5:   after package definition
+#              (this defines the precendency, because any var can be overriden by the next step)
+#
+# export:      when creating the package build script, do not only define this var, but export it
+#
+
 # Mandatory fields
 
 "DESCRIPTION": { "desc":      "description of the package",
@@ -1239,33 +1295,76 @@ envdesc = {
 "FOR_TARGET": {  "desc":      "allows us to disable allow package for specific arch/boards", },
 "SLOT": {        "desc":      "installation slot, i.e glib1.2 could be slot 0 and glib2.0 could be slot 1", },
 "GET_URI": {     "desc":      "get this files like SRC_URI, but don't extract them", },
-
+"MAINTAINER": {  "desc":      "who is reponsible for fixing errors?", },
+"BDEBUG": {      "desc":      "debug-level for the builder", },
 
 # Automatic set (oemake related):
 
-"OEDIR": {       "desc":      "where the build system for OpenEmbedded is located", },
-"OEPATH": {      "desc":      "additional directories to consider when building packages", },
-"TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded", },
-"P": {           "desc":      "package name without the revision, e.g. 'xfree-4.2.1'", },
-"CATEGORY": {    "desc":      "category for the source package, e.g. 'x11-base'", },
-"PN": {          "desc":      "package name without the version, e.g. 'xfree'", },
-"PV": {          "desc":      "package version without the revision, e.g. '4.2.1'", },
-"PR": {          "desc":      "package revision, e.g. 'r2'", },
-"PF": {          "desc":      "full package name, e.g. 'xfree-4.2.1-r2'", },
-"WORKDIR": {     "desc":      "path to the package build root", },
-"FILESDIR": {    "desc":      "location of package add-on files (patches, configurations etc)", },
-"S": {           "desc":      "source will be extracted to this directory", },
-"T": {           "desc":      "free-to-use temporary directory at package built time", },
-"D": {           "desc":      "path to a destination install directory", },
+"OEDIR": {       "desc":      "where the build system for OpenEmbedded is located",
+                 "warnlevel": 3 },
+"OEPATH": {      "desc":      "additional directories to consider when building packages",
+                 "warnlevel": 1 },
+"TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded",
+                 "warnlevel": 3 },
+"P": {           "desc":      "package name without the revision, e.g. 'xfree-4.2.1'",
+                 "warnlevel": 3 },
+"CATEGORY": {    "desc":      "category for the source package, e.g. 'x11-base'",
+                 "warnlevel": 2 },
+"PN": {          "desc":      "package name without the version, e.g. 'xfree'",
+                 "warnlevel": 3 },
+"PV": {          "desc":      "package version without the revision, e.g. '4.2.1'",
+                 "warnlevel": 3 },
+"PR": {          "desc":      "package revision, e.g. 'r2'",
+                 "warnlevel": 2 },
+"PF": {          "desc":      "full package name, e.g. 'xfree-4.2.1-r2'",
+                 "warnlevel": 3 },
+"WORKDIR": {     "desc":      "path to the package build root",
+                 "warnlevel": 3 },
+"FILESDIR": {    "desc":      "location of package add-on files (patches, configurations etc)",
+                 "warnlevel": 3 },
+"S": {           "desc":      "directory wheere source will be extracted into",
+                 "warnlevel": 3 },
+"T": {           "desc":      "free-to-use temporary directory during package built time",
+                 "warnlevel": 3 },
+"D": {           "desc":      "path to a destination install directory",
+                 "warnlevel": 3 },
 "IUSE": {        "desc":      "This is set to what USE variables your package uses", },
+"A": {           "desc":      "lists all sourcefiles without URL/Path",
+                 "warnlevel": 1 },
 
 # Architecture / Board related:
-"CBUILD": {      "desc":      "this is --build on host (for configure), e.g. 'i386'", },
-"CCHOST": {      "desc":      "this is --target to run on (for configure), e.g. 'arm'", },
-"TARGET": {      "desc":      "Target system to compile for, e.g. 'ramses'", },
+
+"CBUILD": {      "desc":      "this is --build on host (for configure), e.g. 'i386'",
+                 "warnlevel": 3,
+                 "warn":      "specify this variable in ${OEPATH}/conf/global.oe" },
+"CCHOST": {      "desc":      "this is --target to run on (for configure), e.g. 'arm'",
+                 "warnlevel": 3,
+                 "warn":      "specify this variable in ${OEPATH}/conf/global.oe" },
+"TARGET": {      "desc":      "Target system to compile for, e.g. 'ramses'",
+                 "warnlevel": 2,
+                 "warn":      "specify this variable in ${OEPATH}/conf/global.oe", },
 
 # Package creation functions:
-"src_compile": {  "desc":     "Shell function needed to compile package", },
-"src_unpack": {   "desc":     "Shell function needed to unpack sources", },
+
+"pkg_setup": {   "desc":     "use for setup functions before any other action takes place", },
+"pkg_nofetch": { "desc":     "ask user to get the source files himself", },
+"src_compile": { "desc":     "commands needed to compile package",
+                 "warnlevel": 2 },
+"src_install": { "desc":     "this should install the compiled package into ${D}",
+                 "warnlevel": 2 },
+"pkg_preinst": { "desc":     "commands to be run on the target before installation ", },
+"pkg_postint": { "desc":     "commands to be run on the target after installion", },
+"pkg_prerm": {   "desc":     "commands to be run on the target before removal", },
+"pkg_postrm": {  "desc":     "commands to be run on the target after removal", },
+
+# Automatically generated, but overrideable:
+
+"pkg_fetch": {   "desc":     "fetch source code",
+                 "warnlevel": 2, },
+"src_unpack": {  "desc":     "creates the source directory ${S} and populates it",
+                 "warnlevel": 2 },
+
+"BDEBUG": {      "desc":     "build-time debug level",
+                 "inherit":  "1" },
 
 }
