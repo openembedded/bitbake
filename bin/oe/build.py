@@ -11,8 +11,7 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
 from oe import debug, data, fetch, fatal, error, note, event, mkdirhier
-import oe
-import os
+import oe, os, string
 
 # data holds flags and function name for a given task
 _task_data = data.init()
@@ -89,7 +88,7 @@ def exec_func(func, d, dirs = None):
 	"""Execute an OE 'function'"""
 
 	if not dirs:
-		dirs = data.getVarFlag(func, 'dirs', d) or []
+		dirs = string.split(data.getVarFlag(func, 'dirs', d) or "")
 	for adir in dirs:
 		adir = data.expand(adir, d)
 		mkdirhier(adir) 
@@ -258,7 +257,7 @@ def exec_task(task, d):
 	_task_graph.walkdown(task, execute)
 
 	# make stamp, or cause event and raise exception
-	if not data.getVarFlag(task, 'nostamp', _task_data):
+	if not data.getVarFlag(task, 'nostamp', d):
 		mkstamp(task, d)
 
 
@@ -280,7 +279,7 @@ def stamp_is_current(task, d, checkdeps = 1):
 	_deps = []
 	def checkStamp(graph, task):
 		# check for existance
-		if data.getVarFlag(task, 'nostamp', _task_data):
+		if data.getVarFlag(task, 'nostamp', d):
 			return 1
 
 		if not stamp_is_current(task, d, 0):
@@ -337,29 +336,3 @@ def task_exists(task):
 
 def get_task_data():
 	return _task_data
-
-data.setVarFlag("do_showdata", "nostamp", "1", _task_data)
-data.setVarFlag("do_showtasks", "nostamp", "1", _task_data)
-data.setVarFlag("do_listtasks", "nostamp", "1", _task_data)
-data.setVarFlag("do_clean", "nostamp", "1", _task_data)
-data.setVarFlag("do_mrproper", "nostamp", "1", _task_data)
-data.setVarFlag("do_build", "nostamp", "1", _task_data)
-
-data.setVarFlag("do_fetch", "nostamp", "1", _task_data)
-data.setVarFlag("do_fetch", "check", "check_md5", _task_data)
-data.setVarFlag("do_fetch", "md5data", [ "${SRC_URI}" ], _task_data)
-
-data.setVarFlag("do_unpack", "check", "check_md5", _task_data)
-data.setVarFlag("do_unpack", "md5data", [ "A" ], _task_data)
-data.setVarFlag("do_unpack", "undo", [ "do_clean" ], _task_data)
-
-data.setVarFlag("do_patch", "check", "check_md5", _task_data)
-data.setVarFlag("do_patch", "md5data", [ "A" ], _task_data)
-
-data.setVarFlag("do_compile", "check", "check_md5", _task_data)
-
-data.setVarFlag("do_stage", "check", "check_md5", _task_data)
-
-data.setVarFlag("do_install", "check", "check_md5", _task_data)
-
-data.setVarFlag("do_package", "check", "check_md5", _task_data)

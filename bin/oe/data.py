@@ -281,9 +281,12 @@ def inheritFromOS(pos, d = _data):
 	pos = str(pos)
 	for s in os.environ.keys():
 		try:
-			inherit = getVarFlag(s, "inherit", d)
-			if inherit is not None and inherit == pos:
+			if pos == "1":
 				setVar(s, os.environ[s], d)
+			else:
+				inherit = getVarFlag(s, "inherit", d)
+				if inherit is not None and inherit == pos:
+					setVar(s, os.environ[s], d)
 		except KeyError:
 			pass
 
