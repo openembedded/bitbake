@@ -269,12 +269,11 @@ if len(sys.argv) < 3:
 	usage(1)
 	fatal("try 'oebuild <command> <somebuildfile.oe>'")
 
-if not env.has_key("OEPATH"):
-	env["OEPATH"] = "${OEDIR}:.:./bin"
+inherit_os_env(1)
 
 __oepath_found_it__ = 0
 
-for s in expand(env['OEPATH']).split(":"):
+for s in getenv('OEPATH').split(":"):
 	if os.access(os.path.join(s,'conf/oe.conf'), os.R_OK):
 		__oepath_found_it__ = 1
 		try:
