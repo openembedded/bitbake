@@ -304,7 +304,12 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 	if getVarFlag(var, "python", d):
 		return 0
 
-	val = getVar(var, d, 1)
+	try:
+		val = getVar(var, d, 1)
+	except:
+		o.write('# expansion of %s threw %s\n' % (var, sys.exc_info()[0]))
+		return 0
+		
 	if type(val) is not types.StringType:
 		return 0
 
