@@ -78,13 +78,16 @@ syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend 
 " BitBake 'def'd python functions
 syn keyword bbDef	def	contained
 
-syn match bbDefCmd		"^def" skipwhite nextgroup=bbDefFunc
+syn match bbDefCmd		"^def" contains=bbDef skipwhite nextgroup=bbDefFunc
 syn match bbDefFunc		"\w\+" contains=bbFunction contained skipwhite nextgroup=bbDefArgs
 syn region bbDefArgs		matchgroup=bbDelimiter start="(" end=")" excludenl contained skipwhite keepend contains=bbIdentifier nextgroup=bbDefRegion
 syn region bbDefRegion		start=":$" end='^$' end='^\(\s\)\@!' contained contains=@python
 
-hi def link bbDefCmd		bbStatement
 
+" BitBake statements
+syn keyword bbStatement		include inherit addtask addhandler
+
+hi def link bbDef		Statement
 hi def link bbPythonFlag	Type
 hi def link bbStatement		Statement
 hi def link bbString		String
