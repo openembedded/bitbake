@@ -16,40 +16,27 @@ endif
 
 syn case match
 
+
 " Catch incorrect syntax (only matches if nothing else does)
+"
 syn match bbUnmatched		"."
+
+
+" Other
 
 syn match bbComment		"^#.*$" display contains=bbTodo
 syn keyword bbTodo		TODO FIXME XXX contained
 syn match bbDelimiter		"[(){}=]" contained
 syn match bbQuote		/['"]/ contained
+syn match bbArrayBrackets	"[\[\]]" contained
 
-"syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ keepend contains=bbTodo
-"syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ keepend contains=bbTodo
+
+" BitBake strings
+
 syn match bbContinue		"\\$"
 syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ contained keepend contains=bbTodo,bbContinue,bbVarDeref
 syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ contained keepend contains=bbTodo,bbContinue,bbVarDeref
 
-" First attempt:
-" syn keyword bbPythonFlag	python contained nextgroup=bbFunction
-" syn region bbPythonFuncRegion	start="^python\s\+\w\+\s*()\s*{" end="^}$" keepend contains=bbPythonFuncDef
-" syn match bbPythonFuncDef	"^python\s\+\w\+\s*()\s*{" contained contains=bbPythonFlag
-" hi def link bbPythonFuncRegion	Comment
-" hi def link bbPythonFlag	Type
-
-" Second attempt:
-" syn keyword bbPythonFlag	python contained nextgroup=bbFunction
-" syn match bbPythonFuncDef	"^python\s\+\w\+\s*()\s*{" contained contains=bbPythonFlag,bbFunction,bbDelimiter
-" syn region bbPythonFuncRegion	start="^python\s\+\w\+\s*()\s*{" end="^}$" keepend contains=bbPythonFuncDef,bbDelimiter
-" hi def link bbPythonFuncRegion	Comment
-" hi def link bbPythonFlag	Type
-
-" Third attempt:
-" syn keyword bbPythonFlag	python contained nextgroup=bbFunction
-" syn match bbPythonFuncDef	"^\(python\s\+\w\+\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion
-" syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained
-" hi def link bbPythonFuncRegion	Comment
-" hi def link bbPythonFlag	Type
 
 " BitBake variable metadata
 
@@ -99,22 +86,17 @@ syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" k
 
 " BitBake 'def'd python functions
 syn keyword bbDef	def	contained
-
-" syn match bbDefCmd		"^def" contains=bbDef skipwhite nextgroup=bbDefFunc
-" syn match bbDefFunc		"\w\+" contains=bbFunction contained skipwhite nextgroup=bbDefArgs
-" syn region bbDefArgs		matchgroup=bbDelimiter start="(" end=")" excludenl contained skipwhite keepend contains=bbIdentifier nextgroup=bbDefRegion
-" syn region bbDefRegion		matchgroup=bbDelimiter start=":\s*$" end='^\(\s\|$\)\@!' contained contains=@python
-
 syn region bbDefRegion		start='^def\s\+\w\+\s*([^)]*)\s*:\s*$' end='^\(\s\|$\)\@!' contains=@python
+
 
 " BitBake statements
 syn keyword bbStatement		include inherit addtask addhandler EXPORT_FUNCTIONS display contained
 syn match bbStatementLine	"^\(include\|inherit\|addtask\|addhandler\|EXPORT_FUNCTIONS\)\s\+" contains=bbStatement nextgroup=bbStatementRest
 syn match bbStatementRest		".*$" contained contains=bbString,bbVarDeref
 
-syn match bbArrayBrackets	"[\[\]]" contained
+" Highlight
+"
 hi def link bbArrayBrackets	Statement
-
 hi def link bbUnmatched		Error
 hi def link bbVarDeref		String
 hi def link bbContinue		Special
@@ -132,7 +114,6 @@ hi def link bbFunction		Function
 hi def link bbDelimiter		Delimiter
 hi def link bbIdentifier	Identifier
 hi def link bbVarEq		Operator
-
 hi def link bbQuote		String
 hi def link bbVarValue		String
 
