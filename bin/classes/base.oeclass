@@ -45,7 +45,7 @@ python base_do_mrproper() {
 
 python base_do_patch () {
 	import re, string
-	from oe import decodeurl
+	from oe import decodeurl, note
 
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
@@ -53,6 +53,7 @@ python base_do_patch () {
 		return
 	src_uri = data.expand(src_uri, d)
 	for url in src_uri.split():
+		note('url is %s' % url)
 		(type, host, path, user, pswd, parm) = decodeurl(url)
 		if not parm.has_key("patch"):
 			continue
@@ -61,7 +62,10 @@ python base_do_patch () {
 		local = localpath(url)
 		# patch!
 		dots = local.split(".")
-		efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(re.sub(r"\.%s$" % dots[-1],"",local)))
+		if dots[-1] in ['gz', 'bz2', 'Z']:
+			efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(local))
+		else:
+			efile = local
 		efile = data.expand(efile, d)
 		patches_dir = data.expand(data.getVar('PATCHES_DIR', d), d)
 		mkdirhier(patches_dir)
@@ -78,7 +82,7 @@ python base_do_patch () {
 		cmd += " -i %s" % efile
 		ret = os.system(cmd)
 		if ret != 0:
-			raise FuncFailed("'patcher' execution failed")
+			raise TaskFailed("'patcher' execution failed")
 }
 
 python base_do_fetch() {
@@ -120,10 +124,10 @@ base_do_unpack() {
 
 base_do_compile() {
 	if [ -x ./configure ] ; then
-		oeconf 
+		oe_runconf 
 	fi
 	if [ -e Makefile -o -e makefile ]; then
-		oemake || die "oemake failed"
+		oe_runmake || die "make failed"
 	else
 		oenote "nothing to compile"
 	fi
