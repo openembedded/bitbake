@@ -23,8 +23,9 @@ syn match bbQuote		/['"]/ contained
 
 "syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ keepend contains=bbTodo
 "syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ keepend contains=bbTodo
-syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ contained keepend contains=bbTodo
-syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ contained keepend contains=bbTodo
+syn match bbContinue		"\\$"
+syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ contained keepend contains=bbTodo,bbContinue
+syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ contained keepend contains=bbTodo,bbContinue
 
 " First attempt:
 " syn keyword bbPythonFlag	python contained nextgroup=bbFunction
@@ -103,6 +104,7 @@ syn keyword bbStatement		include inherit addtask addhandler
 syn match bbArrayBrackets	"[\[\]]" contained
 hi def link bbArrayBrackets	Statement
 
+hi def link bbContinue		Special
 hi def link bbDef		Statement
 hi def link bbPythonFlag	Type
 hi def link bbStatement		Statement
