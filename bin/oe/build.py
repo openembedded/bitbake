@@ -258,7 +258,8 @@ def exec_task(task, d):
 				exec_func(item, d)
 				event.fire(TaskSucceeded(item, d))
 				task_cache.append(item)
-			except FuncFailed:
+			except FuncFailed, reason:
+				note( "Task failed: %s" % reason )
 				failedevent = TaskFailed(item, d)
 				event.fire(failedevent)
 				raise EventException(None, failedevent)
