@@ -1736,8 +1736,7 @@ def emit_env(o=sys.__stdout__, env = globals()["env"]):
 	It is used by exec_shell_func().
 	"""
 
-	o.write('\nPATH="' + os.path.join(projectdir, 'bin/build') + ':${PATH}"\n')
-
+#	o.write('\nPATH="' + os.path.join(projectdir, 'bin/build') + ':${PATH}"\n')
 
 	for s in env:
 		if s == s.lower(): continue
