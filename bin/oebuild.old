@@ -1,0 +1,607 @@
+#!/usr/bin/python
+
+import sys,os,string
+sys.path.append(os.path.join(sys.prefix,'share/oe'))
+from oe import emit_env
+from oe import *
+
+
+#######################################################################
+class FuncFailed(Exception):
+	"""Executed function failed"""
+
+class TaskBase(event.Event):
+	"""Base class for task events"""
+
+	def __init__(self, t, d = {}):
+		self.task = t
+		self.data = d
+
+	def getTask(self):
+		return self._task
+
+	def setTask(self, task):
+		self._task = task
+
+	task = property(getTask, setTask, None, "task property")
+
+	def getData(self):
+		return self._data
+
+	def setData(self, data):
+		self._data = data
+
+	data = property(getData, setData, None, "data property")
+
+class TaskStarted(TaskBase):
+	"""Task execution started"""
+	
+class TaskSucceeded(TaskBase):
+	"""Task execution succeeded"""
+
+class TaskFailed(TaskBase):
+	"""Task execution failed"""
+
+def exec_shell_func(func, d=None, myfatal=fatal):
+	"""This executes any shell function stored in env[func]. Returns
+	true if execution was successful.
+
+	For this, it creates a bash shell script in the tmp dectory, writes the local
+	environment in env[] into it and finally executes this. The output of the
+	shell will end in a log file and stdout.
+	"""
+
+	if tasks.has_key(func) and tasks[func].has_key('deps'):
+		deps = tasks[func]['deps']
+	else:
+		deps = None
+
+	if tasks.has_key(func) and tasks[func].has_key('check'):
+		checkfunc = tasks[func]['check']
+	else:
+		checkfunc = 'stamp_is_current'
+
+	if globals()[checkfunc](func, deps):
+		return
+
+	global logfile
+	mkdirhier(getenv('T'))
+	logfile = getenv('T') + '/log.' + func + '.' + str(os.getpid())
+	runfile = getenv('T') + '/run.' + func + '.' + str(os.getpid())
+
+	f = open(runfile, "w")
+	f.write("#!/bin/bash\n")
+	if env.has_key('OEDEBUG'): f.write("set -x\n")
+	if env.has_key('OEPATH'):
+		for s in expand(env['OEPATH']).split(":"):
+			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
+	emit_env(f)
+
+	if d:  f.write("cd %s\n" % env[d])
+	if func: f.write(func +"\n")
+	f.close()
+	os.chmod(runfile, 0775)
+	if not func:
+		error("Function not specified")
+		raise FuncFailed()
+	event.fire(TaskStarted(func, env))
+	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
+	if ret==0:
+		if not env.has_key('OEDEBUG'): 
+			os.remove(runfile)
+			os.remove(logfile)
+		event.fire(TaskSucceeded(func, env))
+		mkstamp(func)
+		return
+	else:
+		error("'%s'() failed" % func);
+		error("more info in: %s" % logfile);
+		event.fire(TaskFailed(func, env))
+		raise FuncFailed()
+
+
+def exec_python_func(func, dirname = None, myfatal = fatal):
+	if tasks.has_key(func) and tasks[func].has_key('deps'):
+		deps = tasks[func]['deps']
+	else:
+		deps = None
+
+	if tasks.has_key(func) and tasks[func].has_key('check'):
+		checkfunc = tasks[func]['check']
+	else:
+		checkfunc = 'stamp_is_current'
+
+	if globals()[checkfunc](func, deps):
+		return
+
+	if not env.has_key(dirname):
+		warn("dir variable %s does not exist, cannot chdir" % dirname)
+		return
+
+	event.fire(TaskStarted(func, env))
+
+	dir = env[dirname]
+
+	if not os.path.isdir(dir):
+		debug(1, "%s does not exist, creating it." % dir)
+		mkdirhier(dir)
+
+	os.chdir(dir)
+	try:
+		comp = compile(getenv(func),func,'exec')
+		exec(comp)
+	except Exception, e:
+		(type, value, traceback) = sys.exc_info()
+		error("Python function %s failed: %s" % (func, value))
+		event.fire(TaskFailed(func, env))
+		raise FuncFailed(value)
+	event.fire(TaskSucceeded(func, env))
+	mkstamp(func)
+
+
+#######################################################################
+__success = []
+
+def exec_task(task, dir, deptasks = []):
+	"""Executes a given task, handling the stamps appropriately"""
+
+	if task in __success:
+		return
+
+	if not deptasks:
+		try:
+			deptasks = tasks[task]["deps"]
+		except KeyError:
+			pass
+
+	for dep in deptasks:
+		try:
+			depfuncname = tasks[dep]["func"]
+			depfunc = globals()[depfuncname]
+			depfunc()
+			__success.append(dep)
+		except KeyError:
+			debug(2, "%s: invalid 'func' for task %s, running exec_task directly." % (task, dep))
+			if tasks.has_key(dep) and tasks[dep].has_key("deps"):
+				exec_task(dep, dir, tasks[dep]["deps"])
+			else:
+				exec_task(dep, dir)
+
+	if not tasks.has_key(task):
+		if not envflags.has_key(task) and not env.has_key(task):
+			error("unsupported task: %s" % task)
+			raise FuncFailed()
+
+	debug(1, "Executing task '%s'" % task)
+
+	if envflags.has_key(task) and envflags[task].has_key("python") and envflags[task]["python"] is not None:
+		# execute this function as a block of python code, not shell
+		exec_python_func(task, dir)
+	else:
+		exec_shell_func(task, dir)
+	__success.append(task)
+
+def mkstamp(task):
+	"""Creates/updates a stamp for a given task"""
+	mkdirhier(expand('${TMPDIR}/stamps'));
+	open(getenv('STAMP')+"."+task, "w+")
+
+def stamp_is_current(task, deptasks=""):
+	"""Check status of a given task's stamp. returns False if it is not current and needs updating."""
+	stampfile = getenv('STAMP') + "." + task
+	if not os.access(stampfile, os.F_OK):
+		return False
+
+	import stat
+	tasktime = os.stat(stampfile)[stat.ST_MTIME]
+	if deptasks is None:
+		return True
+
+	for dep in deptasks:
+		depfile = getenv('STAMP') + "." + dep
+		if not os.access(depfile, os.F_OK):
+			return True
+		deptime = os.stat(depfile)[stat.ST_MTIME]
+		if deptime > tasktime:
+			return False
+
+	return True
+
+def check_md5(task, deptasks):
+	md5s = []
+	if env.has_key(task):
+		# this is an environment task.
+		md5s.append(env[task])
+	if tasks.has_key(task) and tasks[task].has_key('md5check'):
+		for dep in tasks[task]['md5check']:
+			if env.has_key(dep):
+				md5s.append(env[dep])
+
+	import md5
+	TaskMD5 = md5.new()
+	for m in md5s:
+		TaskMD5.update(m)
+
+	def write_md5(task, digest):
+		path = os.path.join(os.path.dirname(getenv('STAMP')),"md5."+getenv('PF')+'.'+task)
+		try:
+			stamp = open(path, "wb+")
+		except Exception:
+			return None
+
+		stamp.write(digest)
+		stamp.close()
+
+	def read_md5(task):
+		path = os.path.join(os.path.dirname(getenv('STAMP')),"md5."+getenv('PF')+'.'+task)
+		try:
+			stamp = open(path, "rb+")
+		except Exception:
+			return None
+
+		digest = stamp.read()
+		stamp.close()
+		return digest
+	# follow dependency path, calling 'undo' functions to cleanup
+	def followdown(item, callback):
+		try:
+			deps = tasks[item]['deps']
+		except KeyError:
+			deps = None
+		if deps is not None:
+			for p in deps:
+				ret = followdown(p, callback)
+		return callback(item)
+
+	def followup(item, callback):
+		# obtain list of items that depend on item
+		deps = [ task for task in tasks if tasks[task].has_key('deps') and item in tasks[task]['deps'] ]
+
+		for p in deps:
+			ret = followup(p, callback)
+		return callback(item)
+
+	def undo(task):
+		undo = None
+		undodeps = None
+		try:
+			undo = tasks[task]['undo']
+			undodeps = tasks[undo]['deps']
+		except KeyError:
+			pass
+		if not undo: return
+		try:
+			depfuncname = tasks[undo]["func"]
+			depfunc = globals()[depfuncname]
+			depfunc()
+		except KeyError:
+			if undodeps:
+				exec_task(undo, None, undodeps)
+			else:
+				exec_task(undo, None)
+
+
+	old = read_md5(task)
+	new = TaskMD5.digest()
+	if old is None or old != new:
+		# md5sum has changed
+		# remove the stamp so that next time it rebuilds regardless
+		try:
+			os.remove(getenv('STAMP')+"."+task)
+		except OSError, IOError:
+			pass
+
+		followup(task, undo)
+
+		# update md5
+		write_md5(task, new)
+		return 0
+
+	return stamp_is_current(task, deptasks)
+
+#TODO: rmstamp
+
+
+#######################################################################
+
+def do_clean():
+	"""clear the build and temp directories"""
+
+	note("Executing task 'clean'")
+
+	dir = expand("${TMPDIR}/${CATEGORY}/${PF}")
+	if dir == '//': fatal("wrong DATADIR")
+	note("removing " + dir)
+	os.system('rm -rf ' + dir)
+
+	dir = getenv('STAMP')+'.*'
+	note("removing " + dir)
+	os.system('rm -f '+ dir)
+
+
+#######################################################################
+
+def do_mrproper():
+	"""clear downloaded sources, build and temp directories"""
+
+	note("Executing task 'mrproper'")
+
+	dir = getenv("DL_DIR")
+	if dir == '/': fatal("wrong DATADIR");
+	debug(2, "removing " + dir)
+	os.system('rm -rf ' + dir)
+	do_clean()
+
+
+#######################################################################
+
+def do_fetch():
+	"""download needed sources"""
+
+	event.fire(TaskStarted('do_fetch', env))
+
+	mkdirhier(getenv("DL_DIR"))	# create file download directory
+
+	if env.has_key('SRC_URI'):
+		try:
+			fetch.init(getenv('SRC_URI').split())
+		except fetch.NoMethodError:
+			(type, value, traceback) = sys.exc_info()
+			error("No method: %s" % value)
+			event.fire(TaskFailed('do_fetch', env))
+			raise FuncFailed()
+
+		try:
+			fetch.go()
+		except fetch.MissingParameterError:
+			(type, value, traceback) = sys.exc_info()
+			error("Missing parameters: %s" % value)
+			event.fire(TaskFailed('do_fetch', env))
+			raise FuncFailed()
+		except fetch.FetchError:
+			(type, value, traceback) = sys.exc_info()
+			error("Fetch failed: %s" % value)
+			event.fire(TaskFailed('do_fetch', env))
+			raise FuncFailed()
+	else:
+		note("No SRC_URI variable, nothing to be done")
+	event.fire(TaskSucceeded('do_fetch', env))
+
+
+#######################################################################
+
+def do_unpack():
+	"""unpack downloaded sources, patch sources if needed"""
+
+	mkdirhier(env["WORKDIR"])	# create workdir
+	
+	exec_task('do_unpack', 'WORKDIR')
+
+
+#######################################################################
+
+def do_compile():
+	"""compile extracted sources"""
+
+	mkdirhier(env["S"])		# create sourcedir if not yet existing
+	exec_task('do_compile', 'S')
+
+
+#######################################################################
+
+def do_stage():
+	"""install needed files to compile other packages into staging directory"""
+
+	mkdirhier(getenv("S"))		# create sourcedir if not yet existing
+	mkdirhier(getenv("STAGING_LIBDIR"))
+	mkdirhier(getenv("STAGING_BINDIR"))
+	mkdirhier(getenv("STAGING_DIR") + "/build/include")
+	mkdirhier(getenv("STAGING_DIR") + "/target/include")
+	exec_task('do_stage', 'S')
+		
+
+#######################################################################
+
+def do_install():
+	"""install compiled files into image directory"""
+
+	mkdirhier(env["S"])		# create sourcedir if not yet existing
+	exec_task('do_install', 'S')
+		
+
+#######################################################################
+
+def do_build():
+	"""fetch, extract, compile, stage and install files"""
+	exec_task('do_build', 'S')
+
+
+#######################################################################
+
+def do_test():
+	"""internal"""
+
+	ret = exec_shell_func(None)
+
+
+
+#######################################################################
+
+def do_showenv():
+	"""internal
+
+	Just for testing purposes. Displays all environment vars that
+	are NOT automatically generated by oebuild, but are in the config
+	file.
+
+	Might give 'false positives' if some environment variable has not
+	yet been documented in py's envflags{}.
+	"""
+
+	keys = env.keys()
+	keys.sort()
+	for s in keys:
+		#if envflags.has_key(s): continue
+		
+		var = env[s]
+		var = expand(var)
+
+		if s == s.lower():
+			print s + '() {\n' + var + '}'
+		else:
+			print s+'=' + var
+
+	print_missing_env()
+	print_orphan_env()
+
+
+#######################################################################
+
+def usage(errorlevel=0, txt=''):
+	global tasks
+	if txt:
+		print
+		print txt
+
+	funcs = []
+	for i in tasks.keys():
+		if tasks[i].has_key("func"):
+			funcs.append(tasks[i]["func"])
+	funcs.sort()
+
+	print "\noebuild <command> <somebuildfile.oe>\n"
+	print "Valid commands are:"
+	for s in funcs:
+		if not globals().has_key(s):
+			continue
+		doc = getattr(globals()[s], '__doc__')
+		if doc.startswith('internal'): continue
+		print "     %-15s %s" % (s[3:], doc)
+	
+	sys.exit(errorlevel)
+
+tasks = {
+	"do_clean" : { "func" : "do_clean",
+		     },
+	"do_mrproper" : { "func" : "do_mrproper",
+		         },
+	"do_test" : { "func" : "do_test",
+		    },
+	"do_showenv" : { "func" : "do_showenv",
+		       },
+	"do_fetch" : { "func" : "do_fetch",
+		      "check" : "check_md5",
+		      "md5check" : ["SRC_URI"],
+		      "deps" : [ ],
+		     },
+	"do_unpack" : { "func" : "do_unpack",
+		      "check" : "check_md5",
+		      "md5check" : ["A"],
+		      "undo" : "do_clean",
+		      "deps" : [ 'do_fetch' ],
+		      },
+	"do_compile" : { "func" : "do_compile",
+		       "check" : "check_md5",
+		       "deps" : [ 'do_unpack' ],
+		       },
+	"do_patch" : { "undo" : "do_clean",
+		     "check" : "check_md5",
+		     "md5check" : ["A"],
+		     },
+	"do_stage" : { "func" : "do_stage",
+		     "check" : "check_md5",
+		     "deps" : [ 'do_compile' ],
+		     },
+	"do_install" : { "func" : "do_install",
+		       "check" : "check_md5",
+		       "deps" : [ 'do_stage' ],
+		       },
+	"do_package" : { "func" : "do_package",
+		       "check" : "check_md5",
+		       "deps" : [ 'do_install' ],
+		       },
+	"do_build" : { "func" : "do_build",
+		     "deps" : [ 'do_package' ],
+		     },
+}
+
+if len(sys.argv) < 2:
+	usage(1)
+if sys.argv[1] in ('help', 'usage'):
+	usage(0);
+if len(sys.argv) < 3:
+	usage(1)
+	fatal("try 'oebuild <command> <somebuildfile.oe>'")
+
+inherit_os_env(1)
+
+__oepath_found_it__ = 0
+
+for s in getenv('OEPATH').split(":"):
+	if os.access(os.path.join(s,'conf/oe.conf'), os.R_OK):
+		__oepath_found_it__ = 1
+		try:
+			read_config(os.path.join(s,'conf/oe.conf'))	# Read configuration
+		except IOError:
+			pass
+
+if __oepath_found_it__ == 0:
+	fatal("error locating conf/oe.conf")
+
+set_automatic_vars(sys.argv[2])			# Deduce per-package environment variables
+try:
+	read_oe(sys.argv[2])		# Read package configuration
+except IOError:
+	fatal("error accessing build file")
+set_additional_vars()				# set rest of vars, e.g. ${A}
+update_env()					# Environment modification, e.g. local overrides
+
+# check for functions to insert into the task stack
+for var in env.keys():
+	if not envflags.has_key(var):
+		continue
+	if envflags[var].has_key("handler") and env.has_key(var):
+		event.register(env[var])
+		continue
+	if not envflags[var].has_key("task"):
+		continue
+
+	taskvar = var
+	tasks[taskvar] = {}
+	if envflags[var].has_key("func"):
+		tasks[taskvar]["func"] = envflags[var]["func"]
+	else:
+		tasks[taskvar]["func"] = "INVALID"
+	if envflags[var].has_key("deps"):
+		# other tasks that we depend on
+		tasks[taskvar]["deps"] = envflags[var]["deps"] 
+	if envflags[var].has_key("postdeps"):
+		# other tasks that depend on this one
+		postdeps = envflags[var]["postdeps"]
+		for t in tasks.keys():
+			for i in postdeps:
+				if t == i:
+					if not tasks[t].has_key("deps"):
+						tasks[t]["deps"] = []
+					tasks[t]["deps"].append(taskvar)
+					break
+			
+	if envflags[var].has_key("python"):
+		tasks[taskvar]["python"] = "1"
+
+for s in sys.argv[1].split(','):
+	try:
+		try:
+			funcname = tasks["do_" + s]["func"]
+			func = globals()[funcname]
+			func()
+		except KeyError:
+			exec_task("do_" + s, "S")
+	except FuncFailed:
+		fatal("task \"%s\" failed" % s)
+
+	note("task \"%s\" completed" % s)
+#		INVALID()
+#		usage(1, "'%s' is not valid command" % s)
+
+sys.exit(0)
