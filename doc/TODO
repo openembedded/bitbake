@@ -1,6 +1,11 @@
 TODO:
 
 [x] oe package
+	[ ] Define CONFIG_SITE to point to a "SYS" specific config.site.
+
+	[ ] .oe needs access to PROVIDES information that oemake is
+	    currently populating.  Move the default set of the .oe
+	    provides into the .oe parser rather than oemake.
 	[ ] Remove duplicated implementations, and convert everyone to the new
 	    data and parse methods.
 	[ ] API Sanity Audit.
@@ -10,33 +15,31 @@ TODO:
 	    defining the variable.
 		format:
 		export [VAR[=value] ...]
+	[ ] Possibility: alternate data formats for metadata (i.e. arrays).
+		i.e. THIS[1] = "that"
+		     THIS["heh"] = "that"
 	[ ] More complex variable setting/conditionals
 		Options:
 		[ ] Add support for 'anonymous' OE functions in .oe{,class} files.
 		    These functions are to be executed immediately at parse time,
 		    thereby giving one the ability to exert more control over the set
 		    of variables.
-		[ ] if/else blocks for conditional variable setting
+		[ ] if/elseif/else/endif blocks for conditional variable setting
 	[ ] Split oemake's knowledge of AVAILABLE OEFILES from its
 	    knowledge of which packages are to be built.
 		[ ] Define structure and data exchange format(s) for
 		    upstream OE metadata repositories.
 		    Possibly follow an 'apt-get' style.  Cache the
 		    metadata locally, with a command to update.
-
-	* Build requirements
-		[ ] Code will not be automatically updated from CVS
-			[ ] Solve by making Fetch use md5.
-		[ ] Real life test case: Opie
+	[ ] Make Fetch use md5 hashing to indicate per-file download success.
+	    Or in the case of downloaded directories (cvs/svn/bk), simply a 
+	    success stamp on a per file basis.
 	[ ] Add "noinherit", as a means of removing an item from the
 	    list of classes to inherit.
 	[ ] Need a way to specify that you cannot build a given .oe,
 	    from the .oe.  Along the lines of portage's ability for
 	    an ebuild to specify that it isnt buildable for a given
 	    architecture or set of architectures.
-	[ ] .oe needs access to PROVIDES information that oemake is
-	    currently populating.  Move the default set of the .oe
-	    provides into the .oe parser rather than oemake.
 	[ ] Write helper functions ala ebuild's dobin/dodoc/etc and debian's dh_*.
 		[ ] Note, if we do this using actual commands within the .oe file
 		    as opposed to shell helpers, the buildsystem is then aware
@@ -45,13 +48,6 @@ TODO:
 		    information. 
 	[ ] Metadata exchange through multiple oebuild/oemake/oespawn executions
 	    (i.e. to set qpedir/qtdir for all builds from the qt/opie/qtopia .oe's)
-	[ ] Possibility: split staging by package, and maintain links based on
-	    the base atom vs base+version, that sort of thing.  Automatically add
-	    proper include and lib paths to the flags variables based on the items
-	    in DEPENDS.  This 1) prevent unintentional include/link to the wrong
-	    version of things, if multiple versions of things are floating around,
-	    and 2) gives us a means of do_clean wiping out a given package's staging
-	    items.
 	[ ] Split staging by package
 		[ ] When a package populates staging, create links for every item
 		    that this .oe Provides.
@@ -63,6 +59,7 @@ TODO:
 			ipkg depends on virtual/libc, puts staging_dir/libc in flags.
 			glibc staging creates symlinks for every atom it PROVIDES,
 			and installs its staging files into the glibc-ver-rev dir.
+	[ ] Revamp category handling
 	
 [ ] oebuild
 	[ ] Implement and test check_md5, taking nostamp into account.
@@ -93,3 +90,24 @@ TODO:
 	[ ] add qtopia 1.6.1
 	[.] add qt 2.3.6
 	[ ] convert packages from OpenZaurus buildroot
+
+[ ] New c++ OE library (possibility -- open to debate)
+	Benefits:
+		Newly architected with no remnant cruft from portage.
+		Easier bindings for non-python tools that utilize OE.
+		Use existing fetch routines from apt-get.
+		Easier use of libkconfig.
+	[ ] .oe lex/yacc (flex/bison) parser
+	[ ] OE metadata data structure(s) for storage in RAM
+	[ ] Code execution, status and event handling
+		[ ] Build
+		     '----Package
+			     '----Task
+	[ ] Fetching things from upstream
+		[ ] Possibly utilize apt-get "methods"
+			[ ] CVS method
+			[ ] BK method
+			[ ] SVN method
+	[ ] Shared mem interface to control autobuild daemon
+	[ ] XML/RPC metadata exchange format
+	[ ] Cross process metadata exchange with and without a metadata daemon
