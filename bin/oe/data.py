@@ -123,6 +123,7 @@ def expand(s, d = _data):
 	def python_sub(match):
 		code = match.group()[3:-1]
 		s = eval(code)
+		import types
 		if type(s) == types.IntType: s = str(s)
 		return s
 
