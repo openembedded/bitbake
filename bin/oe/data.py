@@ -230,9 +230,6 @@ def expand(s, d = _data, varname = None):
         olds = s
         s = __expand_var_regexp__.sub(var_sub, s)
         s = __expand_python_regexp__.sub(python_sub, s)
-        if len(s)>2048:
-            debug(1, "expanded string too long")
-            return s
         if s == olds: break
     return s
 
