@@ -22,7 +22,10 @@ import sys
 #------------------------------------------------------------------------#
 import qt
 import code
-import rlcompleter
+try:
+    import rlcompleter
+except ImportError:
+    print >>sys.stderr,"Warning: Couldn't import rlcompleter or readline. Continuing without... :("
 #------------------------------------------------------------------------#
 
 class EPythonShell( qt.QMultiLineEdit ):
