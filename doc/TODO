@@ -1,7 +1,7 @@
 TODO:
 
 [x] oe package
-	[ ] Define CONFIG_SITE to point to a "SYS" specific config.site.
+	[x] Define CONFIG_SITE to point to a "SYS" specific config.site.
 
 	[ ] .oe needs access to PROVIDES information that oemake is
 	    currently populating.  Move the default set of the .oe
@@ -94,6 +94,14 @@ TODO:
 		[x] core
 		[ ] symlinks
 		[ ] device specifics (patches, etc)
+	[.] ncurses
+		[x] core
+		[ ] staging function
+		[ ] install function
+	[.] openssl
+		[x] core
+		[ ] staging function
+		[ ] install function
 
 [ ] New c++ OE library (possibility -- open to debate)
 
