@@ -40,8 +40,8 @@ OE-name if different	Portage name		contents
 			ALLOWED_FLAGS		'-O -mcpu -march -pipe -g'
 			ARCH			x86
 			AUTOCLEAN		yes
-			BUILDDIR		/var/tmp/portage/fontconfig-2.2.0
-			BUILD_PREFIX		/var/tmp/portage
+-			BUILDDIR		/var/tmp/portage/fontconfig-2.2.0
+-			BUILD_PREFIX		/var/tmp/portage
 			CATEGORY		media-libs
 			CC			gcc
 			CFLAGS			'-march=athlon-xp -O2 -pipe'
@@ -58,9 +58,10 @@ OE-name if different	Portage name		contents
 			DIROPTIONS		-m0755
 			DISTDIR			/usr/portage/distfiles
 			DOCDESTTREE
-			EBUILD			/usr/portage/media-libs/fontconfig/fontconfig-2.2.0.ebuild
+OEBUILD			EBUILD			/usr/portage/media-libs/fontconfig/fontconfig-2.2.0.ebuild
 			ECLASS
 			ECLASSDIR		/usr/portage/eclass
+OECLASS_DEBUG_OUTPUT	ECLASS_DEBUG_OUTPUT
 			EPATCH_EXCLUDE
 			EPATCH_FORCE			no
 			EPATCH_OPTS
