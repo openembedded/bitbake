@@ -139,7 +139,8 @@ def expand(s, d = _data):
 		s = __expand_var_regexp__.sub(var_sub, s)
 		s = __expand_python_regexp__.sub(python_sub, s)
 		if len(s)>2048:
-			fatal("expanded string too long")
+			debug(1, "expanded string too long")
+			return s
 		if s == olds: break
 	return s
 
@@ -178,7 +179,7 @@ def inheritFromOS(pos, d = _data):
 		except KeyError:
 			pass
 
-import sys
+import sys, string
 
 def emit_env(o=sys.__stdout__, d = _data):
 	"""This prints the data so that it can later be sourced by a shell
@@ -191,8 +192,11 @@ def emit_env(o=sys.__stdout__, d = _data):
 	if oedir is None:
 		oedir = "." 
 	path = getVar('PATH', d)
-	path = os.path.join(oedir, 'bin/build') + ':' + path
-	setVar('PATH', path, d)
+	if path:
+		path = path.split(":")
+		path[0:0] = [ os.path.join("${OEDIR}", "bin/build") ]
+		path[0:0] = [ "${STAGING_BINDIR}" ]
+		setVar('PATH', expand(string.join(path, ":"), d), d)
 
 	expandData(d)
 	env = d.keys()
@@ -211,7 +215,7 @@ def emit_env(o=sys.__stdout__, d = _data):
 			continue
 		# if we're going to output this within doublequotes,
 		# to a shell, we need to escape the quotes in the var
-		alter = re.sub('"', '\\"', val)
+		alter = re.sub('"', '\\"', val.strip())
 		o.write(e+'="'+ alter + '"\n')	
 
 	for e in env:
