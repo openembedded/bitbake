@@ -1203,11 +1203,17 @@ def __read_config__(cfgfile, level):
 		m = __include_regexp__.match(s)
 		if m:
 			if not visit: return
-			s = expand(m.group(1))
-			if os.access(s, os.R_OK):
+			file = expand(m.group(1))
+			if file[0] != '/':
+				path = getenv('OEPATH').split(':')
+				path.append(os.path.dirname(os.path.abspath(oefile)))
+				for s in path:
+					if os.access(os.path.join(s,file), os.R_OK):
+						file = os.path.join(s,file)
+			if os.access(file, os.R_OK):
 				if level==0:
 					inherit_os_env(2)
-				__read_config__(s, level+1)
+				__read_config__(file, level+1)
 			else:
 				debug(1, "%s:%d: could not import %s" % (cfgfile, lineno, s))
 			return
@@ -1283,6 +1289,12 @@ def read_oe(oefile, inherit = False, classname = None):
 		m = __include_regexp__.match(s)
 		if m:
 			file = expand(m.group(1))
+			if file[0] != '/':
+				path = getenv('OEPATH').split(':')
+				path.append(os.path.dirname(os.path.abspath(oefile)))
+				for s in path:
+					if os.access(os.path.join(s,file), os.R_OK):
+						file = os.path.join(s,file)
 			try:
 				read_oe(file)
 			except IOError:
