@@ -120,6 +120,7 @@ def exec_func_python(func, d):
 	body = data.getVar(func, d)
 	if not body:
 		return
+
 	tmp = "def " + func + "():\n%s" % body
 	comp = compile(tmp + '\n' + func + '()', oe.data.getVar('FILE', d, 1) + ':' + func, "exec")
 	prevdir = os.getcwd()
