@@ -344,7 +344,7 @@ def set_additional_vars(file, d, include):
 
     a += fetch.localpaths(d)
     del fetch
-    data.setVar('A', "".join(a), d)
+    data.setVar('A', " ".join(a), d)
 
 
 # Add us to the handlers list
