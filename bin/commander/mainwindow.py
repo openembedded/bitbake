@@ -4,11 +4,22 @@
 from appinfo import *
 from mainwindowbase import *
 from aboutdialog import *
+from packages import Packages
 
 class MainWindow( MainWindowBase ):
 
     def __init__( self, parent = None, name = None, fl = 0 ):
         MainWindowBase.__init__(self, parent, name, fl )
+        
+        self.createStatusBar()
+        
+    def createStatusBar( self ):
+        self.numPackages = QLabel( "No Packages available.", self.statusBar() )
+        self.statusBar().addWidget( self.numPackages )
+    
+    #
+    # slots
+    #
 
     def fileNew(self):
         print "MainWindowBase.fileNew(): Not implemented yet"
@@ -31,8 +42,7 @@ class MainWindow( MainWindowBase ):
         QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
 
     def fileExit(self):
-        print "MainWindowBase.fileExit(): Not implemented yet"
-        QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
+        self.close()
 
     def editUndo(self):
         print "MainWindowBase.editUndo(): Not implemented yet"
@@ -57,7 +67,11 @@ class MainWindow( MainWindowBase ):
     def editFind(self):
         print "MainWindowBase.editFind(): Not implemented yet"
         QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
-
+   
+    def editPreferences(self):
+        print "MainWindowBase.editPreferences(): Not implemented yet"
+        QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
+    
     def helpIndex(self):
         print "MainWindowBase.helpIndex(): Not implemented yet"
         QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
@@ -66,9 +80,39 @@ class MainWindow( MainWindowBase ):
         print "MainWindowBase.helpContents(): Not implemented yet"
         QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
 
+    def buildAllPackages(self):
+        print "MainWindowBase.buildAllPackages(): Not implemented yet"
+        QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
+    
+    def buildSelectedPackages(self):
+        print "MainWindowBase.buildSelected(): Not implemented yet"
+        QMessageBox.information( self, "%s V%s" % ( appname, appversion ), "Not implemented yet" )
+
+    def buildRescanPackages(self):
+        d = QProgressDialog( "<p>Rescanning Packages...<br>Please wait...</p>", "Cancel", 100, None, "dlgrescan", False )
+        d.setCaption( appcaption )
+        d.show()
+        p = Packages.instance()
+        self.statusBar().message( "Rescanning Packages - please wait..." )
+        p.scan( lambda current, last, name: d.setProgress( current, last ) or
+                                            qApp.processEvents() or
+                                            d.setLabelText( "<p>Rescanning Packages...<br>%s</p>" % name.split( "/" )[-1] ) )
+        d.hide()
+        self.statusBar().message( "Done. Scanned %d Packages." % p.numPackages(), 2000 )
+        self.numPackages.setText( "%s Packages available." % p.numPackages() )
+        
+        self.packageView.clear()
+        for package in p.names():
+            QListViewItem( self.packageView, package.split( "/" )[-1],
+                           p.data(package,"CATEGORY"),
+                           p.data(package,"PRIORITY"),
+                           p.data(package,"MAINTAINER"),
+                           p.data(package,"SRC_URI"),
+                           p.data(package,"HOMEPAGE") )
+        
     def helpAbout(self):
-        d = AboutDialog()
-        d.exec_loop()
+            d = AboutDialog()
+            d.exec_loop()
 
 #------------------------------------------------------------------------#
 # main
