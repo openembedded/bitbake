@@ -25,6 +25,8 @@ __build_path = []
 __preferred = {}
 __world_target = Set()
 
+__stats = {}
+
 def handle_options( args ):
         parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ),
         usage = """%prog [options] [package ...]
@@ -85,23 +87,27 @@ def try_build(fn, virtual):
 
 		if failed:
 			oe.error("dependency %s (for %s) not satisfied" % (d,item))
+                        __stats["deps"] += 1
 			return False
 
 		command = make.options.cmd
 		oe.debug(1, "oebuild %s %s" % (command, fn))
 		oe.event.fire(oe.event.PkgStarted(item, make.pkgdata[fn]))
 		try:
+                        __stats["attempt"] += 1
 			if not make.options.dry_run:
 				oe.build.exec_task('do_%s' % command, make.pkgdata[fn])
 			oe.event.fire(oe.event.PkgSucceeded(item, make.pkgdata[fn]))
 			__build_cache.append(fn)
 			return True
 		except oe.build.FuncFailed:
+                        __stats["fail"] += 1
 			oe.error("task stack execution failed")
 			oe.event.fire(oe.event.PkgFailed(item, make.pkgdata[fn]))
 			__build_cache_fail.append(fn)
 			return False
 		except oe.build.EventException:
+                        __stats["fail"] += 1
 			(type, value, traceback) = sys.exc_info()
 			e = value.event
 			oe.error("%s event exception, aborting" % oe.event.getName(e))
@@ -304,6 +310,11 @@ if __name__ == "__main__":
         print "nothing to build"
         sys.exit(0)
 
+    __stats["attempt"] = 0
+    __stats["success"] = 0
+    __stats["fail"] = 0
+    __stats["deps"] = 0
+
     try:
         make.collect_oefiles( myProgressCallback )
 	print
@@ -323,6 +334,10 @@ if __name__ == "__main__":
 			sys.exit(1)
 
         oe.event.fire(oe.event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
+
+        print "Build statistics:"
+        print "  Dependencies not satisfied: %d" % __stats["deps"]
+        print "  Attempted builds: %d (%d failed)" % (__stats["attempt"], __stats["fail"])
 
     except KeyboardInterrupt:
         print "\nNOTE: KeyboardInterrupt - Build not completed."
