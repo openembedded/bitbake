@@ -4,7 +4,7 @@ TODO:
 	[x] Update .oe and .conf parsers to not strip out all the tabs in our 
 	    python function vars..
 	[x] Restructure
-	[ ] Remove duplicated implementations, and convert everyone to the new
+	[.] Remove duplicated implementations, and convert everyone to the new
 	    data and parse methods.
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
@@ -19,7 +19,7 @@ TODO:
 	[ ] Teach the system to support grabbing OEFILES from upstream
 	    using our fetch classes.
 
-[ ] oebuild
+[.] oebuild
 	[x] Use oe.digraph for handling intertask dependency
 	[x] Split task execution from function execution
 	[x] Add a means to add a task which depends on another task's
@@ -36,7 +36,7 @@ TODO:
 	[x] Fix python function implementation, do it the way I did the
 	    code for the event handlers. (needed to fix do_fetch)
 	[ ] Implement and test check_md5, taking nostamp into account.
-	[ ] Add clean and mrproper targets to base oeclass.
+	[x] Add clean and mrproper targets to base oeclass.
 
 [.] oemake
 	[x] Move OEPATH follow into the individual 'handle' functions,
@@ -62,6 +62,17 @@ TODO:
 	[ ] Monitor the stamps for a given .oe file as well, to ensure
 	    changes in build state as well as changes to build metadata result
 	    in a rebuild.
+
+[ ] packages
+	[ ] add cross binutils and binutils
+	[ ] add gcc
+	[ ] figure out where to put the glibc install into the toolchain dir,
+	    which is only needed by gcc pass 2.
+	[ ] add qtopia 1.6.1
+	[ ] add qt 2.3.6
+	[ ] convert packages from OpenZaurus buildroot
+
+[ ] Image creation .oe files and/or external tool
 
 [x] Update patcher tool to make use of our ability to use python functions.
 [x] Write package.oeclass implemented w/ a python function/task
