@@ -20,6 +20,13 @@ TODO:
 	    using our fetch classes.
 
 [.] oebuild
+	[ ] Implement and test check_md5, taking nostamp into account.
+	[ ] Add '--undo'/'-u' cmdline opt that calls the 'undo' task
+	    for the supplied task.
+	[ ] Add '--rebuild'/'-r' cmdline opt that calls the 'undo' task
+	    for the entire upward path in the digraph, then builds that task.
+	    (same thing done when the md5 changes on an affected var in
+	     check_md5)
 	[x] Use oe.digraph for handling intertask dependency
 	[x] Split task execution from function execution
 	[x] Add a means to add a task which depends on another task's
@@ -35,7 +42,6 @@ TODO:
 	[x] default flag set for both oe and task metadata
 	[x] Fix python function implementation, do it the way I did the
 	    code for the event handlers. (needed to fix do_fetch)
-	[ ] Implement and test check_md5, taking nostamp into account.
 	[x] Add clean and mrproper targets to base oeclass.
 
 [.] oemake
