@@ -52,11 +52,11 @@ syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ c
 
 syn keyword bbExportFlag	export contained nextgroup=bbIdentifier skipwhite
 syn match bbVarDeref	"${[a-zA-Z0-9\-_\.]\+}" contained
-syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA-Z0-9\-_\.]\+\)\?\)\s*\(\(:=\)\|\(+=\)\|\(=+\)\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
+syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA-Z0-9\-_\.]\+\)\?\)\s*\(\(:=\)\|\(+=\)\|\(=+\)\|\(?=\)\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
 
 syn match bbIdentifier		"[a-zA-Z0-9\-_\.]\+" display contained
 "syn keyword bbVarEq	= display contained nextgroup=bbVarValue
-syn match bbVarEq		"\(:=\)\|\(+=\)\|\(=+\)\|=" contained nextgroup=bbVarValue
+syn match bbVarEq		"\(:=\)\|\(+=\)\|\(=+\)\|\(?=\)\|=" contained nextgroup=bbVarValue
 syn match bbVarValue		".*$" contained contains=bbString,bbVarDeref
 
 
