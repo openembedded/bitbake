@@ -1723,7 +1723,7 @@ envflags = {
 "STRIP":		{ "warnlevel": 3 },
 "AR":			{ "warnlevel": 3 },
 "RANLIB":		{ "warnlevel": 3 },
-"MAKE":		{ "warnlevel": 3 },
+"MAKE":			{ "warnlevel": 3, "export": 1 },
 
 "BUILD_CPPFLAGS":	{ "warnlevel": 3 },
 "BUILD_CFLAGS":		{ "warnlevel": 3 },
