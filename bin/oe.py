@@ -1229,6 +1229,7 @@ __func_start_regexp__    = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
 __include_regexp__       = re.compile( r"include\s+(.+)" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
+__addtask_regexp__ = re.compile( r"addtask\s+(.+)" )
 
 __read_oe_infunc__ = ""
 __read_oe_body__   = []
@@ -1310,15 +1311,42 @@ def read_oe(oefile, inherit = False, classname = None):
 					fatal("error accessing build file %s" % file)
 			return
 
+		__word__ = re.compile(r"\S+")
+
 		m = __export_func_regexp__.match(s)
 		if m:
 			if inherit == True:
-				__word__ = re.compile(r"\S+")
 				fns = m.group(1)
 				n = __word__.findall(fns)
 				for f in n:
 					setenv(f, "\t%s_%s\n" % (__read_oe_classname__,f))
 			return
+
+		m = __addtask_regexp__.match(s)
+		if m:
+			fns = m.group(1)
+			optre = re.compile(r"(?P<func>\w+)(\s+(((?P<r>['\"]?)(?P<Before>.*?)(?P=r))|(?P<before>.*)))?(\s+(((?P<q>['\"]?)(?P<After>.*?)(?P=q))|(?P<after>.*)))?")
+			opt = optre.match(fns)
+			if opt is not None:
+				func = opt.group("func")
+				before = opt.group("Before") or opt.group("before")
+				after = opt.group("After") or opt.group("after")
+				if func is None:
+					return
+				var = "do_" + func
+
+				if not envflags.has_key(var):
+					envflags[var] = {}
+
+				envflags[var]["task"] = "1"
+
+				if before is not None:
+					# set up deps for function
+					envflags[var]["deps"] = before.split()
+				if after is not None:
+					# set up things that depend on this func 
+					envflags[var]["postdeps"] = after.split()
+				return
 
 		error("Unknown syntax in %s" % oefile)
 		print s

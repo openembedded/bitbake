@@ -47,6 +47,11 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 		return 1
 
 
+def exec_python_func(func, dir = None, myfatal = fatal):
+	os.chdir(getenv(dir))
+	comp = compile(getenv(func),func,'exec')
+	exec(comp)
+
 
 #######################################################################
 
@@ -65,13 +70,22 @@ def exec_task(task, dir, deptasks = []):
 		try:
 			depfuncname = tasks[dep]["func"]
 			depfunc = globals()[depfuncname]
+			depfunc()
 		except KeyError:
-			fatal("error executing dependency task %s" % dep)
-		depfunc()
+			debug(2, "invalid 'func' for task %s, running exec_task directly." % dep)
+			exec_task(dep, dir, tasks[dep]["deps"])
 
 	note("Executing task '%s'" % task)
 	func = 'do_'+task
-	ret = exec_shell_func(func, dir)
+	if not tasks.has_key(task):
+		fatal("unsupported task: %s" % task)
+		return 0
+
+	if tasks[task].has_key("python") and tasks[task]["python"] is not None:
+		# execute this function as a block of python code, not shell
+		ret = exec_python_func(func, dir)
+	else:
+		ret = exec_shell_func(func, dir)
 	if ret==0: mkstamp(task)
 
 def mkstamp(task):
@@ -334,12 +348,47 @@ except IOError:
 set_additional_vars()				# set rest of vars, e.g. ${A}
 update_env()					# Environment modification, e.g. local overrides
 
+# check for functions to insert into the task stack
+for var in env.keys():
+	if not envflags.has_key(var):
+		continue
+	if not envflags[var].has_key("task"):
+		continue
+
+	h = var.split('_') # deal with task vs do_task inconsistency
+	if not h[1]:
+		continue
+	taskvar = h[1]
+	tasks[taskvar] = {}
+	if envflags[var].has_key("func"):
+		tasks[taskvar]["func"] = envflags[var]["func"]
+	else:
+		tasks[taskvar]["func"] = "INVALID"
+	if envflags[var].has_key("deps"):
+		# other tasks that we depend on
+		tasks[taskvar]["deps"] = envflags[var]["deps"] 
+	if envflags[var].has_key("postdeps"):
+		# other tasks that depend on this one
+		postdeps = envflags[var]["postdeps"]
+		for t in tasks.keys():
+			for i in postdeps:
+				if t == i:
+					if not tasks[t].has_key("deps"):
+						tasks[t]["deps"] = []
+					tasks[t]["deps"].append(var)
+					break
+			
+	if envflags[var].has_key("python"):
+		tasks[taskvar]["python"] = "1"
+
 for s in sys.argv[1].split(','):
 	try:
 		funcname = tasks[s]["func"]
 		func = globals()[funcname]
+		func()
 	except KeyError:
-		usage(1, "'%s' is not valid command" % s)
-	func()
+		exec_task(s, "S")
+#		INVALID()
+#		usage(1, "'%s' is not valid command" % s)
 
 sys.exit(0)
