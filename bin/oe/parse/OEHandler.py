@@ -96,7 +96,6 @@ def handle(fn, d = {}, include = 0):
 		w = s.strip()
 		if not w: continue		# skip empty lines
 		s = s.rstrip()
-		if s[0] == '#': continue	# skip comments
 		while s[-1] == '\\':
 			s2 = f.readline()[:-1].strip()
 			s = s[:-1] + s2
@@ -167,6 +166,8 @@ def feeder(lineno, s, fn, d):
 		else:
 			__body__.append(s)
 		return
+
+	if s[0] == '#': return		# skip comments
 
 	m = __func_start_regexp__.match(s)
 	if m:
