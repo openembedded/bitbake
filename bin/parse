@@ -1,20 +1,39 @@
 #!/usr/bin/python
 import oeparser
-import oe, sys
+import sys
+from oe import *
 
-#a = oeparser.FileReader("conf/oe.conf")
-#print "data from filereader is %s" % a.data
+def usage(var):
+	print "usage: parse <somebuildfile.oe>"
+	sys.exit(1)
 
-b = oeparser.ConfigReader("conf/oe.conf")
-b.reader()
-print "env is %s" % b.env
-print "envflags is %s" % b.envflags
+if len(sys.argv) < 2:
+	usage(1)
 
-c = oeparser.PackageReader("test.oe")
-c.cfgenv = b.env # point the package reader to our config data
-c.reader()
+__oepath_found_it__ = 0
 
-for i in b.env.keys():
-	if not c.env.has_key(i):
-		c.env[i] = b.env[i]
-oe.emit_env(sys.__stdout__, c.env)
+for s in getenv('OEPATH').split(":"):
+	if os.access(os.path.join(s,'conf/oe.conf'), os.R_OK):
+		__oepath_found_it__ = 1
+		try:
+			b = oeparser.ConfigReader(os.path.join(s,"conf/oe.conf"))
+			b.reader()
+		except IOError:
+			pass
+
+if __oepath_found_it__ == 0:
+	fatal("error locating conf/oe.conf")
+
+try:
+	c = oeparser.PackageReader(sys.argv[1])
+	c.cfgenv = b.env # point the package reader to our config data
+	c.reader()
+	
+	for i in b.env.keys():
+		if not c.env.has_key(i):
+			c.env[i] = b.env[i]
+except IOError:
+	fatal("error accessing build file")
+
+emit_env(sys.__stdout__, c.env)
+sys.exit(0)
