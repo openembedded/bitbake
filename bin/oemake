@@ -87,7 +87,6 @@ else:
 
 for f in files:
 	# read a file's metadata
-	(root, ext) = os.path.splitext(f)
 	try:
 		from copy import copy
 		pkgdata[f] = parse.handle(f, copy(cfg))
@@ -96,14 +95,19 @@ for f in files:
 			depstr = data.getVar("DEPENDS", pkgdata[f])
 			if depstr is not None:
 				deps = depstr.split()
-			provides = data.getVar("PROVIDES", pkgdata[f])
-			if provides is not None:
-				provides = provides.split()
-				for provide in provides:
-					pkgs[provide] = [[root], None]
+			pkg = catpkgsplit(f)
+			if pkg == None:
+				continue
+			root = "%s/%s-%s-%s" % (pkg[0], pkg[1], pkg[2], pkg[3])
+			provides = []
+			provides.append("%s/%s-%s" % (pkg[0], pkg[1], pkg[2]))
+			provides.append("%s/%s" % (pkg[0], pkg[1]))
+			providestr = data.getVar("PROVIDES", pkgdata[f])
+			if providestr is not None:
+				provides += providestr.split()
+			for provide in provides:
+				pkgs[provide] = [[root], None]
 			pkgs[root] = [deps, f]
-#		if pkgdata[f] is not None:
-#			data.emit_env(sys.__stdout__, pkgdata[f])
 	except IOError:
 		print "error opening %s" % f
 		pass
@@ -129,10 +133,6 @@ for pkg in pkgs.keys():
 # we've already loaded the files, we may as well spawn the build
 # directly.. so lets abstract the task handling bits into a
 # module that both oebuild and oemake can utilize.
-
-data = []
-for k in graph.okeys:
-	addToBuild(data, graph, k)
 
 __build_cache_fail = []
 __build_cache = []
