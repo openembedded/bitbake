@@ -102,6 +102,7 @@ class Fetch(object):
 		return 1
 
 class Wget(Fetch):
+	"""Class to fetch urls via 'wget'"""
 	def supports(decoded = []):
 		"""Check to see if a given url can be fetched using wget.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
@@ -114,6 +115,9 @@ class Wget(Fetch):
 	supports = staticmethod(supports)
 
 	def localpath(url):
+		if parm.has_key("localpath"):
+			# if user overrides local path, use it.
+			return parm["localpath"]
 		return os.path.join(getenv("DL_DIR"), os.path.basename(url))
 	localpath = staticmethod(localpath)
 
@@ -125,11 +129,7 @@ class Wget(Fetch):
 		for loc in urls:
 			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
 			myfile = os.path.basename(path)
-			if parm.has_key("localpath"):
-				# if user overrides local path, use it.
-				dlfile = parm["localpath"]
-			else:
-				dlfile = self.localpath(loc)
+			dlfile = self.localpath(loc)
 
 			myfetch = getenv("RESUMECOMMAND")
 			note("fetch " +loc)
@@ -143,6 +143,10 @@ class Wget(Fetch):
 		return 1
 
 class Cvs(Fetch):
+	"""Class to fetch a module or modules from cvs repositories"""
+	checkoutopts = { "tag": "-r",
+			 "date": "-D" }
+
 	def supports(decoded = []):
 		"""Check to see if a given url can be fetched with cvs.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
@@ -156,6 +160,10 @@ class Cvs(Fetch):
 
 	def localpath(url):
 		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		if parm.has_key("localpath"):
+			# if user overrides local path, use it.
+			return parm["localpath"]
+
 		if not parm.has_key("module"):
 			return url
 		else:
@@ -175,31 +183,31 @@ class Cvs(Fetch):
 			else:
 				module = parm["module"]
 
-			if parm.has_key("localpath"):
-				# if user overrides local path, use it.
-				dlfile = parm["localpath"]
+			dlfile = self.localpath(loc)
+			# if local path contains the cvs
+			# module, consider the dir above it to be the
+			# download directory
+			pos = dlfile.find(module)
+			if pos:
+				dldir = dlfile[:pos]
 			else:
-				dlfile = self.localpath(loc)
+				dldir = os.path.dirname(dlfile)
 
-			if parm.has_key("tag"):
-				tag = "-r" + parm["tag"]
-			else:
-				tag = ""
+			options = []
 
-			if parm.has_key("date"):
-				date = "-D" + parm["date"]
-			else:
-				date = ""
+			for opt in self.checkoutopts:
+				if parm.has_key(opt):
+					options.append(self.checkoutopts[opt] + " " + parm[opt])
 
 			if parm.has_key("method"):
 				method = parm["method"]
 			else:
 				method = "pserver"
 
-			cvscmd = expand("cd ${DL_DIR}; ")
+			cvscmd = "cd %s; " % expand(dldir)
 			cvscmd += "cvs -d:" + method + ":" + user + "@" + host + ":" + path
-			cvscmd += " " + "checkout" + " " + date + " " + tag + " " + module 
-			debug(2,cvscmd)
+			cvscmd += " checkout " + string.join(options) + " " + module 
+			note("fetch " + loc)
 			myret = os.system(cvscmd)
 			if myret != 0:
 				error("Couldn't download %s" % module)
