@@ -10,6 +10,10 @@ TODO:
 	[ ] Comment/Docs Audit.
 	[ ] Allow user supply of .oeclasses to be inherited in every file that
 	    gets parsed via the INHERITS variable.
+		[ ] Add default items to the beginning of INHERITS within
+		    the parsers.  In this way, we can automatically pull in
+		    base.oeclass for oe files, and build_an_srpm.oeclass for
+		    .src.rpm files.
 
 [ ] oebuild and oemake
 	[ ] Teach the system to support grabbing OEFILES from upstream
@@ -41,9 +45,9 @@ TODO:
 
 [.] Event handling
 	[x] event handling core
-	[ ] oe/parse.py
-		[ ] addevent declaration for .oe files.
-	[ ] handle 'event' flag from addevent in oemake/oebuild
+	[x] oe/parse.py
+		[x] addevent declaration for .oe files.
+	[x] handle 'event' flag from addevent in oemake/oebuild
 	[.] oemake
 		[ ] default event handlers
 		[x] event declarations
