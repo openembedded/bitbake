@@ -27,10 +27,10 @@ data.setVarFlag("do_mrproper", "func", 1, cfg)
 
 build.add_task("do_clean", "do_clean", [ ])
 build.add_task("do_mrproper", "do_mrproper", [ "do_clean" ])
-build.exec_task("do_mrproper", "/tmp", cfg)
-build.remove_task("do_clean")
 try:
-	build.exec_task("do_mrproper", "/tmp", cfg)
+	build.exec_task("do_mrproper", cfg)
+	build.remove_task("do_clean")
+	build.exec_task("do_mrproper", cfg)
 except build.EventException:
 	(type, value, traceback) = sys.exc_info()
 	e = value.event

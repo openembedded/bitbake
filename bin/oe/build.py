@@ -74,21 +74,25 @@ def init(data):
 	_task_stack = []
 
 
-def exec_func(func, dir, d):
+def exec_func(func, d):
 	"""Execute an OE 'function'"""
 
-	exec_func_shell(func, dir, d)
+	exec_func_shell(func, d)
 
 
-def exec_func_python(func, dir, d):
+def exec_func_python(func, d):
 	"""Execute a python OE 'function'"""
 
 
-def exec_func_shell(func, dir, d):
+def exec_func_shell(func, d):
 	"""Execute a shell OE 'function' Returns true if execution was successful.
 
 	For this, it creates a bash shell script in the tmp dectory, writes the local
 	data into it and finally executes. The output of the shell will end in a log file and stdout.
+
+	Note on directory behavior.  The 'dirs' varflag should contain a list
+	of the directories you need created prior to execution.  The last
+	item in the list is where we will chdir/cd to.
 	"""
 
 	deps = data.getVarFlag(func, 'deps', _task_data)
@@ -96,6 +100,15 @@ def exec_func_shell(func, dir, d):
 	if globals().has_key(check):
 		if globals()[check](func, deps):
 			return
+
+	dirs = data.getVarFlag(func, 'dirs', d) or []
+	for dir in dirs:
+		mkdirhier(dir) 
+
+	if len(dirs) > 0:
+		dir = dirs[-1]
+	else:
+		dir = None
 
 	global logfile
 	t = data.getVar('T', d)
@@ -114,8 +127,7 @@ def exec_func_shell(func, dir, d):
 			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
 	data.emit_env(f, d)
 
-	envdir = data.getVar(dir, d)
-	if dir and envdir: f.write("cd %s\n" % envdir)
+	if dir: f.write("cd %s\n" % dir)
 	if func: f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
@@ -134,7 +146,7 @@ def exec_func_shell(func, dir, d):
 		raise FuncFailed()
 
 
-def exec_task(task, dir, d):
+def exec_task(task, d):
 	"""Execute an OE 'task'
 
 	   The primary difference between executing a task versus executing
@@ -150,7 +162,7 @@ def exec_task(task, dir, d):
 
 	# follow digraph path up, then execute our way back down
 	def execute(graph, item):
-		exec_func_shell(item, dir, d)
+		exec_func_shell(item, d)
 
 	# execute
 	try:
