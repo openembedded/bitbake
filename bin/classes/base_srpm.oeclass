@@ -1,0 +1,32 @@
+python base_srpm_do_set_specvar() {
+	if env.has_key("SRPMFILE"):
+		env['SPECFILE'] = "${RPMBUILDPATH}/SPECS/${@os.popen('rpm -q -p %s' % getenv('SRPMFILE')).read().split('-')[0]}.spec"
+}
+
+RPMBUILDPATH="${WORKDIR}/rpm"
+#RPMTARGET="--target somethingorother"
+RPMTARGET=""
+RPM="rpm ${RPMTARGET} --rcfile=${WORKDIR}/rpmrc"
+
+base_srpm_do_preprpm() {
+	mkdir -p ${RPMBUILDPATH}/{SPECS,RPMS/{i386,i586,i686,noarch,ppc},SRPMS,SOURCES,BUILD}
+	echo 'macrofiles:/usr/lib/rpm/macros:${WORKDIR}/macros' > ${WORKDIR}/rpmrc
+	echo '%_topdir ${RPMBUILDPATH}' > ${WORKDIR}/macros
+}
+
+base_srpm_do_unpack() {
+	test -e ${SRPMFILE} || die "Source rpm \"${SRPMFILE}\"does not exist"
+	if ! test -e ${SPECFILE}; then
+		${RPM} -i ${SRPMFILE}
+	fi
+}
+
+base_srpm_do_package() {
+	test -e ${SPECFILE} || die "Spec file \"${SPECFILE}\" does not exist"
+	${RPM} -bb ${SPECFILE}
+}
+
+addtask preprpm before do_unpack
+addtask set_specvar before do_preprpm 
+
+EXPORT_FUNCTIONS do_preprpm do_unpack do_package
