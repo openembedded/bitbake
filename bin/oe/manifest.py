@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, string
+import os, sys
 import oe, oe.data
 
 def getfields(line):

@@ -12,7 +12,7 @@ Copyright: (c) 2003 Chris Larson
 Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
-import os, re, string
+import os, re
 import oe
 import oe.data
 
@@ -49,7 +49,7 @@ def uri_replace(uri, uri_find, uri_replace, d = oe.data.init()):
 						localfn = oe.fetch.localpath(uri, d)
 						if localfn:
 							result_decoded[loc] = os.path.dirname(result_decoded[loc]) + "/" + os.path.basename(oe.fetch.localpath(uri, d))
-#				oe.note("uri_replace: matching %s against %s and replacing with %s" % (i, uri_decoded[loc], uri_replace_decoded[loc]))	
+#				oe.note("uri_replace: matching %s against %s and replacing with %s" % (i, uri_decoded[loc], uri_replace_decoded[loc]))
 			else:
 #				oe.note("uri_replace: no match")
 				return uri
@@ -69,7 +69,7 @@ def init(urls = [], d = oe.data.init()):
 			m.data = d
 			if m.supports(u, d):
 				m.urls.append(u)
-	
+
 def go(d = oe.data.init()):
 	"""Fetch all urls"""
 	for m in methods:
@@ -88,11 +88,11 @@ def localpath(url, d = oe.data.init()):
 	for m in methods:
 		if m.supports(url, d):
 			return m.localpath(url, d)
-	return url 
+	return url
 
 class Fetch(object):
 	"""Base class for 'fetch'ing data"""
-	
+
 	def __init__(self, urls = []):
 		self.urls = []
 		for url in urls:
@@ -181,8 +181,8 @@ class Wget(Fetch):
 				md5out = file(md5, 'w')
 				md5out.write("")
 				md5out.close()
-			return True	
-		
+			return True
+
 		if not urls:
 			urls = self.urls
 
@@ -206,8 +206,8 @@ class Wget(Fetch):
 				continue
 
 			# try mirrors
-			mirror = 0	
-			mirrors = [string.split(i) for i in string.split(oe.data.getVar('MIRRORS', localdata, 1), '\n') if i]
+			mirror = 0
+			mirrors = [ i.split() for i in oe.data.getVar('MIRRORS', localdata, 1).split('\n') if i ]
 			completed = 0
 			for (find, replace) in mirrors:
 				newuri = uri_replace(uri, find, replace)
@@ -217,10 +217,10 @@ class Wget(Fetch):
 						break
 
 			if not completed:
-				raise FetchError(uri)	
+				raise FetchError(uri)
 
 		del localdata
-						
+
 
 methods.append(Wget())
 
@@ -253,10 +253,10 @@ class Cvs(Fetch):
 		else:
 			if not tag or tag == "HEAD":
 				date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
-			else:	
+			else:
 				date = ""
 
-		return os.path.join(oe.data.getVar("DL_DIR", d, 1),oe.data.expand('%s_%s_%s_%s.tar.gz' % (string.replace(module, '/', '.'), host, tag, date), d))
+		return os.path.join(oe.data.getVar("DL_DIR", d, 1),oe.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, tag, date), d))
 	localpath = staticmethod(localpath)
 
 	def go(self, d = oe.data.init(), urls = []):
@@ -299,7 +299,7 @@ class Cvs(Fetch):
 			else:
 				if not tag or tag == "HEAD":
 					date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
-				else:	
+				else:
 					date = ""
 
 			if "method" in parm:
@@ -307,7 +307,7 @@ class Cvs(Fetch):
 			else:
 				method = "pserver"
 
-			tarfn = oe.data.expand('%s_%s_%s_%s.tar.gz' % (string.replace(module, '/', '.'), host, tag, date), localdata)
+			tarfn = oe.data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, tag, date), localdata)
 			oe.data.setVar('TARFILES', dlfile, localdata)
 			oe.data.setVar('TARFN', tarfn, localdata)
 
@@ -330,7 +330,7 @@ class Cvs(Fetch):
 			cvsroot += "@" + host + ":" + path
 
 			oe.data.setVar('CVSROOT', cvsroot, localdata)
-			oe.data.setVar('CVSCOOPTS', string.join(options), localdata)
+			oe.data.setVar('CVSCOOPTS', " ".join(options), localdata)
 			oe.data.setVar('CVSMODULE', module, localdata)
 			cvscmd = oe.data.getVar('FETCHCOMMAND', localdata, 1)
 

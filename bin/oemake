@@ -99,7 +99,7 @@ if __name__ == "__main__":
         if not pkgs_to_build:
             oepkgs = data.getVar('OEPKGS', make.cfg, 1)
             if oepkgs:
-                pkgs_to_build = string.split(oepkgs)
+                pkgs_to_build = oepkgs.split()
         if not pkgs_to_build:
             pkgs_to_build = make.graph.okeys
         debug(1, "building: %s" % pkgs_to_build)

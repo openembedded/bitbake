@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, string, oe
+import sys, os, oe
 from oe import *
 
 __version__ = 1.0
@@ -78,12 +78,12 @@ if '-t' in opthash:
 topdir = data.getVar('TOPDIR', cfg_oe, 1) or os.getcwd()
 
 # Iterate through .oe files
-files = string.split(data.getVar("OEFILES", cfg_oe, 1) or "")
+files = (data.getVar("OEFILES", cfg_oe, 1) or "").split()
 if '-f' in opthash:
 	files.extend(opthash['-f'])
 if '--files' in opthash:
 	files.extend(opthash['--files'])
-data.setVar("OEFILES", string.join(files), cfg_oe)
+data.setVar("OEFILES", ''.join(files), cfg_oe)
 
 def get_oefiles():
 	"""Get default oefiles"""
@@ -148,7 +148,7 @@ if args:
 if not pkgs_to_install:
 	inst_oepkgs = data.getVar('INST_OEPKGS', cfg_oe, 1)
 	if inst_oepkgs:
-		pkgs_to_install = string.split(inst_oepkgs)
+		pkgs_to_install = inst_oepkgs.split()
 debug(1, "installing: %s" % pkgs_to_install)
 
 import glob
@@ -174,12 +174,12 @@ for f in files:
 	data.update_data(fdata)
 	addoefiles = data.getVar('OEFILES', fdata) or None
 	if addoefiles:
-		for aof in string.split(addoefiles):
+		for aof in addoefiles.split():
 			if not files.count(aof):
 				if not os.path.isabs(aof):
 					aof = os.path.join(os.path.dirname(f),aof)
 				files.append(aof)
-	pkgs = string.split(data.getVar('PACKAGES', fdata, 1) or "")
+	pkgs = (data.getVar('PACKAGES', fdata, 1) or "").split()
 	# Iterate through PACKAGES
 	for p in pkgs:
 		if pkgs_to_install is not None:

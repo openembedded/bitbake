@@ -297,7 +297,7 @@ def inheritFromOS(d = _data):
 			except TypeError:
 				pass
 
-import sys, string
+import sys
 
 def emit_var(var, o=sys.__stdout__, d = _data):
 	"""Emit a variable to be sourced by a shell."""
@@ -389,7 +389,7 @@ def update_data(d = _data):
 
 	# can't do delete env[...] while iterating over the dictionary, so remember them
 	dodel = []
-	overrides = string.split(getVar('OVERRIDES', d, 1) or "", ":") or []
+	overrides = (getVar('OVERRIDES', d, 1) or "").split(':') or []
 
 	def applyOverrides(var, d = _data):
 		if not overrides:
@@ -431,8 +431,8 @@ def update_data(d = _data):
 			sval = getVar(s, d)
 			if sval:
 				new = ''
-				pattern = string.replace(nameval,"\n","").strip()
-				for line in string.split(sval,"\n"):
+				pattern = nameval.replace('\n','').strip()
+				for line in sval.split('\n'):
 					if line.find(pattern) == -1:
 						new = new + '\n' + line
 				setVar(s, new, d)

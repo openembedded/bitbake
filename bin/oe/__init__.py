@@ -53,7 +53,10 @@ __all__ = [
     "manifest"
  ]
 
-import sys,os,string,types,re
+whitespace = '\t\n\x0b\x0c\r '
+lowercase = 'abcdefghijklmnopqrstuvwxyz'
+
+import sys, os, types, re
 
 #
 # Check for the Python version. A lot of stuff needs Python 2.3 or later
@@ -88,16 +91,16 @@ debug_prepend = ''
 
 def debug(lvl, *args):
     if 'OEDEBUG' in env and (env['OEDEBUG'] >= str(lvl)):
-        print debug_prepend + 'DEBUG:', string.join(args, '')
+        print debug_prepend + 'DEBUG:', ''.join(args)
 
 def note(*args):
-    print debug_prepend + 'NOTE:', string.join(args, '')
+    print debug_prepend + 'NOTE:', ''.join(args)
 
 def error(*args):
-    print debug_prepend + 'ERROR:', string.join(args, '')
+    print debug_prepend + 'ERROR:', ''.join(args)
 
 def fatal(*args):
-    print debug_prepend + 'ERROR:', string.join(args, '')
+    print debug_prepend + 'ERROR:', ''.join(args)
     sys.exit(1)
 
 
@@ -339,7 +342,7 @@ def encodeurl(decoded):
 def which(path, item, direction = 1):
     """Useful function for locating a file in a PATH"""
     found = ""
-    for p in string.split(path or "", ":"):
+    for p in (path or "").split(':'):
         if os.path.exists(os.path.join(p, item)):
             found = os.path.join(p, item)
             if direction == 0:
@@ -402,7 +405,7 @@ def tokenize(mystring):
             curlist=prevlists.pop()
             curlist.append(newlist)
             level=level-1
-        elif x in string.whitespace:
+        elif x in whitespace:
             if accum:
                 curlist.append(accum)
                 accum=""
@@ -509,10 +512,10 @@ def relparse(myver):
     number   = 0
     p1       = 0
     p2       = 0
-    mynewver = string.split(myver,"_")
+    mynewver = myver.split('_')
     if len(mynewver)==2:
         # an _package_weights_
-        number = string.atof(mynewver[0])
+        number = float(mynewver[0])
         match = 0
         for x in _package_ends_:
             elen = len(x)
@@ -520,7 +523,7 @@ def relparse(myver):
                 match = 1
                 p1 = _package_weights_[x]
                 try:
-                    p2 = string.atof(mynewver[1][elen:])
+                    p2 = float(mynewver[1][elen:])
                 except:
                     p2 = 0
                 break
@@ -530,18 +533,18 @@ def relparse(myver):
             if myver[divider:] not in "1234567890":
                 # letter at end
                 p1 = ord(myver[divider:])
-                number = string.atof(myver[0:divider])
+                number = float(myver[0:divider])
             else:
-                number = string.atof(myver)
+                number = float(myver)
     else:
         # normal number or number with letter at end
         divider = len(myver)-1
         if myver[divider:] not in "1234567890":
             #letter at end
             p1     = ord(myver[divider:])
-            number = string.atof(myver[0:divider])
+            number = float(myver[0:divider])
         else:
-            number = string.atof(myver)
+            number = float(myver)
     return [number,p1,p2]
 
 
@@ -587,7 +590,7 @@ def ververify(myorigval,silent=1):
             error("package version is empty")
         __ververify_cache__[myorigval] = 0
         return 0
-    myval = string.split(myorigval,'.')
+    myval = myorigval.split('.')
     if len(myval)==0:
         if not silent:
             error("package name has empty version string")
@@ -601,7 +604,7 @@ def ververify(myorigval,silent=1):
             __ververify_cache__[myorigval] = 0
             return 0
         try:
-            foo = string.atoi(x)
+            foo = int(x)
         except:
             if not silent:
                 error("package version contains non-numeric '"+x+"'")
@@ -613,16 +616,16 @@ def ververify(myorigval,silent=1):
             __ververify_cache__[myorigval] = 0
             return 0
     try:
-        foo = string.atoi(myval[-1])
+        foo = int(myval[-1])
         __ververify_cache__[myorigval] = 1
         return 1
     except:
         pass
 
     # ok, our last component is not a plain number or blank, let's continue
-    if myval[-1][-1] in string.lowercase:
+    if myval[-1][-1] in lowercase:
         try:
-            foo = string.atoi(myval[-1][:-1])
+            foo = int(myval[-1][:-1])
             return 1
             __ververify_cache__[myorigval] = 1
             # 1a, 2.0b, etc.
