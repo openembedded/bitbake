@@ -1,41 +1,11 @@
 #!/usr/bin/python
-import oeparser
-import sys
-from oe import *
 
-def usage(var):
-	print "usage: parse <somebuildfile.oe>"
-	sys.exit(1)
+import oeparse
 
-if len(sys.argv) < 2:
-	usage(1)
+cfgdata = oeparse.handle("conf/oe.conf")
 
-__oepath_found_it__ = 0
+from copy import copy
+testdata = oeparse.handle("test.oe", copy(cfgdata))
 
-for s in getenv('OEPATH').split(":"):
-	if os.access(os.path.join(s,'conf/oe.conf'), os.R_OK):
-		__oepath_found_it__ = 1
-		try:
-			oeparser.oeconf.fn = os.path.join(s, "conf/oe.conf")
-			oeparser.oeconf.reader()
-		except IOError:
-			pass
-
-if __oepath_found_it__ == 0:
-	fatal("error locating conf/oe.conf")
-
-try:
-	a = oeparser.PackageReader(sys.argv[1])
-#	c.cfgenv = b.env # point the package reader to our config data
-	a.reader()
-
-	data = {}
-	for env in [oeparser.oeconf.env,a.env]:
-		for item in env.keys():
-			data[item] = env[item]
-	
-except IOError:
-	fatal("error accessing build file")
-
-emit_env(sys.__stdout__, data)
-sys.exit(0)
+print "testdata: "
+print "\t%s" % testdata
