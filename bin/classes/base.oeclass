@@ -187,7 +187,7 @@ python base_do_unpack() {
 		elif local.endswith('.tgz') or local.endswith('.tar.gz'):
 			cmd = 'tar xz --no-same-owner -f %s' % local
 		elif local.endswith('.tbz') or local.endswith('.tar.bz2'):
-			cmd = 'tar xj --no-same-owner -f %s' % local
+			cmd = 'bzip2 -dc %s | tar x --no-same-owner -f -' % local
 		elif local.endswith('.gz') or local.endswith('.Z') or local.endswith('.z'):
 			loc = local.rfind('.')
 			cmd = 'gzip -dc %s > %s' % (local, efile) 
