@@ -183,6 +183,7 @@ def setData(newData, d = _data):
 	d = newData
 
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
+__expand_python_func_regexp__ = re.compile(r"\${@@.+?}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 def expand(s, d = _data):
@@ -207,6 +208,18 @@ def expand(s, d = _data):
 		else:
 			return match.group()
 
+	def python_func_sub(match):
+		g = globals()
+		code = match.group()[4:-1]
+		import oe
+		c = compile('def __func():\n' + code, '<oe>', 'exec')
+		exec c in g
+		g['d'] = d
+		g['oe'] = oe
+		s = eval('__func()', g, locals())
+		if type(s) == types.IntType: s = str(s)
+		return s
+
 	def python_sub(match):
 		code = match.group()[3:-1]
 		import oe
@@ -221,6 +234,7 @@ def expand(s, d = _data):
 	while s.find('$') != -1:
 		olds = s
 		s = __expand_var_regexp__.sub(var_sub, s)
+		s = __expand_python_func_regexp__.sub(python_func_sub, s)
 		s = __expand_python_regexp__.sub(python_sub, s)
 		if len(s)>2048:
 			debug(1, "expanded string too long")
