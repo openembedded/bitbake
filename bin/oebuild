@@ -85,7 +85,8 @@ def exec_task(task, dir, deptasks = []):
 
 	note("Executing task '%s'" % task)
 
-	if tasks[task].has_key("python") and tasks[task]["python"] is not None:
+	if envflags.has_key(func) and envflags[func].has_key("python") and envflags[func]["python"] is not None:
+#	if tasks[task].has_key("python") and tasks[task]["python"] is not None:
 		# execute this function as a block of python code, not shell
 		ret = exec_python_func(func, dir)
 	else:

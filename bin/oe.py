@@ -1169,7 +1169,7 @@ def reader(cfgfile, feeder):
 
 
 # matches "VAR = VALUE"
-__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>\w+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
+__config_regexp__  = re.compile( r"((?P<exp>export)\s*)*(?P<var>\w+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 
 # matches "include FILE"
 __include_regexp__ = re.compile( r"include\s+(.+)" )
@@ -1225,7 +1225,7 @@ def read_config(cfgfile):
 			fatal('read ${OEDIR}/oe.conf to learn about local configuration')
 
 
-__func_start_regexp__    = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
+__func_start_regexp__    = re.compile( r"((?P<py>python)\s*)*(?P<func>\w+)\s*\(\s*\)\s*{$" )
 __include_regexp__       = re.compile( r"include\s+(.+)" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
@@ -1268,7 +1268,12 @@ def read_oe(oefile, inherit = False, classname = None):
 
 		m = __func_start_regexp__.match(s)
 		if m:
-			__read_oe_infunc__ = m.group(1)
+			__read_oe_infunc__ = m.group("func")
+			key = __read_oe_infunc__
+			if m.group("py") is not None:
+				if not envflags.has_key(key):
+					envflags[key] = {}
+				envflags[key]["python"] = 1
 			return
 
 		m = __include_regexp__.match(s)
