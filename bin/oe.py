@@ -1185,9 +1185,11 @@ def __read_config__(cfgfile, level):
 		if m:
 			groupd = m.groupdict()
 			key = groupd["var"]
-			if groupd.has_key("exp"):
+			if groupd.has_key("exp") and groupd["exp"] is not None:
+				if not envflags.has_key(key):
+					envflags[key] = {}
 				envflags[key]["export"] = 1
-			if groupd.has_key("colon"):
+			if groupd.has_key("colon") and groupd["colon"] is not None:
 				setenv(key, groupd["value"])
 			else:
 				env[key] = groupd["value"]
@@ -1403,7 +1405,7 @@ def expand(s, env = globals()["env"]):
 
 #######################################################################
 
-def setenv(var, value):
+def setenv(var, value, env = globals()["env"]):
 	"""Simple set an environment in the global oe.env[] variable, but
 	with expanding variables beforehand.
 	"""
@@ -1413,14 +1415,14 @@ def setenv(var, value):
 
 #######################################################################
 
-def getenv(var):
+def getenv(var, env = globals()["env"]):
 	"""Returns an expanded environment var"""
-	return expand('${%s}' % var)
+	return expand('${%s}' % var, env)
 
 
 #######################################################################
 
-def inherit_os_env(position):
+def inherit_os_env(position, env = globals()["env"]):
 	"""This reads the the os-environment and imports variables marked as
 	such in envflags into our environment. This happens at various places
 	during package definition read time, see comments near envflags[] for
@@ -1501,7 +1503,7 @@ def set_additional_vars():
 
 #######################################################################
 
-def update_env():
+def update_env(env = globals()["env"]):
 	"""Modifies the environment vars according to local overrides
 
 	For the example we do some preparations:
@@ -1596,7 +1598,7 @@ def update_env():
 
 #######################################################################
 
-def emit_env(o=sys.__stdout__):
+def emit_env(o=sys.__stdout__, env = globals()["env"]):
 	"""This prints the contents of env[] so that it can later be sourced by a shell
 	Normally, it prints to stdout, but this it can be redirectory to some open file handle
 
@@ -1614,12 +1616,12 @@ def emit_env(o=sys.__stdout__):
 			if envflags[s].has_key('export'):
 				 o.write('export ')
 
-		o.write(s+'="'+getenv(s)+'"\n')
+		o.write(s+'="'+getenv(s,env)+'"\n')
 
 	for s in env:
 		if s != s.lower(): continue
 
-		o.write("\n" + s + '() {\n' + getenv(s) + '}\n')
+		o.write("\n" + s + '() {\n' + getenv(s,env) + '}\n')
 
 
 #######################################################################
