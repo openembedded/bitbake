@@ -177,9 +177,11 @@ for f in files:
 			depstr = data.getVar("DEPENDS", pkgdata[f])
 			if depstr is not None:
 				deps = depstr.split()
-			pkg = catpkgsplit(f)
-			if pkg == None:
-				continue
+			pkg = []
+			pkg.append(data.getVar('CATEGORY', pkgdata[f]))
+			pkg.append(data.getVar('PN', pkgdata[f]))
+			pkg.append(data.getVar('PV', pkgdata[f]))
+			pkg.append(data.getVar('PR', pkgdata[f]))
 			root = "%s/%s-%s-%s" % (pkg[0], pkg[1], pkg[2], pkg[3])
 			provides = []
 			provides.append("%s/%s-%s" % (pkg[0], pkg[1], pkg[2]))
