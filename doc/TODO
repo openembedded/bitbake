@@ -1,9 +1,12 @@
 TODO:
 
-[ ] Pester schurig
-	[ ] What is the dir/envvar we use to hold outputted files for packaging?
+[x] Pester schurig
+	[x] What is the dir/envvar we use to hold outputted files for packaging?
 	    ala the current ipktmpdir.
-	[ ] Env var names for the 3 dependency forms, build depends - target, build depends - build, depends.
+	    Doesnt matter.
+	[x] Env var names for the 3 dependency forms, build depends - target, build depends - build, depends.
+	    DEPENDS - build, RDEPENDS - runtime
+	    reflect build machine build depends using seperate build .oe files.
 
 [x] oe package
 	[x] Update .oe and .conf parsers to not strip out all the tabs in our 
