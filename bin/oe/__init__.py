@@ -1060,7 +1060,11 @@ class digraph:
 			self.dict[mykey][1].append(myparent)
 			self.dict[myparent][0]=self.dict[myparent][0]+1
 	
-	def delnode(self,mykey):
+	def delnode(self,mykey, ref = 1):
+		"""Delete a node
+
+		If ref is 1, remove references to this node from other nodes.
+		If ref is 2, remove nodes that reference this node."""
 		if not self.dict.has_key(mykey):
 			return
 		for x in self.dict[mykey][1]:
@@ -1071,6 +1075,16 @@ class digraph:
 				self.okeys.remove(mykey)	
 			except ValueError:
 				break
+		if ref:
+			__kill = []
+			for k in self.okeys:
+				if mykey in self.dict[k][1]:
+					if ref == 1 or ref == 2:
+						self.dict[k][1].remove(mykey)
+					if ref == 2:
+						__kill.append(k)
+			for l in __kill:
+				self.delnode(l, ref)
 	
 	def allnodes(self):
 		"returns all nodes in the dictionary"

@@ -162,7 +162,9 @@ def exec_task(task, d):
 
 	# follow digraph path up, then execute our way back down
 	def execute(graph, item):
-		exec_func_shell(item, d)
+		func = data.getVar(item, _task_data)
+		if func:
+			exec_func_shell(func, d)
 
 	# execute
 	try:
@@ -212,11 +214,8 @@ def remove_task(task, kill = 1, taskdata = _task_data):
 	if not _task_graph.hasnode(task):
 		return
 
-	__kill = [ ]
-	if kill:
-		def killChild(graph, task):
-			__kill.append(task)
-		_task_graph.walkup(task, killChild)
-	for t in __kill:
-		data.delVar(t, taskdata)
-		_task_graph.delnode(t)
+	data.delVar(task, taskdata)
+	ref = 1
+	if kill == 1:
+		ref = 2
+	_task_graph.delnode(task, ref)

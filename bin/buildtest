@@ -29,7 +29,7 @@ build.add_task("do_clean", "do_clean", [ ])
 build.add_task("do_mrproper", "do_mrproper", [ "do_clean" ])
 try:
 	build.exec_task("do_mrproper", cfg)
-	build.remove_task("do_clean")
+	build.remove_task("do_clean", 1)
 	build.exec_task("do_mrproper", cfg)
 except build.EventException:
 	(type, value, traceback) = sys.exc_info()
