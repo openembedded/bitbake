@@ -486,19 +486,14 @@ class Svn(Fetch):
             raise MissingParameterError("svn method needs a 'module' parameter")
         else:
             module = parm["module"]
-        if 'tag' in parm:
-            tag = parm['tag']
+        if 'rev' in parm:
+            revision = parm['rev']
         else:
-            tag = ""
-        if 'date' in parm:
-            date = parm['date']
-        else:
-            if not tag or tag == "HEAD":
-                date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
-            else:
-                date = ""
+            revision = ""
 
-        return os.path.join(oe.data.getVar("DL_DIR", d, 1),oe.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, tag, date), d))
+        date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
+
+        return os.path.join(oe.data.getVar("DL_DIR", d, 1),oe.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, revision, date), d))
     localpath = staticmethod(localpath)
 
     def go(self, d = oe.data.init(), urls = []):
@@ -531,18 +526,12 @@ class Svn(Fetch):
 
 #           setup svn options
             options = []
-            if 'tag' in parm:
-                tag = parm['tag']
+            if 'rev' in parm:
+                revision = parm['rev']
             else:
-                tag = ""
+                revision = ""
 
-            if 'date' in parm:
-                date = parm['date']
-            else:
-                if not tag or tag == "HEAD":
-                    date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
-                else:
-                    date = ""
+            date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
 
             if "method" in parm:
                 method = parm["method"]
@@ -554,7 +543,7 @@ class Svn(Fetch):
                 if "rsh" in parm:
                     svn_rsh = parm["rsh"]
 
-            tarfn = oe.data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, tag, date), localdata)
+            tarfn = oe.data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, revision, date), localdata)
             oe.data.setVar('TARFILES', dlfile, localdata)
             oe.data.setVar('TARFN', tarfn, localdata)
 
@@ -574,11 +563,6 @@ class Svn(Fetch):
                     oe.note("Fetched %s from tarball stash, skipping checkout" % tarfn)
                     continue
 
-            if date:
-                options.append("-D %s" % date)
-            if tag:
-                options.append("-r %s" % tag)
-
             olddir = os.path.abspath(os.getcwd())
             os.chdir(oe.data.expand(dldir, localdata))
 
@@ -594,6 +578,8 @@ class Svn(Fetch):
             svncmd = oe.data.getVar('FETCHCOMMAND', localdata, 1)
             svncmd = "svn co http://%s/%s" % (svnroot, module)
 
+            if revision:
+                svncmd = "svn co -r %s http://%s/%s" % (revision, svnroot, module)
             if svn_rsh:
                 svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
 
@@ -610,7 +596,6 @@ class Svn(Fetch):
 #           check out sources there
             os.chdir(tmpfile)
             oe.note("Fetch " + loc)
-            oe.note(svncmd)
             oe.debug(1, "Running %s" % svncmd)
             myret = os.system(svncmd)
             if myret != 0:
