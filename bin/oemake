@@ -9,7 +9,7 @@ from oe import make
 from sets import Set
 import itertools, optparse
 
-parsespin = itertools.cycle( r'|/-\-' )
+parsespin = itertools.cycle( r'|/-\\' )
 
 __version__ = 1.2
 __build_cache_fail = []
@@ -315,25 +315,17 @@ def build_depgraph():
     pn_provides = {}
 
     def progress(p):
-        if oedebug:
-            return
+        if oedebug or progress.p == p: return 
+        progress.p = p
         if os.isatty(sys.stdout.fileno()):
-            sys.stdout.write("\rNOTE: Building provider hash: [")
-            x = 0
-            for i in range(20):
-                if (p >= x):
-                    sys.stdout.write("#")
-                else:
-                    sys.stdout.write(" ")
-                x += 5
-            sys.stdout.write("] (%02d%%)" % p)
+            sys.stdout.write("\rNOTE: Building provider hash: [%s%s] (%02d%%)" % ( "#" * (p/5), " " * ( 20 - p/5 ), p ) )
+            sys.stdout.flush()
         else:
             if p == 0:
-                sys.stdout.write("\rNOTE: Building provider hash, please wait...")
-                sys.stdout.flush()
+                sys.stdout.write("NOTE: Building provider hash, please wait...\n")
             if p == 100:
-                sys.stdout.write("done.")
-                sys.stdout.flush()
+                sys.stdout.write("done.\n")
+    progress.p = 0
 
     def calc_oefile_priority(filename):
         for (regex, pri) in oefile_config_priorities:
