@@ -175,8 +175,16 @@ def exec_func_shell(func, d):
 
     # open logs
     si = file('/dev/null', 'r')
-    so = file(logfile, 'a')
-    se = file(logfile, 'a+', 0)
+    try:
+    if data.getVar("OEDEBUG", d):
+        so = os.popen("tee \"%s\"" % logfile, "w")
+        se = so
+    else:
+        so = file(logfile, 'w')
+        se = so
+    except OSError, e:
+        oe.error("opening log files: %s" % e)
+        pass
 
     # dup the existing fds so we dont lose them
     osi = [os.dup(sys.stdin.fileno()), sys.stdin.fileno()]
