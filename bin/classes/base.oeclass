@@ -1,13 +1,47 @@
 PATCHES_DIR="${S}"
 
+python base_do_clean() {
+	"""clear the build and temp directories"""
+	from oe import note
+	import os
+
+	note("Executing task 'clean'")
+
+	dir = data.expand("${TMPDIR}/${CATEGORY}/${PF}", d)
+	if dir == '//': fatal("wrong DATADIR")
+	note("removing " + dir)
+	os.system('rm -rf ' + dir)
+
+	dir = "%s.*" % data.expand(data.getVar('STAMP', d), d)
+	note("removing " + dir)
+	os.system('rm -f '+ dir)
+}
+
+python base_do_mrproper() {
+	"""clear downloaded sources, build and temp directories"""
+	from oe import note, debug, build
+	import os
+
+	note("Executing task 'mrproper'")
+
+	dir = data.expand("${DL_DIR}", d)
+	if dir == '/': fatal("wrong DATADIR")
+	debug(2, "removing " + dir)
+	os.system('rm -rf ' + dir)
+	build.exec_task('do_clean', d)
+}
+
 python base_do_patch () {
 	import re
+	from oe import decodeurl
 
-	if not env.has_key('SRC_URI'):
+	src_uri = data.getVar('SRC_URI', d)
+	if not src_uri:
 		raise Exception("SRC_URI not defined")
-	for url in getenv('SRC_URI').split():
+	src_uri = data.expand(src_uri, d)
+	for url in src_uri.split():
 #		print "url: %s" % url
-		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		(type, host, path, user, pswd, parm) = decodeurl(url)
 		if not parm.has_key("patch"):
 			continue
 		from oe.fetch import init, localpath
@@ -17,8 +51,8 @@ python base_do_patch () {
 		dots = local.split(".")
 		if dots[-2] in ['tar']:
 			continue
-		efile = os.path.join(getenv('WORKDIR'),os.path.basename(re.sub(r"\.%s$" % dots[-1],"",local)))
-		os.chdir(getenv('PATCHES_DIR'))
+		efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(re.sub(r"\.%s$" % dots[-1],"",local)))
+		os.chdir(data.getVar('PATCHES_DIR', d))
 		cmd = "patcher"
 		if parm.has_key("pnum"):
 			cmd += " -p %s" % parm["pnum"]
@@ -26,8 +60,6 @@ python base_do_patch () {
 		ret = os.system(cmd)
 		if ret != 0:
 			raise Exception("Patch execution failed")
-	mkstamp('do_patch')
-		
 }
 
 python base_do_fetch() {
@@ -119,8 +151,10 @@ python base_eventhandler() {
 addhandler base_eventhandler
 
 # setup the initial task stack
-EXPORT_FUNCTIONS do_fetch do_unpack do_compile do_stage do_install do_package do_patch do_build
+EXPORT_FUNCTIONS do_clean do_mrproper do_fetch do_unpack do_compile do_stage do_install do_package do_patch do_build
 
+addtask clean
+addtask mrproper
 addtask fetch
 addtask unpack after do_fetch
 addtask patch after do_unpack

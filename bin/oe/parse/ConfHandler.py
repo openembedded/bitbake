@@ -121,6 +121,9 @@ def init(data):
 	
 	# Package creation functions:
 	
+	oe.data.setVarFlag("do_clean", "dirs", [ '${TOPDIR}' ], data)
+	oe.data.setVarFlag("do_mrproper", "dirs", [ '${TOPDIR}' ], data)
+
 	oe.data.setVarFlag("do_fetch", "warnlevel", "1", data)
 	oe.data.setVarFlag("do_fetch", "dirs", [ '${DL_DIR}' ], data)
 	oe.data.setVarFlag("do_unpack", "warnlevel", "1", data)
