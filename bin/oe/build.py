@@ -169,15 +169,13 @@ def exec_task(task, d):
 			try:
 				exec_func_shell(func, d)
 			except FuncFailed:
-				event.fire(TaskFailed(func, d))
-				raise FuncFailed()
+				failedevent = TaskFailed(func, d)
+				event.fire(failedevent)
+				raise EventException(None, failedevent)
 			event.fire(TaskSucceeded(func, d))
 
 	# execute
-	try:
-		_task_graph.walkdown(task, execute)
-	except FuncFailed:
-		raise FuncFailed()
+	_task_graph.walkdown(task, execute)
 
 	# make stamp, or cause event and raise exception
 	mkstamp(task, d)

@@ -54,22 +54,9 @@ for var in oe.keys():
 
 try:
 	build.exec_task(sys.argv[1], oe)
-
 except build.FuncFailed:
 	fatal("task stack execution failed")
-
 except build.EventException:
 	(type, value, traceback) = sys.exc_info()
 	e = value.event
-	task = getattr(e, 'task', None)
-	pkg = getattr(e, 'pkg', None)
-	data = getattr(e, 'data', None)
-	msg = "%s event exception" % event.getName(e)
-	if task or pkg:
-		msg += ": "
-		if task:
-			msg += "task %s" % task
-		if pkg:
-			msg += "pkg %s" % pkg
-	print "%s, aborting" % msg
-	sys.exit(1)
+	fatal("%s event exception, aborting" % event.getName(e))
