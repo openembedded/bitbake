@@ -306,7 +306,7 @@ if __name__ == "__main__":
 
     buildname = oe.data.getVar("BUILDNAME", make.cfg)
 
-    ignore = oe.data.getVar("ASSUME_PROVIDED", make.cfg) or ""
+    ignore = oe.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
     __ignored_dependencies = ignore.split()
 
     pkgs_to_build = None
