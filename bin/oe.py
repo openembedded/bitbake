@@ -243,6 +243,48 @@ def decodeurl(url):
 			
 	return (type, host, path, user, pswd, p)
 		
+#######################################################################
+
+def encodeurl(decoded):
+	"""Encodes a URL from tokens (scheme, network location, path,
+	user, password, parameters). 
+
+	>>> encodeurl(['http', 'www.google.com', '/index.html', '', '', {}])
+
+	"http://www.google.com/index.html"
+
+	CVS with username, host and cvsroot. The cvs module to check out is in the
+	parameters:
+
+	>>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}])
+
+	"cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg"
+
+	Dito, but this time the username has a password part. And we also request a special tag
+	to check out.
+
+	>>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'}])
+
+	"cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81"
+	"""
+
+	(type, host, path, user, pswd, p) = decoded
+
+	if not type or not host or not path:
+		fatal("invalid or missing parameters for url encoding")
+
+	url = '%s://' % type
+	if user:
+		url += "%s" % user
+		if pswd:
+			url += ":%s" % pswd
+		url += "@"
+	url += "%s%s" % (host, path)
+	if p:
+		for parm in p.keys():
+			url += ";%s=%s" % (parm, p[parm])
+
+	return url
 
 #######################################################################
 
