@@ -74,7 +74,7 @@ def load_oefile( oefile ):
             #print " : '%s' clean. loading from cache..." % oefile
             cache_data = unpickle_oe( cache_oefile )
             if deps_clean(cache_data):
-                return cache_data
+                return cache_data, True
 
     oepath = data.getVar('OEPATH', cfg)
     safeoepath = data.getVar('OEPATH', cfg)
@@ -103,7 +103,7 @@ def load_oefile( oefile ):
         parse.handle(oefile, oe) # read .oe data
         if cache is not None: pickle_oe( cache_oefile, oe) # write cache
         os.chdir(oldpath)
-        return oe
+        return oe, False
     finally:
         os.chdir(oldpath)
         data.setVar('OEPATH', safeoepath, cfg)
@@ -124,6 +124,7 @@ def unpickle_oe( oefile ):
 def collect_oefiles( progressCallback ):
     """Collect all available .oe build files"""
 
+    parsed, cached, skipped = 0, 0, 0
     global cache
     cache = oe.data.getVar( "CACHE", cfg, 1 )
     if cache is not None:
@@ -164,7 +165,9 @@ def collect_oefiles( progressCallback ):
 
         # read a file's metadata
         try:
-            pkgdata[f] = load_oefile(f)
+            pkgdata[f], fromCache = load_oefile(f)
+            if fromCache: cached += 1
+            else: parsed += 1
             deps = None
             if pkgdata[f] is not None:
                 # allow metadata files to add items to OEFILES
@@ -183,7 +186,8 @@ def collect_oefiles( progressCallback ):
             oe.error("opening %s: %s" % (f, e))
             pass
         except oe.parse.SkipPackage:
-            pass
+            skipped += 1
+    print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped." % ( cached, parsed, skipped ), 
 
 def explode_version(s):
     import string
