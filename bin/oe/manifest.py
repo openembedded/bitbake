@@ -33,7 +33,7 @@ def parse (mfile, d):
 			break
 		if line.startswith("#"):
 			continue
-		fields = getfields(oe.data.expand(line, d))
+		fields = getfields(line)
 		if not fields:
 			continue
 		manifest.append(fields)
@@ -50,14 +50,16 @@ def emit (func, manifest, d):
 #	str += "}\n"
 	return str
 
-def mangle (func, line):
-	src = line["src"]
+def mangle (func, line, d):
+	import copy
+	newline = copy.copy(line)
+	src = oe.data.expand(newline["src"], d)
 
 	if src:
 		if not os.path.isabs(src):
 			src = "${WORKDIR}/" + src
 
-	dest = line["dest"]
+	dest = newline["dest"]
 	if not dest:
 		return
 
@@ -68,14 +70,14 @@ def mangle (func, line):
 		dest = "${D}/" + dest
 
 	elif func is "do_populate":
-		dest = "${WORKDIR}/install/" + line["pkg"] + "/" + dest
+		dest = "${WORKDIR}/install/" + newline["pkg"] + "/" + dest
 
 	elif func is "do_stage":
 		varmap = {}
-		varmap["${bindir}"] = "${STAGING_BINDIR}"
-		varmap["${libdir}"] = "${STAGING_LIBDIR}"
-		varmap["${includedir}"] = "${STAGING_INCDIR}"
-		varmap["${datadir}"] = "${STAGING_DIR}/share"
+		varmap["${bindir}"] = "${STAGING_DIR}/${HOST_SYS}/bin"
+		varmap["${libdir}"] = "${STAGING_DIR}/${HOST_SYS}/lib"
+		varmap["${includedir}"] = "${STAGING_DIR}/${HOST_SYS}/include"
+		varmap["${datadir}"] = "${STAGING_DATADIR}"
 
 		matched = 0
 		for key in varmap.keys():
@@ -83,19 +85,20 @@ def mangle (func, line):
 				dest = varmap[key] + "/" + dest[len(key):]
 				matched = 1
 		if not matched:
-			line = None
+			newline = None
 			return
 	else:
-		line = None
+		newline = None
 		return
 
-	line["src"] = src
-	line["dest"] = dest
+	newline["src"] = src
+	newline["dest"] = dest
+	return newline
 
 def emit_line (func, line, d):
 	import copy
 	newline = copy.deepcopy(line)
-	mangle(func, newline)
+	newline = mangle(func, newline, d)
 	if not newline:
 		return None
 
@@ -105,13 +108,19 @@ def emit_line (func, line, d):
 	src = newline["src"]
 	dest = newline["dest"]
 	if type is "d":
-		str = "install -d " + dest
+		str = "install -d "
 		if mode:
 			str += "-m %s " % mode
+		str += dest
 	elif type is "f":
 		if not src:
 			return None
-		str = "install -D "
+		if dest.endswith("/"):
+			str = "install -d "
+			str += dest + "\n"
+			str += "install "
+		else:
+			str = "install -D "
 		if mode:
 			str += "-m %s " % mode
 		str += src + " " + dest
