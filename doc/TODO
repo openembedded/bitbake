@@ -5,6 +5,7 @@ TODO:
 	    data and parse methods.
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
+	[.] Implement API testing using doctest.
 	[x] BUG: If we only run an update_data after a load of an .oe,
 	    but not for a .oeclass, if multiple .oeclasses define, say, for
 	    example DEPENDS_prepend, one overrides the other, and we lose
@@ -22,6 +23,8 @@ TODO:
 	[x] Teach 'include' to fetch if necessary.
 	    [x] Move this into handle() rather than include, to complete the
 		below TODO item.
+	[ ] Alter 'export' handling, to support exporting a var without
+	    defining the variable.
 
 [x] oebuild and oemake
 	[x] Teach the system to support grabbing OEFILES from upstream
@@ -51,27 +54,23 @@ TODO:
 	[ ] figure out where to put the glibc install into the toolchain dir,
 	    which is only needed by gcc pass 2.
 	[ ] add qtopia 1.6.1
-	[ ] add qt 2.3.6
+	[.] add qt 2.3.6
 	[ ] convert packages from OpenZaurus buildroot
 
-[ ] Image creation .oe files and/or external tool
-	[ ] Needs
-		[ ] Must be able to exert dependency on a .oe file, in order
-		    to ensure we have things like mkfs.jffs2, or, at a minimum,
-		    display an error when one of our requirements are not
-		    satisfied.
-		[ ] The ability to exert dependency applies to both
-		    rootfs population (ipkg, rpm) and image creation (mkfs.*)
-		[ ] If we implement image creation and rootfs population as
-		    OE files rather than independent python scripts, we gain
-		    said ability, but we then have other concerns.
-		    (i.e. ...)
+[.] Image creation .oe files and/or external tool
 	[x] Rootfs population .oe
 	[.] image creation .oe files that depend on virtual/rootfs
-		[.] tarball
-		[.] jffs2
+		[x] tarball
+		[ ] jffs2
 		[ ] cramfs
 		[ ] ext2
+	[ ] NOTE: need a way to ensure rootfs gets called only after the other
+	    .oe's are built when it gets called via oemake, and need to ensure
+	    image gets called only after rootfs.  The latter is simple enough,
+	    if the do_rootfs exists in the do_build digraph path.  However, if
+	    it exists in the digraph path, we cannot use the event handling means
+	    of solving the former, we'd need to populate DEPENDS with every package
+	    in OEFILES, other than itself and things that depend on it (recursion).
 
 [ ] Once we have the per package deployment code, write a staging oeclass
     that lets you use the FILES blocks for our deployment packages to do the
