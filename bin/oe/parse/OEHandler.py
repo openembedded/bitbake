@@ -60,8 +60,6 @@ def handle(fn, d = {}, include = 0):
 
 	init(d)
 
-	oldfile = data.getVar('FILE', d)
-
 	fn = obtain(fn, d)
 	oepath = ['.']
 	if not os.path.isabs(fn):
@@ -139,8 +137,6 @@ def handle(fn, d = {}, include = 0):
 					pdeps.append(var)
 					data.setVarFlag(p, 'deps', pdeps, d)
 					oe.build.add_task(p, pdeps, d)
-	if oldfile:
-		data.setVar('FILE', oldfile, d)
 	return d
 
 def feeder(lineno, s, fn, d):
