@@ -138,6 +138,25 @@ def version():
 	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
 	print "OEMake version %s" % __version__
 
+def get_oefiles():
+	"""Get default oefiles"""
+	dirs = os.listdir(os.getcwd())
+	oefiles = []
+	for f in dirs:
+		(root, ext) = os.path.splitext(f)
+		if ext == ".oe":
+			oefiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
+	return oefiles
+
+def get_oefile():
+	"""Get default oefile"""
+	oefiles = get_oefiles()
+	if len(oefiles):
+		return oefiles[0]
+	else:
+		return None
+
+
 import getopt
 try:
 	(opts, args) = getopt.getopt(sys.argv[1:], 'v', [ 'version' ])
@@ -179,6 +198,9 @@ buildname = data.getVar("BUILDNAME", cfg)
 files = string.split(data.getVar("OEFILES", cfg, 1) or "")
 files += sys.argv[1:]
 data.setVar("OEFILES", string.join(files), cfg)
+
+if not len(files):
+	files = get_oefiles()
 
 if not len(files):
 	usage()
