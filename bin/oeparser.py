@@ -17,9 +17,9 @@ class FileReader(object):
 	handles continuation lines, comments, empty lines and feed all read lines
 	into the feeder method.
 	"""
-	def __init__(self, filename = ""):
+	def __init__(self, filename = "", d = {}):
 		self.fn = filename
-		self.data = {}
+		self.data = d
 
 	def setFn(self, fn):
 		self.__fn = fn
@@ -172,7 +172,7 @@ class ConfigReader(FileReader):
 		if m:
 			s = expand(m.group(1), self.data["env"])
 			if os.access(s, os.R_OK):
-				print "including %s" % s
+				debug(2, "%s:%d: including %s" % (self.fn, lineno, s)
 				inherit_os_env(2, self.env)
 				self.include(s, ConfigReader())
 			else:
@@ -183,7 +183,7 @@ class PackageReader(ConfigReader):
 	"""Reads an OpenEmbedded format package metadata file"""
 	global oeconf
 
-	def __init__(self, filename = ""):
+	def __init__(self, filename = "", d = {}):
 		# regular expressions
 		self.func_start_regexp = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
 		self.inherit_regexp = re.compile( r"inherit\s+(.+)" )
@@ -194,7 +194,7 @@ class PackageReader(ConfigReader):
 		self.__body   = []
 		self.__oepath_found = 0
 
-		ConfigReader.__init__(self, filename)
+		ConfigReader.__init__(self, filename, d)
 
 		# default the config var expansion to the global cfg data
 		self.cfgenv = oeconf.env
@@ -268,7 +268,7 @@ class PackageReader(ConfigReader):
 					if self.__oepath_found == 0:
 						debug(1, "unable to locate %s in OEPATH"  % file)
 
-				print "inherit: loading %s" % file
+				debug(2, "%s:%d: inheriting %s" % (self.fn, lineno, file)
 				if os.access(file, os.R_OK):
 #					inherit_os_env(2, self.env)
 					self.include(file, PackageReader())
