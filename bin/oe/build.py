@@ -188,7 +188,7 @@ def exec_func_shell(func, d):
 	# execute function
 	prevdir = os.getcwd()
 	if data.getVarFlag(func, "fakeroot", d):
-		maybe_fakeroot = 'fakeroot '
+		maybe_fakeroot = oe.data.expand("${STAGING_BINDIR}/fakeroot ",d)
 	else:
 		maybe_fakeroot = ''
 	ret = os.system('%ssh -e %s' % (maybe_fakeroot, runfile))
