@@ -27,7 +27,7 @@ class VarExpandError(Exception):
 
 prepender = ''
 def debug(lvl, *args):
-	if env.has_key('BDEBUG') and (env['BDEBUG'] >= lvl):
+	if env.has_key('BDEBUG') and (env['BDEBUG'] >= str(lvl)):
 		print prepender + 'DEBUG:', string.join(args, '')
 
 def note(*args):
@@ -296,26 +296,25 @@ def varexpand(mystring,mydict = {}, stripnl=0):
 
 #######################################################################
 #
-# TODO
+# setenv()
+#
+# sets a variable in env[] with prior shell var expansion
 #
 
 def setenv(var, value):
-	#print var,"=", value,"->",
 	value = varexpand(value, env)
-	#print value
 	env[var] = value
-
-setenv('OEDIR', projectdir )
-setenv('TMPDIR', '${OEDIR}/tmp' )
-
 
 
 #######################################################################
+#
+# inherit_os_env()
 #
 # This reads the the os-environment and imports variables marked as such in envdesc
 # into our environment. This happens at various places during package definition
 # read time, see comments near envdesc[] for more.
 #
+
 def inherit_os_env(position):
 	position = str(position)
 	for s in os.environ.keys():
