@@ -1,5 +1,5 @@
 PATCHES_DIR="${S}"
-DEPENDS_prepend="content/patcher "
+DEPENDS_prepend="patcher "
 
 python do_showdata() {
 	import oe
