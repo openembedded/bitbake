@@ -1,0 +1,24 @@
+#!/usr/bin/python
+import oefetch
+from oe import *
+
+#a = oefetch.new(["http://www.openzaurus.org/official/toolchain/old/cross-2.95.3.tar.bz2", "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V-99-84"])
+#a.go()
+#oefetch.go()
+
+__oepath_found_it__ = 0
+
+for s in getenv('OEPATH').split(":"):
+	if os.access(os.path.join(s,'conf/oe.conf'), os.R_OK):
+		__oepath_found_it__ = 1
+		try:
+			read_config(os.path.join(s,'conf/oe.conf'))	# Read configuration
+		except IOError:
+			pass
+
+if __oepath_found_it__ == 0:
+	fatal("error locating conf/oe.conf")
+
+grabber = oefetch.FetchUrls()
+grabber.init(["http://www.openzaurus.org/official/toolchain/old/cross-2.95.3.tar.bz2", "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V-99-84"])
+grabber.go()
