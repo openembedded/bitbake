@@ -1,0 +1,244 @@
+#!/usr/bin/env python
+
+import sys, os, getopt, glob, copy, string, os.path, re
+sys.path.append('/usr/share/oe')
+import oe
+from oe import *
+
+try:
+    import itertools
+except ImportError: # itertools appears in Python 2.3
+    from utils import itertools
+try:
+    import optparse
+except ImportError: # optparse appears in Python 2.3
+    from utils import optparse
+parsespin = itertools.cycle( r'|/-\-' )
+
+__version__ = 1.1
+__build_cache_fail = []
+__build_cache = []
+__building_list = []
+
+def handle_options( args ):
+        parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ),
+        usage = """%prog [options] [package ...]
+
+Builds specified packages, expecting that the .oe files
+it has to work from are in OEFILES
+Default packages are all packages in OEFILES.
+Default OEFILES are the .oe files in the current directory.""" )
+
+        parser.add_option( "-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
+                           action = "store_false", dest = "abort", default = True )
+
+        parser.add_option( "-f", "--force", help = "force run of specified cmd, regardless of stamp status",
+                           action = "store_true", dest = "force", default = False )
+
+
+        parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild",
+                           action = "store", dest = "cmd", default = "build" )
+
+        options, args = parser.parse_args( args )
+        return options, args[1:]
+
+def try_build(item, fn):
+        if fn in __building_list:
+            oe.note("%s depends on itself (eventually)" % fn)
+            return 0
+
+        __building_list.append(fn)
+
+        the_data = make.pkgdata[fn]
+        depends = data.getVar('DEPENDS', the_data, 1) or ""
+        depends_list = string.split(depends)
+        for d in depends_list:
+            if buildPackage(d) == 0:
+                oe.error("dependency %s (for %s) not satisfied" % (d,item))
+                return 0
+        
+        command = make.options.cmd
+        debug(1, "oebuild %s %s" % (command, fn))
+        event.fire(event.PkgStarted(item, make.pkgdata[fn]))
+        try:
+                oe.build.exec_task('do_%s' % command, make.pkgdata[fn])
+                event.fire(event.PkgSucceeded(item, make.pkgdata[fn]))
+                __build_cache.append(fn)
+                return 1
+        except oe.build.FuncFailed:
+                error("task stack execution failed")
+                event.fire(event.PkgFailed(item, make.pkgdata[fn]))
+                __build_cache_fail.append(fn)
+                return 0
+        except oe.build.EventException:
+                (type, value, traceback) = sys.exc_info()
+                e = value.event
+                error("%s event exception, aborting" % event.getName(e))
+                event.fire(event.PkgFailed(item, make.pkgdata[fn]))
+                __build_cache_fail.append(fn)
+                return 0
+
+def buildPackage(item):
+        fn = None
+        
+        if not providers.has_key(item):
+            oe.error("nothing provides %s" % item)
+            return 0
+
+        all_p = providers[item]
+
+        for p in all_p:
+            if p in __build_cache:
+                return 1
+
+        versions = {}
+        for p in all_p:
+            the_data = make.pkgdata[p]
+            pn = data.getVar('PN', the_data, 1)
+            pv = data.getVar('PV', the_data, 1)
+            pr = data.getVar('PR', the_data, 1)
+            if not versions.has_key(pn):
+                versions[pn] = []
+            versions[pn].append(((pv, pr), p))
+
+        # find the latest version of each provider
+        preferred_versions = {}
+        for p in versions.keys():
+            latest = None
+            latest_f = None
+            for (v, _fn) in versions[p]:
+                if (latest is None) or (make.vercmp(latest, v) < 0):
+                    latest = v
+                    latest_f = _fn
+            preferred_versions[p] = (latest, latest_f)
+            
+        # build a new list with just the latest version of everything
+        eligible = []
+        for p in preferred_versions.keys():
+            (v, f) = preferred_versions[p]
+            eligible.append(f)
+                
+        for p in eligible:
+            if item in __build_cache_fail:
+                print "rejecting already-failed %s" % p
+                eligible.remove(p)
+
+        if len(eligible) == 0:
+            oe.error("no eligible providers for %s" % item)
+            return 0
+
+        # look to see if one of them is already staged.
+        # if so, bump it to the head of the queue
+        for p in all_p:
+            the_data = make.pkgdata[p]
+            pn = data.getVar('PN', the_data, 1)
+            pv = data.getVar('PV', the_data, 1)
+            pr = data.getVar('PR', the_data, 1)
+            tmpdir = data.getVar('TMPDIR', the_data, 1)
+            stamp = '%s/stamps/%s-%s-%s.do_stage' % (tmpdir, pn, pv, pr)
+            if os.path.exists(stamp):
+                (newver, fn) = preferred_versions[pn]
+                oldver = "%s-%s" % (pv, pr)
+                if (newver != oldver):
+                    extra_chat = "; upgrading from %s to %s" % (oldver, newver)
+                else:
+                    extra_chat = ""
+                oe.note("selecting already-staged %s to satisfy %s%s" % (pn, item, extra_chat))
+                eligible.remove(fn)
+                eligible = [fn] + eligible
+
+        # run through the list until we find one that we can build
+        for fn in eligible:
+            oe.note("selecting %s to satisfy %s" % (fn, item))
+            if try_build(item, fn):
+                return 1
+
+        oe.note("no buildable providers for %s" % item)
+        return 0
+
+
+def build_depgraph():
+    for f in make.pkgdata.keys():
+        depstr = data.getVar("DEPENDS", make.pkgdata[f], 1)
+        if depstr is not None:
+            deps = depstr.split()
+
+        provides = []
+        providestr = data.getVar("PROVIDES", make.pkgdata[f], 1)
+        if providestr is not None:
+            provides += providestr.split()
+
+        provides += data.getVar('PN', make.pkgdata[f], 1)
+        
+        for provide in provides:
+            if not providers.has_key(provide):
+                providers[provide] = []
+            providers[provide].append(f)
+    
+def myProgressCallback( x, y, f ):
+    sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
+    sys.stdout.flush()
+
+#
+# main
+#
+
+if __name__ == "__main__":
+
+    make.options, args = handle_options( sys.argv )
+
+    _depcmds = { "clean": None,
+                "mrproper": None,
+                "build": "stage" }
+
+    if not make.options.cmd:
+            make.options.cmd = "build"
+
+    if make.options.cmd in _depcmds:
+            depcmd=_depcmds[make.options.cmd]
+    else:
+            depcmd=make.options.cmd
+
+    make.pkgdata = {}
+    make.cfg = {}
+    providers = {}
+
+    try:
+            make.cfg = parse.handle("conf/oe.conf", make.cfg)
+    except IOError:
+            fatal("Unable to open oe.conf")
+
+    if not data.getVar("BUILDNAME", make.cfg):
+            data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
+
+    buildname = data.getVar("BUILDNAME", make.cfg)
+
+    try:
+        make.collect_oefiles( myProgressCallback )
+        build_depgraph()
+
+        pkgs_to_build = None
+        if args:
+            if not pkgs_to_build:
+                    pkgs_to_build = []
+            pkgs_to_build.extend(args)
+        if not pkgs_to_build:
+            oepkgs = data.getVar('OEPKGS', make.cfg, 1)
+            if oepkgs:
+                    pkgs_to_build = string.split(oepkgs)
+        if not pkgs_to_build:
+            print "nothing to build"
+            sys.exit(0)
+
+        event.fire(event.BuildStarted(buildname, pkgs_to_build, make.cfg))
+
+        for k in pkgs_to_build:
+            print "at top level, building " + k
+            if buildPackage(k) == 0:
+		print "Build of " + k + " failed"
+		sys.exit(1)
+
+        event.fire(event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
+
+    except KeyboardInterrupt:
+        print "\nNOTE: KeyboardInterrupt - Build not completed."
