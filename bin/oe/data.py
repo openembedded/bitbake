@@ -26,10 +26,13 @@ def setVar(var, value, d = _data):
 		initVar(var, d)
 		d[var]["content"] = value 
 
-def getVar(var, d = _data):
+def getVar(var, d = _data, exp = 0):
 	"""Gets the value of a variable"""
 	try:
-		return d[var]["content"]
+		if exp:
+			return expand(d[var]["content"], d)
+		else:
+			return d[var]["content"]
 	except KeyError:
 		return None
 
