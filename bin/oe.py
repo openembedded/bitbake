@@ -1151,6 +1151,14 @@ class digraph:
 				return x
 		return None 
 
+	def firstnonzero(self):
+		"returns first node with nonzero references, or NULL if no such node exists"
+		for x in self.okeys:
+			if self.dict[x][0]!=0:
+				return x
+		return None 
+
+
 	def allzeros(self):
 		"returns all nodes with zero references, or NULL if no such node exists"
 		zerolist = []
