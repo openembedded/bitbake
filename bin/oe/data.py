@@ -225,3 +225,107 @@ def emit_env(o=sys.__stdout__, d = _data):
 			continue
 		# NOTE: should probably check for unbalanced {} within the var
 		o.write("\n" + e + '() {\n' + getVar(e, d) + '}\n')
+
+def update_data(d = _data):
+	"""Modifies the environment vars according to local overrides
+
+	For the example we do some preparations:
+
+	>>> setenv('TEST_arm', 'target')
+	>>> setenv('TEST_ramses', 'machine')
+	>>> setenv('TEST_local', 'local')
+        >>> setenv('OVERRIDES', 'arm')
+
+	and then we set some TEST environment variable and let it update:
+
+	>>> setenv('TEST', 'original')
+	>>> update_env()
+	>>> print env['TEST']
+	target
+
+	You can set OVERRIDES to another value, yielding another result:
+
+        >>> setenv('OVERRIDES', 'arm:ramses:local')
+	>>> setenv('TEST', 'original')
+	>>> update_env()
+	>>> print env['TEST']
+	local
+
+	Besides normal updates, we are able to append text:
+
+	>>> setenv('TEST_append', ' foo')
+	>>> update_env()
+	>>> print env['TEST']
+	local foo
+
+	And we can prepend text:
+
+	>>> setenv('TEST_prepend', 'more ')
+	>>> update_env()
+	>>> print env['TEST']
+	more local foo
+
+	Deleting stuff is more fun with multiline environment variables, but
+	it works with normal ones, too. The TEST_delete='foo' construct
+	deletes any line in TEST that matches 'foo':
+
+	>>> setenv('TEST_delete', 'foo ')
+	>>> update_env()
+	>>> print "'%s'" % env['TEST']
+	''
+	"""
+
+	debug(2, "update_env()")
+
+	# can't do delete env[...] while iterating over the dictionary, so remember them
+	dodel = []
+	# preprocess overrides
+	overrides = expand(getVar('OVERRIDES', d), d)
+	if not overrides:
+		debug(1, "OVERRIDES not defined, nothing to do")
+		return
+	overrides = overrides.split(':')
+
+	for s in d.keys():
+		for o in overrides:
+			name = "%s_%s" % (s, o)
+			nameval = getVar(name, d)
+			if nameval:
+				setVar(s, nameval, d)
+				dodel.append(name)
+
+		# Handle line appends:
+		name = "%s_append" % s
+		nameval = getVar(name, d)
+		if nameval:
+			sval = getVar(s, d) or ""
+			setVar(s, sval+nameval, d)
+			dodel.append(name)
+
+		# Handle line prepends
+		name = "%s_prepend" % s
+		nameval = getVar(name, d)
+		if nameval:
+			sval = getVar(s, d) or ""
+			setVar(s, nameval+sval, d)
+			dodel.append(name)
+
+		# Handle line deletions
+		name = "%s_delete" % s
+		nameval = getVar(name, d)
+		if nameval:
+			sval = getVar(s, d)
+			if sval:
+				new = ''
+				pattern = string.replace(nameval,"\n","").strip()
+				for line in string.split(sval,"\n"):
+					if line.find(pattern) == -1:
+						new = new + '\n' + line
+				setVar(s, new, d)
+				dodel.append(name)
+
+	# delete all environment vars no longer needed
+	for s in dodel:
+		delVar(s, d)
+
+	inheritFromOS(5)
