@@ -309,7 +309,7 @@ for k in __tokill:
 	graph.walkup(k, reallykillitem)
 
 event.fire(BuildStarted(buildname, graph.okeys, cfg))
-packages = args
+packages = args or graph.okeys
 
 for k in packages:
 	if pkgs.has_key(k):
