@@ -1161,8 +1161,9 @@ def reader(cfgfile, feeder):
 		lineno = lineno + 1
 		s = f.readline()
 		if not s: break
-		s = s.strip()
-		if not s: continue		# skip empty lines
+		w = s.strip()
+		if not w: continue		# skip empty lines
+		s = s.rstrip()
 		if s[0] == '#': continue	# skip comments
 		while s[-1] == '\\':
 			s2 = f.readline()[:-1].strip()
@@ -1185,6 +1186,7 @@ def __read_config__(cfgfile, level):
 	visit = 1
 
 	def process_config(lineno, s):
+		s = s.strip()
 		m = __config_regexp__.match(s)
 		if m:
 			groupd = m.groupdict()
@@ -1259,6 +1261,11 @@ def read_oe(oefile, inherit = False, classname = None):
 				__read_oe_infunc__ = ""
 				__read_oe_body__ = []
 			else:
+				try:
+					if envflags[__read_oe_infunc__]["python"] == 1:
+						s = re.sub(r"^\t", '', s)
+				except KeyError:
+					pass
 				__read_oe_body__.append(s)
 			return
 			
@@ -1662,6 +1669,8 @@ def emit_env(o=sys.__stdout__, env = globals()["env"]):
 
 		o.write('\n')
 		if envflags.has_key(s):
+			if envflags[s].has_key('python'):
+				continue
 			if envflags[s].has_key('export'):
 				 o.write('export ')
 
@@ -1669,6 +1678,9 @@ def emit_env(o=sys.__stdout__, env = globals()["env"]):
 
 	for s in env:
 		if s != s.lower(): continue
+		if envflags.has_key(s):
+			if envflags[s].has_key('python'):
+				continue
 
 		o.write("\n" + s + '() {\n' + getenv(s,env) + '}\n')
 
