@@ -57,10 +57,13 @@ def setVar(var, value, d = _data):
 			l.append([value, override])
 			setVarFlag(base, v, l, d)
 			return
-		
+
 	if not var in d:
 		initVar(var, d)
-	d[var]["content"] = value 
+	if getVarFlag(var, 'matchesenv', d):
+		delVarFlag(var, 'matchesenv', d)
+		setVarFlag(var, 'export', 1, d)
+	d[var]["content"] = value
 
 def getVar(var, d = _data, exp = 0):
 	"""Gets the value of a variable
@@ -125,14 +128,14 @@ def delVarFlag(var, flag, d = _data):
 		>>> delVarFlag('TEST', 'testflag')
 		>>> print getVarFlag('TEST', 'testflag')
 		None
-		
+
 	"""
 	if var in d and "flags" in d[var] and flag in d[var]["flags"]:
 		del d[var]["flags"][flag]
 
 def setVarFlags(var, flags, d = _data):
 	"""Set the flags for a given variable
-	
+
 	Example:
 		>>> myflags = {}
 		>>> myflags['test'] = 'blah'
@@ -166,7 +169,7 @@ def delVarFlags(var, d = _data):
 		>>> delVarFlags('TEST')
 		>>> print getVarFlags('TEST')
 		None
-		
+
 	"""
 	if var in d and "flags" in d[var]:
 		del d[var]["flags"]
@@ -198,7 +201,7 @@ def expand(s, d = _data):
 	def var_sub(match):
 		key = match.group()[2:-1]
 		#print "got key:", key
-		var = getVar(key, d)
+		var = getVar(key, d, 1)
 		if var is not None:
 			return var
 		else:
@@ -273,6 +276,7 @@ def inheritFromOS(d = _data):
 		if not s in non_inherit_vars:
 			try:
 				setVar(s, os.environ[s], d)
+				setVarFlag(s, 'matchesenv', '1', d)
 			except TypeError:
 				pass
 
@@ -288,6 +292,9 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 		debug(2, "Warning, %s variable is not a string, not emitting" % var)
 		return 0
 
+	if getVarFlag(var, 'matchesenv', d):
+		return 0
+
 	if var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1:
 		debug(2, "Warning, %s variable name contains an invalid char, not emitting to shell" % var)
 		return 0
@@ -295,9 +302,11 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 	if getVarFlag(var, "func", d):
 		# NOTE: should probably check for unbalanced {} within the var
 		o.write("%s() {\n%s\n}\n" % (var, val))
-	else:	
-		if getVarFlag(var, "export", d):
-			o.write('export ')
+	else:
+		if not getVarFlag(var, "export", d):
+			return 0
+
+		o.write('export ')
 		# if we're going to output this within doublequotes,
 		# to a shell, we need to escape the quotes in the var
 		alter = re.sub('"', '\\"', val.strip())
@@ -308,7 +317,7 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 def emit_env(o=sys.__stdout__, d = _data):
 	"""Emits all items in the data store in a format such that it can be sourced by a shell."""
 
-	expandData(d)
+#	expandData(d)
 	env = d.keys()
 
 	for e in env:
@@ -345,12 +354,12 @@ def update_data(d = _data):
 		>>> setVar('TEST_ramses', 'machine')
 		>>> setVar('TEST_local', 'local')
 	        >>> setVar('OVERRIDES', 'arm')
-	
+
 		>>> setVar('TEST', 'original')
 		>>> update_data()
 		>>> print getVar('TEST')
 		target
-	
+
 	        >>> setVar('OVERRIDES', 'arm:ramses:local')
 		>>> setVar('TEST', 'original')
 		>>> update_data()
@@ -387,7 +396,7 @@ def update_data(d = _data):
 					break
 			sval+=a
 			setVar(s, sval, d)
-		
+
 		# Handle line prepends
 		for (a, o) in getVarFlag(s, '_prepend', d) or []:
 			delVarFlag(s, '_prepend', d)
