@@ -2,23 +2,21 @@
 # -*- coding: iso8859-15 -*-
 
 from qt import *
+from appinfo import *
 from packages import Packages
-import os
-
-imageDir = "%s/bin/commander/images/" % os.environ["OEDIR"]
 
 class ProviderItem( QListViewItem ):
 
     columns = { "PROVIDES":     0,
-                "CATEGORY":     1,
-                "SECTION":      2,
-                "PRIORITY":     3,
-                "MAINTAINER":   4,
-                "SRC_URI":      5,
-                "HOMEPAGE":     6,
-                "DEPENDS":      7,
-                "RDEPENDS":     8,
-                "SHORTNAME":    9 }
+                "CATEGORY":     3,
+                "SECTION":      4,
+                "PRIORITY":     5,
+                "MAINTAINER":   6,
+                "SRC_URI":      7,
+                "HOMEPAGE":     8,
+                "DEPENDS":      9,
+                "RDEPENDS":    10,
+                "SHORTNAME":   11 }
 
     def __init__( self, parent, provider ):
         self.parent = parent
