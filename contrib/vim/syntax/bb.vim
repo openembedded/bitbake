@@ -54,13 +54,27 @@ syn match bbVarValue		".*$" contained contains=bbString
 
 " BitBake python metadata
 syn include @python syntax/python.vim
+if exists("b:current_syntax")
+  unlet b:current_syntax
+endif
 
 syn keyword bbPythonFlag	python contained nextgroup=bbFunction
 syn match bbPythonFuncDef	"^\(python\s\+\w\+\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion
 syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@python
 "hi def link bbPythonFuncRegion	Comment
-hi def link bbPythonFlag	Type
 
+" BitBake shell metadata
+syn include @shell syntax/sh.vim
+if exists("b:current_syntax")
+  unlet b:current_syntax
+endif
+
+syn match bbShellFuncDef	"^\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbFunction,bbDelimiter nextgroup=bbShellFuncRegion
+syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@shell
+"hi def link bbShellFuncRegion	Comment
+
+
+hi def link bbPythonFlag	Type
 hi def link bbStatement		Statement
 hi def link bbString		String
 hi def link bbTodo		Todo
@@ -72,3 +86,5 @@ hi def link bbDelimiter		Delimiter
 hi def link bbIdentifier	Identifier
 hi def link bbQuote		Statement
 hi def link bbVarEq		Operator
+
+let b:current_syntax = "bb"
