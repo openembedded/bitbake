@@ -49,7 +49,7 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 
 #######################################################################
 
-def exec_task(task, dir, deptasks=""):
+def exec_task(task, dir, deptasks = []):
 	"""Executes a given task, handling the stamps appropriately"""
 	if stamp_is_current(task, deptasks):
 		return
@@ -60,7 +60,7 @@ def exec_task(task, dir, deptasks=""):
 		except KeyError:
 			pass
 
-	for dep in deptasks.split():
+	for dep in deptasks:
 		try:
 			depfuncname = tasks[dep]["func"]
 			depfunc = globals()[depfuncname]
@@ -245,10 +245,15 @@ def do_showenv():
 #######################################################################
 
 def usage(errorlevel=0, txt=''):
+	global tasks
 	if txt:
 		print
 		print txt
-	funcs = globals().keys()
+
+	funcs = []
+	for i in tasks.keys():
+		if tasks[i].has_key("func"):
+			funcs.append(tasks[i]["func"])
 	funcs.sort()
 
 	print "\noebuild <command> <somebuildfile.oe>\n"
@@ -260,6 +265,25 @@ def usage(errorlevel=0, txt=''):
 			print "     %-15s %s" % (s[3:], doc)
 	
 	sys.exit(errorlevel)
+
+tasks = {
+	"clean" : { "func" : "do_clean" },
+	"mrproper" : { "func" : "do_mrproper" },
+	"test" : { "func" : "do_test" },
+	"showenv" : { "func" : "do_showenv" },
+	"fetch" : { "func" : "do_fetch",
+		     "deps" : [ '' ] },
+	"unpack" : { "func" : "do_unpack",
+		     "deps" : [ 'fetch' ] },
+	"compile" : { "func" : "do_compile",
+		      "deps" : [ 'unpack' ] },
+	"stage" : { "func" : "do_stage",
+		    "deps" : [ 'compile' ] },
+	"install" : { "func" : "do_install",
+		      "deps" : [ 'stage' ] },
+	"build" : { "func" : "do_build",
+		    "deps" : [ 'install' ] },
+}
 
 if len(sys.argv) < 2:
 	usage(1)
@@ -291,25 +315,6 @@ except IOError:
 	fatal("error accessing build file")
 set_additional_vars()				# set rest of vars, e.g. ${A}
 update_env()					# Environment modification, e.g. local overrides
-
-tasks = {
-	"clean" : { "func" : "do_clean" },
-	"mrproper" : { "func" : "do_mrproper" },
-	"test" : { "func" : "do_test" },
-	"showenv" : { "func" : "do_showenv" },
-	"fetch" : { "func" : "do_fetch",
-		     "deps" : "" },
-	"unpack" : { "func" : "do_unpack",
-		     "deps" : "fetch" },
-	"compile" : { "func" : "do_compile",
-		      "deps" : "unpack" },
-	"stage" : { "func" : "do_stage",
-		    "deps" : "compile" },
-	"install" : { "func" : "do_install",
-		      "deps" : "stage" },
-	"build" : { "func" : "do_build",
-		    "deps" : "install" },
-}
 
 for s in sys.argv[1].split(','):
 	try:
