@@ -1,0 +1,59 @@
+#
+# Bash completion for oemake
+#
+# contact: oe at haslup dot com
+#
+#
+# Uses $OEDIR to find your local.conf in which it
+# expects OEFILES to be defined.
+#
+# If it's not, feel free to add an OEFILES like below:
+#OEFILES="/data/zaurus/openembedded/packages/*/*.oe" 
+#
+
+
+_oefiles_update ()
+{
+   if [ -e $OEDIR/conf/local.conf ]; then
+      OEFILES=`grep -E "^OEFILES" $OEDIR/conf/local.conf|sed 's/^.*= *//'`
+   else
+      echo "Couldn't find conf/local.conf, maybe set OEDIR?"
+   fi
+
+  export COMPLETE_OE_PKG_CACHE=$(for f in `ls ${OEFILES//\"/}` ; do basename $f | sed 's/\_.*$//' ; done)
+}
+
+_oemake_cached () 
+{ 
+        local packages cur
+
+        COMPREPLY=()
+        cur=${COMP_WORDS[COMP_CWORD]}
+
+  COMPREPLY=( $(compgen -W '$COMPLETE_OE_PKG_CACHE' -- $cur ) )
+}
+
+_oemake () 
+{ 
+        local packages cur
+
+        COMPREPLY=()
+        cur=${COMP_WORDS[COMP_CWORD]}
+
+   _oefiles_update
+
+   COMPREPLY=( $(compgen -W '$COMPLETE_OE_PKG_CACHE' -- $cur ) )
+   #COMPREPLY=( $(  (compgen -W '$(for f in `find $OE_PKG_DIR -not -path "*SCCS*" -name "*.oe" -exec basename {} \;` ; do echo $f | sed 's/\_.*$//' ; 
+done)' -- $cur ) ) )
+}
+
+_oefiles_update
+
+# Choose one of the commands below... the cached version is pretty quick, but might need
+# refreshing each time you update your packages directory.  Non-cached is too slow
+# on my P4-1.8ghz.
+#
+# If you can use the non-cached, more power to you and your speedy machine :)
+#
+complete -F _oemake_cached oemake
+#complete -F _oemake oemake
