@@ -14,7 +14,6 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 
 import os, re, string
 import oe
-from oe import data
 
 class FetchError(Exception):
 	"""Exception raised when a download fails"""
@@ -36,7 +35,7 @@ def init(urls = []):
 			if m.supports(u):
 				m.urls.append(u)
 	
-def go(d = data.init()):
+def go(d = oe.data.init()):
 	"""Fetch all urls"""
 	for m in methods:
 		if m.urls:
@@ -110,7 +109,7 @@ class Wget(Fetch):
 		return os.path.join(oe.getenv("DL_DIR"), os.path.basename(url))
 	localpath = staticmethod(localpath)
 
-	def go(self, d = data.init(), urls = []):
+	def go(self, d = oe.data.init(), urls = []):
 		"""Fetch urls"""
 		if not urls:
 			urls = self.urls
@@ -119,28 +118,41 @@ class Wget(Fetch):
 			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
 			myfile = os.path.basename(path)
 			dlfile = self.localpath(loc)
-			dlfile = data.expand(dlfile, d)
+			dlfile = oe.data.expand(dlfile, d)
+			md5file = "%s.md5" % dlfile
+
+			if os.path.exists(md5file):
+				# complete, nothing to see here..
+				continue
 
 			if os.path.exists(dlfile):
-				# if the file exists, check md5
-				# if no md5 or mismatch, attempt resume.
-				# regardless of exit code, move on.
-				myfetch = data.expand(data.getVar("RESUMECOMMAND", d), d)
-				oe.note("fetch " +loc)
-				myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
-				myfetch = myfetch.replace("${FILE}",myfile)
-				oe.debug(2,myfetch)
-				myret = os.system(myfetch)
-				continue
+				# file exists, but we didnt complete it.. trying again..
+				myfetch = oe.data.expand(oe.data.getVar("RESUMECOMMAND", d), d)
 			else:
-				myfetch = data.expand(data.getVar("FETCHCOMMAND", d), d)
-				oe.note("fetch " +loc)
-				myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
-				myfetch = myfetch.replace("${FILE}",myfile)
-				oe.debug(2,myfetch)
-				myret = os.system(myfetch)
-				if myret != 0:
-					raise FetchError(myfile)
+				myfetch = oe.data.expand(oe.data.getVar("FETCHCOMMAND", d), d)
+
+			oe.note("fetch " +loc)
+			myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
+			myfetch = myfetch.replace("${FILE}",myfile)
+			oe.debug(2,myfetch)
+			myret = os.system(myfetch)
+			if myret != 0:
+				raise FetchError(myfile)
+
+			# supposedly complete.. write out md5sum
+			if oe.which(oe.data.getVar('PATH', d, 1), 'md5sum'):
+				md5pipe = os.popen('md5sum %s' % dlfile)
+				md5 = md5pipe.readline().split()[0]
+				md5pipe.close()
+				md5out = file(md5file, 'w')
+				md5out.write(md5)
+				md5out.close()
+			else:
+				md5out = file(md5file, 'w')
+				md5out.write("")
+				md5out.close()
+						
+						
 
 methods.append(Wget())
 
@@ -169,7 +181,7 @@ class Cvs(Fetch):
 			return os.path.join(oe.getenv("DL_DIR"), parm["module"])
 	localpath = staticmethod(localpath)
 
-	def go(self, d = data.init(), urls = []):
+	def go(self, d = oe.data.init(), urls = []):
 		"""Fetch urls"""
 		if not urls:
 			urls = self.urls
@@ -203,18 +215,11 @@ class Cvs(Fetch):
 				method = "pserver"
 
 			olddir = os.path.abspath(os.getcwd())
-			os.chdir(data.expand(dldir, d))
+			os.chdir(oe.data.expand(dldir, d))
 			cvsroot = ":" + method + ":" + user
 			if pswd:
 				cvsroot += ":" + pswd
 			cvsroot += "@" + host + ":" + path
-
-#			if method == "pserver":
-#				# Login to the server
-#				cvscmd = "cvs -d" + cvsroot + " login"
-#				myret = os.system(cvscmd)
-#				if myret != 0:
-#					raise FetchError(module)
 
 			cvscmd = "cvs -d" + cvsroot
 			cvscmd += " checkout " + string.join(options) + " " + module 
