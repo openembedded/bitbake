@@ -88,24 +88,20 @@ TODO:
 			[x] core
 			[ ] symlinks
 			[ ] device specifics (patches, etc)
-			[ ] packaging split
 		[.] ncurses
 			[x] core
 			[x] staging function
 			[x] install function
-			[ ] packaging split
 		[.] openssl
 			[x] core
 			[x] staging function
 			[x] install function
-			[ ] packaging split
 		[.] qt 2.3.6^H7
 			[x] core
 			[x] dependencies
 				[x] libpng
 				[x] libjpeg
 			[ ] device specifics (patches, etc)
-			[ ] packaging split
 		[ ] add cross binutils and binutils
 		[ ] add gcc
 		[ ] figure out where to put the glibc install into the toolchain dir,
@@ -114,11 +110,9 @@ TODO:
 			[x] core
 			[x] install
 			[ ] device specifics (patches, etc)
-			[ ] packaging split
 		[.] openssh
 			[x] core
 			[ ] device specifics (patches, etc)
-			[ ] packaging split
 		[.] modutils
 			[x] core
 			[ ] device specifics
@@ -128,6 +122,9 @@ TODO:
 			[x] install
 		[x] mtd-buildarch
 			[x] core
+		[.] hotplug
+			[x] core
+			[ ] deviceism
 	[.] new packages
 		[.] apache
 			[x] core
@@ -161,5 +158,5 @@ TODO:
 			[ ] BK method
 			[ ] SVN method
 	[ ] Shared mem interface to control autobuild daemon
-	[ ] XML/RPC metadata exchange format
-	[ ] Cross process metadata exchange with and without a metadata daemon
+	[ ] Autobuild daemon
+		[ ] XML/RPC control and metadata exchange interfaces
