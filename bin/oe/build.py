@@ -76,6 +76,21 @@ def init(data):
 def exec_func(func, d):
 	"""Execute an OE 'function'"""
 
+	dirs = data.getVarFlag(func, 'dirs', d) or []
+	for adir in dirs:
+		adir = data.expand(adir, d)
+		mkdirhier(adir) 
+
+	if len(dirs) > 0:
+		adir = dirs[-1]
+	else:
+		adir = data.getVar('S', d)
+
+	adir = data.expand(adir, d)
+
+	if adir:
+		os.chdir(adir)
+
 	if data.getVarFlag(func, "python", d):
 		exec_func_python(func, d)
 	else:
@@ -90,8 +105,6 @@ def exec_func_python(func, d):
 	body = data.getVar(func, d)
 	if not body:
 		return
-	print "executing function %s" % func
-	print "content: %s\n" % body
 	tmp = "def tmpFunction(d):\n%s" % body
 	comp = compile(tmp, "tmpFunction(d)", "exec")
 	exec(comp)
@@ -114,16 +127,6 @@ def exec_func_shell(func, d):
 		if globals()[check](func, deps):
 			return
 
-	dirs = data.getVarFlag(func, 'dirs', d) or []
-	for dir in dirs:
-		dir = data.expand(dir, d)
-		mkdirhier(dir) 
-
-	if len(dirs) > 0:
-		dir = dirs[-1]
-	else:
-		dir = None
-
 	global logfile
 	t = data.getVar('T', d)
 	if not t:
@@ -143,7 +146,7 @@ def exec_func_shell(func, d):
 			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
 	data.emit_env(f, d)
 
-	if dir: f.write("cd %s\n" % dir)
+#	if dir: f.write("cd %s\n" % dir)
 	if func: f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
@@ -277,6 +280,12 @@ def remove_task(task, kill = 1, taskdata = _task_data):
 	if kill == 1:
 		ref = 2
 	_task_graph.delnode(task, ref)
+
+def get_task_data():
+	return _task_data
+
+data.setVarFlag("do_clean", "nostamp", "1", _task_data)
+data.setVarFlag("do_mrproper", "nostamp", "1", _task_data)
 
 data.setVarFlag("do_fetch", "nostamp", "1", _task_data)
 data.setVarFlag("do_fetch", "check", "check_md5", _task_data)
