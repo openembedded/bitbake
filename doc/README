@@ -26,7 +26,7 @@ Assuming that you already have a .oe file or set of .oe files to utilize,
 the following applies:
 
 First, unless you installed an OE rpm, deb, or ipk, you'll want to set OEDIR
-to point to the OE repository that contains bin/classes and bin/oe.
+to point to the OE repository that contains classes/ and bin/oe/.
 
 	cd oe
 	OEDIR=`pwd`
