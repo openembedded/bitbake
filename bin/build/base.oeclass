@@ -1,0 +1,30 @@
+base_do_unpack() {
+	oenote "base_do_unpack"
+	test "${A}" != "" && unpack "${A}" || oenote "nothing to extract"
+}
+
+
+base_do_compile() {
+	oenote "base_do_compile"
+	oenote "pwd is $PWD"
+	if [ -x ./configure ] ; then
+		oeconf 
+		oemake || die "oemake failed"
+	else
+		oenote "nothing to compile"
+	fi
+}
+
+
+base_do_stage() {
+	oenote "base_do_stage"
+	oenote "nothing to install into stage area"
+}
+
+
+base_do_install() {
+	oenote "base_do_install"
+	oenote "nothing to install"
+}
+
+EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install
