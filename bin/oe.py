@@ -811,12 +811,13 @@ def catpkgsplit(mydata,silent=1):
 
 	mysplit = mydata.split("/")
 	p_split = None
-	if len(mysplit) == 1:
+	splitlen = len(mysplit)
+	if splitlen == 1:
 		retval = ["null"]
 		p_split = pkgsplit(mydata,silent)
-	elif len(mysplit)==2:
-		retval = [mysplit[0]]
-		p_split = pkgsplit(mysplit[1],silent)
+	else:
+		retval = [mysplit[splitlen - 2]]
+		p_split = pkgsplit(mysplit[splitlen - 1],silent)
 	if not p_split:
 		__catpkgsplit_cache__[mydata] = None
 		return None
@@ -1216,15 +1217,19 @@ def read_config(cfgfile):
 
 __func_start_regexp__    = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
 __include_regexp__       = re.compile( r"include\s+(.+)" )
+__inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
+__export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 
 __read_oe_infunc__ = ""
 __read_oe_body__   = []
+__read_oe_classname__ = "" # our python equiv to OECLASS
 
-def read_oe(oefile):
+def read_oe(oefile, inherit = False, classname = None):
 	"""Reads a build file"""
+	"""When inherit flag is set to False(default), EXPORT_FUNCTIONS is ignored."""
 
 	def process_oe(lineno, s):
-		global __read_oe_infunc__, __read_oe_body__
+		global __read_oe_infunc__, __read_oe_body__, __read_oe_classname__
 		if __read_oe_infunc__:
 			if s == '}':
 				__read_oe_body__.append('')
@@ -1260,6 +1265,40 @@ def read_oe(oefile):
 				fatal("error accessing build file %s" % file)
 			return
 
+		m = __inherit_regexp__.match(s)
+		if m:
+			__word__ = re.compile(r"\S+")
+			files = m.group(1)
+			n = __word__.findall(files)
+#                       TODO: walk OEPATH
+			for f in n:
+				file = expand(f)
+				if file[0] != "/":
+					file = expand("${OEDIR}/bin/build/%s.oeclass" % file)
+					__read_oe_classname__ = file
+
+				o = re.match(r".*/([^/\.]+)",file)
+				if o:
+					__read_oe_classname__ = o.group(1)
+
+				print "read_oe: inherit: loading %s" % file
+				try:
+					read_oe(file, True)
+					__read_oe_classname__ = ""
+				except IOError:
+					fatal("error accessing build file %s" % file)
+			return
+
+		m = __export_func_regexp__.match(s)
+		if m:
+			if inherit == True:
+				__word__ = re.compile(r"\S+")
+				fns = m.group(1)
+				n = __word__.findall(fns)
+				for f in n:
+					setenv(f, "\t%s_%s\n" % (__read_oe_classname__,f))
+			return
+
 		error("Unknown syntax in %s" % oefile)
 		print s
 		sys.exit(1)
@@ -1267,6 +1306,7 @@ def read_oe(oefile):
 
 	debug(2,"read_oe('%s')" % oefile)
 	reader(oefile, process_oe)
+
 
 
 
@@ -1683,6 +1723,7 @@ envflags = {
 "STRIP":		{ "warnlevel": 3 },
 "AR":			{ "warnlevel": 3 },
 "RANLIB":		{ "warnlevel": 3 },
+"MAKE":		{ "warnlevel": 3 },
 
 "BUILD_CPPFLAGS":	{ "warnlevel": 3 },
 "BUILD_CFLAGS":		{ "warnlevel": 3 },
@@ -1715,6 +1756,8 @@ envflags = {
 "SLOT":			{ "warnlevel": 0 },
 "GET_URI":		{ "warnlevel": 0 },
 "MAINTAINER":		{ "warnlevel": 0 },
+"EXTRA_OECONF":		{ "warnlevel": 0 },
+"EXTRA_OEMAKE":		{ "warnlevel": 0 },
 
 
 

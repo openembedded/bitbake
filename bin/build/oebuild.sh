@@ -257,27 +257,37 @@ unpack() {
 #TODO: add crosscompile support
 oeconf() {
 	if [ -x ./configure ] ; then
-		test -z "${CBUILD}" || EXTRA_ECONF="--build=${CBUILD} ${EXTRA_ECONF}"
-		test -z "${CCHOST}" || EXTRA_ECONF="--target=${CCHOST} ${EXTRA_ECONF}"
+		test -z "${BUILD_SYS}" || EXTRA_OECONF="--build=${BUILD_SYS} ${EXTRA_OECONF}"
+		test -z "${TARGET_SYS}" || EXTRA_OECONF="--target=${TARGET_SYS} ${EXTRA_OECONF}"
+		set -x
 		./configure \
 		    --prefix=/usr \
-		    --host=${CHOST} \
+		    --host=${SYS} \
 		    --mandir=/usr/share/man \
 		    --infodir=/usr/share/info \
 		    --datadir=/usr/share \
 		    --sysconfdir=/etc \
 		    --localstatedir=/var/lib \
-			${EXTRA_ECONF} \
-		    "$@" || die "econf failed" 
+			${EXTRA_OECONF} \
+		    "$@" || die "oeconf failed" 
 	else
 		die "no configure script found"
+	fi
+}
+
+oemake() {
+	if [ -f ./[mM]akefile -o -f ./GNUmakefile ] ; then
+		if [ x"$MAKE" = x ]; then MAKE=make; fi
+		${MAKE} ${EXTRA_OEMAKE} "$@" || die "oemake failed"
+	else
+		die "no Makefile found"
 	fi
 }
 
 
 oeinstall() {
 	if [ -f ./[mM]akefile -o -f ./GNUmakefile ] ; then
-		make prefix=${D}/usr \
+		${MAKE} prefix=${D}/usr \
 		    datadir=${D}/usr/share \
 		    infodir=${D}/usr/share/info \
 		    localstatedir=${D}/var/lib \
