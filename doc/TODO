@@ -1,5 +1,10 @@
 TODO:
 
+[ ] Pester schurig
+	[ ] What is the dir/envvar we use to hold outputted files for packaging?
+	    ala the current ipktmpdir.
+	[ ] Env var names for the 3 dependency forms, build depends - target, build depends - build, depends.
+
 [x] oe package
 	[x] Update .oe and .conf parsers to not strip out all the tabs in our 
 	    python function vars..
@@ -33,14 +38,14 @@ TODO:
 	[ ] oe/parse.py
 		[ ] addevent declaration for .oe files.
 	[ ] handle 'event' flag from addevent in oemake/oebuild
-	[ ] oemake
+	[.] oemake
 		[ ] default event handlers
-		[ ] event declarations
+		[x] event declarations
 		[ ] event firing
-	[ ] oebuild
+	[.] oebuild
 		[ ] default event handlers
-		[ ] event declarations
-		[ ] event firing
+		[x] event declarations
+		[x] event firing
 
 [x] Update patcher tool to make use of our ability to use python functions.
 [x] Write package.oeclass implemented w/ a python function/task
