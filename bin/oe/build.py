@@ -263,16 +263,16 @@ def exec_task(task, d):
 
 
 def stamp_is_current(task, d, checkdeps = 1):
-	"""Check status of a given task's stamp. returns False if it is not current and needs updating."""
+	"""Check status of a given task's stamp. returns 0 if it is not current and needs updating."""
 	stamp = data.getVar('STAMP', d)
 	if not stamp:
-		return False
+		return 0
 	stampfile = "%s.%s" % (data.expand(stamp, d), task)
 	if not os.access(stampfile, os.F_OK):
-		return False
+		return 0
 
 	if checkdeps == 0:
-		return True
+		return 1
 
 	import stat
 	tasktime = os.stat(stampfile)[stat.ST_MTIME]

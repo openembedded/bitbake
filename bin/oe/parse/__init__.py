@@ -21,8 +21,8 @@ def supports(fn):
 	"""Returns true if we have a handler for this file, false otherwise"""
 	for h in handlers:
 		if h['supports'](fn):
-			return True
-	return False
+			return 1
+	return 0
 
 def handle(fn, data = {}, include = 0):
 	"""Call the handler that is appropriate for this file"""
