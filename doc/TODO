@@ -31,8 +31,12 @@ TODO:
 	    since its dependency item's stamp doesnt exist.  Need to fix
 	    that behavior, then enhance the fetch classes to check for
 	    existance.
-	[ ] move set_automatic_vars into either data or parse
-	[ ] default flag set for both oe and task metadata
+	[x] move set_automatic_vars into either data or parse
+	[x] default flag set for both oe and task metadata
+	[x] Fix python function implementation, do it the way I did the
+	    code for the event handlers. (needed to fix do_fetch)
+	[ ] Implement and test check_md5, taking nostamp into account.
+	[ ] Add clean and mrproper targets to base oeclass.
 
 [.] oemake
 	[x] Move OEPATH follow into the individual 'handle' functions,
