@@ -207,7 +207,7 @@ def exec_func_shell(func, d):
 	if ret==0:
 		if not data.getVar("OEDEBUG"):
 			os.remove(runfile)
-			os.remove(logfile)
+#			os.remove(logfile)
 		return
 	else:
 		error("function %s failed" % func)
