@@ -11,9 +11,10 @@ class AboutDialog( AboutDialogBase ):
 # main
 #------------------------------------------------------------------------#
 
-import sys
-from qt import *
-app = QApplication( sys.argv )
-mw = AboutDialog()
-mw.exec_loop()
+if __name__ == "__main__":
+    import sys
+    from qt import *
+    app = QApplication( sys.argv )
+    mw = AboutDialog()
+    mw.exec_loop()
 
