@@ -11,10 +11,11 @@ __include_regexp__ = re.compile( r"include\s+(.+)" )
 def init(data):
 	if not oe.data.getVar('TOPDIR', data):
 		oe.data.setVar('TOPDIR', os.getcwd(), data)
-	if not oe.data.getVar('OEDIR', data):
-		oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
 	if not oe.data.getVar('OEPATH', data):
-		oe.data.setVar('OEPATH', "${TOPDIR}:${HOME}/.oe:${OEDIR}/bin:${OEDIR}:%s/share/oe" % sys.prefix, data)
+		oebuild = os.path.abspath(sys.argv[0])
+		oebin = os.path.dirname(oebuild)
+		oedir = os.path.dirname(oebin)
+		oe.data.setVar('OEPATH', "${TOPDIR}:%s:%s:${HOME}/.oe:${OEDIR}/bin:${OEDIR}:%s/share/oe" % (oebin, oedir, sys.prefix), data)
 
 	oe.data.setVarFlag("OEFILES", "inherit", "1", data)
 	oe.data.setVarFlag("OEPKGS", "inherit", "1", data)
@@ -33,7 +34,6 @@ def init(data):
 	oe.data.setVarFlag("TMPDIR", "inherit", "1", data)
 	oe.data.setVarFlag("DL_DIR", "warnlevel", "3", data)
 	oe.data.setVarFlag("OEDIR", "inherit", "1", data)
-	oe.data.setVarFlag("OEDIR", "warnlevel", "3", data)
 	oe.data.setVarFlag("STAGING_DIR", "warnlevel", "3", data)
 	oe.data.setVarFlag("STAGING_BINDIR", "warnlevel", "3", data)
 	oe.data.setVarFlag("STAGING_LIBDIR", "warnlevel", "3", data)
