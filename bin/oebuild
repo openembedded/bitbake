@@ -274,10 +274,11 @@ def usage(errorlevel=0, txt=''):
 	print "\noebuild <command> <somebuildfile.oe>\n"
 	print "Valid commands are:"
 	for s in funcs:
-		if s.startswith('do_'):
-			doc = getattr(globals()[s], '__doc__')
-			if doc.startswith('internal'): continue
-			print "     %-15s %s" % (s[3:], doc)
+		if not globals().has_key(s):
+			continue
+		doc = getattr(globals()[s], '__doc__')
+		if doc.startswith('internal'): continue
+		print "     %-15s %s" % (s[3:], doc)
 	
 	sys.exit(errorlevel)
 
