@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
-import sys, os, getopt, glob, copy, string, os.path, re
+import sys, os, getopt, glob, copy, os.path, re
 sys.path.append('/usr/share/oe')
 import oe
-from oe import *
+from oe import make
 
 try:
     import itertools
@@ -19,6 +19,8 @@ __version__ = 1.1
 __build_cache_fail = []
 __build_cache = []
 __building_list = []
+
+__preferred = {}
 
 def handle_options( args ):
         parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ),
@@ -39,42 +41,50 @@ Default OEFILES are the .oe files in the current directory.""" )
         parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild",
                            action = "store", dest = "cmd", default = "build" )
 
+        parser.add_option( "-r", "--read", help = "read the specified file before oe.conf",
+                           action = "append", dest = "files", default = [] )
+
         options, args = parser.parse_args( args )
         return options, args[1:]
 
-def try_build(item, fn):
+def try_build(fn):
         if fn in __building_list:
             oe.note("%s depends on itself (eventually)" % fn)
+            oe.note("chain is: %s" % " -> ".join(__building_list))
             return 0
 
         __building_list.append(fn)
 
         the_data = make.pkgdata[fn]
-        depends = data.getVar('DEPENDS', the_data, 1) or ""
-        depends_list = string.split(depends)
+        item = oe.data.getVar('PN', the_data, 1)
+        depends_list = (oe.data.getVar('DEPENDS', the_data, 1) or "").split()
+        oe.debug(1, "dependencies are: " + " ".join(depends_list))
         for d in depends_list:
             if buildPackage(d) == 0:
                 oe.error("dependency %s (for %s) not satisfied" % (d,item))
                 return 0
         
         command = make.options.cmd
-        debug(1, "oebuild %s %s" % (command, fn))
-        event.fire(event.PkgStarted(item, make.pkgdata[fn]))
+        oe.debug(1, "oebuild %s %s" % (command, fn))
+        oe.event.fire(oe.event.PkgStarted(item, make.pkgdata[fn]))
         try:
                 oe.build.exec_task('do_%s' % command, make.pkgdata[fn])
-                event.fire(event.PkgSucceeded(item, make.pkgdata[fn]))
+                oe.event.fire(oe.event.PkgSucceeded(item, make.pkgdata[fn]))
+                __building_list.remove(fn)
                 __build_cache.append(fn)
                 return 1
         except oe.build.FuncFailed:
-                error("task stack execution failed")
-                event.fire(event.PkgFailed(item, make.pkgdata[fn]))
+                oe.error("task stack execution failed")
+                oe.event.fire(oe.event.PkgFailed(item, make.pkgdata[fn]))
+                __building_list.remove(fn)
                 __build_cache_fail.append(fn)
                 return 0
         except oe.build.EventException:
                 (type, value, traceback) = sys.exc_info()
                 e = value.event
-                error("%s event exception, aborting" % event.getName(e))
-                event.fire(event.PkgFailed(item, make.pkgdata[fn]))
+                oe.error("%s event exception, aborting" % oe.event.getName(e))
+                oe.event.fire(oe.event.PkgFailed(item, make.pkgdata[fn]))
+                __building_list.remove(fn)
                 __build_cache_fail.append(fn)
                 return 0
 
@@ -94,9 +104,9 @@ def buildPackage(item):
         versions = {}
         for p in all_p:
             the_data = make.pkgdata[p]
-            pn = data.getVar('PN', the_data, 1)
-            pv = data.getVar('PV', the_data, 1)
-            pr = data.getVar('PR', the_data, 1)
+            pn = oe.data.getVar('PN', the_data, 1)
+            pv = oe.data.getVar('PV', the_data, 1)
+            pr = oe.data.getVar('PR', the_data, 1)
             if not versions.has_key(pn):
                 versions[pn] = []
             versions[pn].append(((pv, pr), p))
@@ -127,18 +137,19 @@ def buildPackage(item):
             oe.error("no eligible providers for %s" % item)
             return 0
 
-        # look to see if one of them is already staged.
+        # look to see if one of them is already staged, or marked as preferred.
         # if so, bump it to the head of the queue
         for p in all_p:
             the_data = make.pkgdata[p]
-            pn = data.getVar('PN', the_data, 1)
-            pv = data.getVar('PV', the_data, 1)
-            pr = data.getVar('PR', the_data, 1)
-            tmpdir = data.getVar('TMPDIR', the_data, 1)
+            pn = oe.data.getVar('PN', the_data, 1)
+            pv = oe.data.getVar('PV', the_data, 1)
+            pr = oe.data.getVar('PR', the_data, 1)
+            tmpdir = oe.data.getVar('TMPDIR', the_data, 1)
             stamp = '%s/stamps/%s-%s-%s.do_populate_staging' % (tmpdir, pn, pv, pr)
             if os.path.exists(stamp):
-                (newver, fn) = preferred_versions[pn]
+                (newvers, fn) = preferred_versions[pn]
                 oldver = "%s-%s" % (pv, pr)
+                newver = '-'.join(newvers)
                 if (newver != oldver):
                     extra_chat = "; upgrading from %s to %s" % (oldver, newver)
                 else:
@@ -146,11 +157,23 @@ def buildPackage(item):
                 oe.note("selecting already-staged %s to satisfy %s%s" % (pn, item, extra_chat))
                 eligible.remove(fn)
                 eligible = [fn] + eligible
+                break
+
+        if __preferred.has_key(item):
+            for p in eligible:
+                the_data = make.pkgdata[p]
+                pn = oe.data.getVar('PN', the_data, 1)
+                if __preferred[item] == pn:
+                    oe.note("selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
+                    eligible.remove(p)
+                    eligible = [p] + eligible
+                    break
+                
 
         # run through the list until we find one that we can build
         for fn in eligible:
             oe.note("selecting %s to satisfy %s" % (fn, item))
-            if try_build(item, fn):
+            if try_build(fn):
                 return 1
 
         oe.note("no buildable providers for %s" % item)
@@ -159,21 +182,30 @@ def buildPackage(item):
 
 def build_depgraph():
     for f in make.pkgdata.keys():
-        depstr = data.getVar("DEPENDS", make.pkgdata[f], 1)
+        depstr = oe.data.getVar("DEPENDS", make.pkgdata[f], 1)
         if depstr is not None:
             deps = depstr.split()
 
         provides = []
-        providestr = data.getVar("PROVIDES", make.pkgdata[f], 1)
+        providestr = oe.data.getVar("PROVIDES", make.pkgdata[f], 1)
         if providestr is not None:
             provides += providestr.split()
 
-        provides += data.getVar('PN', make.pkgdata[f], 1)
+        provides += oe.data.getVar('PN', make.pkgdata[f], 1)
         
         for provide in provides:
             if not providers.has_key(provide):
                 providers[provide] = []
             providers[provide].append(f)
+
+        preferstr = oe.data.getVar('PREFERRED_PROVIDERS', make.pkgdata[f]) or ""
+        for p in preferstr.split():
+            (providee, provider) = p.split(':')
+            if __preferred.has_key(providee) and __preferred[providee] != provider:
+                oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
+            __preferred[providee] = provider
+
+    print __preferred
     
 def myProgressCallback( x, y, f ):
     sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
@@ -203,15 +235,21 @@ if __name__ == "__main__":
     make.cfg = {}
     providers = {}
 
+    for f in make.options.files:
+        try:
+            make.cfg = oe.parse.handle(f, make.cfg)
+        except IOError:
+            oe.fatal("Unable to open %s" % f)
+
     try:
-            make.cfg = parse.handle("conf/oe.conf", make.cfg)
+            make.cfg = oe.parse.handle("conf/oe.conf", make.cfg)
     except IOError:
-            fatal("Unable to open oe.conf")
+            oe.fatal("Unable to open oe.conf")
 
-    if not data.getVar("BUILDNAME", make.cfg):
-            data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
+    if not oe.data.getVar("BUILDNAME", make.cfg):
+            oe.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
 
-    buildname = data.getVar("BUILDNAME", make.cfg)
+    buildname = oe.data.getVar("BUILDNAME", make.cfg)
 
     try:
         make.collect_oefiles( myProgressCallback )
@@ -223,14 +261,14 @@ if __name__ == "__main__":
                     pkgs_to_build = []
             pkgs_to_build.extend(args)
         if not pkgs_to_build:
-            oepkgs = data.getVar('OEPKGS', make.cfg, 1)
+            oepkgs = oe.data.getVar('OEPKGS', make.cfg, 1)
             if oepkgs:
-                    pkgs_to_build = string.split(oepkgs)
+                    pkgs_to_build = oepkgs.split()
         if not pkgs_to_build:
             print "nothing to build"
             sys.exit(0)
 
-        event.fire(event.BuildStarted(buildname, pkgs_to_build, make.cfg))
+        oe.event.fire(oe.event.BuildStarted(buildname, pkgs_to_build, make.cfg))
 
         for k in pkgs_to_build:
             print "at top level, building " + k
@@ -238,7 +276,7 @@ if __name__ == "__main__":
 		print "Build of " + k + " failed"
 		sys.exit(1)
 
-        event.fire(event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
+        oe.event.fire(oe.event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
 
     except KeyboardInterrupt:
         print "\nNOTE: KeyboardInterrupt - Build not completed."
