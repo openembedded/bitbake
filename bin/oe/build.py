@@ -1,4 +1,4 @@
-from oe import data, fetch, fatal, error, note, event, mkdirhier
+from oe import debug, data, fetch, fatal, error, note, event, mkdirhier
 import oe
 import os
 
@@ -189,19 +189,21 @@ def exec_task(task, d):
 			if func in _task_cache:
 				return 1
 
-			event.fire(TaskStarted(func, d))
+			if task != func:
+				# deeper than toplevel, exec w/ deps
+				exec_task(func, d)
+				return 1
+
 			try:
-				if task == func:
-					# prevent recursion
-					exec_func(func, d)
-				else:
-					exec_task(func, d)
+				debug(1, "Executing task %s" % func)
+				event.fire(TaskStarted(func, d))
+				exec_func(func, d)
+				event.fire(TaskSucceeded(func, d))
+				_task_cache.append(func)
 			except FuncFailed:
 				failedevent = TaskFailed(func, d)
 				event.fire(failedevent)
 				raise EventException(None, failedevent)
-			event.fire(TaskSucceeded(func, d))
-			_task_cache.append(func)
 
 	# execute
 	_task_graph.walkdown(task, execute)
@@ -287,6 +289,7 @@ def get_task_data():
 data.setVarFlag("do_showdata", "nostamp", "1", _task_data)
 data.setVarFlag("do_clean", "nostamp", "1", _task_data)
 data.setVarFlag("do_mrproper", "nostamp", "1", _task_data)
+data.setVarFlag("do_build", "nostamp", "1", _task_data)
 
 data.setVarFlag("do_fetch", "nostamp", "1", _task_data)
 data.setVarFlag("do_fetch", "check", "check_md5", _task_data)
