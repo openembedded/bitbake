@@ -52,7 +52,6 @@ def handle_options( args ):
 Executes the specified task (default is 'build') for a given set of BitBake files.
 It expects that BBFILES is defined, which is a space seperated list of files to
 be executed.  BBFILES does support wildcards.
-Default packages to be executed are all packages in BBFILES.
 Default BBFILES are the .bb files in the current directory.""" )
 
     parser.add_option( "-b", "--buildfile", help = "execute the task against this .bb file, rather than a package from BBFILES.",
@@ -498,7 +497,7 @@ def build_depgraph():
     if bbdebug == 0:
         sys.stdout.write("\n")
 
-    # Build package list for "bbmake world"
+    # Build package list for "bitbake world"
     bb.debug(1, "BBMAKE collating packages for \"world\"")
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
@@ -657,7 +656,7 @@ if __name__ == "__main__":
             if bbpkgs:
                     pkgs_to_build = bbpkgs.split()
     if not pkgs_to_build and not make.options.show_versions:
-            print "Nothing to build. Use 'bbmake world' to build everything."
+            print "Nothing to build. Use 'bitbake world' to build everything."
             sys.exit(0)
 
 
