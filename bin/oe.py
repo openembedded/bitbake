@@ -79,6 +79,8 @@ def mkdirhier(dir):
 
 #######################################################################
 
+import stat
+
 def movefile(src,dest,newmtime=None,sstat=None):
 	"""Moves a file from src to dest, preserving all permissions and
 	attributes; mtime will be preserved even when moving across
@@ -103,20 +105,20 @@ def movefile(src,dest,newmtime=None,sstat=None):
 		destexists=0
 
 	if destexists:
-		if S_ISLNK(dstat[ST_MODE]):
+		if stat.S_ISLNK(dstat[stat.ST_MODE]):
 			try:
 				os.unlink(dest)
 				destexists=0
 			except Exception, e:
 				pass
 
-	if S_ISLNK(sstat[ST_MODE]):
+	if stat.S_ISLNK(sstat[stat.ST_MODE]):
 		try:
 			target=os.readlink(src)
-			if destexists and not S_ISDIR(dstat[ST_MODE]):
+			if destexists and not stat.S_ISDIR(dstat[stat.ST_MODE]):
 				os.unlink(dest)
 			os.symlink(target,dest)
-			missingos.lchown(dest,sstat[ST_UID],sstat[ST_GID])
+#			os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
 			return os.lstat(dest)
 		except Exception, e:
 			print "!!! failed to properly create symlink:"
@@ -125,7 +127,7 @@ def movefile(src,dest,newmtime=None,sstat=None):
 			return None
 
 	renamefailed=1
-	if sstat[ST_DEV]==dstat[ST_DEV]:
+	if sstat[stat.ST_DEV]==dstat[stat.ST_DEV]:
 		try:
 			ret=os.rename(src,dest)
 			renamefailed=0
@@ -140,7 +142,7 @@ def movefile(src,dest,newmtime=None,sstat=None):
 
 	if renamefailed:
 		didcopy=0
-		if S_ISREG(sstat[ST_MODE]):
+		if stat.S_ISREG(sstat[stat.ST_MODE]):
 			try: # For safety copy then move it over.
 				shutil.copyfile(src,dest+"#new")
 				os.rename(dest+"#new",dest)
@@ -159,8 +161,8 @@ def movefile(src,dest,newmtime=None,sstat=None):
 				return None # failure
 		try:
 			if didcopy:
-				missingos.lchown(dest,sstat[ST_UID],sstat[ST_GID])
-				os.chmod(dest, S_IMODE(sstat[ST_MODE])) # Sticky is reset on chown
+				missingos.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+				os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
 				os.unlink(src)
 		except Exception, e:
 			print "!!! Failed to chown/chmod/unlink in movefile()"
@@ -171,8 +173,8 @@ def movefile(src,dest,newmtime=None,sstat=None):
 	if newmtime:
 		os.utime(dest,(newmtime,newmtime))
 	else:
-		os.utime(dest, (sstat[ST_ATIME], sstat[ST_MTIME]))
-		newmtime=sstat[ST_MTIME]
+		os.utime(dest, (sstat[stat.ST_ATIME], sstat[stat.ST_MTIME]))
+		newmtime=sstat[stat.ST_MTIME]
 	return newmtime
 
 
@@ -1511,12 +1513,12 @@ def set_automatic_vars(file):
 	pkg = catpkgsplit(file)
 	if pkg == None:
 		fatal("package file not in valid format")
-	setenv('CATEGORY',	pkg[0])
-	setenv('PN',		pkg[1])
-	setenv('PV',		pkg[2])
-	setenv('PR',		pkg[3])
-	setenv('P',		'${PN}-${PV}')
-	setenv('PF',		'${P}-${PR}')
+	env['CATEGORY'] = 	pkg[0]
+	env['PN'] = 		pkg[1]
+	env['PV'] = 		pkg[2]
+	env['PR'] = 		pkg[3]
+	env['P'] = 		'${PN}-${PV}'
+	env['PF'] = 		'${P}-${PR}'
 
 	for s in ['${TOPDIR}/${CATEGORY}/${PF}', 
 		  '${TOPDIR}/${CATEGORY}/${PN}-${PV}',
@@ -1524,13 +1526,13 @@ def set_automatic_vars(file):
 		  '${TOPDIR}/${CATEGORY}']:
 		s = expand(s)
 		if os.access(s, os.R_OK):
-			setenv('FILESDIR', s)
+			env['FILESDIR'] =  s
 			break
-	setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}')
-	setenv('T',		'${WORKDIR}/temp')
-	setenv('D',		'${WORKDIR}/image')
-	setenv('S',		'${WORKDIR}/${P}')
-	setenv('SLOT',		'0')
+	env['WORKDIR'] = 	'${TMPDIR}/${CATEGORY}/${PF}'
+	env['T'] = 		'${WORKDIR}/temp'
+	env['D'] = 		'${WORKDIR}/image'
+	env['S'] = 		'${WORKDIR}/${P}'
+	env['SLOT'] = 		'0'
 	inherit_os_env(3)
 
 
@@ -1874,21 +1876,16 @@ envflags = {
 
 # Package creation functions:
 
-"pkg_setup":		{ "warnlevel": 0 },
-"pkg_nofetch":		{ "warnlevel": 0 },
-"pkg_fetch":		{ "warnlevel": 0 },
-"src_compile":		{ "warnlevel": 1 },
-"src_install":		{ "warnlevel": 1 },
-"src_stage":		{ "warnlevel": 0 },
+"do_unpack":		{ "warnlevel": 1 },
+"do_compile":		{ "warnlevel": 1 },
+"do_stage":		{ "warnlevel": 1 },
+"do_install":		{ "warnlevel": 1 },
 "pkg_preinst":		{ "warnlevel": 0 },
 "pkg_postint":		{ "warnlevel": 0 },
 "pkg_prerm":		{ "warnlevel": 0 },
 "pkg_postrm":		{ "warnlevel": 0 },
 
 # Automatically generated, but overrideable:
-
-"do_unpack":		{ "warnlevel": 1 },
-"do_compile":		{ "warnlevel": 1 },
 
 "OEDEBUG":		{ "inherit":  "1" },
 
