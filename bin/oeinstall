@@ -7,15 +7,19 @@ __version__ = 1.0
 cfg_oe = data.init()
 
 def usage():
+	print
 	print "Usage: oeinstall [options ...]"
+	print
 	print "Installs specified files of supported types into a root filesystem."
 	print "Currently only supports installing OEFILES into the rootfs directly"
 	print "using their do_install target."
-	print ""
+	print
+	print "Options:"
 	print "  %s\t\t%s" % ("-r [arg], --root [arg]", "root directory (default=${IMAGE_ROOTFS})")
 	print "  %s\t\t%s" % ("-f [arg], --files [arg]", ".oe files available (default=${OEFILES})")
 	print "  %s\t\t%s" % ("-t [arg], --type [arg]", "installation type (direct, and any for which package_[type].oeclass exists)")
-	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	print "  %s\t\t%s" % ("-V, --version", "output version information and exit")
+	print
 	sys.exit(0)
 
 def version():
@@ -30,14 +34,14 @@ def getopthash(l):
 
 import getopt
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'vr:f:t:', [ 'version', 'root=', 'files=', 'type=' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'Vr:f:t:', [ 'version', 'root=', 'files=', 'type=' ])
 except getopt.GetoptError:
 	usage()
 
 # handle opts
 opthash = getopthash(opts)
 
-if opthash.has_key('--version') or opthash.has_key('-v'):
+if opthash.has_key('--version') or opthash.has_key('-V'):
 	version()
 	sys.exit(0)
 
