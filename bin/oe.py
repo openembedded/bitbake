@@ -268,7 +268,7 @@ def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
 		note("fetch " +loc)
 		myfetch = myfetch.replace("${URI}",loc)
 		myfetch = myfetch.replace("${FILE}",myfile)
-		note(myfetch)
+		debug(myfetch)
 		myret = os.system(myfetch)
 
 		if mydigests.has_key(myfile):
@@ -345,12 +345,6 @@ def fetch(urls, listonly=0):
 
 		if type in ['http','https','ftp']:
 			fetched = fetch_with_wget(loc,mydigests, type,host,path,user,pswd)
-			if env.has_key('A'):
-				a = env['A'].split()
-			else:
-				a = []
-			a.append(os.path.basename(path))
-			env['A'] = string.join(a)
 		elif type in ['cvs', 'pserver']:
 			fetched = fetch_with_cvs(mydigests, type,host,path,user,pswd,parm)
 		elif type == 'bk':
@@ -1636,6 +1630,7 @@ def inherit_os_env(position):
 
 
 #######################################################################
+
 def set_automatic_vars(file):
 	"""Deduce per-package environment variables"""
 
@@ -1649,15 +1644,42 @@ def set_automatic_vars(file):
 	setenv('PR',		pkg[3])
 	setenv('P',		'${PN}-${PV}')
 	setenv('PF',		'${P}-${PR}')
-	setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}/work')
-	setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}/files')
+	setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}')
+	setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}')
+	setenv('T',		'${WORKDIR}/temp')
+	setenv('D',		'${WORKDIR}/image')
 	setenv('S',		'${WORKDIR}/${P}')
-	setenv('T',		'${TMPDIR}/${CATEGORY}/${PF}/temp')
-	setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/image')
 	setenv('DISTDIR',	'${TMPDIR}/downloads/${CATEGORY}/${PN}')
+	setenv('STAMP',		'${TMPDIR}/stamps/${PF}.')
+	setenv('STAGE',		'${TMPDIR}/${CCHOST}')
+	setenv('STAGEINC',	'${STAGE}/include')
+	setenv('STAGELIB',	'${STAGE}/lib')
 	setenv('SLOT',	'0')
-	# TODO: set ${A}
 	inherit_os_env(4)
+
+
+#######################################################################
+
+def set_additional_vars():
+	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
+
+	if env.has_key('SRC_URI'):
+		# Do we already have something in A?
+		if env.has_key('A'):
+			a = env['A'].split()
+		else:
+			a = []
+
+		for loc in env['SRC_URI'].split():
+			(type, host, path, user, pswd, parm) = decodeurl(varexpand(loc, env))
+			if type in ['http','https','ftp']:
+				a.append(os.path.basename(path))
+
+		env['A'] = string.join(a)
+
+	for s in ['S','STAGEDIR','STAGELIB']:
+		if env.has_key(s):
+			env[s] = varexpand(env[s], env)
 
 
 #######################################################################
@@ -1768,7 +1790,7 @@ def print_orphan_env():
 			if not header:
 				note("Nonstandard variables defined in your project:")
 				header = 1
-			print debug_prepender + s
+			print debug_prepend + s
 		if header:
 			print
 
@@ -1783,7 +1805,7 @@ def print_missing_env():
 		if env.has_key(s): continue
 
 		level = envdesc[s]['warnlevel']
-		try: warn = debug_prepender + envdesc[s]['warn']
+		try: warn = debug_prepend + envdesc[s]['warn']
 		except KeyError: warn = ''
 		if level == 1:
 			note('Variable %s is not defined' % s)
@@ -1878,6 +1900,13 @@ envdesc = {
                  "warnlevel": 3 },
 "D": {           "desc":      "path to a destination install directory",
                  "warnlevel": 3 },
+"STAMP": {       "desc":      "directory and filename (without extension) for stamp files",
+                 "warnlevel": 3 },
+"STAGE": {       "desc":      "TODO", },
+"STAGEINC": {    "desc":      "TODO",
+                 "warnlevel": 3 },
+"STAGELIB": {    "desc":      "TODO",
+                 "warnlevel": 3 },
 "IUSE": {        "desc":      "This is set to what USE variables your package uses", },
 "A": {           "desc":      "lists all sourcefiles without URL/Path",
                  "warnlevel": 1 },
@@ -1920,7 +1949,9 @@ envdesc = {
 
 # Automatically generated, but overrideable:
 
-"src_unpack": {  "desc":     "creates the source directory ${S} and populates it",
+"do_unpack": {   "desc":     "creates the source directory ${S} and populates it",
+                 "warnlevel": 2 },
+"do_compile": {  "desc":     "compiles the source",
                  "warnlevel": 2 },
 
 "OEDEBUG": {     "desc":     "build-time debug level",
