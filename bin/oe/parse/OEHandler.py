@@ -12,10 +12,13 @@ __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
-__addhandler_regexp__       = re.compile( r"addhandler\s+(.+)" )
+__addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
+__def_regexp__           = re.compile( r"def\s+.*:" )
+__python_func_regexp__   = re.compile( r"\s+.*" )
 __word__ = re.compile(r"\S+")
 
 __infunc__ = ""
+__inpython__ = False
 __body__   = []
 __oepath_found__ = 0
 __classname__ = ""
@@ -148,7 +151,7 @@ def handle(fn, d = {}, include = 0):
 	return d
 
 def feeder(lineno, s, fn, d):
-	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__, classes, oe
+	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, __oepath_found__, classes, oe
 	if __infunc__:
 		if s == '}':
 			__body__.append('')
@@ -169,6 +172,19 @@ def feeder(lineno, s, fn, d):
 			__body__.append(s)
 		return
 
+	if __inpython__:
+		m = __python_func_regexp__.match(s)
+		if m:
+			__body__.append(s)
+			return
+		else:
+			text = '\n'.join(__body__)
+			comp = compile(text, "<oe>", "exec")
+			exec comp in __builtins__
+			__body__ = []
+			__inpython__ = False
+			# fall through
+
 	if s[0] == '#': return		# skip comments
 
 	m = __func_start_regexp__.match(s)
@@ -188,6 +204,12 @@ def feeder(lineno, s, fn, d):
 			data.setVarFlag(key, "fakeroot", "1", d)
 		else:
 			data.delVarFlag(key, "fakeroot", d)
+		return
+
+	m = __def_regexp__.match(s)
+	if m:
+		__body__.append(s)
+		__inpython__ = True
 		return
 
 	m = __export_func_regexp__.match(s)
