@@ -1,20 +1,6 @@
-inherit base package
+inherit base package rpm_core
 
 SPECFILE="${RPMBUILDPATH}/SPECS/${PN}.spec"
-
-RPMBUILDPATH="${WORKDIR}/rpm"
-
-RPMOPTS="--rcfile=${WORKDIR}/rpmrc"
-#RPMOPTS="--rcfile=${WORKDIR}/rpmrc --target arm-linux"
-RPM="rpm ${RPMOPTS}"
-RPMBUILD="rpmbuild --buildroot ${D} --short-circuit ${RPMOPTS}"
-
-base_srpm_do_preprpm() {
-	mkdir -p ${RPMBUILDPATH}/{SPECS,RPMS/{i386,i586,i686,noarch,ppc},SRPMS,SOURCES,BUILD}
-	echo 'macrofiles:/usr/lib/rpm/macros:${WORKDIR}/macros' > ${WORKDIR}/rpmrc
-	echo '%_topdir ${RPMBUILDPATH}' > ${WORKDIR}/macros
-	echo '%_repackage_dir ${WORKDIR}' >> ${WORKDIR}/macros
-}
 
 base_srpm_do_unpack() {
 	test -e ${SRPMFILE} || die "Source rpm \"${SRPMFILE}\"does not exist"
@@ -32,7 +18,3 @@ base_srpm_do_compile() {
 base_srpm_do_install() {
 	${RPMBUILD} -bi ${SPECFILE}
 }
-
-EXPORT_FUNCTIONS do_preprpm do_unpack do_compile
-
-addtask preprpm before do_unpack
