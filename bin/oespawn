@@ -1,0 +1,129 @@
+#!/usr/bin/python
+
+import sys, os, string, oe
+from oe import *
+
+def usage():
+	print "Usage: oespawn [options]... [cfgfile]"
+	print "Read a standard oe format config file, and start an oemake on"
+	print "every item in the BUILDERS variable, adding said item to the"
+	print "OVERRIDES list as we go, thereby pulling in build specific environment data"
+	print "Default cfgfile = 'conf/oespawn.conf', from the dirs in OEPATH."
+	print ""
+	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	sys.exit(0)
+
+__version__ = 1.0
+def version():
+	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
+	print "OESpawn version %s" % __version__
+
+def emit_oe(d, base_d = {}):
+	for v in d.keys():
+		if d[v] != base_d[v]:
+			data.emit_var(v, d)
+
+import getopt
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], 'v', [ 'version' ])
+except getopt.GetoptError:
+	usage()
+
+# handle opts
+optsonly = [ opt for (opt,val) in opts]
+if '--version' in optsonly or '-v' in optsonly:
+	version()
+	sys.exit(0)
+
+cfg_oe = data.init()
+cfg_oespawn = data.init()
+
+if len(args) != 0:
+	cfgfn = args[0]
+else:
+	cfgfn = "conf/oespawn.conf"
+
+try:
+	cfg_oe = parse.handle("conf/oe.conf", cfg_oe)
+except IOError:
+	fatal("Unable to open oe.conf")
+
+# sanity check
+if cfg_oe is None:
+	fatal("Unable to open/parse conf/oe.conf")
+	usage(1)
+try:
+	cfg_oespawn = parse.handle(cfgfn, cfg_oespawn)	# Read configuration
+except IOError:
+	(type, value, traceback) = sys.exc_info()
+	fatal("Unable to open %s: %s" % (cfgfn, value))
+
+# sanity check
+if cfg_oespawn is None:
+	fatal("Unable to open/parse %s") % cfgfn
+	usage(1)
+
+d = data.init()
+d.update(cfg_oe)
+for k in cfg_oespawn.keys():
+	if data.getVar(k, cfg_oespawn):
+#		print "MERGE: %s: %s" % (k, data.getVar(k, cfg_oespawn))
+		data.setVar(k, data.getVar(k, cfg_oespawn), d)
+	if data.getVarFlags(k, cfg_oespawn):
+		data.setVarFlags(k, data.getVarFlags(k, cfg_oespawn), d)
+
+# for each item in BUILDERS:
+#	1) set BUILDER
+#	2) add BUILDER to overrides
+#	3) data.update_data
+#	4) emit our data
+#	5) spawn an oemake instance against that data
+
+builders = data.expand(data.getVar('BUILDERS', d), d) or []
+curdir = os.path.abspath(os.curdir)
+
+for b in builders.split():
+	from copy import copy, deepcopy
+	localdata = deepcopy(d)
+
+	data.setVar('BUILDER', b, localdata)
+
+	overrides = data.getVar('OVERRIDES', localdata) or '${ARCH}:${MACHINE}:local'
+	data.setVar('OVERRIDES', '%s:%s' % (overrides, b), localdata)
+	data.update_data(localdata)
+	data.setVar('OVERRIDES', overrides, localdata)
+
+	oe_arch = data.getVar('ARCH', localdata, 1) or "i686"
+	oe_os = data.getVar('OS', localdata, 1) or "linux"
+
+	# grab OEDIR
+	oedir = data.expand(data.getVar('OEDIR', localdata), localdata) or curdir
+	mkdirhier(oedir)
+	if oedir != curdir:
+		os.chdir(oedir)
+
+	oefiles = string.split(data.getVar('OEFILES', localdata, 1) or "")
+	if len(oefiles) == 0:
+		fatal("OEFILES not defined")
+
+	# output OEDIR/conf/auto.conf
+	mkdirhier(os.path.join(oedir, 'conf'))
+	fd = file('%s/conf/auto.conf' % oedir, 'w')
+	fd.write("BUILDER=%s\n" % b) 
+	fd.write("include %s\n" % cfgfn)
+	fd.close()
+
+	oepath = string.split(data.getVar('OEPATH', localdata, 1) or "", ":")
+	oepath.append(curdir)
+	os.environ["OEDIR"] = oedir
+	os.environ["OEPATH"] = string.join(oepath, ":")
+
+	# spawn oemake .. into the background, we need not wait() for it
+	pid = os.fork()
+	if pid == 0:
+		# child
+		os.execvp("oemake", ["oemake"])
+#	else:
+		# parent
+
+	del localdata
