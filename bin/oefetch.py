@@ -33,7 +33,7 @@ class FetchUrls:
 		"""
 		for method in self.__methods.keys():
 			if self.__methods[method] is not None:
-				self.__methods[method].urls = {}
+				self.__methods[method].urls = []
 
 		for url in urls:
 			if Wget.supports(decodeurl(url)):
