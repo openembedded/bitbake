@@ -23,74 +23,35 @@ class NoMethodError(Exception):
 class MissingParameterError(Exception):
 	"""Exception raised when a fetch method is missing a critical parameter in the url"""
 
-class FetchUrls:
-	"""Class to obtain a set of urls, via any available methods"""
-	__methods = {	"Wget" : None,
-			"Cvs" : None,
-			"Bk" : None,
-			"Local" : None }
+methods = []
 
-	def setMethods(self, methods):
-		self.__methods = methods
+def init(urls = []):
+	for m in methods:
+		m.urls = []
 
-	def getMethods(self):
-		return self.__methods
-
-	methods = property(getMethods, setMethods, None, "Methods property")
-
-	def init(self, urls = []):
-		"""Initial setup function for url fetching.
-		   Determines which urls go with which 'fetch' methods.
-		"""
-		for method in self.__methods.keys():
-			if self.__methods[method] is not None:
-				self.__methods[method].urls = []
-
-		for url in urls:
-			decoded = decodeurl(url)
-			if Wget.supports(decoded):
-				if self.__methods["Wget"] is None:
-					self.__methods["Wget"] = Wget()
-				self.__methods["Wget"].urls.append(url) 
-			elif Cvs.supports(decoded):
-				if self.__methods["Cvs"] is None:
-					self.__methods["Cvs"] = Cvs()
-				self.__methods["Cvs"].urls.append(url) 
-			elif Bk.supports(decoded):
-				if self.__methods["Bk"] is None:
-					self.__methods["Bk"] = Bk()
-				self.__methods["Bk"].urls.append(url) 
-			elif Local.supports(decoded):
-				if self.__methods["Local"] is None:
-					self.__methods["Local"] = Local()
-				self.__methods["Local"].urls.append(url) 
-			else:
-				raise NoMethodError(url)
+	for u in urls:
+		for m in methods:
+			if m.supports(u):
+				m.urls.append(u)
 	
-	def go(self):
-		"""Fetch all urls"""
-		for method in self.__methods.keys():
-			if self.__methods[method] is None:
-				continue
-			debug(2,"Obtaining urls via %s method..." % method)
-			self.__methods[method].go()
+def go():
+	"""Fetch all urls"""
+	for m in methods:
+		m.go()
 
-	def localpaths(self):
-		"""Return a list of the local filenames, assuming successful fetch"""
-		local = []
-		for method in self.__methods.keys():
-			if self.__methods[method] is None:
-				continue
-			for url in self.__methods[method].urls:
-				local.append(self.__methods[method].localpath(url))
-		return local
+def localpaths():
+	"""Return a list of the local filenames, assuming successful fetch"""
+	local = []
+	for m in methods:
+		for u in m.urls:
+			local.append(m.localpath(u))
+	return local
 
-	def localpath(self, url):
-		for method in self.__methods.keys():
-			if self.__methods[method] is not None:
-				if url in self.__methods[method].urls:
-					return self.__methods[method].localpath(url)
-		return url 
+def localpath(url):
+	for m in methods:
+		if m.supports(url):
+			return m.localpath(url)
+	return url 
 
 class Fetch(object):
 	"""Base class for 'fetch'ing data"""
@@ -101,7 +62,7 @@ class Fetch(object):
 			if self.supports(decodeurl(url)) is 1:
 				self.urls.append(url)
 
-	def supports(decoded):
+	def supports(url):
 		"""Check to see if this fetch class supports a given url.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
@@ -128,11 +89,12 @@ class Fetch(object):
 
 class Wget(Fetch):
 	"""Class to fetch urls via 'wget'"""
-	def supports(decoded):
+	def supports(url):
 		"""Check to see if a given url can be fetched using wget.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		return decoded[0] in ['http','https','ftp']
+		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		return type in ['http','https','ftp']
 	supports = staticmethod(supports)
 
 	def localpath(url):
@@ -164,16 +126,19 @@ class Wget(Fetch):
 			if myret != 0:
 				raise FetchError(myfile)
 
+methods.append(Wget())
+
 class Cvs(Fetch):
 	"""Class to fetch a module or modules from cvs repositories"""
 	checkoutopts = { "tag": "-r",
 			 "date": "-D" }
 
-	def supports(decoded):
+	def supports(url):
 		"""Check to see if a given url can be fetched with cvs.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		return decoded[0] in ['cvs', 'pserver']
+		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		return type in ['cvs', 'pserver']
 	supports = staticmethod(supports)
 
 	def localpath(url):
@@ -241,20 +206,26 @@ class Cvs(Fetch):
 			if myret != 0:
 				raise FetchError(module)
 
+methods.append(Cvs())
+
 class Bk(Fetch):
-	def supports(decoded):
+	def supports(url):
 		"""Check to see if a given url can be fetched via bitkeeper.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		return decoded[0] in ['bk']
+		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		return type in ['bk']
 	supports = staticmethod(supports)
 
+methods.append(Bk())
+
 class Local(Fetch):
-	def supports(decoded):
+	def supports(url):
 		"""Check to see if a given url can be fetched in the local filesystem.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		return decoded[0] in ['file','patch']
+		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		return type in ['file','patch']
 	supports = staticmethod(supports)
 
 	def localpath(url):
@@ -267,3 +238,5 @@ class Local(Fetch):
 		"""Fetch urls (no-op for Local method)"""
 		# no need to fetch local files, we'll deal with them in place.
 		return 1
+
+methods.append(Local())
