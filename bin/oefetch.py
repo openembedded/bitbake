@@ -136,11 +136,13 @@ class Wget(Fetch):
 	supports = staticmethod(supports)
 
 	def localpath(url):
+		# strip off parameters
 		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
-		return os.path.join(getenv("DL_DIR"), re.sub(r";.*$","",os.path.basename(url)))
+		url = encodeurl([type, host, path, user, pswd, {}])
+		return os.path.join(getenv("DL_DIR"), os.path.basename(url))
 	localpath = staticmethod(localpath)
 
 	def go(self, urls = []):
@@ -155,7 +157,7 @@ class Wget(Fetch):
 
 			myfetch = getenv("RESUMECOMMAND")
 			note("fetch " +loc)
-			myfetch = myfetch.replace("${URI}",re.sub(r";.*$","",loc))
+			myfetch = myfetch.replace("${URI}",encodeurl([type, host, path, user, pswd, {}]))
 			myfetch = myfetch.replace("${FILE}",myfile)
 			debug(2,myfetch)
 			myret = os.system(myfetch)
@@ -225,12 +227,12 @@ class Cvs(Fetch):
 				cvsroot += ":" + pswd
 			cvsroot += "@" + host + ":" + path
 
-			if method == "pserver":
-				# Login to the server
-				cvscmd = "cvs -d" + cvsroot + " login"
-				myret = os.system(cvscmd)
-				if myret != 0:
-					raise FetchError(module)
+#			if method == "pserver":
+#				# Login to the server
+#				cvscmd = "cvs -d" + cvsroot + " login"
+#				myret = os.system(cvscmd)
+#				if myret != 0:
+#					raise FetchError(module)
 
 			cvscmd = "cvs -d" + cvsroot
 			cvscmd += " checkout " + string.join(options) + " " + module 
