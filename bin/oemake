@@ -490,7 +490,7 @@ def build_depgraph():
     oe.debug(1, "OEMAKE collating packages for \"world\"")
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
-        if oe.data.getVar('BROKEN', d, 1):
+        if oe.data.getVar('BROKEN', d, 1) or oe.data.getVar('EXCLUDE_FROM_WORLD', d, 1):
             continue
         terminal = True
         pn = oe.data.getVar('PN', d, 1)
