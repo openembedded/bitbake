@@ -86,7 +86,7 @@ debug_prepend = ''
 
 
 def debug(lvl, *args):
-	if 'OEDEBUG' in env and (env['OEDEBUG'] >= str(lvl)):
+	if 'OEDEBUG' in os.environ and (os.environ['OEDEBUG'] >= str(lvl)):
 		print debug_prepend + 'DEBUG:', string.join(args, '')
 
 def note(*args):
@@ -335,7 +335,7 @@ def encodeurl(decoded):
 
 #######################################################################
 
-def which(path, item, direction = 1):
+def which(path, item, direction = 0):
 	"""Useful function for locating a file in a PATH"""
 	found = ""
 	for p in string.split(path or "", ":"):
