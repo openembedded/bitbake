@@ -63,6 +63,8 @@ TODO:
 			glibc staging creates symlinks for every atom it PROVIDES,
 			and installs its staging files into the glibc-ver-rev dir.
 	[ ] Revamp category handling
+	[ ] Complete revamp packaging classes.  Swallow stdout & stderr of
+	    tool used, output our own status, and include HOST_ARCH in tarfn.
 	
 [ ] oebuild
 	[ ] Implement and test check_md5, taking nostamp into account.
