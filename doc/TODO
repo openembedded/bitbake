@@ -1,0 +1,18 @@
+TODO:
+
+[x] Update .oe and .conf parsers to not strip out all the tabs in our 
+    python function vars..
+[x] Update patcher tool to make use of our ability to use python functions.
+[.] Write package.oeclass implemented w/ a python function/task
+[ ] Write ipkg.oeclass which inherits package.oeclass to produce an ipk from
+    our metadata.
+
+[ ] Once we have that per package deployment code, write a staging oeclass
+    that lets you use the FILES blocks for our deployment packages to do the
+    installs into the appropriate staging areas, to save time writing do_stage
+    functions.
+[ ] Finish up extensibility bits for the core oe code, and merge some of the
+    class implementations into something sane.
+
+[ ] Assuming cworth has the base ipkg libs rearchitected, start work on oemake.
+    If he hasnt, start rearchitecting ipkg.
