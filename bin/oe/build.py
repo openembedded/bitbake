@@ -160,8 +160,6 @@ def exec_func_shell(func, d):
 	data.emit_env(f, d)
 
 	f.write("cd %s\n" % os.getcwd())
-	f.write("echo 'oenote $PWD'\n")
-	f.write("oenote $PWD\n")
 	if func: f.write("%s || exit $?\n" % func)
 	f.close()
 	os.chmod(runfile, 0775)
