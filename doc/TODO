@@ -29,6 +29,9 @@ TODO:
 	    thereby giving one the ability to exert more control over the set
 	    of variables.
 	[x] Upstream source use:
+		[ ] Split oemake's knowledge of AVAILABLE OEFILES from its
+		    knowledge of which packages are to be built.
+
 		* Build requirements
 			[x] Code will not be checked out into a temporary area
 				[x] Solve by leaving SRC_URI blank, and setting
@@ -83,10 +86,6 @@ TODO:
 			use relative paths extensively, such as those
 			using '.' as their 'S' variable.
 
-[x] oebuild and oemake
-	[x] Teach the system to support grabbing OEFILES from upstream
-	    using our fetch classes.
-
 [ ] oebuild
 	[ ] Implement and test check_md5, taking nostamp into account.
 	[ ] Add '--undo'/'-u' cmdline opt that calls the 'undo' task
@@ -95,12 +94,10 @@ TODO:
 	    for the entire upward path in the digraph, then builds that task.
 	    (same thing done when the md5 changes on an affected var in
 	     check_md5)
-	[x] Default OEFILES based on .oe files in the current directory.
 
 [.] oemake
 	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
-	[x] Default OEFILES based on .oe files in the current directory.
 
 [.] oemaked
 	[ ] Monitor the stamps for a given .oe file as well, to ensure
