@@ -12,9 +12,10 @@
 #  Please visit http://www.openembedded.org/phpwiki/ for more info.
 #
 
-import sys,posixpath,os,string,types
+import sys,os,string,types
 
-projectdir = posixpath.dirname(posixpath.dirname(posixpath.abspath(sys.argv[0])))
+projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
+prepender = ''
 env = {}
 env['OEDIR'] = projectdir
 env['TMPDIR'] = projectdir+'/tmp'
@@ -352,7 +353,7 @@ def getconfig(mycfg, mykeys={}, myexpand=0):
 
  	debug(2,"trying to read ", mycfg)
 	f = open(mycfg,'r')
-	note("importing ", mycfg)
+	debug(1, "importing ", mycfg)
 	lex = shlex.shlex(f)
 	lex.wordchars = string.digits + string.letters + "~!@#%*_\:;?,./-+{}"
 	lex.quotes = "\"'"
@@ -419,138 +420,339 @@ def getconfig(mycfg, mykeys={}, myexpand=0):
 	return mykeys
 
 
+#######################################################################
+#
+# Read Configation from these places:
+#
+# 1. ${OEDIR}/conf/oe.conf
+# 2. ${OEDIR}/conf/local.conf
+# 3. near current directory:
+#    a) optionally from local.conf
+#    b) optionally from conf/local.conf
+# 4. global per-architecture/per-target configs
+#    a) optionally from ${OEDIR}/${CCHOST}.conf
+#    b) optionally from ${OEDIR}/${TARGET}.conf
+#    c) optionally from ${OEDIR}/${SUBTARGET}.conf
+#
+# Note: it can happen that some file get imported twice, but that is not really a problem
+#
+
+def read_oe_conf():
+	inherit_os_env(1)
+
+	getconfig(projectdir+'/conf/oe.conf', env, 1)
+	inherit_os_env(2)
+
+	try:
+		getconfig(projectdir+'/conf/local.conf', env, 1)
+	except IOError:
+		pass
+	try:
+		getconfig('local.conf', env, 1)
+	except IOError:
+		pass
+	try:
+		getconfig('conf/local.conf', env, 1)
+	except IOError:
+		pass
+
+	try:
+		getconfig(projectdir+'/conf/'+ env['CCHOST']+ '.conf', env, 1)
+	except:
+		pass
+	try:
+		getconfig(projectdir+'/conf/'+ env['TARGET']+ '.conf', env, 1)
+	except:
+		pass
+
+	try:
+		getconfig(projectdir+'/conf/'+ env['SUBTARGET']+ '.conf', env, 1)
+	except:
+		pass
+	inherit_os_env(3)
+
+
+#######################################################################
+#
+# Read package definition
+#
+# 1. ${OEDIR}/file
+# 2. optionally look in directories specified in ${OEPATH} for files named
+#    a) ${PF}.oe
+#    b) ${CATEGORY}/${PF}.oe
+#    c) ${P}.oe
+#    d) ${CATEGORY}/${P}.oe
+#    If one is found, go back to 2.
+#
+def read_package_conf(file):
+	# Specified files
+	getconfig(file, env)
+
+	# Now look for local overrides
+	if env.has_key('OEPATH'):
+		oepath = env['OEPATH']
+		for dir in oepath.split(':'):
+			try:
+				getconfig(dir+'/'+env['PF']+'.oe', env)
+				continue
+			except IOError:
+				try:
+					getconfig(dir+'/'+env['CATEGORY']+'/'+env['PF']+'.oe', env)
+					continue
+				except IOError:
+					try:
+						getconfig(dir+'/'+env['P']+'.oe', env)
+						continue
+					except IOError:
+						try:
+							getconfig(dir+'/'+env['CATEGORY']+'/'+env['P']+'.oe', env)
+							continue
+						except IOError:
+							pass
+
+
+#######################################################################
+#
+# Deduce per-package environment variables
+#
+def set_automatic_vars(file):
+	pkg = catpkgsplit(file)
+	if pkg == None:
+		fatal("package file not in valid format")
+	setenv('CATEGORY',	pkg[0])
+	setenv('PN',		pkg[1])
+	setenv('PV',		pkg[2])
+	setenv('PR',		pkg[3])
+	setenv('P',		'${PN}-${PV}')
+	setenv('PF',		'${P}-${PR}')
+	setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}/work')
+	setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}/files')
+	setenv('S',		'${WORKDIR}/${P}')
+	setenv('T',		'${TMPDIR}/${CATEGORY}/${PF}/temp')
+	setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/image')
+	setenv('DISTDIR',	'${TMPDIR}/downloads/${CATEGORY}/${PN}')
+	setenv('SLOT',	'0')
+	# TODO: set ${A}
+	inherit_os_env(4)
+
+
+#######################################################################
+#
+# Environment modification
+#
+# If one environment variable is named 'VAR_special'
+#
+# and 'special' is '${CCHOST}': replace ${VAR} with ${VAR_${CCHOST}}
+# and 'special' is '${TARGET}': replace ${VAR} with ${VAR_${TARGET}}
+# and 'special' is 'append': add ${VAR_${TARGET}} at the end of ${VAR}
+# and 'special' is 'prepend': add ${VAR_${TARGET}} at the beginning of ${VAR}
+# and 'special' is 'delete': delete all lines in ${VAR} that contain the sub-string ${VAR_${TARGET}}
+#
+
+def update_env():
+	# can't do delete env[...] while iterating over the dictionary, so remember them
+	dodel = []
+
+	for s in env:
+		# Handle architecture overrides
+		name = s+'_'+env['CCHOST']
+		if env.has_key(name):
+			env[s] = env[name]
+			dodel.append(name)
+
+		# Handle target overrides
+		name = s+'_'+env['TARGET']
+		if env.has_key(name):
+			env[s] = env[name]
+			dodel.append(name)
+
+		# Handle target overrides
+		if env.has_key('SUBTARGET'):
+			name = s+'_'+env['SUBTARGET']
+			if env.has_key(name):
+				env[s] = env[name]
+				dodel.append(name)
+
+		# Handle line appends:
+		name = s+'_append'
+		if env.has_key(name):
+			env[s] = env[s]+env[name]
+			dodel.append(name)
+
+		# Handle line prepends
+		name = s+'_prepend'
+		if env.has_key(name):
+			env[s] = env[name]+env[s]
+			dodel.append(name)
+
+		# Handle line deletions
+		name = s+'_delete'
+		if env.has_key(name):
+			new = ''
+			pattern = string.replace(env[name],"\n","").strip()
+			for line in string.split(env[s],"\n"):
+				if line.find(pattern) == -1:
+					new = new + '\n' + line
+			env[s] = new
+			dodel.append(name)
+
+	# delete all environment vars no longer needed
+	for s in dodel:
+		del env[s]
+
+	inherit_os_env(5)
+
+
+#######################################################################
+#
+# Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?
+#
+def print_orphan_env():
+	for s in env:
+		if s == s.lower(): continue		# only care for env vars
+		header = 0				# header shown?
+		try:
+			d = envdesc[s]
+		except KeyError:
+			if not header:
+				note("Nonstandard variables defined in your project:")
+				header = 1
+			print prepender + s
+		if header:
+			print
+
+
+#######################################################################
+#
+# Debug output: warn about all missing variables
+#
+def print_missing_env():
+	for s in envdesc:
+		if not envdesc[s].has_key('warnlevel'): continue
+		if env.has_key(s): continue
+
+		level = envdesc[s]['warnlevel']
+		try: warn = prepender + envdesc[s]['warn']
+		except KeyError: warn = ''
+		if level == 1:
+			note('Variable %s is not defined' % s)
+			if warn: print warn
+		elif level == 2:
+			error('Important variable %s is not defined' % s)
+			if warn: print warn
+		elif level == 3:
+			error('Important variable %s is not defined' % s)
+			if warn: print warn
+			sys.exit(1)
+
+
+#######################################################################
+#
+# fetch()
+#
+# TODO: the current function is quite simple, it can only fetch http:// and ftp://,
+# but not cvs:// bk:// or patches, files, directories
+#
 def fetch(myuris, listonly=0):
 	"fetch files.  Will use digest file if available."
-	if ("mirror" in features) and ("nomirror" in settings["RESTRICT"].split()):
-		print ">>> \"mirror\" mode and \"nomirror\" restriction enabled; skipping fetch."
-		return 1
-	global thirdpartymirrors
-	mymirrors=settings["GENTOO_MIRRORS"].split()
-	fetchcommand=settings["FETCHCOMMAND"]
-	resumecommand=settings["RESUMECOMMAND"]
-	fetchcommand=string.replace(fetchcommand,"${DISTDIR}",settings["DISTDIR"])
-	resumecommand=string.replace(resumecommand,"${DISTDIR}",settings["DISTDIR"])
-	mydigests=None
-	digestfn=settings["FILESDIR"]+"/digest-"+settings["PF"]
+	fetchcommand  = env["FETCHCOMMAND"]
+	resumecommand = env["RESUMECOMMAND"]
+	fetchcommand  = string.replace(fetchcommand,"${DISTDIR}",env["DISTDIR"])
+	resumecommand = string.replace(resumecommand,"${DISTDIR}",env["DISTDIR"])
+	mydigests     = None
+	digestfn      = env["FILESDIR"]+"/digest-"+env["PF"]
+
+	# Read in the md5-Digest. There is one file for all source-URIs.
+	# The file also contains the file-length. We can later use this information
+	# to resume an aborted download.
+
 	if os.path.exists(digestfn):
-		myfile=open(digestfn,"r")
-		mylines=myfile.readlines()
-		mydigests={}
+		debug(3, "checking digest "+ digestfn)
+		myfile    = open(digestfn,"r")
+		mylines   = myfile.readlines()
+		mydigests = {}
 		for x in mylines:
-			myline=string.split(x)
+			myline = string.split(x)
 			if len(myline)<4:
-				#invalid line
-				print "!!! The digest",digestfn,"appears to be corrupt.  Aborting."
-				return 0
+				# invalid line
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
 			try:
-				mydigests[myline[2]]={"md5":myline[1],"size":string.atol(myline[3])}
+				mydigests[myline[2]] = {"md5" : myline[1], "size" : string.atol(myline[3])}
 			except ValueError:
-				print "!!! The digest",digestfn,"appears to be corrupt.  Aborting."
-	if "fetch" in settings["RESTRICT"].split():
-		# fetch is restricted.	Ensure all files have already been downloaded; otherwise,
-		# print message and exit.
-		gotit=1
-		for myuri in myuris:
-			myfile=os.path.basename(myuri)
-			try:
-				mystat=os.stat(settings["DISTDIR"]+"/"+myfile)
-			except (OSError,IOError),e:
-				# file does not exist
-				print "!!!",myfile,"not found in",settings["DISTDIR"]+"."
-				gotit=0
-		if not gotit:
-			print
-			print "!!!",settings["CATEGORY"]+"/"+settings["PF"],"has fetch restriction turned on."
-			print "!!! This probably means that this ebuild's files must be downloaded"
-			print "!!! manually.  See the comments in the ebuild for more information."
-			print
-			spawn("/usr/sbin/ebuild.sh nofetch")
-			return 0
-		return 1
-	locations=mymirrors[:]
-	filedict={}
-	for myuri in myuris:
-		myfile=os.path.basename(myuri)
-		if not filedict.has_key(myfile):
-			filedict[myfile]=[]
-			for y in range(0,len(locations)):
-				filedict[myfile].append(locations[y]+"/distfiles/"+myfile)
-		if myuri[:9]=="mirror://":
-			eidx = myuri.find("/", 9)
-			if eidx != -1:
-				mirrorname = myuri[9:eidx]
-				if thirdpartymirrors.has_key(mirrorname):
-					for locmirr in thirdpartymirrors[mirrorname]:
-						filedict[myfile].append(locmirr+"/"+myuri[eidx+1:])		
-		else:
-				filedict[myfile].append(myuri)
-	for myfile in filedict.keys():
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
+
+	# fetch the files
+
+	for loc in myuris:
+		loc = varexpand(loc, env)
+		myfile = os.path.basename(loc)
 		if listonly:
-			fetched=0
-			print ""
-		for loc in filedict[myfile]:
-			if listonly:
-				print loc+" ",
-				continue
-			try:
-				mystat=os.stat(settings["DISTDIR"]+"/"+myfile)
-				if mydigests!=None and mydigests.has_key(myfile):
-					#if we have the digest file, we know the final size and can resume the download.
-					if mystat[ST_SIZE]<mydigests[myfile]["size"]:
-						fetched=1
-					else:
-						#we already have it downloaded, skip.
-						#if our file is bigger than the recorded size, digestcheck should catch it.
-						fetched=2
+			fetched = 0
+			note("fetch " + loc)
+			continue
+		try:
+			mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+			if mydigests!=None and mydigests.has_key(myfile):
+				# if we have the digest file, we know the final size and can resume the download.
+				if mystat[ST_SIZE]<mydigests[myfile]["size"]:
+					fetched = 1
 				else:
-					#we don't have the digest file, but the file exists.  Assume it is fully downloaded.
-					fetched=2
-			except (OSError,IOError),e:
-				fetched=0
-			if fetched!=2:
-				#we either need to resume or start the download
-				#you can't use "continue" when you're inside a "try" block
-				if fetched==1:
-					#resume mode:
-					print ">>> Resuming download..."
-					locfetch=resumecommand
-				else:
-					#normal mode:
-					locfetch=fetchcommand
-				print ">>> Downloading",loc
-				myfetch=string.replace(locfetch,"${URI}",loc)
-				myfetch=string.replace(myfetch,"${FILE}",myfile)
-				myret=spawn(myfetch,free=1)
-				if mydigests!=None and mydigests.has_key(myfile):
-					try:
-						mystat=os.stat(settings["DISTDIR"]+"/"+myfile)
-						# no exception?  file exists. let digestcheck() report
-						# an appropriately for size or md5 errors
-						if myret and (mystat[ST_SIZE]<mydigests[myfile]["size"]):
-							# Fetch failed... Try the next one... Kill 404 files though.
-							if (mystat[ST_SIZE]<100000) and (len(myfile)>4) and not ((myfile[-5:]==".html") or (myfile[-4:]==".htm")):
-								html404=re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
-								try:
-									if html404.search(open(settings["DISTDIR"]+"/"+myfile).read()):
-										try:
-											os.unlink(settings["DISTDIR"]+"/"+myfile)
-											print ">>> Deleting invalid distfile. (Improper 404 redirect from server.)"
-										except:
-											pass
-								except:
-									pass
-							continue
-						fetched=2
-						break
-					except (OSError,IOError),e:
-						fetched=0
-				else:
-					if not myret:
-						fetched=2
-						break
-		if (fetched!=2) and not listonly:
-			print '!!! Couldn\'t download',myfile+". Aborting."
-			return 0
+					# we already have it downloaded, skip.
+					# if our file is bigger than the recorded size, digestcheck should catch it.
+					fetched = 2
+			else:
+				# we don't have the digest file, but the file exists.  Assume it is fully downloaded.
+				fetched = 2
+		except (OSError,IOError),e:
+			fetched = 0
+		if fetched != 2:
+			# we either need to resume or start the download
+			# you can't use "continue" when you're inside a "try" block
+			if fetched == 1:
+				# resume mode:
+				note("Resuming download...")
+				locfetch = resumecommand
+			else:
+				# normal mode:
+				locfetch=fetchcommand
+			note("fetch " +loc)
+			myfetch = string.replace(locfetch,"${URI}",loc)
+			myfetch = string.replace(myfetch,"${FILE}",myfile)
+			myret = os.system(myfetch)
+			if mydigests != None and mydigests.has_key(myfile):
+				print "0"
+				try:
+					mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+					print "1", myret
+					# no exception?  file exists. let digestcheck() report
+					# an appropriately for size or md5 errors
+					if myret and (mystat[ST_SIZE] < mydigests[myfile]["size"]):
+						print "2"
+						# Fetch failed... Try the next one... Kill 404 files though.
+						if (mystat[ST_SIZE]<100000) and (len(myfile)>4) and not ((myfile[-5:]==".html") or (myfile[-4:]==".htm")):
+							print "3"
+							html404 = re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
+							try:
+								if html404.search(open(env["DISTDIR"]+"/"+myfile).read()):
+									try:
+										os.unlink(env["DISTDIR"]+"/"+myfile)
+										note("deleting invalid distfile (improper 404 redirect from server)")
+									except:
+										pass
+							except:
+								pass
+						continue
+					fetched = 2
+					break
+				except (OSError,IOError),e:
+					fetched = 0
+			else:
+				if not myret:
+					fetched = 2
+					break
+	if (fetched != 2) and not listonly:
+		error("Couldn't download "+ myfile)
+		return 0
 	return 1
 
 
@@ -1322,7 +1524,9 @@ envdesc = {
                  "warnlevel": 3 },
 "FILESDIR": {    "desc":      "location of package add-on files (patches, configurations etc)",
                  "warnlevel": 3 },
-"S": {           "desc":      "directory wheere source will be extracted into",
+"S": {           "desc":      "directory where source will be extracted into",
+                 "warnlevel": 3 },
+"DISTDIR": {     "desc":      "directory where sources will be downloaded into",
                  "warnlevel": 3 },
 "T": {           "desc":      "free-to-use temporary directory during package built time",
                  "warnlevel": 3 },
@@ -1336,22 +1540,25 @@ envdesc = {
 
 "CBUILD": {      "desc":      "this is --build on host (for configure), e.g. 'i386'",
                  "warnlevel": 3,
-                 "warn":      "specify this variable in ${OEPATH}/conf/global.oe" },
+                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
 "CCHOST": {      "desc":      "this is --target to run on (for configure), e.g. 'arm'",
                  "warnlevel": 3,
-                 "warn":      "specify this variable in ${OEPATH}/conf/global.oe" },
-"TARGET": {      "desc":      "Target system to compile for, e.g. 'ramses'",
+                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
+"TARGET": {      "desc":      "Target system to compile for, e.g. 'zaurus'",
                  "warnlevel": 2,
-                 "warn":      "specify this variable in ${OEPATH}/conf/global.oe", },
+                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global", },
+"SUBTARGET": {   "desc":      "select sub-target, e.g. 'sl5500', 'sl5600' etc", },
 
 # Package creation functions:
 
 "pkg_setup": {   "desc":     "use for setup functions before any other action takes place", },
 "pkg_nofetch": { "desc":     "ask user to get the source files himself", },
+"pkg_fetch": {   "desc":     "fetch source code", },
 "src_compile": { "desc":     "commands needed to compile package",
                  "warnlevel": 2 },
 "src_install": { "desc":     "this should install the compiled package into ${D}",
                  "warnlevel": 2 },
+"src_stage": {   "desc":     "install compiled stuff into the staging directory", },
 "pkg_preinst": { "desc":     "commands to be run on the target before installation ", },
 "pkg_postint": { "desc":     "commands to be run on the target after installion", },
 "pkg_prerm": {   "desc":     "commands to be run on the target before removal", },
@@ -1359,8 +1566,6 @@ envdesc = {
 
 # Automatically generated, but overrideable:
 
-"pkg_fetch": {   "desc":     "fetch source code",
-                 "warnlevel": 2, },
 "src_unpack": {  "desc":     "creates the source directory ${S} and populates it",
                  "warnlevel": 2 },
 
