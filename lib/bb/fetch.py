@@ -595,7 +595,7 @@ class Svn(Fetch):
             svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
 
             if revision:
-                svncmd = "svn co -r %s %s://%s/%s" % (proto, revision, svnroot, module)
+                svncmd = "svn co -r %s %s://%s/%s" % (revision, proto, svnroot, module)
             if svn_rsh:
                 svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
 
