@@ -221,14 +221,17 @@ def set_automatic_vars(file, d):
 	data.setVar('P', '${PN}-${PV}', d)
 	data.setVar('PF', '${P}-${PR}', d)
 
-	for s in ['${TOPDIR}/${CATEGORY}/${PF}', 
-		  '${TOPDIR}/${CATEGORY}/${PN}-${PV}',
-		  '${TOPDIR}/${CATEGORY}/files',
-		  '${TOPDIR}/${CATEGORY}']:
-		s = data.expand(s, d)
-		if os.access(s, os.R_OK):
-			data.setVar('FILESDIR', s, d)
+	for t in [ os.path.dirname(file), '${TOPDIR}/${CATEGORY}' ]:
+		if data.getVar('FILESDIR', d):
 			break
+		for s in [ '${PF}', 
+			  '${PN}-${PV}',
+			  'files',
+			  '']:
+			s = data.expand(os.path.join(t, s), d)
+			if os.access(s, os.R_OK):
+				data.setVar('FILESDIR', s, d)
+				break
 
 	data.setVar('WORKDIR', '${TMPDIR}/${CATEGORY}/${PF}', d)
 	data.setVar('T', '${WORKDIR}/temp', d)
