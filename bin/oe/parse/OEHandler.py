@@ -121,7 +121,6 @@ def handle(fn, d = {}, include = 0):
         if include == 0:
             data.expandKeys(d)
             data.update_data(d)
-            set_additional_vars(fn, d, include)
             anonqueue = data.getVar("__anonqueue", d, 1) or []
             for anon in anonqueue:
                 data.setVar("__anonfunc", anon["content"], d)
@@ -139,6 +138,7 @@ def handle(fn, d = {}, include = 0):
                     raise
             data.delVar("__anonqueue", d)
             data.delVar("__anonfunc", d)
+            set_additional_vars(fn, d, include)
             data.update_data(d)
 
             for var in d.keys():
