@@ -105,7 +105,7 @@ syn keyword bbDef	def	contained
 " syn region bbDefArgs		matchgroup=bbDelimiter start="(" end=")" excludenl contained skipwhite keepend contains=bbIdentifier nextgroup=bbDefRegion
 " syn region bbDefRegion		matchgroup=bbDelimiter start=":\s*$" end='^\(\s\|$\)\@!' contained contains=@python
 
-syn region bbDefRegion		start='^def\s\+\w\+([^)]*)\s*:\s*$' end='^\(\s\|$\)\@!' contains=@python
+syn region bbDefRegion		start='^def\s\+\w\+\s*([^)]*)\s*:\s*$' end='^\(\s\|$\)\@!' contains=@python
 
 " BitBake statements
 syn keyword bbStatement		include inherit addtask addhandler EXPORT_FUNCTIONS display contained
