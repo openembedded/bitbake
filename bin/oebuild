@@ -27,9 +27,58 @@ def version():
 
 import getopt
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'v', [ 'version' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'vh', [ 'version', 'help' ])
 except getopt.GetoptError:
 	usage(1)
+
+def get_oefiles():
+	"""Get default oefiles"""
+	dirs = os.listdir(os.getcwd())
+	oefiles = []
+	for f in dirs:
+		(root, ext) = os.path.splitext(f)
+		if ext == ".oe":
+			oefiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
+	return oefiles
+
+def get_oefile():
+	"""Get default oefile"""
+	oefiles = get_oefiles()
+	if len(oefiles):
+		return oefiles[0]
+	else:
+		return None
+
+
+def get_cmd():
+	"""Get default command"""
+	return "do_build"
+
+def load_oefile(oefile, cfgdata):
+	oepath = data.getVar('OEPATH', cfg)
+	topdir = os.path.abspath(os.getcwd())
+	oefile_loc = os.path.abspath(os.path.dirname(oefile))
+	# set topdir to here
+	data.setVar('TOPDIR', topdir, cfg)
+	# expand tmpdir to include this topdir
+	data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
+	# add topdir to oepath
+	oepath += ":%s" % topdir
+	# set topdir to location of .oe file
+	topdir = oefile_loc
+	data.setVar('TOPDIR', topdir, cfg)
+	# add that topdir to oepath
+	oepath += ":%s" % topdir
+	# go there
+	os.chdir(topdir)
+	data.setVar('OEPATH', oepath, cfg)
+	from copy import copy
+	oe = copy(cfgdata)
+	try:
+		oe = parse.handle(oefile, oe) # read .oe data
+		return oe
+	except IOError, OSError:
+		return None
 
 # handle opts
 optsonly = [ opt for (opt,val) in opts]
@@ -37,13 +86,13 @@ if '--version' in optsonly or '-v' in optsonly:
 	version()
 	sys.exit(0)
 
-if len(args) < 1:
-	usage(1)
-if args[0] in ('help', 'usage'):
-	usage(0);
-if len(args) < 2:
+if '--help' in optsonly or '-h' in optsonly:
 	usage(1)
 
+# variable initialization
+oefile = None
+cmd = None
+oedata = None
 cfg = data.init()
 graph = digraph()
 
@@ -53,57 +102,72 @@ except IOError:
 	(type, value, traceback) = sys.exc_info()
 	fatal("Unable to open oe.conf: %s" % value)
 
-oepath = data.getVar('OEPATH', cfg)
-topdir = os.path.abspath(os.getcwd())
-oefile = os.path.abspath(args[1])
-oefile_loc = os.path.dirname(oefile)
-# set topdir to here
-data.setVar('TOPDIR', topdir, cfg)
-# expand tmpdir to include this topdir
-data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
-# add topdir to oepath
-oepath += ":%s" % topdir
-# set topdir to location of .oe file
-topdir = oefile_loc
-data.setVar('TOPDIR', topdir, cfg)
-# add that topdir to oepath
-oepath += ":%s" % topdir
-# go there
-os.chdir(topdir)
-data.setVar('OEPATH', oepath, cfg)
+if len(args) == 0:
+	# user didnt specify command or .oe
+	# see if we can find a .oe file in the current dir
+	oefile = get_oefile()
+	cmd = get_cmd()
+elif len(args) == 1:
+	# one of two cases:
+	#	1) oebuild COMMAND
+	#	2) oebuild OEFILE
+	# First, see if this is a valid task.
+	oedata = load_oefile(args[0], cfg)
+	if not oedata:
+		# If so, assume its a command.
+		# 	If its a command, but we cant get a .oe file
+		#	in the current dir, usage()
+		cmd = args[0]
+	else:
+		# If not, assume a .oe file.
+		oefile = args[0]
 
-from copy import copy
-oe = copy(cfg)
-try:
-	oe = parse.handle(oefile, oe) # read .oe data
-except IOError, OSError:
-	fatal("Unable to open %s" % args[1])
+	if not cmd:
+		cmd = get_cmd()
 
-# sanity check
-if oe is None:
+	if not oefile:
+		oefile = get_oefile()
+elif len(args) == 2:
+	# user specified both
+	cmd = args[0]
+	oefile = args[1]
+else:
+	# invalid
 	usage(1)
 
-for var in oe.keys():
-	if data.getVarFlag(var, 'handler', oe):
-		event.register(data.getVar(var, oe))
+if not cmd:
+	usage(1)
+
+if not oefile:
+	usage(1)
+
+if not oedata:
+	oedata = load_oefile(oefile, cfg)
+
+if not oedata:
+	fatal("Unable to open %s" % oefile)
+
+for var in oedata.keys():
+	if data.getVarFlag(var, 'handler', oedata):
+		event.register(data.getVar(var, oedata))
 		continue
 
-	if not data.getVarFlag(var, 'task', oe):
+	if not data.getVarFlag(var, 'task', oedata):
 		continue
 
-	deps = data.getVarFlag(var, 'deps', oe) or []
-	postdeps = data.getVarFlag(var, 'postdeps', oe) or []
+	deps = data.getVarFlag(var, 'deps', oedata) or []
+	postdeps = data.getVarFlag(var, 'postdeps', oedata) or []
 	build.add_task(var, var, deps)
 	for p in postdeps:
 		d = build.get_task_data()
 		pcontent = data.getVar(p, d) or p
-		pdeps = data.getVarFlag(pcontent, 'deps', oe) or []
+		pdeps = data.getVarFlag(pcontent, 'deps', oedata) or []
 		pdeps.append(var)
-		data.setVarFlag(pcontent, 'deps', pdeps, oe)
+		data.setVarFlag(pcontent, 'deps', pdeps, oedata)
 		build.add_task(p, pcontent, pdeps)
 
 try:
-	build.exec_task(args[0], oe)
+	build.exec_task(cmd, oedata)
 except build.FuncFailed:
 	fatal("task stack execution failed")
 except build.EventException:

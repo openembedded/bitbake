@@ -37,10 +37,10 @@ TODO:
 				[ ] Solve by making Fetch use md5.
 			[x] Follow dependencies
 				[x] Use oemake
-			[ ] Default .oe argument for oebuild
-			[ ] Default 'command' argument for oebuild
-			[ ] Allow execution with a command, without .oe
-			[ ] Allow execution with .oe, without command
+			[x] Default .oe argument for oebuild
+			[x] Default 'command' argument for oebuild
+			[x] Allow execution with a command, without .oe
+			[x] Allow execution with .oe, without command
 			[ ] Default .oe argument for oemake
 			[ ] Allow specifying a command on oemake execution
 			[ ] Must be able to execute 'oemake' within a subpackage
