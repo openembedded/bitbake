@@ -1,0 +1,73 @@
+#!/usr/bin/python
+
+from oe import *
+import sys
+
+def usage(errorlevel=0, txt=''):
+	global tasks
+	if txt:
+		print
+		print txt
+
+	print "Syntax:"
+	print "\noebuild <command> <somebuildfile.oe>\n"
+	sys.exit(0)
+
+if len(sys.argv) < 2:
+	usage(1)
+if sys.argv[1] in ('help', 'usage'):
+	usage(0);
+if len(sys.argv) < 3:
+	usage(1)
+
+cfg = data.init()
+graph = digraph()
+
+try:
+	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
+except IOError:
+	fatal("Unable to open oe.conf")
+
+from copy import copy
+oe = copy(cfg)
+try:
+	oe = parse.handle(sys.argv[2], oe) # read .oe data
+except IOError, OSError:
+	fatal("Unable to open %s" % sys.argv[2])
+
+# sanity check
+if oe is None:
+	usage(1)
+
+#data.update_env(d)
+
+for var in oe.keys():
+	if data.getVarFlag(var, 'handler', oe):
+		event.register(data.getVar(var, oe))
+		continue
+
+	if not data.getVarFlag(var, 'task', oe):
+		continue
+
+	deps = data.getVarFlag(var, 'deps', oe) or []
+	build.add_task(var, var, deps)
+
+try:
+	build.exec_task(sys.argv[1], oe)
+except build.FuncFailed:
+	""""""
+except build.EventException:
+	(type, value, traceback) = sys.exc_info()
+	e = value.event
+	task = getattr(e, 'task', None)
+	pkg = getattr(e, 'pkg', None)
+	data = getattr(e, 'data', None)
+	msg = "%s event exception" % event.getName(e)
+	if task or pkg:
+		msg += ": "
+		if task:
+			msg += "task %s" % task
+		if pkg:
+			msg += "pkg %s" % pkg
+	print "%s, aborting" % msg
+	sys.exit(1)
