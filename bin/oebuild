@@ -107,7 +107,7 @@ def exec_task(task, dir, deptasks = []):
 			depfunc = globals()[depfuncname]
 			depfunc()
 		except KeyError:
-			debug(2, "invalid 'func' for task %s, running exec_task directly." % dep)
+			debug(2, "%s: invalid 'func' for task %s, running exec_task directly." % (task, dep))
 			if tasks.has_key(dep) and tasks[dep].has_key("deps"):
 				exec_task(dep, dir, tasks[dep]["deps"])
 			else:
@@ -140,7 +140,7 @@ def stamp_is_current(task, deptasks=""):
 	import stat
 	tasktime = os.stat(stampfile)[stat.ST_MTIME]
 	if deptasks is None:
-		return False
+		return True
 
 	for dep in deptasks:
 		depfile = getenv('STAMP') + "." + dep
@@ -422,15 +422,16 @@ for var in env.keys():
 
 for s in sys.argv[1].split(','):
 	try:
-		funcname = tasks["do_" + s]["func"]
-		func = globals()[funcname]
-		func()
-	except KeyError:
 		try:
+			funcname = tasks["do_" + s]["func"]
+			func = globals()[funcname]
+			func()
+		except KeyError:
 			exec_task("do_" + s, "S")
-		except FuncFailed:
-			fatal("task \"%s\" failed" % s)
-		note("task \"%s\" completed" % s)
+	except FuncFailed:
+		fatal("task \"%s\" failed" % s)
+
+	note("task \"%s\" completed" % s)
 #		INVALID()
 #		usage(1, "'%s' is not valid command" % s)
 
