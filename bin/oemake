@@ -273,13 +273,6 @@ for f in files:
 			pkg.append(data.getVar('PR', pkgdata[f], 1))
 			root = "%s/%s-%s-%s" % (pkg[0], pkg[1], pkg[2], pkg[3])
 			provides = []
-			# w/ category
-			provides.append("%s/%s-%s" % (pkg[0], pkg[1], pkg[2]))
-			provides.append("%s/%s" % (pkg[0], pkg[1]))
-			# w/o category
-			provides.append("%s" % pkg[1])
-			provides.append("%s-%s" % (pkg[1], pkg[2]))
-			provides.append("%s-%s-%s" % (pkg[1], pkg[2], pkg[3]))
 			providestr = data.getVar("PROVIDES", pkgdata[f], 1)
 			if providestr is not None:
 				provides += providestr.split()

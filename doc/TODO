@@ -3,7 +3,7 @@ TODO:
 [x] oe package
 	[x] Define CONFIG_SITE to point to a "SYS" specific config.site.
 
-	[ ] .oe needs access to PROVIDES information that oemake is
+	[x] .oe needs access to PROVIDES information that oemake is
 	    currently populating.  Move the default set of the .oe
 	    provides into the .oe parser rather than oemake.
 	[ ] Remove duplicated implementations, and convert everyone to the new
