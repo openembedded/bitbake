@@ -154,6 +154,9 @@ def do_mrproper():
 def do_fetch():
 	"""download needed sources"""
 
+	if stamp_is_current('fetch', tasks['fetch']['deps']):
+		return
+
 	mkdirhier(getenv("DL_DIR"))	# create file download directory
 
 	note("Executing task 'fetch'")
