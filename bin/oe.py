@@ -1,14 +1,47 @@
-import sys,posixpath,string
+#######################################################################
+#
+#  OpenEmbedded Python Library
+#
+#  Part of this code has been shamelessly stolen from Gentoo's portage.py.
+#  In the source code was GPL-2 as License, so the same goes for this file.
+#
+#  Functions that have comments with lots of ###### have been tested in the
+#  OE environment, all other stuff has been taken (more or less) 1:1 from
+#  Portage and may or may not apply.
+#
+#  Please visit http://www.openembedded.org/phpwiki/ for more info.
+#
+
+import sys,posixpath,string,types
 projectdir = posixpath.dirname(posixpath.dirname(posixpath.abspath(sys.argv[0])))
+
+
+class VarExpandError(Exception):
+	pass
+
+
+
+#######################################################################
+#
+# tokenize()
+#
+# Put in a string like
+#
+#	'sys-apps/linux-headers nls? (sys-devel/gettext)'
+#
+# and get back
+#
+#	['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']]
+#
 
 def tokenize(mystring):
 	"""breaks a string like 'foo? (bar) oni? (blah (blah))'
 	into embedded lists; returns None on paren mismatch"""
-	newtokens=[]
-	curlist=newtokens
-	prevlists=[]
-	level=0
-	accum=""
+	newtokens = []
+	curlist   = newtokens
+	prevlists = []
+	level     = 0
+	accum     = ""
 	for x in mystring:
 		if x=="(":
 			if accum:
@@ -41,34 +74,72 @@ def tokenize(mystring):
 		return None
 	return newtokens
 
-def evaluate(mytokens,mydefines,allon=0):
+
+#######################################################################
+#
+# evaluate(tokens, defines)
+#
+#
+# Assume you have this list of dependencies:
+#
+#	['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']]
+#
+# and you do a normal build (no defines are set), then you will get:
+#
+#	['sys-apps/linux-headers']
+#
+# as dependency. Now, assume you want to have NLS on your OE target, then put
+# 'nls' into the defines list. Now you will get
+#
+#	['sys-apps/linux-headers', ['sys-devel/gettext']]
+#
+# Just put that throught flatten() and you have a list of dependencies.
+#
+#
+# The tokens can also have negative flags, e.g.
+#
+#	['gdbm?', ['gdbm'], '!gdbm?', ['flatfile'] ]
+#
+
+def evaluate(tokens,mydefines,allon=0):
 	"""removes tokens based on whether conditional definitions exist or not.
 	Recognizes !"""
-	pos=0
-	if mytokens==None:
+	if tokens == None:
 		return None
-	while pos<len(mytokens):
-		if type(mytokens[pos])==types.ListType:
-			evaluate(mytokens[pos],mydefines)
+	mytokens = tokens + []		# this copies the list
+	pos = 0
+	while pos < len(mytokens):
+		if type(mytokens[pos]) == types.ListType:
+			evaluate(mytokens[pos], mydefines)
 			if not len(mytokens[pos]):
 				del mytokens[pos]
 				continue
-		elif mytokens[pos][-1]=="?":
-			cur=mytokens[pos][:-1]
+		elif mytokens[pos][-1] == "?":
+			cur = mytokens[pos][:-1]
 			del mytokens[pos]
 			if allon:
-				if cur[0]=="!":
+				if cur[0] == "!":
 					del mytokens[pos]
 			else:
-				if cur[0]=="!":
-					if ( cur[1:] in mydefines ) and (pos<len(mytokens)):
+				if cur[0] == "!":
+					if (cur[1:] in mydefines) and (pos < len(mytokens)):
 						del mytokens[pos]
 						continue
-				elif ( cur not in mydefines ) and (pos<len(mytokens)):
+				elif (cur not in mydefines) and (pos < len(mytokens)):
 					del mytokens[pos]
 					continue
-		pos=pos+1
+		pos = pos + 1
 	return mytokens
+
+
+#######################################################################
+#
+#  flatten()
+#
+#  [1,[2,3]] -> [1,2,3]
+#
+#  Usually used after tokenize() and evaluate()
+#
 
 def flatten(mytokens):
 	"""this function now turns a [1,[2,3]] list into
@@ -81,8 +152,8 @@ def flatten(mytokens):
 			newlist.append(x)
 	return newlist
 
-#beautiful directed graph object
 
+#beautiful directed graph object
 class digraph:
 	def __init__(self):
 		self.dict={}
@@ -159,13 +230,6 @@ class digraph:
 # valid end of version components; integers specify offset from release version
 # pre=prerelease, p=patchlevel (should always be followed by an int), rc=release candidate
 # all but _p (where it is required) can be followed by an optional trailing integer
-
-endversion={"pre":-2,"p":0,"alpha":-4,"beta":-3,"rc":-1}
-# as there's no reliable way to set {}.keys() order
-# netversion_keys will be used instead of endversion.keys
-# to have fixed search order, so that "pre" is checked
-# before "p"
-endversion_keys = ["pre", "p", "alpha", "beta", "rc"]
 
 def grabfile(myfilename):
 	"""This function grabs the lines in a file, normalizes whitespace and returns lines in a list; if a line
@@ -257,12 +321,19 @@ def writedict(mydict,myfilename,writekey=1):
 	myfile.close()
 	return 1
 
-class VarExpandError(Exception):
-	pass
 
-#cache expansions of constant strings
-cexpand = {}
-def varexpand(mystring,mydict = {},stripnl=0):
+#######################################################################
+#
+# varexpand()
+#
+# Expands variables of the form ${VARNAME} via keys
+# Expands variables of the form ${@python-code} via eval()
+# Expands shell escapes like \n
+#
+
+# cache expansions of constant strings
+_varexpand_cache_ = {}
+def varexpand(mystring,mydict = {}, stripnl=0):
 	"""
 	Removes quotes, handles \n, etc.
 	This code is used by the configfile code, as well as others (parser)
@@ -270,7 +341,7 @@ def varexpand(mystring,mydict = {},stripnl=0):
 	"""
 
 	try:
-		return cexpand[" "+mystring]
+		return _varexpand_cache_[" "+mystring]
 	except KeyError:
 		pass
 
@@ -305,25 +376,25 @@ def varexpand(mystring,mydict = {},stripnl=0):
 			elif mystring[pos] == "\\":
 				# backslash expansion time
 				if pos +1 >= len(mystring):
-					newstring = newstring+mystring[pos]
+					newstring = newstring + mystring[pos]
 					break
 				else:
 					a = mystring[pos+1]
 					pos = pos + 2
 					if a == 'a':
-						newstring = newstring+chr(007)
+						newstring = newstring + chr(007)
 					elif a == 'b':
-						newstring = newstring+chr(010)
+						newstring = newstring + chr(010)
 					elif a == 'e':
-						newstring = newstring+chr(033)
+						newstring = newstring + chr(033)
 					elif (a == 'f') or (a == 'n'):
-						newstring = newstring+chr(012)
+						newstring = newstring + chr(012)
 					elif a == 'r':
-						newstring = newstring+chr(015)
+						newstring = newstring + chr(015)
 					elif a == 't':
-						newstring = newstring+chr(011)
+						newstring = newstring + chr(011)
 					elif a == 'v':
-						newstring = newstring+chr(013)
+						newstring = newstring + chr(013)
 					else:
 						# remove backslash only, as bash does: this takes care of \\ and \' and \" as well
 						newstring = newstring + mystring[pos-1:pos]
@@ -331,7 +402,7 @@ def varexpand(mystring,mydict = {},stripnl=0):
 			elif (mystring[pos] == "$") and (mystring[pos-1] != "\\"):
 				pos = pos + 1
 				if pos+1 >= len(mystring):
-					cexpand[mystring] = ""
+					_varexpand_cache_[mystring] = ""
 					return ""
 				if mystring[pos] == "{":
 					pos = pos + 1
@@ -341,19 +412,25 @@ def varexpand(mystring,mydict = {},stripnl=0):
 				myvstart = pos
 				while mystring[pos] not in terminus:
 					if pos+1 >= len(mystring):
-						cexpand[mystring] = ""
+						_varexpand_cache_[mystring] = ""
 						return ""
 					pos = pos + 1
 				myvarname = mystring[myvstart:pos]
 				pos = pos + 1
 				if len(myvarname) == 0:
-					cexpand[mystring] = ""
+					_varexpand_cache_[mystring] = ""
 					return ""
 				numvars = numvars + 1
-				if mydict.has_key(myvarname):
+
+				# keep vars that are not all in UPPERCASE
+				if myvarname[0] == '@':
+					newstring = newstring + eval(myvarname[1:])
+				elif myvarname != myvarname.upper():
+					newstring = newstring + '${' + myvarname + '}'
+				elif mydict.has_key(myvarname):
 					newstring = newstring + mydict[myvarname]
 				else:
-					raise VarExpandError, "'" + myvarname + "' missing in above definition"
+					raise VarExpandError, "'" + myvarname + "' missing"
 			else:
 				newstring = newstring + mystring[pos]
 				pos = pos + 1
@@ -361,10 +438,28 @@ def varexpand(mystring,mydict = {},stripnl=0):
 			newstring = newstring + mystring[pos]
 			pos = pos + 1
 	if numvars == 0:
-		cexpand[mystring] = newstring[1:]
+		_varexpand_cache_[mystring] = newstring[1:]
 	return newstring[1:]	
 
-def getconfig(mycfg,mykeys = {},tolerant = 0):
+
+#######################################################################
+#
+# Reads some text file and returns a dictionary that is mykeys + all found definitions
+# Definitions have the form:
+#
+# VAR=value
+# VAR     =    value				whitespace is ok
+# VAR = " value"				using double quotes
+# VAR = 'value '				using single quotes
+# VAR() {					use this for multi-line values
+#    value
+#    value
+# }
+#
+# When myexpand is true, all lines go throught varexpand(), see above.
+#
+
+def getconfig(mycfg, mykeys={}, myexpand=0):
 	import shlex
 	f = open(mycfg,'r')
 	lex = shlex.shlex(f)
@@ -379,12 +474,9 @@ def getconfig(mycfg,mykeys = {},tolerant = 0):
 		val = ''
 		if equ == '':
 			# Unexpected end of file
-			if not tolerant:
-				print lex.error_leader(mycfg, lex.lineno), \
-					"enexpected end of config file: variable", key
-				return None
-			else:
-				return mykeys
+			print lex.error_leader(mycfg, lex.lineno), \
+				"enexpected end of config file: variable", key
+			return None
 		elif equ == '(':
 			equ = lex.get_token()
 			if equ != ')':
@@ -404,16 +496,18 @@ def getconfig(mycfg,mykeys = {},tolerant = 0):
 				equ = equ.rstrip()
 				if equ == '}':
 					break
+				if myexpand:
+					try:
+						equ = varexpand(equ, mykeys, 0)
+					except VarExpandError, detail:
+						print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
 				lex.lineno = lex.lineno + 1
 				val = val + equ + "\n"
 			lex.lineno = lex.lineno + 2
 		elif equ != '=':
-			if not tolerant:
-				print lex.error_leader(mycfg, lex.lineno), \
-					"expected '=', got '" + equ + "'"
-				return None
-			else:
-				return mykeys
+			print lex.error_leader(mycfg, lex.lineno), \
+				"expected '=', got '" + equ + "'"
+			return None
 		if val == '':
 			val = lex.get_token()
 			#stripnl = 1
@@ -421,18 +515,18 @@ def getconfig(mycfg,mykeys = {},tolerant = 0):
 		else:
 			stripnl = 0
 		if val == '':
-			if not tolerant:
-				print lex.error_leader(mycfg, lex.lineno), \
-					"end of file in variable definition"
-				return None
-			else:
-				return mykeys
-		try:
-			mykeys[key] = varexpand(val,mykeys,stripnl)
-		except VarExpandError, detail:
-			print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
+			print lex.error_leader(mycfg, lex.lineno), \
+				"end of file in variable definition"
+			return None
+		if myexpand:
+			try:
+				val = varexpand(val,mykeys,stripnl)
+			except VarExpandError, detail:
+				print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
+		mykeys[key] = val
 			
 	return mykeys
+
 
 def fetch(myuris, listonly=0):
 	"fetch files.  Will use digest file if available."
@@ -753,139 +847,166 @@ def movefile(src,dest,newmtime=None,sstat=None):
 def perform_md5(x, calc_prelink=0):
 	return perform_checksum(x, calc_prelink)[0]
 
+
+#######################################################################
+#
+# relparse()
+#
+# Parses the last elements of a version number into a triplet, that can
+# later be compared:
+#
+#	'1.2_pre3'	-> [1.2, -2, 3.0]
+#	'1.2b'		-> [1.2, 98, 0]
+#	'1.2'		-> [1.2, 0, 0]
+#
+
+_package_weights_ = {"pre":-2,"p":0,"alpha":-4,"beta":-3,"rc":-1}	# dicts are unordered
+_package_ends_    = ["pre", "p", "alpha", "beta", "rc"]			# so we need ordered list
+
 def relparse(myver):
 	"converts last version part into three components"
-	number=0
-	p1=0
-	p2=0
-	mynewver=string.split(myver,"_")
+	number   = 0
+	p1       = 0
+	p2       = 0
+	mynewver = string.split(myver,"_")
 	if len(mynewver)==2:
-		#an endversion
-		number=string.atof(mynewver[0])
-		match=0
-		for x in endversion_keys:
-			elen=len(x)
+		# an _package_weights_
+		number = string.atof(mynewver[0])
+		match = 0
+		for x in _package_ends_:
+			elen = len(x)
 			if mynewver[1][:elen] == x:
-				match=1
-				p1=endversion[x]
+				match = 1
+				p1 = _package_weights_[x]
 				try:
-					p2=string.atof(mynewver[1][elen:])
+					p2 = string.atof(mynewver[1][elen:])
 				except:
-					p2=0
+					p2 = 0
 				break
 		if not match:	
-			#normal number or number with letter at end
-			divider=len(myver)-1
+			# normal number or number with letter at end
+			divider = len(myver)-1
 			if myver[divider:] not in "1234567890":
-				#letter at end
-				p1=ord(myver[divider:])
-				number=string.atof(myver[0:divider])
+				# letter at end
+				p1 = ord(myver[divider:])
+				number = string.atof(myver[0:divider])
 			else:
-				number=string.atof(myver)		
+				number = string.atof(myver)		
 	else:
-		#normal number or number with letter at end
-		divider=len(myver)-1
+		# normal number or number with letter at end
+		divider = len(myver)-1
 		if myver[divider:] not in "1234567890":
 			#letter at end
-			p1=ord(myver[divider:])
-			number=string.atof(myver[0:divider])
+			p1     = ord(myver[divider:])
+			number = string.atof(myver[0:divider])
 		else:
-			number=string.atof(myver)  
+			number = string.atof(myver)  
 	return [number,p1,p2]
 
-#returns 1 if valid version string, else 0
-# valid string in format: <v1>.<v2>...<vx>[a-z,_{endversion}[vy]]
-# ververify doesn't do package rev.
 
-vercache={}
-def ververify(myorigval,silent=1):	
+#######################################################################
+#
+# ververify()
+#
+# Returns 1 if given a valid version string, else 0. Valid versions are in the format
+#
+#	<v1>.<v2>...<vx>[a-z,_{_package_weights_}[vy]]
+#
+
+_ververify_cache_={}
+
+def ververify(myorigval,silent=1):
+	# Lookup the cache first
 	try:
-		return vercache[myorigval]
+		return _ververify_cache_[myorigval]
 	except KeyError:
 		pass
-	if len(myorigval)==0:
+
+	if len(myorigval) == 0:
 		if not silent:
-			print "!!! Name error: package contains empty \"-\" part."
+			print "ERROR: package version is empty"
+		_ververify_cache_[myorigval] = 0
 		return 0
-	myval=string.split(myorigval,'.')
+	myval = string.split(myorigval,'.')
 	if len(myval)==0:
 		if not silent:
-			print "!!! Name error: empty version string."
-		vercache[myorigval]=0
+			print "ERROR: package name has empty version string"
+		_ververify_cache_[myorigval] = 0
 		return 0
-	#all but the last version must be a numeric
+	# all but the last version must be a numeric
 	for x in myval[:-1]:
 		if not len(x):
 			if not silent:
-				print "!!! Name error in",myorigval+": two decimal points in a row"
-			vercache[myorigval]=0
+				print "ERROR: package version has two points in a row"
+			_ververify_cache_[myorigval] = 0
 			return 0
 		try:
-			foo=string.atoi(x)
+			foo = string.atoi(x)
 		except:
 			if not silent:
-				print "!!! Name error in",myorigval+": \""+x+"\" is not a valid version component."
-			vercache[myorigval]=0
+				print "ERROR: package version contains non-numeric '"+x+"'"
+			_ververify_cache_[myorigval] = 0
 			return 0
 	if not len(myval[-1]):
 			if not silent:
-				print "!!! Name error in",myorigval+": two decimal points in a row"
-			vercache[myorigval]=0
+				print "ERROR: package version has trailing dot"
+			_ververify_cache_[myorigval] = 0
 			return 0
 	try:
-		foo=string.atoi(myval[-1])
-		vercache[myorigval]=1
+		foo = string.atoi(myval[-1])
+		_ververify_cache_[myorigval] = 1
 		return 1
 	except:
 		pass
-	#ok, our last component is not a plain number or blank, let's continue
+
+	# ok, our last component is not a plain number or blank, let's continue
 	if myval[-1][-1] in string.lowercase:
 		try:
-			foo=string.atoi(myval[-1][:-1])
+			foo = string.atoi(myval[-1][:-1])
 			return 1
-			vercache[myorigval]=1
+			_ververify_cache_[myorigval] = 1
 			# 1a, 2.0b, etc.
 		except:
 			pass
-	#ok, maybe we have a 1_alpha or 1_beta2; let's see
-	#ep="endpart"
+	# ok, maybe we have a 1_alpha or 1_beta2; let's see
 	ep=string.split(myval[-1],"_")
-	if len(ep)!=2:
+	if len(ep)!= 2:
 		if not silent:
-			print "!!! Name error in",myorigval
-		vercache[myorigval]=0
+			print "ERROR: package version has more than one letter at then end"
+		_ververify_cache_[myorigval] = 0
 		return 0
 	try:
-		foo=string.atoi(ep[0])
+		foo = string.atoi(ep[0])
 	except:
-		#this needs to be numeric, i.e. the "1" in "1_alpha"
+		# this needs to be numeric, i.e. the "1" in "1_alpha"
 		if not silent:
-			print "!!! Name error in",myorigval+": characters before _ must be numeric"
-		vercache[myorigval]=0
+			print "ERROR: package version must have numeric part before the '_'"
+		_ververify_cache_[myorigval] = 0
 		return 0
-	for mye in endversion_keys:
-		if ep[1][0:len(mye)]==mye:
-			if len(mye)==len(ep[1]):
-				#no trailing numeric; ok
-				vercache[myorigval]=1
+
+	for mye in _package_ends_:
+		if ep[1][0:len(mye)] == mye:
+			if len(mye) == len(ep[1]):
+				# no trailing numeric is ok
+				_ververify_cache_[myorigval] = 1
 				return 1
 			else:
 				try:
-					foo=string.atoi(ep[1][len(mye):])
-					vercache[myorigval]=1
+					foo = string.atoi(ep[1][len(mye):])
+					_ververify_cache_[myorigval] = 1
 					return 1
 				except:
-					#if no endversions work, *then* we return 0
+					# if no _package_weights_ work, *then* we return 0
 					pass	
 	if not silent:
-		print "!!! Name error in",myorigval
-	vercache[myorigval]=0
+		print "ERROR: package version extension after '_' is invalid"
+	_ververify_cache_[myorigval] = 0
 	return 0
 
+
 def isjustname(mypkg):
-	myparts=string.split(mypkg,'-')
+	myparts = string.split(mypkg,'-')
 	for x in myparts:
 		if ververify(x):
 			return 0
 	return 1
-
