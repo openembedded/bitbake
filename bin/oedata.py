@@ -179,6 +179,7 @@ def emit_env(o=sys.__stdout__, d = _data):
 
 #	o.write('\nPATH="' + os.path.join(projectdir, 'bin/build') + ':${PATH}"\n')
 
+	expandData(d, d)
 	env = d.keys()
 
 	for e in env:
