@@ -191,6 +191,11 @@ def collect_oefiles( progressCallback ):
             pass
         except oe.parse.SkipPackage:
             skipped += 1
+            pass
+        except KeyboardInterrupt:
+            raise
+        except Exception, e:
+            oe.error("%s while parsing %s" % (e, f))
     print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ), 
 
 def explode_version(s):
