@@ -171,9 +171,12 @@ class Wget(Fetch):
 
 			# supposedly complete.. write out md5sum
 			if oe.which(oe.data.getVar('PATH', d), 'md5sum'):
-				md5pipe = os.popen('md5sum ' + dl)
-				md5data = md5pipe.readline().split()[0]
-				md5pipe.close()
+				try:
+					md5pipe = os.popen('md5sum ' + dl)
+					md5data = (md5pipe.readline().split() or [ "" ])[0]
+					md5pipe.close()
+				except OSError:
+					md5data = ""
 				md5out = file(md5, 'w')
 				md5out.write(md5data)
 				md5out.close()
