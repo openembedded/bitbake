@@ -14,7 +14,7 @@ def init(data):
 	if not oe.data.getVar('OEDIR', data):
 		oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
 	if not oe.data.getVar('OEPATH', data):
-		oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}", data)
+		oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}:%s/share/oe" % sys.prefix, data)
 
 	oe.data.setVarFlag("OEFILES", "inherit", "1", data)
 	oe.data.setVarFlag("OEPATH", "inherit", "1", data)
