@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 import sys,os,string
-import oe.fetch
 sys.path.append(os.path.join(sys.prefix,'share/oe'))
+from oe import emit_env
 from oe import *
 
 
@@ -70,7 +70,7 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 	if env.has_key('OEPATH'):
 		for s in expand(env['OEPATH']).split(":"):
 			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
-	oe.emit_env(f)
+	emit_env(f)
 
 	if dir:  f.write("cd %s\n" % env[dir])
 	if func: f.write(func +"\n")
@@ -234,19 +234,19 @@ def do_fetch():
 
 	if env.has_key('SRC_URI'):
 		try:
-			oe.fetch.init(getenv('SRC_URI').split())
-		except oe.fetch.NoMethodError:
+			fetch.init(getenv('SRC_URI').split())
+		except fetch.NoMethodError:
 			(type, value, traceback) = sys.exc_info()
 			error("No method: %s" % value)
 			raise FuncFailed()
 
 		try:
-			oe.fetch.go()
-		except oe.fetch.MissingParameterError:
+			fetch.go()
+		except fetch.MissingParameterError:
 			(type, value, traceback) = sys.exc_info()
 			error("Missing parameters: %s" % value)
 			raise FuncFailed()
-		except oe.fetch.FetchError:
+		except fetch.FetchError:
 			(type, value, traceback) = sys.exc_info()
 			error("Fetch failed: %s" % value)
 			raise FuncFailed()
