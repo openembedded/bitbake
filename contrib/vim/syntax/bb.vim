@@ -77,8 +77,8 @@ if exists("b:current_syntax")
 endif
 
 syn keyword bbPythonFlag	python contained nextgroup=bbFunction
-syn match bbPythonFuncDef	"^\(python\s\+\)\(\w\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion
-syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@python
+syn match bbPythonFuncDef	"^\(python\s\+\)\(\w\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion skipwhite
+syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{\s*" end="^}\s*$" keepend contained contains=@python
 "hi def link bbPythonFuncRegion	Comment
 
 
@@ -89,8 +89,8 @@ if exists("b:current_syntax")
 endif
 
 syn keyword bbFakerootFlag	fakeroot contained nextgroup=bbFunction
-syn match bbShellFuncDef	"^\(fakeroot\s*\)\?\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbFakerootFlag,bbFunction,bbDelimiter nextgroup=bbShellFuncRegion
-syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@shell
+syn match bbShellFuncDef	"^\(fakeroot\s*\)\?\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbFakerootFlag,bbFunction,bbDelimiter nextgroup=bbShellFuncRegion skipwhite
+syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{\s*" end="^}\s*$" keepend contained contains=@shell
 "hi def link bbShellFuncRegion	Comment
 
 
