@@ -54,13 +54,28 @@ except IOError:
 	fatal("Unable to open oe.conf: %s" % value)
 
 oepath = data.getVar('OEPATH', cfg)
-oepath += ":%s" % os.path.abspath(os.path.dirname(args[1]))
+topdir = os.path.abspath(os.getcwd())
+oefile = os.path.abspath(args[1])
+oefile_loc = os.path.dirname(oefile)
+# set topdir to here
+data.setVar('TOPDIR', topdir, cfg)
+# expand tmpdir to include this topdir
+data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
+# add topdir to oepath
+oepath += ":%s" % topdir
+# set topdir to location of .oe file
+topdir = oefile_loc
+data.setVar('TOPDIR', topdir, cfg)
+# add that topdir to oepath
+oepath += ":%s" % topdir
+# go there
+os.chdir(topdir)
 data.setVar('OEPATH', oepath, cfg)
 
 from copy import copy
 oe = copy(cfg)
 try:
-	oe = parse.handle(args[1], oe) # read .oe data
+	oe = parse.handle(oefile, oe) # read .oe data
 except IOError, OSError:
 	fatal("Unable to open %s" % args[1])
 
