@@ -11,40 +11,26 @@ class PkgSucceeded(event.Event):
 	"""Package build succeeded"""
 	type = "PkgSucceeded"
 
-def getBuildOrder(digraph):
-	refcount = 0
-	builddata = []
-	dict = digraph.dict
-	okeys = digraph.okeys
-	
-	for x in okeys:
-		keyref = dict[x][0]
-		if keyref > refcount:
-			refcount = keyref
-	
-	maxcount = refcount
-	
-	while refcount >= 0:
-		__found = 0
-	
-		for x in okeys:
-			keycount = dict[x][0]
-			if keycount == refcount:
-				if keycount != 0 and depcmd is not None:
-					command=depcmd
-				else:
-					command=cmd
-	
-				builddata.append([x, command])
-				__found = 1
-	
-		refcount = refcount-1
-	
-	for x in okeys:
-		if dict[x][0] != 0:
-			builddata.append([x, cmd])
+def getParents(graph, item):
+	if not graph.hasnode(item):
+		return None
+	return graph.dict[item][1]
 
-	return builddata
+def addToBuild(data, graph, item):
+	if not graph.hasnode(item):
+		return 0
+	keycount = graph.dict[item][0]
+	if keycount != 0 and depcmd is not None:
+		command=depcmd
+	else:
+		command=cmd
+	parents = getParents(graph, item)
+	if parents is not None:
+		for p in parents:
+			addToBuild(data, graph, p)
+	if not [item, command] in data:
+		data.append([item, command])
+	return 1
 
 _depcmds = { "clean": None,
 	    "mrproper": None, }
@@ -57,6 +43,7 @@ else:
 	depcmd="stage"
 
 pkgdata = {}
+pkgs = {}
 cfg = {}
 graph = digraph()
 
@@ -80,28 +67,59 @@ else:
 
 #set_automatic_vars(sys.argv[2], )			# Deduce per-package environment variables
 
+#pkg = [ "pkgname", "depends", "provides" ]
+
 for f in files:
 	# read a file's metadata
+	(root, ext) = os.path.splitext(f)
 	try:
 		from copy import copy
 		pkgdata[f] = parse.handle(f, copy(cfg))
+		deps = None
+		if pkgdata[f] is not None:
+			depstr = data.getVar("DEPENDS", pkgdata[f])
+			if depstr is not None:
+				deps = depstr.split()
+			provides = data.getVar("PROVIDES", pkgdata[f])
+			if provides is not None:
+				provides = provides.split()
+				for provide in provides:
+					pkgs[provide] = [[root], None]
+			pkgs[root] = [deps, f]
 #		if pkgdata[f] is not None:
 #			data.emit_env(sys.__stdout__, pkgdata[f])
 	except IOError:
 		print "error opening %s" % f
 		pass
 
-	# use that metadata to yank the necessary bits for high
-	# level build process.. the depends fields and provides info
-	graph.addnode(f, None)
+# default provides.. a package provides itself, with and without
+# version and revision
+
+# add every provide relationship to the dependency graph, depending
+# on all the packages that provide it
+
+for pkg in pkgs.keys():
+#	print "graph.addnode(%s, %s)" % (pkg, None)
+	graph.addnode(pkg, None)
+
+for pkg in pkgs.keys():
+	(deps, fn) = pkgs[pkg]
+	if deps is not None:
+		for d in deps:
+#			print "graph.addnode(%s, %s)" % (pkg, d)
+			graph.addnode(pkg, d)
 	
 # Then, start the build for that package.  Note that because
 # we've already loaded the files, we may as well spawn the build
 # directly.. so lets abstract the task handling bits into a
 # module that both oebuild and oemake can utilize.
 
-data = getBuildOrder(graph)
+data = []
+for k in graph.okeys:
+	addToBuild(data, graph, k)
+
 for d in data:
 	(pkg, step) = d 
-	note("oebuild %s %s" % (step, pkg))
-	os.system("oebuild %s %s" % (step, pkg))
+	if pkgs[pkg][1] is not None:
+		note("oebuild %s %s" % (step, pkgs[pkg][1]))
+		os.system("oebuild %s %s" % (step, pkgs[pkg][1]))
