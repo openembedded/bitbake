@@ -1,24 +1,20 @@
-#######################################################################
-#
-#  OpenEmbedded Python Library
-#
-#  Part of this code has been shamelessly stolen from Gentoo's portage.py.
-#  In the source code was GPL-2 as License, so the same goes for this file.
-#
-#  Functions that have comments with lots of ###### have been tested in the
-#  OE environment, all other stuff has been taken (more or less) 1:1 from
-#  Portage and may or may not apply.
-#
-#  Please visit http://www.openembedded.org/phpwiki/ for more info.
-#
+"""
+OpenEmbedded Build System Python Library
+
+Copyright: (c) 2003 by Holger Schurig
+
+Part of this code has been shamelessly stolen from Gentoo's portage.py.
+This source had GPL-2 as license, so the same goes for this file.
+
+Please visit http://www.openembedded.org/phpwiki/ for more info.
+
+Try "pydoc ./oe.py" to get some nice output.
+"""
 
 import sys,os,string,types,re
 
 projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
-prepender = ''
 env = {}
-env['OEDIR'] = projectdir
-env['TMPDIR'] = projectdir+'/tmp'
 
 class VarExpandError(Exception):
 	pass
@@ -64,8 +60,8 @@ def fatal(*args):
 #######################################################################
 
 def mkdirhier(dir):
-	"""Create a directory like 'mkdir -p', but does not complain if directory
-	already exists like os.makedirs"""
+	"""Create a directory like 'mkdir -p', but does not complain if
+	directory already exists like os.makedirs"""
 
 	try:
 		os.makedirs(dir)
@@ -677,7 +673,29 @@ _ververify_cache_={}
 def ververify(myorigval,silent=1):
 	"""Returns 1 if given a valid version string, els 0. Valid versions are in the format
 
-	<v1>.<v2>...<vx>[a-z,_{_package_weights_}[vy]]"""
+	<v1>.<v2>...<vx>[a-z,_{_package_weights_}[vy]]
+
+	>>> ververify('2.4.20')
+	1
+	>>> ververify('2.4..20')		# two dots
+	0
+	>>> ververify('2.x.20')			# 'x' is not numeric
+	0
+	>>> ververify('2.4.20a')
+	1
+	>>> ververify('2.4.20cvs')		# only one trailing letter
+	0
+	>>> ververify('1a')
+	1
+	>>> ververify('test_a')			# no version at all
+	0
+	>>> ververify('2.4.20_beta1')
+	1
+	>>> ververify('2.4.20_beta')
+	1
+	>>> ververify('2.4.20_wrongext')	# _wrongext is no valid trailer
+	0
+	"""
 
 	# Lookup the cache first
 	try:
@@ -1154,8 +1172,9 @@ def dep_opconvert(mysplit, myuse):
 			mypos += 1
 	return newsplit
 
-#beautiful directed graph object
 class digraph:
+	"""beautiful directed graph object"""
+
 	def __init__(self):
 		self.dict={}
 		#okeys = keys, in order they were added (to optimize firstzero() ordering)
@@ -1738,7 +1757,7 @@ def print_orphan_env():
 			if not header:
 				note("Nonstandard variables defined in your project:")
 				header = 1
-			print prepender + s
+			print debug_prepender + s
 		if header:
 			print
 
@@ -1753,7 +1772,7 @@ def print_missing_env():
 		if env.has_key(s): continue
 
 		level = envdesc[s]['warnlevel']
-		try: warn = prepender + envdesc[s]['warn']
+		try: warn = debug_prepender + envdesc[s]['warn']
 		except KeyError: warn = ''
 		if level == 1:
 			note('Variable %s is not defined' % s)
@@ -1894,6 +1913,8 @@ envdesc = {
 
 }
 
+env['OEDIR'] = projectdir
+env['TMPDIR'] = projectdir+'/tmp'
 
 
 if __name__ == "__main__":
