@@ -2,7 +2,7 @@ PATCHES_DIR="${S}"
 DEPENDS_prepend="patcher "
 
 die () {
-	return 1
+	exit 1
 }
 
 oenote () {
@@ -12,7 +12,7 @@ oenote () {
 
 oefatal () {
 	echo "FATAL:" $*
-	return 1
+	exit 1
 }
 
 oedebug () {
