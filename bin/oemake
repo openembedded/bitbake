@@ -1,11 +1,15 @@
 #!/usr/bin/python
 
-import oe, string, sys, os
+import string, sys, os
+from oe import *
 
-import oe.data # data handling
-oe.data.init()
+class PkgFailed(event.Event):
+	"""Package build failed"""
+	type = "PkgFailed"
 
-import oe.parse # file parsing
+class PkgSucceeded(event.Event):
+	"""Package build succeeded"""
+	type = "PkgSucceeded"
 
 def getBuildOrder(digraph):
 	refcount = 0
@@ -52,55 +56,52 @@ if _depcmds.has_key(cmd):
 else:
 	depcmd="stage"
 
-files = []
-files.append("../packages/content/glibc-2.3.1.oe")
-
 pkgdata = {}
-
-#cfgdata = oe.parse.handle("../conf/oe.conf")
-#from copy import copy
-#testdata = oe.parse.handle("../test.oe", copy(cfgdata))
-
 cfg = {}
-oe.parse.init(".conf", cfg)
-oe.data.inheritFromOS(1, cfg)
+graph = digraph()
 
-__oepath_found_it__ = 0
-for s in oe.data.getVar('OEPATH', cfg).split(":"):
-	s = oe.data.expand(s, cfg)
-	if os.access(os.path.join(s,'conf/oe.conf'), os.R_OK):
-		__oepath_found_it__ = os.path.join(s, 'conf/oe.conf')
+parse.init(".conf", cfg)
+data.setVarFlag("OEFILES", "inherit", "1", cfg)
+data.setVarFlag("OEDIR", "inherit", "1", cfg)
+data.setVarFlag("OEPATH", "inherit", "1", cfg)
+data.setVarFlag("PATH", "inherit", "1", cfg)
+data.inheritFromOS(1, cfg)
 
-if __oepath_found_it__ == 0:
-	oe.fatal("error locating conf/oe.conf")
+try:
+	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
+except IOError:
+	fatal("Unable to open oe.conf")
+
+oefiles = data.getVar("OEFILES", cfg)
+if oefiles is not None:
+	files = oefiles.split()
 else:
-	cfg = oe.parse.handle(__oepath_found_it__, cfg)	# Read configuration
+	fatal("OEFILES not defined")
 
-#oe.set_automatic_vars(sys.argv[2], )			# Deduce per-package environment variables
+#set_automatic_vars(sys.argv[2], )			# Deduce per-package environment variables
 
 for f in files:
 	# read a file's metadata
 	try:
 		from copy import copy
-		pkgdata[f] = oe.parse.handle(f, copy(cfg))
-		if pkgdata[f] is not None:
-			oe.data.emit_env(sys.__stdout__, pkgdata[f])
+		pkgdata[f] = parse.handle(f, copy(cfg))
+#		if pkgdata[f] is not None:
+#			data.emit_env(sys.__stdout__, pkgdata[f])
 	except IOError:
+		print "error opening %s" % f
 		pass
 
 	# use that metadata to yank the necessary bits for high
 	# level build process.. the depends fields and provides info
+	graph.addnode(f, None)
 	
-	# Then, start the build for that package.  Note that because
-	# we've already loaded the files, we may as well spawn the build
-	# directly.. so lets abstract the task handling bits into a
-	# module that both oebuild and oemake can utilize.
+# Then, start the build for that package.  Note that because
+# we've already loaded the files, we may as well spawn the build
+# directly.. so lets abstract the task handling bits into a
+# module that both oebuild and oemake can utilize.
 
-
-#test = oe.digraph()
-#test.addnode("glibc", None)
-#test.addnode("ipkg", "glibc")
-#data = getBuildOrder(test)
-#for d in data:
-#	(pkg, step) = d 
-#	print "oebuild %s %s-*.oe" % (step, pkg)
+data = getBuildOrder(graph)
+for d in data:
+	(pkg, step) = d 
+	note("oebuild %s %s" % (step, pkg))
+	os.system("oebuild %s %s" % (step, pkg))
