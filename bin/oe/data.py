@@ -46,6 +46,9 @@ def setVar(var, value, d = _data):
 			base = match.group('base')
 			override = match.group('add')
 			l = getVarFlag(base, v, d) or []
+			if override == 'delete':
+				if l.count([value, None]):
+					del l[l.index([value, None])]
 			l.append([value, override])
 			setVarFlag(base, v, l, d)
 			return
