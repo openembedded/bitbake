@@ -1,4 +1,6 @@
 #!/usr/bin/python
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 """
 OpenEmbedded Build System Python Library
 
@@ -1060,7 +1062,7 @@ class digraph:
         self.dict={}
         #okeys = keys, in order they were added (to optimize firstzero() ordering)
         self.okeys=[]
-	self.__callback_cache=[]
+        self.__callback_cache=[]
 
     def __str__(self):
         str = ""
@@ -1164,11 +1166,11 @@ class digraph:
     def walkdown(self, item, callback, debug = None, usecache = False):
         if not self.hasnode(item):
             return 0
-	    
-	if usecache:
-    	    if self.__callback_cache.count(item):
-		if debug:    
-		    print "hit cache for item: %s" % item
+
+        if usecache:
+            if self.__callback_cache.count(item):
+                if debug:
+                    print "hit cache for item: %s" % item
                 return 1
 
         parents = self.getparents(item)
@@ -1176,8 +1178,8 @@ class digraph:
         for p in parents:
             if p in children:
 #                print "%s is both parent and child of %s" % (p, item)
-		if usecache:
-            	    self.__callback_cache.append(p)
+                if usecache:
+                    self.__callback_cache.append(p)
                 ret = callback(self, p)
                 if ret == 0:
                     return 0
@@ -1190,8 +1192,8 @@ class digraph:
             ret = self.walkdown(p, callback, debug, usecache)
             if ret == 0:
                 return 0
-	if usecache:
-    	    self.__callback_cache.append(item)
+        if usecache:
+            self.__callback_cache.append(item)
         return callback(self, item)
 
     def walkup(self, item, callback):
