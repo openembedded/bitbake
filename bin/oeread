@@ -23,8 +23,9 @@ if len(sys.argv) == 2:
 		if k in cfg:
 			if cfg[k] == oefile[k]:
 				continue
-		print k,'=',oe.data.expand(oefile[k]['content'], oefile)
-else:	
+		if 'content' in oefile[k]:
+			print k,'=',oe.data.expand(oefile[k]['content'], oefile)
+else:
 	print "Variables in conf/oe.conf & friends:"
 	for k in cfgkeys:
 		print "%-30s %s" % (k, cfg[k])
