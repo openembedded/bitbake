@@ -88,20 +88,24 @@ TODO:
 			[x] core
 			[ ] symlinks
 			[ ] device specifics (patches, etc)
-		[x] ncurses
+			[ ] packaging split
+		[.] ncurses
 			[x] core
 			[x] staging function
 			[x] install function
-		[x] openssl
+			[ ] packaging split
+		[.] openssl
 			[x] core
 			[x] staging function
 			[x] install function
+			[ ] packaging split
 		[.] qt 2.3.6^H7
 			[x] core
 			[x] dependencies
 				[x] libpng
 				[x] libjpeg
 			[ ] device specifics (patches, etc)
+			[ ] packaging split
 		[ ] add cross binutils and binutils
 		[ ] add gcc
 		[ ] figure out where to put the glibc install into the toolchain dir,
@@ -110,14 +114,28 @@ TODO:
 			[x] core
 			[x] install
 			[ ] device specifics (patches, etc)
+			[ ] packaging split
+		[.] openssh
+			[x] core
+			[ ] device specifics (patches, etc)
+			[ ] packaging split
+		[.] modutils
+			[x] core
+			[ ] device specifics
+			[ ] /etc/modules & /etc/modules.conf
+		[x] mtd
+			[x] core
+			[x] install
+		[x] mtd-buildarch
+			[x] core
 	[.] new packages
 		[.] apache
 			[x] core
 			[x] dependencies
 				[x] expat
 				[x] pcre
-			[ ] staging function
-			[ ] install function
+			[x] install function
+			[ ] packaging split
 
 [ ] New c++ OE library (possibility -- open to debate)
 
