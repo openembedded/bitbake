@@ -72,7 +72,7 @@ if exists("b:current_syntax")
 endif
 
 syn keyword bbPythonFlag	python contained nextgroup=bbFunction
-syn match bbPythonFuncDef	"^\(python\s\+\w\+\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion
+syn match bbPythonFuncDef	"^\(python\s\+\)\(\w\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion
 syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@python
 "hi def link bbPythonFuncRegion	Comment
 
