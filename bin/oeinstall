@@ -1,0 +1,82 @@
+#!/usr/bin/python
+
+import sys, os, string, oe
+from oe import *
+
+__version__ = 1.0
+cfg_oe = data.init()
+
+def usage():
+	print "Usage: oeinstall [options ...]"
+	print "Installs specified files of supported types into a root filesystem."
+	print "Supported types: tar.gz, ipk, deb, rpm"
+	print ""
+	print "  %s\t\t%s" % ("-r [arg], --root [arg]", "root directory (default=${IMAGE_ROOTFS})")
+	print "  %s\t\t%s" % ("-f [arg], --files [arg]", "files to install (default=${INSTALL_FILES})")
+	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	sys.exit(0)
+
+def version():
+	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
+	print "OEInstall version %s" % __version__
+
+def getopthash(l):
+	h = {}
+	for (opt, val) in l:
+		h[opt] = val
+	return h
+
+import getopt
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], 'vr:f:', [ 'version', 'root=', 'files=' ])
+except getopt.GetoptError:
+	usage()
+
+# handle opts
+opthash = getopthash(opts)
+
+if opthash.has_key('--version') or opthash.has_key('-v'):
+	version()
+	sys.exit(0)
+
+try:
+	cfg_oe = parse.handle("conf/oe.conf", cfg_oe)
+except IOError:
+	fatal("Unable to open oe.conf")
+
+# sanity check
+if cfg_oe is None:
+	fatal("Unable to open/parse conf/oe.conf")
+	usage(1)
+
+rootfs = data.getVar('IMAGE_ROOTFS', cfg_oe, 1)
+
+if opthash.has_key('--root'):
+	rootfs = opthash['--root']
+if opthash.has_key('-r'):
+	rootfs = opthash['-r']
+
+if not rootfs:
+	oe.fatal("root filesystem not specified")
+
+data.setVar('IMAGE_ROOTFS', rootfs, cfg_oe)
+
+files = string.split(data.getVar('INSTALL_FILES', cfg_oe, 1) or "")
+
+if opthash.has_key('--files'):
+	files = opthash['--files'].split()
+if opthash.has_key('-f'):
+	files = opthash['-f'].split()
+
+if not files:
+	oe.fatal("install files not specified")
+
+data.setVar('INSTALL_FILES', files, cfg_oe)
+
+# grab OEDIR
+topdir = data.getVar('TOPDIR', cfg_oe, 1) or os.getcwd()
+oedir = data.getVar('OEDIR', cfg_oe, 1) or topdir
+mkdirhier(oedir)
+
+for f in files:
+	oe.note("file is %s" % f)
