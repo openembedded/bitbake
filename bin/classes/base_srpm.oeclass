@@ -1,6 +1,9 @@
+inherit base package
+
 python base_srpm_do_set_specvar() {
-	if env.has_key("SRPMFILE"):
-		env['SPECFILE'] = "${RPMBUILDPATH}/SPECS/${@os.popen('rpm -q -p %s' % getenv('SRPMFILE')).read().split('-')[0]}.spec"
+	from oe import data
+	if data.getVar('SRPMFILE', d):
+		data.setVar('SPECFILE', "${RPMBUILDPATH}/SPECS/${@os.popen('rpm -q -p %s' % oe.data.getVar('SRPMFILE', d)).read().split('-')[0]}.spec", d)
 }
 
 RPMBUILDPATH="${WORKDIR}/rpm"
@@ -9,6 +12,7 @@ RPMTARGET=""
 RPM="rpm ${RPMTARGET} --rcfile=${WORKDIR}/rpmrc"
 
 base_srpm_do_preprpm() {
+	oenote preprpm
 	mkdir -p ${RPMBUILDPATH}/{SPECS,RPMS/{i386,i586,i686,noarch,ppc},SRPMS,SOURCES,BUILD}
 	echo 'macrofiles:/usr/lib/rpm/macros:${WORKDIR}/macros' > ${WORKDIR}/rpmrc
 	echo '%_topdir ${RPMBUILDPATH}' > ${WORKDIR}/macros
@@ -26,7 +30,7 @@ base_srpm_do_package() {
 	${RPM} -bb ${SPECFILE}
 }
 
+EXPORT_FUNCTIONS do_preprpm do_set_specvar do_unpack do_package
+
 addtask preprpm before do_unpack
 addtask set_specvar before do_preprpm 
-
-EXPORT_FUNCTIONS do_preprpm do_unpack do_package

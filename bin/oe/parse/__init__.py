@@ -15,6 +15,7 @@ handlers = []
 
 import ConfHandler
 import OEHandler
+import SRPMHandler
 
 def supports(fn):
 	"""Returns true if we have a handler for this file, false otherwise"""
