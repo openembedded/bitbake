@@ -90,12 +90,9 @@ def handle(fn, d = {}, include = 0):
         oldfile = None
 
     fn = obtain(fn, d)
-    bbpath = []
+    bbpath = (data.getVar('BBPATH', d, 1) or '').split(':')
     if not os.path.isabs(fn):
         f = None
-        vbbpath = data.getVar("BBPATH", d)
-        if vbbpath:
-            bbpath += vbbpath.split(":")
         for p in bbpath:
             p = data.expand(p, d)
             j = os.path.join(p, fn)
@@ -109,6 +106,10 @@ def handle(fn, d = {}, include = 0):
         f = open(fn,'r')
         abs_fn = fn
 
+    if ext != ".bbclass":
+        bbpath.insert(0, os.path.dirname(abs_fn))
+        data.setVar('BBPATH', ":".join(bbpath), d)
+
     if include:
         bb.parse.mark_dependency(d, abs_fn)
 
@@ -118,11 +119,6 @@ def handle(fn, d = {}, include = 0):
         if not "base" in i and __classname__ != "base":
             i[0:0] = ["base"]
         inherit(i, d)
-
-    if not bbpath:
-        bbpath = (data.getVar('BBPATH', d, 1) or "").split(':')
-    bbpath.insert(0, os.path.dirname(fn))
-    data.setVar('BBPATH', ":".join(bbpath), d)
 
     lineno = 0
     while 1:
@@ -176,6 +172,7 @@ def handle(fn, d = {}, include = 0):
                     pdeps.append(var)
                     data.setVarFlag(p, 'deps', pdeps, d)
                     bb.build.add_task(p, pdeps, d)
+        bbpath.pop(0)
     if oldfile:
         bb.data.setVar("FILE", oldfile, d)
     return d
