@@ -77,3 +77,10 @@ def removeCode(handlerStr):
 	tmp = "def tmpHandler(e):\n%s" % handlerStr
 	comp = compile(tmp, "tmpHandler(e)", "exec")
 	handlers.remove(comp)
+
+def getName(e):
+	"""Returns the name of a class or class instance"""
+	if getattr(e, "__name__", None) == None:
+		return e.__class__.__name__
+	else:
+		return e.__name__
