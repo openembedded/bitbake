@@ -36,8 +36,6 @@ __build_path = []
 __preferred = {}
 __world_target = Set()
 __ignored_dependencies = Set()
-__depcmds = { "clean": None,
-             "mrproper": None }
 
 __stats = {}
 
@@ -109,14 +107,22 @@ def try_build(fn, virtual):
     try:
         failed = False
 
-        if __depcmd:
+        depcmd = make.options.cmd
+        bbdepcmd = bb.data.getVarFlag('do_%s' % make.options.cmd, 'bbdepcmd', make.pkgdata[fn])
+        if bbdepcmd is not None:
+            if bbdepcmd == "":
+                depcmd = None
+            else:
+                depcmd = bbdepcmd
+
+        if depcmd:
             oldcmd = make.options.cmd
-            make.options.cmd = __depcmd
+            make.options.cmd = depcmd
 
         for d in depends_list:
             if d in __ignored_dependencies:
                 continue
-            if not __depcmd:
+            if not depcmd:
                 continue
             if buildPackage(d) == 0:
                 bb.error("dependency %s (for %s) not satisfied" % (d,item))
@@ -124,7 +130,7 @@ def try_build(fn, virtual):
                 if make.options.abort:
                     break
 
-        if __depcmd:
+        if depcmd:
             make.options.cmd = oldcmd
 
         if failed:
@@ -590,10 +596,6 @@ if __name__ == "__main__":
     if not make.options.cmd:
         make.options.cmd = "build"
 
-    if make.options.cmd in __depcmds:
-        __depcmd=__depcmds[make.options.cmd]
-    else:
-        __depcmd=make.options.cmd
 
     make.pkgdata = {}
     make.cfg = bb.data.init()
