@@ -6,7 +6,7 @@ import re, oe.data, os, sys
 from oe import debug, fatal
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
-__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
+__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 
 def init(data):
@@ -150,6 +150,10 @@ def feeder(lineno, s, fn, data = {}):
 				val = groupd["value"]
 		elif "colon" in groupd and groupd["colon"] != None:
 			val = oe.data.expand(groupd["value"], data)
+		elif "append" in groupd and groupd["append"] != None:
+			val = oe.data.getVar(key, data) + groupd["value"]
+		elif "prepend" in groupd and groupd["prepend"] != None:
+			val = groupd["value"] + oe.data.getVar(key, data)
 		else:
 			val = groupd["value"]
 		if 'flag' in groupd and groupd['flag'] != None:
