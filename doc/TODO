@@ -6,22 +6,6 @@ TODO:
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
 	[.] Implement API testing using doctest.
-	[x] BUG: If we only run an update_data after a load of an .oe,
-	    but not for a .oeclass, if multiple .oeclasses define, say, for
-	    example DEPENDS_prepend, one overrides the other, and we lose
-	    some of the deps.  If we update_data after each .oeclass load,
-	    then DEPENDS_prepend affects DEPENDS immediately, but subsequently,
-	    it applies against a DEPENDS variable which doesnt yet exist,
-	    because the oeclass (in the case of base/INHERIT) is loaded prior
-	    to defining DEPENDS in the .oe.  The only solution I see is to
-	    pick up _append/_prepend/_delete during the .oe feeder, and
-	    append each of them to a list of tasks to do during the
-	    update_data run.  I.e. base sets DEPENDS_prepend to content/patcher,
-	    then content/patcher ends up in the 'to prepend' list, and is then
-	    prepended when update_data runs after the completion of the .oe
-	    parse.
-	[x] Teach 'include' to fetch if necessary.
-	    [x] Move this into handle() rather than include.
 	[ ] Alter 'export' handling, to support exporting a var without
 	    defining the variable.
 	[ ] Add support for 'anonymous' OE functions in .oe{,class} files.
@@ -33,19 +17,8 @@ TODO:
 		    knowledge of which packages are to be built.
 
 		* Build requirements
-			[x] Code will not be checked out into a temporary area
-				[x] Solve by leaving SRC_URI blank, and setting
-				    S appropriately.
 			[ ] Code will not be automatically updated from CVS
 				[ ] Solve by making Fetch use md5.
-			[x] Follow dependencies
-				[x] Use oemake
-			[x] Default .oe argument for oebuild
-			[x] Default 'command' argument for oebuild
-			[x] Allow execution with a command, without .oe
-			[x] Allow execution with .oe, without command
-			[x] Default .oe argument for oemake
-			[x] Allow specifying a command on oemake execution
 			[x] Must be able to execute 'oemake' within a subpackage
 			    of an upstream package, and yet retain access to the
 			    toplevel TMPDIR.  Perhaps specify TMPDIR through
@@ -57,34 +30,20 @@ TODO:
 			[ ] Allow switching to a debug build for the entirety
 			    of the build.  Alter CONFIG for created .pro files,
 			    and add -g to appropriate flags.
-			[x] Nightly builds will use the same .oe files as those
-			    used upstream.  This is easily solved, since the use
-			    of OE upstream already gives us the necessary event
-			    handling.
-			[x] Does not require that the build be done as root.
-			[x] Simplicity of .oe file naming (PV/PR inside .oe)
+				[ ] Requires some form of either if block,
+				    or anonymous python function to do the
+				    logic without lambda madness.
 			[ ] Tests for versioning
+				[ ] Far, far beyond the scope of what OE is
+				    designed to do.
 			[ ] Wrapper Makefile -> oemake
-			[x] Command as <cmd> as opposed to do_<cmd>
+				[ ] Not part of OE, only requires that we can
+				    override the path to Makefile.
 			[ ] Target device filesystem locations as metadata
 			    items so that all the packages can install things
 			    into proper locations.  This is highly distribution
 			    specific, 
 			[ ] Real life test case: Opie
-		[x] default PN,PV,PR,CATEGORY in oe.conf
-		[x] Allow override of PN,PV,PR,CATEGORY within a .oe
-		[x] Allow filename to not contain PV, PR, CATEGORY
-			Needed because a .oe within an upstream source
-			will likely prefer to hold the version as an item
-			of metadata, rather than as the filename.
-		[x] Set TMPDIR to a path off of the original
-		    TOPDIR, then set TOPDIR to the dir the .oe resides in,
-		    in _all_ cases.  This wont break functionality for most,
-		    but will allow relative paths to behave properly, thereby
-		    fixing this issue.
-			In this way we can sanely handle .oe files that
-			use relative paths extensively, such as those
-			using '.' as their 'S' variable.
 
 [ ] oebuild
 	[ ] Implement and test check_md5, taking nostamp into account.
