@@ -20,7 +20,7 @@ if len(sys.argv) == 2:
 		if k.startswith('FILES_'): continue
 		if k.startswith('do_'): continue
 		if k.startswith('oe'): continue
-		if cfg.has_key(k):
+		if k in cfg:
 			if cfg[k] == oefile[k]:
 				continue
 		print k,'=',oe.data.expand(oefile[k]['content'], oefile)

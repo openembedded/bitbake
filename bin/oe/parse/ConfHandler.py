@@ -130,17 +130,17 @@ def feeder(lineno, s, fn, data = {}):
 	if m:
 		groupd = m.groupdict()
 		key = groupd["var"]
-		if groupd.has_key("exp") and groupd["exp"] != None:
+		if "exp" in groupd and groupd["exp"] != None:
 			oe.data.setVarFlag(key, "export", 1, data)
-		if groupd.has_key("ques") and groupd["ques"] != None:
+		if "ques" in groupd and groupd["ques"] != None:
 			val = oe.data.getVar(key, data)
 			if not val:
 				val = groupd["value"]
-		elif groupd.has_key("colon") and groupd["colon"] != None:
+		elif "colon" in groupd and groupd["colon"] != None:
 			val = oe.data.expand(groupd["value"], data)
 		else:
 			val = groupd["value"]
-		if groupd.has_key('flag') and groupd['flag'] != None:
+		if 'flag' in groupd and groupd['flag'] != None:
 			#oe.note("setVarFlag(%s, %s, %s, data)" % (key, groupd['flag'], val))
 			oe.data.setVarFlag(key, groupd['flag'], val, data)
 		else:

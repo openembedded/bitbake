@@ -44,7 +44,7 @@ except getopt.GetoptError:
 # handle opts
 opthash = getopthash(opts)
 
-if opthash.has_key('--version') or opthash.has_key('-v'):
+if '--version' in opthash or '-v' in opthash:
 	version()
 	sys.exit(0)
 
@@ -60,14 +60,14 @@ if cfg_oe is None:
 
 rootfs = data.getVar('IMAGE_ROOTFS', cfg_oe, 1)
 
-if opthash.has_key('--root'):
+if '--root' in opthash:
 	rootfs = opthash['--root']
-if opthash.has_key('-r'):
+if '-r' in opthash:
 	rootfs = opthash['-r']
 
-if opthash.has_key('--type'):
+if '--type' in opthash:
 	type = opthash['--type']
-if opthash.has_key('-t'):
+if '-t' in opthash:
 	type = opthash['-t']
 
 if not rootfs:

@@ -2,7 +2,7 @@
 
 import os, sys, stat, daemon, time
 
-if not os.environ.has_key("OEFILES"):
+if not "OEFILES" in os.environ:
 	sys.exit(1)
 
 olddir=os.getcwd()

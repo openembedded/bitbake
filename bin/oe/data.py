@@ -26,10 +26,10 @@ _data = init()
 
 def initVar(var, d = _data):
 	"""Non-destructive var init for data structure"""
-	if not d.has_key(var):
+	if not var in d:
 		d[var] = {}
 
-	if not d[var].has_key("flags"):
+	if not "flags" in d[var]:
 		d[var]["flags"] = {}
 
 __setvar_regexp__ = {}
@@ -58,7 +58,7 @@ def setVar(var, value, d = _data):
 			setVarFlag(base, v, l, d)
 			return
 		
-	if not d.has_key(var):
+	if not var in d:
 		initVar(var, d)
 	d[var]["content"] = value 
 
@@ -70,7 +70,7 @@ def getVar(var, d = _data, exp = 0):
 		>>> print getVar('TEST')
 		testcontents
 	"""
-	if not d.has_key(var) or not d[var].has_key("content"):
+	if not var in d or not "content" in d[var]:
 		return None
 	if exp:
 		return expand(d[var]["content"], d)
@@ -87,7 +87,7 @@ def delVar(var, d = _data):
 		>>> print getVar('TEST')
 		None
 	"""
-	if d.has_key(var):
+	if var in d:
 		del d[var]
 
 def setVarFlag(var, flag, flagvalue, d = _data):
@@ -99,7 +99,7 @@ def setVarFlag(var, flag, flagvalue, d = _data):
 		1
 	"""
 #	print "d[%s][\"flags\"][%s] = %s" % (var, flag, flagvalue)
-	if not d.has_key(var):
+	if not var in d:
 		initVar(var, d)
 	d[var]["flags"][flag] = flagvalue
 
@@ -111,7 +111,7 @@ def getVarFlag(var, flag, d = _data):
 		>>> print getVarFlag('TEST', 'python')
 		1
 	"""
-	if d.has_key(var) and d[var].has_key("flags") and d[var]["flags"].has_key(flag):
+	if var in d and "flags" in d[var] and flag in d[var]["flags"]:
 		return d[var]["flags"][flag]
 	return None
 
@@ -127,7 +127,7 @@ def delVarFlag(var, flag, d = _data):
 		None
 		
 	"""
-	if d.has_key(var) and d[var].has_key("flags") and d[var]["flags"].has_key(flag):
+	if var in d and "flags" in d[var] and flag in d[var]["flags"]:
 		del d[var]["flags"][flag]
 
 def setVarFlags(var, flags, d = _data):
@@ -140,7 +140,7 @@ def setVarFlags(var, flags, d = _data):
 		>>> print getVarFlag('TEST', 'test')
 		blah
 	"""
-	if not d.has_key(var):
+	if not var in d:
 		initVar(var, d)
 	d[var]["flags"] = flags
 
@@ -152,7 +152,7 @@ def getVarFlags(var, d = _data):
 		>>> print getVarFlags('TEST')['test']
 		blah
 	"""
-	if d.has_key(var) and d[var].has_key("flags"):
+	if var in d and "flags" in d[var]:
 		return d[var]["flags"]
 	return None
 
@@ -168,7 +168,7 @@ def delVarFlags(var, d = _data):
 		None
 		
 	"""
-	if d.has_key(var) and d[var].has_key("flags"):
+	if var in d and "flags" in d[var]:
 		del d[var]["flags"]
 
 def getData(d = _data):

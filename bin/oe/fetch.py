@@ -111,7 +111,7 @@ class Wget(Fetch):
 	def localpath(url, d):
 		# strip off parameters
 		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
-		if parm.has_key("localpath"):
+		if "localpath" in parm:
 			# if user overrides local path, use it.
 			return parm["localpath"]
 		url = oe.encodeurl([type, host, path, user, pswd, {}])
@@ -182,19 +182,19 @@ class Cvs(Fetch):
 
 	def localpath(url, d):
 		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
-		if parm.has_key("localpath"):
+		if "localpath" in parm:
 			# if user overrides local path, use it.
 			return parm["localpath"]
 
-		if not parm.has_key("module"):
+		if not "module" in parm:
 			raise MissingParameterError("cvs method needs a 'module' parameter")
 		else:
 			module = parm["module"]
-		if parm.has_key('tag'):
+		if 'tag' in parm:
 			tag = parm['tag']
 		else:
 			tag = ""
-		if parm.has_key('date'):
+		if 'date' in parm:
 			date = parm['date']
 		else:
 			date = ""
@@ -214,7 +214,7 @@ class Cvs(Fetch):
 
 		for loc in urls:
 			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(loc, localdata))
-			if not parm.has_key("module"):
+			if not "module" in parm:
 				raise MissingParameterError("cvs method needs a 'module' parameter")
 			else:
 				module = parm["module"]
@@ -232,17 +232,17 @@ class Cvs(Fetch):
 
 			# setup cvs options
 			options = []
-			if parm.has_key('tag'):
+			if 'tag' in parm:
 				tag = parm['tag']
 			else:
 				tag = ""
 
-			if parm.has_key('date'):
+			if 'date' in parm:
 				date = parm['date']
 			else:
 				date = ""
 
-			if parm.has_key("method"):
+			if "method" in parm:
 				method = parm["method"]
 			else:
 				method = "pserver"

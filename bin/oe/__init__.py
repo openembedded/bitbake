@@ -78,7 +78,7 @@ debug_prepend = ''
 
 
 def debug(lvl, *args):
-	if env.has_key('OEDEBUG') and (env['OEDEBUG'] >= str(lvl)):
+	if 'OEDEBUG' in env and (env['OEDEBUG'] >= str(lvl)):
 		print debug_prepend + 'DEBUG:', string.join(args, '')
 
 def note(*args):
@@ -1056,7 +1056,7 @@ class digraph:
 		return str
 
 	def addnode(self,mykey,myparent):
-		if not self.dict.has_key(mykey):
+		if not mykey in self.dict:
 			self.okeys.append(mykey)
 			if myparent==None:
 				self.dict[mykey]=[0,[]]
@@ -1073,7 +1073,7 @@ class digraph:
 
 		If ref is 1, remove references to this node from other nodes.
 		If ref is 2, remove nodes that reference this node."""
-		if not self.dict.has_key(mykey):
+		if not mykey in self.dict:
 			return
 		for x in self.dict[mykey][1]:
 			self.dict[x][0]=self.dict[x][0]-1
@@ -1135,7 +1135,7 @@ class digraph:
 		return 0
 
 	def hasnode(self,mynode):
-		return self.dict.has_key(mynode)
+		return mynode in self.dict
 
 	def getparents(self, item):
 		if not self.hasnode(item):

@@ -237,7 +237,7 @@ __pkgsplit_cache__={}
 def vars_from_file(mypkg, d):
 	if not mypkg:
 		return (None, None, None)
-	if __pkgsplit_cache__.has_key(mypkg):
+	if mypkg in __pkgsplit_cache__:
 		return __pkgsplit_cache__[mypkg]
 		
 	myfile = os.path.splitext(os.path.basename(mypkg))

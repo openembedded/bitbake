@@ -62,7 +62,7 @@ def add_oe_file(name, dirname):
 	except ValueError:
 		version = ''
 	#print dirname, name, version
-	if not oefiles.has_key(name):
+	if not name in oefiles:
 		oefiles[name] = {}
 	oefiles[name][version] = dirname
 
@@ -98,7 +98,7 @@ def search_package(name, flags, version):
 	"""Search for the right specified package/version was found"""
 
 	#print "Searching for package %s %s" % (name, version)
-	if not oefiles.has_key(name):
+	if not name in oefiles:
 		print "Package '%s' not found" % name
 		return
 

@@ -36,7 +36,7 @@ def handle(fn, d = {}, include = 0):
 
 	srpm_vars = os.popen('rpm --querytags').read().split('\n')
 	for v in srpm_vars:
-		if _srpm_vartranslate.has_key(v):
+		if v in _srpm_vartranslate:
 			var = _srpm_vartranslate[v]
 		else:
 			var = v

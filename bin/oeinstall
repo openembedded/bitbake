@@ -41,7 +41,7 @@ except getopt.GetoptError:
 # handle opts
 opthash = getopthash(opts)
 
-if opthash.has_key('--version') or opthash.has_key('-V'):
+if '--version' in opthash or '-V' in opthash:
 	version()
 	sys.exit(0)
 
@@ -57,9 +57,9 @@ if cfg_oe is None:
 
 rootfs = data.getVar('IMAGE_ROOTFS', cfg_oe, 1)
 
-if opthash.has_key('--root'):
+if '--root' in opthash:
 	rootfs = opthash['--root']
-if opthash.has_key('-r'):
+if '-r' in opthash:
 	rootfs = opthash['-r']
 
 if not rootfs:
@@ -70,18 +70,18 @@ data.setVar('IMAGE_ROOTFS', rootfs, cfg_oe)
 #type = 'direct'
 type = 'tar'
 
-if opthash.has_key('--type'):
+if '--type' in opthash:
 	type = opthash['--type']
-if opthash.has_key('-t'):
+if '-t' in opthash:
 	type = opthash['-t']
 
 topdir = data.getVar('TOPDIR', cfg_oe, 1) or os.getcwd()
 
 # Iterate through .oe files
 files = string.split(data.getVar("OEFILES", cfg_oe, 1) or "")
-if opthash.has_key('-f'):
+if '-f' in opthash:
 	files.extend(opthash['-f'])
-if opthash.has_key('--files'):
+if '--files' in opthash:
 	files.extend(opthash['--files'])
 data.setVar("OEFILES", string.join(files), cfg_oe)
 

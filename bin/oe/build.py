@@ -140,7 +140,7 @@ def exec_func_shell(func, d):
 
 	deps = data.getVarFlag(func, 'deps', d)
 	check = data.getVarFlag(func, 'check', d)
-	if globals().has_key(check):
+	if check in globals():
 		if globals()[check](func, deps):
 			return
 
