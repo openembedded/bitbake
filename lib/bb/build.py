@@ -55,6 +55,7 @@ class EventException(Exception):
 
     event = property(getEvent, setEvent, None, "event property")
 
+
 class TaskBase(event.Event):
     """Base class for task events"""
 
@@ -297,7 +298,7 @@ def exec_task(task, d):
                 old_overrides = data.getVar('OVERRIDES', d, 0)
                 from copy import deepcopy
                 localdata = deepcopy(d)
-                data.setVar('OVERRIDES', '%s:%s' % (item, old_overrides), localdata)
+                data.setVar('OVERRIDES', 'task_%s:%s' % (item, old_overrides), localdata)
                 data.update_data(localdata)
                 event.fire(TaskStarted(item, localdata))
                 exec_func(item, localdata)
