@@ -6,4 +6,4 @@ from oe import *
 
 
 env['OEDEBUG'] = '3'
-readconfig(env['OEDIR'] + '/conf/oe.conf')
+read_config(env['OEDIR'] + '/conf/oe.conf')

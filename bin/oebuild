@@ -57,7 +57,7 @@ def exec_task(task,dir):
 
 def mkstamp(task):
 	mkdirhier(env['TMPDIR']+'/stamps');
-	open(env['STAMP']+task, "w+")
+	open(expand('${STAMP}')+task, "w+")
 
 #TODO: teststamp, rmstamp
 
@@ -69,7 +69,7 @@ def do_clean():
 
 	note("Executing task 'clean'")
 
-	dir = varexpand("${TMPDIR}/${CATEGORY}/${PF}", env)
+	dir = expand("${TMPDIR}/${CATEGORY}/${PF}")
 	if dir == '//': fatal("wrong DATADIR")
 	note("removing " + dir)
 	os.system('rm -rf ' + dir)
@@ -103,7 +103,7 @@ def do_fetch():
 	note("Executing task 'fetch'")
 
 	if env.has_key('SRC_URI'):
-		ret = fetch(varexpand(env['SRC_URI'], env), 1)
+		ret = fetch(expand(env['SRC_URI']), 1)
 		if ret:
 			mkstamp('source')
 	else:
@@ -191,10 +191,7 @@ def do_showenv():
 		if envdesc.has_key(s): continue
 		
 		var = env[s]
-		try:
-			var = varexpand(var, env)
-		except VarExpandError:
-			pass
+		var = expand(var)
 
 		if s == s.lower():
 			print s + '() {\n' + var + '}'
@@ -229,14 +226,14 @@ if len(sys.argv) < 3:
 	usage(1)
 	fatal("try 'oebuild <command> <somebuildfile.oe>'")
 
-read_oe_conf()				# Read configuration
-set_automatic_vars(sys.argv[2])		# Deduce per-package environment variables
+read_config(env['OEDIR']+'/conf/oe.conf')	# Read configuration
+set_automatic_vars(sys.argv[2])			# Deduce per-package environment variables
 try:
-	read_package_conf(sys.argv[2])		# Read package configuration
+	read_oe(sys.argv[2])		# Read package configuration
 except IOError:
 	fatal("error accessing build file")
-set_additional_vars()			# set rest of vars, e.g. ${A}
-update_env()				# Environment modification, e.g. local overrides
+set_additional_vars()				# set rest of vars, e.g. ${A}
+update_env()					# Environment modification, e.g. local overrides
 
 for s in sys.argv[1].split(','):
 	try:
