@@ -32,15 +32,15 @@ class TaskBase(event.Event):
 		self._data = data
 
 	data = property(getData, setData, None, "data property")
-	
 
+class TaskStarted(TaskBase):
+	"""Task execution started"""
+	
 class TaskSucceeded(TaskBase):
 	"""Task execution succeeded"""
-	type = "TaskSucceeded"
 
 class TaskFailed(TaskBase):
 	"""Task execution failed"""
-	type = "TaskFailed"
 
 def exec_shell_func(func, dir=None, myfatal=fatal):
 	"""This executes any shell function stored in env[func]. Returns
@@ -79,6 +79,7 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 	if not func:
 		error("Function not specified")
 		raise FuncFailed()
+	event.fire(TaskStarted(func, env))
 	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
 	if ret==0:
 		if not env.has_key('OEDEBUG'): 
@@ -106,6 +107,8 @@ def exec_python_func(func, dirname = None, myfatal = fatal):
 	if not env.has_key(dirname):
 		warn("dir variable %s does not exist, cannot chdir" % dirname)
 		return
+
+	event.fire(TaskStarted(func, env))
 
 	dir = env[dirname]
 
