@@ -97,14 +97,10 @@ def try_build(fn, virtual):
     the_data = make.pkgdata[fn]
     item = bb.data.getVar('PN', the_data, 1)
 
-    if bb.build.stamp_is_current('do_%s' % make.options.cmd, the_data):
-        return True
-
     __building_list.append(fn)
 
     pathstr = "%s (%s)" % (item, virtual)
     __build_path.append(pathstr)
-
 
     depends_list = (bb.data.getVar('DEPENDS', the_data, 1) or "").split()
     if make.options.verbose:
@@ -143,6 +139,10 @@ def try_build(fn, virtual):
         if failed:
             __stats["deps"] += 1
             return False
+
+        if bb.build.stamp_is_current('do_%s' % make.options.cmd, the_data):
+            __build_cache.append(fn)
+            return True
 
         bb.event.fire(bb.event.PkgStarted(item, make.pkgdata[fn]))
         try:
