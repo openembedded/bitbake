@@ -1,0 +1,18 @@
+------------------------------------------------------------------
+ T h e   O p e n E m b e d d e d  F A Q
+------------------------------------------------------------------
+
+Question: I can't build anything! I get the following error:
+
+Traceback (most recent call last):
+   File "/opt/opie/oe/oe/bin/oebuild", line 5, in ?
+     from oe import *
+   File "/opt/opie/oe/oe/bin/oe/__init__.py", line 1336, in ?
+     def read_oe(oefile, inherit = False, classname = None):
+NameError: name 'False' is not defined
+
+Answer: You need at least Python 2.2 - recommended is Python 2.3.2
+
+-------------------------------------------------------------------
+
+
