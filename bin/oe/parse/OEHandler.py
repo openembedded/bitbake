@@ -110,6 +110,7 @@ def handle(fn, d = {}, include = 0):
         if not w: continue      # skip empty lines
         s = s.rstrip()
         while s[-1] == '\\':
+            lineno = lineno + 1
             s2 = f.readline()[:-1].strip()
             s = s[:-1] + s2
         feeder(lineno, s, fn, d)
