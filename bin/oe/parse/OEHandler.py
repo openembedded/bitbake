@@ -4,9 +4,8 @@
 
 import re, oe, string, os, sys
 import oe
-import oe.data
 import oe.fetch
-from oe import debug
+from oe import debug, data, fetch
 
 from oe.parse.ConfHandler import include, init
 
@@ -25,7 +24,7 @@ classes = [ None, ]
 def supports(fn):
 	return fn[-3:] == ".oe" or fn[-8:] == ".oeclass"
 
-def handle(fn, data = {}):
+def handle(fn, d = {}):
 	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__
 	__body__ = []
 	__oepath_found__ = 0
@@ -36,16 +35,16 @@ def handle(fn, data = {}):
 		__classname__ = root
 		classes.append(__classname__)
 
-	init(data)
-	oe.data.inheritFromOS(1, data)
+	init(d)
+	data.inheritFromOS(2, d)
 	oepath = ['.']
 	if not os.path.isabs(fn):
 		f = None
-		voepath = oe.data.getVar("OEPATH", data)
+		voepath = data.getVar("OEPATH", d)
 		if voepath:
 			oepath += voepath.split(":")
 		for p in oepath:
-			p = oe.data.expand(p, data)
+			p = data.expand(p, d)
 			if os.access(os.path.join(p, fn), os.R_OK):
 				f = open(os.path.join(p, fn), 'r')
 		if f is None:
@@ -65,24 +64,25 @@ def handle(fn, data = {}):
 		while s[-1] == '\\':
 			s2 = f.readline()[:-1].strip()
 			s = s[:-1] + s2
-		feeder(lineno, s, fn, data)
+		feeder(lineno, s, fn, d)
 	if ext == ".oeclass":
 		classes.remove(__classname__)
-	return data
 
-def feeder(lineno, s, fn, data = {}):
+	set_automatic_vars(fn, d)
+	return d
+
+def feeder(lineno, s, fn, d):
 	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__, classes, oe
 	if __infunc__:
 		if s == '}':
 			__body__.append('')
-			import oe.data
-			oe.data.setVar(__infunc__, string.join(__body__, '\n'), data)
-			oe.data.setVarFlag(__infunc__, "func", 1, data)
+			data.setVar(__infunc__, string.join(__body__, '\n'), d)
+			data.setVarFlag(__infunc__, "func", 1, d)
 			__infunc__ = ""
 			__body__ = []
 		else:
 			try:
-				if oe.data.getVarFlag(__infunc__, "python", data) == 1:
+				if data.getVarFlag(__infunc__, "python", d) == 1:
 					s = re.sub(r"^\t", '', s)
 			except KeyError:
 				pass
@@ -94,7 +94,7 @@ def feeder(lineno, s, fn, data = {}):
 		__infunc__ = m.group("func")
 		key = __infunc__
 		if m.group("py") is not None:
-			oe.data.setVarFlag(key, "python", 1, data)
+			data.setVarFlag(key, "python", 1, d)
 		return
 
 	__word__ = re.compile(r"\S+")
@@ -107,10 +107,10 @@ def feeder(lineno, s, fn, data = {}):
 			var = f
 			if len(classes) > 1 and classes[-2] is not None:
 				var = "%s_%s" % (classes[-2], var)
-			oe.data.setVar(var, "\t%s_%s\n" % (classes[-1], f), data)
-			oe.data.setVarFlag(var, "func", 1, data)
-			if oe.data.getVarFlag("%s_%s" % (classes[-1], f), "python", data) == 1:
-				oe.data.setVarFlag(var, "python", 1, data)
+			data.setVar(var, "\t%s_%s\n" % (classes[-1], f), d)
+			data.setVarFlag(var, "func", 1, d)
+			if data.getVarFlag("%s_%s" % (classes[-1], f), "python", d) == 1:
+				data.setVarFlag(var, "python", 1, d)
 
 		return
 
@@ -123,14 +123,14 @@ def feeder(lineno, s, fn, data = {}):
 			return
 		var = "do_" + func
 
-		oe.data.setVarFlag(var, "task", 1, data)
+		data.setVarFlag(var, "task", 1, d)
 
 		if after is not None:
 			# set up deps for function
-			oe.data.setVarFlag(var, "deps", after.split(), data)
+			data.setVarFlag(var, "deps", after.split(), d)
 		if before is not None:
 			# set up things that depend on this func 
-			oe.data.setVarFlag(var, "postdeps", before.split(), data)
+			data.setVarFlag(var, "postdeps", before.split(), d)
 		return
 
 	m = __addhandler_regexp__.match(s)
@@ -138,7 +138,7 @@ def feeder(lineno, s, fn, data = {}):
 		fns = m.group(1)
 		hs = __word__.findall(fns)
 		for h in hs:
-			oe.data.setVarFlag(h, "handler", 1, data)
+			data.setVarFlag(h, "handler", 1, d)
 		return
 
 	m = __inherit_regexp__.match(s)
@@ -147,12 +147,11 @@ def feeder(lineno, s, fn, data = {}):
 		files = m.group(1)
 		n = __word__.findall(files)
 		for f in n:
-			import oe.data
-			file = oe.data.expand(f, data)
+			file = data.expand(f, d)
 			if file[0] != "/":
-				if data.has_key('OEPATH'):
+				if d.has_key('OEPATH'):
 					__oepath_found__ = 0
-					for dir in oe.data.expand(oe.data.getVar('OEPATH', data), data).split(":"):
+					for dir in data.expand(data.getVar('OEPATH', d), d).split(":"):
 						if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
 							file = os.path.join(dir, "classes",file + ".oeclass")
 							__oepath_found__ = 1
@@ -161,14 +160,44 @@ def feeder(lineno, s, fn, data = {}):
 
 			if os.access(os.path.abspath(file), os.R_OK):
 				debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
-				oe.data.inheritFromOS(2, data)
-				include(fn, file, data)
+				include(fn, file, d)
 			else:
 				debug(1, "%s:%d: could not import %s" % (fn, lineno, file))
 		return
 
 	from oe.parse import ConfHandler
-	return ConfHandler.feeder(lineno, s, fn, data)
+	return ConfHandler.feeder(lineno, s, fn, d)
+
+def set_automatic_vars(file, d):
+	"""Deduce per-package environment variables"""
+
+	debug(2, "setting automatic vars")
+	pkg = oe.catpkgsplit(file)
+	if pkg == None:
+		fatal("package file not in valid format")
+
+	data.setVar('CATEGORY', pkg[0], d)
+	data.setVar('PN', pkg[1], d)
+	data.setVar('PV', pkg[2], d)
+	data.setVar('PR', pkg[3], d)
+	data.setVar('PR', '${PN}-${PV}', d)
+	data.setVar('PF', '${P}-${PR}', d)
+
+	for s in ['${TOPDIR}/${CATEGORY}/${PF}', 
+		  '${TOPDIR}/${CATEGORY}/${PN}-${PV}',
+		  '${TOPDIR}/${CATEGORY}/files',
+		  '${TOPDIR}/${CATEGORY}']:
+		s = data.expand(s, d)
+		if os.access(s, os.R_OK):
+			data.setVar('FILESDIR', s, d)
+			break
+
+	data.setVar('WORKDIR', '${TMPDIR}/${CATEGORY}/${PF}', d)
+	data.setVar('T', '${WORKDIR}/temp', d)
+	data.setVar('D', '${WORKDIR}/image', d)
+	data.setVar('D', '${WORKDIR}/${P}', d)
+	data.setVar('SLOT', '0', d)
+	data.inheritFromOS(3, d)
 
 # Add us to the handlers list
 from oe.parse import handlers
