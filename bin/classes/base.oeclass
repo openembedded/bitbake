@@ -1,6 +1,52 @@
 PATCHES_DIR="${S}"
 DEPENDS_prepend="patcher "
 
+die () {
+	return 1
+}
+
+oenote () {
+	echo "NOTE:" $*
+	return 0
+}
+
+oefatal () {
+	echo "FATAL:" $*
+	return 1
+}
+
+oedebug () {
+	test $# -ge 2 || {
+		echo "Usage: oedebug level \"message\""
+		exit 1
+	}
+	
+	test ${OEDEBUG:-0} -ge $1 && {
+		shift
+		echo "DEBUG:" $*
+	}
+	return 0
+}
+
+oeset () {
+	test $# -eq 2 || {
+		echo "Usage: oeset var value"
+		exit 1
+	}
+	
+	echo "TODO: setting $1 to '$2'"
+}
+
+oe_runmake () {
+	if [ -f ./[mM]akefile -o -f ./GNUmakefile ] ; then
+		if [ x"$MAKE" = x ]; then MAKE=make; fi
+		oenote ${MAKE} ${EXTRA_OEMAKE} "$@"
+		${MAKE} ${EXTRA_OEMAKE} "$@" || die "oemake failed"
+	else
+		die "no Makefile found"
+	fi
+}
+
 python do_showdata() {
 	import oe
 	import sys
@@ -147,18 +193,17 @@ python base_do_unpack() {
 			raise FuncFailed()
 }
 
+base_do_configure() {
+	oenote "nothing to configure"
+}
+
 base_do_compile() {
-	if [ -x ${S}/configure ] ; then
-		oe_runconf 
-	fi
 	if [ -e Makefile -o -e makefile ]; then
 		oe_runmake || die "make failed"
 	else
 		oenote "nothing to compile"
 	fi
 }
-
-
 
 base_do_stage() {
 	oenote "nothing to install into stage area"
@@ -200,7 +245,7 @@ python base_eventhandler() {
 addhandler base_eventhandler
 
 # setup the initial task stack
-EXPORT_FUNCTIONS do_clean do_mrproper do_fetch do_unpack do_compile do_stage do_install do_package do_patch do_build
+EXPORT_FUNCTIONS do_clean do_mrproper do_fetch do_unpack do_configure do_compile do_stage do_install do_package do_patch do_build
 
 addtask showdata
 addtask clean
@@ -208,7 +253,8 @@ addtask mrproper
 addtask fetch
 addtask unpack after do_fetch
 addtask patch after do_unpack
-addtask compile after do_unpack do_patch
+addtask configure after do_unpack do_patch
+addtask compile after do_configure
 addtask stage after do_compile
 addtask install after do_stage
 addtask build after do_install
