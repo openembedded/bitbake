@@ -56,7 +56,12 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 	else:
 		deps = None
 
-	if stamp_is_current(func, deps):
+	if tasks.has_key(func) and tasks[func].has_key('check'):
+		checkfunc = tasks[func]['check']
+	else:
+		checkfunc = 'stamp_is_current'
+
+	if globals()[checkfunc](func, deps):
 		return
 
 	global logfile
@@ -101,7 +106,12 @@ def exec_python_func(func, dirname = None, myfatal = fatal):
 	else:
 		deps = None
 
-	if stamp_is_current(func, deps):
+	if tasks.has_key(func) and tasks[func].has_key('check'):
+		checkfunc = tasks[func]['check']
+	else:
+		checkfunc = 'stamp_is_current'
+
+	if globals()[checkfunc](func, deps):
 		return
 
 	if not env.has_key(dirname):
@@ -233,6 +243,8 @@ def do_fetch():
 	if stamp_is_current('do_fetch', tasks['do_fetch']['deps']):
 		return
 
+	event.fire(TaskStarted('do_fetch', env))
+
 	mkdirhier(getenv("DL_DIR"))	# create file download directory
 
 	if env.has_key('SRC_URI'):
@@ -241,6 +253,7 @@ def do_fetch():
 		except fetch.NoMethodError:
 			(type, value, traceback) = sys.exc_info()
 			error("No method: %s" % value)
+			event.fire(TaskFailed('do_fetch', env))
 			raise FuncFailed()
 
 		try:
@@ -248,15 +261,18 @@ def do_fetch():
 		except fetch.MissingParameterError:
 			(type, value, traceback) = sys.exc_info()
 			error("Missing parameters: %s" % value)
+			event.fire(TaskFailed('do_fetch', env))
 			raise FuncFailed()
 		except fetch.FetchError:
 			(type, value, traceback) = sys.exc_info()
 			error("Fetch failed: %s" % value)
+			event.fire(TaskFailed('do_fetch', env))
 			raise FuncFailed()
 		mkstamp('do_fetch')
 	else:
 		note("No SRC_URI variable, nothing to be done")
 		mkstamp('do_fetch')
+	event.fire(TaskSucceeded('do_fetch', env))
 
 
 #######################################################################
@@ -378,24 +394,41 @@ def usage(errorlevel=0, txt=''):
 	sys.exit(errorlevel)
 
 tasks = {
-	"do_clean" : { "func" : "do_clean" },
-	"do_mrproper" : { "func" : "do_mrproper" },
-	"do_test" : { "func" : "do_test" },
-	"do_showenv" : { "func" : "do_showenv" },
+	"do_clean" : { "func" : "do_clean",
+		     },
+	"do_mrproper" : { "func" : "do_mrproper",
+		         },
+	"do_test" : { "func" : "do_test",
+		    },
+	"do_showenv" : { "func" : "do_showenv",
+		       },
 	"do_fetch" : { "func" : "do_fetch",
-		     "deps" : [ ] },
+		      "check" : "stamp_is_current",
+		      "deps" : [ ],
+		     },
 	"do_unpack" : { "func" : "do_unpack",
-		     "deps" : [ 'do_fetch' ] },
+		      "check" : "stamp_is_current",
+		      "deps" : [ 'do_fetch' ],
+		      },
 	"do_compile" : { "func" : "do_compile",
-		      "deps" : [ 'do_unpack' ] },
+		       "check" : "stamp_is_current",
+		       "deps" : [ 'do_unpack' ],
+		       },
 	"do_stage" : { "func" : "do_stage",
-		    "deps" : [ 'do_compile' ] },
+		     "check" : "stamp_is_current",
+		     "deps" : [ 'do_compile' ],
+		     },
 	"do_install" : { "func" : "do_install",
-		      "deps" : [ 'do_stage' ] },
+		       "check" : "stamp_is_current",
+		       "deps" : [ 'do_stage' ],
+		       },
 	"do_package" : { "func" : "do_package",
-		      "deps" : [ 'do_install' ] },
+		       "check" : "stamp_is_current",
+		       "deps" : [ 'do_install' ],
+		       },
 	"do_build" : { "func" : "do_build",
-		    "deps" : [ 'do_package' ] },
+		     "deps" : [ 'do_package' ],
+		     },
 }
 
 if len(sys.argv) < 2:
