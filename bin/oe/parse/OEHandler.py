@@ -153,12 +153,12 @@ def feeder(lineno, s, fn, d):
 					data.setVarFlag(var, 'python', None, d)
 					data.setVarFlag(var, 'func', None, d)
 
-				for flag in [ "func", "python", "dirs" ]:
-					__dirty = 0
-#					if data.getVarFlag(var, flag, d):
-#						__dirty = var
+				for flag in [ "func", "python" ]:
 					if data.getVarFlag(calledvar, flag, d):
 						data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag, d), d)
+				for flag in [ "dirs" ]:
+					if data.getVarFlag(var, flag, d):
+						data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag, d), d)
 
 				if data.getVarFlag(calledvar, "python", d):
 					data.setVar(var, "\treturn exec_func('%s', d)\n" % calledvar, d)
