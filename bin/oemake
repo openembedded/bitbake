@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import string, sys, os
+import string, sys, os, getopt, glob, copy
 sys.path.append('/usr/share/oe')
 from oe import *
 import oe
@@ -18,14 +18,13 @@ class PkgBase(event.Event):
 	def setPkg(self, pkg):
 		self._pkg = pkg
 
-	pkg = property(getPkg, setPkg, None, "pkg property")
-
 	def getData(self):
 		return self._data
 
 	def setData(self, data):
 		self._data = data
 
+	pkg = property(getPkg, setPkg, None, "pkg property")
 	data = property(getData, setData, None, "data property")
 
 class BuildBase(event.Event):
@@ -42,15 +41,11 @@ class BuildBase(event.Event):
 	def setPkgs(self, pkgs):
 		self._pkgs = pkgs
 
-	pkgs = property(getPkgs, setPkgs, None, "pkgs property")
-
 	def getName(self):
 		return self._name
 
 	def setName(self, name):
 		self._name = name
-
-	name = property(getName, setName, None, "name property")
 
 	def getCfg(self):
 		return self._cfg
@@ -58,6 +53,8 @@ class BuildBase(event.Event):
 	def setCfg(self, cfg):
 		self._cfg = cfg
 
+	pkgs = property(getPkgs, setPkgs, None, "pkgs property")
+	name = property(getName, setName, None, "name property")
 	cfg = property(getCfg, setCfg, None, "cfg property")
 
 class DepBase(PkgBase):
@@ -125,20 +122,31 @@ def build(graph, item):
 		__build_cache_fail.append(item)
 		return 0
 
+def getopthash(l):
+	h = {}
+	for (opt, val) in l:
+		h[opt] = val
+	return h
+
 def usage():
+	print
 	print "Usage: oemake [options] [package ...]"
 	print ""
 	print "Builds specified packages, expecting that the .oe files"
 	print "it has to work from are in OEFILES"
 	print "Default packages are all packages in OEFILES."
 	print "Default OEFILES are the .oe files in the current directory."
-	print "Example: oemake glibc"
-	print "Example: oemake ncurses-5.3"
-	print ""
-	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	print
+	print "Options:"
+	print "  %s\t\t%s" % ("-V, --version", "output version information and exit")
 	print "  %s\t\t%s" % ("-c [arg], --cmd [arg]", "specify command to pass to oebuild")
 	print "  %s\t\t%s" % ("-a, --abort", "abort build if any package build fails")
 	print "  %s\t\t%s" % ("-f, --force", "force run of specified cmd, regardless of status")
+	print
+	print "Examples:"
+	print "\toemake glibc"
+	print "\toemake ncurses-5.3"
+	print
 	sys.exit(0)
 
 __version__ = 1.1
@@ -155,14 +163,6 @@ def get_oefiles():
 		if ext == ".oe":
 			oefiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
 	return oefiles
-
-def get_oefile():
-	"""Get default oefile"""
-	oefiles = get_oefiles()
-	if len(oefiles):
-		return oefiles[0]
-	else:
-		return None
 
 def load_oefile(oefile, cfgdata):
 	oepath = data.getVar('OEPATH', cfg)
@@ -186,8 +186,7 @@ def load_oefile(oefile, cfgdata):
 	oldpath = os.path.abspath(os.getcwd())
 	os.chdir(topdir)
 	data.setVar('OEPATH', oepath, cfg)
-	from copy import deepcopy
-	oe = deepcopy(cfgdata)
+	oe = copy.deepcopy(cfgdata)
 	try:
 		parse.handle(oefile, oe) # read .oe data
 		os.chdir(oldpath)
@@ -196,25 +195,22 @@ def load_oefile(oefile, cfgdata):
 		os.chdir(oldpath)
 		return None
 
-import getopt
+
+#
+# Handle options
+#
+
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'vc:fa', [ 'version', 'cmd=', 'abort', 'force' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'Vc:fa', [ 'version', 'cmd=', 'abort', 'force' ])
 except getopt.GetoptError:
 	usage()
 
-# handle opts
 optsonly = [ opt for (opt,val) in opts]
 cmd = None
 
-def getopthash(l):
-	h = {}
-	for (opt, val) in l:
-		h[opt] = val
-	return h
-
 opthash = getopthash(opts)
 
-if opthash.has_key('--version') or opthash.has_key('-v'):
+if opthash.has_key('--version') or opthash.has_key('-V'):
 	version()
 	sys.exit(0)
 
@@ -232,6 +228,9 @@ if opthash.has_key('--cmd'):
 	cmd = opthash['--cmd']
 if opthash.has_key('-c'):
 	cmd = opthash['-c']
+
+
+
 
 _depcmds = { "clean": None,
 	     "mrproper": None,
@@ -251,7 +250,7 @@ cfg = {}
 graph = digraph()
 
 try:
-	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
+	cfg = parse.handle("conf/oe.conf", cfg)
 except IOError:
 	fatal("Unable to open oe.conf")
 
@@ -260,7 +259,12 @@ if not data.getVar("BUILDNAME", cfg):
 
 buildname = data.getVar("BUILDNAME", cfg)
 
+
+
+#
 # grab oefiles
+#
+
 files = string.split(data.getVar("OEFILES", cfg, 1) or "")
 data.setVar("OEFILES", string.join(files), cfg)
 
@@ -270,7 +274,6 @@ if not len(files):
 if not len(files):
 	usage()
 
-import glob
 for f in files:
 	globbed = glob.glob(f) or [ f ]
 	if globbed:
@@ -279,7 +282,6 @@ for f in files:
 			continue
 	# read a file's metadata
 	try:
-		from copy import deepcopy
 		debug(1, "oemake: parsing %s" % f)
 		pkgdata[f] = load_oefile(f, cfg)
 		deps = None
@@ -368,9 +370,10 @@ for k in pkgs_to_build:
 	if pkgs.has_key(k):
 		ret = graph.walkdown(k, build)
 		if abort and not ret:
-			oe.fatal("Build of %s failed, aborting." % k)
+			fatal("Build of %s failed, aborting." % k)
 	else:
-		oe.error("Unable to build %s: no .oe file provides it." % k)
+		error("Unable to build %s: no .oe file provides it." % k)
 		if abort:
 			sys.exit(1)
+
 event.fire(BuildCompleted(buildname, graph.okeys, cfg))
