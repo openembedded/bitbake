@@ -1,6 +1,11 @@
-oebuild.sh has several commands. Some of them call functions in
-bin/build/oebuild.sh (or in one of the oeclasses, if the *.oe build file
-contains the "inherited ..." keyword).
+OpenEmbedded tools:
+
+oebuild		Individual package build tool
+oemake 		Multiple package build tool that takes into account dependencies
+oemaked 	Autobuild daemon which calls oemake when things change.
+
+Syntax:
+oebuild <command> <.oe file>
 
 Here is a list of what command calls what shell function.
 
@@ -20,3 +25,7 @@ patch     S        do_patch()    unpack and apply patches
 compile   S        do_compile()  cross-compile
 stage     S        do_stage()    copy headers and libraries
 install   S        do_install()  create image ready to be packaged
+
+oemake and oemaked require that the OEFILES environment variable be populated
+with the list of the .oe files for the packages to be built.  They take no
+commandline arguments.
