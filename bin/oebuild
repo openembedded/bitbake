@@ -16,9 +16,9 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 	"""
 
 	global logfile
-	mkdirhier(env['T'])
-	logfile = env['T'] + '/log.fetch.' + str(os.getpid())
-	runfile = env['T'] + '/run.fetch.' + str(os.getpid())
+	mkdirhier(getenv('T'))
+	logfile = getenv('T') + '/log.fetch.' + str(os.getpid())
+	runfile = getenv('T') + '/run.fetch.' + str(os.getpid())
 
 	f = open(runfile, "w")
 	f.write("#!/bin/bash\n")
@@ -56,8 +56,8 @@ def exec_task(task,dir):
 	if ret==0: mkstamp(task)
 
 def mkstamp(task):
-	mkdirhier(env['TMPDIR']+'/stamps');
-	open(expand('${STAMP}')+task, "w+")
+	mkdirhier(expand('${TMPDIR}/stamps'));
+	open(getenv('STAMP')+task, "w+")
 
 #TODO: teststamp, rmstamp
 
@@ -86,7 +86,7 @@ def do_mrproper():
 
 	note("Executing task 'mrproper'")
 
-	dir = env["DL_DIR"]
+	dir = getenv("DL_DIR")
 	if dir == '/': fatal("wrong DATADIR");
 	debug(2, "removing " + dir)
 	os.system('rm -rf ' + dir)
@@ -98,12 +98,12 @@ def do_mrproper():
 def do_fetch():
 	"""download needed sources"""
 
-	mkdirhier(env["DL_DIR"])	# create file download directory
+	mkdirhier(getenv("DL_DIR"))	# create file download directory
 
 	note("Executing task 'fetch'")
 
 	if env.has_key('SRC_URI'):
-		ret = fetch(expand(env['SRC_URI']), 1)
+		ret = fetch(getenv('SRC_URI'), 1)
 		if ret:
 			mkstamp('source')
 	else:
@@ -134,9 +134,10 @@ def do_compile():
 def do_stage():
 	"""install needed files to compile other packages into staging directory"""
 
-	mkdirhier(env["S"])		# create sourcedir if not yet existing
-	mkdirhier(env["STAGELIB"])
-	mkdirhier(env["STAGEINC"])
+	mkdirhier(getenv("S"))		# create sourcedir if not yet existing
+	mkdirhier(getenv("STAGING_LIBDIR"))
+	mkdirhier(getenv("STAGING_BINDIR"))
+	mkdirhier(getenv("STAGING_INCDIR"))
 	exec_task('stage', 'S')
 		
 
@@ -187,8 +188,10 @@ def do_showenv():
 	yet been documented in py's envflags{}.
 	"""
 
-	for s in env:
-		if envflags.has_key(s): continue
+	keys = env.keys()
+	keys.sort()
+	for s in keys:
+		#if envflags.has_key(s): continue
 		
 		var = env[s]
 		var = expand(var)
