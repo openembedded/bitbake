@@ -33,9 +33,9 @@ def initVar(var, d = _data):
 		d[var]["flags"] = {}
 
 __setvar_regexp__ = {}
-__setvar_regexp__["append"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_append")
-__setvar_regexp__["prepend"] = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_prepend")
-__setvar_regexp__["delete"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_delete")
+__setvar_regexp__["_append"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_append")
+__setvar_regexp__["_prepend"] = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_prepend")
+__setvar_regexp__["_delete"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_delete")
 
 def setVar(var, value, d = _data):
 	"""Set a variable to a given value
@@ -45,7 +45,7 @@ def setVar(var, value, d = _data):
 		>>> print getVar('TEST')
 		testcontents
 	"""
-	for v in ["append", "prepend", "delete"]:
+	for v in ["_append", "_prepend", "_delete"]:
 		match = __setvar_regexp__[v].match(var)
 		if match:
 			base = match.group('base')
