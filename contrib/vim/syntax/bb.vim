@@ -22,8 +22,6 @@ syn match bbQuote		/['"]/ contained
 syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ contained keepend contains=bbTodo
 syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ contained keepend contains=bbTodo
 
-syn match bbFunction	"\h\w*" display contained
-
 " First attempt:
 " syn keyword bbPythonFlag	python contained nextgroup=bbFunction
 " syn region bbPythonFuncRegion	start="^python\s\+\w\+\s*()\s*{" end="^}$" keepend contains=bbPythonFuncDef
@@ -52,6 +50,9 @@ syn match bbIdentifier		"[a-zA-Z0-9\-_]\+" display contained
 syn match bbVarEq		"=" contained contains=bbOperator nextgroup=bbVarValue
 syn match bbVarValue		".*$" contained contains=bbString
 
+" Functions!
+syn match bbFunction	"\h\w*" display contained
+
 " BitBake python metadata
 syn include @python syntax/python.vim
 if exists("b:current_syntax")
@@ -73,6 +74,16 @@ syn match bbShellFuncDef	"^\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=
 syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@shell
 "hi def link bbShellFuncRegion	Comment
 
+
+" BitBake 'def'd python functions
+syn keyword bbDef	def	contained
+
+syn match bbDefCmd		"^def" skipwhite nextgroup=bbDefFunc
+syn match bbDefFunc		"\w\+" contains=bbFunction contained skipwhite nextgroup=bbDefArgs
+syn region bbDefArgs		matchgroup=bbDelimiter start="(" end=")" excludenl contained skipwhite keepend contains=bbIdentifier nextgroup=bbDefRegion
+syn region bbDefRegion		start=":$" end='^$' end='^\(\s\)\@!' contained contains=@python
+
+hi def link bbDefCmd		bbStatement
 
 hi def link bbPythonFlag	Type
 hi def link bbStatement		Statement
