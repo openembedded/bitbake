@@ -21,21 +21,28 @@ TODO:
 	    prepended when update_data runs after the completion of the .oe
 	    parse.
 	[x] Teach 'include' to fetch if necessary.
-	    [x] Move this into handle() rather than include, to complete the
-		below TODO item.
+	    [x] Move this into handle() rather than include.
 	[ ] Alter 'export' handling, to support exporting a var without
 	    defining the variable.
 	[ ] Add support for 'anonymous' OE functions in .oe{,class} files.
 	    These functions are to be executed immediately at parse time,
 	    thereby giving one the ability to exert more control over the set
 	    of variables.
-	[ ] Upstream source use:
+	[x] Upstream source use:
 		[x] default PN,PV,PR,CATEGORY in oe.conf
 		[x] Allow override of PN,PV,PR,CATEGORY within a .oe
 		[x] Allow filename to not contain PV, PR, CATEGORY
 			Needed because a .oe within an upstream source
 			will likely prefer to hold the version as an item
 			of metadata, rather than as the filename.
+		[x] Set TMPDIR to a path off of the original
+		    TOPDIR, then set TOPDIR to the dir the .oe resides in,
+		    in _all_ cases.  This wont break functionality for most,
+		    but will allow relative paths to behave properly, thereby
+		    fixing this issue.
+			In this way we can sanely handle .oe files that
+			use relative paths extensively, such as those
+			using '.' as their 'S' variable.
 
 [x] oebuild and oemake
 	[x] Teach the system to support grabbing OEFILES from upstream
@@ -55,20 +62,6 @@ TODO:
 	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
 	[ ] Default OEFILES based on .oe files in the current directory.
-	[ ] Find a way to handle multiple .oe files within a single upstream
-	    source directory.. like if we used .oe files to manage the
-	    interapp dependencies in the Opie sources.  We'd want it to
-	    do the builds of those apps in the apps directory, so it'd have
-	    to alter OEDIR or TOPDIR when oemake spawns the build of that app.
-		[ ] Quick fix: when running oemake on a .oe that defines the
-		    S variable to a relative path (i.e. '.'), add current OEDIR
-		    and current TOPDIR to OEPATH, then cd into the dir where
-		    the .oe resides, and run the build there.
-		[ ] Better solution.  Set TMPDIR to a path off of the original
-		    TOPDIR, then set TOPDIR to the dir the .oe resides in,
-		    in _all_ cases.  This wont break functionality for most,
-		    but will allow relative paths to behave properly, thereby
-		    fixing this issue.
 
 [.] oemaked
 	[ ] Monitor the stamps for a given .oe file as well, to ensure
