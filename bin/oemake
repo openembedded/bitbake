@@ -106,7 +106,7 @@ if __name__ == "__main__":
 
         for k in pkgs_to_build:
             if k in make.pkgs:
-                ret = make.graph.walkdown(k, make.buildPackage)
+                ret = make.graph.walkdown(k, make.buildPackage, usecache=True)
                 if make.options.abort and not ret:
                     fatal("Build of %s failed, aborting." % k)
             else:
