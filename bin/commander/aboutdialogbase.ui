@@ -65,7 +65,7 @@
                 <pixmap>image0</pixmap>
             </property>
             <property name="text">
-                <string>&lt;center&gt;&lt;h3&gt;OpenEmbedded Commander Version 0.0.1&lt;/h3&gt;&lt;/center&gt;
+                <string>&lt;center&gt;&lt;h3&gt;OpenEmbedded Commander Version 0.0.2&lt;/h3&gt;&lt;/center&gt;
 &lt;p align="center"&gt;
 &lt;br&gt;
 &lt;br&gt;
