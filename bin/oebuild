@@ -118,7 +118,7 @@ def exec_task(task, dir, deptasks = []):
 			error("unsupported task: %s" % task)
 			raise FuncFailed()
 
-	note("Executing task '%s'" % task)
+	debug(1, "Executing task '%s'" % task)
 
 	if envflags.has_key(task) and envflags[task].has_key("python") and envflags[task]["python"] is not None:
 		# execute this function as a block of python code, not shell
@@ -430,6 +430,7 @@ for s in sys.argv[1].split(','):
 			exec_task("do_" + s, "S")
 		except FuncFailed:
 			fatal("task \"%s\" failed" % s)
+		note("task \"%s\" completed" % s)
 #		INVALID()
 #		usage(1, "'%s' is not valid command" % s)
 
