@@ -25,6 +25,8 @@ __build_path = []
 __preferred = {}
 __world_target = Set()
 __ignored_dependencies = Set()
+__depcmds = { "clean": None,
+             "mrproper": None }
 
 __stats = {}
 
@@ -85,27 +87,34 @@ def try_build(fn, virtual):
 
         try:
 		failed = False
-		
+
+		if __depcmd:
+			oldcmd = make.options.cmd
+			make.options.cmd = __depcmd
+
 		for d in depends_list:
                         if d in __ignored_dependencies:
                                 continue
+			if not __depcmd:
+				continue
 			if buildPackage(d) == 0:
 				failed = True
 				if make.options.abort:
 					break
+
+		if __depcmd:
+			make.options.cmd = oldcmd
 
 		if failed:
 			oe.error("dependency %s (for %s) not satisfied" % (d,item))
                         __stats["deps"] += 1
 			return False
 
-		command = make.options.cmd
-		oe.debug(1, "oebuild %s %s" % (command, fn))
 		oe.event.fire(oe.event.PkgStarted(item, make.pkgdata[fn]))
 		try:
                         __stats["attempt"] += 1
 			if not make.options.dry_run:
-				oe.build.exec_task('do_%s' % command, make.pkgdata[fn])
+				oe.build.exec_task('do_%s' % make.options.cmd, make.pkgdata[fn])
 			oe.event.fire(oe.event.PkgSucceeded(item, make.pkgdata[fn]))
 			__build_cache.append(fn)
 			return True
@@ -279,17 +288,13 @@ if __name__ == "__main__":
 
     make.options, args = handle_options( sys.argv )
 
-    _depcmds = { "clean": None,
-                "mrproper": None,
-                "build": "stage" }
-
     if not make.options.cmd:
             make.options.cmd = "build"
 
-    if make.options.cmd in _depcmds:
-            depcmd=_depcmds[make.options.cmd]
+    if make.options.cmd in __depcmds:
+            __depcmd=__depcmds[make.options.cmd]
     else:
-            depcmd=make.options.cmd
+            __depcmd=make.options.cmd
 
     make.pkgdata = {}
     make.cfg = {}
