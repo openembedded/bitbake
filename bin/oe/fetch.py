@@ -322,6 +322,11 @@ class Cvs(Fetch):
             else:
                 method = "pserver"
 
+            if "localdir" in parm:
+                localdir = parm["localdir"]
+            else:
+                localdir = os.path.basename(module)
+
             cvs_rsh = None
             if method == "ext":
                 if "rsh" in parm:
@@ -398,7 +403,7 @@ class Cvs(Fetch):
 
             os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
 #           tar them up to a defined filename
-            myret = os.system("tar -czvf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
+            myret = os.system("tar -czvf %s %s" % (os.path.join(dldir,tarfn), localdir))
             if myret != 0:
                 try:
                     os.unlink(tarfn)
