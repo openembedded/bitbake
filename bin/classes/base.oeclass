@@ -2,16 +2,16 @@ PATCHES_DIR="${S}"
 DEPENDS_prepend="patcher "
 
 die () {
-	exit 1
+	oefatal "$*"
 }
 
 oenote () {
-	echo "NOTE:" $*
+	echo "NOTE:" "$*"
 	return 0
 }
 
 oefatal () {
-	echo "FATAL:" $*
+	echo "FATAL:" "$*"
 	exit 1
 }
 
@@ -38,7 +38,7 @@ oeset () {
 }
 
 oe_runmake () {
-	if [ -f ./[mM]akefile -o -f ./GNUmakefile ] ; then
+	if [ -f ./[mM]akefile -o -f ./GNUmakefile -o -f ./makefile ] ; then
 		if [ x"$MAKE" = x ]; then MAKE=make; fi
 		oenote ${MAKE} ${EXTRA_OEMAKE} "$@"
 		${MAKE} ${EXTRA_OEMAKE} "$@" || die "oemake failed"
