@@ -248,8 +248,7 @@ unpack() {
 			;;
 		*)
 			if [ -d "${x}" ]; then
-				if [ -e ${S} ]; oefatal "unpack: ${S} already exists!"; return; fi
-				cp -a ${x} ${S}
+				cp -a ${x} .
 			else
 				oefatal "unpack ${x}: file format not recognized"
 			fi
