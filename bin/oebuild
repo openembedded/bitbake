@@ -59,7 +59,7 @@ for var in oe.keys():
 	build.add_task(var, var, deps)
 	for p in postdeps:
 		d = build.get_task_data()
-		pcontent = data.getVar(p, d)
+		pcontent = data.getVar(p, d) or p
 		pdeps = data.getVarFlag(pcontent, 'deps', oe) or []
 		pdeps.append(var)
 		data.setVarFlag(pcontent, 'deps', pdeps, oe)
