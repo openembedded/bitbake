@@ -1,0 +1,43 @@
+#!/usr/bin/python
+
+from oe import event
+from oe.event import Event
+
+class TestOneEvent(Event):
+	"""event test one"""
+
+class TestTwoEvent(Event):
+	"""event test two"""
+
+
+def testOneHandler(e):
+	if e == TestOneEvent:
+		print "test one caught! woot!"
+		return event.Handled
+	return event.NotHandled
+
+testTwoHandler = "\timport event\n\tif e.__name__ == \"TestTwoEvent\":\n\t\tprint 'handled test two event'\n\t\treturn event.Handled\n\treturn event.NotHandled\n"
+
+event.register(testOneHandler)
+event.register(testTwoHandler)
+
+event.fire(TestOneEvent)
+event.fire(TestTwoEvent)
+event.remove(testOneHandler)
+event.fire(TestOneEvent)
+
+# oemake events
+
+class PkgFailed(Event):
+	"""Package build failed"""
+
+class PkgSucceeded(Event):
+	"""Package build succeeded"""
+
+# oebuild events
+
+class TaskFailed(Event):
+	"""Task execution failed"""
+
+class TaskSucceeded(Event):
+	"""Task execution succeeded"""
