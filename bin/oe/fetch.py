@@ -330,7 +330,7 @@ class Local(Fetch):
 		return type in ['file','patch']
 	supports = staticmethod(supports)
 
-	def localpath(url):
+	def localpath(url, d):
 		"""Return the local filename of a given url assuming a successful fetch.
 		"""
 		return url.split("://")[1]
