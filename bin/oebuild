@@ -4,7 +4,14 @@ import sys,string,oe
 
 
 #
-# Get file to read
+# Make output appear like a shell script
+#
+oe.prepender = '#'
+print "#!/bin/bash"
+
+
+#
+# Which build file do we read?
 #
 if len(sys.argv) == 2:
         file = sys.argv[1]
@@ -16,10 +23,16 @@ else:
 # Read Configation from these places:
 #
 # 1.   ${OEDIR}/conf/global.oe
-# 2.   optionally from conf/local.oe
+# 2.   ${OEDIR}/conf/local.oe
+# 3.   optionally from local.oe
+# 4.   optionally from conf/local.oe
+#
+# Note: it can happen that some file get imported twice, but that is not really a problem
 #
 
+oe.inherit_os_env(1)
 oe.getconfig(oe.projectdir+'/conf/global.oe', oe.env, 1)
+oe.inherit_os_env(2)
 try:
 	oe.getconfig(oe.projectdir+'/conf/local.oe', oe.env, 1)
 except IOError:
@@ -32,6 +45,7 @@ try:
 	oe.getconfig('conf/local.oe', oe.env, 1)
 except IOError:
 	pass
+oe.inherit_os_env(3)
 
 
 
@@ -40,8 +54,7 @@ except IOError:
 #
 pkg = oe.catpkgsplit(file)
 if pkg == None:
-	print "ERROR: package file not in valid format"
-	sys.exit(1)
+	oe.fatal("package file not in valid format")
 
 oe.setenv('CATEGORY',	pkg[0])
 oe.setenv('PN',		pkg[1])
@@ -53,15 +66,26 @@ oe.setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}/work')
 oe.setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}/files')
 oe.setenv('S',		'${WORKDIR}/${P}')
 oe.setenv('T',		'${TMPDIR}/${CATEGORY}/${PF}/temp')
-oe.setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/dest')
+oe.setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/image')
 oe.setenv('SLOT',	'0')
+
+# TODO: set ${A}
+
+oe.inherit_os_env(4)
+
 
 
 #
 # Read package definition
 #
 # 1. ${OEDIR}/file
-# 2. optionally from all directories specified in ${OEPATH}
+# 2. optionally look in directories specified in ${OEPATH} for files named
+#    a) ${PF}.oe
+#    b) ${CATEGORY}/${PF}.oe
+#    c) ${P}.oe
+#    d) ${CATEGORY}/${P}.oe
+#    If one is found, go back to 2.
+#
 
 oe.getconfig(file, oe.env)
 
@@ -88,34 +112,47 @@ if oe.env.has_key('OEPATH'):
 						pass
 
 
+#
+# Environment modification
+#
+# If one environment variable is named 'VAR_special'
+#
+# and 'special' is '${CCHOST}': replace ${VAR} with ${VAR_${CCHOST}}
+# and 'special' is '${TARGET}': replace ${VAR} with ${VAR_${TARGET}}
+# and 'special' is 'append': add ${VAR_${TARGET}} at the end of ${VAR}
+# and 'special' is 'prepend': add ${VAR_${TARGET}} at the beginning of ${VAR}
+# and 'special' is 'delete': delete all lines in ${VAR} that contain the sub-string ${VAR_${TARGET}}
+#
 
-#
-# Handle architecture and target overrides
-#
+# can't do delete oe.env[...] while iterating over the dictionary, so remember them
 dodel = []
+
 for s in oe.env:
-	name = s+'_'+oe.env['CCHOST']
-	if oe.env.has_key(name):
-		oe.env[s] = oe.env[name]
-		dodel.append(name)
+	# Handle target overrides
 	name = s+'_'+oe.env['TARGET']
 	if oe.env.has_key(name):
 		oe.env[s] = oe.env[name]
 		dodel.append(name)
 
+	# Handle architecture overrides
+	name = s+'_'+oe.env['CCHOST']
+	if oe.env.has_key(name):
+		oe.env[s] = oe.env[name]
+		dodel.append(name)
 
-#
-# Handle line appends:
-#
-for s in oe.env:
+	# Handle line appends:
 	name = s+'_append'
 	if oe.env.has_key(name):
 		oe.env[s] = oe.env[s]+oe.env[name]
 		dodel.append(name)
+
+	# Handle line prepends
 	name = s+'_prepend'
 	if oe.env.has_key(name):
 		oe.env[s] = oe.env[name]+oe.env[s]
 		dodel.append(name)
+
+	# Handle line deletions
 	name = s+'_delete'
 	if oe.env.has_key(name):
 		new = ''
@@ -126,38 +163,83 @@ for s in oe.env:
 		oe.env[s] = new
 		dodel.append(name)
 
+# delete all environment vars no longer needed
 for s in dodel:
 	del oe.env[s]
 
+oe.inherit_os_env(5)
 
 	
-
 #
 # Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?
 #
+print
 for s in oe.env:
-	if s == s.lower(): continue
-	desc = 0
+	if s == s.lower(): continue		# only care for env vars
+	header = 0				# header shown?
 	try:
 		d = oe.envdesc[s]
 	except KeyError:
-		if not desc: print "\nVars not yet described in oe.envdesc[]:"
-		desc = 1
-		print "Key:  ", s
-		print "Value:", oe.env[s]
-		pass
-	if desc: print
+		if not header:
+			oe.note("Nonstandard variables defined in your project:")
+			header = 1
+		print "#", s
+	if header:
+		print
+
+#
+# Debug output: warn about all missing variables
+#
+for s in oe.envdesc:
+	if not oe.envdesc[s].has_key('warnlevel'): continue
+	if not oe.env.has_key(s):
+		level = oe.envdesc[s]['warnlevel']
+		try: warn = oe.envdesc[s]['warn']
+		except KeyError: warn = ''
+		if level == 1:
+			oe.note('Variable %s is not defined' % s)
+			if warn: print '#', warn
+		elif level == 2:
+			oe.error('Important variable %s is not defined' % s)
+			if warn: print '#', warn
+		elif level == 3:
+			oe.error('Important variable %s is not defined' % s)
+			if warn: print '#', warn
+			sys.exit(1)
 
 
 #
-# Debug output: show all environment variables
-# Debug output: show all shell functions
+# Output all variables
 #
+print '\nPATH="' + oe.projectdir + '/bin/build:${PATH}"\n'
+
 for s in oe.env:
 	if s == s.upper():
-		print "\n#", oe.envdesc[s]['desc']+':'
+		print
+
+		try: print "#" + oe.envdesc[s]['desc'] + ':'
+		except KeyError: pass
+
+		if oe.envdesc.has_key(s) and oe.envdesc[s].has_key('export'): print "export",
+
 		print s+'="'+oe.env[s]+'"'
 for s in oe.env:
 	if s == s.lower():
 		print
-		print s+'="'+oe.env[s]+'"'
+		print s+'() {'
+		print oe.env[s],
+		print '}'
+
+print
+print "# Create", oe.envdesc['WORKDIR']['desc'] + ':'
+print "mkdir -p ${WORKDIR}"
+print "# Create", oe.envdesc['S']['desc'] + ':'
+print "mkdir -p ${S}"
+print "# Create", oe.envdesc['D']['desc'] + ':'
+print "mkdir -p ${D}"
+print "# Create", oe.envdesc['T']['desc'] + ':'
+print "mkdir -p ${T}"
+
+for s in ('pkg_setup', 'pkg_nofetch', 'pkg_fetch', 'src_compile', 'src_install'):
+	if oe.env.has_key(s):
+		print s,'|| die'
