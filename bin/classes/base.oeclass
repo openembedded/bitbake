@@ -61,4 +61,4 @@ base_do_package() {
 
 EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch
 
-addtask patch unpack compile
+addtask patch after unpack before compile
