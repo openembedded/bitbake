@@ -161,17 +161,16 @@ python base_do_fetch() {
 }
 
 python base_do_unpack() {
-	import os
+	import os, re
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
 		note("no SRC_URI variable, nothing to be done")
 		return
 	src_uri = data.expand(src_uri, d)
 	for url in src_uri.split():
-		# dont need any parameters for extraction, strip them off
-		(scheme, loc, path, u, p, param) = oe.decodeurl(url)
-		url = oe.encodeurl((scheme, loc, path, u, p, []))
 		local = oe.data.expand(oe.fetch.localpath(url), d)
+		# dont need any parameters for extraction, strip them off
+		local = re.sub(';.*$', '', local)
 		cmd = None
 		if local.endswith('.tar'):
 			cmd = 'tar x --no-same-owner -f %s' % local
@@ -185,9 +184,11 @@ python base_do_unpack() {
 		elif local.endswith('.bz2'):
 			loc = local.rfind('.')
 			cmd = 'bzip2 -dc %s > %s' % (local, local[:loc]) 
+		elif os.path.isdir(local):
+			cmd = 'cp -a %s %s/' % (local, os.getcwd())
 		if not cmd:
 			continue
-		note("Unpacking %s to %s" % (local, os.getcwd()))
+		note("Unpacking %s to %s/" % (local, os.getcwd()))
 		ret = os.system(cmd)
 		if ret != 0:
 			raise FuncFailed()
