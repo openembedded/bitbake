@@ -152,7 +152,7 @@ def collect_oefiles( progressCallback ):
                 continue
         newfiles += glob.glob(f) or [ f ]
 
-    oemask = oe.data.getVar('OEMASK', cfg, 1)
+    oemask = oe.data.getVar('OEMASK', cfg, 1) or ""
     try:
         oemask_compiled = re.compile(oemask)
     except sre_constants.error:
