@@ -14,7 +14,9 @@
 
 import sys,posixpath,string,types
 projectdir = posixpath.dirname(posixpath.dirname(posixpath.abspath(sys.argv[0])))
-
+env = {}
+env['OEDIR'] = projectdir
+env['TMPDIR'] = projectdir+'/tmp'
 
 class VarExpandError(Exception):
 	pass
@@ -252,10 +254,11 @@ def varexpand(mystring,mydict = {}, stripnl=0):
 					_varexpand_cache_[mystring] = ""
 					return ""
 				numvars = numvars + 1
+				#print "myvarname:", myvarname
 
-				# keep vars that are not all in UPPERCASE
 				if myvarname[0] == '@':
 					newstring = newstring + eval(myvarname[1:])
+				# keep vars that are not all in UPPERCASE
 				elif myvarname != myvarname.upper():
 					newstring = newstring + '${' + myvarname + '}'
 				elif mydict.has_key(myvarname):
@@ -271,6 +274,22 @@ def varexpand(mystring,mydict = {}, stripnl=0):
 	if numvars == 0:
 		_varexpand_cache_[mystring] = newstring[1:]
 	return newstring[1:]	
+
+
+#######################################################################
+#
+# TODO
+#
+
+def setenv(var, value):
+	#print var,"=", value,"->",
+	value = varexpand(value, env)
+	#print value
+	env[var] = value
+
+setenv('OEDIR', projectdir )
+setenv('TMPDIR', '${OEDIR}/tmp' )
+
 
 
 #######################################################################
@@ -291,8 +310,12 @@ def varexpand(mystring,mydict = {}, stripnl=0):
 #
 
 def getconfig(mycfg, mykeys={}, myexpand=0):
+	# TODO: add 'inherit', 'unset'
+
+ 	print "DEBUG: trying", mycfg
 	import shlex
 	f = open(mycfg,'r')
+	print "NOTE: reading", mycfg
 	lex = shlex.shlex(f)
 	lex.wordchars = string.digits + string.letters + "~!@#%*_\:;?,./-+{}"
 	lex.quotes = "\"'"
@@ -871,6 +894,11 @@ def catpkgsplit(mydata,silent=1):
 	except KeyError:
 		pass
 
+	if mydata[:len(projectdir)] == projectdir:
+		mydata = mydata[len(projectdir)+1:]
+	if mydata[-3:] == '.oe':
+		mydata = mydata[:-3]
+
 	mysplit = mydata.split("/")
 	p_split = None
 	if len(mysplit) == 1:
@@ -983,12 +1011,14 @@ def vercmp(val1,val2):
 #
 # Compares two packages, which should have been split via pkgsplit()
 #
+#	['glibc', '2.2.5', 'r7'] <> ['glibc', '2.2.5', 'r7'] = 0
+#	['glibc', '2.2.5', 'r4'] <> ['glibc', '2.2.5', 'r7'] = -1
+#	['glibc', '2.2.5', 'r7'] <> ['glibc', '2.2.5', 'r2'] = 1
+#
 
 def pkgcmp(pkg1,pkg2):
 	"""if returnval is less than zero, then pkg2 is newer than pkg1, zero if equal and positive if older."""
 	
-	print pkg1[1],pkg2[1]
-
 	mycmp = vercmp(pkg1[1],pkg2[1])
 	if mycmp > 0:
 		return 1
@@ -1002,6 +1032,113 @@ def pkgcmp(pkg1,pkg2):
 		return -1
 	return 0
 
+
+#######################################################################
+#
+# dep_parenreduce()
+#
+#	[''] 				-> ['']
+#	['1', '2', '3']			-> ['1', '2', '3']
+#	['1', '(', '2', '3', ')', '4']	-> ['1', ['2', '3'], '4']
+
+def dep_parenreduce(mysplit, mypos=0):
+	"Accepts a list of strings, and converts '(' and ')' surrounded items to sub-lists"
+	while mypos < len(mysplit): 
+		if mysplit[mypos] == "(":
+			firstpos = mypos
+			mypos = mypos + 1
+			while mypos < len(mysplit):
+				if mysplit[mypos] == ")":
+					mysplit[firstpos:mypos+1] = [mysplit[firstpos+1:mypos]]
+					mypos = firstpos
+					break
+				elif mysplit[mypos] == "(":
+					# recurse
+					mysplit = dep_parenreduce(mysplit,mypos)
+				mypos = mypos + 1
+		mypos = mypos + 1
+	return mysplit
+
+
+def dep_opconvert(mysplit, myuse):
+	"Does dependency operator conversion"
+	
+	mypos   = 0
+	newsplit = []
+	while mypos < len(mysplit):
+		if type(mysplit[mypos]) == types.ListType:
+			newsplit.append(dep_opconvert(mysplit[mypos],myuse))
+			mypos += 1
+		elif mysplit[mypos] == ")":
+			# mismatched paren, error
+			return None
+		elif mysplit[mypos]=="||":
+			if ((mypos+1)>=len(mysplit)) or (type(mysplit[mypos+1])!=types.ListType):
+				# || must be followed by paren'd list
+				return None
+			try:
+				mynew = dep_opconvert(mysplit[mypos+1],myuse)
+			except Exception, e:
+				print "ERROR: nable to satisfy OR dependancy:", string.join(mysplit," || ")
+				raise e
+			mynew[0:0] = ["||"]
+			newsplit.append(mynew)
+			mypos += 2
+		elif mysplit[mypos][-1] == "?":
+			# use clause, i.e "gnome? ( foo bar )"
+			# this is a quick and dirty hack so that repoman can enable all USE vars:
+			if (len(myuse) == 1) and (myuse[0] == "*"):
+				# enable it even if it's ! (for repoman) but kill it if it's
+				# an arch variable that isn't for this arch. XXX Sparc64?
+				if (mysplit[mypos][:-1] not in settings.usemask) or \
+						(mysplit[mypos][:-1]==settings["ARCH"]):
+					enabled=1
+				else:
+					enabled=0
+			else:
+				if mysplit[mypos][0] == "!":
+					myusevar = mysplit[mypos][1:-1]
+					enabled = not myusevar in myuse
+					#if myusevar in myuse:
+					#	enabled = 0
+					#else:
+					#	enabled = 1
+				else:
+					myusevar=mysplit[mypos][:-1]
+					enabled = myusevar in myuse
+					#if myusevar in myuse:
+					#	enabled=1
+					#else:
+					#	enabled=0
+			if (mypos +2 < len(mysplit)) and (mysplit[mypos+2] == ":"):
+				# colon mode
+				if enabled:
+					# choose the first option
+					if type(mysplit[mypos+1]) == types.ListType:
+						newsplit.append(dep_opconvert(mysplit[mypos+1],myuse))
+					else:
+						newsplit.append(mysplit[mypos+1])
+				else:
+					# choose the alternate option
+					if type(mysplit[mypos+1]) == types.ListType:
+						newsplit.append(dep_opconvert(mysplit[mypos+3],myuse))
+					else:
+						newsplit.append(mysplit[mypos+3])
+				mypos += 4
+			else:
+				# normal use mode
+				if enabled:
+					if type(mysplit[mypos+1]) == types.ListType:
+						newsplit.append(dep_opconvert(mysplit[mypos+1],myuse))
+					else:
+						newsplit.append(mysplit[mypos+1])
+				# otherwise, continue
+				mypos += 2
+		else:
+			# normal item
+			newsplit.append(mysplit[mypos])
+			mypos += 1
+	return newsplit
 
 #beautiful directed graph object
 class digraph:
@@ -1077,3 +1214,58 @@ class digraph:
 			mygraph.okeys=self.okeys[:]
 		return mygraph
 
+
+envdesc = {
+
+# Mandatory fields
+
+"DESCRIPTION": { "desc":      "description of the package",
+                 "warnlevel": 3 },
+"DEPEND": {      "desc":      "dependencies required for building this package",
+                 "warnlevel": 2 },
+"RDEPEND": {     "desc":      "dependencies required to run this package",
+                 "warnlevel": 2 },
+"SRC_URI": {     "desc":      "where to get the sources",
+                 "warnlevel": 1 },
+"LICENSE": {     "desc":      "license of the source code for this package",
+                 "warnlevel": 1 },
+"HOMEPAGE": {    "desc":      "URL of home page for the source code project",
+                 "warnlevel": 1 },
+
+# Use when needed
+
+"PROVIDE": {     "desc":      "use when a package provides a virtual target", },
+"RECOMMEND": {   "desc":      "suggest additional packages to install to enhance the current one", },
+"FOR_TARGET": {  "desc":      "allows us to disable allow package for specific arch/boards", },
+"SLOT": {        "desc":      "installation slot, i.e glib1.2 could be slot 0 and glib2.0 could be slot 1", },
+"GET_URI": {     "desc":      "get this files like SRC_URI, but don't extract them", },
+
+
+# Automatic set (oemake related):
+
+"OEDIR": {       "desc":      "where the build system for OpenEmbedded is located", },
+"OEPATH": {      "desc":      "additional directories to consider when building packages", },
+"TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded", },
+"P": {           "desc":      "package name without the revision, e.g. 'xfree-4.2.1'", },
+"CATEGORY": {    "desc":      "category for the source package, e.g. 'x11-base'", },
+"PN": {          "desc":      "package name without the version, e.g. 'xfree'", },
+"PV": {          "desc":      "package version without the revision, e.g. '4.2.1'", },
+"PR": {          "desc":      "package revision, e.g. 'r2'", },
+"PF": {          "desc":      "full package name, e.g. 'xfree-4.2.1-r2'", },
+"WORKDIR": {     "desc":      "path to the package build root", },
+"FILESDIR": {    "desc":      "location of package add-on files (patches, configurations etc)", },
+"S": {           "desc":      "source will be extracted to this directory", },
+"T": {           "desc":      "free-to-use temporary directory at package built time", },
+"D": {           "desc":      "path to a destination install directory", },
+"IUSE": {        "desc":      "This is set to what USE variables your package uses", },
+
+# Architecture / Board related:
+"CBUILD": {      "desc":      "this is --build on host (for configure), e.g. 'i386'", },
+"CCHOST": {      "desc":      "this is --target to run on (for configure), e.g. 'arm'", },
+"TARGET": {      "desc":      "Target system to compile for, e.g. 'ramses'", },
+
+# Package creation functions:
+"src_compile": {  "desc":     "Shell function needed to compile package", },
+"src_unpack": {   "desc":     "Shell function needed to unpack sources", },
+
+}
