@@ -3,7 +3,7 @@
 # proposed new way of structuring environment data for the
 # OpenEmbedded buildsystem
 
-from oe import debug
+from oe import debug, note
 
 def init():
 	return {}
@@ -20,6 +20,24 @@ def initVar(var, d = _data):
 
 def setVar(var, value, d = _data):
 	"""Set a variable to a given value"""
+	for v in ["_append", "_prepend", "_delete"]:
+		match = re.match('(?P<base>.*?)%s(_(?P<add>.*))?' % v, var)
+		if match:
+			base = match.group('base')
+			override = match.group('add')
+			# add is only set in the case of
+			# base_cmd_override, in which case we set
+			# a parameter as a conditional on the cmd.
+#			if override:
+#				note("base_cmd_override instance: %s%s_%s" % (base, v, override))
+#			else:
+#				note("base[_override]_cmd instance: %s%s" % (base, v))
+
+			l = getVarFlag(base, v, d) or []
+			l.append([value, override])
+			setVarFlag(base, v, l, d)
+			return
+		
 	try:
 		d[var]["content"] = value 
 	except KeyError:
@@ -56,6 +74,10 @@ def getVarFlag(var, flag, d = _data):
 	except KeyError:
 		return None
 
+def delVarFlag(var, flag, d = _data):
+	"""Removes a given flag from the variable's flags"""
+	del d[var]["flags"][flag]
+
 def setVarFlags(var, flags, d = _data):
 	"""Set the flags for a given variable"""
 	try:
@@ -70,6 +92,10 @@ def getVarFlags(var, d = _data):
 		return d[var]["flags"]
 	except KeyError:
 		return None
+
+def delVarFlags(var, d = _data):
+	"""Removes a variable's flags"""
+	del d[var]["flags"]
 
 def getData(d = _data):
 	"""Returns the data object used"""
@@ -302,29 +328,45 @@ def update_data(d = _data):
 		return
 	overrides = overrides.split(':')
 
-	for s in d.keys():
+	def applyOverrides(var, d = _data):
+		overrides = string.split(getVar('OVERRIDES', d, 1) or "", ":") or []
+		val = getVar(var, d)
+		flags = getVarFlags(var, d)
 		for o in overrides:
-			name = "%s_%s" % (s, o)
+			name = "%s_%s" % (var, o)
 			nameval = getVar(name, d)
 			if nameval:
-				setVar(s, nameval, d)
-				dodel.append(name)
+				nameflags = getVarFlags(name, d)
+				setVar(var, nameval, d)
+				setVarFlags(var, nameflags, d)
+
+	for s in d.keys():
+		applyOverrides(s, d)
+		sval = getVar(s, d) or ""
 
 		# Handle line appends:
-		name = "%s_append" % s
-		nameval = getVar(name, d)
-		if nameval:
-			sval = getVar(s, d) or ""
-			setVar(s, sval+nameval, d)
-			dodel.append(name)
-
+		for (a, o) in getVarFlag(s, '_append', d) or []:
+			try:
+				delVarFlag(s, '_append', d)
+			except KeyError:
+				pass
+			if o:
+				if not o in overrides:
+					break
+			sval+=a
+			setVar(s, sval, d)
+		
 		# Handle line prepends
-		name = "%s_prepend" % s
-		nameval = getVar(name, d)
-		if nameval:
-			sval = getVar(s, d) or ""
-			setVar(s, nameval+sval, d)
-			dodel.append(name)
+		for (a, o) in getVarFlag(s, '_prepend', d) or []:
+			try:
+				delVarFlag(s, '_prepend', d)
+			except KeyError:
+				pass
+			if o:
+				if not o in overrides:
+					break
+			sval=a+sval
+			setVar(s, sval, d)
 
 		# Handle line deletions
 		name = "%s_delete" % s

@@ -5,7 +5,7 @@ TODO:
 	    data and parse methods.
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
-	[ ] BUG: If we only run an update_data after a load of an .oe,
+	[x] BUG: If we only run an update_data after a load of an .oe,
 	    but not for a .oeclass, if multiple .oeclasses define, say, for
 	    example DEPENDS_prepend, one overrides the other, and we lose
 	    some of the deps.  If we update_data after each .oeclass load,
@@ -20,6 +20,8 @@ TODO:
 	    prepended when update_data runs after the completion of the .oe
 	    parse.
 	[x] Teach 'include' to fetch if necessary.
+	    [.] Move this into handle() rather than include, to complete the
+		below TODO item.
 
 [ ] oebuild and oemake
 	[ ] Teach the system to support grabbing OEFILES from upstream
@@ -75,6 +77,8 @@ TODO:
 	    of what files are libs, what are includes, etc, and we could
 	    then do a sane automatic population of staging based on that
 	    information. 
+[ ] Implement setvar, to give us the equivalent of 'staging' but for config
+    data.
 [ ] Possibility: split staging by package, and maintain links based on
     the base atom vs base+version, that sort of thing.  Automatically add
     proper include and lib paths to the flags variables based on the items
