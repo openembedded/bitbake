@@ -103,7 +103,7 @@ def do_fetch():
 	note("Executing task 'fetch'")
 
 	if env.has_key('SRC_URI'):
-		ret = fetch(getenv('SRC_URI'), 1)
+		ret = fetch(getenv('SRC_URI'))
 		if ret:
 			mkstamp('source')
 	else:
