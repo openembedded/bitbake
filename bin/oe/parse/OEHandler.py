@@ -74,8 +74,10 @@ def handle(fn, d = {}, include = 0):
 			oepath += voepath.split(":")
 		for p in oepath:
 			p = data.expand(p, d)
-			if os.access(os.path.join(p, fn), os.R_OK):
-				f = open(os.path.join(p, fn), 'r')
+			j = os.path.join(p, fn)
+			if os.access(j, os.R_OK):
+				f = open(j, 'r')
+				break
 		if f is None:
 			raise IOError("file not found")
 	else:
