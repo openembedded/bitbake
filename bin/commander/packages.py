@@ -34,9 +34,9 @@ class Packages:
         return self.pkgdata.keys()
         
     def data( self, package, key ):
-        try:
-            return self.pkgdata[key]
-        except KeyError:
+        if package in self.pkgdata and key in self.pkgdata[package]:
+            return data.getVar( key, self.pkgdata[package], 1 )
+        else:
             return "N/A"
     
     def load( self, oefile ):
