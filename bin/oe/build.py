@@ -1,3 +1,15 @@
+#!/usr/bin/python
+"""
+OpenEmbedded 'Build' implementation
+
+Core code for function execution and task handling in the
+OpenEmbedded (http://openembedded.org) build infrastructure.
+
+Copyright: (c) 2003 Chris Larson
+
+Based on functions from the base oe module, Copyright 2003 Holger Schurig
+"""
+
 from oe import debug, data, fetch, fatal, error, note, event, mkdirhier
 import oe
 import os

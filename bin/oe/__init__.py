@@ -1,3 +1,4 @@
+#!/usr/bin/python
 """
 OpenEmbedded Build System Python Library
 
@@ -796,7 +797,7 @@ def catpkgsplit(mydata,silent=1):
 	p_split = None
 	splitlen = len(mysplit)
 	if splitlen == 1:
-		retval = ["null"]
+		retval = [None]
 		p_split = pkgsplit(mydata,silent)
 	else:
 		retval = [mysplit[splitlen - 2]]
