@@ -1,6 +1,8 @@
 PATCHES_DIR="${S}"
 
 python base_do_patch () {
+	import re
+
 	if not env.has_key('SRC_URI'):
 		raise Exception("SRC_URI not defined")
 	for url in getenv('SRC_URI').split():
@@ -8,8 +10,9 @@ python base_do_patch () {
 		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
 		if not parm.has_key("patch"):
 			continue
-		oe.fetch.init([url])
-		local = oe.fetch.localpath(url)
+		from oe.fetch import init, localpath
+		init([url])
+		local = localpath(url)
 		# patch!
 		dots = local.split(".")
 		if dots[-2] in ['tar']:
