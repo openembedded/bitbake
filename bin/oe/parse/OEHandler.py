@@ -179,11 +179,11 @@ def feeder(lineno, s, fn, d):
 		if m.group("py") is not None:
 			data.setVarFlag(key, "python", "1", d)
 		else:
-			data.setVarFlag(key, "python", None, d)
+			data.delVarFlag(key, "python", d)
 		if m.group("fr") is not None:
 			data.setVarFlag(key, "fakeroot", "1", d)
 		else:
-			data.setVarFlag(key, "fakeroot", None, d)
+			data.delVarFlag(key, "fakeroot", d)
 		return
 
 	m = __export_func_regexp__.match(s)

@@ -207,6 +207,7 @@ def expand(s, d = _data, varname = None):
 				fatal("variable %s references itself!" % varname)
 		var = getVar(key, d, 1)
 		if var is not None:
+			setVar(key, var, d)
 			return var
 		else:
 			return match.group()
