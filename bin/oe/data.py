@@ -244,7 +244,17 @@ def expandKeys(alterdata = _data, readdata = None):
         val = getVar(key, alterdata)
         if val is None:
             continue
+#        import copy
+#        setVarFlags(ekey, copy.copy(getVarFlags(key, readdata)), alterdata)
         setVar(ekey, val, alterdata)
+
+        for i in ('_append', '_prepend', '_delete'):
+            dest = getVarFlag(ekey, i, alterdata) or []
+            src = getVarFlag(key, i, readdata) or []
+            dest.extend(src)
+            setVarFlag(ekey, i, dest, alterdata)
+
+        delVar(key, alterdata)
 
 def expandData(alterdata = _data, readdata = None):
     """For each variable in alterdata, expand it, and update the var contents.
