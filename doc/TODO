@@ -1,20 +1,36 @@
 TODO:
 
-[x] Update .oe and .conf parsers to not strip out all the tabs in our 
-    python function vars..
+[x] oe.py
+	[x] Update .oe and .conf parsers to not strip out all the tabs in our 
+	    python function vars..
+
+[ ] oebuild
+	[ ] Use oe.digraph for handling intertask dependency
+	[ ] Split task execution from function execution
+	[ ] Revamp the way in which stamps are implemented
+	[ ] Add a means to add a task which depends on another task's
+	    execution, but not on said task's successful completion.
+
+[.] oemake
+	[.] Add oe.conf parsing - abort if OEFILES is not defined
+	[.] Add parsing of the .oe's listed in OEFILES
+		[ ] Three types of dependency, and any of the three should
+		    have a corresponding provides form.  Establish the
+		    variable names, and make use of it.  Remember to deal
+		    with per package (PACKAGES var) metadata overrides.
+	[ ] Handle provides in the digraph...
+	[ ] Generic event handling, and addevent declaration for .oe files.
+
 [x] Update patcher tool to make use of our ability to use python functions.
 [x] Write package.oeclass implemented w/ a python function/task
 [x] Write src.rpm builder .oeclass
-[ ] Start work on oemake that uses oe.digraph.
 [ ] Write ipkg.oeclass which inherits package.oeclass to produce an ipk from
     our metadata.
-
-[ ] Once we have that per package deployment code, write a staging oeclass
+[ ] Once we have the per package deployment code, write a staging oeclass
     that lets you use the FILES blocks for our deployment packages to do the
     installs into the appropriate staging areas, to save time writing do_stage
     functions.
-[ ] Finish up extensibility bits for the core oe code, and merge some of the
+[.] Finish up extensibility bits for the core oe code, and merge some of the
     class implementations into something sane.
-
 [ ] Assuming cworth has the base ipkg libs rearchitected, start work on oemake.
     If he hasnt, start rearchitecting ipkg.
