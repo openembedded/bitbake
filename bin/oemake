@@ -243,16 +243,23 @@ def build_depgraph():
     pn_provides = {}
 
     def progress(p):
-        sys.stdout.write("\rNOTE: Building provider hash: [")
-        x = 0
-        for i in range(20):
-            if (p >= x):
-                sys.stdout.write("#")
-            else:
-                sys.stdout.write(" ")
-            x += 5
-        sys.stdout.write("] (%02d%%)" % p)
-        sys.stdout.flush()
+        if os.isatty(sys.stdout.fileno()):
+            sys.stdout.write("\rNOTE: Building provider hash: [")
+            x = 0
+            for i in range(20):
+                if (p >= x):
+                    sys.stdout.write("#")
+                else:
+                    sys.stdout.write(" ")
+                x += 5
+            sys.stdout.write("] (%02d%%)" % p)
+        else:
+            if p == 0:
+                sys.stdout.write("\rNOTE: Building provider hash, please wait...")
+                sys.stdout.flush()
+            if p == 100:
+                sys.stdout.write("done.")
+                sys.stdout.flush()
 
     n = len(make.pkgdata.keys())
     i = 0
@@ -315,7 +322,7 @@ def myProgressCallback( x, y, f ):
             sys.stdout.write("Parsing .oe files, please wait...")
             sys.stdout.flush()
         if x == y:
-            sys.stdout.write("done.\n")
+            sys.stdout.write("done.")
             sys.stdout.flush()
 
 
