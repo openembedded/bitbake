@@ -24,6 +24,7 @@ classes = [ None, ]
 def supports(fn):
 	return fn[-3:] == ".oe" or fn[-8:] == ".oeclass"
 
+__inherit_cache = []
 def inherit(files, d):
 	fn = ""
 	lineno = 0
@@ -32,8 +33,10 @@ def inherit(files, d):
 		if file[0] != "/" and file[-8:] != ".oeclass":
 			file = "classes/%s.oeclass" % file
 
-		debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
-		include(fn, file, d)
+		if not file in __inherit_cache:
+			debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
+			__inherit_cache.append(file)
+			include(fn, file, d)
 
 
 def handle(fn, d = {}):
