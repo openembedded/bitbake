@@ -76,13 +76,6 @@ topdir = data.getVar('TOPDIR', cfg_oe, 1) or os.getcwd()
 oedir = data.getVar('OEDIR', cfg_oe, 1) or topdir
 mkdirhier(oedir)
 
-# if type is not direct, add 'package_[type]' to INHERIT
-if type is not 'direct':
-	inherit = data.getVar('INHERIT', cfg_oe, 1) or ""
-	inherit += " package_%s" % type
-	data.setVarFlag('INHERIT', 'export', 1, cfg_oe)
-	data.setVar('INHERIT', inherit, cfg_oe)
-
 # Iterate through .oe files
 files = string.split(data.getVar("OEFILES", cfg_oe, 1) or "")
 data.setVar("OEFILES", string.join(files), cfg_oe)
@@ -103,34 +96,45 @@ if not len(files):
 if not len(files):
 	usage()
 
-pkgdata = {}
+# if type is not direct, add 'package_[type]' to INHERIT
+if type is not 'direct':
+	inherit = data.getVar('INHERIT', cfg_oe, 1) or ""
+	inherit += " base package_%s" % type
+	data.setVarFlag('INHERIT', 'export', 1, cfg_oe)
+	data.setVar('INHERIT', inherit, cfg_oe)
+
 import glob
 for f in files:
+	globbed = glob.glob(f) or [ f ]
+	if globbed:
+		if [ f ] != globbed:
+			files += globbed
+			continue
 	from copy import deepcopy
-	pkgdata[f] = deepcopy(cfg_oe)
-	parse.handle(f, pkgdata[f])
-	if pkgdata[f] is None:
+	fdata = deepcopy(cfg_oe)
+	parse.handle(f, fdata)
+	if fdata is None:
 		continue
 	# allow metadata files to add items to OEFILES
-	data.update_data(pkgdata[f])
-	addoefiles = data.getVar('OEFILES', pkgdata[f]) or None
+	data.update_data(fdata)
+	addoefiles = data.getVar('OEFILES', fdata) or None
 	if addoefiles:
 		for aof in string.split(addoefiles):
 			if not files.count(aof):
 				if not os.path.isabs(aof):
 					aof = os.path.join(os.path.dirname(f),aof)
 				files.append(aof)
-	pkgs = string.split(data.getVar('PACKAGES', pkgdata[f], 1) or "")
+	pkgs = string.split(data.getVar('PACKAGES', fdata, 1) or "")
 	# Iterate through PACKAGES
 	for p in pkgs:
-		d = deepcopy(pkgdata[f])
-		print "Installing package %s (%s)" % (p, data.getVar('PN', d, 1))
+		d = deepcopy(fdata)
 		data.setVar('PKG', p, d)
 		# Add package to overrides, collapse the metadata
 		overrides = data.getVar('OVERRIDES', d, 1) or ""
 		overrides += ":%s" % p
 		data.setVar('OVERRIDES', overrides, d)
 		data.update_data(d)
+		data.setVarFlag('INHERIT', 'export', 1, d)
 		# Look at vars to determine the file names for the package type in question
 		# Call installer for a given package type as pulled from the metadata with INHERIT set properly
 		if data.getVar('pkg_preinst', d):
@@ -147,6 +151,7 @@ for f in files:
 		if data.getVar('package_%s_install' % type, d):
 			try:
 				build.exec_func('package_%s_install' % type, d)
+				print "package %s (%s) installed." % (p, data.getVar('PN', d, 1))
 			except build.FuncFailed:
 				continue
 		else:
@@ -156,5 +161,4 @@ for f in files:
 				build.exec_func('pkg_postinst', d)
 			except build.FuncFailed:
 				pass
-	del pkgdata[f]
 os.environ["D"] = rootfs

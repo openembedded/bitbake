@@ -25,8 +25,8 @@ def supports(fn):
 	localfn = localpath(fn)
 	return localfn[-3:] == ".oe" or localfn[-8:] == ".oeclass"
 
-__inherit_cache = []
 def inherit(files, d):
+	__inherit_cache = data.getVar('__inherit_cache', d) or ""
 	fn = ""
 	lineno = 0
 	for f in files:
@@ -34,10 +34,11 @@ def inherit(files, d):
 		if file[0] != "/" and file[-8:] != ".oeclass":
 			file = "classes/%s.oeclass" % file
 
-		if not file in __inherit_cache:
+		if not file in string.split(__inherit_cache):
 			debug(2, "OE %s:%d: inheriting %s" % (fn, lineno, file))
-			__inherit_cache.append(file)
+			__inherit_cache += " %s" % file
 			include(fn, file, d)
+	data.setVar('__inherit_cache', __inherit_cache, d)
 
 
 def handle(fn, d = {}, include = 0):
