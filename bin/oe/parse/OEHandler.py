@@ -225,7 +225,8 @@ def set_automatic_vars(file, d):
 	data.setVar('WORKDIR', '${TMPDIR}/${CATEGORY}/${PF}', d)
 	data.setVar('T', '${WORKDIR}/temp', d)
 	data.setVar('D', '${WORKDIR}/image', d)
-	data.setVar('D', '${WORKDIR}/${P}', d)
+	if not data.getVar('S', d):
+		data.setVar('S', '${WORKDIR}/${P}', d)
 	data.setVar('SLOT', '0', d)
 	data.inheritFromOS(3, d)
 
@@ -247,14 +248,14 @@ def set_additional_vars(file, d):
 	else:
 		a = []
 
-	import oe.fetch
+	from oe import fetch
 	try:
-		oe.fetch.init(src_uri.split())
-	except oe.fetch.NoMethodError:
+		fetch.init(src_uri.split())
+	except fetch.NoMethodError:
 		pass
 
-	a += oe.fetch.localpaths()
-	del oe.fetch
+	a += fetch.localpaths()
+	del fetch
 	data.setVar('A', string.join(a), d)
 
 
