@@ -77,7 +77,7 @@ python base_do_patch () {
 			path[0:0] = [ os.path.join("${OEDIR}", "bin/build") ]
 			path[0:0] = [ "${STAGING_BINDIR}" ]
 			data.setVar('PATH', data.expand(string.join(path, ":"), d), d)
-		cmd = "PATH=$PATH:%s patcher" % data.getVar('PATH', d)
+		cmd = "PATH=\"$PATH:%s\" patcher" % data.getVar('PATH', d)
 		if parm.has_key("pnum"):
 			cmd += " -p %s" % parm["pnum"]
 		cmd += " -i %s" % efile
@@ -114,14 +114,38 @@ python base_do_fetch() {
 		raise FuncFailed()
 }
 
-base_do_unpack() {
-	if test -z "${A}"; then
-		oenote "nothing to extract"
+python base_do_unpack() {
+	import os
+	src_uri = data.getVar('SRC_URI', d)
+	if not src_uri:
+		note("no SRC_URI variable, nothing to be done")
 		return
-	fi
-	unpack "${A}" || die "unpack failure"
+	src_uri = data.expand(src_uri, d)
+	for url in src_uri.split():
+		# dont need any parameters for extraction, strip them off
+		(scheme, loc, path, u, p, param) = oe.decodeurl(url)
+		url = oe.encodeurl((scheme, loc, path, u, p, []))
+		local = oe.data.expand(oe.fetch.localpath(url), d)
+		cmd = None
+		if local.endswith('.tar'):
+			cmd = 'tar x --no-same-owner -f %s' % local
+		elif local.endswith('.tgz') or local.endswith('.tar.gz'):
+			cmd = 'tar xz --no-same-owner -f %s' % local
+		elif local.endswith('.tbz') or local.endswith('.tar.bz2'):
+			cmd = 'tar xj --no-same-owner -f %s' % local
+		elif local.endswith('.gz') or local.endswith('.Z') or local.endswith('.z'):
+			loc = local.rfind('.')
+			cmd = 'gzip -dc %s > %s' % (local, local[:loc]) 
+		elif local.endswith('.bz2'):
+			loc = local.rfind('.')
+			cmd = 'bzip2 -dc %s > %s' % (local, local[:loc]) 
+		if not cmd:
+			continue
+		note("Unpacking %s to %s" % (local, os.getcwd()))
+		ret = os.system(cmd)
+		if ret != 0:
+			raise FuncFailed()
 }
-
 
 base_do_compile() {
 	if [ -x ${S}/configure ] ; then
