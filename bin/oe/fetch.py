@@ -366,10 +366,13 @@ class Cvs(Fetch):
             os.chdir(oe.data.expand(dldir, localdata))
 
 #           setup cvsroot
-            cvsroot = ":" + method + ":" + user
-            if pswd:
-                cvsroot += ":" + pswd
-            cvsroot += "@" + host + ":" + path
+            if method == "dir":
+                cvsroot = path
+            else:
+                cvsroot = ":" + method + ":" + user
+                if pswd:
+                    cvsroot += ":" + pswd
+                cvsroot += "@" + host + ":" + path
 
             oe.data.setVar('CVSROOT', cvsroot, localdata)
             oe.data.setVar('CVSCOOPTS', " ".join(options), localdata)
