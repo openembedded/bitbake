@@ -204,7 +204,9 @@ diefunc() {
         echo >&2
         oefatal "$CATEGORY/$PF failed"
         oenote "Function $funcname, Line $lineno, Exitcode $exitcode"
-        oenote "${*:-(no error message)}"
+	if [ -n "$*" ]; then
+	        oenote "$*"
+	fi
         exit 1
 }
 
