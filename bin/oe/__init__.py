@@ -263,31 +263,31 @@ def decodeurl(url):
     ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
     """
 
-    #debug(3, "decodeurl('%s')" % url)
-    m = re.compile('([^:]*):/*(.+@)?([^/]+)(/[^;]+);?(.*)').match(url)
+    #m = re.compile('([^:]*):/*(.+@)?([^/]+)(/[^;]+);?(.*)').match(url)
+    m = re.compile('(?P<type>[^:]*)://((?P<user>.+)@)?((?P<host>[^/]+))?(?P<path>/?[^;]+)(;(?P<parm>.*))?').match(url)
     if not m:
         raise MalformedUrl(url)
 
-    type = m.group(1)
-    host = m.group(3)
-    path = m.group(4)
-    user = m.group(2)
-    parm = m.group(5)
-    #print "type:", type
-    #print "host:", host
-    #print "path:", path
-    #print "parm:", parm
+    type = m.group('type')
+    host = m.group('host')
+    path = m.group('path')
+    user = m.group('user')
+    parm = m.group('parm')
     if user:
-        m = re.compile('([^:]+)(:?(.*))@').match(user)
+        m = re.compile('(?P<user>[^:]+)(:?(?P<pswd>.*))').match(user)
         if m:
-            user = m.group(1)
-            pswd = m.group(3)
+            user = m.group('user')
+            pswd = m.group('pswd')
     else:
         user = ''
         pswd = ''
-    #print "user:", user
-    #print "pswd:", pswd
-    #print
+    #debug(3, "decodeurl: %s decoded to:" % url)
+    #debug(3, "decodeurl: type = '%s'" % type)
+    #debug(3, "decodeurl: host = '%s'" % host)
+    #debug(3, "decodeurl: path = '%s'" % path)
+    #debug(3, "decodeurl: parm = '%s'" % parm)
+    #debug(3, "decodeurl: user = '%s'" % user)
+    #debug(3, "decodeurl: pswd = '%s'" % pswd)
     p = {}
     if parm:
         for s in parm.split(';'):
