@@ -120,7 +120,7 @@ def feeder(lineno, s, fn, d):
 		__infunc__ = m.group("func")
 		key = __infunc__
 		if m.group("py") is not None:
-			data.setVarFlag(key, "python", 1, d)
+			data.setVarFlag(key, "python", "1", d)
 		return
 
 	__word__ = re.compile(r"\S+")
@@ -130,18 +130,33 @@ def feeder(lineno, s, fn, d):
 		fns = m.group(1)
 		n = __word__.findall(fns)
 		for f in n:
-			var = f
+			allvars = []
+			allvars.append(f)
+			allvars.append("%s_%s" % (classes[-1], f))
+
+			vars = [[ allvars[0], allvars[1] ]]
 			if len(classes) > 1 and classes[-2] is not None:
-				var = "%s_%s" % (classes[-2], var)
-			data.setVarFlag(var, "func", 1, d)
-			if data.getVarFlag("%s_%s" % (classes[-1], f), "python", d) == 1:
-				data.setVarFlag(var, "python", 1, d)
-				data.setVar(var, """
-	from oe import build
-	build.exec_func('%s_%s', d)
-""" % (classes[-1], f), d)
-			else:
-				data.setVar(var, "\t%s_%s\n" % (classes[-1], f), d)
+				allvars.append("%s_%s" % (classes[-2], f))
+				vars = []
+				vars.append([allvars[2], allvars[1]])
+				vars.append([allvars[0], allvars[2]])
+
+			for (var, calledvar) in vars:
+				for flag in [ "func", "python", "dirs" ]:
+					__dirty = 0
+					if data.getVarFlag(var, flag, d):
+						__dirty = var
+					if data.getVarFlag(calledvar, flag, d):
+						__dirty = calledvar
+					if __dirty:
+						for v in allvars:
+							data.setVarFlag(v, flag, data.getVarFlag(__dirty, flag, d), d)
+				if data.getVarFlag(calledvar, "python", d):
+					data.setVar(var, """
+	return exec_func('%s', d)
+""" % calledvar, d)
+				else:
+					data.setVar(var, "\t%s\n" % calledvar, d)
 
 		return
 
