@@ -66,6 +66,12 @@ TODO:
 		    OE files rather than independent python scripts, we gain
 		    said ability, but we then have other concerns.
 		    (i.e. ...)
+	[x] Rootfs population .oe
+	[.] image creation .oe files that depend on virtual/rootfs
+		[.] tarball
+		[.] jffs2
+		[ ] cramfs
+		[ ] ext2
 
 [ ] Once we have the per package deployment code, write a staging oeclass
     that lets you use the FILES blocks for our deployment packages to do the
