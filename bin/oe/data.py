@@ -190,7 +190,9 @@ def emit_env(o=sys.__stdout__, d = _data):
 	oedir = getVar('OEDIR', d)
 	if oedir is None:
 		oedir = "." 
-	o.write('\nPATH="' + os.path.join(oedir, 'bin/build') + ':${PATH}"\n')
+	path = getVar('PATH', d)
+	path = os.path.join(oedir, 'bin/build') + ':' + path
+	setVar('PATH', path, d)
 
 	expandData(d)
 	env = d.keys()
