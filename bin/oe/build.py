@@ -163,7 +163,7 @@ def exec_func_shell(func, d):
     data.emit_env(f, d)
 
     f.write("cd %s\n" % os.getcwd())
-    if func: f.write("%s || exit $?\n" % func)
+    if func: f.write("%s\n" % func)
     f.close()
     os.chmod(runfile, 0775)
     if not func:
