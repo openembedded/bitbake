@@ -96,6 +96,28 @@ class RecursiveDep(DepBase):
 class MultipleProviders(PkgBase):
 	"""Multiple Providers"""
 
+class Spinner:
+    """Text spinner originally from:
+       http://cwashington.netreach.net/depo/view.asp?Index=103&ScriptType=python"""
+    def __init__(self, type=1):
+        if type == 0:
+            self.chars = ['.', 'o', 'O', 'o']
+        else:
+            self.chars = ['|', '/', '-', '\\', '-']
+        self.len  = len(self.chars)
+        self.curr = 0
+
+    def __str__(self):
+        str = self.char()
+        return("\b \b%s" % str)
+
+    def char(self):
+        self.curr = (self.curr + 1) % self.len
+        return self.chars[self.curr]
+
+    def done(self):
+        sys.stdout.write("\b \b")
+
 __build_cache_fail = []
 __build_cache = []
 def build(graph, item):
@@ -291,6 +313,9 @@ if not len(files):
 if not len(files):
 	usage()
 
+parsespin = Spinner()
+sys.stdout.write("NOTE: Parsing .oe files: %s" % parsespin.char())
+
 for f in files:
 	globbed = glob.glob(f) or [ f ]
 	if globbed:
@@ -300,6 +325,8 @@ for f in files:
 	# read a file's metadata
 	try:
 		debug(1, "oemake: parsing %s" % f)
+		sys.stdout.write("\b \b%s" % parsespin.char())
+		sys.stdout.flush()
 		pkgdata[f] = load_oefile(f, cfg)
 		deps = None
 		if pkgdata[f] is not None:
@@ -334,6 +361,8 @@ for f in files:
 	except IOError:
 		print "error opening %s" % f
 		pass
+
+sys.stdout.write("\n")
 
 # add every provide relationship to the dependency graph, depending
 # on all the packages that provide it
