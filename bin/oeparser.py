@@ -136,7 +136,7 @@ class ConfigReader(FileReader):
 		return ret
 
 	def include(self, file, new = None):
-		if self.fn == file: # prevent recursion
+		if self.fn == file: # prevent infinate recursion
 			return 1
 
 		if new is None:
