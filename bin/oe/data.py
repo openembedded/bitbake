@@ -370,13 +370,11 @@ def update_data(d = _data):
 			debug(1, "OVERRIDES not defined, nothing to do")
 			return
 		val = getVar(var, d)
-		flags = getVarFlags(var, d)
 		for o in overrides:
 			if var.endswith("_%s" % o):
-				l = len(o)+2
-				name = var[:l]
+				l = len(o)+1
+				name = var[:-l]
 				d[name] = d[var]
-
 
 	for s in d.keys():
 		applyOverrides(s, d)
