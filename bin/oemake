@@ -436,7 +436,7 @@ if __name__ == "__main__":
         __depcmd=make.options.cmd
 
     make.pkgdata = {}
-    make.cfg = {}
+    make.cfg = oe.data.init()
     providers = {}
 
     for f in make.options.file:

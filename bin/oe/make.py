@@ -18,7 +18,7 @@ except ImportError:
     print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
 pkgdata = {}
-cfg = {}
+cfg = data.init()
 cache = None
 digits = "0123456789"
 ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -58,7 +58,7 @@ def deps_clean(d):
 def load_oefile( oefile ):
     """Load and parse one .oe build file"""
 
-    if cache is not None:
+    if not cache in [None, '']:
         cache_oefile = oefile.replace( '/', '_' )
 
         try:
@@ -88,7 +88,7 @@ def load_oefile( oefile ):
     # expand tmpdir to include this topdir
     data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
     # add topdir to oepath
-    oepath = "%s:%s" % (topdir, oepath)
+    # oepath = "%s:%s" % (topdir, oepath)
     # set topdir to location of .oe file
     topdir = oefile_loc
     #data.setVar('TOPDIR', topdir, cfg)
@@ -101,7 +101,7 @@ def load_oefile( oefile ):
     oe = copy.deepcopy(cfg)
     try:
         parse.handle(oefile, oe) # read .oe data
-        if cache is not None: pickle_oe( cache_oefile, oe) # write cache
+        if not cache in [None, '']: pickle_oe( cache_oefile, oe) # write cache
         os.chdir(oldpath)
         return oe, False
     finally:
@@ -127,7 +127,7 @@ def collect_oefiles( progressCallback ):
     parsed, cached, skipped, masked = 0, 0, 0, 0
     global cache
     cache = oe.data.getVar( "CACHE", cfg, 1 )
-    if cache is not None:
+    if not cache in [None, '']:
         print "NOTE: Using cache in '%s'" % cache
         try:
             os.stat( cache )

@@ -5,7 +5,7 @@
 import sys, copy, oe, oe.parse, oe.build
 #from oe import *
 
-d = {}
+d = oe.data.init()
 d = oe.parse.handle("conf/oe.conf", d)
 
 if len(sys.argv) == 2:
