@@ -280,6 +280,7 @@ for f in files:
 	# read a file's metadata
 	try:
 		from copy import deepcopy
+		debug(1, "oemake: parsing %s" % f)
 		pkgdata[f] = load_oefile(f, cfg)
 		deps = None
 		if pkgdata[f] is not None:
