@@ -197,16 +197,15 @@ def do_fetch():
 	mkdirhier(getenv("DL_DIR"))	# create file download directory
 
 	if env.has_key('SRC_URI'):
-		grabber = oefetch.FetchUrls()
 		try:
-			grabber.init(getenv('SRC_URI').split())
+			oefetch.init(getenv('SRC_URI').split())
 		except oefetch.NoMethodError:
 			(type, value, traceback) = sys.exc_info()
 			fatal("No method: %s" % value)
 			return
 
 		try:
-			grabber.go()
+			oefetch.go()
 		except oefetch.MissingParameterError:
 			(type, value, traceback) = sys.exc_info()
 			fatal("Missing parameters: %s" % value)
