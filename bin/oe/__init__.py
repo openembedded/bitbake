@@ -1164,7 +1164,7 @@ class digraph:
 		children = [i for i in self.okeys if item in self.getparents(i)]
 		return children
 	
-	def walkdown(self, item, callback):
+	def walkdown(self, item, callback, debug = None):
 		__down_callback_cache = []
 		__recurse_count = 0
 		if not self.hasnode(item):
@@ -1177,13 +1177,18 @@ class digraph:
 		children = self.getchildren(item)
 		for p in parents:
 			if p in children:
-				print "%s is both parent and child of %s, aborting" % (p, item)
-				return 0
+#				print "%s is both parent and child of %s" % (p, item)
+				__down_callback_cache.append(p)
+				ret = callback(self, p)
+				if ret == 0:
+					return 0
+				continue
 			if item == p:
 				print "eek, i'm my own parent!"
 				return 0
-#			print "walkdown => item: %s, p: %s" % (item, p)
-			ret = self.walkdown(p, callback)
+			if debug:
+				print "item: %s, p: %s" % (item, p)
+			ret = self.walkdown(p, callback, debug)
 			if ret == 0:
 				return 0
 
@@ -1194,8 +1199,17 @@ class digraph:
 		if not self.hasnode(item):
 			return 0
 	
+		parents = self.getparents(item)
 		children = self.getchildren(item)
 		for c in children:
+			if c in parents:
+				ret = callback(self, item)
+				if ret == 0:
+					return 0
+				continue
+			if item == c:
+				print "eek, i'm my own child!"
+				return 0
 			ret = self.walkup(c, callback)
 			if ret == 0:
 				return 0
