@@ -30,7 +30,7 @@ classes = [ None, ]
 
 def supports(fn, d):
     localfn = localpath(fn, d)
-    return localfn[-3:] == ".oe" or localfn[-8:] == ".oeclass"
+    return localfn[-3:] == ".oe" or localfn[-8:] == ".oeclass" or localfn[-4:] == ".inc"
 
 def inherit(files, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or ""
