@@ -288,13 +288,13 @@ def decodeurl(url):
     else:
         user = ''
         pswd = ''
-    note("decodeurl: %s decoded to:" % url)
-    note("decodeurl: type = '%s'" % type)
-    note("decodeurl: host = '%s'" % host)
-    note("decodeurl: path = '%s'" % path)
-    note("decodeurl: parm = '%s'" % parm)
-    note("decodeurl: user = '%s'" % user)
-    note("decodeurl: pswd = '%s'" % pswd)
+    #note("decodeurl: %s decoded to:" % url)
+    #note("decodeurl: type = '%s'" % type)
+    #note("decodeurl: host = '%s'" % host)
+    #note("decodeurl: path = '%s'" % path)
+    #note("decodeurl: parm = '%s'" % parm)
+    #note("decodeurl: user = '%s'" % user)
+    #note("decodeurl: pswd = '%s'" % pswd)
     p = {}
     if parm:
         for s in parm.split(';'):
