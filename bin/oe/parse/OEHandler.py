@@ -16,7 +16,7 @@ __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
 __addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
-__def_regexp__	   = re.compile( r"def\s+.*:" )
+__def_regexp__           = re.compile( r"def\s+.*:" )
 __python_func_regexp__   = re.compile( r"\s+.*" )
 __word__ = re.compile(r"\S+")
 
@@ -107,7 +107,7 @@ def handle(fn, d = {}, include = 0):
         s = f.readline()
         if not s: break
         w = s.strip()
-        if not w: continue		# skip empty lines
+        if not w: continue      # skip empty lines
         s = s.rstrip()
         while s[-1] == '\\':
             s2 = f.readline()[:-1].strip()
@@ -193,7 +193,7 @@ def feeder(lineno, s, fn, d):
             __inpython__ = False
 #           fall through
 
-    if s[0] == '#': return		# skip comments
+    if s[0] == '#': return          # skip comments
 
     m = __func_start_regexp__.match(s)
     if m:

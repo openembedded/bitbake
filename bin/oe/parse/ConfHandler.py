@@ -127,9 +127,9 @@ def handle(fn, data = {}, include = 0):
         s = f.readline()
         if not s: break
         w = s.strip()
-        if not w: continue		# skip empty lines
+        if not w: continue          # skip empty lines
         s = s.rstrip()
-        if s[0] == '#': continue	# skip comments
+        if s[0] == '#': continue    # skip comments
         while s[-1] == '\\':
             s2 = f.readline()[:-1].strip()
             lineno = lineno + 1

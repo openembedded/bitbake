@@ -29,18 +29,18 @@
 #
 # Here is a sample pkglist file:
 #
-#    	native  -	       ipkg-native
-#    	native  -	       ipkg-utils
-#    	base    -	       autoconf			2.57
-#    	#base   -	       automake
-#    	#base   -	       libtool
-#    	base    ipk	       glibc
-#    	base    ipk	       ncurses
+#        native  -           ipkg-native
+#        native  -           ipkg-utils
+#        base    -           autoconf            2.57
+#        #base   -           automake
+#        #base   -           libtool
+#        base    ipk         glibc
+#        base    ipk         ncurses
 #
 # There are two other directives that we support so far:
 #
-#    	use <dir-or-file-to-search-for-oe-files>
-#    	ignore <dir-or-file-to-not-search>
+#        use <dir-or-file-to-search-for-oe-files>
+#        ignore <dir-or-file-to-not-search>
 #
 
 

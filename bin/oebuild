@@ -82,8 +82,8 @@ if len(args) == 0:
     cmd = get_cmd()
 elif len(args) == 1:
     # one of two cases:
-    #	1) oebuild COMMAND
-    #	2) oebuild OEFILE
+    #   1) oebuild COMMAND
+    #   2) oebuild OEFILE
     # First, see if this is a valid task.
     try:
         oedata = oe.make.load_oefile(args[0])
@@ -91,8 +91,8 @@ elif len(args) == 1:
         fatal("unable to read %s: %s" % (args[0], e))
     if not oedata:
         # If so, assume its a command.
-        # 	If its a command, but we cant get a .oe file
-        #	in the current dir, usage()
+        #   If its a command, but we cant get a .oe file
+        #   in the current dir, usage()
         cmd = args[0]
     else:
         # If not, assume a .oe file.
