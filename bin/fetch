@@ -2,10 +2,6 @@
 import oefetch
 from oe import *
 
-#a = oefetch.new(["http://www.openzaurus.org/official/toolchain/old/cross-2.95.3.tar.bz2", "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V-99-84"])
-#a.go()
-#oefetch.go()
-
 __oepath_found_it__ = 0
 
 for s in getenv('OEPATH').split(":"):
@@ -20,5 +16,8 @@ if __oepath_found_it__ == 0:
 	fatal("error locating conf/oe.conf")
 
 grabber = oefetch.FetchUrls()
-grabber.init(["http://www.openzaurus.org/official/toolchain/old/cross-2.95.3.tar.bz2", "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V-99-84"])
+urls = ["http://www.openzaurus.org/official/toolchain/old/cross-2.95.3.tar.bz2", "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V-99-84"]
+#urls = ["file:///tmp/test"]
+print "Obtaining urls: %s" % urls
+grabber.init(urls)
 grabber.go()
