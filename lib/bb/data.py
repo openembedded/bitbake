@@ -244,9 +244,10 @@ def expand(s, d = _data, varname = None):
             if type(s) is not types.StringType: # sanity check
                 import bb
                 bb.error('expansion of %s returned non-string %s' % (olds, s))
+        except KeyboardInterrupt:
+            raise
         except:
-            import bb
-            bb.note("%s:%s while evaluating:\n%s" % (sys.exc_info()[0], sys.exc_info()[1], s))
+            note("%s:%s while evaluating:\n%s" % (sys.exc_info()[0], sys.exc_info()[1], s))
             raise
     return s
 
@@ -326,7 +327,10 @@ def emit_var(var, o=sys.__stdout__, d = _data, all=False):
     except KeyboardInterrupt:
         raise
     except:
-        o.write('# expansion of %s threw %s\n' % (var, sys.exc_info()[0]))
+        excname = str(sys.exc_info()[0])
+        if excname == "bb.build.FuncFailed":
+            raise
+        o.write('# expansion of %s threw %s\n' % (var, excname))
         return 0
 
     if all:
