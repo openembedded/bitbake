@@ -81,7 +81,7 @@ endif
 
 syn keyword bbPythonFlag	python contained nextgroup=bbFunction
 syn match bbPythonFuncDef	"^\(python\s\+\)\(\w\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion skipwhite
-syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{\s*" end="^}\s*$" keepend contained contains=@python
+syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@python
 "hi def link bbPythonFuncRegion	Comment
 
 
@@ -93,7 +93,7 @@ endif
 
 syn keyword bbFakerootFlag	fakeroot contained nextgroup=bbFunction
 syn match bbShellFuncDef	"^\(fakeroot\s*\)\?\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbFakerootFlag,bbFunction,bbDelimiter nextgroup=bbShellFuncRegion skipwhite
-syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{\s*" end="^}\s*$" keepend contained contains=@shell
+syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@shell
 "hi def link bbShellFuncRegion	Comment
 
 
@@ -103,7 +103,7 @@ syn keyword bbDef	def	contained
 syn match bbDefCmd		"^def" contains=bbDef skipwhite nextgroup=bbDefFunc
 syn match bbDefFunc		"\w\+" contains=bbFunction contained skipwhite nextgroup=bbDefArgs
 syn region bbDefArgs		matchgroup=bbDelimiter start="(" end=")" excludenl contained skipwhite keepend contains=bbIdentifier nextgroup=bbDefRegion
-syn region bbDefRegion		matchgroup=bbDelimiter start=":$" end='^\(\s\|$\)\@!' contained contains=@python
+syn region bbDefRegion		matchgroup=bbDelimiter start=":\s*$" end='^\(\s\|$\)\@!' contained contains=@python
 
 
 " BitBake statements
