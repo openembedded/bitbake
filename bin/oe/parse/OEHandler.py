@@ -6,7 +6,7 @@
    Reads the file and obtains its metadata"""
 
 import re, oe, os, sys
-import oe.fetch
+import oe.fetch, oe.build
 from oe import debug, data, fetch, fatal
 
 from oe.parse.ConfHandler import include, localpath, obtain, init
