@@ -557,3 +557,4 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:
         print "\nNOTE: KeyboardInterrupt - Build not completed."
+        sys.exit(1)
