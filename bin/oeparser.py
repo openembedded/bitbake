@@ -9,10 +9,10 @@ Copyright: (c) 2003 Chris Larson
 Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
-import os, re
-from oe import expand, debug
+import os, re, string, sys
+from oe import expand, debug, fatal, inherit_os_env, getenv, setenv
 
-class FileReader:
+class FileReader(object):
 	"""Generic configuration file reader that opens a file, reads the lines,
 	handles continuation lines, comments, empty lines and feed all read lines
 	into the feeder method.
@@ -21,14 +21,21 @@ class FileReader:
 		self.fn = filename
 		self.data = {}
 
-		if self.fn:
-			self.reader()
-
 	def setFn(self, fn):
-		self.fn = fn
+		self.__fn = fn
 
 	def getFn(self):
-		return self.fn
+		return self.__fn
+
+	fn = property(getFn, setFn, None, "Filename property")
+
+	def getData(self):
+		return self.__data
+
+	def setData(self, data):
+		self.__data = data
+
+	data = property(getData, setData, None, "Data property")
 
 	def reader(self):
 		"""Generic configuration file reader that opens a file, reads the lines,
@@ -53,9 +60,6 @@ class FileReader:
 	def feeder(self, lineno, s):
 		self.data[lineno] = s
 
-	def getData(self):
-		return self.data
-
 class ConfigReader(FileReader):
 	"""Reads an OpenEmbedded format configuration file"""
 
@@ -77,6 +81,11 @@ class ConfigReader(FileReader):
 		self.data = {}
 		self.data["envflags"] = {}
 		self.data["env"] = {}
+		projectdir = os.getcwd()
+		self.env['TOPDIR'] = projectdir
+		self.env['OEDIR'] = os.path.join(sys.prefix, "share/oe")
+		self.env['OEPATH'] = "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}"
+		inherit_os_env(1, self.env)
 # matches "VAR = VALUE"
 		self.config_regexp  = re.compile( r"(?P<exp>export\s*)?(?P<var>\w+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 
@@ -85,24 +94,37 @@ class ConfigReader(FileReader):
 		self.cacheCheck = self.defaultChecker
 		self.cacheAdd = self.defaultAdder
 
-		if self.fn:
-			self.reader()
-
 	def setCacheCheck(self, cachechecker):
 		"""Set config cache check function to a user supplied function."""
-		self.cacheCheck = cachechecker
+		self.__cacheCheck = cachechecker
 
 	def getCacheCheck(self):
 		"""Return config cache check function"""
-		return self.cacheCheck
+		return self.__cacheCheck
+
+	cacheCheck = property(getCacheCheck, setCacheCheck, None, "cacheCheck property")
 
 	def setCacheAdd(self, cacheadd):
 		"""Set config cache add function to a user supplied function."""
-		self.cacheAdd = cacheadd
+		self.__cacheAdd = cacheadd
 
 	def getCacheAdd(self):
 		"""Return config cache add function"""
-		return self.cacheAdd
+		return self.__cacheAdd
+
+	cacheAdd = property(getCacheAdd, setCacheAdd, None, "cacheAdd property")
+
+	def getEnv(self):
+		"""Returns 'env' data"""
+		return self.data["env"]
+
+	env = property(getEnv, None, None, "Env property")
+
+	def getEnvflags(self):
+		"""Returns 'envflags' data"""
+		return self.data["envflags"]
+
+	envflags = property(getEnvflags, None, None, "Envflags property")
 
 	def reader(self):
 		"""Reimplemented reader function.  Implements [optional] config
@@ -111,6 +133,22 @@ class ConfigReader(FileReader):
 				return
 		ret = FileReader.reader(self)
 		self.cacheAdd(self.fn)
+		return ret
+
+	def include(self, file, new = None):
+		if self.fn == file: # prevent recursion
+			return 1
+
+		if new is None:
+			new = ConfigReader()
+		new.fn = file
+		new.cacheCheck = self.cacheCheck
+		new.cacheAdd = self.cacheAdd
+		ret = new.reader()
+		for i in new.env.keys():
+			self.env[i] = new.env[i]
+		for i in new.envflags.keys():
+			self.envflags[i] = new.envflags[i]
 		return ret
 
 	def feeder(self, lineno, s):
@@ -134,29 +172,96 @@ class ConfigReader(FileReader):
 		if m:
 			s = expand(m.group(1), self.data["env"])
 			if os.access(s, os.R_OK):
-#				if level==0:
-#					inherit_os_env(2)
-				included = ConfigReader()
-				included.setFn(s)
-				included.setCacheCheck(self.cacheCheck)
-				included.setCacheAdd(self.cacheAdd)
-				included.reader()
-				for i in included.env().keys():
-					self.data["env"][i] = included.env()[i]
-				for i in included.envflags().keys():
-					self.data["envflags"][i] = included.envflags()[i]
-
-#				__read_config__(s, level+1)
+				print "including %s" % s
+				inherit_os_env(2, self.env)
+				self.include(s, ConfigReader())
 			else:
 				debug(1, "%s:%d: could not import %s" % (self.fn, lineno, s))
 			return
 
-		print lineno, s
+class PackageReader(ConfigReader):
+	"""Reads an OpenEmbedded format package metadata file"""
 
-	def getEnv(self):
-		"""Returns 'env' data"""
-		return self.data["env"]
+	def __init__(self, filename = ""):
+		# regular expressions
+		self.func_start_regexp = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
+		self.inherit_regexp = re.compile( r"inherit\s+(.+)" )
+                self.export_func_regexp = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 
-	def getEnvflags(self):
-		"""Returns 'envflags' data"""
-		return self.data["envflags"]
+		# state variables
+		self.__infunc = ""
+		self.__body   = []
+		self.__oepath_found = 0
+
+		ConfigReader.__init__(self, filename)
+
+		# need access to global OE config data
+		self.cfgenv = self.env
+
+	def classname(self, fn):
+		(base, ext) = os.path.splitext(os.path.basename(fn))
+		return base
+
+	def getCfgEnv(self):
+		"""Returns config 'env' data"""
+		return self.__config
+
+	def setCfgEnv(self, cfgenv):
+		"""Sets config 'env' data"""
+		self.__config = cfgenv
+
+	cfgenv = property(getCfgEnv, setCfgEnv, None, "CfgEnv property")
+
+	def feeder(self, lineno, s):
+		"""OpenEmbedded package metadata 'feeder'"""
+
+		if self.__infunc:
+			if s == '}':
+				self.__body.append('')
+				self.env[self.__infunc] = string.join(self.__body, '\n')
+				self.__infunc = ""
+				self.__body = []
+			else:
+				self.__body.append(s)
+			return
+
+		m = self.func_start_regexp.match(s)
+		if m:
+			self.__infunc = m.group(1)
+			return
+
+		__word__ = re.compile(r"\S+")
+
+		m = self.export_func_regexp.match(s)
+		if m:
+			fns = m.group(1)
+			n = __word__.findall(fns)
+			for f in n:
+				setenv(f, "\t%s_%s\n" % (self.classname(self.fn), f), self.env)
+			return
+
+		m = self.inherit_regexp.match(s)
+		if m:
+			files = m.group(1)
+			n = __word__.findall(files)
+			for f in n:
+				file = expand(expand(f, self.env), self.cfgenv)
+				if file[0] != "/":
+					if self.cfgenv.has_key('OEPATH'):
+						self.__oepath_found = 0
+						for dir in expand(self.cfgenv['OEPATH'], self.env).split(":"):
+							if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
+								file = os.path.join(dir, "classes",file + ".oeclass")
+								self.__oepath_found = 1
+					if self.__oepath_found == 0:
+						debug(1, "unable to locate %s in OEPATH"  % file)
+
+				print "inherit: loading %s" % file
+				if os.access(file, os.R_OK):
+#					inherit_os_env(2, self.env)
+					self.include(file, PackageReader())
+				else:
+					debug(1, "%s:%d: could not import %s" % (self.fn, lineno, file))
+			return
+
+		return ConfigReader.feeder(self, lineno, s)
