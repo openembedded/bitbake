@@ -119,6 +119,9 @@ def handle(fn, d = {}, include = 0):
             i[0:0] = ["base"]
         inherit(i, d)
 
+    bbpath.insert(0, os.path.dirname(fn))
+    data.setVar('BBPATH', ":".join(bbpath), d)
+
     lineno = 0
     while 1:
         lineno = lineno + 1

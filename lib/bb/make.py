@@ -93,8 +93,6 @@ def load_bbfile( bbfile ):
             if deps_clean(cache_data):
                 return cache_data, True
 
-    bbpath = data.getVar('BBPATH', cfg)
-    safebbpath = data.getVar('BBPATH', cfg)
     topdir = data.getVar('TOPDIR', cfg)
     if not topdir:
         topdir = os.path.abspath(os.getcwd())
@@ -104,17 +102,12 @@ def load_bbfile( bbfile ):
     bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
     # expand tmpdir to include this topdir
     data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
-    # add topdir to bbpath
-    # bbpath = "%s:%s" % (topdir, bbpath)
     # set topdir to location of .bb file
     topdir = bbfile_loc
     #data.setVar('TOPDIR', topdir, cfg)
-    # add that topdir to bbpath
-    bbpath = "%s:%s" % (topdir, bbpath)
     # go there
     oldpath = os.path.abspath(os.getcwd())
     os.chdir(topdir)
-    data.setVar('BBPATH', bbpath, cfg)
     bb = copy.deepcopy(cfg)
     try:
         parse.handle(bbfile, bb) # read .bb data
@@ -123,7 +116,6 @@ def load_bbfile( bbfile ):
         return bb, False
     finally:
         os.chdir(oldpath)
-        data.setVar('BBPATH', safebbpath, cfg)
 
 def pickle_bb( bbfile, bb ):
     p = pickle.Pickler( file( "%s/%s" % ( cache, bbfile ), "wb" ), -1 )

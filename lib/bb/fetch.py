@@ -549,6 +549,11 @@ class Svn(Fetch):
             else:
                 method = "pserver"
 
+            if "proto" in parm:
+                proto = parm["proto"]
+            else:
+                proto = "svn"
+
             svn_rsh = None
             if method == "ext":
                 if "rsh" in parm:
@@ -587,10 +592,10 @@ class Svn(Fetch):
             bb.data.setVar('SVNCOOPTS', " ".join(options), localdata)
             bb.data.setVar('SVNMODULE', module, localdata)
             svncmd = bb.data.getVar('FETCHCOMMAND', localdata, 1)
-            svncmd = "svn co http://%s/%s" % (svnroot, module)
+            svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
 
             if revision:
-                svncmd = "svn co -r %s http://%s/%s" % (revision, svnroot, module)
+                svncmd = "svn co -r %s %s://%s/%s" % (proto, revision, svnroot, module)
             if svn_rsh:
                 svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
 
