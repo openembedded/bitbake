@@ -297,6 +297,8 @@ def emit_var(var, o=sys.__stdout__, d = _data, all=False):
 		if all:
 			oval = getVar(var, d, 0)
 		val = getVar(var, d, 1)
+	except KeyboardInterrupt:
+		raise
 	except:
 		o.write('# expansion of %s threw %s\n' % (var, sys.exc_info()[0]))
 		return 0
