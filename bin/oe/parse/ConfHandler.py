@@ -104,6 +104,7 @@ def handle(fn, data = {}, include = 0):
 			currname = os.path.join(oe.data.expand(p, data), fn)
 			if os.access(currname, os.R_OK):
 				f = open(currname, 'r')
+				abs_fn = currname
 				debug(1, "CONF %s %s" % (inc_string, currname))
 				break
 		if f is None:
@@ -111,6 +112,11 @@ def handle(fn, data = {}, include = 0):
 	else:
 		f = open(fn,'r')
 		debug(1, "CONF %s %s" % (inc_string,fn))
+		abs_fn = fn
+
+	if include:
+		oe.parse.mark_dependency(data, abs_fn)
+		
 	lineno = 0
 	oe.data.setVar('FILE', fn, data)
 	while 1:

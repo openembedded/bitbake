@@ -79,12 +79,17 @@ def handle(fn, d = {}, include = 0):
 			p = data.expand(p, d)
 			j = os.path.join(p, fn)
 			if os.access(j, os.R_OK):
+				abs_fn = j
 				f = open(j, 'r')
 				break
 		if f is None:
 			raise IOError("file not found")
 	else:
 		f = open(fn,'r')
+		abs_fn = fn
+
+	if include:
+		oe.parse.mark_dependency(d, abs_fn)
 
 	if ext != ".oeclass":
 		data.setVar('FILE', fn, d)

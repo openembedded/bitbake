@@ -21,6 +21,7 @@ cfg = {}
 cache = None
 digits = "0123456789"
 ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+mtime_cache = {}
 
 def get_oefiles( path = os.getcwd() ):
     """Get list of default .oe files by reading out the current directory"""
@@ -41,6 +42,16 @@ def find_oefiles( path ):
         return []
     return finddata.readlines()
 
+def deps_clean(d):
+    deps = (data.getVar('__depends', d) or "").split(" ")
+    for dep in deps:
+        (f,old_mtime_s) = dep.split("@")
+        old_mtime = int(old_mtime_s)
+        new_mtime = parse.cached_mtime(f)
+        if (new_mtime > old_mtime):
+            return False
+    return True
+
 def load_oefile( oefile ):
     """Load and parse one .oe build file"""
 
@@ -51,14 +62,16 @@ def load_oefile( oefile ):
             cache_mtime = os.stat( "%s/%s" % ( cache, cache_oefile ) )[8]
         except OSError:
             cache_mtime = 0
-        file_mtime = os.stat( oefile )[8]
+        file_mtime = parse.cached_mtime(oefile)
 
         if file_mtime > cache_mtime:
             #print " : '%s' dirty. reparsing..." % oefile
             pass
         else:
             #print " : '%s' clean. loading from cache..." % oefile
-            return unpickle_oe( cache_oefile )
+            cache_data = unpickle_oe( cache_oefile )
+            if deps_clean(cache_data):
+                return cache_data
 
     oepath = data.getVar('OEPATH', cfg)
     topdir = data.getVar('TOPDIR', cfg)
