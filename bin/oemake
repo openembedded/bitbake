@@ -126,7 +126,7 @@ def try_build(fn, virtual):
             oe.error("task stack execution failed")
             oe.event.fire(oe.event.PkgFailed(item, make.pkgdata[fn]))
             __build_cache_fail.append(fn)
-            return False
+            raise
         except oe.build.EventException:
             __stats["fail"] += 1
             (type, value, traceback) = sys.exc_info()
@@ -134,7 +134,7 @@ def try_build(fn, virtual):
             oe.error("%s event exception, aborting" % oe.event.getName(e))
             oe.event.fire(oe.event.PkgFailed(item, make.pkgdata[fn]))
             __build_cache_fail.append(fn)
-            return False
+            raise
     finally:
         __building_list.remove(fn)
         __build_path.remove(pathstr)
