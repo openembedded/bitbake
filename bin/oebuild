@@ -41,38 +41,6 @@ def get_cmd():
 	"""Get default command, currently always 'build'"""
 	return "build"
 
-def load_oefile(oefile, cfgdata):
-	"""Loads one *.oe file and returns the contents as a dictionary"""
-	oepath = data.getVar('OEPATH', cfg)
-	topdir = data.getVar('TOPDIR', cfg)
-	if not topdir:
-		topdir = os.path.abspath(os.getcwd())
-		# set topdir to here
-		data.setVar('TOPDIR', topdir, cfg)
-	oefile = os.path.abspath(oefile)
-	oefile_loc = os.path.abspath(os.path.dirname(oefile))
-	# expand tmpdir to include this topdir
-	data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
-	# add topdir to oepath
-	oepath += ":%s" % topdir
-	# set topdir to location of .oe file
-	topdir = oefile_loc
-	#data.setVar('TOPDIR', topdir, cfg)
-	# add that topdir to oepath
-	oepath += ":%s" % topdir
-	# go there
-	os.chdir(topdir)
-	data.setVar('OEPATH', oepath, cfg)
-	oe = copy.copy(cfgdata)
-	from oe.parse import ParseError
-	try:
-		oe = parse.handle(oefile, oe) # read .oe data
-		return oe
-	except Exception, e:
-		error("%s" % e)
-		return None
-
-
 #
 # Handle options:
 #
@@ -98,11 +66,9 @@ if '--help' in optsonly or '-h' in optsonly:
 oefile = None
 cmd = None
 oedata = None
-cfg = data.init()
-graph = digraph()
 
 try:
-	cfg = parse.handle("conf/oe.conf", cfg)
+	make.cfg = parse.handle("conf/oe.conf", make.cfg)
 except IOError:
 	(type, value, traceback) = sys.exc_info()
 	fatal("Unable to open oe.conf: %s" % value)
@@ -117,7 +83,7 @@ elif len(args) == 1:
 	#	1) oebuild COMMAND
 	#	2) oebuild OEFILE
 	# First, see if this is a valid task.
-	oedata = load_oefile(args[0], cfg)
+	oedata = oe.make.load_oefile(args[0])
 	if not oedata:
 		# If so, assume its a command.
 		# 	If its a command, but we cant get a .oe file
@@ -147,7 +113,7 @@ if not oefile:
 	usage(1)
 
 if not oedata:
-	oedata = load_oefile(oefile, cfg)
+	oedata = make.load_oefile(oefile)
 
 if not oedata:
 	fatal("Unable to open %s" % oefile)
