@@ -102,13 +102,6 @@ pkgs = {}
 cfg = {}
 graph = digraph()
 
-parse.init(".conf", cfg)
-data.setVarFlag("OEFILES", "inherit", "1", cfg)
-data.setVarFlag("OEDIR", "inherit", "1", cfg)
-data.setVarFlag("OEPATH", "inherit", "1", cfg)
-data.setVarFlag("PATH", "inherit", "1", cfg)
-data.inheritFromOS(1, cfg)
-
 try:
 	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
 except IOError:
