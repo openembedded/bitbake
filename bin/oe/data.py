@@ -341,7 +341,7 @@ def update_data(d = _data):
 				dodel.append(name)
 
 	# delete all environment vars no longer needed
-#	for s in dodel:
-#		delVar(s, d)
+	for s in dodel:
+		delVar(s, d)
 
 	inheritFromOS(5)
