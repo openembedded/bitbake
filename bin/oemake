@@ -2,8 +2,18 @@
 
 import string, sys, os, getopt, glob, copy
 sys.path.append('/usr/share/oe')
-from oe import *
 import oe
+from oe import *
+try:
+    import itertools
+except ImportError: # itertools appears in Python 2.3
+    from utils import itertools
+try:
+    import optparse
+except ImportError: # optparse appears in Python 2.3
+    from utils import optparse
+
+__version__ = 1.1
 
 class PkgBase(event.Event):
 	"""Base class for package events"""
@@ -71,7 +81,7 @@ class DepBase(PkgBase):
 		self._dep = dep
 
 	dep = property(getDep, setDep, None, "dep property")
-	
+
 class PkgStarted(PkgBase):
 	"""Package build started"""
 
@@ -96,30 +106,9 @@ class RecursiveDep(DepBase):
 class MultipleProviders(PkgBase):
 	"""Multiple Providers"""
 
-class Spinner:
-    """Text spinner originally from:
-       http://cwashington.netreach.net/depo/view.asp?Index=103&ScriptType=python"""
-    def __init__(self, type=1):
-        if type == 0:
-            self.chars = ['.', 'o', 'O', 'o']
-        else:
-            self.chars = ['|', '/', '-', '\\', '-']
-        self.len  = len(self.chars)
-        self.curr = 0
-
-    def __str__(self):
-        str = self.char()
-        return("\b \b%s" % str)
-
-    def char(self):
-        self.curr = (self.curr + 1) % self.len
-        return self.chars[self.curr]
-
-    def done(self):
-        sys.stdout.write("\b \b")
-
 __build_cache_fail = []
 __build_cache = []
+
 def build(graph, item):
 	if item in __build_cache:
 		return 1
@@ -128,7 +117,7 @@ def build(graph, item):
 	fn = pkgs[item][1]
 	if fn is None:
 		return 1
-	command = cmd
+	command = options.cmd
 	debug(1, "oebuild %s %s" % (command, fn))
 	event.fire(PkgStarted(item, pkgdata[fn]))
 	try:
@@ -151,50 +140,6 @@ def build(graph, item):
 		__build_cache_fail.append(item)
 		del pkgdata[fn]
 		return 0
-#	opts = ""
-#	if force:
-#		opts += " --force"
-#	ret = os.system("oebuild %s %s %s" % (opts, command, fn))
-#	if ret == 0:
-#		event.fire(PkgSucceeded(item, pkgdata[fn]))
-#		__build_cache.append(item)
-#		return 1
-#	else:
-#		event.fire(PkgFailed(item, pkgdata[fn]))
-#		__build_cache_fail.append(item)
-#		return 0
-
-def getopthash(l):
-	h = {}
-	for (opt, val) in l:
-		h[opt] = val
-	return h
-
-def usage():
-	print
-	print "Usage: oemake [options] [package ...]"
-	print ""
-	print "Builds specified packages, expecting that the .oe files"
-	print "it has to work from are in OEFILES"
-	print "Default packages are all packages in OEFILES."
-	print "Default OEFILES are the .oe files in the current directory."
-	print
-	print "Options:"
-	print "  %s\t\t%s" % ("-V, --version", "output version information and exit")
-	print "  %s\t\t%s" % ("-c [arg], --cmd [arg]", "specify command to pass to oebuild")
-	print "  %s\t\t%s" % ("-k", "continue as much as possible after an error")
-	print "  %s\t\t%s" % ("-f, --force", "force run of specified cmd, regardless of status")
-	print
-	print "Examples:"
-	print "\toemake glibc"
-	print "\toemake ncurses-5.3"
-	print
-	sys.exit(0)
-
-__version__ = 1.1
-def version():
-	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
-	print "OEMake version %s" % __version__
 
 def get_oefiles():
 	"""Get default oefiles"""
@@ -238,56 +183,45 @@ def load_oefile(oefile, cfgdata):
 		return None
 
 
+def handle_options( args ):
+        parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ),
+        usage = """%prog [options] [package ...]
+
+Builds specified packages, expecting that the .oe files
+it has to work from are in OEFILES
+Default packages are all packages in OEFILES.
+Default OEFILES are the .oe files in the current directory.""" )
+
+        parser.add_option( "-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
+                           action = "store_false", dest = "abort", default = True )
+
+        parser.add_option( "-f", "--force", help = "force run of specified cmd, regardless of stamp status",
+                           action = "store_true", dest = "force", default = False )
+
+
+        parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild",
+                           action = "store", dest = "cmd", default = "build" )
+
+        options, args = parser.parse_args( args )
+        return options, args[1:]
+
 #
-# Handle options
+# main
 #
 
-try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'Vc:fka', [ 'version', 'cmd=', 'abort', 'force' ])
-except getopt.GetoptError:
-	usage()
-
-optsonly = [ opt for (opt,val) in opts]
-cmd = None
-
-opthash = getopthash(opts)
-
-if '--version' in opthash or '-V' in opthash:
-	version()
-	sys.exit(0)
-
-if '-k' in opthash:
-	abort = 0
-else:
-	if '--abort' in opthash or '-a' in opthash:
-		oe.note("Using deprecated --abort/-a commandline option.")
-		oe.note("This option is no longer necessary, as abort on failure is default.")
-	abort = 1
-
-if '--force' in opthash or '-f' in opthash:
-	force = 1
-else:
-	force = 0
-
-if '--cmd' in opthash:
-	cmd = opthash['--cmd']
-if '-c' in opthash:
-	cmd = opthash['-c']
-
-
-
+options, args = handle_options( sys.argv )
 
 _depcmds = { "clean": None,
 	     "mrproper": None,
 	     "build": "stage" }
 
-if not cmd:
-	cmd = "build"
+if not options.cmd:
+	options.cmd = "build"
 
-if cmd in _depcmds:
-	depcmd=_depcmds[cmd]
+if options.cmd in _depcmds:
+	depcmd=_depcmds[options.cmd]
 else:
-	depcmd=cmd
+	depcmd=options.cmd
 
 pkgdata = {}
 pkgs = {}
@@ -319,8 +253,8 @@ if not len(files):
 if not len(files):
 	usage()
 
-parsespin = Spinner()
-sys.stdout.write("NOTE: Parsing .oe files: %s" % parsespin.char())
+parsespin = itertools.cycle( r'|/-\-' )
+sys.stdout.write("NOTE: Parsing .oe files: %s" % parsespin.next())
 
 for f in files:
 	globbed = glob.glob(f) or [ f ]
@@ -331,7 +265,7 @@ for f in files:
 	# read a file's metadata
 	try:
 		debug(1, "oemake: parsing %s" % f)
-		sys.stdout.write("\b \b%s" % parsespin.char())
+		sys.stdout.write("\b \b%s" % parsespin.next())
 		sys.stdout.flush()
 		pkgdata[f] = load_oefile(f, cfg)
 		deps = None
@@ -421,11 +355,11 @@ debug(1, "building: %s" % pkgs_to_build)
 for k in pkgs_to_build:
 	if k in pkgs:
 		ret = graph.walkdown(k, build)
-		if abort and not ret:
+		if options.abort and not ret:
 			fatal("Build of %s failed, aborting." % k)
 	else:
 		error("Unable to build %s: no .oe file provides it." % k)
-		if abort:
+		if options.abort:
 			sys.exit(1)
 
 event.fire(BuildCompleted(buildname, graph.okeys, cfg))
