@@ -10,26 +10,26 @@ cfgkeys = cfg.keys()
 cfgkeys.sort()
 
 if len(sys.argv) == 2:
-	oefile = copy.deepcopy(cfg)
-	try:
-		oefile = oe.parse.handle(sys.argv[1], oefile)
-	except Exception, e:
-		oe.fatal("%s" % e)
-	oefilekeys = oefile.keys()
-	oefilekeys.sort()
-	print "Variables in %s:" % sys.argv[1]
-	for k in oefilekeys:
-		if k.startswith('base_'): continue
-		if k.startswith('FILES_'): continue
-		if k.startswith('do_'): continue
-		if k.startswith('oe'): continue
-		if k in cfg:
-			if cfg[k] == oefile[k]:
-				continue
-		if 'content' in oefile[k]:
-			print k,'=',oe.data.expand(oefile[k]['content'], oefile)
+    oefile = copy.deepcopy(cfg)
+    try:
+        oefile = oe.parse.handle(sys.argv[1], oefile)
+    except Exception, e:
+        oe.fatal("%s" % e)
+    oefilekeys = oefile.keys()
+    oefilekeys.sort()
+    print "Variables in %s:" % sys.argv[1]
+    for k in oefilekeys:
+        if k.startswith('base_'): continue
+        if k.startswith('FILES_'): continue
+        if k.startswith('do_'): continue
+        if k.startswith('oe'): continue
+        if k in cfg:
+            if cfg[k] == oefile[k]:
+                continue
+        if 'content' in oefile[k]:
+            print k,'=',oe.data.expand(oefile[k]['content'], oefile)
 else:
-	print "Variables in conf/oe.conf & friends:"
-	for k in cfgkeys:
-		print "%-30s %s" % (k, cfg[k])
+    print "Variables in conf/oe.conf & friends:"
+    for k in cfgkeys:
+        print "%-30s %s" % (k, cfg[k])
 

@@ -3,33 +3,33 @@
 import os, sys, stat, daemon, time
 
 if not "OEFILES" in os.environ:
-	sys.exit(1)
+    sys.exit(1)
 
 olddir=os.getcwd()
 delay=30
 
 files = []
 for file in os.environ["OEFILES"].split():
-	file = os.path.abspath(file)
-	if os.access(file, os.R_OK):
-		print "%s" % file
-		files.append([file, None])
+    file = os.path.abspath(file)
+    if os.access(file, os.R_OK):
+        print "%s" % file
+        files.append([file, None])
 
 daemon.daemonize("/home/kergoth/out", "/home/kergoth/err", "/dev/null")
 
 os.chdir(olddir)
 
 def runOEMake():
-	os.system("oemake")
+    os.system("oemake")
 
 while 1:
-	__dirty = 0
-	for file in files:
-		time = os.stat(file[0])[stat.ST_MTIME]
-		if file[1] is None or time != file[1]:
-			__dirty = 1
-			file[1] = time
-	if __dirty == 1:
-		runOEMake()
+    __dirty = 0
+    for file in files:
+        time = os.stat(file[0])[stat.ST_MTIME]
+        if file[1] is None or time != file[1]:
+            __dirty = 1
+            file[1] = time
+    if __dirty == 1:
+        runOEMake()
 
-	time.sleep(delay)
+    time.sleep(delay)

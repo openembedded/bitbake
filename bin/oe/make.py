@@ -1,4 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python
+# ex:ts=4:sw=4:tw=78:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 """
 OpenEmbedded 'Make' implementations
 
@@ -178,48 +180,48 @@ def collect_oefiles( progressCallback ):
             pass
 
 def explode_version(s):
-        import string
-        r = []
-        alpha_regexp = re.compile('^([a-zA-Z]+)(.*)$')
-        numeric_regexp = re.compile('^(\d+)(.*)$')
-        while (s != ''):
-            if s[0] in digits:
-                m = numeric_regexp.match(s)
-                r.append(int(m.group(1)))
-                s = m.group(2)
-                continue
-            if s[0] in ascii_letters:
-                m = alpha_regexp.match(s)
-                r.append(m.group(1))
-                s = m.group(2)
-                continue
-            s = s[1:]
-        return r
+    import string
+    r = []
+    alpha_regexp = re.compile('^([a-zA-Z]+)(.*)$')
+    numeric_regexp = re.compile('^(\d+)(.*)$')
+    while (s != ''):
+        if s[0] in digits:
+            m = numeric_regexp.match(s)
+            r.append(int(m.group(1)))
+            s = m.group(2)
+            continue
+        if s[0] in ascii_letters:
+            m = alpha_regexp.match(s)
+            r.append(m.group(1))
+            s = m.group(2)
+            continue
+        s = s[1:]
+    return r
 
 def vercmp_part(a, b):
-        va = explode_version(a)
-        vb = explode_version(b)
-        while True:
-            if va == []:
-                ca = None
-            else:
-                ca = va.pop(0)
-            if vb == []:
-                cb = None
-            else:
-                cb = vb.pop(0)
-            if ca == None and cb == None:
-                return 0
-            if ca > cb:
-                return 1
-            if ca < cb:
-                return -1
+    va = explode_version(a)
+    vb = explode_version(b)
+    while True:
+        if va == []:
+            ca = None
+        else:
+            ca = va.pop(0)
+        if vb == []:
+            cb = None
+        else:
+            cb = vb.pop(0)
+        if ca == None and cb == None:
+            return 0
+        if ca > cb:
+            return 1
+        if ca < cb:
+            return -1
 
 def vercmp(ta, tb):
-        (va, ra) = ta
-        (vb, rb) = tb
+    (va, ra) = ta
+    (vb, rb) = tb
 
-        r = vercmp_part(va, vb)
-        if (r == 0):
-            r = vercmp_part(ra, rb)
-        return r
+    r = vercmp_part(va, vb)
+    if (r == 0):
+        r = vercmp_part(ra, rb)
+    return r
