@@ -10,7 +10,7 @@ Copyright: (c) 2003 Chris Larson
 Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
-import sys, os, time
+import sys, os, time, types
 if sys.argv[0][-5:] == "pydoc":
 	path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:
@@ -213,11 +213,10 @@ def expand(s, d = _data):
 		import oe
 		locals()['d'] = d
 		s = eval(code)
-		import types
 		if type(s) == types.IntType: s = str(s)
 		return s
 
-	if s is None: # sanity check
+	if type(s) is not types.StringType: # sanity check
 		return s
 
 	while s.find('$') != -1:
@@ -259,7 +258,7 @@ def expandData(alterdata = _data, readdata = None):
 
 	for key in alterdata.keys():
 		val = getVar(key, alterdata)
-		if val is None:
+		if type(val) is not types.StringType:
 			continue
 		expanded = expand(val, readdata)
 #		print "key is %s, val is %s, expanded is %s" % (key, val, expanded)
@@ -298,8 +297,8 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 		return 0
 
 	val = getVar(var, d, 1)
-	if val is None:
-		debug(2, "Warning, %s variable is None, not emitting" % var)
+	if type(val) is not types.StringType:
+		debug(2, "Warning, %s variable is not a string, not emitting" % var)
 		return 0
 
 	if var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1:
