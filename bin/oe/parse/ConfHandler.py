@@ -202,7 +202,7 @@ def obtain(fn, data = {}):
 	return localfn
 
 
-def include(oldfn, fn, orig_fn, orig_lineno, data = {}):
+def include(oldfn, fn, data = {}):
 	if oldfn == fn: # prevent infinate recursion
 		return None
 
@@ -214,7 +214,7 @@ def include(oldfn, fn, orig_fn, orig_lineno, data = {}):
 	try:
 		ret = handle(fn, data, 1)
 	except IOError:
-		debug(2, "CONF %s:%d: file '%s' not found" % (orig_fn, orig_lineno, fn))
+		debug(2, "CONF file '%s' not found" % fn)
 
 def handle(fn, data = {}, include = 0):
 	if include:
@@ -281,7 +281,7 @@ def feeder(lineno, s, fn, data = {}):
 		s = oe.data.expand(m.group(1), data)
 		#debug(2, "CONF %s:%d: including %s" % (fn, lineno, s))
 		oe.data.inheritFromOS(2, data)
-		include(fn, s, fn, lineno, data)
+		include(fn, s, data)
 		return
 
 	fatal("PARSER: %s:%d: unparsed line" % (fn, lineno));
