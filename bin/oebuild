@@ -173,8 +173,7 @@ def do_fetch():
 		except oefetch.FetchError:
 			fatal("Fetch failed")
 			return
-
-		mkstamp('source')
+		mkstamp('fetch')
 	else:
 		fatal("No SRC_URI variable, not downloading anything")
 
@@ -308,7 +307,7 @@ tasks = {
 	"fetch" : { "func" : "do_fetch",
 		     "deps" : [  ] },
 	"unpack" : { "func" : "do_unpack",
-		     "deps" : [  ] },
+		     "deps" : [ 'fetch' ] },
 	"compile" : { "func" : "do_compile",
 		      "deps" : [ 'unpack' ] },
 	"stage" : { "func" : "do_stage",
