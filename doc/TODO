@@ -40,6 +40,10 @@ TODO:
 			    of what files are libs, what are includes, etc, and we could
 			    then do a sane automatic population of staging based on that
 			    information. 
+		[x] Means of seeking a file within a PATH.  Something like:
+			${@oe.which('OEPATH','bin/oeimage')}
+			${OEPATH:bin/oeimage}
+			${which:OEPATH:bin/oeimage}
 	[ ] Fetch
 		[ ] Make Fetch use md5 hashing to indicate per-file download success.
 		    Or in the case of downloaded directories (cvs/svn/bk), simply a 
