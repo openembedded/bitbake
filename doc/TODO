@@ -1,8 +1,13 @@
 TODO:
 
-[x] oe.py
+[x] oe package
 	[x] Update .oe and .conf parsers to not strip out all the tabs in our 
 	    python function vars..
+	[x] Restructure
+	[ ] Remove duplicated implementations, and convert everyone to the new
+	    data and parse methods.
+	[ ] API Sanity Audit.
+	[ ] Comment/Docs Audit.
 
 [ ] oebuild
 	[ ] Use oe.digraph for handling intertask dependency
@@ -12,14 +17,30 @@ TODO:
 	    execution, but not on said task's successful completion.
 
 [.] oemake
-	[.] Add oe.conf parsing - abort if OEFILES is not defined
-	[.] Add parsing of the .oe's listed in OEFILES
+	[x] Move OEPATH follow into the individual 'handle' functions,
+	    whenever the fn path is relative.  Then kill the init call,
+	    as it is really extraneous, given handle does it for you.
+	[x] Add oe.conf parsing - abort if OEFILES is not defined
+	[x] Add parsing of the .oe's listed in OEFILES
 		[ ] Three types of dependency, and any of the three should
 		    have a corresponding provides form.  Establish the
 		    variable names, and make use of it.  Remember to deal
 		    with per package (PACKAGES var) metadata overrides.
 	[ ] Handle provides in the digraph...
-	[ ] Generic event handling, and addevent declaration for .oe files.
+
+[.] Event handling
+	[x] event handling core
+	[ ] oe/parse.py
+		[ ] addevent declaration for .oe files.
+	[ ] handle 'event' flag from addevent in oemake/oebuild
+	[ ] oemake
+		[ ] default event handlers
+		[ ] event declarations
+		[ ] event firing
+	[ ] oebuild
+		[ ] default event handlers
+		[ ] event declarations
+		[ ] event firing
 
 [x] Update patcher tool to make use of our ability to use python functions.
 [x] Write package.oeclass implemented w/ a python function/task
