@@ -171,6 +171,11 @@ python base_do_unpack() {
 		local = oe.data.expand(oe.fetch.localpath(url), d)
 		# dont need any parameters for extraction, strip them off
 		local = re.sub(';.*$', '', local)
+		dots = local.split(".")
+		if dots[-1] in ['gz', 'bz2', 'Z']:
+			efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(string.join(dots[0:-1],".")))
+		else:
+			efile = local
 		cmd = None
 		if local.endswith('.tar'):
 			cmd = 'tar x --no-same-owner -f %s' % local
@@ -180,10 +185,10 @@ python base_do_unpack() {
 			cmd = 'tar xj --no-same-owner -f %s' % local
 		elif local.endswith('.gz') or local.endswith('.Z') or local.endswith('.z'):
 			loc = local.rfind('.')
-			cmd = 'gzip -dc %s > %s' % (local, local[:loc]) 
+			cmd = 'gzip -dc %s > %s' % (local, efile) 
 		elif local.endswith('.bz2'):
 			loc = local.rfind('.')
-			cmd = 'bzip2 -dc %s > %s' % (local, local[:loc]) 
+			cmd = 'bzip2 -dc %s > %s' % (local, efile) 
 		elif os.path.isdir(local):
 			cmd = 'cp -a %s %s/' % (local, os.getcwd())
 		if not cmd:
