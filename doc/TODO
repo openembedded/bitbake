@@ -1,13 +1,5 @@
 TODO:
 
-[x] Pester schurig
-	[x] What is the dir/envvar we use to hold outputted files for packaging?
-	    ala the current ipktmpdir.
-	    Doesnt matter.
-	[x] Env var names for the 3 dependency forms, build depends - target, build depends - build, depends.
-	    DEPENDS - build, RDEPENDS - runtime
-	    reflect build machine build depends using seperate build .oe files.
-
 [x] oe package
 	[x] Update .oe and .conf parsers to not strip out all the tabs in our 
 	    python function vars..
@@ -16,6 +8,8 @@ TODO:
 	    data and parse methods.
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
+	[ ] Allow user supply of .oeclasses to be inherited in every file that
+	    gets parsed via the INHERITS variable.
 
 [ ] oebuild and oemake
 	[ ] Teach the system to support grabbing OEFILES from upstream

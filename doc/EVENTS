@@ -1,0 +1,31 @@
+	The OpenEmbedded build infrastructure now has a fairly sane event
+handling core.  The following are the events which get fired at
+appropriate points during the build process:
+
+TaskFailed:
+TaskSucceeded:
+
+	The task status event classes have a 'task' attribute, which is
+simply a string containing the task which succeeded or failed.  They also
+have a 'data' attribute, which contains the environment data of the package
+in question.
+
+PackageSucceeded:
+PackageFailed:
+
+	The package build status event classes are a bit higher level.  That
+is, they reflect the overall build status of a given package as a whole, without
+the task level breakdown.  The 'package' attribute is a string which contains
+the package which failed, in the usual form (i.e. content/glibc-2.3.1-r0).
+
+
+TODO:
+TaskStart
+PackageStart
+UnsatisfiedDep
+RecursiveDep
+MultipleProviders
+
+Add 'log' data to the task and package builds, which contains the stdout and
+stderr of the task/package which succeeded/failed, so that email notifications
+of failures can include the build log.
