@@ -78,6 +78,7 @@ def load_oefile( oefile ):
                 return cache_data
 
     oepath = data.getVar('OEPATH', cfg)
+    safeoepath = data.getVar('OEPATH', cfg)
     topdir = data.getVar('TOPDIR', cfg)
     if not topdir:
         topdir = os.path.abspath(os.getcwd())
@@ -88,12 +89,12 @@ def load_oefile( oefile ):
     # expand tmpdir to include this topdir
     data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
     # add topdir to oepath
-    oepath += ":%s" % topdir
+    oepath = "%s:%s" % (topdir, oepath)
     # set topdir to location of .oe file
     topdir = oefile_loc
     #data.setVar('TOPDIR', topdir, cfg)
     # add that topdir to oepath
-    oepath += ":%s" % topdir
+    oepath = "%s:%s" % (topdir, oepath)
     # go there
     oldpath = os.path.abspath(os.getcwd())
     os.chdir(topdir)
@@ -106,6 +107,7 @@ def load_oefile( oefile ):
         return oe
     finally:
         os.chdir(oldpath)
+        data.setVar('OEPATH', safeoepath, cfg)
 
 def pickle_oe( oefile, oe ):
     p = pickle.Pickler( file( "%s/%s" % ( cache, oefile ), "wb" ), -1 )
