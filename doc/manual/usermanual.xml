@@ -245,8 +245,30 @@ options:
                         recommended)
   -s, --show-versions   show current and preferred versions of all packages</screen>
                 </para>
-                <para>Executing tasks for a single file is relatively simple.  You specify the file in question, and bitbake parses it and executes the specified task (or <quote>build</quote> by default).  It obeys intertask dependencies when doing so.</para>
-                <para>There are a number of additional complexities introduced when one wants to manage multiple .bb files.  Clearly there needs to be a way to tell bitbake what files are available, and of those, which we want to execute at this time.  There also needs to be a way for each .bb to express its dependencies, both for build time and runtime.  There must be a way for the user to express their preferences when multiple .bb's provide the same functionality, or when there are multiple versions of a .bb.</para>
+                <para>
+                <example>
+                    <title>Executing a task against a single .bb</title>
+                    <para>Executing tasks for a single file is relatively simple.  You specify the file in question, and bitbake parses it and executes the specified task (or <quote>build</quote> by default).  It obeys intertask dependencies when doing so.</para>
+                    <para><quote>clean</quote> task:</para>
+                    <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb -c clean</screen></para>
+                    <para><quote>build</quote> task:</para>
+                    <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb</screen></para>
+                </example>
+                </para>
+                <para>
+                <example>
+                    <title>Executing tasks against a set of .bb files</title>
+                    <para>There are a number of additional complexities introduced when one wants to manage multiple .bb files.  Clearly there needs to be a way to tell bitbake what files are available, and of those, which we want to execute at this time.  There also needs to be a way for each .bb to express its dependencies, both for build time and runtime.  There must be a way for the user to express their preferences when multiple .bb's provide the same functionality, or when there are multiple versions of a .bb.</para>
+                    <para>The next section, Metadata, outlines how one goes about specifying such things.</para>
+                    <para>Note that the bitbake command, when not using --buildfile, accepts a <varname>PROVIDER</varname>, not a filename or anything else.  By default, a .bb generally PROVIDES its packagename, packagename-version, and packagename-version-revision.</para>
+                    <screen><prompt>$ </prompt>bitbake blah</screen>
+                    <screen><prompt>$ </prompt>bitbake blah-1.0</screen>
+                    <screen><prompt>$ </prompt>bitbake blah-1.0-r0</screen>
+                    <screen><prompt>$ </prompt>bitbake -c clean blah</screen>
+                    <screen><prompt>$ </prompt>bitbake virtual/whatever</screen>
+                    <screen><prompt>$ </prompt>bitbake -c clean virtual/whatever</screen>
+                </example>
+                </para>
             </section>
             <section>
                 <title>Metadata</title>
@@ -291,14 +313,17 @@ options:
     <screen>PREFERRED_VERSION_a = "1.1"</screen>
                     </para>
                 </example>
+                <example>
+                    <title>Using <quote>bbfile collections</quote></title>
+                    <para>bbfile collections exist to allow the user to have multiple repositories of bbfiles that contain the same exact package.  For example, one could easily use them to make one's own local copy of an upstream repository, but with custom modifications that one does not want upstream.  Usage:</para>
+                    <screen>BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
+BBFILE_COLLECTIONS = "upstream local"
+BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
+BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
+BBFILE_PRIORITY_upstream = "5"
+BBFILE_PRIORITY_local = "10"</screen>
+                </example>
             </section>
         </section>
     </chapter>
-    <appendix>
-        <title>Reference</title>
-        <section>
-            <title>Required Metadata</title>
-            <para>test</para>
-        </section>
-    </appendix>
 </book>
