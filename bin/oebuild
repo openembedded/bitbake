@@ -254,17 +254,11 @@ def check_md5(task, deptasks):
 		return callback(item)
 
 	def followup(item, callback):
-		deps = []
-		for task in tasks:
-			try:
-				if item in tasks[task]['deps']:
-					deps.append(task)
-			except KeyError:
-				continue
+		# obtain list of items that depend on item
+		deps = [ task for task in tasks if tasks[task].has_key('deps') and item in tasks[task]['deps'] ]
 
-		if deps is not None:
-			for p in deps:
-				ret = followup(p, callback)
+		for p in deps:
+			ret = followup(p, callback)
 		return callback(item)
 
 	def undo(task):
