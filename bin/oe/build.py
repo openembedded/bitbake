@@ -103,7 +103,7 @@ def exec_func(func, d, dirs = None):
 	try:
 		prevdir = os.getcwd()
 	except OSError:
-		prevdir = data.expand('${TOPDIR}')
+		prevdir = data.expand('${TOPDIR}', d)
 	if adir and os.access(adir, os.F_OK):
 		os.chdir(adir)
 
@@ -112,10 +112,6 @@ def exec_func(func, d, dirs = None):
 	else:
 		exec_func_shell(func, d)
 	os.chdir(prevdir)
-
-def tmpFunction(d):
-	"""Default function for python code blocks"""
-	return 1
 
 def exec_func_python(func, d):
 	"""Execute a python OE 'function'"""
