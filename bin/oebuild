@@ -1,57 +1,58 @@
 #!/usr/bin/python
 
-import sys,os,string,oe
+import sys,os,string
+from oe import *
 
 
 #######################################################################
-#
-# print_env()
-#
-# This prints the contents of oe.env[] so that it can later be sourced by a shell
-# Normally, it prints to stdout, but this it can be redirectory to some open file handle
-#
-# It is used by exec_shell_func().
-#
 
-def print_env(o=sys.__stdout__):
-	o.write('\nPATH="' + oe.projectdir + '/bin/build:${PATH}"\n')
+def emit_env(o=sys.__stdout__):
+	"""This prints the contents of env[] so that it can later be sourced by a shell
+	Normally, it prints to stdout, but this it can be redirectory to some open file handle
 
-	for s in oe.env:
+	It is used by exec_shell_func().
+	"""
+
+	o.write('\nPATH="' + projectdir + '/bin/build:${PATH}"\n')
+
+	for s in env:
 		if s == s.lower(): continue
 
 		o.write('\n')
-		try: o.write('# ' + oe.envdesc[s]['desc'] + ':\n')
-		except KeyError: pass
-		if oe.envdesc.has_key(s) and oe.envdesc[s].has_key('export'): o.write('export ')
+		try:
+			o.write('# ' + envdesc[s]['desc'] + ':\n')
+			if envdesc[s].has_key('export'): o.write('export ')
+		except KeyError:
+			pass
 
-		o.write(s+'="'+oe.env[s]+'"\n')
+		o.write(s+'="'+env[s]+'"\n')
 
-	for s in oe.env:
+	for s in env:
 		if s != s.lower(): continue
 
-		o.write("\n" + s + '() {\n' + oe.env[s] + '}\n')
+		o.write("\n" + s + '() {\n' + env[s] + '}\n')
 
 
 #######################################################################
 
-def exec_shell_func(func):
-	"""This executes any shell function stored in env[func]. Return if execution
-	was successful.
+def exec_shell_func(func, myfatal=fatal):
+	"""This executes any shell function stored in env[func]. Returns
+	true if execution was successful.
 
 	For this, it creates a bash shell script in the tmp directory, writes the local
-	environment in oe.env[] into it and finally executes this. The output of the
+	environment in env[] into it and finally executes this. The output of the
 	shell will end in a log file and stdout.
 	"""
 
 	global logfile
-	mkdir(oe.env['T'])
-	logfile = oe.env['T'] + '/log.fetch.' + str(os.getpid())
-	runfile = oe.env['T'] + '/run.fetch.' + str(os.getpid())
+	mkdirhier(env['T'])
+	logfile = env['T'] + '/log.fetch.' + str(os.getpid())
+	runfile = env['T'] + '/run.fetch.' + str(os.getpid())
 	f = open(runfile, "w")
 	f.write("#!/bin/bash\n")
-	if oe.env.has_key('OEDEBUG'): f.write("set -x\n")
-	print_env(f)
-	f.write("cd %s\n" % oe.env['DISTDIR'])
+	if env.has_key('OEDEBUG'): f.write("set -x\n")
+	emit_env(f)
+	f.write("cd %s\n" % env['DISTDIR'])
 	f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
@@ -59,40 +60,34 @@ def exec_shell_func(func):
 	if ret==0:
 		os.remove(runfile)
 		os.remove(logfile)
-	return ret != 0
-
-
-#######################################################################
-
-def mkdir(dir):
-	try:
-		os.makedirs(dir)
-		oe.debug(2, "created " + dir)
-	except OSError, e:
-		if e.errno != 17: raise e
+		return true
+	else:
+		error("'%s'() failed" % func);
+		myfatal("more info in: %s" % logfile);
+		return false
 
 
 #######################################################################
 
 def do_todo():
-	oe.fatal("oebuild %s is not yet implemented" % sys.argv[1])
+	fatal("oebuild %s is not yet implemented" % sys.argv[1])
 
 
 #######################################################################
 
 def do_clean():
-	dir = oe.varexpand("${TMPDIR}/${CATEGORY}/${PF}", oe.env)
-	if dir == '//': oe.fatal("wrong DATADIR");
-	oe.debug(2, "removing " + dir)
+	dir = varexpand("${TMPDIR}/${CATEGORY}/${PF}", env)
+	if dir == '//': fatal("wrong DATADIR");
+	debug(2, "removing " + dir)
 	os.system('rm -rf ' + dir)
 
 
 #######################################################################
 
 def do_mrproper():
-	dir = oe.env["DISTDIR"]
-	if dir == '/': oe.fatal("wrong DATADIR");
-	oe.debug(2, "removing " + dir)
+	dir = env["DISTDIR"]
+	if dir == '/': fatal("wrong DATADIR");
+	debug(2, "removing " + dir)
 	os.system('rm -rf ' + dir)
 	do_clean()
 
@@ -100,53 +95,53 @@ def do_mrproper():
 #######################################################################
 
 def do_fetch():
-	mkdir(oe.env["DISTDIR"])	# create file download directory
+	mkdirhier(env["DISTDIR"])	# create file download directory
 	done = 0
 	ret = 0
 
-	oe.debug("do_fetch")
-	if oe.env.has_key('SRC_URI'):
+	debug("do_fetch")
+	if env.has_key('SRC_URI'):
 		# TODO: correct error handling
-		ret = oe.fetch(oe.varexpand(oe.env['SRC_URI'], oe.env), 1)
+		ret = fetch(varexpand(env['SRC_URI'], env), 1)
 		done = 1
 	else:
-		oe.note("No SRC_URI variable, not downloading anything")
+		note("No SRC_URI variable, not downloading anything")
 
 
 #######################################################################
 
 def do_unpack():
-	mkdir(oe.env["WORKDIR"])	# create workdir
+	mkdirhier(env["WORKDIR"])	# create workdir
 	
-	if oe.env.has_key('src_unpack'):
+	if env.has_key('src_unpack'):
 		ret = exec_shell_func('src_unpack')
 		if ret != 0:
-			oe.error('unpacking source via src_unpack() failed');
-			oe.fatal('more info in: %s' % logfile);
+			error('unpacking source via src_unpack() failed');
+			fatal('more info in: %s' % logfile);
 		return
 
-	oe.fatal('TODO: add implicit source unpacking')
+	fatal('TODO: add implicit source unpacking')
 		
 
 #######################################################################
 
 def do_compile():
-	if oe.env.has_key('src_compile'):
+	if env.has_key('src_compile'):
 		ret = exec_shell_func('src_compile')
 		if ret != 0:
-			oe.error('compilation via src_compile() failed');
-			oe.fatal('more info in: %s' % logfile);
+			error('compilation via src_compile() failed');
+			fatal('more info in: %s' % logfile);
 		return
 		
 
 #######################################################################
 
 def do_install():
-	if oe.env.has_key('src_install'):
+	if env.has_key('src_install'):
 		ret = exec_shell_func('src_install')
 		if ret != 0:
-			oe.error('installation via src_install() failed');
-			oe.fatal('more info in: %s' % logfile);
+			error('installation via src_install() failed');
+			fatal('more info in: %s' % logfile);
 		return
 		
 
@@ -154,9 +149,9 @@ def do_install():
 
 def do_build():
 	do_fetch()
-	oe.print_orphan_env()
-	oe.print_missing_env()
-	print_env()
+	print_orphan_env()
+	print_missing_env()
+	emit_env()
 	do_unpack()
 	do_compile()
 	do_install()
@@ -171,16 +166,16 @@ def do_showenv():
 	file.
 
 	Might give 'false positives' if some environment variable has not
-	yet been documented in oe.py's envdesc{}.
+	yet been documented in py's envdesc{}.
 	"""
 
-	for s in oe.env:
-		if oe.envdesc.has_key(s): continue
+	for s in env:
+		if envdesc.has_key(s): continue
 		
-		var = oe.env[s]
+		var = env[s]
 		try:
-			var = oe.varexpand(var, oe.env)
-		except oe.VarExpandError:
+			var = varexpand(var, env)
+		except VarExpandError:
 			pass
 
 		if s == s.lower():
@@ -200,12 +195,12 @@ if sys.argv[1] in ('help', 'usage'):
 	usage(0);
 
 if len(sys.argv) < 3:
-	oe.fatal("try 'oebuild <command> <somebuildfile.oe>'")
+	fatal("try 'oebuild <command> <somebuildfile.oe>'")
 
-oe.read_oe_conf()			# Read configuration
-oe.set_automatic_vars(sys.argv[2])	# Deduce per-package environment variables
-oe.read_package_conf(sys.argv[2])	# Read package configuration
-oe.update_env()				# Environment modification
+read_oe_conf()				# Read configuration
+set_automatic_vars(sys.argv[2])		# Deduce per-package environment variables
+read_package_conf(sys.argv[2])		# Read package configuration
+update_env()				# Environment modification
 
 call_func = do_todo;
 
