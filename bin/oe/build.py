@@ -342,11 +342,11 @@ def md5_is_current(task):
 
 def mkstamp(task, d):
     """Creates/updates a stamp for a given task"""
-    mkdirhier(data.expand('${TMPDIR}/stamps', d));
     stamp = data.getVar('STAMP', d)
     if not stamp:
         return
     stamp = "%s.%s" % (data.expand(stamp, d), task)
+    mkdirhier(os.path.dirname(stamp))
     open(stamp, "w+")
 
 
