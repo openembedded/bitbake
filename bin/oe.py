@@ -1168,7 +1168,7 @@ def reader(cfgfile, feeder):
 
 
 # matches "VAR = VALUE"
-__config_regexp__  = re.compile( r"(\w+)\s*=\s*(?P<apo>['\"]?)(.*)(?P=apo)$")
+__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>\w+)\s*=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 
 # matches "include FILE"
 __include_regexp__ = re.compile( r"include\s+(.+)" )
@@ -1182,10 +1182,14 @@ def __read_config__(cfgfile, level):
 	def process_config(lineno, s):
 		m = __config_regexp__.match(s)
 		if m:
-			key = m.group(1)
-			#print key,m.group(3)
-			env[key] = m.group(3)
+			groupd = m.groupdict()
+			key = groupd["var"]
+			if groupd.has_key("exp"):
+				envflags[key]["export"] = 1
+			env[key] = groupd["value"]
+#			print key,groupd["value"]
 			return
+
 		m = __include_regexp__.match(s)
 		if m:
 			if not visit: return
@@ -1243,8 +1247,8 @@ def read_oe(oefile, inherit = False, classname = None):
 			
 		m = __config_regexp__.match(s)
 		if m:
-			key = m.group(1)
-			var = m.group(3)
+			key = m.group("var")
+			var = m.group("value")
 			if var and (var[0]=='"' or var[0]=="'"):
 				fatal("Mismatch in \" or ' characters for %s=" % key)
 			#print "%s=%s" % (key,var)
@@ -1723,7 +1727,7 @@ envflags = {
 "STRIP":		{ "warnlevel": 3 },
 "AR":			{ "warnlevel": 3 },
 "RANLIB":		{ "warnlevel": 3 },
-"MAKE":			{ "warnlevel": 3, "export": 1 },
+"MAKE":			{ "warnlevel": 3 },
 
 "BUILD_CPPFLAGS":	{ "warnlevel": 3 },
 "BUILD_CFLAGS":		{ "warnlevel": 3 },
