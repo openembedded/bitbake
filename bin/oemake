@@ -491,13 +491,20 @@ def build_depgraph():
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
         if oe.data.getVar('BROKEN', d, 1) or oe.data.getVar('EXCLUDE_FROM_WORLD', d, 1):
+            oe.debug(2, "OEMAKE skipping %s due to BROKEN/EXCLUDE_FROM_WORLD" % f)
             continue
         terminal = True
         pn = oe.data.getVar('PN', d, 1)
         for p in pn_provides[pn]:
-            if p in all_depends or p.startswith('virtual/'):
+            if p.startswith('virtual/'):
+                oe.debug(2, "OEMAKE skipping %s due to %s provider starting with virtual/" % (f, p))
                 terminal = False
                 break
+            for pf in providers[p]:
+                if oe.data.getVar('PN', make.pkgdata[pf], 1) != pn:
+                    oe.debug(2, "OEMAKE skipping %s due to both us and %s providing %s" % (f, pf, p))
+                    terminal = False
+                    break
         if terminal:
             __world_target.add(pn)
 
