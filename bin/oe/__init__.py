@@ -64,6 +64,7 @@ __all__ = [
 	"parse",
 	"data",
 	"event",
+	"build",
  ]
 
 import sys,os,string,types,re
