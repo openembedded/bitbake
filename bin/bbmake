@@ -55,6 +55,9 @@ be executed.  BBFILES does support wildcards.
 Default packages to be executed are all packages in BBFILES.
 Default BBFILES are the .bb files in the current directory.""" )
 
+    parser.add_option( "-b", "--buildfile", help = "execute the task against this .bb file, rather than a package from BBFILES.",
+               action = "store", dest = "buildfile", default = None )
+
     parser.add_option( "-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
                action = "store_false", dest = "abort", default = True )
 
@@ -521,7 +524,7 @@ def myProgressCallback( x, y, f ):
     if bbdebug > 0:
         return
     if os.isatty(sys.stdout.fileno()):
-        sys.stdout.write("\rNOTE: Parsing .bb files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
+        sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
         sys.stdout.flush()
     else:
         if x == 1:
@@ -531,10 +534,52 @@ def myProgressCallback( x, y, f ):
             sys.stdout.write("done.")
             sys.stdout.flush()
 
+def executeOneBB( fn ):
+        try:
+            d = bb.parse.handle(fn, make.cfg)
+        except IOError:
+            bb.fatal("Unable to open %s" % fn)
+
+        name = bb.data.getVar('PN', d, 1)
+        bb.event.fire(bb.event.PkgStarted(name, d))
+        try:
+            __stats["attempt"] += 1
+            if not make.options.dry_run:
+                bb.build.exec_task('do_%s' % make.options.cmd, d)
+            bb.event.fire(bb.event.PkgSucceeded(name, d))
+            __build_cache.append(fn)
+        except bb.build.FuncFailed:
+            __stats["fail"] += 1
+            bb.error("task stack execution failed")
+            bb.event.fire(bb.event.PkgFailed(name, d))
+            __build_cache_fail.append(fn)
+        except bb.build.EventException:
+            __stats["fail"] += 1
+            (type, value, traceback) = sys.exc_info()
+            e = value.event
+            bb.error("%s event exception, aborting" % bb.event.getName(e))
+            bb.event.fire(bb.event.PkgFailed(name, d))
+            __build_cache_fail.append(fn)
 
 #
 # main
 #
+
+__stats["attempt"] = 0
+__stats["success"] = 0
+__stats["fail"] = 0
+__stats["deps"] = 0
+
+def printStats( ):
+    print "Build statistics:"
+    print "  Attempted builds: %d" % __stats["attempt"]
+    if __stats["fail"] != 0:
+        print "  Failed builds: %d" % __stats["fail"]
+    if __stats["deps"] != 0:
+        print "  Dependencies not satisfied: %d" % __stats["deps"]
+    if __stats["fail"] != 0 or __stats["deps"] != 0:
+        sys.exit(1)
+    sys.exit(0)
 
 if __name__ == "__main__":
 
@@ -570,6 +615,11 @@ if __name__ == "__main__":
         bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
 
     buildname = bb.data.getVar("BUILDNAME", make.cfg)
+
+    bf = make.options.buildfile
+    if bf:
+        executeOneBB( bf )
+        printStats()
 
     ignore = bb.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
     __ignored_dependencies = ignore.split()
@@ -610,10 +660,6 @@ if __name__ == "__main__":
             print "Nothing to build. Use 'bbmake world' to build everything."
             sys.exit(0)
 
-    __stats["attempt"] = 0
-    __stats["success"] = 0
-    __stats["fail"] = 0
-    __stats["deps"] = 0
 
     # Import Psyco if available and not disabled
     if not make.options.disable_psyco:
@@ -666,15 +712,7 @@ if __name__ == "__main__":
 
         bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
 
-        print "Build statistics:"
-        print "  Attempted builds: %d" % __stats["attempt"]
-        if __stats["fail"] != 0:
-            print "  Failed builds: %d" % __stats["fail"]
-        if __stats["deps"] != 0:
-            print "  Dependencies not satisfied: %d" % __stats["deps"]
-        if __stats["fail"] != 0 or __stats["deps"] != 0:
-            sys.exit(1)
-        sys.exit(0)
+        printStats()
 
     except KeyboardInterrupt:
         print "\nNOTE: KeyboardInterrupt - Build not completed."
