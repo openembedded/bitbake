@@ -10,7 +10,7 @@ Copyright: (c) 2003 Chris Larson
 Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
-import sys, os, time, types
+import sys, os, re, time, types
 if sys.argv[0][-5:] == "pydoc":
 	path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:
@@ -32,6 +32,11 @@ def initVar(var, d = _data):
 	if not d[var].has_key("flags"):
 		d[var]["flags"] = {}
 
+__setvar_regexp__ = {}
+__setvar_regexp__["append"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_append")
+__setvar_regexp__["prepend"] = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_prepend")
+__setvar_regexp__["delete"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_delete")
+
 def setVar(var, value, d = _data):
 	"""Set a variable to a given value
 
@@ -40,8 +45,8 @@ def setVar(var, value, d = _data):
 		>>> print getVar('TEST')
 		testcontents
 	"""
-	for v in ["_append", "_prepend", "_delete"]:
-		match = re.match('(?P<base>.*?)%s(_(?P<add>.*))?' % v, var)
+	for v in ["append", "prepend", "delete"]:
+		match = __setvar_regexp__[v].match(var)
 		if match:
 			base = match.group('base')
 			override = match.group('add')
@@ -53,11 +58,9 @@ def setVar(var, value, d = _data):
 			setVarFlag(base, v, l, d)
 			return
 		
-	try:
-		d[var]["content"] = value 
-	except KeyError:
+	if not d.has_key(var):
 		initVar(var, d)
-		d[var]["content"] = value 
+	d[var]["content"] = value 
 
 def getVar(var, d = _data, exp = 0):
 	"""Gets the value of a variable
@@ -67,13 +70,11 @@ def getVar(var, d = _data, exp = 0):
 		>>> print getVar('TEST')
 		testcontents
 	"""
-	try:
-		if exp:
-			return expand(d[var]["content"], d)
-		else:
-			return d[var]["content"]
-	except KeyError:
+	if not d.has_key(var) or not d[var].has_key("content"):
 		return None
+	if exp:
+		return expand(d[var]["content"], d)
+	return d[var]["content"]
 
 def delVar(var, d = _data):
 	"""Removes a variable from the data set
@@ -97,11 +98,9 @@ def setVarFlag(var, flag, flagvalue, d = _data):
 		1
 	"""
 #	print "d[%s][\"flags\"][%s] = %s" % (var, flag, flagvalue)
-	try:
-		d[var]["flags"][flag] = flagvalue
-	except KeyError:
+	if not d.has_key(var):
 		initVar(var, d)
-		d[var]["flags"][flag] = flagvalue
+	d[var]["flags"][flag] = flagvalue
 
 def getVarFlag(var, flag, d = _data):
 	"""Gets given flag from given var
@@ -111,10 +110,9 @@ def getVarFlag(var, flag, d = _data):
 		>>> print getVarFlag('TEST', 'python')
 		1
 	"""
-	try:
+	if d.has_key(var) and d[var].has_key("flags") and d[var]["flags"].has_key(flag):
 		return d[var]["flags"][flag]
-	except KeyError:
-		return None
+	return None
 
 def delVarFlag(var, flag, d = _data):
 	"""Removes a given flag from the variable's flags
@@ -140,11 +138,9 @@ def setVarFlags(var, flags, d = _data):
 		>>> print getVarFlag('TEST', 'test')
 		blah
 	"""
-	try:
-		d[var]["flags"] = flags
-	except KeyError:
+	if not d.has_key(var):
 		initVar(var, d)
-		d[var]["flags"] = flags
+	d[var]["flags"] = flags
 
 def getVarFlags(var, d = _data):
 	"""Gets a variable's flags
@@ -154,10 +150,9 @@ def getVarFlags(var, d = _data):
 		>>> print getVarFlags('TEST')['test']
 		blah
 	"""
-	try:
+	if d.has_key(var) and d[var].has_key("flags"):
 		return d[var]["flags"]
-	except KeyError:
-		return None
+	return None
 
 def delVarFlags(var, d = _data):
 	"""Removes a variable's flags
@@ -180,8 +175,6 @@ def getData(d = _data):
 def setData(newData, d = _data):
 	"""Sets the data object to the supplied value"""
 	d = newData
-
-import re
 
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
@@ -371,7 +364,7 @@ def update_data(d = _data):
 			return
 		val = getVar(var, d)
 		for o in overrides:
-			if var.endswith("_%s" % o):
+			if var.endswith("_" + o):
 				l = len(o)+1
 				name = var[:-l]
 				d[name] = d[var]
@@ -405,7 +398,7 @@ def update_data(d = _data):
 			setVar(s, sval, d)
 
 		# Handle line deletions
-		name = "%s_delete" % s
+		name = s + "_delete"
 		nameval = getVar(name, d)
 		if nameval:
 			sval = getVar(s, d)

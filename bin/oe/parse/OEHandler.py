@@ -50,9 +50,9 @@ def handle(fn, d = {}, include = 0):
 	__classname__ = ""
 
 	if include == 0:
-		debug(2, "OE %s: handle(data)" % fn)
+		debug(2, "OE " + fn + ": handle(data)")
 	else:
-		debug(2, "OE %s: handle(data, include)" % fn)
+		debug(2, "OE " + fn + ": handle(data, include)")
 
 	(root, ext) = os.path.splitext(os.path.basename(fn))
 	if ext == ".oeclass":
@@ -163,11 +163,11 @@ def feeder(lineno, s, fn, d):
 		for f in n:
 			allvars = []
 			allvars.append(f)
-			allvars.append("%s_%s" % (classes[-1], f))
+			allvars.append(classes[-1] + "_" + f)
 
 			vars = [[ allvars[0], allvars[1] ]]
 			if len(classes) > 1 and classes[-2] is not None:
-				allvars.append("%s_%s" % (classes[-2], f))
+				allvars.append(classes[-2] + "_" + f)
 				vars = []
 				vars.append([allvars[2], allvars[1]])
 				vars.append([allvars[0], allvars[2]])
@@ -176,7 +176,6 @@ def feeder(lineno, s, fn, d):
 				if data.getVar(var, d) and not data.getVarFlag(var, 'export_func', d):
 					continue
 
-				# clean up after possible old flags
 				if data.getVar(var, d):
 					data.setVarFlag(var, 'python', None, d)
 					data.setVarFlag(var, 'func', None, d)
@@ -189,9 +188,9 @@ def feeder(lineno, s, fn, d):
 						data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag, d), d)
 
 				if data.getVarFlag(calledvar, "python", d):
-					data.setVar(var, "\treturn exec_func('%s', d)\n" % calledvar, d)
+					data.setVar(var, "\treturn exec_func('" + calledvar + "', d)\n", d)
 				else:
-					data.setVar(var, "\t%s\n" % calledvar, d)
+					data.setVar(var, "\t" + calledvar + "\n", d)
 				data.setVarFlag(var, 'export_func', '1', d)
 
 		return
