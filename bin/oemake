@@ -26,7 +26,7 @@ __preferred = {}
 __world_target = Set()
 __ignored_dependencies = Set()
 __depcmds = { "clean": None,
-          "mrproper": None }
+             "mrproper": None }
 
 __stats = {}
 
@@ -40,29 +40,29 @@ Default packages are all packages in OEFILES.
 Default OEFILES are the .oe files in the current directory.""" )
 
     parser.add_option( "-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
-                       action = "store_false", dest = "abort", default = True )
+               action = "store_false", dest = "abort", default = True )
 
     parser.add_option( "-f", "--force", help = "force run of specified cmd, regardless of stamp status",
-                       action = "store_true", dest = "force", default = False )
+               action = "store_true", dest = "force", default = False )
 
 
     parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild",
-                       action = "store", dest = "cmd", default = "build" )
+               action = "store", dest = "cmd", default = "build" )
 
     parser.add_option( "-r", "--read", help = "read the specified file before oe.conf",
-                       action = "append", dest = "file", default = [] )
+               action = "append", dest = "file", default = [] )
 
     parser.add_option( "-v", "--verbose", help = "output more chit-chat to the terminal",
-                       action = "store_true", dest = "verbose", default = False )
+               action = "store_true", dest = "verbose", default = False )
 
     parser.add_option( "-n", "--dry-run", help = "don't call oebuild, just go through the motions",
-                       action = "store_true", dest = "dry_run", default = False )
+               action = "store_true", dest = "dry_run", default = False )
 
     parser.add_option( "-p", "--parse-only", help = "quit after parsing the OE files (developers only)",
-                       action = "store_true", dest = "parse_only", default = False )
+               action = "store_true", dest = "parse_only", default = False )
 
     parser.add_option( "-d", "--disable-psyco", help = "disable using the psyco just-in-time compiler (not recommended)",
-                       action = "store_true", dest = "disable_psyco", default = False )
+               action = "store_true", dest = "disable_psyco", default = False )
 
     options, args = parser.parse_args( args )
     return options, args[1:]
@@ -160,7 +160,7 @@ def buildPackage(item):
             versions[pn] = []
         versions[pn].append(((pv, pr), p))
 
-    # find the latest version of each provider
+#    # find the latest version of each provider
     preferred_versions = {}
     for p in versions.keys():
         latest = None
@@ -171,7 +171,7 @@ def buildPackage(item):
                 latest_f = _fn
         preferred_versions[p] = (latest, latest_f)
         
-    # build a new list with just the latest version of everything
+#    # build a new list with just the latest version of everything
     eligible = []
     for p in preferred_versions.keys():
         (v, f) = preferred_versions[p]
@@ -186,8 +186,8 @@ def buildPackage(item):
         oe.error("no eligible providers for %s" % item)
         return 0
 
-    # look to see if one of them is already staged, or marked as preferred.
-    # if so, bump it to the head of the queue
+#    # look to see if one of them is already staged, or marked as preferred.
+#    # if so, bump it to the head of the queue
     for p in all_p:
         the_data = make.pkgdata[p]
         pn = oe.data.getVar('PN', the_data, 1)
@@ -198,7 +198,7 @@ def buildPackage(item):
         if os.path.exists(stamp):
             (newvers, fn) = preferred_versions[pn]
             if not fn in eligible:
-                # package was made ineligible by already-failed check
+#                # package was made ineligible by already-failed check
                 continue
             oldver = "%s-%s" % (pv, pr)
             newver = '-'.join(newvers)
@@ -223,7 +223,7 @@ def buildPackage(item):
                 eligible = [p] + eligible
                 break
         
-    # run through the list until we find one that we can build
+#    # run through the list until we find one that we can build
     for fn in eligible:
         oe.debug(2, "selecting %s to satisfy %s" % (fn, item))
         if try_build(fn, item):
@@ -238,43 +238,43 @@ def build_depgraph():
     pn_provides = {}
     
     for f in make.pkgdata.keys():
-    d = make.pkgdata[f]
-    
-    pn = oe.data.getVar('PN', d, 1)
+        d = make.pkgdata[f]
+        
+        pn = oe.data.getVar('PN', d, 1)
 
-    deps = (oe.data.getVar("DEPENDS", d, 1) or "").split()
-    provides = Set([pn] + (oe.data.getVar("PROVIDES", d, 1) or "").split())
+        deps = (oe.data.getVar("DEPENDS", d, 1) or "").split()
+        provides = Set([pn] + (oe.data.getVar("PROVIDES", d, 1) or "").split())
 
-    for dep in deps:
-        all_depends.add(dep)
+        for dep in deps:
+            all_depends.add(dep)
 
-    if not pn_provides.has_key(pn):
-        pn_provides[pn] = Set()
-    pn_provides[pn] |= provides
-    
-    for provide in provides:
-        if not providers.has_key(provide):
-        providers[provide] = []
-        providers[provide].append(f)
+        if not pn_provides.has_key(pn):
+            pn_provides[pn] = Set()
+        pn_provides[pn] |= provides
+        
+        for provide in provides:
+            if not providers.has_key(provide):
+                providers[provide] = []
+            providers[provide].append(f)
 
-    for p in (oe.data.getVar('PREFERRED_PROVIDERS', d, 1) or "").split():
-        (providee, provider) = p.split(':')
-        if __preferred.has_key(providee) and __preferred[providee] != provider:
-        oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
-        __preferred[providee] = provider
+        for p in (oe.data.getVar('PREFERRED_PROVIDERS', d, 1) or "").split():
+            (providee, provider) = p.split(':')
+            if __preferred.has_key(providee) and __preferred[providee] != provider:
+                oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
+            __preferred[providee] = provider
 
     for f in make.pkgdata.keys():
-    d = make.pkgdata[f]
+        d = make.pkgdata[f]
     if oe.data.getVar('BROKEN', d, 1):
         continue
-    terminal = True
-    pn = oe.data.getVar('PN', d, 1)
-    for p in pn_provides[pn]:
-        if p in all_depends or p.startswith('virtual/'):
-        terminal = False
-        break
-    if terminal:
-        __world_target.add(pn)
+        terminal = True
+        pn = oe.data.getVar('PN', d, 1)
+        for p in pn_provides[pn]:
+            if p in all_depends or p.startswith('virtual/'):
+                terminal = False
+                break
+        if terminal:
+            __world_target.add(pn)
 
 def myProgressCallback( x, y, f ):
     if os.isatty(sys.stdout.fileno()):
@@ -334,12 +334,12 @@ if __name__ == "__main__":
             pkgs_to_build = []
         pkgs_to_build.extend(args)
     if not pkgs_to_build:
-        oepkgs = oe.data.getVar('OEPKGS', make.cfg, 1)
-        if oepkgs:
-            pkgs_to_build = oepkgs.split()
+            oepkgs = oe.data.getVar('OEPKGS', make.cfg, 1)
+            if oepkgs:
+                    pkgs_to_build = oepkgs.split()
     if not pkgs_to_build:
-        print "Nothing to build. Use 'oemake world' to build everything."
-        sys.exit(0)
+            print "Nothing to build. Use 'oemake world' to build everything."
+            sys.exit(0)
 
     __stats["attempt"] = 0
     __stats["success"] = 0
@@ -348,14 +348,14 @@ if __name__ == "__main__":
 
     # Import Psyco if available and not disabled
     if not make.options.disable_psyco:
-    try:
-        import psyco
-    except ImportError:
-        print "NOTE: Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance."
+        try:
+            import psyco
+        except ImportError:
+            print "NOTE: Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance."
+        else:
+            psyco.bind( make.collect_oefiles )
     else:
-        psyco.bind( make.collect_oefiles )
-    else:
-    print "NOTE: You have disabled Psyco. This decreases performance."
+        print "NOTE: You have disabled Psyco. This decreases performance."
 
     try:
         make.collect_oefiles( myProgressCallback )
