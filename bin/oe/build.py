@@ -216,7 +216,18 @@ def exec_func_shell(func, d):
         return
     else:
         error("function %s failed" % func)
-        error("see log in %s" % logfile)
+        if data.getVar("OEINCLUDELOGS", d):
+            error("log data follows")
+            f = open(logfile, "r")
+            while True:
+                l = f.readline()
+                if l == '':
+                    break
+                l = l.rstrip()
+                print '| %s' % l
+            f.close()
+        else:
+            error("see log in %s" % logfile)
         raise FuncFailed()
 
 
