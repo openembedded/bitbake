@@ -63,40 +63,29 @@ oe.setenv('SLOT',	'0')
 # 1. ${OEDIR}/file
 # 2. optionally from all directories specified in ${OEPATH}
 
-oe.getconfig(file, oe.env, 1)
+oe.getconfig(file, oe.env)
 
 # Now read local override
 if oe.env.has_key('OEPATH'):
 	oepath = oe.env['OEPATH']
 	for dir in oepath.split(':'):
-		while 1:
-			try:
-				oe.getconfig(dir+'/'+oe.env['PF']+'.oe', oe.env)
-				break
-			except IOError:
-				pass
-
+		try:
+			oe.getconfig(dir+'/'+oe.env['PF']+'.oe', oe.env)
+			continue
+		except IOError:
 			try:
 				oe.getconfig(dir+'/'+oe.env['CATEGORY']+'/'+oe.env['PF']+'.oe', oe.env)
-				break
+				continue
 			except IOError:
-				pass
-
-			try:
-				oe.getconfig(dir+'/'+oe.env['P']+'.oe', oe.env)
-				break
-			except IOError:
-				pass
-
-			try:
-				oe.getconfig(dir+'/'+oe.env['CATEGORY']+'/'+oe.env['P']+'.oe', oe.env)
-				break
-			except IOError:
-				pass
-			break
-
-
-print
+				try:
+					oe.getconfig(dir+'/'+oe.env['P']+'.oe', oe.env)
+					continue
+				except IOError:
+					try:
+						oe.getconfig(dir+'/'+oe.env['CATEGORY']+'/'+oe.env['P']+'.oe', oe.env)
+						continue
+					except IOError:
+						pass
 
 
 
@@ -105,19 +94,43 @@ print
 #
 dodel = []
 for s in oe.env:
-	if s == s.lower():
-		func = s+'_'+oe.env['CCHOST']
-		if oe.env.has_key(func):
-			oe.env[s] = oe.env[func]
-			dodel.append(func)
-		func = s+'_'+oe.env['TARGET']
-		if oe.env.has_key(func):
-			oe.env[s] = oe.env[func]
-			dodel.append(func)
+	name = s+'_'+oe.env['CCHOST']
+	if oe.env.has_key(name):
+		oe.env[s] = oe.env[name]
+		dodel.append(name)
+	name = s+'_'+oe.env['TARGET']
+	if oe.env.has_key(name):
+		oe.env[s] = oe.env[name]
+		dodel.append(name)
+
+
+#
+# Handle line appends:
+#
+for s in oe.env:
+	name = s+'_append'
+	if oe.env.has_key(name):
+		oe.env[s] = oe.env[s]+oe.env[name]
+		dodel.append(name)
+	name = s+'_prepend'
+	if oe.env.has_key(name):
+		oe.env[s] = oe.env[name]+oe.env[s]
+		dodel.append(name)
+	name = s+'_delete'
+	if oe.env.has_key(name):
+		new = ''
+		pattern = string.replace(oe.env[name],"\n","").strip()
+		for line in string.split(oe.env[s],"\n"):
+			if line.find(pattern) == -1:
+				new = new + '\n' + line
+		oe.env[s] = new
+		dodel.append(name)
+
 for s in dodel:
 	del oe.env[s]
 
 
+	
 
 #
 # Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?
@@ -137,8 +150,8 @@ for s in oe.env:
 
 
 #
-# Output of all environment variables
-# Output of all shell functions
+# Debug output: show all environment variables
+# Debug output: show all shell functions
 #
 for s in oe.env:
 	if s == s.upper():
