@@ -3,6 +3,7 @@
 import sys
 sys.path.append('/usr/share/oe')
 from oe import *
+import oe
 import os
 
 def usage(errorlevel=0, txt=''):
@@ -15,10 +16,10 @@ def usage(errorlevel=0, txt=''):
 	print "  %s\t\t%s" % ("-v, --version", "display oebuild version")
 	sys.exit(0)
 
-oebuild_version = 1.0
+__version__ = 1.0
 def version():
-	print "OpenEmbedded build tool version %s" % oebuild_version
-	print "Source version: %s" % %K%
+	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
+	print "OEBuild version %s" % __version__
 
 import getopt
 try:
