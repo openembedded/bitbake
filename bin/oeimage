@@ -1,0 +1,113 @@
+#!/usr/bin/python
+
+import sys, os, string, oe
+from oe import *
+
+__version__ = 1.0
+type = "jffs2"
+cfg_oe = data.init()
+cfg_oespawn = data.init()
+
+
+def usage():
+	print "Usage: oeimage [options ...]"
+	print "Creates an image for a target device from a root filesystem,"
+	print "obeying configuration parameters from the OpenEmbedded"
+	print "configuration files, thereby easing handling of deviceisms."
+	print ""
+	print "  %s\t\t%s" % ("-r [arg], --root [arg]", "root directory (default=${IMAGE_ROOTFS})")
+	print "  %s\t\t%s" % ("-t [arg], --type [arg]", "image type (jffs2[default], cramfs)")
+	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	sys.exit(0)
+
+def version():
+	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
+	print "OEImage version %s" % __version__
+
+def emit_oe(d, base_d = {}):
+	for v in d.keys():
+		if d[v] != base_d[v]:
+			data.emit_var(v, d)
+
+def getopthash(l):
+	h = {}
+	for (opt, val) in l:
+		h[opt] = val
+	return h
+
+import getopt
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], 'vr:t:', [ 'version', 'root=', 'type=' ])
+except getopt.GetoptError:
+	usage()
+
+# handle opts
+opthash = getopthash(opts)
+
+if opthash.has_key('--version') or opthash.has_key('-v'):
+	version()
+	sys.exit(0)
+
+try:
+	cfg_oe = parse.handle("conf/oe.conf", cfg_oe)
+except IOError:
+	fatal("Unable to open oe.conf")
+
+# sanity check
+if cfg_oe is None:
+	fatal("Unable to open/parse conf/oe.conf")
+	usage(1)
+
+rootfs = data.getVar('IMAGE_ROOTFS', cfg_oe, 1)
+
+if opthash.has_key('--root'):
+	rootfs = opthash['--root']
+if opthash.has_key('-r'):
+	rootfs = opthash['-r']
+
+if opthash.has_key('--type'):
+	type = opthash['--type']
+if opthash.has_key('-t'):
+	type = opthash['-t']
+
+if not rootfs:
+	oe.fatal("IMAGE_ROOTFS not defined")
+
+data.setVar('IMAGE_ROOTFS', rootfs, cfg_oe)
+
+from copy import copy, deepcopy
+localdata = deepcopy(cfg_oe)
+
+overrides = data.getVar('OVERRIDES', localdata)
+if not overrides:
+	oe.fatal("OVERRIDES not defined.")
+data.setVar('OVERRIDES', '%s:%s' % (overrides, type), localdata)
+data.update_data(localdata)
+data.setVar('OVERRIDES', overrides, localdata)
+
+# grab OEDIR
+topdir = data.getVar('TOPDIR', localdata, 1) or os.getcwd()
+oedir = data.getVar('OEDIR', localdata, 1) or topdir
+mkdirhier(oedir)
+
+cmd = data.getVar('IMAGE_CMD', localdata, 1)
+if not cmd:
+	oe.fatal("IMAGE_CMD not defined")
+
+#depends = data.getVar('IMAGE_DEPENDS', localdata, 1) or ""
+#if depends:
+#	oe.note("Spawning oemake to satisfy dependencies: %s" % depends)
+#	ret = os.system('oemake %s' % depends)
+#	if ret != 0:
+#		oe.error("executing oemake to satisfy dependencies")
+
+oe.note("Executing %s" % cmd)
+data.setVar('T', '${TMPDIR}', localdata)
+data.setVar('image_cmd', cmd, localdata)
+data.setVarFlag('image_cmd', 'func', 1, localdata)
+try:
+	oe.build.exec_func('image_cmd', localdata)
+except oe.build.FuncFailed:
+	sys.exit(1)
+#ret = os.system(cmd)
+#sys.exit(ret)
