@@ -34,6 +34,7 @@
 #
 
 #<pkgname>	<from>	<name>		<type>	<mode>	<uid>	<gid>	<major>	<minor>	<start>	<inc>	<count>
+blah	-	${libdir}	d
 blah	blah-1.2.3/src/.libs/libblah.so.1.2.3	${libdir}/libblah.so.1.2.3	f	0755	0	0
 blah	libblah.so.1.2.3	${libdir}/libblah.so.1	s
 blah-dev	libblah.so.1.2.3	${libdir}/libblah.so	s

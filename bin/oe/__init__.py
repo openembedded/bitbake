@@ -49,6 +49,7 @@ __all__ = [
 	"event",
 	"build",
 	"fetch",
+	"manifest"
  ]
 
 import sys,os,string,types,re
