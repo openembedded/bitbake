@@ -203,8 +203,7 @@ def expand(s, d = _data, varname = None):
 		key = match.group()[2:-1]
 		if varname and key:
 			if varname == key:
-				from oe import fatal
-				fatal("variable %s references itself!" % varname)
+				raise Exception("variable %s references itself!" % varname)
 		var = getVar(key, d, 1)
 		if var is not None:
 			setVar(key, var, d)
@@ -307,19 +306,20 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 
 	val = getVar(var, d, 1)
 	if type(val) is not types.StringType:
-		debug(2, "Warning, %s variable is not a string, not emitting" % var)
 		return 0
 
 	if getVarFlag(var, 'matchesenv', d):
 		return 0
 
 	if var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1:
-		debug(2, "Warning, %s variable name contains an invalid char, not emitting to shell" % var)
+		return 0
+
+	val.rstrip()
+	if not val:
 		return 0
 
 	if getVarFlag(var, "func", d):
 		# NOTE: should probably check for unbalanced {} within the var
-		val.rstrip()
 		o.write("%s() {\n%s\n}\n" % (var, val))
 	else:
 		if not getVarFlag(var, "export", d):
