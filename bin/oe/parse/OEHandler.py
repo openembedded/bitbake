@@ -54,11 +54,16 @@ def handle(fn, d = {}, include = 0):
 		debug(2, "OE " + fn + ": handle(data, include)")
 
 	(root, ext) = os.path.splitext(os.path.basename(fn))
+	init(d)
+
 	if ext == ".oeclass":
 		__classname__ = root
 		classes.append(__classname__)
 
-	init(d)
+	if include != 0:
+		oldfile = data.getVar('FILE', d)
+	else:
+		oldfile = None
 
 	fn = obtain(fn, d)
 	oepath = ['.']
