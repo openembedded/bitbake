@@ -210,7 +210,7 @@ def exec_func_shell(func, d):
     os.close(ose[0])
 
     if ret==0:
-        if not data.getVar("OEDEBUG"):
+        if not data.getVar("OEDEBUG", d):
             os.remove(runfile)
 #            os.remove(logfile)
         return
