@@ -18,7 +18,7 @@ __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
 __addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
 __def_regexp__           = re.compile( r"def\s+(\w+).*:" )
-__python_func_regexp__   = re.compile( r"\s+.*" )
+__python_func_regexp__   = re.compile( r"(\s+.*)|(^$)" )
 __word__ = re.compile(r"\S+")
 
 __infunc__ = ""
