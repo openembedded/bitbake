@@ -210,8 +210,8 @@ class Cvs(Fetch):
 			else:
 				method = "pserver"
 
-			os.chdir("cd %s; " % expand(dldir))
-			cvscmd += "cvs -d:" + method + ":" + user + "@" + host + ":" + path
+			os.chdir(expand(dldir))
+			cvscmd = "cvs -d:" + method + ":" + user + "@" + host + ":" + path
 			cvscmd += " checkout " + string.join(options) + " " + module 
 			note("fetch " + loc)
 			myret = os.system(cvscmd)
