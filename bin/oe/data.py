@@ -186,6 +186,29 @@ def inheritFromOS(pos, d = _data):
 
 import sys, string
 
+def emit_var(var, o=sys.__stdout__, d = _data):
+	if getVarFlag(var, "python", d):
+		return 0
+
+	val = getVar(var, d, 1)
+	if val is None:
+		debug(2, "Warning, %s variable is None, not emitting" % var)
+		return 0
+
+	if getVarFlag(var, "func", d):
+		# NOTE: should probably check for unbalanced {} within the var
+		o.write("%s() {\n%s\n}\n" % (var, val))
+		return 1
+	else:	
+		if getVarFlag(var, "export", d):
+			o.write('export ')
+		# if we're going to output this within doublequotes,
+		# to a shell, we need to escape the quotes in the var
+		alter = re.sub('"', '\\"', val.strip())
+		o.write('%s="%s"\n' % (var, alter))
+		return 1
+
+
 def emit_env(o=sys.__stdout__, d = _data):
 	"""This prints the data so that it can later be sourced by a shell
 	Normally, it prints to stdout, but this it can be redirectory to some open file handle
@@ -196,10 +219,13 @@ def emit_env(o=sys.__stdout__, d = _data):
 	oedir = getVar('OEDIR', d)
 	if oedir is None:
 		oedir = "." 
+
+	oepath = string.split(getVar('OEPATH', d, 1) or oedir, ":")
 	path = getVar('PATH', d)
 	if path:
 		path = path.split(":")
-		path[0:0] = [ os.path.join("${OEDIR}", "bin/build") ]
+		for p in oepath:
+			path[0:0] = [ os.path.join("%s" % p, "bin/build") ]
 		path[0:0] = [ "${STAGING_BINDIR}" ]
 		setVar('PATH', expand(string.join(path, ":"), d), d)
 
@@ -209,27 +235,12 @@ def emit_env(o=sys.__stdout__, d = _data):
 	for e in env:
 		if getVarFlag(e, "func", d):
 			continue
-		if getVarFlag(e, "python", d):
-			continue
-		o.write('\n')
-		if getVarFlag(e, "export", d):
-			o.write('export ')
-		val = getVar(e, d)
-		if val is None:
-			debug(2, "Warning, %s variable is None" % e)
-			continue
-		# if we're going to output this within doublequotes,
-		# to a shell, we need to escape the quotes in the var
-		alter = re.sub('"', '\\"', val.strip())
-		o.write(e+'="'+ alter + '"\n')	
+		emit_var(e, o, d) and o.write('\n')
 
 	for e in env:
 		if not getVarFlag(e, "func", d):
 			continue
-		if getVarFlag(e, "python", d):
-			continue
-		# NOTE: should probably check for unbalanced {} within the var
-		o.write("\n" + e + '() {\n' + getVar(e, d) + '}\n')
+		emit_var(e, o, d) and o.write('\n')
 
 def update_data(d = _data):
 	"""Modifies the environment vars according to local overrides
