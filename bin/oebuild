@@ -144,21 +144,21 @@ def do_fetch():
 		try:
 			grabber.init(getenv('SRC_URI').split())
 		except oefetch.NoMethodError:
-			note("No method for one or more urls in SRC_URI")
+			fatal("No method for one or more urls in SRC_URI")
 			return
 
 		try:
 			grabber.go()
 		except oefetch.MissingParameterError:
-			note("Fetch failed due to missing parameters in the supplied urls")
+			fatal("Fetch failed due to missing parameters in the supplied urls")
 			return
 		except oefetch.FetchError:
-			note("Fetch failed")
+			fatal("Fetch failed")
 			return
 
 		mkstamp('source')
 	else:
-		note("No SRC_URI variable, not downloading anything")
+		fatal("No SRC_URI variable, not downloading anything")
 
 
 #######################################################################
