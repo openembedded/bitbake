@@ -1,0 +1,150 @@
+#!/usr/bin/python
+
+import sys,string,oe
+
+
+#
+# Get file to read
+#
+if len(sys.argv) == 2:
+        file = sys.argv[1]
+else:
+        file = oe.projectdir+'/oe-test/override-0.1.oe'
+
+
+#
+# Read Configation from these places:
+#
+# 1.   ${OEDIR}/conf/global.oe
+# 2.   optionally from conf/local.oe
+#
+
+oe.getconfig(oe.projectdir+'/conf/global.oe', oe.env, 1)
+try:
+	oe.getconfig(oe.projectdir+'/conf/local.oe', oe.env, 1)
+except IOError:
+	pass
+try:
+	oe.getconfig('local.oe', oe.env, 1)
+except IOError:
+	pass
+try:
+	oe.getconfig('conf/local.oe', oe.env, 1)
+except IOError:
+	pass
+
+
+
+#
+# Deduce per-package environment variables
+#
+pkg = oe.catpkgsplit(file)
+if pkg == None:
+	print "ERROR: package file not in valid format"
+	sys.exit(1)
+
+oe.setenv('CATEGORY',	pkg[0])
+oe.setenv('PN',		pkg[1])
+oe.setenv('PV',		pkg[2])
+oe.setenv('PR',		pkg[3])
+oe.setenv('P',		'${PN}-${PV}')
+oe.setenv('PF',		'${P}-${PR}')
+oe.setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}/work')
+oe.setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}/files')
+oe.setenv('S',		'${WORKDIR}/${P}')
+oe.setenv('T',		'${TMPDIR}/${CATEGORY}/${PF}/temp')
+oe.setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/dest')
+oe.setenv('SLOT',	'0')
+
+
+#
+# Read package definition
+#
+# 1. ${OEDIR}/file
+# 2. optionally from all directories specified in ${OEPATH}
+
+oe.getconfig(file, oe.env, 1)
+
+# Now read local override
+if oe.env.has_key('OEPATH'):
+	oepath = oe.env['OEPATH']
+	for dir in oepath.split(':'):
+		while 1:
+			try:
+				oe.getconfig(dir+'/'+oe.env['PF']+'.oe', oe.env)
+				break
+			except IOError:
+				pass
+
+			try:
+				oe.getconfig(dir+'/'+oe.env['CATEGORY']+'/'+oe.env['PF']+'.oe', oe.env)
+				break
+			except IOError:
+				pass
+
+			try:
+				oe.getconfig(dir+'/'+oe.env['P']+'.oe', oe.env)
+				break
+			except IOError:
+				pass
+
+			try:
+				oe.getconfig(dir+'/'+oe.env['CATEGORY']+'/'+oe.env['P']+'.oe', oe.env)
+				break
+			except IOError:
+				pass
+			break
+
+
+print
+
+
+
+#
+# Handle architecture and target overrides
+#
+dodel = []
+for s in oe.env:
+	if s == s.lower():
+		func = s+'_'+oe.env['CCHOST']
+		if oe.env.has_key(func):
+			oe.env[s] = oe.env[func]
+			dodel.append(func)
+		func = s+'_'+oe.env['TARGET']
+		if oe.env.has_key(func):
+			oe.env[s] = oe.env[func]
+			dodel.append(func)
+for s in dodel:
+	del oe.env[s]
+
+
+
+#
+# Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?
+#
+for s in oe.env:
+	if s == s.lower(): continue
+	desc = 0
+	try:
+		d = oe.envdesc[s]
+	except KeyError:
+		if not desc: print "\nVars not yet described in oe.envdesc[]:"
+		desc = 1
+		print "Key:  ", s
+		print "Value:", oe.env[s]
+		pass
+	if desc: print
+
+
+#
+# Output of all environment variables
+# Output of all shell functions
+#
+for s in oe.env:
+	if s == s.upper():
+		print "\n#", oe.envdesc[s]['desc']+':'
+		print s+'="'+oe.env[s]+'"'
+for s in oe.env:
+	if s == s.lower():
+		print
+		print s+'="'+oe.env[s]+'"'
