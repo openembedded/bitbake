@@ -260,8 +260,7 @@ unpack() {
 }
 
 
-#TODO: add crosscompile support
-oeconf() {
+oe_runconf() {
 	if [ -x ./configure ] ; then
 		test -z "${BUILD_SYS}" || EXTRA_OECONF="--build=${BUILD_SYS} ${EXTRA_OECONF}"
 		test -z "${TARGET_SYS}" || EXTRA_OECONF="--target=${TARGET_SYS} ${EXTRA_OECONF}"
@@ -280,9 +279,10 @@ oeconf() {
 	fi
 }
 
-oemake() {
+oe_runmake() {
 	if [ -f ./[mM]akefile -o -f ./GNUmakefile ] ; then
 		if [ x"$MAKE" = x ]; then MAKE=make; fi
+		oenote ${MAKE} ${EXTRA_OEMAKE} "$@"
 		${MAKE} ${EXTRA_OEMAKE} "$@" || die "oemake failed"
 	else
 		die "no Makefile found"
