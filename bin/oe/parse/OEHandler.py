@@ -14,6 +14,7 @@ __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
 __addhandler_regexp__       = re.compile( r"addhandler\s+(.+)" )
+__word__ = re.compile(r"\S+")
 
 __infunc__ = ""
 __body__   = []
@@ -154,8 +155,6 @@ def feeder(lineno, s, fn, d):
 		else:
 			data.setVarFlag(key, "python", None, d)
 		return
-
-	__word__ = re.compile(r"\S+")
 
 	m = __export_func_regexp__.match(s)
 	if m:
