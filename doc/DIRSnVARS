@@ -56,7 +56,7 @@ OE-name if different	Portage name		contents
 			DESCRIPTION		'A library for configuring and customizing font access.'
 			DESTTREE		/usr
 			DIROPTIONS		-m0755
-			DISTDIR			/usr/portage/distfiles
+DL_DIR			DISTDIR			/usr/portage/distfiles
 			DOCDESTTREE
 OEBUILD			EBUILD			/usr/portage/media-libs/fontconfig/fontconfig-2.2.0.ebuild
 			ECLASS
