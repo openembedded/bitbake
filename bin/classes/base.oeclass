@@ -1,20 +1,20 @@
 PATCHES_DIR="${S}"
-DEPENDS_prepend="content/patcher"
+DEPENDS_prepend="content/patcher "
 
 python do_showdata() {
-	from oe import data, note
+	import oe
 	import sys
 	# emit variables and shell functions
-	data.emit_env(sys.__stdout__, d)
+	oe.data.emit_env(sys.__stdout__, d)
 	# emit the metadata which isnt valid shell
 	for e in d.keys():
-		if data.getVarFlag(e, 'python', d):
-			sys.__stdout__.write("\npython %s() {\n%s}\n" % (e, data.getVar(e, d)))
+		if oe.data.getVarFlag(e, 'python', d):
+			sys.__stdout__.write("\npython %s() {\n%s}\n" % (e, oe.data.getVar(e, d)))
 }
 
 python base_do_clean() {
 	"""clear the build and temp directories"""
-	from oe import note
+	from oe import note, data
 	import os
 
 	note("Executing task 'clean'")
@@ -49,7 +49,8 @@ python base_do_patch () {
 
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
-		raise Exception("SRC_URI not defined")
+		note("no SRC_URI variable, nothing to be done")
+		return
 	src_uri = data.expand(src_uri, d)
 	for url in src_uri.split():
 		(type, host, path, user, pswd, parm) = decodeurl(url)
@@ -85,7 +86,7 @@ python base_do_fetch() {
 
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
-		note("No SRC_URI variable, nothing to be done")
+		note("no SRC_URI variable, nothing to be done")
 		return 1
 	src_uri = data.expand(src_uri, d)
 
