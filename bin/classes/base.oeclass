@@ -64,7 +64,6 @@ python base_do_patch () {
 
 python base_do_fetch() {
 	import sys
-	print sys.argv
 
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
