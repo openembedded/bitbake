@@ -257,7 +257,8 @@ class Cvs(Fetch):
 
 			if date:
 				options.append("-D %s" % date)
-			options.append("-r %s" % tag)
+			if tag:
+				options.append("-r %s" % tag)
 
 			olddir = os.path.abspath(os.getcwd())
 			os.chdir(oe.data.expand(dldir, localdata))
