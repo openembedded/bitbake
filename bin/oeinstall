@@ -13,7 +13,8 @@ def usage():
 	print "using their do_install target."
 	print ""
 	print "  %s\t\t%s" % ("-r [arg], --root [arg]", "root directory (default=${IMAGE_ROOTFS})")
-	print "  %s\t\t%s" % ("-f [arg], --files [arg]", "files to install (default=${INSTALL_OEFILES})")
+	print "  %s\t\t%s" % ("-f [arg], --files [arg]", ".oe files to install (default=${INSTALL_OEFILES})")
+	print "  %s\t\t%s" % ("-t [arg], --type [arg]", "installation type (direct, and any for which package_[type].oeclass exists)")
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
 	sys.exit(0)
 
@@ -29,7 +30,7 @@ def getopthash(l):
 
 import getopt
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'vr:f:', [ 'version', 'root=', 'files=' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'vr:f:t:', [ 'version', 'root=', 'files=', 'type=' ])
 except getopt.GetoptError:
 	usage()
 
@@ -62,14 +63,98 @@ if not rootfs:
 
 data.setVar('IMAGE_ROOTFS', rootfs, cfg_oe)
 
+#type = 'direct'
+type = 'tar'
+
+if opthash.has_key('--type'):
+	type = opthash['--type']
+if opthash.has_key('-t'):
+	type = opthash['-t']
+
 # grab OEDIR
 topdir = data.getVar('TOPDIR', cfg_oe, 1) or os.getcwd()
 oedir = data.getVar('OEDIR', cfg_oe, 1) or topdir
 mkdirhier(oedir)
 
+# if type is not direct, add 'package_[type]' to INHERIT
+if type is not 'direct':
+	inherit = data.getVar('INHERIT', cfg_oe, 1) or ""
+	inherit += " package_%s" % type
+	data.setVarFlag('INHERIT', 'export', 1, cfg_oe)
+	data.setVar('INHERIT', inherit, cfg_oe)
+
+# Iterate through .oe files
+files = string.split(data.getVar("OEFILES", cfg_oe, 1) or "")
+data.setVar("OEFILES", string.join(files), cfg_oe)
+
+def get_oefiles():
+	"""Get default oefiles"""
+	dirs = os.listdir(os.getcwd())
+	oefiles = []
+	for f in dirs:
+		(root, ext) = os.path.splitext(f)
+		if ext == ".oe":
+			oefiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
+	return oefiles
+
+if not len(files):
+	files = get_oefiles()
+
+if not len(files):
+	usage()
+
+pkgdata = {}
+import glob
+for f in files:
+	from copy import deepcopy
+	pkgdata[f] = deepcopy(cfg_oe)
+	parse.handle(f, pkgdata[f])
+	if pkgdata[f] is None:
+		continue
+	# allow metadata files to add items to OEFILES
+	data.update_data(pkgdata[f])
+	addoefiles = data.getVar('OEFILES', pkgdata[f]) or None
+	if addoefiles:
+		for aof in string.split(addoefiles):
+			if not files.count(aof):
+				if not os.path.isabs(aof):
+					aof = os.path.join(os.path.dirname(f),aof)
+				files.append(aof)
+	pkgs = string.split(data.getVar('PACKAGES', pkgdata[f], 1) or "")
+	# Iterate through PACKAGES
+	for p in pkgs:
+		d = deepcopy(pkgdata[f])
+		print "Installing package %s (%s)" % (p, data.getVar('PN', d, 1))
+		data.setVar('PKG', p, d)
+		# Add package to overrides, collapse the metadata
+		overrides = data.getVar('OVERRIDES', d, 1) or ""
+		overrides += ":%s" % p
+		data.setVar('OVERRIDES', overrides, d)
+		data.update_data(d)
+		# Look at vars to determine the file names for the package type in question
+		# Call installer for a given package type as pulled from the metadata with INHERIT set properly
+		if data.getVar('pkg_preinst', d):
+			try:
+				build.exec_func('pkg_preinst', d)
+			except build.FuncFailed:
+				continue
+		if type is not 'direct':
+			try:
+				build.exec_func('package_%s_fn' % type, d)
+			except build.FuncFailed:
+				oe.error("failed obtaining the filename of the outputted package for %s" % type)
+				continue
+		if data.getVar('package_%s_install' % type, d):
+			try:
+				build.exec_func('package_%s_install' % type, d)
+			except build.FuncFailed:
+				continue
+		else:
+			oe.error("no package_%s_install function to execute. skipping." % type)
+		if data.getVar('pkg_postinst', d):
+			try:
+				build.exec_func('pkg_postinst', d)
+			except build.FuncFailed:
+				pass
+	del pkgdata[f]
 os.environ["D"] = rootfs
-oe.note("Spawning oemake to run do_install for each package.")
-ret = os.system('oemake --cmd install --force --abort')
-if ret != 0:
-	sys.exit(1)
-sys.exit(0)
