@@ -76,7 +76,7 @@ def getVar(var, d = _data, exp = 0):
 	if not var in d or not "content" in d[var]:
 		return None
 	if exp:
-		return expand(d[var]["content"], d)
+		return expand(d[var]["content"], d, var)
 	return d[var]["content"]
 
 def delVar(var, d = _data):
@@ -186,7 +186,7 @@ __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_func_regexp__ = re.compile(r"\${@@.+?}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
-def expand(s, d = _data):
+def expand(s, d = _data, varname = None):
 	"""Variable expansion using the data store.
 
 	Example:
@@ -201,7 +201,10 @@ def expand(s, d = _data):
 	"""
 	def var_sub(match):
 		key = match.group()[2:-1]
-		#print "got key:", key
+		if varname and key:
+			if varname == key:
+				from oe import fatal
+				fatal("variable %s references itself!" % varname)
 		var = getVar(key, d, 1)
 		if var is not None:
 			return var
