@@ -1,14 +1,16 @@
 PATCHES_DIR="${S}"
 
 python base_do_patch () {
+	if not env.has_key('SRC_URI'):
+		raise Exception("SRC_URI not defined")
 	for url in getenv('SRC_URI').split():
 #		print "url: %s" % url
-		fetch = oefetch.FetchUrls()
-		fetch.init([url])
-		local = fetch.localpath(url)
 		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
 		if not parm.has_key("patch"):
 			continue
+		fetch = oefetch.FetchUrls()
+		fetch.init([url])
+		local = fetch.localpath(url)
 		# patch!
 		dots = local.split(".")
 		if dots[-2] in ['tar']:
@@ -21,13 +23,14 @@ python base_do_patch () {
 		cmd += " -i %s" % efile
 		ret = os.system(cmd)
 		if ret != 0:
-			fatal("Patch execution failed")
+			raise Exception("Patch execution failed")
 	mkstamp('do_patch')
 		
 }
 
 base_do_unpack() {
-	test "${A}" != "" && unpack "${A}" || oenote "nothing to extract"
+	if test -z "${A}"; then oenote "nothing to extract"; fi
+	unpack "${A}" || die "unpack failure"
 }
 
 
