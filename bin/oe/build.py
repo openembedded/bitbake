@@ -138,8 +138,8 @@ def exec_func_shell(func, d):
 	"""
 	import sys
 
-	deps = data.getVarFlag(func, 'deps', _task_data)
-	check = data.getVarFlag(func, 'check', _task_data)
+	deps = data.getVarFlag(func, 'deps', d)
+	check = data.getVarFlag(func, 'check', d)
 	if globals().has_key(check):
 		if globals()[check](func, deps):
 			return
@@ -222,7 +222,15 @@ def exec_task(task, d):
 	   has dependencies amongst other tasks."""
 
 	# check if the task is in the graph..
-	if not _task_graph.hasnode(task):
+	task_graph = data.getVar('_task_graph', d)
+	if not task_graph:
+		task_graph = oe.digraph()
+		data.setVar('_task_graph', task_graph, d)
+	task_cache = data.getVar('_task_cache', d)
+	if not task_cache:
+		task_cache = []
+		data.setVar('_task_cache', task_cache, d)
+	if not task_graph.hasnode(task):
 		raise EventException("", InvalidTask(task, d))
 
 	# check whether this task needs executing..
@@ -232,29 +240,28 @@ def exec_task(task, d):
 
 	# follow digraph path up, then execute our way back down
 	def execute(graph, item):
-		func = data.getVar(item, _task_data)
-		if func:
-			if func in _task_cache:
+		if data.getVarFlag(item, 'task', d):
+			if item in task_cache:
 				return 1
 
-			if task != func:
+			if task != item:
 				# deeper than toplevel, exec w/ deps
-				exec_task(func, d)
+				exec_task(item, d)
 				return 1
 
 			try:
-				debug(1, "Executing task %s" % func)
-				event.fire(TaskStarted(func, d))
-				exec_func(func, d)
-				event.fire(TaskSucceeded(func, d))
-				_task_cache.append(func)
+				debug(1, "Executing task %s" % item)
+				event.fire(TaskStarted(item, d))
+				exec_func(item, d)
+				event.fire(TaskSucceeded(item, d))
+				task_cache.append(item)
 			except FuncFailed:
-				failedevent = TaskFailed(func, d)
+				failedevent = TaskFailed(item, d)
 				event.fire(failedevent)
 				raise EventException(None, failedevent)
 
 	# execute
-	_task_graph.walkdown(task, execute)
+	task_graph.walkdown(task, execute)
 
 	# make stamp, or cause event and raise exception
 	if not data.getVarFlag(task, 'nostamp', d):
@@ -263,6 +270,10 @@ def exec_task(task, d):
 
 def stamp_is_current(task, d, checkdeps = 1):
 	"""Check status of a given task's stamp. returns 0 if it is not current and needs updating."""
+	task_graph = data.getVar('_task_graph', d)
+	if not task_graph:
+		task_graph = oe.digraph()
+		data.setVar('_task_graph', task_graph, d)
 	stamp = data.getVar('STAMP', d)
 	if not stamp:
 		return 0
@@ -291,7 +302,7 @@ def stamp_is_current(task, d, checkdeps = 1):
 			return 0
 		return 1
 
-	return _task_graph.walkdown(task, checkStamp)
+	return task_graph.walkdown(task, checkStamp)
 
 
 def md5_is_current(task):
@@ -308,31 +319,43 @@ def mkstamp(task, d):
 	open(stamp, "w+")
 
 
-def add_task(task, content, deps):
-	data.setVar(task, content, _task_data)
-	_task_graph.addnode(task, None)
+def add_task(task, deps, d):
+	task_graph = data.getVar('_task_graph', d)
+	if not task_graph:
+		task_graph = oe.digraph()
+		data.setVar('_task_graph', task_graph, d)
+	data.setVarFlag(task, 'task', 1, d)
+	task_graph.addnode(task, None)
 	for dep in deps:
-		if not _task_graph.hasnode(dep):
-			_task_graph.addnode(dep, None)
-		_task_graph.addnode(task, dep)
+		if not task_graph.hasnode(dep):
+			task_graph.addnode(dep, None)
+		task_graph.addnode(task, dep)
 
 
-def remove_task(task, kill = 1, taskdata = _task_data):
+def remove_task(task, kill, d):
 	"""Remove an OE 'task'.
 
 	   If kill is 1, also remove tasks that depend on this task."""
 
-	if not _task_graph.hasnode(task):
+	task_graph = data.getVar('_task_graph', d)
+	if not task_graph:
+		task_graph = oe.digraph()
+		data.setVar('_task_graph', task_graph, d)
+	if not task_graph.hasnode(task):
 		return
 
-	data.delVar(task, taskdata)
+	data.delVarFlag(task, 'task', d)
 	ref = 1
 	if kill == 1:
 		ref = 2
-	_task_graph.delnode(task, ref)
+	task_graph.delnode(task, ref)
 
-def task_exists(task):
-	return _task_graph.hasnode(task)
+def task_exists(task, d):
+	task_graph = data.getVar('_task_graph', d)
+	if not task_graph:
+		task_graph = oe.digraph()
+		data.setVar('_task_graph', task_graph, d)
+	return task_graph.hasnode(task)
 
 def get_task_data():
 	return _task_data

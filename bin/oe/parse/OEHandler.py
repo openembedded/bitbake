@@ -120,14 +120,12 @@ def handle(fn, d = {}, include = 0):
 				
 				deps = data.getVarFlag(var, 'deps', d) or []
 				postdeps = data.getVarFlag(var, 'postdeps', d) or []
-				oe.build.add_task(var, var, deps)
+				oe.build.add_task(var, deps, d)
 				for p in postdeps:
-					td = oe.build.get_task_data()
-					pcontent = data.getVar(p, td) or p
-					pdeps = data.getVarFlag(pcontent, 'deps', d) or []
+					pdeps = data.getVarFlag(p, 'deps', d) or []
 					pdeps.append(var)
-					data.setVarFlag(pcontent, 'deps', pdeps, d)
-					oe.build.add_task(p, pcontent, pdeps)
+					data.setVarFlag(p, 'deps', pdeps, d)
+					oe.build.add_task(p, pdeps, d)
 	if oldfile:
 		data.setVar('FILE', oldfile, d)
 	return d

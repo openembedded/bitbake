@@ -109,18 +109,35 @@ def build(graph, item):
 	command = cmd
 	debug(1, "oebuild %s %s" % (command, fn))
 	event.fire(PkgStarted(item, pkgdata[fn]))
-	opts = ""
-	if force:
-		opts += " --force"
-	ret = os.system("oebuild %s %s %s" % (opts, command, fn))
-	if ret == 0:
+	try:
+		oe.build.exec_task('do_%s' % command, pkgdata[fn])
 		event.fire(PkgSucceeded(item, pkgdata[fn]))
 		__build_cache.append(item)
 		return 1
-	else:
+	except oe.build.FuncFailed:
+		error("task stack execution failed")
 		event.fire(PkgFailed(item, pkgdata[fn]))
 		__build_cache_fail.append(item)
 		return 0
+	except oe.build.EventException:
+		(type, value, traceback) = sys.exc_info()
+		e = value.event
+		error("%s event exception, aborting" % event.getName(e))
+		event.fire(PkgFailed(item, pkgdata[fn]))
+		__build_cache_fail.append(item)
+		return 0
+#	opts = ""
+#	if force:
+#		opts += " --force"
+#	ret = os.system("oebuild %s %s %s" % (opts, command, fn))
+#	if ret == 0:
+#		event.fire(PkgSucceeded(item, pkgdata[fn]))
+#		__build_cache.append(item)
+#		return 1
+#	else:
+#		event.fire(PkgFailed(item, pkgdata[fn]))
+#		__build_cache_fail.append(item)
+#		return 0
 
 def getopthash(l):
 	h = {}
