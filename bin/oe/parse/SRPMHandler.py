@@ -14,7 +14,7 @@ _srpm_vartranslate = {
 "RELEASE": "PR",
 }
 
-def supports(fn):
+def supports(fn, d):
 	return fn[-8:] == ".src.rpm"
 
 def handle(fn, d = {}, include = 0):
