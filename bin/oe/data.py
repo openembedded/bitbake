@@ -315,6 +315,7 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 
 	if getVarFlag(var, "func", d):
 		# NOTE: should probably check for unbalanced {} within the var
+		val.rstrip()
 		o.write("%s() {\n%s\n}\n" % (var, val))
 	else:
 		if not getVarFlag(var, "export", d):
@@ -331,7 +332,6 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 def emit_env(o=sys.__stdout__, d = _data):
 	"""Emits all items in the data store in a format such that it can be sourced by a shell."""
 
-#	expandData(d)
 	env = d.keys()
 
 	for e in env:
