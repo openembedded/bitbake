@@ -1169,7 +1169,7 @@ def reader(cfgfile, feeder):
 
 
 # matches "VAR = VALUE"
-__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>\w+)\s*=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
+__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>\w+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 
 # matches "include FILE"
 __include_regexp__ = re.compile( r"include\s+(.+)" )
@@ -1187,7 +1187,10 @@ def __read_config__(cfgfile, level):
 			key = groupd["var"]
 			if groupd.has_key("exp"):
 				envflags[key]["export"] = 1
-			env[key] = groupd["value"]
+			if groupd.has_key("colon"):
+				setenv(key, groupd["value"])
+			else:
+				env[key] = groupd["value"]
 #			print key,groupd["value"]
 			return
 
@@ -1253,8 +1256,11 @@ def read_oe(oefile, inherit = False, classname = None):
 			var = m.group("value")
 			if var and (var[0]=='"' or var[0]=="'"):
 				fatal("Mismatch in \" or ' characters for %s=" % key)
+			if m.group("colon"):
+				setenv(key, var)
+			else:
+				env[key] = var
 			#print "%s=%s" % (key,var)
-			env[key] = var
 			return
 
 		m = __func_start_regexp__.match(s)
