@@ -35,7 +35,7 @@ __all__ = [
 	"vercmp",
 	"pkgcmp",
 	"dep_parenreduce",
-	"dep_opreduce",
+	"dep_opconvert",
 	"digraph",
 
 # fetch
@@ -63,6 +63,7 @@ __all__ = [
 	"fetch",
 	"parse",
 	"data",
+	"event",
  ]
 
 import sys,os,string,types,re
@@ -1528,6 +1529,7 @@ def set_additional_vars():
 		else:
 			a = []
 
+		import oe.fetch
 		try:
 			oe.fetch.init(getenv('SRC_URI').split())
 		except oe.fetch.NoMethodError:
@@ -1536,6 +1538,7 @@ def set_additional_vars():
 			return
 
 		a += oe.fetch.localpaths()
+		del oe.fetch
 		env['A'] = string.join(a)
 
 	for s in ['S','STAGING_DIR','STAGING_BINLIB', 'STAGING_LIBDIR']:
