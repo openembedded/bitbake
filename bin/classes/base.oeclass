@@ -48,6 +48,7 @@ base_do_compile() {
 }
 
 
+
 base_do_stage() {
 	oenote "nothing to install into stage area"
 }
@@ -79,8 +80,13 @@ python base_eventhandler() {
 			note("package %s: dependency %s %s" % (e.pkg, e.dep, string.lower(name[:-3])))
 		return NotHandled
 }
-
-EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch do_build
-
-addtask patch after do_unpack before do_compile
 addhandler base_eventhandler
+
+# setup the initial task stack
+EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch do_build
+addtask fetch before do_unpack
+addtask unpack before do_compile
+addtask patch after do_unpack
+addtask compile after do_unpack
+addtask stage after do_compile
+addtask install after do_stage before do_build
