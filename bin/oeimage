@@ -19,6 +19,7 @@ def usage():
     print ""
     print "  %s\t\t%s" % ("-r [arg], --root [arg]", "root directory (default=${IMAGE_ROOTFS})")
     print "  %s\t\t%s" % ("-t [arg], --type [arg]", "image type (jffs2[default], cramfs)")
+    print "  %s\t\t%s" % ("-n [arg], --name [arg]", "image name (override IMAGE_NAME variable)")
     print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
     sys.exit(0)
 
@@ -39,7 +40,7 @@ def getopthash(l):
 
 import getopt
 try:
-    (opts, args) = getopt.getopt(sys.argv[1:], 'vr:t:e:', [ 'version', 'root=', 'type=', 'oefile=' ])
+    (opts, args) = getopt.getopt(sys.argv[1:], 'vr:t:e:n:', [ 'version', 'root=', 'type=', 'oefile=', 'name=' ])
 except getopt.GetoptError:
     usage()
 
@@ -101,6 +102,11 @@ if not overrides:
 data.setVar('OVERRIDES', '%s:%s' % (overrides, type), localdata)
 data.update_data(localdata)
 data.setVar('OVERRIDES', overrides, localdata)
+
+if '-n' in opthash:
+    data.setVar('IMAGE_NAME', opthash['-n'], localdata)
+if '--name' in opthash:
+    data.setVar('IMAGE_NAME', opthash['--name'], localdata)
 
 topdir = data.getVar('TOPDIR', localdata, 1) or os.getcwd()
 
