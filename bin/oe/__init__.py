@@ -11,11 +11,61 @@ Please visit http://www.openembedded.org/phpwiki/ for more info.
 Try "pydoc ./oe.py" to get some nice output.
 """
 
-import gettext
-gettext.install("oe")
-_("Hello, World")
+__version__ = "1.0"
 
-import sys,os,string,types,re,oefetch
+__all__ = [
+
+	"debug",
+	"note",
+	"error",
+	"fatal",
+
+	"mkdirhier",
+	"movefile",
+
+	"tokenize",
+	"evaluate",
+	"flatten",
+	"relparse",
+	"ververify",
+	"isjustname",
+	"isspecific",
+	"pkgsplit",
+	"catpkgsplit",
+	"vercmp",
+	"pkgcmp",
+	"dep_parenreduce",
+	"dep_opreduce",
+	"digraph",
+
+# fetch
+	"decodeurl",
+	"encodeurl",
+
+# file parsing
+	"read_config",
+	"read_oe",
+
+# data handling
+	"inherit_os_env",
+	"getenv",
+	"setenv",
+	"set_automatic_vars",
+	"set_additional_vars",
+	"update_env",
+	"env",
+	"envflags",
+	"expand",
+	"print_missing_env",
+	"print_orphan_env",
+
+# modules
+	"fetch",
+	"parse",
+	"data",
+ ]
+
+import sys,os,string,types,re
 
 #projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 projectdir = os.getcwd()
@@ -1479,13 +1529,13 @@ def set_additional_vars():
 			a = []
 
 		try:
-			oefetch.init(getenv('SRC_URI').split())
-		except oefetch.NoMethodError:
+			oe.fetch.init(getenv('SRC_URI').split())
+		except oe.fetch.NoMethodError:
 			(type, value, traceback) = sys.exc_info()
 			fatal("No method: %s" % value)
 			return
 
-		a += oefetch.localpaths()
+		a += oe.fetch.localpaths()
 		env['A'] = string.join(a)
 
 	for s in ['S','STAGING_DIR','STAGING_BINLIB', 'STAGING_LIBDIR']:
