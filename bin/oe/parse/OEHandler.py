@@ -49,11 +49,12 @@ def inherit(files, d):
 
 
 def handle(fn, d = {}, include = 0):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__, __residue__
     __body__ = []
     __oepath_found__ = 0
     __infunc__ = ""
     __classname__ = ""
+    __residue__ = []
 
     if include == 0:
         debug(2, "OE " + fn + ": handle(data)")
@@ -107,14 +108,11 @@ def handle(fn, d = {}, include = 0):
         lineno = lineno + 1
         s = f.readline()
         if not s: break
-        w = s.strip()
-        if not w: continue      # skip empty lines
         s = s.rstrip()
-        while s[-1] == '\\':
-            lineno = lineno + 1
-            s2 = f.readline()[:-1].strip()
-            s = s[:-1] + s2
         feeder(lineno, s, fn, d)
+    if __inpython__:
+        # add a blank line to close out any python definition
+        feeder(lineno + 1, "", fn, d)
     if ext == ".oeclass":
         classes.remove(__classname__)
     else:
@@ -162,7 +160,7 @@ def handle(fn, d = {}, include = 0):
     return d
 
 def feeder(lineno, s, fn, d):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, __oepath_found__, classes, oe
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, __oepath_found__, classes, oe, __residue__
     if __infunc__:
         if s == '}':
             __body__.append('')
@@ -198,7 +196,14 @@ def feeder(lineno, s, fn, d):
             data.setVar('__functions__', "%s\n%s" % (funcs, text), d)
 #           fall through
 
-    if s[0] == '#': return          # skip comments
+    if s == '' or s[0] == '#': return          # skip comments and empty lines
+
+    if s[-1] == '\\':
+        __residue__.append(s[:-1])
+        return
+
+    s = "".join(__residue__) + s
+    __residue__ = []
 
     m = __func_start_regexp__.match(s)
     if m:
