@@ -10,6 +10,7 @@ import oe.fetch
 from oe import debug, data, fetch, fatal
 
 from oe.parse.ConfHandler import include, localpath, obtain, init
+from oe.parse import ParseError
 
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\-\+]+)?\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
@@ -338,6 +339,8 @@ def set_additional_vars(file, d, include):
         fetch.init(src_uri.split())
     except fetch.NoMethodError:
         pass
+    except oe.MalformedUrl,e:
+        raise ParseError("Unable to generate local paths for SRC_URI due to malformed uri: %s" % e)
 
     a += fetch.localpaths(d)
     del fetch
