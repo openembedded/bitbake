@@ -184,7 +184,7 @@ def exec_func_shell(func, d):
 
 	# execute function
 	prevdir = os.getcwd()
-	ret = os.system('sh -e -x %s' % runfile)
+	ret = os.system('sh -e %s' % runfile)
 	os.chdir(prevdir)
 
 	# restore the backups
