@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import string, sys, os
+sys.path.append('/usr/share/oe')
 from oe import *
 
 class PkgBase(event.Event):

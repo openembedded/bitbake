@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
+import sys
+sys.path.append('/usr/share/oe')
 from oe import *
-import sys, os
+import os
 
 def usage(errorlevel=0, txt=''):
 	global tasks
