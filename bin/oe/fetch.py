@@ -322,6 +322,11 @@ class Cvs(Fetch):
             else:
                 method = "pserver"
 
+            cvs_rsh = None
+            if method == "ext":
+                if "rsh" in parm:
+                    cvs_rsh = parm["rsh"]
+
             tarfn = oe.data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, tag, date), localdata)
             oe.data.setVar('TARFILES', dlfile, localdata)
             oe.data.setVar('TARFN', tarfn, localdata)
@@ -360,6 +365,9 @@ class Cvs(Fetch):
             oe.data.setVar('CVSCOOPTS', " ".join(options), localdata)
             oe.data.setVar('CVSMODULE', module, localdata)
             cvscmd = oe.data.getVar('FETCHCOMMAND', localdata, 1)
+
+            if cvs_rsh:
+                cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)
 
 #           create temp directory
             oe.debug(2, "Fetch: creating temporary directory")
