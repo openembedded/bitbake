@@ -118,7 +118,9 @@ hi def link bbError		Error
 hi def link bbFunction		Function
 hi def link bbDelimiter		Delimiter
 hi def link bbIdentifier	Identifier
-hi def link bbQuote		Statement
 hi def link bbVarEq		Operator
+
+hi def link bbQuote		String
+hi def link bbVarValue		String
 
 let b:current_syntax = "bb"
