@@ -1,0 +1,13 @@
+#!/bin/bash
+
+test $# -ge 2 || {
+	echo "Usage: oedebug level \"message\""
+	exit 1
+}
+
+test ${OEDEBUG:-0} -ge $1 && {
+	shift
+	echo "DEBUG:" $*
+}
+
+exit 0
