@@ -24,22 +24,466 @@ class VarExpandError(Exception):
 	pass
 
 
-prepender = ''
+
+#######################################################################
+#######################################################################
+#
+# SECTION: Debug
+#
+# PURPOSE: little functions to make yourself known
+#
+#######################################################################
+#######################################################################
+
+debug_prepend = ''
+
+
 def debug(lvl, *args):
 	if env.has_key('OEDEBUG') and (env['OEDEBUG'] >= str(lvl)):
-		print prepender + 'DEBUG:', string.join(args, '')
+		print debug_prepend + 'DEBUG:', string.join(args, '')
 
 def note(*args):
-	print prepender + 'NOTE:', string.join(args, '')
+	print debug_prepend + 'NOTE:', string.join(args, '')
 
 def error(*args):
-	print prepender + 'ERROR:', string.join(args, '')
+	print debug_prepend + 'ERROR:', string.join(args, '')
 
 def fatal(*args):
-	print prepender + 'ERROR:', string.join(args, '')
+	print debug_prepend + 'ERROR:', string.join(args, '')
 	sys.exit(1)
 
 
+#######################################################################
+#######################################################################
+#
+# SECTION: File
+#
+# PURPOSE: Basic file and directory tree related functions
+#
+#######################################################################
+#######################################################################
+
+def mkdirhier(dir):
+	"""Create a directory like 'mkdir -p', but does not complain if directory
+	already exists like os.makedirs"""
+
+	try:
+		os.makedirs(dir)
+		debug(2, "created " + dir)
+	except OSError, e:
+		if e.errno != 17: raise e
+
+
+#######################################################################
+
+def movefile(src,dest,newmtime=None,sstat=None):
+	"""moves a file from src to dest, preserving all permissions and
+	attributes; mtime will be preserved even when moving across
+	filesystems.  Returns true on success and false on failure. Move is
+	atomic."""
+
+	#print "movefile("+src+","+dest+","+str(newmtime)+","+str(sstat)+")"
+	try:
+		if not sstat:
+			sstat=os.lstat(src)
+	except Exception, e:
+		print "!!! Stating source file failed... movefile()"
+		print "!!!",e
+		return None
+
+	destexists=1
+	try:
+		dstat=os.lstat(dest)
+	except:
+		dstat=os.lstat(os.path.dirname(dest))
+		destexists=0
+
+	if destexists:
+		if S_ISLNK(dstat[ST_MODE]):
+			try:
+				os.unlink(dest)
+				destexists=0
+			except Exception, e:
+				pass
+
+	if S_ISLNK(sstat[ST_MODE]):
+		try:
+			target=os.readlink(src)
+			if destexists and not S_ISDIR(dstat[ST_MODE]):
+				os.unlink(dest)
+			os.symlink(target,dest)
+			missingos.lchown(dest,sstat[ST_UID],sstat[ST_GID])
+			return os.lstat(dest)
+		except Exception, e:
+			print "!!! failed to properly create symlink:"
+			print "!!!",dest,"->",target
+			print "!!!",e
+			return None
+
+	renamefailed=1
+	if sstat[ST_DEV]==dstat[ST_DEV]:
+		try:
+			ret=os.rename(src,dest)
+			renamefailed=0
+		except Exception, e:
+			import errno
+			if e[0]!=errno.EXDEV:
+				# Some random error.
+				print "!!! Failed to move",src,"to",dest
+				print "!!!",e
+				return None
+			# Invalid cross-device-link 'bind' mounted or actually Cross-Device
+
+	if renamefailed:
+		didcopy=0
+		if S_ISREG(sstat[ST_MODE]):
+			try: # For safety copy then move it over.
+				shutil.copyfile(src,dest+"#new")
+				os.rename(dest+"#new",dest)
+				didcopy=1
+			except Exception, e:
+				print '!!! copy',src,'->',dest,'failed.'
+				print "!!!",e
+				return None
+		else:
+			#we don't yet handle special, so we need to fall back to /bin/mv
+			a=getstatusoutput("/bin/mv -f "+"'"+src+"' '"+dest+"'")
+			if a[0]!=0:
+				print "!!! Failed to move special file:"
+				print "!!! '"+src+"' to '"+dest+"'"
+				print "!!!",a
+				return None # failure
+		try:
+			if didcopy:
+				missingos.lchown(dest,sstat[ST_UID],sstat[ST_GID])
+				os.chmod(dest, S_IMODE(sstat[ST_MODE])) # Sticky is reset on chown
+				os.unlink(src)
+		except Exception, e:
+			print "!!! Failed to chown/chmod/unlink in movefile()"
+			print "!!!",dest
+			print "!!!",e
+			return None
+
+	if newmtime:
+		os.utime(dest,(newmtime,newmtime))
+	else:
+		os.utime(dest, (sstat[ST_ATIME], sstat[ST_MTIME]))
+		newmtime=sstat[ST_MTIME]
+	return newmtime
+
+
+
+#######################################################################
+#######################################################################
+#
+# SECTION: Download
+#
+# PURPOSE: Download via HTTP, FTP, CVS, BITKEEPER, handling of MD5-signatures
+#          and mirrors
+#
+#######################################################################
+#######################################################################
+
+def decodeurl(url):
+	"""Decodes an URL into the tokens (scheme, network location, path,
+	user, password, parameters). 
+
+	>>> decodeurl("http://www.google.com/index.html")
+	('http', 'www.google.com', '/index.html', '', '', {})
+
+	CVS url with username, host and cvsroot. The cvs module to check out is in the
+	parameters:
+
+	>>> decodeurl("cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg")
+	('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'})
+
+	Dito, but this time the username has a password part. And we also request a special tag
+	to check out.
+
+	>>> decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
+	('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
+	"""
+
+	#debug(3, "decodeurl('%s')" % url)
+	m = re.compile('([^:]*):/*(.+@)?([^/]+)(/[^;]+);?(.*)').match(url)
+	if not m:
+		fatal("Malformed URL '%s'" % url)
+
+	type = m.group(1)
+	host = m.group(3)
+	path = m.group(4)
+	user = m.group(2)
+	parm = m.group(5)
+	#print "type:", type
+	#print "host:", host
+	#print "path:", path
+	#print "parm:", parm
+	if user:
+		m = re.compile('([^:]+)(:?(.*))@').match(user)
+		if m:
+			user = m.group(1)
+			pswd = m.group(3)
+	else:
+		user = ''
+		pswd = ''
+	#print "user:", user
+	#print "pswd:", pswd
+	#print
+	p = {}
+	if parm:
+		for s in parm.split(';'):
+			s1,s2 = s.split('=')
+			p[s1] = s2
+			
+	return (type, host, path, user, pswd, p)
+		
+
+#######################################################################
+
+def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
+	myfile = os.path.basename(path)
+	
+	try:
+		mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+		if mydigests.has_key(myfile):
+			# if we have the digest file, we know the final size and can resume the download.
+			if mystat[ST_SIZE] < mydigests[myfile]["size"]:
+				fetched = 1
+			else:
+				# we already have it downloaded, skip
+				# if our file is bigger than the recorded size, digestcheck should catch it.
+				fetched = 2
+		else:
+			# we don't have the digest file, but the file exists.  Assume it is fully downloaded.
+			fetched = 2
+	except (OSError,IOError),e:
+		fetched = 0
+
+	# we either need to resume or start the download
+	if fetched != 2:
+		# you can't use "continue" when you're inside a "try" block
+		if fetched == 1:
+			# resume mode:
+			note("Resuming download...")
+			myfetch = string.replace(env["FETCHCOMMAND"],"${DISTDIR}",env["DISTDIR"])
+		else:
+			# normal mode:
+			myfetch = string.replace(env["RESUMECOMMAND"],"${DISTDIR}",env["DISTDIR"])
+		note("fetch " +loc)
+		myfetch = myfetch.replace("${URI}",loc)
+		myfetch = myfetch.replace("${FILE}",myfile)
+		note(myfetch)
+		myret = os.system(myfetch)
+
+		if mydigests.has_key(myfile):
+			print "0"
+			try:
+				mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+				print "1", myret
+				# no exception?  file exists. let digestcheck() report
+				# an appropriately for size or md5 errors
+				if myret and (mystat[ST_SIZE] < mydigests[myfile]["size"]):
+					print "2"
+					# Fetch failed... Try the next one... Kill 404 files though.
+					if (mystat[ST_SIZE]<100000) and (len(myfile)>4) and not ((myfile[-5:]==".html") or (myfile[-4:]==".htm")):
+						print "3"
+						html404 = re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
+						try:
+							if html404.search(open(env["DISTDIR"]+"/"+myfile).read()):
+								try:
+									os.unlink(env["DISTDIR"]+"/"+myfile)
+									note("deleting invalid distfile (improper 404 redirect from server)")
+								except:
+									pass
+						except:
+							pass
+					print "What to do?"
+					return 1
+				return 2
+			except (OSError,IOError),e:
+				fetched = 0
+		else:
+			if not myret:
+				return 2
+
+	if fetched != 2:
+		error("Couldn't download "+ myfile)
+		return 0
+	return fetched
+
+
+#######################################################################
+
+def fetch_with_cvs(mydigests, type,host,path,user,pswd,parm):
+	fatal('fetch via CVS not yet implemented')
+
+
+#######################################################################
+
+def fetch_with_bk(mydigests, type,host,path,user,pswd,parm):
+	fatal('fetch via BitKeeper not yet implemented')
+
+
+#######################################################################
+
+def fetch(urls, listonly=0):
+	digestfn  = env["FILESDIR"]+"/digest-"+env["PF"]
+	mydigests = {}
+	if os.path.exists(digestfn):
+		debug(3, "checking digest "+ digestfn)
+		myfile    = open(digestfn,"r")
+		mylines   = myfile.readlines()
+		for x in mylines:
+			myline = string.split(x)
+			if len(myline)<4:
+				# invalid line
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
+			try:
+				mydigests[myline[2]] = {"md5" : myline[1], "size" : string.atol(myline[3])}
+			except ValueError:
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
+
+	for loc in urls.split():
+		debug(2,"fetching %s" % loc)
+		(type, host, path, user, pswd, parm) = decodeurl(varexpand(loc, env))
+
+		if type in ['http','https','ftp']:
+			fetched = fetch_with_wget(loc,mydigests, type,host,path,user,pswd)
+			if env.has_key('A'):
+				a = env['A'].split()
+			else:
+				a = []
+			a.append(os.path.basename(path))
+			env['A'] = string.join(a)
+		elif type in ['cvs', 'pserver']:
+			fetched = fetch_with_cvs(mydigests, type,host,path,user,pswd,parm)
+		elif type == 'bk':
+			fetched = fetch_with_bk(mydigests, type,host,path,user,pswd,parm)
+		else:
+			fatal("can't fetch with method '%s'" % type)
+		if fetched != 2:
+			error("Couldn't download "+ loc)
+			return 0
+
+		return 1
+		
+
+#######################################################################
+#
+# fetch2()
+#
+# TODO: the current function is quite simple, it can only fetch http:// and ftp://,
+# but not cvs:// bk:// or patches, files, directories
+#
+def fetch2(myuris, listonly=0):
+	"fetch files.  Will use digest file if available."
+	fetchcommand  = string.replace(env["FETCHCOMMAND"],"${DISTDIR}",env["DISTDIR"])
+	resumecommand = string.replace(env["RESUMECOMMAND"],"${DISTDIR}",env["DISTDIR"])
+	mydigests     = None
+	digestfn      = env["FILESDIR"]+"/digest-"+env["PF"]
+
+	# Read in the md5-Digest. There is one file for all source-URIs.
+	# The file also contains the file-length. We can later use this information
+	# to resume an aborted download.
+
+	if os.path.exists(digestfn):
+		debug(3, "checking digest "+ digestfn)
+		myfile    = open(digestfn,"r")
+		mylines   = myfile.readlines()
+		mydigests = {}
+		for x in mylines:
+			myline = string.split(x)
+			if len(myline)<4:
+				# invalid line
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
+			try:
+				mydigests[myline[2]] = {"md5" : myline[1], "size" : string.atol(myline[3])}
+			except ValueError:
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
+
+	# fetch the files
+
+	for loc in myuris:
+		loc = varexpand(loc, env)
+		myfile = os.path.basename(loc)
+		if listonly:
+			fetched = 0
+			note("fetch " + loc)
+			continue
+		try:
+			mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+			if mydigests!=None and mydigests.has_key(myfile):
+				# if we have the digest file, we know the final size and can resume the download.
+				if mystat[ST_SIZE]<mydigests[myfile]["size"]:
+					fetched = 1
+				else:
+					# we already have it downloaded, skip.
+					# if our file is bigger than the recorded size, digestcheck should catch it.
+					fetched = 2
+			else:
+				# we don't have the digest file, but the file exists.  Assume it is fully downloaded.
+				fetched = 2
+		except (OSError,IOError),e:
+			fetched = 0
+		if fetched != 2:
+			# we either need to resume or start the download
+			# you can't use "continue" when you're inside a "try" block
+			if fetched == 1:
+				# resume mode:
+				note("Resuming download...")
+				locfetch = resumecommand
+			else:
+				# normal mode:
+				locfetch=fetchcommand
+			note("fetch " +loc)
+			myfetch = string.replace(locfetch,"${URI}",loc)
+			myfetch = string.replace(myfetch,"${FILE}",myfile)
+			myret = os.system(myfetch)
+			if mydigests != None and mydigests.has_key(myfile):
+				print "0"
+				try:
+					mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+					print "1", myret
+					# no exception?  file exists. let digestcheck() report
+					# an appropriately for size or md5 errors
+					if myret and (mystat[ST_SIZE] < mydigests[myfile]["size"]):
+						print "2"
+						# Fetch failed... Try the next one... Kill 404 files though.
+						if (mystat[ST_SIZE]<100000) and (len(myfile)>4) and not ((myfile[-5:]==".html") or (myfile[-4:]==".htm")):
+							print "3"
+							html404 = re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
+							try:
+								if html404.search(open(env["DISTDIR"]+"/"+myfile).read()):
+									try:
+										os.unlink(env["DISTDIR"]+"/"+myfile)
+										note("deleting invalid distfile (improper 404 redirect from server)")
+									except:
+										pass
+							except:
+								pass
+						continue
+					fetched = 2
+					break
+				except (OSError,IOError),e:
+					fetched = 0
+			else:
+				if not myret:
+					fetched = 2
+					break
+	if (fetched != 2) and not listonly:
+		error("Couldn't download "+ myfile)
+		return 0
+	return 1
+
+
+#######################################################################
+#######################################################################
+#
+# SECTION: Dependency
+#
+# PURPOSE: Compare build & run dependencies
+#
+#######################################################################
 #######################################################################
 
 def tokenize(mystring):
@@ -172,899 +616,21 @@ def flatten(mytokens):
 
 #######################################################################
 
-# cache expansions of constant strings
-_varexpand_cache_ = {}
-def varexpand(mystring,mydict = {}, stripnl=0):
-	"""Removes quotes, handles \n, etc.  This code is used by the
-	configfile code, as well as others (parser)
-
-	We handle variables, but raise an exception on missing variables:
-
-	>>> env = {"VAR": "value-of-VAR"}
-	>>> varexpand('${VAR}', env)
-	'value-of-VAR'
-	>>> varexpand('${VAR_MISSING}', env)
-	Traceback (most recent call last):
-	  File "<stdin>", line 1, in ?
-	VarExpandError: 'VAR_MISSING' missing
-
-	But only UPPERCASE is expanded, lowercase and mixed case stay put:
-
-	>>> varexpand('${VaR}', {"VaR": "var"})
-	'${VaR}'
-
-	Wow, nifty way to call python code
-
-	>>> varexpand('${@"Test"*2}')
-	'TestTest'
-
-	We remove quotes:
-
-	>>> varexpand('x = "${VAR}"', env)
-	'x = value-of-VAR'
-	"""
-
-	try:
-		return _varexpand_cache_[" "+mystring]
-	except KeyError:
-		pass
-
-	numvars   = 0
-	mystring  = " "+mystring
-	insing    = 0	# in single quotes?
-	indoub    = 0	# in double quotes?
-	pos       = 1
-	newstring = " "
-	while pos<len(mystring):
-		if (mystring[pos] == "'") and (mystring[pos-1] != "\\"):
-			if indoub:
-				newstring = newstring + "'"
-			else:
-				insing = not insing
-			pos = pos+1
-			continue
-		elif (mystring[pos] == '"') and (mystring[pos-1] != "\\"):
-			if insing:
-				newstring = newstring + '"'
-			else:
-				indoub = not indoub
-			pos = pos + 1
-			continue
-		if not insing: 
-			# expansion time
-			if stripnl and (mystring[pos] == "\n"):
-				#print "stripped: ",newstring
-				# convert newlines to spaces
-				newstring = newstring + " "
-				pos = pos + 1
-			elif mystring[pos] == "\\":
-				# backslash expansion time
-				if pos +1 >= len(mystring):
-					newstring = newstring + mystring[pos]
-					break
-				else:
-					a = mystring[pos+1]
-					pos = pos + 2
-					if a == 'a':
-						newstring = newstring + chr(007)
-					elif a == 'b':
-						newstring = newstring + chr(010)
-					elif a == 'e':
-						newstring = newstring + chr(033)
-					elif (a == 'f') or (a == 'n'):
-						newstring = newstring + chr(012)
-					elif a == 'r':
-						newstring = newstring + chr(015)
-					elif a == 't':
-						newstring = newstring + chr(011)
-					elif a == 'v':
-						newstring = newstring + chr(013)
-					else:
-						# remove backslash only, as bash does: this takes care of \\ and \' and \" as well
-						newstring = newstring + mystring[pos-1:pos]
-						continue
-			elif (mystring[pos] == "$") and (mystring[pos-1] != "\\"):
-				pos = pos + 1
-				if pos+1 >= len(mystring):
-					_varexpand_cache_[mystring] = ""
-					return ""
-				if mystring[pos] == "{":
-					pos = pos + 1
-					terminus = "}"
-				else:
-					terminus = string.whitespace
-				myvstart = pos
-				while mystring[pos] not in terminus:
-					if pos+1 >= len(mystring):
-						_varexpand_cache_[mystring] = ""
-						return ""
-					pos = pos + 1
-				myvarname = mystring[myvstart:pos]
-				pos = pos + 1
-				if len(myvarname) == 0:
-					_varexpand_cache_[mystring] = ""
-					return ""
-				numvars = numvars + 1
-				#print "myvarname:", myvarname
-
-				if myvarname[0] == '@':
-					newstring = newstring + eval(myvarname[1:])
-				# keep vars that are not all in UPPERCASE
-				elif myvarname != myvarname.upper():
-					newstring = newstring + '${' + myvarname + '}'
-				elif mydict.has_key(myvarname):
-					newstring = newstring + mydict[myvarname]
-				else:
-					raise VarExpandError, "'" + myvarname + "' missing"
-			else:
-				newstring = newstring + mystring[pos]
-				pos = pos + 1
-		else:
-			newstring = newstring + mystring[pos]
-			pos = pos + 1
-	if numvars == 0:
-		_varexpand_cache_[mystring] = newstring[1:]
-	return newstring[1:]	
-
-
-#######################################################################
-
-def setenv(var, value):
-	"""Simple set an environment in the global oe.env[] variable, but
-	with expanding variables beforehand."""
-
-	value = varexpand(value, env)
-	env[var] = value
-
-
-#######################################################################
-#
-# inherit_os_env()
-#
-# This reads the the os-environment and imports variables marked as such in envdesc
-# into our environment. This happens at various places during package definition
-# read time, see comments near envdesc[] for more.
-#
-
-def inherit_os_env(position):
-	position = str(position)
-	for s in os.environ.keys():
-		try:
-			d = envdesc[s]
-			if d.has_key('inherit') and d['inherit'] == position:
-				env[s] = os.environ[s]
-				debug(2, 'inherit %s from os environment' % s)
-		except KeyError:
-			pass
-
-
-
-#######################################################################
-#
-# Reads some text file and returns a dictionary that is mykeys + all found definitions
-# Definitions have the form:
-#
-# VAR=value
-# VAR     =    value				whitespace is ok
-# VAR = " value"				using double quotes
-# VAR = 'value '				using single quotes
-# VAR() {					use this for multi-line values
-#    value
-#    value
-# }
-#
-# When myexpand is true, all lines go throught varexpand(), see above.
-#
-
-def getconfig(mycfg, mykeys={}, myexpand=0):
-	# TODO: add 'inherit', 'unset'
-
-	import shlex
-
- 	debug(2,"trying to read ", mycfg)
-	f = open(mycfg,'r')
-	debug(1, "importing ", mycfg)
-	lex = shlex.shlex(f)
-	lex.wordchars = string.digits + string.letters + "~!@#%*_\:;?,./-+{}"
-	lex.quotes = "\"'"
-	while 1:
-		key = lex.get_token()
-		if key == '':
-			# Normal end of file
-			break;
-		equ = lex.get_token()
-		val = ''
-		if equ == '':
-			# Unexpected end of file
-			print lex.error_leader(mycfg, lex.lineno), \
-				"enexpected end of config file: variable", key
-			return None
-		elif equ == '(':
-			equ = lex.get_token()
-			if equ != ')':
-				print lex.error_leader(mycfg, lex.lineno), \
-					"expected ')', got '"+ equ + "'"
-				return None
-			equ = lex.get_token()
-			if equ != '{':
-				print lex.error_leader(mycfg, lex.lineno), \
-					"expected '{', got '"+ equ + "'"
-				return None
-			lex.lineno = lex.lineno - 1
-			while 1:
-				equ = lex.instream.readline()
-				if equ == '':
-					break
-				equ = equ.rstrip()
-				if equ == '}':
-					break
-				if myexpand:
-					try:
-						equ = varexpand(equ, mykeys, 0)
-					except VarExpandError, detail:
-						print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
-				lex.lineno = lex.lineno + 1
-				val = val + equ + "\n"
-			lex.lineno = lex.lineno + 2
-		elif equ != '=':
-			print lex.error_leader(mycfg, lex.lineno), \
-				"expected '=', got '" + equ + "'"
-			return None
-		if val == '':
-			val = lex.get_token()
-			#stripnl = 1
-			stripnl = 0
-		else:
-			stripnl = 0
-		if val == '':
-			print lex.error_leader(mycfg, lex.lineno), \
-				"end of file in variable definition"
-			return None
-		if myexpand:
-			try:
-				val = varexpand(val,mykeys,stripnl)
-			except VarExpandError, detail:
-				print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
-		else:
-			while len(val) >= 2 and ((val[0] == '"' and val[-1] == '"') or (val[0] == "'" and val[-1] == "'")):
-				val = val[1:-1]
-		mykeys[key] = val
-			
-	return mykeys
-
-
-#######################################################################
-
-
-
-def read_oe_conf():
-	"""Read Configation from these places:
-
-	1. ${OEDIR}/conf/oe.conf
-	2. ${OEDIR}/conf/local.conf
-	3. near current directory:
-	   a) optionally from local.conf
-	   b) optionally from conf/local.conf
-	4. global per-architecture/per-target configs
-	   a) optionally from ${OEDIR}/${CCHOST}.conf
-	   b) optionally from ${OEDIR}/${TARGET}.conf
-	   c) optionally from ${OEDIR}/${SUBTARGET}.conf
-
-	Note: it can happen that some file get imported twice, but that is not really a problem"""
-
-	inherit_os_env(1)
-
-	getconfig(projectdir+'/conf/oe.conf', env, 1)
-	inherit_os_env(2)
-
-	try:
-		getconfig(projectdir+'/conf/local.conf', env, 1)
-	except IOError:
-		pass
-	try:
-		getconfig('local.conf', env, 1)
-	except IOError:
-		pass
-	try:
-		getconfig('conf/local.conf', env, 1)
-	except IOError:
-		pass
-
-	try:
-		getconfig(projectdir+'/conf/'+ env['CCHOST']+ '.conf', env, 1)
-	except:
-		pass
-	try:
-		getconfig(projectdir+'/conf/'+ env['TARGET']+ '.conf', env, 1)
-	except:
-		pass
-
-	try:
-		getconfig(projectdir+'/conf/'+ env['SUBTARGET']+ '.conf', env, 1)
-	except:
-		pass
-	try:
-		getconfig('local.conf', env, 1)
-	except IOError:
-		pass
-
-	inherit_os_env(3)
-
-
-#######################################################################
-#
-# Read package definition
-#
-# 1. ${OEDIR}/file
-# 2. optionally look in directories specified in ${OEPATH} for files named
-#    a) ${PF}.oe
-#    b) ${CATEGORY}/${PF}.oe
-#    c) ${P}.oe
-#    d) ${CATEGORY}/${P}.oe
-#    If one is found, go back to 2.
-#
-def read_package_conf(file):
-	# Specified files
-	getconfig(file, env)
-
-	# Now look for local overrides
-	if env.has_key('OEPATH'):
-		oepath = env['OEPATH']
-		for dir in oepath.split(':'):
-			try:
-				getconfig(dir+'/'+env['PF']+'.oe', env)
-				continue
-			except IOError:
-				try:
-					getconfig(dir+'/'+env['CATEGORY']+'/'+env['PF']+'.oe', env)
-					continue
-				except IOError:
-					try:
-						getconfig(dir+'/'+env['P']+'.oe', env)
-						continue
-					except IOError:
-						try:
-							getconfig(dir+'/'+env['CATEGORY']+'/'+env['P']+'.oe', env)
-							continue
-						except IOError:
-							pass
-
-
-#######################################################################
-#
-# Deduce per-package environment variables
-#
-def set_automatic_vars(file):
-	debug(2,"setting automatic vars")
-	pkg = catpkgsplit(file)
-	if pkg == None:
-		fatal("package file not in valid format")
-	setenv('CATEGORY',	pkg[0])
-	setenv('PN',		pkg[1])
-	setenv('PV',		pkg[2])
-	setenv('PR',		pkg[3])
-	setenv('P',		'${PN}-${PV}')
-	setenv('PF',		'${P}-${PR}')
-	setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}/work')
-	setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}/files')
-	setenv('S',		'${WORKDIR}/${P}')
-	setenv('T',		'${TMPDIR}/${CATEGORY}/${PF}/temp')
-	setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/image')
-	setenv('DISTDIR',	'${TMPDIR}/downloads/${CATEGORY}/${PN}')
-	setenv('SLOT',	'0')
-	# TODO: set ${A}
-	inherit_os_env(4)
-
-
-#######################################################################
-#
-# Environment modification
-#
-# If one environment variable is named 'VAR_special'
-#
-# and 'special' is '${CCHOST}': replace ${VAR} with ${VAR_${CCHOST}}
-# and 'special' is '${TARGET}': replace ${VAR} with ${VAR_${TARGET}}
-# and 'special' is 'append': add ${VAR_${TARGET}} at the end of ${VAR}
-# and 'special' is 'prepend': add ${VAR_${TARGET}} at the beginning of ${VAR}
-# and 'special' is 'delete': delete all lines in ${VAR} that contain the sub-string ${VAR_${TARGET}}
-#
-
-def update_env():
-	# can't do delete env[...] while iterating over the dictionary, so remember them
-	dodel = []
-
-	for s in env:
-		# Handle architecture overrides
-		name = s+'_'+env['CCHOST']
-		if env.has_key(name):
-			env[s] = env[name]
-			dodel.append(name)
-
-		# Handle target overrides
-		name = s+'_'+env['TARGET']
-		if env.has_key(name):
-			env[s] = env[name]
-			dodel.append(name)
-
-		# Handle target overrides
-		if env.has_key('SUBTARGET'):
-			name = s+'_'+env['SUBTARGET']
-			if env.has_key(name):
-				env[s] = env[name]
-				dodel.append(name)
-
-		# Handle line appends:
-		name = s+'_append'
-		if env.has_key(name):
-			env[s] = env[s]+env[name]
-			dodel.append(name)
-
-		# Handle line prepends
-		name = s+'_prepend'
-		if env.has_key(name):
-			env[s] = env[name]+env[s]
-			dodel.append(name)
-
-		# Handle line deletions
-		name = s+'_delete'
-		if env.has_key(name):
-			new = ''
-			pattern = string.replace(env[name],"\n","").strip()
-			for line in string.split(env[s],"\n"):
-				if line.find(pattern) == -1:
-					new = new + '\n' + line
-			env[s] = new
-			dodel.append(name)
-
-	# delete all environment vars no longer needed
-	for s in dodel:
-		del env[s]
-
-	inherit_os_env(5)
-
-
-#######################################################################
-#
-# Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?
-#
-def print_orphan_env():
-	for s in env:
-		if s == s.lower(): continue		# only care for env vars
-		header = 0				# header shown?
-		try:
-			d = envdesc[s]
-		except KeyError:
-			if not header:
-				note("Nonstandard variables defined in your project:")
-				header = 1
-			print prepender + s
-		if header:
-			print
-
-
-#######################################################################
-#
-# Debug output: warn about all missing variables
-#
-def print_missing_env():
-	for s in envdesc:
-		if not envdesc[s].has_key('warnlevel'): continue
-		if env.has_key(s): continue
-
-		level = envdesc[s]['warnlevel']
-		try: warn = prepender + envdesc[s]['warn']
-		except KeyError: warn = ''
-		if level == 1:
-			note('Variable %s is not defined' % s)
-			if warn: print warn
-		elif level == 2:
-			error('Important variable %s is not defined' % s)
-			if warn: print warn
-		elif level == 3:
-			error('Important variable %s is not defined' % s)
-			if warn: print warn
-			sys.exit(1)
-
-
-#######################################################################
-
-def decodeurl(url):
-	"""Decodes an URL into the tokens (scheme, network location, path, user, password, parameters).
-	Parameters is a 
-
-	URL with http as scheme, hostname and path:
-
-	>>> decodeurl("http://www.google.com/index.html")
-	('http', 'www.google.com', '/index.html', '', '', {})
-
-	CVS url with username, host and cvsroot. The cvs module to check out is in the
-	parameters:
-
-	>>> decodeurl("cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg")
-	('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'})
-
-	Dito, but this time the username has a password part. And we also request a special tag
-	to check out.
-
-	>>> decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
-	('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
-	"""
-
-	#print url
-	m = re.compile('([^:]*):/*(.+@)?([^/]+)(/[^;]+);?(.*)').match(url)
-	if not m:
-		fatal("Malformed URL '%s'" % url)
-
-	type = m.group(1)
-	host = m.group(3)
-	path = m.group(4)
-	user = m.group(2)
-	parm = m.group(5)
-	#print "type:", type
-	#print "host:", host
-	#print "path:", path
-	#print "parm:", parm
-	if user:
-		m = re.compile('([^:]+)(:?(.*))@').match(user)
-		if m:
-			user = m.group(1)
-			pswd = m.group(3)
-	else:
-		user = ''
-		pswd = ''
-	#print "user:", user
-	#print "pswd:", pswd
-	#print
-	p = {}
-	if parm:
-		for s in parm.split(';'):
-			s1,s2 = s.split('=')
-			p[s1] = s2
-			
-	return (type, host, path, user, pswd, p)
-		
-
-def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
-	myfile = os.path.basename(path)
-	
-	try:
-		mystat = os.stat(env["DISTDIR"]+"/"+myfile)
-		if mydigests.has_key(myfile):
-			# if we have the digest file, we know the final size and can resume the download.
-			if mystat[ST_SIZE] < mydigests[myfile]["size"]:
-				fetched = 1
-			else:
-				# we already have it downloaded, skip
-				# if our file is bigger than the recorded size, digestcheck should catch it.
-				fetched = 2
-		else:
-			# we don't have the digest file, but the file exists.  Assume it is fully downloaded.
-			fetched = 2
-	except (OSError,IOError),e:
-		fetched = 0
-
-	# we either need to resume or start the download
-	if fetched != 2:
-		# you can't use "continue" when you're inside a "try" block
-		if fetched == 1:
-			# resume mode:
-			note("Resuming download...")
-			myfetch = string.replace(env["FETCHCOMMAND"],"${DISTDIR}",env["DISTDIR"])
-		else:
-			# normal mode:
-			myfetch = string.replace(env["RESUMECOMMAND"],"${DISTDIR}",env["DISTDIR"])
-		note("fetch " +loc)
-		myfetch = myfetch.replace("${URI}",loc)
-		myfetch = myfetch.replace("${FILE}",myfile)
-		note(myfetch)
-		myret = os.system(myfetch)
-
-		if mydigests.has_key(myfile):
-			print "0"
-			try:
-				mystat = os.stat(env["DISTDIR"]+"/"+myfile)
-				print "1", myret
-				# no exception?  file exists. let digestcheck() report
-				# an appropriately for size or md5 errors
-				if myret and (mystat[ST_SIZE] < mydigests[myfile]["size"]):
-					print "2"
-					# Fetch failed... Try the next one... Kill 404 files though.
-					if (mystat[ST_SIZE]<100000) and (len(myfile)>4) and not ((myfile[-5:]==".html") or (myfile[-4:]==".htm")):
-						print "3"
-						html404 = re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
-						try:
-							if html404.search(open(env["DISTDIR"]+"/"+myfile).read()):
-								try:
-									os.unlink(env["DISTDIR"]+"/"+myfile)
-									note("deleting invalid distfile (improper 404 redirect from server)")
-								except:
-									pass
-						except:
-							pass
-					print "What to do?"
-					return 1
-				return 2
-			except (OSError,IOError),e:
-				fetched = 0
-		else:
-			if not myret:
-				return 2
-
-	if fetched != 2:
-		error("Couldn't download "+ myfile)
-		return 0
-	return fetched
-
-
-def fetch_with_cvs(mydigests, type,host,path,user,pswd,parm):
-	fatal('fetch via CVS not yet implemented')
-
-def fetch_with_bk(mydigests, type,host,path,user,pswd,parm):
-	fatal('fetch via BitKeeper not yet implemented')
-
-
-def fetch(urls, listonly=0):
-	digestfn  = env["FILESDIR"]+"/digest-"+env["PF"]
-	mydigests = {}
-	if os.path.exists(digestfn):
-		debug(3, "checking digest "+ digestfn)
-		myfile    = open(digestfn,"r")
-		mylines   = myfile.readlines()
-		for x in mylines:
-			myline = string.split(x)
-			if len(myline)<4:
-				# invalid line
-				oe.fatal("The digest %s appears to be corrupt" % digestfn);
-			try:
-				mydigests[myline[2]] = {"md5" : myline[1], "size" : string.atol(myline[3])}
-			except ValueError:
-				oe.fatal("The digest %s appears to be corrupt" % digestfn);
-
-	for loc in urls.split():
-		debug(2,"fetching %s" % loc)
-		(type, host, path, user, pswd, parm) = decodeurl(varexpand(loc, env))
-
-		if type in ['http','https','ftp']:
-			fetched = fetch_with_wget(loc,mydigests, type,host,path,user,pswd)
-			if env.has_key('A'):
-				a = env['A'].split()
-			else:
-				a = []
-			a.append(os.path.basename(path))
-			env['A'] = string.join(a)
-		elif type in ['cvs', 'pserver']:
-			fetched = fetch_with_cvs(mydigests, type,host,path,user,pswd,parm)
-		elif type == 'bk':
-			fetched = fetch_with_bk(mydigests, type,host,path,user,pswd,parm)
-		else:
-			fatal("can't fetch with method '%s'" % type)
-		if fetched != 2:
-			error("Couldn't download "+ loc)
-			return 0
-
-		return 1
-		
-
-
-#######################################################################
-#
-# fetch2()
-#
-# TODO: the current function is quite simple, it can only fetch http:// and ftp://,
-# but not cvs:// bk:// or patches, files, directories
-#
-def fetch2(myuris, listonly=0):
-	"fetch files.  Will use digest file if available."
-	fetchcommand  = string.replace(env["FETCHCOMMAND"],"${DISTDIR}",env["DISTDIR"])
-	resumecommand = string.replace(env["RESUMECOMMAND"],"${DISTDIR}",env["DISTDIR"])
-	mydigests     = None
-	digestfn      = env["FILESDIR"]+"/digest-"+env["PF"]
-
-	# Read in the md5-Digest. There is one file for all source-URIs.
-	# The file also contains the file-length. We can later use this information
-	# to resume an aborted download.
-
-	if os.path.exists(digestfn):
-		debug(3, "checking digest "+ digestfn)
-		myfile    = open(digestfn,"r")
-		mylines   = myfile.readlines()
-		mydigests = {}
-		for x in mylines:
-			myline = string.split(x)
-			if len(myline)<4:
-				# invalid line
-				oe.fatal("The digest %s appears to be corrupt" % digestfn);
-			try:
-				mydigests[myline[2]] = {"md5" : myline[1], "size" : string.atol(myline[3])}
-			except ValueError:
-				oe.fatal("The digest %s appears to be corrupt" % digestfn);
-
-	# fetch the files
-
-	for loc in myuris:
-		loc = varexpand(loc, env)
-		myfile = os.path.basename(loc)
-		if listonly:
-			fetched = 0
-			note("fetch " + loc)
-			continue
-		try:
-			mystat = os.stat(env["DISTDIR"]+"/"+myfile)
-			if mydigests!=None and mydigests.has_key(myfile):
-				# if we have the digest file, we know the final size and can resume the download.
-				if mystat[ST_SIZE]<mydigests[myfile]["size"]:
-					fetched = 1
-				else:
-					# we already have it downloaded, skip.
-					# if our file is bigger than the recorded size, digestcheck should catch it.
-					fetched = 2
-			else:
-				# we don't have the digest file, but the file exists.  Assume it is fully downloaded.
-				fetched = 2
-		except (OSError,IOError),e:
-			fetched = 0
-		if fetched != 2:
-			# we either need to resume or start the download
-			# you can't use "continue" when you're inside a "try" block
-			if fetched == 1:
-				# resume mode:
-				note("Resuming download...")
-				locfetch = resumecommand
-			else:
-				# normal mode:
-				locfetch=fetchcommand
-			note("fetch " +loc)
-			myfetch = string.replace(locfetch,"${URI}",loc)
-			myfetch = string.replace(myfetch,"${FILE}",myfile)
-			myret = os.system(myfetch)
-			if mydigests != None and mydigests.has_key(myfile):
-				print "0"
-				try:
-					mystat = os.stat(env["DISTDIR"]+"/"+myfile)
-					print "1", myret
-					# no exception?  file exists. let digestcheck() report
-					# an appropriately for size or md5 errors
-					if myret and (mystat[ST_SIZE] < mydigests[myfile]["size"]):
-						print "2"
-						# Fetch failed... Try the next one... Kill 404 files though.
-						if (mystat[ST_SIZE]<100000) and (len(myfile)>4) and not ((myfile[-5:]==".html") or (myfile[-4:]==".htm")):
-							print "3"
-							html404 = re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
-							try:
-								if html404.search(open(env["DISTDIR"]+"/"+myfile).read()):
-									try:
-										os.unlink(env["DISTDIR"]+"/"+myfile)
-										note("deleting invalid distfile (improper 404 redirect from server)")
-									except:
-										pass
-							except:
-								pass
-						continue
-					fetched = 2
-					break
-				except (OSError,IOError),e:
-					fetched = 0
-			else:
-				if not myret:
-					fetched = 2
-					break
-	if (fetched != 2) and not listonly:
-		error("Couldn't download "+ myfile)
-		return 0
-	return 1
-
-
-def movefile(src,dest,newmtime=None,sstat=None):
-	"""moves a file from src to dest, preserving all permissions and attributes; mtime will
-	be preserved even when moving across filesystems.  Returns true on success and false on
-	failure.  Move is atomic."""
-	#print "movefile("+src+","+dest+","+str(newmtime)+","+str(sstat)+")"
-	try:
-		if not sstat:
-			sstat=os.lstat(src)
-	except Exception, e:
-		print "!!! Stating source file failed... movefile()"
-		print "!!!",e
-		return None
-
-	destexists=1
-	try:
-		dstat=os.lstat(dest)
-	except:
-		dstat=os.lstat(os.path.dirname(dest))
-		destexists=0
-
-	if destexists:
-		if S_ISLNK(dstat[ST_MODE]):
-			try:
-				os.unlink(dest)
-				destexists=0
-			except Exception, e:
-				pass
-
-	if S_ISLNK(sstat[ST_MODE]):
-		try:
-			target=os.readlink(src)
-			if destexists and not S_ISDIR(dstat[ST_MODE]):
-				os.unlink(dest)
-			os.symlink(target,dest)
-			missingos.lchown(dest,sstat[ST_UID],sstat[ST_GID])
-			return os.lstat(dest)
-		except Exception, e:
-			print "!!! failed to properly create symlink:"
-			print "!!!",dest,"->",target
-			print "!!!",e
-			return None
-
-	renamefailed=1
-	if sstat[ST_DEV]==dstat[ST_DEV]:
-		try:
-			ret=os.rename(src,dest)
-			renamefailed=0
-		except Exception, e:
-			import errno
-			if e[0]!=errno.EXDEV:
-				# Some random error.
-				print "!!! Failed to move",src,"to",dest
-				print "!!!",e
-				return None
-			# Invalid cross-device-link 'bind' mounted or actually Cross-Device
-
-	if renamefailed:
-		didcopy=0
-		if S_ISREG(sstat[ST_MODE]):
-			try: # For safety copy then move it over.
-				shutil.copyfile(src,dest+"#new")
-				os.rename(dest+"#new",dest)
-				didcopy=1
-			except Exception, e:
-				print '!!! copy',src,'->',dest,'failed.'
-				print "!!!",e
-				return None
-		else:
-			#we don't yet handle special, so we need to fall back to /bin/mv
-			a=getstatusoutput("/bin/mv -f "+"'"+src+"' '"+dest+"'")
-			if a[0]!=0:
-				print "!!! Failed to move special file:"
-				print "!!! '"+src+"' to '"+dest+"'"
-				print "!!!",a
-				return None # failure
-		try:
-			if didcopy:
-				missingos.lchown(dest,sstat[ST_UID],sstat[ST_GID])
-				os.chmod(dest, S_IMODE(sstat[ST_MODE])) # Sticky is reset on chown
-				os.unlink(src)
-		except Exception, e:
-			print "!!! Failed to chown/chmod/unlink in movefile()"
-			print "!!!",dest
-			print "!!!",e
-			return None
-
-	if newmtime:
-		os.utime(dest,(newmtime,newmtime))
-	else:
-		os.utime(dest, (sstat[ST_ATIME], sstat[ST_MTIME]))
-		newmtime=sstat[ST_MTIME]
-	return newmtime
-
-
-#######################################################################
-#
-# relparse()
-#
-# Parses the last elements of a version number into a triplet, that can
-# later be compared:
-#
-#	'1.2_pre3'	-> [1.2, -2, 3.0]
-#	'1.2b'		-> [1.2, 98, 0]
-#	'1.2'		-> [1.2, 0, 0]
-#
-
 _package_weights_ = {"pre":-2,"p":0,"alpha":-4,"beta":-3,"rc":-1}	# dicts are unordered
 _package_ends_    = ["pre", "p", "alpha", "beta", "rc"]			# so we need ordered list
 
 def relparse(myver):
-	"converts last version part into three components"
+	"""Parses the last elements of a version number into a triplet, that can
+	later be compared:
+
+	>>> relparse('1.2_pre3')
+	[1.2, -2, 3.0]
+	>>> relparse('1.2b')
+	[1.2, 98, 0]
+	>>> relparse('1.2')
+	[1.2, 0, 0]
+	"""
+
 	number   = 0
 	p1       = 0
 	p2       = 0
@@ -1105,17 +671,14 @@ def relparse(myver):
 
 
 #######################################################################
-#
-# ververify()
-#
-# Returns 1 if given a valid version string, else 0. Valid versions are in the format
-#
-#	<v1>.<v2>...<vx>[a-z,_{_package_weights_}[vy]]
-#
 
 _ververify_cache_={}
 
 def ververify(myorigval,silent=1):
+	"""Returns 1 if given a valid version string, els 0. Valid versions are in the format
+
+	<v1>.<v2>...<vx>[a-z,_{_package_weights_}[vy]]"""
+
 	# Lookup the cache first
 	try:
 		return _ververify_cache_[myorigval]
@@ -1230,26 +793,29 @@ def isspecific(mypkg):
 
 
 #######################################################################
-#
-# pkgsplit()
-#
-#	''			-> ERROR: package name without name or version part
-#	'x'			-> ERROR: package name without name or version part
-#	'x-'			-> ERROR: package name with empty name or version part
-#	'-1'			-> ERROR: package name with empty name or version part
-#	'glibc-1.2-8.9-r7'	-> None	
-#	'glibc-2.2.5-r7'	-> ['glibc', '2.2.5', 'r7']
-#	'foo-1.2-1'		->
-#	'Mesa-3.0'		-> ['Mesa', '3.0', 'r0']
-#
-# This function can be used as a package verification function. If it is a
-# valid name, pkgsplit will return a list containing: [ pkgname,
-# pkgversion(norev), pkgrev ].
-#
 
 _pkgsplit_cache_={}
 
 def pkgsplit(mypkg, silent=1):
+
+	"""This function can be used as a package verification function. If
+	it is a valid name, pkgsplit will return a list containing:
+	[pkgname, pkgversion(norev), pkgrev ].
+
+	>>> pkgsplit('')
+	>>> pkgsplit('x')
+	>>> pkgsplit('x-')
+	>>> pkgsplit('-1')
+	>>> pkgsplit('glibc-1.2-8.9-r7')
+	>>> pkgsplit('glibc-2.2.5-r7')
+	['glibc', '2.2.5', 'r7']
+	>>> pkgsplit('foo-1.2-1')
+	>>> pkgsplit('Mesa-3.0')
+	['Mesa', '3.0', 'r0']
+
+	"""
+
+
 	try:
 		return _pkgsplit_cache_[mypkg]
 	except KeyError:
@@ -1315,17 +881,19 @@ def pkgsplit(mypkg, silent=1):
 
 
 #######################################################################
-#
-# catpkgsplit()
-#
-#	sys-libs/glibc-1.2-r7	-> ['sys-libs', 'glibc', '1.2', 'r7']
-#	glibc-1.2-r7		-> ['null', 'glibc', '1.2', 'r7']
-#
 
 _catpkgsplit_cache_ = {}
 
 def catpkgsplit(mydata,silent=1):
-	"returns [cat, pkgname, version, rev ]"
+	"""returns [cat, pkgname, version, rev ]
+
+	>>> catpkgsplit('sys-libs/glibc-1.2-r7')
+	['sys-libs', 'glibc', '1.2', 'r7']
+	>>> catpkgsplit('glibc-1.2-r7')
+	['null', 'glibc', '1.2', 'r7']
+
+	"""
+
 	try:
 		return _catpkgsplit_cache_[mydata]
 	except KeyError:
@@ -1354,21 +922,26 @@ def catpkgsplit(mydata,silent=1):
 
 #######################################################################
 #
-# vercmp()
-#
-# This takes two version strings and returns an integer to tell you whether
-# the versions are the same, val1>val2 or val2>val1.
-#
-#	1   <> 2 = -1.0
-#	2   <> 1 = 1.0
-#	1   <> 1.0 = 0
-#	1   <> 1.1 = -1.0
-#	1.1 <> 1_p2 = 1.0
-#
 
 _vercmp_cache_ = {}
 
 def vercmp(val1,val2):
+	"""This takes two version strings and returns an integer to tell you whether
+	the versions are the same, val1>val2 or val2>val1.
+	
+	>>> vercmp('1', '2')
+	-1.0
+	>>> vercmp('2', '1')
+	1.0
+	>>> vercmp('1', '1.0')
+	0
+	>>> vercmp('1', '1.1')
+	-1.0
+	>>> vercmp('1.1', '1_p2')
+	1.0
+	"""
+
+
 	# quick short-circuit
 	if val1 == val2:
 		return 0
@@ -1443,18 +1016,19 @@ def vercmp(val1,val2):
 
 
 #######################################################################
-#
-# pkgcomp()
-#
-# Compares two packages, which should have been split via pkgsplit()
-#
-#	['glibc', '2.2.5', 'r7'] <> ['glibc', '2.2.5', 'r7'] = 0
-#	['glibc', '2.2.5', 'r4'] <> ['glibc', '2.2.5', 'r7'] = -1
-#	['glibc', '2.2.5', 'r7'] <> ['glibc', '2.2.5', 'r2'] = 1
-#
 
 def pkgcmp(pkg1,pkg2):
-	"""if returnval is less than zero, then pkg2 is newer than pkg1, zero if equal and positive if older."""
+	""" Compares two packages, which should have been split via
+	pkgsplit(). if the return value val is less than zero, then pkg2 is
+	newer than pkg1, zero if equal and positive if older.
+
+	>>> pkgcmp(['glibc', '2.2.5', 'r7'], ['glibc', '2.2.5', 'r7'])
+	0
+	>>> pkgcmp(['glibc', '2.2.5', 'r4'], ['glibc', '2.2.5', 'r7'])
+	-1
+	>>> pkgcmp(['glibc', '2.2.5', 'r7'], ['glibc', '2.2.5', 'r2'])
+	1
+	"""
 	
 	mycmp = vercmp(pkg1[1],pkg2[1])
 	if mycmp > 0:
@@ -1471,15 +1045,18 @@ def pkgcmp(pkg1,pkg2):
 
 
 #######################################################################
-#
-# dep_parenreduce()
-#
-#	[''] 				-> ['']
-#	['1', '2', '3']			-> ['1', '2', '3']
-#	['1', '(', '2', '3', ')', '4']	-> ['1', ['2', '3'], '4']
 
 def dep_parenreduce(mysplit, mypos=0):
-	"Accepts a list of strings, and converts '(' and ')' surrounded items to sub-lists"
+	"""Accepts a list of strings, and converts '(' and ')' surrounded items to sub-lists:
+
+	>>> dep_parenreduce([''])
+	['']
+	>>> dep_parenreduce(['1', '2', '3'])
+	['1', '2', '3']
+	>>> dep_parenreduce(['1', '(', '2', '3', ')', '4'])
+	['1', ['2', '3'], '4']
+	"""
+
 	while mypos < len(mysplit): 
 		if mysplit[mypos] == "(":
 			firstpos = mypos
@@ -1650,6 +1227,545 @@ class digraph:
 			mygraph.dict[x]=self.dict[x][:]
 			mygraph.okeys=self.okeys[:]
 		return mygraph
+
+#######################################################################
+#######################################################################
+#
+# SECTION: Config
+#
+# PURPOSE: Reading and handling of system/target-specific/local configuration
+#	   reading of package configuration
+#
+#######################################################################
+#######################################################################
+
+def getconfig(mycfg, mykeys={}, myexpand=0):
+
+	"""Reads some text file and returns a dictionary that is mykeys +
+	all found definitions Definitions have the form:
+
+	VAR=value
+	VAR     =    value				whitespace is ok
+	VAR = " value"				using double quotes
+	VAR = 'value '				using single quotes
+	VAR() {					use this for multi-line values
+	   value
+	   value
+	}
+
+	When myexpand is true, all lines go throught varexpand()"""
+
+
+	# TODO: add 'inherit', 'unset'
+
+	import shlex
+
+ 	debug(2,"trying to read ", mycfg)
+	f = open(mycfg,'r')
+	debug(1, "importing ", mycfg)
+	lex = shlex.shlex(f)
+	lex.wordchars = string.digits + string.letters + "~!@#%*_\:;?,./-+{}"
+	lex.quotes = "\"'"
+	while 1:
+		key = lex.get_token()
+		if key == '':
+			# Normal end of file
+			break;
+		equ = lex.get_token()
+		val = ''
+		if equ == '':
+			# Unexpected end of file
+			print lex.error_leader(mycfg, lex.lineno), \
+				"enexpected end of config file: variable", key
+			return None
+		elif equ == '(':
+			equ = lex.get_token()
+			if equ != ')':
+				print lex.error_leader(mycfg, lex.lineno), \
+					"expected ')', got '"+ equ + "'"
+				return None
+			equ = lex.get_token()
+			if equ != '{':
+				print lex.error_leader(mycfg, lex.lineno), \
+					"expected '{', got '"+ equ + "'"
+				return None
+			lex.lineno = lex.lineno - 1
+			while 1:
+				equ = lex.instream.readline()
+				if equ == '':
+					break
+				equ = equ.rstrip()
+				if equ == '}':
+					break
+				if myexpand:
+					try:
+						equ = varexpand(equ, mykeys, 0)
+					except VarExpandError, detail:
+						print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
+				lex.lineno = lex.lineno + 1
+				val = val + equ + "\n"
+			lex.lineno = lex.lineno + 2
+		elif equ != '=':
+			print lex.error_leader(mycfg, lex.lineno), \
+				"expected '=', got '" + equ + "'"
+			return None
+		if val == '':
+			val = lex.get_token()
+			#stripnl = 1
+			stripnl = 0
+		else:
+			stripnl = 0
+		if val == '':
+			print lex.error_leader(mycfg, lex.lineno), \
+				"end of file in variable definition"
+			return None
+		if myexpand:
+			try:
+				val = varexpand(val,mykeys,stripnl)
+			except VarExpandError, detail:
+				print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
+		else:
+			while len(val) >= 2 and ((val[0] == '"' and val[-1] == '"') or (val[0] == "'" and val[-1] == "'")):
+				val = val[1:-1]
+		mykeys[key] = val
+			
+	return mykeys
+
+
+#######################################################################
+
+def read_oe_conf():
+	"""Read Configation from these places:
+
+	1. ${OEDIR}/conf/oe.conf
+	2. ${OEDIR}/conf/local.conf
+	3. near current directory:
+	   a) optionally from local.conf
+	   b) optionally from conf/local.conf
+	4. global per-architecture/per-target configs
+	   a) optionally from ${OEDIR}/${CCHOST}.conf
+	   b) optionally from ${OEDIR}/${TARGET}.conf
+	   c) optionally from ${OEDIR}/${SUBTARGET}.conf
+
+	Note: it can happen that some file get imported twice, but that is not really a problem"""
+
+	inherit_os_env(1)
+
+	getconfig(projectdir+'/conf/oe.conf', env, 1)
+	inherit_os_env(2)
+
+	try:
+		getconfig(projectdir+'/conf/local.conf', env, 1)
+	except IOError:
+		pass
+	try:
+		getconfig('local.conf', env, 1)
+	except IOError:
+		pass
+	try:
+		getconfig('conf/local.conf', env, 1)
+	except IOError:
+		pass
+
+	try:
+		getconfig(projectdir+'/conf/'+ env['CCHOST']+ '.conf', env, 1)
+	except:
+		pass
+	try:
+		getconfig(projectdir+'/conf/'+ env['TARGET']+ '.conf', env, 1)
+	except:
+		pass
+
+	try:
+		getconfig(projectdir+'/conf/'+ env['SUBTARGET']+ '.conf', env, 1)
+	except:
+		pass
+	try:
+		getconfig('local.conf', env, 1)
+	except IOError:
+		pass
+
+	inherit_os_env(3)
+
+
+#######################################################################
+
+def read_package_conf(file):
+	"""Read package definition
+
+	1. ${OEDIR}/file
+	2. optionally look in directories specified in ${OEPATH} for files named
+	   a) ${PF}.oe
+	   b) ${CATEGORY}/${PF}.oe
+	   c) ${P}.oe
+	   d) ${CATEGORY}/${P}.oe
+	   If one is found, go back to 2."""
+
+	# Specified files
+	getconfig(file, env)
+
+	# Now look for local overrides
+	if env.has_key('OEPATH'):
+		oepath = env['OEPATH']
+		for dir in oepath.split(':'):
+			try:
+				getconfig(dir+'/'+env['PF']+'.oe', env)
+				continue
+			except IOError:
+				try:
+					getconfig(dir+'/'+env['CATEGORY']+'/'+env['PF']+'.oe', env)
+					continue
+				except IOError:
+					try:
+						getconfig(dir+'/'+env['P']+'.oe', env)
+						continue
+					except IOError:
+						try:
+							getconfig(dir+'/'+env['CATEGORY']+'/'+env['P']+'.oe', env)
+							continue
+						except IOError:
+							pass
+
+
+#######################################################################
+#######################################################################
+#
+# SECTION: Environment
+#
+# PURPOSE: store, modify and emit environment variables. Enforce need
+#          variables, calculate missing ones.
+#
+#######################################################################
+#######################################################################
+
+_varexpand_cache_ = {}		# cache expansions of constant strings
+
+
+#######################################################################
+
+def varexpand(mystring,mydict = {}, stripnl=0):
+	"""Removes quotes, handles \n, etc.  This code is used by the
+	configfile code, as well as others (parser)
+
+	We handle variables, but raise an exception on missing variables:
+
+	>>> env = {"VAR": "value-of-VAR"}
+	>>> varexpand('${VAR}', env)
+	'value-of-VAR'
+	>>> varexpand('${VAR_MISSING}', env)
+	Traceback (most recent call last):
+	  File "<stdin>", line 1, in ?
+	VarExpandError: 'VAR_MISSING' missing
+
+	But only UPPERCASE is expanded, lowercase and mixed case stay put:
+
+	>>> varexpand('${VaR}', {"VaR": "var"})
+	'${VaR}'
+
+	Wow, nifty way to call python code
+
+	>>> varexpand('${@"Test"*2}')
+	'TestTest'
+
+	We remove quotes:
+
+	>>> varexpand('x = "${VAR}"', env)
+	'x = value-of-VAR'
+	"""
+
+	try:
+		return _varexpand_cache_[" "+mystring]
+	except KeyError:
+		pass
+
+	numvars   = 0
+	mystring  = " "+mystring
+	insing    = 0	# in single quotes?
+	indoub    = 0	# in double quotes?
+	pos       = 1
+	newstring = " "
+	while pos<len(mystring):
+		if (mystring[pos] == "'") and (mystring[pos-1] != "\\"):
+			if indoub:
+				newstring = newstring + "'"
+			else:
+				insing = not insing
+			pos = pos+1
+			continue
+		elif (mystring[pos] == '"') and (mystring[pos-1] != "\\"):
+			if insing:
+				newstring = newstring + '"'
+			else:
+				indoub = not indoub
+			pos = pos + 1
+			continue
+		if not insing: 
+			# expansion time
+			if stripnl and (mystring[pos] == "\n"):
+				#print "stripped: ",newstring
+				# convert newlines to spaces
+				newstring = newstring + " "
+				pos = pos + 1
+			elif mystring[pos] == "\\":
+				# backslash expansion time
+				if pos +1 >= len(mystring):
+					newstring = newstring + mystring[pos]
+					break
+				else:
+					a = mystring[pos+1]
+					pos = pos + 2
+					if a == 'a':
+						newstring = newstring + chr(007)
+					elif a == 'b':
+						newstring = newstring + chr(010)
+					elif a == 'e':
+						newstring = newstring + chr(033)
+					elif (a == 'f') or (a == 'n'):
+						newstring = newstring + chr(012)
+					elif a == 'r':
+						newstring = newstring + chr(015)
+					elif a == 't':
+						newstring = newstring + chr(011)
+					elif a == 'v':
+						newstring = newstring + chr(013)
+					else:
+						# remove backslash only, as bash does: this takes care of \\ and \' and \" as well
+						newstring = newstring + mystring[pos-1:pos]
+						continue
+			elif (mystring[pos] == "$") and (mystring[pos-1] != "\\"):
+				pos = pos + 1
+				if pos+1 >= len(mystring):
+					_varexpand_cache_[mystring] = ""
+					return ""
+				if mystring[pos] == "{":
+					pos = pos + 1
+					terminus = "}"
+				else:
+					terminus = string.whitespace
+				myvstart = pos
+				while mystring[pos] not in terminus:
+					if pos+1 >= len(mystring):
+						_varexpand_cache_[mystring] = ""
+						return ""
+					pos = pos + 1
+				myvarname = mystring[myvstart:pos]
+				pos = pos + 1
+				if len(myvarname) == 0:
+					_varexpand_cache_[mystring] = ""
+					return ""
+				numvars = numvars + 1
+				#print "myvarname:", myvarname
+
+				if myvarname[0] == '@':
+					newstring = newstring + eval(myvarname[1:])
+				# keep vars that are not all in UPPERCASE
+				elif myvarname != myvarname.upper():
+					newstring = newstring + '${' + myvarname + '}'
+				elif mydict.has_key(myvarname):
+					newstring = newstring + mydict[myvarname]
+				else:
+					raise VarExpandError, "'" + myvarname + "' missing"
+			else:
+				newstring = newstring + mystring[pos]
+				pos = pos + 1
+		else:
+			newstring = newstring + mystring[pos]
+			pos = pos + 1
+	if numvars == 0:
+		_varexpand_cache_[mystring] = newstring[1:]
+	return newstring[1:]	
+
+
+#######################################################################
+
+def setenv(var, value):
+	"""Simple set an environment in the global oe.env[] variable, but
+	with expanding variables beforehand."""
+
+	value = varexpand(value, env)
+	env[var] = value
+
+
+#######################################################################
+
+def inherit_os_env(position):
+	"""This reads the the os-environment and imports variables marked as
+	such in envdesc into our environment. This happens at various places
+	during package definition read time, see comments near envdesc[] for
+	more."""
+	
+	position = str(position)
+	for s in os.environ.keys():
+		try:
+			d = envdesc[s]
+			if d.has_key('inherit') and d['inherit'] == position:
+				env[s] = os.environ[s]
+				debug(2, 'inherit %s from os environment' % s)
+		except KeyError:
+			pass
+
+
+#######################################################################
+def set_automatic_vars(file):
+	"""Deduce per-package environment variables"""
+
+	debug(2,"setting automatic vars")
+	pkg = catpkgsplit(file)
+	if pkg == None:
+		fatal("package file not in valid format")
+	setenv('CATEGORY',	pkg[0])
+	setenv('PN',		pkg[1])
+	setenv('PV',		pkg[2])
+	setenv('PR',		pkg[3])
+	setenv('P',		'${PN}-${PV}')
+	setenv('PF',		'${P}-${PR}')
+	setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}/work')
+	setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}/files')
+	setenv('S',		'${WORKDIR}/${P}')
+	setenv('T',		'${TMPDIR}/${CATEGORY}/${PF}/temp')
+	setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/image')
+	setenv('DISTDIR',	'${TMPDIR}/downloads/${CATEGORY}/${PN}')
+	setenv('SLOT',	'0')
+	# TODO: set ${A}
+	inherit_os_env(4)
+
+
+#######################################################################
+
+def update_env():
+	"""Environment modification
+
+	If one environment variable is named 'VAR_special'
+
+	and 'special' is '${CCHOST}': replace ${VAR} with ${VAR_${CCHOST}}
+	and 'special' is '${TARGET}': replace ${VAR} with ${VAR_${TARGET}}
+	and 'special' is 'append': add ${VAR_${TARGET}} at the end of ${VAR}
+	and 'special' is 'prepend': add ${VAR_${TARGET}} at the beginning of ${VAR}
+	and 'special' is 'delete': delete all lines in ${VAR} that contain the sub-string ${VAR_${TARGET}}"""
+
+	# can't do delete env[...] while iterating over the dictionary, so remember them
+	dodel = []
+
+	for s in env:
+		# Handle architecture overrides
+		name = s+'_'+env['CCHOST']
+		if env.has_key(name):
+			env[s] = env[name]
+			dodel.append(name)
+
+		# Handle target overrides
+		name = s+'_'+env['TARGET']
+		if env.has_key(name):
+			env[s] = env[name]
+			dodel.append(name)
+
+		# Handle target overrides
+		if env.has_key('SUBTARGET'):
+			name = s+'_'+env['SUBTARGET']
+			if env.has_key(name):
+				env[s] = env[name]
+				dodel.append(name)
+
+		# Handle line appends:
+		name = s+'_append'
+		if env.has_key(name):
+			env[s] = env[s]+env[name]
+			dodel.append(name)
+
+		# Handle line prepends
+		name = s+'_prepend'
+		if env.has_key(name):
+			env[s] = env[name]+env[s]
+			dodel.append(name)
+
+		# Handle line deletions
+		name = s+'_delete'
+		if env.has_key(name):
+			new = ''
+			pattern = string.replace(env[name],"\n","").strip()
+			for line in string.split(env[s],"\n"):
+				if line.find(pattern) == -1:
+					new = new + '\n' + line
+			env[s] = new
+			dodel.append(name)
+
+	# delete all environment vars no longer needed
+	for s in dodel:
+		del env[s]
+
+	inherit_os_env(5)
+
+
+#######################################################################
+
+def emit_env(o=sys.__stdout__):
+	"""This prints the contents of env[] so that it can later be sourced by a shell
+	Normally, it prints to stdout, but this it can be redirectory to some open file handle
+
+	It is used by exec_shell_func().
+	"""
+
+	o.write('\nPATH="' + projectdir + '/bin/build:${PATH}"\n')
+
+	for s in env:
+		if s == s.lower(): continue
+
+		o.write('\n')
+		try:
+			o.write('# ' + envdesc[s]['desc'] + ':\n')
+			if envdesc[s].has_key('export'): o.write('export ')
+		except KeyError:
+			pass
+
+		o.write(s+'="'+env[s]+'"\n')
+
+	for s in env:
+		if s != s.lower(): continue
+
+		o.write("\n" + s + '() {\n' + env[s] + '}\n')
+
+
+#######################################################################
+
+def print_orphan_env():
+	"""Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?"""
+	for s in env:
+		if s == s.lower(): continue		# only care for env vars
+		header = 0				# header shown?
+		try:
+			d = envdesc[s]
+		except KeyError:
+			if not header:
+				note("Nonstandard variables defined in your project:")
+				header = 1
+			print prepender + s
+		if header:
+			print
+
+
+#######################################################################
+
+def print_missing_env():
+	"""Debug output: warn about all missing variables"""
+
+	for s in envdesc:
+		if not envdesc[s].has_key('warnlevel'): continue
+		if env.has_key(s): continue
+
+		level = envdesc[s]['warnlevel']
+		try: warn = prepender + envdesc[s]['warn']
+		except KeyError: warn = ''
+		if level == 1:
+			note('Variable %s is not defined' % s)
+			if warn: print warn
+		elif level == 2:
+			error('Important variable %s is not defined' % s)
+			if warn: print warn
+		elif level == 3:
+			error('Important variable %s is not defined' % s)
+			if warn: print warn
+			sys.exit(1)
+
 
 
 envdesc = {
