@@ -100,7 +100,10 @@ def exec_func(func, d, dirs = None):
 
 	adir = data.expand(adir, d)
 
-	prevdir = os.getcwd()
+	try:
+		prevdir = os.getcwd()
+	except OSError:
+		prevdir = data.expand('${TOPDIR}')
 	if adir and os.access(adir, os.F_OK):
 		os.chdir(adir)
 
