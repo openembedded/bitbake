@@ -30,6 +30,14 @@ class FetchUrls:
 			"Bk" : None,
 			"Local" : None }
 
+	def setMethods(self, methods):
+		self.__methods = methods
+
+	def getMethods(self):
+		return self.__methods
+
+	methods = property(getMethods, setMethods, None, "Methods property")
+
 	def init(self, urls = []):
 		"""Initial setup function for url fetching.
 		   Determines which urls go with which 'fetch' methods.
@@ -76,6 +84,13 @@ class FetchUrls:
 			for url in self.__methods[method].urls:
 				local.append(self.__methods[method].localpath(url))
 		return local
+
+	def localpath(self, url):
+		for method in self.__methods.keys():
+			if self.__methods[method] is not None:
+				if url in self.__methods[method].urls:
+					return self.__methods[method].localpath(url)
+		return url 
 
 class Fetch(object):
 	"""Base class for 'fetch'ing data"""
@@ -125,7 +140,7 @@ class Wget(Fetch):
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
-		return os.path.join(getenv("DL_DIR"), os.path.basename(url))
+		return os.path.join(getenv("DL_DIR"), re.sub(r";.*$","",os.path.basename(url)))
 	localpath = staticmethod(localpath)
 
 	def go(self, urls = []):

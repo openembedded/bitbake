@@ -1,34 +1,29 @@
 PATCHES_DIR="${S}"
 
-do_applypatches() {
-	for purl in `patcher_sanity "${PATCHES_URI}"`; do
-		parm="`echo $purl|sed -e's,^[^;]*;,,'`"
-		pnum="`echo $parm|sed -e's,.*pnum=\(.\).*,\1,'`"
-		if [ "$pnum" = "$purl" ]; then pnum=1; fi 
-		pdl="`patcher_lfn $purl`"
-		case "${pdl##*.}" in
-		ZIP|zip|gz|Z|z|bz2) 
-			pdl="$WORKDIR/${pdl%.*}"
-			;;
-		esac
-		( set -x; cd $PATCHES_DIR && patcher -p $pnum -i "$pdl" ) || return 1
-	done
-	return 0
-}
-
-patcher_sanity() {
-	echo "$@"|sed -e's,;,\;,g'
-}
-
-patcher_lfn() {
-	for fn in $@; do
-		basename $fn|sed -e's,;.*,,'
-	done
-}
-
-base_do_patch() {
-	(cd $WORKDIR && unpack `for purl in \`patcher_sanity "${PATCHES_URI}"\`; do patcher_lfn $purl; done`) || die "patch extraction failed"
-	do_applypatches || die "patch application failed"
+python base_do_patch () {
+	for url in getenv('SRC_URI').split():
+#		print "url: %s" % url
+		fetch = oefetch.FetchUrls()
+		fetch.init([url])
+		local = fetch.localpath(url)
+		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		if not parm.has_key("patch"):
+			continue
+		# patch!
+		dots = local.split(".")
+		if dots[-2] in ['tar']:
+			continue
+		efile = os.path.join(getenv('WORKDIR'),os.path.basename(re.sub(r"\.%s$" % dots[-1],"",local)))
+		os.chdir(getenv('PATCHES_DIR'))
+		cmd = "patcher"
+		if parm.has_key("pnum"):
+			cmd += " -p %s" % parm["pnum"]
+		cmd += " -i %s" % efile
+		ret = os.system(cmd)
+		if ret != 0:
+			fatal("Patch execution failed")
+	mkstamp('do_patch')
+		
 }
 
 base_do_unpack() {
@@ -61,4 +56,4 @@ base_do_package() {
 
 EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch
 
-addtask patch after unpack before compile
+addtask patch after do_unpack before do_compile

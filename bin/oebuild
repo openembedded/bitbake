@@ -17,6 +17,14 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 	shell will end in a log file and stdout.
 	"""
 
+	if tasks.has_key(func) and tasks[func].has_key('deps'):
+		deps = tasks[func]['deps']
+	else:
+		deps = None
+
+	if stamp_is_current(func, deps):
+		return
+
 	global logfile
 	mkdirhier(getenv('T'))
 	logfile = getenv('T') + '/log.' + func + '.' + str(os.getpid())
@@ -48,6 +56,13 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 
 
 def exec_python_func(func, dir = None, myfatal = fatal):
+	if tasks.has_key(func) and tasks[func].has_key('deps'):
+		deps = tasks[func]['deps']
+	else:
+		deps = None
+
+	if stamp_is_current(func, deps):
+		return
 	os.chdir(getenv(dir))
 	comp = compile(getenv(func),func,'exec')
 	exec(comp)
@@ -57,8 +72,6 @@ def exec_python_func(func, dir = None, myfatal = fatal):
 
 def exec_task(task, dir, deptasks = []):
 	"""Executes a given task, handling the stamps appropriately"""
-	if stamp_is_current(task, deptasks):
-		return
 
 	if not deptasks:
 		try:
@@ -78,19 +91,18 @@ def exec_task(task, dir, deptasks = []):
 			except:
 				exec_task(dep, dir)
 
-	func = 'do_'+task
 	if not tasks.has_key(task):
-		fatal("unsupported task: %s" % task)
-		return 0
+		if not envflags.has_key(task) and not env.has_key(task):
+			fatal("unsupported task: %s" % task)
+			return 0
 
 	note("Executing task '%s'" % task)
 
-	if envflags.has_key(func) and envflags[func].has_key("python") and envflags[func]["python"] is not None:
-#	if tasks[task].has_key("python") and tasks[task]["python"] is not None:
+	if envflags.has_key(task) and envflags[task].has_key("python") and envflags[task]["python"] is not None:
 		# execute this function as a block of python code, not shell
-		ret = exec_python_func(func, dir)
+		ret = exec_python_func(task, dir)
 	else:
-		ret = exec_shell_func(func, dir)
+		ret = exec_shell_func(task, dir)
 	if ret==0: mkstamp(task)
 
 def mkstamp(task):
@@ -154,12 +166,10 @@ def do_mrproper():
 def do_fetch():
 	"""download needed sources"""
 
-	if stamp_is_current('fetch', tasks['fetch']['deps']):
+	if stamp_is_current('do_fetch', tasks['do_fetch']['deps']):
 		return
 
 	mkdirhier(getenv("DL_DIR"))	# create file download directory
-
-	note("Executing task 'fetch'")
 
 	if env.has_key('SRC_URI'):
 		grabber = oefetch.FetchUrls()
@@ -180,7 +190,7 @@ def do_fetch():
 			(type, value, traceback) = sys.exc_info()
 			fatal("Fetch failed: %s" % value)
 			return
-		mkstamp('fetch')
+		mkstamp('do_fetch')
 	else:
 		fatal("No SRC_URI variable, not downloading anything")
 
@@ -192,7 +202,7 @@ def do_unpack():
 
 	mkdirhier(env["WORKDIR"])	# create workdir
 	
-	exec_task('unpack', 'WORKDIR')
+	exec_task('do_unpack', 'WORKDIR')
 
 
 #######################################################################
@@ -201,7 +211,7 @@ def do_compile():
 	"""compile extracted sources"""
 
 	mkdirhier(env["S"])		# create sourcedir if not yet existing
-	exec_task('compile', 'S')
+	exec_task('do_compile', 'S')
 
 
 #######################################################################
@@ -214,7 +224,7 @@ def do_stage():
 	mkdirhier(getenv("STAGING_BINDIR"))
 	mkdirhier(getenv("STAGING_DIR") + "/build/include")
 	mkdirhier(getenv("STAGING_DIR") + "/target/include")
-	exec_task('stage', 'S')
+	exec_task('do_stage', 'S')
 		
 
 #######################################################################
@@ -223,7 +233,7 @@ def do_install():
 	"""install compiled files into image directory"""
 
 	mkdirhier(env["S"])		# create sourcedir if not yet existing
-	exec_task('install', 'S')
+	exec_task('do_install', 'S')
 		
 
 #######################################################################
@@ -235,9 +245,6 @@ def do_build():
 	print_orphan_env()
 	print_missing_env()
 	#emit_env()
-	do_unpack()
-	do_compile()
-	do_stage()
 	do_install()
 
 
@@ -307,24 +314,24 @@ def usage(errorlevel=0, txt=''):
 	sys.exit(errorlevel)
 
 tasks = {
-	"clean" : { "func" : "do_clean" },
-	"mrproper" : { "func" : "do_mrproper" },
-	"test" : { "func" : "do_test" },
-	"showenv" : { "func" : "do_showenv" },
-	"fetch" : { "func" : "do_fetch",
-		     "deps" : [  ] },
-	"unpack" : { "func" : "do_unpack",
-		     "deps" : [ 'fetch' ] },
-	"compile" : { "func" : "do_compile",
-		      "deps" : [ 'unpack' ] },
-	"stage" : { "func" : "do_stage",
-		    "deps" : [ 'compile' ] },
-	"install" : { "func" : "do_install",
-		      "deps" : [ 'stage' ] },
-	"package" : { "func" : "do_package",
-		      "deps" : [ 'install' ] },
-	"build" : { "func" : "do_build",
-		    "deps" : [ 'package' ] },
+	"do_clean" : { "func" : "do_clean" },
+	"do_mrproper" : { "func" : "do_mrproper" },
+	"do_test" : { "func" : "do_test" },
+	"do_showenv" : { "func" : "do_showenv" },
+	"do_fetch" : { "func" : "do_fetch",
+		     "deps" : [ ] },
+	"do_unpack" : { "func" : "do_unpack",
+		     "deps" : [ 'do_fetch' ] },
+	"do_compile" : { "func" : "do_compile",
+		      "deps" : [ 'do_unpack' ] },
+	"do_stage" : { "func" : "do_stage",
+		    "deps" : [ 'do_compile' ] },
+	"do_install" : { "func" : "do_install",
+		      "deps" : [ 'do_stage' ] },
+	"do_package" : { "func" : "do_package",
+		      "deps" : [ 'do_install' ] },
+	"do_build" : { "func" : "do_build",
+		    "deps" : [ 'do_package' ] },
 }
 
 if len(sys.argv) < 2:
@@ -365,10 +372,7 @@ for var in env.keys():
 	if not envflags[var].has_key("task"):
 		continue
 
-	h = var.split('_') # deal with task vs do_task inconsistency
-	if not h[1]:
-		continue
-	taskvar = h[1]
+	taskvar = var
 	tasks[taskvar] = {}
 	if envflags[var].has_key("func"):
 		tasks[taskvar]["func"] = envflags[var]["func"]
@@ -393,11 +397,11 @@ for var in env.keys():
 
 for s in sys.argv[1].split(','):
 	try:
-		funcname = tasks[s]["func"]
+		funcname = tasks["do_" + s]["func"]
 		func = globals()[funcname]
 		func()
 	except KeyError:
-		exec_task(s, "S")
+		exec_task("do_" + s, "S")
 #		INVALID()
 #		usage(1, "'%s' is not valid command" % s)
 
