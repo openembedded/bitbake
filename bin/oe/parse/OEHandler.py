@@ -194,7 +194,7 @@ def set_automatic_vars(file, d):
 	data.setVar('PN', pkg[1], d)
 	data.setVar('PV', pkg[2], d)
 	data.setVar('PR', pkg[3], d)
-	data.setVar('PR', '${PN}-${PV}', d)
+	data.setVar('P', '${PN}-${PV}', d)
 	data.setVar('PF', '${P}-${PR}', d)
 
 	for s in ['${TOPDIR}/${CATEGORY}/${PF}', 
