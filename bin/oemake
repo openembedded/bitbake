@@ -114,45 +114,8 @@ def load_oefile( oefile, cfg ):
                 os.chdir(oldpath)
                 return None
 
-
-#
-# main
-#
-
-if __name__ == "__main__":
-
-    options, args = handle_options( sys.argv )
-
-    _depcmds = { "clean": None,
-                "mrproper": None,
-                "build": "stage" }
-
-    if not options.cmd:
-            options.cmd = "build"
-
-    if options.cmd in _depcmds:
-            depcmd=_depcmds[options.cmd]
-    else:
-            depcmd=options.cmd
-
-    pkgdata = {}
-    pkgs = {}
-    cfg = {}
-    graph = digraph()
-
-    try:
-            cfg = parse.handle("conf/oe.conf", cfg)
-    except IOError:
-            fatal("Unable to open oe.conf")
-
-    if not data.getVar("BUILDNAME", cfg):
-            data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), cfg)
-
-    buildname = data.getVar("BUILDNAME", cfg)
-
-    #
-    # grab oefiles
-    #
+def collect_oefiles( cfg ):
+    """Collect all available .oe build files"""
 
     files = (data.getVar( "OEFILES", cfg, 1 ) or "").split()
     data.setVar("OEFILES", " ".join(files), cfg)
@@ -214,13 +177,12 @@ if __name__ == "__main__":
 
     sys.stdout.write("\n")
 
+def build_depgraph( pkgs, graph, cfg ):
     # add every provide relationship to the dependency graph, depending
     # on all the packages that provide it
 
-    global __tokill
-    global __unsatisfied
-    __tokill = []
-    __unsatisfied = []
+    tokill = []
+    unsatisfied = []
 
     for pkg in pkgs.keys():
             graph.addnode(pkg, None)
@@ -232,21 +194,59 @@ if __name__ == "__main__":
                             for d in deps:
                                     if not graph.hasnode(d):
                                             def killitem(graph, item):
-                                                    global __tokill
-                                                    __tokill.append(item)
+                                                    tokill.append(item)
                                             graph.walkup(pkg, killitem)
-                                            __unsatisfied.append([pkg, d])
+                                            unsatisfied.append([pkg, d])
                                             break
                                     graph.addnode(pkg, d)
 
-    for u in __unsatisfied:
+    for u in unsatisfied:
             event.fire(event.UnsatisfiedDep(u[0], pkgdata[pkgs[u[0]][1]], u[1]))
 
-    for k in __tokill:
+    for k in tokill:
             def reallykillitem(graph, item):
                     graph.delnode(item)
             graph.walkup(k, reallykillitem)
 
+
+#
+# main
+#
+
+if __name__ == "__main__":
+
+    options, args = handle_options( sys.argv )
+
+    _depcmds = { "clean": None,
+                "mrproper": None,
+                "build": "stage" }
+
+    if not options.cmd:
+            options.cmd = "build"
+
+    if options.cmd in _depcmds:
+            depcmd=_depcmds[options.cmd]
+    else:
+            depcmd=options.cmd
+
+    pkgdata = {}
+    pkgs = {}
+    cfg = {}
+    graph = digraph()
+
+    try:
+            cfg = parse.handle("conf/oe.conf", cfg)
+    except IOError:
+            fatal("Unable to open oe.conf")
+
+    if not data.getVar("BUILDNAME", cfg):
+            data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), cfg)
+
+    buildname = data.getVar("BUILDNAME", cfg)
+
+    collect_oefiles( cfg )
+    build_depgraph( pkgs, graph, cfg )
+    
     event.fire(event.BuildStarted(buildname, graph.okeys, cfg))
 
     pkgs_to_build = None
