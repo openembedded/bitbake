@@ -97,7 +97,7 @@ def collect_oefiles( progressCallback ):
                 oe.debug(1, "oemake: skipping %s" % f)
                 continue
 
-        progressCallback( i, len( newfiles )-1, f )
+        progressCallback( i + 1, len( newfiles ), f )
         debug(1, "oemake: parsing %s" % f)
 
         # read a file's metadata
