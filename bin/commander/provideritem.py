@@ -23,8 +23,8 @@ class ProviderItem( QListViewItem ): #QCheckListItem
 
     icons = {}
     
-    def __init__( self, parent, provider ):
-    
+    def __init__( self, parent, provider, virtual = False ):
+        
         if not ProviderItem.icons:
             ProviderItem.icons =  { "unpack"    : QPixmap( imageDir + "do_unpack.png" ),
                "patch"     : QPixmap( imageDir + "do_patch.png" ),
@@ -37,23 +37,44 @@ class ProviderItem( QListViewItem ): #QCheckListItem
         self.parent = parent
         self.p = Packages.instance()
         self.fullname = provider
-        self.shortname = provider.split( "/" )[-1]
-        self.virtual = self.virtualValue()
-
-        if self.virtual:
+        self.shortname = provider.split( "/" )[-1]       
+        # <HACK>
+        # Caution! I have absolutely no idea if it is correct to assume, that
+        # the last provider is the most unspecific one... for now this seems to work :)
+        # </HACK>
+        self.mup = self.mupValue()
+        self.virtualp = self.virtualValue()
+        
+        print "ProviderItemInit: FN='%s' SN='%s', VP='%s', MUP='%s'" % ( self.fullname, self.shortname, self.virtualp, self.mup )
+        
+        if self.mup == "N/A":
+            print "Warning: MUP of '%s' seems to be not available." % provider
+            
+        if virtual:
+            QListViewItem.__init__( self, parent, provider )
+            return
+    
+        if self.virtualp:
             #
-            # check if a corresponding parent element already has been added
+            # check if a corresponding virtual parent element already has been added
             #
-            vparent = parent.findItem( self.virtual, 0 )
+            vparent = parent.findItem( self.virtualp, 0 )
             if not vparent:
-                vparent = ProviderItem( parent, self.virtual )
+                vparent = ProviderItem( parent, self.virtualp, True )
                 vparent.setPixmap( 0, QPixmap( imageDir + "virtual.png" ) )
 
             QListViewItem.__init__( self, vparent, provider )
             #QCheckListItem.__init__( self, vparent, provider, QCheckListItem.CheckBox )           
+            
         else:
-            QListViewItem.__init__( self, parent, provider )
-            #QCheckListItem.__init__( self, parent, provider, QCheckListItem.CheckBox )            
+            #
+            # check if a corresponding mup parent element already has been added
+            #
+            vparent = parent.findItem( self.mup, 0 )
+            if not vparent:
+                vparent = ProviderItem( parent, self.mup, True )
+                vparent.setPixmap( 0, QPixmap( imageDir + "virtual.png" ) )          
+            QListViewItem.__init__( self, vparent, provider )
 
         self.decorate()
         self.setPixmap( 0, QPixmap( imageDir + "package.png" ) )
@@ -66,6 +87,10 @@ class ProviderItem( QListViewItem ): #QCheckListItem
         for p in providers:
             if p.split( '/' )[0] == "virtual": return p
 
+    def mupValue( self ):
+        providers = self.p.data( self.fullname, "PROVIDES" ).split()
+        return providers[-1]
+            
     def setCheckStatus( self, checked ):
         self.checked = checked
         if self.checked:
