@@ -42,11 +42,11 @@ class TaskSucceeded(TaskBase):
 class TaskFailed(TaskBase):
 	"""Task execution failed"""
 
-def exec_shell_func(func, dir=None, myfatal=fatal):
+def exec_shell_func(func, d=None, myfatal=fatal):
 	"""This executes any shell function stored in env[func]. Returns
 	true if execution was successful.
 
-	For this, it creates a bash shell script in the tmp directory, writes the local
+	For this, it creates a bash shell script in the tmp dectory, writes the local
 	environment in env[] into it and finally executes this. The output of the
 	shell will end in a log file and stdout.
 	"""
@@ -77,7 +77,7 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
 	emit_env(f)
 
-	if dir:  f.write("cd %s\n" % env[dir])
+	if d:  f.write("cd %s\n" % env[d])
 	if func: f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
@@ -254,8 +254,20 @@ def check_md5(task, deptasks):
 			if deps is not None:
 				for p in deps:
 					ret = followdown(p, callback)
-					if ret == 0:
-						return 0
+			return callback(item)
+
+		def followup(item, callback):
+			deps = []
+			for task in tasks:
+				try:
+					if item in tasks[task]['deps']:
+						deps.append(task)
+				except KeyError:
+					continue
+
+			if deps is not None:
+				for p in deps:
+					ret = followup(p, callback)
 			return callback(item)
 
 		def undo(task):
@@ -267,12 +279,18 @@ def check_md5(task, deptasks):
 			except KeyError:
 				pass
 			if not undo: return
-			if undodeps:
-				exec_task(undo, dir, undodeps)
-			else:
-				exec_task(undo, dir)
+			print "calling %s to undo %s" % (undo, task)
+			try:
+				depfuncname = tasks[undo]["func"]
+				depfunc = globals()[depfuncname]
+				depfunc()
+			except KeyError:
+				if undodeps:
+					exec_task(undo, None, undodeps)
+				else:
+					exec_task(undo, None)
 
-		followdown(task, undo)
+		followup(task, undo)
 
 		# update md5
 		write_md5(task, new)
@@ -493,28 +511,29 @@ tasks = {
 		      "deps" : [ ],
 		     },
 	"do_unpack" : { "func" : "do_unpack",
-		      "check" : "stamp_is_current",
+		      "check" : "check_md5",
 		      "md5check" : ["A"],
 		      "undo" : "do_clean",
 		      "deps" : [ 'do_fetch' ],
 		      },
 	"do_compile" : { "func" : "do_compile",
-		       "check" : "stamp_is_current",
+		       "check" : "check_md5",
 		       "deps" : [ 'do_unpack' ],
 		       },
 	"do_patch" : { "undo" : "do_clean",
+		     "check" : "check_md5",
 		     "md5check" : ["A"],
 		     },
 	"do_stage" : { "func" : "do_stage",
-		     "check" : "stamp_is_current",
+		     "check" : "check_md5",
 		     "deps" : [ 'do_compile' ],
 		     },
 	"do_install" : { "func" : "do_install",
-		       "check" : "stamp_is_current",
+		       "check" : "check_md5",
 		       "deps" : [ 'do_stage' ],
 		       },
 	"do_package" : { "func" : "do_package",
-		       "check" : "stamp_is_current",
+		       "check" : "check_md5",
 		       "deps" : [ 'do_install' ],
 		       },
 	"do_build" : { "func" : "do_build",
