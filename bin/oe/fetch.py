@@ -378,33 +378,38 @@ class Cvs(Fetch):
             oe.data.setVar('CVSCOOPTS', " ".join(options), localdata)
             oe.data.setVar('CVSMODULE', module, localdata)
             cvscmd = oe.data.getVar('FETCHCOMMAND', localdata, 1)
+            cvsupdatecmd = oe.data.getVar('UPDATECOMMAND', localdata, 1)
 
             if cvs_rsh:
                 cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)
 
-#           create temp directory
-            oe.debug(2, "Fetch: creating temporary directory")
-            oe.mkdirhier(oe.data.expand('${WORKDIR}', localdata))
-            oe.data.setVar('TMPBASE', oe.data.expand('${WORKDIR}/oecvs.XXXXXX', localdata), localdata)
-            tmppipe = os.popen(oe.data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
-            tmpfile = tmppipe.readline().strip()
-            if not tmpfile:
-                oe.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
-                raise FetchError(module)
+#           create module directory
+            oe.debug(2, "Fetch: checking for module directory")
+            pkg=oe.data.expand('${PN}', d)
+            pkgdir=os.path.join(oe.data.expand('${CVSDIR}', localdata), pkg)
+            moddir=os.path.join(pkgdir,module)
+            if os.access(os.path.join(moddir,'CVS'), os.R_OK):
+                oe.note("Update " + loc)
+#               update sources there
+                os.chdir(moddir)
+                myret = os.system(cvsupdatecmd)
+            else:
+                oe.note("Fetch " + loc)
+#               check out sources there
+                oe.mkdirhier(pkgdir)
+                os.chdir(pkgdir)
+                oe.debug(1, "Running %s" % cvscmd)
+                myret = os.system(cvscmd)
 
-#           check out sources there
-            os.chdir(tmpfile)
-            oe.note("Fetch " + loc)
-            oe.debug(1, "Running %s" % cvscmd)
-            myret = os.system(cvscmd)
             if myret != 0:
                 try:
-                    os.rmdir(tmpfile)
+                    os.rmdir(moddir)
                 except OSError:
                     pass
                 raise FetchError(module)
 
-            os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
+            os.chdir(moddir)
+            os.chdir('..')
 #           tar them up to a defined filename
             myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), localdir))
             if myret != 0:
@@ -412,8 +417,6 @@ class Cvs(Fetch):
                     os.unlink(tarfn)
                 except OSError:
                     pass
-#           cleanup
-            os.system('rm -rf %s' % tmpfile)
             os.chdir(olddir)
         del localdata
 
