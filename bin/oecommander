@@ -20,23 +20,23 @@ def fail( reason ):
 try:
     from qt import *
 except ImportError:
-    fail( "Can't import the qt module. Do you have PyQt installed?" )
+    fail( "Can't import the qt module. You need to have PyQt (http://riverbankcomputing.co.uk) 3.10 or later installed." )
     sys.exit( -1 )
 
 try:
     PYQT_VERSION_STR
 except NameError:
-    fail( "PyQt Version %s is too old. Please upgrade to PyQt 3.10 or later." % PYQT_VERSION )
+    fail( "Your PyQt (%s) is too old. Please upgrade to PyQt 3.10 or later." % PYQT_VERSION )
 
 major, minor = PYQT_VERSION_STR.split( '.' )
 if int(major) < 3 or ( int(major) == 3 and int(minor) < 10 ):
-    fail( "PyQt Version %s is too old. Please upgrade to PyQt 3.10 or later." % PYQT_VERSION_STR )
+    fail( "Your PyQt (%s) is too old. Please upgrade to PyQt 3.10 or later." % PYQT_VERSION_STR )
 
 import sys
 try:
     from commander.mainwindow import MainWindow
 except ImportError:
-    fail( "Error: Can't load GUI parts. Did you 'qmake commander.pro && make' in $OEDIR/commander/?" )
+    fail( "Can't load the GUI parts. Did you 'qmake commander.pro && make' in $OEDIR/commander/?" )
 from qt import *
 
 #------------------------------------------------------------------------#
