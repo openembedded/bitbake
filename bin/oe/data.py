@@ -87,7 +87,8 @@ def delVar(var, d = _data):
 		>>> print getVar('TEST')
 		None
 	"""
-	del d[var]
+	if d.has_key(var):
+		del d[var]
 
 def setVarFlag(var, flag, flagvalue, d = _data):
 	"""Set a flag for a given variable to a given value
@@ -126,7 +127,8 @@ def delVarFlag(var, flag, d = _data):
 		None
 		
 	"""
-	del d[var]["flags"][flag]
+	if d.has_key(var) and d[var].has_key("flags") and d[var]["flags"].has_key(flag):
+		del d[var]["flags"][flag]
 
 def setVarFlags(var, flags, d = _data):
 	"""Set the flags for a given variable
@@ -166,7 +168,8 @@ def delVarFlags(var, d = _data):
 		None
 		
 	"""
-	del d[var]["flags"]
+	if d.has_key(var) and d[var].has_key("flags"):
+		del d[var]["flags"]
 
 def getData(d = _data):
 	"""Returns the data object used"""
@@ -375,10 +378,7 @@ def update_data(d = _data):
 
 		# Handle line appends:
 		for (a, o) in getVarFlag(s, '_append', d) or []:
-			try:
-				delVarFlag(s, '_append', d)
-			except KeyError:
-				pass
+			delVarFlag(s, '_append', d)
 			if o:
 				if not o in overrides:
 					break
@@ -387,10 +387,7 @@ def update_data(d = _data):
 		
 		# Handle line prepends
 		for (a, o) in getVarFlag(s, '_prepend', d) or []:
-			try:
-				delVarFlag(s, '_prepend', d)
-			except KeyError:
-				pass
+			delVarFlag(s, '_prepend', d)
 			if o:
 				if not o in overrides:
 					break
