@@ -47,10 +47,10 @@ Finally, you can start the build.  There are a few ways to do so.  First, you
 can run 'oebuild' on a single OE.  Second, you can run oemake, which operates
 on an existing set of metadata, and will follow build dependencies.
 
-	oebuild content/glibc-2.3.2.oe
+	oebuild content/glibc_2.3.2.oe
 	-or-
 	export OEFILES=`pwd`/content/*.oe
-	oemake glibc-2.3.2
+	oemake glibc_2.3.2
 
 Please see the other files in doc/, as well as the --help output for each of the OE
 commands, for further details on the capabilities and use of the system.

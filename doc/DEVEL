@@ -5,8 +5,10 @@ How to add the build of a package to OpenEmbedded
 (henceforth known as "OE") in a few easy steps!
 
 First, you'll want to create the .oe.
-	vi content/packagename-version.oe
+	vi content/packagename_version.oe
 	:wq
+
+(Note the underscore separating the packagename and the version.)
 
 Next, we need to add some content.  First, define the
 "SRC_URI" variable to point to the upstream source tarball.
@@ -18,6 +20,8 @@ that tarball:
 
 (Note: "P" defaults to ${PN}-${PV}, which is package name,
 and package version, respectively.)
+(Also note that S=${WORKDIR}/${P} is automatically set, so you
+just need to override, if the package extracts into another directory.)
 
 Finally, we need to make some decisions on how to build this.
 Take a look at the sources.  If you see a 'configure.in', 
@@ -28,7 +32,7 @@ Simply tell the buildsystem that:
 	inherit autotools
 
 And attempt a build!
-	oebuild content/packagename-version.oe
+	oebuild content/packagename_version.oe
 
 If the build either is not autotools based, or deviates from it in
 any way, you can override any of the steps.  For example:
