@@ -153,175 +153,6 @@ def flatten(mytokens):
 	return newlist
 
 
-#beautiful directed graph object
-class digraph:
-	def __init__(self):
-		self.dict={}
-		#okeys = keys, in order they were added (to optimize firstzero() ordering)
-		self.okeys=[]
-	
-	def addnode(self,mykey,myparent):
-		if not self.dict.has_key(mykey):
-			self.okeys.append(mykey)
-			if myparent==None:
-				self.dict[mykey]=[0,[]]
-			else:
-				self.dict[mykey]=[0,[myparent]]
-				self.dict[myparent][0]=self.dict[myparent][0]+1
-			return
-		if myparent and (not myparent in self.dict[mykey][1]):
-			self.dict[mykey][1].append(myparent)
-			self.dict[myparent][0]=self.dict[myparent][0]+1
-	
-	def delnode(self,mykey):
-		if not self.dict.has_key(mykey):
-			return
-		for x in self.dict[mykey][1]:
-			self.dict[x][0]=self.dict[x][0]-1
-		del self.dict[mykey]
-		while 1:
-			try:
-				self.okeys.remove(mykey)	
-			except ValueError:
-				break
-	
-	def allnodes(self):
-		"returns all nodes in the dictionary"
-		return self.dict.keys()
-	
-	def firstzero(self):
-		"returns first node with zero references, or NULL if no such node exists"
-		for x in self.okeys:
-			if self.dict[x][0]==0:
-				return x
-		return None 
-
-	def allzeros(self):
-		"returns all nodes with zero references, or NULL if no such node exists"
-		zerolist = []
-		for x in self.dict.keys():
-			if self.dict[x][0]==0:
-				zerolist.append(x)
-		return zerolist
-
-	def hasallzeros(self):
-		"returns 0/1, Are all nodes zeros? 1 : 0"
-		zerolist = []
-		for x in self.dict.keys():
-			if self.dict[x][0]!=0:
-				return 0
-		return 1
-
-	def empty(self):
-		if len(self.dict)==0:
-			return 1
-		return 0
-
-	def hasnode(self,mynode):
-		return self.dict.has_key(mynode)
-
-	def copy(self):
-		mygraph=digraph()
-		for x in self.dict.keys():
-			mygraph.dict[x]=self.dict[x][:]
-			mygraph.okeys=self.okeys[:]
-		return mygraph
-
-# valid end of version components; integers specify offset from release version
-# pre=prerelease, p=patchlevel (should always be followed by an int), rc=release candidate
-# all but _p (where it is required) can be followed by an optional trailing integer
-
-def grabfile(myfilename):
-	"""This function grabs the lines in a file, normalizes whitespace and returns lines in a list; if a line
-	begins with a #, it is ignored, as are empty lines"""
-
-	try:
-		myfile=open(myfilename,"r")
-	except IOError:
-		return []
-	mylines=myfile.readlines()
-	myfile.close()
-	newlines=[]
-	for x in mylines:
-		#the split/join thing removes leading and trailing whitespace, and converts any whitespace in the line
-		#into single spaces.
-		myline=string.join(string.split(x))
-		if not len(myline):
-			continue
-		if myline[0]=="#":
-			continue
-		newlines.append(myline)
-	return newlines
-
-def grabdict(myfilename,juststrings=0):
-	"""This function grabs the lines in a file, normalizes whitespace and returns lines in a dictionary"""
-	newdict={}
-	try:
-		myfile=open(myfilename,"r")
-	except IOError:
-		return newdict 
-	mylines=myfile.readlines()
-	myfile.close()
-	for x in mylines:
-		#the split/join thing removes leading and trailing whitespace, and converts any whitespace in the line
-		#into single spaces.
-		myline=string.split(x)
-		if len(myline)<2:
-			continue
-		if juststrings:
-			newdict[myline[0]]=string.join(myline[1:])
-		else:
-			newdict[myline[0]]=myline[1:]
-	return newdict
-
-def grabints(myfilename):
-	newdict={}
-	try:
-		myfile=open(myfilename,"r")
-	except IOError:
-		return newdict 
-	mylines=myfile.readlines()
-	myfile.close()
-	for x in mylines:
-		#the split/join thing removes leading and trailing whitespace, and converts any whitespace in the line
-		#into single spaces.
-		myline=string.split(x)
-		if len(myline)!=2:
-			continue
-		newdict[myline[0]]=string.atoi(myline[1])
-	return newdict
-
-def writeints(mydict,myfilename):
-	try:
-		myfile=open(myfilename,"w")
-	except IOError:
-		return 0
-	for x in mydict.keys():
-		myfile.write(x+" "+`mydict[x]`+"\n")
-	myfile.close()
-	return 1
-
-def writedict(mydict,myfilename,writekey=1):
-	"""Writes out a dict to a file; writekey=0 mode doesn't write out
-	the key and assumes all values are strings, not lists."""
-	try:
-		myfile=open(myfilename,"w")
-	except IOError:
-		print "Failed to open file for writedict():",myfilename
-		return 0
-	if not writekey:
-		for x in mydict.values():
-			myfile.write(x+"\n")
-	else:
-		for x in mydict.keys():
-			myfile.write(x+" ")
-			for y in mydict[x]:
-				myfile.write(y+" ")
-			myfile.write("\n")
-	myfile.close()
-	return 1
-
-
 #######################################################################
 #
 # varexpand()
@@ -662,94 +493,6 @@ def fetch(myuris, listonly=0):
 			return 0
 	return 1
 
-def digestgen(myarchives,overwrite=1):
-	"""generates digest file if missing.  Assumes all files are available.	If
-	overwrite=0, the digest will only be created if it doesn't already exist."""
-	if not os.path.isdir(settings["FILESDIR"]):
-		os.makedirs(settings["FILESDIR"])
-		if "cvs" in features:
-			print ">>> Auto-adding files/ dir to CVS..."
-			spawn("cd "+settings["O"]+"; cvs add files",free=1)
-	myoutfn=settings["FILESDIR"]+"/.digest-"+settings["PF"]
-	myoutfn2=settings["FILESDIR"]+"/digest-"+settings["PF"]
-	if (not overwrite) and os.path.exists(myoutfn2):
-		return
-	print ">>> Generating digest file..."
-
-	try:
-		outfile=open(myoutfn,"w")
-	except IOError, e:
-		print "!!! Filesystem error skipping generation. (Read-Only?)"
-		print "!!! "+str(e)
-		return
-	
-	for x in myarchives:
-		myfile=settings["DISTDIR"]+"/"+x
-		mymd5=perform_md5(myfile)
-		mysize=os.stat(myfile)[ST_SIZE]
-		#The [:-1] on the following line is to remove the trailing "L"
-		outfile.write("MD5 "+mymd5+" "+x+" "+`mysize`[:-1]+"\n")	
-	outfile.close()
-	if not movefile(myoutfn,myoutfn2):
-		print "!!! Failed to move digest."
-		sys.exit(1)
-	if "cvs" in features:
-		print ">>> Auto-adding digest file to CVS..."
-		spawn("cd "+settings["FILESDIR"]+"; cvs add digest-"+settings["PF"],free=1)
-	print ">>> Computed message digests."
-	
-def digestcheck(myarchives):
-	"Checks md5sums.  Assumes all files have been downloaded."
-	if not myarchives:
-		#No archives required; don't expect a digest
-		return 1
-	digestfn=settings["FILESDIR"]+"/digest-"+settings["PF"]
-	if not os.path.exists(digestfn):
-		if "digest" in features:
-			print ">>> No message digest file found:",digestfn
-			print ">>> \"digest\" mode enabled; auto-generating new digest..."
-			digestgen(myarchives)
-			return 1
-		else:
-			print "!!! No message digest file found:",digestfn
-			print "!!! Type \"ebuild foo.ebuild digest\" to generate a digest."
-			return 0
-	myfile=open(digestfn,"r")
-	mylines=myfile.readlines()
-	mydigests={}
-	for x in mylines:
-		myline=string.split(x)
-		if len(myline)<2:
-			#invalid line
-			continue
-		mydigests[myline[2]]=[myline[1],myline[3]]
-	for x in myarchives:
-		if not mydigests.has_key(x):
-			if "digest" in features:
-				print ">>> No message digest entry found for archive \""+x+".\""
-				print ">>> \"digest\" mode enabled; auto-generating new digest..."
-				digestgen(myarchives)
-				return 1
-			else:
-				print ">>> No message digest entry found for archive \""+x+".\""
-				print "!!! Most likely a temporary problem. Try 'emerge rsync' again later."
-				print "!!! If you are certain of the authenticity of the file then you may type"
-				print "!!! the following to generate a new digest:"
-				print "!!!   ebuild /usr/portage/category/package/package-version.ebuild digest" 
-				return 0
-		mymd5=perform_md5(settings["DISTDIR"]+"/"+x)
-		if mymd5 != mydigests[x][0]:
-			print
-			print "!!!",x+": message digests do not match!"
-			print "!!!",x,"is corrupt or incomplete."
-			print ">>> our recorded digest:",mydigests[x][0]
-			print ">>>  your file's digest:",mymd5
-			print ">>> Please delete",settings["DISTDIR"]+"/"+x,"and refetch."
-			print
-			return 0
-		else:
-			print ">>> md5 ;-)",x
-	return 1
 
 def movefile(src,dest,newmtime=None,sstat=None):
 	"""moves a file from src to dest, preserving all permissions and attributes; mtime will
@@ -843,9 +586,6 @@ def movefile(src,dest,newmtime=None,sstat=None):
 		os.utime(dest, (sstat[ST_ATIME], sstat[ST_MTIME]))
 		newmtime=sstat[ST_MTIME]
 	return newmtime
-
-def perform_md5(x, calc_prelink=0):
-	return perform_checksum(x, calc_prelink)[0]
 
 
 #######################################################################
@@ -1010,3 +750,330 @@ def isjustname(mypkg):
 		if ververify(x):
 			return 0
 	return 1
+
+
+_isspecific_cache_={}
+
+def isspecific(mypkg):
+	"now supports packages with no category"
+	try:
+		return _isspecific_cache_[mypkg]
+	except:
+		pass
+
+	mysplit = string.split(mypkg,"/")
+	if not isjustname(mysplit[-1]):
+			_isspecific_cache_[mypkg] = 1
+			return 1
+	_isspecific_cache_[mypkg] = 0
+	return 0
+
+
+#######################################################################
+#
+# pkgsplit()
+#
+#	''			-> ERROR: package name without name or version part
+#	'x'			-> ERROR: package name without name or version part
+#	'x-'			-> ERROR: package name with empty name or version part
+#	'-1'			-> ERROR: package name with empty name or version part
+#	'glibc-1.2-8.9-r7'	-> None	
+#	'glibc-2.2.5-r7'	-> ['glibc', '2.2.5', 'r7']
+#	'foo-1.2-1'		->
+#	'Mesa-3.0'		-> ['Mesa', '3.0', 'r0']
+#
+# This function can be used as a package verification function. If it is a
+# valid name, pkgsplit will return a list containing: [ pkgname,
+# pkgversion(norev), pkgrev ].
+#
+
+_pkgsplit_cache_={}
+
+def pkgsplit(mypkg, silent=1):
+	try:
+		return _pkgsplit_cache_[mypkg]
+	except KeyError:
+		pass
+
+	myparts = string.split(mypkg,'-')
+	if len(myparts) < 2:
+		if not silent:
+			print "ERROR: package name without name or version part" 
+		_pkgsplit_cache_[mypkg] = None
+		return None
+	for x in myparts:
+		if len(x) == 0:
+			if not silent:
+				print "ERROR: package name with empty name or version part"
+			_pkgsplit_cache_[mypkg] = None
+			return None
+	# verify rev
+	revok = 0
+	myrev = myparts[-1]
+	if len(myrev) and myrev[0] == "r":
+		try:
+			string.atoi(myrev[1:])
+			revok = 1
+		except: 
+			pass
+	if revok:
+		if ververify(myparts[-2]):
+			if len(myparts) == 2:
+				_pkgsplit_cache_[mypkg] = None
+				return None
+			else:
+				for x in myparts[:-2]:
+					if ververify(x):
+						_pkgsplit_cache_[mypkg]=None
+						return None
+						# names can't have versiony looking parts
+				myval=[string.join(myparts[:-2],"-"),myparts[-2],myparts[-1]]
+				_pkgsplit_cache_[mypkg]=myval
+				return myval
+		else:
+			_pkgsplit_cache_[mypkg] = None
+			return None
+
+	elif ververify(myparts[-1],silent):
+		if len(myparts)==1:
+			if not silent:
+				print "!!! Name error in",mypkg+": missing name part."
+			_pkgsplit_cache_[mypkg]=None
+			return None
+		else:
+			for x in myparts[:-1]:
+				if ververify(x):
+					if not silent: print "ERROR: package name has multiple version parts"
+					_pkgsplit_cache_[mypkg] = None
+					return None
+			myval = [string.join(myparts[:-1],"-"), myparts[-1],"r0"]
+			_pkgsplit_cache_[mypkg] = myval
+			return myval
+	else:
+		_pkgsplit_cache_[mypkg] = None
+		return None
+
+
+#######################################################################
+#
+# catpkgsplit()
+#
+#	sys-libs/glibc-1.2-r7	-> ['sys-libs', 'glibc', '1.2', 'r7']
+#	glibc-1.2-r7		-> ['null', 'glibc', '1.2', 'r7']
+#
+
+_catpkgsplit_cache_ = {}
+
+def catpkgsplit(mydata,silent=1):
+	"returns [cat, pkgname, version, rev ]"
+	try:
+		return _catpkgsplit_cache_[mydata]
+	except KeyError:
+		pass
+
+	mysplit = mydata.split("/")
+	p_split = None
+	if len(mysplit) == 1:
+		retval = ["null"]
+		p_split = pkgsplit(mydata,silent)
+	elif len(mysplit)==2:
+		retval = [mysplit[0]]
+		p_split = pkgsplit(mysplit[1],silent)
+	if not p_split:
+		_catpkgsplit_cache_[mydata] = None
+		return None
+	retval.extend(p_split)
+	_catpkgsplit_cache_[mydata] = retval
+	return retval
+
+
+#######################################################################
+#
+# vercmp()
+#
+# This takes two version strings and returns an integer to tell you whether
+# the versions are the same, val1>val2 or val2>val1.
+#
+#	1   <> 2 = -1.0
+#	2   <> 1 = 1.0
+#	1   <> 1.0 = 0
+#	1   <> 1.1 = -1.0
+#	1.1 <> 1_p2 = 1.0
+#
+
+_vercmp_cache_ = {}
+
+def vercmp(val1,val2):
+	# quick short-circuit
+	if val1 == val2:
+		return 0
+	valkey = val1+" "+val2
+
+	# cache lookup
+	try:
+		return _vercmp_cache_[valkey]
+		try:
+			return - _vercmp_cache_[val2+" "+val1]
+		except KeyError:
+			pass
+	except KeyError:
+		pass
+	
+	# consider 1_p2 vc 1.1
+	# after expansion will become (1_p2,0) vc (1,1)
+	# then 1_p2 is compared with 1 before 0 is compared with 1
+	# to solve the bug we need to convert it to (1,0_p2)
+	# by splitting _prepart part and adding it back _after_expansion
+
+	val1_prepart = val2_prepart = ''
+	if val1.count('_'):
+		val1, val1_prepart = val1.split('_', 1)
+	if val2.count('_'):
+		val2, val2_prepart = val2.split('_', 1)
+
+	# replace '-' by '.'
+	# FIXME: Is it needed? can val1/2 contain '-'?
+
+	val1 = string.split(val1,'-')
+	if len(val1) == 2:
+		val1[0] = val1[0] +"."+ val1[1]
+	val2 = string.split(val2,'-')
+	if len(val2) == 2:
+		val2[0] = val2[0] +"."+ val2[1]
+
+	val1 = string.split(val1[0],'.')
+	val2 = string.split(val2[0],'.')
+
+	# add back decimal point so that .03 does not become "3" !
+	for x in range(1,len(val1)):
+		if val1[x][0] == '0' :
+			val1[x] = '.' + val1[x]
+	for x in range(1,len(val2)):
+		if val2[x][0] == '0' :
+			val2[x] = '.' + val2[x]
+
+	# extend varion numbers
+	if len(val2) < len(val1):
+		val2.extend(["0"]*(len(val1)-len(val2)))
+	elif len(val1) < len(val2):
+		val1.extend(["0"]*(len(val2)-len(val1)))
+
+	# add back _prepart tails
+	if val1_prepart:
+		val1[-1] += '_' + val1_prepart
+	if val2_prepart:
+		val2[-1] += '_' + val2_prepart
+	# The above code will extend version numbers out so they
+	# have the same number of digits.
+	for x in range(0,len(val1)):
+		cmp1 = relparse(val1[x])
+		cmp2 = relparse(val2[x])
+		for y in range(0,3):
+			myret = cmp1[y] - cmp2[y]
+			if myret != 0:
+				_vercmp_cache_[valkey] = myret
+				return myret
+	_vercmp_cache_[valkey] = 0
+	return 0
+
+
+#######################################################################
+#
+# pkgcomp()
+#
+# Compares two packages, which should have been split via pkgsplit()
+#
+
+def pkgcmp(pkg1,pkg2):
+	"""if returnval is less than zero, then pkg2 is newer than pkg1, zero if equal and positive if older."""
+	
+	print pkg1[1],pkg2[1]
+
+	mycmp = vercmp(pkg1[1],pkg2[1])
+	if mycmp > 0:
+		return 1
+	if mycmp < 0:
+		return -1
+	r1=string.atoi(pkg1[2][1:])
+	r2=string.atoi(pkg2[2][1:])
+	if r1 > r2:
+		return 1
+	if r2 > r1:
+		return -1
+	return 0
+
+
+#beautiful directed graph object
+class digraph:
+	def __init__(self):
+		self.dict={}
+		#okeys = keys, in order they were added (to optimize firstzero() ordering)
+		self.okeys=[]
+	
+	def addnode(self,mykey,myparent):
+		if not self.dict.has_key(mykey):
+			self.okeys.append(mykey)
+			if myparent==None:
+				self.dict[mykey]=[0,[]]
+			else:
+				self.dict[mykey]=[0,[myparent]]
+				self.dict[myparent][0]=self.dict[myparent][0]+1
+			return
+		if myparent and (not myparent in self.dict[mykey][1]):
+			self.dict[mykey][1].append(myparent)
+			self.dict[myparent][0]=self.dict[myparent][0]+1
+	
+	def delnode(self,mykey):
+		if not self.dict.has_key(mykey):
+			return
+		for x in self.dict[mykey][1]:
+			self.dict[x][0]=self.dict[x][0]-1
+		del self.dict[mykey]
+		while 1:
+			try:
+				self.okeys.remove(mykey)	
+			except ValueError:
+				break
+	
+	def allnodes(self):
+		"returns all nodes in the dictionary"
+		return self.dict.keys()
+	
+	def firstzero(self):
+		"returns first node with zero references, or NULL if no such node exists"
+		for x in self.okeys:
+			if self.dict[x][0]==0:
+				return x
+		return None 
+
+	def allzeros(self):
+		"returns all nodes with zero references, or NULL if no such node exists"
+		zerolist = []
+		for x in self.dict.keys():
+			if self.dict[x][0]==0:
+				zerolist.append(x)
+		return zerolist
+
+	def hasallzeros(self):
+		"returns 0/1, Are all nodes zeros? 1 : 0"
+		zerolist = []
+		for x in self.dict.keys():
+			if self.dict[x][0]!=0:
+				return 0
+		return 1
+
+	def empty(self):
+		if len(self.dict)==0:
+			return 1
+		return 0
+
+	def hasnode(self,mynode):
+		return self.dict.has_key(mynode)
+
+	def copy(self):
+		mygraph=digraph()
+		for x in self.dict.keys():
+			mygraph.dict[x]=self.dict[x][:]
+			mygraph.okeys=self.okeys[:]
+		return mygraph
+
