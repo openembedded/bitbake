@@ -178,7 +178,7 @@ buildname = data.getVar("BUILDNAME", cfg)
 # grab oefiles
 files = string.split(data.getVar("OEFILES", cfg, 1) or "")
 files += sys.argv[1:]
-data.setVar("OEFILES", files, cfg)
+data.setVar("OEFILES", string.join(files), cfg)
 
 if not len(files):
 	usage()
@@ -200,6 +200,15 @@ for f in files:
 		pkgdata[f] = parse.handle(f, deepcopy(cfg))
 		deps = None
 		if pkgdata[f] is not None:
+			# allow metadata files to add items to OEFILES
+			data.update_data(pkgdata[f])
+			addoefiles = data.getVar('OEFILES', pkgdata[f]) or None
+			if addoefiles:
+				for aof in string.split(addoefiles):
+					if not files.count(aof):
+						if not os.path.isabs(aof):
+							aof = os.path.join(os.path.dirname(f),aof)
+						files.append(aof)
 			for var in pkgdata[f].keys():
 				if data.getVarFlag(var, "handler", pkgdata[f]) and data.getVar(var, pkgdata[f]):
 					event.register(data.getVar(var, pkgdata[f]))
