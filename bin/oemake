@@ -3,7 +3,12 @@
 import oe
 import string
 
-def getBuildData(digraph):
+import oedata # data handling
+oedata.init()
+
+import oeparse # file parsing
+
+def getBuildOrder(digraph):
 	refcount = 0
 	builddata = []
 	dict = digraph.dict
@@ -38,22 +43,45 @@ def getBuildData(digraph):
 
 	return builddata
 
-depcmds = { "clean": None,
+_depcmds = { "clean": None,
 	    "mrproper": None, }
 
 cmd="package"
 
-if depcmds.has_key(cmd):
+if _depcmds.has_key(cmd):
 	depcmd=depcmds[cmd]
 else:
 	depcmd="stage"
 
-test = oe.digraph()
+files = []
+files.append("test.oe")
+files.append("conf/oe.conf")
 
-test.addnode("glibc", None)
-test.addnode("ipkg", "glibc")
-data = getBuildData(test)
+pkgdata = {}
 
-for d in data:
-	(pkg, step) = d 
-	print "oebuild %s %s-*.oe" % (step, pkg)
+#cfgdata = oeparse.handle("../conf/oe.conf")
+#from copy import copy
+#testdata = oeparse.handle("../test.oe", copy(cfgdata))
+
+for f in files:
+	# read a file's metadata
+	pkgdata[f] = oeparse.handle(f)
+	print "pkgdata[%s]:" % f
+	print "\t %s" % pkgdata[f]
+	# use that metadata to yank the necessary bits for high
+	# level build process.. the depends fields and provides info
+	
+	# Then, start the build for that package.  Note that because
+	# we've already loaded the files, we may as well spawn the build
+	# directly.. so lets abstract the task handling bits into a
+	# module that both oebuild and oemake can utilize.
+
+
+#test = oe.digraph()
+#test.addnode("glibc", None)
+#test.addnode("ipkg", "glibc")
+#data = getBuildOrder(test)
+
+#for d in data:
+#	(pkg, step) = d 
+#	print "oebuild %s %s-*.oe" % (step, pkg)
