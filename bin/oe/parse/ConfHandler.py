@@ -232,9 +232,8 @@ def handle(fn, data = {}, include = 0):
 		if voepath:
 			oepath += voepath.split(":")
 		for p in oepath:
-			p = oe.data.expand(p, data)
-			if os.access(os.path.join(p, fn), os.R_OK):
-				currname = os.path.join(p, fn)
+			currname = os.path.join(oe.data.expand(p, data), fn)
+			if os.access(currname, os.R_OK):
 				f = open(currname, 'r')
 				debug(1, "CONF %s %s" % (inc_string, currname))
 				break
