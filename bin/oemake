@@ -214,6 +214,10 @@ def buildPackage(item):
             eligible = [fn] + eligible
             break
 
+    prefervar = oe.data.getVar('PREFERRED_PROVIDER_%s' % item, make.cfg, 1)
+    if prefervar:
+        __preferred[item] = prefervar
+
     if __preferred.has_key(item):
         for p in eligible:
             the_data = make.pkgdata[p]
@@ -255,6 +259,12 @@ def build_depgraph():
 
     op = -1
 
+    for p in (oe.data.getVar('PREFERRED_PROVIDERS', make.cfg, 1) or "").split():
+        (providee, provider) = p.split(':')
+        if __preferred.has_key(providee) and __preferred[providee] != provider:
+            oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
+        __preferred[providee] = provider
+
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
 
@@ -274,12 +284,6 @@ def build_depgraph():
             if not providers.has_key(provide):
                 providers[provide] = []
             providers[provide].append(f)
-
-        for p in (oe.data.getVar('PREFERRED_PROVIDERS', d, 1) or "").split():
-            (providee, provider) = p.split(':')
-            if __preferred.has_key(providee) and __preferred[providee] != provider:
-                oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
-            __preferred[providee] = provider
 
         i += 1
         p = (100 * i) / n
