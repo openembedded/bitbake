@@ -76,6 +76,8 @@ env = {}
 class VarExpandError(Exception):
 	pass
 
+class MalformedUrl(Exception):
+	"""Exception raised when encountering an invalid url"""
 
 
 #######################################################################
@@ -265,7 +267,7 @@ def decodeurl(url):
 	#debug(3, "decodeurl('%s')" % url)
 	m = re.compile('([^:]*):/*(.+@)?([^/]+)(/[^;]+);?(.*)').match(url)
 	if not m:
-		fatal("Malformed URL '%s'" % url)
+		raise MalformedUrl(url)
 
 	type = m.group(1)
 	host = m.group(3)

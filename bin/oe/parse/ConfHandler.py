@@ -155,11 +155,53 @@ def include(oldfn, fn, data = {}):
 	if oldfn == fn: # prevent infinate recursion
 		return None
 
+	import oe
+	fn = oe.data.expand(fn, data)
+	oldfn = oe.data.expand(oldfn, data)
+
+	import sys
+	localfn = None
+	try:
+		localfn = oe.fetch.localpath(fn)
+	except oe.MalformedUrl:
+		pass
+
+	if not localfn:
+		debug(2, "include: fetch: malformed url: %s" % fn)
+		localfn = fn
+
+	localfn = oe.data.expand(localfn, data)
+
+	if localfn != fn:
+		print "fn: %s, localfn: %s" % (fn, localfn)
+		dldir = oe.data.getVar('DL_DIR', data, 1)
+		if not dldir:
+			debug(1, "include: fetch: DL_DIR not defined")
+			return
+		oe.mkdirhier(dldir)
+		try:
+			oe.fetch.init([fn])
+		except oe.fetch.NoMethodError:
+			(type, value, traceback) = sys.exc_info()
+			debug(1, "include: fetch: no method: %s" % value)
+			return
+	
+		try:
+			oe.fetch.go(data)
+		except oe.fetch.MissingParameterError:
+			(type, value, traceback) = sys.exc_info()
+			debug(1, "include: fetch: missing parameters: %s" % value)
+			return
+		except oe.fetch.FetchError:
+			(type, value, traceback) = sys.exc_info()
+			debug(1, "include: fetch failed: %s" % value)
+			return
+
 	from oe.parse import handle
 	try:
-		ret = handle(fn, data)
+		ret = handle(localfn, data)
 	except IOError:
-		debug(1, "include: %s not found" % fn)
+		debug(1, "include: %s not found" % localfn)
 
 def handle(fn, data = {}):
 	init(data)

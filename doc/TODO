@@ -19,6 +19,7 @@ TODO:
 	    then content/patcher ends up in the 'to prepend' list, and is then
 	    prepended when update_data runs after the completion of the .oe
 	    parse.
+	[x] Teach 'include' to fetch if necessary.
 
 [ ] oebuild and oemake
 	[ ] Teach the system to support grabbing OEFILES from upstream
