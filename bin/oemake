@@ -26,6 +26,29 @@ class PkgBase(event.Event):
 
 	data = property(getData, setData, None, "data property")
 
+class BuildBase(event.Event):
+	"""Base class for oemake run events"""
+
+	def __init__(self, n, p):
+		self.name = n
+		self.pkgs = p
+
+	def getPkgs(self):
+		return self._pkgs
+
+	def setPkgs(self, pkgs):
+		self._pkgs = pkgs
+
+	pkgs = property(getPkgs, setPkgs, None, "pkgs property")
+
+	def getName(self):
+		return self._name
+
+	def setName(self, name):
+		self._name = name
+
+	name = property(getName, setName, None, "name property")
+
 class DepBase(PkgBase):
 	"""Base class for dependency events"""
 
@@ -49,6 +72,12 @@ class PkgFailed(PkgBase):
 
 class PkgSucceeded(PkgBase):
 	"""Package build succeeded"""
+
+class BuildStarted(BuildBase):
+	"""oemake build run started"""
+
+class BuildCompleted(BuildBase):
+	"""oemake build run completed"""
 
 class UnsatisfiedDep(DepBase):
 	"""Unsatisfied Dependency"""
@@ -106,6 +135,11 @@ try:
 	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
 except IOError:
 	fatal("Unable to open oe.conf")
+
+if not data.getVar("BUILDNAME", cfg):
+	data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), cfg)
+
+buildname = data.getVar("BUILDNAME", cfg)
 
 oefiles = data.getVar("OEFILES", cfg)
 if oefiles is not None:
@@ -181,5 +215,9 @@ for k in __tokill:
 		graph.delnode(item)
 	graph.walkup(k, reallykillitem)
 
+event.fire(BuildStarted(buildname, graph.okeys))
+
 for k in graph.okeys:
 	graph.walkdown(k, build)
+
+event.fire(BuildCompleted(buildname, graph.okeys))
