@@ -221,29 +221,29 @@ unpack() {
 		y="$(echo $x | sed 's:.*\.\(tar\)\.[a-zA-Z0-9]*:\1:')"
 		case "${x##*.}" in
 		tar) 
-			tar x --no-same-owner -f ${DISTDIR}/${x} || die "$myfail"
+			tar x --no-same-owner -f ${DL_DIR}/${x} || die "$myfail"
 			;;
 		tgz) 
-			tar xz --no-same-owner -f ${DISTDIR}/${x} || die "$myfail"
+			tar xz --no-same-owner -f ${DL_DIR}/${x} || die "$myfail"
 			;;
 		tbz2) 
-			tar xj --no-same-owner -f ${DISTDIR}/${x} || die "$myfail"
+			tar xj --no-same-owner -f ${DL_DIR}/${x} || die "$myfail"
 			;;
 		ZIP|zip) 
-			unzip -qo ${DISTDIR}/${x} || die "$myfail"
+			unzip -qo ${DL_DIR}/${x} || die "$myfail"
 			;;
 		gz|Z|z) 
 			if [ "${y}" == "tar" ]; then
-				tar xz --no-same-owner -f ${DISTDIR}/${x} || die "$myfail"
+				tar xz --no-same-owner -f ${DL_DIR}/${x} || die "$myfail"
 			else
-				gzip -dc ${DISTDIR}/${x} > ${x%.*} || die "$myfail"
+				gzip -dc ${DL_DIR}/${x} > ${x%.*} || die "$myfail"
 			fi
 			;;
 		bz2) 
 			if [ "${y}" == "tar" ]; then
-				tar xj --no-same-owner -f ${DISTDIR}/${x} || die "$myfail"
+				tar xj --no-same-owner -f ${DL_DIR}/${x} || die "$myfail"
 			else
-				bzip2 -dc ${DISTDIR}/${x} > ${x%.*} || die "$myfail"
+				bzip2 -dc ${DL_DIR}/${x} > ${x%.*} || die "$myfail"
 			fi
 			;;
 		*)

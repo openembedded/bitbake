@@ -86,7 +86,7 @@ def do_mrproper():
 
 	note("Executing task 'mrproper'")
 
-	dir = env["DISTDIR"]
+	dir = env["DL_DIR"]
 	if dir == '/': fatal("wrong DATADIR");
 	debug(2, "removing " + dir)
 	os.system('rm -rf ' + dir)
@@ -98,7 +98,7 @@ def do_mrproper():
 def do_fetch():
 	"""download needed sources"""
 
-	mkdirhier(env["DISTDIR"])	# create file download directory
+	mkdirhier(env["DL_DIR"])	# create file download directory
 
 	note("Executing task 'fetch'")
 
@@ -231,7 +231,10 @@ if len(sys.argv) < 3:
 
 read_oe_conf()				# Read configuration
 set_automatic_vars(sys.argv[2])		# Deduce per-package environment variables
-read_package_conf(sys.argv[2])		# Read package configuration
+try:
+	read_package_conf(sys.argv[2])		# Read package configuration
+except IOError:
+	fatal("error accessing build file")
 set_additional_vars()			# set rest of vars, e.g. ${A}
 update_env()				# Environment modification, e.g. local overrides
 
