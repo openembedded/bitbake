@@ -1222,6 +1222,7 @@ __include_regexp__       = re.compile( r"include\s+(.+)" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
+__addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
 
 __read_oe_infunc__ = ""
 __read_oe_body__   = []
@@ -1233,12 +1234,12 @@ def read_oe(oefile, inherit = False, classname = None):
 	"""When inherit flag is set to False(default), EXPORT_FUNCTIONS is ignored."""
 
 	def process_oe(lineno, s):
-		global __read_oe_infunc__, __read_oe_body__, __read_oe_classname__, __oepath_found_it__
+		global __read_oe_infunc__, __read_oe_body__, __read_oe_classname__, __oepath_found_it__, __addhandler_regexp__
 		if __read_oe_infunc__:
 			if s == '}':
 				__read_oe_body__.append('')
 				env[__read_oe_infunc__] = string.join(__read_oe_body__, '\n')
-				__read_oe_infunc__ = ""
+				__read_oe_infunc__ = None
 				__read_oe_body__ = []
 			else:
 				try:
@@ -1248,7 +1249,6 @@ def read_oe(oefile, inherit = False, classname = None):
 					pass
 				__read_oe_body__.append(s)
 			return
-			
 			
 		m = __config_regexp__.match(s)
 		if m:
@@ -1338,6 +1338,7 @@ def read_oe(oefile, inherit = False, classname = None):
 						setenv(f, "\t%s\n" % oldfunc)
 			return
 
+
 		m = __addtask_regexp__.match(s)
 		if m:
 			func = m.group("func")
@@ -1358,6 +1359,16 @@ def read_oe(oefile, inherit = False, classname = None):
 			if before is not None:
 				# set up things that depend on this func 
 				envflags[var]["postdeps"] = before.split()
+			return
+
+		m = __addhandler_regexp__.match(s)
+		if m:
+			fns = m.group(1)
+			hs = __word__.findall(fns)
+			for h in hs:
+				if not envflags.has_key(h):
+					envflags[h] = {}
+				envflags[h]["handler"] = 1
 			return
 
 		error("Unknown syntax in %s" % oefile)
@@ -1658,7 +1669,7 @@ def emit_env(o=sys.__stdout__, env = globals()["env"]):
 
 		o.write('\n')
 		if envflags.has_key(s):
-			if envflags[s].has_key('python'):
+			if envflags[s].has_key('python') or envflags.has_key('handler'):
 				continue
 			if envflags[s].has_key('export'):
 				 o.write('export ')
@@ -1668,7 +1679,7 @@ def emit_env(o=sys.__stdout__, env = globals()["env"]):
 	for s in env:
 		if s != s.lower(): continue
 		if envflags.has_key(s):
-			if envflags[s].has_key('python'):
+			if envflags[s].has_key('python') or envflags.has_key('handler'):
 				continue
 
 		o.write("\n" + s + '() {\n' + getenv(s,env) + '}\n')

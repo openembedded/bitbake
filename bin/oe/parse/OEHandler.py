@@ -14,6 +14,7 @@ __func_start_regexp__    = re.compile( r"((?P<py>python)\s*)*(?P<func>\w+)\s*\(\
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
+__addhandler_regexp__       = re.compile( r"addhandler\s+(.+)" )
 
 __infunc__ = ""
 __body__   = []
@@ -25,7 +26,7 @@ def supports(fn):
 	return fn[-3:] == ".oe" or fn[-8:] == ".oeclass"
 
 def handle(fn, data = {}):
-	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __infunc__, __body__, __oepath_found__
+	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__
 	__body__ = []
 	__oepath_found__ = 0
 	__infunc__ = ""
@@ -69,7 +70,7 @@ def handle(fn, data = {}):
 	return data
 
 def feeder(lineno, s, fn, data = {}):
-	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __infunc__, __body__, __oepath_found__, classes, oe
+	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__, classes, oe
 	if __infunc__:
 		if s == '}':
 			__body__.append('')
@@ -114,9 +115,29 @@ def feeder(lineno, s, fn, data = {}):
 
 	m = __addtask_regexp__.match(s)
 	if m:
+		func = m.group("func")
+		before = m.group("before")
+		after = m.group("after")
+		if func is None:
+			return
+		var = "do_" + func
+
+		oe.data.setVarFlag(var, "task", 1, data)
+
+		if after is not None:
+			# set up deps for function
+			oe.data.setVarFlag(var, "deps", after.split(), data)
+		if before is not None:
+			# set up things that depend on this func 
+			oe.data.setVarFlag(var, "postdeps", before.split(), data)
+		return
+
+	m = __addhandler_regexp__.match(s)
+	if m:
 		fns = m.group(1)
-		n = __word__.findall(fns)
-		oe.data.setVarFlag(n[0], "task", 1, data)
+		hs = __word__.findall(fns)
+		for h in hs:
+			oe.data.setVarFlag(h, "handler", 1, data)
 		return
 
 	m = __inherit_regexp__.match(s)
