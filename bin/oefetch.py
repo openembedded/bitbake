@@ -14,6 +14,15 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 import os, re
 from oe import *
 
+class FetchError(Exception):
+	"""Exception raised when a download fails"""
+
+class NoMethodError(Exception):
+	"""Exception raised when there is no method to obtain a supplied url or set of urls"""
+
+class MissingParameterError(Exception):
+	"""Exception raised when a fetch method is missing a critical parameter in the url"""
+
 class FetchUrls:
 	"""Class to obtain a set of urls, via any available methods"""
 	__methods = { "Wget" : None, "Cvs" : None, "Bk" : None, "Local" : None }
@@ -63,37 +72,6 @@ class FetchUrls:
 			for url in self.__methods[method].urls:
 				local.append(self.__methods[method].localpath(url))
 		return local
-
-class FetchError(Exception):
-	"""Exception thrown when a download fails"""
-
-	def __init__(self, msg = ""):
-		self.__msg = msg
-		Exception.__init__(self)
-
-	def __str__(self):
-		return "%s" % self.__msg
-
-class NoMethodError(Exception):
-	"""Exception thrown when there is no method to obtain a supplied url or set of urls"""
-
-	def __init__(self, msg = ""):
-		self.__msg = msg
-		Exception.__init__(self)
-
-	def __str__(self):
-		return "%s" % self.__msg
-
-class MissingParameterError(Exception):
-	"""Exception thrown when a fetch method is missing a critical parameter in the url"""
-
-	def __init__(self, msg = ""):
-		self.__msg = msg
-		Exception.__init__(self)
-
-	def __str__(self):
-		return "%s" % self.__msg
-
 
 class Fetch(object):
 	"""Base class for 'fetch'ing data"""
@@ -232,7 +210,7 @@ class Cvs(Fetch):
 			else:
 				method = "pserver"
 
-			cvscmd = "cd %s; " % expand(dldir)
+			os.chdir("cd %s; " % expand(dldir))
 			cvscmd += "cvs -d:" + method + ":" + user + "@" + host + ":" + path
 			cvscmd += " checkout " + string.join(options) + " " + module 
 			note("fetch " + loc)
