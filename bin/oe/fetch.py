@@ -195,6 +195,7 @@ class Wget(Fetch):
 		oe.data.update_data(localdata)
 
 		for uri in urls:
+			completed = 0
 			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(uri, localdata))
 			basename = os.path.basename(path)
 			dl = self.localpath(uri, d)
@@ -205,13 +206,22 @@ class Wget(Fetch):
 				# complete, nothing to see here..
 				continue
 
+			premirrors = [ i.split() for i in (oe.data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
+			for (find, replace) in premirrors:
+				newuri = uri_replace(uri, find, replace)
+				if newuri != uri:
+					if fetch_uri(newuri, basename, dl, md5, localdata):
+						completed = 1
+						break
+
+			if completed:
+				continue
+
 			if fetch_uri(uri, basename, dl, md5, localdata):
 				continue
 
 			# try mirrors
-			mirror = 0
-			mirrors = [ i.split() for i in oe.data.getVar('MIRRORS', localdata, 1).split('\n') if i ]
-			completed = 0
+			mirrors = [ i.split() for i in (oe.data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
 			for (find, replace) in mirrors:
 				newuri = uri_replace(uri, find, replace)
 				if newuri != uri:
