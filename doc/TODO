@@ -82,7 +82,7 @@ TODO:
 [ ] oerootfs
 [ ] oeimage
 
-[ ] packages
+[.] packages
 	[ ] add cross binutils and binutils
 	[ ] add gcc
 	[ ] figure out where to put the glibc install into the toolchain dir,
@@ -90,6 +90,10 @@ TODO:
 	[ ] add qtopia 1.6.1
 	[.] add qt 2.3.6
 	[ ] convert packages from OpenZaurus buildroot
+	[.] busybox
+		[x] core
+		[ ] symlinks
+		[ ] device specifics (patches, etc)
 
 [ ] New c++ OE library (possibility -- open to debate)
 
