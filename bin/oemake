@@ -79,7 +79,7 @@ class PkgFailed(PkgBase):
 	"""Package build failed"""
 
 class PkgSucceeded(PkgBase):
-	"""Package build succeeded"""
+	"""Package build completed"""
 
 class BuildStarted(BuildBase):
 	"""oemake build run started"""

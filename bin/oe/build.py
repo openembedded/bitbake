@@ -67,7 +67,7 @@ class TaskStarted(TaskBase):
 	"""Task execution started"""
 	
 class TaskSucceeded(TaskBase):
-	"""Task execution succeeded"""
+	"""Task execution completed"""
 
 class TaskFailed(TaskBase):
 	"""Task execution failed"""
