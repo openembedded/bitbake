@@ -61,8 +61,10 @@ def fatal(*args):
 
 def mkdirhier(dir):
 	"""Create a directory like 'mkdir -p', but does not complain if
-	directory already exists like os.makedirs"""
+	directory already exists like os.makedirs
+	"""
 
+	debug(3, "mkdirhier(%s)" % dir)
 	try:
 		os.makedirs(dir)
 		debug(2, "created " + dir)
@@ -73,10 +75,11 @@ def mkdirhier(dir):
 #######################################################################
 
 def movefile(src,dest,newmtime=None,sstat=None):
-	"""moves a file from src to dest, preserving all permissions and
+	"""Moves a file from src to dest, preserving all permissions and
 	attributes; mtime will be preserved even when moving across
 	filesystems.  Returns true on success and false on failure. Move is
-	atomic."""
+	atomic.
+	"""
 
 	#print "movefile("+src+","+dest+","+str(newmtime)+","+str(sstat)+")"
 	try:
@@ -238,9 +241,10 @@ def decodeurl(url):
 
 def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
 	myfile = os.path.basename(path)
-	
+	dlfile = getenv("DL_DIR")+myfile
+
 	try:
-		mystat = os.stat(env["DL_DIR"]+"/"+myfile)
+		mystat = os.stat(dlfile)
 		if mydigests.has_key(myfile):
 			# if we have the digest file, we know the final size and can resume the download.
 			if mystat[ST_SIZE] < mydigests[myfile]["size"]:
@@ -261,20 +265,20 @@ def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
 		if fetched == 1:
 			# resume mode:
 			note("Resuming download...")
-			myfetch = string.replace(env["FETCHCOMMAND"],"${DL_DIR}",env["DL_DIR"])
+			myfetch = getenv("FETCHCOMMAND")
 		else:
 			# normal mode:
-			myfetch = string.replace(env["RESUMECOMMAND"],"${DL_DIR}",env["DL_DIR"])
+			myfetch = getenv("RESUMECOMMAND")
 		note("fetch " +loc)
 		myfetch = myfetch.replace("${URI}",loc)
 		myfetch = myfetch.replace("${FILE}",myfile)
-		debug(myfetch)
+		debug(2,myfetch)
 		myret = os.system(myfetch)
 
 		if mydigests.has_key(myfile):
 			print "0"
 			try:
-				mystat = os.stat(env["DL_DIR"]+"/"+myfile)
+				mystat = os.stat(dlfile)
 				print "1", myret
 				# no exception?  file exists. let digestcheck() report
 				# an appropriately for size or md5 errors
@@ -285,9 +289,9 @@ def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
 						print "3"
 						html404 = re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
 						try:
-							if html404.search(open(env["DL_DIR"]+"/"+myfile).read()):
+							if html404.search(open(dlfile).read()):
 								try:
-									os.unlink(env["DL_DIR"]+"/"+myfile)
+									os.unlink(dlfile)
 									note("deleting invalid distfile (improper 404 redirect from server)")
 								except:
 									pass
@@ -383,8 +387,8 @@ def tokenize(mystring):
 	['foo?', ['bar'], 'oni?', ['blah', ['blah']]]
 	>>> tokenize("sys-apps/linux-headers nls? (sys-devel/gettext)")
 	['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']]
-
 	"""
+
 	newtokens = []
 	curlist   = newtokens
 	prevlists = []
@@ -446,8 +450,8 @@ def evaluate(tokens,mydefines,allon=0):
 
 	>>> evaluate(['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']], {}, True)
 	['sys-apps/linux-headers', ['sys-devel/gettext']]
-
 	"""
+
 	if tokens == None:
 		return None
 	mytokens = tokens + []		# this copies the list
@@ -479,14 +483,14 @@ def evaluate(tokens,mydefines,allon=0):
 #######################################################################
 
 def flatten(mytokens):
-	"""this function now nested arrays into a flat arrays:
+	"""Converts nested arrays into a flat arrays:
 
 	>>> flatten([1,[2,3]])
 	[1, 2, 3]
 	>>> flatten(['sys-apps/linux-headers', ['sys-devel/gettext']])
 	['sys-apps/linux-headers', 'sys-devel/gettext']
-
 	"""
+
 	newlist=[]
 	for x in mytokens:
 		if type(x)==types.ListType:
@@ -716,9 +720,7 @@ def pkgsplit(mypkg, silent=1):
 	>>> pkgsplit('foo-1.2-1')
 	>>> pkgsplit('Mesa-3.0')
 	['Mesa', '3.0', 'r0']
-
 	"""
-
 
 	try:
 		return __pkgsplit_cache__[mypkg]
@@ -795,7 +797,6 @@ def catpkgsplit(mydata,silent=1):
 	['sys-libs', 'glibc', '1.2', 'r7']
 	>>> catpkgsplit('glibc-1.2-r7')
 	['null', 'glibc', '1.2', 'r7']
-
 	"""
 
 	try:
@@ -843,7 +844,6 @@ def vercmp(val1,val2):
 	>>> vercmp('1.1', '1_p2')
 	1.0
 	"""
-
 
 	# quick short-circuit
 	if val1 == val2:
@@ -1174,7 +1174,7 @@ __include_regexp__ = re.compile( r"include\s+(.+)" )
 
 __read_config_visit_cache__ = {}
 
-def __read_config__(cfgfile):
+def __read_config__(cfgfile, level):
 	"""Reads a configuration file"""
 	visit = 1
 
@@ -1190,7 +1190,9 @@ def __read_config__(cfgfile):
 			if not visit: return
 			s = expand(m.group(1))
 			if os.access(s, os.R_OK):
-				__read_config__(s)
+				if level==0:
+					inherit_os_env(2)
+				__read_config__(s, level+1)
 			else:
 				debug(1, "%s:%d: could not import %s" % (cfgfile, lineno, s))
 			return
@@ -1204,7 +1206,8 @@ def __read_config__(cfgfile):
 	reader(cfgfile, process_config)
 
 def read_config(cfgfile):
-	__read_config__(cfgfile)
+	__read_config__(cfgfile, 0)
+
 	for s in ['BUILD_ARCH','BUILD_OS', 'ARCH', 'OS', 'MACHINE','ARCH']:
 		if not env.has_key(s):
 			print "FATAL: %s" % envflags[s]['warn']
@@ -1236,7 +1239,11 @@ def read_oe(oefile):
 		m = __config_regexp__.match(s)
 		if m:
 			key = m.group(1)
-			env[key] = m.group(3)
+			var = m.group(3)
+			if var and (var[0]=='"' or var[0]=="'"):
+				fatal("Mismatch in \" or ' characters for %s=" % key)
+			#print "%s=%s" % (key,var)
+			env[key] = var
 			return
 
 		m = __func_start_regexp__.match(s)
@@ -1244,10 +1251,14 @@ def read_oe(oefile):
 			__read_oe_infunc__ = m.group(1)
 			return
 
+		error("Unknown syntax in %s" % oefile)
 		print s
+		sys.exit(1)
 
 
+	debug(2,"read_oe('%s')" % oefile)
 	reader(oefile, process_oe)
+
 
 
 #######################################################################
@@ -1296,7 +1307,6 @@ def expand(s):
 	>>> env['SYS'] = '${ARCH}-${OS}'
 	>>> print expand('${SYS}')
 	arm-linux
-
 	"""
 
 	def var_sub(match):
@@ -1327,9 +1337,17 @@ def expand(s):
 
 def setenv(var, value):
 	"""Simple set an environment in the global oe.env[] variable, but
-	with expanding variables beforehand."""
+	with expanding variables beforehand.
+	"""
 
 	env[var] = expand(value)
+
+
+#######################################################################
+
+def getenv(var):
+	"""Returns an expanded environment var"""
+	return expand('${%s}' % var)
 
 
 #######################################################################
@@ -1338,8 +1356,11 @@ def inherit_os_env(position):
 	"""This reads the the os-environment and imports variables marked as
 	such in envflags into our environment. This happens at various places
 	during package definition read time, see comments near envflags[] for
-	more."""
+	more.
+	"""
 	
+	debug(2,"inherit_os_env(%d)" % position)
+
 	position = str(position)
 	for s in os.environ.keys():
 		try:
@@ -1366,13 +1387,21 @@ def set_automatic_vars(file):
 	setenv('PR',		pkg[3])
 	setenv('P',		'${PN}-${PV}')
 	setenv('PF',		'${P}-${PR}')
-	setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}')
+
+	for s in ['${OEDIR}/${CATEGORY}/${PF}', 
+		  '${OEDIR}/${CATEGORY}/${PN}-${PV}',
+		  '${OEDIR}/${CATEGORY}/files',
+		  '${OEDIR}/${CATEGORY}']:
+		s = expand(s)
+		if os.access(s, os.R_OK):
+			setenv('FILESDIR', s)
+			break
 	setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}')
 	setenv('T',		'${WORKDIR}/temp')
 	setenv('D',		'${WORKDIR}/image')
 	setenv('S',		'${WORKDIR}/${P}')
 	setenv('SLOT',		'0')
-	inherit_os_env(4)
+	inherit_os_env(3)
 
 
 #######################################################################
@@ -1380,6 +1409,9 @@ def set_automatic_vars(file):
 def set_additional_vars():
 	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
 
+	debug(2,"set_additional_vars")
+
+	inherit_os_env(4)
 	if env.has_key('SRC_URI'):
 		# Do we already have something in A?
 		if env.has_key('A'):
@@ -1396,7 +1428,7 @@ def set_additional_vars():
 
 	for s in ['S','STAGING_DIR','STAGING_BINLIB', 'STAGING_LIBDIR']:
 		if env.has_key(s):
-			env[s] = expand(env[s])
+			env[s] = getenv(s)
 
 
 #######################################################################
@@ -1449,6 +1481,8 @@ def update_env():
 	>>> print "'%s'" % env['TEST']
 	''
 	"""
+
+	debug(2, "update_env()")
 
 	# can't do delete env[...] while iterating over the dictionary, so remember them
 	dodel = []
@@ -1509,12 +1543,12 @@ def emit_env(o=sys.__stdout__):
 		o.write('\n')
 		if envflags[s].has_key('export'): o.write('export ')
 
-		o.write(s+'="'+env[s]+'"\n')
+		o.write(s+'="'+getenv(s)+'"\n')
 
 	for s in env:
 		if s != s.lower(): continue
 
-		o.write("\n" + s + '() {\n' + env[s] + '}\n')
+		o.write("\n" + s + '() {\n' + getenv(s) + '}\n')
 
 
 #######################################################################
@@ -1579,7 +1613,7 @@ envflags = {
 # inherit 1:   get this var from the environment (if possible) before global config
 # inherit 2:   between global and local config
 # inherit 3:   between local config and package definition
-# inherit 4:   after automatic variable settings
+# inherit 4:   before setting additional vars
 # inherit 5:   after package definition
 #              (this defines the precendency, because any var can be overriden by the next step)
 #
