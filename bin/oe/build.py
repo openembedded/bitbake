@@ -114,6 +114,7 @@ def exec_func_shell(func, d):
 	t = data.getVar('T', d)
 	if not t:
 		return 0
+	t = data.expand(t, d)
 	mkdirhier(t)
 	logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
 	runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
@@ -123,6 +124,7 @@ def exec_func_shell(func, d):
 	if data.getVar("OEDEBUG", d): f.write("set -x\n")
 	oepath = data.getVar("OEPATH", d)
 	if oepath:
+		oepath = data.expand(oepath, d)
 		for s in data.expand(oepath, d).split(":"):
 			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
 	data.emit_env(f, d)
@@ -156,7 +158,6 @@ def exec_task(task, d):
 	# check if the task is in the graph..
 	if not _task_graph.hasnode(task):
 		raise EventException("", InvalidTask(task, d))
-#		return 0
 
 	# check whether this task needs executing..
 
@@ -193,7 +194,7 @@ def mkstamp(task, d):
 	stamp = data.getVar('STAMP', d)
 	if not stamp:
 		return
-	stamp = "%s.%s" % (stamp, task)
+	stamp = "%s.%s" % (data.expand(stamp, d), task)
 	open(stamp, "w+")
 
 
