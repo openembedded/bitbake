@@ -205,7 +205,19 @@ class Cvs(Fetch):
 				method = "pserver"
 
 			os.chdir(expand(dldir))
-			cvscmd = "cvs -d:" + method + ":" + user + "@" + host + ":" + path
+			cvsroot = ":" + method + ":" + user
+			if pswd is not None:
+				cvsroot += ":" + pswd
+			cvsroot += "@" + host + ":" + path
+
+			if method == "pserver":
+				# Login to the server
+				cvscmd = "cvs -d" + cvsroot + " login"
+				myret = os.system(cvscmd)
+				if myret != 0:
+					raise FetchError(module)
+
+			cvscmd = "cvs -d" + cvsroot
 			cvscmd += " checkout " + string.join(options) + " " + module 
 			note("fetch " + loc)
 			myret = os.system(cvscmd)

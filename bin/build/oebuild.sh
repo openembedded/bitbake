@@ -247,7 +247,11 @@ unpack() {
 			fi
 			;;
 		*)
-			oefatal "unpack ${x}: file format not recognized"
+			if [ -d "${x}" ]; then
+				cp -a ${x} .
+			else
+				oefatal "unpack ${x}: file format not recognized"
+			fi
 			;;
 		esac
 	done

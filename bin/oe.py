@@ -11,7 +11,11 @@ Please visit http://www.openembedded.org/phpwiki/ for more info.
 Try "pydoc ./oe.py" to get some nice output.
 """
 
-import sys,os,string,types,re
+import gettext
+gettext.install("oe")
+_("Hello, World")
+
+import sys,os,string,types,re,oefetch
 
 #projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 projectdir = os.getcwd()
@@ -1518,11 +1522,15 @@ def set_additional_vars():
 		else:
 			a = []
 
-		for loc in env['SRC_URI'].split():
-			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
-			if type in ['http','https','ftp']:
-				a.append(os.path.basename(path))
+		grabber = oefetch.FetchUrls()
+		try:
+			grabber.init(getenv('SRC_URI').split())
+		except oefetch.NoMethodError:
+			(type, value, traceback) = sys.exc_info()
+			fatal("No method: %s" % value)
+			return
 
+		a += grabber.localpaths()
 		env['A'] = string.join(a)
 
 	for s in ['S','STAGING_DIR','STAGING_BINLIB', 'STAGING_LIBDIR']:
