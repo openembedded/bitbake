@@ -235,6 +235,8 @@ def expandKeys(alterdata = _data, readdata = None):
 
 	for key in alterdata.keys():
 		ekey = expand(key, readdata)
+		if key == ekey:
+			continue
 		val = getVar(key, alterdata)
 		if val is None:
 			continue
@@ -262,31 +264,17 @@ def expandData(alterdata = _data, readdata = None):
 			continue
 		expanded = expand(val, readdata)
 #		print "key is %s, val is %s, expanded is %s" % (key, val, expanded)
-		setVar(key, expanded, alterdata)
+		if val != expanded:
+			setVar(key, expanded, alterdata)
 
 import os
 
-def inheritFromOS(pos, d = _data):
-	"""Inherit variables from the environment.
-
-	Example:
-		>>> d=init()
-		>>> os.environ["TEST"] = "test"
-		>>> setVarFlag('TEST', 'inherit', '1', d)
-		>>> inheritFromOS(1, d)
-		>>> print getVar('TEST', d)
-		test
-	"""
-	pos = str(pos)
+def inheritFromOS(d = _data):
+	"""Inherit variables from the environment."""
 	for s in os.environ.keys():
 		try:
-			if pos == "1":
-				setVar(s, os.environ[s], d)
-			else:
-				inherit = getVarFlag(s, "inherit", d)
-				if inherit is not None and inherit == pos:
-					setVar(s, os.environ[s], d)
-		except KeyError:
+			setVar(s, os.environ[s], d)
+		except TypeError:
 			pass
 
 import sys, string
@@ -308,7 +296,6 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 	if getVarFlag(var, "func", d):
 		# NOTE: should probably check for unbalanced {} within the var
 		o.write("%s() {\n%s\n}\n" % (var, val))
-		return 1
 	else:	
 		if getVarFlag(var, "export", d):
 			o.write('export ')
@@ -316,27 +303,11 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 		# to a shell, we need to escape the quotes in the var
 		alter = re.sub('"', '\\"', val.strip())
 		o.write('%s="%s"\n' % (var, alter))
-		return 1
+	return 1
 
 
 def emit_env(o=sys.__stdout__, d = _data):
 	"""Emits all items in the data store in a format such that it can be sourced by a shell."""
-
-	oepath = string.split(getVar('OEPATH', d, 1) or "", ":")
-	path = getVar('PATH', d)
-	if path:
-		path = path.split(":")
-		for p in oepath:
-			path[0:0] = [ os.path.join("%s" % p, "bin/build") ]
-		pset = []
-		pcount = 0
-		for p in path[:]:
-			if p not in pset:
-				pset[0:0] = [ p ]
-				pcount += 1
-				continue
-			del path[pcount]
-		setVar('PATH', expand(string.join(path, ":"), d), d)
 
 	expandData(d)
 	env = d.keys()
@@ -401,12 +372,11 @@ def update_data(d = _data):
 		val = getVar(var, d)
 		flags = getVarFlags(var, d)
 		for o in overrides:
-			name = "%s_%s" % (var, o)
-			nameval = getVar(name, d)
-			if nameval:
-				nameflags = getVarFlags(name, d)
-				setVar(var, nameval, d)
-				setVarFlags(var, nameflags, d)
+			if var.endswith("_%s" % o):
+				l = len(o)+2
+				name = var[:l]
+				d[name] = d[var]
+
 
 	for s in d.keys():
 		applyOverrides(s, d)
@@ -453,8 +423,6 @@ def update_data(d = _data):
 	# delete all environment vars no longer needed
 	for s in dodel:
 		delVar(s, d)
-
-	inheritFromOS(5)
 
 def _test():
 	"""Start a doctest run on this module"""

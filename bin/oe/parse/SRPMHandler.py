@@ -19,8 +19,6 @@ def supports(fn, d):
 
 def handle(fn, d = {}, include = 0):
 	init(d)
-	if include == 0:
-		data.inheritFromOS(2, d)
 	oepath = ['.']
 	if not os.path.isabs(fn):
 		f = None
@@ -92,22 +90,17 @@ def set_automatic_vars(file, d, include):
 	if not data.getVar('S', d):
 		data.setVar('S', '${WORKDIR}/${P}', d)
 	data.setVar('SLOT', '0', d)
-	if include == 0:
-		data.inheritFromOS(3, d)
 
 def set_additional_vars(file, d, include):
 	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
 
 	debug(2,"set_additional_vars")
 
-	if include == 0:
-		data.inheritFromOS(4, d)
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
 		return
 	src_uri = data.expand(src_uri, d)
 
-	# Do we already have something in A?
 	a = data.getVar('A', d)
 	if a:
 		a = data.expand(a, d).split()

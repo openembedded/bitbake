@@ -90,7 +90,7 @@ def handle(fn, data = {}, include = 0):
 		inc_string = "reading"
 	init(data)
 	if include == 0:
-		oe.data.inheritFromOS(1, data)
+		oe.data.inheritFromOS(data)
 	fn = obtain(fn, data)
 	oepath = ['.']
 	if not os.path.isabs(fn):
@@ -151,7 +151,6 @@ def feeder(lineno, s, fn, data = {}):
 	if m:
 		s = oe.data.expand(m.group(1), data)
 		#debug(2, "CONF %s:%d: including %s" % (fn, lineno, s))
-		oe.data.inheritFromOS(2, data)
 		include(fn, s, data)
 		return
 
