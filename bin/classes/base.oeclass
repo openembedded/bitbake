@@ -59,6 +59,10 @@ base_do_package() {
 	oenote "nothing to package"
 }
 
+base_do_build() {
+	oenote "nothing to do"
+}
+
 python base_eventhandler() {
 		from oe import expand, note
 		from oe.event import Handled, NotHandled
@@ -80,7 +84,7 @@ python base_eventhandler() {
 		return NotHandled
 }
 
-EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch
+EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch do_build
 
 addtask patch after do_unpack before do_compile
 addhandler base_eventhandler

@@ -419,13 +419,7 @@ def do_install():
 
 def do_build():
 	"""fetch, extract, compile, stage and install files"""
-	
-	do_fetch()
-	print_orphan_env()
-	print_missing_env()
-	#emit_env()
-	do_install()
-
+	exec_task('do_build', 'S')
 
 
 #######################################################################
