@@ -143,8 +143,8 @@ def exec_func_shell(func, d):
 			os.remove(logfile)
 		return
 	else:
-		error("'%s'() failed" % func);
-		error("more info in: %s" % logfile);
+		error("function %s failed" % func)
+		error("see log in %s" % logfile)
 		raise FuncFailed()
 
 
@@ -165,15 +165,18 @@ def exec_task(task, d):
 	def execute(graph, item):
 		func = data.getVar(item, _task_data)
 		if func:
-			exec_func_shell(func, d)
+			event.fire(TaskStarted(func, d))
+			try:
+				exec_func_shell(func, d)
+			except FuncFailed:
+				event.fire(TaskFailed(func, d))
+				raise FuncFailed()
+			event.fire(TaskSucceeded(func, d))
 
 	# execute
 	try:
-		event.fire(TaskStarted(task, d))
 		_task_graph.walkdown(task, execute)
-		event.fire(TaskSucceeded(task, d))
 	except FuncFailed:
-		event.fire(TaskFailed(task, d))
 		raise FuncFailed()
 
 	# make stamp, or cause event and raise exception

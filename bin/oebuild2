@@ -54,8 +54,10 @@ for var in oe.keys():
 
 try:
 	build.exec_task(sys.argv[1], oe)
+
 except build.FuncFailed:
-	""""""
+	fatal("task stack execution failed")
+
 except build.EventException:
 	(type, value, traceback) = sys.exc_info()
 	e = value.event

@@ -67,15 +67,19 @@ base_do_build() {
 }
 
 python base_eventhandler() {
-		from oe import expand, note
+		from oe import note, error, data
 		from oe.event import Handled, NotHandled, getName
 		import os, string
 
 		name = getName(e)
-		if name in ["PkgFailed", "PkgSucceeded", "PkgStarted"]:
+		if name in ["PkgSucceeded", "PkgStarted"]:
 			note("package %s: build %s" % (e.pkg, string.lower(name[3:])))
-		elif name in ["TaskFailed", "TaskSucceeded", "TaskStarted"]:
-			note("package %s: task %s %s" % (expand(e.data["PF"]), e.task, string.lower(name[4:])))
+		elif name in ["PkgFailed"]:
+			error("package %s: build %s" % (e.pkg, string.lower(name[3:])))
+		elif name in ["TaskSucceeded", "TaskStarted"]:
+			note("package %s: task %s %s" % (data.expand(data.getVar("PF", e.data), e.data), e.task, string.lower(name[4:])))
+		elif name in ["TaskFailed"]:
+			error("package %s: task %s %s" % (data.expand(data.getVar("PF", e.data), e.data), e.task, string.lower(name[4:])))
 		elif name in ["UnsatisfiedDep"]:
 			note("package %s: dependency %s %s" % (e.pkg, e.dep, string.lower(name[:-3])))
 		return NotHandled
