@@ -329,7 +329,14 @@ def emit_env(o=sys.__stdout__, d = _data):
 		path = path.split(":")
 		for p in oepath:
 			path[0:0] = [ os.path.join("%s" % p, "bin/build") ]
-		path[0:0] = [ "${STAGING_BINDIR}" ]
+		pset = []
+		pcount = 0
+		for p in path[:]:
+			if p not in pset:
+				pset[0:0] = [ p ]
+				pcount += 1
+				continue
+			del path[pcount]
 		setVar('PATH', expand(string.join(path, ":"), d), d)
 
 	expandData(d)
