@@ -1,12 +1,31 @@
 #!/usr/bin/env python
 
-from oe import *
-import oe
+import sys, copy, oe.parse
+#from oe import *
 
-oe = {}
-oe = parse.handle("conf/oe.conf", oe)
+cfg = {}
+cfg = oe.parse.handle("conf/oe.conf", cfg)
 
-keys = oe.keys()
-keys.sort()
-for k in keys:
-	print "%-30s %s" % (k, oe[k])
+cfgkeys = cfg.keys()
+cfgkeys.sort()
+
+if len(sys.argv) == 2:
+	oefile = copy.deepcopy(cfg)
+	oefile = oe.parse.handle(sys.argv[1], oefile)
+	oefilekeys = oefile.keys()
+	oefilekeys.sort()
+	print "Variables in %s:" % sys.argv[1]
+	for k in oefilekeys:
+		if k.startswith('base_'): continue
+		if k.startswith('FILES_'): continue
+		if k.startswith('do_'): continue
+		if k.startswith('oe'): continue
+		if cfg.has_key(k):
+			if cfg[k] == oefile[k]:
+				continue
+		print k,'=',oe.data.expand(oefile[k]['content'], oefile)
+else:	
+	print "Variables in conf/oe.conf & friends:"
+	for k in keys:
+		print "%-30s %s" % (k, cfg[k])
+
