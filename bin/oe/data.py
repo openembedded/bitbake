@@ -10,7 +10,7 @@ Copyright: (c) 2003 Chris Larson
 Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
-import sys, os
+import sys, os, time
 if sys.argv[0][-5:] == "pydoc":
 	path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:
