@@ -1,10 +1,9 @@
-unix {
-  UI_DIR = .ui
-  MOC_DIR = .moc
-  OBJECTS_DIR = .obj
-}
-FORMS	= mainwindow.ui \
-	aboutdialog.ui
+
+QMAKE_UIC 	= pyuic
+QMAKE_MOC 	= echo
+QMAKE_EXT_CPP 	= .cpp
+QMAKE_EXT_H 	= .py
+FORMS	= mainwindowbase.ui aboutdialogbase.ui
 TEMPLATE	=app
 CONFIG	+= qt warn_on release
-LANGUAGE	= C++
+LANGUAGE	= Python
