@@ -75,10 +75,17 @@ def try_build(fn, virtual):
 		oe.note("dependencies for %s are: %s" % (item, " ".join(depends_list)))
 
         try:
+		failed = False
+		
 		for d in depends_list:
 			if buildPackage(d) == 0:
-				oe.error("dependency %s (for %s) not satisfied" % (d,item))
-				return False
+				failed = True
+				if make.options.abort:
+					break
+
+		if failed:
+			oe.error("dependency %s (for %s) not satisfied" % (d,item))
+			return False
 
 		command = make.options.cmd
 		oe.debug(1, "oebuild %s %s" % (command, fn))
@@ -145,9 +152,9 @@ def buildPackage(item):
         for p in preferred_versions.keys():
             (v, f) = preferred_versions[p]
             eligible.append(f)
-                
+
         for p in eligible:
-            if item in __build_cache_fail:
+            if p in __build_cache_fail:
                 oe.debug(1, "rejecting already-failed %s" % p)
                 eligible.remove(p)
 
@@ -311,8 +318,9 @@ if __name__ == "__main__":
 
         for k in pkgs_to_build:
             if buildPackage(k) == 0:
-		print "Build of " + k + " failed"
-		sys.exit(1)
+		oe.error("Build of " + k + " failed")
+		if make.options.abort:
+			sys.exit(1)
 
         oe.event.fire(oe.event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
 
