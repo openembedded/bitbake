@@ -150,7 +150,6 @@ def feeder(lineno, s, fn, d):
 			__body__.append('')
 			data.setVar(__infunc__, '\n'.join(__body__), d)
 			data.setVarFlag(__infunc__, "func", 1, d)
-			data.setVar(__infunc__, string.join(__body__, '\n'), d)
 			if __infunc__ == "__anonymous":
 				anonqueue = oe.data.getVar("__anonqueue", d) or []
 				anonitem = {}
