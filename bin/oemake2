@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-import sys, os, getopt, glob, copy, os.path, re
+import sys, os, getopt, glob, copy, os.path, re, sets
 sys.path.append('/usr/share/oe')
 import oe
 from oe import make
+from sets import Set
 
 try:
     import itertools
@@ -21,6 +22,7 @@ __build_cache = []
 __building_list = []
 
 __preferred = {}
+__world_target = Set()
 
 def handle_options( args ):
         parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ),
@@ -42,7 +44,7 @@ Default OEFILES are the .oe files in the current directory.""" )
                            action = "store", dest = "cmd", default = "build" )
 
         parser.add_option( "-r", "--read", help = "read the specified file before oe.conf",
-                           action = "append", dest = "files", default = [] )
+                           action = "append", dest = "file", default = [] )
 
         options, args = parser.parse_args( args )
         return options, args[1:]
@@ -63,7 +65,7 @@ def try_build(fn):
             if buildPackage(d) == 0:
                 oe.error("dependency %s (for %s) not satisfied" % (d,item))
                 return 0
-        
+
         command = make.options.cmd
         oe.debug(1, "oebuild %s %s" % (command, fn))
         oe.event.fire(oe.event.PkgStarted(item, make.pkgdata[fn]))
@@ -169,7 +171,6 @@ def buildPackage(item):
                     eligible = [p] + eligible
                     break
                 
-
         # run through the list until we find one that we can build
         for fn in eligible:
             oe.note("selecting %s to satisfy %s" % (fn, item))
@@ -181,32 +182,46 @@ def buildPackage(item):
 
 
 def build_depgraph():
+    all_depends = Set()
+    pn_provides = {}
+    
     for f in make.pkgdata.keys():
-        depstr = oe.data.getVar("DEPENDS", make.pkgdata[f], 1)
-        if depstr is not None:
-            deps = depstr.split()
+        d = make.pkgdata[f]
+        
+        pn = oe.data.getVar('PN', d, 1)
 
-        provides = []
-        providestr = oe.data.getVar("PROVIDES", make.pkgdata[f], 1)
-        if providestr is not None:
-            provides += providestr.split()
+        deps = (oe.data.getVar("DEPENDS", d, 1) or "").split()
+        provides = Set([pn] + (oe.data.getVar("PROVIDES", d, 1) or "").split())
 
-        provides += oe.data.getVar('PN', make.pkgdata[f], 1)
+        for dep in deps:
+            all_depends.add(dep)
+
+        if not pn_provides.has_key(pn):
+            pn_provides[pn] = Set()
+        pn_provides[pn] |= provides
         
         for provide in provides:
             if not providers.has_key(provide):
                 providers[provide] = []
             providers[provide].append(f)
 
-        preferstr = oe.data.getVar('PREFERRED_PROVIDERS', make.pkgdata[f]) or ""
-        for p in preferstr.split():
+        for p in (oe.data.getVar('PREFERRED_PROVIDERS', d, 1) or "").split():
             (providee, provider) = p.split(':')
             if __preferred.has_key(providee) and __preferred[providee] != provider:
                 oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
             __preferred[providee] = provider
 
-    print __preferred
-    
+    for f in make.pkgdata.keys():
+        d = make.pkgdata[f]
+        terminal = True
+        pn = oe.data.getVar('PN', d, 1)
+        for p in pn_provides[pn]:
+            if p in all_depends or p.startswith('virtual/'):
+                terminal = False
+                break
+        if terminal:
+            __world_target.add(pn)
+
 def myProgressCallback( x, y, f ):
     sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
     sys.stdout.flush()
@@ -235,7 +250,7 @@ if __name__ == "__main__":
     make.cfg = {}
     providers = {}
 
-    for f in make.options.files:
+    for f in make.options.file:
         try:
             make.cfg = oe.parse.handle(f, make.cfg)
         except IOError:
@@ -268,10 +283,14 @@ if __name__ == "__main__":
             print "nothing to build"
             sys.exit(0)
 
+        if 'world' in pkgs_to_build:
+            pkgs_to_build.remove('world')
+            for t in __world_target:
+                pkgs_to_build.append(t)
+
         oe.event.fire(oe.event.BuildStarted(buildname, pkgs_to_build, make.cfg))
 
         for k in pkgs_to_build:
-            print "at top level, building " + k
             if buildPackage(k) == 0:
 		print "Build of " + k + " failed"
 		sys.exit(1)
