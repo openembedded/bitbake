@@ -6,36 +6,7 @@ from oe import *
 
 #######################################################################
 
-def emit_env(o=sys.__stdout__):
-	"""This prints the contents of env[] so that it can later be sourced by a shell
-	Normally, it prints to stdout, but this it can be redirectory to some open file handle
-
-	It is used by exec_shell_func().
-	"""
-
-	o.write('\nPATH="' + projectdir + '/bin/build:${PATH}"\n')
-
-	for s in env:
-		if s == s.lower(): continue
-
-		o.write('\n')
-		try:
-			o.write('# ' + envdesc[s]['desc'] + ':\n')
-			if envdesc[s].has_key('export'): o.write('export ')
-		except KeyError:
-			pass
-
-		o.write(s+'="'+env[s]+'"\n')
-
-	for s in env:
-		if s != s.lower(): continue
-
-		o.write("\n" + s + '() {\n' + env[s] + '}\n')
-
-
-#######################################################################
-
-def exec_shell_func(func, myfatal=fatal):
+def exec_shell_func(func, dir=None, myfatal=fatal):
 	"""This executes any shell function stored in env[func]. Returns
 	true if execution was successful.
 
@@ -57,11 +28,12 @@ def exec_shell_func(func, myfatal=fatal):
 		for s in env['OEPATH']:
 			f.write("if -f %s/oebuild.sh && source $%s/oebuild.sh\n" % (s,s));
 	emit_env(f)
-	f.write("cd %s\n" % env['DISTDIR'])
 
-	f.write(func +"\n")
+	if dir:  f.write("cd %s\n" % env[dir])
+	if func: f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
+	if not func: return 1
 	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
 	if ret==0:
 		if not env.has_key('OEDEBUG'): 
@@ -74,24 +46,46 @@ def exec_shell_func(func, myfatal=fatal):
 		return 1
 
 
+
 #######################################################################
 
-def do_todo():
-	fatal("oebuild %s is not yet implemented" % sys.argv[1])
+def exec_task(task,dir):
+	note("Executing task '%s'" % task)
+	func = 'do_'+task
+	ret = exec_shell_func(func, dir)
+	if ret==0: mkstamp(task)
+
+def mkstamp(task):
+	mkdirhier(env['TMPDIR']+'/stamps');
+	open(env['STAMP']+task, "w+")
+
+#TODO: teststamp, rmstamp
 
 
 #######################################################################
 
 def do_clean():
+	"""clear the build and temp directories"""
+
+	note("Executing task 'clean'")
+
 	dir = varexpand("${TMPDIR}/${CATEGORY}/${PF}", env)
-	if dir == '//': fatal("wrong DATADIR");
-	debug(2, "removing " + dir)
+	if dir == '//': fatal("wrong DATADIR")
+	note("removing " + dir)
 	os.system('rm -rf ' + dir)
+
+	dir = env['STAMP']+'.*'
+	note("removing " + dir)
+	os.system('rm -f '+ dir)
 
 
 #######################################################################
 
 def do_mrproper():
+	"""clear downloaded sources, build and temp directories"""
+
+	note("Executing task 'mrproper'")
+
 	dir = env["DISTDIR"]
 	if dir == '/': fatal("wrong DATADIR");
 	debug(2, "removing " + dir)
@@ -102,15 +96,16 @@ def do_mrproper():
 #######################################################################
 
 def do_fetch():
-	mkdirhier(env["DISTDIR"])	# create file download directory
-	done = 0
-	ret = 0
+	"""download needed sources"""
 
-	debug("do_fetch")
+	mkdirhier(env["DISTDIR"])	# create file download directory
+
+	note("Executing task 'fetch'")
+
 	if env.has_key('SRC_URI'):
-		# TODO: correct error handling
 		ret = fetch(varexpand(env['SRC_URI'], env), 1)
-		done = 1
+		if ret:
+			mkstamp('source')
 	else:
 		note("No SRC_URI variable, not downloading anything")
 
@@ -118,57 +113,73 @@ def do_fetch():
 #######################################################################
 
 def do_unpack():
+	"""unpack downloaded sources, patch sources if needed"""
+
 	mkdirhier(env["WORKDIR"])	# create workdir
 	
-	if env.has_key('src_unpack'):
-		ret = exec_shell_func('src_unpack')
-		if ret:
-			error('unpacking source via src_unpack() failed');
-			fatal('more info in: %s' % logfile);
-		return
+	exec_task('unpack', 'WORKDIR')
 
-	fatal('TODO: add implicit source unpacking')
-		
 
 #######################################################################
 
 def do_compile():
-	if env.has_key('src_compile'):
-		ret = exec_shell_func('src_compile')
-		if ret:
-			error('compilation via src_compile() failed');
-			fatal('more info in: %s' % logfile);
-		return
+	"""compile extracted sources"""
+
+	mkdirhier(env["S"])		# create sourcedir if not yet existing
+	exec_task('compile', 'S')
+
+
+#######################################################################
+
+def do_stage():
+	"""install needed files to compile other packages into staging directory"""
+
+	mkdirhier(env["S"])		# create sourcedir if not yet existing
+	mkdirhier(env["STAGELIB"])
+	mkdirhier(env["STAGEINC"])
+	exec_task('stage', 'S')
 		
 
 #######################################################################
 
 def do_install():
-	if env.has_key('src_install'):
-		ret = exec_shell_func('src_install')
-		if ret:
-			error('installation via src_install() failed');
-			fatal('more info in: %s' % logfile);
-		return
+	"""install compiled files into image directory"""
+
+	mkdirhier(env["S"])		# create sourcedir if not yet existing
+	exec_task('install', 'S')
 		
 
 #######################################################################
 
 def do_build():
+	"""fetch, extract, compile, stage and install files"""
+	
 	do_fetch()
 	print_orphan_env()
 	print_missing_env()
-	emit_env()
+	#emit_env()
 	do_unpack()
 	do_compile()
+	do_stage()
 	do_install()
 
 
 
 #######################################################################
 
+def do_test():
+	"""internal"""
+
+	ret = exec_shell_func(None)
+
+
+
+#######################################################################
+
 def do_showenv():
-	"""Just for testing purposes. Displays all environment vars that
+	"""internal
+
+	Just for testing purposes. Displays all environment vars that
 	are NOT automatically generated by oebuild, but are in the config
 	file.
 
@@ -194,61 +205,41 @@ def do_showenv():
 #######################################################################
 
 def usage(errorlevel=0, txt=''):
-	print "TODO: write better Usage"
-	if txt: print txt
+	if txt:
+		print
+		print txt
+	funcs = globals().keys()
+	funcs.sort()
+
+	print "\noebuild <command> <somebuildfile.oe>\n"
+	print "Valid commands are:"
+	for s in funcs:
+		if s.startswith('do_'):
+			doc = getattr(globals()[s], '__doc__')
+			if doc.startswith('internal'): continue
+			print "     %-15s %s" % (s[3:], doc)
+	
 	sys.exit(errorlevel)
 
+if len(sys.argv) < 2:
+	usage(1)
 if sys.argv[1] in ('help', 'usage'):
 	usage(0);
-
 if len(sys.argv) < 3:
+	usage(1)
 	fatal("try 'oebuild <command> <somebuildfile.oe>'")
 
 read_oe_conf()				# Read configuration
 set_automatic_vars(sys.argv[2])		# Deduce per-package environment variables
 read_package_conf(sys.argv[2])		# Read package configuration
-update_env()				# Environment modification
+set_additional_vars()			# set rest of vars, e.g. ${A}
+update_env()				# Environment modification, e.g. local overrides
 
-call_func = do_todo;
-
-for arg in sys.argv[1].split(','):
-	if arg == 'clean':
-		# clean the temporary build directory
-		call_func = do_clean
-	elif arg == 'setup':
-		print 'TODO: execute package specific setup actions'
-	elif arg == 'fetch':
-		# fetch all source code
-		call_func = do_fetch
-	elif arg == 'unpack':
-		# extract the sources
-		call_func = do_unpack
-	elif arg == 'compile':
-		# compile the sources
-		call_func = do_compile
-	elif arg == 'install':
-		# install the binaries
-		call_func = do_install
-	elif arg == 'stage':
-		print 'TODO: install into the staging directory'
-	elif arg == 'install':
-		print 'TODO: install into the temporary install directory ${D}'
-	elif arg == 'package':
-		print 'TODO: create an installable package file, e.g. an ipk'
-	elif arg == 'rootfs':
-		print 'TODO: copy files into a root fs'
-	elif arg == 'build':
-		call_func = do_build;
-	elif arg == 'showenv':
-		call_func = do_showenv;
-	elif arg == 'digest':
-		print 'TODO: for maintainers: create md5 digest files'
-	elif arg == 'mrproper':
-		# clean the temporary build directory and sources for this package
-		call_func = do_mrproper
-	else:
-		usage(1);
-
-	call_func()				# call the function that does some real work
+for s in sys.argv[1].split(','):
+	try:
+		func = globals()['do_'+s]
+	except KeyError:
+		usage(1, "'%s' is not valid command" % s)
+	func()
 
 sys.exit(0)
