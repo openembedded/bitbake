@@ -184,11 +184,11 @@ def do_showenv():
 	file.
 
 	Might give 'false positives' if some environment variable has not
-	yet been documented in py's envdesc{}.
+	yet been documented in py's envflags{}.
 	"""
 
 	for s in env:
-		if envdesc.has_key(s): continue
+		if envflags.has_key(s): continue
 		
 		var = env[s]
 		var = expand(var)
@@ -197,6 +197,9 @@ def do_showenv():
 			print s + '() {\n' + var + '}'
 		else:
 			print s+'=' + var
+
+	print_missing_env()
+	print_orphan_env()
 
 
 #######################################################################
