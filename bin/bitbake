@@ -620,7 +620,7 @@ if __name__ == "__main__":
 
     bf = make.options.buildfile
     if bf:
-        executeOneBB( bf )
+        executeOneBB( os.path.abspath(bf) )
         printStats()
 
     ignore = bb.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
