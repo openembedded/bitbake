@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import string, sys, os
 sys.path.append('/usr/share/oe')
