@@ -10,11 +10,15 @@ This file is part of the OpenEmbedded (http://openembedded.org) build infrastruc
 
 from oe import debug, digraph, data, fetch, fatal, error, note, event, parse
 import copy, oe, re, sys, os, glob
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+    print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
-# These variables are allowed to be reinitialized by client code
 pkgdata = {}
 cfg = {}
-
+cache = None
 digits = "0123456789"
 ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -39,6 +43,23 @@ def find_oefiles( path ):
 
 def load_oefile( oefile ):
     """Load and parse one .oe build file"""
+
+    if cache is not None:
+        cache_oefile = oefile.replace( '/', '_' )
+
+        try:
+            cache_mtime = os.stat( "%s/%s" % ( cache, cache_oefile ) )[8]
+        except OSError:
+            cache_mtime = 0
+        file_mtime = os.stat( oefile )[8]
+
+        if file_mtime > cache_mtime:
+            #print " : '%s' dirty. reparsing..." % oefile
+            pass
+        else:
+            #print " : '%s' clean. loading from cache..." % oefile
+            return unpickle_oe( cache_oefile )
+
     oepath = data.getVar('OEPATH', cfg)
     topdir = data.getVar('TOPDIR', cfg)
     if not topdir:
@@ -63,14 +84,32 @@ def load_oefile( oefile ):
     oe = copy.deepcopy(cfg)
     try:
         parse.handle(oefile, oe) # read .oe data
+        if cache is not None: pickle_oe( cache_oefile, oe) # write cache
         os.chdir(oldpath)
         return oe
     finally:
         os.chdir(oldpath)
 
+def pickle_oe( oefile, oe ):
+    p = pickle.Pickler( file( "%s/%s" % ( cache, oefile ), "wb" ), -1 )
+    p.dump( oe )
+
+def unpickle_oe( oefile ):
+    p = pickle.Unpickler( file( "%s/%s" % ( cache, oefile ), "rb" ) )
+    return p.load()
+
 def collect_oefiles( progressCallback ):
     """Collect all available .oe build files"""
 
+    global cache
+    cache = oe.data.getVar( "CACHE", cfg, 1 )
+    if cache is not None:
+        print "NOTE: Using cache in '%s'" % cache
+        try:
+            os.stat( cache )
+        except OSError:
+            os.mkdir( cache )
+    else: print "NOTE: Not using a cache. Set CACHE = <directory> to enable."
     files = (data.getVar( "OEFILES", cfg, 1 ) or "").split()
     data.setVar("OEFILES", " ".join(files), cfg)
 
@@ -164,7 +203,7 @@ def vercmp_part(a, b):
 def vercmp(ta, tb):
         (va, ra) = ta
         (vb, rb) = tb
-        
+
         r = vercmp_part(va, vb)
         if (r == 0):
             r = vercmp_part(ra, rb)
