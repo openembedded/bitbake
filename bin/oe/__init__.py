@@ -1114,6 +1114,39 @@ class digraph:
 	def hasnode(self,mynode):
 		return self.dict.has_key(mynode)
 
+	def getparents(self, item):
+		if not self.hasnode(item):
+			return []
+		return self.dict[item][1]
+	
+	def getchildren(self, item):
+		if not self.hasnode(item):
+			return []
+		children = [i for i in self.oekeys if item in self.getparents(i)]
+		return children
+	
+	def walkdown(self, item, callback):
+		if not self.hasnode(item):
+			return 0
+	
+		parents = self.getparents(item)
+		for p in parents:
+			ret = self.walkdown(p, callback)
+			if ret == 0:
+				return 0
+		return callback(self, item)
+	
+	def walkup(self, item, callback):
+		if not self.hasnode(item):
+			return 0
+	
+		children = self.getchildren(item)
+		for c in children:
+			ret = self.walkup(c, callback)
+			if ret == 0:
+				return 0
+		return callback(self, item)
+
 	def copy(self):
 		mygraph=digraph()
 		for x in self.dict.keys():

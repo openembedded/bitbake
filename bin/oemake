@@ -59,47 +59,6 @@ class RecursiveDep(DepBase):
 class MultipleProviders(PkgBase):
 	"""Multiple Providers"""
 
-def getParents(graph, item):
-	if not graph.hasnode(item):
-		return None
-	return graph.dict[item][1]
-
-def getChildren(graph, item):
-	if not graph.hasnode(item):
-		return None
-	children = []
-	for i in graph.okeys:
-		if item in getParents(graph, i):
-			children.append(i)
-	return children
-
-def followdown(graph, item, callback):
-	if not graph.hasnode(item):
-		return 0
-	keycount = graph.dict[item][0]
-	if keycount != 0 and depcmd is not None:
-		command=depcmd
-	else:
-		command=cmd
-	parents = getParents(graph, item)
-	if parents is not None:
-		for p in parents:
-			ret = followdown(graph, p, callback)
-			if ret == 0:
-				return 0
-	return callback(item, command)
-
-def followup(graph, item, callback):
-	if not graph.hasnode(item):
-		return 0
-	children = getChildren(graph, item)
-	if children is not None:
-		for c in children:
-			ret = followup(graph, c, callback)
-			if ret == 0:
-				return 0
-	return callback(graph, item)
-
 # Then, start the build for that package.  Note that because
 # we've already loaded the files, we may as well spawn the build
 # directly.. so lets abstract the task handling bits into a
@@ -107,7 +66,7 @@ def followup(graph, item, callback):
 
 __build_cache_fail = []
 __build_cache = []
-def build(item, command):
+def build(graph, item):
 	if item in __build_cache:
 		return 1
 	if item in __build_cache_fail:
@@ -116,6 +75,7 @@ def build(item, command):
 	if fn is None:
 		return 1
 #	note("oebuild %s %s" % (command, fn))
+	command = cmd
 	event.fire(PkgStarted(item, pkgdata[fn]))
 	ret = os.system("oebuild %s %s" % (command, fn))
 	if ret == 0:
@@ -215,7 +175,7 @@ for pkg in pkgs.keys():
 				def killitem(graph, item):
 					global __tokill
 					__tokill.append(item)
-				followup(graph, pkg, killitem)
+				graph.walkup(pkg, killitem)
 				__unsatisfied.append([pkg, d])
 				break
 			graph.addnode(pkg, d)
@@ -226,7 +186,7 @@ for u in __unsatisfied:
 for k in __tokill:
 	def reallykillitem(graph, item):
 		graph.delnode(item)
-	followup(graph, k, reallykillitem)
+	graph.walkup(k, reallykillitem)
 
 for k in graph.okeys:
-	followdown(graph, k, build)
+	graph.walkdown(k, build)
