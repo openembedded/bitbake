@@ -144,9 +144,10 @@ TODO:
 
 	Liabilities:
 		* Development time / Wheel reinvention
-		* Extra effort involved in adding python scripting support
 
-	[ ] .oe lex/yacc (flex/bison) parser
+	[ ] .oe parser
+		[ ] manual
+		[ ] lex/yacc (flex/bison)
 	[ ] OE metadata data structure(s) for storage in RAM
 	[ ] Code execution, status and event handling
 		[ ] Build
@@ -157,6 +158,5 @@ TODO:
 			[ ] CVS method
 			[ ] BK method
 			[ ] SVN method
-	[ ] Shared mem interface to control autobuild daemon
 	[ ] Autobuild daemon
 		[ ] XML/RPC control and metadata exchange interfaces
