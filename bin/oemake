@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
-import oe
-import string
+import oe, string, sys
 
 import oedata # data handling
 oedata.init()
@@ -65,9 +64,13 @@ pkgdata = {}
 
 for f in files:
 	# read a file's metadata
-	pkgdata[f] = oeparse.handle(f)
-	print "pkgdata[%s]:" % f
-	print "\t %s" % pkgdata[f]
+	try:
+		pkgdata[f] = oeparse.handle(f)
+		oedata.emit_env(sys.__stdout__, pkgdata[f])
+#		print "pkgdata[\"%s\"]:" % f
+#		print "\t %s" % pkgdata[f]
+	except IOError:
+		pass
 	# use that metadata to yank the necessary bits for high
 	# level build process.. the depends fields and provides info
 	
