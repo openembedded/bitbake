@@ -83,7 +83,10 @@ elif len(args) == 1:
 	#	1) oebuild COMMAND
 	#	2) oebuild OEFILE
 	# First, see if this is a valid task.
-	oedata = oe.make.load_oefile(args[0])
+	try:
+		oedata = oe.make.load_oefile(args[0])
+	except Exception, e:
+		fatal("unable to read %s: %s" % (args[0], e))
 	if not oedata:
 		# If so, assume its a command.
 		# 	If its a command, but we cant get a .oe file
@@ -112,21 +115,21 @@ if not cmd:
 if not oefile:
 	usage(1)
 
-if not oedata:
-	oedata = make.load_oefile(oefile)
+try:
+	if not oedata:
+		oedata = make.load_oefile(oefile)
 
-if not oedata:
-	fatal("Unable to open %s" % oefile)
+	if not oedata:
+		fatal("Unable to open %s" % oefile)
 
-if '--force' in optsonly or '-f' in optsonly:
-	data.setVarFlag('do_%s' % cmd, 'force', 1, oedata)
+	if '--force' in optsonly or '-f' in optsonly:
+		data.setVarFlag('do_%s' % cmd, 'force', 1, oedata)
 
 
 #
 # Finally exec the requested task
 #
 
-try:
 	build.exec_task('do_%s' % cmd, oedata)
 except build.FuncFailed:
 	fatal("task stack execution failed")
