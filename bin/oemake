@@ -97,10 +97,12 @@ class RecursiveDep(DepBase):
 class MultipleProviders(PkgBase):
 	"""Multiple Providers"""
 
-# Then, start the build for that package.  Note that because
-# we've already loaded the files, we may as well spawn the build
-# directly.. so lets abstract the task handling bits into a
-# module that both oebuild and oemake can utilize.
+def usage():
+	print "Syntax:"
+	print "\noemake <somebuildfile.oe> [<otheroe.oe> ...]"
+	print "--or--"
+	print "Set the list of .oe files in the OEFILES variable."
+	sys.exit(0)
 
 __build_cache_fail = []
 __build_cache = []
@@ -150,11 +152,12 @@ if not data.getVar("BUILDNAME", cfg):
 
 buildname = data.getVar("BUILDNAME", cfg)
 
-oefiles = data.getVar("OEFILES", cfg)
-if oefiles is not None:
-	files = oefiles.split()
-else:
-	fatal("OEFILES not defined")
+# grab oefiles
+files = string.split(data.getVar("OEFILES", cfg) or "")
+files += sys.argv[1:]
+
+if not len(files):
+	usage()
 
 #set_automatic_vars(sys.argv[2], )			# Deduce per-package environment variables
 
