@@ -342,7 +342,7 @@ def emit_var(var, o=sys.__stdout__, d = _data, all=False):
     if getVarFlag(var, 'matchesenv', d):
         return 0
 
-    if var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1:
+    if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return 0
 
     val.rstrip()
