@@ -85,10 +85,7 @@ data.setVar('OVERRIDES', '%s:%s' % (overrides, type), localdata)
 data.update_data(localdata)
 data.setVar('OVERRIDES', overrides, localdata)
 
-# grab OEDIR
 topdir = data.getVar('TOPDIR', localdata, 1) or os.getcwd()
-oedir = data.getVar('OEDIR', localdata, 1) or topdir
-mkdirhier(oedir)
 
 cmd = data.getVar('IMAGE_CMD', localdata, 1)
 if not cmd:

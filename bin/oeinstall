@@ -71,10 +71,7 @@ if opthash.has_key('--type'):
 if opthash.has_key('-t'):
 	type = opthash['-t']
 
-# grab OEDIR
 topdir = data.getVar('TOPDIR', cfg_oe, 1) or os.getcwd()
-oedir = data.getVar('OEDIR', cfg_oe, 1) or topdir
-mkdirhier(oedir)
 
 # Iterate through .oe files
 files = string.split(data.getVar("OEFILES", cfg_oe, 1) or "")
