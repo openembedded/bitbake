@@ -7,7 +7,7 @@ import oe
 import oe.fetch
 from oe import debug, data, fetch, fatal
 
-from oe.parse.ConfHandler import include, init
+from oe.parse.ConfHandler import include, localpath, obtain, init
 
 __func_start_regexp__    = re.compile( r"((?P<py>python)\s*)*(?P<func>\w+)\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
@@ -22,7 +22,8 @@ __classname__ = ""
 classes = [ None, ]
 
 def supports(fn):
-	return fn[-3:] == ".oe" or fn[-8:] == ".oeclass"
+	localfn = localpath(fn)
+	return localfn[-3:] == ".oe" or localfn[-8:] == ".oeclass"
 
 __inherit_cache = []
 def inherit(files, d):
@@ -53,6 +54,7 @@ def handle(fn, d = {}):
 
 	init(d)
 	data.inheritFromOS(2, d)
+	fn = obtain(fn, d)
 	oepath = ['.']
 	if not os.path.isabs(fn):
 		f = None

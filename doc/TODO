@@ -20,11 +20,11 @@ TODO:
 	    prepended when update_data runs after the completion of the .oe
 	    parse.
 	[x] Teach 'include' to fetch if necessary.
-	    [.] Move this into handle() rather than include, to complete the
+	    [x] Move this into handle() rather than include, to complete the
 		below TODO item.
 
-[ ] oebuild and oemake
-	[ ] Teach the system to support grabbing OEFILES from upstream
+[x] oebuild and oemake
+	[x] Teach the system to support grabbing OEFILES from upstream
 	    using our fetch classes.
 
 [ ] oebuild
