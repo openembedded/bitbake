@@ -11,43 +11,42 @@ TODO:
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
 	[.] Implement API testing using doctest.
-	[ ] Alter 'export' handling, to support exporting a var without
-	    defining the variable.
-		format:
-		export [VAR[=value] ...]
-	[ ] Possibility: alternate data formats for metadata (i.e. arrays).
-		i.e. THIS[1] = "that"
-		     THIS["heh"] = "that"
-	[ ] More complex variable setting/conditionals
-		Options:
-		[ ] Add support for 'anonymous' OE functions in .oe{,class} files.
-		    These functions are to be executed immediately at parse time,
-		    thereby giving one the ability to exert more control over the set
-		    of variables.
-		[ ] if/elseif/else/endif blocks for conditional variable setting
-	[ ] Split oemake's knowledge of AVAILABLE OEFILES from its
-	    knowledge of which packages are to be built.
-		[ ] Define structure and data exchange format(s) for
-		    upstream OE metadata repositories.
-		    Possibly follow an 'apt-get' style.  Cache the
-		    metadata locally, with a command to update.
-	[ ] Make Fetch use md5 hashing to indicate per-file download success.
-	    Or in the case of downloaded directories (cvs/svn/bk), simply a 
-	    success stamp on a per file basis.
-	[ ] Add "noinherit", as a means of removing an item from the
-	    list of classes to inherit.
-	[ ] Need a way to specify that you cannot build a given .oe,
-	    from the .oe.  Along the lines of portage's ability for
-	    an ebuild to specify that it isnt buildable for a given
-	    architecture or set of architectures.
-	[ ] Write helper functions ala ebuild's dobin/dodoc/etc and debian's dh_*.
-		[ ] Note, if we do this using actual commands within the .oe file
-		    as opposed to shell helpers, the buildsystem is then aware
-		    of what files are libs, what are includes, etc, and we could
-		    then do a sane automatic population of staging based on that
-		    information. 
-	[ ] Metadata exchange through multiple oebuild/oemake/oespawn executions
-	    (i.e. to set qpedir/qtdir for all builds from the qt/opie/qtopia .oe's)
+	[ ] Parsing
+		[ ] Support $${VAR} or \${VAR} for something we want passed to the shell
+		    without being interpreted as an OE variable.
+		[ ] Alter 'export' handling, to support exporting a var without
+		    defining the variable.
+			format:
+			export [VAR[=value] ...]
+		[ ] Possibility: alternate data formats for metadata (i.e. arrays).
+			i.e. THIS[1] = "that"
+			     THIS["heh"] = "that"
+		[ ] More complex variable setting/conditionals
+			Options:
+			[ ] Add support for 'anonymous' OE functions in .oe{,class} files.
+			    These functions are to be executed immediately at parse time,
+			    thereby giving one the ability to exert more control over the set
+			    of variables.
+			[ ] if/elseif/else/endif blocks for conditional variable setting
+		[ ] Add "noinherit", as a means of removing an item from the
+		    list of classes to inherit.
+		[ ] Need a way to specify that you cannot build a given .oe,
+		    from the .oe.  Along the lines of portage's ability for
+		    an ebuild to specify that it isnt buildable for a given
+		    architecture or set of architectures.
+		[ ] Write helper functions ala ebuild's dobin/dodoc/etc and debian's dh_*.
+			[ ] Note, if we do this using actual commands within the .oe file
+			    as opposed to shell helpers, the buildsystem is then aware
+			    of what files are libs, what are includes, etc, and we could
+			    then do a sane automatic population of staging based on that
+			    information. 
+	[ ] Fetch
+		[ ] Make Fetch use md5 hashing to indicate per-file download success.
+		    Or in the case of downloaded directories (cvs/svn/bk), simply a 
+		    success stamp on a per file basis.
+	[ ] Data
+		[ ] Metadata exchange through multiple oebuild/oemake/oespawn executions
+		    (i.e. to set qpedir/qtdir for all builds from the qt/opie/qtopia .oe's)
 	[ ] Split staging by package
 		[ ] When a package populates staging, create links for every item
 		    that this .oe Provides.
@@ -69,10 +68,16 @@ TODO:
 	    for the entire upward path in the digraph, then builds that task.
 	    (same thing done when the md5 changes on an affected var in
 	     check_md5)
+	[ ] Add '--force'/'-f' cmdline opt that forces the specified task to be
+	    run whether or not we believe it is already complete.
+	[ ] Add '--short-circuit'/'-s' cmdline opt that skips task dependencies
+	    and calls the specified task directly.
 
 [.] oemake
 	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
+	[ ] Split oemake's knowledge of AVAILABLE OEFILES from its
+	    knowledge of which packages are to be built.
 
 [.] oemaked
 	[ ] Monitor the stamps for a given .oe file as well, to ensure
@@ -80,59 +85,17 @@ TODO:
 	    in a rebuild.
 
 [ ] oerootfs
+	[ ] Requires oemake's knowledge of available OEFILES split from what we want.
 [ ] oeimage
+	[ ] Requires oemake's knowledge of available OEFILES split from what we want.
 
 [.] packages
 	[.] transition packages from OpenZaurus buildroot
-		[.] busybox
-			[x] core
-			[ ] symlinks
-			[ ] device specifics (patches, etc)
-		[.] ncurses
-			[x] core
-			[x] staging function
-			[x] install function
-		[.] openssl
-			[x] core
-			[x] staging function
-			[x] install function
-		[.] qt 2.3.6^H7
-			[x] core
-			[x] dependencies
-				[x] libpng
-				[x] libjpeg
-			[ ] device specifics (patches, etc)
-		[ ] add cross binutils and binutils
-		[ ] add gcc
-		[ ] figure out where to put the glibc install into the toolchain dir,
-		    which is only needed by gcc pass 2.
-		[.] sysvinit
-			[x] core
-			[x] install
-			[ ] device specifics (patches, etc)
-		[.] openssh
-			[x] core
-			[ ] device specifics (patches, etc)
+		[ ] all packages need deviceisms added
+		[ ] all packages need output packaging dealt with properly, and
+		    packaging granularity increased.
 		[.] modutils
-			[x] core
-			[ ] device specifics
 			[ ] /etc/modules & /etc/modules.conf
-		[x] mtd
-			[x] core
-			[x] install
-		[x] mtd-buildarch
-			[x] core
-		[.] hotplug
-			[x] core
-			[ ] deviceism
-	[.] new packages
-		[.] apache
-			[x] core
-			[x] dependencies
-				[x] expat
-				[x] pcre
-			[x] install function
-			[ ] packaging split
 
 [ ] New c++ OE library (possibility -- open to debate)
 
@@ -145,10 +108,10 @@ TODO:
 	Liabilities:
 		* Development time / Wheel reinvention
 
+	[ ] Data structure(s) for metadata and metadata store
 	[ ] .oe parser
 		[ ] manual
 		[ ] lex/yacc (flex/bison)
-	[ ] OE metadata data structure(s) for storage in RAM
 	[ ] Code execution, status and event handling
 		[ ] Build
 		     '----Package
