@@ -430,6 +430,9 @@ update_env()					# Environment modification, e.g. local overrides
 for var in env.keys():
 	if not envflags.has_key(var):
 		continue
+	if envflags[var].has_key("handler") and env.has_key(var):
+		event.register(env[var])
+		continue
 	if not envflags[var].has_key("task"):
 		continue
 
@@ -455,14 +458,6 @@ for var in env.keys():
 			
 	if envflags[var].has_key("python"):
 		tasks[taskvar]["python"] = "1"
-
-#def handleFail(e):
-#	if e.type == "TaskFailed":
-#		print "caught failure of \"%s\" task" % e.task
-#		return event.Handled
-#	return event.NotHandled
-#
-#event.register(handleFail)
 
 for s in sys.argv[1].split(','):
 	try:
