@@ -345,7 +345,7 @@ def encodeurl(decoded):
 
 def which(path, item, direction = 1):
 	"""Useful function for locating a file in a PATH"""
-	found = item
+	found = ""
 	for p in string.split(path or "", ":"):
 		if os.path.exists(os.path.join(p, item)):
 			found = os.path.join(p, item)
