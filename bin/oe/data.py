@@ -205,7 +205,6 @@ def expand(s, d = _data, varname = None):
 				raise Exception("variable %s references itself!" % varname)
 		var = getVar(key, d, 1)
 		if var is not None:
-			setVar(key, var, d)
 			return var
 		else:
 			return match.group()
@@ -295,10 +294,15 @@ def emit_var(var, o=sys.__stdout__, d = _data, all=False):
 		return 0
 
 	try:
+		if all:
+			oval = getVar(var, d, 0)
 		val = getVar(var, d, 1)
 	except:
 		o.write('# expansion of %s threw %s\n' % (var, sys.exc_info()[0]))
 		return 0
+
+	if all:
+		o.write('# %s=%s\n' % (var, oval))
 		
 	if type(val) is not types.StringType:
 		return 0
