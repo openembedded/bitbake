@@ -75,6 +75,12 @@ def buildPackage(graph, item):
 		__build_cache_fail.append(item)
 		del pkgdata[fn]
 		return 0
+	except Exception, e:
+		event.fire(event.PkgFailed(item, pkgdata[fn]))
+		__build_cache_fail.append(item)
+		error("%s" % e)
+		del pkgdata[fn]
+		return 0
 
 def get_oefiles( path = os.getcwd() ):
 	"""Get list of default .oe files by reading out the current directory"""
@@ -123,7 +129,8 @@ def load_oefile( oefile, cfg ):
 		parse.handle(oefile, oe) # read .oe data
 		os.chdir(oldpath)
 		return oe
-	except IOError, OSError:
+	except Exception, e:
+		error("%s" % e)
 		os.chdir(oldpath)
 		return None
 

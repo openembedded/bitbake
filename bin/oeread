@@ -11,7 +11,10 @@ cfgkeys.sort()
 
 if len(sys.argv) == 2:
 	oefile = copy.deepcopy(cfg)
-	oefile = oe.parse.handle(sys.argv[1], oefile)
+	try:
+		oefile = oe.parse.handle(sys.argv[1], oefile)
+	except Exception, e:
+		oe.fatal("%s" % e)
 	oefilekeys = oefile.keys()
 	oefilekeys.sort()
 	print "Variables in %s:" % sys.argv[1]

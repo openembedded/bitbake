@@ -64,10 +64,12 @@ def load_oefile(oefile, cfgdata):
 	os.chdir(topdir)
 	data.setVar('OEPATH', oepath, cfg)
 	oe = copy.copy(cfgdata)
+	from oe.parse import ParseError
 	try:
 		oe = parse.handle(oefile, oe) # read .oe data
 		return oe
-	except IOError, OSError:
+	except Exception, e:
+		error("%s" % e)
 		return None
 
 
@@ -166,3 +168,5 @@ except build.EventException:
 	(type, value, traceback) = sys.exc_info()
 	e = value.event
 	fatal("%s event exception, aborting" % event.getName(e))
+except Exception, e:
+	fatal("%s" % e)

@@ -47,8 +47,8 @@ if '--version' in opthash or '-V' in opthash:
 
 try:
 	cfg_oe = parse.handle("conf/oe.conf", cfg_oe)
-except IOError:
-	fatal("Unable to open oe.conf")
+except Exception, e:
+	fatal("Unable to open oe.conf: %s" % e)
 
 # sanity check
 if cfg_oe is None:
@@ -163,7 +163,11 @@ for f in files:
 			continue
 	from copy import deepcopy
 	fdata = deepcopy(cfg_oe)
-	parse.handle(f, fdata)
+	try:
+		parse.handle(f, fdata)
+	except Exception, e:
+		error("%s" % e)
+		fdata = None
 	if fdata is None:
 		continue
 	# allow metadata files to add items to OEFILES
