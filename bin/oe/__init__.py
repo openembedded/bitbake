@@ -481,7 +481,7 @@ def flatten(mytokens):
 #######################################################################
 
 _package_weights_ = {"pre":-2,"p":0,"alpha":-4,"beta":-3,"rc":-1}	# dicts are unordered
-_package_ends_    = ["pre", "p", "alpha", "beta", "rc", "cvs", "HEAD" ]			# so we need ordered list
+_package_ends_    = ["pre", "p", "alpha", "beta", "rc", "cvs", "bk", "HEAD" ]			# so we need ordered list
 
 def relparse(myver):
 	"""Parses the last elements of a version number into a triplet, that can
