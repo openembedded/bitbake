@@ -125,7 +125,7 @@ def collect_oefiles( progressCallback ):
         try:
             os.stat( cache )
         except OSError:
-            os.mkdir( cache )
+            oe.mkdirhier( cache )
     else: print "NOTE: Not using a cache. Set CACHE = <directory> to enable."
     files = (data.getVar( "OEFILES", cfg, 1 ) or "").split()
     data.setVar("OEFILES", " ".join(files), cfg)
