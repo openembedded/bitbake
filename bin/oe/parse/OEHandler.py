@@ -36,8 +36,8 @@ def inherit(files, d):
 					if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
 						file = os.path.join(dir, "classes",file + ".oeclass")
 						__oepath_found__ = 1
-			if __oepath_found__ == 0:
-				debug(1, "unable to locate %s in OEPATH"  % file)
+				if __oepath_found__ == 0:
+					debug(1, "unable to locate %s in OEPATH"  % file)
 
 		if os.access(os.path.abspath(file), os.R_OK):
 			debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
