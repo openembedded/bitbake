@@ -1,0 +1,50 @@
+OpenEmbedded Developer Documentation
+--
+
+How to add the build of a package to OpenEmbedded
+(henceforth known as "OE") in a few easy steps!
+
+First, you'll want to create the .oe.
+	vi content/packagename-version.oe
+	:wq
+
+Next, we need to add some content.  First, define the
+"SRC_URI" variable to point to the upstream source tarball.
+	SRC_URI:=${GNU_MIRROR}/ncurses/ncurses-5.3.tar.gz
+
+Then, we need to tell the system what will be extracted by
+that tarball:
+	S=${WORKDIR}/${P}
+
+(Note: "P" defaults to ${PN}-${PV}, which is package name,
+and package version, respectively.)
+
+Finally, we need to make some decisions on how to build this.
+Take a look at the sources.  If you see a 'configure.in', 
+or 'configure.ac', this is an autoconf/automake based buildsystem.
+In this case, you're nearly done!
+
+Simply tell the buildsystem that:
+	inherit autotools
+
+And attempt a build!
+	oebuild content/packagename-version.oe
+
+If the build either is not autotools based, or deviates from it in
+any way, you can override any of the steps.  For example:
+
+	do_compile () {
+		touch blahblah
+		oe_runmake all
+	}
+
+-or-
+
+	do_install () {
+		oe_runmake 'PREFIX=${D}' install
+	}
+
+You get the picture.  See $OEDIR/bin/classes/base.oeclass for an idea
+as to what tasks exist by default, and what their default behaviors are.
+The system will automatically assume that your .oe inherits base, in addition
+to whatever oeclasses you inherit manually.
