@@ -125,10 +125,10 @@ def build(graph, item):
 		__build_cache_fail.append(item)
 		return 0
 	
-_depcmds = { "clean": None,
-	    "mrproper": None, }
+_depcmds = { "do_clean": None,
+	    "do_mrproper": None, }
 
-cmd="build"
+cmd="do_build"
 
 if _depcmds.has_key(cmd):
 	depcmd=depcmds[cmd]

@@ -26,7 +26,8 @@ graph = digraph()
 try:
 	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
 except IOError:
-	fatal("Unable to open oe.conf")
+	(type, value, traceback) = sys.exc_info()
+	fatal("Unable to open oe.conf: %s" % value)
 
 oepath = data.getVar('OEPATH', cfg)
 oepath += ":%s" % os.path.abspath(os.path.dirname(sys.argv[2]))

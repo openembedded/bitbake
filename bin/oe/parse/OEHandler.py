@@ -29,21 +29,11 @@ def inherit(files, d):
 	lineno = 0
 	for f in files:
 		file = data.expand(f, d)
-		if file[0] != "/":
-			if d.has_key('OEPATH'):
-				__oepath_found__ = 0
-				for dir in data.expand(data.getVar('OEPATH', d), d).split(":"):
-					if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
-						file = os.path.join(dir, "classes",file + ".oeclass")
-						__oepath_found__ = 1
-				if __oepath_found__ == 0:
-					debug(1, "unable to locate %s in OEPATH"  % file)
+		if file[0] != "/" and file[-8:] != ".oeclass":
+			file = "classes/%s.oeclass" % file
 
-		if os.access(os.path.abspath(file), os.R_OK):
-			debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
-			include(fn, file, d)
-		else:
-			debug(1, "%s:%d: could not import %s" % (fn, lineno, file))
+		debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
+		include(fn, file, d)
 
 
 def handle(fn, d = {}):
@@ -51,6 +41,7 @@ def handle(fn, d = {}):
 	__body__ = []
 	__oepath_found__ = 0
 	__infunc__ = ""
+	__classname__ = ""
 
 	(root, ext) = os.path.splitext(os.path.basename(fn))
 	if ext == ".oeclass":
@@ -79,7 +70,8 @@ def handle(fn, d = {}):
 		i = inheritclasses.split()
 	else:
 		i = []
-	i[0:0] = ["base.oeclass"]
+	if not "base" in i and __classname__ != "base":
+		i[0:0] = ["base"]
 	inherit(i, d)
 
 	lineno = 0

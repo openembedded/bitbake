@@ -155,7 +155,10 @@ def include(oldfn, fn, data = {}):
 		return None
 
 	from oe.parse import handle
-	return handle(fn, data)
+	try:
+		ret = handle(fn, data)
+	except IOError:
+		debug(1, "include: %s not found" % fn)
 
 def handle(fn, data = {}):
 	init(data)
@@ -169,7 +172,8 @@ def handle(fn, data = {}):
 		for p in oepath:
 			p = oe.data.expand(p, data)
 			if os.access(os.path.join(p, fn), os.R_OK):
-				f = open(os.path.join(p, fn), 'r')
+				f = open(os.path.join(p, fn), 'r+')
+				break
 		if f is None:
 			raise IOError("file not found")
 	else:
@@ -206,12 +210,9 @@ def feeder(lineno, s, fn, data = {}):
 	m = __include_regexp__.match(s)
 	if m:
 		s = oe.data.expand(m.group(1), data)
-		if os.access(os.path.abspath(s), os.R_OK):
-			debug(2, "%s:%d: including %s" % (fn, lineno, s))
-			oe.data.inheritFromOS(2, data)
-			include(fn, s, data)
-		else:
-			debug(1, "%s:%d: could not import %s" % (fn, lineno, s))
+		debug(2, "%s:%d: including %s" % (fn, lineno, s))
+		oe.data.inheritFromOS(2, data)
+		include(fn, s, data)
 		return
 
 # Add us to the handlers list
