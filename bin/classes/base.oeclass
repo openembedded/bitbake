@@ -1,6 +1,36 @@
+PATCHES_DIR="${S}"
+
+do_applypatches() {
+	oenote do_applypatches
+	for purl in `patcher_sanity "${PATCHES_URI}"`; do
+		parm="`echo $purl|sed -e's,^[^;]*;,,'`"
+		pnum="`echo $parm|sed -e's,.*pnum=\(.\).*,\1,'`"
+		if [ "$pnum" = "$purl" ]; then pnum=1; fi 
+		pdl="`patcher_lfn $purl`"
+		case "${pdl##*.}" in
+		ZIP|zip|gz|Z|z|bz2) 
+			pdl="$WORKDIR/${pdl%.*}"
+			;;
+		esac
+		( set -x; cd $PATCHES_DIR && patcher -p $pnum -i "$pdl" ) || return 1
+	done
+	return 0
+}
+
+patcher_sanity() {
+	echo "$@"|sed -e's,;,\;,g'
+}
+
+patcher_lfn() {
+	for fn in $@; do
+		basename $fn|sed -e's,;.*,,'
+	done
+}
+
 base_do_unpack() {
-	oenote "base_do_unpack"
 	test "${A}" != "" && unpack "${A}" || oenote "nothing to extract"
+	unpack `for purl in \`patcher_sanity "${PATCHES_URI}"\`; do patcher_lfn $purl; done` || oefatal "patch extraction failed"
+	do_applypatches || oefatal "patch application failed"
 }
 
 
@@ -33,3 +63,5 @@ base_do_package() {
 }
 
 EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package
+
+inherit patcher
