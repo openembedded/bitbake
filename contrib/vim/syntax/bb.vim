@@ -88,7 +88,8 @@ if exists("b:current_syntax")
   unlet b:current_syntax
 endif
 
-syn match bbShellFuncDef	"^\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbFunction,bbDelimiter nextgroup=bbShellFuncRegion
+syn keyword bbFakerootFlag	fakeroot contained nextgroup=bbFunction
+syn match bbShellFuncDef	"^\(fakeroot\s*\)\?\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbFakerootFlag,bbFunction,bbDelimiter nextgroup=bbShellFuncRegion
 syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@shell
 "hi def link bbShellFuncRegion	Comment
 
@@ -115,6 +116,7 @@ hi def link bbContinue		Special
 hi def link bbDef		Statement
 hi def link bbPythonFlag	Type
 hi def link bbExportFlag	Type
+hi def link bbFakerootFlag	Type
 hi def link bbStatement		Statement
 hi def link bbString		String
 hi def link bbTodo		Todo
