@@ -72,7 +72,7 @@ python base_do_patch () {
 		cmd += " -i %s" % efile
 		ret = os.system(cmd)
 		if ret != 0:
-			raise Exception("Patch execution failed")
+			raise FuncFailed("'patcher' execution failed")
 }
 
 python base_do_fetch() {
@@ -173,7 +173,7 @@ addtask mrproper
 addtask fetch
 addtask unpack after do_fetch
 addtask patch after do_unpack
-addtask compile after do_unpack
+addtask compile after do_unpack do_patch
 addtask stage after do_compile
 addtask install after do_stage
 addtask build after do_install
