@@ -1,0 +1,59 @@
+#!/usr/bin/python
+
+import oe
+import string
+
+def getBuildData(digraph):
+	refcount = 0
+	builddata = []
+	dict = digraph.dict
+	okeys = digraph.okeys
+	
+	for x in okeys:
+		keyref = dict[x][0]
+		if keyref > refcount:
+			refcount = keyref
+	
+	maxcount = refcount
+	
+	while refcount >= 0:
+		__found = 0
+	
+		for x in okeys:
+			keycount = dict[x][0]
+			if keycount == refcount:
+				if keycount != 0 and depcmd is not None:
+					command=depcmd
+				else:
+					command=cmd
+	
+				builddata.append([x, command])
+				__found = 1
+	
+		refcount = refcount-1
+	
+	for x in okeys:
+		if dict[x][0] != 0:
+			builddata.append([x, cmd])
+
+	return builddata
+
+depcmds = { "clean": None,
+	    "mrproper": None, }
+
+cmd="package"
+
+if depcmds.has_key(cmd):
+	depcmd=depcmds[cmd]
+else:
+	depcmd="stage"
+
+test = oe.digraph()
+
+test.addnode("glibc", None)
+test.addnode("ipkg", "glibc")
+data = getBuildData(test)
+
+for d in data:
+	(pkg, step) = d 
+	print "oebuild %s %s-*.oe" % (step, pkg)
