@@ -215,7 +215,7 @@ def handle(fn, data = {}):
 		for p in oepath:
 			p = oe.data.expand(p, data)
 			if os.access(os.path.join(p, fn), os.R_OK):
-				f = open(os.path.join(p, fn), 'r+')
+				f = open(os.path.join(p, fn), 'r')
 				break
 		if f is None:
 			raise IOError("file not found")
