@@ -92,19 +92,24 @@ TODO:
 			[x] core
 			[x] staging function
 			[x] install function
-		[.] openssl
+		[x] openssl
 			[x] core
-			[ ] staging function
-			[ ] install function
-		[x] qt 2.3.6^H7
+			[x] staging function
+			[x] install function
+		[.] qt 2.3.6^H7
 			[x] core
 			[x] dependencies
 				[x] libpng
 				[x] libjpeg
+			[ ] device specifics (patches, etc)
 		[ ] add cross binutils and binutils
 		[ ] add gcc
 		[ ] figure out where to put the glibc install into the toolchain dir,
 		    which is only needed by gcc pass 2.
+		[.] sysvinit
+			[x] core
+			[x] install
+			[ ] device specifics (patches, etc)
 	[.] new packages
 		[.] apache
 			[x] core
