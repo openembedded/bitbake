@@ -173,7 +173,6 @@ for var in oedata.keys():
 		build.add_task(p, pcontent, pdeps)
 
 if '--force' in optsonly or '-f' in optsonly:
-	print "setting force flag"
 	data.setVarFlag('do_%s' % cmd, 'force', 1, oedata)
 
 try:

@@ -203,8 +203,7 @@ if opthash.has_key('-c'):
 
 _depcmds = { "clean": None,
 	     "mrproper": None,
-	     "build": "stage",
-	     "install": None, }
+	     "build": "stage" }
 
 if not cmd:
 	cmd = "build"
@@ -304,7 +303,7 @@ for pkg in pkgs.keys():
 
 for pkg in pkgs.keys():
 	(deps, fn) = pkgs[pkg]
-	if _depcmds.has_key(cmd) and _depcmds[cmd] is not None:
+	if depcmd is not None:
 		if deps is not None:
 			for d in deps:
 				if not graph.hasnode(d):
