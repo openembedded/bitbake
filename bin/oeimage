@@ -94,6 +94,11 @@ cmd = data.getVar('IMAGE_CMD', localdata, 1)
 if not cmd:
 	oe.fatal("IMAGE_CMD not defined")
 
+outdir = data.getVar('DEPLOY_DIR_IMAGE', localdata, 1)
+if not outdir:
+	oe.fatal('DEPLOY_DIR_IMAGE not defined')
+mkdirhier(outdir)
+
 #depends = data.getVar('IMAGE_DEPENDS', localdata, 1) or ""
 #if depends:
 #	oe.note("Spawning oemake to satisfy dependencies: %s" % depends)
