@@ -142,6 +142,8 @@ def handle(fn, d = {}, include = 0):
 					pdeps.append(var)
 					data.setVarFlag(p, 'deps', pdeps, d)
 					oe.build.add_task(p, pdeps, d)
+	if oldfile:
+		oe.data.setVar("FILE", oldfile, d)
 	return d
 
 def feeder(lineno, s, fn, d):
