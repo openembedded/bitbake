@@ -403,7 +403,7 @@ class Cvs(Fetch):
 
             os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
 #           tar them up to a defined filename
-            myret = os.system("tar -czvf %s %s" % (os.path.join(dldir,tarfn), localdir))
+            myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), localdir))
             if myret != 0:
                 try:
                     os.unlink(tarfn)
@@ -615,7 +615,7 @@ class Svn(Fetch):
 
             os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
 #           tar them up to a defined filename
-            myret = os.system("tar -czvf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
+            myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
             if myret != 0:
                 try:
                     os.unlink(tarfn)
