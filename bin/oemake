@@ -139,7 +139,6 @@ def try_build(fn, virtual):
         __building_list.remove(fn)
         __build_path.remove(pathstr)
 
-
 def buildPackage(item):
     fn = None
 
@@ -235,10 +234,26 @@ def buildPackage(item):
     oe.note("no buildable providers for %s" % item)
     return 0
 
-
 def build_depgraph():
     all_depends = Set()
     pn_provides = {}
+
+    def progress(p):
+        sys.stdout.write("\rNOTE: Building provider hash: [")
+        x = 0
+        for i in range(20):
+            if (p >= x):
+                sys.stdout.write("#")
+            else:
+                sys.stdout.write(" ")
+            x += 5
+        sys.stdout.write("] (%02d%%)" % p)
+        sys.stdout.flush()
+
+    n = len(make.pkgdata.keys())
+    i = 0
+
+    op = -1
 
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
@@ -265,6 +280,14 @@ def build_depgraph():
             if __preferred.has_key(providee) and __preferred[providee] != provider:
                 oe.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, __preferred[providee]))
             __preferred[providee] = provider
+
+        i += 1
+        p = (100 * i) / n
+        if p != op:
+            op = p
+            progress(p)
+
+    sys.stdout.write("\n")
 
     for f in make.pkgdata.keys():
         d = make.pkgdata[f]
