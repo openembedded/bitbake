@@ -24,9 +24,22 @@ Place, Suite 330, Boston, MA 02111-1307 USA.
 """
 
 import os, re
+import bb.data
+
 class Event:
     """Base class for events"""
     type = "Event"
+
+    def __init__(self, d = bb.data.init()):
+        self._data = d
+
+    def getData(self):
+        return self._data
+
+    def setData(self, data):
+        self._data = data
+
+    data = property(getData, setData, None, "data property")
 
 NotHandled = 0
 Handled = 1
@@ -105,8 +118,8 @@ class PkgBase(Event):
     """Base class for package events"""
 
     def __init__(self, t, d = {}):
-        self.pkg = t
-        self.data = d
+        self._pkg = t
+        Event.__init__(self, d)
 
     def getPkg(self):
         return self._pkg
@@ -114,23 +127,16 @@ class PkgBase(Event):
     def setPkg(self, pkg):
         self._pkg = pkg
 
-    def getData(self):
-        return self._data
-
-    def setData(self, data):
-        self._data = data
-
     pkg = property(getPkg, setPkg, None, "pkg property")
-    data = property(getData, setData, None, "data property")
 
 
 class BuildBase(Event):
     """Base class for bbmake run events"""
 
     def __init__(self, n, p, c):
-        self.name = n
-        self.pkgs = p
-        self.cfg = c
+        self._name = n
+        self._pkgs = p
+        Event.__init__(self, c)
 
     def getPkgs(self):
         return self._pkgs
@@ -145,10 +151,10 @@ class BuildBase(Event):
         self._name = name
 
     def getCfg(self):
-        return self._cfg
+        return self.data
 
     def setCfg(self, cfg):
-        self._cfg = cfg
+        self.data = cfg
 
     pkgs = property(getPkgs, setPkgs, None, "pkgs property")
     name = property(getName, setName, None, "name property")
@@ -159,7 +165,7 @@ class DepBase(PkgBase):
     """Base class for dependency events"""
 
     def __init__(self, t, data, d):
-        self.dep = d
+        self._dep = d
         PkgBase.__init__(self, t, data)
 
     def getDep(self):

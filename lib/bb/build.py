@@ -45,7 +45,7 @@ class EventException(Exception):
     """Exception which is associated with an Event."""
 
     def __init__(self, msg, event):
-        self.event = event
+        self._event = event
 
     def getEvent(self):
         return self._event
@@ -60,8 +60,8 @@ class TaskBase(event.Event):
     """Base class for task events"""
 
     def __init__(self, t, d = {}):
-        self.task = t
-        self.data = d
+        self._task = t
+        event.Event.__init__(self, d)
 
     def getTask(self):
         return self._task
@@ -70,14 +70,6 @@ class TaskBase(event.Event):
         self._task = task
 
     task = property(getTask, setTask, None, "task property")
-
-    def getData(self):
-        return self._data
-
-    def setData(self, data):
-        self._data = data
-
-    data = property(getData, setData, None, "data property")
 
 class TaskStarted(TaskBase):
     """Task execution started"""
