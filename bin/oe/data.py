@@ -5,10 +5,10 @@
 
 from oe import debug
 
-_data = {}
+def init():
+	return {}
 
-def init(d = _data):
-	d = {}
+_data = init()
 
 def initVar(var, d = _data):
 	"""Non-destructive var init for data structure"""
@@ -32,6 +32,10 @@ def getVar(var, d = _data):
 		return d[var]["content"]
 	except KeyError:
 		return None
+
+def delVar(var, d = _data):
+	"""Removes a variable from the data set"""
+	del d[var]
 
 def setVarFlag(var, flag, flagvalue, d = _data):
 	"""Set a flag for a given variable to a given value"""
@@ -205,7 +209,7 @@ def emit_env(o=sys.__stdout__, d = _data):
 			continue
 		# if we're going to output this within doublequotes,
 		# to a shell, we need to escape the quotes in the var
-		alter = re.sub('"', '\\"', var)
+		alter = re.sub('"', '\\"', val)
 		o.write(e+'="'+ alter + '"\n')	
 
 	for e in env:
@@ -215,4 +219,3 @@ def emit_env(o=sys.__stdout__, d = _data):
 			continue
 		# NOTE: should probably check for unbalanced {} within the var
 		o.write("\n" + e + '() {\n' + getVar(e, d) + '}\n')
-
