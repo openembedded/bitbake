@@ -1,26 +1,26 @@
 #!/usr/bin/env python
 
-import sys
+import os, sys, getopt, copy
 sys.path.append('/usr/share/oe')
 from oe import *
 import oe
-import os
 
 def usage(errorlevel=0, txt=''):
-	global tasks
+	print
 	if txt:
-		print
 		print txt
 
 	print "Usage: oebuild [options]... [task] [oefile]"
-#	print "Run TASK on OEFILE or standard input if OEFILE is -."
-	print "Run task on oefile.  Default task is 'build'."
-	print "Default .oe file is the first .oe file found in the"
-	print "current directory, if one exists."
-	print "Example: oebuild build content/glibc-2.3.1.oe"
-	print ""
-	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	print
+	print "Run task (defaults to 'build') on oefile (defaults to first"
+	print "*.oe file found in current dir)"
+	print
+	print "Options:"
+	print "  %s\t\t%s" % ("-V, --version", "output version information and exit")
 	print "  %s\t\t%s" % ("-f, --force", "forces execution of specified task")
+	print
+	print "Example: oebuild build content/glibc-2.3.1.oe"
+	print
 	sys.exit(0)
 
 __version__ = 1.0
@@ -28,36 +28,21 @@ def version():
 	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
 	print "OEBuild version %s" % __version__
 
-import getopt
-try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'vhf', [ 'version', 'help', 'force' ])
-except getopt.GetoptError:
-	usage(1)
-
-def get_oefiles():
-	"""Get default oefiles"""
-	dirs = os.listdir(os.getcwd())
-	oefiles = []
-	for f in dirs:
-		(root, ext) = os.path.splitext(f)
-		if ext == ".oe":
-			oefiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
-	return oefiles
-
 def get_oefile():
-	"""Get default oefile"""
-	oefiles = get_oefiles()
-	if len(oefiles):
-		return oefiles[0]
-	else:
-		return None
-
+	"""Returns the first *.oe file found in current directory"""
+	dirs = os.listdir(os.getcwd())
+	dirs.sort()
+	for f in dirs:
+		if os.path.splitext(f)[1] == ".oe":
+			return os.path.abspath(os.path.join(os.getcwd(),f))
+	return None
 
 def get_cmd():
-	"""Get default command"""
+	"""Get default command, currently always 'build'"""
 	return "build"
 
 def load_oefile(oefile, cfgdata):
+	"""Loads one *.oe file and returns the contents as a dictionary"""
 	oepath = data.getVar('OEPATH', cfg)
 	topdir = data.getVar('TOPDIR', cfg)
 	if not topdir:
@@ -78,24 +63,36 @@ def load_oefile(oefile, cfgdata):
 	# go there
 	os.chdir(topdir)
 	data.setVar('OEPATH', oepath, cfg)
-	from copy import copy
-	oe = copy(cfgdata)
+	oe = copy.copy(cfgdata)
 	try:
 		oe = parse.handle(oefile, oe) # read .oe data
 		return oe
 	except IOError, OSError:
 		return None
 
-# handle opts
+
+#
+# Handle options:
+#
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], 'Vhf', [ 'version', 'help', 'force' ])
+except getopt.GetoptError:
+	usage(1)
+
 optsonly = [ opt for (opt,val) in opts]
-if '--version' in optsonly or '-v' in optsonly:
+if '--version' in optsonly or '-V' in optsonly:
 	version()
 	sys.exit(0)
 
 if '--help' in optsonly or '-h' in optsonly:
 	usage(1)
 
+
+
+#
 # variable initialization
+#
+
 oefile = None
 cmd = None
 oedata = None
@@ -103,7 +100,7 @@ cfg = data.init()
 graph = digraph()
 
 try:
-	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
+	cfg = parse.handle("conf/oe.conf", cfg)
 except IOError:
 	(type, value, traceback) = sys.exc_info()
 	fatal("Unable to open oe.conf: %s" % value)
@@ -153,6 +150,11 @@ if not oedata:
 if not oedata:
 	fatal("Unable to open %s" % oefile)
 
+
+#
+# Calculate list of needed tasks
+#
+
 for var in oedata.keys():
 	if data.getVarFlag(var, 'handler', oedata):
 		event.register(data.getVar(var, oedata))
@@ -174,6 +176,11 @@ for var in oedata.keys():
 
 if '--force' in optsonly or '-f' in optsonly:
 	data.setVarFlag('do_%s' % cmd, 'force', 1, oedata)
+
+
+#
+# Finally exec the requested task
+#
 
 try:
 	build.exec_task('do_%s' % cmd, oedata)
