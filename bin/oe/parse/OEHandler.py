@@ -308,6 +308,7 @@ def set_automatic_vars(file, d):
 			break
 		for s in [ '${PF}', 
 			  '${PN}-${PV}',
+			  '${PN}',
 			  'files',
 			  '']:
 			path = data.expand(os.path.join(t, s), d)
