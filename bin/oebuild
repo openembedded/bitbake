@@ -59,11 +59,10 @@ for var in oe.keys():
 	for p in postdeps:
 		d = build.get_task_data()
 		pcontent = data.getVar(p, d)
-		pdeps = data.getVarFlag(pcontent, 'deps', oe)
-		if pdeps:
-			pdeps.append(var)
-			data.setVarFlag(pcontent, 'deps', pdeps, oe)
-			build.add_task(p, pcontent, pdeps)
+		pdeps = data.getVarFlag(pcontent, 'deps', oe) or []
+		pdeps.append(var)
+		data.setVarFlag(pcontent, 'deps', pdeps, oe)
+		build.add_task(p, pcontent, pdeps)
 
 try:
 	build.exec_task(sys.argv[1], oe)
