@@ -34,9 +34,9 @@ TODO:
 	[x] Add parsing of the .oe's listed in OEFILES
 	[x] Handle provides in the digraph...
 	[x] Handle dependency on just content/glibc vs content/glibc-2.3.1-r0
-	[ ] Check for recursive dependency
-	[ ] Proper event handling and failout when we encounter an unsatisfied
+	[x] Proper event handling and failout when we encounter an unsatisfied
 	    dependency.
+	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
 	[ ] Pull package name, version, and revision based on package metadata,
 	    rather than based on the filename in the build tools.  This belongs
