@@ -5,6 +5,9 @@
 
 _data = {}
 
+def init(d = _data):
+	d = {}
+
 def initVar(var, d = _data):
 	"""Non-destructive var init for data structure"""
 	if not d.has_key(var):
@@ -62,6 +65,10 @@ def getVarFlags(var, d = _data):
 def getData(d = _data):
 	"""Returns the data object used"""
 	return d
+
+def setData(newData, d = _data):
+	"""Sets the data object to the supplied value"""
+	d = newData
 
 import re
 
