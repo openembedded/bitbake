@@ -1293,7 +1293,7 @@ def read_oe(oefile, inherit = False, classname = None):
 				if o:
 					__read_oe_classname__ = o.group(1)
 
-				print "read_oe: inherit: loading %s" % file
+#				print "read_oe: inherit: loading %s" % file
 				try:
 					read_oe(file, True)
 					__read_oe_classname__ = ""
