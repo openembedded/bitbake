@@ -137,6 +137,7 @@ def handle(fn, d = {}, include = 0):
                     raise
             data.delVar("__anonqueue", d)
             data.delVar("__anonfunc", d)
+            data.update_data(d)
 
             for var in d.keys():
                 if data.getVarFlag(var, 'handler', d):
