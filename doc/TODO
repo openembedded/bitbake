@@ -14,6 +14,20 @@ TODO:
 		    the parsers.  In this way, we can automatically pull in
 		    base.oeclass for oe files, and build_an_srpm.oeclass for
 		    .src.rpm files.
+	[ ] BUG: If we only run an update_data after a load of an .oe,
+	    but not for a .oeclass, if multiple .oeclasses define, say, for
+	    example DEPENDS_prepend, one overrides the other, and we lose
+	    some of the deps.  If we update_data after each .oeclass load,
+	    then DEPENDS_prepend affects DEPENDS immediately, but subsequently,
+	    it applies against a DEPENDS variable which doesnt yet exist,
+	    because the oeclass (in the case of base/INHERIT) is loaded prior
+	    to defining DEPENDS in the .oe.  The only solution I see is to
+	    pick up _append/_prepend/_delete during the .oe feeder, and
+	    append each of them to a list of tasks to do during the
+	    update_data run.  I.e. base sets DEPENDS_prepend to content/patcher,
+	    then content/patcher ends up in the 'to prepend' list, and is then
+	    prepended when update_data runs after the completion of the .oe
+	    parse.
 
 [ ] oebuild and oemake
 	[ ] Teach the system to support grabbing OEFILES from upstream
@@ -79,6 +93,17 @@ TODO:
 	[ ] convert packages from OpenZaurus buildroot
 
 [ ] Image creation .oe files and/or external tool
+	[ ] Needs
+		[ ] Must be able to exert dependency on a .oe file, in order
+		    to ensure we have things like mkfs.jffs2, or, at a minimum,
+		    display an error when one of our requirements are not
+		    satisfied.
+		[ ] The ability to exert dependency applies to both
+		    rootfs population (ipkg, rpm) and image creation (mkfs.*)
+		[ ] If we implement image creation and rootfs population as
+		    OE files rather than independent python scripts, we gain
+		    said ability, but we then have other concerns.
+		    (i.e. ...)
 
 [x] Update patcher tool to make use of our ability to use python functions.
 [x] Write package.oeclass implemented w/ a python function/task
