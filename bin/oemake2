@@ -135,7 +135,7 @@ def buildPackage(item):
             pv = data.getVar('PV', the_data, 1)
             pr = data.getVar('PR', the_data, 1)
             tmpdir = data.getVar('TMPDIR', the_data, 1)
-            stamp = '%s/stamps/%s-%s-%s.do_stage' % (tmpdir, pn, pv, pr)
+            stamp = '%s/stamps/%s-%s-%s.do_populate_staging' % (tmpdir, pn, pv, pr)
             if os.path.exists(stamp):
                 (newver, fn) = preferred_versions[pn]
                 oldver = "%s-%s" % (pv, pr)
