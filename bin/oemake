@@ -76,6 +76,8 @@ if __name__ == "__main__":
         make.cfg = parse.handle("conf/oe.conf", make.cfg)
     except IOError:
         fatal("Unable to open oe.conf")
+    except Exception, e:
+	fatal("%s" % e)
 
     if not data.getVar("BUILDNAME", make.cfg):
         data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)

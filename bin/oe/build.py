@@ -87,6 +87,10 @@ def init(data):
 def exec_func(func, d, dirs = None):
     """Execute an OE 'function'"""
 
+    body = data.getVar(func, d)
+    if not body:
+        return
+
     if not dirs:
         dirs = (data.getVarFlag(func, 'dirs', d) or "").split()
     for adir in dirs:
@@ -96,7 +100,7 @@ def exec_func(func, d, dirs = None):
     if len(dirs) > 0:
         adir = dirs[-1]
     else:
-        adir = data.getVar('S', d)
+        adir = data.getVar('B', d, 1)
 
     adir = data.expand(adir, d)
 
@@ -117,10 +121,7 @@ def exec_func_python(func, d):
     """Execute a python OE 'function'"""
     import re, os
 
-    body = data.getVar(func, d)
-    if not body:
-        return
-    tmp = "def " + func + "():\n%s" % body
+    tmp = "def " + func + "():\n%s" % data.getVar(func, d)
     comp = compile(tmp + '\n' + func + '()', oe.data.getVar('FILE', d, 1) + ':' + func, "exec")
     prevdir = os.getcwd()
     g = {} # globals
@@ -149,10 +150,9 @@ def exec_func_shell(func, d):
             return
 
     global logfile
-    t = data.getVar('T', d)
+    t = data.getVar('T', d, 1)
     if not t:
         return 0
-    t = data.expand(t, d)
     mkdirhier(t)
     logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
     runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
