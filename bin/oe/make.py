@@ -43,13 +43,15 @@ def find_oefiles( path ):
     return finddata.readlines()
 
 def deps_clean(d):
-    deps = (data.getVar('__depends', d) or "").split(" ")
-    for dep in deps:
-        (f,old_mtime_s) = dep.split("@")
-        old_mtime = int(old_mtime_s)
-        new_mtime = parse.cached_mtime(f)
-        if (new_mtime > old_mtime):
-            return False
+    depstr = data.getVar('__depends', d)
+    if depstr:
+        deps = depstr.split(" ")
+        for dep in deps:
+            (f,old_mtime_s) = dep.split("@")
+            old_mtime = int(old_mtime_s)
+            new_mtime = parse.cached_mtime(f)
+            if (new_mtime > old_mtime):
+                return False
     return True
 
 def load_oefile( oefile ):
