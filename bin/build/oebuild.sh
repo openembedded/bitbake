@@ -294,6 +294,7 @@ oe_runconf() {
 	for lt in `find ${S} -name libtool`; do
 		mv $lt $lt.old && \
 		cat $lt.old | sed -e 's,^sys_lib_search_path_spec=.*,sys_lib_search_path_spec="",; s,^sys_lib_dlsearch_path_spec=.*,sys_lib_dlsearch_path_spec="",' > $lt
+		chmod 755 $lt
 	done
 }
 
