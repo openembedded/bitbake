@@ -167,3 +167,34 @@ def inheritFromOS(pos, d = _data):
 				setVar(s, os.environ[s], d)
 		except KeyError:
 			pass
+
+import sys
+
+def emit_env(o=sys.__stdout__, d = _data):
+	"""This prints the data so that it can later be sourced by a shell
+	Normally, it prints to stdout, but this it can be redirectory to some open file handle
+
+	It is used by exec_shell_func().
+	"""
+
+#	o.write('\nPATH="' + os.path.join(projectdir, 'bin/build') + ':${PATH}"\n')
+
+	env = d.keys()
+
+	for e in env:
+		if getVarFlag(e, "func", d):
+			continue
+		if getVarFlag(e, "python", d):
+			continue
+		o.write('\n')
+		if getVarFlag(e, "export", d):
+			o.write('export ')
+		o.write(e+'="'+getVar(e, d) + '"\n')	
+
+	for e in env:
+		if not getVarFlag(e, "func", d):
+			continue
+		if getVarFlag(e, "python", d):
+			continue
+		o.write("\n" + e + '() {\n' + getenv(e, d) + '}\n')
+

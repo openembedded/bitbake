@@ -29,3 +29,6 @@ expandData()
 print "after expansion:"
 niftyPrint()
 
+
+print "env:"
+emit_env()
