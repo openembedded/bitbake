@@ -480,7 +480,7 @@ def flatten(mytokens):
 #######################################################################
 
 _package_weights_ = {"pre":-2,"p":0,"alpha":-4,"beta":-3,"rc":-1}	# dicts are unordered
-_package_ends_    = ["pre", "p", "alpha", "beta", "rc"]			# so we need ordered list
+_package_ends_    = ["pre", "p", "alpha", "beta", "rc", "cvs", "HEAD" ]			# so we need ordered list
 
 def relparse(myver):
 	"""Parses the last elements of a version number into a triplet, that can
@@ -719,6 +719,7 @@ def pkgsplit(mypkg, silent=1):
 	# verify rev
 	revok = 0
 	myrev = myparts[-1]
+	ververify(myrev, 0)
 	if len(myrev) and myrev[0] == "r":
 		try:
 			string.atoi(myrev[1:])
@@ -781,8 +782,10 @@ def catpkgsplit(mydata,silent=1):
 	except KeyError:
 		pass
 
-	if mydata[:len(projectdir)] == projectdir:
-		mydata = mydata[len(projectdir)+1:]
+	cat = os.path.basename(os.path.dirname(mydata))
+	mydata = os.path.join(cat, os.path.basename(mydata))
+#	if mydata[:len(projectdir)] == projectdir:
+#		mydata = mydata[len(projectdir)+1:]
 	if mydata[-3:] == '.oe':
 		mydata = mydata[:-3]
 
