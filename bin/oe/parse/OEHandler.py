@@ -252,17 +252,21 @@ def vars_from_fn(mypkg, d, store=2, silent=1):
 	myparts = string.split(myfile[0],'-')
 	basepos = 0
 	for i in heh:
+		str = None
 		ind = heh.index(i)
 		loc = int.__neg__(ind + 1) + basepos
 		splitloc = len(heh) - basepos - ind
 		getval = data.getVar(i, d) or None 
-		if not isvalid(i, myparts[loc]):
-			basepos += 1
-			continue
 		if ind == len(heh) - 1:
-			str = string.join(myparts[0:loc + basepos], "-")
+			if len(myparts) > 1:
+				str = string.join(myparts[0:loc + basepos], "-")
+			else:
+				str = myparts[0]
 		else:
 			str = myparts[loc]
+		if not isvalid(i, str) or len(myparts) < (splitloc + basepos):
+			basepos += 1
+			continue
 		pkgsplit[splitloc] = str
 		if store != 0:
 			if store == 1 and getval:
@@ -302,7 +306,6 @@ def set_automatic_vars(file, d):
 	for t in [ os.path.dirname(file), '${TOPDIR}/${CATEGORY}' ]:
 		if data.getVar('FILESDIR', d):
 			break
-		print "t is %s" % t
 		for s in [ '${PF}', 
 			  '${PN}-${PV}',
 			  'files',
@@ -310,7 +313,6 @@ def set_automatic_vars(file, d):
 			path = data.expand(os.path.join(t, s), d)
 			if not os.path.isabs(path):
 				path = os.path.abspath(path)
-			print "checking %s" % path
 			if os.access(path, os.R_OK):
 				data.setVar('FILESDIR', path, d)
 				break
