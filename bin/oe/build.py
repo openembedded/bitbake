@@ -302,6 +302,9 @@ def remove_task(task, kill = 1, taskdata = _task_data):
 		ref = 2
 	_task_graph.delnode(task, ref)
 
+def task_exists(task):
+	return _task_graph.hasnode(task)
+
 def get_task_data():
 	return _task_data
 
