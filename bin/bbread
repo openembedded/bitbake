@@ -22,11 +22,16 @@ sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib
 import bb, bb.parse, bb.build
 
 d = bb.data.init()
-d = bb.parse.handle(os.path.join('conf', 'bitbake.conf'), d)
+try:
+    d = bb.parse.handle(os.path.join('conf', 'bitbake.conf'), d)
+except IOError, e:
+    bb.fatal("Unable to read conf/bitbake.conf: %s" % e)
 
 if len(sys.argv) == 2:
     try:
         d = bb.parse.handle(sys.argv[1], d)
+    except IOError, e:
+        bb.fatal("Unable to read %s: %s" % (sys.argv[1], e))
     except Exception, e:
         bb.fatal("%s" % e)
 

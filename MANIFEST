@@ -1,7 +1,7 @@
 MANIFEST
 setup.py
 bin/bbimage
-bin/bbmake
+bin/bitbake
 bin/bbread
 lib/bb/__init__.py
 lib/bb/build.py
