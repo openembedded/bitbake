@@ -1,0 +1,27 @@
+#!/usr/bin/python
+
+from oe import *
+
+cfg = data.init()
+graph = digraph()
+
+parse.init(".conf", cfg)
+data.setVarFlag("OEFILES", "inherit", "1", cfg)
+data.setVarFlag("OEDIR", "inherit", "1", cfg)
+data.setVarFlag("OEPATH", "inherit", "1", cfg)
+data.setVarFlag("PATH", "inherit", "1", cfg)
+data.inheritFromOS(1, cfg)
+
+try:
+	cfg = parse.handle("conf/oe.conf", cfg)	# Read configuration
+except IOError:
+	fatal("Unable to open oe.conf")
+
+parse.OEHandler.set_automatic_vars("content/glibc-2.3.1.oe", cfg)
+data.setVar("T", "/tmp", cfg)
+data.setVar("do_clean", "echo hehe\n", cfg)
+data.setVarFlag("do_clean", "func", 1, cfg)
+
+build.add_task("do_clean", "do_clean", {})
+build.exec_func("do_clean", "/tmp", cfg)
+build.exec_task("do_clean", "/tmp", cfg)
