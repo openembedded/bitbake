@@ -458,3 +458,172 @@ class Local(Fetch):
         return 1
 
 methods.append(Local())
+
+class Svn(Fetch):
+    """Class to fetch a module or modules from svn repositories"""
+    def supports(url, d):
+        """Check to see if a given url can be fetched with svn.
+           Expects supplied url in list form, as outputted by oe.decodeurl().
+        """
+        (type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
+        return type in ['svn']
+    supports = staticmethod(supports)
+
+    def localpath(url, d):
+        (type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
+        if "localpath" in parm:
+#           if user overrides local path, use it.
+            return parm["localpath"]
+
+        if not "module" in parm:
+            raise MissingParameterError("svn method needs a 'module' parameter")
+        else:
+            module = parm["module"]
+        if 'tag' in parm:
+            tag = parm['tag']
+        else:
+            tag = ""
+        if 'date' in parm:
+            date = parm['date']
+        else:
+            if not tag or tag == "HEAD":
+                date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
+            else:
+                date = ""
+
+        return os.path.join(oe.data.getVar("DL_DIR", d, 1),oe.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, tag, date), d))
+    localpath = staticmethod(localpath)
+
+    def go(self, d = oe.data.init(), urls = []):
+        """Fetch urls"""
+        if not urls:
+            urls = self.urls
+
+        from copy import deepcopy
+        localdata = deepcopy(d)
+        oe.data.setVar('OVERRIDES', "svn:%s" % oe.data.getVar('OVERRIDES', localdata), localdata)
+        oe.data.update_data(localdata)
+
+        for loc in urls:
+            (type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(loc, localdata))
+            if not "module" in parm:
+                raise MissingParameterError("svn method needs a 'module' parameter")
+            else:
+                module = parm["module"]
+
+            dlfile = self.localpath(loc, localdata)
+            dldir = oe.data.getVar('DL_DIR', localdata, 1)
+#           if local path contains the svn
+#           module, consider the dir above it to be the
+#           download directory
+#           pos = dlfile.find(module)
+#           if pos:
+#               dldir = dlfile[:pos]
+#           else:
+#               dldir = os.path.dirname(dlfile)
+
+#           setup svn options
+            options = []
+            if 'tag' in parm:
+                tag = parm['tag']
+            else:
+                tag = ""
+
+            if 'date' in parm:
+                date = parm['date']
+            else:
+                if not tag or tag == "HEAD":
+                    date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
+                else:
+                    date = ""
+
+            if "method" in parm:
+                method = parm["method"]
+            else:
+                method = "pserver"
+
+            svn_rsh = None
+            if method == "ext":
+                if "rsh" in parm:
+                    svn_rsh = parm["rsh"]
+
+            tarfn = oe.data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, tag, date), localdata)
+            oe.data.setVar('TARFILES', dlfile, localdata)
+            oe.data.setVar('TARFN', tarfn, localdata)
+
+            dl = os.path.join(dldir, tarfn)
+            if os.access(dl, os.R_OK):
+                oe.debug(1, "%s already exists, skipping svn checkout." % tarfn)
+                continue
+
+            svn_tarball_stash = oe.data.getVar('CVS_TARBALL_STASH', d, 1)
+            if svn_tarball_stash:
+                fetchcmd = oe.data.getVar("FETCHCOMMAND_wget", d, 1)
+                uri = svn_tarball_stash + tarfn
+                oe.note("fetch " + uri)
+                fetchcmd = fetchcmd.replace("${URI}", uri)
+                ret = os.system(fetchcmd)
+                if ret == 0:
+                    oe.note("Fetched %s from tarball stash, skipping checkout" % tarfn)
+                    continue
+
+            if date:
+                options.append("-D %s" % date)
+            if tag:
+                options.append("-r %s" % tag)
+
+            olddir = os.path.abspath(os.getcwd())
+            os.chdir(oe.data.expand(dldir, localdata))
+
+#           setup svnroot
+#            svnroot = ":" + method + ":" + user
+#            if pswd:
+#                svnroot += ":" + pswd
+            svnroot = host + path
+
+            oe.data.setVar('SVNROOT', svnroot, localdata)
+            oe.data.setVar('SVNCOOPTS', " ".join(options), localdata)
+            oe.data.setVar('SVNMODULE', module, localdata)
+            svncmd = oe.data.getVar('FETCHCOMMAND', localdata, 1)
+            svncmd = "svn co http://%s/%s" % (svnroot, module)
+
+            if svn_rsh:
+                svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
+
+#           create temp directory
+            oe.debug(2, "Fetch: creating temporary directory")
+            oe.mkdirhier(oe.data.expand('${WORKDIR}', localdata))
+            oe.data.setVar('TMPBASE', oe.data.expand('${WORKDIR}/oesvn.XXXXXX', localdata), localdata)
+            tmppipe = os.popen(oe.data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
+            tmpfile = tmppipe.readline().strip()
+            if not tmpfile:
+                oe.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
+                raise FetchError(module)
+
+#           check out sources there
+            os.chdir(tmpfile)
+            oe.note("Fetch " + loc)
+            oe.note(svncmd)
+            oe.debug(1, "Running %s" % svncmd)
+            myret = os.system(svncmd)
+            if myret != 0:
+                try:
+                    os.rmdir(tmpfile)
+                except OSError:
+                    pass
+                raise FetchError(module)
+
+            os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
+#           tar them up to a defined filename
+            myret = os.system("tar -czvf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
+            if myret != 0:
+                try:
+                    os.unlink(tarfn)
+                except OSError:
+                    pass
+#           cleanup
+            os.system('rm -rf %s' % tmpfile)
+            os.chdir(olddir)
+        del localdata
+
+methods.append(Svn())
