@@ -102,7 +102,9 @@ syn region bbDefRegion		matchgroup=bbDelimiter start=":$" end='^$' end='^\(\s\)\
 
 
 " BitBake statements
-syn keyword bbStatement		include inherit addtask addhandler
+syn keyword bbStatement		include inherit addtask addhandler display contained
+syn match bbStatementLine	"^\(include\|inherit\|addtask\|addhandler\)\s\+" contains=bbStatement nextgroup=bbStatementRest
+syn match bbStatementRest		".*$" contained contains=bbString,bbVarOverrideDeref
 
 syn match bbArrayBrackets	"[\[\]]" contained
 hi def link bbArrayBrackets	Statement
