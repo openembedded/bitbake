@@ -3,6 +3,7 @@
 import string, sys, os
 sys.path.append('/usr/share/oe')
 from oe import *
+import oe
 
 class PkgBase(event.Event):
 	"""Base class for package events"""
@@ -98,13 +99,6 @@ class RecursiveDep(DepBase):
 class MultipleProviders(PkgBase):
 	"""Multiple Providers"""
 
-def usage():
-	print "Syntax:"
-	print "\noemake <somebuildfile.oe> [<otheroe.oe> ...]"
-	print "--or--"
-	print "Set the list of .oe files in the OEFILES variable."
-	sys.exit(0)
-
 __build_cache_fail = []
 __build_cache = []
 def build(graph, item):
@@ -127,7 +121,35 @@ def build(graph, item):
 		event.fire(PkgFailed(item, pkgdata[fn]))
 		__build_cache_fail.append(item)
 		return 0
-	
+
+def usage():
+	print "Usage: oemake [options] [oefile ...]"
+#	print "Run TASK on OEFILE or standard input if OEFILE is -."
+	print "Run OEBuild's do_build task on a set of oe files, following"
+	print "inter-package dependencies."
+	print "Also obtains .oe files to build from the OEFILES environment variable."
+	print "Example: oemake content/glibc-2.3.1.oe content/patcher-1.0.oe"
+	print ""
+	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	sys.exit(0)
+
+__version__ = 1.0
+def version():
+	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
+	print "OEMake version %s" % __version__
+
+import getopt
+try:
+	(opts, args) = getopt.getopt(sys.argv[1:], 'v', [ 'version' ])
+except getopt.GetoptError:
+	usage()
+
+# handle opts
+optsonly = [ opt for (opt,val) in opts]
+if '--version' in optsonly or '-v' in optsonly:
+	version()
+	sys.exit(0)
+
 _depcmds = { "do_clean": None,
 	    "do_mrproper": None, }
 
@@ -154,7 +176,7 @@ if not data.getVar("BUILDNAME", cfg):
 buildname = data.getVar("BUILDNAME", cfg)
 
 # grab oefiles
-files = string.split(data.getVar("OEFILES", cfg) or "")
+files = string.split(data.getVar("OEFILES", cfg, 1) or "")
 files += sys.argv[1:]
 
 if not len(files):
