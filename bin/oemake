@@ -123,19 +123,20 @@ def build(graph, item):
 		return 0
 
 def usage():
-	print "Usage: oemake [options] [oefile ...]"
-#	print "Run TASK on OEFILE or standard input if OEFILE is -."
-	print "Run OEBuild's build task on a set of oe files, following"
-	print "inter-package dependencies."
-	print "Also obtains .oe files to build from the OEFILES environment variable."
-	print "Default OEFILES is the oefiles in the current directory."
-	print "Example: oemake content/glibc-2.3.1.oe content/patcher-1.0.oe"
+	print "Usage: oemake [options] [package ...]"
+	print ""
+	print "Builds specified packages, expecting that the .oe files"
+	print "it has to work from are in OEFILES"
+	print "Default packages are all packages in OEFILES."
+	print "Default OEFILES are the .oe files in the current directory."
+	print "Example: oemake glibc"
+	print "Example: oemake ncurses-5.3"
 	print ""
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
 	print "  %s\t\t%s" % ("-c [arg], --cmd [arg]", "specify command to pass to oebuild")
 	sys.exit(0)
 
-__version__ = 1.0
+__version__ = 1.1
 def version():
 	print "OpenEmbedded Build Infrastructure Core version %s" % oe.__version__
 	print "OEMake version %s" % __version__
@@ -157,7 +158,6 @@ def get_oefile():
 		return oefiles[0]
 	else:
 		return None
-
 
 import getopt
 try:
@@ -215,7 +215,6 @@ buildname = data.getVar("BUILDNAME", cfg)
 
 # grab oefiles
 files = string.split(data.getVar("OEFILES", cfg, 1) or "")
-files += args
 data.setVar("OEFILES", string.join(files), cfg)
 
 if not len(files):
@@ -223,10 +222,6 @@ if not len(files):
 
 if not len(files):
 	usage()
-
-#set_automatic_vars(sys.argv[2], )			# Deduce per-package environment variables
-
-#pkg = [ "pkgname", "depends", "provides" ]
 
 import glob
 for f in files:
@@ -270,7 +265,7 @@ for f in files:
 			provides.append("%s" % pkg[1])
 			provides.append("%s-%s" % (pkg[1], pkg[2]))
 			provides.append("%s-%s-%s" % (pkg[1], pkg[2], pkg[3]))
-			providestr = data.getVar("PROVIDES", pkgdata[f])
+			providestr = data.getVar("PROVIDES", pkgdata[f], 1)
 			if providestr is not None:
 				provides += providestr.split()
 			for provide in provides:
@@ -314,8 +309,12 @@ for k in __tokill:
 	graph.walkup(k, reallykillitem)
 
 event.fire(BuildStarted(buildname, graph.okeys, cfg))
+packages = args
 
-for k in graph.okeys:
-	graph.walkdown(k, build)
+for k in packages:
+	if pkgs.has_key(k):
+		graph.walkdown(k, build)
+	else:
+		oe.error("Unable to build %s: no .oe file provides it." % k)
 
 event.fire(BuildCompleted(buildname, graph.okeys, cfg))
