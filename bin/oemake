@@ -55,6 +55,12 @@ Default OEFILES are the .oe files in the current directory.""" )
 	parser.add_option( "-n", "--dry-run", help = "don't call oebuild, just go through the motions",
 			   action = "store_true", dest = "dry_run", default = False )
 
+	parser.add_option( "-p", "--parse-only", help = "quit after parsing the OE files (developers only)",
+			   action = "store_true", dest = "parse_only", default = False )
+
+	parser.add_option( "-d", "--disable-psyco", help = "disable using the psyco just-in-time compiler (not recommended)",
+			   action = "store_true", dest = "disable_psyco", default = False )
+
         options, args = parser.parse_args( args )
         return options, args[1:]
 
@@ -315,9 +321,24 @@ if __name__ == "__main__":
     __stats["fail"] = 0
     __stats["deps"] = 0
 
+    # Import Psyco if available and not disabled
+    if not make.options.disable_psyco:
+        try:
+            import psyco
+        except ImportError:
+            print "NOTE: Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance."
+        else:
+            psyco.bind( make.collect_oefiles )
+    else:
+        print "NOTE: You have disabled Psyco. This decreases performance."
+
     try:
         make.collect_oefiles( myProgressCallback )
-	print
+        print
+        if make.options.parse_only:
+            print "Requested parsing .oe files only. Exiting."
+            sys.exit(0)
+
         build_depgraph()
 
         if 'world' in pkgs_to_build:
