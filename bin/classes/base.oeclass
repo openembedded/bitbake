@@ -161,7 +161,7 @@ python base_do_fetch() {
 }
 
 python base_do_unpack() {
-	import os, re
+	import os, re, string
 	src_uri = data.getVar('SRC_URI', d)
 	if not src_uri:
 		note("no SRC_URI variable, nothing to be done")
