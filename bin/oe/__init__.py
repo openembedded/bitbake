@@ -53,6 +53,13 @@ __all__ = [
 
 import sys,os,string,types,re
 
+#
+# Check for the Python version. A lot of stuff needs Python 2.3 or later
+#
+if sys.version_info[:3] < (2, 3, 0):
+	print "OpenEmbedded needs Python 2.3 or later. Please upgrade."
+	sys.exit(-1)
+
 #projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 projectdir = os.getcwd()
 env = {}
