@@ -1,0 +1,16 @@
+OpenEmbedded build infrastructure Overview:
+
+There are a number of components to the infrastructure.
+
+	First, we have the 'configuration files', stored in $OEDIR/conf.  These configuration files are of a simple VAR=value format, where quotes around value are optional, and newline is the seperator between variable definitions.
+The configuration file loaded by default is conf/oe.conf.  It will attempt to load it from any dir within OEPATH, whose default is to check /usr/share/oe and the OEDIR var from the environment.  oe.conf then 'include's other, per target and per machine configuration files, as well as a 'local.conf', which contains user preference about the build (build arch, target arch, build os, target os, target machine name).
+
+	Next, there are the files which contain per package metadata.  The file naming convention is 'name-version[-revision].oe'.  Their format is as follows:
+
+	<insert detailed description of .oe file format here>
+
+	Finally, there are the tools that make use of this metadata.  We have the most basic tool, 'oebuild'.  Syntax: oebuild <command> <oe file>.  'command' being the 'task' in the build of this package you would like to run.  A package can add a task on its own, as the aforementioned .oe format mentions, but the existing default tasks are fetch, unpack, patch, compile, stage, install, and package.  'build' is always an alias to the top of the task stack (in this case, package).  oebuild simply reads in the configuration data, and the per package metadata, then, following inter-task dependencies, runs its tasks.
+
+	The next tool, moving to a bit higher level, is 'oemake'.  oemake's purpose is simply to take a list of packages to build in the OEFILES environment variable, and call out oebuild on each of them, following inter-package dependencies.  The DEPENDS variable governs build dependencies.  To reflect a build dependency on a 'build architecture' bulid, as opposed to target, simply depend on the build arch .oe file for the package in question.  RDEPENDS controls 'runtime dependency', that is, the dependency between packages on the target.
+
+	So, to build an entire package set for a given target device, one simply specifies the list of packages you want built in OEFILES, set OEDIR to a directory that contains the conf/local.conf for the target device we're doing for this build, and start oemake.  (which is, incidentally, what the script i'm using to spawn the builds from a cronjob does)
