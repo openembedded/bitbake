@@ -241,7 +241,7 @@ def decodeurl(url):
 
 def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
 	myfile = os.path.basename(path)
-	dlfile = getenv("DL_DIR")+myfile
++	dlfile = os.path.join(getenv("DL_DIR"), myfile)
 
 	try:
 		mystat = os.stat(dlfile)
@@ -326,7 +326,7 @@ def fetch_with_bk(mydigests, type,host,path,user,pswd,parm):
 
 #######################################################################
 
-def fetch(urls, listonly=0):
+def fetch(urls):
 	digestfn  = env["FILESDIR"]+"/digest-"+env["PF"]
 	mydigests = {}
 	if os.path.exists(digestfn):
@@ -1588,7 +1588,8 @@ def emit_env(o=sys.__stdout__):
 	It is used by exec_shell_func().
 	"""
 
-	o.write('\nPATH="' + projectdir + '/bin/build:${PATH}"\n')
+	o.write('\nPATH="' + os.path.join(projectdir, '/bin/build') + ':${PATH}"\n')
+
 
 	for s in env:
 		if s == s.lower(): continue
