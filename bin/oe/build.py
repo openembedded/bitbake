@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!usr/bin/python
 """
 OpenEmbedded 'Build' implementation
 
@@ -104,6 +104,8 @@ def exec_func(func, d, dirs = None):
 	prevdir = os.getcwd()
 	if adir and os.access(adir, os.F_OK):
 		os.chdir(adir)
+	else:
+		note("exec_func: unable to access dir %s" % adir)
 
 	if data.getVarFlag(func, "python", d):
 		exec_func_python(func, d)
@@ -137,6 +139,7 @@ def exec_func_shell(func, d):
 	of the directories you need created prior to execution.  The last
 	item in the list is where we will chdir/cd to.
 	"""
+	import sys
 
 	deps = data.getVarFlag(func, 'deps', _task_data)
 	check = data.getVarFlag(func, 'check', _task_data)
@@ -154,25 +157,55 @@ def exec_func_shell(func, d):
 	runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
 
 	f = open(runfile, "w")
-	f.write("#!/bin/bash\n")
+	f.write("#!/bin/sh -e\n")
 	if data.getVar("OEDEBUG", d): f.write("set -x\n")
-	oepath = data.getVar("OEPATH", d)
-	if oepath:
-		oepath = data.expand(oepath, d)
-		for s in data.expand(oepath, d).split(":"):
-			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
 	data.emit_env(f, d)
 
-#	if dir: f.write("cd %s\n" % dir)
-	if func: f.write(func +"\n")
+	f.write("cd %s\n" % os.getcwd())
+	f.write("echo 'oenote $PWD'\n")
+	f.write("oenote $PWD\n")
+	if func: f.write("%s || exit $?\n" % func)
 	f.close()
 	os.chmod(runfile, 0775)
 	if not func:
 		error("Function not specified")
 		raise FuncFailed()
+
+	# open logs
+	si = file('/dev/null', 'r')
+	so = file(logfile, 'a')
+	se = file(logfile, 'a+', 0)
+
+	# dup the existing fds so we dont lose them
+	osi = [os.dup(sys.stdin.fileno()), sys.stdin.fileno()]
+	oso = [os.dup(sys.stdout.fileno()), sys.stdout.fileno()]
+	ose = [os.dup(sys.stderr.fileno()), sys.stderr.fileno()]
+
+	# replace those fds with our own
+	os.dup2(si.fileno(), osi[1])
+	os.dup2(so.fileno(), oso[1])
+	os.dup2(se.fileno(), ose[1])
+
+	# execute function
 	prevdir = os.getcwd()
-	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
+	ret = os.system('sh -e -x %s' % runfile)
 	os.chdir(prevdir)
+
+	# restore the backups
+	os.dup2(osi[0], osi[1])
+	os.dup2(oso[0], oso[1])
+	os.dup2(ose[0], ose[1])
+
+	# close our logs
+	si.close()
+	so.close()
+	se.close()
+
+	# close the backup fds
+	os.close(osi[0])
+	os.close(oso[0])
+	os.close(ose[0])
+
 	if ret==0:
 		if not data.getVar("OEDEBUG"):
 			os.remove(runfile)
