@@ -1347,7 +1347,15 @@ def read_oe(oefile, inherit = False, classname = None):
 				fns = m.group(1)
 				n = __word__.findall(fns)
 				for f in n:
-					setenv(f, "\t%s_%s\n" % (__read_oe_classname__,f))
+					
+					oldfunc = "%s_%s" % (__read_oe_classname__, f)
+					if envflags.has_key(oldfunc) and  envflags[oldfunc].has_key("python"):
+						setenv(f, "exec_task('%s','S')\n" % oldfunc)
+						if not envflags.has_key(f):
+							envflags[f] = {}
+						envflags[f]["python"] = 1
+					else:
+						setenv(f, "\t%s\n" % oldfunc)
 			return
 
 		m = __addtask_regexp__.match(s)
