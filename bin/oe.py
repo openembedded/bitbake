@@ -359,7 +359,7 @@ def fetch(urls, listonly=0):
 			error("Couldn't download "+ loc)
 			return 0
 
-		return 1
+	return 1
 		
 
 #######################################################################
