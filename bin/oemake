@@ -6,17 +6,16 @@ import oe
 from oe import *
 
 try:
-	import itertools
+    import itertools
 except ImportError: # itertools appears in Python 2.3
-	from utils import itertools
+    from utils import itertools
 try:
-	import optparse
+    import optparse
 except ImportError: # optparse appears in Python 2.3
-	from utils import optparse
+    from utils import optparse
+parsespin = itertools.cycle( r'|/-\-' )
 
 __version__ = 1.1
-__build_cache_fail = []
-__build_cache = []
 usageinfo = """%prog [options] [package ...]
 
 Builds specified packages, expecting that the .oe files
@@ -25,219 +24,28 @@ Default packages are all packages in OEFILES.
 Default OEFILES are the .oe files in the current directory."""
 
 def usage( ):
-	sys.__stderr__.write(usageinfo.replace('%prog', 'oemake') + "\n")
-	sys.exit(0)
+    sys.__stderr__.write(usageinfo.replace('%prog', 'oemake') + "\n")
+    sys.exit(0)
 
 def handle_options( args ):
-	parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ), usage = usageinfo )
+    parser = optparse.OptionParser( version = "OpenEmbedded Build Infrastructure Core version %s, %%prog version %s" % ( oe.__version__, __version__ ), usage = usageinfo )
 
-	parser.add_option( "-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
-			   action = "store_false", dest = "abort", default = True )
+    parser.add_option( "-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
+            action = "store_false", dest = "abort", default = True )
 
-	parser.add_option( "-f", "--force", help = "force run of specified cmd, regardless of stamp status",
-			   action = "store_true", dest = "force", default = False )
+    parser.add_option( "-f", "--force", help = "force run of specified cmd, regardless of stamp status",
+            action = "store_true", dest = "force", default = False )
 
 
-	parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild",
-			   action = "store", dest = "cmd", default = "build" )
+    parser.add_option( "-c", "--cmd", help = "specify command to pass to oebuild",
+            action = "store", dest = "cmd", default = "build" )
 
-	options, args = parser.parse_args( args )
-	return options, args[1:]
+    options, args = parser.parse_args( args )
+    return options, args[1:]
 
-def buildPackage(graph, item):
-	if item in __build_cache:
-		return 1
-	if item in __build_cache_fail:
-		return 0
-	fn = pkgs[item][1]
-	if fn is None:
-		return 1
-	command = options.cmd
-	debug(1, "oebuild %s %s" % (command, fn))
-	event.fire(event.PkgStarted(item, pkgdata[fn]))
-	try:
-		oe.build.exec_task('do_%s' % command, pkgdata[fn])
-		event.fire(event.PkgSucceeded(item, pkgdata[fn]))
-		__build_cache.append(item)
-		del pkgdata[fn]
-		return 1
-	except oe.build.FuncFailed:
-		error("task stack execution failed")
-		event.fire(event.PkgFailed(item, pkgdata[fn]))
-		__build_cache_fail.append(item)
-		del pkgdata[fn]
-		return 0
-	except oe.build.EventException:
-		(type, value, traceback) = sys.exc_info()
-		e = value.event
-		error("%s event exception, aborting" % event.getName(e))
-		event.fire(event.PkgFailed(item, pkgdata[fn]))
-		__build_cache_fail.append(item)
-		del pkgdata[fn]
-		return 0
-	except Exception, e:
-		event.fire(event.PkgFailed(item, pkgdata[fn]))
-		__build_cache_fail.append(item)
-		error("%s" % e)
-		del pkgdata[fn]
-		return 0
-
-def get_oefiles( path = os.getcwd() ):
-	"""Get list of default .oe files by reading out the current directory"""
-	contents = os.listdir(path)
-	oefiles = []
-	for f in contents:
-		(root, ext) = os.path.splitext(f)
-		if ext == ".oe":
-			oefiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
-	return oefiles
-
-def find_oefiles( path ):
-	"""Find all the .oe files in a directory (uses find)"""
-	findcmd = 'find ' + path + ' -name *.oe | grep -v SCCS/'
-	try:
-		finddata = os.popen(findcmd)
-	except OSError:
-		return []
-	return finddata.readlines()
-
-def load_oefile( oefile, cfg ):
-	"""Load and parse one .oe build file"""
-	oepath = data.getVar('OEPATH', cfg)
-	topdir = data.getVar('TOPDIR', cfg)
-	if not topdir:
-		topdir = os.path.abspath(os.getcwd())
-		# set topdir to here
-		data.setVar('TOPDIR', topdir, cfg)
-	oefile = os.path.abspath(oefile)
-	oefile_loc = os.path.abspath(os.path.dirname(oefile))
-	# expand tmpdir to include this topdir
-	data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
-	# add topdir to oepath
-	oepath += ":%s" % topdir
-	# set topdir to location of .oe file
-	topdir = oefile_loc
-	#data.setVar('TOPDIR', topdir, cfg)
-	# add that topdir to oepath
-	oepath += ":%s" % topdir
-	# go there
-	oldpath = os.path.abspath(os.getcwd())
-	os.chdir(topdir)
-	data.setVar('OEPATH', oepath, cfg)
-	oe = copy.deepcopy(cfg)
-	try:
-		parse.handle(oefile, oe) # read .oe data
-		os.chdir(oldpath)
-		return oe
-	except Exception, e:
-		error("%s" % e)
-		os.chdir(oldpath)
-		return None
-
-def collect_oefiles( cfg ):
-	"""Collect all available .oe build files"""
-
-	files = (data.getVar( "OEFILES", cfg, 1 ) or "").split()
-	data.setVar("OEFILES", " ".join(files), cfg)
-
-	if not len(files):
-		files = get_oefiles()
-
-	if not len(files):
-		usage()
-
-	parsespin = itertools.cycle( r'|/-\-' )
-	sys.stdout.write("NOTE: Parsing .oe files: %s" % parsespin.next())
-
-	newfiles = []
-	for f in files:
-		if os.path.isdir(f):
-			dirfiles = find_oefiles(f)
-			if dirfiles:
-				newfiles += dirfiles
-				continue
-	newfiles += glob.glob(f) or [ f ]
-
-	for f in newfiles:
-		import re
-		oemask = oe.data.getVar('OEMASK', cfg, 1)
-		if oemask:
-			if re.search(oemask, f):
-				oe.debug(1, "oemake: skipping %s" % f)
-				continue
-		# read a file's metadata
-		try:
-			debug(1, "oemake: parsing %s" % f)
-			sys.stdout.write("\b \b%s" % parsespin.next())
-			sys.stdout.flush()
-			pkgdata[f] = load_oefile(f, cfg)
-			deps = None
-			if pkgdata[f] is not None:
-				# allow metadata files to add items to OEFILES
-				#data.update_data(pkgdata[f])
-				addoefiles = data.getVar('OEFILES', pkgdata[f]) or None
-				if addoefiles:
-					for aof in addoefiles.split():
-						if not files.count(aof):
-							if not os.path.isabs(aof):
-								aof = os.path.join(os.path.dirname(f),aof)
-							files.append(aof)
-				for var in pkgdata[f].keys():
-					if data.getVarFlag(var, "handler", pkgdata[f]) and data.getVar(var, pkgdata[f]):
-						event.register(data.getVar(var, pkgdata[f]))
-				depstr = data.getVar("DEPENDS", pkgdata[f], 1)
-				if depstr is not None:
-					deps = depstr.split()
-				pkg = []
-				pkg.append(data.getVar('CATEGORY', pkgdata[f], 1))
-				pkg.append(data.getVar('PN', pkgdata[f], 1))
-				pkg.append(data.getVar('PV', pkgdata[f], 1))
-				pkg.append(data.getVar('PR', pkgdata[f], 1))
-				root = "%s/%s-%s-%s" % (pkg[0], pkg[1], pkg[2], pkg[3])
-				provides = []
-				providestr = data.getVar("PROVIDES", pkgdata[f], 1)
-				if providestr is not None:
-					provides += providestr.split()
-				for provide in provides:
-					pkgs[provide] = [[root], None]
-				pkgs[root] = [deps, f]
-		except IOError:
-			oe.error("opening %s" % f)
-			pass
-
-	sys.stdout.write("\n")
-
-def build_depgraph( pkgs, graph, cfg ):
-	# add every provide relationship to the dependency graph, depending
-	# on all the packages that provide it
-
-	tokill = []
-	unsatisfied = []
-
-	for pkg in pkgs.keys():
-		graph.addnode(pkg, None)
-
-	for pkg in pkgs.keys():
-		(deps, fn) = pkgs[pkg]
-		if depcmd is not None:
-			if deps is not None:
-				for d in deps:
-					if not graph.hasnode(d):
-						def killitem(graph, item):
-							tokill.append(item)
-						graph.walkup(pkg, killitem)
-						unsatisfied.append([pkg, d])
-						break
-					graph.addnode(pkg, d)
-
-	for u in unsatisfied:
-		event.fire(event.UnsatisfiedDep(u[0], pkgdata[pkgs[u[0]][1]], u[1]))
-
-	for k in tokill:
-		def reallykillitem(graph, item):
-			graph.delnode(item)
-		graph.walkup(k, reallykillitem)
-
+def myProgressCallback( x, y, f ):
+    sys.stdout.write("\rNOTE: Parsing .oe files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
+    sys.stdout.flush()
 
 #
 # main
@@ -245,61 +53,66 @@ def build_depgraph( pkgs, graph, cfg ):
 
 if __name__ == "__main__":
 
-	options, args = handle_options( sys.argv )
+    make.options, args = handle_options( sys.argv )
 
-	_depcmds = { "clean": None,
-		"mrproper": None,
-		"build": "stage" }
+    _depcmds = { "clean": None,
+        "mrproper": None,
+        "build": "stage" }
 
-	if not options.cmd:
-		options.cmd = "build"
+    if not make.options.cmd:
+        make.options.cmd = "build"
 
-	if options.cmd in _depcmds:
-		depcmd=_depcmds[options.cmd]
-	else:
-		depcmd=options.cmd
+    if make.options.cmd in _depcmds:
+        depcmd=_depcmds[make.options.cmd]
+    else:
+        depcmd=make.options.cmd
 
-	pkgdata = {}
-	pkgs = {}
-	cfg = {}
-	graph = digraph()
+    make.pkgdata = {}
+    make.pkgs = {}
+    make.cfg = {}
+    make.graph = digraph()
 
-	try:
-		cfg = parse.handle("conf/oe.conf", cfg)
-	except IOError:
-		fatal("Unable to open oe.conf")
+    try:
+        make.cfg = parse.handle("conf/oe.conf", make.cfg)
+    except IOError:
+        fatal("Unable to open oe.conf")
 
-	if not data.getVar("BUILDNAME", cfg):
-		data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), cfg)
+    if not data.getVar("BUILDNAME", make.cfg):
+        data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
 
-	buildname = data.getVar("BUILDNAME", cfg)
+    buildname = data.getVar("BUILDNAME", make.cfg)
 
-	collect_oefiles( cfg )
-	build_depgraph( pkgs, graph, cfg )
-	
-	event.fire(event.BuildStarted(buildname, graph.okeys, cfg))
+    try:
+        make.collect_oefiles( myProgressCallback )
+        sys.stdout.write("\n")
+        make.build_depgraph( depcmd )
 
-	pkgs_to_build = None
-	if args:
-		if not pkgs_to_build:
-			pkgs_to_build = []
-		pkgs_to_build.extend(args)
-	if not pkgs_to_build:
-		oepkgs = data.getVar('OEPKGS', cfg, 1)
-		if oepkgs:
-			pkgs_to_build = string.split(oepkgs)
-	if not pkgs_to_build:
-		pkgs_to_build = graph.okeys
-	debug(1, "building: %s" % pkgs_to_build)
+        event.fire(event.BuildStarted(buildname, make.graph.okeys, make.cfg))
 
-	for k in pkgs_to_build:
-		if k in pkgs:
-			ret = graph.walkdown(k, buildPackage)
-			if options.abort and not ret:
-				fatal("Build of %s failed, aborting." % k)
-		else:
-			error("Unable to build %s: no .oe file provides it." % k)
-			if options.abort:
-				sys.exit(1)
+        pkgs_to_build = None
+        if args:
+            if not pkgs_to_build:
+                pkgs_to_build = []
+            pkgs_to_build.extend(args)
+        if not pkgs_to_build:
+            oepkgs = data.getVar('OEPKGS', make.cfg, 1)
+            if oepkgs:
+                pkgs_to_build = string.split(oepkgs)
+        if not pkgs_to_build:
+            pkgs_to_build = make.graph.okeys
+        debug(1, "building: %s" % pkgs_to_build)
 
-	event.fire(event.BuildCompleted(buildname, graph.okeys, cfg))
+        for k in pkgs_to_build:
+            if k in make.pkgs:
+                ret = make.graph.walkdown(k, make.buildPackage)
+                if make.options.abort and not ret:
+                    fatal("Build of %s failed, aborting." % k)
+            else:
+                error("Unable to build %s: no .oe file provides it." % k)
+                if make.options.abort:
+                    sys.exit(1)
+
+        event.fire(event.BuildCompleted(buildname, make.graph.okeys, make.cfg))
+
+    except KeyboardInterrupt:
+        print "\nNOTE: KeyboardInterrupt - Build not completed."
