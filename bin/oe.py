@@ -1604,7 +1604,9 @@ def emit_env(o=sys.__stdout__):
 		if s == s.lower(): continue
 
 		o.write('\n')
-		if envflags[s].has_key('export'): o.write('export ')
+		if envflags.has_key(s):
+			if envflags[s].has_key('export'):
+				 o.write('export ')
 
 		o.write(s+'="'+getenv(s)+'"\n')
 
