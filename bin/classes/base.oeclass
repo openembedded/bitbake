@@ -59,6 +59,26 @@ base_do_package() {
 	oenote "nothing to package"
 }
 
+python base_eventhandler() {
+		from oe import expand, note
+		from oe.event import Handled, NotHandled
+		import os, string
+		if getattr(e, "__name__", None) == None:
+			name = e.__class__.__name__
+		else:
+			name = e.__name__
+		if name in ["PkgFailed", "PkgSucceeded", "PkgStarted", "TaskFailed", "TaskSucceeded", "TaskStarted"]:
+			msg = ""
+			if name[:3] == "Pkg":
+				msg += "package %s: build %s" % (e.pkg, string.lower(name[3:]))
+			if name[:4] == "Task":
+				msg += "package %s: task %s %s" % (expand(e.data["PF"]), e.task, string.lower(name[4:]))
+			note(msg)
+#			return Handled # dont consume
+		return NotHandled
+}
+
 EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch
 
 addtask patch after do_unpack before do_compile
+addhandler base_eventhandler
