@@ -1,245 +1,161 @@
 #!/usr/bin/python
 
-import sys,string,oe
+import sys,os,string,oe
 
 
+#######################################################################
 #
-# Make output appear like a shell script
+# print_env()
 #
-oe.prepender = '#'
-print "#!/bin/bash"
-
-
+# This prints the contents of oe.env[] so that it can later be sourced by a shell
+# Normally, it prints to stdout, but this it can be redirectory to some open file handle
 #
-# Which build file do we read?
-#
-if len(sys.argv) == 2:
-        file = sys.argv[1]
-else:
-        file = oe.projectdir+'/oe-test/override-0.1.oe'
+def print_env(o=sys.__stdout__):
+	o.write('\nPATH="' + oe.projectdir + '/bin/build:${PATH}"\n')
 
+	for s in oe.env:
+		if s == s.lower(): continue
 
-#
-# Read Configation from these places:
-#
-# 1.   ${OEDIR}/conf/global.oe
-# 2.   ${OEDIR}/conf/local.oe
-# 3.   optionally from local.oe
-# 4.   optionally from conf/local.oe
-#
-# Note: it can happen that some file get imported twice, but that is not really a problem
-#
-
-oe.inherit_os_env(1)
-oe.getconfig(oe.projectdir+'/conf/global.oe', oe.env, 1)
-oe.inherit_os_env(2)
-try:
-	oe.getconfig(oe.projectdir+'/conf/local.oe', oe.env, 1)
-except IOError:
-	pass
-try:
-	oe.getconfig('local.oe', oe.env, 1)
-except IOError:
-	pass
-try:
-	oe.getconfig('conf/local.oe', oe.env, 1)
-except IOError:
-	pass
-oe.inherit_os_env(3)
-
-
-
-#
-# Deduce per-package environment variables
-#
-pkg = oe.catpkgsplit(file)
-if pkg == None:
-	oe.fatal("package file not in valid format")
-
-oe.setenv('CATEGORY',	pkg[0])
-oe.setenv('PN',		pkg[1])
-oe.setenv('PV',		pkg[2])
-oe.setenv('PR',		pkg[3])
-oe.setenv('P',		'${PN}-${PV}')
-oe.setenv('PF',		'${P}-${PR}')
-oe.setenv('WORKDIR',	'${TMPDIR}/${CATEGORY}/${PF}/work')
-oe.setenv('FILESDIR',	'${OEDIR}/${CATEGORY}/${PF}/files')
-oe.setenv('S',		'${WORKDIR}/${P}')
-oe.setenv('T',		'${TMPDIR}/${CATEGORY}/${PF}/temp')
-oe.setenv('D',		'${TMPDIR}/${CATEGORY}/${PF}/image')
-oe.setenv('SLOT',	'0')
-
-# TODO: set ${A}
-
-oe.inherit_os_env(4)
-
-
-
-#
-# Read package definition
-#
-# 1. ${OEDIR}/file
-# 2. optionally look in directories specified in ${OEPATH} for files named
-#    a) ${PF}.oe
-#    b) ${CATEGORY}/${PF}.oe
-#    c) ${P}.oe
-#    d) ${CATEGORY}/${P}.oe
-#    If one is found, go back to 2.
-#
-
-oe.getconfig(file, oe.env)
-
-# Now read local override
-if oe.env.has_key('OEPATH'):
-	oepath = oe.env['OEPATH']
-	for dir in oepath.split(':'):
-		try:
-			oe.getconfig(dir+'/'+oe.env['PF']+'.oe', oe.env)
-			continue
-		except IOError:
-			try:
-				oe.getconfig(dir+'/'+oe.env['CATEGORY']+'/'+oe.env['PF']+'.oe', oe.env)
-				continue
-			except IOError:
-				try:
-					oe.getconfig(dir+'/'+oe.env['P']+'.oe', oe.env)
-					continue
-				except IOError:
-					try:
-						oe.getconfig(dir+'/'+oe.env['CATEGORY']+'/'+oe.env['P']+'.oe', oe.env)
-						continue
-					except IOError:
-						pass
-
-
-#
-# Environment modification
-#
-# If one environment variable is named 'VAR_special'
-#
-# and 'special' is '${CCHOST}': replace ${VAR} with ${VAR_${CCHOST}}
-# and 'special' is '${TARGET}': replace ${VAR} with ${VAR_${TARGET}}
-# and 'special' is 'append': add ${VAR_${TARGET}} at the end of ${VAR}
-# and 'special' is 'prepend': add ${VAR_${TARGET}} at the beginning of ${VAR}
-# and 'special' is 'delete': delete all lines in ${VAR} that contain the sub-string ${VAR_${TARGET}}
-#
-
-# can't do delete oe.env[...] while iterating over the dictionary, so remember them
-dodel = []
-
-for s in oe.env:
-	# Handle target overrides
-	name = s+'_'+oe.env['TARGET']
-	if oe.env.has_key(name):
-		oe.env[s] = oe.env[name]
-		dodel.append(name)
-
-	# Handle architecture overrides
-	name = s+'_'+oe.env['CCHOST']
-	if oe.env.has_key(name):
-		oe.env[s] = oe.env[name]
-		dodel.append(name)
-
-	# Handle line appends:
-	name = s+'_append'
-	if oe.env.has_key(name):
-		oe.env[s] = oe.env[s]+oe.env[name]
-		dodel.append(name)
-
-	# Handle line prepends
-	name = s+'_prepend'
-	if oe.env.has_key(name):
-		oe.env[s] = oe.env[name]+oe.env[s]
-		dodel.append(name)
-
-	# Handle line deletions
-	name = s+'_delete'
-	if oe.env.has_key(name):
-		new = ''
-		pattern = string.replace(oe.env[name],"\n","").strip()
-		for line in string.split(oe.env[s],"\n"):
-			if line.find(pattern) == -1:
-				new = new + '\n' + line
-		oe.env[s] = new
-		dodel.append(name)
-
-# delete all environment vars no longer needed
-for s in dodel:
-	del oe.env[s]
-
-oe.inherit_os_env(5)
-
-	
-#
-# Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?
-#
-print
-for s in oe.env:
-	if s == s.lower(): continue		# only care for env vars
-	header = 0				# header shown?
-	try:
-		d = oe.envdesc[s]
-	except KeyError:
-		if not header:
-			oe.note("Nonstandard variables defined in your project:")
-			header = 1
-		print "#", s
-	if header:
-		print
-
-#
-# Debug output: warn about all missing variables
-#
-for s in oe.envdesc:
-	if not oe.envdesc[s].has_key('warnlevel'): continue
-	if not oe.env.has_key(s):
-		level = oe.envdesc[s]['warnlevel']
-		try: warn = oe.envdesc[s]['warn']
-		except KeyError: warn = ''
-		if level == 1:
-			oe.note('Variable %s is not defined' % s)
-			if warn: print '#', warn
-		elif level == 2:
-			oe.error('Important variable %s is not defined' % s)
-			if warn: print '#', warn
-		elif level == 3:
-			oe.error('Important variable %s is not defined' % s)
-			if warn: print '#', warn
-			sys.exit(1)
-
-
-#
-# Output all variables
-#
-print '\nPATH="' + oe.projectdir + '/bin/build:${PATH}"\n'
-
-for s in oe.env:
-	if s == s.upper():
-		print
-
-		try: print "#" + oe.envdesc[s]['desc'] + ':'
+		o.write("\n")
+		try: o.write('# ' + oe.envdesc[s]['desc'] + ':\n')
 		except KeyError: pass
+		if oe.envdesc.has_key(s) and oe.envdesc[s].has_key('export'): o.write("export ")
 
-		if oe.envdesc.has_key(s) and oe.envdesc[s].has_key('export'): print "export",
+		o.write(s+'="'+oe.env[s]+'"\n')
 
-		print s+'="'+oe.env[s]+'"'
-for s in oe.env:
-	if s == s.lower():
-		print
-		print s+'() {'
-		print oe.env[s],
-		print '}'
+	for s in oe.env:
+		if s != s.lower(): continue
 
-print
-print "# Create", oe.envdesc['WORKDIR']['desc'] + ':'
-print "mkdir -p ${WORKDIR}"
-print "# Create", oe.envdesc['S']['desc'] + ':'
-print "mkdir -p ${S}"
-print "# Create", oe.envdesc['D']['desc'] + ':'
-print "mkdir -p ${D}"
-print "# Create", oe.envdesc['T']['desc'] + ':'
-print "mkdir -p ${T}"
+		o.write("\n" + s + '() {\n' + oe.env[s] + '}\n')
 
-for s in ('pkg_setup', 'pkg_nofetch', 'pkg_fetch', 'src_compile', 'src_install'):
-	if oe.env.has_key(s):
-		print s,'|| die'
+
+#######################################################################
+
+def print_mkdir(o=sys.__stdout__):
+	o.write("\n")
+	o.write("# Create " + oe.envdesc['WORKDIR']['desc'] + ':\n')
+	o.write("mkdir -p ${WORKDIR}\n")
+	o.write("# Create " + oe.envdesc['S']['desc'] + ':\n')
+	o.write("mkdir -p ${S}\n")
+	o.write("# Create " + oe.envdesc['D']['desc'] + ':\n')
+	o.write("mkdir -p ${D}\n")
+	o.write("# Create " + oe.envdesc['T']['desc'] + ':\n')
+	o.write("mkdir -p ${T}\n")
+
+
+#######################################################################
+
+def mkdir(dir):
+	try:
+		os.makedirs(dir)
+		oe.debug(2, "created " + dir)
+	except OSError, e:
+		if e.errno != 17: raise e
+
+
+#######################################################################
+
+def do_todo():
+	oe.fatal("oebuild %s is not yet implemented" % sys.argv[1])
+
+
+#######################################################################
+
+def do_clean():
+	dir = oe.varexpand("${TMPDIR}/${CATEGORY}/${PF}", oe.env)
+	oe.debug(2, "removing " + dir)
+	os.spawnlp(os.P_WAIT, 'rm', 'rm', '-rf', dir)
+
+
+#######################################################################
+
+def do_mrproper():
+	dir = oe.env["DISTDIR"]
+	oe.debug(2, "removing " + dir)
+	os.spawnlp(os.P_WAIT, 'rm', 'rm', '-rf', dir)
+	do_clean()
+
+
+#######################################################################
+
+def do_fetch():
+	mkdir(oe.env["DISTDIR"])	# create file download directory
+
+	if oe.env.has_key('SRC_URI'):
+		#print "TODO: fetch from ${SRC_URI}"
+		oe.fetch(oe.env['SRC_URI'].split())
+
+	if oe.env.has_key('pkg_fetch'):
+		print "TODO: execute pkt_fetch"
+		return
+
+	if oe.env.has_key('pkp_nofetch'):
+		print "TODO: execute pkg_nofetch"
+
+#######################################################################
+
+def do_build():
+	oe.print_orphan_env()
+	oe.print_missing_env()
+	print_env()
+	print_mkdir()
+	#for s in ('pkg_setup', 'pkg_nofetch', 'pkg_fetch', 'src_compile', 'src_install'):
+	#	if oe.env.has_key(s):
+	#		print s,'|| die'
+
+
+
+#######################################################################
+
+def usage(errorlevel=0, txt=''):
+	print "TODO: write better Usage"
+	if txt: print txt
+	sys.exit(errorlevel)
+
+if sys.argv[1] in ('help', 'usage'):
+	usage(0);
+
+if len(sys.argv) < 3:
+	oe.fatal("try 'oebuild <command> <somebuildfile.oe>'")
+
+call_func = do_todo;
+
+for arg in sys.argv[1].split(','):
+	if arg == 'clean':
+		# print 'TODO: clean the temporary build directory'
+		call_func = do_clean
+	elif arg == 'setup':
+		print 'TODO: execute package specific setup actions'
+	elif arg == 'fetch':
+		#print 'TODO: fetch all source code'
+		call_func = do_fetch
+	elif arg == 'unpack':
+		print 'TODO: extract the sources'
+	elif arg == 'compile':
+		print 'TODO: compile the sources'
+	elif arg == 'stage':
+		print 'TODO: install into the staging directory'
+	elif arg == 'install':
+		print 'TODO: install into the temporary install directory ${D}'
+	elif arg == 'package':
+		print 'TODO: create an installable package file, e.g. an ipk'
+	elif arg == 'rootfs':
+		print 'TODO: copy files into a root fs'
+	elif arg == 'build':
+		call_func = do_build;
+	elif arg == 'digest':
+		print 'TODO: for maintainers: create md5 digest files'
+	elif arg == 'mrproper':
+		#print 'TODO: clean the temporary build directory and sources for this package'
+		call_func = do_mrproper
+	else:
+		usage(1);
+
+	oe.read_oe_conf()			# Read configuration
+	oe.set_automatic_vars(sys.argv[2])	# Deduce per-package environment variables
+	oe.read_package_conf(sys.argv[2])	# Read package configuration
+	oe.update_env()				# Environment modification
+
+	call_func()				# call the function that does some real work
+
+sys.exit(0)
