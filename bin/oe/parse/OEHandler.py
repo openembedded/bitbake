@@ -287,7 +287,7 @@ def set_automatic_vars(file, d, include):
 	for t in [ os.path.dirname(file), '${TOPDIR}/${CATEGORY}' ]:
 		if data.getVar('FILESDIR', d):
 			break
-		for s in [ '${PF}', 
+		for s in [ '${PF}',
 			  '${PN}-${PV}',
 			  '${PN}',
 			  'files',
@@ -309,6 +309,8 @@ def set_automatic_vars(file, d, include):
 		data.setVar('S', '${WORKDIR}/${P}', d)
 	if not data.getVar('SLOT', d):
 		data.setVar('SLOT', '0', d)
+#	for var in ['P', 'PF', 'FILESDIR', 'WORKDIR', 'T', 'D', 'S', 'SLOT']:
+#		data.setVarFlag(var, 'export', 1, d)
 
 def set_additional_vars(file, d, include):
 	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
