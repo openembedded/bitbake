@@ -12,9 +12,11 @@ def usage(errorlevel=0, txt=''):
 		print
 		print txt
 
-	print "Usage: oebuild [options]... task oefile"
+	print "Usage: oebuild [options]... [task] [oefile]"
 #	print "Run TASK on OEFILE or standard input if OEFILE is -."
-	print "Run task on oefile."
+	print "Run task on oefile.  Default task is 'build'."
+	print "Default .oe file is the first .oe file found in the"
+	print "current directory, if one exists."
 	print "Example: oebuild build content/glibc-2.3.1.oe"
 	print ""
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")

@@ -128,9 +128,11 @@ def usage():
 	print "Run OEBuild's build task on a set of oe files, following"
 	print "inter-package dependencies."
 	print "Also obtains .oe files to build from the OEFILES environment variable."
+	print "Default OEFILES is the oefiles in the current directory."
 	print "Example: oemake content/glibc-2.3.1.oe content/patcher-1.0.oe"
 	print ""
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+	print "  %s\t\t%s" % ("-c [arg], --cmd [arg]", "specify command to pass to oebuild")
 	sys.exit(0)
 
 __version__ = 1.0
