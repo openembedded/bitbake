@@ -152,7 +152,7 @@ def feeder(lineno, s, fn, data = {}):
             oe.data.setVarFlag(key, "export", 1, data)
         if "ques" in groupd and groupd["ques"] != None:
             val = oe.data.getVar(key, data)
-            if not val:
+            if val == None:
                 val = groupd["value"]
         elif "colon" in groupd and groupd["colon"] != None:
             val = oe.data.expand(groupd["value"], data)
