@@ -30,8 +30,40 @@ python base_do_patch () {
 		
 }
 
+python base_do_fetch() {
+	import sys
+	print sys.argv
+
+	src_uri = data.getVar('SRC_URI', d)
+	if not src_uri:
+		note("No SRC_URI variable, nothing to be done")
+		return 1
+	src_uri = data.expand(src_uri, d)
+
+	try:
+		fetch.init(src_uri.split())
+	except fetch.NoMethodError:
+		(type, value, traceback) = sys.exc_info()
+		error("No method: %s" % value)
+		raise FuncFailed()
+
+	try:
+		fetch.go(d)
+	except fetch.MissingParameterError:
+		(type, value, traceback) = sys.exc_info()
+		error("Missing parameters: %s" % value)
+		raise FuncFailed()
+	except fetch.FetchError:
+		(type, value, traceback) = sys.exc_info()
+		error("Fetch failed: %s" % value)
+		raise FuncFailed()
+}
+
 base_do_unpack() {
-	if test -z "${A}"; then oenote "nothing to extract"; fi
+	if test -z "${A}"; then
+		oenote "nothing to extract"
+		return
+	fi
 	unpack "${A}" || die "unpack failure"
 }
 
@@ -67,26 +99,32 @@ base_do_build() {
 }
 
 python base_eventhandler() {
-		from oe import expand, note
-		from oe.event import Handled, NotHandled, getName
-		import os, string
+	from oe import note, error, data
+	from oe.event import Handled, NotHandled, getName
+	import os, string
 
-		name = getName(e)
-		if name in ["PkgFailed", "PkgSucceeded", "PkgStarted"]:
-			note("package %s: build %s" % (e.pkg, string.lower(name[3:])))
-		elif name in ["TaskFailed", "TaskSucceeded", "TaskStarted"]:
-			note("package %s: task %s %s" % (expand(e.data["PF"]), e.task, string.lower(name[4:])))
-		elif name in ["UnsatisfiedDep"]:
-			note("package %s: dependency %s %s" % (e.pkg, e.dep, string.lower(name[:-3])))
-		return NotHandled
+	name = getName(e)
+	if name in ["PkgSucceeded", "PkgStarted"]:
+		note("package %s: build %s" % (e.pkg, string.lower(name[3:])))
+	elif name in ["PkgFailed"]:
+		error("package %s: build %s" % (e.pkg, string.lower(name[3:])))
+	elif name in ["TaskSucceeded", "TaskStarted"]:
+		note("package %s: task %s %s" % (data.expand(data.getVar("PF", e.data), e.data), e.task, string.lower(name[4:])))
+	elif name in ["TaskFailed"]:
+		error("package %s: task %s %s" % (data.expand(data.getVar("PF", e.data), e.data), e.task, string.lower(name[4:])))
+	elif name in ["UnsatisfiedDep"]:
+		note("package %s: dependency %s %s" % (e.pkg, e.dep, string.lower(name[:-3])))
+	return NotHandled
 }
 addhandler base_eventhandler
 
 # setup the initial task stack
-EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch do_build
-addtask fetch before do_unpack
-addtask unpack before do_compile
+EXPORT_FUNCTIONS do_fetch do_unpack do_compile do_stage do_install do_package do_patch do_build
+
+addtask fetch
+addtask unpack after do_fetch
 addtask patch after do_unpack
 addtask compile after do_unpack
 addtask stage after do_compile
-addtask install after do_stage before do_build
+addtask install after do_stage
+addtask build after do_install

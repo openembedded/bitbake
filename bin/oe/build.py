@@ -1,5 +1,4 @@
-from oe import event, data
-from oe import mkdirhier, fatal, debug, error
+from oe import data, fetch, fatal, error, note, event, mkdirhier
 import oe
 import os
 
@@ -77,12 +76,26 @@ def init(data):
 def exec_func(func, d):
 	"""Execute an OE 'function'"""
 
-	exec_func_shell(func, d)
+	if data.getVarFlag(func, "python", d):
+		exec_func_python(func, d)
+	else:
+		exec_func_shell(func, d)
 
+def tmpFunction(d):
+	"""Default function for python code blocks"""
+	return 1
 
 def exec_func_python(func, d):
 	"""Execute a python OE 'function'"""
-
+	body = data.getVar(func, d)
+	if not body:
+		return
+	print "executing function %s" % func
+	print "content: %s\n" % body
+	tmp = "def tmpFunction(d):\n%s" % body
+	comp = compile(tmp, "tmpFunction(d)", "exec")
+	exec(comp)
+	tmpFunction(d)
 
 def exec_func_shell(func, d):
 	"""Execute a shell OE 'function' Returns true if execution was successful.
@@ -103,6 +116,7 @@ def exec_func_shell(func, d):
 
 	dirs = data.getVarFlag(func, 'dirs', d) or []
 	for dir in dirs:
+		dir = data.expand(dir, d)
 		mkdirhier(dir) 
 
 	if len(dirs) > 0:
@@ -148,6 +162,8 @@ def exec_func_shell(func, d):
 		raise FuncFailed()
 
 
+_task_cache = []
+
 def exec_task(task, d):
 	"""Execute an OE 'task'
 
@@ -160,29 +176,69 @@ def exec_task(task, d):
 		raise EventException("", InvalidTask(task, d))
 
 	# check whether this task needs executing..
+	if stamp_is_current(task, d):
+		return 1
 
 	# follow digraph path up, then execute our way back down
 	def execute(graph, item):
 		func = data.getVar(item, _task_data)
 		if func:
+			if func in _task_cache:
+				return 1
+
 			event.fire(TaskStarted(func, d))
 			try:
-				exec_func_shell(func, d)
+				if task == func:
+					# prevent recursion
+					exec_func(func, d)
+				else:
+					exec_task(func, d)
 			except FuncFailed:
 				failedevent = TaskFailed(func, d)
 				event.fire(failedevent)
 				raise EventException(None, failedevent)
 			event.fire(TaskSucceeded(func, d))
+			_task_cache.append(func)
 
 	# execute
 	_task_graph.walkdown(task, execute)
 
 	# make stamp, or cause event and raise exception
-	mkstamp(task, d)
+	if not data.getVarFlag(task, 'nostamp', _task_data):
+		mkstamp(task, d)
 
 
-def stamp_is_current(task):
-	"""Check if a stamp file for a given task is current"""
+def stamp_is_current(task, d, checkdeps = 1):
+	"""Check status of a given task's stamp. returns False if it is not current and needs updating."""
+	stamp = data.getVar('STAMP', d)
+	if not stamp:
+		return False
+	stampfile = "%s.%s" % (data.expand(stamp, d), task)
+	if not os.access(stampfile, os.F_OK):
+		return False
+
+	if checkdeps == 0:
+		return True
+
+	import stat
+	tasktime = os.stat(stampfile)[stat.ST_MTIME]
+
+	_deps = []
+	def checkStamp(graph, task):
+		# check for existance
+		if data.getVarFlag(task, 'nostamp', _task_data):
+			return 1
+
+		if not stamp_is_current(task, d, 0):
+			return 0
+
+		depfile = "%s.%s" % (data.expand(stamp, d), task)
+		deptime = os.stat(depfile)[stat.ST_MTIME]
+		if deptime > tasktime:
+			return 0
+		return 1
+
+	return _task_graph.walkdown(task, checkStamp)
 
 
 def md5_is_current(task):
@@ -221,3 +277,22 @@ def remove_task(task, kill = 1, taskdata = _task_data):
 	if kill == 1:
 		ref = 2
 	_task_graph.delnode(task, ref)
+
+data.setVarFlag("do_fetch", "nostamp", "1", _task_data)
+data.setVarFlag("do_fetch", "check", "check_md5", _task_data)
+data.setVarFlag("do_fetch", "md5data", [ "${SRC_URI}" ], _task_data)
+
+data.setVarFlag("do_unpack", "check", "check_md5", _task_data)
+data.setVarFlag("do_unpack", "md5data", [ "A" ], _task_data)
+data.setVarFlag("do_unpack", "undo", [ "do_clean" ], _task_data)
+
+data.setVarFlag("do_patch", "check", "check_md5", _task_data)
+data.setVarFlag("do_patch", "md5data", [ "A" ], _task_data)
+
+data.setVarFlag("do_compile", "check", "check_md5", _task_data)
+
+data.setVarFlag("do_stage", "check", "check_md5", _task_data)
+
+data.setVarFlag("do_install", "check", "check_md5", _task_data)
+
+data.setVarFlag("do_package", "check", "check_md5", _task_data)

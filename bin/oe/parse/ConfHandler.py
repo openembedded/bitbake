@@ -15,10 +15,132 @@ def init(data):
 		oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
 	if not oe.data.getVar('OEPATH', data):
 		oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}", data)
+
 	oe.data.setVarFlag("OEFILES", "inherit", "1", data)
-	oe.data.setVarFlag("OEDIR", "inherit", "1", data)
 	oe.data.setVarFlag("OEPATH", "inherit", "1", data)
+	oe.data.setVarFlag("OEPATH", "warnlevel", "3", data)
 	oe.data.setVarFlag("PATH", "inherit", "1", data)
+	oe.data.setVarFlag("STAMP", "warnlevel", "3", data)
+
+	# directories
+	oe.data.setVarFlag("TOPDIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("TMPDIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("DL_DIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("OEDIR", "inherit", "1", data)
+	oe.data.setVarFlag("OEDIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("STAGING_DIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("STAGING_BINDIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("STAGING_LIBDIR", "warnlevel", "3", data)
+	
+	# Mirrors and download:
+	
+	oe.data.setVarFlag("DEBIAN_MIRROR", "warnlevel", "3", data)
+	oe.data.setVarFlag("SOURCEFORGE_MIRROR", "warnlevel", "3", data)
+	oe.data.setVarFlag("FETCHCOMMAND", "warnlevel", "3", data)
+	oe.data.setVarFlag("RESUMECOMMAND", "warnlevel", "3", data)
+	
+	# Architecture / Board related:
+	
+	oe.data.setVarFlag("DISTRO", "warnlevel", "0", data)
+	oe.data.setVarFlag("BUILD_ARCH", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_ARCH", "warn", "put something like BUILD_ARCH='i686' into conf/local.conf", data)
+	oe.data.setVarFlag("ARCH", "warnlevel", "3", data)
+	oe.data.setVarFlag("ARCH", "warn", "put something like ARCH='arm' into conf/local.conf", data)
+	oe.data.setVarFlag("BUILD_OS", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_OS", "warn", "put something like BUILD_OS='linux' into conf/local.conf", data)
+	oe.data.setVarFlag("OS", "warnlevel", "3", data)
+	oe.data.setVarFlag("OS", "warn", "put something like OS='linux' into conf/local.conf", data)
+	oe.data.setVarFlag("MACHINE", "warnlevel", "3", data)
+	oe.data.setVarFlag("MACHINE", "warn", "put something like MACHINE='ramses' into conf/local.conf", data)
+	oe.data.setVarFlag("USE", "warnlevel", "2", data)
+	oe.data.setVarFlag("USE", "warn", "put something like USE= with a list of features into conf/local.conf", data)
+	oe.data.setVarFlag("BUILD_SYS", "warnlevel", "3", data)
+	oe.data.setVarFlag("SYS", "warnlevel", "3", data)
+	oe.data.setVarFlag("CROSS", "warnlevel", "3", data)
+	oe.data.setVarFlag("OVERRIDES", "warnlevel", "2", data)
+	oe.data.setVarFlag("ALLOWED_FLAGS", "warnlevel", "2", data)
+	oe.data.setVarFlag("FULL_OPTIMIZATION", "warnlevel", "2", data)
+	oe.data.setVarFlag("OPTIMIZATION", "warnlevel", "2", data)
+	oe.data.setVarFlag("CPPFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("CFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("CXXFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("LDFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("CPP", "warnlevel", "3", data)
+	oe.data.setVarFlag("CC", "warnlevel", "3", data)
+	oe.data.setVarFlag("CXX", "warnlevel", "3", data)
+	oe.data.setVarFlag("LD", "warnlevel", "3", data)
+	oe.data.setVarFlag("STRIP", "warnlevel", "3", data)
+	oe.data.setVarFlag("AR", "warnlevel", "3", data)
+	oe.data.setVarFlag("RANLIB", "warnlevel", "3", data)
+	oe.data.setVarFlag("MAKE", "warnlevel", "3", data)
+
+	oe.data.setVarFlag("BUILD_CPPFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_CFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_CXXFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_LDFLAGS", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_CPP", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_CC", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_CXX", "warnlevel", "3", data)
+	oe.data.setVarFlag("BUILD_LD", "warnlevel", "3", data)
+
+	oe.data.setVarFlag("PKG_CONFIG_PATH", "warnlevel", "3", data)
+	
+	# Mandatory fields in build files
+	
+	oe.data.setVarFlag("DESCRIPTION", "warnlevel", "2", data)
+	oe.data.setVarFlag("DEPEND", "warnlevel", "1", data)
+	oe.data.setVarFlag("PROVIDES", "warnlevel", "0", data)
+	oe.data.setVarFlag("SRC_URI", "warnlevel", "1", data)
+	oe.data.setVarFlag("LICENSE", "warnlevel", "1", data)
+	oe.data.setVarFlag("HOMEPAGE", "warnlevel", "1", data)
+	
+	# Use when needed
+	
+	oe.data.setVarFlag("PROVIDE", "warnlevel", "0", data)
+	oe.data.setVarFlag("RECOMMEND", "warnlevel", "0", data)
+	oe.data.setVarFlag("FOR_TARGET", "warnlevel", "0", data)
+	oe.data.setVarFlag("SLOT", "warnlevel", "0", data)
+	oe.data.setVarFlag("GET_URI", "warnlevel", "0", data)
+	oe.data.setVarFlag("MAINTAINER", "warnlevel", "0", data)
+	oe.data.setVarFlag("EXTRA_OECONF", "warnlevel", "0", data)
+	oe.data.setVarFlag("EXTRA_OEMAKE", "warnlevel", "0", data)
+	
+	
+	oe.data.setVarFlag("P", "warnlevel", "3", data)
+	oe.data.setVarFlag("PN", "warnlevel", "3", data)
+	oe.data.setVarFlag("PV", "warnlevel", "3", data)
+	oe.data.setVarFlag("PR", "warnlevel", "3", data)
+	oe.data.setVarFlag("PF", "warnlevel", "3", data)
+	oe.data.setVarFlag("S", "warnlevel", "3", data)
+	oe.data.setVarFlag("T", "warnlevel", "3", data)
+	oe.data.setVarFlag("D", "warnlevel", "3", data)
+	oe.data.setVarFlag("A", "warnlevel", "3", data)
+	oe.data.setVarFlag("CATEGORY", "warnlevel", "2", data)
+	oe.data.setVarFlag("FILESDIR", "warnlevel", "3", data)
+	oe.data.setVarFlag("WORKDIR", "warnlevel", "3", data)
+	
+	# Package creation functions:
+	
+	oe.data.setVarFlag("do_fetch", "warnlevel", "1", data)
+	oe.data.setVarFlag("do_fetch", "dirs", [ '${DL_DIR}' ], data)
+	oe.data.setVarFlag("do_unpack", "warnlevel", "1", data)
+	oe.data.setVarFlag("do_unpack", "dirs", [ '${WORKDIR}' ], data)
+	oe.data.setVarFlag("do_compile", "warnlevel", "1", data)
+	oe.data.setVarFlag("do_compile", "dirs", [ '${S}' ], data)
+	oe.data.setVarFlag("do_stage", "warnlevel", "1", data)
+	oe.data.setVarFlag("do_stage", "dirs", [ '${STAGING_DIR}', '${STAGING_DIR}/build/include', '${STAGING_DIR}/target/include', '${STAGING_BINDIR}', '${STAGING_LIBDIR}', '${S}' ], data)
+	oe.data.setVarFlag("do_install", "warnlevel", "1", data)
+	oe.data.setVarFlag("do_install", "dirs", [ '${S}' ], data)
+	oe.data.setVarFlag("do_build", "warnlevel", "1", data)
+	oe.data.setVarFlag("do_build", "dirs", [ '${S}' ], data)
+	oe.data.setVarFlag("pkg_preinst", "warnlevel", "0", data)
+	oe.data.setVarFlag("pkg_postinst", "warnlevel", "0", data)
+	oe.data.setVarFlag("pkg_postrm", "warnlevel", "0", data)
+	oe.data.setVarFlag("pkg_prerm", "warnlevel", "0", data)
+	
+	# Automatically generated, but overrideable:
+	
+	oe.data.setVarFlag("OEDEBUG", "inherit", "1", data)
 
 def supports(fn):
 	return fn[-5:] == ".conf"

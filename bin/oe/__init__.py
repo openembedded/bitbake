@@ -60,11 +60,11 @@ __all__ = [
 	"print_orphan_env",
 
 # modules
-	"fetch",
 	"parse",
 	"data",
 	"event",
 	"build",
+	"fetch",
  ]
 
 import sys,os,string,types,re

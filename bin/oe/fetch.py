@@ -13,7 +13,7 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 
 import os, re, string
 import oe
-import oe.data
+from oe import data
 
 class FetchError(Exception):
 	"""Exception raised when a download fails"""
@@ -35,11 +35,11 @@ def init(urls = []):
 			if m.supports(u):
 				m.urls.append(u)
 	
-def go():
+def go(d = data.init()):
 	"""Fetch all urls"""
 	for m in methods:
 		if m.urls:
-			m.go()
+			m.go(d)
 
 def localpaths():
 	"""Return a list of the local filenames, assuming successful fetch"""
@@ -109,7 +109,7 @@ class Wget(Fetch):
 		return os.path.join(oe.getenv("DL_DIR"), os.path.basename(url))
 	localpath = staticmethod(localpath)
 
-	def go(self, urls = []):
+	def go(self, d = data.init(), urls = []):
 		"""Fetch urls"""
 		if not urls:
 			urls = self.urls
@@ -118,12 +118,13 @@ class Wget(Fetch):
 			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
 			myfile = os.path.basename(path)
 			dlfile = self.localpath(loc)
+			dlfile = data.expand(dlfile, d)
 
 			if os.path.exists(dlfile):
 				# if the file exists, check md5
 				# if no md5 or mismatch, attempt resume.
 				# regardless of exit code, move on.
-				myfetch = oe.getenv("RESUMECOMMAND")
+				myfetch = data.expand(data.getVar("RESUMECOMMAND", d), d)
 				oe.note("fetch " +loc)
 				myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
 				myfetch = myfetch.replace("${FILE}",myfile)
@@ -131,7 +132,7 @@ class Wget(Fetch):
 				myret = os.system(myfetch)
 				continue
 			else:
-				myfetch = oe.getenv("FETCHCOMMAND")
+				myfetch = data.expand(data.getVar("FETCHCOMMAND", d), d)
 				oe.note("fetch " +loc)
 				myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
 				myfetch = myfetch.replace("${FILE}",myfile)
@@ -167,7 +168,7 @@ class Cvs(Fetch):
 			return os.path.join(oe.getenv("DL_DIR"), parm["module"])
 	localpath = staticmethod(localpath)
 
-	def go(self, urls = []):
+	def go(self, d = data.init(), urls = []):
 		"""Fetch urls"""
 		if not urls:
 			urls = self.urls
@@ -200,7 +201,7 @@ class Cvs(Fetch):
 			else:
 				method = "pserver"
 
-			os.chdir(oe.expand(dldir))
+			os.chdir(data.expand(dldir, d))
 			cvsroot = ":" + method + ":" + user
 			if pswd:
 				cvsroot += ":" + pswd

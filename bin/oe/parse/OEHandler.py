@@ -99,6 +99,7 @@ def handle(fn, d = {}):
 		classes.remove(__classname__)
 	else:
 		set_automatic_vars(fn, d)
+		set_additional_vars(fn, d)
 	return d
 
 def feeder(lineno, s, fn, d):
@@ -111,11 +112,6 @@ def feeder(lineno, s, fn, d):
 			__infunc__ = ""
 			__body__ = []
 		else:
-			try:
-				if data.getVarFlag(__infunc__, "python", d) == 1:
-					s = re.sub(r"^\t", '', s)
-			except KeyError:
-				pass
 			__body__.append(s)
 		return
 			
@@ -137,10 +133,15 @@ def feeder(lineno, s, fn, d):
 			var = f
 			if len(classes) > 1 and classes[-2] is not None:
 				var = "%s_%s" % (classes[-2], var)
-			data.setVar(var, "\t%s_%s\n" % (classes[-1], f), d)
 			data.setVarFlag(var, "func", 1, d)
 			if data.getVarFlag("%s_%s" % (classes[-1], f), "python", d) == 1:
 				data.setVarFlag(var, "python", 1, d)
+				data.setVar(var, """
+	from oe import build
+	build.exec_func('%s_%s', d)
+""" % (classes[-1], f), d)
+			else:
+				data.setVar(var, "\t%s_%s\n" % (classes[-1], f), d)
 
 		return
 
@@ -212,6 +213,35 @@ def set_automatic_vars(file, d):
 	data.setVar('D', '${WORKDIR}/${P}', d)
 	data.setVar('SLOT', '0', d)
 	data.inheritFromOS(3, d)
+
+def set_additional_vars(file, d):
+	"""Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
+
+	debug(2,"set_additional_vars")
+
+	data.inheritFromOS(4, d)
+	src_uri = data.getVar('SRC_URI', d)
+	if not src_uri:
+		return
+	src_uri = data.expand(src_uri, d)
+
+	# Do we already have something in A?
+	a = data.getVar('A', d)
+	if a:
+		a = data.expand(a, d).split()
+	else:
+		a = []
+
+	import oe.fetch
+	try:
+		oe.fetch.init(src_uri.split())
+	except oe.fetch.NoMethodError:
+		pass
+
+	a += oe.fetch.localpaths()
+	del oe.fetch
+	data.setVar('A', string.join(a), d)
+
 
 # Add us to the handlers list
 from oe.parse import handlers
