@@ -1601,15 +1601,14 @@ def set_additional_vars():
 		else:
 			a = []
 
-		grabber = oefetch.FetchUrls()
 		try:
-			grabber.init(getenv('SRC_URI').split())
+			oefetch.init(getenv('SRC_URI').split())
 		except oefetch.NoMethodError:
 			(type, value, traceback) = sys.exc_info()
 			fatal("No method: %s" % value)
 			return
 
-		a += grabber.localpaths()
+		a += oefetch.localpaths()
 		env['A'] = string.join(a)
 
 	for s in ['S','STAGING_DIR','STAGING_BINLIB', 'STAGING_LIBDIR']:
