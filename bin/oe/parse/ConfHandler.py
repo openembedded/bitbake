@@ -17,6 +17,8 @@ def init(data):
 		oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}:%s/share/oe" % sys.prefix, data)
 
 	oe.data.setVarFlag("OEFILES", "inherit", "1", data)
+	oe.data.setVarFlag("OEPKGS", "inherit", "1", data)
+	oe.data.setVarFlag("INST_OEPKGS", "inherit", "1", data)
 	oe.data.setVarFlag("OEPATH", "inherit", "1", data)
 	oe.data.setVarFlag("OEPATH", "warnlevel", "3", data)
 	oe.data.setVarFlag("PATH", "inherit", "1", data)
