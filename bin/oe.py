@@ -1251,6 +1251,15 @@ def read_oe(oefile):
 			__read_oe_infunc__ = m.group(1)
 			return
 
+		m = __include_regexp__.match(s)
+		if m:
+			file = expand(m.group(1))
+			try:
+				read_oe(file)
+			except IOError:
+				fatal("error accessing build file %s" % file)
+			return
+
 		error("Unknown syntax in %s" % oefile)
 		print s
 		sys.exit(1)
