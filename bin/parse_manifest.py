@@ -4,6 +4,7 @@ import os, sys, string
 
 srcdir = "${WORKDIR}"
 destdir = "${D}"
+pkgdestdir = "${WORKDIR}/install"
 
 manifest = sys.__stdin__
 if len(sys.argv) == 2:
@@ -53,9 +54,28 @@ def mangle_path_install(field, fields):
 		path = os.path.join(destdir, path)
 	return path
 
+def mangle_path_populate(field, fields):
+	path = fields[field]
+	pkg = fields["pkg"]
+	if None in (pkg, path):
+		return None
+	if field == "src":
+		if os.path.isabs(path):
+			return path
+		if path.startswith('/'):
+			path = path[1:]
+		path = os.path.join(srcdir, path)
+	elif field == "dest":
+		if os.path.isabs(path):
+			return path
+		if path.startswith('/'):
+			path = path[1:]
+		path = os.path.join(pkgdestdir, pkg, path)
+	return path
+
 def getfields(line):
 	fields = {}
-	fieldmap = ( "src", "dest", "type", "mode", "uid", "gid", "major", "minor", "start", "inc", "count" )
+	fieldmap = ( "pkg", "src", "dest", "type", "mode", "uid", "gid", "major", "minor", "start", "inc", "count" )
 	for f in xrange(len(fieldmap)):
 		fields[fieldmap[f]] = None
 	
@@ -68,6 +88,8 @@ def getfields(line):
 
 	try:
 		for f in xrange(len(fieldmap)):
+			if splitline[f] == '-':
+				continue
 			fields[fieldmap[f]] = splitline[f]
 	except IndexError:
 		pass
@@ -138,6 +160,7 @@ def handle_hard_link(fields, commands, mangle_path):
 		commands.append(cmd)
 
 commands = list()
+commands_populate = list()
 commands_stage = list()
 entries = list()	
 while 1:
@@ -164,6 +187,15 @@ while 1:
 		handle_hard_link(fields, commands, mangle_path_install)
 
 	if fields["type"] == "d":
+		handle_directory(fields, commands_populate, mangle_path_populate)
+	if fields["type"] == "f":
+		handle_file(fields, commands_populate, mangle_path_populate)
+	if fields["type"] == "s":
+		handle_symbolic_link(fields, commands_populate, mangle_path_populate)
+	if fields["type"] == "h":
+		handle_hard_link(fields, commands_populate, mangle_path_populate)
+
+	if fields["type"] == "d":
 		handle_directory(fields, commands_stage, mangle_path_stage)
 	if fields["type"] == "f":
 		handle_file(fields, commands_stage, mangle_path_stage)
@@ -175,4 +207,7 @@ print '\t' + string.join(commands_stage, '\n\t')
 print "}"
 print "do_install () {"
 print '\t' + string.join(commands, '\n\t')
+print "}"
+print "do_populate () {"
+print '\t' + string.join(commands_populate, '\n\t')
 print "}"
