@@ -101,6 +101,7 @@ def exec_func(func, d, dirs = None):
 
 	adir = data.expand(adir, d)
 
+	prevdir = os.getcwd()
 	if adir and os.access(adir, os.F_OK):
 		os.chdir(adir)
 
@@ -108,6 +109,7 @@ def exec_func(func, d, dirs = None):
 		exec_func_python(func, d)
 	else:
 		exec_func_shell(func, d)
+	os.chdir(prevdir)
 
 def tmpFunction(d):
 	"""Default function for python code blocks"""
@@ -120,7 +122,9 @@ def exec_func_python(func, d):
 		return
 	tmp = "def tmpFunction(d):\n%s" % body
 	comp = compile(tmp, "tmpFunction(d)", "exec")
+	prevdir = os.getcwd()
 	exec(comp)
+	os.chdir(prevdir)
 	tmpFunction(d)
 
 def exec_func_shell(func, d):
@@ -166,7 +170,9 @@ def exec_func_shell(func, d):
 	if not func:
 		error("Function not specified")
 		raise FuncFailed()
+	prevdir = os.getcwd()
 	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
+	os.chdir(prevdir)
 	if ret==0:
 		if not data.getVar("OEDEBUG"):
 			os.remove(runfile)
