@@ -388,7 +388,7 @@ class Cvs(Fetch):
             oe.debug(2, "Fetch: checking for module directory")
             pkg=oe.data.expand('${PN}', d)
             pkgdir=os.path.join(oe.data.expand('${CVSDIR}', localdata), pkg)
-            moddir=os.path.join(pkgdir,module)
+            moddir=os.path.join(pkgdir,localdir)
             if os.access(os.path.join(moddir,'CVS'), os.R_OK):
                 oe.note("Update " + loc)
 #               update sources there
