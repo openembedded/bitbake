@@ -123,7 +123,7 @@ def buildPackage(item):
         fn = None
         
         if not providers.has_key(item):
-            oe.error("nothing provides %s" % item)
+            oe.error("Nothing provides %s" % item)
             return 0
 
         all_p = providers[item]
@@ -307,7 +307,7 @@ if __name__ == "__main__":
         if oepkgs:
             pkgs_to_build = oepkgs.split()
     if not pkgs_to_build:
-        print "nothing to build"
+        print "Nothing to build. Use 'oemake world' to build everything."
         sys.exit(0)
 
     __stats["attempt"] = 0
