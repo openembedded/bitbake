@@ -108,10 +108,13 @@ class MainWindow( MainWindowBase ):
         self.packageView.clear()
         for package in p.names():
             i = ProviderItem( self.packageView, package )
-            i.setBuildStatus( unpack=0, patch=0, configure=0, compile=0, stage=0, install=0, status="waiting" )
+            #i.setBuildStatus( status="waiting" )
+            
+        self.packageView.expandAll()
 
     def debugConsole(self):
-        shell = EPythonShell( None, { 'p':Packages.instance(), 'data':data, 'exit':lambda:shell.close() } )
+        shell = EPythonShell( None, { 'p':Packages.instance(), 'data':data, 'exit':lambda:shell.close(),
+                                      'pv':self.packageView } )
         shell.show()
         shell.resize( QSize( 500, 300 ) )
 
