@@ -45,8 +45,9 @@ if 'bdist' in sys.argv[1:]:
     generate_doc('html')
 
 import glob
+__version__ = '1.2svn'
 setup(name='bitbake',
-      version='1.0',
+      version=__version__,
       license='GPL',
       url='http://developer.berlios.de/projects/bitbake/',
       description='BitBake build tool',
@@ -60,8 +61,8 @@ setup(name='bitbake',
                os.path.join('bin', 'bbimage')],
       data_files=[(os.path.join(bbdir, 'conf'), [os.path.join('conf', 'bitbake.conf')]),
                   (os.path.join(bbdir, 'classes'), [os.path.join('classes', 'base.bbclass')]),
-                  (os.path.join(docdir, 'bitbake-1.0', 'html'), glob.glob(os.path.join('doc', 'manual', 'html', '*.html'))),
-                  (os.path.join(docdir, 'bitbake-1.0', 'pdf'), glob.glob(os.path.join('doc', 'manual', 'pdf', '*.pdf'))),],
+                  (os.path.join(docdir, 'bitbake-%s' % __version__, 'html'), glob.glob(os.path.join('doc', 'manual', 'html', '*.html'))),
+                  (os.path.join(docdir, 'bitbake-%s' % __version__, 'pdf'), glob.glob(os.path.join('doc', 'manual', 'pdf', '*.pdf'))),],
      )
 
 if 'bdist' in sys.argv[1:]:
