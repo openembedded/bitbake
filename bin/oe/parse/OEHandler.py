@@ -25,6 +25,8 @@ def supports(fn):
 	return fn[-3:] == ".oe" or fn[-8:] == ".oeclass"
 
 def inherit(files, d):
+	fn = ""
+	lineno = 0
 	for f in files:
 		file = data.expand(f, d)
 		if file[0] != "/":
@@ -77,7 +79,7 @@ def handle(fn, d = {}):
 		i = inheritclasses.split()
 	else:
 		i = []
-	i.prepend("base.oeclass")
+	i[0:0] = ["base.oeclass"]
 	inherit(i, d)
 
 	lineno = 0
