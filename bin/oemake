@@ -336,8 +336,14 @@ if __name__ == "__main__":
         oe.event.fire(oe.event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
 
         print "Build statistics:"
-        print "  Dependencies not satisfied: %d" % __stats["deps"]
-        print "  Attempted builds: %d (%d failed)" % (__stats["attempt"], __stats["fail"])
+        print "  Attempted builds: %d" % __stats["attempt"]
+        if __stats["fail"] != 0:
+            print "  Failed builds: %d" % __stats["fail"]
+        if __stats["deps"] != 0:
+            print "  Dependencies not satisfied: %d" % __stats["deps"]
+        if __stats["fail"] != 0 or __stats["deps"] != 0:
+            sys.exit(1)
+        sys.exit(0)
 
     except KeyboardInterrupt:
         print "\nNOTE: KeyboardInterrupt - Build not completed."
