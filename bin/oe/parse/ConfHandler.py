@@ -86,8 +86,13 @@ def handle(fn, data = {}, include = 0):
 	else:
 		inc_string = "reading"
 	init(data)
+
 	if include == 0:
 		oe.data.inheritFromOS(data)
+		oldfile = None
+	else:
+		oldfile = oe.data.getVar('FILE', data)
+
 	fn = obtain(fn, data)
 	oepath = ['.']
 	if not os.path.isabs(fn):
@@ -121,6 +126,9 @@ def handle(fn, data = {}, include = 0):
 			lineno = lineno + 1
 			s = s[:-1] + s2
 		feeder(lineno, s, fn, data)
+
+	if oldfile:
+		oe.data.setVar('FILE', oldfile, data)
 	return data
 
 def feeder(lineno, s, fn, data = {}):
