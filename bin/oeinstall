@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import sys, os, string, oe
 from oe import *
@@ -144,12 +144,11 @@ if args:
 	if not pkgs_to_install:
 		pkgs_to_install = []
 	pkgs_to_install.extend(args)
-inst_oepkgs = data.getVar('INST_OEPKGS', cfg_oe, 1)
-if inst_oepkgs:
-	if not pkgs_to_install:
-		pkgs_to_install = []
-	pkgs_to_install.extend(string.split(inst_oepkgs))
-#print "install: %s" % pkgs_to_install
+if not pkgs_to_install:
+	inst_oepkgs = data.getVar('INST_OEPKGS', cfg_oe, 1)
+	if inst_oepkgs:
+		pkgs_to_install = string.split(inst_oepkgs)
+debug(1, "installing: %s" % pkgs_to_install)
 
 import glob
 for f in files:
