@@ -37,7 +37,12 @@ if len(sys.argv) == 2:
         bb.fatal("%s" % e)
 
 # emit variables and shell functions
-bb.data.emit_env(sys.__stdout__, d, True)
+try:
+    bb.data.emit_env(sys.__stdout__, d, True)
+except bb.build.FuncFailed:
+    pass
+except Exception, e:
+    bb.fatal("%s" % e)
 # emit the metadata which isnt valid shell
 for e in d.keys():
     if bb.data.getVarFlag(e, 'python', d):
