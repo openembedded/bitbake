@@ -41,7 +41,7 @@ def usage():
     sys.exit(0)
 
 def version():
-    print "BitBake Build Infrastructure Core version %s" % bb.__version__
+    print "BitBake Build Tool Core version %s" % bb.__version__
     print "BBImage version %s" % __version__
 
 def emit_bb(d, base_d = {}):

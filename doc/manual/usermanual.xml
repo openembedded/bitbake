@@ -205,11 +205,35 @@ addtask printdate before do_build</screen></para>
         <title>Commands</title>
         <section>
             <title>bbread</title>
-            <para>test</para>
+            <para>bbread is a command for displaying BitBake metadata.  When run with no arguments, it has the core parse 'conf/bitbake.conf', as located in BBPATH, and displays that.  If you supply a file on the commandline, such as a .bb, then it parses that afterwards, using the aforementioned configuration metadata.</para>
         </section>
         <section>
             <title>bbmake</title>
-            <para>test</para>
+            <programlisting format="linespecific"><literal>usage: bbmake [options] [package ...]
+
+Executes the specified task (default is 'build') for a given set of BitBake files.
+It expects that BBFILES is defined, which is a space seperated list of files to
+be executed.  BBFILES does support wildcards.
+Default packages to be executed are all packages in BBFILES.
+Default BBFILES are the .bb files in the current directory.
+
+options:
+  --version            show program's version number and exit
+  -h, --help           show this help message and exit
+  -k, --continue       continue as much as possible after an error. While the
+                       target that failed, and those that depend on it, cannot
+                       be remade, the other dependencies of these targets can
+                       be processed all the same.
+  -f, --force          force run of specified cmd, regardless of stamp status
+  -cCMD, --cmd=CMD     Specify task to execute
+  -rFILE, --read=FILE  read the specified file before bitbake.conf
+  -v, --verbose        output more chit-chat to the terminal
+  -n, --dry-run        don't execute, just go through the motions
+  -p, --parse-only     quit after parsing the BB files (developers only)
+  -d, --disable-psyco  disable using the psyco just-in-time compiler (not
+                       recommended)
+  -s, --show-versions  show current and preferred versions of all packages</literal>
+            </programlisting>
         </section>
     </chapter>
     <appendix>
