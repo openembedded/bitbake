@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, getopt, glob, copy, os.path, re, sets
+import sys, os, getopt, glob, copy, os.path, re
 sys.path.append('/usr/share/oe')
 import oe
 from oe import make
