@@ -5,7 +5,7 @@
 import re, oe, string, os, sys
 import oe
 import oe.fetch
-from oe import debug, data, fetch
+from oe import debug, data, fetch, fatal
 
 from oe.parse.ConfHandler import include, init
 
@@ -23,6 +23,26 @@ classes = [ None, ]
 
 def supports(fn):
 	return fn[-3:] == ".oe" or fn[-8:] == ".oeclass"
+
+def inherit(files, d):
+	for f in files:
+		file = data.expand(f, d)
+		if file[0] != "/":
+			if d.has_key('OEPATH'):
+				__oepath_found__ = 0
+				for dir in data.expand(data.getVar('OEPATH', d), d).split(":"):
+					if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
+						file = os.path.join(dir, "classes",file + ".oeclass")
+						__oepath_found__ = 1
+			if __oepath_found__ == 0:
+				debug(1, "unable to locate %s in OEPATH"  % file)
+
+		if os.access(os.path.abspath(file), os.R_OK):
+			debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
+			include(fn, file, d)
+		else:
+			debug(1, "%s:%d: could not import %s" % (fn, lineno, file))
+
 
 def handle(fn, d = {}):
 	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __oepath_found__
@@ -52,6 +72,14 @@ def handle(fn, d = {}):
 	else:
 		f = open(fn,'r')
 
+	inheritclasses = data.getVar("INHERIT", d)
+	if inheritclasses:
+		i = inheritclasses.split()
+	else:
+		i = []
+	i.prepend("base.oeclass")
+	inherit(i, d)
+
 	lineno = 0
 	while 1:
 		lineno = lineno + 1
@@ -67,8 +95,8 @@ def handle(fn, d = {}):
 		feeder(lineno, s, fn, d)
 	if ext == ".oeclass":
 		classes.remove(__classname__)
-
-	set_automatic_vars(fn, d)
+	else:
+		set_automatic_vars(fn, d)
 	return d
 
 def feeder(lineno, s, fn, d):
@@ -146,23 +174,7 @@ def feeder(lineno, s, fn, d):
 
 		files = m.group(1)
 		n = __word__.findall(files)
-		for f in n:
-			file = data.expand(f, d)
-			if file[0] != "/":
-				if d.has_key('OEPATH'):
-					__oepath_found__ = 0
-					for dir in data.expand(data.getVar('OEPATH', d), d).split(":"):
-						if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
-							file = os.path.join(dir, "classes",file + ".oeclass")
-							__oepath_found__ = 1
-				if __oepath_found__ == 0:
-					debug(1, "unable to locate %s in OEPATH"  % file)
-
-			if os.access(os.path.abspath(file), os.R_OK):
-				debug(2, "%s:%d: inheriting %s" % (fn, lineno, file))
-				include(fn, file, d)
-			else:
-				debug(1, "%s:%d: could not import %s" % (fn, lineno, file))
+		inherit(n, d)
 		return
 
 	from oe.parse import ConfHandler
