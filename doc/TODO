@@ -92,11 +92,17 @@ TODO:
 	[ ] convert packages from OpenZaurus buildroot
 
 [ ] New c++ OE library (possibility -- open to debate)
+
 	Benefits:
-		Newly architected with no remnant cruft from portage.
-		Easier bindings for non-python tools that utilize OE.
-		Use existing fetch routines from apt-get.
-		Easier use of libkconfig.
+		* Newly architected with no remnant cruft from portage.
+		* Easier bindings for non-python tools that utilize OE.
+		* Use existing fetch routines from apt-get.
+		* Easier use of libkconfig.
+
+	Liabilities:
+		* Development time / Wheel reinvention
+		* Extra effort involved in adding python scripting support
+
 	[ ] .oe lex/yacc (flex/bison) parser
 	[ ] OE metadata data structure(s) for storage in RAM
 	[ ] Code execution, status and event handling
