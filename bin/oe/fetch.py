@@ -26,12 +26,13 @@ class MissingParameterError(Exception):
 
 methods = []
 
-def init(urls = []):
+def init(urls = [], d = oe.data.init()):
 	for m in methods:
 		m.urls = []
 
 	for u in urls:
 		for m in methods:
+			m.data = d
 			if m.supports(u):
 				m.urls.append(u)
 	
@@ -85,6 +86,14 @@ class Fetch(object):
 
 	urls = property(getUrls, setUrls, None, "Urls property")
 
+	def setData(self, data):
+		self.__data = data
+
+	def getData(self):
+		return self.__data
+
+	data = property(getData, setData, None, "Data property")
+
 	def go(self, urls = []):
 		"""Fetch urls"""
 		raise NoMethodError("Missing implementation for url")
@@ -114,11 +123,16 @@ class Wget(Fetch):
 		if not urls:
 			urls = self.urls
 
+		from copy import deepcopy
+		localdata = deepcopy(d)
+		oe.data.setVar('OVERRIDES', "wget:%s" % oe.data.getVar('OVERRIDES', localdata), localdata)
+		oe.data.update_data(localdata)
+
 		for loc in urls:
 			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
 			myfile = os.path.basename(path)
 			dlfile = self.localpath(loc)
-			dlfile = oe.data.expand(dlfile, d)
+			dlfile = oe.data.expand(dlfile, localdata)
 			md5file = "%s.md5" % dlfile
 
 			if os.path.exists(md5file):
@@ -127,9 +141,9 @@ class Wget(Fetch):
 
 			if os.path.exists(dlfile):
 				# file exists, but we didnt complete it.. trying again..
-				myfetch = oe.data.expand(oe.data.getVar("RESUMECOMMAND", d), d)
+				myfetch = oe.data.expand(oe.data.getVar("RESUMECOMMAND", localdata), localdata)
 			else:
-				myfetch = oe.data.expand(oe.data.getVar("FETCHCOMMAND", d), d)
+				myfetch = oe.data.expand(oe.data.getVar("FETCHCOMMAND", localdata), localdata)
 
 			oe.note("fetch " +loc)
 			myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
@@ -151,7 +165,7 @@ class Wget(Fetch):
 				md5out = file(md5file, 'w')
 				md5out.write("")
 				md5out.close()
-						
+		del localdata
 						
 
 methods.append(Wget())
@@ -186,6 +200,11 @@ class Cvs(Fetch):
 		if not urls:
 			urls = self.urls
 
+		from copy import deepcopy
+		localdata = deepcopy(d)
+		oe.data.setVar('OVERRIDES', "cvs:%s" % oe.data.getVar('OVERRIDES', localdata), localdata)
+		oe.data.update_data(localdata)
+
 		for loc in urls:
 			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
 			if not parm.has_key("module"):
@@ -215,20 +234,23 @@ class Cvs(Fetch):
 				method = "pserver"
 
 			olddir = os.path.abspath(os.getcwd())
-			os.chdir(oe.data.expand(dldir, d))
+			os.chdir(oe.data.expand(dldir, localdata))
 			cvsroot = ":" + method + ":" + user
 			if pswd:
 				cvsroot += ":" + pswd
 			cvsroot += "@" + host + ":" + path
 
-			cvscmd = "cvs -d" + cvsroot
-			cvscmd += " checkout " + string.join(options) + " " + module 
+			oe.data.setVar('CVSROOT', cvsroot, localdata)
+			oe.data.setVar('CVSCOOPTS', string.join(options), localdata)
+			oe.data.setVar('CVSMODULE', module, localdata)
 			oe.note("fetch " + loc)
+			cvscmd = oe.data.getVar('FETCHCOMMAND', localdata, 1)
 			oe.debug(1, "Running %s" % cvscmd)
 			myret = os.system(cvscmd)
 			os.chdir(olddir)
 			if myret != 0:
 				raise FetchError(module)
+		del localdata
 
 methods.append(Cvs())
 
