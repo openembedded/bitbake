@@ -8,7 +8,7 @@ import oe.data
 import oe.fetch
 from oe import debug
 
-from oe.parse.ConfHandler import include
+from oe.parse.ConfHandler import include, init
 
 __func_start_regexp__    = re.compile( r"((?P<py>python)\s*)*(?P<func>\w+)\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
@@ -19,28 +19,39 @@ __infunc__ = ""
 __body__   = []
 __oepath_found__ = 0
 __classname__ = ""
-
-def init(data):
-	oe.data.setVar('TOPDIR', os.getcwd(), data)
-	oe.data.setVar('OEDIR', os.path.join(sys.prefix, "share/oe"), data)
-	oe.data.setVar('OEPATH', "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}", data)
+classes = [ None, ]
 
 def supports(fn):
 	return fn[-3:] == ".oe" or fn[-8:] == ".oeclass"
 
 def handle(fn, data = {}):
-	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __infunc__, __body__, __oepath_found__, __classname__
+	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __infunc__, __body__, __oepath_found__
 	__body__ = []
 	__oepath_found__ = 0
 	__infunc__ = ""
 
-	fn = os.path.abspath(fn)
-	__classname__ = fn
-	o = re.match(r".*/([^/\.]+)",fn)
-	if o:
-		__classname__ = o.group(1)
+	(root, ext) = os.path.splitext(os.path.basename(fn))
+	if ext == ".oeclass":
+		__classname__ = root
+		classes.append(__classname__)
 
-	f = open(fn,'r')
+	init(data)
+	oe.data.inheritFromOS(1, data)
+	oepath = ['.']
+	if not os.path.isabs(fn):
+		f = None
+		voepath = oe.data.getVar("OEPATH", data)
+		if voepath:
+			oepath += voepath.split(":")
+		for p in oepath:
+			p = oe.data.expand(p, data)
+			if os.access(os.path.join(p, fn), os.R_OK):
+				f = open(os.path.join(p, fn), 'r')
+		if f is None:
+			raise IOError("file not found")
+	else:
+		f = open(fn,'r')
+
 	lineno = 0
 	while 1:
 		lineno = lineno + 1
@@ -53,10 +64,12 @@ def handle(fn, data = {}):
 			s2 = f.readline()[:-1].strip()
 			s = s[:-1] + s2
 		feeder(lineno, s, fn, data)
+	if ext == ".oeclass":
+		classes.remove(__classname__)
 	return data
 
 def feeder(lineno, s, fn, data = {}):
-	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __infunc__, __body__, __oepath_found__, __classname__, oe
+	global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __infunc__, __body__, __oepath_found__, classes, oe
 	if __infunc__:
 		if s == '}':
 			__body__.append('')
@@ -89,10 +102,14 @@ def feeder(lineno, s, fn, data = {}):
 		fns = m.group(1)
 		n = __word__.findall(fns)
 		for f in n:
-			oe.data.setVar(f, "\t%s_%s\n" % (__classname__, f), data)
-			oe.data.setVarFlag(f, "func", 1, data)
-			if oe.data.getVarFlag("%s_%s" % (__classname__, f), "python", data) == 1:
-				oe.data.setVarFlag(f, "python", 1, data)
+			var = f
+			if len(classes) > 1 and classes[-2] is not None:
+				var = "%s_%s" % (classes[-2], var)
+			oe.data.setVar(var, "\t%s_%s\n" % (classes[-1], f), data)
+			oe.data.setVarFlag(var, "func", 1, data)
+			if oe.data.getVarFlag("%s_%s" % (classes[-1], f), "python", data) == 1:
+				oe.data.setVarFlag(var, "python", 1, data)
+
 		return
 
 	m = __addtask_regexp__.match(s)
@@ -104,6 +121,7 @@ def feeder(lineno, s, fn, data = {}):
 
 	m = __inherit_regexp__.match(s)
 	if m:
+
 		files = m.group(1)
 		n = __word__.findall(files)
 		for f in n:
@@ -127,8 +145,8 @@ def feeder(lineno, s, fn, data = {}):
 				debug(1, "%s:%d: could not import %s" % (fn, lineno, file))
 		return
 
-	import oe.parse.ConfHandler
-	return oe.parse.ConfHandler.feeder(lineno, s, fn, data)
+	from oe.parse import ConfHandler
+	return ConfHandler.feeder(lineno, s, fn, data)
 
 # Add us to the handlers list
 from oe.parse import handlers
