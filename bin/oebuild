@@ -17,8 +17,8 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 
 	global logfile
 	mkdirhier(getenv('T'))
-	logfile = getenv('T') + '/log.fetch.' + str(os.getpid())
-	runfile = getenv('T') + '/run.fetch.' + str(os.getpid())
+	logfile = getenv('T') + '/log.' + func + '.' + str(os.getpid())
+	runfile = getenv('T') + '/run.' + func + '.' + str(os.getpid())
 
 	f = open(runfile, "w")
 	f.write("#!/bin/bash\n")
