@@ -1174,7 +1174,7 @@ __include_regexp__ = re.compile( r"include\s+(.+)" )
 
 __read_config_visit_cache__ = {}
 
-def read_config(cfgfile):
+def __read_config__(cfgfile):
 	"""Reads a configuration file"""
 	visit = 1
 
@@ -1190,7 +1190,7 @@ def read_config(cfgfile):
 			if not visit: return
 			s = expand(m.group(1))
 			if os.access(s, os.R_OK):
-				read_config(s)
+				__read_config__(s)
 			else:
 				debug(1, "%s:%d: could not import %s" % (cfgfile, lineno, s))
 			return
@@ -1202,6 +1202,13 @@ def read_config(cfgfile):
 	__read_config_visit_cache__[cfgfile] = 1
 	debug(2, "read " + cfgfile)
 	reader(cfgfile, process_config)
+
+def read_config(cfgfile):
+	__read_config__(cfgfile)
+	for s in ['BUILD_ARCH','BUILD_OS', 'ARCH', 'OS', 'MACHINE','ARCH']:
+		if not env.has_key(s):
+			print "FATAL: %s" % envflags[s]['warn']
+			fatal('read ${OEDIR}/oe.conf to learn about local configuration')
 
 
 __func_start_regexp__    = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
@@ -1329,14 +1336,14 @@ def setenv(var, value):
 
 def inherit_os_env(position):
 	"""This reads the the os-environment and imports variables marked as
-	such in envdesc into our environment. This happens at various places
-	during package definition read time, see comments near envdesc[] for
+	such in envflags into our environment. This happens at various places
+	during package definition read time, see comments near envflags[] for
 	more."""
 	
 	position = str(position)
 	for s in os.environ.keys():
 		try:
-			d = envdesc[s]
+			d = envflags[s]
 			if d.has_key('inherit') and d['inherit'] == position:
 				env[s] = os.environ[s]
 				debug(2, 'inherit %s from os environment' % s)
@@ -1500,11 +1507,7 @@ def emit_env(o=sys.__stdout__):
 		if s == s.lower(): continue
 
 		o.write('\n')
-		try:
-			o.write('# ' + envdesc[s]['desc'] + ':\n')
-			if envdesc[s].has_key('export'): o.write('export ')
-		except KeyError:
-			pass
+		if envflags[s].has_key('export'): o.write('export ')
 
 		o.write(s+'="'+env[s]+'"\n')
 
@@ -1517,12 +1520,12 @@ def emit_env(o=sys.__stdout__):
 #######################################################################
 
 def print_orphan_env():
-	"""Debug output: do we have any variables that are not mentioned in oe.envdesc[] ?"""
+	"""Debug output: do we have any variables that are not mentioned in oe.envflags[] ?"""
 	for s in env:
 		if s == s.lower(): continue		# only care for env vars
 		header = 0				# header shown?
 		try:
-			d = envdesc[s]
+			d = envflags[s]
 		except KeyError:
 			if not header:
 				note("Nonstandard variables defined in your project:")
@@ -1535,29 +1538,34 @@ def print_orphan_env():
 #######################################################################
 
 def print_missing_env():
-	"""Debug output: warn about all missing variables"""
+	"""Debug output: warn about all missing variables
 
-	for s in envdesc:
-		if not envdesc[s].has_key('warnlevel'): continue
+	Returns 1 on error, terminates on fatal error.
+	"""
+
+	err = 0
+	for s in envflags:
+		if not envflags[s].has_key('warnlevel'): continue
 		if env.has_key(s): continue
 
-		level = envdesc[s]['warnlevel']
-		try: warn = debug_prepend + envdesc[s]['warn']
+		level = envflags[s]['warnlevel']
+		try: warn = debug_prepend + envflags[s]['warn']
 		except KeyError: warn = ''
 		if level == 1:
 			note('Variable %s is not defined' % s)
-			if warn: print warn
+			if warn: print " -", warn
 		elif level == 2:
 			error('Important variable %s is not defined' % s)
-			if warn: print warn
+			err = 1
+			if warn: print " -", warn
 		elif level == 3:
 			error('Important variable %s is not defined' % s)
-			if warn: print warn
+			if warn: print " -", warn
 			sys.exit(1)
+	return err
 
 
-
-envdesc = {
+envflags = {
 
 #
 # desc:        descriptional text
@@ -1581,170 +1589,130 @@ envdesc = {
 
 # Directories for the Build system
 
-"OEDIR": {       "desc":      "where the build system for OpenEmbedded is located",
-                 "warnlevel": 3 },
-"OEPATH": {      "desc":      "additional directories to consider when building packages", },
-"TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded",
-                 "warnlevel": 3 },
-"DL_DIR": {      "desc":      "directory where sources will be downloaded into",
-                 "warnlevel": 3 },
-"STAMP": {       "desc":      "directory and filename (without extension) for stamp files",
-                 "warnlevel": 3 },
-"STAGING_DIR": { "desc":      "TODO", },
-"STAGING_BINDIR": { "desc":   "TODO",
-                 "warnlevel": 3 },
-"STAGING_LIBDIR": { "desc":      "TODO",
-                 "warnlevel": 3 },
+"OEDIR":		{ "warnlevel": 3 },
+"OEPATH":		{ "inherit": 1 },
+"TMPDIR":		{ "warnlevel": 3 },
+"DL_DIR":		{ "warnlevel": 3 },
+"STAMP":		{ "warnlevel": 3 },
+"STAGING_DIR":		{ "warnlevel": 3 },
+"STAGING_BINDIR":	{ "warnlevel": 3 },
+"STAGING_LIBDIR":	{ "warnlevel": 3 },
 
 # Mirros and download:
 
-"DEBIAN_MIRROR": { "desc":   "TODO" },
-"SOURCEFORGE_MIRROR": { "desc":   "TODO" },
-"FETCHCOMMAND": { "desc":    "command to fetch a file via ftp/http/https",
-                 "warnlevel": 3 },
-"RESUMECOMMAND":{ "desc":    "command to resume the fetch of a file via ftp/http/https",
-                 "warnlevel": 3 },
+"DEBIAN_MIRROR":	{ "warnlevel": 3 },
+"SOURCEFORGE_MIRROR":	{ "warnlevel": 3 },
+"FETCHCOMMAND":		{ "warnlevel": 3 },
+"RESUMECOMMAND":	{ "warnlevel": 3 },
 
 # Architecture / Board related:
 
-"DISTRO": {      "desc":      "TODO" },
-"ARCH": {        "desc":      "this is --target to run on (for configure), e.g. 'arm'",
-                 "warnlevel": 3,
-                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
-"OS": {          "desc":      "TODO",
-                 "warnlevel": 3 },
-"BUILD_ARCH": {  "desc":      "this is --build on host (for configure), e.g. 'i386'",
-                 "warnlevel": 3,
-                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
-"BUILD_OS": {    "desc":      "TODO" },
-"MACHINE": {     "desc":      "Target system to compile for, e.g. 'zaurus'",
-                 "warnlevel": 2,
-                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global", },
-"USE": {         "desc":      "This is set to what USE variables your package uses", },
+"DISTRO":		{ "warnlevel": 0, },
+"BUILD_ARCH":		{ "warnlevel": 3,
+			  "warn":      "put something like BUILD_ARCH='i686' into ${OEDIR}/conf/local.conf" },
+"BUILD_OS":		{ "warnlevel": 3,
+			  "warn":      "put something like BUILD_OS='linux' into ${OEDIR}/conf/local.conf" },
+"ARCH":			{ "warnlevel": 3,
+			  "warn":      "put something like ARCH='arm' into ${OEDIR}/conf/local.conf" },
+"OS":			{ "warnlevel": 3,
+			  "warn":      "put something like OS='linux' into ${OEDIR}/conf/local.conf" },
+"MACHINE":		{ "warnlevel": 3,
+			  "warn":      "put something like MACHINE='ramses' into ${OEDIR}/conf/local.conf" },
+"USE":			{ "warnlevel": 2,
+			  "warn":      "put USE= with a list of features into ${OEDIR}/conf/local.conf" },
+"SYS":			{ "warnlevel": 3 },
+"BUILD_SYS":		{ "warnlevel": 3 },
+"CROSS":		{ "warnlevel": 3 },
+"OVERRIDES":     	{ "warnlevel": 2 },
+"ALLOWED_FLAGS":	{ "warnlevel": 2 },
 
-"SYS": {          "desc":      "TODO" },
-"BUILD_SYS": {   "desc":      "TODO" },
-"CROSS": {       "desc":      "TODO" },
-"OVERRIDES":     { "desc":      "TODO" },
-"ALLOWED_FLAGS": { "desc":    "flags not to strip by strip-flags", },
+"FULL_OPTIMIZATION":	{ "warnlevel": 2 },
+"OPTIMIZATION":		{ "warnlevel": 2 },
 
-"FULL_OPTIMIZATION": { "desc":"TODO" },
-"OPTIMIZATION":  { "desc":    "TODO" },
+"CPPFLAGS":		{ "warnlevel": 3 },
+"CFLAGS":		{ "warnlevel": 3 },
+"CXXFLAGS":		{ "warnlevel": 3 },
+"LDFLAGS":		{ "warnlevel": 3 },
+"CPP":			{ "warnlevel": 3 },
+"CC":			{ "warnlevel": 3 },
+"CXX":			{ "warnlevel": 3 },
+"LD":			{ "warnlevel": 3 },
+"STRIP":		{ "warnlevel": 3 },
+"AR":			{ "warnlevel": 3 },
+"RANLIB":		{ "warnlevel": 3 },
 
-"CPPFLAGS":      { "desc":    "TODO" },
-"CFLAGS":        { "desc":    "TODO" },
-"CXXFLAGS":      { "desc":    "TODO" },
-"LDFLAGS":       { "desc":    "TODO" },
-"CPP":           { "desc":    "TODO" },
-"CC":            { "desc":    "TODO" },
-"CXX":           { "desc":    "TODO" },
-"LD":            { "desc":    "TODO" },
-"STRIP":         { "desc":    "TODO" },
-"AR":            { "desc":    "TODO" },
-"RANLIB":        { "desc":    "TODO" },
+"BUILD_CPPFLAGS":	{ "warnlevel": 3 },
+"BUILD_CFLAGS":		{ "warnlevel": 3 },
+"BUILD_CXXFLAGS":	{ "warnlevel": 3 },
+"BUILD_LDFLAGS":	{ "warnlevel": 3 },
+"BUILD_CPP":		{ "warnlevel": 3 },
+"BUILD_CC":		{ "warnlevel": 3 },
+"BUILD_CXX":		{ "warnlevel": 3 },
+"BUILD_LD":		{ "warnlevel": 3 },
 
-"BUILD_CPPFLAGS":{ "desc":    "TODO" },
-"BUILD_CFLAGS":  { "desc":    "TODO" },
-"BUILD_CXXFLAGS":{ "desc":    "TODO" },
-"BUILD_LDFLAGS": { "desc":    "TODO" },
-"BUILD_CPP":     { "desc":    "TODO" },
-"BUILD_CC":      { "desc":    "TODO" },
-"BUILD_CXX":     { "desc":    "TODO" },
-"BUILD_LD":      { "desc":    "TODO" },
-
-"PKG_CONFIG_PATH": { "desc":    "TODO" },
+"PKG_CONFIG_PATH":	{ "warnlevel": 3 },
 
 
 
 # Mandatory fields in build files
 
-"DESCRIPTION": { "desc":      "description of the package",
-                 "warnlevel": 3 },
-"DEPEND": {      "desc":      "dependencies required for building this package",
-                 "warnlevel": 2 },
-"RDEPEND": {     "desc":      "dependencies required to run this package",
-                 "warnlevel": 2 },
-"PROVIDES": {    "desc":      "dependencies fulfulled by this package", },
-"SRC_URI": {     "desc":      "where to get the sources",
-                 "warnlevel": 1 },
-"LICENSE": {     "desc":      "license of the source code for this package",
-                 "warnlevel": 1 },
-"HOMEPAGE": {    "desc":      "URL of home page for the source code project",
-                 "warnlevel": 1 },
+"DESCRIPTION":		{ "warnlevel": 3 },
+"DEPEND":		{ "warnlevel": 1 },
+"RDEPEND":		{ "warnlevel": 1 },
+"PROVIDES":		{ "warnlevel": 0 },
+"SRC_URI":		{ "warnlevel": 1 },
+"LICENSE":		{ "warnlevel": 1 },
+"HOMEPAGE":		{ "warnlevel": 1 },
 
 # Use when needed
 
-"PROVIDE": {     "desc":      "use when a package provides a virtual target", },
-"RECOMMEND": {   "desc":      "suggest additional packages to install to enhance the current one", },
-"FOR_TARGET": {  "desc":      "allows us to disable allow package for specific arch/boards", },
-"SLOT": {        "desc":      "installation slot, i.e glib1.2 could be slot 0 and glib2.0 could be slot 1", },
-"GET_URI": {     "desc":      "get this files like SRC_URI, but don't extract them", },
-"MAINTAINER": {  "desc":      "who is reponsible for fixing errors?", },
-"OEDEBUG": {     "desc":      "debug-level for the builder", },
+"PROVIDE":		{ "warnlevel": 0 },
+"RECOMMEND":		{ "warnlevel": 0 },
+"FOR_TARGET":		{ "warnlevel": 0 },
+"SLOT":			{ "warnlevel": 0 },
+"GET_URI":		{ "warnlevel": 0 },
+"MAINTAINER":		{ "warnlevel": 0 },
 
 
 
-"OEBUILD": {     "desc":      "name(s) of the package build files (global and local)",
-                 "warnlevel": 3 },
-"P": {           "desc":      "package name without the revision, e.g. 'xfree-4.2.1'",
-                 "warnlevel": 3 },
-"CATEGORY": {    "desc":      "category for the source package, e.g. 'x11-base'",
-                 "warnlevel": 2 },
-"PN": {          "desc":      "package name without the version, e.g. 'xfree'",
-                 "warnlevel": 3 },
-"PV": {          "desc":      "package version without the revision, e.g. '4.2.1'",
-                 "warnlevel": 3 },
-"PR": {          "desc":      "package revision, e.g. 'r2'",
-                 "warnlevel": 2 },
-"PF": {          "desc":      "full package name, e.g. 'xfree-4.2.1-r2'",
-                 "warnlevel": 3 },
-"WORKDIR": {     "desc":      "path to the package build root",
-                 "warnlevel": 3 },
-"FILESDIR": {    "desc":      "location of package add-on files (patches, configurations etc)",
-                 "warnlevel": 3 },
-"S": {           "desc":      "directory where source will be extracted into",
-                 "warnlevel": 3 },
-"T": {           "desc":      "free-to-use temporary directory during package built time",
-                 "warnlevel": 3 },
-"D": {           "desc":      "path to a destination install directory",
-                 "warnlevel": 3 },
-"A": {           "desc":      "lists all sourcefiles without URL/Path",
-                 "warnlevel": 1 },
+#"OEBUILD":		{ "warnlevel": 3 },
+"P":			{ "warnlevel": 3 },
+"CATEGORY":		{ "warnlevel": 2 },
+"PN":			{ "warnlevel": 3 },
+"PV":			{ "warnlevel": 3 },
+"PR":			{ "warnlevel": 2 },
+"PF":			{ "warnlevel": 3 },
+"WORKDIR":		{ "warnlevel": 3 },
+"FILESDIR":		{ "warnlevel": 3 },
+"S":			{ "warnlevel": 3 },
+"T":			{ "warnlevel": 3 },
+"D":			{ "warnlevel": 3 },
+"A":			{ "warnlevel": 1 },
 
 # Package creation functions:
 
-"pkg_setup": {   "desc":     "use for setup functions before any other action takes place", },
-"pkg_nofetch": { "desc":     "ask user to get the source files himself", },
-"pkg_fetch": {   "desc":     "fetch source code", },
-"src_compile": { "desc":     "commands needed to compile package",
-                 "warnlevel": 2 },
-"src_install": { "desc":     "this should install the compiled package into ${D}",
-                 "warnlevel": 2 },
-"src_stage": {   "desc":     "install compiled stuff into the staging directory", },
-"pkg_preinst": { "desc":     "commands to be run on the target before installation ", },
-"pkg_postint": { "desc":     "commands to be run on the target after installion", },
-"pkg_prerm": {   "desc":     "commands to be run on the target before removal", },
-"pkg_postrm": {  "desc":     "commands to be run on the target after removal", },
-
-# System wide configuration
-
-"USE": {          "desc":    "which options should be enabled in packages", },
-"FEATURES": {     "desc":    "enabled features of the buildsystem", },
+"pkg_setup":		{ "warnlevel": 0 },
+"pkg_nofetch":		{ "warnlevel": 0 },
+"pkg_fetch":		{ "warnlevel": 0 },
+"src_compile":		{ "warnlevel": 1 },
+"src_install":		{ "warnlevel": 1 },
+"src_stage":		{ "warnlevel": 0 },
+"pkg_preinst":		{ "warnlevel": 0 },
+"pkg_postint":		{ "warnlevel": 0 },
+"pkg_prerm":		{ "warnlevel": 0 },
+"pkg_postrm":		{ "warnlevel": 0 },
 
 # Automatically generated, but overrideable:
 
-"do_unpack": {   "desc":     "creates the source directory ${S} and populates it",
-                 "warnlevel": 2 },
-"do_compile": {  "desc":     "compiles the source",
-                 "warnlevel": 2 },
+"do_unpack":		{ "warnlevel": 1 },
+"do_compile":		{ "warnlevel": 1 },
 
-"OEDEBUG": {     "desc":     "build-time debug level",
-                 "inherit":  "1" },
+"OEDEBUG":		{ "inherit":  "1" },
 
 }
 
 env['OEDIR'] = projectdir
-
+inherit_os_env(1)
 
 if __name__ == "__main__":
 	import doctest, oe
