@@ -30,11 +30,16 @@ TODO:
 	    as it is really extraneous, given handle does it for you.
 	[x] Add oe.conf parsing - abort if OEFILES is not defined
 	[x] Add parsing of the .oe's listed in OEFILES
-		[ ] Three types of dependency, and any of the three should
-		    have a corresponding provides form.  Establish the
-		    variable names, and make use of it.  Remember to deal
-		    with per package (PACKAGES var) metadata overrides.
-	[ ] Handle provides in the digraph...
+	[x] Handle provides in the digraph...
+	[ ] Check for recursive dependency
+	[ ] Handle dependency on just content/glibc vs content/glibc-2.3.1-r0
+	[ ] Proper event handling and failout when we encounter an unsatisfied
+	    dependency.
+	[ ] Deal with multiple provides
+	[ ] Pull package name, version, and revision based on package metadata,
+	    rather than based on the filename in the build tools.  This belongs
+	    in the parser code.  In this way, we can more easily facilitate
+	    builds of src.rpms, .dsc's, et cetera.
 
 [.] Event handling
 	[x] event handling core
@@ -49,6 +54,13 @@ TODO:
 		[ ] default event handlers
 		[x] event declarations
 		[x] event firing
+
+[.] oemaked
+	[x] Autobuilder daemon, monitors files and/or directories
+	    For changes, and runs oemake when appropriate.
+	[ ] Monitor the stamps for a given .oe file as well, to ensure
+	    changes in build state as well as changes to build metadata result
+	    in a rebuild.
 
 [x] Update patcher tool to make use of our ability to use python functions.
 [x] Write package.oeclass implemented w/ a python function/task
