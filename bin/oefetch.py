@@ -155,7 +155,7 @@ class Wget(Fetch):
 
 			myfetch = getenv("RESUMECOMMAND")
 			note("fetch " +loc)
-			myfetch = myfetch.replace("${URI}",loc)
+			myfetch = myfetch.replace("${URI}",re.sub(r";.*$","",loc))
 			myfetch = myfetch.replace("${FILE}",myfile)
 			debug(2,myfetch)
 			myret = os.system(myfetch)
