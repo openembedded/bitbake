@@ -11,7 +11,7 @@ Copyright: (c) 2003 Chris Larson
 Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 
-import os, re
+import os, re, string
 import oe
 import oe.data
 
