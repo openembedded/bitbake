@@ -295,6 +295,8 @@ update_env()					# Environment modification, e.g. local overrides
 tasks = {
 	"clean" : { "func" : "do_clean" },
 	"mrproper" : { "func" : "do_mrproper" },
+	"test" : { "func" : "do_test" },
+	"showenv" : { "func" : "do_showenv" },
 	"fetch" : { "func" : "do_fetch",
 		     "deps" : "" },
 	"unpack" : { "func" : "do_unpack",
