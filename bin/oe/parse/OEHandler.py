@@ -68,14 +68,15 @@ def handle(fn, d = {}):
 	else:
 		f = open(fn,'r')
 
-	inheritclasses = data.getVar("INHERIT", d)
-	if inheritclasses:
-		i = inheritclasses.split()
-	else:
-		i = []
-	if not "base" in i and __classname__ != "base":
-		i[0:0] = ["base"]
-	inherit(i, d)
+	if ext != ".oeclass":
+		inheritclasses = data.getVar("INHERIT", d)
+		if inheritclasses:
+			i = inheritclasses.split()
+		else:
+			i = []
+		if not "base" in i and __classname__ != "base":
+			i[0:0] = ["base"]
+		inherit(i, d)
 
 	lineno = 0
 	while 1:
@@ -115,8 +116,14 @@ def feeder(lineno, s, fn, d):
 	if m:
 		__infunc__ = m.group("func")
 		key = __infunc__
+		if data.getVar(key, d):
+			# clean up old version of this piece of metadata, as its
+			# flags could cause problems
+			data.setVarFlag(key, 'python', None, d)
 		if m.group("py") is not None:
 			data.setVarFlag(key, "python", "1", d)
+		else:
+			data.setVarFlag(key, "python", None, d)
 		return
 
 	__word__ = re.compile(r"\S+")
@@ -138,19 +145,26 @@ def feeder(lineno, s, fn, d):
 				vars.append([allvars[0], allvars[2]])
 
 			for (var, calledvar) in vars:
+				if data.getVar(var, d) and not data.getVarFlag(var, 'export_func', d):
+					continue
+
+				# clean up after possible old flags
+				if data.getVar(var, d):
+					data.setVarFlag(var, 'python', None, d)
+					data.setVarFlag(var, 'func', None, d)
+
 				for flag in [ "func", "python", "dirs" ]:
 					__dirty = 0
-					if data.getVarFlag(var, flag, d):
-						__dirty = var
+#					if data.getVarFlag(var, flag, d):
+#						__dirty = var
 					if data.getVarFlag(calledvar, flag, d):
-						__dirty = calledvar
-					if __dirty:
-						for v in allvars:
-							data.setVarFlag(v, flag, data.getVarFlag(__dirty, flag, d), d)
+						data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag, d), d)
+
 				if data.getVarFlag(calledvar, "python", d):
 					data.setVar(var, "\treturn exec_func('%s', d)\n" % calledvar, d)
 				else:
 					data.setVar(var, "\t%s\n" % calledvar, d)
+				data.setVarFlag(var, 'export_func', '1', d)
 
 		return
 
