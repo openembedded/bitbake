@@ -10,12 +10,18 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 """
 __version__ = '1.0'
 
-__all__ = [ 'handlers', 'supports', 'handle', 'init' ]
+__all__ = [ 'handlers', 'supports', 'handle', 'init', 'ConfHandler', 'OEHandler', 'SRPMHandler', 'ParseError' ]
 handlers = []
 
+class ParseError(Exception):
+	"""Exception raised when parsing fails"""
+
 import ConfHandler
+ConfHandler.ParseError = ParseError
 import OEHandler
+OEHandler.ParseError = ParseError
 import SRPMHandler
+SRPMHandler.ParseError = ParseError
 
 def supports(fn, data):
 	"""Returns true if we have a handler for this file, false otherwise"""

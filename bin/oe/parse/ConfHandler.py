@@ -151,7 +151,7 @@ def feeder(lineno, s, fn, data = {}):
 		include(fn, s, data)
 		return
 
-	fatal("PARSER: %s:%d: unparsed line" % (fn, lineno));
+	raise ParseError("%s:%d: unparsed line" % (fn, lineno));
 
 # Add us to the handlers list
 from oe.parse import handlers
