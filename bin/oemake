@@ -125,7 +125,7 @@ def build(graph, item):
 def usage():
 	print "Usage: oemake [options] [oefile ...]"
 #	print "Run TASK on OEFILE or standard input if OEFILE is -."
-	print "Run OEBuild's do_build task on a set of oe files, following"
+	print "Run OEBuild's build task on a set of oe files, following"
 	print "inter-package dependencies."
 	print "Also obtains .oe files to build from the OEFILES environment variable."
 	print "Example: oemake content/glibc-2.3.1.oe content/patcher-1.0.oe"
@@ -184,12 +184,12 @@ if opthash.has_key('--cmd'):
 if opthash.has_key('-c'):
 	cmd = opthash['-c']
 
-_depcmds = { "do_clean": None,
-	     "do_mrproper": None,
-	     "do_build": "stage", }
+_depcmds = { "clean": None,
+	     "mrproper": None,
+	     "build": "stage", }
 
 if not cmd:
-	cmd = "do_build"
+	cmd = "build"
 
 if _depcmds.has_key(cmd):
 	depcmd=_depcmds[cmd]

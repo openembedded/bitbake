@@ -54,15 +54,15 @@ TODO:
 			[ ] Allow switching to a debug build for the entirety
 			    of the build.  Alter CONFIG for created .pro files,
 			    and add -g to appropriate flags.
-			[ ] Nightly builds will use the same .oe files as those
+			[x] Nightly builds will use the same .oe files as those
 			    used upstream.  This is easily solved, since the use
 			    of OE upstream already gives us the necessary event
 			    handling.
-			[ ] Does not require that the build be done as root.
-			[ ] Simplicity of .oe file naming (PV/PR inside .oe)
+			[x] Does not require that the build be done as root.
+			[x] Simplicity of .oe file naming (PV/PR inside .oe)
 			[ ] Tests for versioning
 			[ ] Wrapper Makefile -> oemake
-			[ ] Command as <cmd> as opposed to do_<cmd>
+			[x] Command as <cmd> as opposed to do_<cmd>
 			[ ] Target device filesystem locations as metadata
 			    items so that all the packages can install things
 			    into proper locations.  This is highly distribution
@@ -95,12 +95,12 @@ TODO:
 	    for the entire upward path in the digraph, then builds that task.
 	    (same thing done when the md5 changes on an affected var in
 	     check_md5)
-	[ ] Default OEFILES based on .oe files in the current directory.
+	[x] Default OEFILES based on .oe files in the current directory.
 
 [.] oemake
 	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
-	[ ] Default OEFILES based on .oe files in the current directory.
+	[x] Default OEFILES based on .oe files in the current directory.
 
 [.] oemaked
 	[ ] Monitor the stamps for a given .oe file as well, to ensure

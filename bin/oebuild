@@ -15,7 +15,7 @@ def usage(errorlevel=0, txt=''):
 	print "Usage: oebuild [options]... task oefile"
 #	print "Run TASK on OEFILE or standard input if OEFILE is -."
 	print "Run task on oefile."
-	print "Example: oebuild do_build content/glibc-2.3.1.oe"
+	print "Example: oebuild build content/glibc-2.3.1.oe"
 	print ""
 	print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
 	sys.exit(0)
@@ -52,7 +52,7 @@ def get_oefile():
 
 def get_cmd():
 	"""Get default command"""
-	return "do_build"
+	return "build"
 
 def load_oefile(oefile, cfgdata):
 	oepath = data.getVar('OEPATH', cfg)
@@ -73,7 +73,6 @@ def load_oefile(oefile, cfgdata):
 	# add that topdir to oepath
 	oepath += ":%s" % topdir
 	# go there
-	print "chdiring to %s" % topdir
 	os.chdir(topdir)
 	data.setVar('OEPATH', oepath, cfg)
 	from copy import copy
@@ -171,7 +170,7 @@ for var in oedata.keys():
 		build.add_task(p, pcontent, pdeps)
 
 try:
-	build.exec_task(cmd, oedata)
+	build.exec_task('do_%s' % cmd, oedata)
 except build.FuncFailed:
 	fatal("task stack execution failed")
 except build.EventException:
