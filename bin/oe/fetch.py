@@ -324,9 +324,21 @@ class Cvs(Fetch):
 			oe.data.setVar('TARFILES', dlfile, localdata)
 			oe.data.setVar('TARFN', tarfn, localdata)
 
-			if os.access(os.path.join(dldir, tarfn), os.R_OK):
+			dl = os.path.join(dldir, tarfn)
+			if os.access(dl, os.R_OK):
 				oe.debug(1, "%s already exists, skipping cvs checkout." % tarfn)
 				continue
+
+			cvs_tarball_stash = oe.data.getVar('CVS_TARBALL_STASH', d, 1)
+			if cvs_tarball_stash:
+				fetchcmd = oe.data.getVar("FETCHCOMMAND_wget", d, 1)
+				uri = cvs_tarball_stash + tarfn
+				oe.note("fetch " + uri)
+				fetchcmd = fetchcmd.replace("${URI}", uri)
+				ret = os.system(fetchcmd)
+				if ret == 0:
+					oe.note("Fetched %s from tarball stash, skipping checkout" % tarfn)
+					continue
 
 			if date:
 				options.append("-D %s" % date)
