@@ -3,6 +3,8 @@
 # proposed new way of structuring environment data for the
 # OpenEmbedded buildsystem
 
+from oe import debug
+
 _data = {}
 
 def init(d = _data):
@@ -190,12 +192,16 @@ def emit_env(o=sys.__stdout__, d = _data):
 		o.write('\n')
 		if getVarFlag(e, "export", d):
 			o.write('export ')
-		o.write(e+'="'+getVar(e, d) + '"\n')	
+		val = getVar(e, d)
+		if val is None:
+			debug(2, "Warning, %s variable is None" % e)
+			continue
+		o.write(e+'="'+ val + '"\n')	
 
 	for e in env:
 		if not getVarFlag(e, "func", d):
 			continue
 		if getVarFlag(e, "python", d):
 			continue
-		o.write("\n" + e + '() {\n' + getenv(e, d) + '}\n')
+		o.write("\n" + e + '() {\n' + getVar(e, d) + '}\n')
 
