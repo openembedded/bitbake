@@ -15,39 +15,58 @@ import os, re
 from oe import *
 
 class FetchUrls:
+	"""Class to obtain a set of urls, via any available methods"""
 	__methods = { "Wget" : None, "Cvs" : None, "Bk" : None, "Local" : None }
 
 	def init(self, urls = []):
+		"""Initial setup function for url fetching.
+		   Determines which urls go with which 'fetch' methods.
+		"""
+		for method in self.__methods.keys():
+			if self.__methods[method] is not None:
+				self.__methods[method].urls = {}
+
 		for url in urls:
-			__supported = 1
 			if Wget.supports(decodeurl(url)):
 				if self.__methods["Wget"] is None:
 					self.__methods["Wget"] = Wget()
-				self.__methods["Wget"].addUrl(url) 
+				self.__methods["Wget"].urls.append(url) 
 			elif Cvs.supports(decodeurl(url)):
 				if self.__methods["Cvs"] is None:
 					self.__methods["Cvs"] = Cvs()
-				self.__methods["Cvs"].addUrl(url) 
+				self.__methods["Cvs"].urls.append(url) 
 			elif Bk.supports(decodeurl(url)):
 				if self.__methods["Bk"] is None:
 					self.__methods["Bk"] = Bk()
-				self.__methods["Bk"].addUrl(url) 
+				self.__methods["Bk"].urls.append(url) 
 			elif Local.supports(decodeurl(url)):
 				if self.__methods["Local"] is None:
 					self.__methods["Local"] = Local()
-				self.__methods["Local"].addUrl(url) 
+				self.__methods["Local"].urls.append(url) 
 			else:
-				__supported = 0
+				# FIXME: no fatal() calls in classes, use exceptions.
 				fatal("Warning: no fetch method for %s" % url)
 	
 	def go(self):
+		"""Fetch all urls"""
 		for method in self.__methods.keys():
 			if self.__methods[method] is None:
 				continue
 			debug(2,"Obtaining urls via %s method..." % method)
 			self.__methods[method].go()
 
+	def localpaths(self):
+		"""Return a list of the local filenames, assuming successful fetch"""
+		local = []
+		for method in self.__methods.keys():
+			if self.__methods[method] is None:
+				continue
+			for url in self.__methods[method].urls:
+				local.append(self.__methods[method].localpath(url))
+		return local
+
 class Fetch(object):
+	"""Base class for 'fetch'ing data"""
 	def __init__(self, urls = []):
 		self.urls = []
 		for url in urls:
@@ -67,10 +86,16 @@ class Fetch(object):
 		return url
 	localpath = staticmethod(localpath)
 
-	def addUrl(self, url):
-		self.urls.append(url)
+	def setUrls(self, urls):
+		self.__urls = urls
+
+	def getUrls(self):
+		return self.__urls
+
+	urls = property(getUrls, setUrls, None, "Urls property")
 
 	def go(self, urls = []):
+		"""Fetch urls"""
 		if not urls:
 			urls = self.urls
 		fatal("No implementation to obtain urls: %s" % urls)
@@ -93,6 +118,7 @@ class Wget(Fetch):
 	localpath = staticmethod(localpath)
 
 	def go(self, urls = []):
+		"""Fetch urls"""
 		if not urls:
 			urls = self.urls
 
@@ -111,7 +137,7 @@ class Wget(Fetch):
 			myfetch = myfetch.replace("${FILE}",myfile)
 			debug(2,myfetch)
 			myret = os.system(myfetch)
-			if not myret:
+			if myret != 0:
 				error("Couldn't download "+ myfile)
 				return 0
 		return 1
@@ -127,6 +153,59 @@ class Cvs(Fetch):
 		else:
 			return 0
 	supports = staticmethod(supports)
+
+	def localpath(url):
+		(type, host, path, user, pswd, parm) = decodeurl(expand(url))
+		if not parm.has_key("module"):
+			return url
+		else:
+			return os.path.join(getenv("DL_DIR"), parm["module"])
+	localpath = staticmethod(localpath)
+
+	def go(self, urls = []):
+		"""Fetch urls"""
+		if not urls:
+			urls = self.urls
+
+		for loc in urls:
+			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
+			if not parm.has_key("module"):
+				# FIXME: no fatal calls in classes, use exceptions
+				fatal("CVS fetch cannot succeed without module parameter.")
+			else:
+				module = parm["module"]
+
+			if parm.has_key("localpath"):
+				# if user overrides local path, use it.
+				dlfile = parm["localpath"]
+			else:
+				dlfile = self.localpath(loc)
+
+			if parm.has_key("tag"):
+				tag = "-r" + parm["tag"]
+			else:
+				tag = ""
+
+			if parm.has_key("date"):
+				date = "-D" + parm["date"]
+			else:
+				date = ""
+
+			if parm.has_key("method"):
+				method = parm["method"]
+			else:
+				method = "pserver"
+
+			cvscmd = expand("cd ${DL_DIR}; ")
+			cvscmd += "cvs -d:" + method + ":" + user + "@" + host + ":" + path
+			cvscmd += " " + "checkout" + " " + date + " " + tag + " " + module 
+			debug(2,cvscmd)
+			myret = os.system(cvscmd)
+			if myret != 0:
+				error("Couldn't download %s" % module)
+				return 0
+		return 1
+			
 
 class Bk(Fetch):
 	def supports(decoded = []):
@@ -157,3 +236,8 @@ class Local(Fetch):
 		"""
 		return url[7:]
 	localpath = staticmethod(localpath)
+
+	def go(self, urls = []):
+		"""Fetch urls (no-op for Local method)"""
+		# no need to fetch local files, we'll deal with them in place.
+		return 1
