@@ -104,6 +104,7 @@ def init(data):
 	oe.data.setVarFlag("MAINTAINER", "warnlevel", "0", data)
 	oe.data.setVarFlag("EXTRA_OECONF", "warnlevel", "0", data)
 	oe.data.setVarFlag("EXTRA_OEMAKE", "warnlevel", "0", data)
+	oe.data.setVarFlag("BUILDNAME", "inherit", "5", data)
 	
 	
 	oe.data.setVarFlag("P", "warnlevel", "3", data)
@@ -128,6 +129,7 @@ def init(data):
 	oe.data.setVarFlag("do_fetch", "dirs", [ '${DL_DIR}' ], data)
 	oe.data.setVarFlag("do_unpack", "warnlevel", "1", data)
 	oe.data.setVarFlag("do_unpack", "dirs", [ '${WORKDIR}' ], data)
+	oe.data.setVarFlag("do_patch", "dirs", [ '${WORKDIR}' ], data)
 	oe.data.setVarFlag("do_compile", "warnlevel", "1", data)
 	oe.data.setVarFlag("do_compile", "dirs", [ '${S}' ], data)
 	oe.data.setVarFlag("do_stage", "warnlevel", "1", data)
