@@ -178,6 +178,7 @@ buildname = data.getVar("BUILDNAME", cfg)
 # grab oefiles
 files = string.split(data.getVar("OEFILES", cfg, 1) or "")
 files += sys.argv[1:]
+data.setVar("OEFILES", files, cfg)
 
 if not len(files):
 	usage()
