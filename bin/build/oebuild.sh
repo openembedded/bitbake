@@ -264,13 +264,21 @@ oe_runconf() {
 		test -z "${BUILD_SYS}" || EXTRA_OECONF="--build=${BUILD_SYS} ${EXTRA_OECONF}"
 		test -z "${TARGET_SYS}" || EXTRA_OECONF="--target=${TARGET_SYS} ${EXTRA_OECONF}"
 		${S}/configure \
-		    --prefix=/usr \
 		    --host=${SYS} \
-		    --mandir=/usr/share/man \
-		    --infodir=/usr/share/info \
-		    --datadir=/usr/share \
-		    --sysconfdir=/etc \
-		    --localstatedir=/var/lib \
+		    --prefix=${prefix} \
+		    --exec_prefix=${exec_prefix} \
+		    --bindir=${bindir} \
+		    --sbindir=${sbindir} \
+		    --libexecdir=${libexecdir} \
+		    --datadir=${datadir} \
+		    --sysconfdir=${sysconfdir} \
+		    --sharedstatedir=${sharedstatedir} \
+		    --localstatedir=${localstatedir} \
+		    --libdir=${libdir} \
+		    --includedir=${includedir} \
+		    --oldincludedir=${oldincludedir} \
+		    --infodir=${infodir} \
+		    --mandir=${mandir} \
 			${EXTRA_OECONF} \
 		    "$@" || die "oeconf failed" 
 	else
