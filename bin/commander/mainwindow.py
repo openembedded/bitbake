@@ -5,6 +5,8 @@ from appinfo import *
 from mainwindowbase import *
 from aboutdialog import *
 from packages import Packages
+from pythonshell import EPythonShell
+from oe import *
 
 class MainWindow( MainWindowBase ):
 
@@ -103,13 +105,24 @@ class MainWindow( MainWindowBase ):
         
         self.packageView.clear()
         for package in p.names():
-            QListViewItem( self.packageView, package.split( "/" )[-1],
-                           p.data(package,"CATEGORY"),
-                           p.data(package,"PRIORITY"),
-                           p.data(package,"MAINTAINER"),
-                           p.data(package,"SRC_URI"),
-                           p.data(package,"HOMEPAGE") )
+            shortname = package.split( "/" )[-1]
+            item = QListViewItem( self.packageView,
+                           p.data(package, "PROVIDES" ).split()[0],
+                           p.data(package, "CATEGORY"),
+                           p.data(package, "SECTION"),
+                           p.data(package, "PRIORITY"),
+                           p.data(package, "MAINTAINER"),
+                           p.data(package, "SRC_URI"),
+                           p.data(package, "HOMEPAGE") )
+            item.setText( 7, p.data(package, "DEPENDS") )
+            item.setText( 8, p.data(package, "RDEPENDS") )
+            item.setText( 9, shortname )
         
+    def debugConsole(self):
+        shell = EPythonShell( None, { 'p':Packages.instance(), 'data':data, 'exit':lambda:shell.close() } )
+        shell.show()
+        shell.resize( QSize( 500, 300 ) )
+    
     def helpAbout(self):
             d = AboutDialog()
             d.exec_loop()
