@@ -1,7 +1,6 @@
 PATCHES_DIR="${S}"
 
 do_applypatches() {
-	oenote do_applypatches
 	for purl in `patcher_sanity "${PATCHES_URI}"`; do
 		parm="`echo $purl|sed -e's,^[^;]*;,,'`"
 		pnum="`echo $parm|sed -e's,.*pnum=\(.\).*,\1,'`"
@@ -27,16 +26,17 @@ patcher_lfn() {
 	done
 }
 
+base_do_patch() {
+	(cd $WORKDIR && unpack `for purl in \`patcher_sanity "${PATCHES_URI}"\`; do patcher_lfn $purl; done`) || die "patch extraction failed"
+	do_applypatches || die "patch application failed"
+}
+
 base_do_unpack() {
 	test "${A}" != "" && unpack "${A}" || oenote "nothing to extract"
-	unpack `for purl in \`patcher_sanity "${PATCHES_URI}"\`; do patcher_lfn $purl; done` || oefatal "patch extraction failed"
-	do_applypatches || oefatal "patch application failed"
 }
 
 
 base_do_compile() {
-	oenote "base_do_compile"
-	oenote "pwd is $PWD"
 	if [ -x ./configure ] ; then
 		oeconf 
 		oemake || die "oemake failed"
@@ -47,21 +47,18 @@ base_do_compile() {
 
 
 base_do_stage() {
-	oenote "base_do_stage"
 	oenote "nothing to install into stage area"
 }
 
 
 base_do_install() {
-	oenote "base_do_install"
 	oenote "nothing to install"
 }
 
 base_do_package() {
-	oenote "base_do_package"
 	oenote "nothing to package"
 }
 
-EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package
+EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package do_patch
 
-inherit patcher
+addtask patch unpack compile

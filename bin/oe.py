@@ -1325,12 +1325,16 @@ def read_oe(oefile, inherit = False, classname = None):
 		m = __addtask_regexp__.match(s)
 		if m:
 			fns = m.group(1)
-			optre = re.compile(r"(?P<func>\w+)(\s+(((?P<r>['\"]?)(?P<Before>.*?)(?P=r))|(?P<before>.*)))?(\s+(((?P<q>['\"]?)(?P<After>.*?)(?P=q))|(?P<after>.*)))?")
+			optre = re.compile(r"(?P<func>\w+)(\s+(((?P<r>['\"])(?P<Before>.*?)(?P=r))|(?P<before>\S+)))?(\s+(((?P<q>['\"])(?P<After>.*?)(?P=q))|(?P<after>\S+)))?")
 			opt = optre.match(fns)
 			if opt is not None:
 				func = opt.group("func")
-				before = opt.group("Before") or opt.group("before")
-				after = opt.group("After") or opt.group("after")
+				before = opt.group("Before")
+				if before is None:
+					before =  opt.group("before")
+				after = opt.group("After")
+				if after is None:
+					after = opt.group("after")
 				if func is None:
 					return
 				var = "do_" + func

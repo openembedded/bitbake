@@ -73,13 +73,17 @@ def exec_task(task, dir, deptasks = []):
 			depfunc()
 		except KeyError:
 			debug(2, "invalid 'func' for task %s, running exec_task directly." % dep)
-			exec_task(dep, dir, tasks[dep]["deps"])
+			try:
+				exec_task(dep, dir, tasks[dep]["deps"])
+			except:
+				exec_task(dep, dir)
 
-	note("Executing task '%s'" % task)
 	func = 'do_'+task
 	if not tasks.has_key(task):
 		fatal("unsupported task: %s" % task)
 		return 0
+
+	note("Executing task '%s'" % task)
 
 	if tasks[task].has_key("python") and tasks[task]["python"] is not None:
 		# execute this function as a block of python code, not shell
@@ -302,9 +306,9 @@ tasks = {
 	"test" : { "func" : "do_test" },
 	"showenv" : { "func" : "do_showenv" },
 	"fetch" : { "func" : "do_fetch",
-		     "deps" : [ '' ] },
+		     "deps" : [  ] },
 	"unpack" : { "func" : "do_unpack",
-		     "deps" : [ 'fetch' ] },
+		     "deps" : [  ] },
 	"compile" : { "func" : "do_compile",
 		      "deps" : [ 'unpack' ] },
 	"stage" : { "func" : "do_stage",
@@ -375,7 +379,7 @@ for var in env.keys():
 				if t == i:
 					if not tasks[t].has_key("deps"):
 						tasks[t]["deps"] = []
-					tasks[t]["deps"].append(var)
+					tasks[t]["deps"].append(taskvar)
 					break
 			
 	if envflags[var].has_key("python"):
