@@ -16,6 +16,9 @@ endif
 
 syn case match
 
+" Catch incorrect syntax (only matches if nothing else does)
+syn match bbUnmatched		"."
+
 syn match bbComment		"^#.*$" display contains=bbTodo
 syn keyword bbTodo		TODO FIXME XXX contained
 syn match bbDelimiter		"[(){}=]" contained
@@ -111,6 +114,7 @@ syn match bbStatementRest		".*$" contained contains=bbString,bbVarDeref
 syn match bbArrayBrackets	"[\[\]]" contained
 hi def link bbArrayBrackets	Statement
 
+hi def link bbUnmatched		Error
 hi def link bbVarDeref		String
 hi def link bbContinue		Special
 hi def link bbDef		Statement
