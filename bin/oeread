@@ -1,9 +1,4 @@
 #!/usr/bin/python
 
-import sys,os,string
-from oe import *
-
-
-
-env['OEDEBUG'] = '3'
-read_config(env['OEDIR'] + '/conf/oe.conf')
+import oeparse
+cfg = oeparse.handle("conf/oe.conf")
