@@ -179,7 +179,7 @@ class Cvs(Fetch):
 		for loc in urls:
 			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
 			if not parm.has_key("module"):
-				raise MissingParameterError
+				raise MissingParameterError("cvs method needs a 'module' parameter")
 			else:
 				module = parm["module"]
 

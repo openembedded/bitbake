@@ -166,16 +166,19 @@ def do_fetch():
 		try:
 			grabber.init(getenv('SRC_URI').split())
 		except oefetch.NoMethodError:
-			fatal("No method for one or more urls in SRC_URI")
+			(type, value, traceback) = sys.exc_info()
+			fatal("No method: %s" % value)
 			return
 
 		try:
 			grabber.go()
 		except oefetch.MissingParameterError:
-			fatal("Fetch failed due to missing parameters in the supplied urls")
+			(type, value, traceback) = sys.exc_info()
+			fatal("Missing parameters: %s" % value)
 			return
 		except oefetch.FetchError:
-			fatal("Fetch failed")
+			(type, value, traceback) = sys.exc_info()
+			fatal("Fetch failed: %s" % value)
 			return
 		mkstamp('fetch')
 	else:
