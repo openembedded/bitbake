@@ -2,8 +2,7 @@
 
    Accesses the file and obtains its metadata"""
 
-import re, oe, string, os, sys
-import oe
+import re, oe, os, sys
 import oe.fetch
 from oe import debug, data, fetch, fatal
 from oe.parse.ConfHandler import init
@@ -75,7 +74,7 @@ def set_automatic_vars(file, d, include):
 	data.setVar('P', '${PN}-${PV}', d)
 	data.setVar('PF', '${P}-${PR}', d)
 
-	for s in ['${TOPDIR}/${CATEGORY}/${PF}', 
+	for s in ['${TOPDIR}/${CATEGORY}/${PF}',
 		  '${TOPDIR}/${CATEGORY}/${PN}-${PV}',
 		  '${TOPDIR}/${CATEGORY}/files',
 		  '${TOPDIR}/${CATEGORY}']:
@@ -115,7 +114,7 @@ def set_additional_vars(file, d, include):
 
 	a += fetch.localpaths(d)
 	del fetch
-	data.setVar('A', string.join(a), d)
+	data.setVar('A', ''.join(a), d)
 
 
 # Add us to the handlers list

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os, string, getopt, copy, oe
+import sys, os, getopt, copy, oe
 from oe import *
 
 def usage():
@@ -104,21 +104,21 @@ for b in builders.split():
 	if oedir != curdir:
 		os.chdir(oedir)
 
-	oefiles = string.split(data.getVar('OEFILES', localdata, 1) or "")
+	oefiles = (data.getVar('OEFILES', localdata, 1) or "").split()
 	if len(oefiles) == 0:
 		fatal("OEFILES not defined")
 
 	# output OEDIR/conf/auto.conf
 	mkdirhier(os.path.join(oedir, 'conf'))
 	fd = file('%s/conf/auto.conf' % oedir, 'w')
-	fd.write("BUILDER=%s\n" % b) 
+	fd.write("BUILDER=%s\n" % b)
 	fd.write("include %s\n" % cfgfn)
 	fd.close()
 
-	oepath = string.split(data.getVar('OEPATH', localdata, 1) or "", ":")
+	oepath = (data.getVar('OEPATH', localdata, 1) or "").split(':')
 	oepath.append(curdir)
 	os.environ["OEDIR"] = oedir
-	os.environ["OEPATH"] = string.join(oepath, ":")
+	os.environ["OEPATH"] = ':'.join(oepath)
 
 	# spawn oemake .. into the background, we need not wait() for it
 	pid = os.fork()
