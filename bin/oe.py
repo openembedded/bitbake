@@ -1421,29 +1421,40 @@ def read_package_conf(file):
 	   If one is found, go back to 2."""
 
 	# Specified files
+	oebuild = []
 	getconfig(file, env)
+	oebuild.append(file)
 
 	# Now look for local overrides
 	if env.has_key('OEPATH'):
 		oepath = env['OEPATH']
 		for dir in oepath.split(':'):
 			try:
-				getconfig(dir+'/'+env['PF']+'.oe', env)
+				s = dir+'/'+env['PF']+'.oe'
+				getconfig(s, env)
+				oebuild.append(s)
 				continue
 			except IOError:
 				try:
-					getconfig(dir+'/'+env['CATEGORY']+'/'+env['PF']+'.oe', env)
+					s = dir+'/'+env['CATEGORY']+'/'+env['PF']+'.oe'
+					getconfig(s, env)
+					oebuild.append(s)
 					continue
 				except IOError:
 					try:
-						getconfig(dir+'/'+env['P']+'.oe', env)
+						s = dir+'/'+env['P']+'.oe'
+						getconfig(s, env)
+						oebuild.append(s)
 						continue
 					except IOError:
 						try:
-							getconfig(dir+'/'+env['CATEGORY']+'/'+env['P']+'.oe', env)
+							s = dir+'/'+env['CATEGORY']+'/'+env['P']+'.oe'
+							getconfig(s, env)
+							oebuild.append(s)
 							continue
 						except IOError:
 							pass
+	env['OEBUILD'] = string.join(oebuild)
 
 
 #######################################################################
@@ -1841,6 +1852,8 @@ envdesc = {
 "OEPATH": {      "desc":      "additional directories to consider when building packages", },
 "TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded",
                  "warnlevel": 3 },
+"OEBUILD": {     "desc":      "name(s) of the package build files (global and local)",
+                 "warnlevel": 3 },
 "P": {           "desc":      "package name without the revision, e.g. 'xfree-4.2.1'",
                  "warnlevel": 3 },
 "CATEGORY": {    "desc":      "category for the source package, e.g. 'x11-base'",
@@ -1899,9 +1912,11 @@ envdesc = {
 
 # System wide configuration
 
-"FETCHCOMMAND": { "desc":     "command to fetch a file via ftp/http/https", },
-"RESUMECOMMAND": { "desc":    "command to resume the fetch of a file via ftp/http/https", },
-"USE": {          "desc":     "which options should be enabled in packages", },
+"FETCHCOMMAND": { "desc":    "command to fetch a file via ftp/http/https", },
+"RESUMECOMMAND":{ "desc":    "command to resume the fetch of a file via ftp/http/https", },
+"USE": {          "desc":    "which options should be enabled in packages", },
+"FEATURES": {     "desc":    "enabled features of the buildsystem", },
+"ALLOWED_FLAGS": {"desc":    "flags not to strip by strip-flags", },
 
 # Automatically generated, but overrideable:
 
