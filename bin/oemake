@@ -29,9 +29,10 @@ class PkgBase(event.Event):
 class BuildBase(event.Event):
 	"""Base class for oemake run events"""
 
-	def __init__(self, n, p):
+	def __init__(self, n, p, c):
 		self.name = n
 		self.pkgs = p
+		self.cfg = c
 
 	def getPkgs(self):
 		return self._pkgs
@@ -48,6 +49,14 @@ class BuildBase(event.Event):
 		self._name = name
 
 	name = property(getName, setName, None, "name property")
+
+	def getCfg(self):
+		return self._cfg
+
+	def setCfg(self, cfg):
+		self._cfg = cfg
+
+	cfg = property(getCfg, setCfg, None, "cfg property")
 
 class DepBase(PkgBase):
 	"""Base class for dependency events"""
@@ -215,9 +224,9 @@ for k in __tokill:
 		graph.delnode(item)
 	graph.walkup(k, reallykillitem)
 
-event.fire(BuildStarted(buildname, graph.okeys))
+event.fire(BuildStarted(buildname, graph.okeys, cfg))
 
 for k in graph.okeys:
 	graph.walkdown(k, build)
 
-event.fire(BuildCompleted(buildname, graph.okeys))
+event.fire(BuildCompleted(buildname, graph.okeys, cfg))
