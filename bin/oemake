@@ -16,6 +16,22 @@ def getParents(graph, item):
 		return None
 	return graph.dict[item][1]
 
+def follow(graph, item, callback):
+	if not graph.hasnode(item):
+		return 0
+	keycount = graph.dict[item][0]
+	if keycount != 0 and depcmd is not None:
+		command=depcmd
+	else:
+		command=cmd
+	parents = getParents(graph, item)
+	if parents is not None:
+		for p in parents:
+			ret = follow(graph, p, callback)
+			if ret == 0:
+				return 0
+	return callback(item, command)
+
 def addToBuild(data, graph, item):
 	if not graph.hasnode(item):
 		return 0
@@ -118,8 +134,30 @@ data = []
 for k in graph.okeys:
 	addToBuild(data, graph, k)
 
-for d in data:
-	(pkg, step) = d 
-	if pkgs[pkg][1] is not None:
-		note("oebuild %s %s" % (step, pkgs[pkg][1]))
-		os.system("oebuild %s %s" % (step, pkgs[pkg][1]))
+__build_cache_fail = []
+__build_cache = []
+def build(item, command):
+	if item in __build_cache:
+		return 1
+	if item in __build_cache_fail:
+		return 0
+	fn = pkgs[item][1]
+	if fn is None:
+		return 1
+	note("oebuild %s %s" % (command, fn))
+	ret = os.system("oebuild %s %s" % (command, fn))
+	if ret == 0:
+		__build_cache.append(item)
+		return 1
+	else:
+		__build_cache_fail.append(item)
+		return 0
+	
+for k in graph.okeys:
+	follow(graph, k, build)
+
+#for d in data:
+#	(pkg, step) = d 
+#	if pkgs[pkg][1] is not None:
+#		note("oebuild %s %s" % (step, pkgs[pkg][1]))
+#		os.system("oebuild %s %s" % (step, pkgs[pkg][1]))
