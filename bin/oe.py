@@ -1227,13 +1227,14 @@ __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __read_oe_infunc__ = ""
 __read_oe_body__   = []
 __read_oe_classname__ = "" # our python equiv to OECLASS
+__oepath_found_it__ = 0
 
 def read_oe(oefile, inherit = False, classname = None):
 	"""Reads a build file"""
 	"""When inherit flag is set to False(default), EXPORT_FUNCTIONS is ignored."""
 
 	def process_oe(lineno, s):
-		global __read_oe_infunc__, __read_oe_body__, __read_oe_classname__
+		global __read_oe_infunc__, __read_oe_body__, __read_oe_classname__, __oepath_found_it__
 		if __read_oe_infunc__:
 			if s == '}':
 				__read_oe_body__.append('')
@@ -1274,11 +1275,18 @@ def read_oe(oefile, inherit = False, classname = None):
 			__word__ = re.compile(r"\S+")
 			files = m.group(1)
 			n = __word__.findall(files)
-#                       TODO: walk OEPATH
 			for f in n:
 				file = expand(f)
 				if file[0] != "/":
-					file = expand("${OEDIR}/bin/build/%s.oeclass" % file)
+					if env.has_key('OEPATH'):
+						__oepath_found_it__ = 0
+						for dir in expand(env['OEPATH']).split(":"):
+#							print "attempting to access %s" % os.path.join(dir, "classes",file + ".oeclass")
+							if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
+								file = os.path.join(dir, "classes",file + ".oeclass")
+								__oepath_found_it__ = 1
+					if __oepath_found_it__ == 0:
+						fatal("unable to locate %s in OEPATH"  % file)
 					__read_oe_classname__ = file
 
 				o = re.match(r".*/([^/\.]+)",file)
@@ -1441,10 +1449,10 @@ def set_automatic_vars(file):
 	setenv('P',		'${PN}-${PV}')
 	setenv('PF',		'${P}-${PR}')
 
-	for s in ['${OEDIR}/${CATEGORY}/${PF}', 
-		  '${OEDIR}/${CATEGORY}/${PN}-${PV}',
-		  '${OEDIR}/${CATEGORY}/files',
-		  '${OEDIR}/${CATEGORY}']:
+	for s in ['${TOPDIR}/${CATEGORY}/${PF}', 
+		  '${TOPDIR}/${CATEGORY}/${PN}-${PV}',
+		  '${TOPDIR}/${CATEGORY}/files',
+		  '${TOPDIR}/${CATEGORY}']:
 		s = expand(s)
 		if os.access(s, os.R_OK):
 			setenv('FILESDIR', s)
@@ -1678,7 +1686,10 @@ envflags = {
 # Directories for the Build system
 
 "OEDIR":		{ "warnlevel": 3 },
-"OEPATH":		{ "inherit": 1 },
+"OEPATH":		{ "warnlevel": 3,
+			  "inherit": 1 },
+"TOPDIR":		{ "warnlevel": 3,
+			  "desc":	"Toplevel directory of build area" },
 "TMPDIR":		{ "warnlevel": 3 },
 "DL_DIR":		{ "warnlevel": 3 },
 "STAMP":		{ "warnlevel": 3 },
@@ -1802,7 +1813,10 @@ envflags = {
 
 }
 
-env['OEDIR'] = projectdir
+# defaults for vars needed to access oe.conf
+env['TOPDIR'] = projectdir
+env['OEDIR'] = os.path.join(sys.prefix, "share/oe")
+env['OEPATH'] = "${OEDIR}:./bin:."
 inherit_os_env(1)
 
 if __name__ == "__main__":
