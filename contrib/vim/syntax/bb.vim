@@ -49,7 +49,9 @@ syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ c
 " hi def link bbPythonFlag	Type
 
 " BitBake variable metadata
-syn match bbVarDef		"^\([a-zA-Z0-9\-_]\+\)\s*\(=\)\@=" contains=bbIdentifier nextgroup=bbVarEq
+syn match bbVarOverrideDeref	"[\${}()]"
+hi def link bbVarOverrideDeref		Statement
+syn match bbVarDef		"^\([a-zA-Z0-9\-_]\+\(_\(\${\)\?[a-zA-Z0-9\-_]\+\(}\)\?\)\?\)\s*\(=\)\@=" contains=bbIdentifier,bbVarOverrideDeref nextgroup=bbVarEq
 syn match bbIdentifier		"[a-zA-Z0-9\-_]\+" display contained
 "syn keyword bbVarEq	= display contained nextgroup=bbVarValue
 syn match bbVarEq		"=" contained contains=bbOperator nextgroup=bbVarValue
