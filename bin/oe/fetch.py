@@ -294,7 +294,10 @@ class Cvs(Fetch):
 			if 'date' in parm:
 				date = parm['date']
 			else:
-				date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
+				if not tag or tag == "HEAD":
+					date = oe.data.getVar("CVSDATE", d, 1) or oe.data.getVar("DATE", d, 1)
+				else:	
+					date = ""
 
 			if "method" in parm:
 				method = parm["method"]
