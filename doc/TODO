@@ -8,9 +8,9 @@ TODO:
 	    data and parse methods.
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
-	[ ] Allow user supply of .oeclasses to be inherited in every file that
+	[.] Allow user supply of .oeclasses to be inherited in every file that
 	    gets parsed via the INHERITS variable.
-		[ ] Add default items to the beginning of INHERITS within
+		[.] Add default items to the beginning of INHERITS within
 		    the parsers.  In this way, we can automatically pull in
 		    base.oeclass for oe files, and build_an_srpm.oeclass for
 		    .src.rpm files.
