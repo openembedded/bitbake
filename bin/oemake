@@ -135,11 +135,13 @@ def build(graph, item):
 		oe.build.exec_task('do_%s' % command, pkgdata[fn])
 		event.fire(PkgSucceeded(item, pkgdata[fn]))
 		__build_cache.append(item)
+		del pkgdata[fn]
 		return 1
 	except oe.build.FuncFailed:
 		error("task stack execution failed")
 		event.fire(PkgFailed(item, pkgdata[fn]))
 		__build_cache_fail.append(item)
+		del pkgdata[fn]
 		return 0
 	except oe.build.EventException:
 		(type, value, traceback) = sys.exc_info()
@@ -147,6 +149,7 @@ def build(graph, item):
 		error("%s event exception, aborting" % event.getName(e))
 		event.fire(PkgFailed(item, pkgdata[fn]))
 		__build_cache_fail.append(item)
+		del pkgdata[fn]
 		return 0
 #	opts = ""
 #	if force:
