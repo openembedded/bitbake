@@ -1,0 +1,54 @@
+OpenEmbedded Transition Guide(s)
+--
+
+Moving from the OpenZaurus "buildroot" to the OE infrastructure:
+
+There are a number of things to note.  One of the first things you'll
+notice is that the core buildsystem is now completely independent of
+the package metadata.  You'll also note that we are not using any form
+of makefile to manage the metadata.  This is a completely different system.
+
+One thing to note is command syntax.
+
+In buildroot, to build the entirety, one simply runs 'make'.
+In OE, assuming OEDIR is set, OEDIR/bin is in the path, the toolchain
+is in the path, and conf/local.conf has TARGET_ARCH set to your target,
+you can simply cd to the dir containing the .oe files and run 'oemake'.
+One can also set OEFILES to a list of the available .oe files, with full path,
+and run oemake.
+
+In buildroot, to build a single package, one runs make SUBDIRS=packages/pkgname [task],
+where task is any number of targets, including clean, binary, package, et cetera.
+In OE, to build a single package, it is far simpler.  Run oebuild [task] path/to/pkgname.oe,
+or simply oebuild path/to/pkgname.oe to default to a full build.
+
+See oebuild --help and oemake --help for further details.
+The deployment tools and syntax are still being written and decided upon, respectively.
+
+Next, we'll compare and contrast some metadata differences.
+
+buildroot		-	OE
+----------------------------------
+Name			-	PN (automatically set based on .oe filename)
+Version			-	PV (automatically set based on .oe filename)
+Revision		-	PR (defaults to r0, generally set otherwise in the .oe)
+Sources			-	SRC_URI (note that the syntax differs here.  Sources was a semicolon
+					 delimited block of sources, where each source was url <space>
+					 comma-seperated-options.  SRC_URI is simply a space-seperated
+					 set of URIs, with the options expressed in normal URI style)
+SourceTree		-	S
+$(stamp-binary):	-	do_compile () { ...
+$(stamp-rootinstall):	-	do_install () { ...
+$(stamp-staginginstall):-	do_stage () { ...
+$(stamp-sourcetree):	-	do_unpack () { ...
+				do_patch () { ...
+
+
+One final thing to note is that OE supports a form of inheritence.  This
+capability allows us to very easily abstract out commonalities and avoid
+duplication of work.  An excellent example of this is our 'autotools.oeclass',
+which is to be utilized for autoconf/automake based buildsystems.
+
+Thanks,
+Chris Larson - kergoth at handhelds dot org
+Embedded Linux Developer - clarson at ti dot com
