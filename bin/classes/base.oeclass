@@ -173,7 +173,7 @@ python base_do_unpack() {
 		local = re.sub(';.*$', '', local)
 		dots = local.split(".")
 		if dots[-1] in ['gz', 'bz2', 'Z']:
-			efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(string.join(dots[0:-1],".")))
+			efile = os.path.join(data.getVar('WORKDIR', d, 1),os.path.basename(string.join(dots[0:-1],".")))
 		else:
 			efile = local
 		cmd = None
