@@ -255,7 +255,7 @@ def feeder(lineno, s, fn, d):
                         data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag, d), d)
 
                 if data.getVarFlag(calledvar, "python", d):
-                    data.setVar(var, "\treturn oe.build.exec_func('" + calledvar + "', d)\n", d)
+                    data.setVar(var, "\toe.build.exec_func('" + calledvar + "', d)\n", d)
                 else:
                     data.setVar(var, "\t" + calledvar + "\n", d)
                 data.setVarFlag(var, 'export_func', '1', d)
