@@ -1304,8 +1304,8 @@ def read_oe(oefile, inherit = False, classname = None):
 
 #				print "read_oe: inherit: loading %s" % file
 				try:
-					read_oe(file, True)
-					__read_oe_classname__ = ""
+					read_oe(file, True, __read_oe_classname__)
+					__read_oe_classname__ = classname
 				except IOError:
 					fatal("error accessing build file %s" % file)
 			return
