@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
-import os, sys, stat
-from daemon import daemonize
-from time import sleep
+import os, sys, stat, daemon, time
 
 if not os.environ.has_key("OEFILES"):
 	sys.exit(1)
@@ -17,7 +15,7 @@ for file in os.environ["OEFILES"].split():
 		print "%s" % file
 		files.append([file, None])
 
-daemonize("/home/kergoth/out", "/home/kergoth/err", "/dev/null")
+daemon.daemonize("/home/kergoth/out", "/home/kergoth/err", "/dev/null")
 
 os.chdir(olddir)
 
@@ -34,4 +32,4 @@ while 1:
 	if __dirty == 1:
 		runOEMake()
 
-	sleep(delay)
+	time.sleep(delay)
