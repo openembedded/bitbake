@@ -42,18 +42,18 @@ def go(d = oe.data.init()):
 		if m.urls:
 			m.go(d)
 
-def localpaths():
+def localpaths(d):
 	"""Return a list of the local filenames, assuming successful fetch"""
 	local = []
 	for m in methods:
 		for u in m.urls:
-			local.append(m.localpath(u))
+			local.append(m.localpath(u, d))
 	return local
 
-def localpath(url):
+def localpath(url, d = oe.data.init()):
 	for m in methods:
 		if m.supports(url):
-			return m.localpath(url)
+			return m.localpath(url, d)
 	return url 
 
 class Fetch(object):
@@ -72,7 +72,7 @@ class Fetch(object):
 		return 0
 	supports = staticmethod(supports)
 
-	def localpath(url):
+	def localpath(url, d = oe.data.init()):
 		"""Return the local filename of a given url assuming a successful fetch.
 		"""
 		return url
@@ -108,7 +108,7 @@ class Wget(Fetch):
 		return type in ['http','https','ftp']
 	supports = staticmethod(supports)
 
-	def localpath(url):
+	def localpath(url, d = oe.data.init()):
 		# strip off parameters
 		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		if parm.has_key("localpath"):
@@ -172,9 +172,6 @@ methods.append(Wget())
 
 class Cvs(Fetch):
 	"""Class to fetch a module or modules from cvs repositories"""
-	checkoutopts = { "tag": "-r",
-			 "date": "-D" }
-
 	def supports(url):
 		"""Check to see if a given url can be fetched with cvs.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
@@ -183,16 +180,26 @@ class Cvs(Fetch):
 		return type in ['cvs', 'pserver']
 	supports = staticmethod(supports)
 
-	def localpath(url):
+	def localpath(url, d):
 		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
 
 		if not parm.has_key("module"):
-			return url
+			raise MissingParameterError("cvs method needs a 'module' parameter")
 		else:
-			return os.path.join(oe.getenv("DL_DIR"), parm["module"])
+			module = parm["module"]
+		if parm.has_key('tag'):
+			tag = parm['tag']
+		else:
+			tag = ""
+		if parm.has_key('date'):
+			date = parm['date']
+		else:
+			date = ""
+
+		return os.path.join(oe.data.getVar("DL_DIR", d, 1),oe.data.expand('%s_%s_%s_%s.tar.gz' % (string.replace(module, '/', '.'), host, tag, date), d))
 	localpath = staticmethod(localpath)
 
 	def go(self, d = oe.data.init(), urls = []):
@@ -212,29 +219,50 @@ class Cvs(Fetch):
 			else:
 				module = parm["module"]
 
-			dlfile = self.localpath(loc)
+			dlfile = self.localpath(loc, localdata)
+			dldir = oe.data.getVar('DL_DIR', localdata, 1)
 			# if local path contains the cvs
 			# module, consider the dir above it to be the
 			# download directory
-			pos = dlfile.find(module)
-			if pos:
-				dldir = dlfile[:pos]
-			else:
-				dldir = os.path.dirname(dlfile)
+#			pos = dlfile.find(module)
+#			if pos:
+#				dldir = dlfile[:pos]
+#			else:
+#				dldir = os.path.dirname(dlfile)
 
+			# setup cvs options
 			options = []
+			if parm.has_key('tag'):
+				tag = parm['tag']
+			else:
+				tag = ""
 
-			for opt in self.checkoutopts:
-				if parm.has_key(opt):
-					options.append(self.checkoutopts[opt] + " " + parm[opt])
+			if parm.has_key('date'):
+				date = parm['date']
+			else:
+				date = ""
 
 			if parm.has_key("method"):
 				method = parm["method"]
 			else:
 				method = "pserver"
 
+			tarfn = oe.data.expand('%s_%s_%s_%s.tar.gz' % (string.replace(module, '/', '.'), host, tag, date), localdata)
+			oe.data.setVar('TARFILES', dlfile, localdata)
+			oe.data.setVar('TARFN', tarfn, localdata)
+
+			if os.access(os.path.join(dldir, tarfn), os.R_OK):
+				oe.debug(1, "%s already exists, skipping cvs checkout." % tarfn)
+				return
+
+			if date:
+				options.append("-D %s" % date)
+			options.append("-r %s" % tag)
+
 			olddir = os.path.abspath(os.getcwd())
 			os.chdir(oe.data.expand(dldir, localdata))
+
+			# setup cvsroot
 			cvsroot = ":" + method + ":" + user
 			if pswd:
 				cvsroot += ":" + pswd
@@ -243,13 +271,41 @@ class Cvs(Fetch):
 			oe.data.setVar('CVSROOT', cvsroot, localdata)
 			oe.data.setVar('CVSCOOPTS', string.join(options), localdata)
 			oe.data.setVar('CVSMODULE', module, localdata)
-			oe.note("fetch " + loc)
 			cvscmd = oe.data.getVar('FETCHCOMMAND', localdata, 1)
+
+			# create temp directory
+	 		oe.debug(2, "Fetch: creating temporary directory")
+			oe.mkdirhier(oe.data.expand('${WORKDIR}', localdata))
+			oe.data.setVar('TMPBASE', oe.data.expand('${WORKDIR}/oecvs.XXXXXX', localdata), localdata)
+			tmppipe = os.popen(oe.data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
+			tmpfile = tmppipe.readline().strip()
+			if not tmpfile:
+				oe.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
+				raise FetchError(module)
+
+			# check out sources there
+			os.chdir(tmpfile)
+			oe.note("Fetch " + loc)
 			oe.debug(1, "Running %s" % cvscmd)
 			myret = os.system(cvscmd)
-			os.chdir(olddir)
 			if myret != 0:
+				try:
+					os.rmdir(tmpfile)
+				except OSError:
+					pass
 				raise FetchError(module)
+
+			os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
+			# tar them up to a defined filename
+			myret = os.system("tar -czvf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
+			if myret != 0:
+				try:
+					os.unlink(tarfn)
+				except OSError:
+					pass
+			# cleanup
+			os.system('rm -rf %s' % tmpfile)
+			os.chdir(olddir)
 		del localdata
 
 methods.append(Cvs())
