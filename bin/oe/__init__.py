@@ -12,7 +12,7 @@ Please visit http://www.openembedded.org/phpwiki/ for more info.
 Try "pydoc ./oe.py" to get some nice output.
 """
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 __all__ = [
 
