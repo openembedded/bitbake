@@ -7,6 +7,8 @@ from oe import *
 
 
 #######################################################################
+class FuncFailed(Exception):
+	"""Executed function failed"""
 
 def exec_shell_func(func, dir=None, myfatal=fatal):
 	"""This executes any shell function stored in env[func]. Returns
@@ -42,20 +44,23 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 	if func: f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
-	if not func: return 1
+	if not func:
+		error("Function not specified")
+		raise FuncFailed()
 	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
 	if ret==0:
 		if not env.has_key('OEDEBUG'): 
 			os.remove(runfile)
 			os.remove(logfile)
-		return 0
+		mkstamp(func)
+		return
 	else:
 		error("'%s'() failed" % func);
-		myfatal("more info in: %s" % logfile);
-		return 1
+		error("more info in: %s" % logfile);
+		raise FuncFailed()
 
 
-def exec_python_func(func, dir = None, myfatal = fatal):
+def exec_python_func(func, dirname = None, myfatal = fatal):
 	if tasks.has_key(func) and tasks[func].has_key('deps'):
 		deps = tasks[func]['deps']
 	else:
@@ -63,9 +68,26 @@ def exec_python_func(func, dir = None, myfatal = fatal):
 
 	if stamp_is_current(func, deps):
 		return
-	os.chdir(getenv(dir))
-	comp = compile(getenv(func),func,'exec')
-	exec(comp)
+
+	if not env.has_key(dirname):
+		warn("dir variable %s does not exist, cannot chdir" % dirname)
+		return
+
+	dir = env[dirname]
+
+	if not os.path.isdir(dir):
+		debug(1, "%s does not exist, creating it." % dir)
+		mkdirhier(dir)
+
+	os.chdir(dir)
+	try:
+		comp = compile(getenv(func),func,'exec')
+		exec(comp)
+	except Exception, e:
+		(type, value, traceback) = sys.exc_info()
+		error("Python function %s failed: %s" % (func, value))
+		raise FuncFailed(value)
+	mkstamp(func)
 
 
 #######################################################################
@@ -86,24 +108,23 @@ def exec_task(task, dir, deptasks = []):
 			depfunc()
 		except KeyError:
 			debug(2, "invalid 'func' for task %s, running exec_task directly." % dep)
-			try:
+			if tasks.has_key(dep) and tasks[dep].has_key("deps"):
 				exec_task(dep, dir, tasks[dep]["deps"])
-			except:
+			else:
 				exec_task(dep, dir)
 
 	if not tasks.has_key(task):
 		if not envflags.has_key(task) and not env.has_key(task):
-			fatal("unsupported task: %s" % task)
-			return 0
+			error("unsupported task: %s" % task)
+			raise FuncFailed()
 
 	note("Executing task '%s'" % task)
 
 	if envflags.has_key(task) and envflags[task].has_key("python") and envflags[task]["python"] is not None:
 		# execute this function as a block of python code, not shell
-		ret = exec_python_func(task, dir)
+		exec_python_func(task, dir)
 	else:
-		ret = exec_shell_func(task, dir)
-	if ret==0: mkstamp(task)
+		exec_shell_func(task, dir)
 
 def mkstamp(task):
 	"""Creates/updates a stamp for a given task"""
@@ -117,11 +138,15 @@ def stamp_is_current(task, deptasks=""):
 		return False
 
 	import stat
-	tasktime = os.stat(stampfile)[stat.ST_ATIME]
+	tasktime = os.stat(stampfile)[stat.ST_MTIME]
+	if deptasks is None:
+		return False
 
 	for dep in deptasks:
 		depfile = getenv('STAMP') + "." + dep
-		deptime = os.stat(depfile)[stat.ST_ATIME]
+		if not os.access(depfile, os.F_OK):
+			return False
+		deptime = os.stat(depfile)[stat.ST_MTIME]
 		if deptime > tasktime:
 			return False
 
@@ -401,7 +426,10 @@ for s in sys.argv[1].split(','):
 		func = globals()[funcname]
 		func()
 	except KeyError:
-		exec_task("do_" + s, "S")
+		try:
+			exec_task("do_" + s, "S")
+		except FuncFailed:
+			fatal("task \"%s\" failed" % s)
 #		INVALID()
 #		usage(1, "'%s' is not valid command" % s)
 
