@@ -12,7 +12,7 @@
 #  Please visit http://www.openembedded.org/phpwiki/ for more info.
 #
 
-import sys,os,string,types
+import sys,os,string,types,re
 
 projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 prepender = ''
@@ -22,7 +22,6 @@ env['TMPDIR'] = projectdir+'/tmp'
 
 class VarExpandError(Exception):
 	pass
-
 
 
 prepender = ''
@@ -42,21 +41,24 @@ def fatal(*args):
 
 
 #######################################################################
-#
-# tokenize()
-#
-# Put in a string like
-#
-#	'sys-apps/linux-headers nls? (sys-devel/gettext)'
-#
-# and get back
-#
-#	['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']]
-#
 
 def tokenize(mystring):
-	"""breaks a string like 'foo? (bar) oni? (blah (blah))'
-	into embedded lists; returns None on paren mismatch"""
+	"""Breaks a string like 'foo? (bar) oni? (blah (blah))' into (possibly embedded) lists:
+
+	>>> tokenize("x")
+	['x']
+	>>> tokenize("x y")
+	['x', 'y']
+	>>> tokenize("(x y)")
+	[['x', 'y']]
+	>>> tokenize("(x y) b c")
+	[['x', 'y'], 'b', 'c']
+	>>> tokenize("foo? (bar) oni? (blah (blah))")
+	['foo?', ['bar'], 'oni?', ['blah', ['blah']]]
+	>>> tokenize("sys-apps/linux-headers nls? (sys-devel/gettext)")
+	['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']]
+
+	"""
 	newtokens = []
 	curlist   = newtokens
 	prevlists = []
@@ -96,34 +98,30 @@ def tokenize(mystring):
 
 
 #######################################################################
-#
-# evaluate(tokens, defines)
-#
-#
-# Assume you have this list of dependencies:
-#
-#	['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']]
-#
-# and you do a normal build (no defines are set), then you will get:
-#
-#	['sys-apps/linux-headers']
-#
-# as dependency. Now, assume you want to have NLS on your OE target, then put
-# 'nls' into the defines list. Now you will get
-#
-#	['sys-apps/linux-headers', ['sys-devel/gettext']]
-#
-# Just put that throught flatten() and you have a list of dependencies.
-#
-#
-# The tokens can also have negative flags, e.g.
-#
-#	['gdbm?', ['gdbm'], '!gdbm?', ['flatfile'] ]
-#
 
 def evaluate(tokens,mydefines,allon=0):
-	"""removes tokens based on whether conditional definitions exist or not.
-	Recognizes !"""
+	"""Removes tokens based on whether conditional definitions exist or not.
+	Recognizes !
+
+	>>> evaluate(['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']], {})
+	['sys-apps/linux-headers']
+
+	Negate the flag:
+
+	>>> evaluate(['sys-apps/linux-headers', '!nls?', ['sys-devel/gettext']], {})
+	['sys-apps/linux-headers', ['sys-devel/gettext']]
+
+	Define 'nls':
+
+	>>> evaluate(['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']], {"nls":1})
+	['sys-apps/linux-headers', ['sys-devel/gettext']]
+
+	Turn allon on:
+
+	>>> evaluate(['sys-apps/linux-headers', 'nls?', ['sys-devel/gettext']], {}, True)
+	['sys-apps/linux-headers', ['sys-devel/gettext']]
+
+	"""
 	if tokens == None:
 		return None
 	mytokens = tokens + []		# this copies the list
@@ -153,17 +151,16 @@ def evaluate(tokens,mydefines,allon=0):
 
 
 #######################################################################
-#
-#  flatten()
-#
-#  [1,[2,3]] -> [1,2,3]
-#
-#  Usually used after tokenize() and evaluate()
-#
 
 def flatten(mytokens):
-	"""this function now turns a [1,[2,3]] list into
-	a [1,2,3] list and returns it."""
+	"""this function now nested arrays into a flat arrays:
+
+	>>> flatten([1,[2,3]])
+	[1, 2, 3]
+	>>> flatten(['sys-apps/linux-headers', ['sys-devel/gettext']])
+	['sys-apps/linux-headers', 'sys-devel/gettext']
+
+	"""
 	newlist=[]
 	for x in mytokens:
 		if type(x)==types.ListType:
@@ -174,21 +171,37 @@ def flatten(mytokens):
 
 
 #######################################################################
-#
-# varexpand()
-#
-# Expands variables of the form ${VARNAME} via keys
-# Expands variables of the form ${@python-code} via eval()
-# Expands shell escapes like \n
-#
 
 # cache expansions of constant strings
 _varexpand_cache_ = {}
 def varexpand(mystring,mydict = {}, stripnl=0):
-	"""
-	Removes quotes, handles \n, etc.
-	This code is used by the configfile code, as well as others (parser)
-	This would be a good bunch of code to port to C.
+	"""Removes quotes, handles \n, etc.  This code is used by the
+	configfile code, as well as others (parser)
+
+	We handle variables, but raise an exception on missing variables:
+
+	>>> env = {"VAR": "value-of-VAR"}
+	>>> varexpand('${VAR}', env)
+	'value-of-VAR'
+	>>> varexpand('${VAR_MISSING}', env)
+	Traceback (most recent call last):
+	  File "<stdin>", line 1, in ?
+	VarExpandError: 'VAR_MISSING' missing
+
+	But only UPPERCASE is expanded, lowercase and mixed case stay put:
+
+	>>> varexpand('${VaR}', {"VaR": "var"})
+	'${VaR}'
+
+	Wow, nifty way to call python code
+
+	>>> varexpand('${@"Test"*2}')
+	'TestTest'
+
+	We remove quotes:
+
+	>>> varexpand('x = "${VAR}"', env)
+	'x = value-of-VAR'
 	"""
 
 	try:
@@ -295,13 +308,11 @@ def varexpand(mystring,mydict = {}, stripnl=0):
 
 
 #######################################################################
-#
-# setenv()
-#
-# sets a variable in env[] with prior shell var expansion
-#
 
 def setenv(var, value):
+	"""Simple set an environment in the global oe.env[] variable, but
+	with expanding variables beforehand."""
+
 	value = varexpand(value, env)
 	env[var] = value
 
@@ -646,18 +657,188 @@ def print_missing_env():
 
 
 #######################################################################
+
+def decodeurl(url):
+	"""Decodes an URL into the tokens (scheme, network location, path, user, password, parameters).
+	Parameters is a 
+
+	URL with http as scheme, hostname and path:
+
+	>>> decodeurl("http://www.google.com/index.html")
+	('http', 'www.google.com', '/index.html', '', '', {})
+
+	CVS url with username, host and cvsroot. The cvs module to check out is in the
+	parameters:
+
+	>>> decodeurl("cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg")
+	('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'})
+
+	Dito, but this time the username has a password part. And we also request a special tag
+	to check out.
+
+	>>> decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
+	('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
+	"""
+
+	#print url
+	m = re.compile('([^:]*):/*(.+@)?([^/]+)(/[^;]+);?(.*)').match(url)
+	if not m:
+		fatal("Malformed URL '%s'" % url)
+
+	type = m.group(1)
+	host = m.group(3)
+	path = m.group(4)
+	user = m.group(2)
+	parm = m.group(5)
+	#print "type:", type
+	#print "host:", host
+	#print "path:", path
+	#print "parm:", parm
+	if user:
+		m = re.compile('([^:]+)(:?(.*))@').match(user)
+		if m:
+			user = m.group(1)
+			pswd = m.group(3)
+	else:
+		user = ''
+		pswd = ''
+	#print "user:", user
+	#print "pswd:", pswd
+	#print
+	p = {}
+	if parm:
+		for s in parm.split(';'):
+			s1,s2 = s.split('=')
+			p[s1] = s2
+			
+	return (type, host, path, user, pswd, p)
+		
+
+def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
+	myfile = os.path.basename(path)
+	
+	try:
+		mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+		if mydigests.has_key(myfile):
+			# if we have the digest file, we know the final size and can resume the download.
+			if mystat[ST_SIZE] < mydigests[myfile]["size"]:
+				fetched = 1
+			else:
+				# we already have it downloaded, skip
+				# if our file is bigger than the recorded size, digestcheck should catch it.
+				fetched = 2
+		else:
+			# we don't have the digest file, but the file exists.  Assume it is fully downloaded.
+			fetched = 2
+	except (OSError,IOError),e:
+		fetched = 0
+
+	# we either need to resume or start the download
+	if fetched != 2:
+		# you can't use "continue" when you're inside a "try" block
+		if fetched == 1:
+			# resume mode:
+			note("Resuming download...")
+			myfetch = string.replace(env["FETCHCOMMAND"],"${DISTDIR}",env["DISTDIR"])
+		else:
+			# normal mode:
+			myfetch = string.replace(env["RESUMECOMMAND"],"${DISTDIR}",env["DISTDIR"])
+		note("fetch " +loc)
+		myfetch = myfetch.replace("${URI}",loc)
+		myfetch = myfetch.replace("${FILE}",myfile)
+		note(myfetch)
+		myret = os.system(myfetch)
+
+		if mydigests.has_key(myfile):
+			print "0"
+			try:
+				mystat = os.stat(env["DISTDIR"]+"/"+myfile)
+				print "1", myret
+				# no exception?  file exists. let digestcheck() report
+				# an appropriately for size or md5 errors
+				if myret and (mystat[ST_SIZE] < mydigests[myfile]["size"]):
+					print "2"
+					# Fetch failed... Try the next one... Kill 404 files though.
+					if (mystat[ST_SIZE]<100000) and (len(myfile)>4) and not ((myfile[-5:]==".html") or (myfile[-4:]==".htm")):
+						print "3"
+						html404 = re.compile("<title>.*(not found|404).*</title>",re.I|re.M)
+						try:
+							if html404.search(open(env["DISTDIR"]+"/"+myfile).read()):
+								try:
+									os.unlink(env["DISTDIR"]+"/"+myfile)
+									note("deleting invalid distfile (improper 404 redirect from server)")
+								except:
+									pass
+						except:
+							pass
+					print "What to do?"
+					return 1
+				return 2
+			except (OSError,IOError),e:
+				fetched = 0
+		else:
+			if not myret:
+				return 2
+
+	if fetched != 2:
+		error("Couldn't download "+ myfile)
+		return 0
+	return fetched
+
+
+def fetch_with_cvs(mydigests, type,host,path,user,pswd,parm):
+	fatal('fetch via CVS not yet implemented')
+
+def fetch_with_bk(mydigests, type,host,path,user,pswd,parm):
+	fatal('fetch via BitKeeper not yet implemented')
+
+
+def fetch(urls, listonly=0):
+	digestfn  = env["FILESDIR"]+"/digest-"+env["PF"]
+	mydigests = {}
+	if os.path.exists(digestfn):
+		debug(3, "checking digest "+ digestfn)
+		myfile    = open(digestfn,"r")
+		mylines   = myfile.readlines()
+		for x in mylines:
+			myline = string.split(x)
+			if len(myline)<4:
+				# invalid line
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
+			try:
+				mydigests[myline[2]] = {"md5" : myline[1], "size" : string.atol(myline[3])}
+			except ValueError:
+				oe.fatal("The digest %s appears to be corrupt" % digestfn);
+
+	for loc in urls.split():
+		(type, host, path, user, pswd, parm) = decodeurl(varexpand(loc, env))
+
+		if type in ['http','https','ftp']:
+			fetched = fetch_with_wget(loc,mydigests, type,host,path,user,pswd)
+		elif type in ['cvs', 'pserver']:
+			fetched = fetch_with_cvs(mydigests, type,host,path,user,pswd,parm)
+		elif type == 'bk':
+			fetched = fetch_with_bk(mydigests, type,host,path,user,pswd,parm)
+		else:
+			fatal("can't fetch with method '%s'" % type)
+		if fetched != 2:
+			error("Couldn't download "+ loc)
+			return 0
+		return 1
+		
+
+
+#######################################################################
 #
-# fetch()
+# fetch2()
 #
 # TODO: the current function is quite simple, it can only fetch http:// and ftp://,
 # but not cvs:// bk:// or patches, files, directories
 #
-def fetch(myuris, listonly=0):
+def fetch2(myuris, listonly=0):
 	"fetch files.  Will use digest file if available."
-	fetchcommand  = env["FETCHCOMMAND"]
-	resumecommand = env["RESUMECOMMAND"]
-	fetchcommand  = string.replace(fetchcommand,"${DISTDIR}",env["DISTDIR"])
-	resumecommand = string.replace(resumecommand,"${DISTDIR}",env["DISTDIR"])
+	fetchcommand  = string.replace(env["FETCHCOMMAND"],"${DISTDIR}",env["DISTDIR"])
+	resumecommand = string.replace(env["RESUMECOMMAND"],"${DISTDIR}",env["DISTDIR"])
 	mydigests     = None
 	digestfn      = env["FILESDIR"]+"/digest-"+env["PF"]
 
@@ -1563,6 +1744,11 @@ envdesc = {
 "pkg_prerm": {   "desc":     "commands to be run on the target before removal", },
 "pkg_postrm": {  "desc":     "commands to be run on the target after removal", },
 
+# System wide configuration
+
+"FETCHCOMMAND": { "desc":     "command to fetch a file via ftp/http/https", },
+"RESUMECOMMAND": { "desc":    "command to resume the fetch of a file via ftp/http/https", },
+
 # Automatically generated, but overrideable:
 
 "src_unpack": {  "desc":     "creates the source directory ${S} and populates it",
@@ -1572,3 +1758,9 @@ envdesc = {
                  "inherit":  "1" },
 
 }
+
+
+
+if __name__ == "__main__":
+	import doctest, oe
+	doctest.testmod(oe)
