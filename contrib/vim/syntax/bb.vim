@@ -50,8 +50,16 @@ syn match bbIdentifier		"[a-zA-Z0-9\-_]\+" display contained
 syn match bbVarEq		"=" contained contains=bbOperator nextgroup=bbVarValue
 syn match bbVarValue		".*$" contained contains=bbString
 
+
+" BitBake variable metadata flags
+syn match bbVarFlagDef		"^\([a-zA-Z0-9\-_]\+\)\(\[[a-zA-Z0-9\-_]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
+syn region bbVarFlagFlag	matchgroup=bbArrayBrackets start="\[" end="\]\s*\(=\)\@=" keepend excludenl contained contains=bbIdentifier nextgroup=bbVarEq
+"syn match bbVarFlagFlag		"\[\([a-zA-Z0-9\-_]\+\)\]\s*\(=\)\@=" contains=bbIdentifier nextgroup=bbVarEq
+
+
 " Functions!
 syn match bbFunction	"\h\w*" display contained
+
 
 " BitBake python metadata
 syn include @python syntax/python.vim
@@ -63,6 +71,7 @@ syn keyword bbPythonFlag	python contained nextgroup=bbFunction
 syn match bbPythonFuncDef	"^\(python\s\+\w\+\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion
 syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{" end="^}$" keepend contained contains=@python
 "hi def link bbPythonFuncRegion	Comment
+
 
 " BitBake shell metadata
 syn include @shell syntax/sh.vim
@@ -86,6 +95,9 @@ syn region bbDefRegion		start=":$" end='^$' end='^\(\s\)\@!' contained contains=
 
 " BitBake statements
 syn keyword bbStatement		include inherit addtask addhandler
+
+syn match bbArrayBrackets	"[\[\]]" contained
+hi def link bbArrayBrackets	Statement
 
 hi def link bbDef		Statement
 hi def link bbPythonFlag	Type
