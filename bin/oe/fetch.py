@@ -33,7 +33,7 @@ def init(urls = [], d = oe.data.init()):
 	for u in urls:
 		for m in methods:
 			m.data = d
-			if m.supports(u):
+			if m.supports(u, d):
 				m.urls.append(u)
 	
 def go(d = oe.data.init()):
@@ -52,7 +52,7 @@ def localpaths(d):
 
 def localpath(url, d = oe.data.init()):
 	for m in methods:
-		if m.supports(url):
+		if m.supports(url, d):
 			return m.localpath(url, d)
 	return url 
 
@@ -62,10 +62,10 @@ class Fetch(object):
 	def __init__(self, urls = []):
 		self.urls = []
 		for url in urls:
-			if self.supports(oe.decodeurl(url)) is 1:
+			if self.supports(oe.decodeurl(url), d) is 1:
 				self.urls.append(url)
 
-	def supports(url):
+	def supports(url, d):
 		"""Check to see if this fetch class supports a given url.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
@@ -100,17 +100,17 @@ class Fetch(object):
 
 class Wget(Fetch):
 	"""Class to fetch urls via 'wget'"""
-	def supports(url):
+	def supports(url, d):
 		"""Check to see if a given url can be fetched using wget.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
 		return type in ['http','https','ftp']
 	supports = staticmethod(supports)
 
 	def localpath(url, d):
 		# strip off parameters
-		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
@@ -129,7 +129,7 @@ class Wget(Fetch):
 		oe.data.update_data(localdata)
 
 		for loc in urls:
-			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
+			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(loc, localdata))
 			myfile = os.path.basename(path)
 			dlfile = self.localpath(loc, d)
 			dlfile = oe.data.expand(dlfile, localdata)
@@ -172,16 +172,16 @@ methods.append(Wget())
 
 class Cvs(Fetch):
 	"""Class to fetch a module or modules from cvs repositories"""
-	def supports(url):
+	def supports(url, d):
 		"""Check to see if a given url can be fetched with cvs.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
 		return type in ['cvs', 'pserver']
 	supports = staticmethod(supports)
 
 	def localpath(url, d):
-		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
 		if parm.has_key("localpath"):
 			# if user overrides local path, use it.
 			return parm["localpath"]
@@ -213,7 +213,7 @@ class Cvs(Fetch):
 		oe.data.update_data(localdata)
 
 		for loc in urls:
-			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(loc))
+			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(loc, localdata))
 			if not parm.has_key("module"):
 				raise MissingParameterError("cvs method needs a 'module' parameter")
 			else:
@@ -312,22 +312,22 @@ class Cvs(Fetch):
 methods.append(Cvs())
 
 class Bk(Fetch):
-	def supports(url):
+	def supports(url, d):
 		"""Check to see if a given url can be fetched via bitkeeper.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
 		return type in ['bk']
 	supports = staticmethod(supports)
 
 methods.append(Bk())
 
 class Local(Fetch):
-	def supports(url):
+	def supports(url, d):
 		"""Check to see if a given url can be fetched in the local filesystem.
 		   Expects supplied url in list form, as outputted by oe.decodeurl().
 		"""
-		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.expand(url))
+		(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(url, d))
 		return type in ['file','patch']
 	supports = staticmethod(supports)
 
