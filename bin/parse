@@ -16,8 +16,8 @@ for s in getenv('OEPATH').split(":"):
 	if os.access(os.path.join(s,'conf/oe.conf'), os.R_OK):
 		__oepath_found_it__ = 1
 		try:
-			b = oeparser.ConfigReader(os.path.join(s,"conf/oe.conf"))
-			b.reader()
+			oeparser.oeconf.fn = os.path.join(s, "conf/oe.conf")
+			oeparser.oeconf.reader()
 		except IOError:
 			pass
 
@@ -25,15 +25,17 @@ if __oepath_found_it__ == 0:
 	fatal("error locating conf/oe.conf")
 
 try:
-	c = oeparser.PackageReader(sys.argv[1])
-	c.cfgenv = b.env # point the package reader to our config data
-	c.reader()
+	a = oeparser.PackageReader(sys.argv[1])
+#	c.cfgenv = b.env # point the package reader to our config data
+	a.reader()
+
+	data = {}
+	for env in [oeparser.oeconf.env,a.env]:
+		for item in env.keys():
+			data[item] = env[item]
 	
-	for i in b.env.keys():
-		if not c.env.has_key(i):
-			c.env[i] = b.env[i]
 except IOError:
 	fatal("error accessing build file")
 
-emit_env(sys.__stdout__, c.env)
+emit_env(sys.__stdout__, data)
 sys.exit(0)

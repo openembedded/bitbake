@@ -181,6 +181,7 @@ class ConfigReader(FileReader):
 
 class PackageReader(ConfigReader):
 	"""Reads an OpenEmbedded format package metadata file"""
+	global oeconf
 
 	def __init__(self, filename = ""):
 		# regular expressions
@@ -195,8 +196,9 @@ class PackageReader(ConfigReader):
 
 		ConfigReader.__init__(self, filename)
 
-		# need access to global OE config data
-		self.cfgenv = self.env
+		# default the config var expansion to the global cfg data
+		self.cfgenv = oeconf.env
+		self.cfgenvflags = oeconf.envflags
 
 	def classname(self, fn):
 		(base, ext) = os.path.splitext(os.path.basename(fn))
@@ -204,13 +206,23 @@ class PackageReader(ConfigReader):
 
 	def getCfgEnv(self):
 		"""Returns config 'env' data"""
-		return self.__config
+		return self.__cfgenv
 
 	def setCfgEnv(self, cfgenv):
 		"""Sets config 'env' data"""
-		self.__config = cfgenv
+		self.__cfgenv = cfgenv
 
-	cfgenv = property(getCfgEnv, setCfgEnv, None, "CfgEnv property")
+	cfgenv = property(getCfgEnv, setCfgEnv, None, "cfgenv property")
+
+	def getCfgEnvFlags(self):
+		"""Returns config 'envflags' data"""
+		return self.__cfgenvflags
+
+	def setCfgEnvFlags(self, cfgenvflags):
+		"""Sets config 'envflags' data"""
+		self.__cfgenvflags = cfgenvflags
+
+	cfgenvflags = property(getCfgEnvFlags, setCfgEnvFlags, None, "cfgenvflags property")
 
 	def feeder(self, lineno, s):
 		"""OpenEmbedded package metadata 'feeder'"""
@@ -265,3 +277,6 @@ class PackageReader(ConfigReader):
 			return
 
 		return ConfigReader.feeder(self, lineno, s)
+
+oeconf = ConfigReader()
+
