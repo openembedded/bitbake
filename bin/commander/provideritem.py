@@ -23,9 +23,9 @@ class ProviderItem( QListViewItem ): #QCheckListItem
                 "SHORTNAME":    17 }
 
     icons = {}
-    
+
     def __init__( self, parent, provider, virtual = False ):
-        
+
         if not ProviderItem.icons:
             ProviderItem.icons =  { "unpack"    : QPixmap( imageDir + "do_unpack.png" ),
                "patch"     : QPixmap( imageDir + "do_patch.png" ),
@@ -45,16 +45,16 @@ class ProviderItem( QListViewItem ): #QCheckListItem
         # </HACK>
         self.mup = self.mupValue()
         self.virtualp = self.virtualValue()
-        
+
         print "ProviderItemInit: FN='%s' SN='%s', VP='%s', MUP='%s'" % ( self.fullname, self.shortname, self.virtualp, self.mup )
-        
+
         if self.mup == "N/A":
             print "Warning: MUP of '%s' seems to be not available." % provider
-            
+
         if virtual:
             QListViewItem.__init__( self, parent, provider )
             return
-    
+
         if self.virtualp:
             #
             # check if a corresponding virtual parent element already has been added
@@ -65,8 +65,8 @@ class ProviderItem( QListViewItem ): #QCheckListItem
                 vparent.setPixmap( 0, QPixmap( imageDir + "virtual.png" ) )
 
             QListViewItem.__init__( self, vparent, provider )
-            #QCheckListItem.__init__( self, vparent, provider, QCheckListItem.CheckBox )           
-            
+            #QCheckListItem.__init__( self, vparent, provider, QCheckListItem.CheckBox )
+
         else:
             #
             # check if a corresponding mup parent element already has been added
@@ -74,17 +74,17 @@ class ProviderItem( QListViewItem ): #QCheckListItem
             vparent = parent.findItem( self.mup, 0 )
             if not vparent:
                 vparent = ProviderItem( parent, self.mup, True )
-                vparent.setPixmap( 0, QPixmap( imageDir + "virtual.png" ) )          
+                vparent.setPixmap( 0, QPixmap( imageDir + "virtual.png" ) )
             QListViewItem.__init__( self, vparent, provider )
 
         self.decorate()
         self.syncStatus()
-        self.setPixmap( 0, QPixmap( imageDir + "package.png" ) )       
+        self.setPixmap( 0, QPixmap( imageDir + "package.png" ) )
         self.setCheckStatus( False )
-        
+
     def getVar( self, value ):
         return self.p.data( self.fullname, value )
-    
+
     def virtualValue( self ):
         #print self.p.data(self.fullname, "PROVIDES" )
         providers = self.p.data(self.fullname, "PROVIDES" ).split()
@@ -94,21 +94,21 @@ class ProviderItem( QListViewItem ): #QCheckListItem
     def mupValue( self ):
         providers = self.p.data( self.fullname, "PROVIDES" ).split()
         return providers[-1]
-            
+
     def setCheckStatus( self, checked ):
         self.checked = checked
         if self.checked:
             self.setPixmap( 1, QPixmap( imageDir + "checked.png" ) )
         else:
             self.setPixmap( 1, QPixmap( imageDir + "unchecked.png" ) )
-            
+
     def setBuildStatus( self, *args, **kwargs ):
         for el in kwargs:
             if el in ProviderItem.columns:
                 self.setPixmap( ProviderItem.columns[el], ( QPixmap(), ProviderItem.icons[el] )[ kwargs[el] ] )
         if "status" in kwargs:
             self.setText( ProviderItem.columns["STATUS"], kwargs["status"] )
-        
+
     def decorate( self ):
         if self.fullname.startswith( "virtual" ):
             return
@@ -122,11 +122,11 @@ class ProviderItem( QListViewItem ): #QCheckListItem
         self.st( "DEPENDS", self.p.data(self.fullname, "DEPENDS") )
         self.st( "RDEPENDS", self.p.data(self.fullname, "RDEPENDS") )
         self.st( "SHORTNAME", self.shortname )
-        
+
     def syncStatus( self ):
         if self.virtual:
-            return    
-        
+            return
+
         status = {}
         for el in "unpack patch configure compile stage install".split():
             statname = "%s/stamps/%s-%s-%s.do_%s" % ( self.p.getVar( "TMPDIR" ),
@@ -143,15 +143,18 @@ class ProviderItem( QListViewItem ): #QCheckListItem
             else:
                 status[el] = True
                 #print "found."
-                
+
         print "status for package", self.shortname, "=", status
         apply( self.setBuildStatus, (), status )
 
     def st( self, column, value ):
         self.setText( ProviderItem.columns[column], value )
-        
+
     def toggleCheck( self ):
         self.setCheckStatus( not self.checked )
+
+    def selectToBuild( self, honorDeps = True ):
+        pass
 
 #------------------------------------------------------------------------#
 # main
