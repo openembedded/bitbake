@@ -175,7 +175,7 @@ def exec_func_shell(func, d):
 
     f = open(runfile, "w")
     f.write("#!/bin/sh -e\n")
-    if data.getVar("BBDEBUG", d): f.write("set -x\n")
+    if bb.debug_level > 0: f.write("set -x\n")
     data.emit_env(f, d)
 
     f.write("cd %s\n" % os.getcwd())
@@ -189,7 +189,7 @@ def exec_func_shell(func, d):
     # open logs
     si = file('/dev/null', 'r')
     try:
-        if data.getVar("BBDEBUG", d):
+        if bb.debug_level > 0:
             so = os.popen("tee \"%s\"" % logfile, "w")
         else:
             so = file(logfile, 'w')
@@ -234,7 +234,7 @@ def exec_func_shell(func, d):
     os.close(ose[0])
 
     if ret==0:
-        if not data.getVar("BBDEBUG", d):
+        if bb.debug_level > 0:
             os.remove(runfile)
 #            os.remove(logfile)
         return

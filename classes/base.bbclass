@@ -41,7 +41,7 @@ bbdebug() {
 		exit 1
 	}
 
-	test ${BBDEBUG:-0} -ge $1 && {
+	test ${@bb.debug_level} -ge $1 && {
 		shift
 		echo "DEBUG:" $*
 	}
