@@ -382,6 +382,7 @@ class Cvs(Fetch):
 
             if cvs_rsh:
                 cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)
+                cvsupdatecmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvsupdatecmd)
 
 #           create module directory
             oe.debug(2, "Fetch: checking for module directory")
