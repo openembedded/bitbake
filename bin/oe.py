@@ -241,7 +241,7 @@ def decodeurl(url):
 
 def fetch_with_wget(loc,mydigests, type,host,path,user,pswd):
 	myfile = os.path.basename(path)
-+	dlfile = os.path.join(getenv("DL_DIR"), myfile)
+	dlfile = os.path.join(getenv("DL_DIR"), myfile)
 
 	try:
 		mystat = os.stat(dlfile)
