@@ -240,7 +240,7 @@ def load_oefile(oefile, cfgdata):
 #
 
 try:
-	(opts, args) = getopt.getopt(sys.argv[1:], 'Vc:fk', [ 'version', 'cmd=', 'force' ])
+	(opts, args) = getopt.getopt(sys.argv[1:], 'Vc:fka', [ 'version', 'cmd=', 'abort', 'force' ])
 except getopt.GetoptError:
 	usage()
 
@@ -256,6 +256,9 @@ if opthash.has_key('--version') or opthash.has_key('-V'):
 if opthash.has_key('-k'):
 	abort = 0
 else:
+	if opthash.has_key('--abort') or opthash.has_key('-a'):
+		oe.note("Using deprecated --abort/-a commandline option.")
+		oe.note("This option is no longer necessary, as abort on failure is default.")
 	abort = 1
 
 if opthash.has_key('--force') or opthash.has_key('-f'):
