@@ -88,7 +88,7 @@ def exec_func(func, d):
 
 	adir = data.expand(adir, d)
 
-	if adir:
+	if adir and os.access(adir, os.F_OK):
 		os.chdir(adir)
 
 	if data.getVarFlag(func, "python", d):
@@ -284,6 +284,7 @@ def remove_task(task, kill = 1, taskdata = _task_data):
 def get_task_data():
 	return _task_data
 
+data.setVarFlag("do_showdata", "nostamp", "1", _task_data)
 data.setVarFlag("do_clean", "nostamp", "1", _task_data)
 data.setVarFlag("do_mrproper", "nostamp", "1", _task_data)
 
