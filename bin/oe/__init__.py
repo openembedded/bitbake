@@ -339,7 +339,7 @@ def encodeurl(decoded):
 
 #######################################################################
 
-def which(path, item, direction = 1):
+def which(path, item, direction = 0):
     """Useful function for locating a file in a PATH"""
     found = ""
     for p in (path or "").split(':'):
