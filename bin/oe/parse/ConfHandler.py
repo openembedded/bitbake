@@ -154,9 +154,9 @@ def feeder(lineno, s, fn, data = {}):
         elif "colon" in groupd and groupd["colon"] != None:
             val = oe.data.expand(groupd["value"], data)
         elif "append" in groupd and groupd["append"] != None:
-            val = (oe.data.getVar(key, data) or "") + groupd["value"]
+            val = "%s %s" % ((oe.data.getVar(key, data) or ""), groupd["value"])
         elif "prepend" in groupd and groupd["prepend"] != None:
-            val = groupd["value"] + (oe.data.getVar(key, data) or "")
+            val = "%s %s" % (groupd["value"], (oe.data.getVar(key, data) or ""))
         else:
             val = groupd["value"]
         if 'flag' in groupd and groupd['flag'] != None:
