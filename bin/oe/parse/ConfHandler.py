@@ -138,6 +138,9 @@ def handle(fn, data = {}, include = 0):
 
     if oldfile:
         oe.data.setVar('FILE', oldfile, data)
+
+    if oe.data.getVar('OEDIR', data, 1):
+        oe.note("OEDIR is deprecated, please switch to OEPATH.")
     return data
 
 def feeder(lineno, s, fn, data = {}):
