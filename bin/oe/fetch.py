@@ -202,7 +202,7 @@ class Cvs(Fetch):
 
 			os.chdir(oe.expand(dldir))
 			cvsroot = ":" + method + ":" + user
-			if pswd is not None:
+			if pswd:
 				cvsroot += ":" + pswd
 			cvsroot += "@" + host + ":" + path
 
@@ -216,6 +216,7 @@ class Cvs(Fetch):
 			cvscmd = "cvs -d" + cvsroot
 			cvscmd += " checkout " + string.join(options) + " " + module 
 			oe.note("fetch " + loc)
+			oe.debug(1, "Running %s" % cvscmd)
 			myret = os.system(cvscmd)
 			if myret != 0:
 				raise FetchError(module)
