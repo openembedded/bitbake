@@ -137,7 +137,8 @@ def do_stage():
 	mkdirhier(getenv("S"))		# create sourcedir if not yet existing
 	mkdirhier(getenv("STAGING_LIBDIR"))
 	mkdirhier(getenv("STAGING_BINDIR"))
-	mkdirhier(getenv("STAGING_INCDIR"))
+	mkdirhier(getenv("STAGING_DIR") + "/build/include")
+	mkdirhier(getenv("STAGING_DIR") + "/target/include")
 	exec_task('stage', 'S')
 		
 
