@@ -10,6 +10,38 @@ from oe import *
 class FuncFailed(Exception):
 	"""Executed function failed"""
 
+class TaskBase(event.Event):
+	"""Base class for task events"""
+
+	def __init__(self, t, d = {}):
+		self.task = t
+		self.data = d
+
+	def getTask(self):
+		return self._task
+
+	def setTask(self, task):
+		self._task = task
+
+	task = property(getTask, setTask, None, "task property")
+
+	def getData(self):
+		return self._data
+
+	def setData(self, data):
+		self._data = data
+
+	data = property(getData, setData, None, "data property")
+	
+
+class TaskSucceeded(TaskBase):
+	"""Task execution succeeded"""
+	type = "TaskSucceeded"
+
+class TaskFailed(TaskBase):
+	"""Task execution failed"""
+	type = "TaskFailed"
+
 def exec_shell_func(func, dir=None, myfatal=fatal):
 	"""This executes any shell function stored in env[func]. Returns
 	true if execution was successful.
@@ -38,7 +70,7 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 	if env.has_key('OEPATH'):
 		for s in expand(env['OEPATH']).split(":"):
 			f.write("if test -f %s/build/oebuild.sh; then source %s/build/oebuild.sh; fi\n" % (s,s));
-	emit_env(f)
+	oe.emit_env(f)
 
 	if dir:  f.write("cd %s\n" % env[dir])
 	if func: f.write(func +"\n")
@@ -52,11 +84,13 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 		if not env.has_key('OEDEBUG'): 
 			os.remove(runfile)
 			os.remove(logfile)
+		event.fire(TaskSucceeded(func, env))
 		mkstamp(func)
 		return
 	else:
 		error("'%s'() failed" % func);
 		error("more info in: %s" % logfile);
+		event.fire(TaskFailed(func, env))
 		raise FuncFailed()
 
 
@@ -86,7 +120,9 @@ def exec_python_func(func, dirname = None, myfatal = fatal):
 	except Exception, e:
 		(type, value, traceback) = sys.exc_info()
 		error("Python function %s failed: %s" % (func, value))
+		event.fire(TaskFailed(func, env))
 		raise FuncFailed(value)
+	event.fire(TaskSucceeded(func, env))
 	mkstamp(func)
 
 
@@ -201,22 +237,23 @@ def do_fetch():
 			oe.fetch.init(getenv('SRC_URI').split())
 		except oe.fetch.NoMethodError:
 			(type, value, traceback) = sys.exc_info()
-			fatal("No method: %s" % value)
-			return
+			error("No method: %s" % value)
+			raise FuncFailed()
 
 		try:
 			oe.fetch.go()
 		except oe.fetch.MissingParameterError:
 			(type, value, traceback) = sys.exc_info()
-			fatal("Missing parameters: %s" % value)
-			return
+			error("Missing parameters: %s" % value)
+			raise FuncFailed()
 		except oe.fetch.FetchError:
 			(type, value, traceback) = sys.exc_info()
-			fatal("Fetch failed: %s" % value)
-			return
+			error("Fetch failed: %s" % value)
+			raise FuncFailed()
 		mkstamp('do_fetch')
 	else:
-		fatal("No SRC_URI variable, not downloading anything")
+		note("No SRC_URI variable, nothing to be done")
+		mkstamp('do_fetch')
 
 
 #######################################################################
@@ -418,6 +455,14 @@ for var in env.keys():
 			
 	if envflags[var].has_key("python"):
 		tasks[taskvar]["python"] = "1"
+
+#def handleFail(e):
+#	if e.type == "TaskFailed":
+#		print "caught failure of \"%s\" task" % e.task
+#		return event.Handled
+#	return event.NotHandled
+#
+#event.register(handleFail)
 
 for s in sys.argv[1].split(','):
 	try:

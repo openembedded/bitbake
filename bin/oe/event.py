@@ -11,6 +11,7 @@ Copyright: (c) 2003 Chris Larson
 import os, re
 class Event:
 	"""Base class for events"""
+	type = "Event"
 
 NotHandled = 0
 Handled = 1
@@ -40,9 +41,12 @@ def fire(event):
 def register(handler):
 	"""Register an Event handler"""
 	if handler is not None:
+		# handle string containing python code
 		if type(handler).__name__ == "str":
 			return registerCode(handler)
-		handlers.append(handler)
+		# prevent duplicate registration
+		if not handler in handlers:
+			handlers.append(handler)
 
 def registerCode(handlerStr):
 	"""Register a 'code' Event.
@@ -54,7 +58,9 @@ def registerCode(handlerStr):
 	   appropriate tabbing put in place."""
 	tmp = "def tmpHandler(e):\n%s" % handlerStr
 	comp = compile(tmp, "tmpHandler(e)", "exec")
-	handlers.append(comp)
+	# prevent duplicate registration
+	if not comp in handlers:
+		handlers.append(comp)
 
 def remove(handler):
 	"""Remove an Event handler"""
