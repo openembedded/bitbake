@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 import string, sys, os
 sys.path.append('/usr/share/oe')
@@ -164,6 +164,38 @@ def get_oefile():
 	else:
 		return None
 
+def load_oefile(oefile, cfgdata):
+	oepath = data.getVar('OEPATH', cfg)
+	topdir = data.getVar('TOPDIR', cfg)
+	if not topdir:
+		topdir = os.path.abspath(os.getcwd())
+		# set topdir to here
+		data.setVar('TOPDIR', topdir, cfg)
+	oefile = os.path.abspath(oefile)
+	oefile_loc = os.path.abspath(os.path.dirname(oefile))
+	# expand tmpdir to include this topdir
+	data.setVar('TMPDIR', data.getVar('TMPDIR', cfg, 1) or "", cfg)
+	# add topdir to oepath
+	oepath += ":%s" % topdir
+	# set topdir to location of .oe file
+	topdir = oefile_loc
+	#data.setVar('TOPDIR', topdir, cfg)
+	# add that topdir to oepath
+	oepath += ":%s" % topdir
+	# go there
+	oldpath = os.path.abspath(os.getcwd())
+	os.chdir(topdir)
+	data.setVar('OEPATH', oepath, cfg)
+	from copy import deepcopy
+	oe = deepcopy(cfgdata)
+	try:
+		parse.handle(oefile, oe) # read .oe data
+		os.chdir(oldpath)
+		return oe
+	except IOError, OSError:
+		os.chdir(oldpath)
+		return None
+
 import getopt
 try:
 	(opts, args) = getopt.getopt(sys.argv[1:], 'vc:fa', [ 'version', 'cmd=', 'abort', 'force' ])
@@ -248,11 +280,11 @@ for f in files:
 	# read a file's metadata
 	try:
 		from copy import deepcopy
-		pkgdata[f] = parse.handle(f, deepcopy(cfg))
+		pkgdata[f] = load_oefile(f, cfg)
 		deps = None
 		if pkgdata[f] is not None:
 			# allow metadata files to add items to OEFILES
-			data.update_data(pkgdata[f])
+			#data.update_data(pkgdata[f])
 			addoefiles = data.getVar('OEFILES', pkgdata[f]) or None
 			if addoefiles:
 				for aof in string.split(addoefiles):
@@ -317,9 +349,21 @@ for k in __tokill:
 	graph.walkup(k, reallykillitem)
 
 event.fire(BuildStarted(buildname, graph.okeys, cfg))
-packages = args or graph.okeys
 
-for k in packages:
+pkgs_to_build = None
+if args:
+	if not pkgs_to_build:
+		pkgs_to_build = []
+	pkgs_to_build.extend(args)
+if not pkgs_to_build:
+	oepkgs = data.getVar('OEPKGS', cfg, 1)
+	if oepkgs:
+		pkgs_to_build = string.split(oepkgs)
+if not pkgs_to_build:
+	pkgs_to_build = graph.okeys
+debug(1, "building: %s" % pkgs_to_build)
+
+for k in pkgs_to_build:
 	if pkgs.has_key(k):
 		ret = graph.walkdown(k, build)
 		if abort and not ret:
@@ -328,5 +372,4 @@ for k in packages:
 		oe.error("Unable to build %s: no .oe file provides it." % k)
 		if abort:
 			sys.exit(1)
-
 event.fire(BuildCompleted(buildname, graph.okeys, cfg))
