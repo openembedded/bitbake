@@ -26,7 +26,7 @@ class VarExpandError(Exception):
 
 prepender = ''
 def debug(lvl, *args):
-	if env.has_key('BDEBUG') and (env['BDEBUG'] >= str(lvl)):
+	if env.has_key('OEDEBUG') and (env['OEDEBUG'] >= str(lvl)):
 		print prepender + 'DEBUG:', string.join(args, '')
 
 def note(*args):
@@ -425,6 +425,9 @@ def getconfig(mycfg, mykeys={}, myexpand=0):
 				val = varexpand(val,mykeys,stripnl)
 			except VarExpandError, detail:
 				print lex.error_leader(mycfg, lex.lineno) + detail.args[0]
+		else:
+			while len(val) >= 2 and ((val[0] == '"' and val[-1] == '"') or (val[0] == "'" and val[-1] == "'")):
+				val = val[1:-1]
 		mykeys[key] = val
 			
 	return mykeys
@@ -532,6 +535,7 @@ def read_package_conf(file):
 # Deduce per-package environment variables
 #
 def set_automatic_vars(file):
+	debug(2,"setting automatic vars")
 	pkg = catpkgsplit(file)
 	if pkg == None:
 		fatal("package file not in valid format")
@@ -817,10 +821,17 @@ def fetch(urls, listonly=0):
 				oe.fatal("The digest %s appears to be corrupt" % digestfn);
 
 	for loc in urls.split():
+		debug(2,"fetching %s" % loc)
 		(type, host, path, user, pswd, parm) = decodeurl(varexpand(loc, env))
 
 		if type in ['http','https','ftp']:
 			fetched = fetch_with_wget(loc,mydigests, type,host,path,user,pswd)
+			if env.has_key('A'):
+				a = env['A'].split()
+			else:
+				a = []
+			a.append(os.path.basename(path))
+			env['A'] = string.join(a)
 		elif type in ['cvs', 'pserver']:
 			fetched = fetch_with_cvs(mydigests, type,host,path,user,pswd,parm)
 		elif type == 'bk':
@@ -830,6 +841,7 @@ def fetch(urls, listonly=0):
 		if fetched != 2:
 			error("Couldn't download "+ loc)
 			return 0
+
 		return 1
 		
 
@@ -1669,6 +1681,7 @@ envdesc = {
                  "warnlevel": 2 },
 "RDEPEND": {     "desc":      "dependencies required to run this package",
                  "warnlevel": 2 },
+"PROVIDES": {    "desc":      "dependencies fulfulled by this package", },
 "SRC_URI": {     "desc":      "where to get the sources",
                  "warnlevel": 1 },
 "LICENSE": {     "desc":      "license of the source code for this package",
@@ -1684,14 +1697,13 @@ envdesc = {
 "SLOT": {        "desc":      "installation slot, i.e glib1.2 could be slot 0 and glib2.0 could be slot 1", },
 "GET_URI": {     "desc":      "get this files like SRC_URI, but don't extract them", },
 "MAINTAINER": {  "desc":      "who is reponsible for fixing errors?", },
-"BDEBUG": {      "desc":      "debug-level for the builder", },
+"OEDEBUG": {     "desc":      "debug-level for the builder", },
 
 # Automatic set (oemake related):
 
 "OEDIR": {       "desc":      "where the build system for OpenEmbedded is located",
                  "warnlevel": 3 },
-"OEPATH": {      "desc":      "additional directories to consider when building packages",
-                 "warnlevel": 1 },
+"OEPATH": {      "desc":      "additional directories to consider when building packages", },
 "TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded",
                  "warnlevel": 3 },
 "P": {           "desc":      "package name without the revision, e.g. 'xfree-4.2.1'",
@@ -1754,13 +1766,14 @@ envdesc = {
 
 "FETCHCOMMAND": { "desc":     "command to fetch a file via ftp/http/https", },
 "RESUMECOMMAND": { "desc":    "command to resume the fetch of a file via ftp/http/https", },
+"USE": {          "desc":     "which options should be enabled in packages", },
 
 # Automatically generated, but overrideable:
 
 "src_unpack": {  "desc":     "creates the source directory ${S} and populates it",
                  "warnlevel": 2 },
 
-"BDEBUG": {      "desc":     "build-time debug level",
+"OEDEBUG": {     "desc":     "build-time debug level",
                  "inherit":  "1" },
 
 }
