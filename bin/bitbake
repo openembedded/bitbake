@@ -656,7 +656,8 @@ if __name__ == "__main__":
             if bbpkgs:
                     pkgs_to_build = bbpkgs.split()
     if not pkgs_to_build and not make.options.show_versions:
-            print "Nothing to build. Use 'bitbake world' to build everything."
+            print "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
+            print "for usage information."
             sys.exit(0)
 
 
