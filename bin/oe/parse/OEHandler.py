@@ -58,8 +58,9 @@ def handle(fn, data = {}):
 		lineno = lineno + 1
 		s = f.readline()
 		if not s: break
-		s = s.strip()
-		if not s: continue		# skip empty lines
+		w = s.strip()
+		if not w: continue		# skip empty lines
+		s = s.rstrip()
 		if s[0] == '#': continue	# skip comments
 		while s[-1] == '\\':
 			s2 = f.readline()[:-1].strip()
