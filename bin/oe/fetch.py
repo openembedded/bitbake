@@ -336,7 +336,12 @@ class Cvs(Fetch):
                 oe.debug(1, "%s already exists, skipping cvs checkout." % tarfn)
                 continue
 
-            cvs_tarball_stash = oe.data.getVar('CVS_TARBALL_STASH', d, 1)
+            pn = oe.data.getVar('PN', d, 1)
+            cvs_tarball_stash = None
+            if pn:
+                cvs_tarball_stash = oe.data.getVar('CVS_TARBALL_STASH_%s' % pn, d, 1)
+            if cvs_tarball_stash == None:
+                cvs_tarball_stash = oe.data.getVar('CVS_TARBALL_STASH', d, 1)
             if cvs_tarball_stash:
                 fetchcmd = oe.data.getVar("FETCHCOMMAND_wget", d, 1)
                 uri = cvs_tarball_stash + tarfn
