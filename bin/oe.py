@@ -13,7 +13,8 @@ Try "pydoc ./oe.py" to get some nice output.
 
 import sys,os,string,types,re
 
-projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
+#projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
+projectdir = os.getcwd()
 env = {}
 
 class VarExpandError(Exception):
@@ -1685,9 +1686,10 @@ envflags = {
 
 # Directories for the Build system
 
-"OEDIR":		{ "warnlevel": 3 },
+"OEDIR":		{ "warnlevel": 3,
+			  "inherit": "1" },
 "OEPATH":		{ "warnlevel": 3,
-			  "inherit": 1 },
+			  "inherit": "1" },
 "TOPDIR":		{ "warnlevel": 3,
 			  "desc":	"Toplevel directory of build area" },
 "TMPDIR":		{ "warnlevel": 3 },
@@ -1816,7 +1818,7 @@ envflags = {
 # defaults for vars needed to access oe.conf
 env['TOPDIR'] = projectdir
 env['OEDIR'] = os.path.join(sys.prefix, "share/oe")
-env['OEPATH'] = "${OEDIR}:./bin:."
+env['OEPATH'] = "${OEDIR}/bin:${OEDIR}:${TOPDIR}/bin:${TOPDIR}"
 inherit_os_env(1)
 
 if __name__ == "__main__":
