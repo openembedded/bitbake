@@ -431,23 +431,24 @@ def getconfig(mycfg, mykeys={}, myexpand=0):
 
 
 #######################################################################
-#
-# Read Configation from these places:
-#
-# 1. ${OEDIR}/conf/oe.conf
-# 2. ${OEDIR}/conf/local.conf
-# 3. near current directory:
-#    a) optionally from local.conf
-#    b) optionally from conf/local.conf
-# 4. global per-architecture/per-target configs
-#    a) optionally from ${OEDIR}/${CCHOST}.conf
-#    b) optionally from ${OEDIR}/${TARGET}.conf
-#    c) optionally from ${OEDIR}/${SUBTARGET}.conf
-#
-# Note: it can happen that some file get imported twice, but that is not really a problem
-#
+
+
 
 def read_oe_conf():
+	"""Read Configation from these places:
+
+	1. ${OEDIR}/conf/oe.conf
+	2. ${OEDIR}/conf/local.conf
+	3. near current directory:
+	   a) optionally from local.conf
+	   b) optionally from conf/local.conf
+	4. global per-architecture/per-target configs
+	   a) optionally from ${OEDIR}/${CCHOST}.conf
+	   b) optionally from ${OEDIR}/${TARGET}.conf
+	   c) optionally from ${OEDIR}/${SUBTARGET}.conf
+
+	Note: it can happen that some file get imported twice, but that is not really a problem"""
+
 	inherit_os_env(1)
 
 	getconfig(projectdir+'/conf/oe.conf', env, 1)
@@ -479,6 +480,11 @@ def read_oe_conf():
 		getconfig(projectdir+'/conf/'+ env['SUBTARGET']+ '.conf', env, 1)
 	except:
 		pass
+	try:
+		getconfig('local.conf', env, 1)
+	except IOError:
+		pass
+
 	inherit_os_env(3)
 
 
