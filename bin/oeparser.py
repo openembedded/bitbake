@@ -188,6 +188,7 @@ class PackageReader(ConfigReader):
 		self.func_start_regexp = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
 		self.inherit_regexp = re.compile( r"inherit\s+(.+)" )
                 self.export_func_regexp = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
+		self.addtask_regexp = re.compile( r"addtask\s+(.+)" )
 
 		# state variables
 		self.__infunc = ""
@@ -250,6 +251,15 @@ class PackageReader(ConfigReader):
 			n = __word__.findall(fns)
 			for f in n:
 				setenv(f, "\t%s_%s\n" % (self.classname(self.fn), f), self.env)
+			return
+
+		m = self.addtask_func_regexp.match(s)
+		if m:
+			fns = m.group(1)
+			n = __word__.findall(fns)
+			if not self.envflags.has_key(n[0]):
+				self.envflags[n[0]] = {}
+			self.envflags[n[0]]["task"] = "1"
 			return
 
 		m = self.inherit_regexp.match(s)
