@@ -49,17 +49,53 @@ def exec_shell_func(func, dir=None, myfatal=fatal):
 
 #######################################################################
 
-def exec_task(task,dir):
+def exec_task(task, dir, deptasks=""):
+	"""Executes a given task, handling the stamps appropriately"""
+	if stamp_is_current(task, deptasks):
+		return
+
+	if not deptasks:
+		try:
+			deptasks = tasks[task]["deps"]
+		except KeyError:
+			pass
+
+	for dep in deptasks.split():
+		try:
+			depfuncname = tasks[dep]["func"]
+			depfunc = globals()[depfuncname]
+		except KeyError:
+			fatal("error executing dependency task %s" % dep)
+		depfunc()
+
 	note("Executing task '%s'" % task)
 	func = 'do_'+task
 	ret = exec_shell_func(func, dir)
 	if ret==0: mkstamp(task)
 
 def mkstamp(task):
+	"""Creates/updates a stamp for a given task"""
 	mkdirhier(expand('${TMPDIR}/stamps'));
-	open(getenv('STAMP')+task, "w+")
+	open(getenv('STAMP')+"."+task, "w+")
 
-#TODO: teststamp, rmstamp
+def stamp_is_current(task, deptasks=""):
+	"""Check status of a given task's stamp. returns False if it is not current and needs updating."""
+	stampfile = getenv('STAMP') + "." + task
+	if not os.access(stampfile, os.F_OK):
+		return False
+
+	import stat
+	tasktime = os.stat(stampfile)[stat.ST_ATIME]
+
+	for dep in deptasks:
+		depfile = getenv('STAMP') + "." + dep
+		deptime = os.stat(depfile)[stat.ST_ATIME]
+		if deptime > tasktime:
+			return False
+
+	return True
+
+#TODO: rmstamp
 
 
 #######################################################################
@@ -74,7 +110,7 @@ def do_clean():
 	note("removing " + dir)
 	os.system('rm -rf ' + dir)
 
-	dir = env['STAMP']+'.*'
+	dir = getenv('STAMP')+'.*'
 	note("removing " + dir)
 	os.system('rm -f '+ dir)
 
@@ -257,9 +293,27 @@ except IOError:
 set_additional_vars()				# set rest of vars, e.g. ${A}
 update_env()					# Environment modification, e.g. local overrides
 
+tasks = {
+	"clean" : { "func" : "do_clean" },
+	"mrproper" : { "func" : "do_mrproper" },
+	"fetch" : { "func" : "do_fetch",
+		     "deps" : "" },
+	"unpack" : { "func" : "do_unpack",
+		     "deps" : "fetch" },
+	"compile" : { "func" : "do_compile",
+		      "deps" : "unpack" },
+	"stage" : { "func" : "do_stage",
+		    "deps" : "compile" },
+	"install" : { "func" : "do_install",
+		      "deps" : "stage" },
+	"build" : { "func" : "do_build",
+		    "deps" : "install" },
+}
+
 for s in sys.argv[1].split(','):
 	try:
-		func = globals()['do_'+s]
+		funcname = tasks[s]["func"]
+		func = globals()[funcname]
 	except KeyError:
 		usage(1, "'%s' is not valid command" % s)
 	func()
