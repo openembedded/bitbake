@@ -299,7 +299,7 @@ def inheritFromOS(d = _data):
 
 import sys
 
-def emit_var(var, o=sys.__stdout__, d = _data):
+def emit_var(var, o=sys.__stdout__, d = _data, all=False):
 	"""Emit a variable to be sourced by a shell."""
 	if getVarFlag(var, "python", d):
 		return 0
@@ -327,10 +327,11 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 		# NOTE: should probably check for unbalanced {} within the var
 		o.write("%s() {\n%s\n}\n" % (var, val))
 	else:
-		if not getVarFlag(var, "export", d):
-			return 0
-
-		o.write('export ')
+		if getVarFlag(var, "export", d):
+			o.write('export ')
+		else:
+			if not all:
+				return 0
 		# if we're going to output this within doublequotes,
 		# to a shell, we need to escape the quotes in the var
 		alter = re.sub('"', '\\"', val.strip())
@@ -338,7 +339,7 @@ def emit_var(var, o=sys.__stdout__, d = _data):
 	return 1
 
 
-def emit_env(o=sys.__stdout__, d = _data):
+def emit_env(o=sys.__stdout__, d = _data, all=False):
 	"""Emits all items in the data store in a format such that it can be sourced by a shell."""
 
 	env = d.keys()
@@ -346,7 +347,7 @@ def emit_env(o=sys.__stdout__, d = _data):
 	for e in env:
 		if getVarFlag(e, "func", d):
 			continue
-		emit_var(e, o, d) and o.write('\n')
+		emit_var(e, o, d, all) and o.write('\n')
 
 	for e in env:
 		if not getVarFlag(e, "func", d):
