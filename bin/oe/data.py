@@ -409,19 +409,23 @@ def update_data(d = _data):
 
 #       Handle line appends:
         for (a, o) in getVarFlag(s, '_append', d) or []:
-            delVarFlag(s, '_append', d)
+            # maybe the OVERRIDE was not yet added so keep the append
+            if (o and o in overrides) or not o:
+                delVarFlag(s, '_append', d)
             if o:
                 if not o in overrides:
-                    break
+                    continue
             sval+=a
             setVar(s, sval, d)
 
 #       Handle line prepends
         for (a, o) in getVarFlag(s, '_prepend', d) or []:
-            delVarFlag(s, '_prepend', d)
+            # maybe the OVERRIDE was not yet added so keep the append
+            if (o and o in overrides) or not o:
+                delVarFlag(s, '_prepend', d)
             if o:
                 if not o in overrides:
-                    break
+                    continue
             sval=a+sval
             setVar(s, sval, d)
 
