@@ -14,6 +14,7 @@ Based on functions from the base oe module, Copyright 2003 Holger Schurig
 
 import os, re, string
 import oe
+import oe.data
 
 class FetchError(Exception):
 	"""Exception raised when a download fails"""
@@ -23,6 +24,39 @@ class NoMethodError(Exception):
 
 class MissingParameterError(Exception):
 	"""Exception raised when a fetch method is missing a critical parameter in the url"""
+
+#decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
+#('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
+
+def uri_replace(uri, uri_find, uri_replace, d = oe.data.init()):
+#	oe.note("uri_replace: operating on %s" % uri)
+	if not uri or not uri_find or not uri_replace:
+		oe.debug(1, "uri_replace: passed an undefined value, not replacing")
+	uri_decoded = list(oe.decodeurl(uri))
+	uri_find_decoded = list(oe.decodeurl(uri_find))
+	uri_replace_decoded = list(oe.decodeurl(uri_replace))
+	result_decoded = ['','','','','',{}]
+	for i in uri_find_decoded:
+		loc = uri_find_decoded.index(i)
+		result_decoded[loc] = uri_decoded[loc]
+		import types
+		if type(i) == types.StringType:
+			import re
+			if (re.match(i, uri_decoded[loc])):
+				result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
+				if uri_find_decoded.index(i) == 2:
+					if d:
+						localfn = oe.fetch.localpath(uri, d)
+						if localfn:
+							result_decoded[loc] = os.path.dirname(result_decoded[loc]) + "/" + os.path.basename(oe.fetch.localpath(uri, d))
+#				oe.note("uri_replace: matching %s against %s and replacing with %s" % (i, uri_decoded[loc], uri_replace_decoded[loc]))	
+			else:
+#				oe.note("uri_replace: no match")
+				return uri
+#		else:
+#			for j in i.keys():
+#				FIXME: apply replacements against options
+	return oe.encodeurl(result_decoded)
 
 methods = []
 
@@ -120,51 +154,71 @@ class Wget(Fetch):
 
 	def go(self, d = oe.data.init(), urls = []):
 		"""Fetch urls"""
+		def fetch_uri(uri, basename, dl, md5, d):
+			if os.path.exists(dl):
+				# file exists, but we didnt complete it.. trying again..
+				fetchcmd = oe.data.getVar("RESUMECOMMAND", d, 1)
+			else:
+				fetchcmd = oe.data.getVar("FETCHCOMMAND", d, 1)
+
+			oe.note("fetch " + uri)
+			fetchcmd = fetchcmd.replace("${URI}", uri)
+			fetchcmd = fetchcmd.replace("${FILE}", basename)
+			oe.debug(2, "executing " + fetchcmd)
+			ret = os.system(fetchcmd)
+			if ret != 0:
+				return False
+
+			# supposedly complete.. write out md5sum
+			if oe.which(oe.data.getVar('PATH', d, 1), 'md5sum'):
+				md5pipe = os.popen('md5sum ' + dl)
+				md5data = md5pipe.readline().split()[0]
+				md5pipe.close()
+				md5out = file(md5, 'w')
+				md5out.write(md5data)
+				md5out.close()
+			else:
+				md5out = file(md5, 'w')
+				md5out.write("")
+				md5out.close()
+			return True	
+		
 		if not urls:
 			urls = self.urls
 
 		from copy import deepcopy
 		localdata = deepcopy(d)
-		oe.data.setVar('OVERRIDES', "wget:%s" % oe.data.getVar('OVERRIDES', localdata), localdata)
+		oe.data.setVar('OVERRIDES', "wget:" + oe.data.getVar('OVERRIDES', localdata), localdata)
 		oe.data.update_data(localdata)
 
-		for loc in urls:
-			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(loc, localdata))
-			myfile = os.path.basename(path)
-			dlfile = self.localpath(loc, d)
-			dlfile = oe.data.expand(dlfile, localdata)
-			md5file = "%s.md5" % dlfile
+		for uri in urls:
+			(type, host, path, user, pswd, parm) = oe.decodeurl(oe.data.expand(uri, localdata))
+			basename = os.path.basename(path)
+			dl = self.localpath(uri, d)
+			dl = oe.data.expand(dl, localdata)
+			md5 = dl + '.md5'
 
-			if os.path.exists(md5file):
+			if os.path.exists(md5):
 				# complete, nothing to see here..
 				continue
 
-			if os.path.exists(dlfile):
-				# file exists, but we didnt complete it.. trying again..
-				myfetch = oe.data.expand(oe.data.getVar("RESUMECOMMAND", localdata), localdata)
-			else:
-				myfetch = oe.data.expand(oe.data.getVar("FETCHCOMMAND", localdata), localdata)
+			if fetch_uri(uri, basename, dl, md5, localdata):
+				continue
 
-			oe.note("fetch " +loc)
-			myfetch = myfetch.replace("${URI}",oe.encodeurl([type, host, path, user, pswd, {}]))
-			myfetch = myfetch.replace("${FILE}",myfile)
-			oe.debug(2,myfetch)
-			myret = os.system(myfetch)
-			if myret != 0:
-				raise FetchError(myfile)
+			# try mirrors
+			mirror = 0	
+			mirrors = [string.split(i) for i in string.split(oe.data.getVar('MIRRORS', localdata, 1), '\n') if i]
+			completed = 0
+			for (find, replace) in mirrors:
+				newuri = uri_replace(uri, find, replace)
+				if newuri != uri:
+					if fetch_uri(newuri, basename, dl, md5, localdata):
+						completed = 1
+						break
 
-			# supposedly complete.. write out md5sum
-			if oe.which(oe.data.getVar('PATH', d, 1), 'md5sum'):
-				md5pipe = os.popen('md5sum %s' % dlfile)
-				md5 = md5pipe.readline().split()[0]
-				md5pipe.close()
-				md5out = file(md5file, 'w')
-				md5out.write(md5)
-				md5out.close()
-			else:
-				md5out = file(md5file, 'w')
-				md5out.write("")
-				md5out.close()
+			if not completed:
+				raise FetchError(uri)	
+
 		del localdata
 						
 

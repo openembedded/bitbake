@@ -250,15 +250,16 @@ def decodeurl(url):
 	"""
 
 	#debug(3, "decodeurl('%s')" % url)
-	m = re.compile('([^:]*):/*(.+@)?([^/]+)(/[^;]+);?(.*)').match(url)
+	#__addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
+	m = re.compile('(?P<type>[^:]*):/*(?P<user>.+@)?(?P<host>[^/]+)(?P<path>/[^;]+)?;?(?P<parm>.*?)').match(url)
 	if not m:
 		raise MalformedUrl(url)
 
-	type = m.group(1)
-	host = m.group(3)
-	path = m.group(4)
-	user = m.group(2)
-	parm = m.group(5)
+	type = m.group('type')
+	host = m.group('host')
+	path = m.group('path')
+	user = m.group('user')
+	parm = m.group('parm')
 	#print "type:", type
 	#print "host:", host
 	#print "path:", path
