@@ -218,7 +218,7 @@ def buildPackage(item):
             else:
                 pv_str = preferred_v
             if preferred_file is None:
-                oe.note("preferred version %s of %s not available", pv_str, pn)
+                oe.note("preferred version %s of %s not available" % (pv_str, pn))
             else:
                 oe.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
                 
