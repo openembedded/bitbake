@@ -443,6 +443,12 @@ def update_data(d = _data):
     for s in dodel:
         delVar(s, d)
 
+def inherits_class(klass, d):
+	val = getVar('__inherit_cache', d) or ""
+	if ("classes/%s.oeclass" % klass) in val.split():
+		return True
+	return False
+
 def _test():
     """Start a doctest run on this module"""
     import doctest
