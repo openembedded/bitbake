@@ -124,7 +124,7 @@ def unpickle_oe( oefile ):
 def collect_oefiles( progressCallback ):
     """Collect all available .oe build files"""
 
-    parsed, cached, skipped = 0, 0, 0
+    parsed, cached, skipped, masked = 0, 0, 0, 0
     global cache
     cache = oe.data.getVar( "CACHE", cfg, 1 )
     if cache is not None:
@@ -160,8 +160,9 @@ def collect_oefiles( progressCallback ):
 
     for i in xrange( len( newfiles ) ):
         f = newfiles[i]
-        if oemask and re.search(oemask_compiled, f):
+        if oemask and oemask_compiled.search(f):
               oe.debug(1, "oemake: skipping %s" % f)
+              masked += 1
               continue
         progressCallback( i + 1, len( newfiles ), f )
         debug(1, "oemake: parsing %s" % f)
@@ -190,7 +191,7 @@ def collect_oefiles( progressCallback ):
             pass
         except oe.parse.SkipPackage:
             skipped += 1
-    print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped." % ( cached, parsed, skipped ), 
+    print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ), 
 
 def explode_version(s):
     import string
