@@ -10,6 +10,7 @@ import sys,os,string,oe
 # This prints the contents of oe.env[] so that it can later be sourced by a shell
 # Normally, it prints to stdout, but this it can be redirectory to some open file handle
 #
+
 def print_env(o=sys.__stdout__):
 	o.write('\nPATH="' + oe.projectdir + '/bin/build:${PATH}"\n')
 
@@ -30,17 +31,31 @@ def print_env(o=sys.__stdout__):
 
 
 #######################################################################
+#
+# exec_shell_func()
+#
+# This executes any shell function stored in env[func]
+#
 
-def print_mkdir(o=sys.__stdout__):
-	o.write("\n")
-	o.write("# Create " + oe.envdesc['WORKDIR']['desc'] + ':\n')
-	o.write("mkdir -p ${WORKDIR}\n")
-	o.write("# Create " + oe.envdesc['S']['desc'] + ':\n')
-	o.write("mkdir -p ${S}\n")
-	o.write("# Create " + oe.envdesc['D']['desc'] + ':\n')
-	o.write("mkdir -p ${D}\n")
-	o.write("# Create " + oe.envdesc['T']['desc'] + ':\n')
-	o.write("mkdir -p ${T}\n")
+def exec_shell_func(func):
+	global logfile
+	mkdir(oe.env['T'])
+	logfile = oe.env['T'] + '/log.fetch.' + str(os.getpid())
+	runfile = oe.env['T'] + '/run.fetch.' + str(os.getpid())
+	f = open(runfile, "w")
+	f.write("#!/bin/bash\n")
+	if oe.env.has_key('BDEBUG'): f.write("set -x\n")
+	print_env(f)
+	f.write("cd %s\n" % oe.env['DISTDIR'])
+	f.write(func +"\n")
+	f.close()
+	os.chmod(runfile, 0775)
+	#ret = os.system("bash -c 'source %s'" % runfile)
+	#ret = os.system("bash -c 'source %s' >%s 2>&1" % (runfile, logfile))
+	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
+	if ret==0: os.remove(logfile)
+	os.remove(runfile)
+	return ret != 0
 
 
 #######################################################################
@@ -63,16 +78,18 @@ def do_todo():
 
 def do_clean():
 	dir = oe.varexpand("${TMPDIR}/${CATEGORY}/${PF}", oe.env)
+	if dir == '//': oe.fatal("wrong DATADIR");
 	oe.debug(2, "removing " + dir)
-	os.spawnlp(os.P_WAIT, 'rm', 'rm', '-rf', dir)
+	os.system('rm -rf ' + dir)
 
 
 #######################################################################
 
 def do_mrproper():
 	dir = oe.env["DISTDIR"]
+	if dir == '/': oe.fatal("wrong DATADIR");
 	oe.debug(2, "removing " + dir)
-	os.spawnlp(os.P_WAIT, 'rm', 'rm', '-rf', dir)
+	os.system('rm -rf ' + dir)
 	do_clean()
 
 
@@ -80,17 +97,59 @@ def do_mrproper():
 
 def do_fetch():
 	mkdir(oe.env["DISTDIR"])	# create file download directory
+	done = 0
 
 	if oe.env.has_key('SRC_URI'):
-		#print "TODO: fetch from ${SRC_URI}"
+		# TODO: correct error handling
 		oe.fetch(oe.env['SRC_URI'].split())
+		done = 1
 
 	if oe.env.has_key('pkg_fetch'):
-		print "TODO: execute pkt_fetch"
+		ret = exec_shell_func('pkg_fetch')
+		if ret == 0:
+			done = 1
+		else:
+			oe.error('download via pkg_fetch() failed');
+			oe.fatal('more info in: %s' % logfile);
+		
+	if done: return
+
+	if oe.env.has_key('pkg_nofetch'):
+		ret = exec_shell_func('pkg_nofetch')
+		if ret != 0:
+			oe.error('execution of pkg_nofetch() failed');
+			oe.fatal('more info in: %s' % logfile);
+
+
+#######################################################################
+
+def do_unpack():
+	mkdir(oe.env["WORKDIR"])	# create workdir
+	
+	if oe.env.has_key('src_unpack'):
+		ret = exec_shell_func('src_unpack')
+		if ret != 0:
+			oe.error('unpacking source via src_unpack() failed');
+			oe.fatal('more info in: %s' % logfile);
 		return
 
-	if oe.env.has_key('pkp_nofetch'):
-		print "TODO: execute pkg_nofetch"
+	oe.fatal('TODO: add implicit source unpacking')
+		
+
+#######################################################################
+
+def do_compile():
+	#mkdir(oe.env["WORKDIR"])	# create workdir
+	
+	if oe.env.has_key('src_compile'):
+		ret = exec_shell_func('src_compile')
+		if ret != 0:
+			oe.error('compilation via src_compile() failed');
+			oe.fatal('more info in: %s' % logfile);
+		return
+
+	# do nothing if package needs no compile
+		
 
 #######################################################################
 
@@ -98,7 +157,7 @@ def do_build():
 	oe.print_orphan_env()
 	oe.print_missing_env()
 	print_env()
-	print_mkdir()
+
 	#for s in ('pkg_setup', 'pkg_nofetch', 'pkg_fetch', 'src_compile', 'src_install'):
 	#	if oe.env.has_key(s):
 	#		print s,'|| die'
@@ -118,21 +177,28 @@ if sys.argv[1] in ('help', 'usage'):
 if len(sys.argv) < 3:
 	oe.fatal("try 'oebuild <command> <somebuildfile.oe>'")
 
+oe.read_oe_conf()			# Read configuration
+oe.set_automatic_vars(sys.argv[2])	# Deduce per-package environment variables
+oe.read_package_conf(sys.argv[2])	# Read package configuration
+oe.update_env()				# Environment modification
+
 call_func = do_todo;
 
 for arg in sys.argv[1].split(','):
 	if arg == 'clean':
-		# print 'TODO: clean the temporary build directory'
+		# clean the temporary build directory
 		call_func = do_clean
 	elif arg == 'setup':
 		print 'TODO: execute package specific setup actions'
 	elif arg == 'fetch':
-		#print 'TODO: fetch all source code'
+		# fetch all source code
 		call_func = do_fetch
 	elif arg == 'unpack':
-		print 'TODO: extract the sources'
+		# extract the sources
+		call_func = do_unpack
 	elif arg == 'compile':
-		print 'TODO: compile the sources'
+		# compile the sources
+		call_func = do_compile
 	elif arg == 'stage':
 		print 'TODO: install into the staging directory'
 	elif arg == 'install':
@@ -146,15 +212,10 @@ for arg in sys.argv[1].split(','):
 	elif arg == 'digest':
 		print 'TODO: for maintainers: create md5 digest files'
 	elif arg == 'mrproper':
-		#print 'TODO: clean the temporary build directory and sources for this package'
+		# clean the temporary build directory and sources for this package
 		call_func = do_mrproper
 	else:
 		usage(1);
-
-	oe.read_oe_conf()			# Read configuration
-	oe.set_automatic_vars(sys.argv[2])	# Deduce per-package environment variables
-	oe.read_package_conf(sys.argv[2])	# Read package configuration
-	oe.update_env()				# Environment modification
 
 	call_func()				# call the function that does some real work
 
