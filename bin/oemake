@@ -109,8 +109,8 @@ def build(graph, item):
 	fn = pkgs[item][1]
 	if fn is None:
 		return 1
-#	note("oebuild %s %s" % (command, fn))
 	command = cmd
+	debug(1, "oebuild %s %s" % (command, fn))
 	event.fire(PkgStarted(item, pkgdata[fn]))
 	ret = os.system("oebuild %s %s" % (command, fn))
 	if ret == 0:
@@ -195,25 +195,30 @@ for f in files:
 			continue
 	# read a file's metadata
 	try:
-		from copy import copy
-		pkgdata[f] = parse.handle(f, copy(cfg))
+		from copy import deepcopy
+		pkgdata[f] = parse.handle(f, deepcopy(cfg))
 		deps = None
 		if pkgdata[f] is not None:
 			for var in pkgdata[f].keys():
 				if data.getVarFlag(var, "handler", pkgdata[f]) and data.getVar(var, pkgdata[f]):
 					event.register(data.getVar(var, pkgdata[f]))
-			depstr = data.getVar("DEPENDS", pkgdata[f])
+			depstr = data.getVar("DEPENDS", pkgdata[f], 1)
 			if depstr is not None:
 				deps = depstr.split()
 			pkg = []
-			pkg.append(data.getVar('CATEGORY', pkgdata[f]))
-			pkg.append(data.getVar('PN', pkgdata[f]))
-			pkg.append(data.getVar('PV', pkgdata[f]))
-			pkg.append(data.getVar('PR', pkgdata[f]))
+			pkg.append(data.getVar('CATEGORY', pkgdata[f], 1))
+			pkg.append(data.getVar('PN', pkgdata[f], 1))
+			pkg.append(data.getVar('PV', pkgdata[f], 1))
+			pkg.append(data.getVar('PR', pkgdata[f], 1))
 			root = "%s/%s-%s-%s" % (pkg[0], pkg[1], pkg[2], pkg[3])
 			provides = []
+			# w/ category
 			provides.append("%s/%s-%s" % (pkg[0], pkg[1], pkg[2]))
 			provides.append("%s/%s" % (pkg[0], pkg[1]))
+			# w/o category
+			provides.append("%s" % pkg[1])
+			provides.append("%s-%s" % (pkg[1], pkg[2]))
+			provides.append("%s-%s-%s" % (pkg[1], pkg[2], pkg[3]))
 			providestr = data.getVar("PROVIDES", pkgdata[f])
 			if providestr is not None:
 				provides += providestr.split()
