@@ -339,6 +339,8 @@ def get_task_data():
 	return _task_data
 
 data.setVarFlag("do_showdata", "nostamp", "1", _task_data)
+data.setVarFlag("do_showtasks", "nostamp", "1", _task_data)
+data.setVarFlag("do_listtasks", "nostamp", "1", _task_data)
 data.setVarFlag("do_clean", "nostamp", "1", _task_data)
 data.setVarFlag("do_mrproper", "nostamp", "1", _task_data)
 data.setVarFlag("do_build", "nostamp", "1", _task_data)
