@@ -43,13 +43,8 @@ __all__ = [
 	"decodeurl",
 	"encodeurl",
 
-# file parsing
-	"read_config",
-	"read_oe",
-
 # data handling
 	"inherit_os_env",
-	"getenv",
 	"setenv",
 	"set_automatic_vars",
 	"set_additional_vars",
@@ -174,6 +169,7 @@ def movefile(src,dest,newmtime=None,sstat=None):
 				os.unlink(dest)
 			os.symlink(target,dest)
 #			os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+			os.unlink(src)
 			return os.lstat(dest)
 		except Exception, e:
 			print "!!! failed to properly create symlink:"
@@ -1254,238 +1250,6 @@ def reader(cfgfile, feeder):
 			s = s[:-1] + s2
 		feeder(lineno, s)
 
-
-
-
-# matches "VAR = VALUE"
-__config_regexp__  = re.compile( r"((?P<exp>export)\s*)*(?P<var>\w+)\s*(?P<colon>:)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
-
-# matches "include FILE"
-__include_regexp__ = re.compile( r"include\s+(.+)" )
-
-__read_config_visit_cache__ = {}
-
-def __read_config__(cfgfile, level):
-	"""Reads a configuration file"""
-	visit = 1
-
-	def process_config(lineno, s):
-		s = s.strip()
-		m = __config_regexp__.match(s)
-		if m:
-			groupd = m.groupdict()
-			key = groupd["var"]
-			if groupd.has_key("exp") and groupd["exp"] is not None:
-				if not envflags.has_key(key):
-					envflags[key] = {}
-				envflags[key]["export"] = 1
-			if groupd.has_key("colon") and groupd["colon"] is not None:
-				setenv(key, groupd["value"])
-			else:
-				env[key] = groupd["value"]
-#			print key,groupd["value"]
-			return
-
-		m = __include_regexp__.match(s)
-		if m:
-			if not visit: return
-			file = expand(m.group(1))
-			if file[0] != '/':
-				path = getenv('OEPATH').split(':')
-				path.append(os.path.dirname(os.path.abspath(oefile)))
-				for s in path:
-					if os.access(os.path.join(s,file), os.R_OK):
-						file = os.path.join(s,file)
-			if os.access(file, os.R_OK):
-				if level==0:
-					inherit_os_env(2)
-				__read_config__(file, level+1)
-			else:
-				debug(1, "%s:%d: could not import %s" % (cfgfile, lineno, s))
-			return
-
-		print lineno, s
-
-	cfgfile = os.path.abspath(cfgfile)
-	if __read_config_visit_cache__.has_key(cfgfile): visit = 0
-	__read_config_visit_cache__[cfgfile] = 1
-	debug(2, "read " + cfgfile)
-	reader(cfgfile, process_config)
-
-def read_config(cfgfile):
-	__read_config__(cfgfile, 0)
-
-	for s in ['BUILD_ARCH','BUILD_OS', 'ARCH', 'OS', 'MACHINE','ARCH']:
-		if not env.has_key(s):
-			print "FATAL: %s" % envflags[s]['warn']
-			fatal('read ${OEDIR}/oe.conf to learn about local configuration')
-
-
-__func_start_regexp__    = re.compile( r"((?P<py>python)\s*)*(?P<func>\w+)\s*\(\s*\)\s*{$" )
-__include_regexp__       = re.compile( r"include\s+(.+)" )
-__inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
-__export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
-__addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
-__addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
-
-__read_oe_infunc__ = ""
-__read_oe_body__   = []
-__read_oe_classname__ = "" # our python equiv to OECLASS
-__oepath_found_it__ = 0
-
-def read_oe(oefile, inherit = False, classname = None):
-	"""Reads a build file"""
-	"""When inherit flag is set to False(default), EXPORT_FUNCTIONS is ignored."""
-
-	def process_oe(lineno, s):
-		global __read_oe_infunc__, __read_oe_body__, __read_oe_classname__, __oepath_found_it__, __addhandler_regexp__
-		if __read_oe_infunc__:
-			if s == '}':
-				__read_oe_body__.append('')
-				env[__read_oe_infunc__] = string.join(__read_oe_body__, '\n')
-				__read_oe_infunc__ = None
-				__read_oe_body__ = []
-			else:
-				try:
-					if envflags[__read_oe_infunc__]["python"] == 1:
-						s = re.sub(r"^\t", '', s)
-				except KeyError:
-					pass
-				__read_oe_body__.append(s)
-			return
-			
-		m = __config_regexp__.match(s)
-		if m:
-			key = m.group("var")
-			var = m.group("value")
-			if var and (var[0]=='"' or var[0]=="'"):
-				fatal("Mismatch in \" or ' characters for %s=" % key)
-			if m.group("colon"):
-				setenv(key, var)
-			else:
-				env[key] = var
-			#print "%s=%s" % (key,var)
-			return
-
-		m = __func_start_regexp__.match(s)
-		if m:
-			__read_oe_infunc__ = m.group("func")
-			key = __read_oe_infunc__
-			if m.group("py") is not None:
-				if not envflags.has_key(key):
-					envflags[key] = {}
-				envflags[key]["python"] = 1
-			return
-
-		m = __include_regexp__.match(s)
-		if m:
-			file = expand(m.group(1))
-			if file[0] != '/':
-				path = getenv('OEPATH').split(':')
-				path.append(os.path.dirname(os.path.abspath(oefile)))
-				for s in path:
-					if os.access(os.path.join(s,file), os.R_OK):
-						file = os.path.join(s,file)
-			try:
-				read_oe(file)
-			except IOError:
-				fatal("error accessing build file %s" % file)
-			return
-
-		m = __inherit_regexp__.match(s)
-		if m:
-			__word__ = re.compile(r"\S+")
-			files = m.group(1)
-			n = __word__.findall(files)
-			for f in n:
-				file = expand(f)
-				if file[0] != "/":
-					if env.has_key('OEPATH'):
-						__oepath_found_it__ = 0
-						for dir in expand(env['OEPATH']).split(":"):
-#							print "attempting to access %s" % os.path.join(dir, "classes",file + ".oeclass")
-							if os.access(os.path.join(dir, "classes", file + ".oeclass"), os.R_OK):
-								file = os.path.join(dir, "classes",file + ".oeclass")
-								__oepath_found_it__ = 1
-					if __oepath_found_it__ == 0:
-						fatal("unable to locate %s in OEPATH"  % file)
-					__read_oe_classname__ = file
-
-				o = re.match(r".*/([^/\.]+)",file)
-				if o:
-					__read_oe_classname__ = o.group(1)
-
-#				print "read_oe: inherit: loading %s" % file
-				try:
-					read_oe(file, True, __read_oe_classname__)
-					__read_oe_classname__ = classname
-				except IOError:
-					fatal("error accessing build file %s" % file)
-			return
-
-		__word__ = re.compile(r"\S+")
-
-		m = __export_func_regexp__.match(s)
-		if m:
-			if inherit == True:
-				fns = m.group(1)
-				n = __word__.findall(fns)
-				for f in n:
-					
-					oldfunc = "%s_%s" % (__read_oe_classname__, f)
-					if envflags.has_key(oldfunc) and  envflags[oldfunc].has_key("python"):
-						setenv(f, "exec_task('%s','S')\n" % oldfunc)
-						if not envflags.has_key(f):
-							envflags[f] = {}
-						envflags[f]["python"] = 1
-					else:
-						setenv(f, "\t%s\n" % oldfunc)
-			return
-
-
-		m = __addtask_regexp__.match(s)
-		if m:
-			func = m.group("func")
-			before = m.group("before")
-			after = m.group("after")
-			if func is None:
-				return
-			var = "do_" + func
-
-			if not envflags.has_key(var):
-				envflags[var] = {}
-
-			envflags[var]["task"] = "1"
-
-			if after is not None:
-				# set up deps for function
-				envflags[var]["deps"] = after.split()
-			if before is not None:
-				# set up things that depend on this func 
-				envflags[var]["postdeps"] = before.split()
-			return
-
-		m = __addhandler_regexp__.match(s)
-		if m:
-			fns = m.group(1)
-			hs = __word__.findall(fns)
-			for h in hs:
-				if not envflags.has_key(h):
-					envflags[h] = {}
-				envflags[h]["handler"] = 1
-			return
-
-		error("Unknown syntax in %s" % oefile)
-		print s
-		sys.exit(1)
-
-
-	debug(2,"read_oe('%s')" % oefile)
-	reader(oefile, process_oe)
-
-
-
-
 #######################################################################
 #######################################################################
 #
@@ -1566,14 +1330,6 @@ def setenv(var, value, env = globals()["env"]):
 	"""
 
 	env[var] = expand(value)
-
-
-#######################################################################
-
-def getenv(var, env = globals()["env"]):
-	"""Returns an expanded environment var"""
-	return expand('${%s}' % var, env)
-
 
 #######################################################################
 
