@@ -10,6 +10,8 @@ import sys,os,string,oe
 # This prints the contents of oe.env[] so that it can later be sourced by a shell
 # Normally, it prints to stdout, but this it can be redirectory to some open file handle
 #
+# It is used by exec_shell_func().
+#
 
 def print_env(o=sys.__stdout__):
 	o.write('\nPATH="' + oe.projectdir + '/bin/build:${PATH}"\n')
@@ -34,8 +36,12 @@ def print_env(o=sys.__stdout__):
 #
 # exec_shell_func()
 #
-# This executes any shell function stored in env[func]
+# This executes any shell function stored in env[func]. Return if execution
+# was successful.
 #
+# For this, it creates a bash shell script in the tmp directory, writes the local
+# environment in oe.env[] into it and finally executes this. The output of the
+# shell will end in a log file and stdout.
 
 def exec_shell_func(func):
 	global logfile
@@ -50,8 +56,6 @@ def exec_shell_func(func):
 	f.write(func +"\n")
 	f.close()
 	os.chmod(runfile, 0775)
-	#ret = os.system("bash -c 'source %s'" % runfile)
-	#ret = os.system("bash -c 'source %s' >%s 2>&1" % (runfile, logfile))
 	ret = os.system("bash -c 'source %s' 2>&1 | tee %s; exit $PIPESTATUS" % (runfile, logfile))
 	if ret==0: os.remove(logfile)
 	os.remove(runfile)
@@ -98,27 +102,31 @@ def do_mrproper():
 def do_fetch():
 	mkdir(oe.env["DISTDIR"])	# create file download directory
 	done = 0
+	ret = 0
 
 	if oe.env.has_key('SRC_URI'):
 		# TODO: correct error handling
-		oe.fetch(oe.env['SRC_URI'].split())
+		ret = oe.fetch(oe.varexpand(oe.env['SRC_URI'], oe.env), 1)
 		done = 1
+	else:
+		oe.note("No SRC_URI variable, not downloading anything")
 
-	if oe.env.has_key('pkg_fetch'):
-		ret = exec_shell_func('pkg_fetch')
-		if ret == 0:
-			done = 1
-		else:
-			oe.error('download via pkg_fetch() failed');
-			oe.fatal('more info in: %s' % logfile);
-		
-	if done: return
 
-	if oe.env.has_key('pkg_nofetch'):
-		ret = exec_shell_func('pkg_nofetch')
-		if ret != 0:
-			oe.error('execution of pkg_nofetch() failed');
-			oe.fatal('more info in: %s' % logfile);
+	#if oe.env.has_key('pkg_fetch'):
+	#	ret = exec_shell_func('pkg_fetch')
+	#	if ret == 0:
+	#		done = 1
+	#	else:
+	#		oe.error('download via pkg_fetch() failed');
+	#		oe.fatal('more info in: %s' % logfile);
+	#	
+	#if done: return ret
+	#
+	#if oe.env.has_key('pkg_nofetch'):
+	#	ret = exec_shell_func('pkg_nofetch')
+	#	if ret != 0:
+	#		oe.error('execution of pkg_nofetch() failed');
+	#		oe.fatal('more info in: %s' % logfile);
 
 
 #######################################################################
@@ -166,6 +174,24 @@ def do_build():
 
 #######################################################################
 
+def do_showenv():
+	for s in oe.env:
+		if oe.envdesc.has_key(s): continue
+		
+		var = oe.env[s]
+		try:
+			var = oe.varexpand(var, oe.env)
+		except oe.VarExpandError:
+			pass
+
+		if s == s.lower():
+			print s + '() {\n' + var + '}'
+		else:
+			print s+'=' + var
+
+
+#######################################################################
+
 def usage(errorlevel=0, txt=''):
 	print "TODO: write better Usage"
 	if txt: print txt
@@ -209,6 +235,8 @@ for arg in sys.argv[1].split(','):
 		print 'TODO: copy files into a root fs'
 	elif arg == 'build':
 		call_func = do_build;
+	elif arg == 'showenv':
+		call_func = do_showenv;
 	elif arg == 'digest':
 		print 'TODO: for maintainers: create md5 digest files'
 	elif arg == 'mrproper':
