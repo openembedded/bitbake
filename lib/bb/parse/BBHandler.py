@@ -119,6 +119,8 @@ def handle(fn, d = {}, include = 0):
             i[0:0] = ["base"]
         inherit(i, d)
 
+    if not bbpath:
+        bbpath = (data.getVar('BBPATH', d, 1) or "").split(':')
     bbpath.insert(0, os.path.dirname(fn))
     data.setVar('BBPATH', ":".join(bbpath), d)
 
