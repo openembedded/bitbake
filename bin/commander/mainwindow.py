@@ -14,7 +14,7 @@ class MainWindow( MainWindowBase ):
 
     def __init__( self, parent = None, name = None, fl = 0 ):
         MainWindowBase.__init__(self, parent, name, fl )
-
+        self.setCaption( appcaption )
         self.createStatusBar()
 
     def createStatusBar( self ):
@@ -107,7 +107,8 @@ class MainWindow( MainWindowBase ):
 
         self.packageView.clear()
         for package in p.names():
-            ProviderItem( self.packageView, package )
+            i = ProviderItem( self.packageView, package )
+            i.setBuildStatus( unpack=0, patch=0, configure=0, compile=0, stage=0, install=0, status="waiting" )
 
     def debugConsole(self):
         shell = EPythonShell( None, { 'p':Packages.instance(), 'data':data, 'exit':lambda:shell.close() } )
