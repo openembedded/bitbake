@@ -17,6 +17,10 @@ TODO:
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
 
+[ ] oebuild and oemake
+	[ ] Teach the system to support grabbing OEFILES from upstream
+	    using our fetch classes.
+
 [ ] oebuild
 	[ ] Use oe.digraph for handling intertask dependency
 	[ ] Split task execution from function execution
@@ -31,8 +35,8 @@ TODO:
 	[x] Add oe.conf parsing - abort if OEFILES is not defined
 	[x] Add parsing of the .oe's listed in OEFILES
 	[x] Handle provides in the digraph...
+	[x] Handle dependency on just content/glibc vs content/glibc-2.3.1-r0
 	[ ] Check for recursive dependency
-	[ ] Handle dependency on just content/glibc vs content/glibc-2.3.1-r0
 	[ ] Proper event handling and failout when we encounter an unsatisfied
 	    dependency.
 	[ ] Deal with multiple provides
