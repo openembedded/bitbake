@@ -1,8 +1,0 @@
-#!/usr/bin/python
-
-import oe.fetch
-
-urls = ["cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V-99-84"]
-
-oe.fetch.init(urls)
-oe.fetch.go()
