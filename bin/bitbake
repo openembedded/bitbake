@@ -70,6 +70,8 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     parser.add_option( "-v", "--verbose", help = "output more chit-chat to the terminal",
                action = "store_true", dest = "verbose", default = False )
+    parser.add_option( "-D", "--debug", help = "Increase the debug level",
+               action = "count", dest="debug", default = 0)
 
     parser.add_option( "-n", "--dry-run", help = "don't execute, just go through the motions",
                action = "store_true", dest = "dry_run", default = False )
@@ -588,14 +590,13 @@ def printStats( ):
 
 if __name__ == "__main__":
 
-    if "BBDEBUG" in os.environ:
-        bbdebug = int(os.environ["BBDEBUG"])
-
     make.options, args = handle_options( sys.argv )
 
     if not make.options.cmd:
         make.options.cmd = "build"
 
+    if make.options.debug:
+        bb.debug_level = make.options.debug
 
     make.pkgdata = {}
     make.cfg = bb.data.init()

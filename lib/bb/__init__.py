@@ -78,7 +78,15 @@ if sys.version_info[:3] < (2, 3, 0):
 
 #projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 projectdir = os.getcwd()
-env = {}
+
+debug_level = 0
+
+if "BBDEBUG" in os.environ:
+    level = int(os.environ["BBDEBUG"])
+    if level:
+        debug_level = level
+    else:
+        debug_level = 0
 
 class VarExpandError(Exception):
     pass
@@ -101,7 +109,7 @@ debug_prepend = ''
 
 
 def debug(lvl, *args):
-    if 'BBDEBUG' in env and (env['BBDEBUG'] >= str(lvl)):
+    if debug_level >= lvl:
         print debug_prepend + 'DEBUG:', ''.join(args)
 
 def note(*args):
