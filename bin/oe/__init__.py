@@ -1060,6 +1060,7 @@ class digraph:
         self.dict={}
         #okeys = keys, in order they were added (to optimize firstzero() ordering)
         self.okeys=[]
+	self.__callback_cache=[]
 
     def __str__(self):
         str = ""
@@ -1160,21 +1161,23 @@ class digraph:
         children = [i for i in self.okeys if item in self.getparents(i)]
         return children
 
-    def walkdown(self, item, callback, debug = None):
-        __down_callback_cache = []
-        __recurse_count = 0
+    def walkdown(self, item, callback, debug = None, usecache = False):
         if not self.hasnode(item):
             return 0
-
-        if __down_callback_cache.count(item):
-            return 1
+	    
+	if usecache:
+    	    if self.__callback_cache.count(item):
+		if debug:    
+		    print "hit cache for item: %s" % item
+                return 1
 
         parents = self.getparents(item)
         children = self.getchildren(item)
         for p in parents:
             if p in children:
 #                print "%s is both parent and child of %s" % (p, item)
-                __down_callback_cache.append(p)
+		if usecache:
+            	    self.__callback_cache.append(p)
                 ret = callback(self, p)
                 if ret == 0:
                     return 0
@@ -1184,11 +1187,11 @@ class digraph:
                 return 0
             if debug:
                 print "item: %s, p: %s" % (item, p)
-            ret = self.walkdown(p, callback, debug)
+            ret = self.walkdown(p, callback, debug, usecache)
             if ret == 0:
                 return 0
-
-        __down_callback_cache.append(item)
+	if usecache:
+    	    self.__callback_cache.append(item)
         return callback(self, item)
 
     def walkup(self, item, callback):
