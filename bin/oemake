@@ -186,7 +186,13 @@ if not len(files):
 
 #pkg = [ "pkgname", "depends", "provides" ]
 
+import glob
 for f in files:
+	globbed = glob.glob(f) or [ f ]
+	if globbed:
+		if [ f ] != globbed:
+			files += globbed
+			continue
 	# read a file's metadata
 	try:
 		from copy import copy
