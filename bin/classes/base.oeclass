@@ -27,4 +27,9 @@ base_do_install() {
 	oenote "nothing to install"
 }
 
-EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install
+base_do_package() {
+	oenote "base_do_package"
+	oenote "nothing to package"
+}
+
+EXPORT_FUNCTIONS do_unpack do_compile do_stage do_install do_package

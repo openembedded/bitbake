@@ -281,8 +281,10 @@ tasks = {
 		    "deps" : [ 'compile' ] },
 	"install" : { "func" : "do_install",
 		      "deps" : [ 'stage' ] },
+	"package" : { "func" : "do_package",
+		      "deps" : [ 'install' ] },
 	"build" : { "func" : "do_build",
-		    "deps" : [ 'install' ] },
+		    "deps" : [ 'package' ] },
 }
 
 if len(sys.argv) < 2:
