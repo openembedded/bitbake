@@ -107,6 +107,7 @@ def handle(fn, data = {}, include = 0):
 		f = open(fn,'r')
 		debug(1, "CONF %s %s" % (inc_string,fn))
 	lineno = 0
+	oe.data.setVar('FILE', fn, data)
 	while 1:
 		lineno = lineno + 1
 		s = f.readline()
