@@ -1,4 +1,5 @@
 PATCHES_DIR="${S}"
+DEPENDS_prepend="content/patcher"
 
 python do_showdata() {
 	from oe import data, note
@@ -43,7 +44,7 @@ python base_do_mrproper() {
 }
 
 python base_do_patch () {
-	import re
+	import re, string
 	from oe import decodeurl
 
 	src_uri = data.getVar('SRC_URI', d)
@@ -51,7 +52,6 @@ python base_do_patch () {
 		raise Exception("SRC_URI not defined")
 	src_uri = data.expand(src_uri, d)
 	for url in src_uri.split():
-#		print "url: %s" % url
 		(type, host, path, user, pswd, parm) = decodeurl(url)
 		if not parm.has_key("patch"):
 			continue
@@ -60,13 +60,18 @@ python base_do_patch () {
 		local = localpath(url)
 		# patch!
 		dots = local.split(".")
-		if dots[-2] in ['tar']:
-			continue
 		efile = os.path.join(data.getVar('WORKDIR', d),os.path.basename(re.sub(r"\.%s$" % dots[-1],"",local)))
+		efile = data.expand(efile, d)
 		patches_dir = data.expand(data.getVar('PATCHES_DIR', d), d)
 		mkdirhier(patches_dir)
 		os.chdir(patches_dir)
-		cmd = "patcher"
+		path = data.getVar('PATH', d)
+		if path:
+			path = path.split(":")
+			path[0:0] = [ os.path.join("${OEDIR}", "bin/build") ]
+			path[0:0] = [ "${STAGING_BINDIR}" ]
+			data.setVar('PATH', data.expand(string.join(path, ":"), d), d)
+		cmd = "PATH=$PATH:%s patcher" % data.getVar('PATH', d)
 		if parm.has_key("pnum"):
 			cmd += " -p %s" % parm["pnum"]
 		cmd += " -i %s" % efile
