@@ -49,14 +49,14 @@ class PackageView( QListView ):
                  self.handleMouseButtonClicked )
                  
     def handleMouseButtonClicked( self, button, item, pos, col ):
-        if item: item.toggleCheck()
+        if item and col == self.coldict["CHECK"]: item.toggleCheck()
         
-    def expandAll( self ):
+    def expandAll( self, expand = True ):
         it = QListViewItemIterator( self )
         while it.current():
-            it.current().setOpen( True )
+            it.current().setOpen( expand )
             it += 1
-
+            
 #------------------------------------------------------------------------#
 # main
 #------------------------------------------------------------------------#
