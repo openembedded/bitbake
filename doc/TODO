@@ -29,6 +29,45 @@ TODO:
 	    thereby giving one the ability to exert more control over the set
 	    of variables.
 	[x] Upstream source use:
+		* Build requirements
+			[x] Code will not be checked out into a temporary area
+				[x] Solve by leaving SRC_URI blank, and setting
+				    S appropriately.
+			[ ] Code will not be automatically updated from CVS
+				[ ] Solve by making Fetch use md5.
+			[x] Follow dependencies
+				[x] Use oemake
+			[ ] Default .oe argument for oebuild
+			[ ] Default 'command' argument for oebuild
+			[ ] Allow execution with a command, without .oe
+			[ ] Allow execution with .oe, without command
+			[ ] Default .oe argument for oemake
+			[ ] Allow specifying a command on oemake execution
+			[ ] Must be able to execute 'oemake' within a subpackage
+			    of an upstream package, and yet retain access to the
+			    toplevel TMPDIR.  Perhaps specify TMPDIR through
+			    the environment.
+				[ ] Preferably also attempt to satisfy dependency,
+				    which implies a way that the .oe files in
+				    this repository are in OEFILES when built
+				    from the subpackage build area.
+			[ ] Allow switching to a debug build for the entirety
+			    of the build.  Alter CONFIG for created .pro files,
+			    and add -g to appropriate flags.
+			[ ] Nightly builds will use the same .oe files as those
+			    used upstream.  This is easily solved, since the use
+			    of OE upstream already gives us the necessary event
+			    handling.
+			[ ] Does not require that the build be done as root.
+			[ ] Simplicity of .oe file naming (PV/PR inside .oe)
+			[ ] Tests for versioning
+			[ ] Wrapper Makefile -> oemake
+			[ ] Command as <cmd> as opposed to do_<cmd>
+			[ ] Target device filesystem locations as metadata
+			    items so that all the packages can install things
+			    into proper locations.  This is highly distribution
+			    specific, 
+			[ ] Real life test case: Opie
 		[x] default PN,PV,PR,CATEGORY in oe.conf
 		[x] Allow override of PN,PV,PR,CATEGORY within a .oe
 		[x] Allow filename to not contain PV, PR, CATEGORY
