@@ -1,19 +1,10 @@
 TODO:
 
 [x] oe package
-	[x] Update .oe and .conf parsers to not strip out all the tabs in our 
-	    python function vars..
-	[x] Restructure
-	[.] Remove duplicated implementations, and convert everyone to the new
+	[ ] Remove duplicated implementations, and convert everyone to the new
 	    data and parse methods.
 	[ ] API Sanity Audit.
 	[ ] Comment/Docs Audit.
-	[x] Allow user supply of .oeclasses to be inherited in every file that
-	    gets parsed via the INHERITS variable.
-		[x] Add default items to the beginning of INHERITS within
-		    the parsers.  In this way, we can automatically pull in
-		    base.oeclass for oe files, and build_an_srpm.oeclass for
-		    .src.rpm files.
 	[ ] BUG: If we only run an update_data after a load of an .oe,
 	    but not for a .oeclass, if multiple .oeclasses define, say, for
 	    example DEPENDS_prepend, one overrides the other, and we lose
@@ -33,7 +24,7 @@ TODO:
 	[ ] Teach the system to support grabbing OEFILES from upstream
 	    using our fetch classes.
 
-[.] oebuild
+[ ] oebuild
 	[ ] Implement and test check_md5, taking nostamp into account.
 	[ ] Add '--undo'/'-u' cmdline opt that calls the 'undo' task
 	    for the supplied task.
@@ -41,44 +32,12 @@ TODO:
 	    for the entire upward path in the digraph, then builds that task.
 	    (same thing done when the md5 changes on an affected var in
 	     check_md5)
-	[x] Use oe.digraph for handling intertask dependency
-	[x] Split task execution from function execution
-	[x] Add a means to add a task which depends on another task's
-	    execution, but not on said task's successful completion.
-	[x] Convert to the new parse and data clases ala oemake.
-	[x] Fetch shouldnt use stamps at all.  Hmm, due to the way
-	    I implemented override of the check functions, the stamp
-	    checker will believe unpack's stamp is always out of date,
-	    since its dependency item's stamp doesnt exist.  Need to fix
-	    that behavior, then enhance the fetch classes to check for
-	    existance.
-	[x] move set_automatic_vars into either data or parse
-	[x] default flag set for both oe and task metadata
-	[x] Fix python function implementation, do it the way I did the
-	    code for the event handlers. (needed to fix do_fetch)
-	[x] Add clean and mrproper targets to base oeclass.
 
 [.] oemake
-	[x] Move OEPATH follow into the individual 'handle' functions,
-	    whenever the fn path is relative.  Then kill the init call,
-	    as it is really extraneous, given handle does it for you.
-	[x] Add oe.conf parsing - abort if OEFILES is not defined
-	[x] Add parsing of the .oe's listed in OEFILES
-	[x] Handle provides in the digraph...
-	[x] Handle dependency on just content/glibc vs content/glibc-2.3.1-r0
-	[x] Proper event handling and failout when we encounter an unsatisfied
-	    dependency.
 	[ ] Check for recursive dependency
 	[ ] Deal with multiple provides
-	[x] Pull package name, version, and revision based on package metadata,
-	    rather than based on the filename in the build tools.  This belongs
-	    in the parser code.  In this way, we can more easily facilitate
-	    builds of src.rpms, .dsc's, et cetera.
-		-aside: pulled set_additional_vars into the new parser code
 
 [.] oemaked
-	[x] Autobuilder daemon, monitors files and/or directories
-	    For changes, and runs oemake when appropriate.
 	[ ] Monitor the stamps for a given .oe file as well, to ensure
 	    changes in build state as well as changes to build metadata result
 	    in a rebuild.
@@ -105,12 +64,20 @@ TODO:
 		    said ability, but we then have other concerns.
 		    (i.e. ...)
 
-[x] Update patcher tool to make use of our ability to use python functions.
-[x] Write package.oeclass implemented w/ a python function/task
-[x] Write src.rpm builder .oeclass
-[x] Write ipkg.oeclass which inherits package.oeclass to produce an ipk from
-    our metadata.
 [ ] Once we have the per package deployment code, write a staging oeclass
     that lets you use the FILES blocks for our deployment packages to do the
     installs into the appropriate staging areas, to save time writing do_stage
     functions.
+[ ] Write helper functions ala ebuild's dobin/dodoc/etc and debian's dh_*.
+	[ ] Note, if we do this using actual commands within the .oe file
+	    as opposed to shell helpers, the buildsystem is then aware
+	    of what files are libs, what are includes, etc, and we could
+	    then do a sane automatic population of staging based on that
+	    information. 
+[ ] Possibility: split staging by package, and maintain links based on
+    the base atom vs base+version, that sort of thing.  Automatically add
+    proper include and lib paths to the flags variables based on the items
+    in DEPENDS.  This 1) prevent unintentional include/link to the wrong
+    version of things, if multiple versions of things are floating around,
+    and 2) gives us a means of do_clean wiping out a given package's staging
+    items.
