@@ -131,7 +131,8 @@ def exec_func_python(func, d):
     g['os'] = os
     g['d'] = d
     exec comp in g
-    os.chdir(prevdir)
+    if os.path.exists(prevdir):
+        os.chdir(prevdir)
 
 def exec_func_shell(func, d):
     """Execute a shell OE 'function' Returns true if execution was successful.
