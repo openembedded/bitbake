@@ -2,8 +2,7 @@
 
    Reads the file and obtains its metadata"""
 
-import re, oe, string, os, sys
-import oe
+import re, oe, os, sys
 import oe.fetch
 from oe import debug, data, fetch, fatal
 
@@ -35,7 +34,7 @@ def inherit(files, d):
 		if file[0] != "/" and file[-8:] != ".oeclass":
 			file = "classes/%s.oeclass" % file
 
-		if not file in string.split(__inherit_cache):
+		if not file in __inherit_cache.split():
 			debug(2, "OE %s:%d: inheriting %s" % (fn, lineno, file))
 			__inherit_cache += " %s" % file
 			include(fn, file, d)
@@ -81,8 +80,7 @@ def handle(fn, d = {}, include = 0):
 
 	if ext != ".oeclass":
 		data.setVar('FILE', fn, d)
-		import string
-		i = string.split(data.getVar("INHERIT", d, 1) or "")
+		i = (data.getVar("INHERIT", d, 1) or "").split()
 		if not "base" in i and __classname__ != "base":
 			i[0:0] = ["base"]
 		inherit(i, d)
@@ -150,6 +148,7 @@ def feeder(lineno, s, fn, d):
 	if __infunc__:
 		if s == '}':
 			__body__.append('')
+			data.setVar(__infunc__, '\n'.join(__body__), d)
 			data.setVarFlag(__infunc__, "func", 1, d)
 			data.setVar(__infunc__, string.join(__body__, '\n'), d)
 			if __infunc__ == "__anonymous":
@@ -240,7 +239,7 @@ def feeder(lineno, s, fn, d):
 			# set up deps for function
 			data.setVarFlag(var, "deps", after.split(), d)
 		if before is not None:
-			# set up things that depend on this func 
+			# set up things that depend on this func
 			data.setVarFlag(var, "postdeps", before.split(), d)
 		return
 
@@ -269,9 +268,9 @@ def vars_from_file(mypkg, d):
 		return (None, None, None)
 	if mypkg in __pkgsplit_cache__:
 		return __pkgsplit_cache__[mypkg]
-		
+
 	myfile = os.path.splitext(os.path.basename(mypkg))
-	parts = string.split(myfile[0], '_')
+	parts = myfile[0].split('_')
 	__pkgsplit_cache__[mypkg] = parts
 	exp = 3 - len(parts)
 	tmplist = []
@@ -305,7 +304,7 @@ def set_additional_vars(file, d, include):
 
 	a += fetch.localpaths(d)
 	del fetch
-	data.setVar('A', string.join(a), d)
+	data.setVar('A', "".join(a), d)
 
 
 # Add us to the handlers list
