@@ -4,9 +4,9 @@
 # The author disclaims copyright to the contents of this file and places it in the
 # public domain.
 
-oedev () {
+bbdev () {
 	local BBDIR PKGDIR BUILDDIR
-	if test x"$1" = "x--help"; then echo >&2 "syntax: oedev [oedir [pkgdir [builddir]]]"; return 1; fi
+	if test x"$1" = "x--help"; then echo >&2 "syntax: bbdev [bbdir [pkgdir [builddir]]]"; return 1; fi
 	if test x"$1" = x; then BBDIR=`pwd`; else BBDIR=$1; fi
 	if test x"$2" = x; then PKGDIR=`pwd`; else PKGDIR=$2; fi
 	if test x"$3" = x; then BUILDDIR=`pwd`; else BUILDDIR=$3; fi
@@ -15,7 +15,7 @@ oedev () {
 	PKGDIR=`readlink -f $PKGDIR`
 	BUILDDIR=`readlink -f $BUILDDIR`
 	if ! (test -d $BBDIR && test -d $PKGDIR && test -d $BUILDDIR); then
-		echo >&2 "syntax: oedev [oedir [pkgdir [builddir]]]"
+		echo >&2 "syntax: bbdev [bbdir [pkgdir [builddir]]]"
 		return 1
 	fi
 	
