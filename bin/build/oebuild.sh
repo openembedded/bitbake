@@ -219,6 +219,7 @@ unpack() {
 	for x in $@
 	do
 		myfail="failure unpacking ${x}"
+		x="$(echo $x | sed 's:;.*::g')"
 		oenote "Unpacking ${x} to $(pwd)"
 		y="$(echo $x | sed 's:.*\.\(tar\)\.[a-zA-Z0-9]*:\1:')"
 		case "${x##*.}" in
@@ -251,8 +252,6 @@ unpack() {
 		*)
 			if [ -d "${x}" ]; then
 				cp -a ${x} .
-			else
-				oefatal "unpack ${x}: file format not recognized"
 			fi
 			;;
 		esac
@@ -261,10 +260,10 @@ unpack() {
 
 
 oe_runconf() {
-	if [ -x ./configure ] ; then
+	if [ -x ${S}/configure ] ; then
 		test -z "${BUILD_SYS}" || EXTRA_OECONF="--build=${BUILD_SYS} ${EXTRA_OECONF}"
 		test -z "${TARGET_SYS}" || EXTRA_OECONF="--target=${TARGET_SYS} ${EXTRA_OECONF}"
-		./configure \
+		${S}/configure \
 		    --prefix=/usr \
 		    --host=${SYS} \
 		    --mandir=/usr/share/man \
