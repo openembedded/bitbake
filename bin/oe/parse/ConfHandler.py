@@ -24,8 +24,22 @@ def include(oldfn, fn, data = {}):
 	return handle(fn, data)
 
 def handle(fn, data = {}):
-	fn = os.path.abspath(fn)
-	f = open(fn,'r')
+	init(data)
+	oe.data.inheritFromOS(1, data)
+	oepath = ['.']
+	if not os.path.isabs(fn):
+		f = None
+		voepath = oe.data.getVar("OEPATH", data)
+		if voepath:
+			oepath += voepath.split(":")
+		for p in oepath:
+			p = oe.data.expand(p, data)
+			if os.access(os.path.join(p, fn), os.R_OK):
+				f = open(os.path.join(p, fn), 'r')
+		if f is None:
+			raise IOError("file not found")
+	else:
+		f = open(fn,'r')
 	lineno = 0
 	while 1:
 		lineno = lineno + 1
