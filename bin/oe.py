@@ -1166,15 +1166,19 @@ def reader(cfgfile, feeder):
 
 
 
+# matches "VAR = VALUE"
 __config_regexp__  = re.compile( r"(\w+)\s*=\s*(?P<apo>['\"]?)(.*)(?P=apo)$")
-__include_regexp__ = re.compile( r"include\s+(.+)" )
-__readconfig_visit_cache__ = {}
 
-def readconfig(cfgfile):
+# matches "include FILE"
+__include_regexp__ = re.compile( r"include\s+(.+)" )
+
+__read_config_visit_cache__ = {}
+
+def read_config(cfgfile):
 	"""Reads a configuration file"""
 	visit = 1
 
-	def processconfig(lineno, s):
+	def process_config(lineno, s):
 		m = __config_regexp__.match(s)
 		if m:
 			key = m.group(1)
@@ -1186,18 +1190,57 @@ def readconfig(cfgfile):
 			if not visit: return
 			s = expand(m.group(1))
 			if os.access(s, os.R_OK):
-				readconfig(s)
+				read_config(s)
 			else:
-				note("%s:%d: could not import %s" % (cfgfile, lineno, s))
+				debug(1, "%s:%d: could not import %s" % (cfgfile, lineno, s))
 			return
 
 		print lineno, s
 
 	cfgfile = os.path.abspath(cfgfile)
-	if __readconfig_visit_cache__.has_key(cfgfile): visit = 0
-	__readconfig_visit_cache__[cfgfile] = 1
+	if __read_config_visit_cache__.has_key(cfgfile): visit = 0
+	__read_config_visit_cache__[cfgfile] = 1
 	debug(2, "read " + cfgfile)
-	reader(cfgfile, processconfig)
+	reader(cfgfile, process_config)
+
+
+__func_start_regexp__    = re.compile( r"(\w+)\s*\(\s*\)\s*{$" )
+__include_regexp__       = re.compile( r"include\s+(.+)" )
+
+__read_oe_infunc__ = ""
+__read_oe_body__   = []
+
+def read_oe(oefile):
+	"""Reads a build file"""
+
+	def process_oe(lineno, s):
+		global __read_oe_infunc__, __read_oe_body__
+		if __read_oe_infunc__:
+			if s == '}':
+				__read_oe_body__.append('')
+				env[__read_oe_infunc__] = string.join(__read_oe_body__, '\n')
+				__read_oe_infunc__ = ""
+				__read_oe_body__ = []
+			else:
+				__read_oe_body__.append(s)
+			return
+			
+			
+		m = __config_regexp__.match(s)
+		if m:
+			key = m.group(1)
+			env[key] = m.group(3)
+			return
+
+		m = __func_start_regexp__.match(s)
+		if m:
+			__read_oe_infunc__ = m.group(1)
+			return
+
+		print s
+
+
+	reader(oefile, process_oe)
 
 
 #######################################################################
@@ -1267,6 +1310,8 @@ def expand(s):
 		olds = s
 		s = __expand_var_regexp__.sub(var_sub, s)
 		s = __expand_python_regexp__.sub(python_sub, s)
+		if len(s)>2048:
+			fatal("expanded string too long")
 		if s == olds: break
 	return s
 
@@ -1336,7 +1381,7 @@ def set_additional_vars():
 			a = []
 
 		for loc in env['SRC_URI'].split():
-			(type, host, path, user, pswd, parm) = decodeurl(xpand(loc))
+			(type, host, path, user, pswd, parm) = decodeurl(expand(loc))
 			if type in ['http','https','ftp']:
 				a.append(os.path.basename(path))
 
@@ -1357,7 +1402,7 @@ def update_env():
 	>>> setenv('TEST_arm', 'target')
 	>>> setenv('TEST_ramses', 'machine')
 	>>> setenv('TEST_local', 'local')
-        >>> setenv('OVERRIDE', 'arm')
+        >>> setenv('OVERRIDES', 'arm')
 
 	and then we set some TEST environment variable and let it update:
 
@@ -1366,9 +1411,9 @@ def update_env():
 	>>> print env['TEST']
 	target
 
-	You can set OVERRIDE to another value, yielding another result:
+	You can set OVERRIDES to another value, yielding another result:
 
-        >>> setenv('OVERRIDE', 'arm:ramses:local')
+        >>> setenv('OVERRIDES', 'arm:ramses:local')
 	>>> setenv('TEST', 'original')
 	>>> update_env()
 	>>> print env['TEST']
@@ -1401,7 +1446,7 @@ def update_env():
 	# can't do delete env[...] while iterating over the dictionary, so remember them
 	dodel = []
 	# preprocess overrides
-	override = expand(env['OVERRIDE']).split(':')
+	override = expand(env['OVERRIDES']).split(':')
 
 	for s in env:
 		for o in override:
@@ -1533,7 +1578,85 @@ envdesc = {
 # export:      when creating the package build script, do not only define this var, but export it
 #
 
-# Mandatory fields
+
+# Directories for the Build system
+
+"OEDIR": {       "desc":      "where the build system for OpenEmbedded is located",
+                 "warnlevel": 3 },
+"OEPATH": {      "desc":      "additional directories to consider when building packages", },
+"TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded",
+                 "warnlevel": 3 },
+"DL_DIR": {      "desc":      "directory where sources will be downloaded into",
+                 "warnlevel": 3 },
+"STAMP": {       "desc":      "directory and filename (without extension) for stamp files",
+                 "warnlevel": 3 },
+"STAGING_DIR": { "desc":      "TODO", },
+"STAGING_BINDIR": { "desc":   "TODO",
+                 "warnlevel": 3 },
+"STAGING_LIBDIR": { "desc":      "TODO",
+                 "warnlevel": 3 },
+
+# Mirros and download:
+
+"DEBIAN_MIRROR": { "desc":   "TODO" },
+"SOURCEFORGE_MIRROR": { "desc":   "TODO" },
+"FETCHCOMMAND": { "desc":    "command to fetch a file via ftp/http/https",
+                 "warnlevel": 3 },
+"RESUMECOMMAND":{ "desc":    "command to resume the fetch of a file via ftp/http/https",
+                 "warnlevel": 3 },
+
+# Architecture / Board related:
+
+"DISTRO": {      "desc":      "TODO" },
+"ARCH": {        "desc":      "this is --target to run on (for configure), e.g. 'arm'",
+                 "warnlevel": 3,
+                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
+"OS": {          "desc":      "TODO",
+                 "warnlevel": 3 },
+"BUILD_ARCH": {  "desc":      "this is --build on host (for configure), e.g. 'i386'",
+                 "warnlevel": 3,
+                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
+"BUILD_OS": {    "desc":      "TODO" },
+"MACHINE": {     "desc":      "Target system to compile for, e.g. 'zaurus'",
+                 "warnlevel": 2,
+                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global", },
+"USE": {         "desc":      "This is set to what USE variables your package uses", },
+
+"SYS": {          "desc":      "TODO" },
+"BUILD_SYS": {   "desc":      "TODO" },
+"CROSS": {       "desc":      "TODO" },
+"OVERRIDES":     { "desc":      "TODO" },
+"ALLOWED_FLAGS": { "desc":    "flags not to strip by strip-flags", },
+
+"FULL_OPTIMIZATION": { "desc":"TODO" },
+"OPTIMIZATION":  { "desc":    "TODO" },
+
+"CPPFLAGS":      { "desc":    "TODO" },
+"CFLAGS":        { "desc":    "TODO" },
+"CXXFLAGS":      { "desc":    "TODO" },
+"LDFLAGS":       { "desc":    "TODO" },
+"CPP":           { "desc":    "TODO" },
+"CC":            { "desc":    "TODO" },
+"CXX":           { "desc":    "TODO" },
+"LD":            { "desc":    "TODO" },
+"STRIP":         { "desc":    "TODO" },
+"AR":            { "desc":    "TODO" },
+"RANLIB":        { "desc":    "TODO" },
+
+"BUILD_CPPFLAGS":{ "desc":    "TODO" },
+"BUILD_CFLAGS":  { "desc":    "TODO" },
+"BUILD_CXXFLAGS":{ "desc":    "TODO" },
+"BUILD_LDFLAGS": { "desc":    "TODO" },
+"BUILD_CPP":     { "desc":    "TODO" },
+"BUILD_CC":      { "desc":    "TODO" },
+"BUILD_CXX":     { "desc":    "TODO" },
+"BUILD_LD":      { "desc":    "TODO" },
+
+"PKG_CONFIG_PATH": { "desc":    "TODO" },
+
+
+
+# Mandatory fields in build files
 
 "DESCRIPTION": { "desc":      "description of the package",
                  "warnlevel": 3 },
@@ -1559,13 +1682,8 @@ envdesc = {
 "MAINTAINER": {  "desc":      "who is reponsible for fixing errors?", },
 "OEDEBUG": {     "desc":      "debug-level for the builder", },
 
-# Automatic set (oemake related):
 
-"OEDIR": {       "desc":      "where the build system for OpenEmbedded is located",
-                 "warnlevel": 3 },
-"OEPATH": {      "desc":      "additional directories to consider when building packages", },
-"TMPDIR": {      "desc":      "temporary area used for building OpenEmbedded",
-                 "warnlevel": 3 },
+
 "OEBUILD": {     "desc":      "name(s) of the package build files (global and local)",
                  "warnlevel": 3 },
 "P": {           "desc":      "package name without the revision, e.g. 'xfree-4.2.1'",
@@ -1586,35 +1704,12 @@ envdesc = {
                  "warnlevel": 3 },
 "S": {           "desc":      "directory where source will be extracted into",
                  "warnlevel": 3 },
-"DL_DIR": {     "desc":      "directory where sources will be downloaded into",
-                 "warnlevel": 3 },
 "T": {           "desc":      "free-to-use temporary directory during package built time",
                  "warnlevel": 3 },
 "D": {           "desc":      "path to a destination install directory",
                  "warnlevel": 3 },
-"STAMP": {       "desc":      "directory and filename (without extension) for stamp files",
-                 "warnlevel": 3 },
-"STAGE": {       "desc":      "TODO", },
-"STAGEINC": {    "desc":      "TODO",
-                 "warnlevel": 3 },
-"STAGELIB": {    "desc":      "TODO",
-                 "warnlevel": 3 },
-"IUSE": {        "desc":      "This is set to what USE variables your package uses", },
 "A": {           "desc":      "lists all sourcefiles without URL/Path",
                  "warnlevel": 1 },
-
-# Architecture / Board related:
-
-"CBUILD": {      "desc":      "this is --build on host (for configure), e.g. 'i386'",
-                 "warnlevel": 3,
-                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
-"CCHOST": {      "desc":      "this is --target to run on (for configure), e.g. 'arm'",
-                 "warnlevel": 3,
-                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global" },
-"TARGET": {      "desc":      "Target system to compile for, e.g. 'zaurus'",
-                 "warnlevel": 2,
-                 "warn":      "specify this variable in ${OEDIR}/conf/oe.global", },
-"SUBTARGET": {   "desc":      "select sub-target, e.g. 'sl5500', 'sl5600' etc", },
 
 # Package creation functions:
 
@@ -1633,11 +1728,8 @@ envdesc = {
 
 # System wide configuration
 
-"FETCHCOMMAND": { "desc":    "command to fetch a file via ftp/http/https", },
-"RESUMECOMMAND":{ "desc":    "command to resume the fetch of a file via ftp/http/https", },
 "USE": {          "desc":    "which options should be enabled in packages", },
 "FEATURES": {     "desc":    "enabled features of the buildsystem", },
-"ALLOWED_FLAGS": {"desc":    "flags not to strip by strip-flags", },
 
 # Automatically generated, but overrideable:
 
