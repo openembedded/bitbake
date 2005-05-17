@@ -41,7 +41,7 @@ class MissingParameterError(Exception):
 #decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
 #('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
 
-def uri_replace(uri, uri_find, uri_replace, d = bb.data.init()):
+def uri_replace(uri, uri_find, uri_replace, d):
 #   bb.note("uri_replace: operating on %s" % uri)
     if not uri or not uri_find or not uri_replace:
         bb.debug(1, "uri_replace: passed an undefined value, not replacing")
@@ -73,7 +73,7 @@ def uri_replace(uri, uri_find, uri_replace, d = bb.data.init()):
 
 methods = []
 
-def init(urls = [], d = bb.data.init()):
+def init(urls = [], d = None):
     for m in methods:
         m.urls = []
 
@@ -83,7 +83,7 @@ def init(urls = [], d = bb.data.init()):
             if m.supports(u, d):
                 m.urls.append(u)
 
-def go(d = bb.data.init()):
+def go(d):
     """Fetch all urls"""
     for m in methods:
         if m.urls:
@@ -97,7 +97,7 @@ def localpaths(d):
             local.append(m.localpath(u, d))
     return local
 
-def localpath(url, d = bb.data.init()):
+def localpath(url, d):
     for m in methods:
         if m.supports(url, d):
             return m.localpath(url, d)
@@ -119,7 +119,7 @@ class Fetch(object):
         return 0
     supports = staticmethod(supports)
 
-    def localpath(url, d = bb.data.init()):
+    def localpath(url, d):
         """Return the local filename of a given url assuming a successful fetch.
         """
         return url
@@ -162,10 +162,11 @@ class Wget(Fetch):
 #           if user overrides local path, use it.
             return parm["localpath"]
         url = bb.encodeurl([type, host, path, user, pswd, {}])
+
         return os.path.join(bb.data.getVar("DL_DIR", d), os.path.basename(url))
     localpath = staticmethod(localpath)
 
-    def go(self, d = bb.data.init(), urls = []):
+    def go(self, d, urls = []):
         """Fetch urls"""
         def fetch_uri(uri, basename, dl, md5, d):
             if os.path.exists(dl):
@@ -220,7 +221,7 @@ class Wget(Fetch):
 
             premirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
             for (find, replace) in premirrors:
-                newuri = uri_replace(uri, find, replace)
+                newuri = uri_replace(uri, find, replace, d)
                 if newuri != uri:
                     if fetch_uri(newuri, basename, dl, md5, localdata):
                         completed = 1
@@ -235,7 +236,7 @@ class Wget(Fetch):
 #           try mirrors
             mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
             for (find, replace) in mirrors:
-                newuri = uri_replace(uri, find, replace)
+                newuri = uri_replace(uri, find, replace, d)
                 if newuri != uri:
                     if fetch_uri(newuri, basename, dl, md5, localdata):
                         completed = 1
@@ -284,7 +285,7 @@ class Cvs(Fetch):
         return os.path.join(bb.data.getVar("DL_DIR", d, 1),bb.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, tag, date), d))
     localpath = staticmethod(localpath)
 
-    def go(self, d = bb.data.init(), urls = []):
+    def go(self, d, urls = []):
         """Fetch urls"""
         if not urls:
             urls = self.urls
@@ -505,7 +506,7 @@ class Svn(Fetch):
         return os.path.join(bb.data.getVar("DL_DIR", d, 1),bb.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, revision, date), d))
     localpath = staticmethod(localpath)
 
-    def go(self, d = bb.data.init(), urls = []):
+    def go(self, d, urls = []):
         """Fetch urls"""
         if not urls:
             urls = self.urls
