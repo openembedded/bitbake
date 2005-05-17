@@ -33,10 +33,10 @@ else:
     path = os.path.dirname(os.path.dirname(sys.argv[0]))
 sys.path.append(path)
 
-from bb import note, debug, data_dict
+from bb import note, debug, data_smart
 
-_dict_type = data_dict.DataDict
-_dict_p_type = data_dict.DataDictPackage
+_dict_type = data_smart.DataSmart
+_dict_p_type = data_smart.DataSmartPackage
 
 class DataDictCache:
     """
