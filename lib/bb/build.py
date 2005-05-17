@@ -364,13 +364,14 @@ def add_task(task, deps, d):
     task_graph = data.getVar('_task_graph', d)
     if not task_graph:
         task_graph = bb.digraph()
-        data.setVar('_task_graph', task_graph, d)
     data.setVarFlag(task, 'task', 1, d)
     task_graph.addnode(task, None)
     for dep in deps:
         if not task_graph.hasnode(dep):
             task_graph.addnode(dep, None)
         task_graph.addnode(task, dep)
+    # don't assume holding a reference
+    data.setVar('_task_graph', task_graph, d)
 
 
 def remove_task(task, kill, d):
@@ -381,7 +382,6 @@ def remove_task(task, kill, d):
     task_graph = data.getVar('_task_graph', d)
     if not task_graph:
         task_graph = bb.digraph()
-        data.setVar('_task_graph', task_graph, d)
     if not task_graph.hasnode(task):
         return
 
@@ -390,6 +390,7 @@ def remove_task(task, kill, d):
     if kill == 1:
         ref = 2
     task_graph.delnode(task, ref)
+    data.setVar('_task_graph', task_graph, d)
 
 def task_exists(task, d):
     task_graph = data.getVar('_task_graph', d)
