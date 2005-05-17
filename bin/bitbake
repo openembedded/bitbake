@@ -4,6 +4,8 @@
 #
 # Copyright (C) 2003, 2004  Chris Larson
 # Copyright (C) 2003, 2004  Phil Blundell
+# Copyright (C) 2005        Holger Hans Peter Freyther
+# Copyright (C) 2005        ROAD GmbH
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -42,6 +44,7 @@ __stats = {}
 bbfile_config_priorities = []
 bbfile_priority = {}
 bbdebug = 0
+providers = {}
 
 def handle_options( args ):
     parser = optparse.OptionParser( version = "BitBake Build Tool Core version %s, %%prog version %s" % ( bb.__version__, __version__ ),
@@ -111,7 +114,7 @@ def try_build(fn, virtual):
         failed = False
 
         depcmd = make.options.cmd
-        bbdepcmd = bb.data.getVarFlag('do_%s' % make.options.cmd, 'bbdepcmd', make.pkgdata[fn])
+        bbdepcmd = bb.data.getVarFlag('do_%s' % make.options.cmd, 'bbdepcmd', the_data)
         if bbdepcmd is not None:
             if bbdepcmd == "":
                 depcmd = None
@@ -144,18 +147,18 @@ def try_build(fn, virtual):
             __build_cache.append(fn)
             return True
 
-        bb.event.fire(bb.event.PkgStarted(item, make.pkgdata[fn]))
+        bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
             __stats["attempt"] += 1
             if not make.options.dry_run:
-                bb.build.exec_task('do_%s' % make.options.cmd, make.pkgdata[fn])
-            bb.event.fire(bb.event.PkgSucceeded(item, make.pkgdata[fn]))
+                bb.build.exec_task('do_%s' % make.options.cmd, the_data)
+            bb.event.fire(bb.event.PkgSucceeded(item, the_data))
             __build_cache.append(fn)
             return True
         except bb.build.FuncFailed:
             __stats["fail"] += 1
             bb.error("task stack execution failed")
-            bb.event.fire(bb.event.PkgFailed(item, make.pkgdata[fn]))
+            bb.event.fire(bb.event.PkgFailed(item, the_data))
             __build_cache_fail.append(fn)
             raise
         except bb.build.EventException:
@@ -163,7 +166,7 @@ def try_build(fn, virtual):
             (type, value, traceback) = sys.exc_info()
             e = value.event
             bb.error("%s event exception, aborting" % bb.event.getName(e))
-            bb.event.fire(bb.event.PkgFailed(item, make.pkgdata[fn]))
+            bb.event.fire(bb.event.PkgFailed(item, the_data))
             __build_cache_fail.append(fn)
             raise
     finally:
@@ -613,9 +616,7 @@ if __name__ == "__main__":
     if make.options.debug:
         bb.debug_level = make.options.debug
 
-    make.pkgdata = {}
     make.cfg = bb.data.init()
-    providers = {}
 
     for f in make.options.file:
         try:
