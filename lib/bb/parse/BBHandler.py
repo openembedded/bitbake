@@ -64,7 +64,7 @@ def inherit(files, d):
     data.setVar('__inherit_cache', __inherit_cache, d)
 
 
-def handle(fn, d = {}, include = 0):
+def handle(fn, d = data.init(), include = 0):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __bbpath_found__, __residue__
     __body__ = []
     __bbpath_found__ = 0
@@ -156,7 +156,7 @@ def handle(fn, d = {}, include = 0):
             set_additional_vars(fn, d, include)
             data.update_data(d)
 
-            for var in d.keys():
+            for var in data.keys(d):
                 if data.getVarFlag(var, 'handler', d):
                     bb.event.register(data.getVar(var, d))
                     continue

@@ -51,7 +51,7 @@ def localpath(fn, d):
         localfn = fn
     return localfn
 
-def obtain(fn, data = {}):
+def obtain(fn, data = bb.data.init()):
     import sys, bb
     fn = bb.data.expand(fn, data)
     localfn = bb.data.expand(localpath(fn, data), data)
@@ -82,7 +82,7 @@ def obtain(fn, data = {}):
     return localfn
 
 
-def include(oldfn, fn, data = {}):
+def include(oldfn, fn, data = bb.data.init()):
     if oldfn == fn: # prevent infinate recursion
         return None
 
@@ -96,7 +96,7 @@ def include(oldfn, fn, data = {}):
     except IOError:
         debug(2, "CONF file '%s' not found" % fn)
 
-def handle(fn, data = {}, include = 0):
+def handle(fn, data = bb.data.init(), include = 0):
     if include:
         inc_string = "including"
     else:
@@ -153,7 +153,7 @@ def handle(fn, data = {}, include = 0):
         bb.data.setVar('FILE', oldfile, data)
     return data
 
-def feeder(lineno, s, fn, data = {}):
+def feeder(lineno, s, fn, data = bb.data.init()):
     m = __config_regexp__.match(s)
     if m:
         groupd = m.groupdict()

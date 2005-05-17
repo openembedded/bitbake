@@ -8,6 +8,7 @@ Functions for interacting with the data structure used by the
 BitBake build tools.
 
 Copyright (C) 2003, 2004  Chris Larson
+Copyright (C) 2005        Holger Hans Peter Freyther
 
 This program is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -32,27 +33,22 @@ else:
     path = os.path.dirname(os.path.dirname(sys.argv[0]))
 sys.path.append(path)
 
-from bb import note, debug
+from bb import note, debug, data_dict
+
+_dict_type = data_dict.DataDict
+
 
 def init():
-    return {}
+    return _dict_type()
 
-_data = init()
+_data_dict = init()
 
-def initVar(var, d = _data):
+def initVar(var, d = _data_dict):
     """Non-destructive var init for data structure"""
-    if not var in d:
-        d[var] = {}
+    d.initVar(var)
 
-    if not "flags" in d[var]:
-        d[var]["flags"] = {}
 
-__setvar_regexp__ = {}
-__setvar_regexp__["_append"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_append")
-__setvar_regexp__["_prepend"] = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_prepend")
-__setvar_regexp__["_delete"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_delete")
-
-def setVar(var, value, d = _data):
+def setVar(var, value, d = _data_dict):
     """Set a variable to a given value
 
     Example:
@@ -60,27 +56,10 @@ def setVar(var, value, d = _data):
         >>> print getVar('TEST')
         testcontents
     """
-    for v in ["_append", "_prepend", "_delete"]:
-        match = __setvar_regexp__[v].match(var)
-        if match:
-            base = match.group('base')
-            override = match.group('add')
-            l = getVarFlag(base, v, d) or []
-            if override == 'delete':
-                if l.count([value, None]):
-                    del l[l.index([value, None])]
-            l.append([value, override])
-            setVarFlag(base, v, l, d)
-            return
+    d.setVar(var,value)
 
-    if not var in d:
-        initVar(var, d)
-    if getVarFlag(var, 'matchesenv', d):
-        delVarFlag(var, 'matchesenv', d)
-        setVarFlag(var, 'export', 1, d)
-    d[var]["content"] = value
 
-def getVar(var, d = _data, exp = 0):
+def getVar(var, d = _data_dict, exp = 0):
     """Gets the value of a variable
 
     Example:
@@ -88,13 +67,9 @@ def getVar(var, d = _data, exp = 0):
         >>> print getVar('TEST')
         testcontents
     """
-    if not var in d or not "content" in d[var]:
-        return None
-    if exp:
-        return expand(d[var]["content"], d, var)
-    return d[var]["content"]
+    return d.getVar(var,exp)
 
-def delVar(var, d = _data):
+def delVar(var, d = _data_dict):
     """Removes a variable from the data set
 
     Example:
@@ -105,10 +80,9 @@ def delVar(var, d = _data):
         >>> print getVar('TEST')
         None
     """
-    if var in d:
-        del d[var]
+    d.delVar(var)
 
-def setVarFlag(var, flag, flagvalue, d = _data):
+def setVarFlag(var, flag, flagvalue, d = _data_dict):
     """Set a flag for a given variable to a given value
 
     Example:
@@ -116,12 +90,9 @@ def setVarFlag(var, flag, flagvalue, d = _data):
         >>> print getVarFlag('TEST', 'python')
         1
     """
-#   print "d[%s][\"flags\"][%s] = %s" % (var, flag, flagvalue)
-    if not var in d:
-        initVar(var, d)
-    d[var]["flags"][flag] = flagvalue
+    d.setVarFlag(var,flag,flagvalue)
 
-def getVarFlag(var, flag, d = _data):
+def getVarFlag(var, flag, d = _data_dict):
     """Gets given flag from given var
 
     Example:
@@ -129,11 +100,9 @@ def getVarFlag(var, flag, d = _data):
         >>> print getVarFlag('TEST', 'python')
         1
     """
-    if var in d and "flags" in d[var] and flag in d[var]["flags"]:
-        return d[var]["flags"][flag]
-    return None
+    return d.getVarFlag(var,flag)
 
-def delVarFlag(var, flag, d = _data):
+def delVarFlag(var, flag, d = _data_dict):
     """Removes a given flag from the variable's flags
 
     Example:
@@ -145,10 +114,9 @@ def delVarFlag(var, flag, d = _data):
         None
 
     """
-    if var in d and "flags" in d[var] and flag in d[var]["flags"]:
-        del d[var]["flags"][flag]
+    d.delVarFlag(var,flag)
 
-def setVarFlags(var, flags, d = _data):
+def setVarFlags(var, flags, d = _data_dict):
     """Set the flags for a given variable
 
     Example:
@@ -158,11 +126,9 @@ def setVarFlags(var, flags, d = _data):
         >>> print getVarFlag('TEST', 'test')
         blah
     """
-    if not var in d:
-        initVar(var, d)
-    d[var]["flags"] = flags
+    d.setVarFlags(var,flags)
 
-def getVarFlags(var, d = _data):
+def getVarFlags(var, d = _data_dict):
     """Gets a variable's flags
 
     Example:
@@ -170,11 +136,9 @@ def getVarFlags(var, d = _data):
         >>> print getVarFlags('TEST')['test']
         blah
     """
-    if var in d and "flags" in d[var]:
-        return d[var]["flags"]
-    return None
+    return d.getVarFlags(var)
 
-def delVarFlags(var, d = _data):
+def delVarFlags(var, d = _data_dict):
     """Removes a variable's flags
 
     Example:
@@ -186,21 +150,33 @@ def delVarFlags(var, d = _data):
         None
 
     """
-    if var in d and "flags" in d[var]:
-        del d[var]["flags"]
+    d.delVarFlags(var)
 
-def getData(d = _data):
+def keys(d = _data_dict):
+    """Return a list of keys in d
+
+    Example:
+        >>> d = init()
+        >>> setVar('TEST',  1, d)
+        >>> setVar('MOO' ,  2, d)
+        >>> setVarFlag('TEST', 'test', 1, d)
+        >>> keys(d)
+        ['TEST', 'MOO']
+    """
+    return d.keys()
+
+def getData(d = _data_dict):
     """Returns the data object used"""
     return d
 
-def setData(newData, d = _data):
+def setData(newData, d = _data_dict):
     """Sets the data object to the supplied value"""
     d = newData
 
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
-def expand(s, d = _data, varname = None):
+def expand(s, d = _data_dict, varname = None):
     """Variable expansion using the data store.
 
     Example:
@@ -251,11 +227,11 @@ def expand(s, d = _data, varname = None):
             raise
     return s
 
-def expandKeys(alterdata = _data, readdata = None):
+def expandKeys(alterdata = _data_dict, readdata = None):
     if readdata == None:
         readdata = alterdata
 
-    for key in alterdata.keys():
+    for key in keys(alterdata):
         ekey = expand(key, readdata)
         if key == ekey:
             continue
@@ -274,7 +250,7 @@ def expandKeys(alterdata = _data, readdata = None):
 
         delVar(key, alterdata)
 
-def expandData(alterdata = _data, readdata = None):
+def expandData(alterdata = _data_dict, readdata = None):
     """For each variable in alterdata, expand it, and update the var contents.
        Replacements use data from readdata.
 
@@ -290,7 +266,7 @@ def expandData(alterdata = _data, readdata = None):
     if readdata == None:
         readdata = alterdata
 
-    for key in alterdata.keys():
+    for key in keys(alterdata):
         val = getVar(key, alterdata)
         if type(val) is not types.StringType:
             continue
@@ -301,7 +277,7 @@ def expandData(alterdata = _data, readdata = None):
 
 import os
 
-def inheritFromOS(d = _data):
+def inheritFromOS(d = _data_dict):
     """Inherit variables from the environment."""
 #   fakeroot needs to be able to set these
     non_inherit_vars = [ "LD_LIBRARY_PATH", "LD_PRELOAD" ]
@@ -315,7 +291,7 @@ def inheritFromOS(d = _data):
 
 import sys
 
-def emit_var(var, o=sys.__stdout__, d = _data, all=False):
+def emit_var(var, o=sys.__stdout__, d = _data_dict, all=False):
     """Emit a variable to be sourced by a shell."""
     if getVarFlag(var, "python", d):
         return 0
@@ -365,10 +341,10 @@ def emit_var(var, o=sys.__stdout__, d = _data, all=False):
     return 1
 
 
-def emit_env(o=sys.__stdout__, d = _data, all=False):
+def emit_env(o=sys.__stdout__, d = _data_dict, all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
-    env = d.keys()
+    env = keys(d)
 
     for e in env:
         if getVarFlag(e, "func", d):
@@ -380,7 +356,7 @@ def emit_env(o=sys.__stdout__, d = _data, all=False):
             continue
         emit_var(e, o, d) and o.write('\n')
 
-def update_data(d = _data):
+def update_data(d = _data_dict):
     """Modifies the environment vars according to local overrides and commands.
     Examples:
         Appending to a variable:
@@ -423,7 +399,7 @@ def update_data(d = _data):
     dodel = []
     overrides = (getVar('OVERRIDES', d, 1) or "").split(':') or []
 
-    def applyOverrides(var, d = _data):
+    def applyOverrides(var, d = _data_dict):
         if not overrides:
             debug(1, "OVERRIDES not defined, nothing to do")
             return
@@ -434,7 +410,7 @@ def update_data(d = _data):
                 name = var[:-l]
                 d[name] = d[var]
 
-    for s in d.keys():
+    for s in keys(d):
         applyOverrides(s, d)
         sval = getVar(s, d) or ""
 
