@@ -29,7 +29,7 @@ This file is part of the BitBake build tools.
 from bb import debug, digraph, data, fetch, fatal, error, note, event, parse
 import copy, bb, re, sys, os, glob, sre_constants
 
-pkgdata = {}
+pkgdata = None
 cfg = data.init()
 cache = None
 digits = "0123456789"
@@ -113,8 +113,10 @@ def collect_bbfiles( progressCallback ):
     """Collect all available .bb build files"""
 
     parsed, cached, skipped, masked = 0, 0, 0, 0
-    global cache
-    cache = bb.data.getVar( "CACHE", cfg, 1 )
+    global cache, pkgdata
+    cache   = bb.data.getVar( "CACHE", cfg, 1 )
+    pkgdata = data.pkgdata( not cache in [None, ''], cache )
+
     if not cache in [None, '']:
         print "NOTE: Using cache in '%s'" % cache
         try:
@@ -157,23 +159,24 @@ def collect_bbfiles( progressCallback ):
 
         # read a file's metadata
         try:
-            pkgdata[f], fromCache = load_bbfile(f)
+            bb_data, fromCache = load_bbfile(f)
             if fromCache: cached += 1
             else: parsed += 1
             deps = None
-            if pkgdata[f] is not None:
+            if bb_data is not None:
                 # allow metadata files to add items to BBFILES
                 #data.update_data(pkgdata[f])
-                addbbfiles = data.getVar('BBFILES', pkgdata[f]) or None
+                addbbfiles = data.getVar('BBFILES', bb_data) or None
                 if addbbfiles:
                     for aof in addbbfiles.split():
                         if not files.count(aof):
                             if not os.path.isabs(aof):
                                 aof = os.path.join(os.path.dirname(f),aof)
                             files.append(aof)
-                for var in pkgdata[f].keys():
-                    if data.getVarFlag(var, "handler", pkgdata[f]) and data.getVar(var, pkgdata[f]):
-                        event.register(data.getVar(var, pkgdata[f]))
+                for var in bb_data.keys():
+                    if data.getVarFlag(var, "handler", bb_data) and data.getVar(var, bb_data):
+                        event.register(data.getVar(var, bb_data))
+                pkgdata[f] = bb_data
         except IOError, e:
             bb.error("opening %s: %s" % (f, e))
             pass

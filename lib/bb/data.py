@@ -38,6 +38,38 @@ from bb import note, debug, data_dict
 _dict_type = data_dict.DataDict
 _dict_p_type = data_dict.DataDictPackage
 
+class DataDictCache:
+    """
+    Databacked Dictionary implementation
+    """
+    def __init__(self, cache_dir):
+        self.cache_dir = cache_dir
+        self.files     = []
+
+    def has_key(self,key):
+        return key in self.files
+
+    def keys(self):
+        return self.files
+
+    def __setitem__(self, key, data):
+        """
+        Add the key to the list of known files and
+        place the data in the cache?
+        """
+        if key in self.files:
+            return
+
+        self.files.append(key)
+
+    def __getitem__(self, key):
+        if not key in self.files:
+            return None
+
+        # not cached yet
+        return _dict_p_type(self.cache_dir, key,False,None)
+
+
 
 def init():
     return _dict_type()
@@ -47,6 +79,14 @@ def init_db(cache,name,clean,parent = None):
 
 def init_db_mtime(cache,cache_bbfile):
     return _dict_p_type.mtime(cache,cache_bbfile)
+
+def pkgdata(use_cache, cache):
+    """
+    Return some sort of dictionary to lookup parsed dictionaires
+    """
+    if use_cache:
+        return DataDictCache(cache)
+    return {}
 
 _data_dict = init()
 
