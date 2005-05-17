@@ -32,7 +32,7 @@ def init(data):
     if not bb.data.getVar('TOPDIR', data):
         bb.data.setVar('TOPDIR', os.getcwd(), data)
     if not bb.data.getVar('BBPATH', data):
-        bb.data.setVar('BBPATH', os.path.join(sys.prefix, 'share', 'bitbake'))
+        bb.data.setVar('BBPATH', os.path.join(sys.prefix, 'share', 'bitbake'), data)
 
 def supports(fn, d):
     return localpath(fn, d)[-5:] == ".conf"

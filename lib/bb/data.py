@@ -88,8 +88,6 @@ def pkgdata(use_cache, cache):
         return DataDictCache(cache)
     return {}
 
-_data_dict = init()
-
 def createCopy(source):
      """Link the source set to the destination
      If one does not find the value in the destination set,
@@ -100,12 +98,12 @@ def createCopy(source):
      """
      return source.createCopy()
 
-def initVar(var, d = _data_dict):
+def initVar(var, d):
     """Non-destructive var init for data structure"""
     d.initVar(var)
 
 
-def setVar(var, value, d = _data_dict):
+def setVar(var, value, d):
     """Set a variable to a given value
 
     Example:
@@ -116,7 +114,7 @@ def setVar(var, value, d = _data_dict):
     d.setVar(var,value)
 
 
-def getVar(var, d = _data_dict, exp = 0):
+def getVar(var, d, exp = 0):
     """Gets the value of a variable
 
     Example:
@@ -126,7 +124,7 @@ def getVar(var, d = _data_dict, exp = 0):
     """
     return d.getVar(var,exp)
 
-def delVar(var, d = _data_dict):
+def delVar(var, d):
     """Removes a variable from the data set
 
     Example:
@@ -139,7 +137,7 @@ def delVar(var, d = _data_dict):
     """
     d.delVar(var)
 
-def setVarFlag(var, flag, flagvalue, d = _data_dict):
+def setVarFlag(var, flag, flagvalue, d):
     """Set a flag for a given variable to a given value
 
     Example:
@@ -149,7 +147,7 @@ def setVarFlag(var, flag, flagvalue, d = _data_dict):
     """
     d.setVarFlag(var,flag,flagvalue)
 
-def getVarFlag(var, flag, d = _data_dict):
+def getVarFlag(var, flag, d):
     """Gets given flag from given var
 
     Example:
@@ -159,7 +157,7 @@ def getVarFlag(var, flag, d = _data_dict):
     """
     return d.getVarFlag(var,flag)
 
-def delVarFlag(var, flag, d = _data_dict):
+def delVarFlag(var, flag, d):
     """Removes a given flag from the variable's flags
 
     Example:
@@ -173,7 +171,7 @@ def delVarFlag(var, flag, d = _data_dict):
     """
     d.delVarFlag(var,flag)
 
-def setVarFlags(var, flags, d = _data_dict):
+def setVarFlags(var, flags, d):
     """Set the flags for a given variable
 
     Example:
@@ -185,7 +183,7 @@ def setVarFlags(var, flags, d = _data_dict):
     """
     d.setVarFlags(var,flags)
 
-def getVarFlags(var, d = _data_dict):
+def getVarFlags(var, d):
     """Gets a variable's flags
 
     Example:
@@ -195,7 +193,7 @@ def getVarFlags(var, d = _data_dict):
     """
     return d.getVarFlags(var)
 
-def delVarFlags(var, d = _data_dict):
+def delVarFlags(var, d):
     """Removes a variable's flags
 
     Example:
@@ -210,7 +208,7 @@ def delVarFlags(var, d = _data_dict):
     """
     d.delVarFlags(var)
 
-def keys(d = _data_dict):
+def keys(d):
     """Return a list of keys in d
 
     Example:
@@ -223,18 +221,18 @@ def keys(d = _data_dict):
     """
     return d.keys()
 
-def getData(d = _data_dict):
+def getData(d):
     """Returns the data object used"""
     return d
 
-def setData(newData, d = _data_dict):
+def setData(newData, d):
     """Sets the data object to the supplied value"""
     d = newData
 
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
-def expand(s, d = _data_dict, varname = None):
+def expand(s, d, varname = None):
     """Variable expansion using the data store.
 
     Example:
@@ -285,7 +283,7 @@ def expand(s, d = _data_dict, varname = None):
             raise
     return s
 
-def expandKeys(alterdata = _data_dict, readdata = None):
+def expandKeys(alterdata, readdata = None):
     if readdata == None:
         readdata = alterdata
 
@@ -308,7 +306,7 @@ def expandKeys(alterdata = _data_dict, readdata = None):
 
         delVar(key, alterdata)
 
-def expandData(alterdata = _data_dict, readdata = None):
+def expandData(alterdata, readdata = None):
     """For each variable in alterdata, expand it, and update the var contents.
        Replacements use data from readdata.
 
@@ -335,7 +333,7 @@ def expandData(alterdata = _data_dict, readdata = None):
 
 import os
 
-def inheritFromOS(d = _data_dict):
+def inheritFromOS(d):
     """Inherit variables from the environment."""
 #   fakeroot needs to be able to set these
     non_inherit_vars = [ "LD_LIBRARY_PATH", "LD_PRELOAD" ]
@@ -349,7 +347,7 @@ def inheritFromOS(d = _data_dict):
 
 import sys
 
-def emit_var(var, o=sys.__stdout__, d = _data_dict, all=False):
+def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     """Emit a variable to be sourced by a shell."""
     if getVarFlag(var, "python", d):
         return 0
@@ -399,7 +397,7 @@ def emit_var(var, o=sys.__stdout__, d = _data_dict, all=False):
     return 1
 
 
-def emit_env(o=sys.__stdout__, d = _data_dict, all=False):
+def emit_env(o=sys.__stdout__, d = init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
     env = keys(d)
@@ -414,7 +412,7 @@ def emit_env(o=sys.__stdout__, d = _data_dict, all=False):
             continue
         emit_var(e, o, d) and o.write('\n')
 
-def update_data(d = _data_dict):
+def update_data(d):
     """Modifies the environment vars according to local overrides and commands.
     Examples:
         Appending to a variable:
@@ -457,7 +455,7 @@ def update_data(d = _data_dict):
     dodel = []
     overrides = (getVar('OVERRIDES', d, 1) or "").split(':') or []
 
-    def applyOverrides(var, d = _data_dict):
+    def applyOverrides(var, d):
         if not overrides:
             debug(1, "OVERRIDES not defined, nothing to do")
             return
