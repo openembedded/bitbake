@@ -1,0 +1,10 @@
+Changes in bitbake 1.2.1:
+	The 1.2.1 release is meant as a intermediate release to lay the
+ground for more radical changes. The most notable changes are:
+
+	-Do not hardcode {}, use bb.data.init() instead if you want to
+get a instance of a data class
+	-bb.data.init() is a factory and the old bb.data methods are delegates
+	-Do not use deepcopy use bb.data.createCopy() instead.
+	-Removed default arguments in bb.fetch
+
