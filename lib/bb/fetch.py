@@ -202,8 +202,7 @@ class Wget(Fetch):
         if not urls:
             urls = self.urls
 
-        from copy import deepcopy
-        localdata = deepcopy(d)
+        localdata = bb.data.createCopy(d)
         bb.data.setVar('OVERRIDES', "wget:" + bb.data.getVar('OVERRIDES', localdata), localdata)
         bb.data.update_data(localdata)
 
@@ -290,8 +289,7 @@ class Cvs(Fetch):
         if not urls:
             urls = self.urls
 
-        from copy import deepcopy
-        localdata = deepcopy(d)
+        localdata = bb.data.createCopy(d)
         bb.data.setVar('OVERRIDES', "cvs:%s" % bb.data.getVar('OVERRIDES', localdata), localdata)
         bb.data.update_data(localdata)
 
@@ -512,8 +510,7 @@ class Svn(Fetch):
         if not urls:
             urls = self.urls
 
-        from copy import deepcopy
-        localdata = deepcopy(d)
+        localdata = bb.data.createCopy(d)
         bb.data.setVar('OVERRIDES', "svn:%s" % bb.data.getVar('OVERRIDES', localdata), localdata)
         bb.data.update_data(localdata)
 

@@ -108,7 +108,7 @@ def load_bbfile( bbfile ):
     # go there
     oldpath = os.path.abspath(os.getcwd())
     os.chdir(topdir)
-    bb = copy.deepcopy(cfg)
+    bb = data.createCopy(cfg)
     try:
         parse.handle(bbfile, bb) # read .bb data
         if not cache in [None, '']: pickle_bb( cache_bbfile, bb) # write cache

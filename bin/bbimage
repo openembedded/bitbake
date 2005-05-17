@@ -111,7 +111,7 @@ if not rootfs:
 data.setVar('IMAGE_ROOTFS', rootfs, cfg_bb)
 
 from copy import copy, deepcopy
-localdata = deepcopy(cfg_bb)
+localdata = data.createCopy(cfg_bb)
 
 overrides = data.getVar('OVERRIDES', localdata)
 if not overrides:

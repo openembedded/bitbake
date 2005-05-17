@@ -288,8 +288,7 @@ def exec_task(task, d):
             try:
                 debug(1, "Executing task %s" % item)
                 old_overrides = data.getVar('OVERRIDES', d, 0)
-                from copy import deepcopy
-                localdata = deepcopy(d)
+                localdata = data.createCopy(d)
                 data.setVar('OVERRIDES', 'task_%s:%s' % (item, old_overrides), localdata)
                 data.update_data(localdata)
                 event.fire(TaskStarted(item, localdata))

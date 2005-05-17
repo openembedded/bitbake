@@ -43,6 +43,16 @@ def init():
 
 _data_dict = init()
 
+def createCopy(source):
+     """Link the source set to the destination
+     If one does not find the value in the destination set,
+     search will go on to the source set to get the value.
+     Value from source are copy-on-write. i.e. any try to
+     modify one of them will end up putting the modified value
+     in the destination set.
+     """
+     return source.createCopy()
+
 def initVar(var, d = _data_dict):
     """Non-destructive var init for data structure"""
     d.initVar(var)
@@ -142,11 +152,12 @@ def delVarFlags(var, d = _data_dict):
     """Removes a variable's flags
 
     Example:
-        >>> setVarFlag('TEST', 'testflag', 1)
-        >>> print getVarFlag('TEST', 'testflag')
+        >>> data = init()
+        >>> setVarFlag('TEST', 'testflag', 1, data)
+        >>> print getVarFlag('TEST', 'testflag', data)
         1
-        >>> delVarFlags('TEST')
-        >>> print getVarFlags('TEST')
+        >>> delVarFlags('TEST', data)
+        >>> print getVarFlags('TEST', data)
         None
 
     """
