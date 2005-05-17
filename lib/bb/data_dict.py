@@ -28,6 +28,14 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 import os, re, sys, types, copy
 from   bb import note, debug, fatal
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+    print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
+
+
+
 __setvar_regexp__ = {}
 __setvar_regexp__["_append"]  = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_append")
 __setvar_regexp__["_prepend"] = re.compile('(?P<base>.*?)%s(_(?P<add>.*))?' % "_prepend")
@@ -173,4 +181,64 @@ class DataDict:
 
     def __setitem__(self,x,y):
         self.dict.__setitem__(x,y)
+
+
+
+class DataDictPackage(DataDict):
+    """
+    Persistent Data Storage
+    """
+    def sanitize_filename(bbfile):
+        return bbfile.replace( '/', '_' )
+    sanitize_filename = staticmethod(sanitize_filename)
+
+    def unpickle(self):
+        """
+        Restore the dict from memory
+        """
+        cache_bbfile = self.sanitize_filename(self.bbfile)
+        p = pickle.Unpickler( file("%s/%s"%(self.cache,cache_bbfile),"rb"))
+        self.dict = p.load()
+        funcstr = self.getVar('__functions__', 0)
+        if funcstr:
+            comp = compile(funcstr, "<pickled>", "exec")
+            exec comp in  __builtins__
+
+    def linkDataSet(self,parent):
+        if not parent == None:
+            self.initVar("_data")
+            self.dict["_data"] = parent
+
+
+    def __init__(self,cache,name,clean,parent):
+        """
+        Construct a persistent data instance
+        """
+        #Initialize the dictionary
+        DataDict.__init__(self)
+
+        self.cache  = cache
+        self.bbfile = name
+
+        # Either unpickle the data or do copy on write
+        if clean:
+            self.linkDataSet(parent)
+        else:
+            self.unpickle()
+
+    def commit(self, mtime):
+        """
+        Save the package to a permanent storage
+        """
+        cache_bbfile = self.sanitize_filename(self.bbfile)
+        p = pickle.Pickler(file("%s/%s" %(self.cache,cache_bbfile), "wb" ), -1 )
+        p.dump( self.dict )
+
+    def mtime(cache,bbfile):
+        cache_bbfile = DataDictPackage.sanitize_filename(bbfile)
+        try:
+            return os.stat( "%s/%s" % (cache,cache_bbfile) )
+        except OSError:
+            return 0
+    mtime = staticmethod(mtime)
 

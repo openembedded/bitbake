@@ -28,11 +28,6 @@ This file is part of the BitBake build tools.
 
 from bb import debug, digraph, data, fetch, fatal, error, note, event, parse
 import copy, bb, re, sys, os, glob, sre_constants
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-    print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
 pkgdata = {}
 cfg = data.init()
@@ -76,12 +71,8 @@ def load_bbfile( bbfile ):
     """Load and parse one .bb build file"""
 
     if not cache in [None, '']:
-        cache_bbfile = bbfile.replace( '/', '_' )
-
-        try:
-            cache_mtime = os.stat( "%s/%s" % ( cache, cache_bbfile ) )[8]
-        except OSError:
-            cache_mtime = 0
+        # get the times
+        cache_mtime = data.init_db_mtime(cache, bbfile)
         file_mtime = parse.cached_mtime(bbfile)
 
         if file_mtime > cache_mtime:
@@ -89,7 +80,7 @@ def load_bbfile( bbfile ):
             pass
         else:
             #print " : '%s' clean. loading from cache..." % bbfile
-            cache_data = unpickle_bb( cache_bbfile )
+            cache_data = data.init_db( cache, bbfile, False )
             if deps_clean(cache_data):
                 return cache_data, True
 
@@ -108,27 +99,15 @@ def load_bbfile( bbfile ):
     # go there
     oldpath = os.path.abspath(os.getcwd())
     os.chdir(topdir)
-    bb = data.createCopy(cfg)
+    bb = data.init_db(cache,bbfile, True, cfg)
     try:
         parse.handle(bbfile, bb) # read .bb data
-        if not cache in [None, '']: pickle_bb( cache_bbfile, bb) # write cache
+        if not cache in [None, '']:
+            bb.commit(parse.cached_mtime(bbfile)) # write cache
         os.chdir(oldpath)
         return bb, False
     finally:
         os.chdir(oldpath)
-
-def pickle_bb( bbfile, bb ):
-    p = pickle.Pickler( file( "%s/%s" % ( cache, bbfile ), "wb" ), -1 )
-    p.dump( bb )
-
-def unpickle_bb( bbfile ):
-    p = pickle.Unpickler( file( "%s/%s" % ( cache, bbfile ), "rb" ) )
-    bb = p.load()
-    funcstr = data.getVar('__functions__', bb)
-    if funcstr:
-        comp = compile(funcstr, "<pickled>", "exec")
-        exec comp in __builtins__
-    return bb
 
 def collect_bbfiles( progressCallback ):
     """Collect all available .bb build files"""

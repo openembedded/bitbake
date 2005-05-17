@@ -36,10 +36,17 @@ sys.path.append(path)
 from bb import note, debug, data_dict
 
 _dict_type = data_dict.DataDict
+_dict_p_type = data_dict.DataDictPackage
 
 
 def init():
     return _dict_type()
+
+def init_db(cache,name,clean,parent = None):
+    return _dict_p_type(cache,name,clean,parent)
+
+def init_db_mtime(cache,cache_bbfile):
+    return _dict_p_type.mtime(cache,cache_bbfile)
 
 _data_dict = init()
 
