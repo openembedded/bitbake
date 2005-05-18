@@ -30,7 +30,7 @@ import itertools, optparse
 
 parsespin = itertools.cycle( r'|/-\\' )
 
-__version__ = 1.2
+__version__ = "1.2.1"
 __build_cache_fail = []
 __build_cache = []
 __building_list = []
