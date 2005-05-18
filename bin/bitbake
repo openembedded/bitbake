@@ -4,6 +4,7 @@
 #
 # Copyright (C) 2003, 2004  Chris Larson
 # Copyright (C) 2003, 2004  Phil Blundell
+# Copyright (C) 2003 - 2005 Michael 'Mickey' Lauer
 # Copyright (C) 2005        Holger Hans Peter Freyther
 # Copyright (C) 2005        ROAD GmbH
 #
@@ -37,7 +38,6 @@ __build_path = []
 
 __preferred = {}
 __world_target = Set()
-__ignored_dependencies = Set()
 
 __stats = {}
 
@@ -640,7 +640,8 @@ if __name__ == "__main__":
         printStats()
 
     ignore = bb.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
-    __ignored_dependencies = ignore.split()
+    global __ignored_dependencies
+    __ignored_dependencies = Set( ignore.split() )
 
     collections = bb.data.getVar("BBFILE_COLLECTIONS", make.cfg, 1)
     if collections:
