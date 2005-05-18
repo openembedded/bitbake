@@ -183,6 +183,13 @@ class Wget(Fetch):
             if ret != 0:
                 return False
 
+            # check if sourceforge did send us to the mirror page
+            dl_dir = data.getVar("DL_DIR", d, True)
+            if not os.path.exists(dl):
+                os.system("rm %s*" % dl) # FIXME shell quote it
+                bb.debug(2,"sourceforge.net send us to the mirror on %s" % basename)
+                return False
+
 #           supposedly complete.. write out md5sum
             if bb.which(data.getVar('PATH', d), 'md5sum'):
                 try:
