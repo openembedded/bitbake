@@ -44,10 +44,11 @@ def generate_doc(type):
 if 'bdist' in sys.argv[1:]:
     generate_doc('html')
 
+sys.path.append(os.path.join(os.path.dirname(sys.argv[0]), 'lib'))
+import bb
 import glob
-__version__ = '1.2svn'
 setup(name='bitbake',
-      version=__version__,
+      version=bb.__version__,
       license='GPL',
       url='http://developer.berlios.de/projects/bitbake/',
       description='BitBake build tool',
@@ -61,8 +62,8 @@ setup(name='bitbake',
                os.path.join('bin', 'bbimage')],
       data_files=[(os.path.join(bbdir, 'conf'), [os.path.join('conf', 'bitbake.conf')]),
                   (os.path.join(bbdir, 'classes'), [os.path.join('classes', 'base.bbclass')]),
-                  (os.path.join(docdir, 'bitbake-%s' % __version__, 'html'), glob.glob(os.path.join('doc', 'manual', 'html', '*.html'))),
-                  (os.path.join(docdir, 'bitbake-%s' % __version__, 'pdf'), glob.glob(os.path.join('doc', 'manual', 'pdf', '*.pdf'))),],
+                  (os.path.join(docdir, 'bitbake-%s' % bb.__version__, 'html'), glob.glob(os.path.join('doc', 'manual', 'html', '*.html'))),
+                  (os.path.join(docdir, 'bitbake-%s' % bb.__version__, 'pdf'), glob.glob(os.path.join('doc', 'manual', 'pdf', '*.pdf'))),],
      )
 
 if 'bdist' in sys.argv[1:]:
