@@ -27,7 +27,7 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import os, re
 import bb
-import bb.data
+from   bb import data
 
 class FetchError(Exception):
     """Exception raised when a download fails"""
@@ -151,19 +151,19 @@ class Wget(Fetch):
         """Check to see if a given url can be fetched using wget.
            Expects supplied url in list form, as outputted by bb.decodeurl().
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         return type in ['http','https','ftp']
     supports = staticmethod(supports)
 
     def localpath(url, d):
 #       strip off parameters
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         if "localpath" in parm:
 #           if user overrides local path, use it.
             return parm["localpath"]
         url = bb.encodeurl([type, host, path, user, pswd, {}])
 
-        return os.path.join(bb.data.getVar("DL_DIR", d), os.path.basename(url))
+        return os.path.join(data.getVar("DL_DIR", d), os.path.basename(url))
     localpath = staticmethod(localpath)
 
     def go(self, d, urls = []):
@@ -171,9 +171,9 @@ class Wget(Fetch):
         def fetch_uri(uri, basename, dl, md5, d):
             if os.path.exists(dl):
 #               file exists, but we didnt complete it.. trying again..
-                fetchcmd = bb.data.getVar("RESUMECOMMAND", d, 1)
+                fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
             else:
-                fetchcmd = bb.data.getVar("FETCHCOMMAND", d, 1)
+                fetchcmd = data.getVar("FETCHCOMMAND", d, 1)
 
             bb.note("fetch " + uri)
             fetchcmd = fetchcmd.replace("${URI}", uri)
@@ -184,7 +184,7 @@ class Wget(Fetch):
                 return False
 
 #           supposedly complete.. write out md5sum
-            if bb.which(bb.data.getVar('PATH', d), 'md5sum'):
+            if bb.which(data.getVar('PATH', d), 'md5sum'):
                 try:
                     md5pipe = os.popen('md5sum ' + dl)
                     md5data = (md5pipe.readline().split() or [ "" ])[0]
@@ -203,23 +203,23 @@ class Wget(Fetch):
         if not urls:
             urls = self.urls
 
-        localdata = bb.data.createCopy(d)
-        bb.data.setVar('OVERRIDES', "wget:" + bb.data.getVar('OVERRIDES', localdata), localdata)
-        bb.data.update_data(localdata)
+        localdata = data.createCopy(d)
+        data.setVar('OVERRIDES', "wget:" + data.getVar('OVERRIDES', localdata), localdata)
+        data.update_data(localdata)
 
         for uri in urls:
             completed = 0
-            (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(uri, localdata))
+            (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(uri, localdata))
             basename = os.path.basename(path)
             dl = self.localpath(uri, d)
-            dl = bb.data.expand(dl, localdata)
+            dl = data.expand(dl, localdata)
             md5 = dl + '.md5'
 
             if os.path.exists(md5):
 #               complete, nothing to see here..
                 continue
 
-            premirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
+            premirrors = [ i.split() for i in (data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
             for (find, replace) in premirrors:
                 newuri = uri_replace(uri, find, replace, d)
                 if newuri != uri:
@@ -234,7 +234,7 @@ class Wget(Fetch):
                 continue
 
 #           try mirrors
-            mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
+            mirrors = [ i.split() for i in (data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
             for (find, replace) in mirrors:
                 newuri = uri_replace(uri, find, replace, d)
                 if newuri != uri:
@@ -256,12 +256,12 @@ class Cvs(Fetch):
         """Check to see if a given url can be fetched with cvs.
            Expects supplied url in list form, as outputted by bb.decodeurl().
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         return type in ['cvs', 'pserver']
     supports = staticmethod(supports)
 
     def localpath(url, d):
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         if "localpath" in parm:
 #           if user overrides local path, use it.
             return parm["localpath"]
@@ -278,11 +278,11 @@ class Cvs(Fetch):
             date = parm['date']
         else:
             if not tag:
-                date = bb.data.getVar("CVSDATE", d, 1) or bb.data.getVar("DATE", d, 1)
+                date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
             else:
                 date = ""
 
-        return os.path.join(bb.data.getVar("DL_DIR", d, 1),bb.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, tag, date), d))
+        return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, tag, date), d))
     localpath = staticmethod(localpath)
 
     def go(self, d, urls = []):
@@ -290,19 +290,19 @@ class Cvs(Fetch):
         if not urls:
             urls = self.urls
 
-        localdata = bb.data.createCopy(d)
-        bb.data.setVar('OVERRIDES', "cvs:%s" % bb.data.getVar('OVERRIDES', localdata), localdata)
-        bb.data.update_data(localdata)
+        localdata = data.createCopy(d)
+        data.setVar('OVERRIDES', "cvs:%s" % data.getVar('OVERRIDES', localdata), localdata)
+        data.update_data(localdata)
 
         for loc in urls:
-            (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(loc, localdata))
+            (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(loc, localdata))
             if not "module" in parm:
                 raise MissingParameterError("cvs method needs a 'module' parameter")
             else:
                 module = parm["module"]
 
             dlfile = self.localpath(loc, localdata)
-            dldir = bb.data.getVar('DL_DIR', localdata, 1)
+            dldir = data.getVar('DL_DIR', localdata, 1)
 #           if local path contains the cvs
 #           module, consider the dir above it to be the
 #           download directory
@@ -323,7 +323,7 @@ class Cvs(Fetch):
                 date = parm['date']
             else:
                 if not tag:
-                    date = bb.data.getVar("CVSDATE", d, 1) or bb.data.getVar("DATE", d, 1)
+                    date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
                 else:
                     date = ""
 
@@ -342,23 +342,23 @@ class Cvs(Fetch):
                 if "rsh" in parm:
                     cvs_rsh = parm["rsh"]
 
-            tarfn = bb.data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, tag, date), localdata)
-            bb.data.setVar('TARFILES', dlfile, localdata)
-            bb.data.setVar('TARFN', tarfn, localdata)
+            tarfn = data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, tag, date), localdata)
+            data.setVar('TARFILES', dlfile, localdata)
+            data.setVar('TARFN', tarfn, localdata)
 
             dl = os.path.join(dldir, tarfn)
             if os.access(dl, os.R_OK):
                 bb.debug(1, "%s already exists, skipping cvs checkout." % tarfn)
                 continue
 
-            pn = bb.data.getVar('PN', d, 1)
+            pn = data.getVar('PN', d, 1)
             cvs_tarball_stash = None
             if pn:
-                cvs_tarball_stash = bb.data.getVar('CVS_TARBALL_STASH_%s' % pn, d, 1)
+                cvs_tarball_stash = data.getVar('CVS_TARBALL_STASH_%s' % pn, d, 1)
             if cvs_tarball_stash == None:
-                cvs_tarball_stash = bb.data.getVar('CVS_TARBALL_STASH', d, 1)
+                cvs_tarball_stash = data.getVar('CVS_TARBALL_STASH', d, 1)
             if cvs_tarball_stash:
-                fetchcmd = bb.data.getVar("FETCHCOMMAND_wget", d, 1)
+                fetchcmd = data.getVar("FETCHCOMMAND_wget", d, 1)
                 uri = cvs_tarball_stash + tarfn
                 bb.note("fetch " + uri)
                 fetchcmd = fetchcmd.replace("${URI}", uri)
@@ -373,7 +373,7 @@ class Cvs(Fetch):
                 options.append("-r %s" % tag)
 
             olddir = os.path.abspath(os.getcwd())
-            os.chdir(bb.data.expand(dldir, localdata))
+            os.chdir(data.expand(dldir, localdata))
 
 #           setup cvsroot
             if method == "dir":
@@ -384,11 +384,11 @@ class Cvs(Fetch):
                     cvsroot += ":" + pswd
                 cvsroot += "@" + host + ":" + path
 
-            bb.data.setVar('CVSROOT', cvsroot, localdata)
-            bb.data.setVar('CVSCOOPTS', " ".join(options), localdata)
-            bb.data.setVar('CVSMODULE', module, localdata)
-            cvscmd = bb.data.getVar('FETCHCOMMAND', localdata, 1)
-            cvsupdatecmd = bb.data.getVar('UPDATECOMMAND', localdata, 1)
+            data.setVar('CVSROOT', cvsroot, localdata)
+            data.setVar('CVSCOOPTS', " ".join(options), localdata)
+            data.setVar('CVSMODULE', module, localdata)
+            cvscmd = data.getVar('FETCHCOMMAND', localdata, 1)
+            cvsupdatecmd = data.getVar('UPDATECOMMAND', localdata, 1)
 
             if cvs_rsh:
                 cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)
@@ -396,8 +396,8 @@ class Cvs(Fetch):
 
 #           create module directory
             bb.debug(2, "Fetch: checking for module directory")
-            pkg=bb.data.expand('${PN}', d)
-            pkgdir=os.path.join(bb.data.expand('${CVSDIR}', localdata), pkg)
+            pkg=data.expand('${PN}', d)
+            pkgdir=os.path.join(data.expand('${CVSDIR}', localdata), pkg)
             moddir=os.path.join(pkgdir,localdir)
             if os.access(os.path.join(moddir,'CVS'), os.R_OK):
                 bb.note("Update " + loc)
@@ -438,7 +438,7 @@ class Bk(Fetch):
         """Check to see if a given url can be fetched via bitkeeper.
            Expects supplied url in list form, as outputted by bb.decodeurl().
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         return type in ['bk']
     supports = staticmethod(supports)
 
@@ -449,7 +449,7 @@ class Local(Fetch):
         """Check to see if a given url can be fetched in the local filesystem.
            Expects supplied url in list form, as outputted by bb.decodeurl().
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         return type in ['file','patch']
     supports = staticmethod(supports)
 
@@ -459,11 +459,11 @@ class Local(Fetch):
         path = url.split("://")[1]
         newpath = path
         if path[0] != "/":
-            filespath = bb.data.getVar('FILESPATH', d, 1)
+            filespath = data.getVar('FILESPATH', d, 1)
             if filespath:
                 newpath = bb.which(filespath, path)
             if not newpath:
-                filesdir = bb.data.getVar('FILESDIR', d, 1)
+                filesdir = data.getVar('FILESDIR', d, 1)
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
         return newpath
@@ -482,12 +482,12 @@ class Svn(Fetch):
         """Check to see if a given url can be fetched with svn.
            Expects supplied url in list form, as outputted by bb.decodeurl().
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         return type in ['svn']
     supports = staticmethod(supports)
 
     def localpath(url, d):
-        (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(url, d))
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         if "localpath" in parm:
 #           if user overrides local path, use it.
             return parm["localpath"]
@@ -501,9 +501,9 @@ class Svn(Fetch):
         else:
             revision = ""
 
-        date = bb.data.getVar("CVSDATE", d, 1) or bb.data.getVar("DATE", d, 1)
+        date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
 
-        return os.path.join(bb.data.getVar("DL_DIR", d, 1),bb.data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, revision, date), d))
+        return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, revision, date), d))
     localpath = staticmethod(localpath)
 
     def go(self, d, urls = []):
@@ -511,19 +511,19 @@ class Svn(Fetch):
         if not urls:
             urls = self.urls
 
-        localdata = bb.data.createCopy(d)
-        bb.data.setVar('OVERRIDES', "svn:%s" % bb.data.getVar('OVERRIDES', localdata), localdata)
-        bb.data.update_data(localdata)
+        localdata = data.createCopy(d)
+        data.setVar('OVERRIDES', "svn:%s" % data.getVar('OVERRIDES', localdata), localdata)
+        data.update_data(localdata)
 
         for loc in urls:
-            (type, host, path, user, pswd, parm) = bb.decodeurl(bb.data.expand(loc, localdata))
+            (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(loc, localdata))
             if not "module" in parm:
                 raise MissingParameterError("svn method needs a 'module' parameter")
             else:
                 module = parm["module"]
 
             dlfile = self.localpath(loc, localdata)
-            dldir = bb.data.getVar('DL_DIR', localdata, 1)
+            dldir = data.getVar('DL_DIR', localdata, 1)
 #           if local path contains the svn
 #           module, consider the dir above it to be the
 #           download directory
@@ -540,7 +540,7 @@ class Svn(Fetch):
             else:
                 revision = ""
 
-            date = bb.data.getVar("CVSDATE", d, 1) or bb.data.getVar("DATE", d, 1)
+            date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
 
             if "method" in parm:
                 method = parm["method"]
@@ -557,18 +557,18 @@ class Svn(Fetch):
                 if "rsh" in parm:
                     svn_rsh = parm["rsh"]
 
-            tarfn = bb.data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, revision, date), localdata)
-            bb.data.setVar('TARFILES', dlfile, localdata)
-            bb.data.setVar('TARFN', tarfn, localdata)
+            tarfn = data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, revision, date), localdata)
+            data.setVar('TARFILES', dlfile, localdata)
+            data.setVar('TARFN', tarfn, localdata)
 
             dl = os.path.join(dldir, tarfn)
             if os.access(dl, os.R_OK):
                 bb.debug(1, "%s already exists, skipping svn checkout." % tarfn)
                 continue
 
-            svn_tarball_stash = bb.data.getVar('CVS_TARBALL_STASH', d, 1)
+            svn_tarball_stash = data.getVar('CVS_TARBALL_STASH', d, 1)
             if svn_tarball_stash:
-                fetchcmd = bb.data.getVar("FETCHCOMMAND_wget", d, 1)
+                fetchcmd = data.getVar("FETCHCOMMAND_wget", d, 1)
                 uri = svn_tarball_stash + tarfn
                 bb.note("fetch " + uri)
                 fetchcmd = fetchcmd.replace("${URI}", uri)
@@ -578,7 +578,7 @@ class Svn(Fetch):
                     continue
 
             olddir = os.path.abspath(os.getcwd())
-            os.chdir(bb.data.expand(dldir, localdata))
+            os.chdir(data.expand(dldir, localdata))
 
 #           setup svnroot
 #            svnroot = ":" + method + ":" + user
@@ -586,10 +586,10 @@ class Svn(Fetch):
 #                svnroot += ":" + pswd
             svnroot = host + path
 
-            bb.data.setVar('SVNROOT', svnroot, localdata)
-            bb.data.setVar('SVNCOOPTS', " ".join(options), localdata)
-            bb.data.setVar('SVNMODULE', module, localdata)
-            svncmd = bb.data.getVar('FETCHCOMMAND', localdata, 1)
+            data.setVar('SVNROOT', svnroot, localdata)
+            data.setVar('SVNCOOPTS', " ".join(options), localdata)
+            data.setVar('SVNMODULE', module, localdata)
+            svncmd = data.getVar('FETCHCOMMAND', localdata, 1)
             svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
 
             if revision:
@@ -599,9 +599,9 @@ class Svn(Fetch):
 
 #           create temp directory
             bb.debug(2, "Fetch: creating temporary directory")
-            bb.mkdirhier(bb.data.expand('${WORKDIR}', localdata))
-            bb.data.setVar('TMPBASE', bb.data.expand('${WORKDIR}/oesvn.XXXXXX', localdata), localdata)
-            tmppipe = os.popen(bb.data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
+            bb.mkdirhier(data.expand('${WORKDIR}', localdata))
+            data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvn.XXXXXX', localdata), localdata)
+            tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
             tmpfile = tmppipe.readline().strip()
             if not tmpfile:
                 bb.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
