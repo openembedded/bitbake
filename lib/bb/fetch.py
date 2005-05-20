@@ -74,6 +74,12 @@ def uri_replace(uri, uri_find, uri_replace, d):
 methods = []
 
 def init(urls = [], d = None):
+    if d == None:
+        bb.error("BUG init called with None as data object!!!")
+        import traceback
+        traceback.print_stack()
+        return
+
     for m in methods:
         m.urls = []
 

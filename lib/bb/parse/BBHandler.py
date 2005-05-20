@@ -361,7 +361,7 @@ def set_additional_vars(file, d, include):
 
     from bb import fetch
     try:
-        fetch.init(src_uri.split())
+        fetch.init(src_uri.split(), d)
     except fetch.NoMethodError:
         pass
     except bb.MalformedUrl,e:
