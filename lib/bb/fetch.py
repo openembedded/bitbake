@@ -75,9 +75,7 @@ methods = []
 
 def init(urls = [], d = None):
     if d == None:
-        bb.error("BUG init called with None as data object!!!")
-        import traceback
-        traceback.print_stack()
+        bb.debug(2,"BUG init called with None as data object!!!")
         return
 
     for m in methods:
