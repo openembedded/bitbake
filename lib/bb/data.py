@@ -263,6 +263,7 @@ def expand(s, d, varname = None):
         >>> print expand('${TARGET_MOO}',d)
         yupp
         >>> setVar('SRC_URI', 'http://somebug.${TARGET_MOO}', d)
+        >>> delVar('TARGET_MOO', d)
         >>> print expand('${SRC_URI}', d)
         http://somebug.${TARGET_MOO}
     """
