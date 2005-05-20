@@ -262,6 +262,9 @@ def expand(s, d, varname = None):
         >>> setVar('TARGET_MOO', 'yupp', d)
         >>> print expand('${TARGET_MOO}',d)
         yupp
+        >>> setVar('SRC_URI', 'http://somebug.${TARGET_MOO}', d)
+        >>> print expand('${SRC_URI}', d)
+        http://somebug.${TARGET_MOO}
     """
     def var_sub(match):
         key = match.group()[2:-1]
