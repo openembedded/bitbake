@@ -107,8 +107,9 @@ def setVar(var, value, d):
     """Set a variable to a given value
 
     Example:
-        >>> setVar('TEST', 'testcontents')
-        >>> print getVar('TEST')
+        >>> d = init()
+        >>> setVar('TEST', 'testcontents', d)
+        >>> print getVar('TEST', d)
         testcontents
     """
     d.setVar(var,value)
@@ -118,8 +119,9 @@ def getVar(var, d, exp = 0):
     """Gets the value of a variable
 
     Example:
-        >>> setVar('TEST', 'testcontents')
-        >>> print getVar('TEST')
+        >>> d = init()
+        >>> setVar('TEST', 'testcontents', d)
+        >>> print getVar('TEST', d)
         testcontents
     """
     return d.getVar(var,exp)
@@ -128,11 +130,12 @@ def delVar(var, d):
     """Removes a variable from the data set
 
     Example:
-        >>> setVar('TEST', 'testcontents')
-        >>> print getVar('TEST')
+        >>> d = init()
+        >>> setVar('TEST', 'testcontents', d)
+        >>> print getVar('TEST', d)
         testcontents
-        >>> delVar('TEST')
-        >>> print getVar('TEST')
+        >>> delVar('TEST', d)
+        >>> print getVar('TEST', d)
         None
     """
     d.delVar(var)
@@ -141,8 +144,9 @@ def setVarFlag(var, flag, flagvalue, d):
     """Set a flag for a given variable to a given value
 
     Example:
-        >>> setVarFlag('TEST', 'python', 1)
-        >>> print getVarFlag('TEST', 'python')
+        >>> d = init()
+        >>> setVarFlag('TEST', 'python', 1, d)
+        >>> print getVarFlag('TEST', 'python', d)
         1
     """
     d.setVarFlag(var,flag,flagvalue)
@@ -151,8 +155,9 @@ def getVarFlag(var, flag, d):
     """Gets given flag from given var
 
     Example:
-        >>> setVarFlag('TEST', 'python', 1)
-        >>> print getVarFlag('TEST', 'python')
+        >>> d = init()
+        >>> setVarFlag('TEST', 'python', 1, d)
+        >>> print getVarFlag('TEST', 'python', d)
         1
     """
     return d.getVarFlag(var,flag)
@@ -161,11 +166,12 @@ def delVarFlag(var, flag, d):
     """Removes a given flag from the variable's flags
 
     Example:
-        >>> setVarFlag('TEST', 'testflag', 1)
-        >>> print getVarFlag('TEST', 'testflag')
+        >>> d = init()
+        >>> setVarFlag('TEST', 'testflag', 1, d)
+        >>> print getVarFlag('TEST', 'testflag', d)
         1
-        >>> delVarFlag('TEST', 'testflag')
-        >>> print getVarFlag('TEST', 'testflag')
+        >>> delVarFlag('TEST', 'testflag', d)
+        >>> print getVarFlag('TEST', 'testflag', d)
         None
 
     """
@@ -175,10 +181,11 @@ def setVarFlags(var, flags, d):
     """Set the flags for a given variable
 
     Example:
+        >>> d = init()
         >>> myflags = {}
         >>> myflags['test'] = 'blah'
-        >>> setVarFlags('TEST', myflags)
-        >>> print getVarFlag('TEST', 'test')
+        >>> setVarFlags('TEST', myflags, d)
+        >>> print getVarFlag('TEST', 'test', d)
         blah
     """
     d.setVarFlags(var,flags)
@@ -187,8 +194,9 @@ def getVarFlags(var, d):
     """Gets a variable's flags
 
     Example:
-        >>> setVarFlag('TEST', 'test', 'blah')
-        >>> print getVarFlags('TEST')['test']
+        >>> d = init()
+        >>> setVarFlag('TEST', 'test', 'blah', d)
+        >>> print getVarFlags('TEST', d)['test']
         blah
     """
     return d.getVarFlags(var)
@@ -237,12 +245,14 @@ def expand(s, d, varname = None):
 
     Example:
         Standard expansion:
-        >>> setVar('A', 'sshd')
-        >>> print expand('/usr/bin/${A}')
+        >>> d = init()
+        >>> setVar('A', 'sshd', d)
+        >>> print expand('/usr/bin/${A}', d)
         /usr/bin/sshd
 
         Python expansion:
-        >>> print expand('result: ${@37 * 72}')
+        >>> d = init()
+        >>> print expand('result: ${@37 * 72}', d)
         result: 2664
     """
     def var_sub(match):
@@ -416,36 +426,37 @@ def update_data(d):
     """Modifies the environment vars according to local overrides and commands.
     Examples:
         Appending to a variable:
-        >>> setVar('TEST', 'this is a')
-        >>> setVar('TEST_append', ' test')
-        >>> setVar('TEST_append', ' of the emergency broadcast system.')
-        >>> update_data()
-        >>> print getVar('TEST')
+        >>> d = init()
+        >>> setVar('TEST', 'this is a', d)
+        >>> setVar('TEST_append', ' test', d)
+        >>> setVar('TEST_append', ' of the emergency broadcast system.', d)
+        >>> update_data(d)
+        >>> print getVar('TEST', d)
         this is a test of the emergency broadcast system.
 
         Prepending to a variable:
-        >>> setVar('TEST', 'virtual/libc')
-        >>> setVar('TEST_prepend', 'virtual/tmake ')
-        >>> setVar('TEST_prepend', 'virtual/patcher ')
-        >>> update_data()
-        >>> print getVar('TEST')
+        >>> setVar('TEST', 'virtual/libc', d)
+        >>> setVar('TEST_prepend', 'virtual/tmake ', d)
+        >>> setVar('TEST_prepend', 'virtual/patcher ', d)
+        >>> update_data(d)
+        >>> print getVar('TEST', d)
         virtual/patcher virtual/tmake virtual/libc
 
         Overrides:
-        >>> setVar('TEST_arm', 'target')
-        >>> setVar('TEST_ramses', 'machine')
-        >>> setVar('TEST_local', 'local')
-        >>> setVar('OVERRIDES', 'arm')
+        >>> setVar('TEST_arm', 'target', d)
+        >>> setVar('TEST_ramses', 'machine', d)
+        >>> setVar('TEST_local', 'local', d)
+        >>> setVar('OVERRIDES', 'arm', d)
 
-        >>> setVar('TEST', 'original')
-        >>> update_data()
-        >>> print getVar('TEST')
+        >>> setVar('TEST', 'original', d)
+        >>> update_data(d)
+        >>> print getVar('TEST', d)
         target
 
-        >>> setVar('OVERRIDES', 'arm:ramses:local')
-        >>> setVar('TEST', 'original')
-        >>> update_data()
-        >>> print getVar('TEST')
+        >>> setVar('OVERRIDES', 'arm:ramses:local', d)
+        >>> setVar('TEST', 'original', d)
+        >>> update_data(d)
+        >>> print getVar('TEST', d)
         local
     """
 
