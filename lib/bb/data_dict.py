@@ -205,9 +205,9 @@ class DataDictPackage(DataDict):
             exec comp in  __builtins__
 
     def linkDataSet(self,parent):
+        from copy import deepcopy
         if not parent == None:
-            self.initVar("_data")
-            self.dict["_data"] = parent
+            self.dict = deepcopy(parent)
 
 
     def __init__(self,cache,name,clean,parent):
