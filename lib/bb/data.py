@@ -254,6 +254,14 @@ def expand(s, d, varname = None):
         >>> d = init()
         >>> print expand('result: ${@37 * 72}', d)
         result: 2664
+
+        Shell expansion:
+        >>> d = init()
+        >>> print expand('${TARGET_MOO}', d)
+        ${TARGET_MOO}
+        >>> setVar('TARGET_MOO', 'yupp', d)
+        >>> print expand('${TARGET_MOO}',d)
+        yupp
     """
     def var_sub(match):
         key = match.group()[2:-1]
