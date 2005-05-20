@@ -237,7 +237,7 @@ class DataDictPackage(DataDict):
     def mtime(cache,bbfile):
         cache_bbfile = DataDictPackage.sanitize_filename(bbfile)
         try:
-            return os.stat( "%s/%s" % (cache,cache_bbfile) )
+            return os.stat( "%s/%s" % (cache,cache_bbfile) )[8]
         except OSError:
             return 0
     mtime = staticmethod(mtime)
