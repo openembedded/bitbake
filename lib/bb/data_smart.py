@@ -104,16 +104,16 @@ class DataSmart:
                 self.dict["_data"] = cfg;
 
     def _findVar(self,var):
-        _dest = self
+        _dest = self.dict
 
-        while (_dest and var not in _dest.dict):
-            if not "_data" in _dest.dict:
+        while (_dest and var not in _dest):
+            if not "_data" in _dest:
                 _dest = None
                 break
             _dest = _dest["_data"]
 
-        if _dest and var in _dest.dict:
-            return _dest.dict[var]
+        if _dest and var in _dest:
+            return _dest[var]
         return None
 
     def _copyVar(self,var,name):
@@ -236,31 +236,30 @@ class DataSmart:
         """
         # we really want this to be a DataSmart...
         data = DataSmart()
-        data.initVar("_data")
-        data.dict["_data"] = self
+        data.dict["_data"] = self.dict
 
         return data
 
     # Dictionary Methods
     def keys(self):
         def _keys(d, mykey):
-            if "_data" in d.dict:
-                _keys(d.dict["_data"],mykey)
+            if "_data" in d:
+                _keys(d["_data"],mykey)
 
-            for key in d.dict.keys():
+            for key in d.keys():
                 if key != "_data":
                     mykey[key] = None
         keytab = {}
-        _keys(self,keytab)
+        _keys(self.dict,keytab)
         return keytab.keys()
 
     def __getitem__(self,item):
-        start = self
+        start = self.dict
         while start:
-            if item in start.dict:
-                return start.dict[item]
-            elif "_data" in start.dict:
-                start = start.dict["_data"]
+            if item in start:
+                return start[item]
+            elif "_data" in start:
+                start = start["_data"]
             else:
                 start = None
         return None
@@ -292,8 +291,8 @@ class DataSmartPackage(DataSmart):
 
     def linkDataSet(self,parent):
         if not parent == None:
-            self.initVar("_data")
-            self.dict["_data"] = parent
+            # assume parent is a DataSmartInstance
+            self.dict = copy.deepcopy(parent.dict)
 
 
     def __init__(self,cache,name,clean,parent):
