@@ -539,7 +539,7 @@ def build_depgraph():
         if terminal:
             __world_target.add(pn)
 
-def myProgressCallback( x, y, f ):
+def myProgressCallback( x, y, f, file_data, from_cache ):
     if bbdebug > 0:
         return
     if os.isatty(sys.stdout.fileno()):

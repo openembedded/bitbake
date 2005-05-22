@@ -154,7 +154,6 @@ def collect_bbfiles( progressCallback ):
               bb.debug(1, "bbmake: skipping %s" % f)
               masked += 1
               continue
-        progressCallback( i + 1, len( newfiles ), f )
         debug(1, "bbmake: parsing %s" % f)
 
         # read a file's metadata
@@ -177,6 +176,9 @@ def collect_bbfiles( progressCallback ):
                     if data.getVarFlag(var, "handler", bb_data) and data.getVar(var, bb_data):
                         event.register(data.getVar(var, bb_data))
                 pkgdata[f] = bb_data
+
+            # now inform the caller
+            progressCallback( i + 1, len( newfiles ), f, bb_data, fromCache )
         except IOError, e:
             bb.error("opening %s: %s" % (f, e))
             pass
