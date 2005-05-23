@@ -38,6 +38,7 @@ if len(sys.argv) == 2:
 
 # emit variables and shell functions
 try:
+    bb.data.update_data(d)
     bb.data.emit_env(sys.__stdout__, d, True)
 except bb.build.FuncFailed:
     pass
