@@ -5,10 +5,6 @@ On popular request by popular people a list of tasks to-do:
 	-Unpack only the real file and do not use wild-cards (is that the case)
 	-Introduce a -p option to automatically hotshot/profile the
 	 run
-	-On generating the inter package deps do not parse each file multiply
-	 times.
-	-Do not generate the world dependency tree, only when someone
-	 requests it.
 	-Cache dependencies separately and invalidate them when any file
          changed.
 	-Fix data_dict.py
@@ -16,3 +12,9 @@ On popular request by popular people a list of tasks to-do:
 
 
 DONE:
+·       -On generating the inter package deps do not parse each file multiply
+·        times.
+	-We build the lists while parsing the data now
+·       (WAS: Do not generate the world dependency tree, only when someone
+·             requests it.
+
