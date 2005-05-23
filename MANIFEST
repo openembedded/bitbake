@@ -9,6 +9,7 @@ lib/bb/__init__.py
 lib/bb/build.py
 lib/bb/data.py
 lib/bb/data_dict.py
+lib/bb/data_smart.py
 lib/bb/event.py
 lib/bb/fetch.py
 lib/bb/make.py
