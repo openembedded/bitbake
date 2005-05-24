@@ -78,7 +78,7 @@ class BBParsingStatus:
 
 
         # build PackageName to FileName lookup table
-        if not self.pkg_pn.has_key(pn):
+        if pn not in self.pkg_pn:
             self.pkg_pn[pn] = []
         self.pkg_pn[pn].append(file_name)
 
@@ -90,12 +90,12 @@ class BBParsingStatus:
         # Build forward and reverse provider hashes
         # Forward: virtual -> [filenames]
         # Reverse: PN -> [virtuals]
-        if not self.pn_provides.has_key(pn):
+        if pn not in self.pn_provides:
             self.pn_provides[pn] = Set()
         self.pn_provides[pn] |= provides
 
         for provide in provides:
-            if not self.providers.has_key(provide):
+            if provide not in self.providers:
                 self.providers[provide] = []
             self.providers[provide].append(file_name)
 
@@ -242,7 +242,7 @@ class BBCooker:
             priorities = {}
             for f in files:
                 priority = self.status.bbfile_priority[f]
-                if not priorities.has_key(priority):
+                if priority not in priorities:
                     priorities[priority] = []
                 priorities[priority].append(f)
             p_list = priorities.keys()
@@ -323,7 +323,7 @@ class BBCooker:
 
         discriminated = False
 
-        if not self.status.providers.has_key(item):
+        if item not in self.status.providers:
             bb.error("Nothing provides %s" % item)
             return 0
 
@@ -341,7 +341,7 @@ class BBCooker:
         pkg_pn = {}
         for p in all_p:
             pn = self.status.pkg_fn[p]
-            if not pkg_pn.has_key(pn):
+            if pn not in pkg_pn:
                 pkg_pn[pn] = []
             pkg_pn[pn].append(p)
 
@@ -353,7 +353,7 @@ class BBCooker:
             priorities = {}
             for f in files:
                 priority = self.status.bbfile_priority[f]
-                if not priorities.has_key(priority):
+                if priority not in priorities:
                     priorities[priority] = []
                 priorities[priority].append(f)
             p_list = priorities.keys()
@@ -456,7 +456,7 @@ class BBCooker:
         if prefervar:
             self.preferred[item] = prefervar
 
-        if self.preferred.has_key(item):
+        if item in self.preferred:
             for p in eligible:
                 pn = self.status.pkg_fn[p]
                 if self.preferred[item] == pn:
@@ -499,7 +499,7 @@ class BBCooker:
         # Handle PREFERRED_PROVIDERS
         for p in (bb.data.getVar('PREFERRED_PROVIDERS', make.cfg, 1) or "").split():
             (providee, provider) = p.split(':')
-            if self.preferred.has_key(providee) and self.preferred[providee] != provider:
+            if providee in self.preferred and self.preferred[providee] != provider:
                 bb.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.preferred[providee]))
             self.preferred[providee] = provider
 
@@ -621,7 +621,7 @@ class BBCooker:
         if bf:
             self.executeOneBB( os.path.abspath(bf) )
             sys.exit( self.stats.show() )
-            
+
         # initialise the parsing status now we know we will need deps
         self.status = BBParsingStatus()
 
