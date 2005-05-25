@@ -35,6 +35,10 @@ TODO:
     * clean-and-rebuild bbfile
 """
 
+try:
+    set
+except NameError:
+    from sets import Set as set
 import sys, os, imp, readline
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import make, data
