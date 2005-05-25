@@ -1,16 +1,18 @@
 Changes in bitbake Trunk:
-	-kill default arguments in methods in the bb.data module
-	-kill default arguments in methods in the bb.fetch module
-	-the http/https/ftp fetcher will fail if the to be 
-	 downloaded file was not found in DL_DIR (this is needed
-	 to avoid unpacking the sourceforge mirror page)
-	-Switch to a cow like data instance for persistent and non
-	 persisting mode (called data_smart.py)
-	-Changed the callback of bb.make.collect_bbfiles to carry
-	 additional parameters
-	-Drastically reduced the amount of needed RAM by not holding
-	 each data instance in memory when using a cache/persistent
-	 storage
+	- add bitbake interactive shell (bitbake -i)
+	- refactor bitbake utility in OO style
+	- kill default arguments in methods in the bb.data module
+	- kill default arguments in methods in the bb.fetch module
+	- the http/https/ftp fetcher will fail if the to be 
+	  downloaded file was not found in DL_DIR (this is needed
+	  to avoid unpacking the sourceforge mirror page)
+	- Switch to a cow like data instance for persistent and non
+	  persisting mode (called data_smart.py)
+	- Changed the callback of bb.make.collect_bbfiles to carry
+	  additional parameters
+	- Drastically reduced the amount of needed RAM by not holding
+	  each data instance in memory when using a cache/persistent
+	  storage
 
 Changes in bitbake 1.2.1:
 	The 1.2.1 release is meant as a intermediate release to lay the

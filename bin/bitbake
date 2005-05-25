@@ -139,6 +139,10 @@ class BBCooker:
     """
     Manages one bitbake build run
     """
+
+    ParsingStatus = BBParsingStatus     # make it visible from the shell
+    Statistics = BBStatistics           # make it visible from the shell
+
     def __init__( self ):
         self.build_cache_fail = []
         self.build_cache = []
@@ -581,54 +585,23 @@ class BBCooker:
                 self.build_cache_fail.append(fn)
 
     def interactiveMode( self ):
+        """Drop off into a shell"""
         try:
             from bb import shell
-        except ImportError:
-            print "Sorry, the shell is not available yet."
-            sys.exit( -1 )
+        except ImportError, details:
+            bb.fatal("Sorry, shell not available (%s)" % details )
         else:
-            shell.start()
+            shell.start( self )
+            sys.exit( 0 )
 
-    def cook( self, args ):
-        if not make.options.cmd:
-            make.options.cmd = "build"
-
-        if make.options.debug:
-            bb.debug_level = make.options.debug
-
-        make.cfg = bb.data.init()
-
-        for f in make.options.file:
-            try:
-                make.cfg = bb.parse.handle(f, make.cfg)
-            except IOError:
-                bb.fatal("Unable to open %s" % f)
-
+    def parseConfigurationFile( self, afile ):
         try:
-            make.cfg = bb.parse.handle(os.path.join('conf', 'bitbake.conf'), make.cfg)
+            make.cfg = bb.parse.handle( afile, make.cfg )
         except IOError:
-            bb.fatal("Unable to open %s" % os.path.join('conf', 'bitbake.conf'))
+            bb.fatal( "Unable to open %s" % afile )
 
-        if not bb.data.getVar("BUILDNAME", make.cfg):
-            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
-
-        buildname = bb.data.getVar("BUILDNAME", make.cfg)
-
-        if make.options.interactive:
-            self.interactiveMode()
-
-        bf = make.options.buildfile
-        if bf:
-            self.executeOneBB( os.path.abspath(bf) )
-            sys.exit( self.stats.show() )
-
-        # initialise the parsing status now we know we will need deps
-        self.status = BBParsingStatus()
-
-        ignore = bb.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
-        self.status.ignored_dependencies = Set( ignore.split() )
-
-        collections = bb.data.getVar("BBFILE_COLLECTIONS", make.cfg, 1)
+    def handleCollections( self, collections ):
+        """Handle collections"""
         if collections:
             collection_list = collections.split()
             for c in collection_list:
@@ -651,6 +624,42 @@ class BBCooker:
                 except ValueError:
                     bb.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
 
+
+    def cook( self, args ):
+        if not make.options.cmd:
+            make.options.cmd = "build"
+
+        if make.options.debug:
+            bb.debug_level = make.options.debug
+
+        make.cfg = bb.data.init()
+
+        for f in make.options.file:
+            self.parseConfigurationFile( f )
+
+        self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
+
+        if not bb.data.getVar("BUILDNAME", make.cfg):
+            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
+
+        buildname = bb.data.getVar("BUILDNAME", make.cfg)
+
+        if make.options.interactive:
+            self.interactiveMode()
+
+        bf = make.options.buildfile
+        if bf:
+            self.executeOneBB( os.path.abspath(bf) )
+            sys.exit( self.stats.show() )
+
+        # initialise the parsing status now we know we will need deps
+        self.status = BBParsingStatus()
+
+        ignore = bb.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
+        self.status.ignored_dependencies = Set( ignore.split() )
+
+        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", make.cfg, 1) )
+
         pkgs_to_build = None
         if args:
             if not pkgs_to_build:
@@ -660,11 +669,10 @@ class BBCooker:
                 bbpkgs = bb.data.getVar('BBPKGS', make.cfg, 1)
                 if bbpkgs:
                         pkgs_to_build = bbpkgs.split()
-        if not pkgs_to_build and not make.options.show_versions:
+        if not pkgs_to_build and not make.options.show_versions and not make.options.interactive:
                 print "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
                 print "for usage information."
                 sys.exit(0)
-
 
         # Import Psyco if available and not disabled
         if not make.options.disable_psyco:

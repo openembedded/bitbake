@@ -17,6 +17,7 @@ lib/bb/manifest.py
 lib/bb/parse/BBHandler.py
 lib/bb/parse/ConfHandler.py
 lib/bb/parse/__init__.py
+lib/bb/shell.py
 doc/COPYING.GPL
 doc/COPYING.MIT
 doc/manual/html.css
