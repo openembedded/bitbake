@@ -557,10 +557,6 @@ class BBCooker:
             except IOError:
                 bb.fatal("Unable to open %s" % fn)
 
-            if make.options.parse_only:
-                print "Requested parsing .bb files only.  Exiting."
-                sys.exit(0)
-
             name = bb.data.getVar('PN', d, 1)
             bb.event.fire(bb.event.PkgStarted(name, d))
             try:
@@ -638,7 +634,7 @@ class BBCooker:
             self.parseConfigurationFile( f )
 
         self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
-        
+
         bb.data.update_data( make.cfg )
 
         if not bb.data.getVar("BUILDNAME", make.cfg):
@@ -696,7 +692,7 @@ class BBCooker:
                 print
             if make.options.parse_only:
                 print "Requested parsing .bb files only.  Exiting."
-                sys.exit(0)
+                return
 
             self.buildDepgraph()
 
