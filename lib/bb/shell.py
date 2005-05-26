@@ -27,12 +27,18 @@ TODO:
     * readline completion (file and provider?)
     * specify tasks
     * specify force
-    * command to clean stamps
-    * command to reparse one bbfile
+    * command to reparse just one (or more) bbfile(s)
     * automatic check if reparsing is necessary (inotify?)
     * bb file wizard
-    * call editor on bb file
-    * clean-and-rebuild bbfile
+
+
+BUGS:
+    * somehow the stamps or the make build cache gets confused.
+      Reproduce this by calling rebuild on a bbfile twice.
+      1st, some tasks are called twice (do_fetch for instance),
+      2nd, no tasks are called anymore on the second rebuild.
+      Obviously executeOneBB is corrupting some state variables
+      or making some bogus assumptions about state and/or control flow
 """
 
 try:
@@ -51,11 +57,12 @@ cmds = {}
 leave_mainloop = False
 cooker = None
 parsed = False
-# debug = False
-debug = True
+debug = os.environ.get( "BBSHELL_DEBUG", "" ) != ""
 history_file = "%s/.bbsh_history" % os.environ.get( "HOME" )
 
-#============================ start of commands ==================
+##########################################################################
+# Commands
+##########################################################################
 
 def buildCommand( params, cmd = "build" ):
     """Build a .bb file or a provider"""
@@ -69,7 +76,7 @@ def buildCommand( params, cmd = "build" ):
         cooker.build_cache_fail = []
 
         if name.endswith( ".bb" ):
-            cooker.executeOneBB( os.path.abspath( name ) )
+            cooker.executeOneBB( completeFilePath( name ) )
         else:
             if not parsed:
                 print "BBSHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
@@ -137,8 +144,20 @@ def setVarCommand( params ):
         data.setVar( var, value, make.cfg )
         print "OK"
 
-#============================ end of commands ==================
+##########################################################################
+# Common helper functions
+##########################################################################
 
+def completeFilePath( bbfile ):
+    if not make.pkgdata: return "<unknown>"
+    for key in make.pkgdata.keys():
+        if key.endswith( bbfile ):
+            return key
+    return "<unknown>"
+
+##########################################################################
+# Startup / Shutdown
+##########################################################################
 def init():
     """Register commands and set up readline"""
     registerCommand( "help", showHelp )
@@ -170,9 +189,22 @@ def cleanup():
     except:
         print "BBSHELL: Unable to save command history"
 
-def completer( *args, **kwargs ):
-    print "completer called", args, kwargs
-    return None
+def completer( text, state ):
+    if debug: print "(completer called with text='%s', state='%d'" % ( text, state )
+    if make.pkgdata is None:
+        if state == 0:
+            return "(No Matches Available. Parsed yet?)"
+        else:
+            return None
+    if state == 0:
+        #print "make.pkgdata.keys = '%s'" % make.pkgdata
+        allmatches = [ x.split("/")[-1] for x in make.pkgdata.keys() ]
+        completer.matches = [ x for x in allmatches if x[:len(text)] == text ]
+        #print "completer.matches = '%s'" % completer.matches
+    if len( completer.matches ) > state:
+        return completer.matches[state]
+    else:
+        return None
 
 def showCredits():
     print __credits__
