@@ -94,7 +94,7 @@ def editCommand( params ):
     except IndexError:
         print "Usage: edit <bbfile>"
     else:
-        os.system( "%s %s" % ( os.environ.get( "EDITOR" ), name ) )
+        os.system( "%s %s" % ( os.environ.get( "EDITOR" ), completeFilePath( name ) ) )
 
 def exitShell( params ):
     """Leave the BitBake Shell"""
@@ -129,11 +129,6 @@ def printCommand( params ):
         value = data.getVar( var, make.cfg, 1 )
         print value
 
-def rebuildCommand( params ):
-    """Clean and rebuild a .bb file or a provider"""
-    buildCommand( params, "clean" )
-    buildCommand( params, "build" )
-
 def setVarCommand( params ):
     """Set an outer BitBake environment variable"""
     try:
@@ -144,16 +139,30 @@ def setVarCommand( params ):
         data.setVar( var, value, make.cfg )
         print "OK"
 
+def rebuildCommand( params ):
+    """Clean and rebuild a .bb file or a provider"""
+    buildCommand( params, "clean" )
+    buildCommand( params, "build" )
+
+def whichCommand( params ):
+    """Computes the preferred and latest provider for a given dependency"""
+    try:
+        var = params[0]
+    except IndexError:
+        print "Usage: which <provider>"
+    else:
+        print "Sorry, not yet implemented"
+
 ##########################################################################
 # Common helper functions
 ##########################################################################
 
 def completeFilePath( bbfile ):
-    if not make.pkgdata: return "<unknown>"
+    if not make.pkgdata: return bbfile
     for key in make.pkgdata.keys():
         if key.endswith( bbfile ):
             return key
-    return "<unknown>"
+    return bbfile
 
 ##########################################################################
 # Startup / Shutdown
@@ -173,6 +182,7 @@ def init():
     registerCommand( "set", setVarCommand )
 
     readline.set_completer( completer )
+    readline.set_completer_delims( " " )
     readline.parse_and_bind("tab: complete")
 
     try:
