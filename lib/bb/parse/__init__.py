@@ -68,7 +68,7 @@ def handle(fn, data, include = 0):
     for h in handlers:
         if h['supports'](fn, data):
             return h['handle'](fn, data, include)
-    return None
+    raise ParseError("%s is not a BitBake file" % fn)
 
 def init(fn, data):
     for h in handlers:
