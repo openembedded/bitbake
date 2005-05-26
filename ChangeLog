@@ -1,4 +1,4 @@
-Changes in bitbake Trunk:
+Changes in bitbake 1.3.0:
 	- add bitbake interactive shell (bitbake -i)
 	- refactor bitbake utility in OO style
 	- kill default arguments in methods in the bb.data module
