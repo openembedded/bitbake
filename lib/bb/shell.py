@@ -48,21 +48,26 @@ __credits__ = """BitBake Shell Version %2.1f (C) 2005 Michael 'Mickey' Lauer <mi
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
 cmds = {}
+leave_mainloop = False
 cooker = None
 parsed = False
-debug = False
+# debug = False
+debug = True
+history_file = "%s/.bbsh_history" % os.environ.get( "HOME" )
 
-def rebuildCommand( params ):
-    """Clean and rebuild a .bb file or a provider"""
-    print "BBSHELL: sorry, not yet implemented :/"
+#============================ start of commands ==================
 
-def buildCommand( params ):
+def buildCommand( params, cmd = "build" ):
     """Build a .bb file or a provider"""
     try:
         name = params[0]
     except IndexError:
         print "Usage: build <bbfile|provider>"
     else:
+        make.options.cmd = cmd
+        cooker.build_cache = []
+        cooker.build_cache_fail = []
+
         if name.endswith( ".bb" ):
             cooker.executeOneBB( os.path.abspath( name ) )
         else:
@@ -70,6 +75,25 @@ def buildCommand( params ):
                 print "BBSHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
                 parseCommand( None )
             cooker.buildPackage( name )
+
+def cleanCommand( params ):
+    """Clean a .bb file or a provider"""
+    buildCommand( params, "clean" )
+
+def editCommand( params ):
+    """Call $EDITOR on a .bb file"""
+    try:
+        name = params[0]
+    except IndexError:
+        print "Usage: edit <bbfile>"
+    else:
+        os.system( "%s %s" % ( os.environ.get( "EDITOR" ), name ) )
+
+def exitShell( params ):
+    """Leave the BitBake Shell"""
+    if debug: print "(setting leave_mainloop to true)"
+    global leave_mainloop
+    leave_mainloop = True
 
 def parseCommand( params ):
     """(Re-)parse .bb files and calculate the dependency graph"""
@@ -98,6 +122,11 @@ def printCommand( params ):
         value = data.getVar( var, make.cfg, 1 )
         print value
 
+def rebuildCommand( params ):
+    """Clean and rebuild a .bb file or a provider"""
+    buildCommand( params, "clean" )
+    buildCommand( params, "build" )
+
 def setVarCommand( params ):
     """Set an outer BitBake environment variable"""
     try:
@@ -108,24 +137,38 @@ def setVarCommand( params ):
         data.setVar( var, value, make.cfg )
         print "OK"
 
+#============================ end of commands ==================
+
 def init():
     """Register commands and set up readline"""
     registerCommand( "help", showHelp )
     registerCommand( "exit", exitShell )
-    
+
     registerCommand( "build", buildCommand )
+    registerCommand( "clean", cleanCommand )
+    registerCommand( "edit", editCommand )
     registerCommand( "environment", environmentCommand )
-    registerCommand( "rebuild", rebuildCommand )
     registerCommand( "parse", parseCommand )
     registerCommand( "print", printCommand )
+    registerCommand( "rebuild", rebuildCommand )
     registerCommand( "set", setVarCommand )
-    
+
     readline.set_completer( completer )
     readline.parse_and_bind("tab: complete")
 
-def exitShell( params ):
-    """Leave the BitBake Shell"""
-    sys.exit(0)
+    try:
+        global history_file
+        readline.read_history_file( history_file )
+    except IOError:
+        pass  # It doesn't exist yet.
+
+def cleanup():
+    if debug: print "(writing command history)"
+    try:
+        global history_file
+        readline.write_history_file( history_file )
+    except:
+        print "BBSHELL: Unable to save command history"
 
 def completer( *args, **kwargs ):
     print "completer called", args, kwargs
@@ -154,7 +197,7 @@ def processCommand( command, params ):
     if debug: print "(result was '%s')" % result
 
 def main():
-    while True:
+    while not leave_mainloop:
         try:
             cmdline = raw_input( "BB>> " )
             if cmdline:
@@ -174,6 +217,7 @@ def start( aCooker ):
     showCredits()
     init()
     main()
+    cleanup()
 
 if __name__ == "__main__":
     print "BBSHELL: Sorry, this program should only be called by BitBake."
