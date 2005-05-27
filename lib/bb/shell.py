@@ -24,13 +24,13 @@ General Question to be decided: Make it a full-fledged Python Shell or
 retain the simple command line interface like it is at the moment?
 
 TODO:
-    * readline completion (file and provider?)
+    * Fix bugs (see below)
+    * decide whether to use a special mode for '-b' or leave it like it is
     * specify tasks
     * specify force
     * command to reparse just one (or more) bbfile(s)
     * automatic check if reparsing is necessary (inotify?)
     * bb file wizard
-
 
 BUGS:
     * somehow the stamps or the make build cache gets confused.
@@ -49,7 +49,7 @@ import sys, os, imp, readline
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import make, data
 
-__version__ = 0.1
+__version__ = 0.2
 __credits__ = """BitBake Shell Version %2.1f (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -96,6 +96,14 @@ def editCommand( params ):
     else:
         os.system( "%s %s" % ( os.environ.get( "EDITOR" ), completeFilePath( name ) ) )
 
+def environmentCommand( params ):
+    """Dump out the outer BitBake environment (see bbread)"""
+    data.emit_env(sys.__stdout__, make.cfg, True)
+
+def execCommand( params ):
+    """Execute one line of python code"""
+    exec " ".join( params ) in locals(), globals()
+
 def exitShell( params ):
     """Leave the BitBake Shell"""
     if debug: print "(setting leave_mainloop to true)"
@@ -115,10 +123,6 @@ def parseCommand( params ):
     parsed = True
     print
 
-def environmentCommand( params ):
-    """Dump out the outer BitBake environment (see bbread)"""
-    data.emit_env(sys.__stdout__, make.cfg, True)
-
 def printCommand( params ):
     """Print the contents of an outer BitBake environment variable"""
     try:
@@ -128,6 +132,14 @@ def printCommand( params ):
     else:
         value = data.getVar( var, make.cfg, 1 )
         print value
+
+def pythonCommand( params ):
+    """Enter the expert mode - an interactive BitBake Python Interpreter"""
+    sys.ps1 = "EXPERT BB>>> "
+    sys.ps2 = "EXPERT BB... "
+    import code
+    python = code.InteractiveConsole( dict( globals() ) )
+    python.interact( "BBSHELL: Expert Mode - BitBake Python %s\nType 'help' for more information, press CTRL-D to switch back to BBSHELL." % sys.version )
 
 def setVarCommand( params ):
     """Set an outer BitBake environment variable"""
@@ -143,6 +155,10 @@ def rebuildCommand( params ):
     """Clean and rebuild a .bb file or a provider"""
     buildCommand( params, "clean" )
     buildCommand( params, "build" )
+
+def testCommand( params ):
+    """Just for testing..."""
+    print "testCommand called with '%s'" % params
 
 def whichCommand( params ):
     """Computes the preferred and latest provider for a given dependency"""
@@ -176,10 +192,13 @@ def init():
     registerCommand( "clean", cleanCommand )
     registerCommand( "edit", editCommand )
     registerCommand( "environment", environmentCommand )
+    registerCommand( "exec", execCommand )
     registerCommand( "parse", parseCommand )
     registerCommand( "print", printCommand )
+    registerCommand( "python", pythonCommand )
     registerCommand( "rebuild", rebuildCommand )
     registerCommand( "set", setVarCommand )
+    registerCommand( "test", testCommand )
 
     readline.set_completer( completer )
     readline.set_completer_delims( " " )
@@ -201,14 +220,21 @@ def cleanup():
 
 def completer( text, state ):
     if debug: print "(completer called with text='%s', state='%d'" % ( text, state )
-    if make.pkgdata is None:
-        if state == 0:
-            return "(No Matches Available. Parsed yet?)"
-        else:
-            return None
+
     if state == 0:
-        #print "make.pkgdata.keys = '%s'" % make.pkgdata
-        allmatches = [ x.split("/")[-1] for x in make.pkgdata.keys() ]
+        line = readline.get_line_buffer()
+        if " " in line:
+            line = line.split()
+            # we are in second (or more) argument
+            if line[0] == "print" or line[0] == "set":
+                allmatches = make.cfg.keys()
+            else:
+                if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                else: allmatches = [ x.split("/")[-1] for x in make.pkgdata.keys() ]
+        else:
+            # we are in first argument
+            allmatches = cmds.iterkeys()
+
         completer.matches = [ x for x in allmatches if x[:len(text)] == text ]
         #print "completer.matches = '%s'" % completer.matches
     if len( completer.matches ) > state:
