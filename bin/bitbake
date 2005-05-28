@@ -637,8 +637,6 @@ class BBCooker:
 
         self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
 
-        bb.data.update_data( make.cfg )
-
         if not bb.data.getVar("BUILDNAME", make.cfg):
             bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
 
@@ -696,6 +694,7 @@ class BBCooker:
                 print "Requested parsing .bb files only.  Exiting."
                 return
 
+            bb.data.update_data( make.cfg ) 
             self.buildDepgraph()
 
             if make.options.show_versions:
