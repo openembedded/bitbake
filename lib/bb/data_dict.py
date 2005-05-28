@@ -25,7 +25,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA.
 Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
-import os, re, sys, types, copy
+import os, re, sys, time, types, copy
 from   bb import note, debug, fatal
 
 try:
