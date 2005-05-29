@@ -31,7 +31,7 @@ import itertools, optparse
 parsespin = itertools.cycle( r'|/-\\' )
 bbdebug = 0
 
-__version__ = "1.2.9"
+__version__ = "1.3.1"
 
 #============================================================================#
 # BBParsingStatus
@@ -153,7 +153,36 @@ class BBCooker:
         self.stats = BBStatistics()
         self.status = None
 
+    def tryBuildPackage( self, fn, item, the_data ):
+        print ">>>tryBuildPackage. fn = '%s', item = '%s', the_data = '%s'" % (fn, item, the_data )
+        """Build one package"""
+        bb.event.fire(bb.event.PkgStarted(item, the_data))
+        try:
+            self.stats.attempt += 1
+            if make.options.force:
+                bb.data.setVarFlag('do_%s' % make.options.cmd, 'force', 1, d)
+            if not make.options.dry_run:
+                bb.build.exec_task('do_%s' % make.options.cmd, the_data)
+            bb.event.fire(bb.event.PkgSucceeded(item, the_data))
+            self.build_cache.append(fn)
+            return True
+        except bb.build.FuncFailed:
+            self.stats.fail += 1
+            bb.error("task stack execution failed")
+            bb.event.fire(bb.event.PkgFailed(item, the_data))
+            self.build_cache_fail.append(fn)
+            raise
+        except bb.build.EventException:
+            self.stats.fail += 1
+            (type, value, traceback) = sys.exc_info()
+            e = value.event
+            bb.error("%s event exception, aborting" % bb.event.getName(e))
+            bb.event.fire(bb.event.PkgFailed(item, the_data))
+            self.build_cache_fail.append(fn)
+            raise
+
     def tryBuild( self, fn, virtual ):
+        """Build a provider and its dependencies"""
         if fn in self.building_list:
             bb.error("%s depends on itself (eventually)" % fn)
             bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
@@ -187,13 +216,13 @@ class BBCooker:
                 oldcmd = make.options.cmd
                 make.options.cmd = depcmd
 
-            for d in depends_list:
-                if d in self.status.ignored_dependencies:
+            for dependency in depends_list:
+                if dependency in self.status.ignored_dependencies:
                     continue
                 if not depcmd:
                     continue
-                if self.buildPackage(d) == 0:
-                    bb.error("dependency %s (for %s) not satisfied" % (d,item))
+                if self.buildProvider( dependency ) == 0:
+                    bb.error("dependency %s (for %s) not satisfied" % (dependency,item))
                     failed = True
                     if make.options.abort:
                         break
@@ -209,28 +238,8 @@ class BBCooker:
                 self.build_cache.append(fn)
                 return True
 
-            bb.event.fire(bb.event.PkgStarted(item, the_data))
-            try:
-                self.stats.attempt += 1
-                if not make.options.dry_run:
-                    bb.build.exec_task('do_%s' % make.options.cmd, the_data)
-                bb.event.fire(bb.event.PkgSucceeded(item, the_data))
-                self.build_cache.append(fn)
-                return True
-            except bb.build.FuncFailed:
-                self.stats.fail += 1
-                bb.error("task stack execution failed")
-                bb.event.fire(bb.event.PkgFailed(item, the_data))
-                self.build_cache_fail.append(fn)
-                raise
-            except bb.build.EventException:
-                self.stats.fail += 1
-                (type, value, traceback) = sys.exc_info()
-                e = value.event
-                bb.error("%s event exception, aborting" % bb.event.getName(e))
-                bb.event.fire(bb.event.PkgFailed(item, the_data))
-                self.build_cache_fail.append(fn)
-                raise
+            return self.tryBuildPackage( fn, item, the_data )
+
         finally:
             self.building_list.remove(fn)
             self.build_path.remove(pathstr)
@@ -255,12 +264,8 @@ class BBCooker:
             for p in p_list:
                 pkg_pn[pn] = [ priorities[p] ] + pkg_pn[pn]
 
-        # If there is a PREFERRED_VERSION, find the highest-priority bbfile providing that
-        # version.  If not, find the latest version provided by an bbfile in the
-        # highest-priority set.
         for pn in pkg_pn.keys():
             preferred_file = None
-
             preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, make.cfg, 1)
             if preferred_v:
                 preferred_r = None
@@ -322,7 +327,7 @@ class BBCooker:
             print "%-30s %20s %20s" % (p, latest[0][0] + "-" + latest[0][1],
                                         prefstr)
 
-    def buildPackage( self, item ):
+    def buildProvider( self, item ):
         fn = None
 
         discriminated = False
@@ -551,35 +556,6 @@ class BBCooker:
                 sys.stdout.write("done.")
                 sys.stdout.flush()
 
-    def executeOneBB( self, fn ):
-            try:
-                d = bb.parse.handle(fn, make.cfg)
-            except IOError:
-                bb.fatal("Unable to open %s" % fn)
-
-            name = bb.data.getVar('PN', d, 1)
-            bb.event.fire(bb.event.PkgStarted(name, d))
-            try:
-                self.stats.attempt += 1
-                if make.options.force:
-                    bb.data.setVarFlag('do_%s' % make.options.cmd, 'force', 1, d)
-                if not make.options.dry_run:
-                    bb.build.exec_task('do_%s' % make.options.cmd, d)
-                bb.event.fire(bb.event.PkgSucceeded(name, d))
-                self.build_cache.append(fn)
-            except bb.build.FuncFailed:
-                self.stats.fail += 1
-                bb.error("task stack execution failed")
-                bb.event.fire(bb.event.PkgFailed(name, d))
-                self.build_cache_fail.append(fn)
-            except bb.build.EventException:
-                self.stats.fail += 1
-                (type, value, traceback) = sys.exc_info()
-                e = value.event
-                bb.error("%s event exception, aborting" % bb.event.getName(e))
-                bb.event.fire(bb.event.PkgFailed(name, d))
-                self.build_cache_fail.append(fn)
-
     def interactiveMode( self ):
         """Drop off into a shell"""
         try:
@@ -647,7 +623,13 @@ class BBCooker:
 
         bf = make.options.buildfile
         if bf:
-            self.executeOneBB( os.path.abspath(bf) )
+            try:
+                bbfile_data = bb.parse.handle(bf, make.cfg)
+            except IOError:
+                bb.fatal("Unable to open %s" % bf)
+
+            item = bb.data.getVar('PN', bbfile_data, 1)
+            self.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
             sys.exit( self.stats.show() )
 
         # initialise the parsing status now we know we will need deps
@@ -694,7 +676,7 @@ class BBCooker:
                 print "Requested parsing .bb files only.  Exiting."
                 return
 
-            bb.data.update_data( make.cfg ) 
+            bb.data.update_data( make.cfg )
             self.buildDepgraph()
 
             if make.options.show_versions:
@@ -710,7 +692,7 @@ class BBCooker:
             for k in pkgs_to_build:
                 failed = False
                 try:
-                    if self.buildPackage(k) == 0:
+                    if self.buildProvider( k ) == 0:
                         # already diagnosed
                         failed = True
                 except bb.build.EventException:
