@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+##########################################################################
 #
 # Copyright (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>, Vanille Media
 #
@@ -16,15 +17,13 @@
 # this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA 02111-1307 USA.
 #
+##########################################################################
 
 """
 BitBake Shell
 
-General Question to be decided: Make it a full-fledged Python Shell or
-retain the simple command line interface like it is at the moment?
-
 TODO:
-    * Fix bugs (see below)
+    * Fix bugs in file**** commands (see below)
     * decide whether to use a special mode for '-b' or leave it like it is
     * specify tasks
     * specify force
@@ -34,12 +33,16 @@ TODO:
 
 BUGS:
     * somehow the stamps or the make build cache gets confused.
-      Reproduce this by calling rebuild on a bbfile twice.
-      1st, some tasks are called twice (do_fetch for instance),
-      2nd, no tasks are called anymore on the second rebuild.
+      Reproduce this by calling filerebuild on a bbfile twice.
+      1st problem: Some tasks are called twice (do_fetch for instance),
+      2nd problem: No tasks are called anymore on the second rebuild.
       Obviously executeOneBB is corrupting some state variables
       or making some bogus assumptions about state and/or control flow
 """
+
+##########################################################################
+# Import and setup global variables
+##########################################################################
 
 try:
     set
@@ -47,7 +50,7 @@ except NameError:
     from sets import Set as set
 import sys, os, imp, readline
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
-from bb import make, data
+from bb import make, data, parse, fatal
 
 __version__ = 0.2
 __credits__ = """BitBake Shell Version %2.1f (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
@@ -65,36 +68,26 @@ history_file = "%s/.bbsh_history" % os.environ.get( "HOME" )
 ##########################################################################
 
 def buildCommand( params, cmd = "build" ):
-    """Build a .bb file or a provider"""
-    try:
-        name = params[0]
-    except IndexError:
-        print "Usage: build <bbfile|provider>"
-    else:
-        make.options.cmd = cmd
-        cooker.build_cache = []
-        cooker.build_cache_fail = []
+    """Build a provider"""
+    name = params[0]
 
-        if name.endswith( ".bb" ):
-            cooker.executeOneBB( completeFilePath( name ) )
-        else:
-            if not parsed:
-                print "BBSHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
-                parseCommand( None )
-            cooker.buildPackage( name )
+    make.options.cmd = cmd
+    cooker.build_cache = []
+    cooker.build_cache_fail = []
+
+    if not parsed:
+        print "BBSHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
+        parseCommand( None )
+    cooker.buildProvider( name )
 
 def cleanCommand( params ):
-    """Clean a .bb file or a provider"""
+    """Clean a provider"""
     buildCommand( params, "clean" )
 
 def editCommand( params ):
     """Call $EDITOR on a .bb file"""
-    try:
-        name = params[0]
-    except IndexError:
-        print "Usage: edit <bbfile>"
-    else:
-        os.system( "%s %s" % ( os.environ.get( "EDITOR" ), completeFilePath( name ) ) )
+    name = params[0]
+    os.system( "%s %s" % ( os.environ.get( "EDITOR" ), completeFilePath( name ) ) )
 
 def environmentCommand( params ):
     """Dump out the outer BitBake environment (see bbread)"""
@@ -109,6 +102,22 @@ def exitShell( params ):
     if debug: print "(setting leave_mainloop to true)"
     global leave_mainloop
     leave_mainloop = True
+
+def fileBuildCommand( params, cmd = "build" ):
+    """Parse and build a .bb file"""
+    name = params[0]
+    bf = completeFilePath( name )
+
+    try:
+        bbfile_data = parse.handle( bf, make.cfg )
+    except IOError:
+        print "ERROR: Unable to open %s" % bf
+    else:
+        item = data.getVar('PN', bbfile_data, 1)
+        self.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
+
+def fileCleanCommand( params ):
+    print "NYI"
 
 def parseCommand( params ):
     """(Re-)parse .bb files and calculate the dependency graph"""
@@ -125,13 +134,9 @@ def parseCommand( params ):
 
 def printCommand( params ):
     """Print the contents of an outer BitBake environment variable"""
-    try:
-        var = params[0]
-    except IndexError:
-        print "Usage: print <variable>"
-    else:
-        value = data.getVar( var, make.cfg, 1 )
-        print value
+    var = params[0]
+    value = data.getVar( var, make.cfg, 1 )
+    print value
 
 def pythonCommand( params ):
     """Enter the expert mode - an interactive BitBake Python Interpreter"""
@@ -143,31 +148,48 @@ def pythonCommand( params ):
 
 def setVarCommand( params ):
     """Set an outer BitBake environment variable"""
-    try:
-        var, value = params
-    except ValueError, IndexError:
-        print "Usage: set <variable> <value>"
-    else:
-        data.setVar( var, value, make.cfg )
-        print "OK"
+    var, value = params
+    data.setVar( var, value, make.cfg )
+    print "OK"
 
 def rebuildCommand( params ):
     """Clean and rebuild a .bb file or a provider"""
     buildCommand( params, "clean" )
     buildCommand( params, "build" )
 
+def statusCommand( params ):
+    print "-" * 78
+    print "build cache = '%s'" % cooker.build_cache
+    print "build cache fail = '%s'" % cooker.build_cache_fail
+    print "building list = '%s'" % cooker.building_list
+    print "build path = '%s'" % cooker.build_path
+    print "consider_msgs_cache = '%s'" % cooker.consider_msgs_cache
+    print "build stats = '%s'" % cooker.stats
+
 def testCommand( params ):
     """Just for testing..."""
     print "testCommand called with '%s'" % params
 
 def whichCommand( params ):
-    """Computes the preferred and latest provider for a given dependency"""
+    """Computes the providers for a given dependency"""
+    item = params[0]
+
+    if not parsed:
+        print "BBSHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
+        parseCommand( None )
     try:
-        var = params[0]
-    except IndexError:
-        print "Usage: which <provider>"
+        providers = cooker.status.providers[item]
+    except KeyError:
+        print "ERROR: Nothing provides", item
     else:
-        print "Sorry, not yet implemented"
+        print "Providers for '%s':" % item
+        print "------------------------------------------------------"
+        for provider in providers:
+            print "   ", provider
+        pv = data.getVar( "PREFERRED_VERSION_%s" % item, make.cfg, 1 )
+        pp = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
+        if pv: print "Preferred version for '%s': ", pv
+        if pp: print "Preferred version for '%s': ", pp
 
 ##########################################################################
 # Common helper functions
@@ -183,22 +205,27 @@ def completeFilePath( bbfile ):
 ##########################################################################
 # Startup / Shutdown
 ##########################################################################
+
 def init():
     """Register commands and set up readline"""
     registerCommand( "help", showHelp )
     registerCommand( "exit", exitShell )
 
-    registerCommand( "build", buildCommand )
-    registerCommand( "clean", cleanCommand )
-    registerCommand( "edit", editCommand )
+    registerCommand( "build", buildCommand, 1, "build <providee>" )
+    registerCommand( "clean", cleanCommand, 1, "clean <providee>" )
+    registerCommand( "edit", editCommand, 1, "edit <bbfile>" )
     registerCommand( "environment", environmentCommand )
-    registerCommand( "exec", execCommand )
+    registerCommand( "exec", execCommand, 1, "exec <one line of pythoncode>" )
+    registerCommand( "filebuild", fileBuildCommand, 1, "filebuild <bbfile>" )
+    registerCommand( "fileclean", fileCleanCommand, 1, "fileclean <bbfile>" )
     registerCommand( "parse", parseCommand )
-    registerCommand( "print", printCommand )
+    registerCommand( "print", printCommand, 1, "print <variable>" )
     registerCommand( "python", pythonCommand )
-    registerCommand( "rebuild", rebuildCommand )
-    registerCommand( "set", setVarCommand )
+    registerCommand( "rebuild", rebuildCommand, 1, "rebuild <providee>" )
+    registerCommand( "set", setVarCommand, 2, "set <variable> <value>" )
+    registerCommand( "status", statusCommand )
     registerCommand( "test", testCommand )
+    registerCommand( "which", whichCommand, 1, "which <providee>" )
 
     readline.set_completer( completer )
     readline.set_completer_delims( " " )
@@ -211,6 +238,7 @@ def init():
         pass  # It doesn't exist yet.
 
 def cleanup():
+    """Write readline history and clean up resources"""
     if debug: print "(writing command history)"
     try:
         global history_file
@@ -219,6 +247,7 @@ def cleanup():
         print "BBSHELL: Unable to save command history"
 
 def completer( text, state ):
+    """Return a possible readline completion"""
     if debug: print "(completer called with text='%s', state='%d'" % ( text, state )
 
     if state == 0:
@@ -228,9 +257,13 @@ def completer( text, state ):
             # we are in second (or more) argument
             if line[0] == "print" or line[0] == "set":
                 allmatches = make.cfg.keys()
-            else:
+            elif line[0].startswith( "file" ):
                 if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
                 else: allmatches = [ x.split("/")[-1] for x in make.pkgdata.keys() ]
+            elif line[0] == "build" or line[0] == "clean" or line[0] == "which":
+                if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                else: allmatches = cooker.status.providers.iterkeys()
+            else: allmatches = [ "(No tab completion available for this command)" ]
         else:
             # we are in first argument
             allmatches = cmds.iterkeys()
@@ -243,28 +276,38 @@ def completer( text, state ):
         return None
 
 def showCredits():
+    """Show credits (sic!)"""
     print __credits__
 
 def showHelp( *args ):
     """Show a comprehensive list of commands and their purpose"""
     print "="*35, "Available Commands", "="*35
-    for cmd, func in cmds.items():
-        print "| %s | %s" % (cmd.ljust(max([len(x) for x in cmds.keys()])), func.__doc__)
+    for cmd, (function,numparams,usage,helptext) in cmds.items():
+        print "| %s | %s" % (usage.ljust(35), helptext)
     print "="*88
 
-def registerCommand( command, function ):
-    cmds[command] = function
+def registerCommand( command, function, numparams = 0, usage = "", helptext = "" ):
+    """Register a command"""
+    if usage == "": usage = command
+    if helptext == "": helptext = function.__doc__ or "<not yet documented>"
+    cmds[command] = ( function, numparams, usage, helptext )
 
 def processCommand( command, params ):
+    """Process a command. Check number of params and print a usage string, if appropriate"""
     if debug: print "(processing command '%s'...)" % command
-    if command in cmds:
-        result = cmds[command]( params )
-    else:
+    try:
+        function, numparams, usage, helptext = cmds[command]
+    except KeyError:
         print "Error: '%s' command is not a valid command." % command
-        return
-    if debug: print "(result was '%s')" % result
+    else:
+        if not len( params ) == numparams:
+            print "Usage: '%s'" % usage
+            return
+        result = function( params )
+        if debug: print "(result was '%s')" % result
 
 def main():
+    """The main command loop"""
     while not leave_mainloop:
         try:
             cmdline = raw_input( "BB>> " )
