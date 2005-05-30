@@ -27,13 +27,12 @@ TODO:
     * specify force
     * command to reparse just one (or more) bbfile(s)
     * automatic check if reparsing is necessary (inotify?)
-    * new bb file wizard
-    * frontend for bb file manipulation? 
+    * frontend for bb file manipulation?
     * pipe output of commands into a shell command (i.e grep or sort)?
     * job control, i.e. bring commands into background with '&', fg, bg, etc.?
     * start parsing in background right after startup?
     * use ; to supply more than one commnd per line
-    * command aliases / shortcuts? 
+    * command aliases / shortcuts?
 
     * capture bb exceptions occuring during task execution
 """
@@ -75,7 +74,7 @@ def buildCommand( params, cmd = "build" ):
     cooker.build_cache_fail = []
 
     if not parsed:
-        print "BBSHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
+        print "SHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
         parseCommand( None )
     cooker.buildProvider( name )
 
@@ -108,7 +107,7 @@ def fileBuildCommand( params, cmd = "build" ):
     """Parse and build a .bb file"""
     name = params[0]
     bf = completeFilePath( name )
-    print "Calling '%s' on '%s'" % ( cmd, bf )
+    print "SHELL: Calling '%s' on '%s'" % ( cmd, bf )
 
     oldcmd = make.options.cmd
     make.options.cmd = cmd
@@ -118,7 +117,7 @@ def fileBuildCommand( params, cmd = "build" ):
     try:
         bbfile_data = parse.handle( bf, make.cfg )
     except IOError:
-        print "ERROR: Unable to open %s" % bf
+        print "SHELL: ERROR: Unable to open %s" % bf
     else:
         item = data.getVar('PN', bbfile_data, 1)
         data.setVar( "_task_cache", [], bbfile_data ) # force
@@ -135,6 +134,51 @@ def fileRebuildCommand( params ):
     """Rebuild (clean & build) a .bb file"""
     fileCleanCommand( params )
     fileBuildCommand( params )
+
+def newCommand( params ):
+    """Create a new .bb file and open the editor"""
+    dirname, filename = params
+    packages = '/'.join( data.getVar( "BBFILES", make.cfg, 1 ).split('/')[:-2] )
+    fulldirname = "%s/%s" % ( packages, dirname )
+
+    if not os.path.exists( fulldirname ):
+        print "SHELL: Creating '%s'" % fulldirname
+        os.mkdir( fulldirname )
+    if os.path.exists( fulldirname ) and os.path.isdir( fulldirname ):
+        if os.path.exists( "%s/%s" % ( fulldirname, filename ) ):
+            print "SHELL: ERROR: %s/%s already exists" % ( fulldirname, filename )
+            return False
+        print "SHELL: Creating '%s/%s'" % ( fulldirname, filename )
+        newpackage = open( "%s/%s" % ( fulldirname, filename ), "w" )
+        print >>newpackage,"""DESCRIPTION = ""
+SECTION = ""
+AUTHOR = ""
+HOMEPAGE = ""
+MAINTAINER = ""
+LICENSE = "GPL"
+
+SRC_URI = ""
+
+inherit base
+
+#do_compile() {
+#
+#}
+
+#do_configure() {
+#
+#}
+
+#do_stage() {
+#
+#}
+
+#do_install() {
+#
+#}
+"""
+        newpackage.close()
+        os.system( "%s %s/%s" % ( os.environ.get( "EDITOR" ), fulldirname, filename ) )
 
 def parseCommand( params ):
     """(Re-)parse .bb files and calculate the dependency graph"""
@@ -161,7 +205,7 @@ def pythonCommand( params ):
     sys.ps2 = "EXPERT BB... "
     import code
     python = code.InteractiveConsole( dict( globals() ) )
-    python.interact( "BBSHELL: Expert Mode - BitBake Python %s\nType 'help' for more information, press CTRL-D to switch back to BBSHELL." % sys.version )
+    python.interact( "SHELL: Expert Mode - BitBake Python %s\nType 'help' for more information, press CTRL-D to switch back to BBSHELL." % sys.version )
 
 def setVarCommand( params ):
     """Set an outer BitBake environment variable"""
@@ -192,21 +236,25 @@ def whichCommand( params ):
     item = params[0]
 
     if not parsed:
-        print "BBSHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
+        print "SHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
         parseCommand( None )
     try:
         providers = cooker.status.providers[item]
     except KeyError:
-        print "ERROR: Nothing provides", item
+        print "SHELL: ERROR: Nothing provides", item
     else:
+        pv = data.getVar( "PREFERRED_VERSION_%s" % item, make.cfg, 1 )
+        pp = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
+
         print "Providers for '%s':" % item
         print "------------------------------------------------------"
         for provider in providers:
-            print "   ", provider
-        pv = data.getVar( "PREFERRED_VERSION_%s" % item, make.cfg, 1 )
-        pp = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
-        if pv: print "Preferred version for '%s': ", pv
-        if pp: print "Preferred version for '%s': ", pp
+            if pp and data.getVar( "P", make.pkgdata[provider], 1 ).startswith( pp ):
+                print "[P]", provider
+            else:
+                print "   ", provider
+        if pv: print "Preferred version for '%s': %s" % ( item, pv )
+        if pp: print "Preferred version for '%s': %s" % ( item, pp )
 
 ##########################################################################
 # Common helper functions
@@ -236,6 +284,7 @@ def init():
     registerCommand( "filebuild", fileBuildCommand, 1, "filebuild <bbfile>" )
     registerCommand( "fileclean", fileCleanCommand, 1, "fileclean <bbfile>" )
     registerCommand( "filerebuild", fileRebuildCommand, 1, "filerebuild <bbfile>" )
+    registerCommand( "new", newCommand, 2, "new <directory> <bbfile>" )
     registerCommand( "parse", parseCommand )
     registerCommand( "print", printCommand, 1, "print <variable>" )
     registerCommand( "python", pythonCommand )
@@ -262,7 +311,7 @@ def cleanup():
         global history_file
         readline.write_history_file( history_file )
     except:
-        print "BBSHELL: Unable to save command history"
+        print "SHELL: Unable to save command history"
 
 def completer( text, state ):
     """Return a possible readline completion"""
@@ -319,7 +368,7 @@ def processCommand( command, params ):
     try:
         function, numparams, usage, helptext = cmds[command]
     except KeyError:
-        print "Error: '%s' command is not a valid command." % command
+        print "SHELL: ERROR: '%s' command is not a valid command." % command
     else:
         if not len( params ) == numparams:
             print "Usage: '%s'" % usage
@@ -333,10 +382,12 @@ def main():
         try:
             cmdline = raw_input( "BB>> " )
             if cmdline:
-                if ' ' in cmdline:
-                    processCommand( cmdline.split()[0], cmdline.split()[1:] )
-                else:
-                    processCommand( cmdline, "" )
+                commands = cmdline.split( ';' )
+                for command in commands:
+                    if ' ' in command:
+                        processCommand( command.split()[0], command.split()[1:] )
+                    else:
+                        processCommand( command, "" )
         except EOFError:
             print
             return
@@ -352,4 +403,4 @@ def start( aCooker ):
     cleanup()
 
 if __name__ == "__main__":
-    print "BBSHELL: Sorry, this program should only be called by BitBake."
+    print "SHELL: Sorry, this program should only be called by BitBake."
