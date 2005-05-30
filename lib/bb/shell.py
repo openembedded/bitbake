@@ -27,7 +27,13 @@ TODO:
     * specify force
     * command to reparse just one (or more) bbfile(s)
     * automatic check if reparsing is necessary (inotify?)
-    * bb file wizard
+    * new bb file wizard
+    * frontend for bb file manipulation? 
+    * pipe output of commands into a shell command (i.e grep or sort)?
+    * job control, i.e. bring commands into background with '&', fg, bg, etc.?
+    * start parsing in background right after startup?
+    * use ; to supply more than one commnd per line
+    * command aliases / shortcuts? 
 
     * capture bb exceptions occuring during task execution
 """
