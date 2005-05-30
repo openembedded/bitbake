@@ -154,7 +154,6 @@ class BBCooker:
         self.status = None
 
     def tryBuildPackage( self, fn, item, the_data ):
-        print ">>>tryBuildPackage. fn = '%s', item = '%s', the_data = '%s'" % (fn, item, the_data )
         """Build one package"""
         bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
