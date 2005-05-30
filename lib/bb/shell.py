@@ -23,21 +23,13 @@
 BitBake Shell
 
 TODO:
-    * Fix bugs in file**** commands (see below)
-    * decide whether to use a special mode for '-b' or leave it like it is
     * specify tasks
     * specify force
     * command to reparse just one (or more) bbfile(s)
     * automatic check if reparsing is necessary (inotify?)
     * bb file wizard
 
-BUGS:
-    * somehow the stamps or the make build cache gets confused.
-      Reproduce this by calling filerebuild on a bbfile twice.
-      1st problem: Some tasks are called twice (do_fetch for instance),
-      2nd problem: No tasks are called anymore on the second rebuild.
-      Obviously executeOneBB is corrupting some state variables
-      or making some bogus assumptions about state and/or control flow
+    * capture bb exceptions occuring during task execution
 """
 
 ##########################################################################
@@ -52,7 +44,7 @@ import sys, os, imp, readline
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import make, data, parse, fatal
 
-__version__ = 0.2
+__version__ = 0.3
 __credits__ = """BitBake Shell Version %2.1f (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -68,9 +60,10 @@ history_file = "%s/.bbsh_history" % os.environ.get( "HOME" )
 ##########################################################################
 
 def buildCommand( params, cmd = "build" ):
-    """Build a provider"""
+    """Build a providee"""
     name = params[0]
 
+    oldcmd = make.options.cmd
     make.options.cmd = cmd
     cooker.build_cache = []
     cooker.build_cache_fail = []
@@ -80,8 +73,10 @@ def buildCommand( params, cmd = "build" ):
         parseCommand( None )
     cooker.buildProvider( name )
 
+    make.options.cmd = oldcmd
+
 def cleanCommand( params ):
-    """Clean a provider"""
+    """Clean a providee"""
     buildCommand( params, "clean" )
 
 def editCommand( params ):
@@ -107,6 +102,12 @@ def fileBuildCommand( params, cmd = "build" ):
     """Parse and build a .bb file"""
     name = params[0]
     bf = completeFilePath( name )
+    print "Calling '%s' on '%s'" % ( cmd, bf )
+
+    oldcmd = make.options.cmd
+    make.options.cmd = cmd
+    cooker.build_cache = []
+    cooker.build_cache_fail = []
 
     try:
         bbfile_data = parse.handle( bf, make.cfg )
@@ -114,10 +115,20 @@ def fileBuildCommand( params, cmd = "build" ):
         print "ERROR: Unable to open %s" % bf
     else:
         item = data.getVar('PN', bbfile_data, 1)
-        self.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
+        data.setVar( "_task_cache", [], bbfile_data ) # force
+        cooker.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
+
+    make.options.cmd = oldcmd
+
 
 def fileCleanCommand( params ):
-    print "NYI"
+    """Clean a .bb file"""
+    fileBuildCommand( params, "clean" )
+
+def fileRebuildCommand( params ):
+    """Rebuild (clean & build) a .bb file"""
+    fileCleanCommand( params )
+    fileBuildCommand( params )
 
 def parseCommand( params ):
     """(Re-)parse .bb files and calculate the dependency graph"""
@@ -153,7 +164,7 @@ def setVarCommand( params ):
     print "OK"
 
 def rebuildCommand( params ):
-    """Clean and rebuild a .bb file or a provider"""
+    """Clean and rebuild a .bb file or a providee"""
     buildCommand( params, "clean" )
     buildCommand( params, "build" )
 
@@ -171,7 +182,7 @@ def testCommand( params ):
     print "testCommand called with '%s'" % params
 
 def whichCommand( params ):
-    """Computes the providers for a given dependency"""
+    """Computes the providers for a given providee"""
     item = params[0]
 
     if not parsed:
@@ -218,6 +229,7 @@ def init():
     registerCommand( "exec", execCommand, 1, "exec <one line of pythoncode>" )
     registerCommand( "filebuild", fileBuildCommand, 1, "filebuild <bbfile>" )
     registerCommand( "fileclean", fileCleanCommand, 1, "fileclean <bbfile>" )
+    registerCommand( "filerebuild", fileRebuildCommand, 1, "filerebuild <bbfile>" )
     registerCommand( "parse", parseCommand )
     registerCommand( "print", printCommand, 1, "print <variable>" )
     registerCommand( "python", pythonCommand )
@@ -282,7 +294,10 @@ def showCredits():
 def showHelp( *args ):
     """Show a comprehensive list of commands and their purpose"""
     print "="*35, "Available Commands", "="*35
-    for cmd, (function,numparams,usage,helptext) in cmds.items():
+    allcmds = cmds.keys()
+    allcmds.sort()
+    for cmd in allcmds:
+        function,numparams,usage,helptext = cmds[cmd]
         print "| %s | %s" % (usage.ljust(35), helptext)
     print "="*88
 
