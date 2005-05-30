@@ -159,7 +159,7 @@ class BBCooker:
         try:
             self.stats.attempt += 1
             if make.options.force:
-                bb.data.setVarFlag('do_%s' % make.options.cmd, 'force', 1, d)
+                bb.data.setVarFlag('do_%s' % make.options.cmd, 'force', 1, the_data)
             if not make.options.dry_run:
                 bb.build.exec_task('do_%s' % make.options.cmd, the_data)
             bb.event.fire(bb.event.PkgSucceeded(item, the_data))
