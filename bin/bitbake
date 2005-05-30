@@ -620,15 +620,15 @@ class BBCooker:
         if make.options.interactive:
             self.interactiveMode()
 
-        bf = make.options.buildfile
-        if bf:
+        if make.options.buildfile is not None:
+            bf = os.path.abspath( make.options.buildfile )
             try:
                 bbfile_data = bb.parse.handle(bf, make.cfg)
             except IOError:
                 bb.fatal("Unable to open %s" % bf)
 
             item = bb.data.getVar('PN', bbfile_data, 1)
-            self.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
+            self.tryBuildPackage( bf, item, bbfile_data )
             sys.exit( self.stats.show() )
 
         # initialise the parsing status now we know we will need deps
