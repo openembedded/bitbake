@@ -243,6 +243,76 @@ class BBCooker:
             self.building_list.remove(fn)
             self.build_path.remove(pathstr)
 
+    def findBestProvider( self, pn ):
+        """
+        If there is a PREFERRED_VERSION, find the highest-priority bbfile 
+        providing that version.  If not, find the latest version provided by 
+        an bbfile in the highest-priority set.
+        """
+        pkg_pn = self.status.pkg_pn
+
+        files = pkg_pn[pn]
+        priorities = {}
+        for f in files:
+            priority = self.status.bbfile_priority[f]
+            if priority not in priorities:
+                priorities[priority] = []
+            priorities[priority].append(f)
+        p_list = priorities.keys()
+        p_list.sort(lambda a, b: a - b)
+        tmp_pn = []
+        for p in p_list:
+            tmp_pn = [priorities[p]] + tmp_pn
+        pkg_pn[pn] = tmp_pn
+
+        preferred_file = None
+
+        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, make.cfg, 1)
+        if preferred_v:
+            m = re.match('(.*)_(.*)', preferred_v)
+            if m:
+                preferred_v = m.group(1)
+                preferred_r = m.group(2)
+            else:
+                preferred_r = None
+
+            for file_set in pkg_pn[pn]:
+                for f in file_set:
+                    pv,pr = self.status.pkg_pvpr[f]
+                    if preferred_v == pv and (preferred_r == pr or preferred_r == None):
+                        preferred_file = f
+                        preferred_ver = (pv, pr)
+                        break
+                if preferred_file:
+                    break
+            if preferred_r:
+                pv_str = '%s-%s' % (preferred_v, preferred_r)
+            else:
+                pv_str = preferred_v
+            if preferred_file is None:
+                bb.note("preferred version %s of %s not available" % (pv_str, pn))
+            else:
+                bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
+
+        # get highest priority file set
+        files = pkg_pn[pn][0]
+        latest = None
+        latest_p = 0
+        latest_f = None
+        for file_name in files:
+            pv,pr = self.status.pkg_pvpr[file_name]
+            dp = self.status.pkg_dp[file_name]
+
+            if (latest is None) or ((latest_p == dp) and (make.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
+                latest = (pv, pr)
+                latest_f = file_name
+                latest_p = dp
+        if preferred_file is None:
+            preferred_file = latest_f
+            preferred_ver = latest
+
+        return (latest,latest_f,preferred_ver, preferred_file)
+
     def showVersions( self ):
         pkg_pn = self.status.pkg_pn
         preferred_versions = {}
@@ -250,66 +320,9 @@ class BBCooker:
 
         # Sort by priority
         for pn in pkg_pn.keys():
-            files = pkg_pn[pn]
-            priorities = {}
-            for f in files:
-                priority = self.status.bbfile_priority[f]
-                if priority not in priorities:
-                    priorities[priority] = []
-                priorities[priority].append(f)
-            p_list = priorities.keys()
-            p_list.sort(lambda a, b: a - b)
-            pkg_pn[pn] = []
-            for p in p_list:
-                pkg_pn[pn] = [ priorities[p] ] + pkg_pn[pn]
-
-        for pn in pkg_pn.keys():
-            preferred_file = None
-            preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, make.cfg, 1)
-            if preferred_v:
-                preferred_r = None
-                m = re.match('(.*)_(.*)', preferred_v)
-                if m:
-                    preferred_v = m.group(1)
-                    preferred_r = m.group(2)
-
-                for file_set in pkg_pn[pn]:
-                    for f in file_set:
-                        pv,pr = self.status.pkg_pvpr[f]
-                        if preferred_v == pv and (preferred_r == pr or preferred_r == None):
-                            preferred_file = f
-                            preferred_ver = (pv, pr)
-                            break
-                    if preferred_file:
-                        break
-                if preferred_r:
-                    pv_str = '%s-%s' % (preferred_v, preferred_r)
-                else:
-                    pv_str = preferred_v
-                if preferred_file is None:
-                    bb.note("preferred version %s of %s not available" % (pv_str, pn))
-                else:
-                    bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
-
-            # get highest priority file set
-            files = pkg_pn[pn][0]
-            latest = None
-            latest_p = 0
-            latest_f = None
-            for f in files:
-                pv,pr = self.status.pkg_pvpr[f]
-                dp = self.status.pkg_dp[f]
-
-                if (latest is None) or ((latest_p == dp) and (make.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
-                    latest = (pv, pr)
-                    latest_f = f
-                    latest_p = dp
-            if preferred_file is None:
-                preferred_file = latest_f
-                preferred_ver = latest
-
-            preferred_versions[pn] = (preferred_ver, preferred_file)
-            latest_versions[pn] = (latest, latest_f)
+            (last_ver,last_file,pref_ver,pref_file) = self.findBestProvider(pn)
+            preferred_versions[pn] = (pref_ver, pref_file)
+            latest_versions[pn] = (last_ver, last_file)
 
         pkg_list = pkg_pn.keys()
         pkg_list.sort()
@@ -355,75 +368,10 @@ class BBCooker:
 
         bb.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
-        # Sort by priority
         for pn in pkg_pn.keys():
-            files = pkg_pn[pn]
-            priorities = {}
-            for f in files:
-                priority = self.status.bbfile_priority[f]
-                if priority not in priorities:
-                    priorities[priority] = []
-                priorities[priority].append(f)
-            p_list = priorities.keys()
-            p_list.sort(lambda a, b: a - b)
-            pkg_pn[pn] = []
-            for p in p_list:
-                pkg_pn[pn] = [ priorities[p] ] + pkg_pn[pn]
-
-        # If there is a PREFERRED_VERSION, find the highest-priority bbfile providing that
-        # version.  If not, find the latest version provided by an bbfile in the
-        # highest-priority set.
-        for pn in pkg_pn.keys():
-            preferred_file = None
-
-            preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, make.cfg, 1)
-            if preferred_v:
-                preferred_r = None
-                m = re.match('(.*)_(.*)', preferred_v)
-                if m:
-                    preferred_v = m.group(1)
-                    preferred_r = m.group(2)
-
-                for file_set in pkg_pn[pn]:
-                    for f in file_set:
-                        pv,pr = self.status.pkg_pvpr[f]
-                        if preferred_v == pv and (preferred_r == pr or preferred_r == None):
-                            preferred_file = f
-                            preferred_ver = (pv, pr)
-                            break
-                    if preferred_file:
-                        break
-                if preferred_r:
-                    pv_str = '%s-%s' % (preferred_v, preferred_r)
-                else:
-                    pv_str = preferred_v
-                if preferred_file is None:
-                    bb.note("preferred version %s of %s not available" % (pv_str, pn))
-                else:
-                    bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
-
-            if preferred_file is None:
-                # get highest priority file set
-                files = pkg_pn[pn][0]
-                latest = None
-                latest_p = 0
-                latest_f = None
-                for f in files:
-                    pv,pr = self.status.pkg_pvpr[f]
-                    dp    = self.status.pkg_dp[f]
-
-                    if (latest is None) or ((latest_p == dp) and (make.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
-                        latest = (pv, pr)
-                        latest_f = f
-                        latest_p = dp
-                preferred_file = latest_f
-                preferred_ver = latest
-
-                bb.debug(1, "selecting %s as latest version of provider %s" % (preferred_file, pn))
-
-            preferred_versions[pn] = (preferred_ver, preferred_file)
-            eligible.append(preferred_file)
-
+            preferred_versions[pn] = self.findBestProvider(pn)[2:4]
+            eligible.append(preferred_versions[pn][1])
+ 
         for p in eligible:
             if p in self.build_cache_fail:
                 bb.debug(1, "rejecting already-failed %s" % p)
