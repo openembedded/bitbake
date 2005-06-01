@@ -49,8 +49,8 @@ import sys, os, imp, readline
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import make, data, parse, fatal
 
-__version__ = 0.3
-__credits__ = """BitBake Shell Version %2.1f (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
+__version__ = "0.3.5"
+__credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
 cmds = {}
@@ -238,23 +238,24 @@ def whichCommand( params ):
     if not parsed:
         print "SHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
         parseCommand( None )
+
+    preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
+    if not preferred: preferred = item
+
+    try:
+        lv, lf, pv, pf = cooker.findBestProvider( preferred )
+    except KeyError:
+        lv, lf, pv, pf = (None,)*4
+
     try:
         providers = cooker.status.providers[item]
     except KeyError:
-        print "SHELL: ERROR: Nothing provides", item
+        print "SHELL: ERROR: Nothing provides", preferred
     else:
-        pv = data.getVar( "PREFERRED_VERSION_%s" % item, make.cfg, 1 )
-        pp = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
-
-        print "Providers for '%s':" % item
-        print "------------------------------------------------------"
         for provider in providers:
-            if pp and data.getVar( "P", make.pkgdata[provider], 1 ).startswith( pp ):
-                print "[P]", provider
-            else:
-                print "   ", provider
-        if pv: print "Preferred version for '%s': %s" % ( item, pv )
-        if pp: print "Preferred version for '%s': %s" % ( item, pp )
+            if provider == pf: provider = " (***) %s" % provider
+            else:              provider = "       %s" % provider
+            print provider
 
 ##########################################################################
 # Common helper functions
