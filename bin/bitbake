@@ -573,7 +573,11 @@ class BBCooker:
                 bb.fatal("Unable to open %s" % bf)
 
             item = bb.data.getVar('PN', bbfile_data, 1)
-            self.tryBuildPackage( bf, item, bbfile_data )
+            try:
+                self.tryBuildPackage( bf, item, bbfile_data )
+            except bb.build.EventException:
+                bb.error( "Build of '%s' failed" % item )
+
             sys.exit( self.stats.show() )
 
         # initialise the parsing status now we know we will need deps
