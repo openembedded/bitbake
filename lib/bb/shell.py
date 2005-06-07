@@ -47,9 +47,9 @@ except NameError:
     from sets import Set as set
 import sys, os, imp, readline
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
-from bb import make, data, parse, fatal
+from bb import data, parse, build, make, fatal
 
-__version__ = "0.3.5"
+__version__ = "0.3.6"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -76,7 +76,10 @@ def buildCommand( params, cmd = "build" ):
     if not parsed:
         print "SHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
         parseCommand( None )
-    cooker.buildProvider( name )
+    try:
+        cooker.buildProvider( name )
+    except build.EventException:
+        print "ERROR: Couldn't build '%s'" % name
 
     make.options.cmd = oldcmd
 
