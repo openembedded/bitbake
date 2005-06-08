@@ -45,21 +45,12 @@ class EventException(Exception):
     """Exception which is associated with an Event."""
 
     def __init__(self, msg, event):
-        self._event = event
-
-    def getEvent(self):
-        return self._event
-
-    def setEvent(self, event):
-        self._event = event
-
-    event = property(getEvent, setEvent, None, "event property")
-
+        self.args = msg, event
 
 class TaskBase(event.Event):
     """Base class for task events"""
 
-    def __init__(self, t, d = {}):
+    def __init__(self, t, d ):
         self._task = t
         event.Event.__init__(self, d)
 
@@ -245,7 +236,7 @@ def exec_func_shell(func, d):
             f.close()
         else:
             error("see log in %s" % logfile)
-        raise FuncFailed()
+        raise FuncFailed( logfile )
 
 
 _task_cache = []
@@ -267,7 +258,7 @@ def exec_task(task, d):
         task_cache = []
         data.setVar('_task_cache', task_cache, d)
     if not task_graph.hasnode(task):
-        raise EventException("", InvalidTask(task, d))
+        raise EventException("Missing node in task graph", InvalidTask(task, d))
 
     # check whether this task needs executing..
     if not data.getVarFlag(task, 'force', d):
@@ -299,7 +290,7 @@ def exec_task(task, d):
                 note( "Task failed: %s" % reason )
                 failedevent = TaskFailed(item, d)
                 event.fire(failedevent)
-                raise EventException(None, failedevent)
+                raise EventException("Function failed in task: %s" % reason, failedevent)
 
     # execute
     task_graph.walkdown(task, execute)
