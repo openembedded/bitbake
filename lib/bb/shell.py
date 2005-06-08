@@ -32,8 +32,8 @@ TODO:
     * job control, i.e. bring commands into background with '&', fg, bg, etc.?
     * start parsing in background right after startup?
     * use ; to supply more than one commnd per line
+    * make pastebin more flexible (paste complete output of last command)
     * command aliases / shortcuts?
-
     * capture bb exceptions occuring during task execution
 """
 
@@ -45,7 +45,7 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline
+import sys, os, imp, readline, httplib, urllib
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, make, fatal
 
@@ -55,6 +55,7 @@ Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
 cmds = {}
 leave_mainloop = False
+last_exception = None
 cooker = None
 parsed = False
 debug = os.environ.get( "BBSHELL_DEBUG", "" ) != ""
@@ -78,8 +79,10 @@ def buildCommand( params, cmd = "build" ):
         parseCommand( None )
     try:
         cooker.buildProvider( name )
-    except build.EventException:
+    except build.EventException, e:
         print "ERROR: Couldn't build '%s'" % name
+        global last_exception
+        last_exception = e
 
     make.options.cmd = oldcmd
 
@@ -138,6 +141,22 @@ def fileRebuildCommand( params ):
     fileCleanCommand( params )
     fileBuildCommand( params )
 
+def lastErrorCommand( params ):
+    """Show the reason or log that was produced by the last BitBake event exception"""
+    if last_exception is None:
+        print "SHELL: No Errors yet (Phew)..."
+    else:
+        reason, event = last_exception.args
+        print "SHELL: Reason for the last error: '%s'" % reason
+        if ':' in reason:
+            msg, filename = reason.split( ':' )
+            filename = filename.strip()
+            print "SHELL: Dumping log file for last error:"
+            try:
+                print open( filename ).read()
+            except IOError:
+                print "ERROR: Couldn't open '%s'" % filename
+
 def newCommand( params ):
     """Create a new .bb file and open the editor"""
     dirname, filename = params
@@ -182,6 +201,40 @@ inherit base
 """
         newpackage.close()
         os.system( "%s %s/%s" % ( os.environ.get( "EDITOR" ), fulldirname, filename ) )
+
+def pastebinCommand( params ):
+    """Send the last event exception error log (if there is one) to http://pastebin.com"""
+
+    if last_exception is None:
+        print "SHELL: No Errors yet (Phew)..."
+    else:
+        reason, event = last_exception.args
+        print "SHELL: Reason for the last error: '%s'" % reason
+        if ':' in reason:
+            msg, filename = reason.split( ':' )
+            filename = filename.strip()
+            print "SHELL: Pasting log file to pastebin..."
+
+            mydata = {}
+            mydata["parent_pid"] = ""
+            mydata["format"] = "bash"
+            mydata["code2"] = open( filename ).read()
+            mydata["paste"] = "Send"
+            mydata["poster"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), os.environ.get( "HOST", "unknown" ) )
+            params = urllib.urlencode( mydata )
+            headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
+
+            conn = httplib.HTTPConnection( "pastebin.com:80" )
+            conn.request("POST", "/", params, headers )
+
+            response = conn.getresponse()
+
+            if int( response.status ) == 302:
+                location = response.getheader( "location" ) or "unknown"
+                print "SHELL: Pasted to %s" % location
+            else:
+                print "ERROR: %s %s" % ( response.status, response.reason )
+            conn.close()
 
 def parseCommand( params ):
     """(Re-)parse .bb files and calculate the dependency graph"""
@@ -229,6 +282,7 @@ def statusCommand( params ):
     print "build path = '%s'" % cooker.build_path
     print "consider_msgs_cache = '%s'" % cooker.consider_msgs_cache
     print "build stats = '%s'" % cooker.stats
+    if last_exception is not None: print "last_exception = '%s'" % repr( last_exception.args )
 
 def testCommand( params ):
     """Just for testing..."""
@@ -288,7 +342,9 @@ def init():
     registerCommand( "filebuild", fileBuildCommand, 1, "filebuild <bbfile>" )
     registerCommand( "fileclean", fileCleanCommand, 1, "fileclean <bbfile>" )
     registerCommand( "filerebuild", fileRebuildCommand, 1, "filerebuild <bbfile>" )
+    registerCommand( "lasterror", lastErrorCommand, 0 )
     registerCommand( "new", newCommand, 2, "new <directory> <bbfile>" )
+    registerCommand( "pastebin", pastebinCommand, 0 )
     registerCommand( "parse", parseCommand )
     registerCommand( "print", printCommand, 1, "print <variable>" )
     registerCommand( "python", pythonCommand )
