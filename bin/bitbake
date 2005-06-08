@@ -171,11 +171,10 @@ class BBCooker:
             bb.event.fire(bb.event.PkgFailed(item, the_data))
             self.build_cache_fail.append(fn)
             raise
-        except bb.build.EventException:
+        except bb.build.EventException, e:
             self.stats.fail += 1
-            (type, value, traceback) = sys.exc_info()
-            e = value.event
-            bb.error("%s event exception, aborting" % bb.event.getName(e))
+            event = e.args[1]
+            bb.error("%s event exception, aborting" % bb.event.getName(event))
             bb.event.fire(bb.event.PkgFailed(item, the_data))
             self.build_cache_fail.append(fn)
             raise
@@ -245,8 +244,8 @@ class BBCooker:
 
     def findBestProvider( self, pn ):
         """
-        If there is a PREFERRED_VERSION, find the highest-priority bbfile 
-        providing that version.  If not, find the latest version provided by 
+        If there is a PREFERRED_VERSION, find the highest-priority bbfile
+        providing that version.  If not, find the latest version provided by
         an bbfile in the highest-priority set.
         """
         pkg_pn = self.status.pkg_pn
@@ -368,7 +367,7 @@ class BBCooker:
         for pn in pkg_pn.keys():
             preferred_versions[pn] = self.findBestProvider(pn)[2:4]
             eligible.append(preferred_versions[pn][1])
- 
+
         for p in eligible:
             if p in self.build_cache_fail:
                 bb.debug(1, "rejecting already-failed %s" % p)
