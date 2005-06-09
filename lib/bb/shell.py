@@ -44,7 +44,7 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline, httplib, urllib
+import sys, os, imp, readline, socket, httplib, urllib
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, make, fatal
 
@@ -341,7 +341,7 @@ def sendToPastebin( content ):
     mydata["format"] = "bash"
     mydata["code2"] = content
     mydata["paste"] = "Send"
-    mydata["poster"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), os.environ.get( "HOST", "unknown" ) )
+    mydata["poster"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), socket.gethostname() or "unknown" )
     params = urllib.urlencode( mydata )
     headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
 
