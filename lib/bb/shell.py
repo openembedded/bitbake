@@ -44,11 +44,11 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline, socket, httplib, urllib
+import sys, os, imp, readline, socket, httplib, urllib, commands
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, make, fatal
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -283,6 +283,10 @@ def rebuildCommand( params ):
     buildCommand( params, "clean" )
     buildCommand( params, "build" )
 
+def shellCommand( params ):
+    """Execute a shell command and dump the output"""
+    print commands.getoutput( " ".join( params ) )
+
 def statusCommand( params ):
     print "-" * 78
     print "build cache = '%s'" % cooker.build_cache
@@ -420,6 +424,7 @@ def init():
     registerCommand( "python", pythonCommand )
     registerCommand( "rebuild", rebuildCommand, 1, "rebuild <providee>" )
     registerCommand( "set", setVarCommand, 2, "set <variable> <value>" )
+    registerCommand( "shell", shellCommand, 1, "shell <command>" )
     registerCommand( "status", statusCommand )
     registerCommand( "test", testCommand )
     registerCommand( "which", whichCommand, 1, "which <providee>" )
