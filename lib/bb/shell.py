@@ -32,7 +32,6 @@ TODO:
     * job control, i.e. bring commands into background with '&', fg, bg, etc.?
     * start parsing in background right after startup?
     * use ; to supply more than one commnd per line
-    * make pastebin more flexible (paste complete output of last command)
     * command aliases / shortcuts?
     * capture bb exceptions occuring during task execution
 """
@@ -49,7 +48,7 @@ import sys, os, imp, readline, httplib, urllib
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, make, fatal
 
-__version__ = "0.3.6"
+__version__ = "0.4.0"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -64,6 +63,22 @@ history_file = "%s/.bbsh_history" % os.environ.get( "HOME" )
 ##########################################################################
 # Commands
 ##########################################################################
+
+def bufferCommand( params ):
+    """Dump output buffer #i"""
+    index = params[0]
+    print processCommand.memoryOutput.buffer( int( index ) )
+
+def buffersCommand( params ):
+    """Show the available output buffers"""
+    commands = processCommand.memoryOutput.bufferedCommands()
+    if not commands:
+        print "SHELL: No buffered commands available yet. Start doing something."
+    else:
+        print "="*35, "Available Output Buffers", "="*27
+        for index, cmd in enumerate( commands ):
+            print "| %s %s" % ( str( index ).ljust( 3 ), cmd )
+        print "="*88
 
 def buildCommand( params, cmd = "build" ):
     """Build a providee"""
@@ -130,7 +145,6 @@ def fileBuildCommand( params, cmd = "build" ):
         cooker.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
 
     make.options.cmd = oldcmd
-
 
 def fileCleanCommand( params ):
     """Clean a .bb file"""
@@ -202,9 +216,18 @@ inherit base
         newpackage.close()
         os.system( "%s %s/%s" % ( os.environ.get( "EDITOR" ), fulldirname, filename ) )
 
-def pastebinCommand( params ):
-    """Send the last event exception error log (if there is one) to http://pastebin.com"""
+def pasteBinCommand( params ):
+    """Send a command + output buffer to http://pastebin.com"""
+    index = params[0]
+    contents = processCommand.memoryOutput.buffer( int( index ) )
+    status, error, location = sendToPastebin( contents )
+    if status == 302:
+        print "SHELL: Pasted to %s" % location
+    else:
+        print "ERROR: %s %s" % ( response.status, response.reason )
 
+def pasteLogCommand( params ):
+    """Send the last event exception error log (if there is one) to http://pastebin.com"""
     if last_exception is None:
         print "SHELL: No Errors yet (Phew)..."
     else:
@@ -215,26 +238,12 @@ def pastebinCommand( params ):
             filename = filename.strip()
             print "SHELL: Pasting log file to pastebin..."
 
-            mydata = {}
-            mydata["parent_pid"] = ""
-            mydata["format"] = "bash"
-            mydata["code2"] = open( filename ).read()
-            mydata["paste"] = "Send"
-            mydata["poster"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), os.environ.get( "HOST", "unknown" ) )
-            params = urllib.urlencode( mydata )
-            headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
+            status, error, location = sendToPastebin( open( filename ).read() )
 
-            conn = httplib.HTTPConnection( "pastebin.com:80" )
-            conn.request("POST", "/", params, headers )
-
-            response = conn.getresponse()
-
-            if int( response.status ) == 302:
-                location = response.getheader( "location" ) or "unknown"
+            if status == 302:
                 print "SHELL: Pasted to %s" % location
             else:
                 print "ERROR: %s %s" % ( response.status, response.reason )
-            conn.close()
 
 def parseCommand( params ):
     """(Re-)parse .bb files and calculate the dependency graph"""
@@ -283,6 +292,7 @@ def statusCommand( params ):
     print "consider_msgs_cache = '%s'" % cooker.consider_msgs_cache
     print "build stats = '%s'" % cooker.stats
     if last_exception is not None: print "last_exception = '%s'" % repr( last_exception.args )
+    print "memory output contents = '%s'" % processCommand.memoryOutput._buffer
 
 def testCommand( params ):
     """Just for testing..."""
@@ -325,6 +335,63 @@ def completeFilePath( bbfile ):
             return key
     return bbfile
 
+def sendToPastebin( content ):
+    mydata = {}
+    mydata["parent_pid"] = ""
+    mydata["format"] = "bash"
+    mydata["code2"] = content
+    mydata["paste"] = "Send"
+    mydata["poster"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), os.environ.get( "HOST", "unknown" ) )
+    params = urllib.urlencode( mydata )
+    headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
+
+    conn = httplib.HTTPConnection( "pastebin.com:80" )
+    conn.request("POST", "/", params, headers )
+
+    response = conn.getresponse()
+    conn.close()
+
+    return response.status, response.reason, response.getheader( "location" ) or "unknown"
+
+##########################################################################
+# File-like output class buffering the output of the last 10 commands
+##########################################################################
+
+class MemoryOutput:
+    def __init__( self, delegate ):
+        self.delegate = delegate
+        self._buffer = []
+        self.text = []
+        self._command = None
+
+    def startCommand( self, command ):
+        self._command = command
+        self.text = []
+    def endCommand( self ):
+        if self._command is not None:
+            if len( self._buffer ) == 10: del self._buffer[0]
+            self._buffer.append( ( self._command, self.text ) )
+    def removeLast( self ):
+        if self._buffer:
+            del self._buffer[ len( self._buffer ) - 1 ]
+        self.text = []
+        self._command = None
+    def bufferedCommands( self ):
+        return [ cmd for cmd, output in self._buffer ]
+    def buffer( self, i ):
+        if i < len( self._buffer ):
+            return "BB>> %s\n%s" % ( self._buffer[i][0], "".join( self._buffer[i][1] ) )
+        else: return "ERROR: Invalid buffer number. Buffer needs to be in (0, %d)" % ( len( self._buffer ) - 1 )
+    def write( self, text ):
+        if self._command is not None and text != "BB>> ": self.text.append( text )
+        self.delegate.write( text )
+    def flush( self ):
+        return self.delegate.flush()
+    def fileno( self ):
+        return self.delegate.fileno()
+    def isatty( self ):
+        return self.delegate.isatty()
+
 ##########################################################################
 # Startup / Shutdown
 ##########################################################################
@@ -334,6 +401,8 @@ def init():
     registerCommand( "help", showHelp )
     registerCommand( "exit", exitShell )
 
+    registerCommand( "buffer", bufferCommand, 1, "buffer <#>" )
+    registerCommand( "buffers", buffersCommand, 0 )
     registerCommand( "build", buildCommand, 1, "build <providee>" )
     registerCommand( "clean", cleanCommand, 1, "clean <providee>" )
     registerCommand( "edit", editCommand, 1, "edit <bbfile>" )
@@ -342,9 +411,10 @@ def init():
     registerCommand( "filebuild", fileBuildCommand, 1, "filebuild <bbfile>" )
     registerCommand( "fileclean", fileCleanCommand, 1, "fileclean <bbfile>" )
     registerCommand( "filerebuild", fileRebuildCommand, 1, "filerebuild <bbfile>" )
-    registerCommand( "lasterror", lastErrorCommand, 0 )
+    registerCommand( "lastlog", lastErrorCommand, 0 )
     registerCommand( "new", newCommand, 2, "new <directory> <bbfile>" )
-    registerCommand( "pastebin", pastebinCommand, 0 )
+    registerCommand( "pastebin", pasteBinCommand, 1, "pastebin <#>" )
+    registerCommand( "pastelog", pasteLogCommand, 0 )
     registerCommand( "parse", parseCommand )
     registerCommand( "print", printCommand, 1, "print <variable>" )
     registerCommand( "python", pythonCommand )
@@ -429,25 +499,31 @@ def processCommand( command, params ):
         function, numparams, usage, helptext = cmds[command]
     except KeyError:
         print "SHELL: ERROR: '%s' command is not a valid command." % command
+        processCommand.memoryOutput.removeLast()
     else:
         if not len( params ) == numparams:
             print "Usage: '%s'" % usage
             return
+
         result = function( params )
         if debug: print "(result was '%s')" % result
 
 def main():
     """The main command loop"""
+    processCommand.memoryOutput = MemoryOutput( sys.stdout )
+    sys.stdout = processCommand.memoryOutput
     while not leave_mainloop:
         try:
             cmdline = raw_input( "BB>> " )
             if cmdline:
                 commands = cmdline.split( ';' )
                 for command in commands:
+                    processCommand.memoryOutput.startCommand( command )
                     if ' ' in command:
                         processCommand( command.split()[0], command.split()[1:] )
                     else:
                         processCommand( command, "" )
+                    processCommand.memoryOutput.endCommand()
         except EOFError:
             print
             return
