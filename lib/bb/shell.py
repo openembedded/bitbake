@@ -31,9 +31,7 @@ TODO:
     * pipe output of commands into a shell command (i.e grep or sort)?
     * job control, i.e. bring commands into background with '&', fg, bg, etc.?
     * start parsing in background right after startup?
-    * use ; to supply more than one commnd per line
     * command aliases / shortcuts?
-    * capture bb exceptions occuring during task execution
 """
 
 ##########################################################################
@@ -48,7 +46,7 @@ import sys, os, imp, readline, socket, httplib, urllib, commands
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, make, fatal
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -137,12 +135,17 @@ def fileBuildCommand( params, cmd = "build" ):
 
     try:
         bbfile_data = parse.handle( bf, make.cfg )
-    except IOError:
-        print "SHELL: ERROR: Unable to open %s" % bf
+    except parse.ParseError:
+        print "ERROR: Unable to open or parse '%s'" % bf
     else:
         item = data.getVar('PN', bbfile_data, 1)
         data.setVar( "_task_cache", [], bbfile_data ) # force
-        cooker.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
+        try:
+            cooker.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
+        except build.EventException, e:
+            print "ERROR: Couldn't build '%s'" % name
+            global last_exception
+            last_exception = e
 
     make.options.cmd = oldcmd
 
@@ -516,10 +519,11 @@ def processCommand( command, params ):
 def main():
     """The main command loop"""
     processCommand.memoryOutput = MemoryOutput( sys.stdout )
-    sys.stdout = processCommand.memoryOutput
     while not leave_mainloop:
         try:
+            sys.stdout = processCommand.memoryOutput.delegate
             cmdline = raw_input( "BB>> " )
+            sys.stdout = processCommand.memoryOutput
             if cmdline:
                 commands = cmdline.split( ';' )
                 for command in commands:
