@@ -21,7 +21,7 @@ FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
 this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA. 
+Place, Suite 330, Boston, MA 02111-1307 USA.
 
 This file is part of the BitBake build tools.
 """
@@ -111,19 +111,22 @@ def load_bbfile( bbfile ):
 
 def collect_bbfiles( progressCallback ):
     """Collect all available .bb build files"""
-
+    collect_bbfiles.cb = progressCallback
     parsed, cached, skipped, masked = 0, 0, 0, 0
     global cache, pkgdata
     cache   = bb.data.getVar( "CACHE", cfg, 1 )
     pkgdata = data.pkgdata( not cache in [None, ''], cache )
 
     if not cache in [None, '']:
-        print "NOTE: Using cache in '%s'" % cache
+        if collect_bbfiles.cb is not None:
+            print "NOTE: Using cache in '%s'" % cache
         try:
             os.stat( cache )
         except OSError:
             bb.mkdirhier( cache )
-    else: print "NOTE: Not using a cache. Set CACHE = <directory> to enable."
+    else:
+        if collect_bbfiles.cb is not None:
+            print "NOTE: Not using a cache. Set CACHE = <directory> to enable."
     files = (data.getVar( "BBFILES", cfg, 1 ) or "").split()
     data.setVar("BBFILES", " ".join(files), cfg)
 
@@ -178,7 +181,9 @@ def collect_bbfiles( progressCallback ):
                 pkgdata[f] = bb_data
 
             # now inform the caller
-            progressCallback( i + 1, len( newfiles ), f, bb_data, fromCache )
+            if collect_bbfiles.cb is not None:
+                collect_bbfiles.cb( i + 1, len( newfiles ), f, bb_data, fromCache )
+
         except IOError, e:
             bb.error("opening %s: %s" % (f, e))
             pass
@@ -189,7 +194,9 @@ def collect_bbfiles( progressCallback ):
             raise
         except Exception, e:
             bb.error("%s while parsing %s" % (e, f))
-    print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ), 
+
+    if collect_bbfiles.cb is not None:
+        print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ),
 
 def explode_version(s):
     import string
