@@ -67,14 +67,7 @@ __all__ = [
 whitespace = '\t\n\x0b\x0c\r '
 lowercase = 'abcdefghijklmnopqrstuvwxyz'
 
-import sys, os, types, re
-
-#
-# Check for the Python version. A lot of stuff needs Python 2.3 or later
-#
-if sys.version_info[:3] < (2, 3, 0):
-    print "BitBake needs Python 2.3 or later. Please upgrade."
-    sys.exit(-1)
+import sys, os, types, re, string
 
 #projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 projectdir = os.getcwd()
@@ -305,13 +298,7 @@ def decodeurl(url):
     else:
         user = ''
         pswd = ''
-    #note("decodeurl: %s decoded to:" % url)
-    #note("decodeurl: type = '%s'" % type)
-    #note("decodeurl: host = '%s'" % host)
-    #note("decodeurl: path = '%s'" % path)
-    #note("decodeurl: parm = '%s'" % parm)
-    #note("decodeurl: user = '%s'" % user)
-    #note("decodeurl: pswd = '%s'" % pswd)
+    
     p = {}
     if parm:
         for s in parm.split(';'):
@@ -327,22 +314,19 @@ def encodeurl(decoded):
     user, password, parameters).
 
     >>> encodeurl(['http', 'www.google.com', '/index.html', '', '', {}])
-
-    "http://www.google.com/index.html"
+    'http://www.google.com/index.html'
 
     CVS with username, host and cvsroot. The cvs module to check out is in the
     parameters:
 
     >>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}])
-
-    "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg"
+    'cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg'
 
     Dito, but this time the username has a password part. And we also request a special tag
     to check out.
 
     >>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'}])
-
-    "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81"
+    'cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg'
     """
 
     (type, host, path, user, pswd, p) = decoded
@@ -816,7 +800,7 @@ def catpkgsplit(mydata,silent=1):
     >>> catpkgsplit('sys-libs/glibc-1.2-r7')
     ['sys-libs', 'glibc', '1.2', 'r7']
     >>> catpkgsplit('glibc-1.2-r7')
-    ['null', 'glibc', '1.2', 'r7']
+    [None, 'glibc', '1.2', 'r7']
     """
 
     try:
@@ -826,8 +810,6 @@ def catpkgsplit(mydata,silent=1):
 
     cat = os.path.basename(os.path.dirname(mydata))
     mydata = os.path.join(cat, os.path.basename(mydata))
-#    if mydata[:len(projectdir)] == projectdir:
-#        mydata = mydata[len(projectdir)+1:]
     if mydata[-3:] == '.bb':
         mydata = mydata[:-3]
 
