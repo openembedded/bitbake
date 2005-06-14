@@ -745,7 +745,7 @@ def pkgsplit(mypkg, silent=1):
     # verify rev
     revok = 0
     myrev = myparts[-1]
-    ververify(myrev, 0)
+    ververify(myrev, silent)
     if len(myrev) and myrev[0] == "r":
         try:
             string.atoi(myrev[1:])
