@@ -129,6 +129,16 @@ class BitBakeShellCommands:
         self.build( params, "clean" )
     clean.usage = "<providee>"
 
+    def compile( self, params ):
+        """Execute 'compile' on a providee"""
+        self.build( params, "compile" )
+    compile.usage = "<providee>"
+
+    def configure( self, params ):
+        """Execute 'configure' on a providee"""
+        self.build( params, "configure" )
+    configure.usage = "<providee>"
+
     def edit( self, params ):
         """Call $EDITOR on a .bb file"""
         name = params[0]
@@ -144,6 +154,11 @@ class BitBakeShellCommands:
         if debug: print "(setting leave_mainloop to true)"
         global leave_mainloop
         leave_mainloop = True
+
+    def fetch( self, params ):
+        """Fetch a providee"""
+        self.build( params, "fetch" )
+    fetch.usage = "<providee>"
 
     def fileBuild( self, params, cmd = "build" ):
         """Parse and build a .bb file"""
@@ -183,6 +198,11 @@ class BitBakeShellCommands:
         self.fileClean( params )
         self.fileBuild( params )
     fileRebuild.usage = "<bbfile>"
+
+    def force( self, params ):
+        """Toggle force task execution flag (see bitbake -f)"""
+        make.options.force = not make.options.force
+        print "SHELL: Force Flag is now '%s'" % repr( make.options.force )
 
     def help( self, params ):
         """Show a comprehensive list of commands and their purpose"""
@@ -287,6 +307,11 @@ SRC_URI = ""
                 else:
                     print "ERROR: %s %s" % ( response.status, response.reason )
 
+    def patch( self, params ):
+        """Execute 'patch' command on a providee"""
+        self.build( params, "patch" )
+    patch.usage = "<providee>"
+
     def parse( self, params ):
         """(Re-)parse .bb files and calculate the dependency graph"""
         cooker.status = cooker.ParsingStatus()
@@ -334,6 +359,11 @@ SRC_URI = ""
             print commands.getoutput( " ".join( params ) )
     shell.usage = "<...>"
 
+    def stage( self, params ):
+        """Execute 'stage' on a providee"""
+        self.build( params, "stage" )
+    stage.usage = "<providee>"
+
     def status( self, params ):
         """<just for testing>"""
         print "-" * 78
@@ -349,6 +379,11 @@ SRC_URI = ""
     def test( self, params ):
         """<just for testing>"""
         print "testCommand called with '%s'" % params
+
+    def unpack( self, params ):
+        """Execute 'unpack' on a providee"""
+        self.build( params, "unpack" )
+    unpack.usage = "<providee>"
 
     def which( self, params ):
         """Computes the providers for a given providee"""
@@ -417,14 +452,17 @@ def completer( text, state ):
         if " " in line:
             line = line.split()
             # we are in second (or more) argument
-            if line[0] == "print" or line[0] == "set":
-                allmatches = make.cfg.keys()
-            elif line[0].startswith( "file" ):
-                if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
-                else: allmatches = [ x.split("/")[-1] for x in make.pkgdata.keys() ]
-            elif line[0] == "build" or line[0] == "clean" or line[0] == "which":
-                if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
-                else: allmatches = cooker.status.providers.iterkeys()
+            if line[0] in cmds and hasattr( cmds[line[0]][0], "usage" ): # known command and usage
+                u = getattr( cmds[line[0]][0], "usage" ).split()[0]
+                if u == "<variable>":
+                    allmatches = make.cfg.keys()
+                elif u == "<bbfile>":
+                    if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                    else: allmatches = [ x.split("/")[-1] for x in make.pkgdata.keys() ]
+                elif u == "<providee>":
+                    if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                    else: allmatches = cooker.status.providers.iterkeys()
+                else: allmatches = [ "(No tab completion available for this command)" ]
             else: allmatches = [ "(No tab completion available for this command)" ]
         else:
             # we are in first argument
