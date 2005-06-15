@@ -144,7 +144,6 @@ mkdirhier(outdir)
 #           bb.error("executing bbmake to satisfy dependencies")
 
 bb.note("Executing %s" % cmd)
-data.setVar('T', '${TMPDIR}', localdata)
 data.setVar('image_cmd', cmd, localdata)
 data.setVarFlag('image_cmd', 'func', 1, localdata)
 try:
