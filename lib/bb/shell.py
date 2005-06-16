@@ -22,17 +22,22 @@
 """
 BitBake Shell
 
-TODO:
-    * specify tasks
-    * specify force
+IDEAS:
+    * use shlex lexer
+    * list defined tasks per package
+    * list classes
+    * toggle force
     * command to reparse just one (or more) bbfile(s)
     * automatic check if reparsing is necessary (inotify?)
-    * frontend for bb file manipulation?
-    * pipe output of commands into shell commands (i.e grep or sort)?
-    * job control, i.e. bring commands into background with '&', fg, bg, etc.?
-    * start parsing in background right after startup?
+    * frontend for bb file manipulation
+    * shell like output control, i.e. pipe output into grep, sort, etc.
+    * shell like job control, i.e. bring commands into background with '&', fg, bg, etc.
+    * start parsing in background right after startup
     * print variable from package data
-    * command aliases / shortcuts?
+    * command aliases / shortcuts
+    * ncurses interface
+    * clean up edit/fileedit
+    * add peek and poke
 """
 
 ##########################################################################
@@ -43,7 +48,7 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline, socket, httplib, urllib, commands
+import sys, os, imp, readline, socket, httplib, urllib, commands, popen2
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, make, fatal
 
@@ -56,7 +61,7 @@ leave_mainloop = False
 last_exception = None
 cooker = None
 parsed = False
-debug = os.environ.get( "BBSHELL_DEBUG", "" ) != ""
+debug = os.environ.get( "BBSHELL_DEBUG", "" )
 history_file = "%s/.bbsh_history" % os.environ.get( "HOME" )
 
 ##########################################################################
@@ -70,13 +75,13 @@ class BitBakeShellCommands:
         """Register all the commands"""
         self._shell = shell
         for attr in BitBakeShellCommands.__dict__:
-            if not attr.startswith( "__" ):
+            if not attr.startswith( "_" ):
                 if attr.endswith( "_" ):
                     command = attr[:-1].lower()
                 else:
                     command = attr[:].lower()
                 method = getattr( BitBakeShellCommands, attr )
-                if debug: print "registering command '%s'" % command
+                debugOut( "registering command '%s'" % command )
                 # scan number of arguments
                 usage = getattr( method, "usage", "" )
                 if usage != "<...>":
@@ -84,6 +89,11 @@ class BitBakeShellCommands:
                 else:
                     numArgs = -1
                 shell.registerCommand( command, method, numArgs, "%s %s" % ( command, usage ), method.__doc__ )
+
+    def _checkParsed( self ):
+        if not parsed:
+            print "SHELL: This command needs to parse bbfiles..."
+            self.parse( None )
 
     def buffer( self, params ):
         """Dump specified output buffer"""
@@ -111,9 +121,8 @@ class BitBakeShellCommands:
         cooker.build_cache = []
         cooker.build_cache_fail = []
 
-        if not parsed:
-            print "SHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
-            self.parse( None )
+        self._checkParsed()
+
         try:
             cooker.buildProvider( name )
         except build.EventException, e:
@@ -151,7 +160,7 @@ class BitBakeShellCommands:
 
     def exit_( self, params ):
         """Leave the BitBake Shell"""
-        if debug: print "(setting leave_mainloop to true)"
+        debugOut( "setting leave_mainloop to true" )
         global leave_mainloop
         leave_mainloop = True
 
@@ -325,12 +334,25 @@ SRC_URI = ""
         parsed = True
         print
 
-    def print_( self, params ):
-        """Print the contents of an outer BitBake environment variable"""
+    def getvar( self, params ):
+        """Dump the contents of an outer BitBake environment variable"""
         var = params[0]
         value = data.getVar( var, make.cfg, 1 )
         print value
-    print_.usage = "<variable>"
+    getvar.usage = "<variable>"
+
+    def print_( self, params ):
+        """Dump all files or providers"""
+        what = params[0]
+        if what == "files":
+            self._checkParsed()
+            for i in make.pkgdata.keys(): print i
+        elif what == "providers":
+            self._checkParsed()
+            for i in cooker.status.providers.keys(): print i
+        else:
+            print "Usage: print %s" % self.print_.usage
+    print_.usage = "<files|providers>"
 
     def python( self, params ):
         """Enter the expert mode - an interactive BitBake Python Interpreter"""
@@ -389,9 +411,7 @@ SRC_URI = ""
         """Computes the providers for a given providee"""
         item = params[0]
 
-        if not parsed:
-            print "SHELL: D'oh! The .bb files haven't been parsed yet. Next time call 'parse' before building stuff. This time I'll do it for 'ya."
-            self.parse( None )
+        self._checkParsed()
 
         preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
         if not preferred: preferred = item
@@ -445,7 +465,7 @@ def sendToPastebin( content ):
 
 def completer( text, state ):
     """Return a possible readline completion"""
-    if debug: print "(completer called with text='%s', state='%d'" % ( text, state )
+    debugOut( "completer called with text='%s', state='%d'" % ( text, state ) )
 
     if state == 0:
         line = readline.get_line_buffer()
@@ -475,6 +495,9 @@ def completer( text, state ):
     else:
         return None
 
+def debugOut( text ):
+    if debug:
+        sys.stderr.write( "( %s )\n" % text )
 
 ##########################################################################
 # Class MemoryOutput
@@ -500,6 +523,9 @@ class MemoryOutput:
             del self._buffer[ len( self._buffer ) - 1 ]
         self.text = []
         self._command = None
+    def lastBuffer( self ):
+        if self._buffer:
+            return self._buffer[ len( self._buffer ) -1 ][1]
     def bufferedCommands( self ):
         return [ cmd for cmd, output in self._buffer ]
     def buffer( self, i ):
@@ -508,7 +534,7 @@ class MemoryOutput:
         else: return "ERROR: Invalid buffer number. Buffer needs to be in (0, %d)" % ( len( self._buffer ) - 1 )
     def write( self, text ):
         if self._command is not None and text != "BB>> ": self.text.append( text )
-        self.delegate.write( text )
+        if self.delegate is not None: self.delegate.write( text )
     def flush( self ):
         return self.delegate.flush()
     def fileno( self ):
@@ -541,7 +567,7 @@ class BitBakeShell:
 
     def cleanup( self ):
         """Write readline history and clean up resources"""
-        if debug: print "(writing command history)"
+        debugOut( "writing command history" )
         try:
             global history_file
             readline.write_history_file( history_file )
@@ -556,7 +582,7 @@ class BitBakeShell:
 
     def processCommand( self, command, params ):
         """Process a command. Check number of params and print a usage string, if appropriate"""
-        if debug: print "(processing command '%s'...)" % command
+        debugOut( "processing command '%s'..." % command )
         try:
             function, numparams, usage, helptext = cmds[command]
         except KeyError:
@@ -568,7 +594,7 @@ class BitBakeShell:
                 return
 
             result = function( self.commands, params )
-            if debug: print "(result was '%s')" % result
+            debugOut( "result was '%s'" % result )
 
     def main( self ):
         """The main command loop"""
@@ -578,14 +604,28 @@ class BitBakeShell:
                 cmdline = raw_input( "BB>> " )
                 sys.stdout = self.myout
                 if cmdline:
-                    commands = cmdline.split( ';' )
-                    for command in commands:
+                    allCommands = cmdline.split( ';' )
+                    for command in allCommands:
+                        pipecmd = None
+                        #
                         self.myout.startCommand( command )
+                        if '|' in command: # disable output
+                            command, pipecmd = command.split( '|' )
+                            delegate = self.myout.delegate
+                            self.myout.delegate = None
                         if ' ' in command:
                             self.processCommand( command.split()[0], command.split()[1:] )
                         else:
                             self.processCommand( command, "" )
                         self.myout.endCommand()
+                        if pipecmd is not None: # restore output
+                            self.myout.delegate = delegate
+
+                            pipe = popen2.Popen4( pipecmd )
+                            pipe.tochild.write( "\n".join( self.myout.lastBuffer() ) )
+                            pipe.tochild.close()
+                            sys.stdout.write( pipe.fromchild.read() )
+                        #
             except EOFError:
                 print
                 return
