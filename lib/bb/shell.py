@@ -297,7 +297,7 @@ SRC_URI = ""
         if status == 302:
             print "SHELL: Pasted to %s" % location
         else:
-            print "ERROR: %s %s" % ( response.status, response.reason )
+            print "ERROR: %s %s" % ( status, error )
     pasteBin.usage = "<index>"
 
     def pasteLog( self, params ):
@@ -317,7 +317,7 @@ SRC_URI = ""
                 if status == 302:
                     print "SHELL: Pasted to %s" % location
                 else:
-                    print "ERROR: %s %s" % ( response.status, response.reason )
+                    print "ERROR: %s %s" % ( status, error )
 
     def patch( self, params ):
         """Execute 'patch' command on a providee"""
