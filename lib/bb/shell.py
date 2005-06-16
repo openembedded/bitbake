@@ -23,21 +23,24 @@
 BitBake Shell
 
 IDEAS:
-    * use shlex lexer
     * list defined tasks per package
     * list classes
     * toggle force
     * command to reparse just one (or more) bbfile(s)
     * automatic check if reparsing is necessary (inotify?)
     * frontend for bb file manipulation
-    * shell like output control, i.e. pipe output into grep, sort, etc.
-    * shell like job control, i.e. bring commands into background with '&', fg, bg, etc.
+    * more shell-like features:
+        - shell lexer (shlex)
+        - output control, i.e. pipe output into grep, sort, etc.
+        - job control, i.e. bring running commands into background and foreground
+        - wildcards for commands, i.e. build *opie*
     * start parsing in background right after startup
     * print variable from package data
     * command aliases / shortcuts
     * ncurses interface
     * clean up edit/fileedit
     * add peek and poke
+    * read some initial commands from startup file (batch)
 """
 
 ##########################################################################
@@ -362,6 +365,11 @@ SRC_URI = ""
         interpreter = code.InteractiveConsole( dict( globals() ) )
         interpreter.interact( "SHELL: Expert Mode - BitBake Python %s\nType 'help' for more information, press CTRL-D to switch back to BBSHELL." % sys.version )
 
+    def showdata( self, params ):
+        """Execute 'showdata' on a providee"""
+        self.build( params, "showdata" )
+    showdata.usage = "<providee>"
+
     def setVar( self, params ):
         """Set an outer BitBake environment variable"""
         var, value = params
@@ -608,23 +616,29 @@ class BitBakeShell:
                     for command in allCommands:
                         pipecmd = None
                         #
-                        self.myout.startCommand( command )
-                        if '|' in command: # disable output
-                            command, pipecmd = command.split( '|' )
-                            delegate = self.myout.delegate
-                            self.myout.delegate = None
-                        if ' ' in command:
-                            self.processCommand( command.split()[0], command.split()[1:] )
-                        else:
+                        # special case for expert mode
+                        if command == 'python':
+                            sys.stdout = self.myout.delegate
                             self.processCommand( command, "" )
-                        self.myout.endCommand()
-                        if pipecmd is not None: # restore output
-                            self.myout.delegate = delegate
+                            sys.stdout = self.myout
+                        else:
+                            self.myout.startCommand( command )
+                            if '|' in command: # disable output
+                                command, pipecmd = command.split( '|' )
+                                delegate = self.myout.delegate
+                                self.myout.delegate = None
+                            if ' ' in command:
+                                self.processCommand( command.split()[0], command.split()[1:] )
+                            else:
+                                self.processCommand( command, "" )
+                            self.myout.endCommand()
+                            if pipecmd is not None: # restore output
+                                self.myout.delegate = delegate
 
-                            pipe = popen2.Popen4( pipecmd )
-                            pipe.tochild.write( "\n".join( self.myout.lastBuffer() ) )
-                            pipe.tochild.close()
-                            sys.stdout.write( pipe.fromchild.read() )
+                                pipe = popen2.Popen4( pipecmd )
+                                pipe.tochild.write( "\n".join( self.myout.lastBuffer() ) )
+                                pipe.tochild.close()
+                                sys.stdout.write( pipe.fromchild.read() )
                         #
             except EOFError:
                 print
