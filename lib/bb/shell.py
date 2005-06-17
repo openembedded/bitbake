@@ -38,8 +38,13 @@ IDEAS:
     * print variable from package data
     * command aliases / shortcuts
     * ncurses interface
-    * add peek and poke
     * read some initial commands from startup file (batch)
+
+PROBLEMS:
+    * force doesn't always work
+    * poke doesn't work at all (outcommented atm.)
+    * readline completion for commands with more than one parameters
+
 """
 
 ##########################################################################
@@ -164,7 +169,10 @@ class BitBakeShellCommands:
         """Call $EDITOR on a providee"""
         name = params[0]
         bbfile = self._findProvider( name )
-        os.system( "%s %s" % ( os.environ.get( "EDITOR", "vi" ), bbfile ) )
+        if bbfile is not None:
+            os.system( "%s %s" % ( os.environ.get( "EDITOR", "vi" ), bbfile ) )
+        else:
+            print "ERROR: Nothing provides '%s'" % name
     edit.usage = "<providee>"
 
     def environment( self, params ):
@@ -359,6 +367,28 @@ SRC_URI = ""
         value = data.getVar( var, make.cfg, 1 )
         print value
     getvar.usage = "<variable>"
+
+    def peek( self, params ):
+        """Dump contents of variable defined in providee's metadata"""
+        name, var = params
+        bbfile = self._findProvider( name )
+        if bbfile is not None:
+            value = make.pkgdata[bbfile].getVar( var, 1 )
+            print value
+        else:
+            print "ERROR: Nothing provides '%s'" % name
+    peek.usage = "<providee> <variable>"
+
+    #def poke( self, params ):
+    #    """Set contents of variable defined in providee's metadata"""
+    #    name, var, value = params
+    #    bbfile = self._findProvider( name )
+    #    if bbfile is not None:
+    #        make.pkgdata[bbfile].setVar( var, value )
+    #        print "OK"
+    #    else:
+    #        print "ERROR: Nothing provides '%s'" % name
+    #poke.usage = "<providee> <variable> <value>"
 
     def print_( self, params ):
         """Dump all files or providers"""
