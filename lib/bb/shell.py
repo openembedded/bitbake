@@ -36,7 +36,6 @@ IDEAS:
         - wildcards for commands, i.e. build *opie*
     * start parsing in background right after startup
     * print variable from package data
-    * command aliases / shortcuts
     * ncurses interface
     * read some initial commands from startup file (batch)
 
@@ -69,7 +68,6 @@ last_exception = None
 cooker = None
 parsed = False
 debug = os.environ.get( "BBSHELL_DEBUG", "" )
-history_file = "%s/.bbsh_history" % os.environ.get( "HOME" )
 
 ##########################################################################
 # Class BitBakeShellCommands
@@ -111,6 +109,16 @@ class BitBakeShellCommands:
         except KeyError:
             lv, lf, pv, pf = (None,)*4
         return pf
+
+    def alias( self, params ):
+        """Register a new name for a command"""
+        new, old = params
+        if not old in cmds:
+            print "ERROR: Command '%s' not known" % old
+        else:
+            cmds[new] = cmds[old]
+            print "OK"
+    alias.usage = "<alias> <command>"
 
     def buffer( self, params ):
         """Dump specified output buffer"""
@@ -606,14 +614,15 @@ class BitBakeShell:
         """Register commands and set up readline"""
         self.commands = BitBakeShellCommands( self )
         self.myout = MemoryOutput( sys.stdout )
+        self.historyfilename = os.path.expanduser( "~/.bbsh_history" )
+        self.startupfilename = os.path.expanduser( "~/.bbsh_startup" )
 
         readline.set_completer( completer )
         readline.set_completer_delims( " " )
         readline.parse_and_bind("tab: complete")
 
         try:
-            global history_file
-            readline.read_history_file( history_file )
+            readline.read_history_file( self.historyfilename )
         except IOError:
             pass  # It doesn't exist yet.
 
@@ -623,8 +632,7 @@ class BitBakeShell:
         """Write readline history and clean up resources"""
         debugOut( "writing command history" )
         try:
-            global history_file
-            readline.write_history_file( history_file )
+            readline.write_history_file( self.historyfilename )
         except:
             print "SHELL: Unable to save command history"
 
@@ -649,6 +657,30 @@ class BitBakeShell:
 
             result = function( self.commands, params )
             debugOut( "result was '%s'" % result )
+
+    def processStartupFile( self ):
+        """Read and execute all commands found in $HOME/.bbsh_startup"""
+        if os.path.exists( self.startupfilename ):
+            startupfile = open( self.startupfilename, "r" )
+            # save_stdout = sys.stdout
+            # sys.stdout = open( "/dev/null", "w" )
+            numCommands = 0
+            for cmdline in startupfile.readlines():
+                cmdline = cmdline.strip()
+                debugOut( "processing startup line '%s'" % cmdline )
+                if not cmdline:
+                    continue
+                if "|" in cmdline:
+                    print >>save_stdout, "ERROR: ';' in startup file is not allowed. Ignoring line"
+                    continue
+                allCommands = cmdline.split( ';' )
+                for command in allCommands:
+                    if ' ' in command:
+                        self.processCommand( command.split()[0], command.split()[1:] )
+                    else:
+                        self.processCommand( command, "" )
+                    numCommands += 1
+            print "SHELL: Processed %d commands from '%s'" % ( numCommands, self.startupfilename )
 
     def main( self ):
         """The main command loop"""
@@ -700,6 +732,7 @@ def start( aCooker ):
     global cooker
     cooker = aCooker
     bbshell = BitBakeShell()
+    bbshell.processStartupFile()
     bbshell.main()
     bbshell.cleanup()
 
