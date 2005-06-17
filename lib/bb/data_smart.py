@@ -303,7 +303,7 @@ class DataSmartPackage(DataSmart):
         DataSmart.__init__(self)
 
         self.cache  = cache
-        self.bbfile = name
+        self.bbfile = os.path.abspath( name )
 
         # Either unpickle the data or do copy on write
         if clean:
