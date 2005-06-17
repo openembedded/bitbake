@@ -38,7 +38,6 @@ IDEAS:
     * print variable from package data
     * command aliases / shortcuts
     * ncurses interface
-    * clean up edit/fileedit
     * add peek and poke
     * read some initial commands from startup file (batch)
 """
@@ -98,6 +97,16 @@ class BitBakeShellCommands:
             print "SHELL: This command needs to parse bbfiles..."
             self.parse( None )
 
+    def _findProvider( self, item ):
+        self._checkParsed()
+        preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
+        if not preferred: preferred = item
+        try:
+            lv, lf, pv, pf = cooker.findBestProvider( preferred )
+        except KeyError:
+            lv, lf, pv, pf = (None,)*4
+        return pf
+
     def buffer( self, params ):
         """Dump specified output buffer"""
         index = params[0]
@@ -152,10 +161,11 @@ class BitBakeShellCommands:
     configure.usage = "<providee>"
 
     def edit( self, params ):
-        """Call $EDITOR on a .bb file"""
+        """Call $EDITOR on a providee"""
         name = params[0]
-        os.system( "%s %s" % ( os.environ.get( "EDITOR", "vi" ), completeFilePath( name ) ) )
-    edit.usage = "<bbfile>"
+        bbfile = self._findProvider( name )
+        os.system( "%s %s" % ( os.environ.get( "EDITOR", "vi" ), bbfile ) )
+    edit.usage = "<providee>"
 
     def environment( self, params ):
         """Dump out the outer BitBake environment (see bbread)"""
@@ -204,6 +214,12 @@ class BitBakeShellCommands:
         """Clean a .bb file"""
         self.fileBuild( params, "clean" )
     fileClean.usage = "<bbfile>"
+
+    def fileEdit( self, params ):
+        """Call $EDITOR on a .bb file"""
+        name = params[0]
+        os.system( "%s %s" % ( os.environ.get( "EDITOR", "vi" ), completeFilePath( name ) ) )
+    fileEdit.usage = "<bbfile>"
 
     def fileRebuild( self, params ):
         """Rebuild (clean & build) a .bb file"""
