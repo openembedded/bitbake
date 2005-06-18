@@ -242,13 +242,14 @@ class BBCooker:
             self.building_list.remove(fn)
             self.build_path.remove(pathstr)
 
-    def findBestProvider( self, pn ):
+    def findBestProvider( self, pn, pkg_pn = None):
         """
         If there is a PREFERRED_VERSION, find the highest-priority bbfile
         providing that version.  If not, find the latest version provided by
         an bbfile in the highest-priority set.
         """
-        pkg_pn = self.status.pkg_pn
+        if not pkg_pn:
+            pkg_pn = self.status.pkg_pn
 
         files = pkg_pn[pn]
         priorities = {}
@@ -365,7 +366,7 @@ class BBCooker:
         bb.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
         for pn in pkg_pn.keys():
-            preferred_versions[pn] = self.findBestProvider(pn)[2:4]
+            preferred_versions[pn] = self.findBestProvider(pn, pkg_pn)[2:4]
             eligible.append(preferred_versions[pn][1])
 
         for p in eligible:
