@@ -239,8 +239,6 @@ def exec_func_shell(func, d):
         raise FuncFailed( logfile )
 
 
-_task_cache = []
-
 def exec_task(task, d):
     """Execute an BB 'task'
 
@@ -286,6 +284,7 @@ def exec_task(task, d):
                 exec_func(item, localdata)
                 event.fire(TaskSucceeded(item, localdata))
                 task_cache.append(item)
+                data.setVar('_task_cache', task_cache, d)
             except FuncFailed, reason:
                 note( "Task failed: %s" % reason )
                 failedevent = TaskFailed(item, d)
