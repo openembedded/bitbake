@@ -107,7 +107,10 @@ class BitBakeShellCommands:
         try:
             lv, lf, pv, pf = cooker.findBestProvider( preferred )
         except KeyError:
-            lv, lf, pv, pf = (None,)*4
+            if item in cooker.status.providers:
+                pf = cooker.status.providers[item][0]
+            else:
+                pf = None
         return pf
 
     def alias( self, params ):
@@ -387,26 +390,27 @@ SRC_URI = ""
             print "ERROR: Nothing provides '%s'" % name
     peek.usage = "<providee> <variable>"
 
-    #def poke( self, params ):
-    #    """Set contents of variable defined in providee's metadata"""
-    #    name, var, value = params
-    #    bbfile = self._findProvider( name )
-    #    if bbfile is not None:
-    #        make.pkgdata[bbfile].setVar( var, value )
-    #        print "OK"
-    #    else:
-    #        print "ERROR: Nothing provides '%s'" % name
-    #poke.usage = "<providee> <variable> <value>"
+    def poke( self, params ):
+        """Set contents of variable defined in providee's metadata"""
+        print "WARNING: This command doesn't work. Try 'peek %s' right after this command and see for yourself..." % params
+        name, var, value = params
+        bbfile = self._findProvider( name )
+        if bbfile is not None:
+            make.pkgdata[bbfile].setVar( var, value )
+            print "OK"
+        else:
+            print "ERROR: Nothing provides '%s'" % name
+    poke.usage = "<providee> <variable> <value>"
 
     def print_( self, params ):
         """Dump all files or providers"""
         what = params[0]
         if what == "files":
             self._checkParsed()
-            for i in make.pkgdata.keys(): print i
+            for key in make.pkgdata.keys(): print key
         elif what == "providers":
             self._checkParsed()
-            for i in cooker.status.providers.keys(): print i
+            for key in cooker.status.providers.keys(): print key
         else:
             print "Usage: print %s" % self.print_.usage
     print_.usage = "<files|providers>"
@@ -560,6 +564,21 @@ def completer( text, state ):
 def debugOut( text ):
     if debug:
         sys.stderr.write( "( %s )\n" % text )
+
+def columnize( alist, width = 80 ):
+    """
+    A word-wrap function that preserves existing line breaks
+    and most spaces in the text. Expects that existing line
+    breaks are posix newlines (\n).
+    """
+    return reduce(lambda line, word, width=width: '%s%s%s' %
+                  (line,
+                   ' \n'[(len(line[line.rfind('\n')+1:])
+                         + len(word.split('\n',1)[0]
+                              ) >= width)],
+                   word),
+                  alist
+                 )
 
 ##########################################################################
 # Class MemoryOutput
