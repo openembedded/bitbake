@@ -38,6 +38,21 @@ from bb import note, debug, data_smart
 _dict_type = data_smart.DataSmart
 _dict_p_type = data_smart.DataSmartPackage
 
+class DataDictFull(dict):
+    """
+    This implements our Package Data Storage Interface.
+    setDirty is a no op as all items are held in memory
+    """
+    def setDirty(self, bbfile, data):
+        """
+        No-Op we assume data was manipulated as some sort of
+        reference
+        """
+        if not bbfile in self:
+            raise Exception("File %s was not in dictionary before" % bbfile)
+
+        self[bbfile] = data
+
 class DataDictCache:
     """
     Databacked Dictionary implementation
@@ -45,6 +60,7 @@ class DataDictCache:
     def __init__(self, cache_dir):
         self.cache_dir = cache_dir
         self.files     = []
+        self.dirty     = {}
 
     def has_key(self,key):
         return key in self.files
@@ -66,8 +82,22 @@ class DataDictCache:
         if not key in self.files:
             return None
 
+        # if it was dirty we will
+        if key in self.dirty:
+            return self.dirty[key]
+
         # not cached yet
         return _dict_p_type(self.cache_dir, key,False,None)
+
+    def setDirty(self, bbfile, data):
+        """
+        Only already added items can be declared dirty!!!
+        """
+
+        if not bbfile in self.files:
+            raise Exception("File %s was not in dictionary before" % bbfile)
+
+        self.dirty[bbfile] = data
 
 
 
@@ -86,7 +116,7 @@ def pkgdata(use_cache, cache):
     """
     if use_cache:
         return DataDictCache(cache)
-    return {}
+    return DataDictFull()
 
 def createCopy(source):
      """Link the source set to the destination

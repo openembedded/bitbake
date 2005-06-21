@@ -39,9 +39,11 @@ IDEAS:
     * ncurses interface
     * read some initial commands from startup file (batch)
 
+MAYBE WORKING:
+   * poke doesn't work at all (outcommented atm.)
+
 PROBLEMS:
     * force doesn't always work
-    * poke doesn't work at all (outcommented atm.)
     * readline completion for commands with more than one parameters
 
 """
@@ -392,11 +394,14 @@ SRC_URI = ""
 
     def poke( self, params ):
         """Set contents of variable defined in providee's metadata"""
-        print "WARNING: This command doesn't work. Try 'peek %s' right after this command and see for yourself..." % params
         name, var, value = params
         bbfile = self._findProvider( name )
+        d = make.pkgdata[bbfile]
         if bbfile is not None:
-            make.pkgdata[bbfile].setVar( var, value )
+            data.setVar( var, value, d )
+
+            # mark the change semi persistant
+            make.pkgdata.setDirty(bbfile, d)
             print "OK"
         else:
             print "ERROR: Nothing provides '%s'" % name
