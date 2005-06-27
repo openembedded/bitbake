@@ -515,8 +515,8 @@ class BBCooker:
             make.cfg = bb.parse.handle( afile, make.cfg )
         except IOError:
             bb.fatal( "Unable to open %s" % afile )
-        except bb.parse.ParseError:
-            bb.fatal( "Unable to parse %s" % afile )
+        except bb.parse.ParseError, details:
+            bb.fatal( "Unable to parse %s (%s)" % (afile, details) )
 
     def handleCollections( self, collections ):
         """Handle collections"""
