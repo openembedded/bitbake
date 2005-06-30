@@ -114,7 +114,9 @@ def exec_func(func, d, dirs = None):
         exec_func_python(func, d)
     else:
         exec_func_shell(func, d)
-    os.chdir(prevdir)
+
+    if os.path.exists(prevdir):
+        os.chdir(prevdir)
 
 def exec_func_python(func, d):
     """Execute a python BB 'function'"""
