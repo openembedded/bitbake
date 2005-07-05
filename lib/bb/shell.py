@@ -39,9 +39,6 @@ IDEAS:
     * ncurses interface
     * read some initial commands from startup file (batch)
 
-MAYBE WORKING:
-   * poke doesn't work at all (outcommented atm.)
-
 PROBLEMS:
     * force doesn't always work
     * readline completion for commands with more than one parameters
@@ -58,9 +55,9 @@ except NameError:
     from sets import Set as set
 import sys, os, imp, readline, socket, httplib, urllib, commands, popen2
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
-from bb import data, parse, build, make, fatal
+from bb import data, parse, build, fatal
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -104,7 +101,7 @@ class BitBakeShellCommands:
 
     def _findProvider( self, item ):
         self._checkParsed()
-        preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
+        preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, cooker.configuration.data, 1 )
         if not preferred: preferred = item
         try:
             lv, lf, pv, pf = cooker.findBestProvider( preferred )
@@ -146,8 +143,8 @@ class BitBakeShellCommands:
         """Build a providee"""
         name = params[0]
 
-        oldcmd = make.options.cmd
-        make.options.cmd = cmd
+        oldcmd = cooker.configuration.cmd
+        cooker.configuration.cmd = cmd
         cooker.build_cache = []
         cooker.build_cache_fail = []
 
@@ -160,7 +157,7 @@ class BitBakeShellCommands:
             global last_exception
             last_exception = e
 
-        make.options.cmd = oldcmd
+        cooker.configuration.cmd = oldcmd
     build.usage = "<providee>"
 
     def clean( self, params ):
@@ -190,7 +187,7 @@ class BitBakeShellCommands:
 
     def environment( self, params ):
         """Dump out the outer BitBake environment (see bbread)"""
-        data.emit_env(sys.__stdout__, make.cfg, True)
+        data.emit_env(sys.__stdout__, cooker.configuration.data, True)
 
     def exit_( self, params ):
         """Leave the BitBake Shell"""
@@ -209,13 +206,13 @@ class BitBakeShellCommands:
         bf = completeFilePath( name )
         print "SHELL: Calling '%s' on '%s'" % ( cmd, bf )
 
-        oldcmd = make.options.cmd
-        make.options.cmd = cmd
+        oldcmd = cooker.configuration.cmd
+        cooker.configuration.cmd = cmd
         cooker.build_cache = []
         cooker.build_cache_fail = []
 
         try:
-            bbfile_data = parse.handle( bf, make.cfg )
+            bbfile_data = parse.handle( bf, cooker.configuration.data )
         except parse.ParseError:
             print "ERROR: Unable to open or parse '%s'" % bf
         else:
@@ -228,7 +225,7 @@ class BitBakeShellCommands:
                 global last_exception
                 last_exception = e
 
-        make.options.cmd = oldcmd
+        cooker.configuration.cmd = oldcmd
     fileBuild.usage = "<bbfile>"
 
     def fileClean( self, params ):
@@ -250,8 +247,8 @@ class BitBakeShellCommands:
 
     def force( self, params ):
         """Toggle force task execution flag (see bitbake -f)"""
-        make.options.force = not make.options.force
-        print "SHELL: Force Flag is now '%s'" % repr( make.options.force )
+        cooker.configuration.force = not cooker.configuration.force
+        print "SHELL: Force Flag is now '%s'" % repr( cooker.configuration.force )
 
     def help( self, params ):
         """Show a comprehensive list of commands and their purpose"""
@@ -282,7 +279,7 @@ class BitBakeShellCommands:
     def new( self, params ):
         """Create a new .bb file and open the editor"""
         dirname, filename = params
-        packages = '/'.join( data.getVar( "BBFILES", make.cfg, 1 ).split('/')[:-2] )
+        packages = '/'.join( data.getVar( "BBFILES", cooker.configuration.data, 1 ).split('/')[:-2] )
         fulldirname = "%s/%s" % ( packages, dirname )
 
         if not os.path.exists( fulldirname ):
@@ -364,11 +361,11 @@ SRC_URI = ""
     def parse( self, params ):
         """(Re-)parse .bb files and calculate the dependency graph"""
         cooker.status = cooker.ParsingStatus()
-        ignore = data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
+        ignore = data.getVar("ASSUME_PROVIDED", cooker.configuration.data, 1) or ""
         cooker.status.ignored_dependencies = set( ignore.split() )
-        cooker.handleCollections( data.getVar("BBFILE_COLLECTIONS", make.cfg, 1) )
+        cooker.handleCollections( data.getVar("BBFILE_COLLECTIONS", cooker.configuration.data, 1) )
 
-        make.collect_bbfiles( cooker.myProgressCallback )
+        cooker.collect_bbfiles( cooker.myProgressCallback )
         cooker.buildDepgraph()
         global parsed
         parsed = True
@@ -377,7 +374,7 @@ SRC_URI = ""
     def getvar( self, params ):
         """Dump the contents of an outer BitBake environment variable"""
         var = params[0]
-        value = data.getVar( var, make.cfg, 1 )
+        value = data.getVar( var, cooker.configuration.data, 1 )
         print value
     getvar.usage = "<variable>"
 
@@ -386,7 +383,7 @@ SRC_URI = ""
         name, var = params
         bbfile = self._findProvider( name )
         if bbfile is not None:
-            value = make.pkgdata[bbfile].getVar( var, 1 )
+            value = cooker.pkgdata[bbfile].getVar( var, 1 )
             print value
         else:
             print "ERROR: Nothing provides '%s'" % name
@@ -396,12 +393,12 @@ SRC_URI = ""
         """Set contents of variable defined in providee's metadata"""
         name, var, value = params
         bbfile = self._findProvider( name )
-        d = make.pkgdata[bbfile]
+        d = cooker.pkgdata[bbfile]
         if bbfile is not None:
             data.setVar( var, value, d )
 
             # mark the change semi persistant
-            make.pkgdata.setDirty(bbfile, d)
+            cooker.pkgdata.setDirty(bbfile, d)
             print "OK"
         else:
             print "ERROR: Nothing provides '%s'" % name
@@ -412,7 +409,7 @@ SRC_URI = ""
         what = params[0]
         if what == "files":
             self._checkParsed()
-            for key in make.pkgdata.keys(): print key
+            for key in cooker.pkgdata.keys(): print key
         elif what == "providers":
             self._checkParsed()
             for key in cooker.status.providers.keys(): print key
@@ -436,7 +433,7 @@ SRC_URI = ""
     def setVar( self, params ):
         """Set an outer BitBake environment variable"""
         var, value = params
-        data.setVar( var, value, make.cfg )
+        data.setVar( var, value, cooker.configuration.data )
         print "OK"
     setVar.usage = "<variable> <value>"
 
@@ -484,7 +481,7 @@ SRC_URI = ""
 
         self._checkParsed()
 
-        preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, make.cfg, 1 )
+        preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, cooker.configuration.data, 1 )
         if not preferred: preferred = item
 
         try:
@@ -509,8 +506,8 @@ SRC_URI = ""
 
 def completeFilePath( bbfile ):
     """Get the complete bbfile path"""
-    if not make.pkgdata: return bbfile
-    for key in make.pkgdata.keys():
+    if not cooker.pkgdata: return bbfile
+    for key in cooker.pkgdata.keys():
         if key.endswith( bbfile ):
             return key
     return bbfile
@@ -546,12 +543,12 @@ def completer( text, state ):
             if line[0] in cmds and hasattr( cmds[line[0]][0], "usage" ): # known command and usage
                 u = getattr( cmds[line[0]][0], "usage" ).split()[0]
                 if u == "<variable>":
-                    allmatches = make.cfg.keys()
+                    allmatches = cooker.configuration.data.keys()
                 elif u == "<bbfile>":
-                    if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
-                    else: allmatches = [ x.split("/")[-1] for x in make.pkgdata.keys() ]
+                    if cooker.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                    else: allmatches = [ x.split("/")[-1] for x in cooker.pkgdata.keys() ]
                 elif u == "<providee>":
-                    if make.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                    if cooker.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
                     else: allmatches = cooker.status.providers.iterkeys()
                 else: allmatches = [ "(No tab completion available for this command)" ]
             else: allmatches = [ "(No tab completion available for this command)" ]

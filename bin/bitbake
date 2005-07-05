@@ -24,14 +24,14 @@
 import sys, os, getopt, glob, copy, os.path, re
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
-from bb import make
+from bb import utils, data, parse, debug, event, fatal
 from sets import Set
 import itertools, optparse
 
 parsespin = itertools.cycle( r'|/-\\' )
 bbdebug = 0
 
-__version__ = "1.3.1"
+__version__ = "1.3.2"
 
 #============================================================================#
 # BBParsingStatus
@@ -133,6 +133,18 @@ class BBStatistics:
 
 
 #============================================================================#
+# BBOptions
+#============================================================================#
+class BBConfiguration( object ):
+    """
+    Manages build options and configurations for one run
+    """
+    def __init__( self, options ):
+        for key, val in options.__dict__.items():
+            setattr( self, key, val )
+        self.data = data.init()
+
+#============================================================================#
 # BBCooker
 #============================================================================#
 class BBCooker:
@@ -153,15 +165,18 @@ class BBCooker:
         self.stats = BBStatistics()
         self.status = None
 
+        self.pkgdata = None
+        self.cache = None
+
     def tryBuildPackage( self, fn, item, the_data ):
         """Build one package"""
         bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
             self.stats.attempt += 1
-            if make.options.force:
-                bb.data.setVarFlag('do_%s' % make.options.cmd, 'force', 1, the_data)
-            if not make.options.dry_run:
-                bb.build.exec_task('do_%s' % make.options.cmd, the_data)
+            if self.configuration.force:
+                bb.data.setVarFlag('do_%s' % self.configuration.cmd, 'force', 1, the_data)
+            if not self.configuration.dry_run:
+                bb.build.exec_task('do_%s' % self.configuration.cmd, the_data)
             bb.event.fire(bb.event.PkgSucceeded(item, the_data))
             self.build_cache.append(fn)
             return True
@@ -186,7 +201,7 @@ class BBCooker:
             bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
             return False
 
-        the_data = make.pkgdata[fn]
+        the_data = self.pkgdata[fn]
         item = self.status.pkg_fn[fn]
 
         self.building_list.append(fn)
@@ -195,15 +210,15 @@ class BBCooker:
         self.build_path.append(pathstr)
 
         depends_list = (bb.data.getVar('DEPENDS', the_data, 1) or "").split()
-        if make.options.verbose:
+        if self.configuration.verbose:
             bb.note("current path: %s" % (" -> ".join(self.build_path)))
             bb.note("dependencies for %s are: %s" % (item, " ".join(depends_list)))
 
         try:
             failed = False
 
-            depcmd = make.options.cmd
-            bbdepcmd = bb.data.getVarFlag('do_%s' % make.options.cmd, 'bbdepcmd', the_data)
+            depcmd = self.configuration.cmd
+            bbdepcmd = bb.data.getVarFlag('do_%s' % self.configuration.cmd, 'bbdepcmd', the_data)
             if bbdepcmd is not None:
                 if bbdepcmd == "":
                     depcmd = None
@@ -211,8 +226,8 @@ class BBCooker:
                     depcmd = bbdepcmd
 
             if depcmd:
-                oldcmd = make.options.cmd
-                make.options.cmd = depcmd
+                oldcmd = self.configuration.cmd
+                self.configuration.cmd = depcmd
 
             for dependency in depends_list:
                 if dependency in self.status.ignored_dependencies:
@@ -222,17 +237,17 @@ class BBCooker:
                 if self.buildProvider( dependency ) == 0:
                     bb.error("dependency %s (for %s) not satisfied" % (dependency,item))
                     failed = True
-                    if make.options.abort:
+                    if self.configuration.abort:
                         break
 
             if depcmd:
-                make.options.cmd = oldcmd
+                self.configuration.cmd = oldcmd
 
             if failed:
                 self.stats.deps += 1
                 return False
 
-            if bb.build.stamp_is_current('do_%s' % make.options.cmd, the_data):
+            if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
                 self.build_cache.append(fn)
                 return True
 
@@ -267,7 +282,7 @@ class BBCooker:
 
         preferred_file = None
 
-        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, make.cfg, 1)
+        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, self.configuration.data, 1)
         if preferred_v:
             m = re.match('(.*)_(.*)', preferred_v)
             if m:
@@ -300,7 +315,7 @@ class BBCooker:
             pv,pr = self.status.pkg_pvpr[file_name]
             dp = self.status.pkg_dp[file_name]
 
-            if (latest is None) or ((latest_p == dp) and (make.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
+            if (latest is None) or ((latest_p == dp) and (utils.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
                 latest = (pv, pr)
                 latest_f = file_name
                 latest_p = dp
@@ -335,6 +350,26 @@ class BBCooker:
 
             print "%-30s %20s %20s" % (p, latest[0][0] + "-" + latest[0][1],
                                         prefstr)
+
+    def showEnvironment( self ):
+        """Show the outer or per-package environment"""
+        if self.configuration.buildfile:
+            try:
+                self.configuration.data, fromCache = self.load_bbfile( self.configuration.buildfile )
+            except IOError, e:
+                fatal("Unable to read %s: %s" % ( self.configuration.buildfile, e ))
+            except Exception, e:
+                fatal("%s" % e)
+        # emit variables and shell functions
+        try:
+            data.update_data( self.configuration.data )
+            data.emit_env(sys.__stdout__, self.configuration.data, True)
+        except Exception, e:
+            fatal("%s" % e)
+        # emit the metadata which isnt valid shell
+        for e in self.configuration.data.keys():
+            if data.getVarFlag( e, 'python', self.configuration.data ):
+                sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
     def buildProvider( self, item ):
         fn = None
@@ -381,7 +416,7 @@ class BBCooker:
         # look to see if one of them is already staged, or marked as preferred.
         # if so, bump it to the head of the queue
         for p in all_p:
-            the_data = make.pkgdata[p]
+            the_data = self.pkgdata[p]
             pn = bb.data.getVar('PN', the_data, 1)
             pv = bb.data.getVar('PV', the_data, 1)
             pr = bb.data.getVar('PR', the_data, 1)
@@ -398,14 +433,14 @@ class BBCooker:
                     extra_chat = "; upgrading from %s to %s" % (oldver, newver)
                 else:
                     extra_chat = ""
-                if make.options.verbose:
+                if self.configuration.verbose:
                     bb.note("selecting already-staged %s to satisfy %s%s" % (pn, item, extra_chat))
                 eligible.remove(fn)
                 eligible = [fn] + eligible
                 discriminated = True
                 break
 
-        prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, make.cfg, 1)
+        prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, self.configuration.data, 1)
         if prefervar:
             self.preferred[item] = prefervar
 
@@ -413,7 +448,7 @@ class BBCooker:
             for p in eligible:
                 pn = self.status.pkg_fn[p]
                 if self.preferred[item] == pn:
-                    if make.options.verbose:
+                    if self.configuration.verbose:
                         bb.note("selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
                     eligible.remove(p)
                     eligible = [p] + eligible
@@ -450,14 +485,14 @@ class BBCooker:
             return 0
 
         # Handle PREFERRED_PROVIDERS
-        for p in (bb.data.getVar('PREFERRED_PROVIDERS', make.cfg, 1) or "").split():
+        for p in (bb.data.getVar('PREFERRED_PROVIDERS', self.configuration.data, 1) or "").split():
             (providee, provider) = p.split(':')
             if providee in self.preferred and self.preferred[providee] != provider:
                 bb.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.preferred[providee]))
             self.preferred[providee] = provider
 
         # Calculate priorities for each file
-        for p in make.pkgdata.keys():
+        for p in self.pkgdata.keys():
             self.status.bbfile_priority[p] = calc_bbfile_priority(p)
 
         # Build package list for "bitbake world"
@@ -512,7 +547,7 @@ class BBCooker:
 
     def parseConfigurationFile( self, afile ):
         try:
-            make.cfg = bb.parse.handle( afile, make.cfg )
+            self.configuration.data = bb.parse.handle( afile, self.configuration.data )
         except IOError:
             bb.fatal( "Unable to open %s" % afile )
         except bb.parse.ParseError, details:
@@ -523,11 +558,11 @@ class BBCooker:
         if collections:
             collection_list = collections.split()
             for c in collection_list:
-                regex = bb.data.getVar("BBFILE_PATTERN_%s" % c, make.cfg, 1)
+                regex = bb.data.getVar("BBFILE_PATTERN_%s" % c, self.configuration.data, 1)
                 if regex == None:
                     bb.error("BBFILE_PATTERN_%s not defined" % c)
                     continue
-                priority = bb.data.getVar("BBFILE_PRIORITY_%s" % c, make.cfg, 1)
+                priority = bb.data.getVar("BBFILE_PRIORITY_%s" % c, self.configuration.data, 1)
                 if priority == None:
                     bb.error("BBFILE_PRIORITY_%s not defined" % c)
                     continue
@@ -543,32 +578,38 @@ class BBCooker:
                     bb.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
 
 
-    def cook( self, args ):
-        if not make.options.cmd:
-            make.options.cmd = "build"
+    def cook( self, configuration, args ):
+        self.configuration = configuration
 
-        if make.options.debug:
-            bb.debug_level = make.options.debug
+        if not self.configuration.cmd:
+            self.configuration.cmd = "build"
 
-        make.cfg = bb.data.init()
+        if self.configuration.debug:
+            bb.debug_level = self.configuration.debug
 
-        for f in make.options.file:
+        self.configuration.data = bb.data.init()
+
+        for f in self.configuration.file:
             self.parseConfigurationFile( f )
 
         self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
 
-        if not bb.data.getVar("BUILDNAME", make.cfg):
-            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
+        if self.configuration.show_environment:
+            self.showEnvironment()
+            sys.exit( 0 )
 
-        buildname = bb.data.getVar("BUILDNAME", make.cfg)
+        if not bb.data.getVar("BUILDNAME", self.configuration.data):
+            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
 
-        if make.options.interactive:
+        buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
+
+        if self.configuration.interactive:
             self.interactiveMode()
 
-        if make.options.buildfile is not None:
-            bf = os.path.abspath( make.options.buildfile )
+        if self.configuration.buildfile is not None:
+            bf = os.path.abspath( self.configuration.buildfile )
             try:
-                bbfile_data = bb.parse.handle(bf, make.cfg)
+                bbfile_data = bb.parse.handle(bf, self.configuration.data)
             except IOError:
                 bb.fatal("Unable to open %s" % bf)
 
@@ -583,10 +624,10 @@ class BBCooker:
         # initialise the parsing status now we know we will need deps
         self.status = BBParsingStatus()
 
-        ignore = bb.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
+        ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
         self.status.ignored_dependencies = Set( ignore.split() )
 
-        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", make.cfg, 1) )
+        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
         pkgs_to_build = None
         if args:
@@ -594,40 +635,42 @@ class BBCooker:
                 pkgs_to_build = []
             pkgs_to_build.extend(args)
         if not pkgs_to_build:
-                bbpkgs = bb.data.getVar('BBPKGS', make.cfg, 1)
+                bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, 1)
                 if bbpkgs:
                         pkgs_to_build = bbpkgs.split()
-        if not pkgs_to_build and not make.options.show_versions and not make.options.interactive:
+        if not pkgs_to_build and not self.configuration.show_versions \
+                             and not self.configuration.interactive \
+                             and not self.configuration.show_environment:
                 print "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
                 print "for usage information."
                 sys.exit(0)
 
         # Import Psyco if available and not disabled
-        if not make.options.disable_psyco:
+        if not self.configuration.disable_psyco:
             try:
                 import psyco
             except ImportError:
                 if bbdebug == 0:
                     bb.note("Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
             else:
-                psyco.bind( make.collect_bbfiles )
+                psyco.bind( self.collect_bbfiles )
         else:
             bb.note("You have disabled Psyco. This decreases performance.")
 
         try:
             bb.debug(1, "collecting .bb files")
-            make.collect_bbfiles( self.myProgressCallback )
+            self.collect_bbfiles( self.myProgressCallback )
             bb.debug(1, "parsing complete")
             if bbdebug == 0:
                 print
-            if make.options.parse_only:
+            if self.configuration.parse_only:
                 print "Requested parsing .bb files only.  Exiting."
                 return
 
-            bb.data.update_data( make.cfg )
+            bb.data.update_data( self.configuration.data )
             self.buildDepgraph()
 
-            if make.options.show_versions:
+            if self.configuration.show_versions:
                 self.showVersions()
                 sys.exit( 0 )
             if 'world' in pkgs_to_build:
@@ -635,7 +678,7 @@ class BBCooker:
                 for t in self.status.world_target:
                     pkgs_to_build.append(t)
 
-            bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, make.cfg))
+            bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.data))
 
             for k in pkgs_to_build:
                 failed = False
@@ -648,16 +691,177 @@ class BBCooker:
                     failed = True
 
                 if failed:
-                    if make.options.abort:
+                    if self.configuration.abort:
                         sys.exit(1)
 
-            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
+            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.data))
 
             sys.exit( self.stats.show() )
 
         except KeyboardInterrupt:
             print "\nNOTE: KeyboardInterrupt - Build not completed."
             sys.exit(1)
+
+    def get_bbfiles( self, path = os.getcwd() ):
+        """Get list of default .bb files by reading out the current directory"""
+        contents = os.listdir(path)
+        bbfiles = []
+        for f in contents:
+            (root, ext) = os.path.splitext(f)
+            if ext == ".bb":
+                bbfiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
+        return bbfiles
+
+    def find_bbfiles( self, path ):
+        """Find all the .bb files in a directory (uses find)"""
+        findcmd = 'find ' + path + ' -name *.bb | grep -v SCCS/'
+        try:
+            finddata = os.popen(findcmd)
+        except OSError:
+            return []
+        return finddata.readlines()
+
+    def deps_clean(self, d):
+        depstr = data.getVar('__depends', d)
+        if depstr:
+            deps = depstr.split(" ")
+            for dep in deps:
+                (f,old_mtime_s) = dep.split("@")
+                old_mtime = int(old_mtime_s)
+                new_mtime = parse.cached_mtime(f)
+                if (new_mtime > old_mtime):
+                    return False
+        return True
+
+    def load_bbfile( self, bbfile ):
+        """Load and parse one .bb build file"""
+
+        if not self.cache in [None, '']:
+            # get the times
+            cache_mtime = data.init_db_mtime(self.cache, bbfile)
+            file_mtime = parse.cached_mtime(bbfile)
+
+            if file_mtime > cache_mtime:
+                #print " : '%s' dirty. reparsing..." % bbfile
+                pass
+            else:
+                #print " : '%s' clean. loading from cache..." % bbfile
+                cache_data = data.init_db( self.cache, bbfile, False )
+                if self.deps_clean(cache_data):
+                    return cache_data, True
+
+        topdir = data.getVar('TOPDIR', self.configuration.data)
+        if not topdir:
+            topdir = os.path.abspath(os.getcwd())
+            # set topdir to here
+            data.setVar('TOPDIR', topdir, self.configuration)
+        bbfile = os.path.abspath(bbfile)
+        bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
+        # expand tmpdir to include this topdir
+        data.setVar('TMPDIR', data.getVar('TMPDIR', self.configuration.data, 1) or "", self.configuration.data)
+        # set topdir to location of .bb file
+        topdir = bbfile_loc
+        #data.setVar('TOPDIR', topdir, cfg)
+        # go there
+        oldpath = os.path.abspath(os.getcwd())
+        os.chdir(topdir)
+        bb = data.init_db(self.cache,bbfile, True, self.configuration.data)
+        try:
+            parse.handle(bbfile, bb) # read .bb data
+            if not self.cache in [None, '']:
+                bb.commit(parse.cached_mtime(bbfile)) # write cache
+            os.chdir(oldpath)
+            return bb, False
+        finally:
+            os.chdir(oldpath)
+
+    def collect_bbfiles( self, progressCallback ):
+        """Collect all available .bb build files"""
+        self.cb = progressCallback
+        parsed, cached, skipped, masked = 0, 0, 0, 0
+        self.cache   = bb.data.getVar( "CACHE", self.configuration.data, 1 )
+        self.pkgdata = data.pkgdata( not self.cache in [None, ''], self.cache )
+
+        if not self.cache in [None, '']:
+            if self.cb is not None:
+                print "NOTE: Using cache in '%s'" % self.cache
+            try:
+                os.stat( self.cache )
+            except OSError:
+                bb.mkdirhier( self.cache )
+        else:
+            if self.cb is not None:
+                print "NOTE: Not using a cache. Set CACHE = <directory> to enable."
+        files = (data.getVar( "BBFILES", self.configuration.data, 1 ) or "").split()
+        data.setVar("BBFILES", " ".join(files), self.configuration.data)
+
+        if not len(files):
+            files = get_bbfiles()
+
+        if not len(files):
+            bb.error("no files to build.")
+
+        newfiles = []
+        for f in files:
+            if os.path.isdir(f):
+                dirfiles = find_bbfiles(f)
+                if dirfiles:
+                    newfiles += dirfiles
+                    continue
+            newfiles += glob.glob(f) or [ f ]
+
+        bbmask = bb.data.getVar('BBMASK', self.configuration.data, 1) or ""
+        try:
+            bbmask_compiled = re.compile(bbmask)
+        except sre_constants.error:
+            bb.fatal("BBMASK is not a valid regular expression.")
+
+        for i in xrange( len( newfiles ) ):
+            f = newfiles[i]
+            if bbmask and bbmask_compiled.search(f):
+                bb.debug(1, "bbmake: skipping %s" % f)
+                masked += 1
+                continue
+            debug(1, "bbmake: parsing %s" % f)
+
+            # read a file's metadata
+            try:
+                bb_data, fromCache = self.load_bbfile(f)
+                if fromCache: cached += 1
+                else: parsed += 1
+                deps = None
+                if bb_data is not None:
+                    # allow metadata files to add items to BBFILES
+                    #data.update_data(self.pkgdata[f])
+                    addbbfiles = data.getVar('BBFILES', bb_data) or None
+                    if addbbfiles:
+                        for aof in addbbfiles.split():
+                            if not files.count(aof):
+                                if not os.path.isabs(aof):
+                                    aof = os.path.join(os.path.dirname(f),aof)
+                                files.append(aof)
+                    for var in bb_data.keys():
+                        if data.getVarFlag(var, "handler", bb_data) and data.getVar(var, bb_data):
+                            event.register(data.getVar(var, bb_data))
+                    self.pkgdata[f] = bb_data
+
+                # now inform the caller
+                if self.cb is not None:
+                    self.cb( i + 1, len( newfiles ), f, bb_data, fromCache )
+
+            except IOError, e:
+                bb.error("opening %s: %s" % (f, e))
+                pass
+            except bb.parse.SkipPackage:
+                skipped += 1
+                pass
+            except KeyboardInterrupt:
+                raise
+            except Exception, e:
+                bb.error("%s while parsing %s" % (e, f))
+
+        if self.cb is not None:
+            print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ),
 
 #============================================================================#
 # main
@@ -685,7 +889,7 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-i", "--interactive", help = "drop into the interactive mode.",
                action = "store_true", dest = "interactive", default = False )
 
-    parser.add_option( "-c", "--cmd", help = "Specify task to execute",
+    parser.add_option( "-c", "--cmd", help = "Specify task to execute. Note that this only executes the specified task for the providee and the packages it depends on, i.e. 'compile' does not implicitly call stage for the dependencies (IOW: use only if you know what you are doing)",
                action = "store", dest = "cmd", default = "build" )
 
     parser.add_option( "-r", "--read", help = "read the specified file before bitbake.conf",
@@ -709,8 +913,10 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-s", "--show-versions", help = "show current and preferred versions of all packages",
                action = "store_true", dest = "show_versions", default = False )
 
+    parser.add_option( "-e", "--environment", help = "show the global or per-package environment (this is what used to be bbread)",
+               action = "store_true", dest = "show_environment", default = False )
+
     options, args = parser.parse_args( sys.argv )
 
-    make.options = options
     cooker = BBCooker()
-    cooker.cook( args[1:] )
+    cooker.cook( BBConfiguration( options ), args[1:] )
