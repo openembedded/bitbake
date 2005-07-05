@@ -1,0 +1,103 @@
+NOTE: this doc is slightly coherent mumbling and psuedo code.  I'll make it
+have actual implementations of the structures, and more coherent outlining of
+the design, shortly.
+
+struct var_chunk {
+	type;
+	data;
+	condition; /* A in B .. any chunk of a var can be conditional, to
+		      facilitate conditional prepend/append */
+}
+
+struct var_chunk_set {
+	list of var_chunks;
+	condition; /* A in B .. any var itself's value can be conditional */
+}
+
+struct var {
+	name;
+	cached_val; /* expanded version of the value */
+	list of var_chunk_sets; /* unexpanded version of the value */
+	bool dirty; /* dbbs it need re-expansion due to the referees changing? */
+	list of vars; /* referrers */
+}
+
+enum bb_opcode {
+	BB_VAR_SET,
+	BB_VAR_APPEND,
+	BB_VAR_APPEND_NOSPACE,
+	BB_VAR_PREPEND,
+	BB_VAR_PREPEND_NOSPACE,
+	BB_VAR_DEL
+	BB_VAR_ATTR_SET,
+	BB_VAR_ATTR_APPEND,
+	BB_VAR_ATTR_APPEND_NOSPACE,
+	BB_VAR_ATTR_PREPEND
+	BB_VAR_ATTR_PREPEND_NOSPACE,
+	BB_VAR_ATTR_DEL
+};
+
+struct bb_cmd {
+	enum bb_opcode;
+	list of data;
+};
+
+struct bb_compiled {
+	list of struct bbc's;
+}
+
+struct pre_metadata_set {
+	list of:
+	{
+		if resolved -> struct var
+		if unresolved -> bbc
+	}
+}
+
+struct metadata_set {
+	parents; /* links to higher scopes */
+	hash table of var name -> struct var;
+}
+
+NOTE: we track variable referrers (who has me in their var chunks?)
+
+example:
+A := ${B} /* unresolved */
+C := a /* resolved */
+D := ${A} /* unresolved */
+C += ${B} /* unresolved */
+E := ${C} /* resolved */
+F = ${B} /* unresolved, but its contents can be a struct var, not an bbc */
+
+Then, when you link a metadata set to another (set our scope under his),
+all the unresolved bbc's can be immediately executed, producing a new
+metadata set which is entirely struct var's.
+
+Once a pre metadata set is executed / attached to its parent scopes, we know
+that the pre_metadata_set -> metadata_set needs to occur again whenever one of
+its parents is dirtied.  Technically, we know which variables in its parents
+affect which variables of ours, but unless we track which bbc's affected which
+variables, we'll have to rerun the pre metadata set -> metadata set operation
+whenever its parents change.
+
+In conclusion, precompiling the .bb with bbc's, and using the pre metadata set,
+enables us to avoid reparsing files that depend on their context in each possible
+context, and when its context changes.  For example, this will enable us to
+avoid reparsing all the .bb files when bb.conf or local.conf changes.
+
+Caching the pre metadata set as well as the compiled bb reduces the number of
+bbc executions necessary when attaching to a new parent scope (i.e. taking
+base.bbclass and attaching it to each and every .bb).
+
+Caching the metadata set allows us to avoid reexecution of any bbc's when
+context hasn't changed, and the compiled bb isnt dirty.
+
+bbmake runs:
+	reparse any changed/new files
+	re execution bbc's whereever someone was affected by the reparses
+	store the metadata sets in an sqlite db
+
+	Now, after this, we know that the db contains the current metadata sets for
+	all existing files.  We can issue sql queries to obtain all the dependency
+	information to construct our build paths, and can obtain the package data
+	whenever we're ready for it.

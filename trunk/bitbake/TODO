@@ -1,0 +1,18 @@
+On popular request by popular people a list of tasks to-do:
+
+	-Kill insecure usage of os.system either by properly escaping
+         the strings or a faster replacement not involving /bin/sh
+	-Introduce a -p option to automatically hotshot/profile the
+	 run
+	-Cache dependencies separately and invalidate them when any file
+         changed.
+	-...
+
+
+DONE:
+·       -On generating the inter package deps do not parse each file multiply
+·        times.
+	-We build the lists while parsing the data now
+·       (WAS: Do not generate the world dependency tree, only when someone
+·             requests it.
+

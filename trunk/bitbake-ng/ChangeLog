@@ -1,0 +1,36 @@
+2005-01-17 Chris Larson <kergoth@handhelds.org>
+
+	* design_spec.xml: Add specification of the metadata component,
+	  update vim modeline to set the filetype to 'docbk'.
+
+2005-01-13 Chris Larson <kergoth@handhelds.org>
+
+	* Minor rearranging.. now we have m4/internal and m4/external,
+	  to make it possible to run autoreconf in this tree even on
+	  machines without 'check' installed.
+
+2005-01-10 Chris Larson <kergoth@handhelds.org>
+
+	* Update library linking so that the dev symlink is
+	  libbitbake-[release].so rather than libbitbake.so.
+
+2005-01-09 Chris Larson <kergoth@handhelds.org>
+
+	* Correct library linking to set libtool's versioning.
+	* Add 'test' target to makefiles, which runs the 'check' unit tests.
+	* Add pkgconfig .pc file.
+
+2005-01-08 Chris Larson <kergoth@handhelds.org>
+
+	* Improve documentation generation.  Use a decent set of
+	  autoconf macros to handle selection of the types of
+	  doxygen output (taken from the "doxample" project).
+	* Use 'check' (http://check.sourceforge.net/) for unit testing.
+	* Add basic variable insert/remove/lookup implementations for the
+	  bitbake metadata (RAM backed for now).
+
+2004-12-30  Chris Larson <kergoth@handhelds.org>
+
+	* Create initial tree for bitbake-ng.
+	* Add autoconf macros for gcc 4.0 (and patched 3.4.x) symbol visibility.
+	* Add initial BitBake-ng Design Specification document.

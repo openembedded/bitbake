@@ -1,0 +1,9 @@
+# Point to the OpenEmbedded packages
+BBFILES := "/home/ich/programming/oe/openembedded_data/packages/*/*.bb"
+
+# Configurations to run tests for
+# Each configurations consists out of a three tuple
+# (TARGET_ARCH,TARGET_OS,DISTRO,[MACHINE1.MACHINE2])
+TEST_CONFIGS = "(arm,linux,familiar-0.9.0,[h3600.h3900]) (arm,linux,openzaurus-3.5.3,[collie.corgie])"
+
+

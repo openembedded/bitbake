@@ -1,0 +1,21 @@
+enum metadata_source_type {
+	OE_METADATA_ENV,
+	OE_METADATA_FILE
+}
+
+struct metadata_source {
+	enum metadata_source_type;
+	gcchar *location;
+	struct oe_metadata *data;
+	void *private;
+}
+
+#if 0
+/* this probably belongs in whomever is doing the parsing and
+   storing of the metadata */
+struct metadata_sources {
+	hash of metadata_source's, keyed by location?;
+}
+#endif
+
+struct metadata_source_type *oe_getmetadata_sync(enum metadata_source_type, location);

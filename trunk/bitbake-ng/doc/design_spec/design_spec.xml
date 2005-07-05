@@ -1,0 +1,156 @@
+<?xml version="1.0"?>
+<!--
+  ex:ts=4:sw=4:sts=4:et:ft=docbk
+  -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+-->
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+                      "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<book>
+    <bookinfo>
+        <title>BitBake-Ng Design Specification</title>
+        <authorgroup>
+            <corpauthor>BitBake Team</corpauthor>
+        </authorgroup>
+        <copyright>
+            <year>2004</year>
+            <year>2005</year>
+            <holder>Chris Larson</holder>
+        </copyright>
+        <legalnotice>
+            <para>This work is licensed under the Creative Commons Attribution License. To view a copy of this license, visit <ulink url="http://creativecommons.org/licenses/by/2.0/">http://creativecommons.org/licenses/by/2.0/</ulink> or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.</para>
+        </legalnotice>
+    </bookinfo>
+    <preface>
+        <title>Introduction</title>
+        <para>It is said that a developer should always plan on at least one rewrite in a given project.  Such is the case here.  This document outlines the design of bitbake 2.0, the upcoming rewrite of the BitBake project.  It is expected that the reader will have at least a passing familiarity with the bitbake project.  I would recommend perusing the <ulink url="http://bitbake.berlios.de/manual/">bitbake users manual</ulink> if this is not the case.</para>
+    </preface>
+    <preface>
+        <title>Terminology</title>
+        <table><title>Terminology</title>
+            <tgroup cols='2'>
+                <colspec colname='term'/>
+                <colspec colname='definition'/>
+                <tbody>
+                    <row>
+                        <entry>Recipe</entry>
+                        <entry>A set of directions with a list of ingredients for making or preparing something.  In this context, an ordered sequence of steps to be executed, with associated metadata.</entry>
+                    </row>
+                    <row>
+                        <entry>Recipe Box</entry>
+                        <entry>The bitbake component that manages the available recipes.</entry>
+                    </row>
+                    <row>
+                        <entry>Metadata</entry>
+                        <entry>The bitbake component that manages the metadata for bitbake recipes.  The <quote>ingredients</quote>, as it were.</entry>
+                    </row>
+                    <row>
+                        <entry>Bakers</entry>
+                        <entry>The bitbake component consisting of the threads that execute recipes, obeying recipe interdependencies.</entry>
+                    </row>
+                </tbody>
+            </tgroup>
+        </table>
+    </preface>
+    <chapter>
+        <title>General Requirements</title>
+        <itemizedlist>
+            <listitem><para><emphasis>MUST</emphasis> be thread-safe.</para></listitem>
+        </itemizedlist>
+    </chapter>
+    <chapter>
+        <title>Components</title>
+        <section>
+            <title>Metadata</title>
+            <section>
+                <title>Overview</title>
+                <para>The <quote>metadata</quote> component governs the backend datastore for bitbake.  It will store all the metadata associated with bitbake's recipes.  This may or may not include actual functions, depending on the nature of the recipes being used.</para>
+            </section>
+            <section>
+                <title>Requirements</title>
+                <itemizedlist>
+                    <listitem><para>The metadata is expected to be in the form of key/value pairs.</para></listitem>
+                    <listitem><para>There needs to be a means of specifying metadata about other metadata (key/value pairs that correspond to a specific existing key).</para></listitem>
+                    <listitem><para>We know from the previous implementation that it is very important that we keep memory usage down, and ensure that we do not have multiple copies of the same metadata in RAM at any given time.</para></listitem>
+                </itemizedlist>
+            </section>
+            <section>
+                <title>Component Architecture</title>
+                <para>The metadata for a given recipe will be laid out as a hash table.  Each key (UTF-8 string) in the table will be associated with a <quote>BitBake variable</quote>.  A BitBake variable consists of the following:</para>
+                <para>
+                    <itemizedlist>
+                        <listitem><para>linked list of variables that refer to this one</para></listitem>
+                        <listitem><para>linked list of <quote>variable chunks</quote></para></listitem>
+                        <listitem><para>a cached value (UTF-8 string), which is the resolved form of the variable chunks</para></listitem>
+                        <listitem><para><quote>dirty</quote> flag to indicate whether the cached value is current</para></listitem>
+                    </itemizedlist>
+                </para>
+                <para>Variable chunks are independent, ordered, components of the value of a given piece of metadata.  A chunk can take the form of a string or a reference to another variable.  The cached form will be updated automatically whenever a variable that we refer to changes.</para>
+            </section>
+        </section>
+        <section>
+            <title>Recipes</title>
+            <section>
+                <title>Overview</title>
+                <para>The <quote>recipe</quote> component governs the parsing, storing, and execution of individual bitbake recipes.  A bitbake recipe consists of an ordered sequence of steps to be executed and the associated metadata.</para>
+            </section>
+            <section>
+                <title>Requirements</title>
+                <itemizedlist>
+                    <listitem><para>The parsers should be token-based rather than regular expression based.</para></listitem>
+                    <listitem>
+                        <para>We need to support multiple file formats for our metadata:</para>
+                        <itemizedlist>
+                            <listitem><para>.conf</para></listitem>
+                            <listitem><para>.bb</para></listitem>
+                            <listitem><para>.inc</para></listitem>
+                            <listitem><para>.bbclass</para></listitem>
+                        </itemizedlist>
+                    </listitem>
+                    <listitem><para>The file formats need to be well defined and have a BNF syntax.</para></listitem>
+                    <listitem><para>The file formats need to be easily editable by a user.</para></listitem>
+                    <listitem><para>We should ensure that very little escaping is necessary in the use of our metadata for the common case (avoid using ${} for variable expansion, for example, because that's what the shell uses).</para></listitem>
+                    <listitem><para>The parser must do a good job of detecting and reporting syntax errors.</para></listitem>
+                    <listitem><para>The valid escape sequences (i.e. \n, \r) and anything else that needs escaping must be well defined and documented.</para></listitem>
+                    <listitem><para>We must have well defined namespaces/scopes, with defined rules for merging them (inheritence/inclusion).</para></listitem>
+                </itemizedlist>
+            </section>
+            <section>
+                <title>Component Architecture</title>
+                <para>A bitbake recipe consists of a number of individual pieces.  Naturally, being a recipe, it has a set of ordered steps to be followed.  It also has a set of ingredients (associated bitbake metadata).  The first of the bitbake specific aspects of the recipe is that it has links to its <quote>parents</quote>.  The parents of a given bitbake recipe are essentially the context for the recipe, or the <quote>scope</quote> the recipe is in.  This may be global user specified configuration parameters, or <quote>classes</quote> to abstract out common parts of the recipe.  To give a real world example, you might have a recipe class for cookies.  Each recipe has its own unique steps, but for the most part, the steps involved in making cookies are the same.</para>
+            </section>
+        </section>
+        <section>
+            <title>Recipe Box</title>
+            <para><emphasis>Insert content here.</emphasis></para>
+        </section>
+        <section>
+            <title>Bakers</title>
+            <section>
+                <title>Requirements</title>
+                <itemizedlist>
+                    <listitem><para>We must be able to build .bb files in dependency order (package A depends on package B).</para></listitem>
+                    <listitem><para>We must handle inter-task dependency for a single .bb.</para></listitem>
+                    <listitem><para>We <emphasis>MAY</emphasis> want to allow inter-task dependencies across package boundaries (package A's configure and compile tasks depend on package B's staging task).</para></listitem>
+                    <listitem><para>We must handle PROVIDES, and multiple-provides situations (the user must be able to extert control over what providers they would prefer and/or require).</para></listitem>
+                    <listitem><para>We should support multiple interpreters for the executed code (python, shell, etc).</para></listitem>
+                    <listitem><para>We need to handle package version comparisons when selecting providers, and again, the user needs to be able to extert control over this.</para></listitem>
+                    <listitem><para>It would be useful if there was a way to depend on a condition regarding another package's metadata.  In other words, package A depends on package B being built in a certain way.</para></listitem>
+                </itemizedlist>
+            </section>
+            <section>
+                <title>Possible Solutions</title>
+                <itemizedlist>
+                    <listitem><para><emphasis>Insert content here.</emphasis></para></listitem>
+                </itemizedlist>
+            </section>
+            <section>
+                <title>Implementation Decision</title>
+                <para><emphasis>Insert content here.</emphasis></para>
+            </section>
+        </section>
+    </chapter>
+    <chapter>
+        <title>Component Relationships</title>
+        <para><emphasis>Insert content here.</emphasis></para>
+    </chapter>
+</book>

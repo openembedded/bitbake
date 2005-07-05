@@ -1,0 +1,23 @@
+TODO List
+---------
+NOTE: This is a very simple library with a specific purpose in mind, but we want to
+make sure it's done right, since performance or scalability problems could impact the
+entirety of bitbake and bitbake-ng. --CML
+
+[ ] Fix up the API to accomidate proper error handling, in order to respond to the user
+    and let them know what's going on.  A common problem would be not having write access
+    to the default BBDATAPATH.  Perhaps a more sane default for a normal user would be a
+    file in /var/tmp.
+[ ] Test repeatedly the basic variable set/get/delete operations.
+[ ] Document whether or not the set functions copy the strings of the key/value or use
+    them as is, in the doxygen markup.
+[ ] Code/test/sanity check variable attribute operations.
+[ ] Code/test the last modif date function.
+[ ] Profile the code to ensure it will meet our needs.
+[ ] If necessary, optimize the bottlenecks.
+[ ] Add functions to supply optimization hints to the datastore.  This is almost certain
+    to be necessary, as writes to sqlite are quickest when done in a single transaction.
+    So, you'd have a function stating that you'll be using this heavily for a while, as
+    a hint that perhaps it should be keeping it in RAM until you're done, or postpone
+    COMMIT until you're done.
+[ ] Start using it.

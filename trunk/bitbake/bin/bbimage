@@ -1,0 +1,154 @@
+#!/usr/bin/env python
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# Copyright (C) 2003  Chris Larson
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+# 
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA 02111-1307 USA. 
+
+import sys, os
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
+import bb
+from bb import *
+
+__version__ = 1.0
+type = "jffs2"
+cfg_bb = data.init()
+cfg_oespawn = data.init()
+
+
+def usage():
+    print "Usage: bbimage [options ...]"
+    print "Creates an image for a target device from a root filesystem,"
+    print "obeying configuration parameters from the BitBake"
+    print "configuration files, thereby easing handling of deviceisms."
+    print ""
+    print "  %s\t\t%s" % ("-r [arg], --root [arg]", "root directory (default=${IMAGE_ROOTFS})")
+    print "  %s\t\t%s" % ("-t [arg], --type [arg]", "image type (jffs2[default], cramfs)")
+    print "  %s\t\t%s" % ("-n [arg], --name [arg]", "image name (override IMAGE_NAME variable)")
+    print "  %s\t\t%s" % ("-v, --version", "output version information and exit")
+    sys.exit(0)
+
+def version():
+    print "BitBake Build Tool Core version %s" % bb.__version__
+    print "BBImage version %s" % __version__
+
+def emit_bb(d, base_d = {}):
+    for v in d.keys():
+        if d[v] != base_d[v]:
+            data.emit_var(v, d)
+
+def getopthash(l):
+    h = {}
+    for (opt, val) in l:
+        h[opt] = val
+    return h
+
+import getopt
+try:
+    (opts, args) = getopt.getopt(sys.argv[1:], 'vr:t:e:n:', [ 'version', 'root=', 'type=', 'bbfile=', 'name=' ])
+except getopt.GetoptError:
+    usage()
+
+# handle opts
+opthash = getopthash(opts)
+
+if '--version' in opthash or '-v' in opthash:
+    version()
+    sys.exit(0)
+
+try:
+    cfg_bb = parse.handle(os.path.join('conf', 'bitbake.conf'), cfg_bb)
+except IOError:
+    fatal("Unable to open bitbake.conf")
+
+# sanity check
+if cfg_bb is None:
+    fatal("Unable to open/parse %s" % os.path.join('conf', 'bitbake.conf'))
+    usage(1)
+
+rootfs = None
+extra_files = []
+
+if '--root' in opthash:
+    rootfs = opthash['--root']
+if '-r' in opthash:
+    rootfs = opthash['-r']
+
+if '--type' in opthash:
+    type = opthash['--type']
+if '-t' in opthash:
+    type = opthash['-t']
+
+if '--bbfile' in opthash:
+    extra_files.append(opthash['--bbfile'])
+if '-e' in opthash:
+    extra_files.append(opthash['-e'])
+
+for f in extra_files:
+    try:
+        cfg_bb = parse.handle(f, cfg_bb)
+    except IOError:
+        print "unable to open %s" % f
+
+if not rootfs:
+    rootfs = data.getVar('IMAGE_ROOTFS', cfg_bb, 1)
+
+if not rootfs:
+    bb.fatal("IMAGE_ROOTFS not defined")
+
+data.setVar('IMAGE_ROOTFS', rootfs, cfg_bb)
+
+from copy import copy, deepcopy
+localdata = data.createCopy(cfg_bb)
+
+overrides = data.getVar('OVERRIDES', localdata)
+if not overrides:
+    bb.fatal("OVERRIDES not defined.")
+data.setVar('OVERRIDES', '%s:%s' % (overrides, type), localdata)
+data.update_data(localdata)
+data.setVar('OVERRIDES', overrides, localdata)
+
+if '-n' in opthash:
+    data.setVar('IMAGE_NAME', opthash['-n'], localdata)
+if '--name' in opthash:
+    data.setVar('IMAGE_NAME', opthash['--name'], localdata)
+
+topdir = data.getVar('TOPDIR', localdata, 1) or os.getcwd()
+
+cmd = data.getVar('IMAGE_CMD', localdata, 1)
+if not cmd:
+    bb.fatal("IMAGE_CMD not defined")
+
+outdir = data.getVar('DEPLOY_DIR_IMAGE', localdata, 1)
+if not outdir:
+    bb.fatal('DEPLOY_DIR_IMAGE not defined')
+mkdirhier(outdir)
+
+#depends = data.getVar('IMAGE_DEPENDS', localdata, 1) or ""
+#if depends:
+#       bb.note("Spawning bbmake to satisfy dependencies: %s" % depends)
+#       ret = os.system('bbmake %s' % depends)
+#       if ret != 0:
+#           bb.error("executing bbmake to satisfy dependencies")
+
+bb.note("Executing %s" % cmd)
+data.setVar('image_cmd', cmd, localdata)
+data.setVarFlag('image_cmd', 'func', 1, localdata)
+try:
+    bb.build.exec_func('image_cmd', localdata)
+except bb.build.FuncFailed:
+    sys.exit(1)
+#ret = os.system(cmd)
+#sys.exit(ret)

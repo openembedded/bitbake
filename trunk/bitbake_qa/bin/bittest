@@ -1,0 +1,208 @@
+#!/usr/bin/env python
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+#
+# Copyright (C)       2005 Holger Hans Peter Freyther
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+#   Redistributions of source code must retain the above copyright notice,
+#   this list of conditions and the following disclaimer.
+#
+#   Redistributions in binary form must reproduce the above copyright
+#   notice, this list of conditions and the following disclaimer in the
+#   documentation and/or other materials provided with the distribution.
+#
+#   Neither the name Holger Hans Peter Freyther nor the names of its
+#   contributors may be used to endorse or promote products derived
+#   from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+# FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+# COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+import sys, os, optparse
+
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
+
+from bittest import *
+
+try:
+    import bb
+    import bb.data
+except:
+    print "Use PYTHONPATH to point to bitbake/lib"
+    sys.exit(0)
+
+__version__   = 0.2
+__all_tests__ = ["patch_checker",
+                 "source_checker",
+                 "doc_checker",
+                 "content_checker"]
+
+def handle_options( args ):
+    """
+    Handle the options and return the handled options and the rest (not parsed)
+    """
+    parser = optparse.OptionParser( version = "BitTest Bitbake Testing Tool version %s" % __version__,
+                                    usage = """%prog [options] [test ...]
+Executes the specified tests or if none are given all tests. The result is printed
+on the cmd line
+""" )
+
+    parser.add_option( "-o", "--output", help = "print the output to the file",
+                       action = "store", dest = "output", default  = None )
+    parser.add_option( "-f", "--format", help = "print the output in the specified format",
+                       action = "store", dest = "format", default = None )
+
+    options, args = parser.parse_args( args )
+    return options, args[1:]
+
+def _load_config(file):
+    """
+    load a config file into a bb.data instance
+    """
+    try:
+        return bb.parse.handle(os.path.join('conf', file), bb.data.init() )
+    except IOError, e:
+        return None
+
+def _get_instances(tests):
+    test_inst = {}
+
+    # create instances
+    for test in tests:
+        test_inst[test] = __import__(test).create_test()
+
+    return test_inst
+
+def generate_results(test_results):
+    for result in test_results:
+        test_output = TestOutputText(result, test_results[result])
+        test_output.print_result()
+
+def run_tests(data,test_config,test_options, tests, bbfiles = None):
+    if bbfiles == None:
+        bbfiles = fileparser.find_files(bb.data.getVar('BBFILES', test_config).split(' '))
+
+    bb.note("Collected %d BitBake files" % len(bbfiles) )
+
+    tmp_dir = os.path.join(os.getcwd(),'tmp')
+    src_dir = os.path.join(os.getcwd(),'tmp_sources')
+    bb.mkdirhier(tmp_dir)
+    bb.mkdirhier(src_dir)
+
+    # now run the tests for each test
+    test_results   = {}
+    test_instances = _get_instances(tests)
+
+    for test in test_instances:
+        test_results[test] = TestResult(test_instances[test].test_name())
+
+    for bbfile in bbfiles:
+
+        # now we do it for each configuration...
+        for (arch,os1,distro,machines) in test_options:
+            test_data = bb.data.createCopy(data)
+            bb.data.setVar('TARGET_ARCH', arch, test_data)
+            bb.data.setVar('TARGET_OS',   os1,  test_data)
+            bb.data.setVar('DISTRO',    distro, test_data)
+
+            # include the distro
+            bb.parse.handle(os.path.join('conf/distro',distro+'.conf'),test_data,1)
+
+            # now for each machine and we can finally run the tests
+            for machine in machines:
+                machine_data = bb.data.createCopy(test_data)
+                bb.data.setVar('MACHINE', machine, machine_data)
+
+                try:
+                    bb.parse.handle(os.path.join('conf/machine',machine+'.conf'),machine_data,1)
+                except:
+                    bb.note("Machine %s is not known" % machine)
+
+                try:
+                    bb_data = bb.parse.handle(bbfile, bb.data.createCopy(machine_data))
+                except bb.parse.SkipPackage:
+                    bb.note("Skipping Package %s" % bbfile)
+                    continue
+                except Exception, e:
+                    bb.note("Error on parsing: %s:%s" % (bbfile, e))
+
+                # run the testcases now
+                for test in test_instances:
+                    test_run = bb.data.createCopy(bb_data)
+
+                    # be sure these variables are set
+                    bb.data.setVar('TMPDIR', tmp_dir, test_run)
+                    bb.data.setVar('DL_DIR', src_dir, test_run)
+
+
+                    bb.data.update_data(test_run)
+                    print "Running test for %s with machine: %s and distro: %s" % (bb.data.getVar('PN', test_run, True), machine, distro)
+                    test_results[test].insert_result(test_instances[test].test(bbfile, test_run))
+
+    return test_results
+
+
+
+def start_testing():
+    """
+    Start with testing:
+        We will parse the options to decide which tests should be executed.
+        Then we will parse the base configuration (bitbake.conf) and afterwards
+        our unit testing configuration.
+        We will go through every bbfile, parse it and for each setup we will call
+        the testing method
+    """
+
+    options, args = handle_options( sys.argv )
+
+    tests = []
+    if len(args) == 0:
+        tests = __all_tests__
+    else:
+        for mode in args:
+            if not mode in __all_tests__ and not mode == "example":
+                bb.note("Test %s does not exist" % mode)
+            else:
+                tests.append(mode)
+
+    if len(tests) == 0:
+        bb.note("No tests to run exiting")
+        sys.exit(0)
+
+    bb.note("Running the following tests: %s" % tests )
+
+    # Parse the default config
+    data = _load_config('bitbake.conf')
+    if data == None:
+        bb.error("Could not parse the bitbake.conf")
+    bb.data.inheritFromOS(data)
+
+    # Parse the test configuration
+    test_config = _load_config('testrun.conf')
+    if test_config == None:
+        bb.error("Could not parse the bittest configuration file")
+    test_options = parse_test_options(test_config)
+
+    # start running the test
+    results = run_tests(data, test_config, test_options, tests)
+    generate_results(results)
+
+
+
+if __name__ == "__main__":
+    start_testing()

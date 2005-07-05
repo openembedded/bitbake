@@ -1,0 +1,41 @@
+2005-02-17  Chris Larson <kergoth@handhelds.org>
+
+	* src/backend-sqlite3.c, include/bitbake-data.h: Adjust the API so
+	  that bitbake-data users aren't required to link against glib-2.0
+	  themselves.
+
+2005-02-03  Chris Larson <kergoth@handhelds.org>
+
+	* doc/doxygen.cfg, doc/doxygen.m4, doc/Makefile.am, configure.ac,
+	  Makefile.am: Add doxygen doc generation.
+	* include/bitbake-data.h, src/backend-sqlite3.h: Add datastore process
+	  wide initialization and shutdown based on usage count.
+	* src/backend-sqlite3.h: Add calls to sqlite3 to open and close the
+	  recipe database.
+	* src/backend-sqlite3.h, include/bitbake-data.h: Adjust the
+	  bb_data_destroy function.  Now accepts a new gboolean
+	  parameter to indicate that the data can be truly removed -- only
+	  affects behavior of stores which are persistant.  Setting said
+	  parameter to TRUE will remove the data for the recipe in question
+	  from the persistant store completely, rather than just freeing our
+	  datastructures.
+	* bitbake-data-0.0.pc.in, bitbake-data.pc.in: Renamed.
+	* configure.ac: Update per .pc.in rename.
+	* Makefile.am: Create a .pc based on LT_RELEASE, and install our .pc.
+	* src/Makefile.am: Don't hardcode the library release.  Use
+	  @LT_RELEASE@ where appropriate instead.
+	* README, AUTHORS: New file.
+	* configure.ac, Makefile.am, tests/Makefile.am, tests/check_bitbake_data.c:
+	  Add the first of our unit tests using 'check'.
+	* src/backend-sqlite3.c, include/bitbake-data/private.h, tests/check_bitbake_data.c:
+	  Add the variable and variable attribute lookup, insertion, and
+	  removal routines.
+	* src/backend-sqlite3.c, tests/check_bitbake_data.c: Start rework of
+	  sqlite tables to accomidate scope resolution.
+
+2005-02-02  Chris Larson <kergoth@handhelds.org>
+
+	* Many files: Created initial repository.
+	* include/bitbake-data/common.h: Add common header for things like gcc
+	  visibility macros.
+	* doc/REQUIREMENTS: Add musings on requirements.

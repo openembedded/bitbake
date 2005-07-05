@@ -1,0 +1,2 @@
+bitbake-data is a supplementary library to be used by recipe handlers
+in the bitbake 2.0 library.   It provides a metadata store for the recipes.

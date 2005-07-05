@@ -1,0 +1,29 @@
+Bitbake QA will hold Quality Assurance Resources:
+	The primary user will be OpenEmbedded but it is useful
+for any other user bitbake as well.
+
+layout of the bitbake_qa module:
+conf/
+	It contains example configurations used to run tests
+with specified parameters (for overrides)
+
+doc/
+	This directory
+
+module_name/
+	QA modules doing the actual tests
+
+
+I hope to offer the following tests soon:
+
+source_checker - It will check if the sources can still be fetched
+		 and generates reports
+
+patch_checker  - It will check if the patches still applies
+
+doc_checker    - It will check if all variables have a documentation
+
+content_checker - It will check for common misusage in variables
+
+tinderbox_resources - It will contain resources to run a tinderbox server
+		      and client.

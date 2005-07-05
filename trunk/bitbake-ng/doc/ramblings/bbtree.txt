@@ -1,0 +1,39 @@
+F = Fetch
+P = Patch
+Cf = Configure
+Cp = Compile
+S = Stage
+Pk = Package
+
+
+
+F1 <-- P1 <-- Cf1 <-- Cp1 <-- S1 <-- Pk1
+                              ^
+               ---------------|
+               |
+F2 <-- P2 <-- Cf2 <-- Cp2 <-- S2 <-- Pk2
+                              ^
+               ---------------|
+               |
+F3 <-- P3 <-- Cf3 <-- Cp3 <-- S3 <-- Pk3
+
+
+Counts (start at the end products and work backwards)
+Pk1 - 1
+Pk2 - 1
+Pk3 - 1
+S1 - 3
+S2 - 2
+S3 - 1
+Cp1 - 3
+Cp2 - 2
+Cp3 - 1
+Cf1 - 3
+Cf2 - 2
+Cf3 - 1
+P1 - 3
+P2 - 2
+P3 - 1
+F1 - 3
+F2 - 2
+F3 - 1 

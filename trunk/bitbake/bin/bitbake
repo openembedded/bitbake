@@ -1,0 +1,716 @@
+#!/usr/bin/env python
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+#
+# Copyright (C) 2003, 2004  Chris Larson
+# Copyright (C) 2003, 2004  Phil Blundell
+# Copyright (C) 2003 - 2005 Michael 'Mickey' Lauer
+# Copyright (C) 2005        Holger Hans Peter Freyther
+# Copyright (C) 2005        ROAD GmbH
+#
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation; either version 2 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, write to the Free Software Foundation, Inc., 59 Temple
+# Place, Suite 330, Boston, MA 02111-1307 USA.
+
+import sys, os, getopt, glob, copy, os.path, re
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
+import bb
+from bb import make
+from sets import Set
+import itertools, optparse
+
+parsespin = itertools.cycle( r'|/-\\' )
+bbdebug = 0
+
+__version__ = "1.3.1"
+
+#============================================================================#
+# BBParsingStatus
+#============================================================================#
+class BBParsingStatus:
+    """
+    The initial idea for this status class is to use the data when it is
+    already loaded instead of loading it from various place over and over
+    again.
+    """
+
+    def __init__(self):
+        self.cache_dirty = False
+        self.providers   = {}
+        self.bbfile_priority = {}
+        self.bbfile_config_priorities = []
+        self.ignored_depedencies = None
+        self.possible_world = []
+        self.world_target = Set()
+        self.pkg_pn = {}
+        self.pkg_fn = {}
+        self.pkg_pvpr = {}
+        self.pkg_dp = {}
+        self.pn_provides = {}
+        self.all_depends = Set()
+
+    def handle_bb_data(self, file_name, bb_data, cached):
+        """
+        We will fill the dictionaries with the stuff we
+        need for building the tree more fast
+        """
+        if bb_data == None:
+            return
+
+        if not cached:
+            self.cache_dirty = True
+
+        pn       = bb.data.getVar('PN', bb_data, True)
+        pv       = bb.data.getVar('PV', bb_data, True)
+        pr       = bb.data.getVar('PR', bb_data, True)
+        dp       = int(bb.data.getVar('DEFAULT_PREFERENCE', bb_data, True) or "0")
+        provides = Set([pn] + (bb.data.getVar("PROVIDES", bb_data, 1) or "").split())
+        depends  = (bb.data.getVar("DEPENDS", bb_data, True) or "").split()
+
+
+        # build PackageName to FileName lookup table
+        if pn not in self.pkg_pn:
+            self.pkg_pn[pn] = []
+        self.pkg_pn[pn].append(file_name)
+
+        # build FileName to PackageName lookup table
+        self.pkg_fn[file_name] = pn
+        self.pkg_pvpr[file_name] = (pv,pr)
+        self.pkg_dp[file_name] = dp
+
+        # Build forward and reverse provider hashes
+        # Forward: virtual -> [filenames]
+        # Reverse: PN -> [virtuals]
+        if pn not in self.pn_provides:
+            self.pn_provides[pn] = Set()
+        self.pn_provides[pn] |= provides
+
+        for provide in provides:
+            if provide not in self.providers:
+                self.providers[provide] = []
+            self.providers[provide].append(file_name)
+
+        for dep in depends:
+            self.all_depends.add(dep)
+
+        # Collect files we may need for possible world-dep
+        # calculations
+        if not bb.data.getVar('BROKEN', bb_data, True) and not bb.data.getVar('EXCLUDE_FROM_WORLD', bb_data, True):
+            self.possible_world.append(file_name)
+
+
+#============================================================================#
+# BBStatistics
+#============================================================================#
+class BBStatistics:
+    """
+    Manage build statistics for one run
+    """
+    def __init__(self ):
+        self.attempt = 0
+        self.success = 0
+        self.fail = 0
+        self.deps = 0
+
+    def show( self ):
+        print "Build statistics:"
+        print "  Attempted builds: %d" % self.attempt
+        if self.fail:
+            print "  Failed builds: %d" % self.fail
+        if self.deps:
+            print "  Dependencies not satisfied: %d" % self.deps
+        if self.fail or self.deps: return 1
+        else: return 0
+
+
+#============================================================================#
+# BBCooker
+#============================================================================#
+class BBCooker:
+    """
+    Manages one bitbake build run
+    """
+
+    ParsingStatus = BBParsingStatus     # make it visible from the shell
+    Statistics = BBStatistics           # make it visible from the shell
+
+    def __init__( self ):
+        self.build_cache_fail = []
+        self.build_cache = []
+        self.building_list = []
+        self.build_path = []
+        self.consider_msgs_cache = []
+        self.preferred = {}
+        self.stats = BBStatistics()
+        self.status = None
+
+    def tryBuildPackage( self, fn, item, the_data ):
+        """Build one package"""
+        bb.event.fire(bb.event.PkgStarted(item, the_data))
+        try:
+            self.stats.attempt += 1
+            if make.options.force:
+                bb.data.setVarFlag('do_%s' % make.options.cmd, 'force', 1, the_data)
+            if not make.options.dry_run:
+                bb.build.exec_task('do_%s' % make.options.cmd, the_data)
+            bb.event.fire(bb.event.PkgSucceeded(item, the_data))
+            self.build_cache.append(fn)
+            return True
+        except bb.build.FuncFailed:
+            self.stats.fail += 1
+            bb.error("task stack execution failed")
+            bb.event.fire(bb.event.PkgFailed(item, the_data))
+            self.build_cache_fail.append(fn)
+            raise
+        except bb.build.EventException, e:
+            self.stats.fail += 1
+            event = e.args[1]
+            bb.error("%s event exception, aborting" % bb.event.getName(event))
+            bb.event.fire(bb.event.PkgFailed(item, the_data))
+            self.build_cache_fail.append(fn)
+            raise
+
+    def tryBuild( self, fn, virtual ):
+        """Build a provider and its dependencies"""
+        if fn in self.building_list:
+            bb.error("%s depends on itself (eventually)" % fn)
+            bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
+            return False
+
+        the_data = make.pkgdata[fn]
+        item = self.status.pkg_fn[fn]
+
+        self.building_list.append(fn)
+
+        pathstr = "%s (%s)" % (item, virtual)
+        self.build_path.append(pathstr)
+
+        depends_list = (bb.data.getVar('DEPENDS', the_data, 1) or "").split()
+        if make.options.verbose:
+            bb.note("current path: %s" % (" -> ".join(self.build_path)))
+            bb.note("dependencies for %s are: %s" % (item, " ".join(depends_list)))
+
+        try:
+            failed = False
+
+            depcmd = make.options.cmd
+            bbdepcmd = bb.data.getVarFlag('do_%s' % make.options.cmd, 'bbdepcmd', the_data)
+            if bbdepcmd is not None:
+                if bbdepcmd == "":
+                    depcmd = None
+                else:
+                    depcmd = bbdepcmd
+
+            if depcmd:
+                oldcmd = make.options.cmd
+                make.options.cmd = depcmd
+
+            for dependency in depends_list:
+                if dependency in self.status.ignored_dependencies:
+                    continue
+                if not depcmd:
+                    continue
+                if self.buildProvider( dependency ) == 0:
+                    bb.error("dependency %s (for %s) not satisfied" % (dependency,item))
+                    failed = True
+                    if make.options.abort:
+                        break
+
+            if depcmd:
+                make.options.cmd = oldcmd
+
+            if failed:
+                self.stats.deps += 1
+                return False
+
+            if bb.build.stamp_is_current('do_%s' % make.options.cmd, the_data):
+                self.build_cache.append(fn)
+                return True
+
+            return self.tryBuildPackage( fn, item, the_data )
+
+        finally:
+            self.building_list.remove(fn)
+            self.build_path.remove(pathstr)
+
+    def findBestProvider( self, pn, pkg_pn = None):
+        """
+        If there is a PREFERRED_VERSION, find the highest-priority bbfile
+        providing that version.  If not, find the latest version provided by
+        an bbfile in the highest-priority set.
+        """
+        if not pkg_pn:
+            pkg_pn = self.status.pkg_pn
+
+        files = pkg_pn[pn]
+        priorities = {}
+        for f in files:
+            priority = self.status.bbfile_priority[f]
+            if priority not in priorities:
+                priorities[priority] = []
+            priorities[priority].append(f)
+        p_list = priorities.keys()
+        p_list.sort(lambda a, b: a - b)
+        tmp_pn = []
+        for p in p_list:
+            tmp_pn = priorities[p] + tmp_pn
+        pkg_pn[pn] = tmp_pn
+
+        preferred_file = None
+
+        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, make.cfg, 1)
+        if preferred_v:
+            m = re.match('(.*)_(.*)', preferred_v)
+            if m:
+                preferred_v = m.group(1)
+                preferred_r = m.group(2)
+            else:
+                preferred_r = None
+
+            for f in pkg_pn[pn]:
+                pv,pr = self.status.pkg_pvpr[f]
+                if preferred_v == pv and (preferred_r == pr or preferred_r == None):
+                    preferred_file = f
+                    preferred_ver = (pv, pr)
+                    break
+            if preferred_r:
+                pv_str = '%s-%s' % (preferred_v, preferred_r)
+            else:
+                pv_str = preferred_v
+            if preferred_file is None:
+                bb.note("preferred version %s of %s not available" % (pv_str, pn))
+            else:
+                bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
+
+        # get highest priority file set
+        files = pkg_pn[pn]
+        latest = None
+        latest_p = 0
+        latest_f = None
+        for file_name in files:
+            pv,pr = self.status.pkg_pvpr[file_name]
+            dp = self.status.pkg_dp[file_name]
+
+            if (latest is None) or ((latest_p == dp) and (make.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
+                latest = (pv, pr)
+                latest_f = file_name
+                latest_p = dp
+        if preferred_file is None:
+            preferred_file = latest_f
+            preferred_ver = latest
+
+        return (latest,latest_f,preferred_ver, preferred_file)
+
+    def showVersions( self ):
+        pkg_pn = self.status.pkg_pn
+        preferred_versions = {}
+        latest_versions = {}
+
+        # Sort by priority
+        for pn in pkg_pn.keys():
+            (last_ver,last_file,pref_ver,pref_file) = self.findBestProvider(pn)
+            preferred_versions[pn] = (pref_ver, pref_file)
+            latest_versions[pn] = (last_ver, last_file)
+
+        pkg_list = pkg_pn.keys()
+        pkg_list.sort()
+
+        for p in pkg_list:
+            pref = preferred_versions[p]
+            latest = latest_versions[p]
+
+            if pref != latest:
+                prefstr = pref[0][0] + "-" + pref[0][1]
+            else:
+                prefstr = ""
+
+            print "%-30s %20s %20s" % (p, latest[0][0] + "-" + latest[0][1],
+                                        prefstr)
+
+    def buildProvider( self, item ):
+        fn = None
+
+        discriminated = False
+
+        if item not in self.status.providers:
+            bb.error("Nothing provides %s" % item)
+            return 0
+
+        all_p = self.status.providers[item]
+
+        for p in all_p:
+            if p in self.build_cache:
+                bb.debug(1, "already built %s in this run\n" % p)
+                return 1
+
+        eligible = []
+        preferred_versions = {}
+
+        # Collate providers by PN
+        pkg_pn = {}
+        for p in all_p:
+            pn = self.status.pkg_fn[p]
+            if pn not in pkg_pn:
+                pkg_pn[pn] = []
+            pkg_pn[pn].append(p)
+
+        bb.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
+
+        for pn in pkg_pn.keys():
+            preferred_versions[pn] = self.findBestProvider(pn, pkg_pn)[2:4]
+            eligible.append(preferred_versions[pn][1])
+
+        for p in eligible:
+            if p in self.build_cache_fail:
+                bb.debug(1, "rejecting already-failed %s" % p)
+                eligible.remove(p)
+
+        if len(eligible) == 0:
+            bb.error("no eligible providers for %s" % item)
+            return 0
+
+        # look to see if one of them is already staged, or marked as preferred.
+        # if so, bump it to the head of the queue
+        for p in all_p:
+            the_data = make.pkgdata[p]
+            pn = bb.data.getVar('PN', the_data, 1)
+            pv = bb.data.getVar('PV', the_data, 1)
+            pr = bb.data.getVar('PR', the_data, 1)
+            tmpdir = bb.data.getVar('TMPDIR', the_data, 1)
+            stamp = '%s/stamps/%s-%s-%s.do_populate_staging' % (tmpdir, pn, pv, pr)
+            if os.path.exists(stamp):
+                (newvers, fn) = preferred_versions[pn]
+                if not fn in eligible:
+                    # package was made ineligible by already-failed check
+                    continue
+                oldver = "%s-%s" % (pv, pr)
+                newver = '-'.join(newvers)
+                if (newver != oldver):
+                    extra_chat = "; upgrading from %s to %s" % (oldver, newver)
+                else:
+                    extra_chat = ""
+                if make.options.verbose:
+                    bb.note("selecting already-staged %s to satisfy %s%s" % (pn, item, extra_chat))
+                eligible.remove(fn)
+                eligible = [fn] + eligible
+                discriminated = True
+                break
+
+        prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, make.cfg, 1)
+        if prefervar:
+            self.preferred[item] = prefervar
+
+        if item in self.preferred:
+            for p in eligible:
+                pn = self.status.pkg_fn[p]
+                if self.preferred[item] == pn:
+                    if make.options.verbose:
+                        bb.note("selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
+                    eligible.remove(p)
+                    eligible = [p] + eligible
+                    discriminated = True
+                    break
+
+        if len(eligible) > 1 and discriminated == False:
+            if item not in self.consider_msgs_cache:
+                providers_list = []
+                for fn in eligible:
+                    providers_list.append(self.status.pkg_fn[fn])
+                bb.note("multiple providers are available (%s);" % ", ".join(providers_list))
+                bb.note("consider defining PREFERRED_PROVIDER_%s" % item)
+            self.consider_msgs_cache.append(item)
+
+
+        # run through the list until we find one that we can build
+        for fn in eligible:
+            bb.debug(2, "selecting %s to satisfy %s" % (fn, item))
+            if self.tryBuild(fn, item):
+                return 1
+
+        bb.note("no buildable providers for %s" % item)
+        return 0
+
+    def buildDepgraph( self ):
+        all_depends = self.status.all_depends
+        pn_provides = self.status.pn_provides
+
+        def calc_bbfile_priority(filename):
+            for (regex, pri) in self.status.bbfile_config_priorities:
+                if regex.match(filename):
+                    return pri
+            return 0
+
+        # Handle PREFERRED_PROVIDERS
+        for p in (bb.data.getVar('PREFERRED_PROVIDERS', make.cfg, 1) or "").split():
+            (providee, provider) = p.split(':')
+            if providee in self.preferred and self.preferred[providee] != provider:
+                bb.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.preferred[providee]))
+            self.preferred[providee] = provider
+
+        # Calculate priorities for each file
+        for p in make.pkgdata.keys():
+            self.status.bbfile_priority[p] = calc_bbfile_priority(p)
+
+        # Build package list for "bitbake world"
+        bb.debug(1, "collating packages for \"world\"")
+        for f in self.status.possible_world:
+            terminal = True
+            pn = self.status.pkg_fn[f]
+
+            for p in pn_provides[pn]:
+                if p.startswith('virtual/'):
+                    bb.debug(2, "skipping %s due to %s provider starting with virtual/" % (f, p))
+                    terminal = False
+                    break
+                for pf in self.status.providers[p]:
+                    if self.status.pkg_fn[pf] != pn:
+                        bb.debug(2, "skipping %s due to both us and %s providing %s" % (f, pf, p))
+                        terminal = False
+                        break
+            if terminal:
+                self.status.world_target.add(pn)
+
+            # drop reference count now
+            self.status.possible_world = None
+            self.status.all_depends    = None
+
+    def myProgressCallback( self, x, y, f, file_data, from_cache ):
+        # feed the status with new input
+        self.status.handle_bb_data(f, file_data, from_cache)
+
+        if bbdebug > 0:
+            return
+        if os.isatty(sys.stdout.fileno()):
+            sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
+            sys.stdout.flush()
+        else:
+            if x == 1:
+                sys.stdout.write("Parsing .bb files, please wait...")
+                sys.stdout.flush()
+            if x == y:
+                sys.stdout.write("done.")
+                sys.stdout.flush()
+
+    def interactiveMode( self ):
+        """Drop off into a shell"""
+        try:
+            from bb import shell
+        except ImportError, details:
+            bb.fatal("Sorry, shell not available (%s)" % details )
+        else:
+            shell.start( self )
+            sys.exit( 0 )
+
+    def parseConfigurationFile( self, afile ):
+        try:
+            make.cfg = bb.parse.handle( afile, make.cfg )
+        except IOError:
+            bb.fatal( "Unable to open %s" % afile )
+        except bb.parse.ParseError, details:
+            bb.fatal( "Unable to parse %s (%s)" % (afile, details) )
+
+    def handleCollections( self, collections ):
+        """Handle collections"""
+        if collections:
+            collection_list = collections.split()
+            for c in collection_list:
+                regex = bb.data.getVar("BBFILE_PATTERN_%s" % c, make.cfg, 1)
+                if regex == None:
+                    bb.error("BBFILE_PATTERN_%s not defined" % c)
+                    continue
+                priority = bb.data.getVar("BBFILE_PRIORITY_%s" % c, make.cfg, 1)
+                if priority == None:
+                    bb.error("BBFILE_PRIORITY_%s not defined" % c)
+                    continue
+                try:
+                    cre = re.compile(regex)
+                except re.error:
+                    bb.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression" % (c, regex))
+                    continue
+                try:
+                    pri = int(priority)
+                    self.status.bbfile_config_priorities.append((cre, pri))
+                except ValueError:
+                    bb.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
+
+
+    def cook( self, args ):
+        if not make.options.cmd:
+            make.options.cmd = "build"
+
+        if make.options.debug:
+            bb.debug_level = make.options.debug
+
+        make.cfg = bb.data.init()
+
+        for f in make.options.file:
+            self.parseConfigurationFile( f )
+
+        self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
+
+        if not bb.data.getVar("BUILDNAME", make.cfg):
+            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), make.cfg)
+
+        buildname = bb.data.getVar("BUILDNAME", make.cfg)
+
+        if make.options.interactive:
+            self.interactiveMode()
+
+        if make.options.buildfile is not None:
+            bf = os.path.abspath( make.options.buildfile )
+            try:
+                bbfile_data = bb.parse.handle(bf, make.cfg)
+            except IOError:
+                bb.fatal("Unable to open %s" % bf)
+
+            item = bb.data.getVar('PN', bbfile_data, 1)
+            try:
+                self.tryBuildPackage( bf, item, bbfile_data )
+            except bb.build.EventException:
+                bb.error( "Build of '%s' failed" % item )
+
+            sys.exit( self.stats.show() )
+
+        # initialise the parsing status now we know we will need deps
+        self.status = BBParsingStatus()
+
+        ignore = bb.data.getVar("ASSUME_PROVIDED", make.cfg, 1) or ""
+        self.status.ignored_dependencies = Set( ignore.split() )
+
+        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", make.cfg, 1) )
+
+        pkgs_to_build = None
+        if args:
+            if not pkgs_to_build:
+                pkgs_to_build = []
+            pkgs_to_build.extend(args)
+        if not pkgs_to_build:
+                bbpkgs = bb.data.getVar('BBPKGS', make.cfg, 1)
+                if bbpkgs:
+                        pkgs_to_build = bbpkgs.split()
+        if not pkgs_to_build and not make.options.show_versions and not make.options.interactive:
+                print "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
+                print "for usage information."
+                sys.exit(0)
+
+        # Import Psyco if available and not disabled
+        if not make.options.disable_psyco:
+            try:
+                import psyco
+            except ImportError:
+                if bbdebug == 0:
+                    bb.note("Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+            else:
+                psyco.bind( make.collect_bbfiles )
+        else:
+            bb.note("You have disabled Psyco. This decreases performance.")
+
+        try:
+            bb.debug(1, "collecting .bb files")
+            make.collect_bbfiles( self.myProgressCallback )
+            bb.debug(1, "parsing complete")
+            if bbdebug == 0:
+                print
+            if make.options.parse_only:
+                print "Requested parsing .bb files only.  Exiting."
+                return
+
+            bb.data.update_data( make.cfg )
+            self.buildDepgraph()
+
+            if make.options.show_versions:
+                self.showVersions()
+                sys.exit( 0 )
+            if 'world' in pkgs_to_build:
+                pkgs_to_build.remove('world')
+                for t in self.status.world_target:
+                    pkgs_to_build.append(t)
+
+            bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, make.cfg))
+
+            for k in pkgs_to_build:
+                failed = False
+                try:
+                    if self.buildProvider( k ) == 0:
+                        # already diagnosed
+                        failed = True
+                except bb.build.EventException:
+                    bb.error("Build of " + k + " failed")
+                    failed = True
+
+                if failed:
+                    if make.options.abort:
+                        sys.exit(1)
+
+            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, make.cfg))
+
+            sys.exit( self.stats.show() )
+
+        except KeyboardInterrupt:
+            print "\nNOTE: KeyboardInterrupt - Build not completed."
+            sys.exit(1)
+
+#============================================================================#
+# main
+#============================================================================#
+
+if __name__ == "__main__":
+
+    parser = optparse.OptionParser( version = "BitBake Build Tool Core version %s, %%prog version %s" % ( bb.__version__, __version__ ),
+    usage = """%prog [options] [package ...]
+
+Executes the specified task (default is 'build') for a given set of BitBake files.
+It expects that BBFILES is defined, which is a space seperated list of files to
+be executed.  BBFILES does support wildcards.
+Default BBFILES are the .bb files in the current directory.""" )
+
+    parser.add_option( "-b", "--buildfile", help = "execute the task against this .bb file, rather than a package from BBFILES.",
+               action = "store", dest = "buildfile", default = None )
+
+    parser.add_option( "-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
+               action = "store_false", dest = "abort", default = True )
+
+    parser.add_option( "-f", "--force", help = "force run of specified cmd, regardless of stamp status",
+               action = "store_true", dest = "force", default = False )
+
+    parser.add_option( "-i", "--interactive", help = "drop into the interactive mode.",
+               action = "store_true", dest = "interactive", default = False )
+
+    parser.add_option( "-c", "--cmd", help = "Specify task to execute",
+               action = "store", dest = "cmd", default = "build" )
+
+    parser.add_option( "-r", "--read", help = "read the specified file before bitbake.conf",
+               action = "append", dest = "file", default = [] )
+
+    parser.add_option( "-v", "--verbose", help = "output more chit-chat to the terminal",
+               action = "store_true", dest = "verbose", default = False )
+
+    parser.add_option( "-D", "--debug", help = "Increase the debug level",
+               action = "count", dest="debug", default = 0)
+
+    parser.add_option( "-n", "--dry-run", help = "don't execute, just go through the motions",
+               action = "store_true", dest = "dry_run", default = False )
+
+    parser.add_option( "-p", "--parse-only", help = "quit after parsing the BB files (developers only)",
+               action = "store_true", dest = "parse_only", default = False )
+
+    parser.add_option( "-d", "--disable-psyco", help = "disable using the psyco just-in-time compiler (not recommended)",
+               action = "store_true", dest = "disable_psyco", default = False )
+
+    parser.add_option( "-s", "--show-versions", help = "show current and preferred versions of all packages",
+               action = "store_true", dest = "show_versions", default = False )
+
+    options, args = parser.parse_args( sys.argv )
+
+    make.options = options
+    cooker = BBCooker()
+    cooker.cook( args[1:] )
