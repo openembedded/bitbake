@@ -30,14 +30,11 @@ IDEAS:
     * automatic check if reparsing is necessary (inotify?)
     * frontend for bb file manipulation
     * more shell-like features:
-        - shell lexer (shlex)
         - output control, i.e. pipe output into grep, sort, etc.
         - job control, i.e. bring running commands into background and foreground
         - wildcards for commands, i.e. build *opie*
     * start parsing in background right after startup
-    * print variable from package data
     * ncurses interface
-    * read some initial commands from startup file (batch)
 
 PROBLEMS:
     * force doesn't always work
@@ -53,11 +50,11 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy
+import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, fatal
 
-__version__ = "0.5.1"
+__version__ = "0.5.2"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -639,6 +636,7 @@ class BitBakeShell:
 
     def __init__( self ):
         """Register commands and set up readline"""
+        self.commandQ = Queue.Queue()
         self.commands = BitBakeShellCommands( self )
         self.myout = MemoryOutput( sys.stdout )
         self.historyfilename = os.path.expanduser( "~/.bbsh_history" )
@@ -693,33 +691,25 @@ class BitBakeShell:
         """Read and execute all commands found in $HOME/.bbsh_startup"""
         if os.path.exists( self.startupfilename ):
             startupfile = open( self.startupfilename, "r" )
-            # save_stdout = sys.stdout
-            # sys.stdout = open( "/dev/null", "w" )
-            numCommands = 0
-            for cmdline in startupfile.readlines():
-                cmdline = cmdline.strip()
+            for cmdline in startupfile:
                 debugOut( "processing startup line '%s'" % cmdline )
                 if not cmdline:
                     continue
                 if "|" in cmdline:
-                    print >>save_stdout, "ERROR: ';' in startup file is not allowed. Ignoring line"
+                    print "ERROR: '|' in startup file is not allowed. Ignoring line"
                     continue
-                allCommands = cmdline.split( ';' )
-                for command in allCommands:
-                    if ' ' in command:
-                        self.processCommand( command.split()[0], command.split()[1:] )
-                    else:
-                        self.processCommand( command, "" )
-                    numCommands += 1
-            print "SHELL: Processed %d commands from '%s'" % ( numCommands, self.startupfilename )
+                self.commandQ.put( cmdline.strip() )
 
     def main( self ):
         """The main command loop"""
         while not leave_mainloop:
             try:
-                sys.stdout = self.myout.delegate
-                cmdline = raw_input( "BB>> " )
-                sys.stdout = self.myout
+                if self.commandQ.empty():
+                    sys.stdout = self.myout.delegate
+                    cmdline = raw_input( "BB>> " )
+                    sys.stdout = self.myout
+                else:
+                    cmdline = self.commandQ.get()
                 if cmdline:
                     allCommands = cmdline.split( ';' )
                     for command in allCommands:
@@ -736,10 +726,8 @@ class BitBakeShell:
                                 command, pipecmd = command.split( '|' )
                                 delegate = self.myout.delegate
                                 self.myout.delegate = None
-                            if ' ' in command:
-                                self.processCommand( command.split()[0], command.split()[1:] )
-                            else:
-                                self.processCommand( command, "" )
+                            tokens = shlex.split( command, True )
+                            self.processCommand( tokens[0], tokens[1:] or "" )
                             self.myout.endCommand()
                             if pipecmd is not None: # restore output
                                 self.myout.delegate = delegate
