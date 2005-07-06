@@ -32,7 +32,6 @@ IDEAS:
     * more shell-like features:
         - output control, i.e. pipe output into grep, sort, etc.
         - job control, i.e. bring running commands into background and foreground
-        - wildcards for commands, i.e. build *opie*
     * start parsing in background right after startup
     * ncurses interface
 
@@ -50,7 +49,7 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue
+import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue, fnmatch
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, fatal
 
@@ -139,23 +138,24 @@ class BitBakeShellCommands:
 
     def build( self, params, cmd = "build" ):
         """Build a providee"""
-        name = params[0]
-
-        oldcmd = cooker.configuration.cmd
-        cooker.configuration.cmd = cmd
-        cooker.build_cache = []
-        cooker.build_cache_fail = []
-
+        globexpr = params[0]
         self._checkParsed()
+        names = globfilter( cooker.status.pkg_pn.keys(), globexpr )
+        if len( names ) == 0: names = [ globexpr ]
+        print "SHELL: Building %s..." % ' '.join( names )
 
-        try:
-            cooker.buildProvider( name )
-        except build.EventException, e:
-            print "ERROR: Couldn't build '%s'" % name
-            global last_exception
-            last_exception = e
-
-        cooker.configuration.cmd = oldcmd
+        for name in names:
+            oldcmd = cooker.configuration.cmd
+            cooker.configuration.cmd = cmd
+            cooker.build_cache = []
+            cooker.build_cache_fail = []
+            try:
+                cooker.buildProvider( name )
+            except build.EventException, e:
+                print "ERROR: Couldn't build '%s'" % name
+                global last_exception
+                last_exception = e
+            cooker.configuration.cmd = oldcmd
     build.usage = "<providee>"
 
     def clean( self, params ):
@@ -278,6 +278,19 @@ class BitBakeShellCommands:
                     print open( filename ).read()
                 except IOError:
                     print "ERROR: Couldn't open '%s'" % filename
+
+    def match( self, params ):
+        """Dump all files or providers matching a glob expression"""
+        what, globexpr = params
+        if what == "files":
+            self._checkParsed()
+            for key in globfilter( cooker.pkgdata.keys(), globexpr ): print key
+        elif what == "providers":
+            self._checkParsed()
+            for key in globfilter( cooker.status.pkg_pn.keys(), globexpr ): print key
+        else:
+            print "Usage: match %s" % self.print_.usage
+    match.usage = "<files|providers> <glob>"
 
     def new( self, params ):
         """Create a new .bb file and open the editor"""
@@ -584,6 +597,9 @@ def columnize( alist, width = 80 ):
                    word),
                   alist
                  )
+
+def globfilter( names, pattern ):
+    return fnmatch.filter( names, pattern )
 
 ##########################################################################
 # Class MemoryOutput
