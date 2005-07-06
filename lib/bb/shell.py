@@ -53,7 +53,7 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline, socket, httplib, urllib, commands, popen2
+import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, fatal
 
@@ -66,6 +66,7 @@ leave_mainloop = False
 last_exception = None
 cooker = None
 parsed = False
+initdata = None
 debug = os.environ.get( "BBSHELL_DEBUG", "" )
 
 ##########################################################################
@@ -211,8 +212,13 @@ class BitBakeShellCommands:
         cooker.build_cache = []
         cooker.build_cache_fail = []
 
+        thisdata = copy.deepcopy( initdata )
+        # Caution: parse.handle modifies thisdata, hence it would
+        # lead to pollution cooker.configuration.data, which is
+        # why we use it on a safe copy we obtained from cooker right after
+        # parsing the initial *.conf files
         try:
-            bbfile_data = parse.handle( bf, cooker.configuration.data )
+            bbfile_data = parse.handle( bf, thisdata )
         except parse.ParseError:
             print "ERROR: Unable to open or parse '%s'" % bf
         else:
@@ -648,6 +654,10 @@ class BitBakeShell:
             pass  # It doesn't exist yet.
 
         print __credits__
+
+        # save initial cooker configuration (will be reused in file*** commands)
+        global initdata
+        initdata = copy.deepcopy( cooker.configuration.data )
 
     def cleanup( self ):
         """Write readline history and clean up resources"""
