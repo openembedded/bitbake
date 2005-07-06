@@ -796,7 +796,7 @@ class BBCooker:
         data.setVar("BBFILES", " ".join(files), self.configuration.data)
 
         if not len(files):
-            files = get_bbfiles()
+            files = self.get_bbfiles()
 
         if not len(files):
             bb.error("no files to build.")
@@ -804,7 +804,7 @@ class BBCooker:
         newfiles = []
         for f in files:
             if os.path.isdir(f):
-                dirfiles = find_bbfiles(f)
+                dirfiles = self.find_bbfiles(f)
                 if dirfiles:
                     newfiles += dirfiles
                     continue
