@@ -142,20 +142,24 @@ class BitBakeShellCommands:
         self._checkParsed()
         names = globfilter( cooker.status.pkg_pn.keys(), globexpr )
         if len( names ) == 0: names = [ globexpr ]
-        print "SHELL: Building %s..." % ' '.join( names )
+        print "SHELL: Building %s" % ' '.join( names )
+
+        oldcmd = cooker.configuration.cmd
+        cooker.configuration.cmd = cmd
+        cooker.build_cache = []
+        cooker.build_cache_fail = []
 
         for name in names:
-            oldcmd = cooker.configuration.cmd
-            cooker.configuration.cmd = cmd
-            cooker.build_cache = []
-            cooker.build_cache_fail = []
             try:
                 cooker.buildProvider( name )
             except build.EventException, e:
                 print "ERROR: Couldn't build '%s'" % name
                 global last_exception
                 last_exception = e
-            cooker.configuration.cmd = oldcmd
+                break
+
+        cooker.configuration.cmd = oldcmd
+
     build.usage = "<providee>"
 
     def clean( self, params ):
