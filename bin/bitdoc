@@ -84,6 +84,10 @@ class HTMLFormatter:
         """
         Create HTML to link to foreign keys
         """
+
+        if len(item.related()) == 0:
+            return ""
+
         txt = "<p><b>See also:</b><br>"
         for it in item.related():
             txt += """<a href="key%s.html">%s</a>, """ % (it, it)
@@ -94,12 +98,17 @@ class HTMLFormatter:
         """
         Create HTML to link to related groups
         """
+
+        if len(item.groups()) == 0:
+            return ""
+
+
         txt = "<p><b>Seel also:</b><br>"
         for group in item.groups():
             txt += """<a href="group%s.html">%s</a>, """ % (group,group)
 
         return txt
-        
+
 
     def createKeySite(self,item):
         """
@@ -144,11 +153,13 @@ class HTMLFormatter:
         """
         Create the Group Overview site
         """
-        
+
         groups = ""
-        for group in doc.groups():
+        sorted_groups = doc.groups()
+        sorted_groups.sort()
+        for group in sorted_groups:
             groups += """<a href="group%s.html">%s</a><br>""" % (group, group)
-        
+
         return """<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html><head><title>Group overview</title></head>
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -180,9 +191,11 @@ class HTMLFormatter:
         Create Overview of all avilable keys
         """
         keys = ""
-        for key in doc.doc_keys():
+        sorted_keys = doc.doc_keys()
+        sorted_keys.sort()
+        for key in sorted_keys:
             keys += """<a href="key%s.html">%s</a><br>""" % (key, key)
-        
+
         return """<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html><head><title>Key overview</title></head>
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -201,8 +214,8 @@ class HTMLFormatter:
         """
         groups = ""
         for group in items:
-            groups += """<a href="group%s.html">%s</a><br>""" % (group.name(), group.name())
-        
+            groups += """<a href="key%s.html">%s</a><br>""" % (group.name(), group.name())
+
         return """<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html><head><title>Group %s</title></head>
 <link rel="stylesheet" href="style.css" type="text/css">
@@ -217,7 +230,7 @@ class HTMLFormatter:
 </body>
 """ % (gr, self.createNavigator(), gr, groups)
 
-        
+
 
     def createCSS(self):
         """
@@ -291,7 +304,7 @@ a:hover
 }
 """
 
-          
+
 
 class DocumentationItem:
     """
@@ -330,6 +343,10 @@ class DocumentationItem:
     def addRelation(self,relation):
         self._related.append(relation)
 
+    def sort(self):
+        self._related.sort()
+        self._groups.sort()
+
 
 class Documentation:
     """
@@ -345,6 +362,7 @@ class Documentation:
         Insert the Doc Item into the internal list
         of representation
         """
+        item.sort()
         self.__keys[item.name()] = item
 
         for group in item.groups():
@@ -383,7 +401,7 @@ class Documentation:
             return self.__groups[group_name]
         except KeyError:
             return []
-        
+
 
 def parse_cmdline(args):
     """
@@ -399,13 +417,13 @@ Create a set of html pages (documentation) for a bitbake.conf....
     # Add the needed options
     parser.add_option( "-c", "--config", help = "Use the specified configuration file as source",
                        action = "store", dest = "config", default = os.path.join("conf", "documentation.conf") )
-                       
+
     parser.add_option( "-o", "--output", help = "Output directory for html files",
                        action = "store", dest = "output", default = "html/" )
-                       
+
     parser.add_option( "-D",  "--debug", help = "Increase the debug level",
                        action = "count", dest = "debug", default = 0 )
-                       
+
     parser.add_option( "-v","--verbose", help = "output more chit-char to the terminal",
                        action = "store_true", dest = "verbose", default = False )
 
@@ -449,7 +467,7 @@ def main():
         doc_ins = DocumentationItem()
         doc_ins.setName(key)
 
-        
+
         tokens = data.split(' ')
         state = state_begin
         string= ""
@@ -462,7 +480,7 @@ def main():
             elif not state == state_group and token  == "@group":
                 state = state_group
                 continue
-            
+
             if state == state_begin:
                 string += " %s" % token
             elif state == state_see:
@@ -473,8 +491,8 @@ def main():
         # set the description
         doc_ins.setDescription(string)
         doc.insert_doc_item(doc_ins)
-            
-    # let us create the HTML now...
+
+    # let us create the HTML now
     bb.mkdirhier(output_dir)
     os.chdir(output_dir)
 
@@ -504,7 +522,7 @@ def main():
     for key in doc.doc_keys():
         f = file('key%s.html' % doc.doc_item(key).name(), 'w')
         print >> f, html_slave.createKeySite(doc.doc_item(key))
-        
+
 
 if __name__ == "__main__":
     main()
