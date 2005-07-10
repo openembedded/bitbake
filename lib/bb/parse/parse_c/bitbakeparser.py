@@ -29,7 +29,7 @@ class CParser:
     """
     The C-based Parser for Bitbake
     """
-    def __init__(self, data):
+    def __init__(self, data, type):
         """
         Constructor
         """
@@ -53,6 +53,11 @@ class CParser:
         """
         VAR = "MOO"
         we will assign moo to VAR
+        """
+        pass
+
+    def _assign(self, key, value):
+        """
         """
         pass
 

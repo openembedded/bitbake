@@ -41,7 +41,7 @@
 %extra_argument  {lex_t* lex}
 
 %include {
-#include "standard.h"
+#include "token.h"
 }
 
 

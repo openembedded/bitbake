@@ -95,11 +95,8 @@ enum {
 #define YY_EXTRA_TYPE lex_t*
 
 	/* Read from buffer */
-#define YY_INPUT(rgb,result,cbMax) \
- { if (cbMax > yyextra->cbInput) cbMax = yyextra->cbInput; \
-   memcpy (rgb, yyextra->rgbInput, cbMax); \
-   yyextra->cbInput -= cbMax; yyextra->rgbInput += cbMax; \
-   result = cbMax ? cbMax : YY_NULL; }
+#define YY_INPUT(buf,result,max_size) \
+ { yyextra->input(buf, &result, max_size); }
 
 //#define YY_DECL static size_t yylex ()
 

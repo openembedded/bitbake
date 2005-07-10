@@ -30,6 +30,7 @@ struct lex_t {
     void* (*parse)(void*, int, token_t, lex_t*);
 
     void accept(int token, const char* string = 0);
+    void input(char *buf, int *result, int_max_size);
     int  line()const;
     const char* filename()const;
 private:
