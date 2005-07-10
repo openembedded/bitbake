@@ -1,0 +1,313 @@
+/* bbf.flex 
+
+   written by Marc Singer
+   6 January 2005
+
+   This program is free software; you can redistribute it and/or
+   modify it under the terms of the GNU General Public License as
+   published by the Free Software Foundation; either version 2 of the
+   License, or (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
+   USA.
+
+   DESCRIPTION
+   -----------
+
+   flex lexer specification for a BitBake input file parser.
+
+   Unfortunately, flex doesn't welcome comments within the rule sets.
+   I say unfortunately because this lexer is unreasonably complex and
+   comments would make the code much easier to comprehend.
+
+   The BitBake grammar is not regular.  In order to interpret all
+   of the available input files, the lexer maintains much state as it
+   parses.  There are places where this lexer will emit tokens that
+   are invalid.  The parser will tend to catch these. 
+
+   The lexer requires C++ at the moment.  The only reason for this has
+   to do with a very small amount of managed state.  Producing a C
+   lexer should be a reasonably easy task as long as the %reentrant
+   option is used.
+
+
+   NOTES
+   -----
+
+   o RVALUES.  There are three kinds of RVALUES.  There are unquoted
+     values, double quote enclosed strings, and single quote 
+     strings.  Quoted strings may contain unescaped quotes (of either
+     type), *and* any type may span more than one line by using a
+     continuation '\' at the end of the line.  This requires us to
+     recognize all types of values with a single expression.
+     Moreover, the only reason to quote a value is to include
+     trailing or leading whitespace.  Whitespace within a value is
+     preserved, ugh.
+
+   o CLASSES.  C_ patterns define classes.  Classes ought not include
+     a repitition operator, instead letting the reference to the class
+     define the repitition count.
+
+     C_SS - symbol start
+     C_SB - symbol body
+     C_SP - whitespace
+
+*/
+
+%option never-interactive
+%option yylineno
+%option noyywrap
+%option reentrant stack
+
+
+%{
+
+#include "standard.h"
+#include "token.h"
+#include "filestack.h"
+#include "lexer.h"
+#include "arguments.h"
+#include <ctype.h>
+
+extern void *bbparseAlloc(void *(*mallocProc)(size_t));
+extern void bbparseFree(void *p, void (*freeProc)(void*));
+extern void *bbparseAlloc(void *(*mallocProc)(size_t));
+extern void *bbparse(void*, int, token_t, lex_t*);
+extern void bbparseTrace(FILE *TraceFILE, char *zTracePrompt);
+
+//static const char* rgbInput;
+//static size_t cbInput;
+
+
+int lineError;
+int errorParse;
+
+enum {
+  errorNone = 0,
+  errorUnexpectedInput,
+  errorUnsupportedFeature, 
+};
+
+#define YY_EXTRA_TYPE lex_t*
+
+	/* Read from buffer */
+#define YY_INPUT(rgb,result,cbMax) \
+ { if (cbMax > yyextra->cbInput) cbMax = yyextra->cbInput; \
+   memcpy (rgb, yyextra->rgbInput, cbMax); \
+   yyextra->cbInput -= cbMax; yyextra->rgbInput += cbMax; \
+   result = cbMax ? cbMax : YY_NULL; }
+
+//#define YY_DECL static size_t yylex ()
+
+#define ERROR(e) \
+  do { lineError = yylineno; errorParse = e; yyterminate (); } while (0)
+
+static const char* fixup_escapes (const char* sz);
+
+%}
+
+
+C_SP            [ \t]
+COMMENT         #.*\n
+OP_ASSIGN       "="
+OP_IMMEDIATE    ":="
+OP_PREPEND      "=+"
+OP_APPEND       "+="
+OP_COND         "?="
+B_OPEN          "{"
+B_CLOSE         "}"
+
+K_ADDTASK       "addtask"
+K_ADDHANDLER    "addhandler"
+K_AFTER         "after"
+K_BEFORE        "before"
+K_DEF           "def"
+K_INCLUDE       "include"
+K_INHERIT       "inherit"
+K_PYTHON        "python"
+K_FAKEROOT      "fakeroot"
+K_EXPORT        "export"
+K_EXPORT_FUNC   "EXPORT_FUNCTIONS"
+
+STRING          \"([^\n\r]|"\\\n")*\"
+SSTRING         \'([^\n\r]|"\\\n")*\'
+VALUE           ([^'" \t\n])|([^'" \t\n]([^\n]|(\\\n))*[^'" \t\n])
+
+C_SS            [a-zA-Z_]
+C_SB            [a-zA-Z0-9_+-.]
+REF             $\{{C_SS}{C_SB}*\}
+SYMBOL          {C_SS}{C_SB}*
+VARIABLE        $?{C_SS}({C_SB}*|{REF})*(\[[a-zA-Z0-9_]*\])?
+FILENAME        ([a-zA-Z_./]|{REF})(([-+a-zA-Z0-9_./]*)|{REF})*
+
+PROC            \({C_SP}*\)
+
+%s S_DEF
+%s S_DEF_ARGS
+%s S_DEF_BODY
+%s S_FUNC
+%s S_INCLUDE
+%s S_INHERIT
+%s S_PROC
+%s S_RVALUE
+%s S_TASK
+
+%%
+
+{OP_APPEND}                     { BEGIN S_RVALUE;
+                                  yyextra->accept (T_OP_APPEND); }
+{OP_PREPEND}                    { BEGIN S_RVALUE;
+                                  yyextra->accept (T_OP_PREPEND); }
+{OP_IMMEDIATE}                  { BEGIN S_RVALUE;
+                                  yyextra->accept (T_OP_IMMEDIATE); }
+{OP_ASSIGN}                     { BEGIN S_RVALUE;
+                                  yyextra->accept (T_OP_ASSIGN); }
+{OP_COND}                       { BEGIN S_RVALUE;
+                                  yyextra->accept (T_OP_COND); }
+
+<S_RVALUE>\\\n{C_SP}*           {  }
+<S_RVALUE>{STRING}              { BEGIN INITIAL;
+                                  size_t cb = yyleng;
+                                  while (cb && isspace (yytext[cb - 1]))
+                                      --cb;
+                                  yytext[cb - 1] = 0;
+                                  yyextra->accept (T_STRING, yytext + 1); }
+<S_RVALUE>{SSTRING}             { BEGIN INITIAL;
+                                  size_t cb = yyleng;
+                                  while (cb && isspace (yytext[cb - 1]))
+                                      --cb;
+                                  yytext[cb - 1] = 0;
+                                  yyextra->accept (T_STRING, yytext + 1); }
+
+<S_RVALUE>{VALUE}               { ERROR (errorUnexpectedInput);  }
+<S_RVALUE>{C_SP}*\n+            { BEGIN INITIAL;
+                                  yyextra->accept (T_STRING, NULL); }
+
+{K_INCLUDE}                     { BEGIN S_INCLUDE;
+                                  yyextra->accept (T_INCLUDE); }
+{K_INHERIT}                     { BEGIN S_INHERIT;
+                                  yyextra->accept (T_INHERIT); }
+{K_ADDTASK}                     { BEGIN S_TASK;
+                                  yyextra->accept (T_ADDTASK); }
+{K_ADDHANDLER}                  { yyextra->accept (T_ADDHANDLER); }
+{K_EXPORT_FUNC}                 { BEGIN S_FUNC;
+                                  yyextra->accept (T_EXPORT_FUNC); }
+<S_TASK>{K_BEFORE}              { yyextra->accept (T_BEFORE); }
+<S_TASK>{K_AFTER}               { yyextra->accept (T_AFTER); }
+<INITIAL>{K_EXPORT}             { yyextra->accept (T_EXPORT); }
+
+<INITIAL>{K_FAKEROOT}           { yyextra->accept (T_FAKEROOT); }
+<INITIAL>{K_PYTHON}             { yyextra->accept (T_PYTHON); }
+{PROC}{C_SP}*{BOPEN}{C_SP}*\n*  { BEGIN S_PROC;
+                                  yyextra->accept (T_PROC_OPEN); }
+<S_PROC>{BCLOSE}{C_SP}*\n*      { BEGIN INITIAL;
+                                  yyextra->accept (T_PROC_CLOSE); }
+<S_PROC>([^}][^\n]*)?\n*        { yyextra->accept (T_PROC_BODY, yytext); }
+
+{K_DEF}                         { BEGIN S_DEF; }
+<S_DEF>{SYMBOL}                 { BEGIN S_DEF_ARGS;
+                                  yyextra->accept (T_SYMBOL, yytext); }
+<S_DEF_ARGS>[^\n:]*:            { yyextra->accept (T_DEF_ARGS, yytext); }
+<S_DEF_ARGS>{C_SP}*\n           { BEGIN S_DEF_BODY; }
+<S_DEF_BODY>{C_SP}+[^\n]*\n     { yyextra->accept (T_DEF_BODY, yytext); }
+<S_DEF_BODY>\n                  { yyextra->accept (T_DEF_BODY, yytext); }
+<S_DEF_BODY>.                   { BEGIN INITIAL; unput (yytext[0]); }
+
+{COMMENT}                       { }
+
+<INITIAL>{SYMBOL}               { yyextra->accept (T_SYMBOL, yytext); }
+<INITIAL>{VARIABLE}             { yyextra->accept (T_VARIABLE, yytext); }
+
+<S_TASK>{SYMBOL}                { yyextra->accept (T_TSYMBOL, yytext); }
+<S_FUNC>{SYMBOL}                { yyextra->accept (T_FSYMBOL, yytext); }
+<S_INHERIT>{SYMBOL}             { yyextra->accept (T_ISYMBOL, yytext); }
+<S_INCLUDE>{FILENAME}           { BEGIN INITIAL;
+                                  yyextra->accept (T_ISYMBOL, yytext); }
+
+<S_TASK>\n                      { BEGIN INITIAL; }
+<S_FUNC>\n                      { BEGIN INITIAL; }
+<S_INHERIT>\n                   { BEGIN INITIAL; }
+
+[ \t\r\n]                       /* Insignificant whitespace */
+
+.                               { ERROR (errorUnexpectedInput); }
+
+                                /* Check for premature termination */
+<<EOF>>                         { return T_EOF; }
+
+%%
+
+void lex_t::accept (int token, const char* sz) 
+{
+  token_t t;
+  memset (&t, 0, sizeof (t));
+  if (sz) {
+    t.sz = new char [strlen (sz) + 1];
+    strcpy (t.sz, sz);
+  }
+  struct yyguts_t * yyg = (struct yyguts_t*)scanner;
+  extern char* token_name[];
+  extern char* state_name[];
+  if (arguments.show_tokens)
+    printf (" <%s> %s %-*.*s\n",
+            state_name[(yyg->yy_start - 1)/2], token_name[token],
+            60, 60, sz ? sz : "");
+  parse (parser, token, t, this);
+}
+
+int lex_t::line (void)
+{
+  return yyget_lineno (scanner);
+}
+
+const char* lex_t::filename (void)
+{
+  return mf->m_szPath;
+}
+
+void parse (MappedFile* mf)
+{
+  void* parser = bbparseAlloc (malloc);
+  yyscan_t scanner;
+  lex_t lex;
+
+  yylex_init (&scanner);
+//  printf ("scanner create %p\n", scanner);
+
+  lex.parser = parser;
+  lex.scanner = scanner;
+  lex.mf = mf;
+  lex.rgbInput = mf->m_rgb;
+  lex.cbInput = mf->m_cb;
+  lex.parse = bbparse;
+  yyset_extra (&lex, scanner);
+
+#if defined (USE_TRACE_LOG)
+  FILE* fp = fopen ("trace.log", "a+");
+  bbparseTrace (fp, "");
+#endif
+
+  int result = yylex (scanner);
+
+  lex.accept (0);
+  bbparseTrace (NULL, NULL);;
+
+  if (result != T_EOF)
+    WARNING ("premature end of file\n");
+//  printf ("scanner release %p\n", scanner);
+  yylex_destroy (scanner);
+
+//  printf ("yylex return %d\n", result);
+
+#if defined (USE_TRACE_LOG)
+  fclose (fp);
+#endif
+  bbparseFree (parser, free);
+}
