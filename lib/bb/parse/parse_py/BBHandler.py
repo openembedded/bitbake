@@ -25,7 +25,7 @@ import re, bb, os, sys
 import bb.fetch, bb.build
 from bb import debug, data, fetch, fatal
 
-from bb.parse.ConfHandler import include, localpath, obtain, init
+from ConfHandler import include, localpath, obtain, init
 from bb.parse import ParseError
 
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )

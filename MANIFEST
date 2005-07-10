@@ -11,9 +11,10 @@ lib/bb/data_smart.py
 lib/bb/event.py
 lib/bb/fetch.py
 lib/bb/manifest.py
-lib/bb/parse/BBHandler.py
-lib/bb/parse/ConfHandler.py
 lib/bb/parse/__init__.py
+lib/bb/parse/parse_py/BBHandler.py
+lib/bb/parse/parse_py/ConfHandler.py
+lib/bb/parse/parse_py/__init__.py
 lib/bb/shell.py
 lib/bb/utils.py
 doc/COPYING.GPL
