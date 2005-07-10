@@ -277,8 +277,7 @@ class BBCooker:
         p_list.sort(lambda a, b: a - b)
         tmp_pn = []
         for p in p_list:
-            tmp_pn = priorities[p] + tmp_pn
-        pkg_pn[pn] = tmp_pn
+            tmp_pn = [priorities[p]] + tmp_pn
 
         preferred_file = None
 
@@ -291,12 +290,15 @@ class BBCooker:
             else:
                 preferred_r = None
 
-            for f in pkg_pn[pn]:
-                pv,pr = self.status.pkg_pvpr[f]
-                if preferred_v == pv and (preferred_r == pr or preferred_r == None):
-                    preferred_file = f
-                    preferred_ver = (pv, pr)
-                    break
+            for file_set in tmp_pn:
+                for f in file_set:
+                    pv,pr = self.status.pkg_pvpr[f]
+                    if preferred_v == pv and (preferred_r == pr or preferred_r == None):
+                        preferred_file = f
+                        preferred_ver = (pv, pr)
+                        break
+                if preferred_file:
+                    break;
             if preferred_r:
                 pv_str = '%s-%s' % (preferred_v, preferred_r)
             else:
@@ -307,7 +309,7 @@ class BBCooker:
                 bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
 
         # get highest priority file set
-        files = pkg_pn[pn]
+        files = tmp_pn[0]
         latest = None
         latest_p = 0
         latest_f = None
