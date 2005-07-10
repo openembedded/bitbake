@@ -69,11 +69,8 @@
 
 %{
 
-#include "standard.h"
 #include "token.h"
-#include "filestack.h"
 #include "lexer.h"
-#include "arguments.h"
 #include <ctype.h>
 
 extern void *bbparseAlloc(void *(*mallocProc)(size_t));
@@ -205,9 +202,9 @@ PROC            \({C_SP}*\)
 
 <INITIAL>{K_FAKEROOT}           { yyextra->accept (T_FAKEROOT); }
 <INITIAL>{K_PYTHON}             { yyextra->accept (T_PYTHON); }
-{PROC}{C_SP}*{BOPEN}{C_SP}*\n*  { BEGIN S_PROC;
+{PROC}{C_SP}*{B_OPEN}{C_SP}*\n*  { BEGIN S_PROC;
                                   yyextra->accept (T_PROC_OPEN); }
-<S_PROC>{BCLOSE}{C_SP}*\n*      { BEGIN INITIAL;
+<S_PROC>{B_CLOSE}{C_SP}*\n*      { BEGIN INITIAL;
                                   yyextra->accept (T_PROC_CLOSE); }
 <S_PROC>([^}][^\n]*)?\n*        { yyextra->accept (T_PROC_BODY, yytext); }
 
@@ -246,68 +243,49 @@ PROC            \({C_SP}*\)
 
 void lex_t::accept (int token, const char* sz) 
 {
-  token_t t;
-  memset (&t, 0, sizeof (t));
-  if (sz) {
-    t.sz = new char [strlen (sz) + 1];
-    strcpy (t.sz, sz);
-  }
-  struct yyguts_t * yyg = (struct yyguts_t*)scanner;
-  extern char* token_name[];
-  extern char* state_name[];
-  if (arguments.show_tokens)
-    printf (" <%s> %s %-*.*s\n",
-            state_name[(yyg->yy_start - 1)/2], token_name[token],
-            60, 60, sz ? sz : "");
-  parse (parser, token, t, this);
+    token_t t;
+    memset (&t, 0, sizeof (t));
+    t.copyString(sz);
+
+    /* tell lemon to parse the token */
+    parse (parser, token, t, this);
 }
 
-int lex_t::line (void)
+int lex_t::line ()const
 {
-  return yyget_lineno (scanner);
+    return yyget_lineno (scanner);
 }
 
-const char* lex_t::filename (void)
+const char* lex_t::filename ()const
 {
-  return mf->m_szPath;
+    return m_fileName;
 }
 
 void parse (MappedFile* mf)
 {
-  void* parser = bbparseAlloc (malloc);
-  yyscan_t scanner;
-  lex_t lex;
+    void* parser = bbparseAlloc (malloc);
+    yyscan_t scanner;
+    lex_t lex;
 
-  yylex_init (&scanner);
-//  printf ("scanner create %p\n", scanner);
+    yylex_init (&scanner);
 
-  lex.parser = parser;
-  lex.scanner = scanner;
-  lex.mf = mf;
-  lex.rgbInput = mf->m_rgb;
-  lex.cbInput = mf->m_cb;
-  lex.parse = bbparse;
-  yyset_extra (&lex, scanner);
+    lex.parser = parser;
+    lex.scanner = scanner;
+    lex.mf = mf;
+    lex.rgbInput = mf->m_rgb;
+    lex.cbInput = mf->m_cb;
+    lex.parse = bbparse;
+    yyset_extra (&lex, scanner);
 
-#if defined (USE_TRACE_LOG)
-  FILE* fp = fopen ("trace.log", "a+");
-  bbparseTrace (fp, "");
-#endif
 
-  int result = yylex (scanner);
+    int result = yylex (scanner);
 
-  lex.accept (0);
-  bbparseTrace (NULL, NULL);;
+    lex.accept (0);
+    bbparseTrace (NULL, NULL);
 
-  if (result != T_EOF)
-    WARNING ("premature end of file\n");
-//  printf ("scanner release %p\n", scanner);
-  yylex_destroy (scanner);
+    if (result != T_EOF)
+        WARNING ("premature end of file\n");
 
-//  printf ("yylex return %d\n", result);
-
-#if defined (USE_TRACE_LOG)
-  fclose (fp);
-#endif
-  bbparseFree (parser, free);
+    yylex_destroy (scanner);
+    bbparseFree (parser, free);
 }
