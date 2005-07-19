@@ -544,6 +544,7 @@ class BBCooker:
         except ImportError, details:
             bb.fatal("Sorry, shell not available (%s)" % details )
         else:
+            bb.data.update_data( self.configuration.data )
             shell.start( self )
             sys.exit( 0 )
 
