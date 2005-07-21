@@ -172,7 +172,17 @@ class Wget(Fetch):
 
     def go(self, d, urls = []):
         """Fetch urls"""
-        def fetch_uri(uri, basename, dl, md5, d):
+
+        def md5_sum(basename, data):
+            """
+            Fast and incomplete OVERRIDE implementation for MD5SUM handling
+            MD5SUM_basename = "SUM" and fallback to MD5SUM_basename
+            """
+            var = "MD5SUM_%s" % basename
+            return getVar(var, data) or get("MD5SUM",data)
+
+
+        def fetch_uri(uri, basename, dl, md5, parm, d):
             if os.path.exists(dl):
 #               file exists, but we didnt complete it.. trying again..
                 fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
@@ -234,14 +244,14 @@ class Wget(Fetch):
             for (find, replace) in premirrors:
                 newuri = uri_replace(uri, find, replace, d)
                 if newuri != uri:
-                    if fetch_uri(newuri, basename, dl, md5, localdata):
+                    if fetch_uri(newuri, basename, dl, md5, parm, localdata):
                         completed = 1
                         break
 
             if completed:
                 continue
 
-            if fetch_uri(uri, basename, dl, md5, localdata):
+            if fetch_uri(uri, basename, dl, md5, parm, localdata):
                 continue
 
 #           try mirrors
@@ -249,7 +259,7 @@ class Wget(Fetch):
             for (find, replace) in mirrors:
                 newuri = uri_replace(uri, find, replace, d)
                 if newuri != uri:
-                    if fetch_uri(newuri, basename, dl, md5, localdata):
+                    if fetch_uri(newuri, basename, dl, md5, parm, localdata):
                         completed = 1
                         break
 
