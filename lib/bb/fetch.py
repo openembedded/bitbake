@@ -38,6 +38,9 @@ class NoMethodError(Exception):
 class MissingParameterError(Exception):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
 
+class MD5SumError(Exception):
+    """Exception raised when a MD5SUM of a file does not match the expected one"""
+
 #decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
 #('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
 
