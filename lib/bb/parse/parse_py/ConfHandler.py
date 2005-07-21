@@ -23,6 +23,7 @@
 
 import re, bb.data, os, sys
 from bb import debug, fatal
+from bb.parse import ParseError
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
