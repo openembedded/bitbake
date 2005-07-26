@@ -21,7 +21,7 @@
 # this program; if not, write to the Free Software Foundation, Inc., 59 Temple
 # Place, Suite 330, Boston, MA 02111-1307 USA.
 
-import sys, os, getopt, glob, copy, os.path, re
+import sys, os, getopt, glob, copy, os.path, re, time
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
 from bb import utils, data, parse, debug, event, fatal
@@ -601,8 +601,10 @@ class BBCooker:
             self.showEnvironment()
             sys.exit( 0 )
 
+        # inject custom variables
         if not bb.data.getVar("BUILDNAME", self.configuration.data):
             bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
+        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.localtime()),self.configuration.data)
 
         buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
 
