@@ -26,7 +26,7 @@ from bb import debug, fatal
 from bb.parse import ParseError
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
-__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
+__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|(?P<predot>=\.)|(?P<postdot>\.=)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 
 def init(data):
@@ -171,6 +171,10 @@ def feeder(lineno, s, fn, data = bb.data.init()):
             val = "%s %s" % ((bb.data.getVar(key, data) or ""), groupd["value"])
         elif "prepend" in groupd and groupd["prepend"] != None:
             val = "%s %s" % (groupd["value"], (bb.data.getVar(key, data) or ""))
+        elif "postdot" in groupd and groupd["postdot"] != None:
+            val = "%s%s" % ((bb.data.getVar(key, data) or ""), groupd["value"])
+        elif "predot" in groupd and groupd["predot"] != None:
+            val = "%s%s" % (groupd["value"], (bb.data.getVar(key, data) or ""))
         else:
             val = groupd["value"]
         if 'flag' in groupd and groupd['flag'] != None:
