@@ -369,6 +369,7 @@ class Documentation:
             if not group in self.__groups:
                 self.__groups[group] = []
             self.__groups[group].append(item)
+            self.__groups[group].sort()
 
 
     def doc_item(self, key):
