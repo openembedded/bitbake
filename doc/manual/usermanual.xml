@@ -109,6 +109,15 @@ share common metadata between many packages.</para></listitem>
                 <para>In this example, <varname>B</varname> is now <literal>bval additionaldata</literal> and <varname>C</varname> is <literal>test cval</literal>.</para>
             </section>
             <section>
+                <title>Appending (.=) and prepending (=.) without spaces</title>
+                    <para><screen><varname>B</varname> = "bval"
+<varname>B</varname> += "additionaldata"
+<varname>C</varname> = "cval"
+<varname>C</varname> =+ "test"</screen></para>
+                <para>In this example, <varname>B</varname> is now <literal>bvaladditionaldata</literal> and <varname>C</varname> is <literal>testcval</literal>. In contrast to the above Appending and Prepending operators no additional space
+will be introduced.</para>
+            </section>
+            <section>
                 <title>Conditional metadata set</title>
                 <para>OVERRIDES is a <quote>:</quote> seperated variable containing each item you want to satisfy conditions.  So, if you have a variable which is conditional on <quote>arm</quote>, and <quote>arm</quote> is in OVERRIDES, then the <quote>arm</quote> specific version of the variable is used rather than the non-conditional version.  Example:</para>
                 <para><screen><varname>OVERRIDES</varname> = "architecture:os:machine"
