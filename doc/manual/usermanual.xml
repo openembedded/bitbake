@@ -12,7 +12,7 @@
             <corpauthor>BitBake Team</corpauthor>
         </authorgroup>
         <copyright>
-            <year>2004</year>
+            <year>2004, 2005</year>
             <holder>Chris Larson</holder>
             <holder>Phil Blundell</holder>
         </copyright>
@@ -190,7 +190,19 @@ addtask printdate before do_build</screen></para>
                 <title>Events</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
                 <para>BitBake also implements a means of registering event handlers.  Events are triggered at certain points during operation, such as, the beginning of operation against a given .bb, the start of a given task, task failure, task success, et cetera.  The intent was to make it easy to do things like email notifications on build failure.</para>
-                <para><emphasis>[Insert instructions on how to add event handlers here]</emphasis></para>
+                <para><screen>addhandler myclass_eventhandler
+python myclass_eventhandler() {
+    from bb.event import NotHandled, getName
+    from bb import data
+
+    print "The name of the Event is %s" % getName(e)
+    print "The file we run for is %s" % data.getVar('FILE', e.data, True)
+
+    return NotHandled
+</screen></para><para>
+This event handler gets called every time an event is triggered. A global variable <varname>e</varname> is defined. <varname>e</varname>.data contains an instance of bb.data. With the getName(<varname>e</varname>)
+method one can get the name of the triggered event.</para><para>The above event handler prints the name
+of the event and the content of the <varname>FILE</varname> variable.</para>
             </section>
         </section>
         <section>
