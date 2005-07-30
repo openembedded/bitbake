@@ -604,7 +604,7 @@ class BBCooker:
         # inject custom variables
         if not bb.data.getVar("BUILDNAME", self.configuration.data):
             bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
-        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.localtime()),self.configuration.data)
+        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.gmtime()),self.configuration.data)
 
         buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
 
