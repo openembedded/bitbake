@@ -160,7 +160,7 @@ will be introduced.</para>
                 <title>Defining python functions into the global python namespace</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
                 <para><screen>def get_depends(bb, d):
-    if bb.data.getVar('SOMECONDITION', d, 1):
+    if bb.data.getVar('SOMECONDITION', d, True):
         return "dependencywithcond"
     else:
         return "dependency"
