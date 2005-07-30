@@ -2,6 +2,10 @@ Changes in BitBake 1.3.2:
 	- reintegration of make.py into BitBake
 	- bbread is gone, use bitbake -e
 	- lots of shell updates and bugfixes
+	- Introduction of the .= and =. operator
+	- Sort variables, keys and groups in bitdoc
+	- Fix regression in the handling of BBCOLLECTIONS
+	- Update the bitbake usermanual
 
 Changes in BitBake 1.3.0:
 	- add bitbake interactive shell (bitbake -i)
