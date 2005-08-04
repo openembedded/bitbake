@@ -785,7 +785,7 @@ class BBCooker:
         self.cb = progressCallback
         parsed, cached, skipped, masked = 0, 0, 0, 0
         self.cache   = bb.data.getVar( "CACHE", self.configuration.data, 1 )
-        self.pkgdata = data.pkgdata( not self.cache in [None, ''], self.cache )
+        self.pkgdata = data.pkgdata( not self.cache in [None, ''], self.cache, self.configuration.data )
 
         if not self.cache in [None, '']:
             if self.cb is not None:

@@ -57,10 +57,11 @@ class DataDictCache:
     """
     Databacked Dictionary implementation
     """
-    def __init__(self, cache_dir):
+    def __init__(self, cache_dir, config):
         self.cache_dir = cache_dir
         self.files     = []
         self.dirty     = {}
+        self.config    = config
 
     def has_key(self,key):
         return key in self.files
@@ -110,12 +111,12 @@ def init_db(cache,name,clean,parent = None):
 def init_db_mtime(cache,cache_bbfile):
     return _dict_p_type.mtime(cache,cache_bbfile)
 
-def pkgdata(use_cache, cache):
+def pkgdata(use_cache, cache, config = None):
     """
     Return some sort of dictionary to lookup parsed dictionaires
     """
     if use_cache:
-        return DataDictCache(cache)
+        return DataDictCache(cache, config)
     return DataDictFull()
 
 def createCopy(source):
