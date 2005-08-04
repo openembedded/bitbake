@@ -88,7 +88,7 @@ class DataDictCache:
             return self.dirty[key]
 
         # not cached yet
-        return _dict_p_type(self.cache_dir, key,False,None)
+        return _dict_p_type(self.cache_dir, key,False,self.config)
 
     def setDirty(self, bbfile, data):
         """
