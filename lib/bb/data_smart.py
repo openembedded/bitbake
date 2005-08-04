@@ -284,15 +284,16 @@ class DataSmartPackage(DataSmart):
         cache_bbfile = self.sanitize_filename(self.bbfile)
         p = pickle.Unpickler( file("%s/%s"%(self.cache,cache_bbfile),"rb"))
         self.dict = p.load()
+        self.unpickle_prep()
         funcstr = self.getVar('__functions__', 0)
         if funcstr:
             comp = compile(funcstr, "<pickled>", "exec")
             exec comp in  __builtins__
 
-    def linkDataSet(self,parent):
-        if not parent == None:
+    def linkDataSet(self):
+        if not self.parent == None:
             # assume parent is a DataSmartInstance
-            self.dict = copy.deepcopy(parent.dict)
+            self.dict["_data"] = self.parent.dict
 
 
     def __init__(self,cache,name,clean,parent):
@@ -304,10 +305,11 @@ class DataSmartPackage(DataSmart):
 
         self.cache  = cache
         self.bbfile = os.path.abspath( name )
+        self.parent = parent
 
         # Either unpickle the data or do copy on write
         if clean:
-            self.linkDataSet(parent)
+            self.linkDataSet()
         else:
             self.unpickle()
 
@@ -315,9 +317,13 @@ class DataSmartPackage(DataSmart):
         """
         Save the package to a permanent storage
         """
+        self.pickle_prep()
+
         cache_bbfile = self.sanitize_filename(self.bbfile)
         p = pickle.Pickler(file("%s/%s" %(self.cache,cache_bbfile), "wb" ), -1 )
         p.dump( self.dict )
+
+        self.unpickle_prep()
 
     def mtime(cache,bbfile):
         cache_bbfile = DataSmartPackage.sanitize_filename(bbfile)
@@ -326,3 +332,20 @@ class DataSmartPackage(DataSmart):
         except OSError:
             return 0
     mtime = staticmethod(mtime)
+
+    def pickle_prep(self):
+        """
+        If self.dict contains a _data key and it is a configuration
+        we will remember we had a configuration instance attached
+        """
+        if "_data" in self.dict:
+            if self.dict["_data"] == self.parent:
+                dest["_data"] = "cfg"
+
+    def unpickle_prep(self):
+        """
+        If we had a configuration instance attached, we will reattach it
+        """
+        if "_data" in self.dict:
+            if self.dict["_data"] == "cfg":
+                self.dict["_data"] = self.parent
