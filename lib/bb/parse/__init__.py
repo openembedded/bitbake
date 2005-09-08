@@ -26,6 +26,8 @@ __all__ = [ 'ParseError', 'SkipPackage', 'cached_mtime', 'mark_dependency',
             'supports', 'handle', 'init' ]
 handlers = []
 
+import bb, os
+
 class ParseError(Exception):
     """Exception raised when parsing fails"""
 
@@ -34,13 +36,14 @@ class SkipPackage(Exception):
 
 __mtime_cache = {}
 def cached_mtime(f):
-    import os
     if not __mtime_cache.has_key(f):
-        __mtime_cache[f] = os.stat(f)[8]
+        update_mtime(f)
     return __mtime_cache[f]
 
+def update_mtime(f):
+    __mtime_cache[f] = os.stat(f)[8]
+
 def mark_dependency(d, f):
-    import bb, os
     if f.startswith('./'):
         f = "%s/%s" % (os.getcwd(), f[2:])
     deps = (bb.data.getVar('__depends', d) or "").split()

@@ -18,6 +18,12 @@
 # Place, Suite 330, Boston, MA 02111-1307 USA.
 #
 ##########################################################################
+#
+# Thanks to:
+# * Holger Freyther <zecke@handhelds.org>
+# * Justin Patrin <papercrane@reversefold.com>
+#
+##########################################################################
 
 """
 BitBake Shell
@@ -53,7 +59,7 @@ import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy, 
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, fatal
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -252,6 +258,19 @@ class BitBakeShellCommands:
         self.fileBuild( params )
     fileRebuild.usage = "<bbfile>"
 
+    def fileReparse( self, params ):
+        """(re)Parse a bb file"""
+        bbfile = params[0]
+        print "SHELL: Parsing '%s'" % bbfile
+        parse.update_mtime( bbfile )
+        bb_data, fromCache = cooker.load_bbfile( bbfile )
+        cooker.pkgdata[bbfile] = bb_data
+        if fromCache:
+            print "SHELL: File has not been updated, not reparsing"
+        else:
+            print "SHELL: Parsed"
+    fileReparse.usage = "<bbfile>"
+
     def force( self, params ):
         """Toggle force task execution flag (see bitbake -f)"""
         cooker.configuration.force = not cooker.configuration.force
@@ -390,6 +409,16 @@ SRC_URI = ""
         global parsed
         parsed = True
         print
+
+    def reparse( self, params ):
+        """(re)Parse a providee's bb file"""
+        bbfile = self._findProvider( params[0] )
+        if bbfile is not None:
+            print "SHELL: Found bbfile '%s' for '%s'" % ( bbfile, params[0] )
+            self.fileReparse( [ bbfile ] )
+        else:
+            print "ERROR: Nothing provides '%s'" % params[0]
+    reparse.usage = "<providee>"
 
     def getvar( self, params ):
         """Dump the contents of an outer BitBake environment variable"""
