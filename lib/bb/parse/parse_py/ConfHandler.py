@@ -125,7 +125,7 @@ def handle(fn, data = bb.data.init(), include = 0):
                 debug(1, "CONF %s %s" % (inc_string, currname))
                 break
         if f is None:
-            raise IOError("file not found")
+            raise IOError("file '%s' not found" % fn)
     else:
         f = open(fn,'r')
         debug(1, "CONF %s %s" % (inc_string,fn))
