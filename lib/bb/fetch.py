@@ -173,16 +173,26 @@ class Wget(Fetch):
     def go(self, d, urls = []):
         """Fetch urls"""
 
-        def md5_sum(basename, data):
+        def md5_sum(basename, d):
             """
             Fast and incomplete OVERRIDE implementation for MD5SUM handling
             MD5SUM_basename = "SUM" and fallback to MD5SUM_basename
             """
             var = "MD5SUM_%s" % basename
-            return getVar(var, data) or get("MD5SUM",data)
+            return data.getVar(var, d) or data.getVar("MD5SUM", d)
 
+        def verify_md5sum(wanted_sum, got_sum):
+            """
+            Verify the md5sum we wanted with the one we got
+            """
+            if not wanted_sum:
+                return True
+
+            return wanted_sum == got_sum
 
         def fetch_uri(uri, basename, dl, md5, parm, d):
+            # the MD5 sum we want to verify
+            wanted_md5sum = md5_sum(basename, d)
             if os.path.exists(dl):
 #               file exists, but we didnt complete it.. trying again..
                 fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
@@ -212,13 +222,14 @@ class Wget(Fetch):
                     md5pipe.close()
                 except OSError:
                     md5data = ""
-                md5out = file(md5, 'w')
-                md5out.write(md5data)
-                md5out.close()
-            else:
-                md5out = file(md5, 'w')
-                md5out.write("")
-                md5out.close()
+
+            # verify the md5sum
+            if not verify_md5sum(wanted_md5sum, md5data):
+                raise MD5SumError(uri)
+
+            md5out = file(md5, 'w')
+            md5out.write(md5data)
+            md5out.close()
             return True
 
         if not urls:
