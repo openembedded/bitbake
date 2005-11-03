@@ -281,7 +281,11 @@ class BBCooker:
 
         preferred_file = None
 
-        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, self.configuration.data, 1)
+        localdata = data.createCopy(self.configuration.data)
+        bb.data.setVar('OVERRIDES', "%s:%s" % (pn, data.getVar('OVERRIDES', localdata)), localdata)
+        bb.data.update_data(localdata)
+
+        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, localdata, 1)
         if preferred_v:
             m = re.match('(.*)_(.*)', preferred_v)
             if m:
@@ -307,6 +311,8 @@ class BBCooker:
                 bb.note("preferred version %s of %s not available" % (pv_str, pn))
             else:
                 bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
+
+        del localdata
 
         # get highest priority file set
         files = tmp_pn[0]
