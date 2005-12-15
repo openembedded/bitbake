@@ -48,7 +48,7 @@ class BBParsingStatus:
         self.providers   = {}
         self.bbfile_priority = {}
         self.bbfile_config_priorities = []
-        self.ignored_depedencies = None
+        self.ignored_dependencies = None
         self.possible_world = []
         self.world_target = Set()
         self.pkg_pn = {}
