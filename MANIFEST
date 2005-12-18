@@ -9,7 +9,13 @@ lib/bb/build.py
 lib/bb/data.py
 lib/bb/data_smart.py
 lib/bb/event.py
-lib/bb/fetch.py
+lib/bb/fetch/bk.py
+lib/bb/fetch/cvs.py
+lib/bb/fetch/git.py
+lib/bb/fetch/__init__.py
+lib/bb/fetch/local.py
+lib/bb/fetch/svn.py
+lib/bb/fetch/wget.py
 lib/bb/manifest.py
 lib/bb/parse/__init__.py
 lib/bb/parse/parse_py/BBHandler.py
