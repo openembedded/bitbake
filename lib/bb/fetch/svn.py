@@ -59,7 +59,7 @@ class Svn(Fetch):
 
         date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
 
-        return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, revision, date), d))
+        return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, path.replace('/', '.'), revision, date), d))
     localpath = staticmethod(localpath)
 
     def go(self, d, urls = []):
@@ -113,7 +113,7 @@ class Svn(Fetch):
                 if "rsh" in parm:
                     svn_rsh = parm["rsh"]
 
-            tarfn = data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, revision, date), localdata)
+            tarfn = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, path.replace('/', '.'), revision, date), localdata)
             data.setVar('TARFILES', dlfile, localdata)
             data.setVar('TARFN', tarfn, localdata)
 
