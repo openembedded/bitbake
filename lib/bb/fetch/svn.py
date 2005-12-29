@@ -146,7 +146,7 @@ class Svn(Fetch):
             data.setVar('SVNCOOPTS', " ".join(options), localdata)
             data.setVar('SVNMODULE', module, localdata)
             svncmd = data.getVar('FETCHCOMMAND', localdata, 1)
-            svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
+            svncmd = "svn co -r {%s} %s://%s/%s" % (date, proto, svnroot, module)
 
             if revision:
                 svncmd = "svn co -r %s %s://%s/%s" % (revision, proto, svnroot, module)
