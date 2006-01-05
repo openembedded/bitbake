@@ -139,6 +139,12 @@ will be introduced.</para>
                 <para>Next, there is the <literal>include</literal> directive, which causes BitBake to parse in whatever file you specify, and insert it at that location, which is not unlike <command>make</command>.  However, if the path specified on the <literal>include</literal> line is a relative path, BitBake will locate the first one it can find within <envar>BBPATH</envar>.</para>
             </section>
             <section>
+                <title>Requiring Inclusion</title>
+                <para>In contrast to the <literal>include</literal> directive, <literal>require</literal> will
+raise an ParseError if the to be included file can not be found. Otherwise it will behave just like the <literal>
+include</literal> directive.</para>
+            </section>
+            <section>
                 <title>Python variable expansion</title>
                 <para><screen><varname>DATE</varname> = "${@time.strftime('%Y%m%d',time.gmtime())}"</screen></para>
                 <para>This would result in the <varname>DATE</varname> variable containing today's date.</para>
