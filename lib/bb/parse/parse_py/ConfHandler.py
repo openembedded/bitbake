@@ -28,6 +28,7 @@ from bb.parse import ParseError
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|(?P<predot>=\.)|(?P<postdot>\.=)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
+__require_regexp__ = re.compile( r"require\s+(.+)" )
 
 def init(data):
     if not bb.data.getVar('TOPDIR', data):
@@ -83,7 +84,11 @@ def obtain(fn, data = bb.data.init()):
     return localfn
 
 
-def include(oldfn, fn, data = bb.data.init()):
+def include(oldfn, fn, data = bb.data.init(), error_out = False):
+    """
+
+    error_out If True a ParseError will be reaised if the to be included
+    """
     if oldfn == fn: # prevent infinate recursion
         return None
 
@@ -93,8 +98,10 @@ def include(oldfn, fn, data = bb.data.init()):
 
     from bb.parse import handle
     try:
-        ret = handle(fn, data, 1)
+        ret = handle(fn, data, True)
     except IOError:
+        if error_out:
+            raise ParseError("Could not include required file %(fn)s" % vars() )
         debug(2, "CONF file '%s' not found" % fn)
 
 def handle(fn, data = bb.data.init(), include = 0):
@@ -190,6 +197,11 @@ def feeder(lineno, s, fn, data = bb.data.init()):
 #       debug(2, "CONF %s:%d: including %s" % (fn, lineno, s))
         include(fn, s, data)
         return
+
+    m = __require_regexp__.match(s)
+    if m:
+        s = bb.data.expand(m.group(1), data)
+        include(fn, s, data, True)
 
     raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));
 
