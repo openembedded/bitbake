@@ -57,7 +57,7 @@ class Svn(Fetch):
         else:
             revision = ""
 
-        date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
+        date = Fetch.getSRCDate(d)
 
         return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, path.replace('/', '.'), revision, date), d))
     localpath = staticmethod(localpath)
@@ -96,7 +96,7 @@ class Svn(Fetch):
             else:
                 revision = ""
 
-            date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
+            date = Fetch.getSRCDate(d)
 
             if "method" in parm:
                 method = parm["method"]

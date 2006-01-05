@@ -149,6 +149,15 @@ class Fetch(object):
         """Fetch urls"""
         raise NoMethodError("Missing implementation for url")
 
+    def getSRCDate(d):
+        """
+        Return the SRC Date for the component
+
+        d the bb.data module
+        """
+        return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1 )
+    getSRCDate = staticmethod(getSRCDate)
+
 #if __name__ == "__main__":
 
 import bk

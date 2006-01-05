@@ -60,7 +60,7 @@ class Cvs(Fetch):
             date = parm['date']
         else:
             if not tag:
-                date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
+                date = Fetch.getSRCDate(d)
             else:
                 date = ""
 
@@ -105,7 +105,7 @@ class Cvs(Fetch):
                 date = parm['date']
             else:
                 if not tag:
-                    date = data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
+                    date = Fetch.getSRCDate(d)
                 else:
                     date = ""
 
