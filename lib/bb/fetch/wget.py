@@ -57,13 +57,13 @@ class Wget(Fetch):
     def go(self, d, urls = []):
         """Fetch urls"""
 
-        def md5_sum(basename, d):
+        def md5_sum(parm, d):
             """
-            Fast and incomplete OVERRIDE implementation for MD5SUM handling
-            MD5SUM_basename = "SUM" and fallback to MD5SUM_basename
+            Return the MD5SUM associated with the to be downloaded
+            file.
+            It can return None if no md5sum is associated
             """
-            var = "MD5SUM_%s" % basename
-            return data.getVar(var, d) or data.getVar("MD5SUM", d)
+            return parm['md5sum']
 
         def verify_md5sum(wanted_sum, got_sum):
             """
@@ -76,7 +76,7 @@ class Wget(Fetch):
 
         def fetch_uri(uri, basename, dl, md5, parm, d):
             # the MD5 sum we want to verify
-            wanted_md5sum = md5_sum(basename, d)
+            wanted_md5sum = md5_sum(parm, d)
             if os.path.exists(dl):
 #               file exists, but we didnt complete it.. trying again..
                 fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
