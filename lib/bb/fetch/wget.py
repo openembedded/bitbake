@@ -63,7 +63,10 @@ class Wget(Fetch):
             file.
             It can return None if no md5sum is associated
             """
-            return parm['md5sum']
+            try:
+                return parm['md5sum']
+            except:
+                return None
 
         def verify_md5sum(wanted_sum, got_sum):
             """
