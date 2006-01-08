@@ -46,6 +46,8 @@ class BBParsingStatus:
     def __init__(self):
         self.cache_dirty = False
         self.providers   = {}
+        self.packages = {}
+        self.packages_dynamic = {}
         self.bbfile_priority = {}
         self.bbfile_config_priorities = []
         self.ignored_dependencies = None
@@ -75,6 +77,8 @@ class BBParsingStatus:
         dp       = int(bb.data.getVar('DEFAULT_PREFERENCE', bb_data, True) or "0")
         provides = Set([pn] + (bb.data.getVar("PROVIDES", bb_data, 1) or "").split())
         depends  = (bb.data.getVar("DEPENDS", bb_data, True) or "").split()
+        packages = (bb.data.getVar('PACKAGES', bb_data, True) or "").split()
+        packages_dynamic = (bb.data.getVar('PACKAGES_DYNAMIC', bb_data, True) or "").split()
 
 
         # build PackageName to FileName lookup table
@@ -101,6 +105,19 @@ class BBParsingStatus:
 
         for dep in depends:
             self.all_depends.add(dep)
+
+        # Build reverse hash for PACKAGES, so runtime dependencies 
+        # can be be resolved (RDEPENDS, RRECOMMENDS etc.)
+    
+        for package in packages:
+            if not package in self.packages:
+                self.packages[package] = []
+            self.packages[package].append(file_name)
+
+        for package in packages_dynamic:
+            if not package in self.packages_dynamic:
+                self.packages_dynamic[package] = []
+            self.packages_dynamic[package].append(file_name)
 
         # Collect files we may need for possible world-dep
         # calculations
@@ -194,7 +211,7 @@ class BBCooker:
             self.build_cache_fail.append(fn)
             raise
 
-    def tryBuild( self, fn, virtual ):
+    def tryBuild( self, fn, virtual , buildAllDeps ):
         """Build a provider and its dependencies"""
         if fn in self.building_list:
             bb.error("%s depends on itself (eventually)" % fn)
@@ -209,10 +226,18 @@ class BBCooker:
         pathstr = "%s (%s)" % (item, virtual)
         self.build_path.append(pathstr)
 
-        depends_list = (bb.data.getVar('DEPENDS', the_data, 1) or "").split()
+        depends_list = (bb.data.getVar('DEPENDS', the_data, 1) or "")
+        if not buildAllDeps:
+            buildAllDeps = bb.data.getVar('BUILD_ALL_DEPS', the_data, 1) or False
+
+        if buildAllDeps:
+            depends_list = "%s %s %s" % (depends_list, (bb.data.getVar('RDEPENDS', the_data, 1) or ""), (bb.data.getVar('RRECOMMENDS', the_data, 1) or ""))
+
         if self.configuration.verbose:
             bb.note("current path: %s" % (" -> ".join(self.build_path)))
-            bb.note("dependencies for %s are: %s" % (item, " ".join(depends_list)))
+            bb.note("dependencies for %s are: %s" % (item, depends_list))
+
+        depends_list = depends_list.split()
 
         try:
             failed = False
@@ -234,7 +259,7 @@ class BBCooker:
                     continue
                 if not depcmd:
                     continue
-                if self.buildProvider( dependency ) == 0:
+                if self.buildProvider( dependency , buildAllDeps ) == 0:
                     bb.error("dependency %s (for %s) not satisfied" % (dependency,item))
                     failed = True
                     if self.configuration.abort:
@@ -379,16 +404,39 @@ class BBCooker:
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
-    def buildProvider( self, item ):
+    def getProviders(self, item, buildAllDeps):
+
+        if item in self.status.providers:
+            return self.status.providers[item]
+
+        if not buildAllDeps:
+            return False
+
+        if item in self.status.packages:
+            return self.status.packages[item]
+
+        matches = []
+        for pattern in self.status.packages_dynamic:
+            regexp = re.compile(pattern)
+            if regexp.match(item):
+                for fn in self.status.packages_dynamic[pattern]:
+                    matches.append(fn)
+
+        if matches:
+            return matches
+
+        return False
+
+    def buildProvider( self, item , buildAllDeps ):
         fn = None
 
         discriminated = False
 
-        if item not in self.status.providers:
+        all_p = self.getProviders(item, buildAllDeps)
+
+        if not all_p:
             bb.error("Nothing provides %s" % item)
             return 0
-
-        all_p = self.status.providers[item]
 
         for p in all_p:
             if p in self.build_cache:
@@ -476,7 +524,7 @@ class BBCooker:
         # run through the list until we find one that we can build
         for fn in eligible:
             bb.debug(2, "selecting %s to satisfy %s" % (fn, item))
-            if self.tryBuild(fn, item):
+            if self.tryBuild(fn, item, buildAllDeps):
                 return 1
 
         bb.note("no buildable providers for %s" % item)
@@ -694,7 +742,7 @@ class BBCooker:
             for k in pkgs_to_build:
                 failed = False
                 try:
-                    if self.buildProvider( k ) == 0:
+                    if self.buildProvider( k , False ) == 0:
                         # already diagnosed
                         failed = True
                 except bb.build.EventException:
