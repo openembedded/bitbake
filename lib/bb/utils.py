@@ -69,3 +69,27 @@ def vercmp(ta, tb):
     if (r == 0):
         r = vercmp_part(ra, rb)
     return r
+
+def explode_deps(s):
+    """
+    Take an RDEPENDS style string of format:
+    "DEPEND1 (optional version) DEPEND2 (optional version) ..."
+    and return a list of dependencies.
+    Version information is ignored.
+    """
+    r = []
+    l = s.split()
+    flag = False
+    for i in l:
+        if i[0] == '(':
+            flag = True
+            j = []
+        if flag:
+            j.append(i)
+        if i.endswith(')'):
+            flag = False
+            # Ignore version
+            #r[-1] += ' ' + ' '.join(j)
+        else:
+            r.append(i)
+    return r

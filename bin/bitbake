@@ -46,6 +46,7 @@ class BBParsingStatus:
     def __init__(self):
         self.cache_dirty = False
         self.providers   = {}
+        self.rproviders = {}
         self.packages = {}
         self.packages_dynamic = {}
         self.bbfile_priority = {}
@@ -76,6 +77,7 @@ class BBParsingStatus:
         pr       = bb.data.getVar('PR', bb_data, True)
         dp       = int(bb.data.getVar('DEFAULT_PREFERENCE', bb_data, True) or "0")
         provides = Set([pn] + (bb.data.getVar("PROVIDES", bb_data, 1) or "").split())
+        rprovides = (bb.data.getVar("RPROVIDES", bb_data, 1) or "").split()
         depends  = (bb.data.getVar("DEPENDS", bb_data, True) or "").split()
         packages = (bb.data.getVar('PACKAGES', bb_data, True) or "").split()
         packages_dynamic = (bb.data.getVar('PACKAGES_DYNAMIC', bb_data, True) or "").split()
@@ -118,6 +120,11 @@ class BBParsingStatus:
             if not package in self.packages_dynamic:
                 self.packages_dynamic[package] = []
             self.packages_dynamic[package].append(file_name)
+
+        for rprovide in rprovides:
+            if not rprovide in self.rproviders:
+                self.rproviders[rprovide] = []
+            self.rproviders[rprovide].append(file_name)
 
         # Collect files we may need for possible world-dep
         # calculations
@@ -175,6 +182,7 @@ class BBCooker:
     def __init__( self ):
         self.build_cache_fail = []
         self.build_cache = []
+        self.rbuild_cache = []
         self.building_list = []
         self.build_path = []
         self.consider_msgs_cache = []
@@ -211,14 +219,22 @@ class BBCooker:
             self.build_cache_fail.append(fn)
             raise
 
-    def tryBuild( self, fn, virtual , buildAllDeps ):
+    def tryBuild( self, fn, virtual , itemtype , buildAllDeps ):
         """Build a provider and its dependencies"""
-        if fn in self.building_list:
-            bb.error("%s depends on itself (eventually)" % fn)
-            bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
-            return False
 
         the_data = self.pkgdata[fn]
+
+        if not buildAllDeps:
+            buildAllDeps = bb.data.getVar('BUILD_ALL_DEPS', the_data, True) or False
+
+        if fn in self.building_list:
+            if itemtype == "runtime":
+                return self.addRunDeps(fn, virtual , buildAllDeps)
+            else:
+                bb.error("%s depends on itself (eventually)" % fn)
+                bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
+                return False
+
         item = self.status.pkg_fn[fn]
 
         self.building_list.append(fn)
@@ -226,18 +242,11 @@ class BBCooker:
         pathstr = "%s (%s)" % (item, virtual)
         self.build_path.append(pathstr)
 
-        depends_list = (bb.data.getVar('DEPENDS', the_data, 1) or "")
-        if not buildAllDeps:
-            buildAllDeps = bb.data.getVar('BUILD_ALL_DEPS', the_data, 1) or False
-
-        if buildAllDeps:
-            depends_list = "%s %s %s" % (depends_list, (bb.data.getVar('RDEPENDS', the_data, 1) or ""), (bb.data.getVar('RRECOMMENDS', the_data, 1) or ""))
+        depends_list = (bb.data.getVar('DEPENDS', the_data, True) or "").split()
 
         if self.configuration.verbose:
             bb.note("current path: %s" % (" -> ".join(self.build_path)))
-            bb.note("dependencies for %s are: %s" % (item, depends_list))
-
-        depends_list = depends_list.split()
+            bb.note("dependencies for %s are: %s" % (item, " ".join(depends_list)))
 
         try:
             failed = False
@@ -270,6 +279,9 @@ class BBCooker:
 
             if failed:
                 self.stats.deps += 1
+                return False
+
+            if not self.addRunDeps(fn, virtual , buildAllDeps):
                 return False
 
             if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
@@ -310,7 +322,7 @@ class BBCooker:
         bb.data.setVar('OVERRIDES', "%s:%s" % (pn, data.getVar('OVERRIDES', localdata)), localdata)
         bb.data.update_data(localdata)
 
-        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, localdata, 1)
+        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, localdata, True)
         if preferred_v:
             m = re.match('(.*)_(.*)', preferred_v)
             if m:
@@ -404,51 +416,17 @@ class BBCooker:
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
-    def getProviders(self, item, buildAllDeps):
-
-        if item in self.status.providers:
-            return self.status.providers[item]
-
-        if not buildAllDeps:
-            return False
-
-        if item in self.status.packages:
-            return self.status.packages[item]
-
-        matches = []
-        for pattern in self.status.packages_dynamic:
-            regexp = re.compile(pattern)
-            if regexp.match(item):
-                for fn in self.status.packages_dynamic[pattern]:
-                    matches.append(fn)
-
-        if matches:
-            return matches
-
-        return False
-
-    def buildProvider( self, item , buildAllDeps ):
-        fn = None
-
-        discriminated = False
-
-        all_p = self.getProviders(item, buildAllDeps)
-
-        if not all_p:
-            bb.error("Nothing provides %s" % item)
-            return 0
-
-        for p in all_p:
-            if p in self.build_cache:
-                bb.debug(1, "already built %s in this run\n" % p)
-                return 1
-
+    def filterProviders(self, providers, item):
+        """
+        Take a list of providers and filter/reorder according to the 
+        environment variables and previous build results
+        """
         eligible = []
         preferred_versions = {}
 
         # Collate providers by PN
         pkg_pn = {}
-        for p in all_p:
+        for p in providers:
             pn = self.status.pkg_fn[p]
             if pn not in pkg_pn:
                 pkg_pn[pn] = []
@@ -471,7 +449,7 @@ class BBCooker:
 
         # look to see if one of them is already staged, or marked as preferred.
         # if so, bump it to the head of the queue
-        for p in all_p:
+        for p in providers:
             the_data = self.pkgdata[p]
             pn = bb.data.getVar('PN', the_data, 1)
             pv = bb.data.getVar('PV', the_data, 1)
@@ -495,6 +473,30 @@ class BBCooker:
                 eligible = [fn] + eligible
                 discriminated = True
                 break
+
+        return eligible
+
+    def buildProvider( self, item , buildAllDeps ):
+        """
+        Build something to provide a named build requirement
+        (takes item names from DEPENDS namespace)
+        """
+
+        fn = None
+        discriminated = False
+
+        if not item in self.status.providers:
+            bb.error("Nothing provides dependency %s" % item)
+            return 0
+
+        all_p = self.status.providers[item]
+
+        for p in all_p:
+            if p in self.build_cache:
+                bb.debug(1, "already built %s in this run\n" % p)
+                return 1
+
+        eligible = self.filterProviders(all_p, item)
 
         prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, self.configuration.data, 1)
         if prefervar:
@@ -524,11 +526,126 @@ class BBCooker:
         # run through the list until we find one that we can build
         for fn in eligible:
             bb.debug(2, "selecting %s to satisfy %s" % (fn, item))
-            if self.tryBuild(fn, item, buildAllDeps):
+            if self.tryBuild(fn, item, "build", buildAllDeps):
                 return 1
 
         bb.note("no buildable providers for %s" % item)
         return 0
+
+    def buildRProvider( self, item , buildAllDeps ):
+        """
+        Build something to provide a named runtime requirement
+        (takes item names from RDEPENDS/PACKAGES namespace)
+        """
+
+        fn = None
+        all_p = []
+        discriminated = False
+
+        if not buildAllDeps:
+            return True
+
+        all_p = self.getProvidersRun(item)
+
+        if not all_p:
+            bb.error("Nothing provides runtime dependency %s" % (item))
+            return False
+
+        for p in all_p:
+            if p in self.rbuild_cache:
+                bb.debug(2, "Already built %s providing runtime %s\n" % (p,item))
+                return True
+            if p in self.build_cache:
+                bb.debug(2, "Already built %s but adding any further RDEPENDS for %s\n" % (p, item))
+                return self.addRunDeps(p, item , buildAllDeps)
+
+        eligible = self.filterProviders(all_p, item)
+
+        for p in eligible:
+            pn = self.status.pkg_fn[p]
+            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % pn, self.configuration.data, 1)
+            if prefervar:
+                if self.configuration.verbose:
+                    bb.note("selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
+                eligible.remove(p)
+                eligible = [p] + eligible
+                discriminated = True
+                break
+
+        if len(eligible) > 1 and discriminated == False:
+            if item not in self.consider_msgs_cache:
+                providers_list = []
+                for fn in eligible:
+                    providers_list.append(self.status.pkg_fn[fn])
+                bb.note("multiple providers are available (%s);" % ", ".join(providers_list))
+                bb.note("consider defining a PREFERRED_PROVIDER to match runtime %s" % item)
+            self.consider_msgs_cache.append(item)
+
+        # run through the list until we find one that we can build
+        for fn in eligible:
+            bb.debug(2, "selecting %s to satisfy runtime %s" % (fn, item))
+            if self.tryBuild(fn, item, "runtime", buildAllDeps):
+                return True
+
+        bb.error("No buildable providers for runtime %s" % item)
+        return False
+
+    def getProvidersRun(self, rdepend):
+        """
+        Return any potential providers of runtime rdepend
+        """
+        rproviders = []
+
+        if rdepend in self.status.rproviders:
+            rproviders += self.status.rproviders[rdepend]
+
+        if rdepend in self.status.packages:
+            rproviders += self.status.packages[rdepend]
+
+        if rproviders:
+            return rproviders
+
+        # Only search dynamic packages if we can't find anything in other variables
+        for pattern in self.status.packages_dynamic:
+            regexp = re.compile(pattern)
+            if regexp.match(rdepend):
+                rproviders += self.status.packages_dynamic[pattern]
+
+        return rproviders
+
+    def addRunDeps(self , fn, item , buildAllDeps):
+        """
+        Add any runtime dependencies of runtime item provided by fn 
+        as long as item has't previously been processed by this function.
+        """
+
+        if item in self.rbuild_cache:
+            return True
+
+        if not buildAllDeps:
+            return True
+
+        rdepends = []
+        self.rbuild_cache.append(item)
+        the_data = self.pkgdata[fn]
+        pn = self.status.pkg_fn[fn]
+
+        if (item == pn):
+            rdepends += bb.utils.explode_deps(bb.data.getVar('RDEPENDS', the_data, True) or "")
+            rdepends += bb.utils.explode_deps(bb.data.getVar('RRECOMMENDS', the_data, True) or "")
+        else:
+            packages = (bb.data.getVar('PACKAGES', the_data, 1).split() or "")
+            for package in packages:
+                if package == item:
+                    rdepends += bb.utils.explode_deps(bb.data.getVar("RDEPENDS_%s" % package, the_data, True) or "")
+                    rdepends += bb.utils.explode_deps(bb.data.getVar("RRECOMMENDS_%s" % package, the_data, True) or "")
+
+        bb.debug(2, "Additional runtime dependencies for %s are: %s" % (item, " ".join(rdepends)))
+
+        for rdepend in rdepends:  
+            if not self.buildRProvider(rdepend, buildAllDeps):
+                return False
+        return True
 
     def buildDepgraph( self ):
         all_depends = self.status.all_depends
