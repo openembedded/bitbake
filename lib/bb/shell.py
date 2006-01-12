@@ -157,7 +157,7 @@ class BitBakeShellCommands:
 
         for name in names:
             try:
-                cooker.buildProvider( name )
+                cooker.buildProvider( name, data.getVar("BUILD_ALL_DEPS", cooker.configuration.data, True) )
             except build.EventException, e:
                 print "ERROR: Couldn't build '%s'" % name
                 global last_exception
