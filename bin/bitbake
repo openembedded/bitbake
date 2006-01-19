@@ -219,21 +219,28 @@ class BBCooker:
             self.build_cache_fail.append(fn)
             raise
 
-    def tryBuild( self, fn, virtual , itemtype , buildAllDeps ):
-        """Build a provider and its dependencies"""
+    def tryBuild( self, fn, virtual , buildAllDeps , build_depends = []):
+        """
+        Build a provider and its dependencies. 
+        build_depends is a list of previous build dependencies (not runtime)
+        If build_depends is empty, we're dealing with a runtime depends
+        """
 
         the_data = self.pkgdata[fn]
 
         if not buildAllDeps:
             buildAllDeps = bb.data.getVar('BUILD_ALL_DEPS', the_data, True) or False
 
+        # Error on build time dependency loops
+        if build_depends and build_depends.count(fn) > 1:
+            bb.error("%s depends on itself (eventually)" % fn)
+            bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
+            return False
+
+        # See if this is a runtime dependency we've already built
+	# Or a build dependency being handled in a different build chain
         if fn in self.building_list:
-            if itemtype == "runtime":
-                return self.addRunDeps(fn, virtual , buildAllDeps)
-            else:
-                bb.error("%s depends on itself (eventually)" % fn)
-                bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
-                return False
+            return self.addRunDeps(fn, virtual , buildAllDeps)
 
         item = self.status.pkg_fn[fn]
 
@@ -268,7 +275,7 @@ class BBCooker:
                     continue
                 if not depcmd:
                     continue
-                if self.buildProvider( dependency , buildAllDeps ) == 0:
+                if self.buildProvider( dependency , buildAllDeps , build_depends ) == 0:
                     bb.error("dependency %s (for %s) not satisfied" % (dependency,item))
                     failed = True
                     if self.configuration.abort:
@@ -476,7 +483,7 @@ class BBCooker:
 
         return eligible
 
-    def buildProvider( self, item , buildAllDeps ):
+    def buildProvider( self, item , buildAllDeps , build_depends = [] ):
         """
         Build something to provide a named build requirement
         (takes item names from DEPENDS namespace)
@@ -526,7 +533,7 @@ class BBCooker:
         # run through the list until we find one that we can build
         for fn in eligible:
             bb.debug(2, "selecting %s to satisfy %s" % (fn, item))
-            if self.tryBuild(fn, item, "build", buildAllDeps):
+            if self.tryBuild(fn, item, buildAllDeps, build_depends + [fn]):
                 return 1
 
         bb.note("no buildable providers for %s" % item)
@@ -584,7 +591,7 @@ class BBCooker:
         # run through the list until we find one that we can build
         for fn in eligible:
             bb.debug(2, "selecting %s to satisfy runtime %s" % (fn, item))
-            if self.tryBuild(fn, item, "runtime", buildAllDeps):
+            if self.tryBuild(fn, item, buildAllDeps):
                 return True
 
         bb.error("No buildable providers for runtime %s" % item)
