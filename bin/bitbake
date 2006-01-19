@@ -567,25 +567,36 @@ class BBCooker:
                 return self.addRunDeps(p, item , buildAllDeps)
 
         eligible = self.filterProviders(all_p, item)
+        preferred = []
 
         for p in eligible:
             pn = self.status.pkg_fn[p]
-            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % pn, self.configuration.data, 1)
-            if prefervar:
-                if self.configuration.verbose:
-                    bb.note("selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
-                eligible.remove(p)
-                eligible = [p] + eligible
-                discriminated = True
-                break
+            provides = self.status.pn_provides[pn]
+            for provide in provides:
+                prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, self.configuration.data, 1)
+                if prefervar == pn:
+                    if self.configuration.verbose:
+                        bb.note("selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
+                    eligible.remove(p)
+                    eligible = [p] + eligible
+                    preferred.append(p)
 
-        if len(eligible) > 1 and discriminated == False:
+        if len(eligible) > 1 and len(preferred) == 0:
             if item not in self.consider_msgs_cache:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(self.status.pkg_fn[fn])
                 bb.note("multiple providers are available (%s);" % ", ".join(providers_list))
                 bb.note("consider defining a PREFERRED_PROVIDER to match runtime %s" % item)
+            self.consider_msgs_cache.append(item)
+
+        if len(preferred) > 1:
+            if item not in self.consider_msgs_cache:
+                providers_list = []
+                for fn in preferred:
+                    providers_list.append(self.status.pkg_fn[fn])
+                bb.note("multiple preferred providers are available (%s);" % ", ".join(providers_list))
+                bb.note("consider defining only one PREFERRED_PROVIDER to match runtime %s" % item)
             self.consider_msgs_cache.append(item)
 
         # run through the list until we find one that we can build
