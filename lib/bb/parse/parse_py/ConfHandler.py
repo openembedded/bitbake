@@ -202,6 +202,7 @@ def feeder(lineno, s, fn, data = bb.data.init()):
     if m:
         s = bb.data.expand(m.group(1), data)
         include(fn, s, data, True)
+        return
 
     raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));
 
