@@ -505,6 +505,9 @@ class BBCooker:
 
         eligible = self.filterProviders(all_p, item)
 
+        if not eligible:
+            return 0
+
         prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, self.configuration.data, 1)
         if prefervar:
             self.preferred[item] = prefervar
@@ -567,8 +570,10 @@ class BBCooker:
                 return self.addRunDeps(p, item , buildAllDeps)
 
         eligible = self.filterProviders(all_p, item)
-        preferred = []
+        if not eligible:
+            return 0
 
+        preferred = []
         for p in eligible:
             pn = self.status.pkg_fn[p]
             provides = self.status.pn_provides[pn]
