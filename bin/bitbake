@@ -461,8 +461,7 @@ class BBCooker:
             pn = bb.data.getVar('PN', the_data, 1)
             pv = bb.data.getVar('PV', the_data, 1)
             pr = bb.data.getVar('PR', the_data, 1)
-            tmpdir = bb.data.getVar('TMPDIR', the_data, 1)
-            stamp = '%s/stamps/%s-%s-%s.do_populate_staging' % (tmpdir, pn, pv, pr)
+            stamp = '%s.do_populate_staging' % bb.data.getVar('STAMP', the_data, 1)
             if os.path.exists(stamp):
                 (newvers, fn) = preferred_versions[pn]
                 if not fn in eligible:
