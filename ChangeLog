@@ -1,4 +1,4 @@
-Changes in BitBake 1.3.?:
+Changes in BitBake 1.3.3:
 	- Create a new Fetcher module to ease the
 	  development of new Fetchers.
 	  Issue #438 fixed by rpurdie@openedhand.com
@@ -7,13 +7,19 @@ Changes in BitBake 1.3.?:
 	  Issue #555 fixed by chris@openedhand.com
 	- Expand PREFERRED_PROVIDER properly
 	  Issue #436 fixed by rprudie@openedhand.com
-	- Typo fix for Issue #531 Philipp Zabel for the
+	- Typo fix for Issue #531 by Philipp Zabel for the
 	  BitBake Shell
 	- Introduce a new special variable SRCDATE as
-	  a generic naming to take over CVSDATE.
-	- Introduce a new keyword 'required' In contrast
-	  to include parsing will fail if a to be included
-	  can not be found.
+	  a generic naming to replace CVSDATE.
+	- Introduce a new keyword 'required'. In contrast
+	  to 'include' parsing will fail if a to be included
+	  file can not be found.
+	- Remove hardcoding of the STAMP directory. Patch
+	  courtsey pHilipp Zabel
+	- Track the RDEPENDS of each package (rpurdie@openedhand.com)
+	- Introduce BUILD_ALL_DEPS to build all RDEPENDS. E.g
+	  this is used by the OpenEmbedded Meta Packages.
+	  (rpurdie@openedhand.com).
 
 Changes in BitBake 1.3.2:
 	- reintegration of make.py into BitBake
