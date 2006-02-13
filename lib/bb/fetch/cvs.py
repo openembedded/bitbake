@@ -194,7 +194,7 @@ class Cvs(Fetch):
                 bb.debug(1, "Running %s" % cvscmd)
                 myret = os.system(cvscmd)
 
-            if myret != 0:
+            if myret != 0 or not os.access(moddir, os.R_OK):
                 try:
                     os.rmdir(moddir)
                 except OSError:
