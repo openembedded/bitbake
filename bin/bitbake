@@ -31,7 +31,7 @@ import itertools, optparse
 parsespin = itertools.cycle( r'|/-\\' )
 bbdebug = 0
 
-__version__ = "1.3.3.1"
+__version__ = "1.3.3.2"
 
 #============================================================================#
 # BBParsingStatus
@@ -655,6 +655,7 @@ class BBCooker:
         if (item == pn):
             rdepends += bb.utils.explode_deps(bb.data.getVar('RDEPENDS', the_data, True) or "")
             rdepends += bb.utils.explode_deps(bb.data.getVar('RRECOMMENDS', the_data, True) or "")
+            rdepends += bb.utils.explode_deps(bb.data.getVar("RDEPENDS_%s" % pn, the_data, True) or "")
         else:
             packages = (bb.data.getVar('PACKAGES', the_data, 1).split() or "")
             for package in packages:
