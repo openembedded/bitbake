@@ -111,9 +111,9 @@ share common metadata between many packages.</para></listitem>
             <section>
                 <title>Appending (.=) and prepending (=.) without spaces</title>
                     <para><screen><varname>B</varname> = "bval"
-<varname>B</varname> += "additionaldata"
+<varname>B</varname> .= "additionaldata"
 <varname>C</varname> = "cval"
-<varname>C</varname> =+ "test"</screen></para>
+<varname>C</varname> =. "test"</screen></para>
                 <para>In this example, <varname>B</varname> is now <literal>bvaladditionaldata</literal> and <varname>C</varname> is <literal>testcval</literal>. In contrast to the above Appending and Prepending operators no additional space
 will be introduced.</para>
             </section>
