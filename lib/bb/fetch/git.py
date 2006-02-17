@@ -110,22 +110,9 @@ class Git(Fetch):
                 continue
 
 # Still Need to add GIT_TARBALL_STASH Support...
-#            pn = data.getVar('PN', d, 1)
-#            cvs_tarball_stash = None
-#            if pn:
-#                cvs_tarball_stash = data.getVar('CVS_TARBALL_STASH_%s' % pn, d, 1)
-#            if cvs_tarball_stash == None:
-#                cvs_tarball_stash = data.getVar('CVS_TARBALL_STASH', d, 1)
-#            if cvs_tarball_stash:
-#                fetchcmd = data.getVar("FETCHCOMMAND_wget", d, 1)
-#                uri = cvs_tarball_stash + tarfn
-#                bb.note("fetch " + uri)
-#                fetchcmd = fetchcmd.replace("${URI}", uri)
-#                ret = os.system(fetchcmd)
-#                if ret == 0:
-#                    bb.note("Fetched %s from tarball stash, skipping checkout" % tarfn)
-#                    continue
-         
+#           if Fetch.try_mirror(d, tarfn):
+#               continue
+
             #if os.path.exists(repodir):
                 #prunedir(repodir)
 

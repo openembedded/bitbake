@@ -158,7 +158,32 @@ class Fetch(object):
         return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1 )
     getSRCDate = staticmethod(getSRCDate)
 
-#if __name__ == "__main__":
+    def try_mirror(d, tarfn):
+        """
+        Try to use a mirrored version of the sources. We do this
+        to avoid massive loads on foreign cvs and svn servers.
+        This method will be used by the different fetcher
+        implementations.
+
+        d Is a bb.data instance
+        tarfn is the name of the tarball
+        """
+        pn = data.getVar('PN', d, True)
+        src_tarball_stash = None
+        if pn:
+            src_tarball_stash = data.getVar('SRC_TARBALL_STASH_%s' % pn, d, True) or data.getVar('CVS_TARBALL_STASH_%s' % pn, d, True) or data.getVar('SRC_TARBALL_STASH', d, True) or data.getVar('CVS_TARBALL_STASH', d, True)
+
+        if src_tarball_stash:
+            fetchcmd = data.getVar("FETCHCOMMAND_mirror", d, True) or data.getVar("FETCHCOMMAND_wget", d, True)
+            uri = src_tarball_stash + tarfn
+            bb.note("fetch " + uri)
+            fetchcmd = fetchcmd.replace("${URI}", uri)
+            ret = os.system(fetchcmd)
+            if ret == 0:
+                bb.note("Fetched %s from tarball stash, skipping checkout" % tarfn)
+                return True
+        return False
+    try_mirror = staticmethod(try_mirror)
 
 import bk
 import cvs
@@ -166,6 +191,7 @@ import git
 import local
 import svn
 import wget
+import svk
 
 methods.append(bk.Bk())
 methods.append(cvs.Cvs())
@@ -173,3 +199,4 @@ methods.append(git.Git())
 methods.append(local.Local())
 methods.append(svn.Svn())
 methods.append(wget.Wget())
+methods.append(svk.Svk())

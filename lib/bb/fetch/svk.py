@@ -4,6 +4,14 @@
 """
 BitBake 'Fetch' implementations
 
+This implementation is for svk. It is based on the svn implementation
+
+Copyright (C) 2006 Holger Hans Peter Freyther
+
+GPL and MIT licensed
+
+
+
 Classes for obtaining upstream sources for the
 BitBake build tools.
 
@@ -32,14 +40,14 @@ from   bb.fetch import Fetch
 from   bb.fetch import FetchError
 from   bb.fetch import MissingParameterError
 
-class Svn(Fetch):
+class Svk(Fetch):
     """Class to fetch a module or modules from svn repositories"""
     def supports(url, d):
         """Check to see if a given url can be fetched with svn.
            Expects supplied url in list form, as outputted by bb.decodeurl().
         """
         (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        return type in ['svn']
+        return type in ['svk']
     supports = staticmethod(supports)
 
     def localpath(url, d):
@@ -74,20 +82,12 @@ class Svn(Fetch):
         for loc in urls:
             (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(loc, localdata))
             if not "module" in parm:
-                raise MissingParameterError("svn method needs a 'module' parameter")
+                raise MissingParameterError("svk method needs a 'module' parameter")
             else:
                 module = parm["module"]
 
             dlfile = self.localpath(loc, localdata)
             dldir = data.getVar('DL_DIR', localdata, 1)
-#           if local path contains the svn
-#           module, consider the dir above it to be the
-#           download directory
-#           pos = dlfile.find(module)
-#           if pos:
-#               dldir = dlfile[:pos]
-#           else:
-#               dldir = os.path.dirname(dlfile)
 
 #           setup svn options
             options = []
@@ -122,7 +122,6 @@ class Svn(Fetch):
                 bb.debug(1, "%s already exists, skipping svn checkout." % tarfn)
                 continue
 
-            # try to use the tarball stash
             if Fetch.try_mirror(d, tarfn):
                 continue
 
