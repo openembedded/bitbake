@@ -41,9 +41,9 @@ from   bb.fetch import FetchError
 from   bb.fetch import MissingParameterError
 
 class Svk(Fetch):
-    """Class to fetch a module or modules from svn repositories"""
+    """Class to fetch a module or modules from svk repositories"""
     def supports(url, d):
-        """Check to see if a given url can be fetched with svn.
+        """Check to see if a given url can be fetched with svk.
            Expects supplied url in list form, as outputted by bb.decodeurl().
         """
         (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
@@ -57,7 +57,7 @@ class Svk(Fetch):
             return parm["localpath"]
 
         if not "module" in parm:
-            raise MissingParameterError("svn method needs a 'module' parameter")
+            raise MissingParameterError("svk method needs a 'module' parameter")
         else:
             module = parm["module"]
         if 'rev' in parm:
@@ -76,7 +76,7 @@ class Svk(Fetch):
             urls = self.urls
 
         localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "svn:%s" % data.getVar('OVERRIDES', localdata), localdata)
+        data.setVar('OVERRIDES', "svk:%s" % data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
         for loc in urls:
@@ -89,7 +89,7 @@ class Svk(Fetch):
             dlfile = self.localpath(loc, localdata)
             dldir = data.getVar('DL_DIR', localdata, 1)
 
-#           setup svn options
+#           setup svk options
             options = []
             if 'rev' in parm:
                 revision = parm['rev']
@@ -97,58 +97,32 @@ class Svk(Fetch):
                 revision = ""
 
             date = Fetch.getSRCDate(d)
-
-            if "method" in parm:
-                method = parm["method"]
-            else:
-                method = "pserver"
-
-            if "proto" in parm:
-                proto = parm["proto"]
-            else:
-                proto = "svn"
-
-            svn_rsh = None
-            if method == "ext":
-                if "rsh" in parm:
-                    svn_rsh = parm["rsh"]
-
             tarfn = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, path.replace('/', '.'), revision, date), localdata)
             data.setVar('TARFILES', dlfile, localdata)
             data.setVar('TARFN', tarfn, localdata)
 
             dl = os.path.join(dldir, tarfn)
             if os.access(dl, os.R_OK):
-                bb.debug(1, "%s already exists, skipping svn checkout." % tarfn)
-                continue
-
-            if Fetch.try_mirror(d, tarfn):
+                bb.debug(1, "%s already exists, skipping svk checkout." % tarfn)
                 continue
 
             olddir = os.path.abspath(os.getcwd())
             os.chdir(data.expand(dldir, localdata))
 
-#           setup svnroot
-#            svnroot = ":" + method + ":" + user
-#            if pswd:
-#                svnroot += ":" + pswd
-            svnroot = host + path
+            svkroot = host + path
 
-            data.setVar('SVNROOT', svnroot, localdata)
-            data.setVar('SVNCOOPTS', " ".join(options), localdata)
-            data.setVar('SVNMODULE', module, localdata)
-            svncmd = data.getVar('FETCHCOMMAND', localdata, 1)
-            svncmd = "svn co -r {%s} %s://%s/%s" % (date, proto, svnroot, module)
+            data.setVar('SVKROOT', svkroot, localdata)
+            data.setVar('SVKCOOPTS', " ".join(options), localdata)
+            data.setVar('SVKMODULE', module, localdata)
+            svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, module)
 
             if revision:
-                svncmd = "svn co -r %s %s://%s/%s" % (revision, proto, svnroot, module)
-            if svn_rsh:
-                svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
+                svkcmd = "svk co -r %s/%s" % (revision, svkroot, module)
 
 #           create temp directory
             bb.debug(2, "Fetch: creating temporary directory")
             bb.mkdirhier(data.expand('${WORKDIR}', localdata))
-            data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvn.XXXXXX', localdata), localdata)
+            data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
             tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
             tmpfile = tmppipe.readline().strip()
             if not tmpfile:
@@ -158,8 +132,8 @@ class Svk(Fetch):
 #           check out sources there
             os.chdir(tmpfile)
             bb.note("Fetch " + loc)
-            bb.debug(1, "Running %s" % svncmd)
-            myret = os.system(svncmd)
+            bb.debug(1, "Running %s" % svkcmd)
+            myret = os.system(svkcmd)
             if myret != 0:
                 try:
                     os.rmdir(tmpfile)
