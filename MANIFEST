@@ -14,6 +14,7 @@ lib/bb/fetch/cvs.py
 lib/bb/fetch/git.py
 lib/bb/fetch/__init__.py
 lib/bb/fetch/local.py
+lib/bb/fetch/svk.py
 lib/bb/fetch/svn.py
 lib/bb/fetch/wget.py
 lib/bb/manifest.py
