@@ -116,12 +116,11 @@ class Git(Fetch):
             #if os.path.exists(repodir):
                 #prunedir(repodir)
 
-            bb.mkdirhier(repodir)
-            os.chdir(repodir)
-
             #print("Changing to %s" % repodir)
 
             if os.access(repofile, os.R_OK):
+                bb.mkdirhier(repodir)
+                os.chdir(repodir)
                 rungitcmd("tar -xzf %s" % (repofile),d)
             else:
                 rungitcmd("git clone rsync://%s%s %s" % (host, path, repodir),d)

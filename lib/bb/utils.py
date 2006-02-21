@@ -86,10 +86,10 @@ def explode_deps(s):
             j = []
         if flag:
             j.append(i)
-        if i.endswith(')'):
+        else:
+            r.append(i)
+        if flag and i.endswith(')'):
             flag = False
             # Ignore version
             #r[-1] += ' ' + ' '.join(j)
-        else:
-            r.append(i)
     return r
