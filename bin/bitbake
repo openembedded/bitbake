@@ -665,7 +665,9 @@ class BBCooker:
 
         bb.debug(2, "Additional runtime dependencies for %s are: %s" % (item, " ".join(rdepends)))
 
-        for rdepend in rdepends:  
+        for rdepend in rdepends:
+            if rdepend in self.status.ignored_dependencies:
+                continue
             if not self.buildRProvider(rdepend, buildAllDeps):
                 return False
         return True

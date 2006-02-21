@@ -2,6 +2,7 @@ Changes in BitBake 1.3.x:
 	- Fix to check both RDEPENDS and RDEPENDS_${PN}
 	- Fix a RDEPENDS parsing bug in utils:explode_deps()
 	- Update git fetcher behaviour to match git changes
+	- ASSUME_PROVIDED allowed to include runtime packages
 
 Changes in BitBake 1.3.3:
 	- Create a new Fetcher module to ease the
