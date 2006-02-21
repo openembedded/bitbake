@@ -185,7 +185,6 @@ class Fetch(object):
         return False
     try_mirror = staticmethod(try_mirror)
 
-import bk
 import cvs
 import git
 import local
@@ -193,7 +192,6 @@ import svn
 import wget
 import svk
 
-methods.append(bk.Bk())
 methods.append(cvs.Cvs())
 methods.append(git.Git())
 methods.append(local.Local())
