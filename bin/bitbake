@@ -881,6 +881,7 @@ class BBCooker:
 
             bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.data))
 
+            failures = 0
             for k in pkgs_to_build:
                 failed = False
                 try:
@@ -892,10 +893,11 @@ class BBCooker:
                     failed = True
 
                 if failed:
+                    failures += failures
                     if self.configuration.abort:
                         sys.exit(1)
 
-            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.data))
+            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.data, failures))
 
             sys.exit( self.stats.show() )
 

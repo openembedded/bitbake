@@ -133,10 +133,11 @@ class PkgBase(Event):
 class BuildBase(Event):
     """Base class for bbmake run events"""
 
-    def __init__(self, n, p, c):
+    def __init__(self, n, p, c, failures = 0):
         self._name = n
         self._pkgs = p
         Event.__init__(self, c)
+        self._failures = failures
 
     def getPkgs(self):
         return self._pkgs
@@ -155,6 +156,12 @@ class BuildBase(Event):
 
     def setCfg(self, cfg):
         self.data = cfg
+
+    def getFailures(self):
+        """
+        Return the number of failed packages
+        """
+        return self._failures
 
     pkgs = property(getPkgs, setPkgs, None, "pkgs property")
     name = property(getName, setName, None, "name property")
