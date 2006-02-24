@@ -529,6 +529,7 @@ class BBCooker:
                     providers_list.append(self.status.pkg_fn[fn])
                 bb.note("multiple providers are available (%s);" % ", ".join(providers_list))
                 bb.note("consider defining PREFERRED_PROVIDER_%s" % item)
+                bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data))
             self.consider_msgs_cache.append(item)
 
 
@@ -592,6 +593,7 @@ class BBCooker:
                     providers_list.append(self.status.pkg_fn[fn])
                 bb.note("multiple providers are available (%s);" % ", ".join(providers_list))
                 bb.note("consider defining a PREFERRED_PROVIDER to match runtime %s" % item)
+                bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data,runtime=True))
             self.consider_msgs_cache.append(item)
 
         if len(preferred) > 1:
@@ -601,6 +603,7 @@ class BBCooker:
                     providers_list.append(self.status.pkg_fn[fn])
                 bb.note("multiple preferred providers are available (%s);" % ", ".join(providers_list))
                 bb.note("consider defining only one PREFERRED_PROVIDER to match runtime %s" % item)
+                bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data,runtime=True))
             self.consider_msgs_cache.append(item)
 
         # run through the list until we find one that we can build

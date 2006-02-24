@@ -212,6 +212,29 @@ class RecursiveDep(DepBase):
     """Recursive Dependency"""
 
 
-class MultipleProviders(PkgBase):
+class MultipleProviders(Event):
     """Multiple Providers"""
 
+    def  __init__(self, item, candidates, data, runtime = False):
+        Event.__init__(self, data)
+        self._item = item
+        self._candidates = candidates
+        self._is_runtime = runtime
+
+    def isRuntime(self):
+        """
+        Is this a runtime issue?
+        """
+        return self._is_runtime
+
+    def getItem(self):
+        """
+        The name for the to be build item
+        """
+        return self._item
+
+    def getCandidates(self):
+        """
+        Get the possible Candidates for a PROVIDER.
+        """
+        return self._candidates
