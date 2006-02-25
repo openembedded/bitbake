@@ -117,7 +117,7 @@ def getName(e):
 class PkgBase(Event):
     """Base class for package events"""
 
-    def __init__(self, t, d = {}):
+    def __init__(self, t, d = bb.data.init()):
         self._pkg = t
         Event.__init__(self, d)
 
