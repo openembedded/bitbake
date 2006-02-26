@@ -110,7 +110,6 @@ class BBParsingStatus:
 
         # Build reverse hash for PACKAGES, so runtime dependencies 
         # can be be resolved (RDEPENDS, RRECOMMENDS etc.)
-    
         for package in packages:
             if not package in self.packages:
                 self.packages[package] = []
