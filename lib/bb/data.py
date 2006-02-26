@@ -211,6 +211,11 @@ def delVarFlag(var, flag, d):
 def setVarFlags(var, flags, d):
     """Set the flags for a given variable
 
+    Note:
+        setVarFlags will not clear previous
+        flags. Think of this method as
+        addVarFlags
+
     Example:
         >>> d = init()
         >>> myflags = {}
