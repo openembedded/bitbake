@@ -22,7 +22,7 @@
    Place, Suite 330, Boston, MA 02111-1307 USA.""" 
 
 import re, bb, os, sys
-import bb.fetch, bb.build
+import bb.fetch, bb.build, bb.utils
 from bb import debug, data, fetch, fatal
 
 from ConfHandler import include, localpath, obtain, init
@@ -206,7 +206,7 @@ def feeder(lineno, s, fn, d):
             return
         else:
             text = '\n'.join(__body__)
-            comp = compile(text, "<bb>", "exec")
+            comp = bb.utils.better_compile(text, "<bb>", fn )
             exec comp in __builtins__
             __body__ = []
             __inpython__ = False

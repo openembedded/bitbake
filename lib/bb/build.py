@@ -25,7 +25,7 @@ You should have received a copy of the GNU General Public License along with
 Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
-from bb import debug, data, fetch, fatal, error, note, event, mkdirhier
+from bb import debug, data, fetch, fatal, error, note, event, mkdirhier, utils
 import bb, os
 
 # data holds flags and function name for a given task
@@ -122,8 +122,9 @@ def exec_func_python(func, d):
     """Execute a python BB 'function'"""
     import re, os
 
-    tmp = "def " + func + "():\n%s" % data.getVar(func, d)
-    comp = compile(tmp + '\n' + func + '()', bb.data.getVar('FILE', d, 1) + ':' + func, "exec")
+    tmp  = "def " + func + "():\n%s" % data.getVar(func, d)
+    tmp += '\n' + func + '()'
+    comp = utils.better_compile(tmp, func, bb.data.getVar('FILE', d, 1) )
     prevdir = os.getcwd()
     g = {} # globals
     g['bb'] = bb

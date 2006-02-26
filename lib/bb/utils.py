@@ -93,3 +93,26 @@ def explode_deps(s):
             # Ignore version
             #r[-1] += ' ' + ' '.join(j)
     return r
+
+
+def better_compile(text, file, realfile):
+    try:
+        return compile(text, file, "exec")
+    except Exception, e:
+        import bb,sys
+
+        # split the text into lines again
+        body = text.split('\n')
+        bb.error("Error in compiling: ", realfile)
+        bb.error("The lines resulting into thiis error were:")
+        bb.error("\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
+        # print the environment of the method
+        bb.error("Printing the environment of the function")
+        min_line = max(1,e.lineno-4)
+        max_line = min(e.lineno+4,len(body))
+        for i in range(min_line,max_line+1):
+            bb.error("\t%.4d:%s" % (i, body[i-1]) )
+
+        # exit now
+        sys.exit(1)
+
