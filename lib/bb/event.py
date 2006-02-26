@@ -50,7 +50,7 @@ def tmpHandler(event):
     return NotHandled
 
 def defaultTmpHandler():
-    tmp = "def tmpHandler(e):\n\t\"\"\"heh\"\"\"\n\treturn 0"
+    tmp = "def tmpHandler(e):\n\t\"\"\"heh\"\"\"\n\treturn NotHandled"
     comp = compile(tmp, "tmpHandler(e)", "exec")
     return comp
 
@@ -71,12 +71,12 @@ def register(handler):
     if handler is not None:
 #       handle string containing python code
         if type(handler).__name__ == "str":
-            return registerCode(handler)
+            return _registerCode(handler)
 #       prevent duplicate registration
         if not handler in handlers:
             handlers.append(handler)
 
-def registerCode(handlerStr):
+def _registerCode(handlerStr):
     """Register a 'code' Event.
        Deprecated interface; call register instead.
 
@@ -94,12 +94,12 @@ def remove(handler):
     """Remove an Event handler"""
     for h in handlers:
         if type(handler).__name__ == "str":
-            return removeCode(handler)
+            return _removeCode(handler)
 
         if handler is h:
             handlers.remove(handler)
 
-def removeCode(handlerStr):
+def _removeCode(handlerStr):
     """Remove a 'code' Event handler
        Deprecated interface; call remove instead."""
     tmp = "def tmpHandler(e):\n%s" % handlerStr
