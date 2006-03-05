@@ -22,7 +22,7 @@
 # Place, Suite 330, Boston, MA 02111-1307 USA.
 
 import sys, os, getopt, glob, copy, os.path, re, time
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
+sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
 from bb import utils, data, parse, debug, event, fatal
 from sets import Set

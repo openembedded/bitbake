@@ -31,7 +31,7 @@ if sys.argv[0][-5:] == "pydoc":
     path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:
     path = os.path.dirname(os.path.dirname(sys.argv[0]))
-sys.path.append(path)
+sys.path.insert(0,path)
 
 from bb import note, debug, data_smart
 
