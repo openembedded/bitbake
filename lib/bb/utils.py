@@ -108,7 +108,7 @@ def better_compile(text, file, realfile):
         # split the text into lines again
         body = text.split('\n')
         bb.error("Error in compiling: ", realfile)
-        bb.error("The lines resulting into thiis error were:")
+        bb.error("The lines resulting into this error were:")
         bb.error("\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
         # print the environment of the method
         bb.error("Printing the environment of the function")
@@ -132,19 +132,29 @@ def better_exec(code, context, text, realfile):
         exec code in context
     except:
         (t,value,tb) = sys.exc_info()
-        bb.note("error")
 
-        import traceback
-        print type(t)
-        print type(value)
-        print type(tb)
-        print t
-        print value
-        print tb
-        print dir(tb)
+        # print the Header of the Error Message
+        bb.error("Error in executing: ", realfile)
+        bb.error("Exception:%s Message:%s" % (t,value) )
+
+        # let us find the line number now
         while tb.tb_next:
             tb = tb.tb_next
 
-        print "f:%d" %traceback.tb_lineno(tb)
-        traceback.print_tb(tb)
+        import traceback
+        line = traceback.tb_lineno(tb)
+
+
+        body = text.split('\n')
+        bb.error("The lines resulting into this error were:")
+        bb.error("\t%d:'%s'" % (line, body[line-1]))
+
+        # print the environment of the method
+        bb.error("Printing the environment of the function")
+        min_line = max(1,line-4)
+        max_line = min(line+4,len(body))
+        for i in range(min_line,max_line+1):
+            bb.error("\t%.4d:%s" % (i, body[i-1]) )
+
+        
         raise
