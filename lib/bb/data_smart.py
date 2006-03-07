@@ -287,7 +287,7 @@ class DataSmartPackage(DataSmart):
         self.unpickle_prep()
         funcstr = self.getVar('__functions__', 0)
         if funcstr:
-            comp = utils.better_compile(funcstr, "<pickled>")
+            comp = utils.better_compile(funcstr, "<pickled>", self.bbfile)
             utils.better_exec(comp, __builtins__, funcstr, self.bbfile)
 
     def linkDataSet(self):
