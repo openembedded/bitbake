@@ -128,7 +128,6 @@ def better_exec(code, context, text, realfile):
     """
     import bb,sys
     try:
-        bb.note("executing")
         exec code in context
     except:
         (t,value,tb) = sys.exc_info()
