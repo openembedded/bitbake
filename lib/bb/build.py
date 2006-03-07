@@ -130,7 +130,7 @@ def exec_func_python(func, d):
     g['bb'] = bb
     g['os'] = os
     g['d'] = d
-    exec comp in g
+    utils.better_exec(comp,g,tmp, bb.data.getVar('FILE',d,1))
     if os.path.exists(prevdir):
         os.chdir(prevdir)
 

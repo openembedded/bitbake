@@ -96,6 +96,10 @@ def explode_deps(s):
 
 
 def better_compile(text, file, realfile):
+    """
+    A better compile method. This method
+    will print  the offending lines.
+    """
     try:
         return compile(text, file, "exec")
     except Exception, e:
@@ -116,3 +120,31 @@ def better_compile(text, file, realfile):
         # exit now
         sys.exit(1)
 
+def better_exec(code, context, text, realfile):
+    """
+    Similiar to better_compile, better_exec will
+    print the lines that are responsible for the
+    error.
+    """
+    import bb,sys
+    try:
+        bb.note("executing")
+        exec code in context
+    except:
+        (t,value,tb) = sys.exc_info()
+        bb.note("error")
+
+        import traceback
+        print type(t)
+        print type(value)
+        print type(tb)
+        print t
+        print value
+        print tb
+        print dir(tb)
+        while tb.tb_next:
+            tb = tb.tb_next
+
+        print "f:%d" %traceback.tb_lineno(tb)
+        traceback.print_tb(tb)
+        raise
