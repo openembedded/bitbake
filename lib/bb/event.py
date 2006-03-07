@@ -25,6 +25,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA.
 
 import os, re
 import bb.data
+import bb.utils
 
 class Event:
     """Base class for events"""
@@ -51,7 +52,7 @@ def tmpHandler(event):
 
 def defaultTmpHandler():
     tmp = "def tmpHandler(e):\n\t\"\"\"heh\"\"\"\n\treturn NotHandled"
-    comp = compile(tmp, "tmpHandler(e)", "exec")
+    comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event.defaultTmpHandler")
     return comp
 
 def fire(event):
@@ -85,7 +86,7 @@ def _registerCode(handlerStr):
        the code will be within a function, so should have had
        appropriate tabbing put in place."""
     tmp = "def tmpHandler(e):\n%s" % handlerStr
-    comp = compile(tmp, "tmpHandler(e)", "exec")
+    comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._registerCode")
 #   prevent duplicate registration
     if not comp in handlers:
         handlers.append(comp)
@@ -103,7 +104,7 @@ def _removeCode(handlerStr):
     """Remove a 'code' Event handler
        Deprecated interface; call remove instead."""
     tmp = "def tmpHandler(e):\n%s" % handlerStr
-    comp = compile(tmp, "tmpHandler(e)", "exec")
+    comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._removeCode")
     handlers.remove(comp)
 
 def getName(e):

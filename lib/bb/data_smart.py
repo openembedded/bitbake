@@ -29,7 +29,7 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
 import copy, os, re, sys, time, types
-from   bb import note, debug, fatal
+from   bb import note, debug, fatal, utils
 
 try:
     import cPickle as pickle
@@ -287,8 +287,8 @@ class DataSmartPackage(DataSmart):
         self.unpickle_prep()
         funcstr = self.getVar('__functions__', 0)
         if funcstr:
-            comp = compile(funcstr, "<pickled>", "exec")
-            exec comp in  __builtins__
+            comp = utils.better_compile(funcstr, "<pickled>")
+            utils.better_exec(comp, __builtins__, funcstr, self.bbfile)
 
     def linkDataSet(self):
         if not self.parent == None:
