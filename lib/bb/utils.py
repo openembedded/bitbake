@@ -113,7 +113,7 @@ def better_compile(text, file, realfile):
         # print the environment of the method
         bb.error("Printing the environment of the function")
         min_line = max(1,e.lineno-4)
-        max_line = min(e.lineno+4,len(body))
+        max_line = min(e.lineno+4,len(body)-1)
         for i in range(min_line,max_line+1):
             bb.error("\t%.4d:%s" % (i, body[i-1]) )
 
@@ -154,7 +154,7 @@ def better_exec(code, context, text, realfile):
         # print the environment of the method
         bb.error("Printing the environment of the function")
         min_line = max(1,line-4)
-        max_line = min(line+4,len(body))
+        max_line = min(line+4,len(body)-1)
         for i in range(min_line,max_line+1):
             bb.error("\t%.4d:%s" % (i, body[i-1]) )
 
