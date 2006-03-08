@@ -132,6 +132,9 @@ def better_exec(code, context, text, realfile):
     except:
         (t,value,tb) = sys.exc_info()
 
+        if t == bb.parse.SkipPackage:
+            raise t(value)
+
         # print the Header of the Error Message
         bb.error("Error in executing: ", realfile)
         bb.error("Exception:%s Message:%s" % (t,value) )
