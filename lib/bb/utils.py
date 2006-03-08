@@ -143,8 +143,8 @@ def better_exec(code, context, text, realfile):
     except:
         (t,value,tb) = sys.exc_info()
 
-        if t == bb.parse.SkipPackage:
-            raise t(value)
+        if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
+            raise
 
         # print the Header of the Error Message
         bb.error("Error in executing: ", realfile)
