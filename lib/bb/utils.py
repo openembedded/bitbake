@@ -95,6 +95,21 @@ def explode_deps(s):
     return r
 
 
+
+def _print_trace(body, line):
+    """
+    Print the Environment of a Text Body
+    """
+    import bb
+
+    # print the environment of the method
+    bb.error("Printing the environment of the function")
+    min_line = max(1,line-4)
+    max_line = min(line+4,len(body)-1)
+    for i in range(min_line,max_line+1):
+        bb.error("\t%.4d:%s" % (i, body[i-1]) )
+
+
 def better_compile(text, file, realfile):
     """
     A better compile method. This method
@@ -110,12 +125,8 @@ def better_compile(text, file, realfile):
         bb.error("Error in compiling: ", realfile)
         bb.error("The lines resulting into this error were:")
         bb.error("\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
-        # print the environment of the method
-        bb.error("Printing the environment of the function")
-        min_line = max(1,e.lineno-4)
-        max_line = min(e.lineno+4,len(body)-1)
-        for i in range(min_line,max_line+1):
-            bb.error("\t%.4d:%s" % (i, body[i-1]) )
+
+        _print_trace(body, e.lineno)
 
         # exit now
         sys.exit(1)
@@ -146,17 +157,6 @@ def better_exec(code, context, text, realfile):
         import traceback
         line = traceback.tb_lineno(tb)
 
-
-        body = text.split('\n')
-        bb.error("The lines resulting into this error were:")
-        bb.error("\t%d:'%s'" % (line, body[line-1]))
-
-        # print the environment of the method
-        bb.error("Printing the environment of the function")
-        min_line = max(1,line-4)
-        max_line = min(line+4,len(body)-1)
-        for i in range(min_line,max_line+1):
-            bb.error("\t%.4d:%s" % (i, body[i-1]) )
-
+        _print_trace( text.split('\n'), line )
         
         raise
