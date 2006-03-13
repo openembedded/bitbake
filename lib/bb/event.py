@@ -212,6 +212,19 @@ class UnsatisfiedDep(DepBase):
 class RecursiveDep(DepBase):
     """Recursive Dependency"""
 
+class NoProvider(Event):
+    """No Provider for an Event"""
+
+    def __init__(self, item, data,runtime=False):
+        Event.__init__(self, data)
+        self._item = item
+        self._runtime = runtime
+
+    def getItem(self):
+        return self._item
+
+    def isRuntime(self):
+        return self._runtime
 
 class MultipleProviders(Event):
     """Multiple Providers"""

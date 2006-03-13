@@ -492,6 +492,7 @@ class BBCooker:
 
         if not item in self.status.providers:
             bb.error("Nothing provides dependency %s" % item)
+            bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
             return 0
 
         all_p = self.status.providers[item]
@@ -539,6 +540,7 @@ class BBCooker:
                 return 1
 
         bb.note("no buildable providers for %s" % item)
+        bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
         return 0
 
     def buildRProvider( self, item , buildAllDeps ):
@@ -558,6 +560,7 @@ class BBCooker:
 
         if not all_p:
             bb.error("Nothing provides runtime dependency %s" % (item))
+            bb.event.fire(bb.event.NoProvider(item,self.configuration.data,runtime=True))
             return False
 
         for p in all_p:
@@ -612,6 +615,7 @@ class BBCooker:
                 return True
 
         bb.error("No buildable providers for runtime %s" % item)
+        bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
         return False
 
     def getProvidersRun(self, rdepend):
