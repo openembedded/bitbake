@@ -30,7 +30,7 @@ import optparse, os, sys
 # bitbake
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
-from   bb import make
+import bb.parse
 from   string import split, join
 
 __version__ = "0.0.2"
