@@ -12,7 +12,7 @@
             <corpauthor>BitBake Team</corpauthor>
         </authorgroup>
         <copyright>
-            <year>2004, 2005</year>
+            <year>2004, 2005, 2006</year>
             <holder>Chris Larson</holder>
             <holder>Phil Blundell</holder>
         </copyright>
@@ -228,6 +228,86 @@ of the event and the content of the <varname>FILE</varname> variable.</para>
             </section>
         </section>
     </chapter>
+
+    <chapter>
+        <title>File Download support</title>
+        <section>
+            <title>Overview</title>
+            <para>BitBake provides support to download files this procedure is called fetching. The SRC_URI is normally used to indicate BitBake which files to fetch. The next sections will describe th available fetchers and the options they have. Each Fetcher honors a set of Variables and
+a per URI parameters separated by a <quote>;</quote> consisting of a key and a value. The semantic of the Variables and Parameters are defined by the Fetcher. BitBakes tries to have a consistent semantic between the different Fetchers.
+            </para>
+        </section>
+
+        <section>
+            <title>Local File Fetcher</title>
+            <para>The URN for the Local File Fetcher is <emphasis>file</emphasis>. The filename can be either absolute or relative. If the filename is relative <varname>FILESPATH</varname> and <varname>FILESDIR</varname> will be used to find the appropriate relative file depending on the <varname>OVERRIDES</varname>. Single files and complete directories can be specified.
+<screen><varname>SRC_URI</varname>= "file://relativefile.patch"
+<varname>SRC_URI</varname>= "file://relativefile.patch;this=ignored"
+<varname>SRC_URI</varname>= "file:///Users/ich/very_important_software"
+</screen>
+            </para>
+        </section>
+
+        <section>
+            <title>CVS File Fetcher</title>
+            <para>The URN for the CVS Fetcher is <emphasis>cvs</emphasis>. This Fetcher honors the variables <varname>DL_DIR</varname>, <varname>SRCDATE</varname>, <varname>FETCHCOMMAND_cvs</varname>, <varname>UPDATECOMMAND_cvs</varname>. <varname>DL_DIRS</varname> specifies where a temporary checkout is saved, <varname>SRCDATE</varname> specifies which date to use when doing the fetching, <varname>FETCHCOMMAND</varname> and <varname>UPDATECOMMAND</varname> specify which executables should be used when doing the CVS checkout or update.
+            </para>
+            <para>The supported Parameters are <varname>module</varname>, <varname>tag</varname>, <varname>date</varname>, <varname>method</varname>, <varname>localdir</varname>, <varname>rsh</varname>. The <varname>module</varname> specifies which module to check out, the <varname>tag</varname> describes which CVS TAG should be used for the checkout by default the TAG is empty. A <varname>date</varname> can be specified to override the SRCDATE of the configuration to checkout a specific date. <varname>method</varname> is by default <emphasis>pserver</emphasis>, if <emphasis>ext</emphasis> is used the <varname>rsh</varname> parameter will be evaluated and <varname>CVS_RSH</varname> will be set. Finally <varname>localdir</varname> is used to checkout into a special directory relative to <varname>CVSDIR></varname>.
+<screen><varname>SRC_URI</varname> = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
+<varname>SRC_URI</varname> = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
+</screen>
+            </para>
+        </section>
+
+        <section>
+            <title>HTTP/FTP Fetcher</title>
+            <para>The URNs for the HTTP/FTP are <emphasis>http</emphasis>, <emphasis>https</emphasis> and <emphasis>ftp</emphasis>. This Fetcher honors the variables <varname>DL_DIR</varname>, <varname>FETCHCOMMAND_wget</varname>, <varname>PREMIRRORS</varname>, <varname>MIRRORS</varname>. The <varname>DL_DIR</varname> defines where to store the fetched file, <varname>FETCHCOMMAND</varname> contains the command used for fetching. <quote>${URI}</quote> and <quote>${FILES}</quote> will be replaced by the uri and basename of the to be fetched file. <varname>PREMIRRORS</varname>
+will be tried first when fetching a file if that fails the actual file will be tried and finally all <varname>MIRRORS</varname> will be tried.
+            </para>
+            <para>The only supported Parameter is <varname>md5sum</varname>. After a fetch the <varname>md5sum</varname> of the file will be calculated and the two sums will be compared.
+            </para>
+            <para><screen><varname>SRC_URI</varname> = "http://oe.handhelds.org/not_there.aac;md5sum=12343"
+<varname>SRC_URI</varname> = "ftp://oe.handhelds.org/not_there_as_well.aac;md5sum=1234"
+<varname>SRC_URI</varname> = "ftp://you@oe.handheld.sorg/home/you/secret.plan;md5sum=1234"
+</screen></para>
+        </section>
+
+        <section>
+            <title>SVK Fetcher</title>
+            <para>
+            <emphasis>Currently NOT suppoered</emphasis>
+            </para>
+        </section>
+
+        <section>
+            <title>SVN Fetcher</title>
+            <para>The URN for the SVN Fetcher is <emphasis>svn</emphasis>.
+            </para>
+            <para>The Variables <varname>FETCHCOMMAND_svn</varname>, <varname>DL_DIR</varname> are used by the SVN Fetcher. <varname>FETCHCOMMAND</varname> contains the subversion command, <varname>DL_DIR</varname> is the directory where tarballs will be saved.
+            </para>
+            <para>The supported Parameters are <varname>proto</varname>, <varname>rev</varname>. <varname>proto</varname> is the subversion prototype, <varname>rev</varname> is the subversions revision.
+            </para>
+            <para><screen><varname>SRC_URI</varname> = "svn://svn.oe.handhelds.org/svn;module=vip;proto=http;rev=667"
+<varname>SRC_URI</varname> = "svn://svn.oe.handhelds.org/svn/;module=opie;proto=svn+ssh;date=20060126"
+</screen></para>
+        </section>
+
+        <section>
+            <title>GIT Fetcher</title>
+            <para>The URN for the GIT Fetcher is <emphasis>git</emphasis>.
+            </para>
+            <para>The Variables <varname>DL_DIR</varname>, <varname>GITDIR</varname> are used. <varname>DL_DIR</varname> will be used to store the checkedout version. <varname>GITDIR</varname> will be used as the base directory where the git tree is cloned to.
+            </para>
+            <para>The Parameters are <emphasis>tag</emphasis>, <emphasis>protocol</emphasis>. <emphasis>tag</emphasis> is a git tag, the default is <quote>master</quote>. <emphasis>protocol</emphasis> is the git protocol to use and defaults to <quote>rsync</quote>.
+            </para>
+            <para><screen><varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
+<varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
+            </screen></para>
+        </section>
+
+    </chapter>
+
+
     <chapter>
         <title>Commands</title>
         <section>
@@ -320,7 +400,7 @@ options:
                     <title>Depending on another .bb</title>
                     <para>a.bb:
     <screen>PN = "package-a"
-    DEPENDS += "package-b"</screen>
+DEPENDS += "package-b"</screen>
                     </para>
                     <para>b.bb:
     <screen>PN = "package-b"</screen>
