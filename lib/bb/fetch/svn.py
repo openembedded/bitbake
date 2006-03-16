@@ -98,20 +98,10 @@ class Svn(Fetch):
 
             date = Fetch.getSRCDate(d)
 
-            if "method" in parm:
-                method = parm["method"]
-            else:
-                method = "pserver"
-
             if "proto" in parm:
                 proto = parm["proto"]
             else:
                 proto = "svn"
-
-            svn_rsh = None
-            if method == "ext":
-                if "rsh" in parm:
-                    svn_rsh = parm["rsh"]
 
             tarfn = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, path.replace('/', '.'), revision, date), localdata)
             data.setVar('TARFILES', dlfile, localdata)
@@ -129,10 +119,6 @@ class Svn(Fetch):
             olddir = os.path.abspath(os.getcwd())
             os.chdir(data.expand(dldir, localdata))
 
-#           setup svnroot
-#            svnroot = ":" + method + ":" + user
-#            if pswd:
-#                svnroot += ":" + pswd
             svnroot = host + path
 
             data.setVar('SVNROOT', svnroot, localdata)
