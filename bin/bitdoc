@@ -45,8 +45,8 @@ class HTMLFormatter:
     one site for each key with links to the relations and groups.
 
         index.html
-        keys.html
-        groups.html
+        all_keys.html
+        all_groups.html
         groupNAME.html
         keyNAME.html
     """
@@ -75,8 +75,8 @@ class HTMLFormatter:
         return """<table class="navigation" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
 <tr valign="middle">
 <td><a accesskey="g" href="index.html">Home</a></td>
-<td><a accesskey="n" href="groups.html">Groups</a></td>
-<td><a accesskey="u" href="keys.html">Keys</a></td>
+<td><a accesskey="n" href="all_groups.html">Groups</a></td>
+<td><a accesskey="u" href="all_keys.html">Keys</a></td>
 </tr></table>
 """
 
@@ -89,10 +89,11 @@ class HTMLFormatter:
             return ""
 
         txt = "<p><b>See also:</b><br>"
+        txts = []
         for it in item.related():
-            txt += """<a href="key%s.html">%s</a>, """ % (it, it)
+            txts.append("""<a href="key%(it)s.html">%(it)s</a>""" % vars() )
 
-        return txt
+        return txt + ",".join(txts)
 
     def groups(self,item):
         """
@@ -103,11 +104,12 @@ class HTMLFormatter:
             return ""
 
 
-        txt = "<p><b>Seel also:</b><br>"
+        txt = "<p><b>See also:</b><br>"
+        txts = []
         for group in item.groups():
-            txt += """<a href="group%s.html">%s</a>, """ % (group,group)
+            txts.append( """<a href="group%s.html">%s</a> """ % (group,group) )
 
-        return txt
+        return txt + ",".join(txts)
 
 
     def createKeySite(self,item):
@@ -213,6 +215,8 @@ class HTMLFormatter:
         inside this group
         """
         groups = ""
+
+        items.sort(cmp=lambda x,y:cmp(x.name(),y.name()))
         for group in items:
             groups += """<a href="key%s.html">%s</a><br>""" % (group.name(), group.name())
 
@@ -508,10 +512,10 @@ def main():
     f = file('index.html', 'w')
     print >> f, html_slave.createIndex()
 
-    f = file('groups.html', 'w')
+    f = file('all_groups.html', 'w')
     print >> f, html_slave.createGroupsSite(doc)
 
-    f = file('keys.html', 'w')
+    f = file('all_keys.html', 'w')
     print >> f, html_slave.createKeysSite(doc)
 
     # now for each group create the site
