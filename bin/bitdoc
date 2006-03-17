@@ -127,23 +127,23 @@ class HTMLFormatter:
 
 <div class="refsynopsisdiv">
 <h2>Synopsis</h2>
-<pre class="synopsis">
+<p>
 %s
-</pre>
+</p>
 </div>
 
 <div class="refsynopsisdiv">
 <h2>Related Keys</h2>
-<pre class="synopsis">
+<p>
 %s
-</pre>
+</p>
 </div>
 
 <div class="refsynopsisdiv">
 <h2>Groups</h2>
-<pre class="synopsis">
+<p>
 %s
-</pre>
+</p>
 </div>
 
 
