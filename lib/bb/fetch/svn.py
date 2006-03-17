@@ -103,6 +103,10 @@ class Svn(Fetch):
             else:
                 proto = "svn"
 
+            svn_rsh = None
+            if proto == "svn+ssh" and "rsh" in parm:
+                svn_rsh = parm["rsh"]
+
             tarfn = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, path.replace('/', '.'), revision, date), localdata)
             data.setVar('TARFILES', dlfile, localdata)
             data.setVar('TARFN', tarfn, localdata)
