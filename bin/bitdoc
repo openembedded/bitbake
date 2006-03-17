@@ -183,8 +183,8 @@ class HTMLFormatter:
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 %s
 <h2>Documentation Entrance</h2>
-<a href="groups.html">All available groups</a><br>
-<a href="keys.html">All available keys</a><br>
+<a href="all_groups.html">All available groups</a><br>
+<a href="all_keys.html">All available keys</a><br>
 </body>
 """ % self.createNavigator()
 
@@ -208,13 +208,19 @@ class HTMLFormatter:
 </body>
 """ % (self.createNavigator(), keys)
 
-    def createGroupSite(self,gr, items):
+    def createGroupSite(self, gr, items, _description = None):
         """
         Create a site for a group:
         Group the name of the group, items contain the name of the keys
         inside this group
         """
         groups = ""
+        description = ""
+
+        # create a section with the group descriptions
+        if _description:
+            description  += "<h2 Description of Grozp %s</h2>" % gr
+            description  += _description
 
         items.sort(cmp=lambda x,y:cmp(x.name(),y.name()))
         for group in items:
@@ -225,6 +231,7 @@ class HTMLFormatter:
 <link rel="stylesheet" href="style.css" type="text/css">
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
 %s
+%s
 <div class="refsynopsisdiv">
 <h2>Keys in Group %s</h2>
 <pre class="synopsis">
@@ -232,7 +239,7 @@ class HTMLFormatter:
 </pre>
 </div>
 </body>
-""" % (gr, self.createNavigator(), gr, groups)
+""" % (gr, self.createNavigator(), description, gr, groups)
 
 
 
