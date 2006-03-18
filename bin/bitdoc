@@ -222,7 +222,7 @@ class HTMLFormatter:
             description  += "<h2 Description of Grozp %s</h2>" % gr
             description  += _description
 
-        items.sort(cmp=lambda x,y:cmp(x.name(),y.name()))
+        items.sort(lambda x,y:cmp(x.name(),y.name()))
         for group in items:
             groups += """<a href="key%s.html">%s</a><br>""" % (group.name(), group.name())
 
