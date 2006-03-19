@@ -1076,8 +1076,7 @@ class BBCooker:
 # main
 #============================================================================#
 
-if __name__ == "__main__":
-
+def main():
     parser = optparse.OptionParser( version = "BitBake Build Tool Core version %s, %%prog version %s" % ( bb.__version__, __version__ ),
     usage = """%prog [options] [package ...]
 
@@ -1129,3 +1128,8 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     cooker = BBCooker()
     cooker.cook( BBConfiguration( options ), args[1:] )
+
+
+
+if __name__ == "__main__":
+    main()
