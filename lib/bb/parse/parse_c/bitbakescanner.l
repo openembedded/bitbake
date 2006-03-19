@@ -125,6 +125,7 @@ K_AFTER         "after"
 K_BEFORE        "before"
 K_DEF           "def"
 K_INCLUDE       "include"
+K_REQUIRE       "require"
 K_INHERIT       "inherit"
 K_PYTHON        "python"
 K_FAKEROOT      "fakeroot"
@@ -150,6 +151,7 @@ PROC            \({C_SP}*\)
 %s S_FUNC
 %s S_INCLUDE
 %s S_INHERIT
+%s S_REQUIRE
 %s S_PROC
 %s S_RVALUE
 %s S_TASK
@@ -187,6 +189,8 @@ PROC            \({C_SP}*\)
 
 {K_INCLUDE}                     { BEGIN S_INCLUDE;
                                   yyextra->accept (T_INCLUDE); }
+{K_REQUIRE}                     { BEGIN S_REQUIRE;
+                                  yyextra->accept (T_REQUIRE); }
 {K_INHERIT}                     { BEGIN S_INHERIT;
                                   yyextra->accept (T_INHERIT); }
 {K_ADDTASK}                     { BEGIN S_TASK;
@@ -225,7 +229,8 @@ PROC            \({C_SP}*\)
 <S_INHERIT>{SYMBOL}             { yyextra->accept (T_ISYMBOL, yytext); }
 <S_INCLUDE>{FILENAME}           { BEGIN INITIAL;
                                   yyextra->accept (T_ISYMBOL, yytext); }
-
+<S_REQUIRE>{FILENAME}           { BEGIN INITIAL;
+                                  yyextra->accept (T_ISYMBOL, yytext); }
 <S_TASK>\n                      { BEGIN INITIAL; }
 <S_FUNC>\n                      { BEGIN INITIAL; }
 <S_INHERIT>\n                   { BEGIN INITIAL; }
