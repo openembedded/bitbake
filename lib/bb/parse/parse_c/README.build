@@ -1,0 +1,12 @@
+To ease portability (lemon, flex, etc) we keep the
+result of flex and lemon in the source code. We agree
+to not manually change the scanner and parser.
+
+
+
+How we create the files:
+   flex -t bitbakescanner.l > bitbakescanner.cc
+   lemon bitbakeparser.y
+   mv bitbakeparser.c bitbakeparser.cc
+
+Now manually create two files

@@ -71,6 +71,7 @@
 
 #include "token.h"
 #include "lexer.h"
+#include "bitbakeparser.h"
 #include <ctype.h>
 
 extern void *bbparseAlloc(void *(*mallocProc)(size_t));

@@ -24,13 +24,24 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef TOKEN_H
 #define TOKEN_H
 
+#include <ctype.h>
+#include <string.h>
+
 #define PURE_METHOD
+
+
+/**
+ * Special Value for End Of File Handling. We set it to
+ * 1001 so we can have up to 1000 Terminal Symbols on
+ * grammar. Currenlty we have around 20
+ */
+#define T_EOF    1001
 
 struct token_t {
     const char* string()const PURE_METHOD;
 
     static char* concatString(const char* l, const char* r);
-    void assignString(const char* str);
+    void assignString(char* str);
     void copyString(const char* str);
 
     void release_this();
@@ -50,6 +61,7 @@ inline const char* token_t::string()const
  */
 inline char* token_t::concatString(const char* l, const char* r)
 {
+#if 0
     size_t cb = (l ? strlen (l) : 0) + strlen (r) + 1;
     r_sz = new char[cb];
     *r_sz = 0;
@@ -57,9 +69,11 @@ inline char* token_t::concatString(const char* l, const char* r)
     strcat (r_sz, r);
 
     return r_sz;
+#endif
+#warning "XXX fixme"
 }
 
-inline void token_t::assignString(const char* str)
+inline void token_t::assignString(char* str)
 {
     m_string = str;
     m_stringLen = str ? strlen(str) : 0;
@@ -70,7 +84,7 @@ inline void token_t::copyString(const char* str)
     if( str ) {
         m_stringLen = strlen(str);
         m_string = new char[m_stringLen+1];
-        strcpy(m_string, str)
+        strcpy(m_string, str);
     }
 }
 

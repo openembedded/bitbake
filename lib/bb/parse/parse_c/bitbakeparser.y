@@ -42,13 +42,13 @@
 
 %include {
 #include "token.h"
+#include "lexer.h"
 }
 
 
 %token_destructor { $$.release_this (); }
 
-%syntax_error     { printf ("%s:%d: syntax error\n",
-                    lex->filename (), lex->line ()); }
+%syntax_error     { e_parse_error( lex->filename(), lex->line() ); }
 
 program ::= statements.
 
@@ -56,12 +56,12 @@ statements ::= statements statement.
 statements ::= .
 
 variable(r) ::= SYMBOL(s).
-        { r.assignString( s.string() );
+        { r.assignString( (char*)s.string() );
           s.assignString( 0 );
           s.release_this(); }
 variable(r) ::= VARIABLE(v).
         {
-          r.assignString( v.string() );
+          r.assignString( (char*)v.string() );
           v.assignString( 0 );
           v.release_this(); }
 
@@ -128,7 +128,10 @@ statement ::= INHERIT inherits.
 statement ::= INCLUDE ISYMBOL(i).
         { e_include(i.string() ); i.release_this(); }
 
-proc_body(r) ::= proc_body(l) PROC_BODY(b). 
+statement ::= REQUIRE ISYMBOL(i).
+        { e_require(i.string() ); i.release_this(); }
+
+proc_body(r) ::= proc_body(l) PROC_BODY(b).
         { /* concatenate body lines */
           r.assignString( token_t::concatString(l.string(), b.string()) );
           l.release_this ();
@@ -151,10 +154,10 @@ statement ::= FAKEROOT SYMBOL(p) PROC_OPEN proc_body(b) PROC_CLOSE.
 
 def_body(r) ::= def_body(l) DEF_BODY(b).
         { /* concatenate body lines */
-          r.assignString( token_t::concatString(l.string(), b.string());
+          r.assignString( token_t::concatString(l.string(), b.string()) );
           l.release_this (); b.release_this ();
         }
-def_body(b) ::= . { b.sz = 0; }
+def_body(b) ::= . { b.assignString( 0 ); }
 statement ::= SYMBOL(p) DEF_ARGS(a) def_body(b).
         { e_def( p.string(), a.string(), b.string());
           p.release_this(); a.release_this(); b.release_this(); }
