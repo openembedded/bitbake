@@ -77,10 +77,10 @@ class BBParsingStatus:
         pr       = bb.data.getVar('PR', bb_data, True)
         dp       = int(bb.data.getVar('DEFAULT_PREFERENCE', bb_data, True) or "0")
         provides = Set([pn] + (bb.data.getVar("PROVIDES", bb_data, 1) or "").split())
-        rprovides = (bb.data.getVar("RPROVIDES", bb_data, 1) or "").split()
         depends  = (bb.data.getVar("DEPENDS", bb_data, True) or "").split()
         packages = (bb.data.getVar('PACKAGES', bb_data, True) or "").split()
         packages_dynamic = (bb.data.getVar('PACKAGES_DYNAMIC', bb_data, True) or "").split()
+        rprovides = (bb.data.getVar("RPROVIDES", bb_data, 1) or "").split()
 
 
         # build PackageName to FileName lookup table
@@ -114,6 +114,7 @@ class BBParsingStatus:
             if not package in self.packages:
                 self.packages[package] = []
             self.packages[package].append(file_name)
+            rprovides += (bb.data.getVar("RPROVIDES_%s" % package, bb_data, 1) or "").split() 
 
         for package in packages_dynamic:
             if not package in self.packages_dynamic:
@@ -662,6 +663,7 @@ class BBCooker:
             rdepends += bb.utils.explode_deps(bb.data.getVar('RDEPENDS', the_data, True) or "")
             rdepends += bb.utils.explode_deps(bb.data.getVar('RRECOMMENDS', the_data, True) or "")
             rdepends += bb.utils.explode_deps(bb.data.getVar("RDEPENDS_%s" % pn, the_data, True) or "")
+            rdepends += bb.utils.explode_deps(bb.data.getVar('RRECOMMENDS_%s' % pn, the_data, True) or "")
         else:
             packages = (bb.data.getVar('PACKAGES', the_data, 1).split() or "")
             for package in packages:
