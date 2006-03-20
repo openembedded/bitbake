@@ -61,16 +61,15 @@ inline const char* token_t::string()const
  */
 inline char* token_t::concatString(const char* l, const char* r)
 {
-#if 0
     size_t cb = (l ? strlen (l) : 0) + strlen (r) + 1;
-    r_sz = new char[cb];
+    char *r_sz = new char[cb];
     *r_sz = 0;
-    if (l) strcat (r_sz, l);
+
+    if (l)
+        strcat (r_sz, l);
     strcat (r_sz, r);
 
     return r_sz;
-#endif
-#warning "XXX fixme"
 }
 
 inline void token_t::assignString(char* str)

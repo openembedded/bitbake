@@ -3096,12 +3096,7 @@ int lex_t::line ()const
     return yyget_lineno (scanner);
 }
 
-const char* lex_t::filename ()const
-{
-    return m_fileName;
-}
-
-void parse (MappedFile* mf)
+void parse (FILE* file, PyObject* data)
 {
     void* parser = bbparseAlloc (malloc);
     yyscan_t scanner;
@@ -3111,9 +3106,8 @@ void parse (MappedFile* mf)
 
     lex.parser = parser;
     lex.scanner = scanner;
-    lex.mf = mf;
-    lex.rgbInput = mf->m_rgb;
-    lex.cbInput = mf->m_cb;
+    lex.file = file;
+    lex.data = data;
     lex.parse = bbparse;
     yyset_extra (&lex, scanner);
 
@@ -3124,7 +3118,7 @@ void parse (MappedFile* mf)
     bbparseTrace (NULL, NULL);
 
     if (result != T_EOF)
-        WARNING ("premature end of file\n");
+        printf ("premature end of file\n");
 
     yylex_destroy (scanner);
     bbparseFree (parser, free);

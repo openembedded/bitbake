@@ -24,17 +24,29 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #ifndef LEXER_H
 #define LEXER_H
 
+/*
+ * The PyObject Token. Likely to be
+ * a bb.data implementation
+ */
+struct PyObject;
+
+
+/**
+ * This is used by the Parser and Scanner
+ * of BitBake.
+ * The implementation and creation is done
+ * in the scanner.
+ */
 struct lex_t {
     void *parser;
     void *scanner;
+    FILE *file;
+    PyObject *data;
     void* (*parse)(void*, int, token_t, lex_t*);
 
     void accept(int token, const char* string = 0);
     void input(char *buf, int *result, int max_size);
     int  line()const;
-    const char* filename()const;
-private:
-    const char* m_fileName;
 };
 
 

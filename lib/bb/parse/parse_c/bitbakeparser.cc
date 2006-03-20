@@ -8,7 +8,8 @@
 
 #include "token.h"
 #include "lexer.h"
-#line 13 "bitbakeparser.c"
+#include "python_output.h"
+#line 14 "bitbakeparser.c"
 /* Next is all token values, in a form suitable for use by makeheaders.
 ** This section will be null unless lemon is run with the -m switch.
 */
@@ -401,9 +402,9 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 25:
     case 26:
     case 27:
-#line 49 "bitbakeparser.y"
+#line 50 "bitbakeparser.y"
 { (yypminor->yy0).release_this (); }
-#line 408 "bitbakeparser.c"
+#line 409 "bitbakeparser.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -667,212 +668,212 @@ static void yy_reduce(
   **     break;
   */
       case 3:
-#line 59 "bitbakeparser.y"
+#line 60 "bitbakeparser.y"
 { yygotominor.yy0.assignString( (char*)yymsp[0].minor.yy0.string() );
           yymsp[0].minor.yy0.assignString( 0 );
           yymsp[0].minor.yy0.release_this(); }
-#line 676 "bitbakeparser.c"
+#line 677 "bitbakeparser.c"
         break;
       case 4:
-#line 63 "bitbakeparser.y"
+#line 64 "bitbakeparser.y"
 {
           yygotominor.yy0.assignString( (char*)yymsp[0].minor.yy0.string() );
           yymsp[0].minor.yy0.assignString( 0 );
           yymsp[0].minor.yy0.release_this(); }
-#line 684 "bitbakeparser.c"
+#line 685 "bitbakeparser.c"
         break;
       case 5:
-#line 69 "bitbakeparser.y"
-{ e_assign( yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
-          e_export( yymsp[-2].minor.yy0.string() );
+#line 70 "bitbakeparser.y"
+{ e_assign( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+          e_export( lex, yymsp[-2].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 693 "bitbakeparser.c"
+#line 694 "bitbakeparser.c"
         break;
       case 6:
-#line 73 "bitbakeparser.y"
-{ e_immediate (yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
-          e_export( yymsp[-2].minor.yy0.string() );
+#line 74 "bitbakeparser.y"
+{ e_immediate ( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+          e_export( lex, yymsp[-2].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 702 "bitbakeparser.c"
+#line 703 "bitbakeparser.c"
         break;
       case 7:
-#line 77 "bitbakeparser.y"
-{ e_cond( yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+#line 78 "bitbakeparser.y"
+{ e_cond( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 710 "bitbakeparser.c"
+#line 711 "bitbakeparser.c"
         break;
       case 8:
-#line 81 "bitbakeparser.y"
-{ e_assign( yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+#line 82 "bitbakeparser.y"
+{ e_assign( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 717 "bitbakeparser.c"
+#line 718 "bitbakeparser.c"
         break;
       case 9:
-#line 84 "bitbakeparser.y"
-{ e_prepend( yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+#line 85 "bitbakeparser.y"
+{ e_prepend( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(8,&yymsp[-1].minor);
 }
-#line 724 "bitbakeparser.c"
+#line 725 "bitbakeparser.c"
         break;
       case 10:
-#line 87 "bitbakeparser.y"
-{ e_append( yymsp[-2].minor.yy0.string() , yymsp[0].minor.yy0.string() );
+#line 88 "bitbakeparser.y"
+{ e_append( lex, yymsp[-2].minor.yy0.string() , yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(9,&yymsp[-1].minor);
 }
-#line 731 "bitbakeparser.c"
+#line 732 "bitbakeparser.c"
         break;
       case 11:
-#line 90 "bitbakeparser.y"
-{ e_immediate( yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+#line 91 "bitbakeparser.y"
+{ e_immediate( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 738 "bitbakeparser.c"
+#line 739 "bitbakeparser.c"
         break;
       case 12:
-#line 93 "bitbakeparser.y"
-{ e_cond( yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+#line 94 "bitbakeparser.y"
+{ e_cond( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 745 "bitbakeparser.c"
+#line 746 "bitbakeparser.c"
         break;
       case 13:
-#line 97 "bitbakeparser.y"
-{ e_addtask( yymsp[-4].minor.yy0.string(), yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
+#line 98 "bitbakeparser.y"
+{ e_addtask( lex, yymsp[-4].minor.yy0.string(), yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-4].minor.yy0.release_this(); yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(11,&yymsp[-3].minor);
   yy_destructor(12,&yymsp[-1].minor);
 }
-#line 753 "bitbakeparser.c"
+#line 754 "bitbakeparser.c"
         break;
       case 14:
-#line 100 "bitbakeparser.y"
-{ e_addtask( yymsp[-4].minor.yy0.string(), yymsp[0].minor.yy0.string(), yymsp[-2].minor.yy0.string());
+#line 101 "bitbakeparser.y"
+{ e_addtask( lex, yymsp[-4].minor.yy0.string(), yymsp[0].minor.yy0.string(), yymsp[-2].minor.yy0.string());
           yymsp[-4].minor.yy0.release_this(); yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(12,&yymsp[-3].minor);
   yy_destructor(11,&yymsp[-1].minor);
 }
-#line 761 "bitbakeparser.c"
+#line 762 "bitbakeparser.c"
         break;
       case 15:
-#line 103 "bitbakeparser.y"
-{ e_addtask( yymsp[0].minor.yy0.string(), NULL, NULL);
+#line 104 "bitbakeparser.y"
+{ e_addtask( lex, yymsp[0].minor.yy0.string(), NULL, NULL);
           yymsp[0].minor.yy0.release_this();}
-#line 767 "bitbakeparser.c"
+#line 768 "bitbakeparser.c"
         break;
       case 16:
-#line 106 "bitbakeparser.y"
-{ e_addtask( yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string(), NULL);
+#line 107 "bitbakeparser.y"
+{ e_addtask( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string(), NULL);
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(11,&yymsp[-1].minor);
 }
-#line 774 "bitbakeparser.c"
+#line 775 "bitbakeparser.c"
         break;
       case 17:
-#line 109 "bitbakeparser.y"
-{ e_addtask( yymsp[-2].minor.yy0.string(), NULL, yymsp[0].minor.yy0.string());
+#line 110 "bitbakeparser.y"
+{ e_addtask( lex, yymsp[-2].minor.yy0.string(), NULL, yymsp[0].minor.yy0.string());
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(12,&yymsp[-1].minor);
 }
-#line 781 "bitbakeparser.c"
+#line 782 "bitbakeparser.c"
         break;
       case 21:
-#line 116 "bitbakeparser.y"
-{ e_addhandler( yymsp[0].minor.yy0.string()); yymsp[0].minor.yy0.release_this ();   yy_destructor(14,&yymsp[-1].minor);
+#line 117 "bitbakeparser.y"
+{ e_addhandler( lex, yymsp[0].minor.yy0.string()); yymsp[0].minor.yy0.release_this ();   yy_destructor(14,&yymsp[-1].minor);
 }
-#line 787 "bitbakeparser.c"
+#line 788 "bitbakeparser.c"
         break;
       case 22:
-#line 118 "bitbakeparser.y"
-{ e_export_func(yymsp[0].minor.yy0.string()); yymsp[0].minor.yy0.release_this(); }
-#line 792 "bitbakeparser.c"
+#line 119 "bitbakeparser.y"
+{ e_export_func( lex, yymsp[0].minor.yy0.string()); yymsp[0].minor.yy0.release_this(); }
+#line 793 "bitbakeparser.c"
         break;
       case 26:
-#line 123 "bitbakeparser.y"
-{ e_inherit(yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this (); }
-#line 797 "bitbakeparser.c"
+#line 124 "bitbakeparser.y"
+{ e_inherit( lex, yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this (); }
+#line 798 "bitbakeparser.c"
         break;
       case 30:
-#line 129 "bitbakeparser.y"
-{ e_include(yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this();   yy_destructor(19,&yymsp[-1].minor);
+#line 130 "bitbakeparser.y"
+{ e_include( lex, yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this();   yy_destructor(19,&yymsp[-1].minor);
 }
-#line 803 "bitbakeparser.c"
+#line 804 "bitbakeparser.c"
         break;
       case 31:
-#line 132 "bitbakeparser.y"
-{ e_require(yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this();   yy_destructor(20,&yymsp[-1].minor);
+#line 133 "bitbakeparser.y"
+{ e_require( lex, yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this();   yy_destructor(20,&yymsp[-1].minor);
 }
-#line 809 "bitbakeparser.c"
+#line 810 "bitbakeparser.c"
         break;
       case 32:
-#line 135 "bitbakeparser.y"
+#line 136 "bitbakeparser.y"
 { /* concatenate body lines */
           yygotominor.yy0.assignString( token_t::concatString(yymsp[-1].minor.yy0.string(), yymsp[0].minor.yy0.string()) );
           yymsp[-1].minor.yy0.release_this ();
           yymsp[0].minor.yy0.release_this ();
         }
-#line 818 "bitbakeparser.c"
+#line 819 "bitbakeparser.c"
         break;
       case 33:
-#line 140 "bitbakeparser.y"
+#line 141 "bitbakeparser.y"
 { yygotominor.yy0.assignString(0); }
-#line 823 "bitbakeparser.c"
+#line 824 "bitbakeparser.c"
         break;
       case 34:
-#line 142 "bitbakeparser.y"
-{ e_proc( yymsp[-3].minor.yy0.string(), yymsp[-1].minor.yy0.string() );
+#line 143 "bitbakeparser.y"
+{ e_proc( lex, yymsp[-3].minor.yy0.string(), yymsp[-1].minor.yy0.string() );
           yymsp[-3].minor.yy0.release_this(); yymsp[-1].minor.yy0.release_this();   yy_destructor(22,&yymsp[-2].minor);
   yy_destructor(23,&yymsp[0].minor);
 }
-#line 831 "bitbakeparser.c"
+#line 832 "bitbakeparser.c"
         break;
       case 35:
-#line 145 "bitbakeparser.y"
-{ e_proc_python (yymsp[-3].minor.yy0.string(), yymsp[-1].minor.yy0.string() );
+#line 146 "bitbakeparser.y"
+{ e_proc_python ( lex, yymsp[-3].minor.yy0.string(), yymsp[-1].minor.yy0.string() );
           yymsp[-3].minor.yy0.release_this(); yymsp[-1].minor.yy0.release_this();   yy_destructor(24,&yymsp[-4].minor);
   yy_destructor(22,&yymsp[-2].minor);
   yy_destructor(23,&yymsp[0].minor);
 }
-#line 840 "bitbakeparser.c"
+#line 841 "bitbakeparser.c"
         break;
       case 36:
-#line 148 "bitbakeparser.y"
-{ e_proc_python( NULL, yymsp[-1].minor.yy0.string());
+#line 149 "bitbakeparser.y"
+{ e_proc_python( lex, NULL, yymsp[-1].minor.yy0.string());
           yymsp[-1].minor.yy0.release_this ();   yy_destructor(24,&yymsp[-3].minor);
   yy_destructor(22,&yymsp[-2].minor);
   yy_destructor(23,&yymsp[0].minor);
 }
-#line 849 "bitbakeparser.c"
+#line 850 "bitbakeparser.c"
         break;
       case 37:
-#line 152 "bitbakeparser.y"
-{ e_proc_fakeroot(yymsp[-3].minor.yy0.string(), yymsp[-1].minor.yy0.string() );
+#line 153 "bitbakeparser.y"
+{ e_proc_fakeroot( lex, yymsp[-3].minor.yy0.string(), yymsp[-1].minor.yy0.string() );
           yymsp[-3].minor.yy0.release_this (); yymsp[-1].minor.yy0.release_this ();   yy_destructor(25,&yymsp[-4].minor);
   yy_destructor(22,&yymsp[-2].minor);
   yy_destructor(23,&yymsp[0].minor);
 }
-#line 858 "bitbakeparser.c"
+#line 859 "bitbakeparser.c"
         break;
       case 38:
-#line 156 "bitbakeparser.y"
+#line 157 "bitbakeparser.y"
 { /* concatenate body lines */
           yygotominor.yy0.assignString( token_t::concatString(yymsp[-1].minor.yy0.string(), yymsp[0].minor.yy0.string()) );
           yymsp[-1].minor.yy0.release_this (); yymsp[0].minor.yy0.release_this ();
         }
-#line 866 "bitbakeparser.c"
+#line 867 "bitbakeparser.c"
         break;
       case 39:
-#line 160 "bitbakeparser.y"
+#line 161 "bitbakeparser.y"
 { yygotominor.yy0.assignString( 0 ); }
-#line 871 "bitbakeparser.c"
+#line 872 "bitbakeparser.c"
         break;
       case 40:
-#line 162 "bitbakeparser.y"
-{ e_def( yymsp[-2].minor.yy0.string(), yymsp[-1].minor.yy0.string(), yymsp[0].minor.yy0.string());
+#line 163 "bitbakeparser.y"
+{ e_def( lex, yymsp[-2].minor.yy0.string(), yymsp[-1].minor.yy0.string(), yymsp[0].minor.yy0.string());
           yymsp[-2].minor.yy0.release_this(); yymsp[-1].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this(); }
-#line 877 "bitbakeparser.c"
+#line 878 "bitbakeparser.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -929,9 +930,9 @@ static void yy_syntax_error(
 ){
   bbparseARG_FETCH;
 #define TOKEN (yyminor.yy0)
-#line 51 "bitbakeparser.y"
- e_parse_error( lex->filename(), lex->line() ); 
-#line 937 "bitbakeparser.c"
+#line 52 "bitbakeparser.y"
+ e_parse_error( lex ); 
+#line 938 "bitbakeparser.c"
   bbparseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
