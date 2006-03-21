@@ -701,7 +701,12 @@ class BBCooker:
         for p in self.pkgdata.keys():
             self.status.bbfile_priority[p] = calc_bbfile_priority(p)
 
-        # Build package list for "bitbake world"
+    def buildWorldTargetList(self):
+        """
+         Build package list for "bitbake world"
+        """
+        all_depends = self.status.all_depends
+        pn_provides = self.status.pn_provides
         bb.debug(1, "collating packages for \"world\"")
         for f in self.status.possible_world:
             terminal = True
@@ -883,6 +888,7 @@ class BBCooker:
                 self.showVersions()
                 sys.exit( 0 )
             if 'world' in pkgs_to_build:
+                self.buildWorldTargetList()
                 pkgs_to_build.remove('world')
                 for t in self.status.world_target:
                     pkgs_to_build.append(t)
