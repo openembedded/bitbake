@@ -22,8 +22,10 @@
 # THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #
 
-from bb import data
+# The Module we will use here
+from bb import data, parse
 from bb.parse import ParseError
+import bb
 
 #
 # This is the Python Part of the Native Parser Implementation.
@@ -39,7 +41,12 @@ from bb.parse import ParseError
 #
 # internal
 #
-
+def _init(fn, d):
+    """
+    Initialize the data implementation with values of
+    the environment and data from the file.
+    """
+    pass
 
 #
 # public
@@ -48,15 +55,50 @@ def supports(fn, data):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
 
 def init(fn, data):
-    print "Init"
+    if not bb.data.getVar('TOPDIR', data):
+        bb.error('TOPDIR is not set')
+    if not bb.data.getVar('BBPATH', data):
+        bb.error('BBPATH is not set')
 
-def handle(fn, data, include):
+
+def handle(fn, d, include):
     print ""
     print "fn: %s" % fn
     print "data: %s" % data
     print "include: %s" % include
 
-    pass
+    # check if we include or are the beginning
+    if include:
+        oldfile = data.getVar('FILE', d)
+    else:
+        data.inheritFromOS(d)
+        oldfile = None
+
+    # find the file
+    if not os.path.isabs(fn):
+        bb.error("No Absolute FILE name")
+        abs_fn = bb.which(data.getVar('BBPATH',d), fn)
+    else:
+        abs_fn = fn
+
+    # check if the file exists
+    if not os.path.exists(abs_fn):
+        raise IOError("file '%(fn)' not found" % locals() )
+
+    fn = file(abs_fn, 'r')
+
+    # now we know the file is around mark it as dep
+    if include:
+        parse.mark_dependency(d, abs_fn)
+
+    # now parse this file - by defering it to C++
+
+
+    # restore the original FILE
+    if oldfile:
+        data.setVar('FILE', oldfile, data)
+
+    return data
 
 # Inform bitbake that we are a parser
 # We need to define all three
