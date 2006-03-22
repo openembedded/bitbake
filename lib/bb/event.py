@@ -44,7 +44,8 @@ class Event:
 
 NotHandled = 0
 Handled = 1
-handlers = []
+_handlers = []
+_handlers_dict = {}
 
 def tmpHandler(event):
     """Default handler for code events"""
@@ -57,7 +58,7 @@ def defaultTmpHandler():
 
 def fire(event):
     """Fire off an Event"""
-    for h in handlers:
+    for h in _handlers:
         if type(h).__name__ == "code":
             exec(h)
             if tmpHandler(event) == Handled:
@@ -67,15 +68,21 @@ def fire(event):
                 return Handled
     return NotHandled
 
-def register(handler):
+def register(name, handler):
     """Register an Event handler"""
+
+    # already registered
+    if name in _handlers_dict:
+        return;
+
     if handler is not None:
 #       handle string containing python code
         if type(handler).__name__ == "str":
-            return _registerCode(handler)
-#       prevent duplicate registration
-        if not handler in handlers:
-            handlers.append(handler)
+            _registerCode(handler)
+        else:
+            _handlers.append(handler)
+
+        _handlers_dict[name] = 1
 
 def _registerCode(handlerStr):
     """Register a 'code' Event.
@@ -88,24 +95,23 @@ def _registerCode(handlerStr):
     tmp = "def tmpHandler(e):\n%s" % handlerStr
     comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._registerCode")
 #   prevent duplicate registration
-    if not comp in handlers:
-        handlers.append(comp)
+    _handlers.append(comp)
 
-def remove(handler):
+def remove(name, handler):
     """Remove an Event handler"""
-    for h in handlers:
-        if type(handler).__name__ == "str":
-            return _removeCode(handler)
 
-        if handler is h:
-            handlers.remove(handler)
+    _handlers_dict.pop(name)
+    if type(handler).__name__ == "str":
+        return _removeCode(handler)
+    else:
+        _handlers.remove(handler)
 
 def _removeCode(handlerStr):
     """Remove a 'code' Event handler
        Deprecated interface; call remove instead."""
     tmp = "def tmpHandler(e):\n%s" % handlerStr
     comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._removeCode")
-    handlers.remove(comp)
+    _handlers.remove(comp)
 
 def getName(e):
     """Returns the name of a class or class instance"""

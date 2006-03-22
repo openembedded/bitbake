@@ -1057,9 +1057,6 @@ class BBCooker:
                                 if not os.path.isabs(aof):
                                     aof = os.path.join(os.path.dirname(f),aof)
                                 files.append(aof)
-                    for var in bb_data.keys():
-                        if data.getVarFlag(var, "handler", bb_data) and data.getVar(var, bb_data):
-                            event.register(data.getVar(var, bb_data))
                     self.pkgdata[f] = bb_data
 
                 # now inform the caller

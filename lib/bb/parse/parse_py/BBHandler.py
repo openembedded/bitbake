@@ -167,7 +167,7 @@ def handle(fn, d, include = 0):
 
             for var in data.keys(d):
                 if data.getVarFlag(var, 'handler', d):
-                    bb.event.register(data.getVar(var, d))
+                    bb.event.register(var, data.getVar(var, d))
                     continue
 
                 if not data.getVarFlag(var, 'task', d):
@@ -225,7 +225,6 @@ def feeder(lineno, s, fn, root, d):
                 bb.utils.better_exec(comp, __builtins__, text, fn)
                 funcs = data.getVar('__functions__', d) or ""
                 data.setVar('__functions__', "%s\n%s" % (funcs, text), d)
-             
             __body__ = []
             __inpython__ = False
 
