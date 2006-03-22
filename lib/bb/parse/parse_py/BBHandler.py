@@ -165,9 +165,15 @@ def handle(fn, d, include = 0):
             set_additional_vars(fn, d, include)
             data.update_data(d)
 
+            all_handlers = {} 
             for var in data.keys(d):
+                # try to add the handler
+                # if we added it remember the choiche
                 if data.getVarFlag(var, 'handler', d):
-                    bb.event.register(var, data.getVar(var, d))
+                    handler = data.getVar(var,d)
+                    if bb.event.register(var,handler) == bb.event.Registered:
+                        all_handlers[var] = handler
+
                     continue
 
                 if not data.getVarFlag(var, 'task', d):
@@ -181,6 +187,11 @@ def handle(fn, d, include = 0):
                     pdeps.append(var)
                     data.setVarFlag(p, 'deps', pdeps, d)
                     bb.build.add_task(p, pdeps, d)
+
+            # now add the handlers
+            if not len(all_handlers) == 0:
+                data.setVar('__all_handlers__', all_handlers, d)
+
         bbpath.pop(0)
     if oldfile:
         bb.data.setVar("FILE", oldfile, d)

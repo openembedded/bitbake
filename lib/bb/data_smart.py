@@ -285,10 +285,19 @@ class DataSmartPackage(DataSmart):
         p = pickle.Unpickler( file("%s/%s"%(self.cache,cache_bbfile),"rb"))
         self.dict = p.load()
         self.unpickle_prep()
+
+        # compile the functions into global scope
         funcstr = self.getVar('__functions__', 0)
         if funcstr:
             comp = utils.better_compile(funcstr, "<pickled>", self.bbfile)
             utils.better_exec(comp, __builtins__, funcstr, self.bbfile)
+
+        # now add the handlers which were present
+        handlers = self.getVar('__all_handlers__', 0) or {}
+        import bb.event
+        for key in handlers.keys():
+            bb.event.register(key, handlers[key])
+
 
     def linkDataSet(self):
         if not self.parent == None:
