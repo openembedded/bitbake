@@ -44,6 +44,11 @@ class Event:
 
 NotHandled = 0
 Handled = 1
+
+Registered        = 10
+AlreadyRegistered = 14
+
+# Internal
 _handlers = []
 _handlers_dict = {}
 
@@ -73,7 +78,7 @@ def register(name, handler):
 
     # already registered
     if name in _handlers_dict:
-        return;
+        return AlreadyRegistered
 
     if handler is not None:
 #       handle string containing python code
@@ -83,6 +88,7 @@ def register(name, handler):
             _handlers.append(handler)
 
         _handlers_dict[name] = 1
+        return Registered
 
 def _registerCode(handlerStr):
     """Register a 'code' Event.
