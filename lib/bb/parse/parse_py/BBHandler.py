@@ -21,7 +21,7 @@
    this program; if not, write to the Free Software Foundation, Inc., 59 Temple
    Place, Suite 330, Boston, MA 02111-1307 USA.""" 
 
-import re, bb, os, sys
+import re, bb, os, sys, time
 import bb.fetch, bb.build, bb.utils
 from bb import debug, data, fetch, fatal
 
@@ -43,6 +43,14 @@ __body__   = []
 __bbpath_found__ = 0
 __classname__ = ""
 classes = [ None, ]
+
+#
+# A cache of parsed bbclasses. We will use this cache to make a
+# decision if we should compile and execute a method.
+# This dict contains a list of classes which might have methods
+# we have already added.
+#
+__parsed_methods__ = {}
 
 def supports(fn, d):
     localfn = localpath(fn, d)
@@ -78,6 +86,7 @@ def handle(fn, d, include = 0):
         debug(2, "BB " + fn + ": handle(data, include)")
 
     (root, ext) = os.path.splitext(os.path.basename(fn))
+    base_name = "%s%s" % (root,ext)
     init(d)
 
     if ext == ".bbclass":
@@ -126,10 +135,10 @@ def handle(fn, d, include = 0):
         s = f.readline()
         if not s: break
         s = s.rstrip()
-        feeder(lineno, s, fn, d)
+        feeder(lineno, s, fn, base_name, d)
     if __inpython__:
         # add a blank line to close out any python definition
-        feeder(lineno + 1, "", fn, d)
+        feeder(lineno + 1, "", fn, base_name, d)
     if ext == ".bbclass":
         classes.remove(__classname__)
     else:
@@ -175,9 +184,14 @@ def handle(fn, d, include = 0):
         bbpath.pop(0)
     if oldfile:
         bb.data.setVar("FILE", oldfile, d)
+
+    # we have parsed the bb class now
+    if ext == ".bbclass" or ext == ".inc":
+        __parsed_methods__[base_name] = 1
+
     return d
 
-def feeder(lineno, s, fn, d):
+def feeder(lineno, s, fn, root, d):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, __bbpath_found__, classes, bb, __residue__
     if __infunc__:
         if s == '}':
@@ -205,13 +219,16 @@ def feeder(lineno, s, fn, d):
             __body__.append(s)
             return
         else:
-            text = '\n'.join(__body__)
-            comp = bb.utils.better_compile(text, "<bb>", fn )
-            bb.utils.better_exec(comp, __builtins__, text, fn)
+            if not root  in __parsed_methods__:
+                text = '\n'.join(__body__)
+                comp = bb.utils.better_compile(text, "<bb>", fn )
+                bb.utils.better_exec(comp, __builtins__, text, fn)
+                funcs = data.getVar('__functions__', d) or ""
+                data.setVar('__functions__', "%s\n%s" % (funcs, text), d)
+             
             __body__ = []
             __inpython__ = False
-            funcs = data.getVar('__functions__', d) or ""
-            data.setVar('__functions__', "%s\n%s" % (funcs, text), d)
+
 #           fall through
 
     if s == '' or s[0] == '#': return          # skip comments and empty lines
