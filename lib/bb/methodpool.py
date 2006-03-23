@@ -65,7 +65,7 @@ def check_insert_method(modulename, code, fn):
     name will be used for that 
     """
     if not modulename in _parsed_methods:
-        return insert_method(modulename, code)
+        return insert_method(modulename, code, fn)
 
 def parsed_module(modulename):
     """

@@ -29,7 +29,7 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
 import copy, os, re, sys, time, types
-from   bb import note, debug, fatal, utils
+from   bb import note, debug, fatal, utils, methodpool
 
 try:
     import cPickle as pickle
@@ -287,10 +287,10 @@ class DataSmartPackage(DataSmart):
         self.unpickle_prep()
 
         # compile the functions into global scope
-        funcstr = self.getVar('__functions__', 0)
-        if funcstr:
-            comp = utils.better_compile(funcstr, "<pickled>", self.bbfile)
-            utils.better_exec(comp, __builtins__, funcstr, self.bbfile)
+        funcs = self.getVar('__functions__', 0) or {}
+        for key in funcs.keys():
+            methodpool.check_insert_method( key, funcs[key], self.bbfile )
+            methodpool.parsed_module( key )
 
         # now add the handlers which were present
         handlers = self.getVar('__all_handlers__', 0) or {}
