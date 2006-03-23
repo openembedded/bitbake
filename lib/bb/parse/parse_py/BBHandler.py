@@ -23,7 +23,7 @@
 
 import re, bb, os, sys, time
 import bb.fetch, bb.build, bb.utils
-from bb import debug, data, fetch, fatal
+from bb import debug, data, fetch, fatal, methodpool
 
 from ConfHandler import include, localpath, obtain, init
 from bb.parse import ParseError
@@ -44,13 +44,7 @@ __bbpath_found__ = 0
 __classname__ = ""
 classes = [ None, ]
 
-#
-# A cache of parsed bbclasses. We will use this cache to make a
-# decision if we should compile and execute a method.
-# This dict contains a list of classes which might have methods
-# we have already added.
-#
-__parsed_methods__ = {}
+__parsed_methods__ = methodpool.get_parsed_dict()
 
 def supports(fn, d):
     localfn = localpath(fn, d)
@@ -232,10 +226,14 @@ def feeder(lineno, s, fn, root, d):
         else:
             if not root  in __parsed_methods__:
                 text = '\n'.join(__body__)
-                comp = bb.utils.better_compile(text, "<bb>", fn )
-                bb.utils.better_exec(comp, __builtins__, text, fn)
-                funcs = data.getVar('__functions__', d) or ""
-                data.setVar('__functions__', "%s\n%s" % (funcs, text), d)
+                methodpool.insert_method( root, text, fn )
+                funcs = data.getVar('__functions__', d) or {}
+                if not funcs.has_key( root ):
+                    funcs[root] = text 
+                else:
+                    funcs[root] = "%s\n%s" % (funcs[root], text)
+
+                data.setVar('__functions__', funcs, d)
             __body__ = []
             __inpython__ = False
 

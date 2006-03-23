@@ -60,7 +60,8 @@ __all__ = [
     "event",
     "build",
     "fetch",
-    "manifest"
+    "manifest",
+    "methodpool"
  ]
 
 whitespace = '\t\n\x0b\x0c\r '

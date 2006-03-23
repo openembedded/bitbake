@@ -18,6 +18,7 @@ lib/bb/fetch/svk.py
 lib/bb/fetch/svn.py
 lib/bb/fetch/wget.py
 lib/bb/manifest.py
+lib/bb/methodpool.py
 lib/bb/parse/__init__.py
 lib/bb/parse/parse_py/BBHandler.py
 lib/bb/parse/parse_py/ConfHandler.py
