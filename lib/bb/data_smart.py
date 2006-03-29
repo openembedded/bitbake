@@ -8,7 +8,7 @@ BitBake build tools.
 
 Copyright (C) 2003, 2004  Chris Larson
 Copyright (C) 2004, 2005  Seb Frankengul
-Copyright (C) 2005        Holger Hans Peter Freyther
+Copyright (C) 2005, 2006  Holger Hans Peter Freyther
 Copyright (C) 2005        Uli Luckas
 Copyright (C) 2005        ROAD GmbH
 
@@ -29,7 +29,8 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
 import copy, os, re, sys, time, types
-from   bb import note, debug, fatal, utils, methodpool
+from bb   import note, debug, error, fatal, utils, methodpool
+from sets import Set
 
 try:
     import cPickle as pickle
@@ -37,9 +38,8 @@ except ImportError:
     import pickle
     print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
-
-__setvar_keyword__ = ["_append","_prepend","_delete"]
-__setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend|_delete)(_(?P<add>.*))?')
+__setvar_keyword__ = ["_append","_prepend"]
+__setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?')
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
@@ -47,6 +47,10 @@ __expand_python_regexp__ = re.compile(r"\${@.+?}")
 class DataSmart:
     def __init__(self):
         self.dict = {}
+
+        # cookie monster tribute
+        self._special_values = {}
+        self._seen_overrides = {}
 
     def expand(self,s, varname):
         def var_sub(match):
@@ -78,8 +82,7 @@ class DataSmart:
                 s = __expand_python_regexp__.sub(python_sub, s)
                 if s == olds: break
                 if type(s) is not types.StringType: # sanity check
-                    import bb
-                    bb.error('expansion of %s returned non-string %s' % (olds, s))
+                    error('expansion of %s returned non-string %s' % (olds, s))
             except KeyboardInterrupt:
                 raise
             except:
@@ -90,18 +93,6 @@ class DataSmart:
     def initVar(self, var):
         if not var in self.dict:
             self.dict[var] = {}
-
-    def pickle_prep(self, cfg):
-        if "_data" in self.dict:
-            if self.dict["_data"] == cfg:
-                self.dict["_data"] = "cfg";
-            else: # this is an unknown array for the moment
-                pass
-
-    def unpickle_prep(self, cfg):
-        if "_data" in self.dict:
-            if self.dict["_data"] == "cfg":
-                self.dict["_data"] = cfg;
 
     def _findVar(self,var):
         _dest = self.dict
@@ -115,14 +106,6 @@ class DataSmart:
         if _dest and var in _dest:
             return _dest[var]
         return None
-
-    def _copyVar(self,var,name):
-        local_var = self._findVar(var)
-        if local_var:
-            self.dict[name] = copy.copy(local_var)
-        else:
-            debug(1,"Warning, _copyVar %s to %s, %s does not exists" % (var,name,var))
-
 
     def _makeShadowCopy(self, var):
         if var in self.dict:
@@ -142,11 +125,20 @@ class DataSmart:
             keyword = match.group("keyword")
             override = match.group('add')
             l = self.getVarFlag(base, keyword) or []
-            if override == 'delete':
-                if l.count([value, None]):
-                    del l[l.index([value, None])]
             l.append([value, override])
-            self.setVarFlag(base, match.group("keyword"), l)
+            self.setVarFlag(base, keyword, l)
+
+            # pay the cookie monster
+            try:
+                self._special_values[keyword].add( base )
+            except:
+                self._special_values[keyword] = Set()
+                self._special_values[keyword].add( base )
+
+            # SRC_URI_append_simpad is both a flag and a override
+            #if not override in self._seen_overrides:
+            #    self._seen_overrides[override] = Set()
+            #self._seen_overrides[override].add( base )
             return
 
         if not var in self.dict:
@@ -154,6 +146,13 @@ class DataSmart:
         if self.getVarFlag(var, 'matchesenv'):
             self.delVarFlag(var, 'matchesenv')
             self.setVarFlag(var, 'export', 1)
+
+        # more cookies for the cookie monster
+        if '_' in var:
+            override = var[var.rfind('_')+1:]
+            if not override in self._seen_overrides:
+                self._seen_overrides[override] = Set()
+            self._seen_overrides[override].add( var )
 
         # setting var
         self.dict[var]["content"] = value
@@ -166,6 +165,8 @@ class DataSmart:
         return value
 
     def delVar(self,var):
+        if not var in self.dict:
+            self._makeShadowCopy(var)
         self.dict[var] = {}
 
     def setVarFlag(self,var,flag,flagvalue):
@@ -284,6 +285,8 @@ class DataSmartPackage(DataSmart):
         cache_bbfile = self.sanitize_filename(self.bbfile)
         p = pickle.Unpickler( file("%s/%s"%(self.cache,cache_bbfile),"rb"))
         self.dict = p.load()
+        self._seen_overrides = p.load()
+        self._special_values = p.load()
         self.unpickle_prep()
 
         # compile the functions into global scope
@@ -331,6 +334,8 @@ class DataSmartPackage(DataSmart):
         cache_bbfile = self.sanitize_filename(self.bbfile)
         p = pickle.Pickler(file("%s/%s" %(self.cache,cache_bbfile), "wb" ), -1 )
         p.dump( self.dict )
+        p.dump( self._seen_overrides )
+        p.dump( self._special_values )
 
         self.unpickle_prep()
 
@@ -347,14 +352,12 @@ class DataSmartPackage(DataSmart):
         If self.dict contains a _data key and it is a configuration
         we will remember we had a configuration instance attached
         """
-        if "_data" in self.dict:
-            if self.dict["_data"] == self.parent:
-                dest["_data"] = "cfg"
+        if "_data" in self.dict and  self.dict["_data"] == self.parent:
+            dest["_data"] = "cfg"
 
     def unpickle_prep(self):
         """
         If we had a configuration instance attached, we will reattach it
         """
-        if "_data" in self.dict:
-            if self.dict["_data"] == "cfg":
-                self.dict["_data"] = self.parent
+        if "_data" in self.dict and  self.dict["_data"] == "cfg":
+            self.dict["_data"] = self.parent
