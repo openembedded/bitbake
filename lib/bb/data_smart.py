@@ -238,6 +238,8 @@ class DataSmart:
         # we really want this to be a DataSmart...
         data = DataSmart()
         data.dict["_data"] = self.dict
+        data._seen_overrides = copy.copy(self._seen_overrides)
+        data._special_values = copy.copy(self._special_values)
 
         return data
 
