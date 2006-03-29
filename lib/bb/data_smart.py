@@ -324,6 +324,8 @@ class DataSmartPackage(DataSmart):
         # Either unpickle the data or do copy on write
         if clean:
             self.linkDataSet()
+            self._seen_overrides = copy.copy(parent._seen_overrides)
+            self._special_values = copy.copy(parent._special_values)
         else:
             self.unpickle()
 
