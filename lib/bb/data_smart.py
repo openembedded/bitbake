@@ -286,9 +286,7 @@ class DataSmartPackage(DataSmart):
         """
         cache_bbfile = self.sanitize_filename(self.bbfile)
         p = pickle.Unpickler( file("%s/%s"%(self.cache,cache_bbfile),"rb"))
-        self.dict = p.load()
-        self._seen_overrides = p.load()
-        self._special_values = p.load()
+        (self.dict, self._seen_overrides, self._special_values) = p.load()
         self.unpickle_prep()
 
         # compile the functions into global scope
@@ -337,9 +335,7 @@ class DataSmartPackage(DataSmart):
 
         cache_bbfile = self.sanitize_filename(self.bbfile)
         p = pickle.Pickler(file("%s/%s" %(self.cache,cache_bbfile), "wb" ), -1 )
-        p.dump( self.dict )
-        p.dump( self._seen_overrides )
-        p.dump( self._special_values )
+        p.dump( (self.dict,self._seen_overrides,self._special_values) )
 
         self.unpickle_prep()
 
