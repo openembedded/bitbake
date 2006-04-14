@@ -46,10 +46,12 @@
 """
 
 from bb.utils import better_compile, better_exec
+from bb       import error
 
 # A dict of modules we have handled
 # it is the number of .bbclasses + x in size
 _parsed_methods = { }
+_parsed_fns     = { }
 
 def insert_method(modulename, code, fn):
     """
@@ -58,6 +60,16 @@ def insert_method(modulename, code, fn):
     """
     comp = better_compile(code, "<bb>", fn )
     better_exec(comp, __builtins__, code, fn)
+
+    # now some instrumentation
+    code = comp.co_names
+    for name in code:
+        if name in ['None', 'False']:
+            continue
+        elif name in _parsed_fns and not _parsed_fns[name] == modulename:
+            error( "Error Method already seen: %s in' %s' now in '%s'" % (name, _parsed_fns[name], modulename))
+        else:
+            _parsed_fns[name] = modulename
 
 def check_insert_method(modulename, code, fn):
     """
