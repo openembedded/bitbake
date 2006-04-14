@@ -224,6 +224,9 @@ def feeder(lineno, s, fn, root, d):
             __body__.append(s)
             return
         else:
+            # Note we will add root to parsedmethods after having parse
+            # 'this' file. This means we will not parse methods from
+            # bb classes twice
             if not root  in __parsed_methods__:
                 text = '\n'.join(__body__)
                 methodpool.insert_method( root, text, fn )
