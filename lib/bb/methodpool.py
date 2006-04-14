@@ -63,6 +63,11 @@ def check_insert_method(modulename, code, fn):
     """
     Add the code if it wasnt added before. The module
     name will be used for that 
+
+    Variables:
+        @modulename a short name e.g. base.bbclass
+        @code The actual python code
+        @fn   The filename from the outer file
     """
     if not modulename in _parsed_methods:
         return insert_method(modulename, code, fn)
