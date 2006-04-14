@@ -46,10 +46,12 @@
 """
 
 from bb.utils import better_compile, better_exec
+from bb       import error
 
 # A dict of modules we have handled
 # it is the number of .bbclasses + x in size
 _parsed_methods = { }
+_parsed_fns     = { }
 
 def insert_method(modulename, code, fn):
     """
@@ -65,7 +67,10 @@ def check_insert_method(modulename, code, fn):
     name will be used for that 
     """
     if not modulename in _parsed_methods:
+        _parsed_fns[modulename] = fn
         return insert_method(modulename, code, fn)
+    elif not _parsed_fns[modulename] == fn:
+        error("Method: '%s' was added by '%s' and '%s'" % (modulename, _parsed_fns[modulename], fn))
 
 def parsed_module(modulename):
     """
