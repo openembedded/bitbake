@@ -470,11 +470,11 @@ class BBCooker:
                 oldver = "%s-%s" % (pv, pr)
                 newver = '-'.join(newvers)
                 if (newver != oldver):
-                    extra_chat = "; upgrading from %s to %s" % (oldver, newver)
+                    extra_chat = "%s (%s) already staged but upgrading to %s to satisfy %s" % (pn, oldver, newver, item)
                 else:
-                    extra_chat = ""
+                    extra_chat = "Selecting already-staged %s (%s) to satisfy %s" % (pn, oldver, item)
                 if self.configuration.verbose:
-                    bb.note("selecting already-staged %s to satisfy %s%s" % (pn, item, extra_chat))
+                    bb.note("%s" % extra_chat)
                 eligible.remove(fn)
                 eligible = [fn] + eligible
                 discriminated = True
