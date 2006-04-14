@@ -134,6 +134,7 @@ class Git(Fetch):
             os.chdir(repodir)
             rungitcmd("git pull %s://%s%s" % (proto, host, path),d)
             rungitcmd("git pull --tags %s://%s%s" % (proto, host, path),d)
+            rungitcmd("git prune-packed", d)
             # old method of downloading tags
             #rungitcmd("rsync -a --verbose --stats --progress rsync://%s%s/ %s" % (host, path, os.path.join(repodir, ".git", "")),d)
 
