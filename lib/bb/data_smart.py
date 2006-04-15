@@ -165,8 +165,6 @@ class DataSmart:
         return value
 
     def delVar(self,var):
-        if not var in self.dict:
-            self._makeShadowCopy(var)
         self.dict[var] = {}
 
     def setVarFlag(self,var,flag,flagvalue):
