@@ -270,32 +270,3 @@ class DataSmart:
         self.dict[var] = data
 
 
-class DataSmartPackage(DataSmart):
-    """
-    Persistent Data Storage
-    """
-    def linkDataSet(self):
-        if not self.parent == None:
-            # assume parent is a DataSmartInstance
-            self.dict["_data"] = self.parent.dict
-
-
-    def __init__(self,cache,name,clean,parent):
-        """
-        Construct a persistent data instance
-        """
-        #Initialize the dictionary
-        DataSmart.__init__(self)
-
-        self.cache  = cache
-        self.bbfile = os.path.abspath( name )
-        self.parent = parent
-
-
-
-        # XXX Kill this class, kill this deepcopy by COW
-        self._seen_overrides = copy.deepcopy(parent._seen_overrides)
-        self._special_values = copy.deepcopy(parent._special_values)
-
-        self.linkDataSet()
-

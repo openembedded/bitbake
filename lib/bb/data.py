@@ -48,85 +48,15 @@ sys.path.insert(0,path)
 from bb import note, debug, data_smart
 
 _dict_type = data_smart.DataSmart
-_dict_p_type = data_smart.DataSmartPackage
-
-class DataDictFull(dict):
-    """
-    This implements our Package Data Storage Interface.
-    setDirty is a no op as all items are held in memory
-    """
-    def setDirty(self, bbfile, data):
-        """
-        No-Op we assume data was manipulated as some sort of
-        reference
-        """
-        if not bbfile in self:
-            raise Exception("File %s was not in dictionary before" % bbfile)
-
-        self[bbfile] = data
-
-class DataDictCache:
-    """
-    Databacked Dictionary implementation
-    """
-    def __init__(self, cache_dir, config):
-        self.cache_dir = cache_dir
-        self.files     = []
-        self.dirty     = {}
-        self.config    = config
-
-    def has_key(self,key):
-        return key in self.files
-
-    def keys(self):
-        return self.files
-
-    def __setitem__(self, key, data):
-        """
-        Add the key to the list of known files and
-        place the data in the cache?
-        """
-        if key in self.files:
-            return
-
-        self.files.append(key)
-
-    def __getitem__(self, key):
-        if not key in self.files:
-            return None
-
-        # if it was dirty we will
-        if key in self.dirty:
-            return self.dirty[key]
-
-        # not cached yet
-        return _dict_p_type(self.cache_dir, key,False,self.config)
-
-    def setDirty(self, bbfile, data):
-        """
-        Only already added items can be declared dirty!!!
-        """
-
-        if not bbfile in self.files:
-            raise Exception("File %s was not in dictionary before" % bbfile)
-
-        self.dirty[bbfile] = data
-
-
 
 def init():
     return _dict_type()
 
-def init_db(cache,name,clean,parent = None):
-    return _dict_p_type(cache,name,clean,parent)
-
-def pkgdata(use_cache, cache, config = None):
-    """
-    Return some sort of dictionary to lookup parsed dictionaires
-    """
-    if use_cache:
-        return DataDictCache(cache, config)
-    return DataDictFull()
+def init_db(parent = None):
+    if parent:
+        return parent.createCopy()
+    else:
+        return _dict_type()
 
 def createCopy(source):
      """Link the source set to the destination
