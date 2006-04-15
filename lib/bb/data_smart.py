@@ -236,8 +236,8 @@ class DataSmart:
         # we really want this to be a DataSmart...
         data = DataSmart()
         data.dict["_data"] = self.dict
-        data._seen_overrides = copy.copy(self._seen_overrides)
-        data._special_values = copy.copy(self._special_values)
+        data._seen_overrides = copy.deepcopy(self._seen_overrides)
+        data._special_values = copy.deepcopy(self._special_values)
 
         return data
 
@@ -291,6 +291,11 @@ class DataSmartPackage(DataSmart):
         self.bbfile = os.path.abspath( name )
         self.parent = parent
 
-        # Do Copy on Write
+
+
+        # XXX Kill this class, kill this deepcopy by COW
+        self._seen_overrides = copy.deepcopy(parent._seen_overrides)
+        self._special_values = copy.deepcopy(parent._special_values)
+
         self.linkDataSet()
 
