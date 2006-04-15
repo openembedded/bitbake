@@ -274,32 +274,6 @@ class DataSmartPackage(DataSmart):
     """
     Persistent Data Storage
     """
-    def sanitize_filename(bbfile):
-        return bbfile.replace( '/', '_' )
-    sanitize_filename = staticmethod(sanitize_filename)
-
-    def unpickle(self):
-        """
-        Restore the dict from memory
-        """
-        cache_bbfile = self.sanitize_filename(self.bbfile)
-        p = pickle.Unpickler( file("%s/%s"%(self.cache,cache_bbfile),"rb"))
-        (self.dict, self._seen_overrides, self._special_values) = p.load()
-        self.unpickle_prep()
-
-        # compile the functions into global scope
-        funcs = self.getVar('__functions__', 0) or {}
-        for key in funcs.keys():
-            methodpool.check_insert_method( key, funcs[key], self.bbfile )
-            methodpool.parsed_module( key )
-
-        # now add the handlers which were present
-        handlers = self.getVar('__all_handlers__', 0) or {}
-        import bb.event
-        for key in handlers.keys():
-            bb.event.register(key, handlers[key])
-
-
     def linkDataSet(self):
         if not self.parent == None:
             # assume parent is a DataSmartInstance
@@ -317,45 +291,6 @@ class DataSmartPackage(DataSmart):
         self.bbfile = os.path.abspath( name )
         self.parent = parent
 
-        # Either unpickle the data or do copy on write
-        if clean:
-            self.linkDataSet()
-            self._seen_overrides = copy.copy(parent._seen_overrides)
-            self._special_values = copy.copy(parent._special_values)
-        else:
-            self.unpickle()
+        # Do Copy on Write
+        self.linkDataSet()
 
-    def commit(self, mtime):
-        """
-        Save the package to a permanent storage
-        """
-        self.pickle_prep()
-
-        cache_bbfile = self.sanitize_filename(self.bbfile)
-        p = pickle.Pickler(file("%s/%s" %(self.cache,cache_bbfile), "wb" ), -1 )
-        p.dump( (self.dict,self._seen_overrides,self._special_values) )
-
-        self.unpickle_prep()
-
-    def mtime(cache,bbfile):
-        cache_bbfile = DataSmartPackage.sanitize_filename(bbfile)
-        try:
-            return os.stat( "%s/%s" % (cache,cache_bbfile) )[8]
-        except OSError:
-            return 0
-    mtime = staticmethod(mtime)
-
-    def pickle_prep(self):
-        """
-        If self.dict contains a _data key and it is a configuration
-        we will remember we had a configuration instance attached
-        """
-        if "_data" in self.dict and  self.dict["_data"] == self.parent:
-            dest["_data"] = "cfg"
-
-    def unpickle_prep(self):
-        """
-        If we had a configuration instance attached, we will reattach it
-        """
-        if "_data" in self.dict and  self.dict["_data"] == "cfg":
-            self.dict["_data"] = self.parent

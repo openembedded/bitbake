@@ -61,7 +61,8 @@ __all__ = [
     "build",
     "fetch",
     "manifest",
-    "methodpool"
+    "methodpool",
+    "cache",
  ]
 
 whitespace = '\t\n\x0b\x0c\r '

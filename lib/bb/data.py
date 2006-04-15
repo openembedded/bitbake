@@ -120,9 +120,6 @@ def init():
 def init_db(cache,name,clean,parent = None):
     return _dict_p_type(cache,name,clean,parent)
 
-def init_db_mtime(cache,cache_bbfile):
-    return _dict_p_type.mtime(cache,cache_bbfile)
-
 def pkgdata(use_cache, cache, config = None):
     """
     Return some sort of dictionary to lookup parsed dictionaires

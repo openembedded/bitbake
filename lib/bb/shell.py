@@ -263,8 +263,9 @@ class BitBakeShellCommands:
         bbfile = params[0]
         print "SHELL: Parsing '%s'" % bbfile
         parse.update_mtime( bbfile )
-        bb_data, fromCache = cooker.load_bbfile( bbfile )
-        cooker.pkgdata[bbfile] = bb_data
+        cooker.bb_cache.cacheValidUpdate(bbfile)
+        fromCache = cooker.bb_cache.loadData(bbfile, cooker)
+        cooker.bb_cache.sync()
         if fromCache:
             print "SHELL: File has not been updated, not reparsing"
         else:
@@ -307,7 +308,7 @@ class BitBakeShellCommands:
         what, globexpr = params
         if what == "files":
             self._checkParsed()
-            for key in globfilter( cooker.pkgdata.keys(), globexpr ): print key
+            for key in globfilter( cooker.status.pkg_fn.keys(), globexpr ): print key
         elif what == "providers":
             self._checkParsed()
             for key in globfilter( cooker.status.pkg_pn.keys(), globexpr ): print key
@@ -432,7 +433,8 @@ SRC_URI = ""
         name, var = params
         bbfile = self._findProvider( name )
         if bbfile is not None:
-            value = cooker.pkgdata[bbfile].getVar( var, 1 )
+            the_data = cooker.bb_cache.loadDataFull(bbfile, cooker)
+            value = the_data.getVar( var, 1 )
             print value
         else:
             print "ERROR: Nothing provides '%s'" % name
@@ -442,13 +444,14 @@ SRC_URI = ""
         """Set contents of variable defined in providee's metadata"""
         name, var, value = params
         bbfile = self._findProvider( name )
-        d = cooker.pkgdata[bbfile]
         if bbfile is not None:
-            data.setVar( var, value, d )
+            print "ERROR: Sorry, this functionality is currently broken"
+            #d = cooker.pkgdata[bbfile]
+            #data.setVar( var, value, d )
 
             # mark the change semi persistant
-            cooker.pkgdata.setDirty(bbfile, d)
-            print "OK"
+            #cooker.pkgdata.setDirty(bbfile, d)
+            #print "OK"
         else:
             print "ERROR: Nothing provides '%s'" % name
     poke.usage = "<providee> <variable> <value>"
@@ -458,7 +461,7 @@ SRC_URI = ""
         what = params[0]
         if what == "files":
             self._checkParsed()
-            for key in cooker.pkgdata.keys(): print key
+            for key in cooker.status.pkg_fn.keys(): print key
         elif what == "providers":
             self._checkParsed()
             for key in cooker.status.providers.keys(): print key
@@ -555,8 +558,8 @@ SRC_URI = ""
 
 def completeFilePath( bbfile ):
     """Get the complete bbfile path"""
-    if not cooker.pkgdata: return bbfile
-    for key in cooker.pkgdata.keys():
+    if not cooker.status.pkg_fn: return bbfile
+    for key in cooker.status.pkg_fn.keys():
         if key.endswith( bbfile ):
             return key
     return bbfile
@@ -594,10 +597,10 @@ def completer( text, state ):
                 if u == "<variable>":
                     allmatches = cooker.configuration.data.keys()
                 elif u == "<bbfile>":
-                    if cooker.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
-                    else: allmatches = [ x.split("/")[-1] for x in cooker.pkgdata.keys() ]
+                    if cooker.status.pkg_fn is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                    else: allmatches = [ x.split("/")[-1] for x in cooker.status.pkg_fn.keys() ]
                 elif u == "<providee>":
-                    if cooker.pkgdata is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
+                    if cooker.status.pkg_fn is None: allmatches = [ "(No Matches Available. Parsed yet?)" ]
                     else: allmatches = cooker.status.providers.iterkeys()
                 else: allmatches = [ "(No tab completion available for this command)" ]
             else: allmatches = [ "(No tab completion available for this command)" ]
