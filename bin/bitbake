@@ -251,7 +251,8 @@ class BBCooker:
 
         the_data = self.bb_cache.loadDataFull(fn, self)
 
-        if not buildAllDeps:
+        # Only follow all (runtime) dependencies if doing a build
+        if not buildAllDeps and self.configuration.cmd is "build":
             buildAllDeps = self.status.build_all[fn]
 
         # Error on build time dependency loops
@@ -430,9 +431,10 @@ class BBCooker:
     def showEnvironment( self ):
         """Show the outer or per-package environment"""
         if self.configuration.buildfile:
+            self.cb = None
             self.bb_cache = bb.cache.init(self)
             try:
-                self.configuration.data, fromCache = self.bb_cache.loadDataFull(self.configuration.buildfile, self)
+                self.configuration.data = self.bb_cache.loadDataFull(self.configuration.buildfile, self)
             except IOError, e:
                 fatal("Unable to read %s: %s" % ( self.configuration.buildfile, e ))
             except Exception, e:
