@@ -40,6 +40,8 @@ except ImportError:
     import pickle
     print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
+__cache_version__ = "123"
+
 class Cache:
     """
     BitBake Cache implementation
@@ -65,8 +67,17 @@ class Cache:
                 bb.mkdirhier( self.cachedir )
 
         if (self.mtime(self.cachefile)):
-            p = pickle.Unpickler( file(self.cachefile,"rb"))
-            self.depends_cache = p.load()
+            try:
+                p = pickle.Unpickler( file(self.cachefile,"rb"))
+                self.depends_cache, version_data = p.load()
+                if version_data['CACHE_VER'] != __cache_version__:
+                    raise ValueError, 'Cache Version Mismatch'
+                if version_data['BITBAKE_VER'] != bb.__version__:
+                    raise ValueError, 'Bitbake Version Mismatch'
+            except (ValueError, KeyError):
+                bb.note("Invalid cache found, rebuilding...")
+                self.depends_cache = {}
+
         if self.depends_cache:
             for fn in self.depends_cache.keys():
                 self.clean[fn] = ""
@@ -223,8 +234,13 @@ class Cache:
         Save the cache
         Called from the parser when complete (or exitting)
         """
+
+        version_data = {}
+        version_data['CACHE_VER'] = __cache_version__
+        version_data['BITBAKE_VER'] = bb.__version__
+
         p = pickle.Pickler(file(self.cachefile, "wb" ), -1 )
-        p.dump(self.depends_cache)
+        p.dump([self.depends_cache, version_data])
 
     def mtime(self, cachefile):
         try:
