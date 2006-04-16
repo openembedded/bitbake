@@ -70,6 +70,14 @@ statement ::= EXPORT variable(s) OP_ASSIGN STRING(v).
         { e_assign( lex, s.string(), v.string() );
           e_export( lex, s.string() );
           s.release_this(); v.release_this(); }
+statement ::= EXPORT variable(s) OP_PREDOT STRING(v).
+        { e_precat( lex, s.string(), v.string() );
+          e_export( lex, s.string() );
+          s.release_this(); v.release_this(); }
+statement ::= EXPORT variable(s) OP_POSTDOT STRING(v).
+        { e_postcat( lex, s.string(), v.string() );
+          e_export( lex, s.string() );
+          s.release_this(); v.release_this(); }
 statement ::= EXPORT variable(s) OP_IMMEDIATE STRING(v).
         { e_immediate ( lex, s.string(), v.string() );
           e_export( lex, s.string() );
@@ -80,6 +88,12 @@ statement ::= EXPORT variable(s) OP_COND STRING(v).
 
 statement ::= variable(s) OP_ASSIGN STRING(v).
         { e_assign( lex, s.string(), v.string() );
+          s.release_this(); v.release_this(); }
+statement ::= variable(s) OP_PREDOT STRING(v).
+        { e_precat( lex, s.string(), v.string() );
+          s.release_this(); v.release_this(); }
+statement ::= variable(s) OP_POSTDOT STRING(v).
+        { e_postcat( lex, s.string(), v.string() );
           s.release_this(); v.release_this(); }
 statement ::= variable(s) OP_PREPEND STRING(v).
         { e_prepend( lex, s.string(), v.string() );

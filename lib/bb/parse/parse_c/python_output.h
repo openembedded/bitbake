@@ -27,15 +27,19 @@ This is the glue:
 
 */
 
+extern "C" {
+
 struct lex_t;
 
 extern void e_assign(lex_t*, const char*, const char*);
 extern void e_export(lex_t*, const char*);
 extern void e_immediate(lex_t*, const char*, const char*);
 extern void e_cond(lex_t*, const char*, const char*);
-extern void e_assign(lex_t*, const char*, const char*);
 extern void e_prepend(lex_t*, const char*, const char*);
 extern void e_append(lex_t*, const char*, const char*);
+extern void e_precat(lex_t*, const char*, const char*);
+extern void e_postcat(lex_t*, const char*, const char*);
+
 extern void e_addtask(lex_t*, const char*, const char*, const char*);
 extern void e_addhandler(lex_t*,const char*);
 extern void e_export_func(lex_t*, const char*);
@@ -48,4 +52,5 @@ extern void e_proc_fakeroot(lex_t*, const char*, const char*);
 extern void e_def(lex_t*, const char*, const char*, const char*);
 extern void e_parse_error(lex_t*);
 
+}
 #endif // PYTHON_OUTPUT_H

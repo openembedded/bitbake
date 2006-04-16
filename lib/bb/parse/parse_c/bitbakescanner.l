@@ -83,6 +83,7 @@ extern void bbparseTrace(FILE *TraceFILE, char *zTracePrompt);
 //static const char* rgbInput;
 //static size_t cbInput;
 
+extern "C" {
 
 int lineError;
 int errorParse;
@@ -92,6 +93,8 @@ enum {
   errorUnexpectedInput,
   errorUnsupportedFeature, 
 };
+
+}
 
 #define YY_EXTRA_TYPE lex_t*
 
@@ -112,6 +115,8 @@ static const char* fixup_escapes (const char* sz);
 C_SP            [ \t]
 COMMENT         #.*\n
 OP_ASSIGN       "="
+OP_PREDOT       ".="
+OP_POSTDOT      "=."
 OP_IMMEDIATE    ":="
 OP_PREPEND      "=+"
 OP_APPEND       "+="
@@ -166,6 +171,10 @@ PROC            \({C_SP}*\)
                                   yyextra->accept (T_OP_IMMEDIATE); }
 {OP_ASSIGN}                     { BEGIN S_RVALUE;
                                   yyextra->accept (T_OP_ASSIGN); }
+{OP_PREDOT}                     { BEGIN S_RVALUE;
+                                  yyextra->accept (T_OP_PREDOT); }
+{OP_POSTDOT}                    { BEGIN S_RVALUE;
+                                  yyextra->accept (T_OP_POSTDOT); }
 {OP_COND}                       { BEGIN S_RVALUE;
                                   yyextra->accept (T_OP_COND); }
 
@@ -254,35 +263,55 @@ void lex_t::accept (int token, const char* sz)
     parse (parser, token, t, this);
 }
 
+void lex_t::input (char *buf, int *result, int max_size)
+{
+    printf("lex_t::input %p %d\n", buf, max_size);
+    *result = fread(buf, 1, max_size, file);
+    printf("lex_t::input result %d\n", *result);
+}
+
 int lex_t::line ()const
 {
+    printf("lex_t::line\n");
     return yyget_lineno (scanner);
 }
 
-void parse (FILE* file, PyObject* data)
-{
-    void* parser = bbparseAlloc (malloc);
-    yyscan_t scanner;
-    lex_t lex;
 
-    yylex_init (&scanner);
+extern "C" {
 
-    lex.parser = parser;
-    lex.scanner = scanner;
-    lex.file = file;
-    lex.data = data;
-    lex.parse = bbparse;
-    yyset_extra (&lex, scanner);
+    void parse (FILE* file, PyObject* data)
+    {
+	printf("parse bbparseAlloc\n");
+        void* parser = bbparseAlloc (malloc);
+        yyscan_t scanner;
+        lex_t lex;
 
+	printf("parse yylex_init\n");
+        yylex_init (&scanner);
 
-    int result = yylex (scanner);
+        lex.parser = parser;
+        lex.scanner = scanner;
+        lex.file = file;
+        lex.data = data;
+        lex.parse = bbparse;
+	printf("parse yyset_extra\n");
+        yyset_extra (&lex, scanner);
 
-    lex.accept (0);
-    bbparseTrace (NULL, NULL);
+	printf("parse yylex\n");
+        int result = yylex (scanner);
+	
+	printf("parse result %d\n", result);
 
-    if (result != T_EOF)
-        printf ("premature end of file\n");
+        lex.accept (0);
+	printf("parse lex.accept\n");
+        bbparseTrace (NULL, NULL);
+	printf("parse bbparseTrace\n");
 
-    yylex_destroy (scanner);
-    bbparseFree (parser, free);
+        if (result != T_EOF)
+           printf ("premature end of file\n");
+
+        yylex_destroy (scanner);
+        bbparseFree (parser, free);
+    }
+
 }
