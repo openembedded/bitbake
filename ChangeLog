@@ -6,6 +6,9 @@ Changes in BitBake 1.3.x:
 	- git fetcher cleanup and efficency improvements
 	- Change the format of the cache
 	- Update usermanual to document the Fetchers
+	- Major changes to caching with a new strategy
+	  giving a major performance increase when reparsing
+	  with few data changes
 
 Changes in BitBake 1.3.3:
 	- Create a new Fetcher module to ease the

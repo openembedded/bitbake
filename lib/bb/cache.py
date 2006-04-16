@@ -117,7 +117,7 @@ class Cache:
         To do this, we need to parse the file.
         """
         bb_data, skipped = self.load_bbfile(fn, cooker)
-        return bb_data, False
+        return bb_data
 
     def loadData(self, fn, cooker):
         """

@@ -249,7 +249,7 @@ class BBCooker:
         If build_depends is empty, we're dealing with a runtime depends
         """
 
-        the_data, fromCache = self.bb_cache.loadDataFull(fn, self)
+        the_data = self.bb_cache.loadDataFull(fn, self)
 
         if not buildAllDeps:
             buildAllDeps = self.status.build_all[fn]

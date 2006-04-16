@@ -433,7 +433,7 @@ SRC_URI = ""
         name, var = params
         bbfile = self._findProvider( name )
         if bbfile is not None:
-            the_data, cached = cooker.bb_cache.loadDataFull(bbfile, cooker)
+            the_data = cooker.bb_cache.loadDataFull(bbfile, cooker)
             value = the_data.getVar( var, 1 )
             print value
         else:
