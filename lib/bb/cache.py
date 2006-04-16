@@ -171,24 +171,19 @@ class Cache:
         # Check file still exists
         if self.mtime(fn) == 0:
             bb.debug(2, "Cache: %s not longer exists" % fn)
-            if fn in self.clean:
-                del self.clean[fn]
-            if fn in self.depends_cache:
-                del self.depends_cache[fn]
+            self.remove(fn)
             return False
 
         # File isn't in depends_cache
         if not fn in self.depends_cache:
             bb.debug(2, "Cache: %s is not cached" % fn)
-            if fn in self.clean:
-                del self.clean[fn]
+            self.remove(fn)
             return False
 
         # Check the file's timestamp
         if bb.parse.cached_mtime(fn) > self.getVar("CACHETIMESTAMP", fn, True):
             bb.debug(2, "Cache: %s changed" % fn)
-            if fn in self.clean:
-                del self.clean[fn]
+            self.remove(fn)
             return False
 
         # Check dependencies are still valid
@@ -201,8 +196,7 @@ class Cache:
                 new_mtime = bb.parse.cached_mtime(f)
                 if (new_mtime > old_mtime):
                     bb.debug(2, "Cache: %s's dependency %s changed" % (fn, f))
-                    if fn in self.clean:
-                        del self.clean[fn]
+                    self.remove(fn)
                     return False
 
         bb.debug(2, "Depends Cache: %s is clean" % fn)
@@ -225,9 +219,11 @@ class Cache:
         Remove a fn from the cache
         Called from the parser in error cases
         """
-        bb.note("Removing %s from cache" % fn)
+        bb.debug(1, "Removing %s from cache" % fn)
         if fn in self.depends_cache:
             del self.depends_cache[fn]
+        if fn in self.clean:
+            del self.clean[fn]
 
     def sync(self):
         """
