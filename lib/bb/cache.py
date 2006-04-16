@@ -157,16 +157,25 @@ class Cache:
         if self.cachedir in [None, '']:
             return False
 
+        # Check file still exists
+        if self.mtime(fn) == 0:
+            bb.debug(2, "Cache: %s not longer exists" % fn)
+            if fn in self.clean:
+                del self.clean[fn]
+            if fn in self.depends_cache:
+                del self.depends_cache[fn]
+            return False
+
         # File isn't in depends_cache
         if not fn in self.depends_cache:
-            bb.note("Cache: %s is not cached" % fn)
+            bb.debug(2, "Cache: %s is not cached" % fn)
             if fn in self.clean:
                 del self.clean[fn]
             return False
 
         # Check the file's timestamp
         if bb.parse.cached_mtime(fn) > self.getVar("CACHETIMESTAMP", fn, True):
-            bb.note("Cache: %s changed" % fn)
+            bb.debug(2, "Cache: %s changed" % fn)
             if fn in self.clean:
                 del self.clean[fn]
             return False
@@ -180,12 +189,12 @@ class Cache:
                 old_mtime = int(old_mtime_s)
                 new_mtime = bb.parse.cached_mtime(f)
                 if (new_mtime > old_mtime):
-                    bb.note("Cache: %s's dependency %s changed" % (fn, f))
+                    bb.debug(2, "Cache: %s's dependency %s changed" % (fn, f))
                     if fn in self.clean:
                         del self.clean[fn]
                     return False
 
-        #bb.note("Depends Cache: %s is clean" % fn)
+        bb.debug(2, "Depends Cache: %s is clean" % fn)
         if not fn in self.clean:
             self.clean[fn] = ""
 

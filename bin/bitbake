@@ -133,16 +133,21 @@ class BBParsingStatus:
                 if not dep in deplist:
                     deplist[dep] = ""
 
-        for package in packages + [pn]:
-            if not package in self.rundeps:
-                self.rundeps[package] = {}
-            if not package in self.runrecs:
-                self.runrecs[package] = {}
+        if not file_name in self.rundeps:
+            self.rundeps[file_name] = {}
+        if not file_name in self.runrecs:
+            self.runrecs[file_name] = {}
 
-            add_dep(self.rundeps[package], bb.utils.explode_deps(bb_cache.getVar('RDEPENDS', file_name, True) or ""))
-            add_dep(self.runrecs[package], bb.utils.explode_deps(bb_cache.getVar('RRECOMMENDS', file_name, True) or ""))
-            add_dep(self.rundeps[package], bb.utils.explode_deps(bb_cache.getVar("RDEPENDS_%s" % package, file_name, True) or ""))
-            add_dep(self.runrecs[package], bb.utils.explode_deps(bb_cache.getVar("RRECOMMENDS_%s" % package, file_name, True) or ""))
+        for package in packages + [pn]:
+            if not package in self.rundeps[file_name]:
+                self.rundeps[file_name][package] = {}
+            if not package in self.runrecs[file_name]:
+                self.runrecs[file_name][package] = {}
+
+            add_dep(self.rundeps[file_name][package], bb.utils.explode_deps(bb_cache.getVar('RDEPENDS', file_name, True) or ""))
+            add_dep(self.runrecs[file_name][package], bb.utils.explode_deps(bb_cache.getVar('RRECOMMENDS', file_name, True) or ""))
+            add_dep(self.rundeps[file_name][package], bb.utils.explode_deps(bb_cache.getVar("RDEPENDS_%s" % package, file_name, True) or ""))
+            add_dep(self.runrecs[file_name][package], bb.utils.explode_deps(bb_cache.getVar("RRECOMMENDS_%s" % package, file_name, True) or ""))
 
         # Collect files we may need for possible world-dep
         # calculations
@@ -676,10 +681,10 @@ class BBCooker:
         rdepends = []
         self.rbuild_cache.append(item)
 
-        if item in self.status.rundeps:
-            rdepends += self.status.rundeps[item].keys()
-        if item in self.status.runrecs:
-            rdepends += self.status.runrecs[item].keys()
+        if fn in self.status.rundeps and item in self.status.rundeps[fn]:
+            rdepends += self.status.rundeps[fn][item].keys()
+        if fn in self.status.runrecs and item in self.status.runrecs[fn]:
+            rdepends += self.status.runrecs[fn][item].keys()
 
         bb.debug(2, "Additional runtime dependencies for %s are: %s" % (item, " ".join(rdepends)))
 
