@@ -44,13 +44,84 @@ __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 
+#=====
+#
+# Helper Class
+#
+#====
+class ParentDictSet:
+    """
+    To avoid DeepCopies of shared dictionaries
+    we use a COW/parenting pattern.
+
+    This class looks like a dictionary. If we
+    set a key that is also present in the parent
+    we will make a copy of it.
+
+    Currently it is not possible to remove keys
+    """
+
+    def __init__(self, parent=None):
+        self._dict = {}
+
+        #set the parent of this dict
+        #and save the lists of keys
+        if parent:
+            self._dict['_PARENT_OF_DICT'] = parent._dict
+            self._keys = parent._keys
+        else:
+            self._keys = []
+
+    def _crazy_lookup(self, dict, name):
+        # crazy lookup
+        while dict:
+            if name in dict:
+                return (dict[name],True)
+            elif '_PARENT_OF_DICT' in dict:
+                dict = dict['_PARENT_OF_DICT']
+            else:
+                break
+
+        return (None,False)
+
+
+    def get(self, name):
+        (var,found) = self._crazy_lookup(self._dict, name)
+
+        return var
+
+    def add(self, name, value):
+        #
+        # Check if we have the key already locally
+        #
+        if name in self._dict:
+            self._dict[name].add( value )
+            return
+
+        #
+        # Check if the key is used by our parent
+        #
+        if '_PARENT_OF_DICT' in self._dict:
+            (var,found) = self._crazy_lookup(self._dict['_PARENT_OF_DICT'], name)
+            if found:
+                self._dict[name] = copy.copy(var)
+                self._dict[name].add(value)
+        else:
+            # a new name is born
+            self._keys.append(name)
+            self._dict[name] = Set()
+            self._dict[name].add(value)
+
+    def keys(self):
+        return self._keys
+
 class DataSmart:
     def __init__(self):
         self.dict = {}
 
         # cookie monster tribute
-        self._special_values = {}
-        self._seen_overrides = {}
+        self._special_values = ParentDictSet()
+        self._seen_overrides = ParentDictSet()
 
     def expand(self,s, varname):
         def var_sub(match):
@@ -129,16 +200,8 @@ class DataSmart:
             self.setVarFlag(base, keyword, l)
 
             # pay the cookie monster
-            try:
-                self._special_values[keyword].add( base )
-            except:
-                self._special_values[keyword] = Set()
-                self._special_values[keyword].add( base )
+            self._special_values.add( keyword, base )
 
-            # SRC_URI_append_simpad is both a flag and a override
-            #if not override in self._seen_overrides:
-            #    self._seen_overrides[override] = Set()
-            #self._seen_overrides[override].add( base )
             return
 
         if not var in self.dict:
@@ -150,9 +213,7 @@ class DataSmart:
         # more cookies for the cookie monster
         if '_' in var:
             override = var[var.rfind('_')+1:]
-            if not override in self._seen_overrides:
-                self._seen_overrides[override] = Set()
-            self._seen_overrides[override].add( var )
+            self._seen_overrides.add( override, var )
 
         # setting var
         self.dict[var]["content"] = value
@@ -236,8 +297,10 @@ class DataSmart:
         # we really want this to be a DataSmart...
         data = DataSmart()
         data.dict["_data"] = self.dict
-        data._seen_overrides = copy.deepcopy(self._seen_overrides)
-        data._special_values = copy.deepcopy(self._special_values)
+
+        # reparent the dicts
+        data._seen_overrides = ParentDictSet(self._seen_overrides)
+        data._special_values = ParentDictSet(self._special_values)
 
         return data
 
