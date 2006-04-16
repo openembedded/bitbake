@@ -41,7 +41,9 @@ except ImportError:
     print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
 class Cache:
-
+    """
+    BitBake Cache implementation
+    """
     def __init__(self, cooker):
 
         self.cachedir = bb.data.getVar("CACHE", cooker.configuration.data, True)
@@ -71,6 +73,16 @@ class Cache:
                 self.cacheValidUpdate(fn)
 
     def getVar(self, var, fn, exp = 0):
+        """
+        Gets the value of a variable
+        (similar to getVar in the data class)
+        
+        There are two scenarios:
+          1. We have cached data - serve from depends_cache[fn]
+          2. We're learning what data to cache - serve from data 
+             backend but add a copy of the data to the cache.
+        """
+
         if fn in self.clean:
             return self.depends_cache[fn][var]
 
@@ -78,13 +90,20 @@ class Cache:
             self.depends_cache[fn] = {}
 
         if fn != self.data_fn:
-            bb.fatal("Parsing error data_fn %s and fn %s don't match" % (self.data_fn, fn))
+            # We're trying to access data in the cache which doesn't exist
+            # yet setData hasn't been called to setup the right access. Very bad.
+            bb.error("Parsing error data_fn %s and fn %s don't match" % (self.data_fn, fn))
 
         result = bb.data.getVar(var, self.data, exp)
         self.depends_cache[fn][var] = result
         return result
 
     def setData(self, fn, data):
+        """
+        Called to prime bb_cache ready to learn which variables to cache.
+        Will be followed by calls to self.getVar which aren't cached
+        but can be fulfilled from self.data.
+        """
         self.data_fn = fn
         self.data = data
 
@@ -93,11 +112,21 @@ class Cache:
         self.depends_cache[fn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
 
     def loadDataFull(self, fn, cooker):
-
+        """
+        Return a complete set of data for fn.
+        To do this, we need to parse the file.
+        """
         bb_data, skipped = self.load_bbfile(fn, cooker)
         return bb_data, False
 
     def loadData(self, fn, cooker):
+        """
+        Load a subset of data for fn.
+        If the cached data is valid we do nothing,
+        To do this, we need to parse the file and set the system
+        to record the variables accessed.
+        Return the cache status and whether the file was skipped when parsed
+        """
         if self.cacheValid(fn):
             if "SKIPPED" in self.depends_cache[fn]:
                 return True, True
@@ -108,6 +137,10 @@ class Cache:
         return False, skipped
 
     def cacheValid(self, fn):
+        """
+        Is the cache valid for fn?
+        Fast version, no timestamps checked.
+        """
         # Is cache enabled?
         if self.cachedir in [None, '']:
             return False
@@ -116,6 +149,10 @@ class Cache:
         return False
 
     def cacheValidUpdate(self, fn):
+        """
+        Is the cache valid for fn?
+        Make thorough (slower) checks including timestamps.
+        """
         # Is cache enabled?
         if self.cachedir in [None, '']:
             return False
@@ -155,16 +192,28 @@ class Cache:
         return True
 
     def skip(self, fn):
+        """
+        Mark a fn as skipped
+        Called from the parser
+        """
         if not fn in self.depends_cache:
             self.depends_cache[fn] = {}
         self.depends_cache[fn]["SKIPPED"] = "1"
 
     def remove(self, fn):
+        """
+        Remove a fn from the cache
+        Called from the parser in error cases
+        """
         bb.note("Removing %s from cache" % fn)
         if fn in self.depends_cache:
             del self.depends_cache[fn]
 
     def sync(self):
+        """
+        Save the cache
+        Called from the parser when complete (or exitting)
+        """
         p = pickle.Pickler(file(self.cachefile, "wb" ), -1 )
         p.dump(self.depends_cache)
 
@@ -175,7 +224,10 @@ class Cache:
             return 0
 
     def load_bbfile( self, bbfile , cooker):
-        """Load and parse one .bb build file"""
+        """
+        Load and parse one .bb build file
+        Return the data and whether parsing resulted in the file being skipped
+        """
 
         import bb
         from bb import utils, data, parse, debug, event, fatal
@@ -208,5 +260,21 @@ class Cache:
             raise
 
 def init(cooker):
+    """
+    The Objective: Cache the minimum amount of data possible yet get to the 
+    stage of building packages (i.e. tryBuild) without reparsing any .bb files.
+
+    To do this, we intercept getVar calls and only cache the variables we see 
+    being accessed. We rely on the cache getVar calls being made for all 
+    variables bitbake might need to use to reach this stage. For each cached 
+    file we need to track:
+
+    * Its mtime
+    * The mtimes of all its dependencies
+    * Whether it caused a parse.SkipPackage exception
+
+    Files causing parsing errors are evicted from the cache.
+
+    """
     return Cache(cooker)
 
