@@ -778,6 +778,13 @@ class BBCooker:
     def parseConfigurationFile( self, afile ):
         try:
             self.configuration.data = bb.parse.handle( afile, self.configuration.data )
+
+            # Add the handlers we inherited by INHERITS
+            # FIXME: This assumes that we included at least one .inc file
+            for var in bb.data.keys(self.configuration.data):
+                if bb.data.getVarFlag(var, 'handler', self.configuration.data):
+                    bb.event.register(var,bb.data.getVar(var,self.configuration.data))
+
         except IOError:
             bb.fatal( "Unable to open %s" % afile )
         except bb.parse.ParseError, details:
