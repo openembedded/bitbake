@@ -61,6 +61,9 @@ def insert_method(modulename, code, fn):
     comp = better_compile(code, "<bb>", fn )
     better_exec(comp, __builtins__, code, fn)
 
+    # hack hack hack XXX
+    return
+
     # now some instrumentation
     code = comp.co_names
     for name in code:
