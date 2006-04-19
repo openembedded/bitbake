@@ -2,10 +2,12 @@ AUTHORS
 ChangeLog
 MANIFEST
 setup.py
+bin/bitdoc
 bin/bbimage
 bin/bitbake
 lib/bb/__init__.py
 lib/bb/build.py
+lib/bb/cache.py
 lib/bb/data.py
 lib/bb/data_smart.py
 lib/bb/event.py
@@ -31,5 +33,6 @@ doc/manual/html.css
 doc/manual/Makefile
 doc/manual/usermanual.xml
 contrib/bbdev.sh
+contrib/vim/syntax/bitbake.vim
 conf/bitbake.conf
 classes/base.bbclass
