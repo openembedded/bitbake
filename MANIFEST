@@ -2,6 +2,7 @@ AUTHORS
 ChangeLog
 MANIFEST
 setup.py
+bin/bitdoc
 bin/bbimage
 bin/bitbake
 lib/bb/__init__.py
@@ -32,5 +33,6 @@ doc/manual/html.css
 doc/manual/Makefile
 doc/manual/usermanual.xml
 contrib/bbdev.sh
+contrib/vim/syntax/bitbake.vim
 conf/bitbake.conf
 classes/base.bbclass
