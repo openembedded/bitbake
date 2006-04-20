@@ -430,6 +430,26 @@ def update_data(d):
         >>> update_data(d)
         >>> print getVar('TEST', d)
         local
+
+        CopyMonster:
+        >>> e = d.createCopy()
+        >>> setVar('TEST_foo', 'foo', e)
+        >>> update_data(e)
+        >>> print getVar('TEST', e)
+        local
+
+        >>> setVar('OVERRIDES', 'arm:ramses:local:foo', e)
+        >>> update_data(e)
+        >>> print getVar('TEST', e)
+        foo
+
+        >>> f = d.createCopy()
+        >>> setVar('TEST_moo', 'something', f)
+        >>> setVar('OVERRIDES', 'moo:arm:ramses:local:foo', e)
+        >>> update_data(e)
+        >>> print getVar('TEST', e)
+        foo
+
     """
     debug(2, "update_data()")
 
@@ -460,10 +480,10 @@ def update_data(d):
         l    = len(o)+1
 
         # see if one should even try
-        if not o in d._seen_overrides:
+        if not o in d._seen_overrides.__dict__:
             continue
 
-        vars = d._seen_overrides[o]
+        vars = d._seen_overrides.__dict__[o]
         for var in vars:
             name = var[:-l]
             try:
@@ -472,8 +492,8 @@ def update_data(d):
                 note ("Untracked delVar")
 
     # now on to the appends and prepends
-    if '_append' in d._special_values:
-        appends = d._special_values['_append'] or []
+    if '_append' in d._special_values.__dict__:
+        appends = d._special_values.__dict__['_append'] or []
         for append in appends:
             for (a, o) in getVarFlag(append, '_append', d) or []:
                 # maybe the OVERRIDE was not yet added so keep the append
@@ -487,8 +507,8 @@ def update_data(d):
                 setVar(append, sval, d)
 
 
-    if '_prepend' in d._special_values:
-        prepends = d._special_values['_prepend'] or []
+    if '_prepend' in d._special_values.__dict__:
+        prepends = d._special_values.__dict__['_prepend'] or []
 
         for prepend in prepends:
             for (a, o) in getVarFlag(prepend, '_prepend', d) or []:
