@@ -248,7 +248,7 @@ class DataSmart:
         Create a copy of self by setting _data to self
         """
         # we really want this to be a DataSmart...
-        data = DataSmart(createMetaCow(self._seen_overrides), createMetaCow(self._special_values))
+        data = DataSmart(seen=createMetaCow(self._seen_overrides), special=createMetaCow(self._special_values))
         data.dict["_data"] = self.dict
 
         return data
