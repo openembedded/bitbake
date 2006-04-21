@@ -3,7 +3,8 @@
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 ##########################################################################
 #
-# Copyright (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>, Vanille Media
+# Copyright (C) 2005-2006 Michael 'Mickey' Lauer <mickey@Vanille.de>
+# Copyright (C) 2005-2006 Vanille Media
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -59,7 +60,7 @@ import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy, 
 imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
 from bb import data, parse, build, fatal
 
-__version__ = "0.5.3"
+__version__ = "0.5.3.1"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
 Type 'help' for more information, press CTRL-D to exit.""" % __version__
 
@@ -266,7 +267,7 @@ class BitBakeShellCommands:
         cooker.bb_cache.cacheValidUpdate(bbfile)
         fromCache = cooker.bb_cache.loadData(bbfile, cooker)
         cooker.bb_cache.sync()
-        if fromCache:
+        if False #fromCache:
             print "SHELL: File has not been updated, not reparsing"
         else:
             print "SHELL: Parsed"
@@ -375,7 +376,7 @@ SRC_URI = ""
     pasteBin.usage = "<index>"
 
     def pasteLog( self, params ):
-        """Send the last event exception error log (if there is one) to http://pastebin.com"""
+        """Send the last event exception error log (if there is one) to http://oe.pastebin.com"""
         if last_exception is None:
             print "SHELL: No Errors yet (Phew)..."
         else:
@@ -565,7 +566,7 @@ def completeFilePath( bbfile ):
     return bbfile
 
 def sendToPastebin( content ):
-    """Send content to http://www.pastebin.com"""
+    """Send content to http://oe.pastebin.com"""
     mydata = {}
     mydata["parent_pid"] = ""
     mydata["format"] = "bash"
@@ -575,7 +576,7 @@ def sendToPastebin( content ):
     params = urllib.urlencode( mydata )
     headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
 
-    conn = httplib.HTTPConnection( "pastebin.com:80" )
+    conn = httplib.HTTPConnection( "oe.pastebin.com:80" )
     conn.request("POST", "/", params, headers )
 
     response = conn.getresponse()
