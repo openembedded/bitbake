@@ -64,35 +64,35 @@ cdef public void e_cond(lex_t* c, char* key, char* what):
     # if val == None:    
     #    val = groupd["value"]
     d = <object>c.data
-    d.setVar(key, (d.getVar(key) or what))
+    d.setVar(key, (d.getVar(key,0) or what))
 
 cdef public void e_prepend(lex_t* c, char* key, char* what):
     print "e_prepend", key, what
     #prepend:
     # val = "%s %s" % (groupd["value"], (bb.data.getVar(key, data) or ""))
     d = <object>c.data
-    d.setVar(key, what + " " + (d.getVar(key) or ""))
+    d.setVar(key, what + " " + (d.getVar(key,0) or ""))
 
 cdef public void e_append(lex_t* c, char* key, char* what):
     print "e_append", key, what
     #append:
     # val = "%s %s" % ((bb.data.getVar(key, data) or ""), groupd["value"])
     d = <object>c.data
-    d.setVar(key, (d.getVar(key) or "") + " " + what)
+    d.setVar(key, (d.getVar(key,0) or "") + " " + what)
 
 cdef public void e_precat(lex_t* c, char* key, char* what):
     print "e_precat", key, what
     #predot:
     # val = "%s%s" % (groupd["value"], (bb.data.getVar(key, data) or ""))
     d = <object>c.data
-    d.setVar(key, what + (d.getVar(key) or ""))
+    d.setVar(key, what + (d.getVar(key,0) or ""))
 
 cdef public void e_postcat(lex_t* c, char* key, char* what):
     print "e_postcat", key, what
     #postdot:
     # val = "%s%s" % ((bb.data.getVar(key, data) or ""), groupd["value"])
     d = <object>c.data
-    d.setVar(key, (d.getVar(key) or "") + what)
+    d.setVar(key, (d.getVar(key,0) or "") + what)
 
 cdef public void e_addtask(lex_t* c, char* name, char* before, char* after):
     print "e_addtask", name, before, after
