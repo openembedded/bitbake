@@ -40,7 +40,8 @@ except ImportError:
     import pickle
     print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
-__cache_version__ = "123"
+# __cache_version__ = "123"
+__cache_version__ = "124" # changes the __depends structure
 
 class Cache:
     """
@@ -192,16 +193,12 @@ class Cache:
 
         # Check dependencies are still valid
         depends = self.getVar("__depends", fn, True)
-        if depends:
-            deps = depends.split(" ")
-            for dep in deps:
-                (f,old_mtime_s) = dep.split("@")
-                old_mtime = int(old_mtime_s)
-                new_mtime = bb.parse.cached_mtime(f)
-                if (new_mtime > old_mtime):
-                    bb.debug(2, "Cache: %s's dependency %s changed" % (fn, f))
-                    self.remove(fn)
-                    return False
+        for f,old_mtime in depends:
+            new_mtime = bb.parse.cached_mtime(f)
+            if (new_mtime > old_mtime):
+                bb.debug(2, "Cache: %s's dependency %s changed" % (fn, f))
+                self.remove(fn)
+                return False
 
         bb.debug(2, "Depends Cache: %s is clean" % fn)
         if not fn in self.clean:

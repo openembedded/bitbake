@@ -46,9 +46,9 @@ def update_mtime(f):
 def mark_dependency(d, f):
     if f.startswith('./'):
         f = "%s/%s" % (os.getcwd(), f[2:])
-    deps = (bb.data.getVar('__depends', d) or "").split()
-    deps.append("%s@%s" % (f, cached_mtime(f)))
-    bb.data.setVar('__depends', " ".join(deps), d)
+    deps = bb.data.getVar('__depends', d) or []
+    deps.append( (f, cached_mtime(f)) )
+    bb.data.setVar('__depends', deps, d)
 
 def supports(fn, data):
     """Returns true if we have a handler for this file, false otherwise"""
