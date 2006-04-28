@@ -30,6 +30,7 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import copy, os, re, sys, time, types
 from bb   import note, debug, error, fatal, utils, methodpool
+from COW  import COWDictBase
 from sets import Set
 from new  import classobj
 
@@ -45,24 +46,8 @@ __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 
-#
-# Meta Class helper for a COW
-# implementation
-#
-class MetaCow:
-    def keys(self):
-        """
-        Return all names (variables) of this dictionary
-        """
-        return filter(lambda x: [True,False][x in ['__doc__','__module__']], dir(self) )
-
-def createMetaCow(base = MetaCow):
-    """ Create New and Copies from existing classes """
-    return classobj('MetaCowCopy', (base,), {})
-
-
 class DataSmart:
-    def __init__(self, special = createMetaCow(), seen = createMetaCow() ):
+    def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
         self.dict = {}
 
         # cookie monster tribute
@@ -148,10 +133,10 @@ class DataSmart:
             # todo make sure keyword is not __doc__ or __module__
             # pay the cookie monster
             try:
-                self._special_values.__dict__[keyword].add( base )
+                self._special_values[keyword].add( base )
             except:
-                self._special_values.__dict__[keyword] = Set()
-                self._special_values.__dict__[keyword].add( base )
+                self._special_values[keyword] = Set()
+                self._special_values[keyword].add( base )
 
             return
 
@@ -164,9 +149,9 @@ class DataSmart:
         # more cookies for the cookie monster
         if '_' in var:
             override = var[var.rfind('_')+1:]
-            if not override in self._seen_overrides.__dict__:
-                self._seen_overrides.__dict__[override] = Set()
-            self._seen_overrides.__dict__[override].add( var )
+            if not self._seen_overrides.has_key(override):
+                self._seen_overrides[override] = Set()
+            self._seen_overrides[override].add( var )
 
         # setting var
         self.dict[var]["content"] = value
@@ -248,7 +233,7 @@ class DataSmart:
         Create a copy of self by setting _data to self
         """
         # we really want this to be a DataSmart...
-        data = DataSmart(seen=createMetaCow(self._seen_overrides), special=createMetaCow(self._special_values))
+        data = DataSmart(seen=self._seen_overrides.copy(), special=self._special_values.copy())
         data.dict["_data"] = self.dict
 
         return data

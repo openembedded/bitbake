@@ -480,10 +480,10 @@ def update_data(d):
         l    = len(o)+1
 
         # see if one should even try
-        if not o in d._seen_overrides.__dict__:
+        if not d._seen_overrides.has_key(o):
             continue
 
-        vars = d._seen_overrides.__dict__[o]
+        vars = d._seen_overrides[o]
         for var in vars:
             name = var[:-l]
             try:
@@ -492,8 +492,8 @@ def update_data(d):
                 note ("Untracked delVar")
 
     # now on to the appends and prepends
-    if '_append' in d._special_values.__dict__:
-        appends = d._special_values.__dict__['_append'] or []
+    if d._special_values.has_key('_append'):
+        appends = d._special_values['_append'] or []
         for append in appends:
             for (a, o) in getVarFlag(append, '_append', d) or []:
                 # maybe the OVERRIDE was not yet added so keep the append
@@ -507,8 +507,8 @@ def update_data(d):
                 setVar(append, sval, d)
 
 
-    if '_prepend' in d._special_values.__dict__:
-        prepends = d._special_values.__dict__['_prepend'] or []
+    if d._special_values.has_key('_prepend'):
+        prepends = d._special_values['_prepend'] or []
 
         for prepend in prepends:
             for (a, o) in getVarFlag(prepend, '_prepend', d) or []:
