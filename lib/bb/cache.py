@@ -48,17 +48,21 @@ class Cache:
     """
     def __init__(self, cooker):
 
+
         self.cachedir = bb.data.getVar("CACHE", cooker.configuration.data, True)
-        self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
         self.clean = {}
         self.depends_cache = {}
         self.data = None
         self.data_fn = None
 
         if self.cachedir in [None, '']:
+            self.has_cache = False
             if cooker.cb is not None:
                 print "NOTE: Not using a cache. Set CACHE = <directory> to enable."
         else:
+            self.has_cache = True
+            self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
+            
             if cooker.cb is not None:
                 print "NOTE: Using cache in '%s'" % self.cachedir
             try:
@@ -66,7 +70,7 @@ class Cache:
             except OSError:
                 bb.mkdirhier( self.cachedir )
 
-        if (self.mtime(self.cachefile)):
+        if self.has_cache and (self.mtime(self.cachefile)):
             try:
                 p = pickle.Unpickler( file(self.cachefile,"rb"))
                 self.depends_cache, version_data = p.load()
@@ -153,7 +157,7 @@ class Cache:
         Fast version, no timestamps checked.
         """
         # Is cache enabled?
-        if self.cachedir in [None, '']:
+        if not self.has_cache:
             return False
         if fn in self.clean:
             return True
@@ -165,7 +169,7 @@ class Cache:
         Make thorough (slower) checks including timestamps.
         """
         # Is cache enabled?
-        if self.cachedir in [None, '']:
+        if not self.has_cache:
             return False
 
         # Check file still exists
@@ -230,6 +234,9 @@ class Cache:
         Save the cache
         Called from the parser when complete (or exitting)
         """
+
+        if not self.has_cache:
+            return
 
         version_data = {}
         version_data['CACHE_VER'] = __cache_version__
