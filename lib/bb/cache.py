@@ -271,7 +271,8 @@ class Cache:
         #data.setVar('TOPDIR', topdir, cfg)
         # go there
         oldpath = os.path.abspath(os.getcwd())
-        os.chdir(topdir)
+        if self.mtime(topdir):
+            os.chdir(topdir)
         bb_data = data.init_db(cooker.configuration.data)
         try:
             parse.handle(bbfile, bb_data) # read .bb data
