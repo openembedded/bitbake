@@ -168,6 +168,10 @@ class Fetch(object):
         d Is a bb.data instance
         tarfn is the name of the tarball
         """
+        tarpath = os.path.join(data.getVar("DL_DIR", d, 1), tarfn)
+        if os.access(tarpath, os.R_OK):
+            return True
+
         pn = data.getVar('PN', d, True)
         src_tarball_stash = None
         if pn:

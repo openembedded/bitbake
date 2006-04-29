@@ -111,13 +111,9 @@ class Svn(Fetch):
             data.setVar('TARFILES', dlfile, localdata)
             data.setVar('TARFN', tarfn, localdata)
 
-            dl = os.path.join(dldir, tarfn)
-            if os.access(dl, os.R_OK):
-                bb.debug(1, "%s already exists, skipping svn checkout." % tarfn)
-                continue
-
             # try to use the tarball stash
             if Fetch.try_mirror(d, tarfn):
+                bb.debug(1, "%s already exists or was mirrored, skipping svn checkout." % tarfn)
                 continue
 
             olddir = os.path.abspath(os.getcwd())
