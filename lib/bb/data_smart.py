@@ -34,11 +34,6 @@ from COW  import COWDictBase
 from sets import Set
 from new  import classobj
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-    print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
 __setvar_keyword__ = ["_append","_prepend"]
 __setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?')
