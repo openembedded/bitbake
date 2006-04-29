@@ -129,7 +129,7 @@ class Git(Fetch):
                     os.chdir(repodir)
                     rungitcmd("tar -xzf %s" % (repofile),d)
                 else:
-                    rungitcmd("git clone %s://%s%s %s" % (proto, host, path, repodir),d)
+                    rungitcmd("git clone -n %s://%s%s %s" % (proto, host, path, repodir),d)
 
             os.chdir(repodir)
             rungitcmd("git pull %s://%s%s" % (proto, host, path),d)
