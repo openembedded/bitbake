@@ -171,11 +171,11 @@ class Fetch(object):
         pn = data.getVar('PN', d, True)
         src_tarball_stash = None
         if pn:
-            src_tarball_stash = data.getVar('SRC_TARBALL_STASH_%s' % pn, d, True) or data.getVar('CVS_TARBALL_STASH_%s' % pn, d, True) or data.getVar('SRC_TARBALL_STASH', d, True) or data.getVar('CVS_TARBALL_STASH', d, True)
+            src_tarball_stash = (data.getVar('SRC_TARBALL_STASH_%s' % pn, d, True) or data.getVar('CVS_TARBALL_STASH_%s' % pn, d, True) or data.getVar('SRC_TARBALL_STASH', d, True) or data.getVar('CVS_TARBALL_STASH', d, True) or "").split()
 
-        if src_tarball_stash:
+        for stash in src_tarball_stash:
             fetchcmd = data.getVar("FETCHCOMMAND_mirror", d, True) or data.getVar("FETCHCOMMAND_wget", d, True)
-            uri = src_tarball_stash + tarfn
+            uri = stash + tarfn
             bb.note("fetch " + uri)
             fetchcmd = fetchcmd.replace("${URI}", uri)
             ret = os.system(fetchcmd)
