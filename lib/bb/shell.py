@@ -267,7 +267,7 @@ class BitBakeShellCommands:
         cooker.bb_cache.cacheValidUpdate(bbfile)
         fromCache = cooker.bb_cache.loadData(bbfile, cooker)
         cooker.bb_cache.sync()
-        if False #fromCache:
+        if False: #fromCache:
             print "SHELL: File has not been updated, not reparsing"
         else:
             print "SHELL: Parsed"
