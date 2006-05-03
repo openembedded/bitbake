@@ -701,6 +701,9 @@ class BBCooker:
         all_depends = self.status.all_depends
         pn_provides = self.status.pn_provides
 
+        localdata = data.createCopy(self.configuration.data)
+        bb.data.update_data(localdata)
+
         def calc_bbfile_priority(filename):
             for (regex, pri) in self.status.bbfile_config_priorities:
                 if regex.match(filename):
@@ -708,7 +711,7 @@ class BBCooker:
             return 0
 
         # Handle PREFERRED_PROVIDERS
-        for p in (bb.data.getVar('PREFERRED_PROVIDERS', self.configuration.data, 1) or "").split():
+        for p in (bb.data.getVar('PREFERRED_PROVIDERS', localdata, 1) or "").split():
             (providee, provider) = p.split(':')
             if providee in self.preferred and self.preferred[providee] != provider:
                 bb.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.preferred[providee]))
@@ -906,7 +909,6 @@ class BBCooker:
                 print "Requested parsing .bb files only.  Exiting."
                 return
 
-            bb.data.update_data( self.configuration.data )
             self.buildDepgraph()
 
             if self.configuration.show_versions:
