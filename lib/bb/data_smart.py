@@ -255,11 +255,11 @@ class DataSmart:
         return keytab.keys()
 
     def __getitem__(self,item):
-        print "Warning deprecated"
+        #print "Warning deprecated"
         return self.getVar(item, False)
 
     def __setitem__(self,var,data):
-        print "Warning deprecated"
+        #print "Warning deprecated"
         self.setVar(var,data)
 
 
