@@ -247,18 +247,11 @@ class DataSmart:
         return keytab.keys()
 
     def __getitem__(self,item):
-        start = self.dict
-        while start:
-            if item in start:
-                return start[item]
-            elif "_data" in start:
-                start = start["_data"]
-            else:
-                start = None
-        return None
+        #print "Warning deprecated"
+        return self.getVar(item, False)
 
     def __setitem__(self,var,data):
-        self._makeShadowCopy(var)
-        self.dict[var] = data
+        #print "Warning deprecated"
+        self.setVar(var,data)
 
 
