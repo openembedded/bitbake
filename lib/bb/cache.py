@@ -132,7 +132,7 @@ class Cache:
         Return a complete set of data for fn.
         To do this, we need to parse the file.
         """
-        bb_data, skipped = self.load_bbfile(fn, cooker)
+        bb_data, skipped = self.load_bbfile(fn, cooker.configuration.data)
         return bb_data
 
     def loadData(self, fn, cooker):
@@ -148,7 +148,7 @@ class Cache:
                 return True, True
             return True, False
 
-        bb_data, skipped = self.load_bbfile(fn, cooker)
+        bb_data, skipped = self.load_bbfile(fn, cooker.configuration.data)
         self.setData(fn, bb_data)
         return False, skipped
 
@@ -248,7 +248,7 @@ class Cache:
         except OSError:
             return 0
 
-    def load_bbfile( self, bbfile , cooker):
+    def load_bbfile( self, bbfile , config):
         """
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped
@@ -257,25 +257,15 @@ class Cache:
         import bb
         from bb import utils, data, parse, debug, event, fatal
 
-        topdir = data.getVar('TOPDIR', cooker.configuration.data)
-        if not topdir:
-            topdir = os.path.abspath(os.getcwd())
-            # set topdir to here
-            data.setVar('TOPDIR', topdir, cooker.configuration)
-        bbfile = os.path.abspath(bbfile)
-        bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         # expand tmpdir to include this topdir
-        data.setVar('TMPDIR', data.getVar('TMPDIR', cooker.configuration.data, 1) or "", cooker.configuration.data)
-        # set topdir to location of .bb file
-        topdir = bbfile_loc
-        #data.setVar('TOPDIR', topdir, cfg)
-        # go there
+        data.setVar('TMPDIR', data.getVar('TMPDIR', config, 1) or "", config)
+        bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         oldpath = os.path.abspath(os.getcwd())
-        if self.mtime(topdir):
-            os.chdir(topdir)
-        bb_data = data.init_db(cooker.configuration.data)
+        if self.mtime(bbfile_loc):
+            os.chdir(bbfile_loc)
+        bb_data = data.init_db(config)
         try:
-            parse.handle(bbfile, bb_data) # read .bb data
+            bb_data = parse.handle(bbfile, bb_data) # read .bb data
             os.chdir(oldpath)
             return bb_data, False
         except bb.parse.SkipPackage:
