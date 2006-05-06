@@ -56,8 +56,7 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, imp, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue, fnmatch
-imp.load_source( "bitbake", os.path.dirname( sys.argv[0] )+"/bitbake" )
+import sys, os, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue, fnmatch
 from bb import data, parse, build, fatal
 
 __version__ = "0.5.3.1"
