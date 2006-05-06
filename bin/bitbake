@@ -189,7 +189,6 @@ class BBConfiguration( object ):
     def __init__( self, options ):
         for key, val in options.__dict__.items():
             setattr( self, key, val )
-        self.data = data.init()
 
 #============================================================================#
 # BBCooker
@@ -819,6 +818,12 @@ class BBCooker:
 
 
     def cook( self, configuration, args ):
+        """
+        We are building stuff here. We do the building
+        from here. By default we try to execute task
+        build.
+        """
+
         self.configuration = configuration
 
         if not self.configuration.cmd:
@@ -833,6 +838,13 @@ class BBCooker:
             self.parseConfigurationFile( f )
 
         self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
+
+
+        #
+        # Special updated configuration we use for firing events
+        #
+        self.configuration.event_data = bb.data.createCopy(self.configuration.data)
+        bb.data.update_data(self.configuration.event_data)
 
         if self.configuration.show_environment:
             self.showEnvironment()
@@ -920,7 +932,7 @@ class BBCooker:
                 for t in self.status.world_target:
                     pkgs_to_build.append(t)
 
-            bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.data))
+            bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.event_data))
 
             failures = 0
             for k in pkgs_to_build:
@@ -938,7 +950,7 @@ class BBCooker:
                     if self.configuration.abort:
                         sys.exit(1)
 
-            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.data, failures))
+            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.event_data, failures))
 
             sys.exit( self.stats.show() )
 
