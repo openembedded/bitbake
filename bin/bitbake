@@ -859,11 +859,19 @@ class BBCooker:
         try:
             self.configuration.data = bb.parse.handle( afile, self.configuration.data )
 
-            # Add the handlers we inherited by INHERITS
+            # Add the handlers we inherited by INHERIT
+            # we need to do this manually as it is not guranteed
+            # we will pick up these classes... as we only INHERIT
+            # on .inc and .bb files but not on .conf
+            data = bb.data.createCopy( self.configuration.data )
+            inherits  = ["base"] + (bb.data.getVar('INHERIT', data, True ) or "").split()
+            for inherit in inherits:
+                data = bb.parse.handle( os.path.join('classes', '%s.bbclass' % inherit ), data, True )
+
             # FIXME: This assumes that we included at least one .inc file
-            for var in bb.data.keys(self.configuration.data):
-                if bb.data.getVarFlag(var, 'handler', self.configuration.data):
-                    bb.event.register(var,bb.data.getVar(var,self.configuration.data))
+            for var in bb.data.keys(data):
+                if bb.data.getVarFlag(var, 'handler', data):
+                    bb.event.register(var,bb.data.getVar(var, data))
 
         except IOError:
             bb.fatal( "Unable to open %s" % afile )
