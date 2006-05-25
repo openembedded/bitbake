@@ -449,6 +449,84 @@ class BBCooker:
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
+    def generateDotGraph( self, pkgs_to_build ):
+        """
+        Generate two graphs one for the DEPENDS and RDEPENDS. The current
+        implementation creates crappy graphs ;)
+        """
+
+        rdepends_file = file('rdepends.dot', 'w' )
+        depends_file  = file('depends.dot', 'w' )
+
+
+        # setup the graphs
+        print >> depends_file, "digraph depends {"
+        print >> rdepends_file, "digraph rdepends {"
+
+
+        # try to avoid adding the same rdepends over an over again
+        seen_depends   = {}
+        seen_rdepends =  {}
+
+        added_depends_error = False
+
+        def add_depends(package_list):
+            """
+            Add all depends of all packages from this list
+            """
+            for package in package_list:
+                if package in seen_depends:
+                    continue
+                else:
+                    seen_depends[package] = 1
+
+                if not package in self.status.providers:
+                    """
+                    We have not seen this name -> error in
+                    dependency handling
+                    """
+                    print >> depends_file, '"%(package)s" -> ERROR' % vars()
+                    continue
+
+                # get all providers for this package
+                providers = self.status.providers[package]
+
+                # now let us find the bestProvider for it
+                elligible = self.filterProviders(providers, package)
+                prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % package, self.configuration.data, 1)
+
+                # try the preferred provider first
+                if prefervar:
+                    for p in elligible:
+                        if prefervar == self.status.pkg_fn[p]:
+                            bb.note("Selecting PREFERRED_PROVIDER %s" % prefervar)
+                            elligible.remove(p)
+                            elligible = [p] + elligible
+
+                fn = elligible[0] 
+                depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
+                rdepends = bb.utils.explode_deps(self.bb_cache.getVar('RDEPENDS', fn, True) or "")
+                add_depends( depends )
+                add_rdepends( rdepends )
+
+                for depend in depends:
+                    print >> depends_file, '"%(package)s" -> "%(depend)s"' % vars()
+
+        def add_rdepends(package_list):
+            """
+            for each package of the package_list
+            we will see if we have handled it already
+            """
+            pass
+        
+        # start with the initial list
+        add_depends( pkgs_to_build )
+        add_rdepends( pkgs_to_build )
+
+        # finish it up
+        print >> depends_file,  "}"
+        print >> rdepends_file, "}"
+
     def filterProviders(self, providers, item):
         """
         Take a list of providers and filter/reorder according to the 
@@ -921,6 +999,7 @@ class BBCooker:
                 print "Requested parsing .bb files only.  Exiting."
                 return
 
+
             self.buildDepgraph()
 
             if self.configuration.show_versions:
@@ -931,6 +1010,11 @@ class BBCooker:
                 pkgs_to_build.remove('world')
                 for t in self.status.world_target:
                     pkgs_to_build.append(t)
+    
+            if self.configuration.dot_graph:
+                self.generateDotGraph( pkgs_to_build )
+                sys.exit( 0 )
+
 
             bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.event_data))
 
@@ -1111,6 +1195,9 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     parser.add_option( "-e", "--environment", help = "show the global or per-package environment (this is what used to be bbread)",
                action = "store_true", dest = "show_environment", default = False )
+
+    parser.add_option( "-g", "--graphviz", help = "emit the dependency trees of the specified packages in the dot syntax",
+                action = "store_true", dest = "dot_graph", default = False )
 
     options, args = parser.parse_args( sys.argv )
 
