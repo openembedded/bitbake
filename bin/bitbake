@@ -449,12 +449,16 @@ class BBCooker:
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
-    def generateDotGraph( self, pkgs_to_build ):
+    def generateDotGraph( self, pkgs_to_build, ignore_deps ):
         """
         Generate two graphs one for the DEPENDS and RDEPENDS. The current
         implementation creates crappy graphs ;)
-        """
 
+        pkgs_to_build A list of packages that needs to be built
+        ignore_deps   A list of names where processing of dependencies
+                      should be stopped. e.g. dependencies that get
+        """
+        print ignore_deps
         rdepends_file = file('rdepends.dot', 'w' )
         depends_file  = file('depends.dot', 'w' )
 
@@ -475,7 +479,7 @@ class BBCooker:
             Add all depends of all packages from this list
             """
             for package in package_list:
-                if package in seen_depends:
+                if package in seen_depends or package in ignore_deps:
                     continue
                 else:
                     seen_depends[package] = 1
@@ -510,6 +514,8 @@ class BBCooker:
                 add_rdepends( rdepends )
 
                 for depend in depends:
+                    if depend in ignore_deps:
+                        continue
                     print >> depends_file, '"%(package)s" -> "%(depend)s"' % vars()
 
         def add_rdepends(package_list):
@@ -1020,7 +1026,7 @@ class BBCooker:
                     pkgs_to_build.append(t)
     
             if self.configuration.dot_graph:
-                self.generateDotGraph( pkgs_to_build )
+                self.generateDotGraph( pkgs_to_build, self.configuration.ignored_dot_deps )
                 sys.exit( 0 )
 
 
@@ -1206,6 +1212,9 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     parser.add_option( "-g", "--graphviz", help = "emit the dependency trees of the specified packages in the dot syntax",
                 action = "store_true", dest = "dot_graph", default = False )
+    parser.add_option( "-I", "--ignore-deps", help = """Stop processing at the given list of dependencies when generating dependency graphs. This can help to make the graph more appealing""",
+                action = "append", dest = "ignored_dot_deps", default = [] )
+
 
     options, args = parser.parse_args( sys.argv )
 
