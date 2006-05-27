@@ -505,14 +505,6 @@ class BBCooker:
 
 
 
-        print ignore_deps
-        depends_file  = file('depends.dot', 'w' )
-        alldepends_file = file('alldepends.dot', 'w' )
-
-
-        # setup the graphs
-        print >> depends_file, "digraph depends {"
-        print >> alldepends_file, "digraph alldepends {"
 
         # try to avoid adding the same rdepends over an over again
         seen_depends  = []
@@ -523,9 +515,10 @@ class BBCooker:
             """
             Add all depends of all packages from this list
             """
-            package_list = filter( lambda x: x not in seen_depends and not x in ignore_deps, package_list )
-
             for package in package_list:
+                if package in seen_depends or package in ignore_deps:
+                    continue
+
                 seen_depends.append( package )
                 if not package in self.status.providers:
                     """
@@ -559,9 +552,10 @@ class BBCooker:
             Add both DEPENDS and RDEPENDS. RDEPENDS will get dashed
             lines
             """
-            package_list = filter( lambda x: x not in seen_rdepends and not x in ignore_deps, package_list )
-
             for package in package_list:
+                if package in seen_rdepends or package in ignore_deps:
+                    continue
+
                 seen_rdepends.append( package )
                 if not package in self.status.providers:
                     """
@@ -571,6 +565,9 @@ class BBCooker:
                     bb.note( "ERROR with provider: %(package)s" % vars() )
                     print >> alldepends_file, '"%(package)s" -> ERROR' % vars()
                     continue
+
+                if package == "task-bootstrap":
+                    print "PackageList: %s" % package_list
 
                 # get all providers for this package
                 providers = self.status.providers[package]
@@ -594,14 +591,16 @@ class BBCooker:
                     print >> alldepends_file, '"%(package)s" -> "%(depend)s" [style=dashed]' % vars()
 
 
-
-
-        # start with the initial list
+        # Add depends now
+        depends_file = file('depends.dot', 'w' )
+        print >> depends_file, "digraph depends {"
         add_depends( pkgs_to_build )
-        add_all_depends( pkgs_to_build )
-
-        # finish it up
         print >> depends_file,  "}"
+
+        # Add all depends now
+        alldepends_file = file('alldepends.dot', 'w' )
+        print >> alldepends_file, "digraph alldepends {"
+        add_all_depends( pkgs_to_build )
         print >> alldepends_file, "}"
 
     def filterProviders(self, providers, item):
