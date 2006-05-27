@@ -450,6 +450,16 @@ def update_data(d):
         >>> print getVar('TEST', e)
         foo
 
+
+        >>> h = init()
+        >>> setVar('SRC_URI', 'file://append.foo;patch=1 ', h)
+        >>> g = h.createCopy()
+        >>> setVar('SRC_URI_append_arm', 'file://other.foo;patch=1', g)
+        >>> setVar('OVERRIDES', 'arm:moo', g)
+        >>> update_data(g)
+        >>> print getVar('SRC_URI', g)
+        file://append.foo;patch=1 file://other.foo;patch=1
+
     """
     debug(2, "update_data()")
 
