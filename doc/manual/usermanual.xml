@@ -205,6 +205,7 @@ python myclass_eventhandler() {
     print "The file we run for is %s" % data.getVar('FILE', e.data, True)
 
     return NotHandled
+}
 </screen></para><para>
 This event handler gets called every time an event is triggered. A global variable <varname>e</varname> is defined. <varname>e</varname>.data contains an instance of bb.data. With the getName(<varname>e</varname>)
 method one can get the name of the triggered event.</para><para>The above event handler prints the name
