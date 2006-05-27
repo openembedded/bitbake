@@ -364,7 +364,7 @@ SRC_URI = ""
     new.usage = "<directory> <filename>"
 
     def pasteBin( self, params ):
-        """Send a command + output buffer to http://pastebin.com"""
+        """Send a command + output buffer to http://oe.pastebin.com"""
         index = params[0]
         contents = self._shell.myout.buffer( int( index ) )
         status, error, location = sendToPastebin( contents )
