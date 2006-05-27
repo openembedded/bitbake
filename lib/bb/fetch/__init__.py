@@ -38,6 +38,9 @@ class NoMethodError(Exception):
 class MissingParameterError(Exception):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
 
+class ParameterError(Exception):
+    """Exception raised when a url cannot be proccessed due to invalid parameters."""
+
 class MD5SumError(Exception):
     """Exception raised when a MD5SUM of a file does not match the expected one"""
 
