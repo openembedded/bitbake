@@ -261,7 +261,7 @@ class BBCooker:
             return False
 
         # See if this is a runtime dependency we've already built
-	# Or a build dependency being handled in a different build chain
+        # Or a build dependency being handled in a different build chain
         if fn in self.building_list:
             return self.addRunDeps(fn, virtual , buildAllDeps)
 
@@ -425,7 +425,7 @@ class BBCooker:
 
             print "%-30s %20s %20s" % (p, latest[0][0] + "-" + latest[0][1],
                                         prefstr)
-        
+
 
     def showEnvironment( self ):
         """Show the outer or per-package environment"""
@@ -1063,7 +1063,7 @@ class BBCooker:
                 pkgs_to_build.remove('world')
                 for t in self.status.world_target:
                     pkgs_to_build.append(t)
-    
+
             if self.configuration.dot_graph:
                 self.generateDotGraph( pkgs_to_build, self.configuration.ignored_dot_deps )
                 sys.exit( 0 )
