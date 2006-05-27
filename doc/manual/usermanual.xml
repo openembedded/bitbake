@@ -195,7 +195,7 @@ addtask printdate before do_build</screen></para>
             <section>
                 <title>Events</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-                <para>BitBake also implements a means of registering event handlers.  Events are triggered at certain points during operation, such as, the beginning of operation against a given .bb, the start of a given task, task failure, task success, et cetera.  The intent was to make it easy to do things like email notifications on build failure.</para>
+                <para>BitBake allows to install event handlers.  Events are triggered at certain points during operation, such as, the beginning of operation against a given .bb, the start of a given task, task failure, task success, et cetera.  The intent was to make it easy to do things like email notifications on build failure.</para>
                 <para><screen>addhandler myclass_eventhandler
 python myclass_eventhandler() {
     from bb.event import NotHandled, getName
