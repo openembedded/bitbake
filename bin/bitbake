@@ -535,6 +535,7 @@ class BBCooker:
                     We have not seen this name -> error in
                     dependency handling
                     """
+                    bb.note( "ERROR with provider: %(package)s" % vars() )
                     print >> depends_file, '"%(package)s" -> ERROR' % vars()
                     continue
 
@@ -545,10 +546,8 @@ class BBCooker:
                 fn = self.filterProviders(providers, package)[0]
 
                 depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
-                rdepends = bb.utils.explode_deps(self.bb_cache.getVar('RDEPENDS', fn, True) or "")
                 version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
                 add_depends ( depends )
-                add_rdepends( rdepends )
 
                 # now create the node
                 print >> depends_file, '"%(package)s" [label="%(package)s\\n%(version)s"]' % vars()
@@ -557,12 +556,6 @@ class BBCooker:
                 for depend in depends:
                     print >> depends_file, '"%(package)s" -> "%(depend)s"' % vars()
 
-        def add_rdepends(package_list):
-            """
-            for each package of the package_list
-            we will see if we have handled it already
-            """
-            pass
 
         # start with the initial list
         add_depends( pkgs_to_build )
