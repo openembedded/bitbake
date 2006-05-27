@@ -345,15 +345,19 @@ options:
                         cannot be remade, the other dependencies of these
                         targets can be processed all the same.
   -f, --force           force run of specified cmd, regardless of stamp status
-  -i, --interactive     drop into the interactive mode.
+  -i, --interactive     drop into the interactive mode also called the BitBake
+                        shell.
   -c CMD, --cmd=CMD     Specify task to execute. Note that this only executes
                         the specified task for the providee and the packages
                         it depends on, i.e. 'compile' does not implicitly call
                         stage for the dependencies (IOW: use only if you know
-                        what you are doing)
+                        what you are doing). Depending on the base.bbclass a
+                        listtaks tasks is defined and will show available
+                        tasks
   -r FILE, --read=FILE  read the specified file before bitbake.conf
   -v, --verbose         output more chit-chat to the terminal
-  -D, --debug           Increase the debug level
+  -D, --debug           Increase the debug level. You can specify this more
+                        than once.
   -n, --dry-run         don't execute, just go through the motions
   -p, --parse-only      quit after parsing the BB files (developers only)
   -d, --disable-psyco   disable using the psyco just-in-time compiler (not
@@ -361,6 +365,12 @@ options:
   -s, --show-versions   show current and preferred versions of all packages
   -e, --environment     show the global or per-package environment (this is
                         what used to be bbread)
+  -g, --graphviz        emit the dependency trees of the specified packages in
+                        the dot syntax
+  -I IGNORED_DOT_DEPS, --ignore-deps=IGNORED_DOT_DEPS
+                        Stop processing at the given list of dependencies when
+                        generating dependency graphs. This can help to make
+                        the graph more appealing
 
 </screen>
                 </para>
@@ -386,6 +396,14 @@ options:
                     <screen><prompt>$ </prompt>bitbake -c clean blah</screen>
                     <screen><prompt>$ </prompt>bitbake virtual/whatever</screen>
                     <screen><prompt>$ </prompt>bitbake -c clean virtual/whatever</screen>
+                </example>
+                <example>
+                    <title>Generating dependency graphs</title>
+                    <para>BitBake is able to generate dependency graphs using the dot syntax. These graphs can be converted
+to images using the <application>dot</application> application from <ulink url="http://www.graphviz.org">graphviz</ulink>. 
+Three files will be written into the current working directory, <emphasis>depends.dot</emphasis> containing <varname>DEPENDS</varname> variables, <emphasis>rdepends.dot</emphasis> containing <varname>RDEPENDS</varname> and <emphasis>alldepends.dot</emphasis> containing all depends. To stop depending on common depends one can use the <prompt>-I depend</prompt> to omit these from the graph. This can lead to more readable graphs.</para>
+                    <screen><prompt>$ </prompt>bitbake -g blah</screen>
+                    <screen><prompt>$ </prompt>bitbake -g -I virtual/whatever -I bloom blah</screen>
                 </example>
                 </para>
             </section>
