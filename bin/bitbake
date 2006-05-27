@@ -506,30 +506,27 @@ class BBCooker:
 
 
         print ignore_deps
-        rdepends_file = file('rdepends.dot', 'w' )
         depends_file  = file('depends.dot', 'w' )
         alldepends_file = file('alldepends.dot', 'w' )
 
 
         # setup the graphs
         print >> depends_file, "digraph depends {"
-        print >> rdepends_file, "digraph rdepends {"
         print >> alldepends_file, "digraph alldepends {"
 
         # try to avoid adding the same rdepends over an over again
-        seen_depends   = {}
-        added_depends_error = False
+        seen_depends  = []
+        seen_rdepends = []
+
 
         def add_depends(package_list):
             """
             Add all depends of all packages from this list
             """
-            for package in package_list:
-                if package in seen_depends or package in ignore_deps:
-                    continue
-                else:
-                    seen_depends[package] = 1
+            package_list = filter( lambda x: x not in seen_depends and not x in ignore_deps, package_list )
 
+            for package in package_list:
+                seen_depends.append( package )
                 if not package in self.status.providers:
                     """
                     We have not seen this name -> error in
@@ -557,12 +554,54 @@ class BBCooker:
                     print >> depends_file, '"%(package)s" -> "%(depend)s"' % vars()
 
 
+        def add_all_depends( package_list ):
+            """
+            Add both DEPENDS and RDEPENDS. RDEPENDS will get dashed
+            lines
+            """
+            package_list = filter( lambda x: x not in seen_rdepends and not x in ignore_deps, package_list )
+
+            for package in package_list:
+                seen_rdepends.append( package )
+                if not package in self.status.providers:
+                    """
+                    We have not seen this name -> error in
+                    dependency handling
+                    """
+                    bb.note( "ERROR with provider: %(package)s" % vars() )
+                    print >> alldepends_file, '"%(package)s" -> ERROR' % vars()
+                    continue
+
+                # get all providers for this package
+                providers = self.status.providers[package]
+
+                # now let us find the bestProvider for it
+                fn = self.filterProviders(providers, package)[0]
+
+                depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
+                rdepends  = bb.utils.explode_deps(self.bb_cache.getVar('RDEPENDS', fn, True) or "")
+                version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
+                add_all_depends ( depends+rdepends )
+
+                # now create the node
+                print >> alldepends_file, '"%(package)s" [label="%(package)s\\n%(version)s"]' % vars()
+
+                depends = filter( (lambda x: x not in ignore_deps), depends )
+                rdepends = filter( (lambda x: x not in ignore_deps), rdepends )
+                for depend in depends:
+                    print >> alldepends_file, '"%(package)s" -> "%(depend)s"' % vars()
+                for depend in rdepends:
+                    print >> alldepends_file, '"%(package)s" -> "%(depend)s" [style=dashed]' % vars()
+
+
+
+
         # start with the initial list
         add_depends( pkgs_to_build )
+        add_all_depends( pkgs_to_build )
 
         # finish it up
         print >> depends_file,  "}"
-        print >> rdepends_file, "}"
         print >> alldepends_file, "}"
 
     def filterProviders(self, providers, item):
