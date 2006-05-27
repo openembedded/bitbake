@@ -458,20 +458,66 @@ class BBCooker:
         ignore_deps   A list of names where processing of dependencies
                       should be stopped. e.g. dependencies that get
         """
+
+        def myFilterProvider( providers, item):
+            """
+            Take a list of providers and filter according to environment
+            variables. In contrast to filterProviders we do not discriminate
+            and take PREFERRED_PROVIDER into account.
+            """
+            eligible = []
+            preferred_versions = {}
+
+            # Collate providers by PN
+            pkg_pn = {}
+            for p in providers:
+                pn = self.status.pkg_fn[p]
+                if pn not in pkg_pn:
+                    pkg_pn[pn] = []
+                pkg_pn[pn].append(p)
+
+            bb.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
+
+            for pn in pkg_pn.keys():
+                preferred_versions[pn] = self.findBestProvider(pn, pkg_pn)[2:4]
+                eligible.append(preferred_versions[pn][1])
+
+            for p in eligible:
+                if p in self.build_cache_fail:
+                    bb.debug(1, "rejecting already-failed %s" % p)
+                    eligible.remove(p)
+
+            if len(eligible) == 0:
+                bb.error("no eligible providers for %s" % item)
+                return 0
+
+            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % package, self.configuration.data, 1)
+
+            # try the preferred provider first
+            if prefervar:
+                for p in elligible:
+                    if prefervar == self.status.pkg_fn[p]:
+                        bb.note("Selecting PREFERRED_PROVIDER %s" % prefervar)
+                        elligible.remove(p)
+                        elligible = [p] + elligible
+
+            return eligible
+
+
+
         print ignore_deps
         rdepends_file = file('rdepends.dot', 'w' )
         depends_file  = file('depends.dot', 'w' )
+        alldepends_file = file('alldepends.dot', 'w' )
 
 
         # setup the graphs
         print >> depends_file, "digraph depends {"
         print >> rdepends_file, "digraph rdepends {"
-
+        print >> alldepends_file, "digraph alldepends {"
 
         # try to avoid adding the same rdepends over an over again
         seen_depends   = {}
-        seen_rdepends =  {}
-
         added_depends_error = False
 
         def add_depends(package_list):
@@ -496,26 +542,19 @@ class BBCooker:
                 providers = self.status.providers[package]
 
                 # now let us find the bestProvider for it
-                elligible = self.filterProviders(providers, package)
-                prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % package, self.configuration.data, 1)
+                fn = self.filterProviders(providers, package)[0]
 
-                # try the preferred provider first
-                if prefervar:
-                    for p in elligible:
-                        if prefervar == self.status.pkg_fn[p]:
-                            bb.note("Selecting PREFERRED_PROVIDER %s" % prefervar)
-                            elligible.remove(p)
-                            elligible = [p] + elligible
-
-                fn = elligible[0] 
                 depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
                 rdepends = bb.utils.explode_deps(self.bb_cache.getVar('RDEPENDS', fn, True) or "")
-                add_depends( depends )
+                version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
+                add_depends ( depends )
                 add_rdepends( rdepends )
 
+                # now create the node
+                print >> depends_file, '"%(package)s" [label="%(package)s\\n%(version)s"]' % vars()
+
+                depends = filter( (lambda x: x not in ignore_deps), depends )
                 for depend in depends:
-                    if depend in ignore_deps:
-                        continue
                     print >> depends_file, '"%(package)s" -> "%(depend)s"' % vars()
 
         def add_rdepends(package_list):
@@ -524,14 +563,14 @@ class BBCooker:
             we will see if we have handled it already
             """
             pass
-        
+
         # start with the initial list
         add_depends( pkgs_to_build )
-        add_rdepends( pkgs_to_build )
 
         # finish it up
         print >> depends_file,  "}"
         print >> rdepends_file, "}"
+        print >> alldepends_file, "}"
 
     def filterProviders(self, providers, item):
         """
@@ -1180,10 +1219,10 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-f", "--force", help = "force run of specified cmd, regardless of stamp status",
                action = "store_true", dest = "force", default = False )
 
-    parser.add_option( "-i", "--interactive", help = "drop into the interactive mode.",
+    parser.add_option( "-i", "--interactive", help = "drop into the interactive mode also called the BitBake shell.",
                action = "store_true", dest = "interactive", default = False )
 
-    parser.add_option( "-c", "--cmd", help = "Specify task to execute. Note that this only executes the specified task for the providee and the packages it depends on, i.e. 'compile' does not implicitly call stage for the dependencies (IOW: use only if you know what you are doing)",
+    parser.add_option( "-c", "--cmd", help = "Specify task to execute. Note that this only executes the specified task for the providee and the packages it depends on, i.e. 'compile' does not implicitly call stage for the dependencies (IOW: use only if you know what you are doing). Depending on the base.bbclass a listtaks tasks is defined and will show available tasks",
                action = "store", dest = "cmd", default = "build" )
 
     parser.add_option( "-r", "--read", help = "read the specified file before bitbake.conf",
@@ -1192,7 +1231,7 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-v", "--verbose", help = "output more chit-chat to the terminal",
                action = "store_true", dest = "verbose", default = False )
 
-    parser.add_option( "-D", "--debug", help = "Increase the debug level",
+    parser.add_option( "-D", "--debug", help = "Increase the debug level. You can specify this more than once.",
                action = "count", dest="debug", default = 0)
 
     parser.add_option( "-n", "--dry-run", help = "don't execute, just go through the motions",
