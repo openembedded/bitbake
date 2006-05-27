@@ -547,38 +547,53 @@ class BBCooker:
                     print >> depends_file, '"%(package)s" -> "%(depend)s"' % vars()
 
 
-        def add_all_depends( package_list ):
+        def add_all_depends( the_depends, the_rdepends ):
             """
             Add both DEPENDS and RDEPENDS. RDEPENDS will get dashed
             lines
             """
+            package_list = the_depends + the_rdepends
             for package in package_list:
                 if package in seen_rdepends or package in ignore_deps:
                     continue
 
                 seen_rdepends.append( package )
-                if not package in self.status.providers:
-                    """
-                    We have not seen this name -> error in
-                    dependency handling
-                    """
-                    bb.note( "ERROR with provider: %(package)s" % vars() )
-                    print >> alldepends_file, '"%(package)s" -> ERROR' % vars()
+
+                # let us see if this is a runtime or
+                if package in the_depends:
+                    if not package in self.status.providers:
+                        bb.note( "ERROR with provider: %(package)s" % vars() )
+                        print >> alldepends_file, '"%(package)s" -> ERROR' % vars()
+                        continue
+
+                    providers = self.status.providers[package]
+                elif package in the_rdepends:
+                    if len(self.getProvidersRun(package)) == 0:
+                        bb.note( "ERROR with rprovider: %(package)s" % vars() )
+                        print >> alldepends_file, '"%(package)s" -> ERROR [style="dashed"]' % vars()
+                        continue
+
+                    providers = self.getProvidersRun(package)
+                else:
+                    print "Complete ERROR! %s" % package
                     continue
-
-                if package == "task-bootstrap":
-                    print "PackageList: %s" % package_list
-
-                # get all providers for this package
-                providers = self.status.providers[package]
 
                 # now let us find the bestProvider for it
                 fn = self.filterProviders(providers, package)[0]
 
                 depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
-                rdepends  = bb.utils.explode_deps(self.bb_cache.getVar('RDEPENDS', fn, True) or "")
+                if fn in self.status.rundeps and package in self.status.rundeps[fn]:
+                    rdepends= self.status.rundeps[fn][package].keys()
+                else:
+                    rdepends = []
                 version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
-                add_all_depends ( depends+rdepends )
+                if package == "task-opie-applets":
+                    print fn
+                    print depends
+                    print depends
+                    print version
+
+                add_all_depends ( depends, rdepends )
 
                 # now create the node
                 print >> alldepends_file, '"%(package)s" [label="%(package)s\\n%(version)s"]' % vars()
@@ -600,7 +615,7 @@ class BBCooker:
         # Add all depends now
         alldepends_file = file('alldepends.dot', 'w' )
         print >> alldepends_file, "digraph alldepends {"
-        add_all_depends( pkgs_to_build )
+        add_all_depends( pkgs_to_build, [] )
         print >> alldepends_file, "}"
 
     def filterProviders(self, providers, item):
