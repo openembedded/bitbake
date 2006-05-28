@@ -491,15 +491,15 @@ class BBCooker:
                 bb.error("no eligible providers for %s" % item)
                 return 0
 
-            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % package, self.configuration.data, 1)
+            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, self.configuration.data, 1)
 
             # try the preferred provider first
             if prefervar:
-                for p in elligible:
+                for p in eligible:
                     if prefervar == self.status.pkg_fn[p]:
                         bb.note("Selecting PREFERRED_PROVIDER %s" % prefervar)
-                        elligible.remove(p)
-                        elligible = [p] + elligible
+                        eligible.remove(p)
+                        eligible = [p] + eligible
 
             return eligible
 
@@ -533,7 +533,7 @@ class BBCooker:
                 providers = self.status.providers[package]
 
                 # now let us find the bestProvider for it
-                fn = self.filterProviders(providers, package)[0]
+                fn = myFilterProvider(providers, package)[0]
 
                 depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
                 version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
@@ -559,7 +559,9 @@ class BBCooker:
 
                 seen_rdepends.append( package )
 
-                # let us see if this is a runtime or
+                # Let us find out if the package is a DEPENDS or RDEPENDS
+                # and we will set 'providers' with the avilable providers
+                # for the package.
                 if package in the_depends:
                     if not package in self.status.providers:
                         bb.note( "ERROR with provider: %(package)s" % vars() )
@@ -575,29 +577,28 @@ class BBCooker:
 
                     providers = self.getProvidersRun(package)
                 else:
+                    # something went wrong...
                     print "Complete ERROR! %s" % package
                     continue
 
                 # now let us find the bestProvider for it
-                fn = self.filterProviders(providers, package)[0]
+                fn = myFilterProvider(providers, package)[0]
 
+                # Now we have a filename let us get the depends and RDEPENDS of it
                 depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
                 if fn in self.status.rundeps and package in self.status.rundeps[fn]:
                     rdepends= self.status.rundeps[fn][package].keys()
                 else:
                     rdepends = []
                 version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
-                if package == "task-opie-applets":
-                    print fn
-                    print depends
-                    print depends
-                    print version
 
+                # handle all the depends and rdepends of package
                 add_all_depends ( depends, rdepends )
 
-                # now create the node
+                # now create the node using package name
                 print >> alldepends_file, '"%(package)s" [label="%(package)s\\n%(version)s"]' % vars()
 
+                # remove the stuff we want to ignore and add the edges
                 depends = filter( (lambda x: x not in ignore_deps), depends )
                 rdepends = filter( (lambda x: x not in ignore_deps), rdepends )
                 for depend in depends:
