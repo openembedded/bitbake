@@ -112,7 +112,7 @@ class Svn(Fetch):
             data.setVar('TARFN', tarfn, localdata)
 
             # try to use the tarball stash
-            if Fetch.try_mirror(d, tarfn):
+            if Fetch.check_for_tarball(d, tarfn, dldir, date):
                 bb.debug(1, "%s already exists or was mirrored, skipping svn checkout." % tarfn)
                 continue
 
@@ -127,8 +127,12 @@ class Svn(Fetch):
             svncmd = data.getVar('FETCHCOMMAND', localdata, 1)
             svncmd = "svn co -r {%s} %s://%s/%s" % (date, proto, svnroot, module)
 
+            # either use the revision or if SRCDATE is now no braces
             if revision:
                 svncmd = "svn co -r %s %s://%s/%s" % (revision, proto, svnroot, module)
+            elif date == "now":
+                svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
+
             if svn_rsh:
                 svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
 

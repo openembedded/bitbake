@@ -101,9 +101,7 @@ class Svk(Fetch):
             data.setVar('TARFILES', dlfile, localdata)
             data.setVar('TARFN', tarfn, localdata)
 
-            dl = os.path.join(dldir, tarfn)
-            if os.access(dl, os.R_OK):
-                bb.debug(1, "%s already exists, skipping svk checkout." % tarfn)
+            if Fetch.check_for_tarball(d, tarfn, dldir, date):
                 continue
 
             olddir = os.path.abspath(os.getcwd())
