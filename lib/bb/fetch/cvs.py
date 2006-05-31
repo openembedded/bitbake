@@ -128,13 +128,7 @@ class Cvs(Fetch):
             data.setVar('TARFILES', dlfile, localdata)
             data.setVar('TARFN', tarfn, localdata)
 
-            dl = os.path.join(dldir, tarfn)
-            if os.access(dl, os.R_OK):
-                bb.debug(1, "%s already exists, skipping cvs checkout." % tarfn)
-                continue
-
-            # try to use the tarball stash
-            if Fetch.try_mirror(d, tarfn):
+            if Fetch.check_for_tarball(d, tarfn, dldir, date):
                 continue
 
             if date:

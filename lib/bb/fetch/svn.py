@@ -111,13 +111,7 @@ class Svn(Fetch):
             data.setVar('TARFILES', dlfile, localdata)
             data.setVar('TARFN', tarfn, localdata)
 
-            dl = os.path.join(dldir, tarfn)
-            if os.access(dl, os.R_OK):
-                bb.debug(1, "%s already exists, skipping svn checkout." % tarfn)
-                continue
-
-            # try to use the tarball stash
-            if Fetch.try_mirror(d, tarfn):
+            if Fetch.check_for_tarball(d, tarfn, dldir, date):
                 continue
 
             olddir = os.path.abspath(os.getcwd())
@@ -133,6 +127,9 @@ class Svn(Fetch):
 
             if revision:
                 svncmd = "svn co -r %s %s://%s/%s" % (revision, proto, svnroot, module)
+            elif date == "now":
+                svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
+
             if svn_rsh:
                 svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
 

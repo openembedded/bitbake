@@ -185,6 +185,28 @@ class Fetch(object):
         return False
     try_mirror = staticmethod(try_mirror)
 
+    def check_for_tarball(d, tarfn, dldir, date):
+        """
+        Check for a local copy then check the tarball stash.
+        Both checks are skipped if date == 'now'.
+
+        d Is a bb.data instance
+        tarfn is the name of the tarball
+        date is the SRCDATE
+        """
+        if "now" != date:
+            dl = os.path.join(dldir, tarfn)
+            if os.access(dl, os.R_OK):
+                bb.debug(1, "%s already exists, skipping checkout." % tarfn)
+                return True
+
+            # try to use the tarball stash
+            if Fetch.try_mirror(d, tarfn):
+                return True
+        return False
+    check_for_tarball = staticmethod(check_for_tarball)
+
+
 import cvs
 import git
 import local
