@@ -28,15 +28,6 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 from bb import debug, data, fetch, fatal, error, note, event, mkdirhier, utils
 import bb, os
 
-# data holds flags and function name for a given task
-_task_data = data.init()
-
-# graph represents task interdependencies
-_task_graph = bb.digraph()
-
-# stack represents execution order, excepting dependencies
-_task_stack = []
-
 # events
 class FuncFailed(Exception):
     """Executed function failed"""
@@ -75,13 +66,6 @@ class InvalidTask(TaskBase):
     """Invalid Task"""
 
 # functions
-
-def init(data):
-    global _task_data, _task_graph, _task_stack
-    _task_data = data.init()
-    _task_graph = bb.digraph()
-    _task_stack = []
-
 
 def exec_func(func, d, dirs = None):
     """Execute an BB 'function'"""
@@ -391,6 +375,3 @@ def task_exists(task, d):
         task_graph = bb.digraph()
         data.setVar('_task_graph', task_graph, d)
     return task_graph.hasnode(task)
-
-def get_task_data():
-    return _task_data
