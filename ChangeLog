@@ -1,3 +1,7 @@
+Changes in Bitbake 1.4.x:
+	- SRCDATE now handling courtsey Justin Patrin
+	- #1017 fix to work with rm_work
+
 Changes in BitBake 1.4.2:
 	- Send logs to oe.pastebin.com instead of pastebin.com
 	  fixes #856
