@@ -76,9 +76,9 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None):
         else:
             pv_str = preferred_v
         if preferred_file is None:
-            bb.note("preferred version %s of %s not available" % (pv_str, pn))
+            bb.msg.note(1, bb.msg.domain.Provider, "preferred version %s of %s not available" % (pv_str, pn))
         else:
-            bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
+            bb.msg.debug(1, bb.msg.domain.Provider, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
 
     del localdata
 
@@ -101,7 +101,7 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None):
 
     return (latest,latest_f,preferred_ver, preferred_file)
 
-def filterProviders(providers, item, cfgData, dataCache, build_cache_fail, verbose):
+def filterProviders(providers, item, cfgData, dataCache, build_cache_fail):
     """
     Take a list of providers and filter/reorder according to the 
     environment variables and previous build results
@@ -117,7 +117,7 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail, verbo
             pkg_pn[pn] = []
         pkg_pn[pn].append(p)
 
-    bb.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
+    bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
     for pn in pkg_pn.keys():
         preferred_versions[pn] = bb.providers.findBestProvider(pn, cfgData, dataCache, pkg_pn)[2:4]
@@ -126,7 +126,7 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail, verbo
 
     for p in eligible:
         if p in build_cache_fail:
-            bb.debug(1, "rejecting already-failed %s" % p)
+            bb.msg.debug(1, bb.msg.domain.Provider, "rejecting already-failed %s" % p)
             eligible.remove(p)
 
     if len(eligible) == 0:
@@ -152,8 +152,7 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail, verbo
             else:
                 extra_chat = "Selecting already-staged %s (%s) to satisfy %s" % (pn, oldver, item)
 
-            if verbose:
-                bb.note("%s" % extra_chat)
+            bb.msg.note(2, bb.msg.domain.Provider, "%s" % extra_chat)
             eligible.remove(fn)
             eligible = [fn] + eligible
             discriminated = True

@@ -24,12 +24,11 @@
 import sys, os, getopt, glob, copy, os.path, re, time
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
-from bb import utils, data, parse, debug, event, fatal, cache, providers
+from bb import utils, data, parse, event, cache, providers
 from sets import Set
 import itertools, optparse
 
 parsespin = itertools.cycle( r'|/-\\' )
-bbdebug = 0
 
 __version__ = "1.5.0"
 
@@ -229,14 +228,14 @@ class BBCooker:
             return True
         except bb.build.FuncFailed:
             self.stats.fail += 1
-            bb.error("task stack execution failed")
+            bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
             bb.event.fire(bb.event.PkgFailed(item, the_data))
             self.build_cache_fail.append(fn)
             raise
         except bb.build.EventException, e:
             self.stats.fail += 1
             event = e.args[1]
-            bb.error("%s event exception, aborting" % bb.event.getName(event))
+            bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
             bb.event.fire(bb.event.PkgFailed(item, the_data))
             self.build_cache_fail.append(fn)
             raise
@@ -256,8 +255,8 @@ class BBCooker:
 
         # Error on build time dependency loops
         if build_depends and build_depends.count(fn) > 1:
-            bb.error("%s depends on itself (eventually)" % fn)
-            bb.error("upwards chain is: %s" % (" -> ".join(self.build_path)))
+            bb.msg.error(bb.msg.domain.Depends, "%s depends on itself (eventually)" % fn)
+            bb.msg.error(bb.msg.domain.Depends, "upwards chain is: %s" % (" -> ".join(self.build_path)))
             return False
 
         # See if this is a runtime dependency we've already built
@@ -274,9 +273,8 @@ class BBCooker:
 
         depends_list = (bb.data.getVar('DEPENDS', the_data, True) or "").split()
 
-        if self.configuration.verbose:
-            bb.note("current path: %s" % (" -> ".join(self.build_path)))
-            bb.note("dependencies for %s are: %s" % (item, " ".join(depends_list)))
+        bb.msg.note(2, bb.msg.domain.Depends, "current path: %s" % (" -> ".join(self.build_path)))
+        bb.msg.note(2, bb.msg.domain.Depends, "dependencies for %s are: %s" % (item, " ".join(depends_list)))
 
         try:
             failed = False
@@ -299,7 +297,7 @@ class BBCooker:
                 if not depcmd:
                     continue
                 if self.buildProvider( dependency , buildAllDeps , build_depends ) == 0:
-                    bb.error("dependency %s (for %s) not satisfied" % (dependency,item))
+                    bb.msg.error(bb.msg.domain.Depends, "dependency %s (for %s) not satisfied" % (dependency,item))
                     failed = True
                     if self.configuration.abort:
                         break
@@ -360,15 +358,15 @@ class BBCooker:
             try:
                 self.configuration.data = self.bb_cache.loadDataFull(self.configuration.buildfile, self)
             except IOError, e:
-                fatal("Unable to read %s: %s" % ( self.configuration.buildfile, e ))
+                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to read %s: %s" % ( self.configuration.buildfile, e ))
             except Exception, e:
-                fatal("%s" % e)
+                bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit variables and shell functions
         try:
             data.update_data( self.configuration.data )
             data.emit_env(sys.__stdout__, self.configuration.data, True)
         except Exception, e:
-            fatal("%s" % e)
+            bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
         for e in self.configuration.data.keys():
             if data.getVarFlag( e, 'python', self.configuration.data ):
@@ -401,7 +399,7 @@ class BBCooker:
                     pkg_pn[pn] = []
                 pkg_pn[pn].append(p)
 
-            bb.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
+            bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
             for pn in pkg_pn.keys():
                 preferred_versions[pn] = self.findBestProvider(pn, pkg_pn)[2:4]
@@ -409,11 +407,11 @@ class BBCooker:
 
             for p in eligible:
                 if p in self.build_cache_fail:
-                    bb.debug(1, "rejecting already-failed %s" % p)
+                    bb.msg.debug(1, bb.msg.domain.Provider, "rejecting already-failed %s" % p)
                     eligible.remove(p)
 
             if len(eligible) == 0:
-                bb.error("no eligible providers for %s" % item)
+                bb.msg.error(bb.msg.domain.Provider, "no eligible providers for %s" % item)
                 return 0
 
             prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, self.configuration.data, 1)
@@ -422,7 +420,7 @@ class BBCooker:
             if prefervar:
                 for p in eligible:
                     if prefervar == self.status.pkg_fn[p]:
-                        bb.note("Selecting PREFERRED_PROVIDER %s" % prefervar)
+                        bb.msg.note(1, bb.msg.domain.Provider, "Selecting PREFERRED_PROVIDER %s" % prefervar)
                         eligible.remove(p)
                         eligible = [p] + eligible
 
@@ -554,7 +552,7 @@ class BBCooker:
         discriminated = False
 
         if not item in self.status.providers:
-            bb.error("Nothing provides dependency %s" % item)
+            bb.msg.error(bb.msg.domain.Depends, "Nothing provides dependency %s" % item)
             bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
             return 0
 
@@ -562,10 +560,10 @@ class BBCooker:
 
         for p in all_p:
             if p in self.build_cache:
-                bb.debug(1, "already built %s in this run\n" % p)
+                bb.msg.debug(1, bb.msg.domain.Provider, "already built %s in this run" % p)
                 return 1
 
-        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail, self.configuration.verbose)
+        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail)
 
         if not eligible:
             return 0
@@ -578,8 +576,7 @@ class BBCooker:
             for p in eligible:
                 pn = self.status.pkg_fn[p]
                 if self.preferred[item] == pn:
-                    if self.configuration.verbose:
-                        bb.note("selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
+                    bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
                     eligible.remove(p)
                     eligible = [p] + eligible
                     discriminated = True
@@ -590,19 +587,19 @@ class BBCooker:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(self.status.pkg_fn[fn])
-                bb.note("multiple providers are available (%s);" % ", ".join(providers_list))
-                bb.note("consider defining PREFERRED_PROVIDER_%s" % item)
+                bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available (%s);" % ", ".join(providers_list))
+                bb.msg.note(1, bb.msg.domain.Provider, "consider defining PREFERRED_PROVIDER_%s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data))
             self.consider_msgs_cache.append(item)
 
 
         # run through the list until we find one that we can build
         for fn in eligible:
-            bb.debug(2, "selecting %s to satisfy %s" % (fn, item))
+            bb.msg.debug(2, bb.msg.domain.Provider, "selecting %s to satisfy %s" % (fn, item))
             if self.tryBuild(fn, item, buildAllDeps, build_depends + [fn]):
                 return 1
 
-        bb.note("no buildable providers for %s" % item)
+        bb.msg.note(1, bb.msg.domain.Provider, "no buildable providers for %s" % item)
         bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
         return 0
 
@@ -622,19 +619,19 @@ class BBCooker:
         all_p = self.getProvidersRun(item)
 
         if not all_p:
-            bb.error("Nothing provides runtime dependency %s" % (item))
+            bb.msg.error(bb.msg.domain.Provider, "Nothing provides runtime dependency %s" % (item))
             bb.event.fire(bb.event.NoProvider(item,self.configuration.data,runtime=True))
             return False
 
         for p in all_p:
             if p in self.rbuild_cache:
-                bb.debug(2, "Already built %s providing runtime %s\n" % (p,item))
+                bb.msg.debug(2, bb.msg.domain.Provider, "Already built %s providing runtime %s" % (p,item))
                 return True
             if p in self.build_cache:
-                bb.debug(2, "Already built %s but adding any further RDEPENDS for %s\n" % (p, item))
+                bb.msg.debug(2, bb.msg.domain.Provider, "Already built %s but adding any further RDEPENDS for %s" % (p, item))
                 return self.addRunDeps(p, item , buildAllDeps)
 
-        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail, self.configuration.verbose)
+        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail)
         if not eligible:
             return 0
 
@@ -645,8 +642,7 @@ class BBCooker:
             for provide in provides:
                 prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, self.configuration.data, 1)
                 if prefervar == pn:
-                    if self.configuration.verbose:
-                        bb.note("selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
+                    bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
                     eligible.remove(p)
                     eligible = [p] + eligible
                     preferred.append(p)
@@ -656,8 +652,8 @@ class BBCooker:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(self.status.pkg_fn[fn])
-                bb.note("multiple providers are available (%s);" % ", ".join(providers_list))
-                bb.note("consider defining a PREFERRED_PROVIDER to match runtime %s" % item)
+                bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available (%s);" % ", ".join(providers_list))
+                bb.msg.note(1, bb.msg.domain.Provider, "consider defining a PREFERRED_PROVIDER to match runtime %s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data,runtime=True))
             self.consider_msgs_cache.append(item)
 
@@ -666,18 +662,18 @@ class BBCooker:
                 providers_list = []
                 for fn in preferred:
                     providers_list.append(self.status.pkg_fn[fn])
-                bb.note("multiple preferred providers are available (%s);" % ", ".join(providers_list))
-                bb.note("consider defining only one PREFERRED_PROVIDER to match runtime %s" % item)
+                bb.msg.note(1, bb.msg.domain.Provider, "multiple preferred providers are available (%s);" % ", ".join(providers_list))
+                bb.msg.note(1, bb.msg.domain.Provider, "consider defining only one PREFERRED_PROVIDER to match runtime %s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data,runtime=True))
             self.consider_msgs_cache.append(item)
 
         # run through the list until we find one that we can build
         for fn in eligible:
-            bb.debug(2, "selecting %s to satisfy runtime %s" % (fn, item))
+            bb.msg.debug(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s" % (fn, item))
             if self.tryBuild(fn, item, buildAllDeps):
                 return True
 
-        bb.error("No buildable providers for runtime %s" % item)
+        bb.msg.error(bb.msg.domain.Provider, "No buildable providers for runtime %s" % item)
         bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
         return False
 
@@ -724,7 +720,7 @@ class BBCooker:
         if fn in self.status.runrecs and item in self.status.runrecs[fn]:
             rdepends += self.status.runrecs[fn][item].keys()
 
-        bb.debug(2, "Additional runtime dependencies for %s are: %s" % (item, " ".join(rdepends)))
+        bb.msg.debug(2, bb.msg.domain.Provider, "Additional runtime dependencies for %s are: %s" % (item, " ".join(rdepends)))
 
         for rdepend in rdepends:
             if rdepend in self.status.ignored_dependencies:
@@ -750,7 +746,7 @@ class BBCooker:
         for p in (bb.data.getVar('PREFERRED_PROVIDERS', localdata, 1) or "").split():
             (providee, provider) = p.split(':')
             if providee in self.preferred and self.preferred[providee] != provider:
-                bb.error("conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.preferred[providee]))
+                bb.msg.error(bb.msg.domain.Provider, "conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.preferred[providee]))
             self.preferred[providee] = provider
 
         # Calculate priorities for each file
@@ -763,19 +759,19 @@ class BBCooker:
         """
         all_depends = self.status.all_depends
         pn_provides = self.status.pn_provides
-        bb.debug(1, "collating packages for \"world\"")
+        bb.msg.debug(1, bb.msg.domain.Parsing, "collating packages for \"world\"")
         for f in self.status.possible_world:
             terminal = True
             pn = self.status.pkg_fn[f]
 
             for p in pn_provides[pn]:
                 if p.startswith('virtual/'):
-                    bb.debug(2, "skipping %s due to %s provider starting with virtual/" % (f, p))
+                    bb.msg.debug(2, bb.msg.domain.Parsing, "World build skipping %s due to %s provider starting with virtual/" % (f, p))
                     terminal = False
                     break
                 for pf in self.status.providers[p]:
                     if self.status.pkg_fn[pf] != pn:
-                        bb.debug(2, "skipping %s due to both us and %s providing %s" % (f, pf, p))
+                        bb.msg.debug(2, bb.msg.domain.Parsing, "World build skipping %s due to both us and %s providing %s" % (f, pf, p))
                         terminal = False
                         break
             if terminal:
@@ -790,8 +786,6 @@ class BBCooker:
 
         self.status.handle_bb_data(f, bb_cache, from_cache)
 
-        if bbdebug > 0:
-            return
         if os.isatty(sys.stdout.fileno()):
             sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
             sys.stdout.flush()
@@ -808,7 +802,7 @@ class BBCooker:
         try:
             from bb import shell
         except ImportError, details:
-            bb.fatal("Sorry, shell not available (%s)" % details )
+            bb.msg.fatal(bb.msg.domain.Parsing, "Sorry, shell not available (%s)" % details )
         else:
             bb.data.update_data( self.configuration.data )
             shell.start( self )
@@ -833,9 +827,9 @@ class BBCooker:
                     bb.event.register(var,bb.data.getVar(var, data))
 
         except IOError:
-            bb.fatal( "Unable to open %s" % afile )
+            bb.msg.fatal(bb.msg.domain.Parsing, "Unable to open %s" % afile )
         except bb.parse.ParseError, details:
-            bb.fatal( "Unable to parse %s (%s)" % (afile, details) )
+            bb.msg.fatal(bb.msg.domain.Parsing, "Unable to parse %s (%s)" % (afile, details) )
 
     def handleCollections( self, collections ):
         """Handle collections"""
@@ -844,22 +838,22 @@ class BBCooker:
             for c in collection_list:
                 regex = bb.data.getVar("BBFILE_PATTERN_%s" % c, self.configuration.data, 1)
                 if regex == None:
-                    bb.error("BBFILE_PATTERN_%s not defined" % c)
+                    bb.msg.error(bb.msg.domain.Parsing, "BBFILE_PATTERN_%s not defined" % c)
                     continue
                 priority = bb.data.getVar("BBFILE_PRIORITY_%s" % c, self.configuration.data, 1)
                 if priority == None:
-                    bb.error("BBFILE_PRIORITY_%s not defined" % c)
+                    bb.msg.error(bb.msg.domain.Parsing, "BBFILE_PRIORITY_%s not defined" % c)
                     continue
                 try:
                     cre = re.compile(regex)
                 except re.error:
-                    bb.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression" % (c, regex))
+                    bb.msg.error(bb.msg.domain.Parsing, "BBFILE_PATTERN_%s \"%s\" is not a valid regular expression" % (c, regex))
                     continue
                 try:
                     pri = int(priority)
                     self.status.bbfile_config_priorities.append((cre, pri))
                 except ValueError:
-                    bb.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
+                    bb.msg.error(bb.msg.domain.Parsing, "invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
 
 
     def cook( self, configuration, args ):
@@ -871,11 +865,14 @@ class BBCooker:
 
         self.configuration = configuration
 
+        if self.configuration.verbose:
+            bb.msg.set_verbose(True)
+
         if not self.configuration.cmd:
             self.configuration.cmd = "build"
 
         if self.configuration.debug:
-            bb.debug_level = self.configuration.debug
+            bb.msg.set_debug_level(self.configuration.debug)
 
         self.configuration.data = bb.data.init()
 
@@ -910,13 +907,13 @@ class BBCooker:
             try:
                 bbfile_data = bb.parse.handle(bf, self.configuration.data)
             except IOError:
-                bb.fatal("Unable to open %s" % bf)
+                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to open %s" % bf)
 
             item = bb.data.getVar('PN', bbfile_data, 1)
             try:
                 self.tryBuildPackage( bf, item, bbfile_data )
             except bb.build.EventException:
-                bb.error( "Build of '%s' failed" % item )
+                bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
 
             sys.exit( self.stats.show() )
 
@@ -949,21 +946,19 @@ class BBCooker:
             try:
                 import psyco
             except ImportError:
-                if bbdebug == 0:
-                    bb.note("Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+                bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
             else:
                 psyco.bind( self.collect_bbfiles )
         else:
-            bb.note("You have disabled Psyco. This decreases performance.")
+            bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
 
         try:
-            bb.debug(1, "collecting .bb files")
+            bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
             self.collect_bbfiles( self.myProgressCallback )
-            bb.debug(1, "parsing complete")
-            if bbdebug == 0:
-                print
+            bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
+            print
             if self.configuration.parse_only:
-                print "Requested parsing .bb files only.  Exiting."
+                bb.msg.note(1, bb.msg.domain.Collection, "Requested parsing .bb files only.  Exiting.")
                 return
 
 
@@ -993,7 +988,7 @@ class BBCooker:
                         # already diagnosed
                         failed = True
                 except bb.build.EventException:
-                    bb.error("Build of " + k + " failed")
+                    bb.msg.error(bb.msg.domain.Build, "Build of " + k + " failed")
                     failed = True
 
                 if failed:
@@ -1006,7 +1001,7 @@ class BBCooker:
             sys.exit( self.stats.show() )
 
         except KeyboardInterrupt:
-            print "\nNOTE: KeyboardInterrupt - Build not completed."
+            bb.msg.note(1, bb.msg.domain.Collection, "KeyboardInterrupt - Build not completed.")
             sys.exit(1)
 
     def get_bbfiles( self, path = os.getcwd() ):
@@ -1041,7 +1036,7 @@ class BBCooker:
             files = self.get_bbfiles()
 
         if not len(files):
-            bb.error("no files to build.")
+            bb.msg.error(bb.msg.domain.Collection, "no files to build.")
 
         newfiles = []
         for f in files:
@@ -1056,22 +1051,22 @@ class BBCooker:
         try:
             bbmask_compiled = re.compile(bbmask)
         except sre_constants.error:
-            bb.fatal("BBMASK is not a valid regular expression.")
+            bb.msg.fatal(bb.msg.domain.Collection, "BBMASK is not a valid regular expression.")
 
         for i in xrange( len( newfiles ) ):
             f = newfiles[i]
             if bbmask and bbmask_compiled.search(f):
-                bb.debug(1, "bbmake: skipping %s" % f)
+                bb.msg.debug(1, bb.msg.domain.Collection, "bbmake: skipping %s" % f, f)
                 masked += 1
                 continue
-            debug(1, "bbmake: parsing %s" % f)
+            bb.msg.debug(1, bb.msg.domain.Collection, "bbmake: parsing %s" % f, f)
 
             # read a file's metadata
             try:
                 fromCache, skip = self.bb_cache.loadData(f, self)
                 if skip:
                     skipped += 1
-                    #bb.note("Skipping %s" % f)
+                    bb.msg.debug(2, bb.msg.domain.Collection, "Skipping %s" % f, f)
                     self.bb_cache.skip(f)
                     continue
                 elif fromCache: cached += 1
@@ -1094,20 +1089,21 @@ class BBCooker:
 
             except IOError, e:
                 self.bb_cache.remove(f)
-                bb.error("opening %s: %s" % (f, e))
+                bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e), f)
                 pass
             except KeyboardInterrupt:
                 self.bb_cache.sync()
                 raise
             except Exception, e:
                 self.bb_cache.remove(f)
-                bb.error("%s while parsing %s" % (e, f))
+                bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f), f)
             except:
                 self.bb_cache.remove(f)
                 raise
 
         if self.cb is not None:
-            print "\rNOTE: Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ),
+            print "\r" # need newline after Handling Bitbake files message
+            bb.msg.note(1, bb.msg.domain.Collection, "Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ))
 
         self.bb_cache.sync()
 

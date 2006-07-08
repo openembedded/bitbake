@@ -69,19 +69,16 @@ __all__ = [
 whitespace = '\t\n\x0b\x0c\r '
 lowercase = 'abcdefghijklmnopqrstuvwxyz'
 
-import sys, os, types, re, string
+import sys, os, types, re, string, bb
+from bb import msg
 
 #projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
 projectdir = os.getcwd()
 
-debug_level = 0
-
 if "BBDEBUG" in os.environ:
     level = int(os.environ["BBDEBUG"])
     if level:
-        debug_level = level
-    else:
-        debug_level = 0
+        bb.msg.set_debug_level(level)
 
 class VarExpandError(Exception):
     pass
@@ -100,22 +97,17 @@ class MalformedUrl(Exception):
 #######################################################################
 #######################################################################
 
-debug_prepend = ''
-
-
 def debug(lvl, *args):
-    if debug_level >= lvl:
-        print debug_prepend + 'DEBUG:', ''.join(args)
+    bb.msg.std_debug(lvl, ''.join(args))
 
 def note(*args):
-    print debug_prepend + 'NOTE:', ''.join(args)
+    bb.msg.std_note(''.join(args))
 
 def error(*args):
-    print debug_prepend + 'ERROR:', ''.join(args)
+    bb.msg.std_error(''.join(args))
 
 def fatal(*args):
-    print debug_prepend + 'ERROR:', ''.join(args)
-    sys.exit(1)
+    bb.msg.std_fatal(''.join(args))
 
 
 #######################################################################

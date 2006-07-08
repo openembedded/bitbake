@@ -25,7 +25,7 @@ You should have received a copy of the GNU General Public License along with
 Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
-from bb import debug, data, fetch, fatal, error, note, event, mkdirhier, utils
+from bb import data, fetch, fatal, error, note, event, mkdirhier, utils
 import bb, os
 
 # events
@@ -146,7 +146,7 @@ def exec_func_shell(func, d):
 
     f = open(runfile, "w")
     f.write("#!/bin/sh -e\n")
-    if bb.debug_level > 0: f.write("set -x\n")
+    if bb.msg.debug_level > 0: f.write("set -x\n")
     data.emit_env(f, d)
 
     f.write("cd %s\n" % os.getcwd())
@@ -160,7 +160,7 @@ def exec_func_shell(func, d):
     # open logs
     si = file('/dev/null', 'r')
     try:
-        if bb.debug_level > 0:
+        if bb.msg.debug_level > 0:
             so = os.popen("tee \"%s\"" % logfile, "w")
         else:
             so = file(logfile, 'w')
@@ -208,7 +208,7 @@ def exec_func_shell(func, d):
     os.close(ose[0])
 
     if ret==0:
-        if bb.debug_level > 0:
+        if bb.msg.debug_level > 0:
             os.remove(runfile)
 #            os.remove(logfile)
         return
@@ -265,7 +265,7 @@ def exec_task(task, d):
                 return 1
 
             try:
-                debug(1, "Executing task %s" % item)
+                bb.msg.debug(1, bb.msg.domain.Build, "Executing task %s" % item)
                 old_overrides = data.getVar('OVERRIDES', d, 0)
                 localdata = data.createCopy(d)
                 data.setVar('OVERRIDES', 'task_%s:%s' % (item, old_overrides), localdata)

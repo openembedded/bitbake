@@ -442,7 +442,7 @@ Create a set of html pages (documentation) for a bitbake.conf....
     options, args = parser.parse_args( sys.argv )
 
     if options.debug:
-        bb.debug_level = options.debug
+        bb.msg.set_debug_level(options.debug)
 
     return options.config, options.output
 
