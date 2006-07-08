@@ -24,7 +24,7 @@
 import sys, os, getopt, glob, copy, os.path, re, time
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
-from bb import utils, data, parse, debug, event, fatal, cache
+from bb import utils, data, parse, debug, event, fatal, cache, providers
 from sets import Set
 import itertools, optparse
 
@@ -324,81 +324,6 @@ class BBCooker:
             self.building_list.remove(fn)
             self.build_path.remove(pathstr)
 
-    def findBestProvider( self, pn, pkg_pn = None):
-        """
-        If there is a PREFERRED_VERSION, find the highest-priority bbfile
-        providing that version.  If not, find the latest version provided by
-        an bbfile in the highest-priority set.
-        """
-        if not pkg_pn:
-            pkg_pn = self.status.pkg_pn
-
-        files = pkg_pn[pn]
-        priorities = {}
-        for f in files:
-            priority = self.status.bbfile_priority[f]
-            if priority not in priorities:
-                priorities[priority] = []
-            priorities[priority].append(f)
-        p_list = priorities.keys()
-        p_list.sort(lambda a, b: a - b)
-        tmp_pn = []
-        for p in p_list:
-            tmp_pn = [priorities[p]] + tmp_pn
-
-        preferred_file = None
-
-        localdata = data.createCopy(self.configuration.data)
-        bb.data.setVar('OVERRIDES', "%s:%s" % (pn, data.getVar('OVERRIDES', localdata)), localdata)
-        bb.data.update_data(localdata)
-
-        preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, localdata, True)
-        if preferred_v:
-            m = re.match('(.*)_(.*)', preferred_v)
-            if m:
-                preferred_v = m.group(1)
-                preferred_r = m.group(2)
-            else:
-                preferred_r = None
-
-            for file_set in tmp_pn:
-                for f in file_set:
-                    pv,pr = self.status.pkg_pvpr[f]
-                    if preferred_v == pv and (preferred_r == pr or preferred_r == None):
-                        preferred_file = f
-                        preferred_ver = (pv, pr)
-                        break
-                if preferred_file:
-                    break;
-            if preferred_r:
-                pv_str = '%s-%s' % (preferred_v, preferred_r)
-            else:
-                pv_str = preferred_v
-            if preferred_file is None:
-                bb.note("preferred version %s of %s not available" % (pv_str, pn))
-            else:
-                bb.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
-
-        del localdata
-
-        # get highest priority file set
-        files = tmp_pn[0]
-        latest = None
-        latest_p = 0
-        latest_f = None
-        for file_name in files:
-            pv,pr = self.status.pkg_pvpr[file_name]
-            dp = self.status.pkg_dp[file_name]
-
-            if (latest is None) or ((latest_p == dp) and (utils.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
-                latest = (pv, pr)
-                latest_f = file_name
-                latest_p = dp
-        if preferred_file is None:
-            preferred_file = latest_f
-            preferred_ver = latest
-
-        return (latest,latest_f,preferred_ver, preferred_file)
 
     def showVersions( self ):
         pkg_pn = self.status.pkg_pn
@@ -407,7 +332,7 @@ class BBCooker:
 
         # Sort by priority
         for pn in pkg_pn.keys():
-            (last_ver,last_file,pref_ver,pref_file) = self.findBestProvider(pn)
+            (last_ver,last_file,pref_ver,pref_file) = self.findBestProvider(pn, self.configuration.data, self.status)
             preferred_versions[pn] = (pref_ver, pref_file)
             latest_versions[pn] = (last_ver, last_file)
 
@@ -619,64 +544,6 @@ class BBCooker:
         add_all_depends( pkgs_to_build, [] )
         print >> alldepends_file, "}"
 
-    def filterProviders(self, providers, item):
-        """
-        Take a list of providers and filter/reorder according to the 
-        environment variables and previous build results
-        """
-        eligible = []
-        preferred_versions = {}
-
-        # Collate providers by PN
-        pkg_pn = {}
-        for p in providers:
-            pn = self.status.pkg_fn[p]
-            if pn not in pkg_pn:
-                pkg_pn[pn] = []
-            pkg_pn[pn].append(p)
-
-        bb.debug(1, "providers for %s are: %s" % (item, pkg_pn.keys()))
-
-        for pn in pkg_pn.keys():
-            preferred_versions[pn] = self.findBestProvider(pn, pkg_pn)[2:4]
-            eligible.append(preferred_versions[pn][1])
-
-        for p in eligible:
-            if p in self.build_cache_fail:
-                bb.debug(1, "rejecting already-failed %s" % p)
-                eligible.remove(p)
-
-        if len(eligible) == 0:
-            bb.error("no eligible providers for %s" % item)
-            return 0
-
-        # look to see if one of them is already staged, or marked as preferred.
-        # if so, bump it to the head of the queue
-        for p in providers:
-            pn = self.status.pkg_fn[p]
-            pv, pr = self.status.pkg_pvpr[p]
-
-            stamp = '%s.do_populate_staging' % self.status.stamp[p]
-            if os.path.exists(stamp):
-                (newvers, fn) = preferred_versions[pn]
-                if not fn in eligible:
-                    # package was made ineligible by already-failed check
-                    continue
-                oldver = "%s-%s" % (pv, pr)
-                newver = '-'.join(newvers)
-                if (newver != oldver):
-                    extra_chat = "%s (%s) already staged but upgrading to %s to satisfy %s" % (pn, oldver, newver, item)
-                else:
-                    extra_chat = "Selecting already-staged %s (%s) to satisfy %s" % (pn, oldver, item)
-                if self.configuration.verbose:
-                    bb.note("%s" % extra_chat)
-                eligible.remove(fn)
-                eligible = [fn] + eligible
-                discriminated = True
-                break
-
-        return eligible
-
     def buildProvider( self, item , buildAllDeps , build_depends = [] ):
         """
         Build something to provide a named build requirement
@@ -698,7 +565,7 @@ class BBCooker:
                 bb.debug(1, "already built %s in this run\n" % p)
                 return 1
 
-        eligible = self.filterProviders(all_p, item)
+        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail, self.configuration.verbose)
 
         if not eligible:
             return 0
@@ -767,7 +634,7 @@ class BBCooker:
                 bb.debug(2, "Already built %s but adding any further RDEPENDS for %s\n" % (p, item))
                 return self.addRunDeps(p, item , buildAllDeps)
 
-        eligible = self.filterProviders(all_p, item)
+        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail, self.configuration.verbose)
         if not eligible:
             return 0
 

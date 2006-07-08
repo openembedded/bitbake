@@ -63,6 +63,7 @@ __all__ = [
     "manifest",
     "methodpool",
     "cache",
+    "providers",
  ]
 
 whitespace = '\t\n\x0b\x0c\r '

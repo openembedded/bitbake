@@ -107,7 +107,7 @@ class BitBakeShellCommands:
         preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, cooker.configuration.data, 1 )
         if not preferred: preferred = item
         try:
-            lv, lf, pv, pf = cooker.findBestProvider( preferred )
+            lv, lf, pv, pf = bb.providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, cooker.build_cache_fail, cooker.configuration.verbose)
         except KeyError:
             if item in cooker.status.providers:
                 pf = cooker.status.providers[item][0]
@@ -537,7 +537,7 @@ SRC_URI = ""
         if not preferred: preferred = item
 
         try:
-            lv, lf, pv, pf = cooker.findBestProvider( preferred )
+            lv, lf, pv, pf = bb.providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, cooker.build_cache_fail, cooker.configuration.verbose)
         except KeyError:
             lv, lf, pv, pf = (None,)*4
 
