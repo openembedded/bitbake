@@ -135,6 +135,9 @@ class Git(Fetch):
             rungitcmd("git pull %s://%s%s" % (proto, host, path),d)
             rungitcmd("git pull --tags %s://%s%s" % (proto, host, path),d)
             rungitcmd("git prune-packed", d)
+            rungitcmd("git pack-redundant --all | xargs -r rm", d)
+            # Remove all but the .git directory
+            rungitcmd("rm * -Rf", d)
             # old method of downloading tags
             #rungitcmd("rsync -a --verbose --stats --progress rsync://%s%s/ %s" % (host, path, os.path.join(repodir, ".git", "")),d)
 
