@@ -187,7 +187,10 @@ def exec_func_shell(func, d):
     else:
         maybe_fakeroot = ''
     ret = os.system('%ssh -e %s' % (maybe_fakeroot, runfile))
-    os.chdir(prevdir)
+    try:
+        os.chdir(prevdir)
+    except:
+        pass
 
     # restore the backups
     os.dup2(osi[0], osi[1])
