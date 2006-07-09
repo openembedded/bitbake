@@ -47,15 +47,15 @@ cdef public void e_export(lex_t* c, char* what):
     print "e_export", what
     #exp:
     # bb.data.setVarFlag(key, "export", 1, data)
-    d = <object>container.data
-    d.setVarFlag(key, "export", 1)
+    d = <object>c.data
+    d.setVarFlag(what, "export", 1)
 
 cdef public void e_immediate(lex_t* c, char* key, char* what):
     print "e_immediate", key, what
     #colon:
     # val = bb.data.expand(groupd["value"], data)
     d = <object>c.data
-    d.setVar(key, d.expand(what))
+    d.setVar(key, d.expand(what,None))
 
 cdef public void e_cond(lex_t* c, char* key, char* what):
     print "e_cond", key, what
@@ -140,8 +140,8 @@ cdef public void e_inherit(lex_t* c, char* file):
 cdef public void e_include(lex_t* c, char* file):
     print "e_include", file
     d = <object>c.data
-    d.expand(file)
-    
+    d.expand(file,)
+
     try:
         parsefile(file, d)
     except IOError:
@@ -152,7 +152,7 @@ cdef public void e_require(lex_t* c, char* file):
     print "e_require", file
     d = <object>c.data
     d.expand(file)
-    
+
     try:
         parsefile(file, d)
     except IOError:
@@ -171,7 +171,7 @@ cdef public void e_proc_fakeroot(lex_t* c, char* key, char* what):
     pass
 
 cdef public void e_def(lex_t* c, char* a, char* b, char* d):
-    print "e_def", key, what
+    print "e_def", a, b, d
     pass
 
 cdef public void e_parse_error(lex_t* c):

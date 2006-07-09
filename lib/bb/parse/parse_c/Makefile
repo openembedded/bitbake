@@ -28,9 +28,9 @@ bitbakec.so: bitbakec.o bitbakeparser.o bitbakescanner.o
 	g++ -shared -fPIC bitbakeparser.o bitbakescanner.o bitbakec.o -o bitbakec.so
 
 clean:
-	rm *.out
-	rm *.cc
-	rm bitbakec.c
-	rm bitbakec-processed.c
-	rm *.o
-	rm *.so
+	rm -f *.out
+	rm -f *.cc
+	rm -f bitbakec.c
+	rm -f bitbakec-processed.c
+	rm -f *.o
+	rm -f *.so

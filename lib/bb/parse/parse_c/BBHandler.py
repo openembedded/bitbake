@@ -61,13 +61,15 @@ def supports(fn, data):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc" or fn[-5:] == ".conf"
 
 def init(fn, data):
-    if not data.getVar('TOPDIR'):
+    if not data.getVar('TOPDIR', False):
         bb.error('TOPDIR is not set')
-    if not data.getVar('BBPATH'):
+    if not data.getVar('BBPATH', False):
         bb.error('BBPATH is not set')
 
 
 def handle(fn, d, include):
+    from bb import data, parse
+
     print ""
     print "fn: %s" % fn
     print "data: %s" % d
@@ -77,15 +79,15 @@ def handle(fn, d, include):
 
     # check if we include or are the beginning
     if include:
-        oldfile = d.getVar('FILE')
+        oldfile = d.getVar('FILE', False)
     else:
-        #d.inheritFromOS()
+        if fn[-5:] == ".conf":
+            data.inheritFromOS(d)
         oldfile = None
 
     # find the file
     if not os.path.isabs(fn):
-        bb.error("No Absolute FILE name")
-        abs_fn = bb.which(d.getVar('BBPATH'), fn)
+        abs_fn = bb.which(d.getVar('BBPATH', True), fn)
     else:
         abs_fn = fn
 
@@ -98,7 +100,7 @@ def handle(fn, d, include):
         parse.mark_dependency(d, abs_fn)
 
     # now parse this file - by defering it to C++
-    parsefile(fn, d)
+    parsefile(abs_fn, d)
 
     # restore the original FILE
     if oldfile:
