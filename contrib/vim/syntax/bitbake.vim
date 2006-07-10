@@ -42,11 +42,11 @@ syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ c
 
 syn keyword bbExportFlag	export contained nextgroup=bbIdentifier skipwhite
 syn match bbVarDeref	"${[a-zA-Z0-9\-_\.]\+}" contained
-syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA-Z0-9\-_\.]\+\)\?\)\s*\(\(:=\)\|\(+=\)\|\(=+\)\|\(?=\)\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
+syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA-Z0-9\-_\.]\+\)\?\)\s*\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
 
 syn match bbIdentifier		"[a-zA-Z0-9\-_\.]\+" display contained
 "syn keyword bbVarEq	= display contained nextgroup=bbVarValue
-syn match bbVarEq		"\(:=\)\|\(+=\)\|\(=+\)\|\(?=\)\|=" contained nextgroup=bbVarValue
+syn match bbVarEq		"\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)" contained nextgroup=bbVarValue
 syn match bbVarValue		".*$" contained contains=bbString,bbVarDeref
 
 
@@ -90,8 +90,8 @@ syn region bbDefRegion		start='^def\s\+\w\+\s*([^)]*)\s*:\s*$' end='^\(\s\|$\)\@
 
 
 " BitBake statements
-syn keyword bbStatement		include inherit addtask addhandler EXPORT_FUNCTIONS display contained
-syn match bbStatementLine	"^\(include\|inherit\|addtask\|addhandler\|EXPORT_FUNCTIONS\)\s\+" contains=bbStatement nextgroup=bbStatementRest
+syn keyword bbStatement		include inherit require addtask addhandler EXPORT_FUNCTIONS display contained
+syn match bbStatementLine	"^\(include\|inherit\|require\|addtask\|addhandler\|EXPORT_FUNCTIONS\)\s\+" contains=bbStatement nextgroup=bbStatementRest
 syn match bbStatementRest		".*$" contained contains=bbString,bbVarDeref
 
 " Highlight
