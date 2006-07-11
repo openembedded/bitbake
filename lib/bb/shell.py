@@ -364,18 +364,14 @@ SRC_URI = ""
     new.usage = "<directory> <filename>"
 
     def pasteBin( self, params ):
-        """Send a command + output buffer to http://oe.pastebin.com"""
+        """Send a command + output buffer to the pastebin at http://rafb.net/paste"""
         index = params[0]
         contents = self._shell.myout.buffer( int( index ) )
-        status, error, location = sendToPastebin( contents )
-        if status == 302:
-            print "SHELL: Pasted to %s" % location
-        else:
-            print "ERROR: %s %s" % ( status, error )
+        sendToPastebin( "output of " + params[0], contents )
     pasteBin.usage = "<index>"
 
     def pasteLog( self, params ):
-        """Send the last event exception error log (if there is one) to http://oe.pastebin.com"""
+        """Send the last event exception error log (if there is one) to http://rafb.net/paste"""
         if last_exception is None:
             print "SHELL: No Errors yet (Phew)..."
         else:
@@ -386,12 +382,8 @@ SRC_URI = ""
                 filename = filename.strip()
                 print "SHELL: Pasting log file to pastebin..."
 
-                status, error, location = sendToPastebin( open( filename ).read() )
-
-                if status == 302:
-                    print "SHELL: Pasted to %s" % location
-                else:
-                    print "ERROR: %s %s" % ( status, error )
+                file = open( filename ).read()
+                sendToPastebin( "contents of " + filename, file )
 
     def patch( self, params ):
         """Execute 'patch' command on a providee"""
@@ -564,24 +556,29 @@ def completeFilePath( bbfile ):
             return key
     return bbfile
 
-def sendToPastebin( content ):
+def sendToPastebin( desc, content ):
     """Send content to http://oe.pastebin.com"""
     mydata = {}
-    mydata["parent_pid"] = ""
-    mydata["format"] = "bash"
-    mydata["code2"] = content
-    mydata["paste"] = "Send"
-    mydata["poster"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), socket.gethostname() or "unknown" )
+    mydata["lang"] = "Plain Text"
+    mydata["desc"] = desc
+    mydata["cvt_tabs"] = "No"
+    mydata["nick"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), socket.gethostname() or "unknown" )
+    mydata["text"] = content
     params = urllib.urlencode( mydata )
     headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
 
-    conn = httplib.HTTPConnection( "oe.pastebin.com:80" )
-    conn.request("POST", "/", params, headers )
+    host = "rafb.net"
+    conn = httplib.HTTPConnection( "%s:80" % host )
+    conn.request("POST", "/paste/paste.php", params, headers )
 
     response = conn.getresponse()
     conn.close()
 
-    return response.status, response.reason, response.getheader( "location" ) or "unknown"
+    if response.status == 302:
+        location = response.getheader( "location" ) or "unknown"
+        print "SHELL: Pasted to http://%s%s" % ( host, location )
+    else:
+        print "ERROR: %s %s" % ( response.status, response.reason )
 
 def completer( text, state ):
     """Return a possible readline completion"""
