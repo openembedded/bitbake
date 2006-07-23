@@ -13,13 +13,14 @@ cdef extern from "lexerc.h":
     ctypedef struct lex_t:
         void* parser
         void* scanner
+        char* name
         FILE* file
         void* data
 
     int lineError
     int errorParse
 
-    cdef extern void parse(FILE*, object)
+    cdef extern int parse(FILE*, char*, object)
 
 def parsefile(object file, object data):
     #print "parsefile: 1", file, data
@@ -33,15 +34,18 @@ def parsefile(object file, object data):
         raise IOError("No such file %s." % file)
 
     #print "parsefile: 3 parse"
-    parse(f, data)
+    parse(f, file, data)
 
     # Close the file
-    #print "parsefile: 4 closing"
     fclose(f)
 
 
 cdef public void e_assign(lex_t* container, char* key, char* what):
     #print "e_assign", key, what
+    if what == NULL:
+        print "FUTURE Warning empty string: use \"\""
+        what = ""
+
     d = <object>container.data
     d.setVar(key, what)
 
@@ -57,7 +61,7 @@ cdef public void e_immediate(lex_t* c, char* key, char* what):
     #colon:
     # val = bb.data.expand(groupd["value"], data)
     d = <object>c.data
-    d.setVar(key, d.expand(what,None))
+    d.setVar(key, d.expand(what,d))
 
 cdef public void e_cond(lex_t* c, char* key, char* what):
     #print "e_cond", key, what
@@ -65,8 +69,12 @@ cdef public void e_cond(lex_t* c, char* key, char* what):
     # val = bb.data.getVar(key, data)
     # if val == None:    
     #    val = groupd["value"]
+    if what == NULL:
+        print "FUTURE warning: Use \"\" for", key
+        what = ""
+
     d = <object>c.data
-    d.setVar(key, (d.getVar(key,0) or what))
+    d.setVar(key, (d.getVar(key,False) or what))
 
 cdef public void e_prepend(lex_t* c, char* key, char* what):
     #print "e_prepend", key, what
@@ -151,7 +159,7 @@ cdef public void e_include(lex_t* c, char* file):
         print "Could not include file", file
 
 
-cdef public void e_require(lex_t* c, char* file):
+cdef public int e_require(lex_t* c, char* file) except -1:
     #print "e_require", file
     from bb.parse import handle
     d = <object>c.data
@@ -162,6 +170,7 @@ cdef public void e_require(lex_t* c, char* file):
         print "ParseError", file
         from bb.parse import ParseError
         raise ParseError("Could not include required file %s" % file)
+        return -1
 
 cdef public void e_proc(lex_t* c, char* key, char* what):
     #print "e_proc", key, what
@@ -185,10 +194,11 @@ cdef public void e_def(lex_t* c, char* a, char* b, char* d):
     #print "e_def", a, b, d
     pass
 
-cdef public void e_parse_error(lex_t* c):
-    print "e_parse_error", "line:", lineError, "parse:", errorParse
+cdef public int e_parse_error(lex_t* c) except -1:
+    print "e_parse_error", c.name, "line:", lineError, "parse:", errorParse
 
 
     from bb.parse import ParseError
-    raise ParseError("There was an parse error, sorry unable to give more information at the current time.")
+    raise ParseError("There was an parse error, sorry unable to give more information at the current time. File: %s Line: %d" % (c.name,lineError) )
+    return -1
 

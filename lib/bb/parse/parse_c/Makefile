@@ -1,6 +1,6 @@
 
-test: bitbakec.so
-	python test.py
+buil: bitbakec.so
+	echo "Done"
 
 bitbakescanner.cc: bitbakescanner.l
 	flex -t bitbakescanner.l > bitbakescanner.cc

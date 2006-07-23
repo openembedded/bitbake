@@ -27,13 +27,14 @@ THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "Python.h"
 
 extern "C" {
-	
+
 struct lex_t {
     void* parser;
     void* scanner;
-    FILE* file;    
+    FILE* file;
+    char *name;
     PyObject *data;
-    
+
     void* (*parse)(void*, int, token_t, lex_t*);
 
     void accept(int token, const char* sz = NULL);

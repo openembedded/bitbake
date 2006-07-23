@@ -31,7 +31,7 @@
 	THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-import os
+import os, sys
 
 # The Module we will use here
 import bb
@@ -61,10 +61,10 @@ def supports(fn, data):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc" or fn[-5:] == ".conf"
 
 def init(fn, data):
-    if not data.getVar('TOPDIR', False):
-        bb.error('TOPDIR is not set')
-    if not data.getVar('BBPATH', False):
-        bb.error('BBPATH is not set')
+    if not bb.data.getVar('TOPDIR', data):
+        bb.data.setVar('TOPDIR', os.getcwd(), data)
+    if not bb.data.getVar('BBPATH', data):
+        bb.data.setVar('BBPATH', os.path.join(sys.prefix, 'share', 'bitbake'), data)
 
 
 def handle(fn, d, include):
@@ -75,7 +75,10 @@ def handle(fn, d, include):
     #print "data: %s" % d
     #print dir(d)
     #print d.getVar.__doc__
-    print "include: %s" % fn
+    #print "include: %s" % fn
+
+    # initialize with some data
+    init(fn,d)
 
     # check if we include or are the beginning
     if include:
@@ -107,6 +110,29 @@ def handle(fn, d, include):
         d.setVar('FILE', oldfile)
 
     return d
+
+
+# Needed for BitBake files...
+__pkgsplit_cache__={}
+def vars_from_file(mypkg, d):
+    if not mypkg:
+        return (None, None, None)
+    if mypkg in __pkgsplit_cache__:
+        return __pkgsplit_cache__[mypkg]
+
+    myfile = os.path.splitext(os.path.basename(mypkg))
+    parts = myfile[0].split('_')
+    __pkgsplit_cache__[mypkg] = parts
+    exp = 3 - len(parts)
+    tmplist = []
+    while exp != 0:
+        exp -= 1
+        tmplist.append(None)
+    parts.extend(tmplist)
+    return parts
+
+
+
 
 # Inform bitbake that we are a parser
 # We need to define all three

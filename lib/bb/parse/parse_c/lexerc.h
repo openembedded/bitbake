@@ -11,6 +11,7 @@ typedef struct {
     void *parser;
     void *scanner;
     FILE *file;
+    char *name;
     PyObject *data;
 } lex_t;
 
