@@ -6,6 +6,8 @@ cdef extern from "stdio.h":
     FILE *fopen(char*, char*)
     int fclose(FILE *fp)
 
+cdef extern from "string.h":
+    int strlen(char*)
 
 cdef extern from "lexerc.h":
     ctypedef struct lex_t:
@@ -37,11 +39,11 @@ def parsefile(object file, object data):
     print "parsefile: 4 closing"
     fclose(f)
 
- 
+
 cdef public void e_assign(lex_t* container, char* key, char* what):
     print "e_assign", key, what
     d = <object>container.data
-    d.setVar(key, what)    
+    d.setVar(key, what)
 
 cdef public void e_export(lex_t* c, char* what):
     print "e_export", what
@@ -95,7 +97,7 @@ cdef public void e_postcat(lex_t* c, char* key, char* what):
     d.setVar(key, (d.getVar(key,0) or "") + what)
 
 cdef public void e_addtask(lex_t* c, char* name, char* before, char* after):
-    print "e_addtask", name, before, after
+    print "e_addtask", name
     # func = m.group("func")
     # before = m.group("before")
     # after = m.group("after")
@@ -112,15 +114,17 @@ cdef public void e_addtask(lex_t* c, char* name, char* before, char* after):
     # #   set up things that depend on this func
     #     data.setVarFlag(var, "postdeps", before.split(), d)
     # return
-    
+
     do = "do_%s" % name
     d = <object>c.data
     d.setVarFlag(do, "task", 1)
 
-    if strlen(before) > 0:
+    if before != NULL and strlen(before) > 0:
+        print "Before", before
+        d.setVarFlag(do, "postdeps", ("%s" % before).split())
+    if after  != NULL and strlen(after) > 0:
+        print "After", after
         d.setVarFlag(do, "deps", ("%s" % after).split())
-    if strlen(after) > 0:
-        d.setVarFlag(do, "deps", ("%s" % before).split())
 
 
 cdef public void e_addhandler(lex_t* c, char* h):
@@ -139,11 +143,11 @@ cdef public void e_inherit(lex_t* c, char* file):
 
 cdef public void e_include(lex_t* c, char* file):
     print "e_include", file
+    from bb.parse import handle
     d = <object>c.data
-    d.expand(file,)
 
     try:
-        parsefile(file, d)
+        handle(d.expand(file,None), d, True)
     except IOError:
         print "Could not include required file %s" % file
 
@@ -163,7 +167,11 @@ cdef public void e_proc(lex_t* c, char* key, char* what):
     pass
 
 cdef public void e_proc_python(lex_t* c, char* key, char* what):
-    print "e_proc_python", key, what
+    print "e_proc_python"
+    if key != NULL:
+        print "Key", key
+    if what != NULL:
+        print "What", what
     pass
 
 cdef public void e_proc_fakeroot(lex_t* c, char* key, char* what):
