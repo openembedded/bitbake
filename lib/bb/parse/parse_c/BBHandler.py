@@ -70,12 +70,12 @@ def init(fn, data):
 def handle(fn, d, include):
     from bb import data, parse
 
-    print ""
-    print "fn: %s" % fn
-    print "data: %s" % d
-    print dir(d)
-    print d.getVar.__doc__
-    print "include: %s" % include
+    #print ""
+    #print "fn: %s" % fn
+    #print "data: %s" % d
+    #print dir(d)
+    #print d.getVar.__doc__
+    print "include: %s" % fn
 
     # check if we include or are the beginning
     if include:
@@ -93,7 +93,7 @@ def handle(fn, d, include):
 
     # check if the file exists
     if not os.path.exists(abs_fn):
-        raise IOError("file '%(fn)' not found" % locals() )
+        raise IOError("file '%(fn)s' not found" % locals() )
 
     # now we know the file is around mark it as dep
     if include:

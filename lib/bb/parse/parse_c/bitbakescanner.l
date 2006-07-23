@@ -91,7 +91,7 @@ int errorParse;
 enum {
   errorNone = 0,
   errorUnexpectedInput,
-  errorUnsupportedFeature, 
+  errorUnsupportedFeature,
 };
 
 }
@@ -142,7 +142,7 @@ SSTRING         \'([^\n\r]|"\\\n")*\'
 VALUE           ([^'" \t\n])|([^'" \t\n]([^\n]|(\\\n))*[^'" \t\n])
 
 C_SS            [a-zA-Z_]
-C_SB            [a-zA-Z0-9_+-.]
+C_SB            [a-zA-Z0-9_+-./]
 REF             $\{{C_SS}{C_SB}*\}
 SYMBOL          {C_SS}{C_SB}*
 VARIABLE        $?{C_SS}({C_SB}*|{REF})*(\[[a-zA-Z0-9_]*\])?
@@ -265,14 +265,14 @@ void lex_t::accept (int token, const char* sz)
 
 void lex_t::input (char *buf, int *result, int max_size)
 {
-    printf("lex_t::input %p %d\n", buf, max_size);
+    /* printf("lex_t::input %p %d\n", buf, max_size); */
     *result = fread(buf, 1, max_size, file);
-    printf("lex_t::input result %d\n", *result);
+    /* printf("lex_t::input result %d\n", *result); */
 }
 
 int lex_t::line ()const
 {
-    printf("lex_t::line\n");
+    /* printf("lex_t::line\n"); */
     return yyget_lineno (scanner);
 }
 
@@ -281,12 +281,12 @@ extern "C" {
 
     void parse (FILE* file, PyObject* data)
     {
-	printf("parse bbparseAlloc\n");
+        /* printf("parse bbparseAlloc\n"); */
         void* parser = bbparseAlloc (malloc);
         yyscan_t scanner;
         lex_t lex;
 
-	printf("parse yylex_init\n");
+        /* printf("parse yylex_init\n"); */
         yylex_init (&scanner);
 
         lex.parser = parser;
@@ -294,18 +294,18 @@ extern "C" {
         lex.file = file;
         lex.data = data;
         lex.parse = bbparse;
-	printf("parse yyset_extra\n");
+        /*printf("parse yyset_extra\n"); */
         yyset_extra (&lex, scanner);
 
-	printf("parse yylex\n");
+        /* printf("parse yylex\n"); */
         int result = yylex (scanner);
-	
-	printf("parse result %d\n", result);
+
+        /* printf("parse result %d\n", result); */
 
         lex.accept (0);
-	printf("parse lex.accept\n");
+        /* printf("parse lex.accept\n"); */
         bbparseTrace (NULL, NULL);
-	printf("parse bbparseTrace\n");
+        /* printf("parse bbparseTrace\n"); */
 
         if (result != T_EOF)
            printf ("premature end of file\n");
