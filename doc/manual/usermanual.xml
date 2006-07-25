@@ -401,7 +401,7 @@ options:
                     <title>Generating dependency graphs</title>
                     <para>BitBake is able to generate dependency graphs using the dot syntax. These graphs can be converted
 to images using the <application>dot</application> application from <ulink url="http://www.graphviz.org">graphviz</ulink>. 
-Three files will be written into the current working directory, <emphasis>depends.dot</emphasis> containing <varname>DEPENDS</varname> variables, <emphasis>rdepends.dot</emphasis> containing <varname>RDEPENDS</varname> and <emphasis>alldepends.dot</emphasis> containing all depends. To stop depending on common depends one can use the <prompt>-I depend</prompt> to omit these from the graph. This can lead to more readable graphs.</para>
+Three files will be written into the current working directory, <emphasis>depends.dot</emphasis> containing <varname>DEPENDS</varname> variables, <emphasis>rdepends.dot</emphasis> and <emphasis>alldepends.dot</emphasis> containing both <varname>DEPENDS</varname> and <varname>RDEPENDS</varname>. To stop depending on common depends one can use the <prompt>-I depend</prompt> to omit these from the graph. This can lead to more readable graphs. E.g. this way <varname>DEPENDS</varname> from inherited classes, e.g. base.bbclass, can be removed from the graph.</para>
                     <screen><prompt>$ </prompt>bitbake -g blah</screen>
                     <screen><prompt>$ </prompt>bitbake -g -I virtual/whatever -I bloom blah</screen>
                 </example>
