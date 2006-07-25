@@ -128,51 +128,49 @@ typedef union {
 */
 static const YYACTIONTYPE yy_action[] = {
  /*     0 */    82,    3,    7,    8,   38,   22,   39,   24,   26,   32,
- /*    10 */    34,   28,   30,  128,    1,   40,   53,   70,   55,    5,
- /*    20 */    60,   65,   67,    2,   21,   36,   69,   77,    9,    7,
- /*    30 */    11,    6,   13,   15,   17,   19,   12,   52,   50,    4,
- /*    40 */    74,   42,   46,   59,   57,   10,   64,   62,   38,   14,
- /*    50 */    73,   16,   38,   38,   76,   81,   18,   20,   23,   25,
- /*    60 */    27,   29,   31,   33,   35,   37,   56,   51,   90,   54,
- /*    70 */    58,   71,   41,   43,   63,   45,   44,   47,   72,   48,
- /*    80 */    75,   78,   80,   61,   90,   49,   66,   90,   90,   68,
- /*    90 */    90,   90,   90,   90,   90,   79,
+ /*    10 */    34,   28,   30,    2,   21,   40,   53,   70,   55,   44,
+ /*    20 */    60,   65,   67,  128,    1,   36,   69,   77,   42,   46,
+ /*    30 */    11,   66,   13,   15,   17,   19,   64,   62,    9,    7,
+ /*    40 */    74,   38,   45,   81,   59,   57,   38,   38,   73,   76,
+ /*    50 */     5,   68,   52,   50,   14,   31,   47,   71,   48,   10,
+ /*    60 */    72,   33,   23,   49,    6,   41,   51,   78,   75,   16,
+ /*    70 */     4,   54,   35,   25,   18,   80,   79,   56,   27,   37,
+ /*    80 */    58,   12,   61,   29,   43,   63,   20,
 };
 static const YYCODETYPE yy_lookahead[] = {
  /*     0 */     0,    1,    2,    3,   23,    4,   25,    6,    7,    8,
- /*    10 */     9,   10,   11,   31,   32,   15,   16,    1,   18,   42,
- /*    20 */    20,   21,   22,   33,   34,   24,   26,   27,    1,    2,
- /*    30 */     4,   28,    6,    7,    8,    9,    5,   35,   36,   29,
- /*    40 */    24,   13,   14,   37,   38,   34,   39,   40,   23,    5,
- /*    50 */    25,    5,   23,   23,   25,   25,    5,    5,    5,    5,
- /*    60 */     5,    5,    5,    5,    5,   41,   17,   35,   43,    1,
- /*    70 */    37,   24,   12,   12,   39,   12,   14,   12,   41,   13,
- /*    80 */    41,    1,   41,   19,   43,   12,   19,   43,   43,   19,
- /*    90 */    43,   43,   43,   43,   43,   24,
+ /*    10 */     9,   10,   11,   33,   34,   15,   16,    1,   18,   14,
+ /*    20 */    20,   21,   22,   31,   32,   24,   26,   27,   13,   14,
+ /*    30 */     4,   19,    6,    7,    8,    9,   39,   40,    1,    2,
+ /*    40 */    24,   23,   12,   25,   37,   38,   23,   23,   25,   25,
+ /*    50 */    42,   19,   35,   36,    5,    5,   12,   24,   13,   34,
+ /*    60 */    41,    5,    5,   12,   28,   12,   35,    1,   41,    5,
+ /*    70 */    29,    1,    5,    5,    5,   41,   24,   17,    5,   41,
+ /*    80 */    37,    5,   19,    5,   12,   39,    5,
 };
 #define YY_SHIFT_USE_DFLT (-20)
 static const signed char yy_shift_ofst[] = {
- /*     0 */   -20,    0,  -20,   10,  -20,    3,  -20,  -20,   27,  -20,
- /*    10 */    26,   31,  -20,   44,  -20,   46,  -20,   51,  -20,   52,
- /*    20 */   -20,    1,   53,  -20,   54,  -20,   55,  -20,   56,  -20,
- /*    30 */    57,  -20,   58,  -20,   59,  -20,  -20,  -19,  -20,  -20,
- /*    40 */    60,   28,   61,   62,   63,  -20,   65,   66,   73,  -20,
- /*    50 */    60,  -20,  -20,   68,  -20,   49,  -20,   49,  -20,  -20,
- /*    60 */    64,  -20,   64,  -20,  -20,   67,  -20,   70,  -20,   16,
- /*    70 */    47,  -20,   25,  -20,  -20,   29,  -20,   80,   71,  -20,
- /*    80 */    30,  -20,
+ /*     0 */   -20,    0,  -20,   41,  -20,   36,  -20,  -20,   37,  -20,
+ /*    10 */    26,   76,  -20,   49,  -20,   64,  -20,   69,  -20,   81,
+ /*    20 */   -20,    1,   57,  -20,   68,  -20,   73,  -20,   78,  -20,
+ /*    30 */    50,  -20,   56,  -20,   67,  -20,  -20,  -19,  -20,  -20,
+ /*    40 */    53,   15,   72,    5,   30,  -20,   44,   45,   51,  -20,
+ /*    50 */    53,  -20,  -20,   70,  -20,   60,  -20,   60,  -20,  -20,
+ /*    60 */    63,  -20,   63,  -20,  -20,   12,  -20,   32,  -20,   16,
+ /*    70 */    33,  -20,   23,  -20,  -20,   24,  -20,   66,   52,  -20,
+ /*    80 */    18,  -20,
 };
-#define YY_REDUCE_USE_DFLT (-24)
+#define YY_REDUCE_USE_DFLT (-21)
 static const signed char yy_reduce_ofst[] = {
- /*     0 */   -18,  -10,  -24,  -24,  -23,  -24,  -24,  -24,   11,  -24,
- /*    10 */   -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,
- /*    20 */   -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,
- /*    30 */   -24,  -24,  -24,  -24,  -24,  -24,   24,  -24,  -24,  -24,
- /*    40 */     2,  -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,  -24,
- /*    50 */    32,  -24,  -24,  -24,  -24,    6,  -24,   33,  -24,  -24,
- /*    60 */     7,  -24,   35,  -24,  -24,  -24,  -24,  -24,  -24,  -24,
- /*    70 */   -24,   37,  -24,  -24,   39,  -24,  -24,  -24,  -24,   41,
- /*    80 */   -24,  -24,
+ /*     0 */    -8,  -20,  -21,  -21,    8,  -21,  -21,  -21,   25,  -21,
+ /*    10 */   -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,
+ /*    20 */   -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,
+ /*    30 */   -21,  -21,  -21,  -21,  -21,  -21,   38,  -21,  -21,  -21,
+ /*    40 */    17,  -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,  -21,
+ /*    50 */    31,  -21,  -21,  -21,  -21,    7,  -21,   43,  -21,  -21,
+ /*    60 */    -3,  -21,   46,  -21,  -21,  -21,  -21,  -21,  -21,  -21,
+ /*    70 */   -21,   19,  -21,  -21,   27,  -21,  -21,  -21,  -21,   34,
+ /*    80 */   -21,  -21,
 };
 static const YYACTIONTYPE yy_default[] = {
  /*     0 */    84,  127,   83,   85,  125,  126,  124,   86,  127,   85,
@@ -420,7 +418,7 @@ static void yy_destructor(YYCODETYPE yymajor, YYMINORTYPE *yypminor){
     case 29:
 #line 50 "bitbakeparser.y"
 { (yypminor->yy0).release_this (); }
-#line 425 "bitbakeparser.c"
+#line 423 "bitbakeparser.c"
       break;
     default:  break;   /* If no destructor action specified: do nothing */
   }
@@ -694,7 +692,7 @@ static void yy_reduce(
 { yygotominor.yy0.assignString( (char*)yymsp[0].minor.yy0.string() );
           yymsp[0].minor.yy0.assignString( 0 );
           yymsp[0].minor.yy0.release_this(); }
-#line 699 "bitbakeparser.c"
+#line 697 "bitbakeparser.c"
         break;
       case 4:
 #line 64 "bitbakeparser.y"
@@ -702,7 +700,7 @@ static void yy_reduce(
           yygotominor.yy0.assignString( (char*)yymsp[0].minor.yy0.string() );
           yymsp[0].minor.yy0.assignString( 0 );
           yymsp[0].minor.yy0.release_this(); }
-#line 707 "bitbakeparser.c"
+#line 705 "bitbakeparser.c"
         break;
       case 5:
 #line 70 "bitbakeparser.y"
@@ -711,7 +709,7 @@ static void yy_reduce(
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 716 "bitbakeparser.c"
+#line 714 "bitbakeparser.c"
         break;
       case 6:
 #line 74 "bitbakeparser.y"
@@ -720,7 +718,7 @@ static void yy_reduce(
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 725 "bitbakeparser.c"
+#line 723 "bitbakeparser.c"
         break;
       case 7:
 #line 78 "bitbakeparser.y"
@@ -729,7 +727,7 @@ static void yy_reduce(
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 734 "bitbakeparser.c"
+#line 732 "bitbakeparser.c"
         break;
       case 8:
 #line 82 "bitbakeparser.y"
@@ -738,7 +736,7 @@ static void yy_reduce(
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(8,&yymsp[-1].minor);
 }
-#line 743 "bitbakeparser.c"
+#line 741 "bitbakeparser.c"
         break;
       case 9:
 #line 86 "bitbakeparser.y"
@@ -746,56 +744,56 @@ static void yy_reduce(
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(3,&yymsp[-3].minor);
   yy_destructor(9,&yymsp[-1].minor);
 }
-#line 751 "bitbakeparser.c"
+#line 749 "bitbakeparser.c"
         break;
       case 10:
 #line 90 "bitbakeparser.y"
 { e_assign( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(4,&yymsp[-1].minor);
 }
-#line 758 "bitbakeparser.c"
+#line 756 "bitbakeparser.c"
         break;
       case 11:
 #line 93 "bitbakeparser.y"
 { e_precat( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(6,&yymsp[-1].minor);
 }
-#line 765 "bitbakeparser.c"
+#line 763 "bitbakeparser.c"
         break;
       case 12:
 #line 96 "bitbakeparser.y"
 { e_postcat( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(7,&yymsp[-1].minor);
 }
-#line 772 "bitbakeparser.c"
+#line 770 "bitbakeparser.c"
         break;
       case 13:
 #line 99 "bitbakeparser.y"
 { e_prepend( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(10,&yymsp[-1].minor);
 }
-#line 779 "bitbakeparser.c"
+#line 777 "bitbakeparser.c"
         break;
       case 14:
 #line 102 "bitbakeparser.y"
 { e_append( lex, yymsp[-2].minor.yy0.string() , yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(11,&yymsp[-1].minor);
 }
-#line 786 "bitbakeparser.c"
+#line 784 "bitbakeparser.c"
         break;
       case 15:
 #line 105 "bitbakeparser.y"
 { e_immediate( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(8,&yymsp[-1].minor);
 }
-#line 793 "bitbakeparser.c"
+#line 791 "bitbakeparser.c"
         break;
       case 16:
 #line 108 "bitbakeparser.y"
 { e_cond( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string() );
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(9,&yymsp[-1].minor);
 }
-#line 800 "bitbakeparser.c"
+#line 798 "bitbakeparser.c"
         break;
       case 17:
 #line 112 "bitbakeparser.y"
@@ -803,7 +801,7 @@ static void yy_reduce(
           yymsp[-4].minor.yy0.release_this(); yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(13,&yymsp[-3].minor);
   yy_destructor(14,&yymsp[-1].minor);
 }
-#line 808 "bitbakeparser.c"
+#line 806 "bitbakeparser.c"
         break;
       case 18:
 #line 115 "bitbakeparser.y"
@@ -811,55 +809,55 @@ static void yy_reduce(
           yymsp[-4].minor.yy0.release_this(); yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(14,&yymsp[-3].minor);
   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 816 "bitbakeparser.c"
+#line 814 "bitbakeparser.c"
         break;
       case 19:
 #line 118 "bitbakeparser.y"
 { e_addtask( lex, yymsp[0].minor.yy0.string(), NULL, NULL);
           yymsp[0].minor.yy0.release_this();}
-#line 822 "bitbakeparser.c"
+#line 820 "bitbakeparser.c"
         break;
       case 20:
 #line 121 "bitbakeparser.y"
 { e_addtask( lex, yymsp[-2].minor.yy0.string(), yymsp[0].minor.yy0.string(), NULL);
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(13,&yymsp[-1].minor);
 }
-#line 829 "bitbakeparser.c"
+#line 827 "bitbakeparser.c"
         break;
       case 21:
 #line 124 "bitbakeparser.y"
 { e_addtask( lex, yymsp[-2].minor.yy0.string(), NULL, yymsp[0].minor.yy0.string());
           yymsp[-2].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this();   yy_destructor(14,&yymsp[-1].minor);
 }
-#line 836 "bitbakeparser.c"
+#line 834 "bitbakeparser.c"
         break;
       case 25:
 #line 131 "bitbakeparser.y"
 { e_addhandler( lex, yymsp[0].minor.yy0.string()); yymsp[0].minor.yy0.release_this ();   yy_destructor(16,&yymsp[-1].minor);
 }
-#line 842 "bitbakeparser.c"
+#line 840 "bitbakeparser.c"
         break;
       case 26:
 #line 133 "bitbakeparser.y"
 { e_export_func( lex, yymsp[0].minor.yy0.string()); yymsp[0].minor.yy0.release_this(); }
-#line 847 "bitbakeparser.c"
+#line 845 "bitbakeparser.c"
         break;
       case 30:
 #line 138 "bitbakeparser.y"
 { e_inherit( lex, yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this (); }
-#line 852 "bitbakeparser.c"
+#line 850 "bitbakeparser.c"
         break;
       case 34:
 #line 144 "bitbakeparser.y"
 { e_include( lex, yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this();   yy_destructor(21,&yymsp[-1].minor);
 }
-#line 858 "bitbakeparser.c"
+#line 856 "bitbakeparser.c"
         break;
       case 35:
 #line 147 "bitbakeparser.y"
 { e_require( lex, yymsp[0].minor.yy0.string() ); yymsp[0].minor.yy0.release_this();   yy_destructor(22,&yymsp[-1].minor);
 }
-#line 864 "bitbakeparser.c"
+#line 862 "bitbakeparser.c"
         break;
       case 36:
 #line 150 "bitbakeparser.y"
@@ -868,12 +866,12 @@ static void yy_reduce(
           yymsp[-1].minor.yy0.release_this ();
           yymsp[0].minor.yy0.release_this ();
         }
-#line 873 "bitbakeparser.c"
+#line 871 "bitbakeparser.c"
         break;
       case 37:
 #line 155 "bitbakeparser.y"
 { yygotominor.yy0.assignString(0); }
-#line 878 "bitbakeparser.c"
+#line 876 "bitbakeparser.c"
         break;
       case 38:
 #line 157 "bitbakeparser.y"
@@ -881,7 +879,7 @@ static void yy_reduce(
           yymsp[-3].minor.yy0.release_this(); yymsp[-1].minor.yy0.release_this();   yy_destructor(24,&yymsp[-2].minor);
   yy_destructor(25,&yymsp[0].minor);
 }
-#line 886 "bitbakeparser.c"
+#line 884 "bitbakeparser.c"
         break;
       case 39:
 #line 160 "bitbakeparser.y"
@@ -890,7 +888,7 @@ static void yy_reduce(
   yy_destructor(24,&yymsp[-2].minor);
   yy_destructor(25,&yymsp[0].minor);
 }
-#line 895 "bitbakeparser.c"
+#line 893 "bitbakeparser.c"
         break;
       case 40:
 #line 163 "bitbakeparser.y"
@@ -899,7 +897,7 @@ static void yy_reduce(
   yy_destructor(24,&yymsp[-2].minor);
   yy_destructor(25,&yymsp[0].minor);
 }
-#line 904 "bitbakeparser.c"
+#line 902 "bitbakeparser.c"
         break;
       case 41:
 #line 167 "bitbakeparser.y"
@@ -908,7 +906,7 @@ static void yy_reduce(
   yy_destructor(24,&yymsp[-2].minor);
   yy_destructor(25,&yymsp[0].minor);
 }
-#line 913 "bitbakeparser.c"
+#line 911 "bitbakeparser.c"
         break;
       case 42:
 #line 171 "bitbakeparser.y"
@@ -916,18 +914,18 @@ static void yy_reduce(
           yygotominor.yy0.assignString( token_t::concatString(yymsp[-1].minor.yy0.string(), yymsp[0].minor.yy0.string()) );
           yymsp[-1].minor.yy0.release_this (); yymsp[0].minor.yy0.release_this ();
         }
-#line 921 "bitbakeparser.c"
+#line 919 "bitbakeparser.c"
         break;
       case 43:
 #line 175 "bitbakeparser.y"
 { yygotominor.yy0.assignString( 0 ); }
-#line 926 "bitbakeparser.c"
+#line 924 "bitbakeparser.c"
         break;
       case 44:
 #line 177 "bitbakeparser.y"
 { e_def( lex, yymsp[-2].minor.yy0.string(), yymsp[-1].minor.yy0.string(), yymsp[0].minor.yy0.string());
           yymsp[-2].minor.yy0.release_this(); yymsp[-1].minor.yy0.release_this(); yymsp[0].minor.yy0.release_this(); }
-#line 932 "bitbakeparser.c"
+#line 930 "bitbakeparser.c"
         break;
   };
   yygoto = yyRuleInfo[yyruleno].lhs;
@@ -986,7 +984,7 @@ static void yy_syntax_error(
 #define TOKEN (yyminor.yy0)
 #line 52 "bitbakeparser.y"
  e_parse_error( lex ); 
-#line 992 "bitbakeparser.c"
+#line 990 "bitbakeparser.c"
   bbparseARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
 
@@ -1042,7 +1040,7 @@ void bbparse(
   /* (re)initialize the parser, if necessary */
   yypParser = (yyParser*)yyp;
   if( yypParser->yyidx<0 ){
-    /* if( yymajor==0 ) return; // not sure why this was here... */
+    if( yymajor==0 ) return;
     yypParser->yyidx = 0;
     yypParser->yyerrcnt = -1;
     yypParser->yystack[0].stateno = 0;

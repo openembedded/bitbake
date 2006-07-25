@@ -13,6 +13,7 @@ typedef struct {
     FILE *file;
     char *name;
     PyObject *data;
+    int config;
 } lex_t;
 
 #endif

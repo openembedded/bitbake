@@ -34,6 +34,7 @@ struct lex_t {
     FILE* file;
     char *name;
     PyObject *data;
+    int config;
 
     void* (*parse)(void*, int, token_t, lex_t*);
 

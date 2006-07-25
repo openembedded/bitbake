@@ -5,30 +5,30 @@
     Reads a .bb file and obtains its metadata (using a C++ parser)
 
     Copyright (C) 2006 Tim Robert Ansell
-	Copyright (C) 2006 Holger Hans Peter Freyther
-   
+    Copyright (C) 2006 Holger Hans Peter Freyther
+
     This program is free software; you can redistribute it and/or modify it under
     the terms of the GNU General Public License as published by the Free Software
     Foundation; either version 2 of the License, or (at your option) any later
     version.
 
-	Permission is hereby granted, free of charge, to any person obtaining a copy
-	of this software and associated documentation files (the "Software"), to deal
-	in the Software without restriction, including without limitation the rights
-	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-	copies of the Software, and to permit persons to whom the Software is
-	furnished to do so, subject to the following conditions:
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
 
-	The above copyright notice and this permission notice shall be included in all
-	copies or substantial portions of the Software.
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
 
-	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
-	SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-	DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-	OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-	THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT
+    SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+    DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+    THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import os, sys
@@ -66,27 +66,52 @@ def init(fn, data):
     if not bb.data.getVar('BBPATH', data):
         bb.data.setVar('BBPATH', os.path.join(sys.prefix, 'share', 'bitbake'), data)
 
+def handle_inherit(d):
+    """
+    Handle inheriting of classes. This will load all default classes.
+    It could be faster, it could detect infinite loops but this is todo
+    Also this delayed loading of bb.parse could impose a penalty
+    """
+    from bb.parse import handle
+
+    files = (data.getVar('INHERIT', d, True) or "").split()
+    if not "base" in i:
+        files[0:0] = ["base"]
+
+    __inherit_cache = data.getVar('__inherit_cache', d) or []
+    for f in files:
+        file = data.expand(f, d)
+        if file[0] != "/" and file[-8:] != ".bbclass":
+            file = os.path.join('classes', '%s.bbclass' % file)
+
+        if not file in __inherit_cache:
+            debug(2, "BB %s:%d: inheriting %s" % (fn, lineno, file))
+            __inherit_cache.append( file )
+
+            try:
+                handle(file, d, True)
+            except IOError:
+                print "Failed to inherit %s" % file
+    data.setVar('__inherit_cache', __inherit_cache, d)
+
 
 def handle(fn, d, include):
     from bb import data, parse
 
-    #print ""
-    #print "fn: %s" % fn
-    #print "data: %s" % d
-    #print dir(d)
-    #print d.getVar.__doc__
-    #print "include: %s" % fn
+    (root, ext) = os.path.splitext(os.path.basename(fn))
+    base_name = "%s%s" % (root,ext)
 
     # initialize with some data
     init(fn,d)
 
     # check if we include or are the beginning
+    oldfile = None
     if include:
         oldfile = d.getVar('FILE', False)
-    else:
-        if fn[-5:] == ".conf":
-            data.inheritFromOS(d)
-        oldfile = None
+        is_conf = False
+    elif ext == ".conf":
+        is_conf = True
+        data.inheritFromOS(d)
 
     # find the file
     if not os.path.isabs(fn):
@@ -102,12 +127,34 @@ def handle(fn, d, include):
     if include:
         parse.mark_dependency(d, abs_fn)
 
+    # manipulate the bbpath
+    if ext != ".bbclass" and ext != ".conf":
+        old_bb_path = data.getVar('BBPATH', d)
+        data.setVar('BBPATH', os.path.dirname(abs_fn) + (":%s" %old_bb_path) , d)
+
+    # handle INHERITS and base inherit
+    if ext != ".bbclass" and ext != ".conf":
+        data.setVar('FILE', fn, d)
+        handle_interit(d)
+
     # now parse this file - by defering it to C++
-    parsefile(abs_fn, d)
+    parsefile(abs_fn, d, is_conf)
+
+    # Finish it up
+    if include == 0:
+        data.expandKeys(d)
+        data.update_data(d)
+        #### !!! XXX Finish it up by executing the anonfunc
+
 
     # restore the original FILE
     if oldfile:
         d.setVar('FILE', oldfile)
+
+    # restore bbpath
+    if ext != ".bbclass" and ext != ".conf":
+        data.setVar('BBPATH', old_bb_path, d )
+
 
     return d
 

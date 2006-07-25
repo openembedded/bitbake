@@ -279,7 +279,7 @@ int lex_t::line ()const
 
 extern "C" {
 
-    void parse (FILE* file, char* name, PyObject* data)
+    void parse (FILE* file, char* name, PyObject* data, int config)
     {
         /* printf("parse bbparseAlloc\n"); */
         void* parser = bbparseAlloc (malloc);
@@ -294,6 +294,7 @@ extern "C" {
         lex.file = file;
         lex.name = name;
         lex.data = data;
+        lex.config = config;
         lex.parse = bbparse;
         /*printf("parse yyset_extra\n"); */
         yyset_extra (&lex, scanner);
