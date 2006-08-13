@@ -40,8 +40,7 @@ except ImportError:
     import pickle
     print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
 
-# __cache_version__ = "123"
-__cache_version__ = "124" # changes the __depends structure
+__cache_version__ = "125"
 
 class Cache:
     """
