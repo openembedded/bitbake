@@ -288,9 +288,49 @@ def exec_task(task, d):
     if not data.getVarFlag(task, 'nostamp', d):
         mkstamp(task, d)
 
+def stamp_is_current_cache(dataCache, file_name, task, checkdeps = 1):
+    """
+    Check status of a given task's stamp. 
+    Returns 0 if it is not current and needs updating.
+    Same as stamp_is_current but works against the dataCache instead of d
+    """
+    task_graph = dataCache.task_queues[file_name]
+
+    if not dataCache.stamp[file_name]:
+        return 0
+
+    stampfile = "%s.%s" % (dataCache.stamp[file_name], task)
+    if not os.access(stampfile, os.F_OK):
+        return 0
+
+    if checkdeps == 0:
+        return 1
+
+    import stat
+    tasktime = os.stat(stampfile)[stat.ST_MTIME]
+
+    _deps = []
+    def checkStamp(graph, task):
+        # check for existance
+        if 'nostamp' in dataCache.task_deps[file_name] and task in dataCache.task_deps[file_name]['nostamp']:
+            return 1
+
+        if not stamp_is_current_cache(dataCache, file_name, task, 0):
+            return 0
+
+        depfile = "%s.%s" % (dataCache.stamp[file_name], task)
+        deptime = os.stat(depfile)[stat.ST_MTIME]
+        if deptime > tasktime:
+            return 0
+        return 1
+
+    return task_graph.walkdown(task, checkStamp)
 
 def stamp_is_current(task, d, checkdeps = 1):
-    """Check status of a given task's stamp. returns 0 if it is not current and needs updating."""
+    """
+    Check status of a given task's stamp. 
+    Returns 0 if it is not current and needs updating.
+    """
     task_graph = data.getVar('_task_graph', d)
     if not task_graph:
         task_graph = bb.digraph()
@@ -336,9 +376,14 @@ def mkstamp(task, d):
     if not stamp:
         return
     stamp = "%s.%s" % (data.expand(stamp, d), task)
+    print "Updating %s" % stamp
     mkdirhier(os.path.dirname(stamp))
-    open(stamp, "w+")
-
+    # Remove the file and recreate to force timestamp
+    # change on broken NFS filesystems
+    if os.access(stamp, os.F_OK):
+        os.remove(stamp)
+    f = open(stamp, "w")
+    f.close()
 
 def add_task(task, deps, d):
     task_graph = data.getVar('_task_graph', d)
@@ -353,6 +398,21 @@ def add_task(task, deps, d):
     # don't assume holding a reference
     data.setVar('_task_graph', task_graph, d)
 
+    task_deps = data.getVar('_task_deps', d)
+    if not task_deps:
+        task_deps = {}
+    def getTask(name):
+        deptask = data.getVarFlag(task, name, d)
+        if deptask:
+            if not name in task_deps:
+                task_deps[name] = {}
+            task_deps[name][task] = deptask
+    getTask('deptask')
+    getTask('rdeptask')
+    getTask('recrdeptask')
+    getTask('nostamp')
+
+    data.setVar('_task_deps', task_deps, d)
 
 def remove_task(task, kill, d):
     """Remove an BB 'task'.
