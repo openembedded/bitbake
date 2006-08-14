@@ -501,12 +501,12 @@ class BBCooker:
 
                     providers = self.status.providers[package]
                 elif package in the_rdepends:
-                    if len(bb.providers.getRuntimeProviders(package)) == 0:
+                    if len(bb.providers.getRuntimeProviders(self.status, package)) == 0:
                         bb.note( "ERROR with rprovider: %(package)s" % vars() )
                         print >> alldepends_file, '"%(package)s" -> ERROR [style="dashed"]' % vars()
                         continue
 
-                    providers = bb.providers.getRuntimeProviders(package)
+                    providers = bb.providers.getRuntimeProviders(self.status, package)
                 else:
                     # something went wrong...
                     print "Complete ERROR! %s" % package
@@ -624,7 +624,7 @@ class BBCooker:
         if not buildAllDeps:
             return True
 
-        all_p = bb.providers.getRuntimeProviders(item)
+        all_p = bb.providers.getRuntimeProviders(self.status, item)
 
         if not all_p:
             bb.msg.error(bb.msg.domain.Provider, "Nothing provides runtime dependency %s" % (item))
