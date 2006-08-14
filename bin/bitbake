@@ -338,7 +338,7 @@ class BBCooker:
 
         # Sort by priority
         for pn in pkg_pn.keys():
-            (last_ver,last_file,pref_ver,pref_file) = self.findBestProvider(pn, self.configuration.data, self.status)
+            (last_ver,last_file,pref_ver,pref_file) = bb.providers.findBestProvider(pn, self.configuration.data, self.status)
             preferred_versions[pn] = (pref_ver, pref_file)
             latest_versions[pn] = (last_ver, last_file)
 
@@ -410,7 +410,7 @@ class BBCooker:
             bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
             for pn in pkg_pn.keys():
-                preferred_versions[pn] = self.findBestProvider(pn, pkg_pn)[2:4]
+                preferred_versions[pn] = bb.providers.findBestProvider(pn, pkg_pn)[2:4]
                 eligible.append(preferred_versions[pn][1])
 
             for p in eligible:
