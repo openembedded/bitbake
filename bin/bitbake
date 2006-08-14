@@ -501,12 +501,12 @@ class BBCooker:
 
                     providers = self.status.providers[package]
                 elif package in the_rdepends:
-                    if len(self.getProvidersRun(package)) == 0:
+                    if len(bb.providers.getRuntimeProviders(package)) == 0:
                         bb.note( "ERROR with rprovider: %(package)s" % vars() )
                         print >> alldepends_file, '"%(package)s" -> ERROR [style="dashed"]' % vars()
                         continue
 
-                    providers = self.getProvidersRun(package)
+                    providers = bb.providers.getRuntimeProviders(package)
                 else:
                     # something went wrong...
                     print "Complete ERROR! %s" % package
@@ -624,7 +624,7 @@ class BBCooker:
         if not buildAllDeps:
             return True
 
-        all_p = self.getProvidersRun(item)
+        all_p = bb.providers.getRuntimeProviders(item)
 
         if not all_p:
             bb.msg.error(bb.msg.domain.Provider, "Nothing provides runtime dependency %s" % (item))
@@ -684,29 +684,6 @@ class BBCooker:
         bb.msg.error(bb.msg.domain.Provider, "No buildable providers for runtime %s" % item)
         bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
         return False
-
-    def getProvidersRun(self, rdepend):
-        """
-        Return any potential providers of runtime rdepend
-        """
-        rproviders = []
-
-        if rdepend in self.status.rproviders:
-            rproviders += self.status.rproviders[rdepend]
-
-        if rdepend in self.status.packages:
-            rproviders += self.status.packages[rdepend]
-
-        if rproviders:
-            return rproviders
-
-        # Only search dynamic packages if we can't find anything in other variables
-        for pattern in self.status.packages_dynamic:
-            regexp = re.compile(pattern)
-            if regexp.match(rdepend):
-                rproviders += self.status.packages_dynamic[pattern]
-
-        return rproviders
 
     def addRunDeps(self , fn, item , buildAllDeps):
         """

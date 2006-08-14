@@ -7,6 +7,7 @@
 # Copyright (C) 2003 - 2005 Michael 'Mickey' Lauer
 # Copyright (C) 2005        Holger Hans Peter Freyther
 # Copyright (C) 2005        ROAD GmbH
+# Copyright (C) 2006        Richard Purdie
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -24,6 +25,9 @@
 import os, re
 from bb import data, utils
 import bb
+
+class NoProvider(Exception):
+    """Exception raised when no provider can be found"""
 
 def findBestProvider(pn, cfgData, dataCache, pkg_pn = None):
     """
@@ -101,7 +105,10 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None):
 
     return (latest,latest_f,preferred_ver, preferred_file)
 
-def filterProviders(providers, item, cfgData, dataCache, build_cache_fail):
+#
+# RP - build_cache_fail needs to move elsewhere
+#
+def filterProviders(providers, item, cfgData, dataCache, build_cache_fail = {}):
     """
     Take a list of providers and filter/reorder according to the 
     environment variables and previous build results
@@ -160,3 +167,25 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail):
 
     return eligible
 
+def getRuntimeProviders(dataCache, rdepend):
+    """
+    Return any providers of runtime dependency
+    """
+    rproviders = []
+
+    if rdepend in dataCache.rproviders:
+       rproviders += dataCache.rproviders[rdepend]
+
+    if rdepend in dataCache.packages:
+        rproviders += dataCache.packages[rdepend]
+
+    if rproviders:
+        return rproviders
+
+    # Only search dynamic packages if we can't find anything in other variables
+    for pattern in dataCache.packages_dynamic:
+        regexp = re.compile(pattern)
+        if regexp.match(rdepend):
+            rproviders += dataCache.packages_dynamic[pattern]
+
+    return rproviders
