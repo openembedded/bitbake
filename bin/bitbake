@@ -30,7 +30,7 @@ import itertools, optparse
 
 parsespin = itertools.cycle( r'|/-\\' )
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 
 #============================================================================#
 # BBParsingStatus
@@ -1158,9 +1158,4 @@ Default BBFILES are the .bb files in the current directory.""" )
 
 
 if __name__ == "__main__":
-    print """WARNING, WARNING, WARNING
-This is a Bitbake from the Unstable/Development Branch.
-You might want to use the bitbake-1.4 stable branch (if you are not a BitBake developer or tester). I'm going to sleep 5 seconds now to make sure you see that."""
-    import time
-    time.sleep(5)
     main()

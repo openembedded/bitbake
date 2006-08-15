@@ -1,3 +1,25 @@
+Changes in Bitbake 1.6.0:
+	- Better msg handling
+	- COW dict implementation from Tim Ansell (mithro) leading
+	  to better performance
+	- Speed up of -s
+
+Changes in Bitbake 1.4.4:
+	- SRCDATE now handling courtsey Justin Patrin
+	- #1017 fix to work with rm_work
+
+Changes in BitBake 1.4.2:
+	- Send logs to oe.pastebin.com instead of pastebin.com
+	  fixes #856
+	- Copy the internal bitbake data before building the
+	  dependency graph. This fixes nano not having a
+	  virtual/libc dependency
+	- Allow multiple TARBALL_STASH entries
+	- Cache, check if the directory exists before changing
+	  into it
+	- git speedup cloning by not doing a checkout
+	- allow to have spaces in filenames (.conf, .bb, .bbclass)
+
 Changes in BitBake 1.4.0:
 	- Fix to check both RDEPENDS and RDEPENDS_${PN}
 	- Fix a RDEPENDS parsing bug in utils:explode_deps()
