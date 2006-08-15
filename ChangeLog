@@ -1,4 +1,4 @@
-Changes in Bitbake 1.4.x:
+Changes in Bitbake 1.4.4:
 	- SRCDATE now handling courtsey Justin Patrin
 	- #1017 fix to work with rm_work
 
