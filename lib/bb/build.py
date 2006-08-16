@@ -376,7 +376,6 @@ def mkstamp(task, d):
     if not stamp:
         return
     stamp = "%s.%s" % (data.expand(stamp, d), task)
-    print "Updating %s" % stamp
     mkdirhier(os.path.dirname(stamp))
     # Remove the file and recreate to force timestamp
     # change on broken NFS filesystems
