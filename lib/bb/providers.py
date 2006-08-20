@@ -27,7 +27,10 @@ from bb import data, utils
 import bb
 
 class NoProvider(Exception):
-    """Exception raised when no provider can be found"""
+    """Exception raised when no provider of a build dependency can be found"""
+
+class NoRProvider(Exception):
+    """Exception raised when no provider of a runtime dependency can be found"""
 
 def findBestProvider(pn, cfgData, dataCache, pkg_pn = None):
     """
