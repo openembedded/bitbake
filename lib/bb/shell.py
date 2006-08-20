@@ -232,7 +232,7 @@ class BitBakeShellCommands:
             item = data.getVar('PN', bbfile_data, 1)
             data.setVar( "_task_cache", [], bbfile_data ) # force
             try:
-                cooker.tryBuildPackage( os.path.abspath( bf ), item, bbfile_data )
+                cooker.tryBuildPackage( os.path.abspath( bf ), item, cmd, bbfile_data, True )
             except build.EventException, e:
                 print "ERROR: Couldn't build '%s'" % name
                 global last_exception

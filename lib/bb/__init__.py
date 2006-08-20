@@ -63,6 +63,8 @@ __all__ = [
     "manifest",
     "methodpool",
     "cache",
+    "runqueue",
+    "taskdata",
     "providers",
  ]
 

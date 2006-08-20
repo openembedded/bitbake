@@ -7,6 +7,7 @@
 # Copyright (C) 2003 - 2005 Michael 'Mickey' Lauer
 # Copyright (C) 2005        Holger Hans Peter Freyther
 # Copyright (C) 2005        ROAD GmbH
+# Copyright )C) 2006        Richard Purdie
 #
 # This program is free software; you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -24,7 +25,7 @@
 import sys, os, getopt, glob, copy, os.path, re, time
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
-from bb import utils, data, parse, event, cache, providers
+from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
 from sets import Set
 import itertools, optparse
 
@@ -43,15 +44,14 @@ class BBParsingStatus:
     """
 
     def __init__(self):
+        """
+        Direct cache variables
+        """
         self.providers   = {}
         self.rproviders = {}
         self.packages = {}
         self.packages_dynamic = {}
-        self.bbfile_priority = {}
-        self.bbfile_config_priorities = []
-        self.ignored_dependencies = None
         self.possible_world = []
-        self.world_target = Set()
         self.pkg_pn = {}
         self.pkg_fn = {}
         self.pkg_pvpr = {}
@@ -66,6 +66,15 @@ class BBParsingStatus:
         self.task_deps = {}
         self.stamp = {}
         self.preferred = {}
+
+        """
+        Indirect Cache variables
+        """
+        self.ignored_dependencies = []
+        self.world_target = Set()
+        self.bbfile_priority = {}
+        self.bbfile_config_priorities = []
+
 
     def handle_bb_data(self, file_name, bb_cache, cached):
         """
@@ -212,25 +221,25 @@ class BBCooker:
     def __init__( self ):
         self.build_cache_fail = []
         self.build_cache = []
-        self.rbuild_cache = []
-        self.building_list = []
-        self.build_path = []
-        self.consider_msgs_cache = []
         self.stats = BBStatistics()
         self.status = None
 
         self.cache = None
         self.bb_cache = None
 
-    def tryBuildPackage( self, fn, item, the_data ):
-        """Build one package"""
+    def tryBuildPackage(self, fn, item, task, the_data, build_depends):
+        """
+        Build one task of a package, optionally build following task depends
+        """
         bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
             self.stats.attempt += 1
             if self.configuration.force:
-                bb.data.setVarFlag('do_%s' % self.configuration.cmd, 'force', 1, the_data)
+                bb.data.setVarFlag('do_%s' % task, 'force', 1, the_data)
+            if not build_depends:
+                bb.data.setVarFlag('do_%s' % task, 'dontrundeps', 1, the_data)
             if not self.configuration.dry_run:
-                bb.build.exec_task('do_%s' % self.configuration.cmd, the_data)
+                bb.build.exec_task('do_%s' % task, the_data)
             bb.event.fire(bb.event.PkgSucceeded(item, the_data))
             self.build_cache.append(fn)
             return True
@@ -248,7 +257,7 @@ class BBCooker:
             self.build_cache_fail.append(fn)
             raise
 
-    def tryBuild( self, fn, virtual , buildAllDeps , build_depends = []):
+    def tryBuild( self, fn, build_depends):
         """
         Build a provider and its dependencies. 
         build_depends is a list of previous build dependencies (not runtime)
@@ -257,79 +266,13 @@ class BBCooker:
 
         the_data = self.bb_cache.loadDataFull(fn, self)
 
-        # Only follow all (runtime) dependencies if doing a build
-        if not buildAllDeps and self.configuration.cmd is "build":
-            buildAllDeps = self.status.build_all[fn]
-
-        # Error on build time dependency loops
-        if build_depends and build_depends.count(fn) > 1:
-            bb.msg.error(bb.msg.domain.Depends, "%s depends on itself (eventually)" % fn)
-            bb.msg.error(bb.msg.domain.Depends, "upwards chain is: %s" % (" -> ".join(self.build_path)))
-            return False
-
-        # See if this is a runtime dependency we've already built
-        # Or a build dependency being handled in a different build chain
-        if fn in self.building_list:
-            return self.addRunDeps(fn, virtual , buildAllDeps)
-
         item = self.status.pkg_fn[fn]
 
-        self.building_list.append(fn)
+        if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
+            self.build_cache.append(fn)
+            return True
 
-        pathstr = "%s (%s)" % (item, virtual)
-        self.build_path.append(pathstr)
-
-        depends_list = (bb.data.getVar('DEPENDS', the_data, True) or "").split()
-
-        bb.msg.note(2, bb.msg.domain.Depends, "current path: %s" % (" -> ".join(self.build_path)))
-        bb.msg.note(2, bb.msg.domain.Depends, "dependencies for %s are: %s" % (item, " ".join(depends_list)))
-
-        try:
-            failed = False
-
-            depcmd = self.configuration.cmd
-            bbdepcmd = bb.data.getVarFlag('do_%s' % self.configuration.cmd, 'bbdepcmd', the_data)
-            if bbdepcmd is not None:
-                if bbdepcmd == "":
-                    depcmd = None
-                else:
-                    depcmd = bbdepcmd
-
-            if depcmd:
-                oldcmd = self.configuration.cmd
-                self.configuration.cmd = depcmd
-
-            for dependency in depends_list:
-                if dependency in self.status.ignored_dependencies:
-                    continue
-                if not depcmd:
-                    continue
-                if self.buildProvider( dependency , buildAllDeps , build_depends ) == 0:
-                    bb.msg.error(bb.msg.domain.Depends, "dependency %s (for %s) not satisfied" % (dependency,item))
-                    failed = True
-                    if self.configuration.abort:
-                        break
-
-            if depcmd:
-                self.configuration.cmd = oldcmd
-
-            if failed:
-                self.stats.deps += 1
-                return False
-
-            if not self.addRunDeps(fn, virtual , buildAllDeps):
-                return False
-
-            if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
-                self.build_cache.append(fn)
-                return True
-
-            return self.tryBuildPackage( fn, item, the_data )
-
-        finally:
-            self.building_list.remove(fn)
-            self.build_path.remove(pathstr)
-
+        return self.tryBuildPackage(fn, item, self.configuration.cmd, the_data, build_depends)
 
     def showVersions( self ):
         pkg_pn = self.status.pkg_pn
@@ -410,7 +353,7 @@ class BBCooker:
             bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
             for pn in pkg_pn.keys():
-                preferred_versions[pn] = bb.providers.findBestProvider(pn, pkg_pn)[2:4]
+                preferred_versions[pn] = bb.providers.findBestProvider(pn, self.configuration.data, self.status, pkg_pn)[2:4]
                 eligible.append(preferred_versions[pn][1])
 
             for p in eligible:
@@ -433,8 +376,6 @@ class BBCooker:
                         eligible = [p] + eligible
 
             return eligible
-
-
 
 
         # try to avoid adding the same rdepends over an over again
@@ -556,163 +497,34 @@ class BBCooker:
         (takes item names from DEPENDS namespace)
         """
 
-        fn = None
-        discriminated = False
+        taskdata = bb.taskdata.TaskData()
 
-        if not item in self.status.providers:
-            bb.msg.error(bb.msg.domain.Depends, "Nothing provides dependency %s" % item)
-            bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
+        try:
+            taskdata.add_provider(self.configuration.data, self.status, item)
+        except bb.providers.NoProvider:
             return 0
 
-        all_p = self.status.providers[item]
+        providers = taskdata.get_provider(item)
 
-        for p in all_p:
+        if len(providers) == 0:
+            return 0
+
+        for p in providers:
             if p in self.build_cache:
                 bb.msg.debug(1, bb.msg.domain.Provider, "already built %s in this run" % p)
                 return 1
 
-        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail)
+        taskdata.add_unresolved(self.configuration.data, self.status)
 
-        if not eligible:
-            return 0
+        tasks = [[item, "do_%s" % self.configuration.cmd]]
+        rq = bb.runqueue.RunQueue()
+        rq.prepare_runqueue(self.configuration.data, self.status, taskdata, tasks)
+        rq.execute_runqueue(self, self.configuration.data, self.status, taskdata, tasks)
 
-        prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, self.configuration.data, 1)
-        if prefervar:
-            self.status.preferred[item] = prefervar
+        #taskdata.dump_data()
+        #rq.dump_data(taskdata)
 
-        if item in self.status.preferred:
-            for p in eligible:
-                pn = self.status.pkg_fn[p]
-                if self.status.preferred[item] == pn:
-                    bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
-                    eligible.remove(p)
-                    eligible = [p] + eligible
-                    discriminated = True
-                    break
-
-        if len(eligible) > 1 and discriminated == False:
-            if item not in self.consider_msgs_cache:
-                providers_list = []
-                for fn in eligible:
-                    providers_list.append(self.status.pkg_fn[fn])
-                bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available (%s);" % ", ".join(providers_list))
-                bb.msg.note(1, bb.msg.domain.Provider, "consider defining PREFERRED_PROVIDER_%s" % item)
-                bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data))
-            self.consider_msgs_cache.append(item)
-
-
-        # run through the list until we find one that we can build
-        for fn in eligible:
-            bb.msg.debug(2, bb.msg.domain.Provider, "selecting %s to satisfy %s" % (fn, item))
-            if self.tryBuild(fn, item, buildAllDeps, build_depends + [fn]):
-                return 1
-
-        bb.msg.note(1, bb.msg.domain.Provider, "no buildable providers for %s" % item)
-        bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
-        return 0
-
-    def buildRProvider( self, item , buildAllDeps ):
-        """
-        Build something to provide a named runtime requirement
-        (takes item names from RDEPENDS/PACKAGES namespace)
-        """
-
-        fn = None
-        all_p = []
-        discriminated = False
-
-        if not buildAllDeps:
-            return True
-
-        all_p = bb.providers.getRuntimeProviders(self.status, item)
-
-        if not all_p:
-            bb.msg.error(bb.msg.domain.Provider, "Nothing provides runtime dependency %s" % (item))
-            bb.event.fire(bb.event.NoProvider(item,self.configuration.data,runtime=True))
-            return False
-
-        for p in all_p:
-            if p in self.rbuild_cache:
-                bb.msg.debug(2, bb.msg.domain.Provider, "Already built %s providing runtime %s" % (p,item))
-                return True
-            if p in self.build_cache:
-                bb.msg.debug(2, bb.msg.domain.Provider, "Already built %s but adding any further RDEPENDS for %s" % (p, item))
-                return self.addRunDeps(p, item , buildAllDeps)
-
-        eligible = bb.providers.filterProviders(all_p, item, self.configuration.data, self.status, self.build_cache_fail)
-        if not eligible:
-            return 0
-
-        preferred = []
-        for p in eligible:
-            pn = self.status.pkg_fn[p]
-            provides = self.status.pn_provides[pn]
-            for provide in provides:
-                prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, self.configuration.data, 1)
-                if prefervar == pn:
-                    bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
-                    eligible.remove(p)
-                    eligible = [p] + eligible
-                    preferred.append(p)
-
-        if len(eligible) > 1 and len(preferred) == 0:
-            if item not in self.consider_msgs_cache:
-                providers_list = []
-                for fn in eligible:
-                    providers_list.append(self.status.pkg_fn[fn])
-                bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available (%s);" % ", ".join(providers_list))
-                bb.msg.note(1, bb.msg.domain.Provider, "consider defining a PREFERRED_PROVIDER to match runtime %s" % item)
-                bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data,runtime=True))
-            self.consider_msgs_cache.append(item)
-
-        if len(preferred) > 1:
-            if item not in self.consider_msgs_cache:
-                providers_list = []
-                for fn in preferred:
-                    providers_list.append(self.status.pkg_fn[fn])
-                bb.msg.note(1, bb.msg.domain.Provider, "multiple preferred providers are available (%s);" % ", ".join(providers_list))
-                bb.msg.note(1, bb.msg.domain.Provider, "consider defining only one PREFERRED_PROVIDER to match runtime %s" % item)
-                bb.event.fire(bb.event.MultipleProviders(item,providers_list,self.configuration.data,runtime=True))
-            self.consider_msgs_cache.append(item)
-
-        # run through the list until we find one that we can build
-        for fn in eligible:
-            bb.msg.debug(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s" % (fn, item))
-            if self.tryBuild(fn, item, buildAllDeps):
-                return True
-
-        bb.msg.error(bb.msg.domain.Provider, "No buildable providers for runtime %s" % item)
-        bb.event.fire(bb.event.NoProvider(item,self.configuration.data))
-        return False
-
-    def addRunDeps(self , fn, item , buildAllDeps):
-        """
-        Add any runtime dependencies of runtime item provided by fn 
-        as long as item has't previously been processed by this function.
-        """
-
-        if item in self.rbuild_cache:
-            return True
-
-        if not buildAllDeps:
-            return True
-
-        rdepends = []
-        self.rbuild_cache.append(item)
-
-        if fn in self.status.rundeps and item in self.status.rundeps[fn]:
-            rdepends += self.status.rundeps[fn][item].keys()
-        if fn in self.status.runrecs and item in self.status.runrecs[fn]:
-            rdepends += self.status.runrecs[fn][item].keys()
-
-        bb.msg.debug(2, bb.msg.domain.Provider, "Additional runtime dependencies for %s are: %s" % (item, " ".join(rdepends)))
-
-        for rdepend in rdepends:
-            if rdepend in self.status.ignored_dependencies:
-                continue
-            if not self.buildRProvider(rdepend, buildAllDeps):
-                return False
-        return True
+        return 1
 
     def buildDepgraph( self ):
         all_depends = self.status.all_depends
@@ -853,9 +665,6 @@ class BBCooker:
         if self.configuration.verbose:
             bb.msg.set_verbose(True)
 
-        if not self.configuration.cmd:
-            self.configuration.cmd = "build"
-
         if self.configuration.debug:
             bb.msg.set_debug_level(self.configuration.debug)
 
@@ -866,6 +675,12 @@ class BBCooker:
 
         self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
 
+        if not self.configuration.cmd:
+            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data)
+
+        # For backwards compatibility - REMOVE ME
+        if not self.configuration.cmd:
+            self.configuration.cmd = "build"
 
         #
         # Special updated configuration we use for firing events
@@ -896,7 +711,7 @@ class BBCooker:
 
             item = bb.data.getVar('PN', bbfile_data, 1)
             try:
-                self.tryBuildPackage( bf, item, bbfile_data )
+                self.tryBuildPackage(bf, item, self.configuration.cmd, bbfile_data, True)
             except bb.build.EventException:
                 bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
 
@@ -962,24 +777,22 @@ class BBCooker:
                 self.generateDotGraph( pkgs_to_build, self.configuration.ignored_dot_deps )
                 sys.exit( 0 )
 
-
             bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.event_data))
 
-            failures = 0
-            for k in pkgs_to_build:
-                failed = False
-                try:
-                    if self.buildProvider( k , False ) == 0:
-                        # already diagnosed
-                        failed = True
-                except bb.build.EventException:
-                    bb.msg.error(bb.msg.domain.Build, "Build of " + k + " failed")
-                    failed = True
+            taskdata = bb.taskdata.TaskData()
 
-                if failed:
-                    failures += failures
-                    if self.configuration.abort:
-                        sys.exit(1)
+            runlist = []
+            try:
+                for k in pkgs_to_build:
+                    taskdata.add_provider(self.configuration.data, self.status, k)
+                    runlist.append([k, "do_%s" % self.configuration.cmd])
+                taskdata.add_unresolved(self.configuration.data, self.status)
+            except bb.providers.NoProvider:
+                sys.exit(1)
+
+            rq = bb.runqueue.RunQueue()
+            rq.prepare_runqueue(self.configuration.data, self.status, taskdata, runlist)
+            failures = rq.execute_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
 
             bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.event_data, failures))
 
@@ -1118,7 +931,7 @@ Default BBFILES are the .bb files in the current directory.""" )
                action = "store_true", dest = "interactive", default = False )
 
     parser.add_option( "-c", "--cmd", help = "Specify task to execute. Note that this only executes the specified task for the providee and the packages it depends on, i.e. 'compile' does not implicitly call stage for the dependencies (IOW: use only if you know what you are doing). Depending on the base.bbclass a listtaks tasks is defined and will show available tasks",
-               action = "store", dest = "cmd", default = "build" )
+               action = "store", dest = "cmd" )
 
     parser.add_option( "-r", "--read", help = "read the specified file before bitbake.conf",
                action = "append", dest = "file", default = [] )
