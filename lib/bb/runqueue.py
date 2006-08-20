@@ -210,7 +210,7 @@ class RunQueue:
                 endpoints.append(listid)
             for dep in revdeps:
                 if dep in self.runq_depends[listid]:
-                    self.dump_data(taskData)
+                    #self.dump_data(taskData)
                     bb.fatal("Task %s has circular dependency on %s" % (dep, listid))
             runq_weight1[listid] = len(revdeps)
 
@@ -414,8 +414,9 @@ class RunQueue:
 
         bb.msg.debug(3, bb.msg.domain.RunQueue, "sorted_tasks:")
         for task1 in range(len(self.runq_fnid)):
-            task = self.prio_map[task1]
-            bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
+            if task1 in self.prio_map:
+                task = self.prio_map[task1]
+                bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
                         taskQueue.fn_index[self.runq_fnid[task]], 
                         self.runq_task[task], 
                         self.runq_weight[task], 
