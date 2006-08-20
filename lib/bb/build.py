@@ -281,8 +281,10 @@ def exec_task(task, d):
                 event.fire(failedevent)
                 raise EventException("Function failed in task: %s" % reason, failedevent)
 
-    # execute
-    task_graph.walkdown(task, execute)
+    if data.getVarFlag(task, 'dontrundeps', d):
+        execute(None, task)
+    else:
+        task_graph.walkdown(task, execute)
 
     # make stamp, or cause event and raise exception
     if not data.getVarFlag(task, 'nostamp', d):
