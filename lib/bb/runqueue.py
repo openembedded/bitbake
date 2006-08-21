@@ -373,6 +373,7 @@ class RunQueue:
                         bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (build_pids[result[0]], get_user_idstring(build_pids[result[0]])))
                         raise bb.runqueue.TaskFailure(self.runq_fnid[build_pids[result[0]]], self.runq_task[build_pids[result[0]]])
                     task_complete(self, build_pids[result[0]])
+                    del build_pids[result[0]]
                     continue
                 break
         except SystemExit:
@@ -382,7 +383,12 @@ class RunQueue:
             if active_builds > 0:
                 while active_builds > 0:
                     bb.note("Waiting for %s active tasks to finish" % active_builds)
-                    os.waitpid(-1, 0)
+                    tasknum = 1
+                    for k, v in build_pids.iteritems():
+                        bb.note("%s: %s (%s)" % (tasknum, get_user_idstring(v), k))
+                        tasknum = tasknum + 1
+                    result = os.waitpid(-1, 0)
+                    del build_pids[result[0]]		    
                     active_builds = active_builds - 1
             if cooker.configuration.abort:
                 sys.exit(1)
