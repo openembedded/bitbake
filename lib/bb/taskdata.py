@@ -232,7 +232,7 @@ class TaskData:
         for target in self.build_names_index:
             if target in dataCache.ignored_dependencies:
                 continue
-            if target in self.failed_deps:
+            if self.build_names_index.index(target) in self.failed_deps:
                 continue
             if not self.have_build_target(target):
                 unresolved.append(target)
@@ -247,7 +247,7 @@ class TaskData:
         for target in self.run_names_index:
             if target in dataCache.ignored_dependencies:
                 continue
-            if target in self.failed_rdeps:
+            if self.run_names_index.index(target) in self.failed_rdeps:
                 continue
             if not self.have_runtime_target(target):
                 unresolved.append(target)
