@@ -359,8 +359,10 @@ class TaskData:
             self.consider_msgs_cache.append(item)
 
         for fn in eligible:
+            fnid = self.getfn_id(fn)
+            if fnid in self.failed_fnids:
+                continue
             bb.msg.debug(2, bb.msg.domain.Provider, "adding %s to satisfy %s" % (fn, item))
-
             self.add_tasks(fn, dataCache)
             self.add_build_target(fn, item)
 
@@ -434,6 +436,9 @@ class TaskData:
 
         # run through the list until we find one that we can build
         for fn in eligible:
+            fnid = self.getfn_id(fn)
+            if fnid in self.failed_fnids:
+                continue
             bb.msg.debug(2, bb.msg.domain.Provider, "adding %s to satisfy runtime %s" % (fn, item))
             self.add_tasks(fn, dataCache)
             self.add_runtime_target(fn, item)
