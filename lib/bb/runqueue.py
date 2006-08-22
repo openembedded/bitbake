@@ -330,7 +330,7 @@ class RunQueue:
             taskname = self.runq_task[task]
             return "%s, %s" % (fn, taskname)
 
-        number_tasks = bb.data.getVar("BB_NUMBER_THREADS", cfgData)
+        number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData))
         if not number_tasks:
             number_tasks = 1
 
