@@ -50,6 +50,7 @@ class RunQueue:
         targets is list of paired values - a provider name and the task to run
         """
 
+        depends = []
         runq_weight1 = []
         runq_build = []
         runq_done = []
