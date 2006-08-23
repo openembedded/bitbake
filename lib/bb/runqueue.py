@@ -212,7 +212,7 @@ class RunQueue:
             for dep in revdeps:
                 if dep in self.runq_depends[listid]:
                     #self.dump_data(taskData)
-                    bb.fatal("Task %s has circular dependency on %s" % (dep, listid))
+                    bb.fatal("Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep] , taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
             runq_weight1[listid] = len(revdeps)
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Compute totals (have %s endpoint(s))" % len(endpoints))
