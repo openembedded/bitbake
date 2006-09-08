@@ -18,11 +18,11 @@
 # Place, Suite 330, Boston, MA 02111-1307 USA. 
 
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
+sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
 from bb import *
 
-__version__ = 1.0
+__version__ = 1.1
 type = "jffs2"
 cfg_bb = data.init()
 cfg_oespawn = data.init()
