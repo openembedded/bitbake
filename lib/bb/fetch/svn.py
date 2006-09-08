@@ -26,6 +26,7 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
 import os, re
+import sys
 import bb
 from   bb import data
 from   bb.fetch import Fetch
@@ -121,52 +122,52 @@ class Svn(Fetch):
 
             svnroot = host + path
 
-            data.setVar('SVNROOT', svnroot, localdata)
+            # either use the revision, or SRCDATE in braces, or nothing for SRCDATE = "now"
+            if revision:
+                options.append("-r %s" % revision)
+            elif date != "now":
+                options.append("-r {%s}" % date)
+
+            data.setVar('SVNROOT', "%s://%s/%s" % (proto, svnroot, module), localdata)
             data.setVar('SVNCOOPTS', " ".join(options), localdata)
             data.setVar('SVNMODULE', module, localdata)
             svncmd = data.getVar('FETCHCOMMAND', localdata, 1)
-            svncmd = "svn co -r {%s} %s://%s/%s" % (date, proto, svnroot, module)
-
-            # either use the revision or if SRCDATE is now no braces
-            if revision:
-                svncmd = "svn co -r %s %s://%s/%s" % (revision, proto, svnroot, module)
-            elif date == "now":
-                svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
+            svnupcmd = data.getVar('UPDATECOMMAND', localdata, 1)
 
             if svn_rsh:
                 svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
+                svnupcmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svnupcmd)
 
-#           create temp directory
-            bb.debug(2, "Fetch: creating temporary directory")
-            bb.mkdirhier(data.expand('${WORKDIR}', localdata))
-            data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvn.XXXXXX', localdata), localdata)
-            tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
-            tmpfile = tmppipe.readline().strip()
-            if not tmpfile:
-                bb.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
-                raise FetchError(module)
+            pkg=data.expand('${PN}', d)
+            pkgdir=os.path.join(data.expand('${SVNDIR}', localdata), pkg)
+            moddir=os.path.join(pkgdir, module)
+            bb.debug(2, "Fetch: checking for module directory '" + moddir + "'")
 
-#           check out sources there
-            os.chdir(tmpfile)
-            bb.note("Fetch " + loc)
-            bb.debug(1, "Running %s" % svncmd)
-            myret = os.system(svncmd)
+            if os.access(os.path.join(moddir,'.svn'), os.R_OK):
+                bb.note("Update " + loc)
+    		# update sources there
+                os.chdir(moddir)
+                bb.debug(1, "Running %s" % svnupcmd)
+                myret = os.system(svnupcmd)
+            else:
+                bb.note("Fetch " + loc)
+    		# check out sources there
+                bb.mkdirhier(pkgdir)
+                os.chdir(pkgdir)
+                bb.debug(1, "Running %s" % svncmd)
+                myret = os.system(svncmd)
+
             if myret != 0:
-                try:
-                    os.rmdir(tmpfile)
-                except OSError:
-                    pass
                 raise FetchError(module)
 
-            os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
-#           tar them up to a defined filename
+            os.chdir(pkgdir)
+	    # tar them up to a defined filename
             myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
             if myret != 0:
                 try:
                     os.unlink(tarfn)
                 except OSError:
                     pass
-#           cleanup
-            os.system('rm -rf %s' % tmpfile)
             os.chdir(olddir)
+
         del localdata
