@@ -1,3 +1,9 @@
+Changes in BitBake 1.7.?:
+    - Major updates of the dependency handling and execution
+      of tasks
+    - Change of the SVN Fetcher to keep the checkout around
+      courtsey to Paul Sokolovsky (#1367)
+
 Changes in Bitbake 1.6.0:
 	- Better msg handling
 	- COW dict implementation from Tim Ansell (mithro) leading
