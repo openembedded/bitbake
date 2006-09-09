@@ -43,6 +43,11 @@ class RunQueue:
         self.runq_weight = []
         self.prio_map = []
 
+    def get_user_idstring(self, task, taskData):
+        fn = taskData.fn_index[self.runq_fnid[task]]
+        taskname = self.runq_task[task]
+        return "%s, %s" % (fn, taskname)
+
     def prepare_runqueue(self, cfgData, dataCache, taskData, targets):
         """
         Turn a set of taskData into a RunQueue and compute data needed 
@@ -233,9 +238,9 @@ class RunQueue:
         # Sanity Checks
         for task in range(len(self.runq_fnid)):
             if runq_done[task] == 0:
-                bb.fatal("Task %s not processed!" % task)
+                bb.fatal("Task %s (%s) not processed!" % (task, self.get_user_idstring(task, taskData)))
             if runq_weight1[task] != 0:
-                bb.fatal("Task %s count not zero!" % task)
+                bb.fatal("Task %s (%s) count not zero!" % (task, self.get_user_idstring(task, taskData)))
 
         # Make a weight sorted map
         from copy import deepcopy
@@ -325,10 +330,6 @@ class RunQueue:
             else:
                 runq_buildable.append(0)
 
-        def get_user_idstring(task):
-            fn = taskData.fn_index[self.runq_fnid[task]]
-            taskname = self.runq_task[task]
-            return "%s, %s" % (fn, taskname)
 
         number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData) or 1)
 
@@ -340,12 +341,12 @@ class RunQueue:
                     taskname = self.runq_task[task]
 
                     if bb.build.stamp_is_current_cache(dataCache, fn, taskname):
-                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, get_user_idstring(task)))
+                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
                         runq_running[task] = 1
                         task_complete(self, task)
                         continue
 
-                    bb.msg.debug(1, bb.msg.domain.RunQueue, "Running task %s (%s)" % (task, get_user_idstring(task)))
+                    bb.msg.debug(1, bb.msg.domain.RunQueue, "Running task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
                     try: 
                         pid = os.fork() 
                     except OSError, e: 
@@ -369,7 +370,7 @@ class RunQueue:
                     result = os.waitpid(-1, 0)
                     active_builds = active_builds - 1
                     if result[1] != 0:
-                        bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (build_pids[result[0]], get_user_idstring(build_pids[result[0]])))
+                        bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (build_pids[result[0]], self.get_user_idstring(build_pids[result[0]], taskData)))
                         raise bb.runqueue.TaskFailure(self.runq_fnid[build_pids[result[0]]], self.runq_task[build_pids[result[0]]])
                     task_complete(self, build_pids[result[0]])
                     del build_pids[result[0]]
@@ -384,7 +385,7 @@ class RunQueue:
                     bb.note("Waiting for %s active tasks to finish" % active_builds)
                     tasknum = 1
                     for k, v in build_pids.iteritems():
-                        bb.note("%s: %s (%s)" % (tasknum, get_user_idstring(v), k))
+                        bb.note("%s: %s (%s)" % (tasknum, self.get_user_idstring(v, taskData), k))
                         tasknum = tasknum + 1
                     result = os.waitpid(-1, 0)
                     del build_pids[result[0]]		    
