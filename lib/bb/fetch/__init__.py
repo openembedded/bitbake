@@ -45,9 +45,9 @@ class MD5SumError(Exception):
     """Exception raised when a MD5SUM of a file does not match the expected one"""
 
 def uri_replace(uri, uri_find, uri_replace, d):
-#   bb.note("uri_replace: operating on %s" % uri)
+#   bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: operating on %s" % uri)
     if not uri or not uri_find or not uri_replace:
-        bb.debug(1, "uri_replace: passed an undefined value, not replacing")
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "uri_replace: passed an undefined value, not replacing")
     uri_decoded = list(bb.decodeurl(uri))
     uri_find_decoded = list(bb.decodeurl(uri_find))
     uri_replace_decoded = list(bb.decodeurl(uri_replace))
@@ -65,9 +65,9 @@ def uri_replace(uri, uri_find, uri_replace, d):
                         localfn = bb.fetch.localpath(uri, d)
                         if localfn:
                             result_decoded[loc] = os.path.dirname(result_decoded[loc]) + "/" + os.path.basename(bb.fetch.localpath(uri, d))
-#                       bb.note("uri_replace: matching %s against %s and replacing with %s" % (i, uri_decoded[loc], uri_replace_decoded[loc]))
+#                       bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: matching %s against %s and replacing with %s" % (i, uri_decoded[loc], uri_replace_decoded[loc]))
             else:
-#               bb.note("uri_replace: no match")
+#               bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: no match")
                 return uri
 #           else:
 #               for j in i.keys():
@@ -78,7 +78,7 @@ methods = []
 
 def init(urls = [], d = None):
     if d == None:
-        bb.debug(2,"BUG init called with None as data object!!!")
+        bb.msg.debug(2, bb.msg.domain.Fetcher, "BUG init called with None as data object!!!")
         return
 
     for m in methods:
@@ -173,7 +173,7 @@ class Fetch(object):
         """
         tarpath = os.path.join(data.getVar("DL_DIR", d, 1), tarfn)
         if os.access(tarpath, os.R_OK):
-            bb.debug(1, "%s already exists, skipping checkout." % tarfn)
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % tarfn)
             return True
 
         pn = data.getVar('PN', d, True)
@@ -184,11 +184,11 @@ class Fetch(object):
         for stash in src_tarball_stash:
             fetchcmd = data.getVar("FETCHCOMMAND_mirror", d, True) or data.getVar("FETCHCOMMAND_wget", d, True)
             uri = stash + tarfn
-            bb.note("fetch " + uri)
+            bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
             fetchcmd = fetchcmd.replace("${URI}", uri)
             ret = os.system(fetchcmd)
             if ret == 0:
-                bb.note("Fetched %s from tarball stash, skipping checkout" % tarfn)
+                bb.msg.note(1, bb.msg.domain.Fetcher, "Fetched %s from tarball stash, skipping checkout" % tarfn)
                 return True
         return False
     try_mirror = staticmethod(try_mirror)
@@ -205,7 +205,7 @@ class Fetch(object):
         if "now" != date:
             dl = os.path.join(dldir, tarfn)
             if os.access(dl, os.R_OK):
-                bb.debug(1, "%s already exists, skipping checkout." % tarfn)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % tarfn)
                 return True
 
             # try to use the tarball stash

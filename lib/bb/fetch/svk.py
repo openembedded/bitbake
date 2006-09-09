@@ -118,19 +118,19 @@ class Svk(Fetch):
                 svkcmd = "svk co -r %s/%s" % (revision, svkroot, module)
 
 #           create temp directory
-            bb.debug(2, "Fetch: creating temporary directory")
+            bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: creating temporary directory")
             bb.mkdirhier(data.expand('${WORKDIR}', localdata))
             data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
             tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
             tmpfile = tmppipe.readline().strip()
             if not tmpfile:
-                bb.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
+                bb.msg.error(bb.msg.domain.Fetcher, "Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
                 raise FetchError(module)
 
 #           check out sources there
             os.chdir(tmpfile)
-            bb.note("Fetch " + loc)
-            bb.debug(1, "Running %s" % svkcmd)
+            bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svkcmd)
             myret = os.system(svkcmd)
             if myret != 0:
                 try:

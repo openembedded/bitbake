@@ -130,7 +130,7 @@ class Cvs(Fetch):
 
             # try to use the tarball stash
             if Fetch.check_for_tarball(d, tarfn, dldir, date):
-                bb.debug(1, "%s already exists or was mirrored, skipping cvs checkout." % tarfn)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping cvs checkout." % tarfn)
                 continue
 
             if date:
@@ -161,21 +161,21 @@ class Cvs(Fetch):
                 cvsupdatecmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvsupdatecmd)
 
 #           create module directory
-            bb.debug(2, "Fetch: checking for module directory")
+            bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory")
             pkg=data.expand('${PN}', d)
             pkgdir=os.path.join(data.expand('${CVSDIR}', localdata), pkg)
             moddir=os.path.join(pkgdir,localdir)
             if os.access(os.path.join(moddir,'CVS'), os.R_OK):
-                bb.note("Update " + loc)
+                bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
 #               update sources there
                 os.chdir(moddir)
                 myret = os.system(cvsupdatecmd)
             else:
-                bb.note("Fetch " + loc)
+                bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
 #               check out sources there
                 bb.mkdirhier(pkgdir)
                 os.chdir(pkgdir)
-                bb.debug(1, "Running %s" % cvscmd)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cvscmd)
                 myret = os.system(cvscmd)
 
             if myret != 0 or not os.access(moddir, os.R_OK):

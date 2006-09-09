@@ -114,7 +114,7 @@ class Svn(Fetch):
 
             # try to use the tarball stash
             if Fetch.check_for_tarball(d, tarfn, dldir, date):
-                bb.debug(1, "%s already exists or was mirrored, skipping svn checkout." % tarfn)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % tarfn)
                 continue
 
             olddir = os.path.abspath(os.getcwd())
@@ -141,20 +141,20 @@ class Svn(Fetch):
             pkg=data.expand('${PN}', d)
             pkgdir=os.path.join(data.expand('${SVNDIR}', localdata), pkg)
             moddir=os.path.join(pkgdir, module)
-            bb.debug(2, "Fetch: checking for module directory '" + moddir + "'")
+            bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + moddir + "'")
 
             if os.access(os.path.join(moddir,'.svn'), os.R_OK):
-                bb.note("Update " + loc)
+                bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
     		# update sources there
                 os.chdir(moddir)
-                bb.debug(1, "Running %s" % svnupcmd)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnupcmd)
                 myret = os.system(svnupcmd)
             else:
-                bb.note("Fetch " + loc)
+                bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
     		# check out sources there
                 bb.mkdirhier(pkgdir)
                 os.chdir(pkgdir)
-                bb.debug(1, "Running %s" % svncmd)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svncmd)
                 myret = os.system(svncmd)
 
             if myret != 0:

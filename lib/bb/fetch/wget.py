@@ -86,10 +86,10 @@ class Wget(Fetch):
             else:
                 fetchcmd = data.getVar("FETCHCOMMAND", d, 1)
 
-            bb.note("fetch " + uri)
+            bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
             fetchcmd = fetchcmd.replace("${URI}", uri)
             fetchcmd = fetchcmd.replace("${FILE}", basename)
-            bb.debug(2, "executing " + fetchcmd)
+            bb.msg.debug(2, bb.msg.domain.Fetcher, "executing " + fetchcmd)
             ret = os.system(fetchcmd)
             if ret != 0:
                 return False
@@ -98,7 +98,7 @@ class Wget(Fetch):
             dl_dir = data.getVar("DL_DIR", d, True)
             if not os.path.exists(dl):
                 os.system("rm %s*" % dl) # FIXME shell quote it
-                bb.debug(2,"sourceforge.net send us to the mirror on %s" % basename)
+                bb.msg.debug(2, bb.msg.domain.Fetcher, "sourceforge.net send us to the mirror on %s" % basename)
                 return False
 
 #           supposedly complete.. write out md5sum

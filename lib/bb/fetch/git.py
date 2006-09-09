@@ -37,7 +37,7 @@ def prunedir(topdir):
 
 def rungitcmd(cmd,d):
 
-    bb.debug(1, "Running %s" % cmd)
+    bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
 
     # Need to export PATH as git is likely to be in metadata paths 
     # rather than host provided
@@ -120,7 +120,7 @@ class Git(Fetch):
 
             # tag=="master" must always update
             if (tag != "master") and Fetch.try_mirror(d, localfile(loc, d)):
-                bb.debug(1, "%s already exists (or was stashed). Skipping git checkout." % cofile)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % cofile)
                 continue
 
             if not os.path.exists(repodir):
@@ -142,7 +142,7 @@ class Git(Fetch):
             #rungitcmd("rsync -a --verbose --stats --progress rsync://%s%s/ %s" % (host, path, os.path.join(repodir, ".git", "")),d)
 
             os.chdir(repodir)
-            bb.note("Creating tarball of git repository")
+            bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
             rungitcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ),d)
 
             if os.path.exists(codir):
@@ -154,5 +154,5 @@ class Git(Fetch):
             rungitcmd("git checkout-index -q -f --prefix=%s -a" % (os.path.join(codir, "git", "")),d)
 
             os.chdir(codir)
-            bb.note("Creating tarball of git checkout")
+            bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
             rungitcmd("tar -czf %s %s" % (cofile, os.path.join(".", "*") ),d)
