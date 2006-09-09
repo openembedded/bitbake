@@ -32,7 +32,7 @@ class NoProvider(Exception):
 class NoRProvider(Exception):
     """Exception raised when no provider of a runtime dependency can be found"""
 
-def findBestProvider(pn, cfgData, dataCache, pkg_pn = None):
+def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     """
     If there is a PREFERRED_VERSION, find the highest-priority bbfile
     providing that version.  If not, find the latest version provided by
@@ -82,10 +82,13 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None):
             pv_str = '%s-%s' % (preferred_v, preferred_r)
         else:
             pv_str = preferred_v
+        itemstr = ""
+        if item:
+            itemstr = " (for item %s)" % item
         if preferred_file is None:
-            bb.msg.note(1, bb.msg.domain.Provider, "preferred version %s of %s not available" % (pv_str, pn))
+            bb.msg.note(1, bb.msg.domain.Provider, "preferred version %s of %s not available%s" % (pv_str, pn, itemstr))
         else:
-            bb.msg.debug(1, bb.msg.domain.Provider, "selecting %s as PREFERRED_VERSION %s of package %s" % (preferred_file, pv_str, pn))
+            bb.msg.debug(1, bb.msg.domain.Provider, "selecting %s as PREFERRED_VERSION %s of package %s%s" % (preferred_file, pv_str, pn, itemstr))
 
     del localdata
 
@@ -130,7 +133,7 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail = {}):
     bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
     for pn in pkg_pn.keys():
-        preferred_versions[pn] = bb.providers.findBestProvider(pn, cfgData, dataCache, pkg_pn)[2:4]
+        preferred_versions[pn] = bb.providers.findBestProvider(pn, cfgData, dataCache, pkg_pn, item)[2:4]
         eligible.append(preferred_versions[pn][1])
 
 
