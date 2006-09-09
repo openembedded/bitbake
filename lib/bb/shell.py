@@ -57,7 +57,7 @@ try:
 except NameError:
     from sets import Set as set
 import sys, os, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue, fnmatch
-from bb import data, parse, build, fatal
+from bb import data, parse, build, fatal, cache
 
 __version__ = "0.5.3.1"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
@@ -392,7 +392,7 @@ SRC_URI = ""
 
     def parse( self, params ):
         """(Re-)parse .bb files and calculate the dependency graph"""
-        cooker.status = cooker.ParsingStatus()
+        cooker.status = cache.CacheData()
         ignore = data.getVar("ASSUME_PROVIDED", cooker.configuration.data, 1) or ""
         cooker.status.ignored_dependencies = set( ignore.split() )
         cooker.handleCollections( data.getVar("BBFILE_COLLECTIONS", cooker.configuration.data, 1) )
