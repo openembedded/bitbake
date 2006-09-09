@@ -26,7 +26,7 @@ Place, Suite 330, Boston, MA 02111-1307 USA.
 import sys, os, re, bb
 from bb import utils
 
-debug_level = 0
+debug_level = {}
 
 verbose = False
 
@@ -48,20 +48,32 @@ domain = bb.utils.Enum(
 #
 
 def set_debug_level(level):
-    bb.msg.debug_level = level
+    bb.msg.debug_level = {}
+    for domain in bb.msg.domain:
+        bb.msg.debug_level[domain] = level
+    bb.msg.debug_level['default'] = level
 
 def set_verbose(level):
     bb.msg.verbose = level
+
+def set_debug_domains(domains):
+    for domain in domains:
+        for ddomain in bb.msg.domain:
+            if domain == str(ddomain):
+                bb.msg.debug_level[ddomain] = 2
+        else:
+             std_warn("Logging domain %s is not valid, ignoring" % domain)
 
 #
 # Message handling functions
 #
 
 def debug(level, domain, msg, fn = None):
-    std_debug(level, msg)
+    if debug_level[domain] >= level:
+        print 'DEBUG: ' + msg
 
 def note(level, domain, msg, fn = None):
-    if level == 1 or verbose:
+    if level == 1 or verbose or debug_level[domain] >= 1:
         std_note(msg)
 
 def warn(domain, msg, fn = None):
@@ -77,7 +89,7 @@ def fatal(domain, msg, fn = None):
 # Compatibility functions for the original message interface
 #
 def std_debug(lvl, msg):
-    if debug_level >= lvl:
+    if debug_level['default'] >= lvl:
         print 'DEBUG: ' + msg
 
 def std_note(msg):
@@ -92,4 +104,3 @@ def std_error(msg):
 def std_fatal(msg):
     print 'ERROR: ' + msg
     sys.exit(1)
-

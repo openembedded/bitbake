@@ -667,6 +667,11 @@ class BBCooker:
 
         if self.configuration.debug:
             bb.msg.set_debug_level(self.configuration.debug)
+        else:
+            bb.msg.set_debug_level(0)
+
+        if self.configuration.debug_domains:
+            bb.msg.set_debug_domains(self.configuration.debug_domains)
 
         self.configuration.data = bb.data.init()
 
@@ -959,8 +964,12 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     parser.add_option( "-g", "--graphviz", help = "emit the dependency trees of the specified packages in the dot syntax",
                 action = "store_true", dest = "dot_graph", default = False )
+
     parser.add_option( "-I", "--ignore-deps", help = """Stop processing at the given list of dependencies when generating dependency graphs. This can help to make the graph more appealing""",
                 action = "append", dest = "ignored_dot_deps", default = [] )
+
+    parser.add_option( "-l", "--log-domains", help = """Show debug logging for the specified logging domains""",
+                action = "append", dest = "debug_domains", default = [] )
 
 
     options, args = parser.parse_args( sys.argv )
