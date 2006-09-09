@@ -27,6 +27,7 @@ type = "jffs2"
 cfg_bb = data.init()
 cfg_oespawn = data.init()
 
+bb.msg.set_debug_level(0)
 
 def usage():
     print "Usage: bbimage [options ...]"
