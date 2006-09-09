@@ -121,7 +121,7 @@ class RunQueue:
                 #Prune self references
                 if task in depends:
                     newdep = []
-                    bb.debug(2, "Task %s (%s %s) contains self reference! %s" % (task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], depends))
+                    bb.msg.debug(2, bb.msg.domain.RunQueue, "Task %s (%s %s) contains self reference! %s" % (task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], depends))
                     for dep in depends:
                        if task != dep:
                           newdep.append(dep)
@@ -196,7 +196,7 @@ class RunQueue:
             origdeps = self.runq_depends[listid]
             for origdep in origdeps:
                 if maps[origdep] == -1:
-                    bb.fatal(bb.msg.domain.RunQueue, "Invalid mapping - Should never happen!")
+                    bb.msg.fatal(bb.msg.domain.RunQueue, "Invalid mapping - Should never happen!")
                 newdeps.append(maps[origdep])
             self.runq_depends[listid] = newdeps
 
@@ -217,7 +217,7 @@ class RunQueue:
             for dep in revdeps:
                 if dep in self.runq_depends[listid]:
                     #self.dump_data(taskData)
-                    bb.fatal("Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep] , taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
+                    bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep] , taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
             runq_weight1[listid] = len(revdeps)
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Compute totals (have %s endpoint(s))" % len(endpoints))
@@ -238,9 +238,9 @@ class RunQueue:
         # Sanity Checks
         for task in range(len(self.runq_fnid)):
             if runq_done[task] == 0:
-                bb.fatal("Task %s (%s) not processed!" % (task, self.get_user_idstring(task, taskData)))
+                bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) not processed!" % (task, self.get_user_idstring(task, taskData)))
             if runq_weight1[task] != 0:
-                bb.fatal("Task %s (%s) count not zero!" % (task, self.get_user_idstring(task, taskData)))
+                bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) count not zero!" % (task, self.get_user_idstring(task, taskData)))
 
         # Make a weight sorted map
         from copy import deepcopy
@@ -379,13 +379,13 @@ class RunQueue:
         except SystemExit:
             raise
         except:
-            bb.error("Exception received")
+            bb.msg.error(bb.msg.domain.RunQueue, "Exception received")
             if active_builds > 0:
                 while active_builds > 0:
-                    bb.note("Waiting for %s active tasks to finish" % active_builds)
+                    bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % active_builds)
                     tasknum = 1
                     for k, v in build_pids.iteritems():
-                        bb.note("%s: %s (%s)" % (tasknum, self.get_user_idstring(v, taskData), k))
+                        bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (%s)" % (tasknum, self.get_user_idstring(v, taskData), k))
                         tasknum = tasknum + 1
                     result = os.waitpid(-1, 0)
                     del build_pids[result[0]]		    

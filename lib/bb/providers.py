@@ -140,7 +140,7 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail = {}):
             eligible.remove(p)
 
     if len(eligible) == 0:
-        bb.error("no eligible providers for %s" % item)
+        bb.msg.error(bb.msg.domain.Provider, "no eligible providers for %s" % item)
         return 0
 
     # look to see if one of them is already staged, or marked as preferred.

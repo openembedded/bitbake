@@ -25,7 +25,7 @@ You should have received a copy of the GNU General Public License along with
 Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
-from bb import data, fetch, fatal, error, note, event, mkdirhier, utils
+from bb import data, fetch, event, mkdirhier, utils
 import bb, os
 
 # events
@@ -154,7 +154,7 @@ def exec_func_shell(func, d):
     f.close()
     os.chmod(runfile, 0775)
     if not func:
-        error("Function not specified")
+        bb.msg.error(bb.msg.domain.Build, "Function not specified")
         raise FuncFailed()
 
     # open logs
@@ -165,7 +165,7 @@ def exec_func_shell(func, d):
         else:
             so = file(logfile, 'w')
     except OSError, e:
-        bb.error("opening log file: %s" % e)
+        bb.msg.error(bb.msg.domain.Build, "opening log file: %s" % e)
         pass
 
     se = so
@@ -213,9 +213,9 @@ def exec_func_shell(func, d):
 #            os.remove(logfile)
         return
     else:
-        error("function %s failed" % func)
+        bb.msg.error(bb.msg.domain.Build, "function %s failed" % func)
         if data.getVar("BBINCLUDELOGS", d):
-            error("log data follows (%s)" % logfile)
+            bb.msg.error(bb.msg.domain.Build, "log data follows (%s)" % logfile)
             f = open(logfile, "r")
             while True:
                 l = f.readline()
@@ -225,7 +225,7 @@ def exec_func_shell(func, d):
                 print '| %s' % l
             f.close()
         else:
-            error("see log in %s" % logfile)
+            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
         raise FuncFailed( logfile )
 
 
@@ -276,7 +276,7 @@ def exec_task(task, d):
                 task_cache.append(item)
                 data.setVar('_task_cache', task_cache, d)
             except FuncFailed, reason:
-                note( "Task failed: %s" % reason )
+                bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % reason )
                 failedevent = TaskFailed(item, d)
                 event.fire(failedevent)
                 raise EventException("Function failed in task: %s" % reason, failedevent)

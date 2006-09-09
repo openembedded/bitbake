@@ -30,7 +30,18 @@ debug_level = 0
 
 verbose = False
 
-domain = bb.utils.Enum('Depends', 'Provider', 'Build', 'Parsing', 'Collection', 'RunQueue', 'TaskData', 'Fetcher')
+domain = bb.utils.Enum(
+    'Build',
+    'Cache',
+    'Collection',
+    'Data',
+    'Depends',
+    'Fetcher',
+    'Parsing',
+    'Provider',
+    'RunQueue',
+    'TaskData',
+    'Util')
 
 #
 # Message control functions

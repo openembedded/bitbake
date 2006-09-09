@@ -135,7 +135,7 @@ class TaskData:
         fnid = self.getfn_id(fn)
 
         if fnid in self.failed_fnids:
-            bb.fatal("Trying to re-add a failed file? Something is broken...")
+            bb.msg.fatal(bb.msg.domain.TaskData, "Trying to re-add a failed file? Something is broken...")
 
         # Check if we've already seen this fn
         if fnid in self.tasks_fnid:

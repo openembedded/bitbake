@@ -103,11 +103,11 @@ def _print_trace(body, line):
     import bb
 
     # print the environment of the method
-    bb.error("Printing the environment of the function")
+    bb.msg.error(bb.msg.domain.Util, "Printing the environment of the function")
     min_line = max(1,line-4)
     max_line = min(line+4,len(body)-1)
     for i in range(min_line,max_line+1):
-        bb.error("\t%.4d:%s" % (i, body[i-1]) )
+        bb.msg.error(bb.msg.domain.Util, "\t%.4d:%s" % (i, body[i-1]) )
 
 
 def better_compile(text, file, realfile):
@@ -122,9 +122,9 @@ def better_compile(text, file, realfile):
 
         # split the text into lines again
         body = text.split('\n')
-        bb.error("Error in compiling: ", realfile)
-        bb.error("The lines resulting into this error were:")
-        bb.error("\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
+        bb.msg.error(bb.msg.domain.Util, "Error in compiling: ", realfile)
+        bb.msg.error(bb.msg.domain.Util, "The lines resulting into this error were:")
+        bb.msg.error(bb.msg.domain.Util, "\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
 
         _print_trace(body, e.lineno)
 
@@ -147,8 +147,8 @@ def better_exec(code, context, text, realfile):
             raise
 
         # print the Header of the Error Message
-        bb.error("Error in executing: ", realfile)
-        bb.error("Exception:%s Message:%s" % (t,value) )
+        bb.msg.error(bb.msg.domain.Util, "Error in executing: ", realfile)
+        bb.msg.error(bb.msg.domain.Util, "Exception:%s Message:%s" % (t,value) )
 
         # let us find the line number now
         while tb.tb_next:

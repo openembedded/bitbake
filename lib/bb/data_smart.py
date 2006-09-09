@@ -29,7 +29,8 @@ Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
 
 import copy, os, re, sys, time, types
-from bb   import note, debug, error, fatal, utils, methodpool
+import bb
+from bb   import utils, methodpool
 from COW  import COWDictBase
 from sets import Set
 from new  import classobj
@@ -79,11 +80,11 @@ class DataSmart:
                 s = __expand_python_regexp__.sub(python_sub, s)
                 if s == olds: break
                 if type(s) is not types.StringType: # sanity check
-                    error('expansion of %s returned non-string %s' % (olds, s))
+                    bb.msg.error(bb.msg.domain.Data, 'expansion of %s returned non-string %s' % (olds, s))
             except KeyboardInterrupt:
                 raise
             except:
-                note("%s:%s while evaluating:\n%s" % (sys.exc_info()[0], sys.exc_info()[1], s))
+                bb.msg.note(1, bb.msg.domain.Data, "%s:%s while evaluating:\n%s" % (sys.exc_info()[0], sys.exc_info()[1], s))
                 raise
         return s
 

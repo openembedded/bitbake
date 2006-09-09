@@ -45,7 +45,8 @@ else:
     path = os.path.dirname(os.path.dirname(sys.argv[0]))
 sys.path.insert(0,path)
 
-from bb import note, debug, data_smart
+from bb import data_smart
+import bb
 
 _dict_type = data_smart.DataSmart
 
@@ -461,7 +462,7 @@ def update_data(d):
         file://append.foo;patch=1 file://other.foo;patch=1
 
     """
-    debug(2, "update_data()")
+    bb.msg.debug(2, bb.msg.domain.Data, "update_data()")
 
     # now ask the cookie monster for help
     #print "Cookie Monster"
@@ -499,7 +500,7 @@ def update_data(d):
             try:
                 d[name] = d[var]
             except:
-                note ("Untracked delVar")
+                bb.msg.note(1, bb.msg.domain.Data, "Untracked delVar")
 
     # now on to the appends and prepends
     if d._special_values.has_key('_append'):

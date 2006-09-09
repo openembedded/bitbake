@@ -23,7 +23,7 @@
 
 import re, bb, os, sys, time
 import bb.fetch, bb.build, bb.utils
-from bb import debug, data, fetch, fatal, methodpool
+from bb import data, fetch, methodpool
 
 from ConfHandler import include, localpath, obtain, init
 from bb.parse import ParseError
@@ -60,7 +60,7 @@ def inherit(files, d):
             file = os.path.join('classes', '%s.bbclass' % file)
 
         if not file in __inherit_cache.split():
-            debug(2, "BB %s:%d: inheriting %s" % (fn, lineno, file))
+            bb.msg.debug(2, bb.msg.domain.Parsing, "BB %s:%d: inheriting %s" % (fn, lineno, file))
             __inherit_cache += " %s" % file
             include(fn, file, d)
     data.setVar('__inherit_cache', __inherit_cache, d)
@@ -75,9 +75,9 @@ def handle(fn, d, include = 0):
     __residue__ = []
 
     if include == 0:
-        debug(2, "BB " + fn + ": handle(data)")
+        bb.msg.debug(2, bb.msg.domain.Parsing, "BB " + fn + ": handle(data)")
     else:
-        debug(2, "BB " + fn + ": handle(data, include)")
+        bb.msg.debug(2, bb.msg.domain.Parsing, "BB " + fn + ": handle(data, include)")
 
     (root, ext) = os.path.splitext(os.path.basename(fn))
     base_name = "%s%s" % (root,ext)
@@ -152,7 +152,7 @@ def handle(fn, d, include = 0):
                     if t:
                         data.setVar('T', t, d)
                 except Exception, e:
-                    bb.debug(1, "executing anonymous function: %s" % e)
+                    bb.msg.debug(1, bb.msg.domain.Parsing, "executing anonymous function: %s" % e)
                     raise
             data.delVar("__anonqueue", d)
             data.delVar("__anonfunc", d)
@@ -374,7 +374,7 @@ def vars_from_file(mypkg, d):
 def set_additional_vars(file, d, include):
     """Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
 
-    debug(2,"BB %s: set_additional_vars" % file)
+    bb.msg.debug(2, bb.msg.domain.Parsing, "BB %s: set_additional_vars" % file)
 
     src_uri = data.getVar('SRC_URI', d)
     if not src_uri:

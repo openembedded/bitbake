@@ -38,7 +38,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
-    print "NOTE: Importing cPickle failed. Falling back to a very slow implementation."
+    bb.msg.note(1, bb.msg.domain.Cache, "Importing cPickle failed. Falling back to a very slow implementation.")
 
 __cache_version__ = "125"
 
@@ -58,13 +58,13 @@ class Cache:
         if self.cachedir in [None, '']:
             self.has_cache = False
             if cooker.cb is not None:
-                print "NOTE: Not using a cache. Set CACHE = <directory> to enable."
+                bb.msg.note(1, bb.msg.domain.Cache, "Not using a cache. Set CACHE = <directory> to enable.")
         else:
             self.has_cache = True
             self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
             
             if cooker.cb is not None:
-                print "NOTE: Using cache in '%s'" % self.cachedir
+                bb.msg.note(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
             try:
                 os.stat( self.cachedir )
             except OSError:
@@ -79,7 +79,7 @@ class Cache:
                 if version_data['BITBAKE_VER'] != bb.__version__:
                     raise ValueError, 'Bitbake Version Mismatch'
             except (ValueError, KeyError):
-                bb.note("Invalid cache found, rebuilding...")
+                bb.msg.note(1, bb.msg.domain.Cache, "Invalid cache found, rebuilding...")
                 self.depends_cache = {}
 
         if self.depends_cache:
@@ -107,7 +107,7 @@ class Cache:
         if fn != self.data_fn:
             # We're trying to access data in the cache which doesn't exist
             # yet setData hasn't been called to setup the right access. Very bad.
-            bb.error("Parsing error data_fn %s and fn %s don't match" % (self.data_fn, fn))
+            bb.msg.error(bb.msg.domain.Cache, "Parsing error data_fn %s and fn %s don't match" % (self.data_fn, fn))
 
         result = bb.data.getVar(var, self.data, exp)
         self.depends_cache[fn][var] = result
@@ -174,19 +174,19 @@ class Cache:
 
         # Check file still exists
         if self.mtime(fn) == 0:
-            bb.debug(2, "Cache: %s not longer exists" % fn)
+            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s not longer exists" % fn)
             self.remove(fn)
             return False
 
         # File isn't in depends_cache
         if not fn in self.depends_cache:
-            bb.debug(2, "Cache: %s is not cached" % fn)
+            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s is not cached" % fn)
             self.remove(fn)
             return False
 
         # Check the file's timestamp
         if bb.parse.cached_mtime(fn) > self.getVar("CACHETIMESTAMP", fn, True):
-            bb.debug(2, "Cache: %s changed" % fn)
+            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s changed" % fn)
             self.remove(fn)
             return False
 
@@ -195,11 +195,11 @@ class Cache:
         for f,old_mtime in depends:
             new_mtime = bb.parse.cached_mtime(f)
             if (new_mtime > old_mtime):
-                bb.debug(2, "Cache: %s's dependency %s changed" % (fn, f))
+                bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s's dependency %s changed" % (fn, f))
                 self.remove(fn)
                 return False
 
-        bb.debug(2, "Depends Cache: %s is clean" % fn)
+        bb.msg.debug(2, bb.msg.domain.Cache, "Depends Cache: %s is clean" % fn)
         if not fn in self.clean:
             self.clean[fn] = ""
 
@@ -219,7 +219,7 @@ class Cache:
         Remove a fn from the cache
         Called from the parser in error cases
         """
-        bb.debug(1, "Removing %s from cache" % fn)
+        bb.msg.debug(1, bb.msg.domain.Cache, "Removing %s from cache" % fn)
         if fn in self.depends_cache:
             del self.depends_cache[fn]
         if fn in self.clean:

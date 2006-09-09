@@ -397,7 +397,7 @@ class BBCooker:
                     We have not seen this name -> error in
                     dependency handling
                     """
-                    bb.note( "ERROR with provider: %(package)s" % vars() )
+                    bb.msg.note(1, bb.msg.domain.Depends, "ERROR with provider: %(package)s" % vars() )
                     print >> depends_file, '"%(package)s" -> ERROR' % vars()
                     continue
 
@@ -436,14 +436,14 @@ class BBCooker:
                 # for the package.
                 if package in the_depends:
                     if not package in self.status.providers:
-                        bb.note( "ERROR with provider: %(package)s" % vars() )
+                        bb.msg.note(1, bb.msg.domain.Depends, "ERROR with provider: %(package)s" % vars() )
                         print >> alldepends_file, '"%(package)s" -> ERROR' % vars()
                         continue
 
                     providers = self.status.providers[package]
                 elif package in the_rdepends:
                     if len(bb.providers.getRuntimeProviders(self.status, package)) == 0:
-                        bb.note( "ERROR with rprovider: %(package)s" % vars() )
+                        bb.msg.note(1, bb.msg.domain.Depends, "ERROR with rprovider: %(package)s" % vars() )
                         print >> alldepends_file, '"%(package)s" -> ERROR [style="dashed"]' % vars()
                         continue
 
