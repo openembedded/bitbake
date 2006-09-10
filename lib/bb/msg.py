@@ -58,11 +58,13 @@ def set_verbose(level):
 
 def set_debug_domains(domains):
     for domain in domains:
+        found = False
         for ddomain in bb.msg.domain:
             if domain == str(ddomain):
-                bb.msg.debug_level[ddomain] = 2
-        else:
-             std_warn("Logging domain %s is not valid, ignoring" % domain)
+                bb.msg.debug_level[ddomain] = bb.msg.debug_level[ddomain] + 1
+                found = True
+        if not found:
+            std_warn("Logging domain %s is not valid, ignoring" % domain)
 
 #
 # Message handling functions
