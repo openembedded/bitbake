@@ -57,7 +57,7 @@ try:
 except NameError:
     from sets import Set as set
 import sys, os, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue, fnmatch
-from bb import data, parse, build, fatal, cache
+from bb import data, parse, build, fatal, cache, taskdata, runqueue, providers as Providers
 
 __version__ = "0.5.3.1"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>
@@ -107,7 +107,7 @@ class BitBakeShellCommands:
         preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, cooker.configuration.data, 1 )
         if not preferred: preferred = item
         try:
-            lv, lf, pv, pf = bb.providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, cooker.build_cache_fail)
+            lv, lf, pv, pf = Providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, cooker.build_cache_fail)
         except KeyError:
             if item in cooker.status.providers:
                 pf = cooker.status.providers[item][0]
@@ -155,14 +155,39 @@ class BitBakeShellCommands:
         cooker.build_cache = []
         cooker.build_cache_fail = []
 
-        for name in names:
-            try:
-                cooker.buildProvider( name, data.getVar("BUILD_ALL_DEPS", cooker.configuration.data, True) )
-            except build.EventException, e:
-                print "ERROR: Couldn't build '%s'" % name
-                global last_exception
-                last_exception = e
-                break
+        td = taskdata.TaskData()
+
+        try:
+            tasks = []
+            for name in names:
+                td.add_provider(cooker.configuration.data, cooker.status, name)
+                providers = td.get_provider(name)
+
+                if len(providers) == 0:
+                    raise Providers.NoProvider
+
+                tasks.append([name, "do_%s" % cooker.configuration.cmd])
+
+            td.add_unresolved(cooker.configuration.data, cooker.status)
+            
+            rq = runqueue.RunQueue()
+            rq.prepare_runqueue(cooker.configuration.data, cooker.status, td, tasks)
+            rq.execute_runqueue(cooker, cooker.configuration.data, cooker.status, td, tasks)
+
+        except Providers.NoProvider:
+            print "ERROR: No Provider"
+            global last_exception
+            last_exception = Providers.NoProvider
+
+        except runqueue.TaskFailure, (fnid, fn, taskname):
+            print "ERROR: '%s, %s' failed" % (fn, taskname)
+            global last_exception
+            last_exception = runqueue.TaskFailure
+
+        except build.EventException, e:
+            print "ERROR: Couldn't build '%s'" % names
+            global last_exception
+            last_exception = e
 
         cooker.configuration.cmd = oldcmd
 

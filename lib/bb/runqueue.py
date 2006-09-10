@@ -25,8 +25,8 @@ import bb, os, sys
 class TaskFailure(Exception):
     """Exception raised when a task in a runqueue fails"""
 
-    def __init__(self, fnid, taskname):
-        self.args = fnid, taskname
+    def __init__(self, fnid, fn, taskname):
+        self.args = fnid, fn, taskname
 
 class RunQueue:
     """
@@ -268,7 +268,9 @@ class RunQueue:
             try:
                 self.execute_runqueue_internal(cooker, cfgData, dataCache, taskData)
                 return failures
-            except bb.runqueue.TaskFailure, (fnid, taskname):
+            except bb.runqueue.TaskFailure, (fnid, taskData.fn_index[fnid], taskname):
+                if cooker.configuration.abort:
+                    raise
                 if cooker.configuration.abort:
                     raise
                 taskData.fail_fnid(fnid)
@@ -373,7 +375,7 @@ class RunQueue:
                     active_builds = active_builds - 1
                     if result[1] != 0:
                         bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (build_pids[result[0]], self.get_user_idstring(build_pids[result[0]], taskData)))
-                        raise bb.runqueue.TaskFailure(self.runq_fnid[build_pids[result[0]]], self.runq_task[build_pids[result[0]]])
+                        raise bb.runqueue.TaskFailure(self.runq_fnid[build_pids[result[0]]], taskData.fn_index[self.runq_fnid[build_pids[result[0]]]], self.runq_task[build_pids[result[0]]])
                     task_complete(self, build_pids[result[0]])
                     del build_pids[result[0]]
                     continue
