@@ -269,6 +269,8 @@ class RunQueue:
                 self.execute_runqueue_internal(cooker, cfgData, dataCache, taskData)
                 return failures
             except bb.runqueue.TaskFailure, (fnid, taskname):
+                if cooker.configuration.abort:
+                    raise
                 taskData.fail_fnid(fnid)
                 self.reset_runqueue()
                 self.prepare_runqueue(cfgData, dataCache, taskData, runlist)
@@ -390,8 +392,6 @@ class RunQueue:
                     result = os.waitpid(-1, 0)
                     del build_pids[result[0]]		    
                     active_builds = active_builds - 1
-            if cooker.configuration.abort:
-                sys.exit(1)
             raise
 
         # Sanity Checks
