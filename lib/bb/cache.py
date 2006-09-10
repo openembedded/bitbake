@@ -271,7 +271,6 @@ class Cache:
             cacheData.pkg_pn[pn] = []
         cacheData.pkg_pn[pn].append(file_name)
 
-        cacheData.build_all[file_name] = int(self.getVar('BUILD_ALL_DEPS', file_name, True) or "0")
         cacheData.stamp[file_name] = self.getVar('STAMP', file_name, True)
 
         # build FileName to PackageName lookup table
@@ -415,7 +414,6 @@ class CacheData:
         self.pkg_dp = {}
         self.pn_provides = {}
         self.all_depends = Set()
-        self.build_all = {}
         self.deps = {}
         self.rundeps = {}
         self.runrecs = {}
