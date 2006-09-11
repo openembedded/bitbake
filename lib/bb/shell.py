@@ -279,8 +279,7 @@ class BitBakeShellCommands:
 
     def fileRebuild( self, params ):
         """Rebuild (clean & build) a .bb file"""
-        self.fileClean( params )
-        self.fileBuild( params )
+        self.fileBuild( params, "rebuild" )
     fileRebuild.usage = "<bbfile>"
 
     def fileReparse( self, params ):
@@ -555,7 +554,8 @@ SRC_URI = ""
         if not preferred: preferred = item
 
         try:
-            lv, lf, pv, pf = bb.providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, cooker.build_cache_fail)
+            lv, lf, pv, pf = Providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, 
+cooker.build_cache_fail)
         except KeyError:
             lv, lf, pv, pf = (None,)*4
 
