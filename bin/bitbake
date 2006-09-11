@@ -533,23 +533,19 @@ class BBCooker:
             self.interactiveMode()
 
         if self.configuration.buildfile is not None:
-            bf = self.configuration.buildfile
+            bf = os.path.abspath( self.configuration.buildfile )
             try:
                 os.stat(bf)
             except OSError:
-                bf = os.path.abspath( self.configuration.buildfile )
-                try:
-                    os.stat(bf)
-                except OSError:
-                    (filelist, masked) = self.collect_bbfiles()
-                    regexp = re.compile(self.configuration.buildfile)
-                    matches = 0
-                    for f in filelist:
-                        if regexp.search(f):
-                            bf = f
-                            matches = matches + 1
-                    if matches != 1:
-                        bb.msg.fatal(bb.msg.domain.Parsing, "Unable to match %s (%s matches found)" % (self.configuration.buildfile, matches))
+                (filelist, masked) = self.collect_bbfiles()
+                regexp = re.compile(self.configuration.buildfile)
+                matches = 0
+                for f in filelist:
+                    if regexp.search(f):
+                        bf = f
+                        matches = matches + 1
+                if matches != 1:
+                    bb.msg.fatal(bb.msg.domain.Parsing, "Unable to match %s (%s matches found)" % (self.configuration.buildfile, matches))
 
             bbfile_data = bb.parse.handle(bf, self.configuration.data)
 
