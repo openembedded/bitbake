@@ -58,14 +58,12 @@ class Cache:
 
         if self.cachedir in [None, '']:
             self.has_cache = False
-            if cooker.cb is not None:
-                bb.msg.note(1, bb.msg.domain.Cache, "Not using a cache. Set CACHE = <directory> to enable.")
+            bb.msg.note(1, bb.msg.domain.Cache, "Not using a cache. Set CACHE = <directory> to enable.")
         else:
             self.has_cache = True
             self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
             
-            if cooker.cb is not None:
-                bb.msg.note(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
+            bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
             try:
                 os.stat( self.cachedir )
             except OSError:
