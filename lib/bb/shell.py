@@ -422,7 +422,8 @@ SRC_URI = ""
         cooker.status.ignored_dependencies = set( ignore.split() )
         cooker.handleCollections( data.getVar("BBFILE_COLLECTIONS", cooker.configuration.data, 1) )
 
-        cooker.collect_bbfiles( cooker.myProgressCallback )
+        (filelist, masked) = cooker.collect_bbfiles()
+        cooker.parse_bbfiles(filelist, masked, cooker.myProgressCallback)
         cooker.buildDepgraph()
         global parsed
         parsed = True

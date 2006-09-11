@@ -533,11 +533,25 @@ class BBCooker:
             self.interactiveMode()
 
         if self.configuration.buildfile is not None:
-            bf = os.path.abspath( self.configuration.buildfile )
+            bf = self.configuration.buildfile
             try:
-                bbfile_data = bb.parse.handle(bf, self.configuration.data)
-            except IOError:
-                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to open %s" % bf)
+                os.stat(bf)
+            except OSError:
+                bf = os.path.abspath( self.configuration.buildfile )
+                try:
+                    os.stat(bf)
+                except OSError:
+                    (filelist, masked) = self.collect_bbfiles()
+                    regexp = re.compile(self.configuration.buildfile)
+                    matches = 0
+                    for f in filelist:
+                        if regexp.search(f):
+                            bf = f
+                            matches = matches + 1
+                    if matches != 1:
+                        bb.msg.fatal(bb.msg.domain.Parsing, "Unable to match %s (%s matches found)" % (self.configuration.buildfile, matches))
+
+            bbfile_data = bb.parse.handle(bf, self.configuration.data)
 
             item = bb.data.getVar('PN', bbfile_data, 1)
             try:
@@ -578,13 +592,14 @@ class BBCooker:
             except ImportError:
                 bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
             else:
-                psyco.bind( self.collect_bbfiles )
+                psyco.bind( self.parse_bbfiles )
         else:
             bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
 
         try:
             bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
-            self.collect_bbfiles( self.myProgressCallback )
+            (filelist, masked) = self.collect_bbfiles()
+            self.parse_bbfiles(filelist, masked, self.myProgressCallback)
             bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
             print
             if self.configuration.parse_only:
@@ -655,9 +670,8 @@ class BBCooker:
             return []
         return finddata.readlines()
 
-    def collect_bbfiles( self, progressCallback ):
+    def collect_bbfiles( self ):
         """Collect all available .bb build files"""
-        self.cb = progressCallback
         parsed, cached, skipped, masked = 0, 0, 0, 0
         self.bb_cache = bb.cache.init(self)
 
@@ -679,61 +693,76 @@ class BBCooker:
                     continue
             newfiles += glob.glob(f) or [ f ]
 
-        bbmask = bb.data.getVar('BBMASK', self.configuration.data, 1) or ""
+        bbmask = bb.data.getVar('BBMASK', self.configuration.data, 1)
+
+        if not bbmask:
+            return (newfiles, 0)
+
         try:
             bbmask_compiled = re.compile(bbmask)
         except sre_constants.error:
             bb.msg.fatal(bb.msg.domain.Collection, "BBMASK is not a valid regular expression.")
 
+        finalfiles = []
         for i in xrange( len( newfiles ) ):
             f = newfiles[i]
             if bbmask and bbmask_compiled.search(f):
-                bb.msg.debug(1, bb.msg.domain.Collection, "bbmake: skipping %s" % f, f)
+                bb.msg.debug(1, bb.msg.domain.Collection, "skipping masked file %s" % f)
                 masked += 1
                 continue
-            bb.msg.debug(1, bb.msg.domain.Collection, "bbmake: parsing %s" % f, f)
+            finalfiles.append(f)
+
+        return (finalfiles, masked)
+
+    def parse_bbfiles(self, filelist, masked, progressCallback = None):
+        parsed, cached, skipped = 0, 0, 0
+        for i in xrange( len( filelist ) ):
+            f = filelist[i]
+
+            bb.msg.debug(1, bb.msg.domain.Collection, "parsing %s" % f)
 
             # read a file's metadata
             try:
                 fromCache, skip = self.bb_cache.loadData(f, self)
                 if skip:
                     skipped += 1
-                    bb.msg.debug(2, bb.msg.domain.Collection, "Skipping %s" % f, f)
+                    bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
                     self.bb_cache.skip(f)
                     continue
                 elif fromCache: cached += 1
                 else: parsed += 1
                 deps = None
 
+                # Disabled by RP as was no longer functional
                 # allow metadata files to add items to BBFILES
                 #data.update_data(self.pkgdata[f])
-                addbbfiles = self.bb_cache.getVar('BBFILES', f, False) or None
-                if addbbfiles:
-                    for aof in addbbfiles.split():
-                        if not files.count(aof):
-                            if not os.path.isabs(aof):
-                                aof = os.path.join(os.path.dirname(f),aof)
-                            files.append(aof)
+                #addbbfiles = self.bb_cache.getVar('BBFILES', f, False) or None
+                #if addbbfiles:
+                #    for aof in addbbfiles.split():
+                #        if not files.count(aof):
+                #            if not os.path.isabs(aof):
+                #                aof = os.path.join(os.path.dirname(f),aof)
+                #            files.append(aof)
 
                 # now inform the caller
-                if self.cb is not None:
-                    self.cb( i + 1, len( newfiles ), f, self.bb_cache, fromCache )
+                if progressCallback is not None:
+                    progressCallback( i + 1, len( filelist ), f, self.bb_cache, fromCache )
 
             except IOError, e:
                 self.bb_cache.remove(f)
-                bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e), f)
+                bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
                 pass
             except KeyboardInterrupt:
                 self.bb_cache.sync()
                 raise
             except Exception, e:
                 self.bb_cache.remove(f)
-                bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f), f)
+                bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))
             except:
                 self.bb_cache.remove(f)
                 raise
 
-        if self.cb is not None:
+        if progressCallback is not None:
             print "\r" # need newline after Handling Bitbake files message
             bb.msg.note(1, bb.msg.domain.Collection, "Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ))
 
