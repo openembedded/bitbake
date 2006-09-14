@@ -20,6 +20,7 @@ You should have received a copy of the GNU General Public License along with
 """
 
 from bb import msg, data, fetch, event, mkdirhier, utils
+from sets import Set 
 import bb, os, sys
 
 class TaskFailure(Exception):
@@ -130,8 +131,8 @@ class RunQueue:
 
             self.runq_fnid.append(taskData.tasks_fnid[task])
             self.runq_task.append(taskData.tasks_name[task])
-            self.runq_depends.append(depends)
-            self.runq_revdeps.append([])
+            self.runq_depends.append(Set(depends))
+            self.runq_revdeps.append(Set())
             self.runq_weight.append(0)
 
             runq_weight1.append(0)
@@ -198,14 +199,13 @@ class RunQueue:
                 if maps[origdep] == -1:
                     bb.msg.fatal(bb.msg.domain.RunQueue, "Invalid mapping - Should never happen!")
                 newdeps.append(maps[origdep])
-            self.runq_depends[listid] = newdeps
+            self.runq_depends[listid] = Set(newdeps)
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Assign Weightings")
 
         for listid in range(len(self.runq_fnid)):
             for dep in self.runq_depends[listid]:
-                if dep not in self.runq_revdeps[dep]:
-                    self.runq_revdeps[dep].append(listid)
+                self.runq_revdeps[dep].add(listid)
 
         endpoints = []
         for listid in range(len(self.runq_fnid)):
@@ -238,7 +238,16 @@ class RunQueue:
         # Sanity Checks
         for task in range(len(self.runq_fnid)):
             if runq_done[task] == 0:
-                bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) not processed!" % (task, self.get_user_idstring(task, taskData)))
+                seen = []
+                def print_chain(taskid):
+                    seen.append(taskid)
+                    for revdep in self.runq_revdeps[taskid]:
+                        if runq_done[revdep] == 0:
+                            bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) (depends: %s)" % (revdep, self.get_user_idstring(revdep, taskData), self.runq_depends[revdep]))
+                            if revdep not in seen:
+                                print_chain(revdep)
+                print_chain(task)
+                bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) not processed!\nThis is probably a circular dependency (the chain might be printed above)." % (task, self.get_user_idstring(task, taskData)))
             if runq_weight1[task] != 0:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) count not zero!" % (task, self.get_user_idstring(task, taskData)))
 
