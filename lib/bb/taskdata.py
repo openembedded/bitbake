@@ -39,6 +39,8 @@ class TaskData:
         self.tasks_fnid = []
         self.tasks_name = []
         self.tasks_tdepends = []
+        # Cache to speed up task ID lookups
+        self.tasks_lookup = {}
 
         self.depids = {}
         self.rdepids = {}
@@ -112,19 +114,21 @@ class TaskData:
         """
         fnid = self.getfn_id(fn)
 
-        fnids = self.matches_in_list(self.tasks_fnid, fnid)
-        names = self.matches_in_list(self.tasks_name, task)
-
-        listid = self.both_contain(fnids, names)
-
-        if listid is not None:
-            return listid
+        if fnid in self.tasks_lookup:
+            if task in self.tasks_lookup[fnid]:
+                return self.tasks_lookup[fnid][task]
 
         self.tasks_name.append(task)
         self.tasks_fnid.append(fnid)
         self.tasks_tdepends.append([])
 
-        return len(self.tasks_name)-1
+        listid = len(self.tasks_name) - 1
+
+        if fnid not in self.tasks_lookup:
+            self.tasks_lookup[fnid] = {}
+        self.tasks_lookup[fnid][task] = listid
+
+        return listid
 
     def add_tasks(self, fn, dataCache):
         """
