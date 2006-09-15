@@ -192,6 +192,10 @@ class Cache:
         # Check dependencies are still valid
         depends = self.getVar("__depends", fn, True)
         for f,old_mtime in depends:
+            # Check if file still exists
+            if self.mtime(f) == 0:
+                return False
+
             new_mtime = bb.parse.cached_mtime(f)
             if (new_mtime > old_mtime):
                 bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s's dependency %s changed" % (fn, f))
