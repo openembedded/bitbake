@@ -354,10 +354,12 @@ class RunQueue:
                     taskname = self.runq_task[task]
 
                     if bb.build.stamp_is_current_cache(dataCache, fn, taskname):
-                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
-                        runq_running[task] = 1
-                        task_complete(self, task)
-                        continue
+                        targetid = taskData.gettask_id(fn, taskname)
+                        if not (targetid in taskData.external_targets and cooker.configuration.force):
+                            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
+                            runq_running[task] = 1
+                            task_complete(self, task)
+                            continue
 
                     bb.msg.debug(1, bb.msg.domain.RunQueue, "Running task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
                     try: 

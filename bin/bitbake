@@ -128,7 +128,7 @@ class BBCooker:
 
         item = self.status.pkg_fn[fn]
 
-        if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
+        if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data) and not self.configuration.force:
             self.build_cache.append(fn)
             return True
 
