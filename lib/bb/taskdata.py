@@ -393,7 +393,8 @@ class TaskData:
 
             item = dataCache.pkg_fn[fn]
 
-        self.mark_external_target(item)
+        if external:
+            self.mark_external_target(item)
 
         return True
 
