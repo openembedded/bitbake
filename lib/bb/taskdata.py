@@ -391,7 +391,7 @@ class TaskData:
             self.add_tasks(fn, dataCache)
             self.add_build_target(fn, item)
 
-            item = dataCache.pkg_fn[fn]
+            #item = dataCache.pkg_fn[fn]
 
         if external:
             self.mark_external_target(item)
