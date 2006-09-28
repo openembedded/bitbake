@@ -548,9 +548,9 @@ class TaskData:
         Dump some debug information on the internal data structures
         """
         bb.msg.debug(3, bb.msg.domain.TaskData, "build_names:")
-        bb.msg.debug(3, bb.msg.domain.TaskData, self.build_names_index)
+        bb.msg.debug(3, bb.msg.domain.TaskData, ", ".join(self.build_names_index))
         bb.msg.debug(3, bb.msg.domain.TaskData, "run_names:")
-        bb.msg.debug(3, bb.msg.domain.TaskData, self.run_names_index)
+        bb.msg.debug(3, bb.msg.domain.TaskData, ", ".join(self.run_names_index))
         bb.msg.debug(3, bb.msg.domain.TaskData, "build_targets:")
         for target in self.build_targets.keys():
             bb.msg.debug(3, bb.msg.domain.TaskData, " %s: %s" % (self.build_names_index[target], self.build_targets[target]))
