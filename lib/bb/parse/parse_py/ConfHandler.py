@@ -52,7 +52,7 @@ def localpath(fn, d):
         localfn = fn
     return localfn
 
-def obtain(fn, data = bb.data.init()):
+def obtain(fn, data):
     import sys, bb
     fn = bb.data.expand(fn, data)
     localfn = bb.data.expand(localpath(fn, data), data)
@@ -83,7 +83,7 @@ def obtain(fn, data = bb.data.init()):
     return localfn
 
 
-def include(oldfn, fn, data = bb.data.init(), error_out = False):
+def include(oldfn, fn, data, error_out = False):
     """
 
     error_out If True a ParseError will be reaised if the to be included
@@ -103,7 +103,7 @@ def include(oldfn, fn, data = bb.data.init(), error_out = False):
             raise ParseError("Could not include required file %(fn)s" % vars() )
         bb.msg.debug(2, bb.msg.domain.Parsing, "CONF file '%s' not found" % fn)
 
-def handle(fn, data = bb.data.init(), include = 0):
+def handle(fn, data, include = 0):
     if include:
         inc_string = "including"
     else:
@@ -160,7 +160,7 @@ def handle(fn, data = bb.data.init(), include = 0):
         bb.data.setVar('FILE', oldfile, data)
     return data
 
-def feeder(lineno, s, fn, data = bb.data.init()):
+def feeder(lineno, s, fn, data):
     m = __config_regexp__.match(s)
     if m:
         groupd = m.groupdict()
