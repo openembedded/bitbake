@@ -403,11 +403,8 @@ class BBCooker:
             self.status.possible_world = None
             self.status.all_depends    = None
 
-    def myProgressCallback( self, x, y, f, bb_cache, from_cache ):
-        # feed the status with new input
-
-        bb_cache.handle_data(f, self.status)
-
+    def myProgressCallback( self, x, y, f, from_cache ):
+        """Update any tty with the progress change"""
         if os.isatty(sys.stdout.fileno()):
             sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
             sys.stdout.flush()
@@ -740,9 +737,11 @@ class BBCooker:
                 #                aof = os.path.join(os.path.dirname(f),aof)
                 #            files.append(aof)
 
+                bb_cache.handle_data(f, self.status)
+
                 # now inform the caller
                 if progressCallback is not None:
-                    progressCallback( i + 1, len( filelist ), f, self.bb_cache, fromCache )
+                    progressCallback( i + 1, len( filelist ), f, fromCache )
 
             except IOError, e:
                 self.bb_cache.remove(f)
