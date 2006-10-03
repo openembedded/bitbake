@@ -125,15 +125,15 @@ class Cache:
         self.getVar("__depends", fn, True)
         self.depends_cache[fn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
 
-    def loadDataFull(self, fn, cooker):
+    def loadDataFull(self, fn, cfgData):
         """
         Return a complete set of data for fn.
         To do this, we need to parse the file.
         """
-        bb_data, skipped = self.load_bbfile(fn, cooker.configuration.data)
+        bb_data, skipped = self.load_bbfile(fn, cfgData)
         return bb_data
 
-    def loadData(self, fn, cooker):
+    def loadData(self, fn, cfgData):
         """
         Load a subset of data for fn.
         If the cached data is valid we do nothing,
@@ -146,7 +146,7 @@ class Cache:
                 return True, True
             return True, False
 
-        bb_data, skipped = self.load_bbfile(fn, cooker.configuration.data)
+        bb_data, skipped = self.load_bbfile(fn, cfgData)
         self.setData(fn, bb_data)
         return False, skipped
 

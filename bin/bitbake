@@ -124,7 +124,7 @@ class BBCooker:
         If build_depends is empty, we're dealing with a runtime depends
         """
 
-        the_data = self.bb_cache.loadDataFull(fn, self)
+        the_data = self.bb_cache.loadDataFull(fn, self.configuration.data)
 
         item = self.status.pkg_fn[fn]
 
@@ -167,7 +167,7 @@ class BBCooker:
             self.cb = None
             self.bb_cache = bb.cache.init(self)
             try:
-                self.configuration.data = self.bb_cache.loadDataFull(self.configuration.buildfile, self)
+                self.configuration.data = self.bb_cache.loadDataFull(self.configuration.buildfile, self.configuration.data)
             except IOError, e:
                 bb.msg.fatal(bb.msg.domain.Parsing, "Unable to read %s: %s" % ( self.configuration.buildfile, e ))
             except Exception, e:
@@ -719,7 +719,7 @@ class BBCooker:
 
             # read a file's metadata
             try:
-                fromCache, skip = self.bb_cache.loadData(f, self)
+                fromCache, skip = self.bb_cache.loadData(f, self.configuration.data)
                 if skip:
                     skipped += 1
                     bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
