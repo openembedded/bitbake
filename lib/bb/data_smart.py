@@ -50,6 +50,8 @@ class DataSmart:
         self._special_values = special
         self._seen_overrides = seen
 
+        self.expand_cache = {}
+
     def expand(self,s, varname):
         def var_sub(match):
             key = match.group()[2:-1]
@@ -73,6 +75,9 @@ class DataSmart:
         if type(s) is not types.StringType: # sanity check
             return s
 
+        if varname and varname in self.expand_cache:
+            return self.expand_cache[varname]
+
         while s.find('$') != -1:
             olds = s
             try:
@@ -86,9 +91,14 @@ class DataSmart:
             except:
                 bb.msg.note(1, bb.msg.domain.Data, "%s:%s while evaluating:\n%s" % (sys.exc_info()[0], sys.exc_info()[1], s))
                 raise
+
+        if varname:
+            self.expand_cache[varname] = s
+
         return s
 
     def initVar(self, var):
+        self.expand_cache = {}
         if not var in self.dict:
             self.dict[var] = {}
 
@@ -117,6 +127,7 @@ class DataSmart:
             self.initVar(var)
 
     def setVar(self,var,value):
+        self.expand_cache = {}
         match  = __setvar_regexp__.match(var)
         if match and match.group("keyword") in __setvar_keyword__:
             base = match.group('base')
@@ -160,6 +171,7 @@ class DataSmart:
         return value
 
     def delVar(self,var):
+        self.expand_cache = {}
         self.dict[var] = {}
 
     def setVarFlag(self,var,flag,flagvalue):
