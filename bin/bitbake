@@ -737,7 +737,7 @@ class BBCooker:
                 #                aof = os.path.join(os.path.dirname(f),aof)
                 #            files.append(aof)
 
-                bb_cache.handle_data(f, self.status)
+                self.bb_cache.handle_data(f, self.status)
 
                 # now inform the caller
                 if progressCallback is not None:
