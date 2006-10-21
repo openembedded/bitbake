@@ -57,6 +57,7 @@ try:
 except NameError:
     from sets import Set as set
 import sys, os, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue, fnmatch
+import bb
 from bb import data, parse, build, fatal
 
 __version__ = "0.5.3.1"
