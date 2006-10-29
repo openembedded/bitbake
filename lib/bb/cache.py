@@ -260,7 +260,7 @@ class Cache:
         pr       = self.getVar('PR', file_name, True)
         dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
         provides  = Set([pn] + (self.getVar("PROVIDES", file_name, True) or "").split())
-        depends   = (self.getVar("DEPENDS", file_name, True) or "").split()
+        depends   = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")
         packages  = (self.getVar('PACKAGES', file_name, True) or "").split()
         packages_dynamic = (self.getVar('PACKAGES_DYNAMIC', file_name, True) or "").split()
         rprovides = (self.getVar("RPROVIDES", file_name, True) or "").split()
