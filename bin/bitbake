@@ -78,7 +78,7 @@ class BBParsingStatus:
         pr       = bb_cache.getVar('PR', file_name, True)
         dp       = int(bb_cache.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
         provides  = Set([pn] + (bb_cache.getVar("PROVIDES", file_name, True) or "").split())
-        depends   = (bb_cache.getVar("DEPENDS", file_name, True) or "").split()
+        depends   =  bb.utils.explode_deps(bb_cache.getVar("DEPENDS", file_name, True) or "")
         packages  = (bb_cache.getVar('PACKAGES', file_name, True) or "").split()
         packages_dynamic = (bb_cache.getVar('PACKAGES_DYNAMIC', file_name, True) or "").split()
         rprovides = (bb_cache.getVar("RPROVIDES", file_name, True) or "").split()
@@ -279,7 +279,7 @@ class BBCooker:
         pathstr = "%s (%s)" % (item, virtual)
         self.build_path.append(pathstr)
 
-        depends_list = (bb.data.getVar('DEPENDS', the_data, True) or "").split()
+        depends_list = bb.utils.explode_deps(bb.data.getVar('DEPENDS', the_data, True) or "")
 
         bb.msg.note(2, bb.msg.domain.Depends, "current path: %s" % (" -> ".join(self.build_path)))
         bb.msg.note(2, bb.msg.domain.Depends, "dependencies for %s are: %s" % (item, " ".join(depends_list)))
