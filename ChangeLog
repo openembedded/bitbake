@@ -2,6 +2,7 @@ Changes in Bitbake 1.6.1:
 	- Add support for the interactive flag (backported from trunk)
 	- Ignore versions in DEPENDS (backported from trunk)
 	- Fix bug referencing bb.providers in shell.py
+	- Remove some debug that crept in
 
 Changes in Bitbake 1.6.0:
 	- Better msg handling
