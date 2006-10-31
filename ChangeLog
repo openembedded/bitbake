@@ -1,3 +1,8 @@
+Changes in Bitbake 1.6.1:
+	- Add support for the interactive flag (backported from trunk)
+	- Ignore versions in DEPENDS (backported from trunk)
+	- Fix bug referencing bb.providers in shell.py
+
 Changes in Bitbake 1.6.0:
 	- Better msg handling
 	- COW dict implementation from Tim Ansell (mithro) leading
