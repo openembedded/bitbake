@@ -1,3 +1,5 @@
+Changes in BitBake 1.6.3:
+
 Changes in Bitbake 1.6.1:
 	- Add support for the interactive flag (backported from trunk)
 	- Ignore versions in DEPENDS (backported from trunk)
