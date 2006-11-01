@@ -1,4 +1,6 @@
-Changes in BitBake 1.7.?:
+Changes in BitBake 1.7.3:
+
+Changes in BitBake 1.7.1:
     - Major updates of the dependency handling and execution
       of tasks
     - Change of the SVN Fetcher to keep the checkout around
