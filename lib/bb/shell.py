@@ -296,6 +296,11 @@ class BitBakeShellCommands:
             print "SHELL: Parsed"
     fileReparse.usage = "<bbfile>"
 
+    def abort( self, params ):
+        """Toggle abort task execution flag (see bitbake -k)"""
+        cooker.configuration.abort = not cooker.configuration.abort
+        print "SHELL: Abort Flag is now '%s'" % repr( cooker.configuration.abort )
+
     def force( self, params ):
         """Toggle force task execution flag (see bitbake -f)"""
         cooker.configuration.force = not cooker.configuration.force
