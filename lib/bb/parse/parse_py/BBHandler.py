@@ -44,6 +44,13 @@ __bbpath_found__ = 0
 __classname__ = ""
 classes = [ None, ]
 
+# We need to indicate EOF to the feeder. This code is so messy that
+# factoring it out to a close_parse_file method is out of question.
+# We will use the IN_PYTHON_EOF as an indicator to just close the method
+#
+# The two parts using it are tightly integrated anyway
+IN_PYTHON_EOF = -9999999999999
+
 __parsed_methods__ = methodpool.get_parsed_dict()
 
 def supports(fn, d):
@@ -132,7 +139,7 @@ def handle(fn, d, include = 0):
         feeder(lineno, s, fn, base_name, d)
     if __inpython__:
         # add a blank line to close out any python definition
-        feeder(lineno + 1, "", fn, base_name, d)
+        feeder(IN_PYTHON_EOF, "", fn, base_name, d)
     if ext == ".bbclass":
         classes.remove(__classname__)
     else:
@@ -220,7 +227,7 @@ def feeder(lineno, s, fn, root, d):
 
     if __inpython__:
         m = __python_func_regexp__.match(s)
-        if m:
+        if m and lineno != IN_PYTHON_EOF:
             __body__.append(s)
             return
         else:
@@ -239,6 +246,9 @@ def feeder(lineno, s, fn, root, d):
                 data.setVar('__functions__', funcs, d)
             __body__ = []
             __inpython__ = False
+
+            if lineno == IN_PYTHON_EOF:
+                return
 
 #           fall through
 
