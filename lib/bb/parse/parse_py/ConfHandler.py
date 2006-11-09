@@ -83,7 +83,7 @@ def obtain(fn, data):
     return localfn
 
 
-def include(oldfn, fn, data, error_out = False):
+def include(oldfn, fn, data, error_out):
     """
 
     error_out If True a ParseError will be reaised if the to be included
@@ -100,7 +100,7 @@ def include(oldfn, fn, data, error_out = False):
         ret = handle(fn, data, True)
     except IOError:
         if error_out:
-            raise ParseError("Could not include required file %(fn)s" % vars() )
+            raise ParseError("Could not %(error_out)s file %(fn)s" % vars() )
         bb.msg.debug(2, bb.msg.domain.Parsing, "CONF file '%s' not found" % fn)
 
 def handle(fn, data, include = 0):
@@ -194,13 +194,13 @@ def feeder(lineno, s, fn, data):
     if m:
         s = bb.data.expand(m.group(1), data)
         bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (fn, lineno, s))
-        include(fn, s, data)
+        include(fn, s, data, False)
         return
 
     m = __require_regexp__.match(s)
     if m:
         s = bb.data.expand(m.group(1), data)
-        include(fn, s, data, True)
+        include(fn, s, data, "include required")
         return
 
     raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));
