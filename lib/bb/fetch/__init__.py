@@ -221,6 +221,7 @@ import local
 import svn
 import wget
 import svk
+import ssh
 
 methods.append(cvs.Cvs())
 methods.append(git.Git())
@@ -228,3 +229,4 @@ methods.append(local.Local())
 methods.append(svn.Svn())
 methods.append(wget.Wget())
 methods.append(svk.Svk())
+methods.append(ssh.SSH())
