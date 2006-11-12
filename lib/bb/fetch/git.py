@@ -68,7 +68,7 @@ class Git(Fetch):
 
         ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.tag), d)
 
-        return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
+        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def go(self, loc, ud, d):
         """Fetch url"""
@@ -82,11 +82,9 @@ class Git(Fetch):
         coname = '%s' % (ud.tag)
         codir = os.path.join(repodir, coname)
 
-        cofile = ud.localpath
-
         # tag=="master" must always update
         if (ud.tag != "master") and Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % cofile)
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % ud.localpath)
             return
 
         if not os.path.exists(repodir):
@@ -121,4 +119,4 @@ class Git(Fetch):
 
         os.chdir(codir)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
-        rungitcmd("tar -czf %s %s" % (cofile, os.path.join(".", "*") ),d)
+        rungitcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ),d)

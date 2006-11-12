@@ -110,7 +110,10 @@ def go(d):
     """Fetch all urls"""
     for m in methods:
         for u in m.urls:
+            # RP - is olddir needed?
+            olddir = os.path.abspath(os.getcwd())
             m.go(u, urldata[u], d)
+            os.chdir(olddir)
 
 def localpaths(d):
     """Return a list of the local filenames, assuming successful fetch"""

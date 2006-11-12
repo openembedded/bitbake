@@ -45,7 +45,7 @@ class Wget(Fetch):
 
         url = bb.encodeurl([ud.type, ud.host, ud.path, ud.user, ud.pswd, {}])
 
-        return os.path.join(data.getVar("DL_DIR", d), os.path.basename(url))
+        return data.expand(os.path.join(data.getVar("DL_DIR", d), os.path.basename(url)), d)
 
     def go(self, uri, ud, d):
         """Fetch urls"""

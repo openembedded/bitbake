@@ -52,15 +52,15 @@ class Svk(Fetch):
         if not "module" in ud.parm:
             raise MissingParameterError("svk method needs a 'module' parameter")
         else:
-            module = ud.parm["module"]
+            ud.module = ud.parm["module"]
+
+        ud.revision = ""
         if 'rev' in ud.parm:
-            revision = ud.parm['rev']
-        else:
-            revision = ""
+            ud.revision = ud.parm['rev']
 
-        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), revision, ud.date), d)
+        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
-        return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
+        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def go(self, loc, ud, d):
         """Fetch urls"""
@@ -69,40 +69,21 @@ class Svk(Fetch):
         data.setVar('OVERRIDES', "svk:%s" % data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        if not "module" in ud.parm:
-            raise MissingParameterError("svk method needs a 'module' parameter")
-        else:
-            module = ud.parm["module"]
-
-        dlfile = ud.localpath
-        dldir = data.getVar('DL_DIR', localdata, 1)
-
         # setup svk options
         options = []
-        if 'rev' in ud.parm:
-            revision = ud.parm['rev']
-        else:
-            revision = ""
-
-        tarfn = ud.localfile
-        data.setVar('TARFILES', dlfile, localdata)
-        data.setVar('TARFN', tarfn, localdata)
 
         if (date != "now") and Fetch.try_mirror(d, ud.localfile):
             return
-
-        olddir = os.path.abspath(os.getcwd())
-        os.chdir(data.expand(dldir, localdata))
 
         svkroot = ud.host + ud.path
 
         data.setVar('SVKROOT', svkroot, localdata)
         data.setVar('SVKCOOPTS', " ".join(options), localdata)
-        data.setVar('SVKMODULE', module, localdata)
-        svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, module)
+        data.setVar('SVKMODULE', ud.module, localdata)
+        svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, ud.module)
 
-        if revision:
-            svkcmd = "svk co -r %s/%s" % (revision, svkroot, module)
+        if ud.revision:
+            svkcmd = "svk co -r %s/%s" % (ud.revision, svkroot, ud.module)
 
         # create temp directory
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: creating temporary directory")
@@ -112,7 +93,7 @@ class Svk(Fetch):
         tmpfile = tmppipe.readline().strip()
         if not tmpfile:
             bb.msg.error(bb.msg.domain.Fetcher, "Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
-            raise FetchError(module)
+            raise FetchError(ud.module)
 
         # check out sources there
         os.chdir(tmpfile)
@@ -124,17 +105,15 @@ class Svk(Fetch):
                 os.rmdir(tmpfile)
             except OSError:
                 pass
-            raise FetchError(module)
+            raise FetchError(ud.module)
 
-        os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
+        os.chdir(os.path.join(tmpfile, os.path.dirname(ud.module)))
         # tar them up to a defined filename
-        myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
+        myret = os.system("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)))
         if myret != 0:
             try:
-                os.unlink(tarfn)
+                os.unlink(ud.localpath)
             except OSError:
                 pass
         # cleanup
         os.system('rm -rf %s' % tmpfile)
-        os.chdir(olddir)
-

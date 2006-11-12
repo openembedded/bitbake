@@ -71,7 +71,7 @@ class SSH(Fetch):
         m = __pattern__.match(url)
         path = m.group('path')
         host = m.group('host')
-        lpath = os.path.join(data.getVar('DL_DIR', d, 1), host, os.path.basename(path))
+        lpath = os.path.join(data.getVar('DL_DIR', d, True), host, os.path.basename(path))
         return lpath
 
     def go(self, url, urldata, d):

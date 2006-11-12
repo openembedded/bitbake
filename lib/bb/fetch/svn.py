@@ -45,15 +45,15 @@ class Svn(Fetch):
         if not "module" in ud.parm:
             raise MissingParameterError("svn method needs a 'module' parameter")
         else:
-            module = ud.parm["module"]
+            ud.module = ud.parm["module"]
 
         ud.revision = ""
         if 'rev' in parm:
             ud.revision = ud.parm['rev']
 
-        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
+        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
-        return os.path.join(data.getVar("DL_DIR", d, 1), )
+        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def go(self, loc, ud, d):
         """Fetch url"""
@@ -62,35 +62,21 @@ class Svn(Fetch):
         data.setVar('OVERRIDES', "svn:%s" % data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        if not "module" in ud.parm:
-            raise MissingParameterError("svn method needs a 'module' parameter")
-        else:
-            module = ud.parm["module"]
-
-        dlfile = self.localpath(loc, localdata)
-        dldir = data.getVar('DL_DIR', localdata, 1)
-
         # setup svn options
         options = []
 
+        proto = "svn"
         if "proto" in ud.parm:
             proto = ud.parm["proto"]
-        else:
-            proto = "svn"
 
         svn_rsh = None
         if proto == "svn+ssh" and "rsh" in ud.parm:
             svn_rsh = ud.parm["rsh"]
 
-        tarfn = ud.localfile
-
         # try to use the tarball stash
         if (date != "now") and Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % tarfn)
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % ud.localpath)
             return
-
-        olddir = os.path.abspath(os.getcwd())
-        os.chdir(data.expand(dldir, localdata))
 
         svnroot = ud.host + ud.path
 
@@ -100,9 +86,9 @@ class Svn(Fetch):
         elif ud.date != "now":
             options.append("-r {%s}" % ud.date)
 
-        data.setVar('SVNROOT', "%s://%s/%s" % (proto, svnroot, module), localdata)
+        data.setVar('SVNROOT', "%s://%s/%s" % (proto, svnroot, ud.module), localdata)
         data.setVar('SVNCOOPTS', " ".join(options), localdata)
-        data.setVar('SVNMODULE', module, localdata)
+        data.setVar('SVNMODULE', ud.module, localdata)
         svncmd = data.getVar('FETCHCOMMAND', localdata, 1)
         svnupcmd = data.getVar('UPDATECOMMAND', localdata, 1)
 
@@ -112,7 +98,7 @@ class Svn(Fetch):
 
         pkg=data.expand('${PN}', d)
         pkgdir=os.path.join(data.expand('${SVNDIR}', localdata), pkg)
-        moddir=os.path.join(pkgdir, module)
+        moddir=os.path.join(pkgdir, ud.module)
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + moddir + "'")
 
         if os.access(os.path.join(moddir,'.svn'), os.R_OK):
@@ -130,14 +116,13 @@ class Svn(Fetch):
             myret = os.system(svncmd)
 
         if myret != 0:
-            raise FetchError(module)
+            raise FetchError(ud.module)
 
         os.chdir(pkgdir)
         # tar them up to a defined filename
-        myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
+        myret = os.system("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)))
         if myret != 0:
             try:
-                os.unlink(tarfn)
+                os.unlink(ud.localpath)
             except OSError:
                 pass
-        os.chdir(olddir)
