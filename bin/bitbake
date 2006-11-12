@@ -179,6 +179,7 @@ class BBCooker:
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
+        data.expandKeys( self.configuration.data )	
         for e in self.configuration.data.keys():
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
@@ -357,6 +358,7 @@ class BBCooker:
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
+        bb.data.expandKeys(localdata)
 
         def calc_bbfile_priority(filename):
             for (regex, pri) in self.status.bbfile_config_priorities:
@@ -424,6 +426,7 @@ class BBCooker:
             bb.msg.fatal(bb.msg.domain.Parsing, "Sorry, shell not available (%s)" % details )
         else:
             bb.data.update_data( self.configuration.data )
+            bb.data.expandKeys(localdata)
             shell.start( self )
             sys.exit( 0 )
 
@@ -617,14 +620,18 @@ class BBCooker:
 
             bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.event_data))
 
+            localdata = data.createCopy(self.configuration.data)
+            bb.data.update_data(localdata)
+            bb.data.expandKeys(localdata)
+
             taskdata = bb.taskdata.TaskData(self.configuration.abort)
 
             runlist = []
             try:
                 for k in pkgs_to_build:
-                    taskdata.add_provider(self.configuration.data, self.status, k)
+                    taskdata.add_provider(localdata, self.status, k)
                     runlist.append([k, "do_%s" % self.configuration.cmd])
-                taskdata.add_unresolved(self.configuration.data, self.status)
+                taskdata.add_unresolved(localdata, self.status)
             except bb.providers.NoProvider:
                 sys.exit(1)
 
