@@ -88,7 +88,7 @@ class Svk(Fetch):
         data.setVar('TARFILES', dlfile, localdata)
         data.setVar('TARFN', tarfn, localdata)
 
-        if Fetch.check_for_tarball(d, tarfn, dldir, date):
+        if (date != "now") and Fetch.try_mirror(d, ud.localfile):
             return
 
         olddir = os.path.abspath(os.getcwd())

@@ -85,7 +85,7 @@ class Svn(Fetch):
         tarfn = ud.localfile
 
         # try to use the tarball stash
-        if Fetch.check_for_tarball(d, tarfn, dldir, ud.date):
+        if (date != "now") and Fetch.try_mirror(d, ud.localfile):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % tarfn)
             return
 
