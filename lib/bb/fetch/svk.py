@@ -75,19 +75,14 @@ class Svk(Fetch):
 
         svkroot = ud.host + ud.path
 
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "svk:%s" % data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
-
-        data.setVar('SVKROOT', svkroot, localdata)
-        data.setVar('SVKCOOPTS', '', localdata)
-        data.setVar('SVKMODULE', ud.module, localdata)
         svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, ud.module)
 
         if ud.revision:
             svkcmd = "svk co -r %s/%s" % (ud.revision, svkroot, ud.module)
 
         # create temp directory
+        localdata = data.createCopy(d)
+        data.update_data(localdata)
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: creating temporary directory")
         bb.mkdirhier(data.expand('${WORKDIR}', localdata))
         data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
