@@ -190,6 +190,9 @@ class RunQueue:
                 delcount = delcount + 1
                 maps.append(-1)
 
+        if len(self.runq_fnid) == 0:
+            bb.msg.fatal(bb.msg.domain.RunQueue, "No active tasks?! Please report this bug.")
+
         bb.msg.note(2, bb.msg.domain.RunQueue, "Pruned %s inactive tasks, %s left" % (delcount, len(self.runq_fnid)))
 
         for listid in range(len(self.runq_fnid)):
