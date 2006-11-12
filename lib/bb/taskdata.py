@@ -502,6 +502,7 @@ class TaskData:
         for fnid in dependees:
             self.fail_fnid(fnid)
         if self.abort and targetid in self.external_targets:
+            bb.msg.error(bb.msg.domain.Provider, "No buildable providers available for required build target %s" % self.build_names_index[targetid])
             raise bb.providers.NoProvider
 
     def remove_runtarget(self, targetid):
