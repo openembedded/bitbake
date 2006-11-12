@@ -192,6 +192,9 @@ class RunQueue:
             if targetid in taskData.failed_deps:
                 continue
 
+            if targetid not in taskData.build_targets:
+                continue
+
             fnid = taskData.build_targets[targetid][0]
             if fnid in taskData.failed_fnids:
                 continue
