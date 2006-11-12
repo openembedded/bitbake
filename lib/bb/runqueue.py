@@ -368,11 +368,9 @@ class RunQueue:
                         cooker.configuration.cmd = taskname[3:]
                         try: 
                             cooker.tryBuild(fn, False)
-                        except bb.build.EventException, e:
-                            bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
-                            sys.exit(1)
                         except:
-                            sys.exit(1)
+                            bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
+                            raise
                         sys.exit(0)
                     build_pids[pid] = task
                     runq_running[task] = 1
