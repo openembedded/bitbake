@@ -26,7 +26,7 @@ class TaskData:
     """
     BitBake Task Data implementation
     """
-    def __init__(self):
+    def __init__(self, abort = True):
         self.build_names_index = []
         self.run_names_index = []
         self.fn_index = []
@@ -51,6 +51,7 @@ class TaskData:
         self.failed_rdeps = []
         self.failed_fnids = []
 
+        self.abort = abort
 
     def matches_in_list(self, data, substring):
         """
@@ -318,7 +319,19 @@ class TaskData:
                 dependees.append(self.fn_index[fnid])
         return dependees
 
-    def add_provider(self, cfgData, dataCache, item, external = True):
+    def add_provider(self, cfgData, dataCache, item):
+        try:
+            self.add_provider_internal(cfgData, dataCache, item)
+        except bb.providers.NoProvider:
+            if self.abort:
+                bb.msg.error(bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (item, self.get_dependees_str(item)))
+                raise
+            targetid = self.getbuild_id(item)
+            self.remove_buildtarget(targetid)
+
+        self.mark_external_target(item)
+
+    def add_provider_internal(self, cfgData, dataCache, item):
         """
         Add the providers of item to the task data
         Mark entries were specifically added externally as against dependencies 
@@ -326,19 +339,15 @@ class TaskData:
         """
 
         if item in dataCache.ignored_dependencies:
-            return True
+            return
 
         if not item in dataCache.providers:
-            msg = "No providers of build target %s (for %s)" % (item, self.get_dependees_str(item))
-            if external:
-                bb.msg.error(bb.msg.domain.Provider, msg)
-            else:
-                bb.msg.debug(1, bb.msg.domain.Provider, msg)
+            bb.msg.debug(1, bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (item, self.get_dependees_str(item)))
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
         if self.have_build_target(item):
-            return True
+            return
 
         all_p = dataCache.providers[item]
 
@@ -350,11 +359,7 @@ class TaskData:
                 eligible.remove(p)
 
         if not eligible:
-            msg = "No providers of build target %s after filtering (for %s)" % (item, self.get_dependees_str(item))
-            if external:
-                bb.msg.error(bb.msg.domain.Provider, msg)
-            else:
-                bb.msg.debug(1, bb.msg.domain.Provider, msg)
+            bb.msg.debug(1, bb.msg.domain.Provider, "No providers of build target %s after filtering (for %s)" % (item, self.get_dependees_str(item)))
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
@@ -393,11 +398,6 @@ class TaskData:
 
             #item = dataCache.pkg_fn[fn]
 
-        if external:
-            self.mark_external_target(item)
-
-        return True
-
     def add_rprovider(self, cfgData, dataCache, item):
         """
         Add the runtime providers of item to the task data
@@ -405,10 +405,10 @@ class TaskData:
         """
 
         if item in dataCache.ignored_dependencies:
-            return True
+            return
 
         if self.have_runtime_target(item):
-            return True
+            return
 
         all_p = bb.providers.getRuntimeProviders(dataCache, item)
 
@@ -471,8 +471,6 @@ class TaskData:
             self.add_tasks(fn, dataCache)
             self.add_runtime_target(fn, item)
 
-        return True
-
     def fail_fnid(self, fnid):
         """
         Mark a file as failed (unbuildable)
@@ -503,6 +501,8 @@ class TaskData:
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
             self.fail_fnid(fnid)
+        if self.abort and targetid in self.external_targets:
+            raise bb.providers.NoProvider
 
     def remove_runtarget(self, targetid):
         """
@@ -524,12 +524,11 @@ class TaskData:
             added = 0
             for target in self.get_unresolved_build_targets(dataCache):
                 try:
-                    self.add_provider(cfgData, dataCache, target, False)
+                    self.add_provider_internal(cfgData, dataCache, target)
                     added = added + 1
                 except bb.providers.NoProvider:
                     targetid = self.getbuild_id(target)
-                    if targetid in self.external_targets:
-                        # FIXME - should look at configuration.abort here and only raise if set
+                    if self.abort and targetid in self.external_targets:
                         raise
                     self.remove_buildtarget(targetid)
             for target in self.get_unresolved_run_targets(dataCache):

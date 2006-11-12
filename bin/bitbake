@@ -617,7 +617,7 @@ class BBCooker:
 
             bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.event_data))
 
-            taskdata = bb.taskdata.TaskData()
+            taskdata = bb.taskdata.TaskData(self.configuration.abort)
 
             runlist = []
             try:

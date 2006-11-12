@@ -278,9 +278,7 @@ class RunQueue:
                 self.execute_runqueue_internal(cooker, cfgData, dataCache, taskData)
                 return failures
             except bb.runqueue.TaskFailure, (fnid, taskData.fn_index[fnid], taskname):
-                if cooker.configuration.abort:
-                    raise
-                if cooker.configuration.abort:
+                if taskData.abort:
                     raise
                 taskData.fail_fnid(fnid)
                 self.reset_runqueue()

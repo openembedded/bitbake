@@ -155,7 +155,7 @@ class BitBakeShellCommands:
         cooker.build_cache = []
         cooker.build_cache_fail = []
 
-        td = taskdata.TaskData()
+        td = taskdata.TaskData(cooker.configuration.abort)
 
         try:
             tasks = []
