@@ -159,26 +159,26 @@ class TaskData:
 
         # Work out build dependencies
         if not fnid in self.depids:
-            dependids = []
+            dependids = {}
             for depend in dataCache.deps[fn]:
                 bb.msg.debug(2, bb.msg.domain.TaskData, "Added dependency %s for %s" % (depend, fn))
-                dependids.append(self.getbuild_id(depend))
-            self.depids[fnid] = dependids
+                dependids[self.getbuild_id(depend)] = None
+            self.depids[fnid] = dependids.keys()
 
         # Work out runtime dependencies
         if not fnid in self.rdepids:
-            rdependids = []
+            rdependids = {}
             rdepends = dataCache.rundeps[fn]
             rrecs = dataCache.runrecs[fn]
             for package in rdepends:
                 for rdepend in rdepends[package]:
                     bb.msg.debug(2, bb.msg.domain.TaskData, "Added runtime dependency %s for %s" % (rdepend, fn))
-                    rdependids.append(self.getrun_id(rdepend))
+                    rdependids[self.getrun_id(rdepend)] = None
             for package in rrecs:
                 for rdepend in rrecs[package]:
                     bb.msg.debug(2, bb.msg.domain.TaskData, "Added runtime recommendation %s for %s" % (rdepend, fn))
-                    rdependids.append(self.getrun_id(rdepend))
-            self.rdepids[fnid] = rdependids
+                    rdependids[self.getrun_id(rdepend)] = None
+            self.rdepids[fnid] = rdependids.keys()
 
     def have_build_target(self, target):
         """
@@ -542,7 +542,6 @@ class TaskData:
             if added == 0:
                 break
 
-
     def dump_data(self):
         """
         Dump some debug information on the internal data structures
@@ -564,5 +563,8 @@ class TaskData:
                 self.fn_index[self.tasks_fnid[task]], 
                 self.tasks_name[task], 
                 self.tasks_tdepends[task]))
+        bb.msg.debug(3, bb.msg.domain.TaskData, "runtime ids (per fn):")
+        for fnid in self.rdepids:
+            bb.msg.debug(3, bb.msg.domain.TaskData, " %s %s: %s" % (fnid, self.fn_index[fnid], self.rdepids[fnid]))
 
 
