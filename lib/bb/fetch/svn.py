@@ -68,9 +68,6 @@ class Svn(Fetch):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % ud.localpath)
             return
 
-        # setup svn options
-        options = []
-
         proto = "svn"
         if "proto" in ud.parm:
             proto = ud.parm["proto"]
@@ -82,6 +79,7 @@ class Svn(Fetch):
         svnroot = ud.host + ud.path
 
         # either use the revision, or SRCDATE in braces, or nothing for SRCDATE = "now"
+        options = []
         if ud.revision:
             options.append("-r %s" % ud.revision)
         elif ud.date != "now":
@@ -101,12 +99,12 @@ class Svn(Fetch):
             svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
             svnupcmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svnupcmd)
 
-        pkg=data.expand('${PN}', d)
-        pkgdir=os.path.join(data.expand('${SVNDIR}', localdata), pkg)
-        moddir=os.path.join(pkgdir, ud.module)
+        pkg = data.expand('${PN}', d)
+        pkgdir = os.path.join(data.expand('${SVNDIR}', localdata), pkg)
+        moddir = os.path.join(pkgdir, ud.module)
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + moddir + "'")
 
-        if os.access(os.path.join(moddir,'.svn'), os.R_OK):
+        if os.access(os.path.join(moddir, '.svn'), os.R_OK):
             bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
             # update sources there
             os.chdir(moddir)
@@ -131,3 +129,4 @@ class Svn(Fetch):
                 os.unlink(ud.localpath)
             except OSError:
                 pass
+            raise FetchError(ud.module)

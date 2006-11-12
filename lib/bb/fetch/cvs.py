@@ -73,30 +73,19 @@ class Cvs(Fetch):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping cvs checkout." % ud.localpath)
             return
 
-        # setup cvs options
-        options = []
-
+        method = "pserver"
         if "method" in ud.parm:
             method = ud.parm["method"]
-        else:
-            method = "pserver"
 
+        localdir = ud.module
         if "localdir" in ud.parm:
             localdir = ud.parm["localdir"]
-        else:
-            localdir = ud.module
 
         cvs_rsh = None
         if method == "ext":
             if "rsh" in ud.parm:
                 cvs_rsh = ud.parm["rsh"]
 
-        if ud.date:
-            options.append("-D %s" % ud.date)
-        if ud.tag:
-            options.append("-r %s" % ud.tag)
-
-        # setup cvsroot
         if method == "dir":
             cvsroot = ud.path
         else:
@@ -104,6 +93,12 @@ class Cvs(Fetch):
             if ud.pswd:
                 cvsroot += ":" + ud.pswd
             cvsroot += "@" + ud.host + ":" + ud.path
+
+        options = []
+        if ud.date:
+            options.append("-D %s" % ud.date)
+        if ud.tag:
+            options.append("-r %s" % ud.tag)
 
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "cvs:%s" % data.getVar('OVERRIDES', localdata), localdata)
@@ -121,9 +116,9 @@ class Cvs(Fetch):
 
         # create module directory
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory")
-        pkg=data.expand('${PN}', d)
-        pkgdir=os.path.join(data.expand('${CVSDIR}', localdata), pkg)
-        moddir=os.path.join(pkgdir,localdir)
+        pkg = data.expand('${PN}', d)
+        pkgdir = os.path.join(data.expand('${CVSDIR}', localdata), pkg)
+        moddir = os.path.join(pkgdir,localdir)
         if os.access(os.path.join(moddir,'CVS'), os.R_OK):
             bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
             # update sources there
@@ -153,3 +148,4 @@ class Cvs(Fetch):
                 os.unlink(ud.localpath)
             except OSError:
                 pass
+            raise FetchError(ud.module)

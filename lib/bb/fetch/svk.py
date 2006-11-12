@@ -117,5 +117,6 @@ class Svk(Fetch):
                 os.unlink(ud.localpath)
             except OSError:
                 pass
+            raise FetchError(ud.module)
         # cleanup
         os.system('rm -rf %s' % tmpfile)

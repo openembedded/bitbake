@@ -191,7 +191,12 @@ class Fetch(object):
 
         d the bb.data module
         """
-        return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1 )
+        pn = data.getVar("PN", d, 1)
+
+        if pn:
+            return data.getVar("SRCDATE_%s" % pn, d, 1) or data.getVar("CVSDATE_%s" % pn, d, 1) or data.getVar("DATE", d, 1)
+
+        return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
     getSRCDate = staticmethod(getSRCDate)
 
     def try_mirror(d, tarfn):
