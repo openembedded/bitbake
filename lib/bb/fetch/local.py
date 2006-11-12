@@ -50,6 +50,7 @@ class Local(Fetch):
                 filesdir = data.getVar('FILESDIR', d, 1)
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
+        # We don't set localfile as for this fetcher the file is already local!
         return newpath
 
     def go(self, url, urldata, d):

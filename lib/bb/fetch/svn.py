@@ -55,8 +55,18 @@ class Svn(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
+    def forcefetch(self, url, ud, d):
+        if (ud.date == "now"):
+            return True
+        return False
+
     def go(self, loc, ud, d):
         """Fetch url"""
+
+        # try to use the tarball stash
+        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % ud.localpath)
+            return
 
         # setup svn options
         options = []
@@ -68,11 +78,6 @@ class Svn(Fetch):
         svn_rsh = None
         if proto == "svn+ssh" and "rsh" in ud.parm:
             svn_rsh = ud.parm["rsh"]
-
-        # try to use the tarball stash
-        if (ud.date != "now") and Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % ud.localpath)
-            return
 
         svnroot = ud.host + ud.path
 

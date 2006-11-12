@@ -111,10 +111,18 @@ def go(d):
     """Fetch all urls"""
     for m in methods:
         for u in m.urls:
+            ud = urldata[u]
+            if ud.localfile and not m.forcefetch(u, ud, d) and os.path.exists(urldata[u].md5):
+                # File already present along with md5 stamp file
+                # Touch md5 file to show activity
+                os.utime(ud.md5, None)
+                continue
             # RP - is olddir needed?
-            olddir = os.path.abspath(os.getcwd())
-            m.go(u, urldata[u], d)
-            os.chdir(olddir)
+            # olddir = os.path.abspath(os.getcwd())
+            m.go(u, ud	, d)
+            # os.chdir(olddir)
+            if ud.localfile and not m.forcefetch(u, ud, d):
+                Fetch.write_md5sum(u, ud, d)
 
 def localpaths(d):
     """Return a list of the local filenames, assuming successful fetch"""
@@ -132,6 +140,9 @@ def localpath(url, d):
 
 class FetchData(object):
     """Class for fetcher variable store"""
+    def __init__(self):
+        self.localfile = ""
+
 
 class Fetch(object):
     """Base class for 'fetch'ing data"""
@@ -160,6 +171,12 @@ class Fetch(object):
         return self.__urls
 
     urls = property(getUrls, setUrls, None, "Urls property")
+
+    def forcefetch(self, url, urldata, d):
+        """
+        Force a fetch, even if localpath exists?
+        """
+        return False
 
     def go(self, url, urldata, d):
         """
@@ -208,6 +225,37 @@ class Fetch(object):
                 return True
         return False
     try_mirror = staticmethod(try_mirror)
+
+    def verify_md5sum(ud, got_sum):
+        """
+        Verify the md5sum we wanted with the one we got
+        """
+        wanted_sum = None
+        if 'md5sum' in ud.parm:
+            wanted_sum = ud.parm['md5sum']
+        if not wanted_sum:
+            return True
+
+        return wanted_sum == got_sum
+    verify_md5sum = staticmethod(verify_md5sum)
+
+    def write_md5sum(url, ud, d):
+        if bb.which(data.getVar('PATH', d), 'md5sum'):
+            try:
+                md5pipe = os.popen('md5sum ' + ud.localpath)
+                md5data = (md5pipe.readline().split() or [ "" ])[0]
+                md5pipe.close()
+            except OSError:
+                md5data = ""
+
+        # verify the md5sum
+        if not Fetch.verify_md5sum(ud, md5data):
+            raise MD5SumError(url)
+
+        md5out = file(ud.md5, 'w')
+        md5out.write(md5data)
+        md5out.close()
+    write_md5sum = staticmethod(write_md5sum)
 
 import cvs
 import git

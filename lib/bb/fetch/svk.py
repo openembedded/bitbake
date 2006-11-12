@@ -62,10 +62,15 @@ class Svk(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
+    def forcefetch(self, url, ud, d):
+        if (ud.date == "now"):
+            return True
+        return False
+
     def go(self, loc, ud, d):
         """Fetch urls"""
 
-        if (ud.date != "now") and Fetch.try_mirror(d, ud.localfile):
+        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
             return
 
         svkroot = ud.host + ud.path

@@ -70,8 +70,18 @@ class Git(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
+    def forcefetch(self, url, ud, d):
+        # tag=="master" must always update
+        if (ud.tag == "master"):
+            return True
+        return False
+
     def go(self, loc, ud, d):
         """Fetch url"""
+
+        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % ud.localpath)
+            return
 
         gitsrcname = '%s%s' % (ud.host, path.replace('/', '.'))
 
@@ -81,11 +91,6 @@ class Git(Fetch):
 
         coname = '%s' % (ud.tag)
         codir = os.path.join(repodir, coname)
-
-        # tag=="master" must always update
-        if (ud.tag != "master") and Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % ud.localpath)
-            return
 
         if not os.path.exists(repodir):
             if Fetch.try_mirror(d, repofilename):    

@@ -61,7 +61,17 @@ class Cvs(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
+    def forcefetch(self, url, ud, d):
+        if (ud.date == "now"):
+            return True
+        return False
+
     def go(self, loc, ud, d):
+
+        # try to use the tarball stash
+        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping cvs checkout." % ud.localpath)
+            return
 
         # setup cvs options
         options = []
@@ -80,11 +90,6 @@ class Cvs(Fetch):
         if method == "ext":
             if "rsh" in ud.parm:
                 cvs_rsh = ud.parm["rsh"]
-
-        # try to use the tarball stash
-        if (ud.date != "now") and Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping cvs checkout." % ud.localpath)
-            return
 
         if ud.date:
             options.append("-D %s" % ud.date)
