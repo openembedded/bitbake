@@ -63,10 +63,6 @@ class Cvs(Fetch):
 
     def go(self, loc, ud, d):
 
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "cvs:%s" % data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
-
         # setup cvs options
         options = []
 
@@ -103,6 +99,10 @@ class Cvs(Fetch):
             if ud.pswd:
                 cvsroot += ":" + ud.pswd
             cvsroot += "@" + ud.host + ":" + ud.path
+
+        localdata = data.createCopy(d)
+        data.setVar('OVERRIDES', "cvs:%s" % data.getVar('OVERRIDES', localdata), localdata)
+        data.update_data(localdata)
 
         data.setVar('CVSROOT', cvsroot, localdata)
         data.setVar('CVSCOOPTS', " ".join(options), localdata)

@@ -70,10 +70,10 @@ class Wget(Fetch):
 
             return wanted_sum == got_sum
 
-        def fetch_uri(uri, basename, dl, md5, parm, d):
+        def fetch_uri(uri, ud, basename, d):
             # the MD5 sum we want to verify
-            wanted_md5sum = md5_sum(parm, d)
-            if os.path.exists(dl):
+            wanted_md5sum = md5_sum(ud.parm, d)
+            if os.path.exists(ud.localpath):
                 # file exists, but we didnt complete it.. trying again..
                 fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
             else:
@@ -88,16 +88,15 @@ class Wget(Fetch):
                 return False
 
             # check if sourceforge did send us to the mirror page
-            dl_dir = data.getVar("DL_DIR", d, True)
-            if not os.path.exists(dl):
-                os.system("rm %s*" % dl) # FIXME shell quote it
+            if not os.path.exists(ud.localpath):
+                os.system("rm %s*" % ud.localpath) # FIXME shell quote it
                 bb.msg.debug(2, bb.msg.domain.Fetcher, "sourceforge.net send us to the mirror on %s" % basename)
                 return False
 
             # supposedly complete.. write out md5sum
             if bb.which(data.getVar('PATH', d), 'md5sum'):
                 try:
-                    md5pipe = os.popen('md5sum ' + dl)
+                    md5pipe = os.popen('md5sum ' + ud.localpath)
                     md5data = (md5pipe.readline().split() or [ "" ])[0]
                     md5pipe.close()
                 except OSError:
@@ -107,38 +106,36 @@ class Wget(Fetch):
             if not verify_md5sum(wanted_md5sum, md5data):
                 raise MD5SumError(uri)
 
-            md5out = file(md5, 'w')
+            md5out = file(ud.md5, 'w')
             md5out.write(md5data)
             md5out.close()
             return True
+
+        completed = 0
+        basename = os.path.basename(ud.path)
+
+        if os.path.exists(ud.md5):
+            #complete, nothing to see here..
+            #touch md5 file to show activity
+            os.utime(ud.md5, None)
+            return
 
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "wget:" + data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        completed = 0
-        basename = os.path.basename(ud.path)
-        dl = data.expand(ud.localpath, localdata)
-        md5 = dl + '.md5'
-
-        if os.path.exists(md5):
-            #complete, nothing to see here..
-            #touch md5 file to show activity
-            os.utime(md5, None)
-            return
-
         premirrors = [ i.split() for i in (data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
         for (find, replace) in premirrors:
             newuri = uri_replace(uri, find, replace, d)
             if newuri != uri:
-                if fetch_uri(newuri, basename, dl, md5, ud.parm, localdata):
+                if fetch_uri(newuri, ud, basename, localdata):
                     completed = 1
                     break
 
         if completed:
             return
 
-        if fetch_uri(uri, basename, dl, md5, ud.parm, localdata):
+        if fetch_uri(uri, ud, basename, localdata):
             return
 
         # try mirrors
@@ -146,7 +143,7 @@ class Wget(Fetch):
         for (find, replace) in mirrors:
             newuri = uri_replace(uri, find, replace, d)
             if newuri != uri:
-                if fetch_uri(newuri, basename, dl, md5, ud.parm, localdata):
+                if fetch_uri(newuri, ud, basename, localdata):
                     completed = 1
                     break
 

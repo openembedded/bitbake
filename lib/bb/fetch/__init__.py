@@ -98,6 +98,7 @@ def initdata(url, d):
         for m in methods:
             if m.supports(url, ud, d):
                 ud.localpath = m.localpath(url, ud, d)
+                ud.md5 = ud.localpath + '.md5'
                 # if user sets localpath for file, use it instead.
                 if "localpath" in ud.parm:
                     ud.localpath = ud.parm["localpath"]

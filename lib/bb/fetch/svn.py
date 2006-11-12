@@ -58,10 +58,6 @@ class Svn(Fetch):
     def go(self, loc, ud, d):
         """Fetch url"""
 
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "svn:%s" % data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
-
         # setup svn options
         options = []
 
@@ -85,6 +81,10 @@ class Svn(Fetch):
             options.append("-r %s" % ud.revision)
         elif ud.date != "now":
             options.append("-r {%s}" % ud.date)
+
+        localdata = data.createCopy(d)
+        data.setVar('OVERRIDES', "svn:%s" % data.getVar('OVERRIDES', localdata), localdata)
+        data.update_data(localdata)
 
         data.setVar('SVNROOT', "%s://%s/%s" % (proto, svnroot, ud.module), localdata)
         data.setVar('SVNCOOPTS', " ".join(options), localdata)

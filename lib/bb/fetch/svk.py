@@ -65,20 +65,17 @@ class Svk(Fetch):
     def go(self, loc, ud, d):
         """Fetch urls"""
 
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "svk:%s" % data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
-
-        # setup svk options
-        options = []
-
         if (ud.date != "now") and Fetch.try_mirror(d, ud.localfile):
             return
 
         svkroot = ud.host + ud.path
 
+        localdata = data.createCopy(d)
+        data.setVar('OVERRIDES', "svk:%s" % data.getVar('OVERRIDES', localdata), localdata)
+        data.update_data(localdata)
+
         data.setVar('SVKROOT', svkroot, localdata)
-        data.setVar('SVKCOOPTS', " ".join(options), localdata)
+        data.setVar('SVKCOOPTS', '', localdata)
         data.setVar('SVKMODULE', ud.module, localdata)
         svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, ud.module)
 
