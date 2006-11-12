@@ -72,7 +72,7 @@ class Svk(Fetch):
         # setup svk options
         options = []
 
-        if (date != "now") and Fetch.try_mirror(d, ud.localfile):
+        if (ud.date != "now") and Fetch.try_mirror(d, ud.localfile):
             return
 
         svkroot = ud.host + ud.path

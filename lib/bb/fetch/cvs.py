@@ -86,7 +86,7 @@ class Cvs(Fetch):
                 cvs_rsh = ud.parm["rsh"]
 
         # try to use the tarball stash
-        if (date != "now") and Fetch.try_mirror(d, ud.localfile):
+        if (ud.date != "now") and Fetch.try_mirror(d, ud.localfile):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping cvs checkout." % ud.localpath)
             return
 
