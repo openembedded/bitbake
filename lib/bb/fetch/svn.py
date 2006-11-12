@@ -35,95 +35,70 @@ from   bb.fetch import MissingParameterError
 
 class Svn(Fetch):
     """Class to fetch a module or modules from svn repositories"""
-    def supports(url, d):
-        """Check to see if a given url can be fetched with svn.
-           Expects supplied url in list form, as outputted by bb.decodeurl().
+    def supports(self, url, ud, d):
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        return type in ['svn']
-    supports = staticmethod(supports)
+        Check to see if a given url can be fetched with svn.
+        """
+        return ud.type in ['svn']
 
-    def localpath(url, d):
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        if "localpath" in parm:
-#           if user overrides local path, use it.
-            return parm["localpath"]
-
-        if not "module" in parm:
+    def localpath(self, url, ud, d):
+        if not "module" in ud.parm:
             raise MissingParameterError("svn method needs a 'module' parameter")
         else:
-            module = parm["module"]
+            module = ud.parm["module"]
+
+        ud.revision = ""
         if 'rev' in parm:
-            revision = parm['rev']
-        else:
-            revision = ""
+            ud.revision = ud.parm['rev']
 
-        date = Fetch.getSRCDate(d)
+        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
-        return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, path.replace('/', '.'), revision, date), d))
-    localpath = staticmethod(localpath)
+        return os.path.join(data.getVar("DL_DIR", d, 1), )
 
-    def go(self, d, loc):
+    def go(self, loc, ud, d):
         """Fetch url"""
 
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "svn:%s" % data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(loc, localdata))
-        if not "module" in parm:
+        if not "module" in ud.parm:
             raise MissingParameterError("svn method needs a 'module' parameter")
         else:
-            module = parm["module"]
+            module = ud.parm["module"]
 
         dlfile = self.localpath(loc, localdata)
         dldir = data.getVar('DL_DIR', localdata, 1)
-#       if local path contains the svn
-#       module, consider the dir above it to be the
-#       download directory
-#       pos = dlfile.find(module)
-#       if pos:
-#           dldir = dlfile[:pos]
-#       else:
-#           dldir = os.path.dirname(dlfile)
 
-#       setup svn options
+        # setup svn options
         options = []
-        if 'rev' in parm:
-            revision = parm['rev']
-        else:
-            revision = ""
 
-        date = Fetch.getSRCDate(d)
-
-        if "proto" in parm:
-            proto = parm["proto"]
+        if "proto" in ud.parm:
+            proto = ud.parm["proto"]
         else:
             proto = "svn"
 
         svn_rsh = None
-        if proto == "svn+ssh" and "rsh" in parm:
-            svn_rsh = parm["rsh"]
+        if proto == "svn+ssh" and "rsh" in ud.parm:
+            svn_rsh = ud.parm["rsh"]
 
-        tarfn = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, path.replace('/', '.'), revision, date), localdata)
-        data.setVar('TARFILES', dlfile, localdata)
-        data.setVar('TARFN', tarfn, localdata)
+        tarfn = ud.localfile
 
         # try to use the tarball stash
-        if Fetch.check_for_tarball(d, tarfn, dldir, date):
+        if Fetch.check_for_tarball(d, tarfn, dldir, ud.date):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % tarfn)
             return
 
         olddir = os.path.abspath(os.getcwd())
         os.chdir(data.expand(dldir, localdata))
 
-        svnroot = host + path
+        svnroot = ud.host + ud.path
 
         # either use the revision, or SRCDATE in braces, or nothing for SRCDATE = "now"
-        if revision:
-            options.append("-r %s" % revision)
-        elif date != "now":
-            options.append("-r {%s}" % date)
+        if ud.revision:
+            options.append("-r %s" % ud.revision)
+        elif ud.date != "now":
+            options.append("-r {%s}" % ud.date)
 
         data.setVar('SVNROOT', "%s://%s/%s" % (proto, svnroot, module), localdata)
         data.setVar('SVNCOOPTS', " ".join(options), localdata)

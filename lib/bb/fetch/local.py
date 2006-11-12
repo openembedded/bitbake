@@ -31,15 +31,13 @@ from   bb import data
 from   bb.fetch import Fetch
 
 class Local(Fetch):
-    def supports(url, d):
-        """Check to see if a given url can be fetched in the local filesystem.
-           Expects supplied url in list form, as outputted by bb.decodeurl().
+    def supports(self, url, urldata, d):
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        return type in ['file','patch']
-    supports = staticmethod(supports)
+        Check to see if a given url can be fetched with cvs.
+        """
+        return urldata.type in ['file','patch']
 
-    def localpath(url, d):
+    def localpath(self, url, urldata, d):
         """Return the local filename of a given url assuming a successful fetch.
         """
         path = url.split("://")[1]
@@ -53,9 +51,8 @@ class Local(Fetch):
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
         return newpath
-    localpath = staticmethod(localpath)
 
-    def go(self, d, url):
+    def go(self, url, urldata, d):
         """Fetch urls (no-op for Local method)"""
-#       no need to fetch local files, we'll deal with them in place.
+        # no need to fetch local files, we'll deal with them in place.
         return 1

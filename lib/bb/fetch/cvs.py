@@ -33,118 +33,89 @@ from   bb.fetch import FetchError
 from   bb.fetch import MissingParameterError
 
 class Cvs(Fetch):
-    """Class to fetch a module or modules from cvs repositories"""
-    def supports(url, d):
-        """Check to see if a given url can be fetched with cvs.
-           Expects supplied url in list form, as outputted by bb.decodeurl().
+    """
+    Class to fetch a module or modules from cvs repositories
+    """
+    def supports(self, url, ud, d):
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        return type in ['cvs', 'pserver']
-    supports = staticmethod(supports)
+        Check to see if a given url can be fetched with cvs.
+        """
+        return ud.type in ['cvs', 'pserver']
 
-    def localpath(url, d):
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        if "localpath" in parm:
-#           if user overrides local path, use it.
-            return parm["localpath"]
-
-        if not "module" in parm:
+    def localpath(self, url, ud, d):
+        if not "module" in ud.parm:
             raise MissingParameterError("cvs method needs a 'module' parameter")
-        else:
-            module = parm["module"]
-        if 'tag' in parm:
-            tag = parm['tag']
-        else:
-            tag = ""
-        if 'date' in parm:
-            date = parm['date']
-        else:
-            if not tag:
-                date = Fetch.getSRCDate(d)
-            else:
-                date = ""
+        ud.module = ud.parm["module"]
 
-        return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, tag, date), d))
-    localpath = staticmethod(localpath)
+        ud.tag = ""
+        if 'tag' in ud.parm:
+            ud.tag = ud.parm['tag']
 
-    def go(self, d, loc):
+        # Override the default date in certain cases
+        if 'date' in ud.parm:
+            ud.date = ud.parm['date']
+        elif ud.tag:
+            ud.date = ""
+
+        ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), ud.host, ud.tag, ud.date), d)
+
+        return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
+
+    def go(self, loc, ud, d):
 
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "cvs:%s" % data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(loc, localdata))
-        if not "module" in parm:
+        if not "module" in ud.parm:
             raise MissingParameterError("cvs method needs a 'module' parameter")
         else:
-            module = parm["module"]
+            module = ud.parm["module"]
 
-        dlfile = self.localpath(loc, localdata)
+        dlfile = ud.localpath
         dldir = data.getVar('DL_DIR', localdata, 1)
-#       if local path contains the cvs
-#       module, consider the dir above it to be the
-#       download directory
-#       pos = dlfile.find(module)
-#       if pos:
-#           dldir = dlfile[:pos]
-#       else:
-#           dldir = os.path.dirname(dlfile)
 
-#       setup cvs options
+        # setup cvs options
         options = []
-        if 'tag' in parm:
-            tag = parm['tag']
-        else:
-            tag = ""
 
-        if 'date' in parm:
-            date = parm['date']
-        else:
-            if not tag:
-                date = Fetch.getSRCDate(d)
-            else:
-                date = ""
-
-        if "method" in parm:
-            method = parm["method"]
+        if "method" in ud.parm:
+            method = ud.parm["method"]
         else:
             method = "pserver"
 
-        if "localdir" in parm:
-            localdir = parm["localdir"]
+        if "localdir" in ud.parm:
+            localdir = ud.parm["localdir"]
         else:
             localdir = module
 
         cvs_rsh = None
         if method == "ext":
-            if "rsh" in parm:
-                cvs_rsh = parm["rsh"]
+            if "rsh" in ud.parm:
+                cvs_rsh = ud.parm["rsh"]
 
-        tarfn = data.expand('%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, tag, date), localdata)
-        data.setVar('TARFILES', dlfile, localdata)
-        data.setVar('TARFN', tarfn, localdata)
+        tarfn = ud.localfile
 
         # try to use the tarball stash
         if Fetch.check_for_tarball(d, tarfn, dldir, date):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping cvs checkout." % tarfn)
             return
 
-        if date:
-            options.append("-D %s" % date)
-        if tag:
-            options.append("-r %s" % tag)
+        if ud.date:
+            options.append("-D %s" % ud.date)
+        if ud.tag:
+            options.append("-r %s" % ud.tag)
 
         olddir = os.path.abspath(os.getcwd())
         os.chdir(data.expand(dldir, localdata))
 
-#           setup cvsroot
+        # setup cvsroot
         if method == "dir":
-            cvsroot = path
+            cvsroot = ud.path
         else:
-            cvsroot = ":" + method + ":" + user
-            if pswd:
-                cvsroot += ":" + pswd
-            cvsroot += "@" + host + ":" + path
+            cvsroot = ":" + method + ":" + ud.user
+            if ud.pswd:
+                cvsroot += ":" + ud.pswd
+            cvsroot += "@" + ud.host + ":" + ud.path
 
         data.setVar('CVSROOT', cvsroot, localdata)
         data.setVar('CVSCOOPTS', " ".join(options), localdata)
@@ -156,19 +127,19 @@ class Cvs(Fetch):
             cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)
             cvsupdatecmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvsupdatecmd)
 
-#       create module directory
+        # create module directory
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory")
         pkg=data.expand('${PN}', d)
         pkgdir=os.path.join(data.expand('${CVSDIR}', localdata), pkg)
         moddir=os.path.join(pkgdir,localdir)
         if os.access(os.path.join(moddir,'CVS'), os.R_OK):
             bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
-#           update sources there
+            # update sources there
             os.chdir(moddir)
             myret = os.system(cvsupdatecmd)
         else:
             bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
-#           check out sources there
+            # check out sources there
             bb.mkdirhier(pkgdir)
             os.chdir(pkgdir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cvscmd)
@@ -183,7 +154,7 @@ class Cvs(Fetch):
 
         os.chdir(moddir)
         os.chdir('..')
-#       tar them up to a defined filename
+        # tar them up to a defined filename
         myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(moddir)))
         if myret != 0:
             try:

@@ -64,17 +64,17 @@ __pattern__ = re.compile(r'''
 class SSH(Fetch):
     '''Class to fetch a module or modules via Secure Shell'''
 
-    def supports(self, url, d):
+    def supports(self, url, urldata, d):
         return __pattern__.match(url) != None
 
-    def localpath(self, url, d):
+    def localpath(self, url, urldata, d):
         m = __pattern__.match(url)
         path = m.group('path')
         host = m.group('host')
         lpath = os.path.join(data.getVar('DL_DIR', d, 1), host, os.path.basename(path))
         return lpath
 
-    def go(self, d, url):
+    def go(self, url, urldata, d):
         dldir = data.getVar('DL_DIR', d, 1)
 
         m = __pattern__.match(url)

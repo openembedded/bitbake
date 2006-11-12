@@ -75,6 +75,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
     return bb.encodeurl(result_decoded)
 
 methods = []
+urldata = {}
 
 def init(urls = [], d = None):
     if d == None:
@@ -85,52 +86,68 @@ def init(urls = [], d = None):
         m.urls = []
 
     for u in urls:
+        ud = initdata(u, d)
+        if ud.method:
+            ud.method.urls.append(u)
+
+def initdata(url, d):
+    if url not in urldata:
+        ud = FetchData()
+        (ud.type, ud.host, ud.path, ud.user, ud.pswd, ud.parm) = bb.decodeurl(data.expand(url, d))
+        ud.date = Fetch.getSRCDate(d)
         for m in methods:
-            m.data = d
-            if m.supports(u, d):
-                m.urls.append(u)
+            if m.supports(url, ud, d):
+                ud.localpath = m.localpath(url, ud, d)
+                # if user sets localpath for file, use it instead.
+                if "localpath" in ud.parm:
+                    ud.localpath = ud.parm["localpath"]
+                ud.method = m
+                break
+        urldata[url] = ud
+    return urldata[url]
 
 def go(d):
     """Fetch all urls"""
     for m in methods:
         for u in m.urls:
-            m.go(d, u)
+            m.go(u, urldata[u], d)
 
 def localpaths(d):
     """Return a list of the local filenames, assuming successful fetch"""
     local = []
     for m in methods:
         for u in m.urls:
-            local.append(m.localpath(u, d))
+            local.append(urldata[u].localpath)
     return local
 
 def localpath(url, d):
-    for m in methods:
-        if m.supports(url, d):
-            return m.localpath(url, d)
+    ud = initdata(url, d)
+    if ud.method:
+        return ud.localpath
     return url
+
+class FetchData(object):
+    """Class for fetcher variable store"""
 
 class Fetch(object):
     """Base class for 'fetch'ing data"""
 
     def __init__(self, urls = []):
         self.urls = []
-        for url in urls:
-            if self.supports(bb.decodeurl(url), d) is 1:
-                self.urls.append(url)
 
-    def supports(url, d):
-        """Check to see if this fetch class supports a given url.
-           Expects supplied url in list form, as outputted by bb.decodeurl().
+    def supports(self, url, urldata, d):
+        """
+        Check to see if this fetch class supports a given url.
         """
         return 0
-    supports = staticmethod(supports)
 
-    def localpath(url, d):
-        """Return the local filename of a given url assuming a successful fetch.
+    def localpath(self, url, urldata, d):
+        """
+        Return the local filename of a given url assuming a successful fetch.
+        Can also setup variables in urldata for use in go (saving code duplication 
+        and duplicate code execution)
         """
         return url
-    localpath = staticmethod(localpath)
 
     def setUrls(self, urls):
         self.__urls = urls
@@ -140,16 +157,11 @@ class Fetch(object):
 
     urls = property(getUrls, setUrls, None, "Urls property")
 
-    def setData(self, data):
-        self.__data = data
-
-    def getData(self):
-        return self.__data
-
-    data = property(getData, setData, None, "Data property")
-
-    def go(self, d, url):
-        """Fetch urls"""
+    def go(self, url, urldata, d):
+        """
+        Fetch urls
+        Assumes localpath was called first
+        """
         raise NoMethodError("Missing implementation for url")
 
     def getSRCDate(d):
@@ -193,7 +205,7 @@ class Fetch(object):
         return False
     try_mirror = staticmethod(try_mirror)
 
-    def check_for_tarball(d, tarfn, dldir, date):
+    def check_for_tarball(d, tarfn, dldir, date = ""):
         """
         Check for a local copy then check the tarball stash.
         Both checks are skipped if date == 'now'.
@@ -202,15 +214,13 @@ class Fetch(object):
         tarfn is the name of the tarball
         date is the SRCDATE
         """
-        if "now" != date:
-            dl = os.path.join(dldir, tarfn)
-            if os.access(dl, os.R_OK):
-                bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % tarfn)
-                return True
+        if date and date == "now":
+            return False
 
-            # try to use the tarball stash
-            if Fetch.try_mirror(d, tarfn):
-                return True
+        # try to use the tarball stash
+        if Fetch.try_mirror(d, tarfn):
+            return True
+
         return False
     check_for_tarball = staticmethod(check_for_tarball)
 

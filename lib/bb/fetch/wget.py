@@ -35,26 +35,19 @@ from   bb.fetch import uri_replace
 
 class Wget(Fetch):
     """Class to fetch urls via 'wget'"""
-    def supports(url, d):
-        """Check to see if a given url can be fetched using wget.
-           Expects supplied url in list form, as outputted by bb.decodeurl().
+    def supports(self, url, ud, d):
         """
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        return type in ['http','https','ftp']
-    supports = staticmethod(supports)
+        Check to see if a given url can be fetched with cvs.
+        """
+        return ud.type in ['http','https','ftp']
 
-    def localpath(url, d):
-        # strip off parameters
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
-        if "localpath" in parm:
-            # if user overrides local path, use it.
-            return parm["localpath"]
-        url = bb.encodeurl([type, host, path, user, pswd, {}])
+    def localpath(self, url, ud, d):
+
+        url = bb.encodeurl([ud.type, ud.host, ud.path, ud.user, ud.pswd, {}])
 
         return os.path.join(data.getVar("DL_DIR", d), os.path.basename(url))
-    localpath = staticmethod(localpath)
 
-    def go(self, d, uri):
+    def go(self, uri, ud, d):
         """Fetch urls"""
 
         def md5_sum(parm, d):
@@ -124,10 +117,8 @@ class Wget(Fetch):
         data.update_data(localdata)
 
         completed = 0
-        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(uri, localdata))
-        basename = os.path.basename(path)
-        dl = self.localpath(uri, d)
-        dl = data.expand(dl, localdata)
+        basename = os.path.basename(ud.path)
+        dl = data.expand(ud.localpath, localdata)
         md5 = dl + '.md5'
 
         if os.path.exists(md5):
@@ -140,14 +131,14 @@ class Wget(Fetch):
         for (find, replace) in premirrors:
             newuri = uri_replace(uri, find, replace, d)
             if newuri != uri:
-                if fetch_uri(newuri, basename, dl, md5, parm, localdata):
+                if fetch_uri(newuri, basename, dl, md5, ud.parm, localdata):
                     completed = 1
                     break
 
         if completed:
             return
 
-        if fetch_uri(uri, basename, dl, md5, parm, localdata):
+        if fetch_uri(uri, basename, dl, md5, ud.parm, localdata):
             return
 
         # try mirrors
@@ -155,7 +146,7 @@ class Wget(Fetch):
         for (find, replace) in mirrors:
             newuri = uri_replace(uri, find, replace, d)
             if newuri != uri:
-                if fetch_uri(newuri, basename, dl, md5, parm, localdata):
+                if fetch_uri(newuri, basename, dl, md5, ud.parm, localdata):
                     completed = 1
                     break
 
