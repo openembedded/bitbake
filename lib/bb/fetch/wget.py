@@ -44,17 +44,17 @@ class Wget(Fetch):
     supports = staticmethod(supports)
 
     def localpath(url, d):
-#       strip off parameters
+        # strip off parameters
         (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(url, d))
         if "localpath" in parm:
-#           if user overrides local path, use it.
+            # if user overrides local path, use it.
             return parm["localpath"]
         url = bb.encodeurl([type, host, path, user, pswd, {}])
 
         return os.path.join(data.getVar("DL_DIR", d), os.path.basename(url))
     localpath = staticmethod(localpath)
 
-    def go(self, d, urls = []):
+    def go(self, d, uri):
         """Fetch urls"""
 
         def md5_sum(parm, d):
@@ -81,7 +81,7 @@ class Wget(Fetch):
             # the MD5 sum we want to verify
             wanted_md5sum = md5_sum(parm, d)
             if os.path.exists(dl):
-#               file exists, but we didnt complete it.. trying again..
+                # file exists, but we didnt complete it.. trying again..
                 fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
             else:
                 fetchcmd = data.getVar("FETCHCOMMAND", d, 1)
@@ -101,7 +101,7 @@ class Wget(Fetch):
                 bb.msg.debug(2, bb.msg.domain.Fetcher, "sourceforge.net send us to the mirror on %s" % basename)
                 return False
 
-#           supposedly complete.. write out md5sum
+            # supposedly complete.. write out md5sum
             if bb.which(data.getVar('PATH', d), 'md5sum'):
                 try:
                     md5pipe = os.popen('md5sum ' + dl)
@@ -119,49 +119,45 @@ class Wget(Fetch):
             md5out.close()
             return True
 
-        if not urls:
-            urls = self.urls
-
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "wget:" + data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        for uri in urls:
-            completed = 0
-            (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(uri, localdata))
-            basename = os.path.basename(path)
-            dl = self.localpath(uri, d)
-            dl = data.expand(dl, localdata)
-            md5 = dl + '.md5'
+        completed = 0
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(uri, localdata))
+        basename = os.path.basename(path)
+        dl = self.localpath(uri, d)
+        dl = data.expand(dl, localdata)
+        md5 = dl + '.md5'
 
-            if os.path.exists(md5):
-#               complete, nothing to see here..
-                continue
+        if os.path.exists(md5):
+            #complete, nothing to see here..
+            #touch md5 file to show activity
+            os.utime(md5, None)
+            return
 
-            premirrors = [ i.split() for i in (data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
-            for (find, replace) in premirrors:
-                newuri = uri_replace(uri, find, replace, d)
-                if newuri != uri:
-                    if fetch_uri(newuri, basename, dl, md5, parm, localdata):
-                        completed = 1
-                        break
+        premirrors = [ i.split() for i in (data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
+        for (find, replace) in premirrors:
+            newuri = uri_replace(uri, find, replace, d)
+            if newuri != uri:
+                if fetch_uri(newuri, basename, dl, md5, parm, localdata):
+                    completed = 1
+                    break
 
-            if completed:
-                continue
+        if completed:
+            return
 
-            if fetch_uri(uri, basename, dl, md5, parm, localdata):
-                continue
+        if fetch_uri(uri, basename, dl, md5, parm, localdata):
+            return
 
-#           try mirrors
-            mirrors = [ i.split() for i in (data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
-            for (find, replace) in mirrors:
-                newuri = uri_replace(uri, find, replace, d)
-                if newuri != uri:
-                    if fetch_uri(newuri, basename, dl, md5, parm, localdata):
-                        completed = 1
-                        break
+        # try mirrors
+        mirrors = [ i.split() for i in (data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
+        for (find, replace) in mirrors:
+            newuri = uri_replace(uri, find, replace, d)
+            if newuri != uri:
+                if fetch_uri(newuri, basename, dl, md5, parm, localdata):
+                    completed = 1
+                    break
 
-            if not completed:
-                raise FetchError(uri)
-
-        del localdata
+        if not completed:
+            raise FetchError(uri)

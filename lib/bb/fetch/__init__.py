@@ -93,8 +93,8 @@ def init(urls = [], d = None):
 def go(d):
     """Fetch all urls"""
     for m in methods:
-        if m.urls:
-            m.go(d)
+        for u in m.urls:
+            m.go(d, u)
 
 def localpaths(d):
     """Return a list of the local filenames, assuming successful fetch"""
@@ -148,7 +148,7 @@ class Fetch(object):
 
     data = property(getData, setData, None, "Data property")
 
-    def go(self, urls = []):
+    def go(self, d, url):
         """Fetch urls"""
         raise NoMethodError("Missing implementation for url")
 

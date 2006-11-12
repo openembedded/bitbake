@@ -70,84 +70,81 @@ class Svk(Fetch):
         return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, path.replace('/', '.'), revision, date), d))
     localpath = staticmethod(localpath)
 
-    def go(self, d, urls = []):
+    def go(self, d, loc):
         """Fetch urls"""
-        if not urls:
-            urls = self.urls
 
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "svk:%s" % data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        for loc in urls:
-            (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(loc, localdata))
-            if not "module" in parm:
-                raise MissingParameterError("svk method needs a 'module' parameter")
-            else:
-                module = parm["module"]
+        (type, host, path, user, pswd, parm) = bb.decodeurl(data.expand(loc, localdata))
+        if not "module" in parm:
+            raise MissingParameterError("svk method needs a 'module' parameter")
+        else:
+            module = parm["module"]
 
-            dlfile = self.localpath(loc, localdata)
-            dldir = data.getVar('DL_DIR', localdata, 1)
+        dlfile = self.localpath(loc, localdata)
+        dldir = data.getVar('DL_DIR', localdata, 1)
 
-#           setup svk options
-            options = []
-            if 'rev' in parm:
-                revision = parm['rev']
-            else:
-                revision = ""
+#       setup svk options
+        options = []
+        if 'rev' in parm:
+            revision = parm['rev']
+        else:
+            revision = ""
 
-            date = Fetch.getSRCDate(d)
-            tarfn = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, path.replace('/', '.'), revision, date), localdata)
-            data.setVar('TARFILES', dlfile, localdata)
-            data.setVar('TARFN', tarfn, localdata)
+        date = Fetch.getSRCDate(d)
+        tarfn = data.expand('%s_%s_%s_%s_%s.tar.gz' % (module.replace('/', '.'), host, path.replace('/', '.'), revision, date), localdata)
+        data.setVar('TARFILES', dlfile, localdata)
+        data.setVar('TARFN', tarfn, localdata)
 
-            if Fetch.check_for_tarball(d, tarfn, dldir, date):
-                continue
+        if Fetch.check_for_tarball(d, tarfn, dldir, date):
+            return
 
-            olddir = os.path.abspath(os.getcwd())
-            os.chdir(data.expand(dldir, localdata))
+        olddir = os.path.abspath(os.getcwd())
+        os.chdir(data.expand(dldir, localdata))
 
-            svkroot = host + path
+        svkroot = host + path
 
-            data.setVar('SVKROOT', svkroot, localdata)
-            data.setVar('SVKCOOPTS', " ".join(options), localdata)
-            data.setVar('SVKMODULE', module, localdata)
-            svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, module)
+        data.setVar('SVKROOT', svkroot, localdata)
+        data.setVar('SVKCOOPTS', " ".join(options), localdata)
+        data.setVar('SVKMODULE', module, localdata)
+        svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, module)
 
-            if revision:
-                svkcmd = "svk co -r %s/%s" % (revision, svkroot, module)
+        if revision:
+            svkcmd = "svk co -r %s/%s" % (revision, svkroot, module)
 
-#           create temp directory
-            bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: creating temporary directory")
-            bb.mkdirhier(data.expand('${WORKDIR}', localdata))
-            data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
-            tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
-            tmpfile = tmppipe.readline().strip()
-            if not tmpfile:
-                bb.msg.error(bb.msg.domain.Fetcher, "Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
-                raise FetchError(module)
+#       create temp directory
+        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: creating temporary directory")
+        bb.mkdirhier(data.expand('${WORKDIR}', localdata))
+        data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
+        tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
+        tmpfile = tmppipe.readline().strip()
+        if not tmpfile:
+            bb.msg.error(bb.msg.domain.Fetcher, "Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
+            raise FetchError(module)
 
-#           check out sources there
-            os.chdir(tmpfile)
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svkcmd)
-            myret = os.system(svkcmd)
-            if myret != 0:
-                try:
-                    os.rmdir(tmpfile)
-                except OSError:
-                    pass
-                raise FetchError(module)
+#       check out sources there
+        os.chdir(tmpfile)
+        bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svkcmd)
+        myret = os.system(svkcmd)
+        if myret != 0:
+            try:
+                os.rmdir(tmpfile)
+            except OSError:
+                pass
+            raise FetchError(module)
 
-            os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
-#           tar them up to a defined filename
-            myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
-            if myret != 0:
-                try:
-                    os.unlink(tarfn)
-                except OSError:
-                    pass
-#           cleanup
-            os.system('rm -rf %s' % tmpfile)
-            os.chdir(olddir)
-        del localdata
+        os.chdir(os.path.join(tmpfile, os.path.dirname(module)))
+#       tar them up to a defined filename
+        myret = os.system("tar -czf %s %s" % (os.path.join(dldir,tarfn), os.path.basename(module)))
+        if myret != 0:
+            try:
+                os.unlink(tarfn)
+            except OSError:
+                pass
+#       cleanup
+        os.system('rm -rf %s' % tmpfile)
+        os.chdir(olddir)
+

@@ -74,49 +74,45 @@ class SSH(Fetch):
         lpath = os.path.join(data.getVar('DL_DIR', d, 1), host, os.path.basename(path))
         return lpath
 
-    def go(self, d, urls = []):
-        if not urls:
-            urls = self.urls
+    def go(self, d, url):
+        dldir = data.getVar('DL_DIR', d, 1)
 
-        for url in urls:
-            dldir = data.getVar('DL_DIR', d, 1)
+        m = __pattern__.match(url)
+        path = m.group('path')
+        host = m.group('host')
+        port = m.group('port')
+        user = m.group('user')
+        password = m.group('pass')
 
-            m = __pattern__.match(url)
-            path = m.group('path')
-            host = m.group('host')
-            port = m.group('port')
-            user = m.group('user')
-            password = m.group('pass')
+        ldir = os.path.join(dldir, host)
+        lpath = os.path.join(ldir, os.path.basename(path))
 
-            ldir = os.path.join(dldir, host)
-            lpath = os.path.join(ldir, os.path.basename(path))
+        if not os.path.exists(ldir):
+            os.makedirs(ldir)
 
-            if not os.path.exists(ldir):
-                os.makedirs(ldir)
+        if port:
+            port = '-P %s' % port
+        else:
+            port = ''
 
-            if port:
-                port = '-P %s' % port
-            else:
-                port = ''
-
-            if user:
-                fr = user
-                if password:
-                    fr += ':%s' % password
-                fr += '@%s' % host
-            else:
-                fr = host
-            fr += ':%s' % path
+        if user:
+            fr = user
+            if password:
+                fr += ':%s' % password
+            fr += '@%s' % host
+        else:
+            fr = host
+        fr += ':%s' % path
 
 
-            import commands
-            cmd = 'scp -B -r %s %s %s/' % (
-                port,
-                commands.mkarg(fr),
-                commands.mkarg(ldir)
-            )
+        import commands
+        cmd = 'scp -B -r %s %s %s/' % (
+            port,
+            commands.mkarg(fr),
+            commands.mkarg(ldir)
+        )
 
-            (exitstatus, output) = commands.getstatusoutput(cmd)
-            if exitstatus != 0:
-                print output
-                raise FetchError('Unable to fetch %s' % url)
+        (exitstatus, output) = commands.getstatusoutput(cmd)
+        if exitstatus != 0:
+            print output
+            raise FetchError('Unable to fetch %s' % url)

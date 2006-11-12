@@ -55,7 +55,7 @@ class Local(Fetch):
         return newpath
     localpath = staticmethod(localpath)
 
-    def go(self, urls = []):
+    def go(self, d, url):
         """Fetch urls (no-op for Local method)"""
 #       no need to fetch local files, we'll deal with them in place.
         return 1
