@@ -225,7 +225,10 @@ class RunQueue:
                 maps.append(-1)
 
         if len(self.runq_fnid) == 0:
-            bb.msg.fatal(bb.msg.domain.RunQueue, "No active tasks?! Please report this bug.")
+            if taskData.abort:
+                bb.msg.note(1, bb.msg.domain.RunQueue, "All possible tasks have been run but build incomplete (--continue mode). See errors above for incomplete tasks.")
+                return
+            bb.msg.fatal(bb.msg.domain.RunQueue, "No active tasks and not in --continue mode?! Please report this bug.")
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Pruned %s inactive tasks, %s left" % (delcount, len(self.runq_fnid)))
 
@@ -334,6 +337,10 @@ class RunQueue:
         runq_complete = []
         active_builds = 0
         build_pids = {}
+
+        if len(self.runq_fnid) == 0:
+            # nothing to do
+	    return
 
         def get_next_task(data):
             """
