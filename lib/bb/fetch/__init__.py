@@ -269,6 +269,7 @@ import svn
 import wget
 import svk
 import ssh
+import perforce
 
 methods.append(cvs.Cvs())
 methods.append(git.Git())
@@ -277,3 +278,4 @@ methods.append(svn.Svn())
 methods.append(wget.Wget())
 methods.append(svk.Svk())
 methods.append(ssh.SSH())
+methods.append(perforce.Perforce())

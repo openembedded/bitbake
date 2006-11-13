@@ -24,6 +24,7 @@ lib/bb/fetch/cvs.py
 lib/bb/fetch/git.py
 lib/bb/fetch/__init__.py
 lib/bb/fetch/local.py
+lib/bb/fetch/perforce.py
 lib/bb/fetch/ssh.py
 lib/bb/fetch/svk.py
 lib/bb/fetch/svn.py
