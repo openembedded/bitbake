@@ -146,6 +146,19 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail = {}):
         bb.msg.error(bb.msg.domain.Provider, "no eligible providers for %s" % item)
         return 0
 
+
+    # If pn == item, give it a slight default preference
+    # This means PREFERRED_PROVIDER_foobar defaults to foobar if available
+    for p in providers:
+        pn = dataCache.pkg_fn[p]
+        if pn != item:
+            continue
+        (newvers, fn) = preferred_versions[pn]
+        if not fn in eligible:
+            continue
+        eligible.remove(fn)
+        eligible = [fn] + eligible
+
     # look to see if one of them is already staged, or marked as preferred.
     # if so, bump it to the head of the queue
     for p in providers:
@@ -168,7 +181,6 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail = {}):
             bb.msg.note(2, bb.msg.domain.Provider, "%s" % extra_chat)
             eligible.remove(fn)
             eligible = [fn] + eligible
-            discriminated = True
             break
 
     return eligible
