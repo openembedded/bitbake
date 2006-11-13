@@ -225,7 +225,7 @@ class RunQueue:
                 maps.append(-1)
 
         if len(self.runq_fnid) == 0:
-            if taskData.abort:
+            if not taskData.abort:
                 bb.msg.note(1, bb.msg.domain.RunQueue, "All possible tasks have been run but build incomplete (--continue mode). See errors above for incomplete tasks.")
                 return
             bb.msg.fatal(bb.msg.domain.RunQueue, "No active tasks and not in --continue mode?! Please report this bug.")
