@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+		#!/usr/bin/env python
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 """
@@ -412,6 +412,9 @@ class RunQueue:
                         cooker.configuration.cmd = taskname[3:]
                         try: 
                             cooker.tryBuild(fn, False)
+                        except bb.build.EventException:
+                            bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
+                            sys.exit(1)
                         except:
                             bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
                             raise
