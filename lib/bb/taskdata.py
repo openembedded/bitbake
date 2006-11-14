@@ -60,6 +60,7 @@ class TaskData:
         """
         if not name in self.build_names_index:
             self.build_names_index.append(name)
+            return len(self.build_names_index) - 1
 
         return self.build_names_index.index(name)
 
@@ -70,6 +71,7 @@ class TaskData:
         """
         if not name in self.run_names_index:
             self.run_names_index.append(name)
+            return len(self.run_names_index) - 1
 
         return self.run_names_index.index(name)
 
@@ -80,6 +82,7 @@ class TaskData:
         """
         if not name in self.fn_index:
             self.fn_index.append(name)
+            return len(self.fn_index) - 1
 
         return self.fn_index.index(name)
 
