@@ -180,6 +180,15 @@ class TaskData:
                     rdependids[self.getrun_id(rdepend)] = None
             self.rdepids[fnid] = rdependids.keys()
 
+        for dep in self.depids[fnid]:
+            if dep in self.failed_deps:
+                self.fail_fnid(fnid)
+                return
+        for dep in self.rdepids[fnid]:
+            if dep in self.failed_rdeps:
+                self.fail_fnid(fnid)
+                return
+
     def have_build_target(self, target):
         """
         Have we a build target matching this name?
@@ -383,7 +392,7 @@ class TaskData:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(dataCache.pkg_fn[fn])
-                bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available (%s);" % ", ".join(providers_list))
+                bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available for %s (%s);" % (item, ", ".join(providers_list)))
                 bb.msg.note(1, bb.msg.domain.Provider, "consider defining PREFERRED_PROVIDER_%s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list,cfgData))
             self.consider_msgs_cache.append(item)
@@ -393,8 +402,9 @@ class TaskData:
             if fnid in self.failed_fnids:
                 continue
             bb.msg.debug(2, bb.msg.domain.Provider, "adding %s to satisfy %s" % (fn, item))
-            self.add_tasks(fn, dataCache)
             self.add_build_target(fn, item)
+            self.add_tasks(fn, dataCache)
+
 
             #item = dataCache.pkg_fn[fn]
 
@@ -447,8 +457,8 @@ class TaskData:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(dataCache.pkg_fn[fn])
-                bb.msg.note(2, bb.msg.domain.Provider, "multiple providers are available (%s);" % ", ".join(providers_list))
-                bb.msg.note(2, bb.msg.domain.Provider, "consider defining a PREFERRED_PROVIDER to match runtime %s" % item)
+                bb.msg.note(2, bb.msg.domain.Provider, "multiple providers are available for runtime %s (%s);" % (item, ", ".join(providers_list)))
+                bb.msg.note(2, bb.msg.domain.Provider, "consider defining a PREFERRED_PROVIDER entry to match runtime %s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list, cfgData, runtime=True))
             self.consider_msgs_cache.append(item)
 
@@ -457,8 +467,8 @@ class TaskData:
                 providers_list = []
                 for fn in preferred:
                     providers_list.append(dataCache.pkg_fn[fn])
-                bb.msg.note(2, bb.msg.domain.Provider, "multiple preferred providers are available (%s);" % ", ".join(providers_list))
-                bb.msg.note(2, bb.msg.domain.Provider, "consider defining only one PREFERRED_PROVIDER to match runtime %s" % item)
+                bb.msg.note(2, bb.msg.domain.Provider, "multiple preferred providers are available for runtime %s (%s);" % (item, ", ".join(providers_list)))
+                bb.msg.note(2, bb.msg.domain.Provider, "consider defining only one PREFERRED_PROVIDER entry to match runtime %s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list, cfgData, runtime=True))
             self.consider_msgs_cache.append(item)
 
@@ -468,8 +478,8 @@ class TaskData:
             if fnid in self.failed_fnids:
                 continue
             bb.msg.debug(2, bb.msg.domain.Provider, "adding %s to satisfy runtime %s" % (fn, item))
-            self.add_tasks(fn, dataCache)
             self.add_runtime_target(fn, item)
+            self.add_tasks(fn, dataCache)
 
     def fail_fnid(self, fnid):
         """
