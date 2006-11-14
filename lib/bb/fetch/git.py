@@ -83,7 +83,7 @@ class Git(Fetch):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % ud.localpath)
             return
 
-        gitsrcname = '%s%s' % (ud.host, path.replace('/', '.'))
+        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
 
         repofilename = 'git_%s.tar.gz' % (gitsrcname)
         repofile = os.path.join(data.getVar("DL_DIR", d, 1), repofilename)
