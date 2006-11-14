@@ -245,10 +245,7 @@ class Cache:
         p.dump([self.depends_cache, version_data])
 
     def mtime(self, cachefile):
-        try:
-            return os.stat(cachefile)[8]
-        except OSError:
-            return 0
+        return bb.parse.cached_mtime_noerror(cachefile)
 
     def handle_data(self, file_name, cacheData):
         """
