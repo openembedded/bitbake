@@ -199,10 +199,7 @@ class RunQueue:
             if fnid in taskData.failed_fnids:
                 continue
 
-            fnids = taskData.matches_in_list(self.runq_fnid, fnid)
-            tasks = taskData.matches_in_list(self.runq_task, target[1])
-
-            listid = taskData.both_contain(fnids, tasks)
+            listid = taskData.tasks_lookup[fnid][target[1]]
 
             mark_active(listid, 1)
 

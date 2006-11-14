@@ -53,31 +53,6 @@ class TaskData:
 
         self.abort = abort
 
-    def matches_in_list(self, data, substring):
-        """
-        Return a list of the positions of substring in list data
-        """
-        matches = []
-        start = 0
-        while 1:
-            try:
-                start = data.index(substring, start)
-            except ValueError:
-                return matches
-            matches.append(start)
-            start = start + 1
-
-    def both_contain(self, list1, list2):
-        """
-        Return the items present in both list1 and list2
-        """
-        matches = []
-        for data in list1:
-            if data in list2:
-                return data
-        return None
-
-
     def getbuild_id(self, name):
         """
         Return an ID number for the build target name.
