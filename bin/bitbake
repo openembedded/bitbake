@@ -539,13 +539,17 @@ class BBCooker:
             except OSError:
                 (filelist, masked) = self.collect_bbfiles()
                 regexp = re.compile(self.configuration.buildfile)
-                matches = 0
+                matches = []
                 for f in filelist:
-                    if regexp.search(f):
+                    if regexp.search(f) and os.path.isfile(f):
                         bf = f
-                        matches = matches + 1
-                if matches != 1:
-                    bb.msg.fatal(bb.msg.domain.Parsing, "Unable to match %s (%s matches found)" % (self.configuration.buildfile, matches))
+                        matches.append(f)
+                if len(matches) != 1:
+                    bb.msg.error(bb.msg.domain.Parsing, "Unable to match %s (%s matches found):" % (self.configuration.buildfile, len(matches)))
+                    for f in matches:
+                        bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
+                    sys.exit(1)
+                bf = matches[0]		    
 
             bbfile_data = bb.parse.handle(bf, self.configuration.data)
 
