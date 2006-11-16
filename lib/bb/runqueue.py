@@ -276,14 +276,20 @@ class RunQueue:
         for task in range(len(self.runq_fnid)):
             if runq_done[task] == 0:
                 seen = []
-                def print_chain(taskid):
+                deps_seen = []
+                def print_chain(taskid, finish):
                     seen.append(taskid)
                     for revdep in self.runq_revdeps[taskid]:
-                        if runq_done[revdep] == 0:
+                        if runq_done[revdep] == 0 and revdep not in seen and not finish:
                             bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) (depends: %s)" % (revdep, self.get_user_idstring(revdep, taskData), self.runq_depends[revdep]))
-                            if revdep not in seen:
-                                print_chain(revdep)
-                print_chain(task)
+                            if revdep in deps_seen:
+                                bb.msg.error(bb.msg.domain.RunQueue, "Chain ends at Task %s (%s)" % (revdep, self.get_user_idstring(revdep, taskData)))
+                                finish = True
+                                return
+                            for dep in self.runq_depends[revdep]:
+                                deps_seen.append(dep)
+                            print_chain(revdep, finish)
+                print_chain(task, False)
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) not processed!\nThis is probably a circular dependency (the chain might be printed above)." % (task, self.get_user_idstring(task, taskData)))
             if runq_weight1[task] != 0:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) count not zero!" % (task, self.get_user_idstring(task, taskData)))
@@ -301,6 +307,8 @@ class RunQueue:
             self.prio_map.append(idx)
             copyweight[idx] = -1
         self.prio_map.reverse()
+
+        #self.dump_data(taskData)
 
     def execute_runqueue(self, cooker, cfgData, dataCache, taskData, runlist):
         """
