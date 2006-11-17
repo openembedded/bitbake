@@ -83,6 +83,7 @@ def check_insert_method(modulename, code, fn):
     """
     if not modulename in _parsed_methods:
         return insert_method(modulename, code, fn)
+    _parsed_methods[modulename] = 1
 
 def parsed_module(modulename):
     """
