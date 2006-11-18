@@ -271,6 +271,9 @@ def expandKeys(alterdata, readdata = None):
         readdata = alterdata
 
     for key in keys(alterdata):
+        if not '${' in key:
+            continue
+
         ekey = expand(key, readdata)
         if key == ekey:
             continue
