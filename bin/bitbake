@@ -643,10 +643,10 @@ class BBCooker:
             rq.prepare_runqueue(self.configuration.data, self.status, taskdata, runlist)
             try:
                 failures = rq.execute_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
-            except runqueue.TaskFailure, (fnid, fn, taskname):
-                bb.msg.error(bb.msg.domain.Build, "'%s, %s' failed" % (fn, taskname))
+            except runqueue.TaskFailure, fnids:
+                for fnid in fnids:
+                    bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
                 sys.exit(1)
-
             bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.event_data, failures))
 
             sys.exit( self.stats.show() )

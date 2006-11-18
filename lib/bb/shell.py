@@ -179,8 +179,9 @@ class BitBakeShellCommands:
             global last_exception
             last_exception = Providers.NoProvider
 
-        except runqueue.TaskFailure, (fnid, fn, taskname):
-            print "ERROR: '%s, %s' failed" % (fn, taskname)
+        except runqueue.TaskFailure, fnids:
+            for fnid in fnids:
+                print "ERROR: '%s' failed" % td.fn_index[fnid])
             global last_exception
             last_exception = runqueue.TaskFailure
 

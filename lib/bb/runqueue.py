@@ -1,4 +1,4 @@
-		#!/usr/bin/env python
+#!/usr/bin/env python
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 """
@@ -25,9 +25,8 @@ import bb, os, sys
 
 class TaskFailure(Exception):
     """Exception raised when a task in a runqueue fails"""
-
-    def __init__(self, fnid, fn, taskname):
-        self.args = fnid, fn, taskname
+    def __init__(self, x): 
+        self.args = x
 
 class RunQueue:
     """
@@ -319,21 +318,23 @@ class RunQueue:
 
         failures = 0
         while 1:
-            try:
-                self.execute_runqueue_internal(cooker, cfgData, dataCache, taskData)
+            failed_fnids = self.execute_runqueue_internal(cooker, cfgData, dataCache, taskData)
+            if len(failed_fnids) == 0:
                 return failures
-            except bb.runqueue.TaskFailure, (fnid, taskData.fn_index[fnid], taskname):
-                if taskData.abort:
-                    raise
+            if taskData.abort:
+                raise bb.runqueue.TaskFailure(failed_fnids)
+            for fnid in failed_fnids:
+                #print "Failure: %s %s %s" % (fnid, taskData.fn_index[fnid],  self.runq_task[fnid])
                 taskData.fail_fnid(fnid)
-                self.reset_runqueue()
-                self.prepare_runqueue(cfgData, dataCache, taskData, runlist)
                 failures = failures + 1
+            self.reset_runqueue()
+            self.prepare_runqueue(cfgData, dataCache, taskData, runlist)
 
     def execute_runqueue_internal(self, cooker, cfgData, dataCache, taskData):
         """
         Run the tasks in a queue prepared by prepare_runqueue
         """
+        import signal
 
         bb.msg.note(1, bb.msg.domain.RunQueue, "Executing runqueue")
 
@@ -342,10 +343,14 @@ class RunQueue:
         runq_complete = []
         active_builds = 0
         build_pids = {}
+        failed_fnids = []
 
         if len(self.runq_fnid) == 0:
             # nothing to do
             return
+
+        def sigint_handler(signum, frame):
+            raise KeyboardInterrupt
 
         def get_next_task(data):
             """
@@ -414,6 +419,11 @@ class RunQueue:
                     except OSError, e: 
                         bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
                     if pid == 0:
+                        # Bypass finally below
+                        active_builds = 0 
+                        # Stop Ctrl+C being sent to children
+                        signal.signal(signal.SIGINT, signal.SIG_IGN)
+                        sys.stdin = open('/dev/null', 'r')
                         cooker.configuration.cmd = taskname[3:]
                         try: 
                             cooker.tryBuild(fn, False)
@@ -432,28 +442,39 @@ class RunQueue:
                 if active_builds > 0:
                     result = os.waitpid(-1, 0)
                     active_builds = active_builds - 1
+                    task = build_pids[result[0]]
                     if result[1] != 0:
-                        bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (build_pids[result[0]], self.get_user_idstring(build_pids[result[0]], taskData)))
-                        raise bb.runqueue.TaskFailure(self.runq_fnid[build_pids[result[0]]], taskData.fn_index[self.runq_fnid[build_pids[result[0]]]], self.runq_task[build_pids[result[0]]])
-                    task_complete(self, build_pids[result[0]])
+                        del build_pids[result[0]]
+                        bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (task, self.get_user_idstring(task, taskData)))
+                        failed_fnids.append(self.runq_fnid[task])
+                        break
+                    task_complete(self, task)
                     del build_pids[result[0]]
                     continue
                 break
-        except SystemExit:
-            raise
-        except:
-            bb.msg.error(bb.msg.domain.RunQueue, "Exception received")
-            if active_builds > 0:
+        finally:
+            try:
+                orig_builds = active_builds
                 while active_builds > 0:
                     bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % active_builds)
                     tasknum = 1
                     for k, v in build_pids.iteritems():
-                        bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (%s)" % (tasknum, self.get_user_idstring(v, taskData), k))
-                        tasknum = tasknum + 1
+                         bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (%s)" % (tasknum, self.get_user_idstring(v, taskData), k))
+                         tasknum = tasknum + 1
                     result = os.waitpid(-1, 0)
-                    del build_pids[result[0]]		    
+                    task = build_pids[result[0]]
+                    if result[1] != 0:
+                         bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (task, self.get_user_idstring(task, taskData)))
+                         failed_fnids.append(self.runq_fnid[task])
+                    del build_pids[result[0]]
                     active_builds = active_builds - 1
-            raise
+                if orig_builds > 0:
+                    return failed_fnids
+            except:
+                bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGTERM to remaining %s tasks" % active_builds)
+                for k, v in build_pids.iteritems():
+                     os.kill(k, signal.SIGTERM)
+                raise
 
         # Sanity Checks
         for task in range(len(self.runq_fnid)):
@@ -464,7 +485,7 @@ class RunQueue:
             if runq_complete[task] == 0:
                 bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
 
-        return 0
+        return failed_fnids
 
     def dump_data(self, taskQueue):
         """
