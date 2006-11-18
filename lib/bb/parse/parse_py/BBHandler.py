@@ -147,20 +147,21 @@ def handle(fn, d, include = 0):
             data.expandKeys(d)
             data.update_data(d)
             anonqueue = data.getVar("__anonqueue", d, 1) or []
-            for anon in anonqueue:
-                data.setVar("__anonfunc", anon["content"], d)
-                data.setVarFlags("__anonfunc", anon["flags"], d)
-                from bb import build
-                try:
-                    t = data.getVar('T', d)
-                    data.setVar('T', '${TMPDIR}/', d)
-                    build.exec_func("__anonfunc", d)
-                    data.delVar('T', d)
-                    if t:
-                        data.setVar('T', t, d)
-                except Exception, e:
-                    bb.msg.debug(1, bb.msg.domain.Parsing, "executing anonymous function: %s" % e)
-                    raise
+            body = [x['content'] for x in anonqueue]
+            flag = { 'python' : 1, 'func' : 1 }
+            data.setVar("__anonfunc", "\n".join(body), d)
+            data.setVarFlags("__anonfunc", flag, d)
+            from bb import build
+            try:
+                t = data.getVar('T', d)
+                data.setVar('T', '${TMPDIR}/', d)
+                build.exec_func("__anonfunc", d)
+                data.delVar('T', d)
+                if t:
+                    data.setVar('T', t, d)
+            except Exception, e:
+                bb.msg.debug(1, bb.msg.domain.Parsing, "executing anonymous function: %s" % e)
+                raise
             data.delVar("__anonqueue", d)
             data.delVar("__anonfunc", d)
             set_additional_vars(fn, d, include)
