@@ -61,8 +61,8 @@ def inherit(files, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or []
     fn = ""
     lineno = 0
-    for f in files:
-        file = data.expand(f, d)
+    files = data.expand(files, d)
+    for file in files:
         if file[0] != "/" and file[-8:] != ".bbclass":
             file = os.path.join('classes', '%s.bbclass' % file)
 
@@ -104,7 +104,6 @@ def handle(fn, d, include = 0):
     if not os.path.isabs(fn):
         f = None
         for p in bbpath:
-            p = data.expand(p, d)
             j = os.path.join(p, fn)
             if os.access(j, os.R_OK):
                 abs_fn = j
@@ -387,16 +386,11 @@ def set_additional_vars(file, d, include):
 
     bb.msg.debug(2, bb.msg.domain.Parsing, "BB %s: set_additional_vars" % file)
 
-    src_uri = data.getVar('SRC_URI', d)
+    src_uri = data.getVar('SRC_URI', d, 1)
     if not src_uri:
         return
-    src_uri = data.expand(src_uri, d)
 
-    a = data.getVar('A', d)
-    if a:
-        a = data.expand(a, d).split()
-    else:
-        a = []
+    a = (data.getVar('A', d, 1) or '').split()
 
     from bb import fetch
     try:

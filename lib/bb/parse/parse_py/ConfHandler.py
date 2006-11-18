@@ -117,14 +117,11 @@ def handle(fn, data, include = 0):
         oldfile = bb.data.getVar('FILE', data)
 
     fn = obtain(fn, data)
-    bbpath = []
     if not os.path.isabs(fn):
         f = None
-        vbbpath = bb.data.getVar("BBPATH", data)
-        if vbbpath:
-            bbpath += vbbpath.split(":")
-        for p in bbpath:
-            currname = os.path.join(bb.data.expand(p, data), fn)
+        bbpath = bb.data.getVar("BBPATH", data, 1) or []
+        for p in bbpath.split(":"):
+            currname = os.path.join(p, fn)
             if os.access(currname, os.R_OK):
                 f = open(currname, 'r')
                 abs_fn = currname
