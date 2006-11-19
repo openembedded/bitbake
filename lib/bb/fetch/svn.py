@@ -4,6 +4,10 @@
 """
 BitBake 'Fetch' implementations
 
+This implementation is for svn. It is based on the cvs implementation.
+
+Copyright (C) 2004 Marcin Juszkiewicz
+
 Classes for obtaining upstream sources for the
 BitBake build tools.
 
