@@ -167,19 +167,14 @@ def handle(fn, d, include = 0):
             data.update_data(d)
 
             all_handlers = {} 
-            for var in data.keys(d):
+            for var in data.getVar('__BBHANDLERS', d) or []:
                 # try to add the handler
                 # if we added it remember the choiche
-                if data.getVarFlag(var, 'handler', d):
-                    handler = data.getVar(var,d)
-                    if bb.event.register(var,handler) == bb.event.Registered:
-                        all_handlers[var] = handler
+                handler = data.getVar(var,d)
+                if bb.event.register(var,handler) == bb.event.Registered:
+                    all_handlers[var] = handler
 
-                    continue
-
-                if not data.getVarFlag(var, 'task', d):
-                    continue
-
+            for var in data.getVar('__BBTASKS', d) or []:
                 deps = data.getVarFlag(var, 'deps', d) or []
                 postdeps = data.getVarFlag(var, 'postdeps', d) or []
                 bb.build.add_task(var, deps, d)
@@ -336,6 +331,10 @@ def feeder(lineno, s, fn, root, d):
 
         data.setVarFlag(var, "task", 1, d)
 
+        bbtasks = data.getVar('__BBTASKS', d) or []
+        bbtasks.append(var)
+        data.setVar('__BBTASKS', bbtasks, d)
+
         if after is not None:
 #           set up deps for function
             data.setVarFlag(var, "deps", after.split(), d)
@@ -348,8 +347,11 @@ def feeder(lineno, s, fn, root, d):
     if m:
         fns = m.group(1)
         hs = __word__.findall(fns)
+        bbhands = data.getVar('__BBHANDLERS', d) or []
         for h in hs:
+            bbhands.append(h)
             data.setVarFlag(h, "handler", 1, d)
+        data.setVar('__BBHANDLERS', bbhands, d)
         return
 
     m = __inherit_regexp__.match(s)
