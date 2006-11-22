@@ -52,7 +52,7 @@ class Git(Fetch):
     """Class to fetch a module or modules from git repositories"""
     def supports(self, url, ud, d):
         """
-        Check to see if a given url can be fetched with cvs.
+        Check to see if a given url can be fetched with git.
         """
         return ud.type in ['git']
 
