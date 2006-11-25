@@ -373,6 +373,9 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 #       NOTE: should probably check for unbalanced {} within the var
         o.write("%s() {\n%s\n}\n" % (varExpanded, val))
     else:
+        if getVarFlag(var, "unexport", d):
+            o.write('unset %s\n' % varExpanded)
+            return 1
         if getVarFlag(var, "export", d):
             o.write('export ')
         else:
@@ -540,7 +543,7 @@ def update_data(d):
 
 def inherits_class(klass, d):
     val = getVar('__inherit_cache', d) or []
-    if os.path.join('classes', '%s.bbclass' % klass) in val:
+    if os.path.join('classes', '%s.bbclass' % klass) in val.split():
         return True
     return False
 
