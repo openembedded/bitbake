@@ -40,7 +40,6 @@ __word__ = re.compile(r"\S+")
 __infunc__ = ""
 __inpython__ = False
 __body__   = []
-__bbpath_found__ = 0
 __classname__ = ""
 classes = [ None, ]
 
@@ -74,9 +73,8 @@ def inherit(files, d):
 
 
 def handle(fn, d, include = 0):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __bbpath_found__, __residue__
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
     __body__ = []
-    __bbpath_found__ = 0
     __infunc__ = ""
     __classname__ = ""
     __residue__ = []
@@ -199,7 +197,7 @@ def handle(fn, d, include = 0):
     return d
 
 def feeder(lineno, s, fn, root, d):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, __bbpath_found__, classes, bb, __residue__
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, classes, bb, __residue__
     if __infunc__:
         if s == '}':
             __body__.append('')
