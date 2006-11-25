@@ -91,7 +91,10 @@ def init(urls = [], d = None):
             ud.method.urls.append(u)
 
 def initdata(url, d):
-    if url not in urldata:
+    fn = bb.data.getVar('FILE', d, 1)
+    if fn not in urldata:
+        urldata[fn] = {}
+    if url not in urldata[fn]:
         ud = FetchData()
         (ud.type, ud.host, ud.path, ud.user, ud.pswd, ud.parm) = bb.decodeurl(data.expand(url, d))
         ud.date = Fetch.getSRCDate(d)
@@ -104,15 +107,16 @@ def initdata(url, d):
                     ud.localpath = ud.parm["localpath"]
                 ud.method = m
                 break
-        urldata[url] = ud
-    return urldata[url]
+        urldata[fn][url] = ud
+    return urldata[fn][url]
 
 def go(d):
     """Fetch all urls"""
+    fn = bb.data.getVar('FILE', d, 1)
     for m in methods:
         for u in m.urls:
-            ud = urldata[u]
-            if ud.localfile and not m.forcefetch(u, ud, d) and os.path.exists(urldata[u].md5):
+            ud = urldata[fn][u]
+            if ud.localfile and not m.forcefetch(u, ud, d) and os.path.exists(urldata[fn][u].md5):
                 # File already present along with md5 stamp file
                 # Touch md5 file to show activity
                 os.utime(ud.md5, None)
@@ -127,9 +131,10 @@ def go(d):
 def localpaths(d):
     """Return a list of the local filenames, assuming successful fetch"""
     local = []
+    fn = bb.data.getVar('FILE', d, 1)
     for m in methods:
         for u in m.urls:
-            local.append(urldata[u].localpath)
+            local.append(urldata[fn][u].localpath)
     return local
 
 def localpath(url, d):
