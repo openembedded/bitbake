@@ -454,7 +454,6 @@ class RunQueue:
                 break
         finally:
             try:
-                orig_builds = active_builds
                 while active_builds > 0:
                     bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % active_builds)
                     tasknum = 1
@@ -468,7 +467,7 @@ class RunQueue:
                          failed_fnids.append(self.runq_fnid[task])
                     del build_pids[result[0]]
                     active_builds = active_builds - 1
-                if orig_builds > 0:
+                if len(failed_fnids) > 0:
                     return failed_fnids
             except:
                 bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGTERM to remaining %s tasks" % active_builds)
