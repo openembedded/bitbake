@@ -543,7 +543,7 @@ def update_data(d):
 
 def inherits_class(klass, d):
     val = getVar('__inherit_cache', d) or []
-    if os.path.join('classes', '%s.bbclass' % klass) in val.split():
+    if os.path.join('classes', '%s.bbclass' % klass) in val:
         return True
     return False
 
