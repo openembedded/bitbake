@@ -78,7 +78,7 @@ class DataSmart:
         if varname and varname in self.expand_cache:
             return self.expand_cache[varname]
 
-        while s.find('$') != -1:
+        while s.find('${') != -1:
             olds = s
             try:
                 s = __expand_var_regexp__.sub(var_sub, s)
