@@ -186,171 +186,82 @@ class BBCooker:
 
     def generateDotGraph( self, pkgs_to_build, ignore_deps ):
         """
-        Generate two graphs one for the DEPENDS and RDEPENDS. The current
-        implementation creates crappy graphs ;)
+        Generate a task dependency graph. 
 
         pkgs_to_build A list of packages that needs to be built
         ignore_deps   A list of names where processing of dependencies
                       should be stopped. e.g. dependencies that get
         """
 
-        def myFilterProvider( providers, item):
-            """
-            Take a list of providers and filter according to environment
-            variables. In contrast to filterProviders we do not discriminate
-            and take PREFERRED_PROVIDER into account.
-            """
-            eligible = []
-            preferred_versions = {}
+        for dep in ignore_deps:
+            self.status.ignored_dependencies.add(dep)
 
-            # Collate providers by PN
-            pkg_pn = {}
-            for p in providers:
-                pn = self.status.pkg_fn[p]
-                if pn not in pkg_pn:
-                    pkg_pn[pn] = []
-                pkg_pn[pn].append(p)
+        localdata = data.createCopy(self.configuration.data)
+        bb.data.update_data(localdata)
+        bb.data.expandKeys(localdata)
+        taskdata = bb.taskdata.TaskData(self.configuration.abort)
 
-            bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
+        runlist = []
+        try:
+            for k in pkgs_to_build:
+                taskdata.add_provider(localdata, self.status, k)
+                runlist.append([k, "do_%s" % self.configuration.cmd])
+            taskdata.add_unresolved(localdata, self.status)
+        except bb.providers.NoProvider:
+            sys.exit(1)
+        rq = bb.runqueue.RunQueue()
+        rq.prepare_runqueue(self.configuration.data, self.status, taskdata, runlist)
 
-            for pn in pkg_pn.keys():
-                preferred_versions[pn] = bb.providers.findBestProvider(pn, self.configuration.data, self.status, pkg_pn)[2:4]
-                eligible.append(preferred_versions[pn][1])
-
-            for p in eligible:
-                if p in self.build_cache_fail:
-                    bb.msg.debug(1, bb.msg.domain.Provider, "rejecting already-failed %s" % p)
-                    eligible.remove(p)
-
-            if len(eligible) == 0:
-                bb.msg.error(bb.msg.domain.Provider, "no eligible providers for %s" % item)
-                return 0
-
-            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, self.configuration.data, 1)
-
-            # try the preferred provider first
-            if prefervar:
-                for p in eligible:
-                    if prefervar == self.status.pkg_fn[p]:
-                        bb.msg.note(1, bb.msg.domain.Provider, "Selecting PREFERRED_PROVIDER %s" % prefervar)
-                        eligible.remove(p)
-                        eligible = [p] + eligible
-
-            return eligible
-
-
-        # try to avoid adding the same rdepends over an over again
-        seen_depends  = []
-        seen_rdepends = []
-
-
-        def add_depends(package_list):
-            """
-            Add all depends of all packages from this list
-            """
-            for package in package_list:
-                if package in seen_depends or package in ignore_deps:
-                    continue
-
-                seen_depends.append( package )
-                if not package in self.status.providers:
-                    """
-                    We have not seen this name -> error in
-                    dependency handling
-                    """
-                    bb.msg.note(1, bb.msg.domain.Depends, "ERROR with provider: %(package)s" % vars() )
-                    print >> depends_file, '"%(package)s" -> ERROR' % vars()
-                    continue
-
-                # get all providers for this package
-                providers = self.status.providers[package]
-
-                # now let us find the bestProvider for it
-                fn = myFilterProvider(providers, package)[0]
-
-                depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
-                version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
-                add_depends ( depends )
-
-                # now create the node
-                print >> depends_file, '"%(package)s" [label="%(package)s\\n%(version)s"]' % vars()
-
-                depends = filter( (lambda x: x not in ignore_deps), depends )
-                for depend in depends:
-                    print >> depends_file, '"%(package)s" -> "%(depend)s"' % vars()
-
-
-        def add_all_depends( the_depends, the_rdepends ):
-            """
-            Add both DEPENDS and RDEPENDS. RDEPENDS will get dashed
-            lines
-            """
-            package_list = the_depends + the_rdepends
-            for package in package_list:
-                if package in seen_rdepends or package in ignore_deps:
-                    continue
-
-                seen_rdepends.append( package )
-
-                # Let us find out if the package is a DEPENDS or RDEPENDS
-                # and we will set 'providers' with the avilable providers
-                # for the package.
-                if package in the_depends:
-                    if not package in self.status.providers:
-                        bb.msg.note(1, bb.msg.domain.Depends, "ERROR with provider: %(package)s" % vars() )
-                        print >> alldepends_file, '"%(package)s" -> ERROR' % vars()
-                        continue
-
-                    providers = self.status.providers[package]
-                elif package in the_rdepends:
-                    if len(bb.providers.getRuntimeProviders(self.status, package)) == 0:
-                        bb.msg.note(1, bb.msg.domain.Depends, "ERROR with rprovider: %(package)s" % vars() )
-                        print >> alldepends_file, '"%(package)s" -> ERROR [style="dashed"]' % vars()
-                        continue
-
-                    providers = bb.providers.getRuntimeProviders(self.status, package)
-                else:
-                    # something went wrong...
-                    print "Complete ERROR! %s" % package
-                    continue
-
-                # now let us find the bestProvider for it
-                fn = myFilterProvider(providers, package)[0]
-
-                # Now we have a filename let us get the depends and RDEPENDS of it
-                depends  = bb.utils.explode_deps(self.bb_cache.getVar('DEPENDS', fn, True) or "")
-                if fn in self.status.rundeps and package in self.status.rundeps[fn]:
-                    rdepends= self.status.rundeps[fn][package].keys()
-                else:
-                    rdepends = []
-                version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
-
-                # handle all the depends and rdepends of package
-                add_all_depends ( depends, rdepends )
-
-                # now create the node using package name
-                print >> alldepends_file, '"%(package)s" [label="%(package)s\\n%(version)s"]' % vars()
-
-                # remove the stuff we want to ignore and add the edges
-                depends = filter( (lambda x: x not in ignore_deps), depends )
-                rdepends = filter( (lambda x: x not in ignore_deps), rdepends )
-                for depend in depends:
-                    print >> alldepends_file, '"%(package)s" -> "%(depend)s"' % vars()
-                for depend in rdepends:
-                    print >> alldepends_file, '"%(package)s" -> "%(depend)s" [style=dashed]' % vars()
-
-
-        # Add depends now
+        seen_fnids = []  
         depends_file = file('depends.dot', 'w' )
+        tdepends_file = file('task-depends.dot', 'w' )
         print >> depends_file, "digraph depends {"
-        add_depends( pkgs_to_build )
+        print >> tdepends_file, "digraph depends {"
+        rq.prio_map.reverse()
+        for task1 in range(len(rq.runq_fnid)):
+            task = rq.prio_map[task1]
+            taskname = rq.runq_task[task]t
+            fnid = rq.runq_fnid[task]
+            fn = taskdata.fn_index[fnid]
+            pn = self.status.pkg_fn[fn]
+            version  = self.bb_cache.getVar('PV', fn, True ) + '-' + self.bb_cache.getVar('PR', fn, True)
+            print >> tdepends_file, '"%s.%s" [label="%s %s\\n%s\\n%s"]' % (pn, taskname, pn, taskname, version, fn)
+            for dep in rq.runq_depends[task]:
+                depfn = taskdata.fn_index[rq.runq_fnid[dep]]
+                deppn = self.status.pkg_fn[depfn]
+                print >> tdepends_file, '"%s.%s" -> "%s.%s"' % (pn, rq.runq_task[task], deppn, rq.runq_task[dep])
+            if fnid not in seen_fnids:
+                seen_fnids.append(fnid)
+                packages = []
+                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)		
+                for depend in self.status.deps[fn]:
+                    print >> depends_file, '"%s" -> "%s"' % (pn, depend)
+                rdepends = self.status.rundeps[fn]
+                for package in rdepends:
+                    for rdepend in rdepends[package]:
+                        print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+                    packages.append(package)
+                rrecs = self.status.runrecs[fn]
+                for package in rrecs:
+                    for rdepend in rrecs[package]:
+                        print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+                    if not package in packages:
+                        packages.append(package)
+                for package in packages:
+                    if package != pn:
+                        print >> depends_file, '"%s" [label="%s(%s) %s\\n%s"]' % (package, package, pn, version, fn)
+                        for depend in self.status.deps[fn]:
+                            print >> depends_file, '"%s" -> "%s"' % (package, depend)
+                # Prints a flattened form of the above where subpackages of a package are merged into the main pn
+                #print >> depends_file, '"%s" [label="%s %s\\n%s\\n%s"]' % (pn, pn, taskname, version, fn)
+                #for rdep in taskdata.rdepids[fnid]:
+                #    print >> depends_file, '"%s" -> "%s" [style=dashed]' % (pn, taskdata.run_names_index[rdep])
+                #for dep in taskdata.depids[fnid]:
+                #    print >> depends_file, '"%s" -> "%s"' % (pn, taskdata.build_names_index[dep])
         print >> depends_file,  "}"
-
-        # Add all depends now
-        alldepends_file = file('alldepends.dot', 'w' )
-        print >> alldepends_file, "digraph alldepends {"
-        add_all_depends( pkgs_to_build, [] )
-        print >> alldepends_file, "}"
+        print >> tdepends_file,  "}"
+        bb.msg.note(1, bb.msg.domain.Collection, "Dependencies saved to 'depends.dot'")
+        bb.msg.note(1, bb.msg.domain.Collection, "Task dependencies saved to 'task-depends.dot'")
 
     def buildDepgraph( self ):
         all_depends = self.status.all_depends
