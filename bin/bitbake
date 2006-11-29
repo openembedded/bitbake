@@ -220,7 +220,7 @@ class BBCooker:
         rq.prio_map.reverse()
         for task1 in range(len(rq.runq_fnid)):
             task = rq.prio_map[task1]
-            taskname = rq.runq_task[task]t
+            taskname = rq.runq_task[task]
             fnid = rq.runq_fnid[task]
             fn = taskdata.fn_index[fnid]
             pn = self.status.pkg_fn[fn]
