@@ -181,7 +181,7 @@ class BitBakeShellCommands:
 
         except runqueue.TaskFailure, fnids:
             for fnid in fnids:
-                print "ERROR: '%s' failed" % td.fn_index[fnid])
+                print "ERROR: '%s' failed" % td.fn_index[fnid]
             global last_exception
             last_exception = runqueue.TaskFailure
 
