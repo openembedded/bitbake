@@ -337,7 +337,7 @@ class BBCooker:
             bb.msg.fatal(bb.msg.domain.Parsing, "Sorry, shell not available (%s)" % details )
         else:
             bb.data.update_data( self.configuration.data )
-            bb.data.expandKeys(localdata)
+            bb.data.expandKeys( self.configuration.data )
             shell.start( self )
             sys.exit( 0 )
 
