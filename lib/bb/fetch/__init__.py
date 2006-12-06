@@ -97,7 +97,7 @@ def initdata(url, d):
     if url not in urldata[fn]:
         ud = FetchData()
         (ud.type, ud.host, ud.path, ud.user, ud.pswd, ud.parm) = bb.decodeurl(data.expand(url, d))
-        ud.date = Fetch.getSRCDate(d)
+        ud.date = Fetch.getSRCDate(ud, d)
         for m in methods:
             if m.supports(url, ud, d):
                 ud.localpath = m.localpath(url, ud, d)
@@ -190,12 +190,15 @@ class Fetch(object):
         """
         raise NoMethodError("Missing implementation for url")
 
-    def getSRCDate(d):
+    def getSRCDate(urldata, d):
         """
         Return the SRC Date for the component
 
         d the bb.data module
         """
+        if "srcdate" in urldata.parm:
+            return urldata.parm['srcdate']
+
         pn = data.getVar("PN", d, 1)
 
         if pn:
