@@ -374,7 +374,7 @@ class BBCooker:
                     bb.msg.error(bb.msg.domain.Parsing, "invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
 
 
-    def cook( self, configuration, args ):
+    def cook(self, configuration):
         """
         We are building stuff here. We do the building
         from here. By default we try to execute task
@@ -465,17 +465,12 @@ class BBCooker:
 
         self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
-        pkgs_to_build = None
-        if args:
-            if not pkgs_to_build:
-                pkgs_to_build = []
-            pkgs_to_build.extend(args)
-        if not pkgs_to_build:
-                bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, 1)
-                if bbpkgs:
-                        pkgs_to_build = bbpkgs.split()
-        if not pkgs_to_build and not self.configuration.show_versions \
-                             and not self.configuration.interactive \
+        pkgs_to_build = self.configuration.pkgs_to_build
+
+        bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, 1)
+        if bbpkgs:
+            pkgs_to_build.extend(bbpkgs.split())
+        if len(pkgs_to_build) == 0 and not self.configuration.show_versions \
                              and not self.configuration.show_environment:
                 print "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
                 print "for usage information."

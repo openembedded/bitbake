@@ -103,10 +103,13 @@ Default BBFILES are the .bb files in the current directory.""" )
                 action = "append", dest = "debug_domains", default = [] )
 
 
-    options, args = parser.parse_args( sys.argv )
+    options, args = parser.parse_args(sys.argv)
 
-    cooker = bb.cooker.BBCooker()
-    cooker.cook( BBConfiguration( options ), args[1:] )
+    configuration = BBConfiguration(options)
+    configuration.pkgs_to_build = []
+    configuration.pkgs_to_build.extend(args[1:])
+
+    bb.cooker.BBCooker().cook(configuration)
 
 
 
