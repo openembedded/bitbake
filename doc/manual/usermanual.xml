@@ -352,7 +352,7 @@ options:
                         it depends on, i.e. 'compile' does not implicitly call
                         stage for the dependencies (IOW: use only if you know
                         what you are doing). Depending on the base.bbclass a
-                        listtaks tasks is defined and will show available
+                        listtasks tasks is defined and will show available
                         tasks
   -r FILE, --read=FILE  read the specified file before bitbake.conf
   -v, --verbose         output more chit-chat to the terminal
