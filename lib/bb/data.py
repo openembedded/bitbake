@@ -18,25 +18,25 @@ to have faster update_data and expandKeys operations.
 
 This is a treade-off between speed and memory again but
 the speed is more critical here.
-
-Copyright (C) 2003, 2004  Chris Larson
-Copyright (C) 2005        Holger Hans Peter Freyther
-
-This program is free software; you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation; either version 2 of the License, or (at your option) any later
-version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT
-ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
-FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-this program; if not, write to the Free Software Foundation, Inc., 59 Temple
-Place, Suite 330, Boston, MA 02111-1307 USA. 
-
-Based on functions from the base bb module, Copyright 2003 Holger Schurig
 """
+
+# Copyright (C) 2003, 2004  Chris Larson
+# Copyright (C) 2005        Holger Hans Peter Freyther
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+#Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import sys, os, re, time, types
 if sys.argv[0][-5:] == "pydoc":

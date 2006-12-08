@@ -1,15 +1,8 @@
-#!/usr/bin/env python
 # ex:ts=4:sw=4:sts=4:et
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
-"""
-BitBake Parsers
-
-File parsers for the BitBake build tools.
-
-"""
-
-# Copyright (C) 2003, 2004  Chris Larson
-# Copyright (C) 2003, 2004  Phil Blundell
+#
+# <one line to give the program's name and a brief idea of what it does.>
+# Copyright (C) <year>  <name of author>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -23,11 +16,4 @@ File parsers for the BitBake build tools.
 # You should have received a copy of the GNU General Public License along
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# Based on functions from the base bb module, Copyright 2003 Holger Schurig
-__version__ = '1.0'
 
-__all__ = [ 'ConfHandler', 'BBHandler']
-
-import ConfHandler
-import BBHandler
