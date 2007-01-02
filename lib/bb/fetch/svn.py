@@ -55,6 +55,9 @@ class Svn(Fetch):
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
 
+        if ud.revision:
+            ud.date = ""
+
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
