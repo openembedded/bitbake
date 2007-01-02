@@ -363,10 +363,15 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if not val:
         return 0
 
+    varExpanded = expand(var, d)
+
     if getVarFlag(var, "func", d):
 #       NOTE: should probably check for unbalanced {} within the var
-        o.write("%s() {\n%s\n}\n" % (var, val))
+        o.write("%s() {\n%s\n}\n" % (varExpanded, val))
     else:
+        if getVarFlag(var, "unexport", d):
+            o.write('unset %s\n' % varExpanded)
+            return 1
         if getVarFlag(var, "export", d):
             o.write('export ')
         else:
@@ -375,7 +380,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 #       if we're going to output this within doublequotes,
 #       to a shell, we need to escape the quotes in the var
         alter = re.sub('"', '\\"', val.strip())
-        o.write('%s="%s"\n' % (var, alter))
+        o.write('%s="%s"\n' % (varExpanded, alter))
     return 1
 
 
