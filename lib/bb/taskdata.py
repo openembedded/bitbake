@@ -90,16 +90,20 @@ class TaskData:
 
         return self.fn_index.index(name)
 
-    def gettask_id(self, fn, task):
+    def gettask_id(self, fn, task, create = True):
         """
         Return an ID number for the task matching fn and task.
-        If it doesn't exist, create one.
+        If it doesn't exist, create one by default.
+        Optionally return None instead.
         """
         fnid = self.getfn_id(fn)
 
         if fnid in self.tasks_lookup:
             if task in self.tasks_lookup[fnid]:
                 return self.tasks_lookup[fnid][task]
+
+        if not create:
+            return None
 
         self.tasks_name.append(task)
         self.tasks_fnid.append(fnid)
@@ -533,6 +537,7 @@ class TaskData:
             bb.msg.debug(1, bb.msg.domain.TaskData, "Resolved " + str(added) + " extra dependecies")
             if added == 0:
                 break
+        # self.dump_data()
 
     def dump_data(self):
         """
