@@ -21,10 +21,10 @@
 from distutils.core import setup
 import os, sys
 
-# bbdir = os.path.join(sys.prefix, 'share', 'bitbake')
-# docdir = os.path.join(sys.prefix, 'share', 'doc')
-bbdir = os.path.join('bitbake')
-docdir = os.path.join('doc')
+bbdir = os.path.join(sys.prefix, 'share', 'bitbake')
+docdir = os.path.join(sys.prefix, 'share', 'doc')
+# bbdir = os.path.join('bitbake')
+# docdir = os.path.join('doc')
 
 def clean_doc(type):
     origpath = os.path.abspath(os.curdir)
