@@ -218,15 +218,19 @@ def exec_func_shell(func, d):
     else:
         bb.msg.error(bb.msg.domain.Build, "function %s failed" % func)
         if data.getVar("BBINCLUDELOGS", d):
-            bb.msg.error(bb.msg.domain.Build, "log data follows (%s)" % logfile)
-            f = open(logfile, "r")
-            while True:
-                l = f.readline()
-                if l == '':
-                    break
-                l = l.rstrip()
-                print '| %s' % l
-            f.close()
+            number_of_lines = data.getVar("BBINCLUDELOGS_LINES", d)
+            if number_of_lines:
+                os.system('tail -n%s %s' % (number_of_lines, logfile))
+            else:
+                bb.msg.error(bb.msg.domain.Build, "log data follows (%s)" % logfile)
+                f = open(logfile, "r")
+                while True:
+                    l = f.readline()
+                    if l == '':
+                        break
+                    l = l.rstrip()
+                    print '| %s' % l
+                f.close()
         else:
             bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
         raise FuncFailed( logfile )
