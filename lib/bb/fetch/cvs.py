@@ -118,7 +118,7 @@ class Cvs(Fetch):
             else:
                 localdir = module
 
-            cvs_port = 2401
+            cvs_port = ""
             if "port" in parm:
                 cvs_port = parm["port"]
 
