@@ -82,6 +82,10 @@ class Cvs(Fetch):
         if "localdir" in ud.parm:
             localdir = ud.parm["localdir"]
 
+        cvs_port = 2401
+        if "port" in ud.parm:
+            cvs_port = ud.parm["port"]
+
         cvs_rsh = None
         if method == "ext":
             if "rsh" in ud.parm:
@@ -93,7 +97,7 @@ class Cvs(Fetch):
             cvsroot = ":" + method + ":" + ud.user
             if ud.pswd:
                 cvsroot += ":" + ud.pswd
-            cvsroot += "@" + ud.host + ":" + ud.path
+            cvsroot += "@" + ud.host + ":" + cvs_port + ud.path
 
         options = []
         if ud.date:
