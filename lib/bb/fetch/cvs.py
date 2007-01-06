@@ -82,7 +82,7 @@ class Cvs(Fetch):
         if "localdir" in ud.parm:
             localdir = ud.parm["localdir"]
 
-        cvs_port = 2401
+        cvs_port = ""
         if "port" in ud.parm:
             cvs_port = ud.parm["port"]
 
