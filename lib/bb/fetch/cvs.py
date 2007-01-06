@@ -118,6 +118,10 @@ class Cvs(Fetch):
             else:
                 localdir = module
 
+            cvs_port = 2401
+            if "port" in parm:
+                cvs_port = parm["port"]
+
             cvs_rsh = None
             if method == "ext":
                 if "rsh" in parm:
@@ -147,7 +151,7 @@ class Cvs(Fetch):
                 cvsroot = ":" + method + ":" + user
                 if pswd:
                     cvsroot += ":" + pswd
-                cvsroot += "@" + host + ":" + path
+                cvsroot += "@" + host + ":" + cvs_port + path
 
             data.setVar('CVSROOT', cvsroot, localdata)
             data.setVar('CVSCOOPTS', " ".join(options), localdata)
