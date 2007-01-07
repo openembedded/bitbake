@@ -295,7 +295,7 @@ def exec_task(task, d):
 
     # make stamp, or cause event and raise exception
     if not data.getVarFlag(task, 'nostamp', d):
-        mkstamp(task, d)
+        make_stamp(task, d)
 
 def extract_stamp_data(d, fn):
     """
@@ -309,6 +309,15 @@ def extract_stamp_data(d, fn):
         task_graph = bb.digraph()
         data.setVar('_task_graph', task_graph, d)
     return (task_graph, data.getVar('STAMP', d, 1), None)
+
+def extract_stamp(d, fn):
+    """
+    Extracts stamp format which is either a data dictonary (fn unset) 
+    or a dataCache entry (fn set). 
+    """
+    if fn:
+        return d.stamp[fn]
+    return data.getVar('STAMP', d, 1)
 
 def stamp_is_current(task, d, file_name = None, checkdeps = 1):
     """
@@ -342,7 +351,7 @@ def stamp_is_current(task, d, file_name = None, checkdeps = 1):
             if data.getVarFlag(task, 'nostamp', d):
                 return 1
 
-        if not stamp_is_current(task, d, file_name, 0):
+        if not stamp_is_current(task, d, file_name, 0						):
             return 0
 
         depfile = "%s.%s" % (stampfn, task)
@@ -353,19 +362,40 @@ def stamp_is_current(task, d, file_name = None, checkdeps = 1):
 
     return task_graph.walkdown(task, checkStamp)
 
-def mkstamp(task, d):
-    """Creates/updates a stamp for a given task"""
-    stamp = data.getVar('STAMP', d)
+def stamp_internal(task, d, file_name):
+    """
+    Internal stamp helper function
+    Removes any stamp for the given task
+    Makes sure the stamp directory exists
+    Returns the stamp path+filename
+    """
+    stamp = extract_stamp(d, file_name)
     if not stamp:
         return
-    stamp = "%s.%s" % (data.expand(stamp, d), task)
+    stamp = "%s.%s" % (stamp, task)
     mkdirhier(os.path.dirname(stamp))
     # Remove the file and recreate to force timestamp
     # change on broken NFS filesystems
     if os.access(stamp, os.F_OK):
         os.remove(stamp)
-    f = open(stamp, "w")
-    f.close()
+    return stamp
+
+def make_stamp(task, d, file_name = None):
+    """
+    Creates/updates a stamp for a given task
+    (d can be a data dict or dataCache)
+    """
+    stamp = stamp_internal(task, d, file_name)
+    if stamp:
+        f = open(stamp, "w")
+        f.close()
+
+def del_stamp(task, d, file_name = None):
+    """
+    Removes a stamp for a given task
+    (d can be a data dict or dataCache)
+    """
+    stamp_internal(task, d, file_name)
 
 def add_task(task, deps, d):
     task_graph = data.getVar('_task_graph', d)
