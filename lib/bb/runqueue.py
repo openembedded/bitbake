@@ -357,10 +357,13 @@ class RunQueue:
 
         bb.msg.note(1, bb.msg.domain.RunQueue, "Executing runqueue")
 
+        active_builds = 0
+        tasks_completed = 0
+        tasks_skipped = 0
+
         runq_buildable = []
         runq_running = []
         runq_complete = []
-        active_builds = 0
         build_pids = {}
         failed_fnids = []
 
@@ -428,9 +431,11 @@ class RunQueue:
                         bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
                         runq_running[task] = 1
                         task_complete(self, task)
+                        tasks_completed = tasks_completed + 1
+                        tasks_skipped = tasks_skipped + 1
                         continue
 
-                    bb.msg.debug(1, bb.msg.domain.RunQueue, "Running task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
+                    bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (tasks_completed + active_builds + 1, len(self.runq_fnid), task, self.get_user_idstring(task, taskData)))
                     try: 
                         pid = os.fork() 
                     except OSError, e: 
@@ -468,6 +473,7 @@ class RunQueue:
                         failed_fnids.append(self.runq_fnid[task])
                         break
                     task_complete(self, task)
+                    tasks_completed = tasks_completed + 1
                     del build_pids[result[0]]
                     continue
                 break
@@ -502,6 +508,8 @@ class RunQueue:
                 bb.msg.error(bb.msg.domain.RunQueue, "Task %s never ran!" % task)
             if runq_complete[task] == 0:
                 bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
+
+        bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (tasks_completed, tasks_skipped, len(failed_fnids)))
 
         return failed_fnids
 
