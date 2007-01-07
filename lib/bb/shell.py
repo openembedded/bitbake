@@ -255,6 +255,11 @@ class BitBakeShellCommands:
         except parse.ParseError:
             print "ERROR: Unable to open or parse '%s'" % bf
         else:
+            # Remove stamp for target if force mode active
+            if cooker.configuration.force:
+                bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (cmd, bf))
+                bb.build.del_stamp('do_%s' % cmd, bbfile_data)
+
             item = data.getVar('PN', bbfile_data, 1)
             data.setVar( "_task_cache", [], bbfile_data ) # force
             try:
