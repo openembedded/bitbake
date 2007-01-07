@@ -171,7 +171,7 @@ class BitBakeShellCommands:
             td.add_unresolved(cooker.configuration.data, cooker.status)
             
             rq = runqueue.RunQueue()
-            rq.prepare_runqueue(cooker.configuration.data, cooker.status, td, tasks)
+            rq.prepare_runqueue(cooker, cooker.configuration.data, cooker.status, td, tasks)
             rq.execute_runqueue(cooker, cooker.configuration.data, cooker.status, td, tasks)
 
         except Providers.NoProvider:

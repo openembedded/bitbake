@@ -51,7 +51,7 @@ class RunQueue:
         taskname = self.runq_task[task]
         return "%s, %s" % (fn, taskname)
 
-    def prepare_runqueue(self, cfgData, dataCache, taskData, targets):
+    def prepare_runqueue(self, cooker, cfgData, dataCache, taskData, targets):
         """
         Turn a set of taskData into a RunQueue and compute data needed 
         to optimise the execution order.

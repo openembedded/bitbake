@@ -195,7 +195,7 @@ class BBCooker:
         except bb.providers.NoProvider:
             sys.exit(1)
         rq = bb.runqueue.RunQueue()
-        rq.prepare_runqueue(self.configuration.data, self.status, taskdata, runlist)
+        rq.prepare_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
 
         seen_fnids = []  
         depends_file = file('depends.dot', 'w' )
@@ -531,7 +531,7 @@ class BBCooker:
                 sys.exit(1)
 
             rq = bb.runqueue.RunQueue()
-            rq.prepare_runqueue(self.configuration.data, self.status, taskdata, runlist)
+            rq.prepare_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
             try:
                 failures = rq.execute_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
             except runqueue.TaskFailure, fnids:
