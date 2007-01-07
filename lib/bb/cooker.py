@@ -79,8 +79,6 @@ class BBCooker:
         bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
             self.stats.attempt += 1
-            if self.configuration.force:
-                bb.data.setVarFlag('do_%s' % task, 'force', 1, the_data)
             if not build_depends:
                 bb.data.setVarFlag('do_%s' % task, 'dontrundeps', 1, the_data)
             if not self.configuration.dry_run:
@@ -113,7 +111,7 @@ class BBCooker:
 
         item = self.status.pkg_fn[fn]
 
-        if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data) and not self.configuration.force:
+        if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
             self.build_cache.append(fn)
             return True
 
@@ -402,11 +400,7 @@ class BBCooker:
         self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
 
         if not self.configuration.cmd:
-            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data)
-
-        # For backwards compatibility - REMOVE ME
-        if not self.configuration.cmd:
-            self.configuration.cmd = "build"
+            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data) or "build"
 
         #
         # Special updated configuration we use for firing events
@@ -448,6 +442,11 @@ class BBCooker:
                 bf = matches[0]		    
 
             bbfile_data = bb.parse.handle(bf, self.configuration.data)
+
+            # Remove stamp for target if force mode active
+            if self.configuration.force:
+                bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (self.configuration.cmd, bf))
+                bb.build.del_stamp('do_%s' % self.configuration.cmd, bbfile_data)
 
             item = bb.data.getVar('PN', bbfile_data, 1)
             try:

@@ -199,13 +199,21 @@ class RunQueue:
 
         for target in targets:
             targetid = taskData.getbuild_id(target[0])
-            if targetid in taskData.failed_deps:
-                continue
 
             if targetid not in taskData.build_targets:
                 continue
 
             fnid = taskData.build_targets[targetid][0]
+
+            # Remove stamps for targets if force mode active
+            if cooker.configuration.force:
+                fn = taskData.fn_index[fnid]
+                bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (target[1], fn))
+                bb.build.del_stamp(target[1], dataCache, fn)
+
+            if targetid in taskData.failed_deps:
+                continue
+
             if fnid in taskData.failed_fnids:
                 continue
 
@@ -417,12 +425,10 @@ class RunQueue:
                     taskname = self.runq_task[task]
 
                     if bb.build.stamp_is_current(taskname, dataCache, fn):
-                        targetid = taskData.gettask_id(fn, taskname)
-                        if not (targetid in taskData.external_targets and cooker.configuration.force):
-                            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
-                            runq_running[task] = 1
-                            task_complete(self, task)
-                            continue
+                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
+                        runq_running[task] = 1
+                        task_complete(self, task)
+                        continue
 
                     bb.msg.debug(1, bb.msg.domain.RunQueue, "Running task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
                     try: 

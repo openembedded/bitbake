@@ -256,9 +256,8 @@ def exec_task(task, d):
         raise EventException("Missing node in task graph", InvalidTask(task, d))
 
     # check whether this task needs executing..
-    if not data.getVarFlag(task, 'force', d):
-        if stamp_is_current(task, d):
-            return 1
+    if stamp_is_current(task, d):
+        return 1
 
     # follow digraph path up, then execute our way back down
     def execute(graph, item):
