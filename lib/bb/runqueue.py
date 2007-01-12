@@ -347,7 +347,7 @@ class RunQueue:
                 taskData.fail_fnid(fnid)
                 failures = failures + 1
             self.reset_runqueue()
-            self.prepare_runqueue(cfgData, dataCache, taskData, runlist)
+            self.prepare_runqueue(cooker, cfgData, dataCache, taskData, runlist)
 
     def execute_runqueue_internal(self, cooker, cfgData, dataCache, taskData):
         """
