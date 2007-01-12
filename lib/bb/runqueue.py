@@ -203,6 +203,9 @@ class RunQueue:
             if targetid not in taskData.build_targets:
                 continue
 
+            if targetid in taskData.failed_deps:
+                continue
+
             fnid = taskData.build_targets[targetid][0]
 
             # Remove stamps for targets if force mode active
@@ -210,9 +213,6 @@ class RunQueue:
                 fn = taskData.fn_index[fnid]
                 bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (target[1], fn))
                 bb.build.del_stamp(target[1], dataCache, fn)
-
-            if targetid in taskData.failed_deps:
-                continue
 
             if fnid in taskData.failed_fnids:
                 continue
@@ -369,7 +369,7 @@ class RunQueue:
 
         if len(self.runq_fnid) == 0:
             # nothing to do
-            return
+            return []
 
         def sigint_handler(signum, frame):
             raise KeyboardInterrupt
