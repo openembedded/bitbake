@@ -94,12 +94,23 @@ class Svn(Fetch):
 
 #           setup svn options
             options = []
-            if 'rev' in parm:
-                revision = parm['rev']
-            else:
-                revision = ""
 
             date = Fetch.getSRCDate(d)
+
+            revision = ""
+            if 'rev' in parm:
+                revision = parm['rev']
+            
+            if revision:
+                options.append("-r %s" % revision)
+            elif date != "now":
+                options.append("-r {%s}" % date)
+
+            if user:
+                options.append("--username %s" % user)
+
+            if pswd:
+                options.append("--password %s" % pswd)
 
             if "proto" in parm:
                 proto = parm["proto"]
@@ -124,17 +135,10 @@ class Svn(Fetch):
 
             svnroot = host + path
 
-            data.setVar('SVNROOT', svnroot, localdata)
+            data.setVar('SVNROOT', "%s://%s/%s" % (proto, svnroot, module), localdata)
             data.setVar('SVNCOOPTS', " ".join(options), localdata)
             data.setVar('SVNMODULE', module, localdata)
             svncmd = data.getVar('FETCHCOMMAND', localdata, 1)
-            svncmd = "svn co -r {%s} %s://%s/%s" % (date, proto, svnroot, module)
-
-            # either use the revision or if SRCDATE is now no braces
-            if revision:
-                svncmd = "svn co -r %s %s://%s/%s" % (revision, proto, svnroot, module)
-            elif date == "now":
-                svncmd = "svn co %s://%s/%s" % (proto, svnroot, module)
 
             if svn_rsh:
                 svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
