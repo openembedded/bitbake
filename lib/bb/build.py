@@ -188,8 +188,7 @@ def exec_func_shell(func, d):
         maybe_fakeroot = "PATH=\"%s\" fakeroot " % bb.data.getVar("PATH", d, 1)
     else:
         maybe_fakeroot = ''
-    lang_environment = "LC_ALL=C "
-    ret = os.system('%s%ssh -e %s' % (lang_environment, maybe_fakeroot, runfile))
+    ret = os.system('%ssh -e %s' % (maybe_fakeroot, runfile))
     try:
         os.chdir(prevdir)
     except:
