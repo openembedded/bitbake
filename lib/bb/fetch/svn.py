@@ -91,6 +91,12 @@ class Svn(Fetch):
         elif ud.date != "now":
             options.append("-r {%s}" % ud.date)
 
+        if ud.user:
+            options.append("--username %s" % ud.user)
+
+        if ud.pswd:
+            options.append("--password %s" % ud.pswd)
+
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "svn:%s" % data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
