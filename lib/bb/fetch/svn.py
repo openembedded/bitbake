@@ -63,6 +63,12 @@ class Svn(Fetch):
 
         date = Fetch.getSRCDate(d)
 
+        if 'srcdate' in parm:
+            date = parm['srcdate']
+
+        if revision:
+            date = ""
+
         return os.path.join(data.getVar("DL_DIR", d, 1),data.expand('%s_%s_%s_%s_%s.tar.gz' % ( module.replace('/', '.'), host, path.replace('/', '.'), revision, date), d))
     localpath = staticmethod(localpath)
 
@@ -98,6 +104,9 @@ class Svn(Fetch):
 
             date = Fetch.getSRCDate(d)
 
+            if 'srcdate' in parm:
+                date = parm['srcdate']
+
             revision = ""
             if 'rev' in parm:
                 revision = parm['rev']
@@ -106,6 +115,10 @@ class Svn(Fetch):
                 options.append("-r %s" % revision)
             elif date != "now":
                 options.append("-r {%s}" % date)
+
+            if revision:
+                date = ""
+
 
             if user:
                 options.append("--username %s" % user)
