@@ -1,4 +1,9 @@
 Changes in BitBake 1.6.3:
+    - Various updates to the svn fetcher
+    - Various updates to the cvs fetcher (port number)
+    - Fixes to the shell
+    - Relicensed to GPLv2
+    - Various packaging changes
 
 Changes in Bitbake 1.6.1:
 	- Add support for the interactive flag (backported from trunk)
