@@ -31,10 +31,13 @@ lib/bb/shell.py
 lib/bb/utils.py
 doc/COPYING.GPL
 doc/COPYING.MIT
+doc/bitbake.1
 doc/manual/html.css
 doc/manual/Makefile
 doc/manual/usermanual.xml
+contrib/README
 contrib/bbdev.sh
+contrib/vim/ftdetect/bitbake.vim
 contrib/vim/syntax/bitbake.vim
 conf/bitbake.conf
 classes/base.bbclass

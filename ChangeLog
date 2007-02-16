@@ -1,3 +1,6 @@
+Changes in BitBake 1.6.4:
+    - Update the MANIFEST file
+
 Changes in BitBake 1.6.3:
     - Various updates to the svn fetcher
     - Various updates to the cvs fetcher (port number)
