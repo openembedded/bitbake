@@ -152,9 +152,9 @@ class RunQueue:
                 # Resolve Recursive Runtime Depends
                 # Also includes all Build Depends (and their runtime depends)
                 if 'recrdeptask' in task_deps and taskData.tasks_name[task] in task_deps['recrdeptask']:
-                    dep_seen = []
-                    rdep_seen = []
                     for taskname in task_deps['recrdeptask'][taskData.tasks_name[task]].split():
+                        dep_seen = []
+                        rdep_seen = []
                         for depid in taskData.depids[fnid]:
                             add_recursive_build(depid)
                         for rdepid in taskData.rdepids[fnid]:
