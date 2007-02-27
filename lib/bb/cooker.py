@@ -556,13 +556,17 @@ class BBCooker:
         return bbfiles
 
     def find_bbfiles( self, path ):
-        """Find all the .bb files in a directory (uses find)"""
-        findcmd = 'find ' + path + ' -name *.bb | grep -v SCCS/'
-        try:
-            finddata = os.popen(findcmd)
-        except OSError:
-            return []
-        return finddata.readlines()
+        """Find all the .bb files in a directory"""
+        from os.path import join
+
+        found = []
+        for dir, dirs, files in os.walk(path):
+            for ignored in ('SCCS', 'CVS', '.svn'):
+                if ignored in dirs:
+                    dirs.remove(ignored)
+            found += [join(dir,f) for f in files if f.endswith('.bb')]
+
+        return found
 
     def collect_bbfiles( self ):
         """Collect all available .bb build files"""
