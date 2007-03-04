@@ -523,7 +523,10 @@ class RunQueue:
             except:
                 bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % self.active_builds)
                 for k, v in build_pids.iteritems():
-                     os.kill(-k, signal.SIGINT)
+                     try:
+                         os.kill(-k, signal.SIGINT)
+                     except:
+                         pass
                 raise
 
         # Sanity Checks
