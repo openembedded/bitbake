@@ -38,8 +38,6 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    Statistics = BBStatistics           # make it visible from the shell
-
     def __init__( self ):
         self.status = None
 
