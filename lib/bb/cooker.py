@@ -365,6 +365,112 @@ class BBCooker:
                 except ValueError:
                     bb.msg.error(bb.msg.domain.Parsing, "invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
 
+    def buildSetVars(self):
+        """
+        Setup any variables needed before starting a build
+        """
+        if not bb.data.getVar("BUILDNAME", self.configuration.data):
+            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
+        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.gmtime()),self.configuration.data)
+
+    def buildFile(self, buildfile):
+        """
+        Build the file matching regexp buildfile
+        """
+
+        bf = os.path.abspath(buildfile)
+        try:
+            os.stat(bf)
+        except OSError:
+            (filelist, masked) = self.collect_bbfiles()
+            regexp = re.compile(buildfile)
+            matches = []
+            for f in filelist:
+                if regexp.search(f) and os.path.isfile(f):
+                    bf = f
+                    matches.append(f)
+            if len(matches) != 1:
+                bb.msg.error(bb.msg.domain.Parsing, "Unable to match %s (%s matches found):" % (buildfile, len(matches)))
+                for f in matches:
+                    bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
+                sys.exit(1)
+            bf = matches[0]		    
+
+        bbfile_data = bb.parse.handle(bf, self.configuration.data)
+
+        # Remove stamp for target if force mode active
+        if self.configuration.force:
+            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (self.configuration.cmd, bf))
+            bb.build.del_stamp('do_%s' % self.configuration.cmd, bbfile_data)
+
+        item = bb.data.getVar('PN', bbfile_data, 1)
+        try:
+            self.tryBuildPackage(bf, item, self.configuration.cmd, bbfile_data, True)
+        except bb.build.EventException:
+            bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
+
+        sys.exit(0)
+
+    def buildTargets(self, targets):
+        """
+        Attempt to build the targets specified
+        """
+
+        buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
+        bb.event.fire(bb.event.BuildStarted(buildname, targets, self.configuration.event_data))
+
+        localdata = data.createCopy(self.configuration.data)
+        bb.data.update_data(localdata)
+        bb.data.expandKeys(localdata)
+
+        taskdata = bb.taskdata.TaskData(self.configuration.abort)
+
+        runlist = []
+        try:
+            for k in targets:
+                taskdata.add_provider(localdata, self.status, k)
+                runlist.append([k, "do_%s" % self.configuration.cmd])
+            taskdata.add_unresolved(localdata, self.status)
+        except bb.providers.NoProvider:
+            sys.exit(1)
+
+        rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
+        rq.prepare_runqueue()
+        try:
+            failures = rq.execute_runqueue()
+        except runqueue.TaskFailure, fnids:
+            for fnid in fnids:
+                bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+            sys.exit(1)
+        bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
+
+        sys.exit(0)
+
+    def updateCache(self):
+        # Import Psyco if available and not disabled
+        if not self.configuration.disable_psyco:
+            try:
+                import psyco
+            except ImportError:
+                bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+            else:
+                psyco.bind( self.parse_bbfiles )
+        else:
+            bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
+
+        self.status = bb.cache.CacheData()
+
+        ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
+        self.status.ignored_dependencies = Set( ignore.split() )
+
+        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
+
+        bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
+        (filelist, masked) = self.collect_bbfiles()
+        self.parse_bbfiles(filelist, masked, self.myProgressCallback)
+        bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
+
+        self.buildDepgraph()
 
     def cook(self):
         """
@@ -377,57 +483,20 @@ class BBCooker:
             self.showEnvironment()
             sys.exit( 0 )
 
-        # inject custom variables
-        if not bb.data.getVar("BUILDNAME", self.configuration.data):
-            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
-        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.gmtime()),self.configuration.data)
-
-        buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
+        self.buildSetVars()
 
         if self.configuration.interactive:
             self.interactiveMode()
 
         if self.configuration.buildfile is not None:
-            bf = os.path.abspath( self.configuration.buildfile )
-            try:
-                os.stat(bf)
-            except OSError:
-                (filelist, masked) = self.collect_bbfiles()
-                regexp = re.compile(self.configuration.buildfile)
-                matches = []
-                for f in filelist:
-                    if regexp.search(f) and os.path.isfile(f):
-                        bf = f
-                        matches.append(f)
-                if len(matches) != 1:
-                    bb.msg.error(bb.msg.domain.Parsing, "Unable to match %s (%s matches found):" % (self.configuration.buildfile, len(matches)))
-                    for f in matches:
-                        bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
-                    sys.exit(1)
-                bf = matches[0]		    
-
-            bbfile_data = bb.parse.handle(bf, self.configuration.data)
-
-            # Remove stamp for target if force mode active
-            if self.configuration.force:
-                bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (self.configuration.cmd, bf))
-                bb.build.del_stamp('do_%s' % self.configuration.cmd, bbfile_data)
-
-            item = bb.data.getVar('PN', bbfile_data, 1)
-            try:
-                self.tryBuildPackage(bf, item, self.configuration.cmd, bbfile_data, True)
-            except bb.build.EventException:
-                bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
-
-            sys.exit(0)
+            return self.buildFile(self.configuration.buildfile)
 
         # initialise the parsing status now we know we will need deps
-        self.status = bb.cache.CacheData()
+        self.updateCache()
 
-        ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
-        self.status.ignored_dependencies = Set( ignore.split() )
-
-        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
+        if self.configuration.parse_only:
+            bb.msg.note(1, bb.msg.domain.Collection, "Requested parsing .bb files only.  Exiting.")
+            return 0
 
         pkgs_to_build = self.configuration.pkgs_to_build
 
@@ -440,30 +509,7 @@ class BBCooker:
                 print "for usage information."
                 sys.exit(0)
 
-        # Import Psyco if available and not disabled
-        if not self.configuration.disable_psyco:
-            try:
-                import psyco
-            except ImportError:
-                bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
-            else:
-                psyco.bind( self.parse_bbfiles )
-        else:
-            bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
-
         try:
-            bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
-            (filelist, masked) = self.collect_bbfiles()
-            self.parse_bbfiles(filelist, masked, self.myProgressCallback)
-            bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
-            print
-            if self.configuration.parse_only:
-                bb.msg.note(1, bb.msg.domain.Collection, "Requested parsing .bb files only.  Exiting.")
-                return
-
-
-            self.buildDepgraph()
-
             if self.configuration.show_versions:
                 self.showVersions()
                 sys.exit( 0 )
@@ -477,34 +523,7 @@ class BBCooker:
                 self.generateDotGraph( pkgs_to_build, self.configuration.ignored_dot_deps )
                 sys.exit( 0 )
 
-            bb.event.fire(bb.event.BuildStarted(buildname, pkgs_to_build, self.configuration.event_data))
-
-            localdata = data.createCopy(self.configuration.data)
-            bb.data.update_data(localdata)
-            bb.data.expandKeys(localdata)
-
-            taskdata = bb.taskdata.TaskData(self.configuration.abort)
-
-            runlist = []
-            try:
-                for k in pkgs_to_build:
-                    taskdata.add_provider(localdata, self.status, k)
-                    runlist.append([k, "do_%s" % self.configuration.cmd])
-                taskdata.add_unresolved(localdata, self.status)
-            except bb.providers.NoProvider:
-                sys.exit(1)
-
-            rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
-            rq.prepare_runqueue()
-            try:
-                failures = rq.execute_runqueue()
-            except runqueue.TaskFailure, fnids:
-                for fnid in fnids:
-                    bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
-                sys.exit(1)
-            bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.event_data, failures))
-
-            sys.exit(0)
+            return self.buildTargets(pkgs_to_build)
 
         except KeyboardInterrupt:
             bb.msg.note(1, bb.msg.domain.Collection, "KeyboardInterrupt - Build not completed.")
