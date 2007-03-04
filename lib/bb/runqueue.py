@@ -31,6 +31,25 @@ class TaskFailure(Exception):
     def __init__(self, x): 
         self.args = x
 
+
+class RunQueueStats:
+    """
+    Holds statistics on the tasks handled by the associated runQueue
+    """
+    def __init__(self):
+        self.completed = 0
+        self.skipped = 0
+        self.failed = 0
+
+    def taskFailed(self):
+        self.failed = self.failed + 1
+
+    def taskCompleted(self):
+        self.completed = self.completed + 1
+
+    def taskSkipped(self):
+        self.skipped = self.skipped + 1
+
 class RunQueue:
     """
     BitBake Run Queue implementation
@@ -39,6 +58,8 @@ class RunQueue:
         self.reset_runqueue()
 
     def reset_runqueue(self):
+        self.stats = RunQueueStats()
+
         self.runq_fnid = []
         self.runq_task = []
         self.runq_depends = []
@@ -357,9 +378,7 @@ class RunQueue:
 
         bb.msg.note(1, bb.msg.domain.RunQueue, "Executing runqueue")
 
-        active_builds = 0
-        tasks_completed = 0
-        tasks_skipped = 0
+        self.active_builds = 0
 
         runq_buildable = []
         runq_running = []
@@ -431,18 +450,18 @@ class RunQueue:
                         bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task, taskData)))
                         runq_running[task] = 1
                         task_complete(self, task)
-                        tasks_completed = tasks_completed + 1
-                        tasks_skipped = tasks_skipped + 1
+                        self.stats.taskCompleted()
+                        self.stats.taskSkipped()
                         continue
 
-                    bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (tasks_completed + active_builds + 1, len(self.runq_fnid), task, self.get_user_idstring(task, taskData)))
+                    bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.active_builds + 1, len(self.runq_fnid), task, self.get_user_idstring(task, taskData)))
                     try: 
                         pid = os.fork() 
                     except OSError, e: 
                         bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
                     if pid == 0:
                         # Bypass finally below
-                        active_builds = 0 
+                        self.active_builds = 0 
                         # Stop Ctrl+C being sent to children
                         # signal.signal(signal.SIGINT, signal.SIG_IGN)
                         # Make the child the process group leader
@@ -460,27 +479,28 @@ class RunQueue:
                         sys.exit(0)
                     build_pids[pid] = task
                     runq_running[task] = 1
-                    active_builds = active_builds + 1
-                    if active_builds < number_tasks:
+                    self.active_builds = self.active_builds + 1
+                    if self.active_builds < number_tasks:
                         continue
-                if active_builds > 0:
+                if self.active_builds > 0:
                     result = os.waitpid(-1, 0)
-                    active_builds = active_builds - 1
+                    self.ctive_builds = self.active_builds - 1
                     task = build_pids[result[0]]
                     if result[1] != 0:
                         del build_pids[result[0]]
                         bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (task, self.get_user_idstring(task, taskData)))
                         failed_fnids.append(self.runq_fnid[task])
+                        self.stats.taskFailed()
                         break
                     task_complete(self, task)
-                    tasks_completed = tasks_completed + 1
+                    self.stats.taskCompleted()
                     del build_pids[result[0]]
                     continue
                 break
         finally:
             try:
-                while active_builds > 0:
-                    bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % active_builds)
+                while self.active_builds > 0:
+                    bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.active_builds)
                     tasknum = 1
                     for k, v in build_pids.iteritems():
                          bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (%s)" % (tasknum, self.get_user_idstring(v, taskData), k))
@@ -490,12 +510,13 @@ class RunQueue:
                     if result[1] != 0:
                          bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (task, self.get_user_idstring(task, taskData)))
                          failed_fnids.append(self.runq_fnid[task])
+                         self.stats.taskFailed()
                     del build_pids[result[0]]
-                    active_builds = active_builds - 1
+                    self.active_builds = self.active_builds - 1
                 if len(failed_fnids) > 0:
                     return failed_fnids
             except:
-                bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % active_builds)
+                bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % self.active_builds)
                 for k, v in build_pids.iteritems():
                      os.kill(-k, signal.SIGINT)
                 raise
@@ -509,7 +530,7 @@ class RunQueue:
             if runq_complete[task] == 0:
                 bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
 
-        bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (tasks_completed, tasks_skipped, len(failed_fnids)))
+        bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (self.stats.completed, self.stats.skipped, self.stats.failed))
 
         return failed_fnids
 

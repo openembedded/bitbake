@@ -31,29 +31,6 @@ import itertools
 parsespin = itertools.cycle( r'|/-\\' )
 
 #============================================================================#
-# BBStatistics
-#============================================================================#
-class BBStatistics:
-    """
-    Manage build statistics for one run
-    """
-    def __init__(self ):
-        self.attempt = 0
-        self.success = 0
-        self.fail = 0
-        self.deps = 0
-
-    def show( self ):
-        print "Build statistics:"
-        print "  Attempted builds: %d" % self.attempt
-        if self.fail:
-            print "  Failed builds: %d" % self.fail
-        if self.deps:
-            print "  Dependencies not satisfied: %d" % self.deps
-        if self.fail or self.deps: return 1
-        else: return 0
-
-#============================================================================#
 # BBCooker
 #============================================================================#
 class BBCooker:
@@ -64,9 +41,6 @@ class BBCooker:
     Statistics = BBStatistics           # make it visible from the shell
 
     def __init__( self ):
-        self.build_cache_fail = []
-        self.build_cache = []
-        self.stats = BBStatistics()
         self.status = None
 
         self.cache = None
@@ -78,26 +52,20 @@ class BBCooker:
         """
         bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
-            self.stats.attempt += 1
             if not build_depends:
                 bb.data.setVarFlag('do_%s' % task, 'dontrundeps', 1, the_data)
             if not self.configuration.dry_run:
                 bb.build.exec_task('do_%s' % task, the_data)
             bb.event.fire(bb.event.PkgSucceeded(item, the_data))
-            self.build_cache.append(fn)
             return True
         except bb.build.FuncFailed:
-            self.stats.fail += 1
             bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
             bb.event.fire(bb.event.PkgFailed(item, the_data))
-            self.build_cache_fail.append(fn)
             raise
         except bb.build.EventException, e:
-            self.stats.fail += 1
             event = e.args[1]
             bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
             bb.event.fire(bb.event.PkgFailed(item, the_data))
-            self.build_cache_fail.append(fn)
             raise
 
     def tryBuild( self, fn, build_depends):
@@ -112,7 +80,6 @@ class BBCooker:
         item = self.status.pkg_fn[fn]
 
         if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
-            self.build_cache.append(fn)
             return True
 
         return self.tryBuildPackage(fn, item, self.configuration.cmd, the_data, build_depends)
@@ -454,7 +421,7 @@ class BBCooker:
             except bb.build.EventException:
                 bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
 
-            sys.exit( self.stats.show() )
+            sys.exit(0)
 
         # initialise the parsing status now we know we will need deps
         self.status = bb.cache.CacheData()
@@ -539,7 +506,7 @@ class BBCooker:
                 sys.exit(1)
             bb.event.fire(bb.event.BuildCompleted(buildname, pkgs_to_build, self.configuration.event_data, failures))
 
-            sys.exit( self.stats.show() )
+            sys.exit(0)
 
         except KeyboardInterrupt:
             bb.msg.note(1, bb.msg.domain.Collection, "KeyboardInterrupt - Build not completed.")
