@@ -23,7 +23,7 @@ Message handling infrastructure for bitbake
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import sys, os, re, bb
-from bb import utils
+from bb import utils, event
 
 debug_level = {}
 
@@ -41,6 +41,29 @@ domain = bb.utils.Enum(
     'RunQueue',
     'TaskData',
     'Util')
+
+
+class MsgBase(bb.event.Event):
+    """Base class for messages"""
+
+    def __init__(self, msg, d ):
+        self._message = msg
+        event.Event.__init__(self, d)
+
+class MsgDebug(MsgBase):
+    """Debug Message"""
+
+class MsgNote(MsgBase):
+    """Note Message"""
+
+class MsgWarn(MsgBase):
+    """Warning Message"""
+
+class MsgError(MsgBase):
+    """Error Message"""
+
+class MsgFatal(MsgBase):
+    """Fatal Message"""
 
 #
 # Message control functions
@@ -71,6 +94,7 @@ def set_debug_domains(domains):
 
 def debug(level, domain, msg, fn = None):
     if debug_level[domain] >= level:
+        bb.event.fire(MsgDebug(msg, None))
         print 'DEBUG: ' + msg
 
 def note(level, domain, msg, fn = None):
@@ -91,17 +115,22 @@ def fatal(domain, msg, fn = None):
 #
 def std_debug(lvl, msg):
     if debug_level['default'] >= lvl:
+        bb.event.fire(MsgDebug(msg, None))
         print 'DEBUG: ' + msg
 
 def std_note(msg):
+    bb.event.fire(MsgNote(msg, None))
     print 'NOTE: ' + msg
 
 def std_warn(msg):
+    bb.event.fire(MsgWarn(msg, None))
     print 'WARNING: ' + msg
 
 def std_error(msg):
+    bb.event.fire(MsgError(msg, None))
     print 'ERROR: ' + msg
 
 def std_fatal(msg):
+    bb.event.fire(MsgFatal(msg, None))
     print 'ERROR: ' + msg
     sys.exit(1)
