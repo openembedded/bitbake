@@ -377,6 +377,40 @@ class RunQueue:
             self.reset_runqueue()
             self.prepare_runqueue()
 
+    def task_complete(self, task):
+        """
+        Mark a task as completed
+        Look at the reverse dependencies and mark any task with 
+        completed dependencies as buildable
+        """
+        self.runq_complete[task] = 1
+        for revdep in self.runq_revdeps[task]:
+            if self.runq_running[revdep] == 1:
+                continue
+            if self.runq_buildable[revdep] == 1:
+                continue
+            alldeps = 1
+            for dep in self.runq_depends[revdep]:
+                if self.runq_complete[dep] != 1:
+                    alldeps = 0
+            if alldeps == 1:
+                self.runq_buildable[revdep] = 1
+                fn = self.taskData.fn_index[self.runq_fnid[revdep]]
+                taskname = self.runq_task[revdep]
+                bb.msg.debug(1, bb.msg.domain.RunQueue, "Marking task %s (%s, %s) as buildable" % (revdep, fn, taskname))
+
+    def get_next_task(self):
+        """
+        Return the id of the highest priority task that is buildable
+        """
+        for task1 in range(len(self.runq_fnid)):
+            task = self.prio_map[task1]
+            if self.runq_running[task] == 1:
+                continue
+            if self.runq_buildable[task] == 1:
+                return task
+        return None
+
     def execute_runqueue_internal(self):
         """
         Run the tasks in a queue prepared by prepare_runqueue
@@ -387,9 +421,9 @@ class RunQueue:
 
         self.active_builds = 0
 
-        runq_buildable = []
-        runq_running = []
-        runq_complete = []
+        self.runq_buildable = []
+        self.runq_running = []
+        self.runq_complete = []
         build_pids = {}
         failed_fnids = []
 
@@ -400,61 +434,27 @@ class RunQueue:
         def sigint_handler(signum, frame):
             raise KeyboardInterrupt
 
-        def get_next_task(data):
-            """
-            Return the id of the highest priority task that is buildable
-            """
-            for task1 in range(len(data.runq_fnid)):
-                task = data.prio_map[task1]
-                if runq_running[task] == 1:
-                    continue
-                if runq_buildable[task] == 1:
-                    return task
-            return None
-
-        def task_complete(data, task):
-            """
-            Mark a task as completed
-            Look at the reverse dependencies and mark any task with 
-            completed dependencies as buildable
-            """
-            runq_complete[task] = 1
-            for revdep in data.runq_revdeps[task]:
-                if runq_running[revdep] == 1:
-                    continue
-                if runq_buildable[revdep] == 1:
-                    continue
-                alldeps = 1
-                for dep in data.runq_depends[revdep]:
-                    if runq_complete[dep] != 1:
-                        alldeps = 0
-                if alldeps == 1:
-                    runq_buildable[revdep] = 1
-                    fn = self.taskData.fn_index[self.runq_fnid[revdep]]
-                    taskname = self.runq_task[revdep]
-                    bb.msg.debug(1, bb.msg.domain.RunQueue, "Marking task %s (%s, %s) as buildable" % (revdep, fn, taskname))
-
         # Mark initial buildable tasks
         for task in range(len(self.runq_fnid)):
-            runq_running.append(0)
-            runq_complete.append(0)
+            self.runq_running.append(0)
+            self.runq_complete.append(0)
             if len(self.runq_depends[task]) == 0:
-                runq_buildable.append(1)
+                self.runq_buildable.append(1)
             else:
-                runq_buildable.append(0)
+                self.runq_buildable.append(0)
 
 
         try:
-            while 1:
-                task = get_next_task(self)
+            while True:
+                task = self.get_next_task()
                 if task is not None:
                     fn = self.taskData.fn_index[self.runq_fnid[task]]
                     taskname = self.runq_task[task]
 
                     if bb.build.stamp_is_current(taskname, self.dataCache, fn):
                         bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
-                        runq_running[task] = 1
-                        task_complete(self, task)
+                        self.runq_running[task] = 1
+                        self.task_complete(task)
                         self.stats.taskCompleted()
                         self.stats.taskSkipped()
                         continue
@@ -483,7 +483,7 @@ class RunQueue:
                             raise
                         sys.exit(0)
                     build_pids[pid] = task
-                    runq_running[task] = 1
+                    self.runq_running[task] = 1
                     self.active_builds = self.active_builds + 1
                     if self.active_builds < self.number_tasks:
                         continue
@@ -497,7 +497,7 @@ class RunQueue:
                         failed_fnids.append(self.runq_fnid[task])
                         self.stats.taskFailed()
                         break
-                    task_complete(self, task)
+                    self.task_complete(task)
                     self.stats.taskCompleted()
                     del build_pids[result[0]]
                     continue
@@ -531,11 +531,11 @@ class RunQueue:
 
         # Sanity Checks
         for task in range(len(self.runq_fnid)):
-            if runq_buildable[task] == 0:
+            if self.runq_buildable[task] == 0:
                 bb.msg.error(bb.msg.domain.RunQueue, "Task %s never buildable!" % task)
-            if runq_running[task] == 0:
+            if self.runq_running[task] == 0:
                 bb.msg.error(bb.msg.domain.RunQueue, "Task %s never ran!" % task)
-            if runq_complete[task] == 0:
+            if self.runq_complete[task] == 0:
                 bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
 
         bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (self.stats.completed, self.stats.skipped, self.stats.failed))
