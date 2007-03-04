@@ -38,11 +38,40 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__( self ):
+    def __init__(self, configuration):
         self.status = None
 
         self.cache = None
         self.bb_cache = None
+
+        self.configuration = configuration
+
+        if self.configuration.verbose:
+            bb.msg.set_verbose(True)
+
+        if self.configuration.debug:
+            bb.msg.set_debug_level(self.configuration.debug)
+        else:
+            bb.msg.set_debug_level(0)
+
+        if self.configuration.debug_domains:
+            bb.msg.set_debug_domains(self.configuration.debug_domains)
+
+        self.configuration.data = bb.data.init()
+
+        for f in self.configuration.file:
+            self.parseConfigurationFile( f )
+
+        self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
+
+        if not self.configuration.cmd:
+            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data) or "build"
+
+        #
+        # Special updated configuration we use for firing events
+        #
+        self.configuration.event_data = bb.data.createCopy(self.configuration.data)
+        bb.data.update_data(self.configuration.event_data)
 
     def tryBuildPackage(self, fn, item, task, the_data, build_depends):
         """
@@ -337,41 +366,12 @@ class BBCooker:
                     bb.msg.error(bb.msg.domain.Parsing, "invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
 
 
-    def cook(self, configuration):
+    def cook(self):
         """
         We are building stuff here. We do the building
         from here. By default we try to execute task
         build.
         """
-
-        self.configuration = configuration
-
-        if self.configuration.verbose:
-            bb.msg.set_verbose(True)
-
-        if self.configuration.debug:
-            bb.msg.set_debug_level(self.configuration.debug)
-        else:
-            bb.msg.set_debug_level(0)
-
-        if self.configuration.debug_domains:
-            bb.msg.set_debug_domains(self.configuration.debug_domains)
-
-        self.configuration.data = bb.data.init()
-
-        for f in self.configuration.file:
-            self.parseConfigurationFile( f )
-
-        self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
-
-        if not self.configuration.cmd:
-            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data) or "build"
-
-        #
-        # Special updated configuration we use for firing events
-        #
-        self.configuration.event_data = bb.data.createCopy(self.configuration.data)
-        bb.data.update_data(self.configuration.event_data)
 
         if self.configuration.show_environment:
             self.showEnvironment()

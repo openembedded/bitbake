@@ -109,8 +109,8 @@ Default BBFILES are the .bb files in the current directory.""" )
     configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
 
-    bb.cooker.BBCooker().cook(configuration)
-
+    cooker = bb.cooker.BBCooker(configuration)
+    cooker.cook()
 
 
 if __name__ == "__main__":
