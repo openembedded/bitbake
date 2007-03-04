@@ -110,10 +110,7 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
 
     return (latest,latest_f,preferred_ver, preferred_file)
 
-#
-# RP - build_cache_fail needs to move elsewhere
-#
-def filterProviders(providers, item, cfgData, dataCache, build_cache_fail = {}):
+def filterProviders(providers, item, cfgData, dataCache):
     """
     Take a list of providers and filter/reorder according to the 
     environment variables and previous build results
@@ -134,12 +131,6 @@ def filterProviders(providers, item, cfgData, dataCache, build_cache_fail = {}):
     for pn in pkg_pn.keys():
         preferred_versions[pn] = bb.providers.findBestProvider(pn, cfgData, dataCache, pkg_pn, item)[2:4]
         eligible.append(preferred_versions[pn][1])
-
-
-    for p in eligible:
-        if p in build_cache_fail:
-            bb.msg.debug(1, bb.msg.domain.Provider, "rejecting already-failed %s" % p)
-            eligible.remove(p)
 
     if len(eligible) == 0:
         bb.msg.error(bb.msg.domain.Provider, "no eligible providers for %s" % item)
