@@ -23,14 +23,13 @@ BitBake build tools.
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os, re
-import bb.data
 import bb.utils
 
 class Event:
     """Base class for events"""
     type = "Event"
 
-    def __init__(self, d = bb.data.init()):
+    def __init__(self, d):
         self._data = d
 
     def getData(self):
@@ -129,7 +128,7 @@ def getName(e):
 class PkgBase(Event):
     """Base class for package events"""
 
-    def __init__(self, t, d = bb.data.init()):
+    def __init__(self, t, d):
         self._pkg = t
         Event.__init__(self, d)
 
