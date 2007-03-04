@@ -365,7 +365,7 @@ class RunQueue:
 
         failures = 0
         while 1:
-            failed_fnids = self.execute_runqueue_internal(self.taskData)
+            failed_fnids = self.execute_runqueue_internal()
             if len(failed_fnids) == 0:
                 return failures
             if self.taskData.abort:
