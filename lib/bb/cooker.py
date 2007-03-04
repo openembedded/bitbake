@@ -159,8 +159,8 @@ class BBCooker:
             taskdata.add_unresolved(localdata, self.status)
         except bb.providers.NoProvider:
             sys.exit(1)
-        rq = bb.runqueue.RunQueue()
-        rq.prepare_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
+        rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
+        rq.prepare_runqueue()
 
         seen_fnids = []  
         depends_file = file('depends.dot', 'w' )
@@ -496,10 +496,10 @@ class BBCooker:
             except bb.providers.NoProvider:
                 sys.exit(1)
 
-            rq = bb.runqueue.RunQueue()
-            rq.prepare_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
+            rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
+            rq.prepare_runqueue()
             try:
-                failures = rq.execute_runqueue(self, self.configuration.data, self.status, taskdata, runlist)
+                failures = rq.execute_runqueue()
             except runqueue.TaskFailure, fnids:
                 for fnid in fnids:
                     bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
