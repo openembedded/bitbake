@@ -104,10 +104,11 @@ class BitBakeShellCommands:
 
     def _findProvider( self, item ):
         self._checkParsed()
+        # Need to use taskData for this information
         preferred = data.getVar( "PREFERRED_PROVIDER_%s" % item, cooker.configuration.data, 1 )
         if not preferred: preferred = item
         try:
-            lv, lf, pv, pf = Providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, cooker.build_cache_fail)
+            lv, lf, pv, pf = Providers.findBestProvider(preferred, cooker.configuration.data, cooker.status)
         except KeyError:
             if item in cooker.status.providers:
                 pf = cooker.status.providers[item][0]
@@ -152,8 +153,6 @@ class BitBakeShellCommands:
 
         oldcmd = cooker.configuration.cmd
         cooker.configuration.cmd = cmd
-        cooker.build_cache = []
-        cooker.build_cache_fail = []
 
         td = taskdata.TaskData(cooker.configuration.abort)
 
@@ -242,8 +241,6 @@ class BitBakeShellCommands:
 
         oldcmd = cooker.configuration.cmd
         cooker.configuration.cmd = cmd
-        cooker.build_cache = []
-        cooker.build_cache_fail = []
 
         thisdata = copy.deepcopy( initdata )
         # Caution: parse.handle modifies thisdata, hence it would
@@ -537,8 +534,6 @@ SRC_URI = ""
     def status( self, params ):
         """<just for testing>"""
         print "-" * 78
-        print "build cache = '%s'" % cooker.build_cache
-        print "build cache fail = '%s'" % cooker.build_cache_fail
         print "building list = '%s'" % cooker.building_list
         print "build path = '%s'" % cooker.build_path
         print "consider_msgs_cache = '%s'" % cooker.consider_msgs_cache
@@ -557,6 +552,7 @@ SRC_URI = ""
 
     def which( self, params ):
         """Computes the providers for a given providee"""
+        # Need to use taskData for this information
         item = params[0]
 
         self._checkParsed()
@@ -565,8 +561,7 @@ SRC_URI = ""
         if not preferred: preferred = item
 
         try:
-            lv, lf, pv, pf = Providers.findBestProvider(preferred, cooker.configuration.data, cooker.status, 
-cooker.build_cache_fail)
+            lv, lf, pv, pf = Providers.findBestProvider(preferred, cooker.configuration.data, cooker.status)
         except KeyError:
             lv, lf, pv, pf = (None,)*4
 
