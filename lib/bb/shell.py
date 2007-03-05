@@ -145,6 +145,7 @@ class BitBakeShellCommands:
 
     def build( self, params, cmd = "build" ):
         """Build a providee"""
+        global last_exception
         globexpr = params[0]
         self._checkParsed()
         names = globfilter( cooker.status.pkg_pn.keys(), globexpr )
@@ -175,18 +176,15 @@ class BitBakeShellCommands:
 
         except Providers.NoProvider:
             print "ERROR: No Provider"
-            global last_exception
             last_exception = Providers.NoProvider
 
         except runqueue.TaskFailure, fnids:
             for fnid in fnids:
                 print "ERROR: '%s' failed" % td.fn_index[fnid]
-            global last_exception
             last_exception = runqueue.TaskFailure
 
         except build.EventException, e:
             print "ERROR: Couldn't build '%s'" % names
-            global last_exception
             last_exception = e
 
         cooker.configuration.cmd = oldcmd
@@ -235,6 +233,7 @@ class BitBakeShellCommands:
 
     def fileBuild( self, params, cmd = "build" ):
         """Parse and build a .bb file"""
+        global last_exception
         name = params[0]
         bf = completeFilePath( name )
         print "SHELL: Calling '%s' on '%s'" % ( cmd, bf )
@@ -263,7 +262,6 @@ class BitBakeShellCommands:
                 cooker.tryBuildPackage( os.path.abspath( bf ), item, cmd, bbfile_data, True )
             except build.EventException, e:
                 print "ERROR: Couldn't build '%s'" % name
-                global last_exception
                 last_exception = e
 
         cooker.configuration.cmd = oldcmd
