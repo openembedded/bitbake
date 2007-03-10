@@ -4,8 +4,6 @@ On popular request by popular people a list of tasks to-do:
          the strings or a faster replacement not involving /bin/sh
 	-Introduce a -p option to automatically hotshot/profile the
 	 run
-	-Cache dependencies separately and invalidate them when any file
-         changed.
 	-...
 
 
