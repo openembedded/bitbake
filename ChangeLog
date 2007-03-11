@@ -1,10 +1,43 @@
-Changes in BitBake 1.7.3:
-
-Changes in BitBake 1.7.1:
-    - Major updates of the dependency handling and execution
-      of tasks
-    - Change of the SVN Fetcher to keep the checkout around
-      courtsey to Paul Sokolovsky (#1367)
+Changes in BitBake 1.7.x:
+	- Major updates of the dependency handling and execution
+	  of tasks. Code from bin/bitbake replaced with runqueue.py
+	  and taskdata.py
+	- New task execution code supports multithreading with a simplistic
+	  threading algorithm controlled by BB_NUMBER_THREADS
+	- Change of the SVN Fetcher to keep the checkout around
+	  courtsey of Paul Sokolovsky (#1367)
+	- PATH fix to bbimage (#1108)
+	- Allow debug domains to be specified on the commandline (-l)
+	- Allow 'interactive' tasks
+	- Logging message improvements
+	- Drop now uneeded BUILD_ALL_DEPS variable
+	- Add support for wildcards to -b option
+	- Major overhaul of the fetchers making a large amount of code common
+	  including mirroring code
+	- Fetchers now touch md5 stamps upon access (to show activity)
+	- Fix -f force option when used without -b (long standing bug)
+	- Add expand_cache to data_cache.py, caching expanded data (speedup)
+	- Allow version field in DEPENDS (ignored for now)
+	- Add abort flag support to the shell
+	- Make inherit fail if the class doesn't exist (#1478)
+	- Fix data.emit_env() to expand keynames as well as values
+	- Add ssh fetcher
+	- Add perforce fetcher
+	- Make PREFERRED_PROVIDER_foobar defaults to foobar if available
+	- Share the parser's mtime_cache, reducing the number of stat syscalls
+	- Compile all anonfuncs at once! 
+	  *** Anonfuncs must now use common spacing format ***
+	- Memorise the list of handlers in __BBHANDLERS and tasks in __BBTASKS
+	  This removes 2 million function calls resulting in a 5-10% speedup
+	- Add manpage
+	- Update generateDotGraph to use taskData/runQueue improving accuracy
+	  and also adding a task dependency graph
+	- Fix/standardise on GPLv2 licence
+	- Move most functionality from bin/bitbake to cooker.py and split into
+	  separate funcitons
+	- CVS fetcher: Added support for non-default port
+	- Add BBINCLUDELOGS_LINES, the number of lines to read from any logfile
+	- Drop shebangs from lib/bb scripts
 
 Changes in Bitbake 1.6.0:
 	- Better msg handling
