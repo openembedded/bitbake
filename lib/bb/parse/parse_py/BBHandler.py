@@ -155,7 +155,7 @@ def handle(fn, d, include = 0):
             from bb import build
             try:
                 t = data.getVar('T', d)
-                data.setVar('T', '${TMPDIR}/', d)
+                data.setVar('T', '${TMPDIR}/anonfunc/', d)
                 build.exec_func("__anonfunc", d)
                 data.delVar('T', d)
                 if t:
