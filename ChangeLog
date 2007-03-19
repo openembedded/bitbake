@@ -1,3 +1,6 @@
+Changes in Bitbake 1.9.x:
+	- Add PE (Package Epoch) support from Philipp Zabel (pH5)
+
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
 

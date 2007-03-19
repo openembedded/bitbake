@@ -61,19 +61,27 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
 
     preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, localdata, True)
     if preferred_v:
-        m = re.match('(.*)_(.*)', preferred_v)
+        m = re.match('(\d+:)*(.*)(_.*)*', preferred_v)
         if m:
-            preferred_v = m.group(1)
-            preferred_r = m.group(2)
+            if m.group(1):
+                preferred_e = int(m.group(1)[:-1])
+            else:
+                preferred_e = None
+            preferred_v = m.group(2)
+            if m.group(3):
+                preferred_r = m.group(3)[1:]
+            else:
+                preferred_r = None
         else:
+            preferred_e = None
             preferred_r = None
 
         for file_set in tmp_pn:
             for f in file_set:
-                pv,pr = dataCache.pkg_pvpr[f]
-                if preferred_v == pv and (preferred_r == pr or preferred_r == None):
+                pe,pv,pr = dataCache.pkg_pepvpr[f]
+                if preferred_v == pv and (preferred_r == pr or preferred_r == None) and (preferred_e == pe or preferred_e == None):
                     preferred_file = f
-                    preferred_ver = (pv, pr)
+                    preferred_ver = (pe, pv, pr)
                     break
             if preferred_file:
                 break;
@@ -81,6 +89,8 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
             pv_str = '%s-%s' % (preferred_v, preferred_r)
         else:
             pv_str = preferred_v
+        if not (preferred_e is None):
+            pv_str = '%d:%s' % (preferred_e, pv_str)
         itemstr = ""
         if item:
             itemstr = " (for item %s)" % item
@@ -97,11 +107,11 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     latest_p = 0
     latest_f = None
     for file_name in files:
-        pv,pr = dataCache.pkg_pvpr[file_name]
+        pe,pv,pr = dataCache.pkg_pepvpr[file_name]
         dp = dataCache.pkg_dp[file_name]
 
-        if (latest is None) or ((latest_p == dp) and (utils.vercmp(latest, (pv, pr)) < 0)) or (dp > latest_p):
-            latest = (pv, pr)
+        if (latest is None) or ((latest_p == dp) and (utils.vercmp(latest, (pe, pv, pr)) < 0)) or (dp > latest_p):
+            latest = (pe, pv, pr)
             latest_f = file_name
             latest_p = dp
     if preferred_file is None:
@@ -153,7 +163,7 @@ def filterProviders(providers, item, cfgData, dataCache):
     # if so, bump it to the head of the queue
     for p in providers:
         pn = dataCache.pkg_fn[p]
-        pv, pr = dataCache.pkg_pvpr[p]
+        pe, pv, pr = dataCache.pkg_pepvpr[p]
 
         stamp = '%s.do_populate_staging' % dataCache.stamp[p]
         if os.path.exists(stamp):
@@ -162,7 +172,11 @@ def filterProviders(providers, item, cfgData, dataCache):
                 # package was made ineligible by already-failed check
                 continue
             oldver = "%s-%s" % (pv, pr)
-            newver = '-'.join(newvers)
+            if pe > 0:
+                oldver = "%d:%s" % (pe, oldver)
+            newver = "%s-%s" % (newvers[1], newvers[2])
+            if newvers[0] > 0:
+                newver = "%d:%s" % (newvers[0], newver)
             if (newver != oldver):
                 extra_chat = "%s (%s) already staged but upgrading to %s to satisfy %s" % (pn, oldver, newver, item)
             else:

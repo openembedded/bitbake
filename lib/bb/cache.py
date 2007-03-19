@@ -39,7 +39,7 @@ except ImportError:
     import pickle
     bb.msg.note(1, bb.msg.domain.Cache, "Importing cPickle failed. Falling back to a very slow implementation.")
 
-__cache_version__ = "125"
+__cache_version__ = "126"
 
 class Cache:
     """
@@ -251,6 +251,7 @@ class Cache:
         """
 
         pn       = self.getVar('PN', file_name, True)
+        pe       = int(self.getVar('PE', file_name, True) or "0")
         pv       = self.getVar('PV', file_name, True)
         pr       = self.getVar('PR', file_name, True)
         dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
@@ -272,7 +273,7 @@ class Cache:
 
         # build FileName to PackageName lookup table
         cacheData.pkg_fn[file_name] = pn
-        cacheData.pkg_pvpr[file_name] = (pv,pr)
+        cacheData.pkg_pepvpr[file_name] = (pe,pv,pr)
         cacheData.pkg_dp[file_name] = dp
 
         # Build forward and reverse provider hashes
@@ -407,7 +408,7 @@ class CacheData:
         self.possible_world = []
         self.pkg_pn = {}
         self.pkg_fn = {}
-        self.pkg_pvpr = {}
+        self.pkg_pepvpr = {}
         self.pkg_dp = {}
         self.pn_provides = {}
         self.all_depends = Set()
