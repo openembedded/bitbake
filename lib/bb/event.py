@@ -293,3 +293,17 @@ class MultipleProviders(Event):
         Get the possible Candidates for a PROVIDER.
         """
         return self._candidates
+
+class ParseProgress(Event):
+    """
+    Parsing Progress Event
+    """
+
+    def __init__(self, d, cached, parsed, skipped, masked, total):
+        Event.__init__(self, d)
+        self.cached = cached
+        self.parsed = parsed
+        self.skipped = skipped
+        self.masked = masked
+        self.sofar = cached + parsed + skipped + masked
+        self.total = total
