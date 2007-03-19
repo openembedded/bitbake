@@ -1,3 +1,6 @@
+Changes in Bitbake 1.8.0:
+	- Release 1.7.x as a stable series
+
 Changes in BitBake 1.7.x:
 	- Major updates of the dependency handling and execution
 	  of tasks. Code from bin/bitbake replaced with runqueue.py
