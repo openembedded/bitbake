@@ -49,6 +49,8 @@ AlreadyRegistered = 14
 # Internal
 _handlers = []
 _handlers_dict = {}
+_ui_handlers = {}
+_ui_handler_seq = 0
 
 def tmpHandler(event):
     """Default handler for code events"""
@@ -61,6 +63,25 @@ def defaultTmpHandler():
 
 def fire(event):
     """Fire off an Event"""
+    databack = event.data
+    databack1 = event._data
+    event.data = None
+    event._data = None
+
+    errors = []
+    for h in _ui_handlers:
+        #print "Sending event %s" % event
+        classid = "%s.%s" % (event.__class__.__module__, event.__class__.__name__)
+        try:
+            _ui_handlers[h].event.send((classid, event))
+        except:
+            errors.append(h)
+    for h in errors:
+        del _ui_handlers[h]
+
+    event.data = databack
+    event._data = databack1
+
     for h in _handlers:
         if type(h).__name__ == "code":
             exec(h)
@@ -87,6 +108,16 @@ def register(name, handler):
 
         _handlers_dict[name] = 1
         return Registered
+
+def register_UIHhandler(handler):
+    bb.event._ui_handler_seq = bb.event._ui_handler_seq + 1
+    _ui_handlers[_ui_handler_seq] = handler
+    return _ui_handler_seq
+
+def unregister_UIHhandler(handlerNum):
+    if handlerNum in _ui_handlers:
+        del _ui_handlers[handlerNum]
+    return
 
 def _registerCode(handlerStr):
     """Register a 'code' Event.
@@ -225,7 +256,7 @@ class RecursiveDep(DepBase):
 class NoProvider(Event):
     """No Provider for an Event"""
 
-    def __init__(self, item, data,runtime=False):
+    def __init__(self, item, data, runtime=False):
         Event.__init__(self, data)
         self._item = item
         self._runtime = runtime
