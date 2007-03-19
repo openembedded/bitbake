@@ -26,11 +26,15 @@
 #Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 from bb import data, fetch, event, mkdirhier, utils
-import bb, os
+import bb, os, sys
 
 # events
 class FuncFailed(Exception):
-    """Executed function failed"""
+    """
+    Executed function failed
+    First parameter a message
+    Second paramter is a logfile (optional)
+    """
 
 class EventException(Exception):
     """Exception which is associated with an Event."""
@@ -61,6 +65,10 @@ class TaskSucceeded(TaskBase):
 
 class TaskFailed(TaskBase):
     """Task execution failed"""
+    def __init__(self, msg, logfile, t, d ):
+        self.logfile = logfile
+        self.msg = msg
+        TaskBase.__init__(self, t, d)
 
 class InvalidTask(TaskBase):
     """Invalid Task"""
@@ -87,78 +95,25 @@ def exec_func(func, d, dirs = None):
 
     adir = data.expand(adir, d)
 
+    # Save current directory
     try:
         prevdir = os.getcwd()
     except OSError:
         prevdir = data.expand('${TOPDIR}', d)
-    if adir and os.access(adir, os.F_OK):
-        os.chdir(adir)
 
-    if data.getVarFlag(func, "python", d):
-        exec_func_python(func, d)
-    else:
-        exec_func_shell(func, d)
-
-    if os.path.exists(prevdir):
-        os.chdir(prevdir)
-
-def exec_func_python(func, d):
-    """Execute a python BB 'function'"""
-    import re, os
-
-    tmp  = "def " + func + "():\n%s" % data.getVar(func, d)
-    tmp += '\n' + func + '()'
-    comp = utils.better_compile(tmp, func, bb.data.getVar('FILE', d, 1) )
-    prevdir = os.getcwd()
-    g = {} # globals
-    g['bb'] = bb
-    g['os'] = os
-    g['d'] = d
-    utils.better_exec(comp,g,tmp, bb.data.getVar('FILE',d,1))
-    if os.path.exists(prevdir):
-        os.chdir(prevdir)
-
-def exec_func_shell(func, d):
-    """Execute a shell BB 'function' Returns true if execution was successful.
-
-    For this, it creates a bash shell script in the tmp dectory, writes the local
-    data into it and finally executes. The output of the shell will end in a log file and stdout.
-
-    Note on directory behavior.  The 'dirs' varflag should contain a list
-    of the directories you need created prior to execution.  The last
-    item in the list is where we will chdir/cd to.
-    """
-    import sys
-
-    deps = data.getVarFlag(func, 'deps', d)
-    check = data.getVarFlag(func, 'check', d)
-    interact = data.getVarFlag(func, 'interactive', d)
-    if check in globals():
-        if globals()[check](func, deps):
-            return
-
-    global logfile
+    # Setup logfiles
     t = data.getVar('T', d, 1)
     if not t:
-        return 0
+        bb.msg.fatal(bb.msg.domain.Build, "T not set")
     mkdirhier(t)
     logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
     runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
 
-    f = open(runfile, "w")
-    f.write("#!/bin/sh -e\n")
-    if bb.msg.debug_level['default'] > 0: f.write("set -x\n")
-    data.emit_env(f, d)
+    # Change to correct directory (if specified)
+    if adir and os.access(adir, os.F_OK):
+        os.chdir(adir)
 
-    f.write("cd %s\n" % os.getcwd())
-    if func: f.write("%s\n" % func)
-    f.close()
-    os.chmod(runfile, 0775)
-    if not func:
-        bb.msg.error(bb.msg.domain.Build, "Function not specified")
-        raise FuncFailed()
-
-    # open logs
+    # Handle logfiles
     si = file('/dev/null', 'r')
     try:
         if bb.msg.debug_level['default'] > 0:
@@ -171,70 +126,120 @@ def exec_func_shell(func, d):
 
     se = so
 
-    if not interact:
-        # dup the existing fds so we dont lose them
-        osi = [os.dup(sys.stdin.fileno()), sys.stdin.fileno()]
-        oso = [os.dup(sys.stdout.fileno()), sys.stdout.fileno()]
-        ose = [os.dup(sys.stderr.fileno()), sys.stderr.fileno()]
+    # Dup the existing fds so we dont lose them
+    osi = [os.dup(sys.stdin.fileno()), sys.stdin.fileno()]
+    oso = [os.dup(sys.stdout.fileno()), sys.stdout.fileno()]
+    ose = [os.dup(sys.stderr.fileno()), sys.stderr.fileno()]
 
-        # replace those fds with our own
-        os.dup2(si.fileno(), osi[1])
-        os.dup2(so.fileno(), oso[1])
-        os.dup2(se.fileno(), ose[1])
+    # Replace those fds with our own
+    os.dup2(si.fileno(), osi[1])
+    os.dup2(so.fileno(), oso[1])
+    os.dup2(se.fileno(), ose[1])
+
+    # Run the function
+    if data.getVarFlag(func, "python", d):
+        exec_func_python(func, d, runfile, logfile)
+    else:
+        exec_func_shell(func, d, runfile, logfile)
+
+    # Restore original directory
+    try:
+        os.chdir(prevdir)
+    except:
+        pass
+
+    # Restore the backup fds
+    os.dup2(osi[0], osi[1])
+    os.dup2(oso[0], oso[1])
+    os.dup2(ose[0], ose[1])
+
+    # Close our logs
+    si.close()
+    so.close()
+    se.close()
+
+    # Close the backup fds
+    os.close(osi[0])
+    os.close(oso[0])
+    os.close(ose[0])
+
+
+def exec_func_python(func, d, runfile, logfile):
+    """Execute a python BB 'function'"""
+    import re, os
+
+    tmp  = "def " + func + "():\n%s" % data.getVar(func, d)
+    tmp += '\n' + func + '()'
+
+    f = open(runfile, "w")
+    f.write(tmp)
+    comp = utils.better_compile(tmp, func, bb.data.getVar('FILE', d, 1) )
+    g = {} # globals
+    g['bb'] = bb
+    g['os'] = os
+    g['d'] = d
+    utils.better_exec(comp, g, tmp, bb.data.getVar('FILE',d,1))
+
+
+def exec_func_shell(func, d, runfile, logfile):
+    """Execute a shell BB 'function' Returns true if execution was successful.
+
+    For this, it creates a bash shell script in the tmp dectory, writes the local
+    data into it and finally executes. The output of the shell will end in a log file and stdout.
+
+    Note on directory behavior.  The 'dirs' varflag should contain a list
+    of the directories you need created prior to execution.  The last
+    item in the list is where we will chdir/cd to.
+    """
+
+    deps = data.getVarFlag(func, 'deps', d)
+    check = data.getVarFlag(func, 'check', d)
+    if check in globals():
+        if globals()[check](func, deps):
+            return
+
+    f = open(runfile, "w")
+    f.write("#!/bin/sh -e\n")
+    if bb.msg.debug_level['default'] > 0: f.write("set -x\n")
+    data.emit_env(f, d)
+
+    f.write("cd %s\n" % os.getcwd())
+    if func: f.write("%s\n" % func)
+    f.close()
+    os.chmod(runfile, 0775)
+    if not func:
+        bb.msg.error(bb.msg.domain.Build, "Function not specified")
+        raise FuncFailed("Function not specified for exec_func_shell")
 
     # execute function
-    prevdir = os.getcwd()
     if data.getVarFlag(func, "fakeroot", d):
         maybe_fakeroot = "PATH=\"%s\" fakeroot " % bb.data.getVar("PATH", d, 1)
     else:
         maybe_fakeroot = ''
     lang_environment = "LC_ALL=C "
     ret = os.system('%s%ssh -e %s' % (lang_environment, maybe_fakeroot, runfile))
-    try:
-        os.chdir(prevdir)
-    except:
-        pass
 
-    if not interact:
-        # restore the backups
-        os.dup2(osi[0], osi[1])
-        os.dup2(oso[0], oso[1])
-        os.dup2(ose[0], ose[1])
-
-        # close our logs
-        si.close()
-        so.close()
-        se.close()
-
-        # close the backup fds
-        os.close(osi[0])
-        os.close(oso[0])
-        os.close(ose[0])
-
-    if ret==0:
-        if bb.msg.debug_level['default'] > 0:
-            os.remove(runfile)
-#            os.remove(logfile)
+    if ret == 0:
         return
-    else:
-        bb.msg.error(bb.msg.domain.Build, "function %s failed" % func)
-        if data.getVar("BBINCLUDELOGS", d):
-            bb.msg.error(bb.msg.domain.Build, "log data follows (%s)" % logfile)
-            number_of_lines = data.getVar("BBINCLUDELOGS_LINES", d)
-            if number_of_lines:
-                os.system('tail -n%s %s' % (number_of_lines, logfile))
-            else:
-                f = open(logfile, "r")
-                while True:
-                    l = f.readline()
-                    if l == '':
-                        break
-                    l = l.rstrip()
-                    print '| %s' % l
-                f.close()
+
+    bb.msg.error(bb.msg.domain.Build, "Function %s failed" % func)
+    if data.getVar("BBINCLUDELOGS", d):
+        bb.msg.error(bb.msg.domain.Build, "log data follows (%s)" % logfile)
+        number_of_lines = data.getVar("BBINCLUDELOGS_LINES", d)
+        if number_of_lines:
+            os.system('tail -n%s %s' % (number_of_lines, logfile))
         else:
-            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
-        raise FuncFailed( logfile )
+            f = open(logfile, "r")
+            while True:
+                l = f.readline()
+                if l == '':
+                    break
+                l = l.rstrip()
+                print '| %s' % l
+            f.close()
+    else:
+        bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
+    raise FuncFailed("function %s failed" % func, logfile)
 
 
 def exec_task(task, d):
@@ -282,11 +287,17 @@ def exec_task(task, d):
                 event.fire(TaskSucceeded(item, localdata))
                 task_cache.append(item)
                 data.setVar('_task_cache', task_cache, d)
-            except FuncFailed, reason:
-                bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % reason )
-                failedevent = TaskFailed(item, d)
+            except FuncFailed, message:
+                # Try to extract the optional logfile
+                try:
+                    (msg, logfile) = message
+                except:
+                    logfile = None
+                    msg = message
+                bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % message )
+                failedevent = TaskFailed(msg, logfile, item, d)
                 event.fire(failedevent)
-                raise EventException("Function failed in task: %s" % reason, failedevent)
+                raise EventException("Function failed in task: %s" % message, failedevent)
 
     if data.getVarFlag(task, 'dontrundeps', d):
         execute(None, task)
