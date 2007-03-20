@@ -136,33 +136,34 @@ def exec_func(func, d, dirs = None):
     os.dup2(so.fileno(), oso[1])
     os.dup2(se.fileno(), ose[1])
 
-    # Run the function
-    if data.getVarFlag(func, "python", d):
-        exec_func_python(func, d, runfile, logfile)
-    else:
-        exec_func_shell(func, d, runfile, logfile)
-
-    # Restore original directory
     try:
-        os.chdir(prevdir)
-    except:
-        pass
+        # Run the function
+        if data.getVarFlag(func, "python", d):
+            exec_func_python(func, d, runfile, logfile)
+        else:
+            exec_func_shell(func, d, runfile, logfile)
 
-    # Restore the backup fds
-    os.dup2(osi[0], osi[1])
-    os.dup2(oso[0], oso[1])
-    os.dup2(ose[0], ose[1])
+        # Restore original directory
+        try:
+            os.chdir(prevdir)
+        except:
+            pass
 
-    # Close our logs
-    si.close()
-    so.close()
-    se.close()
+    finally:
+        # Restore the backup fds
+        os.dup2(osi[0], osi[1])
+        os.dup2(oso[0], oso[1])
+        os.dup2(ose[0], ose[1])
 
-    # Close the backup fds
-    os.close(osi[0])
-    os.close(oso[0])
-    os.close(ose[0])
+        # Close our logs
+        si.close()
+        so.close()
+        se.close()
 
+        # Close the backup fds
+        os.close(osi[0])
+        os.close(oso[0])
+        os.close(ose[0])
 
 def exec_func_python(func, d, runfile, logfile):
     """Execute a python BB 'function'"""
