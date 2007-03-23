@@ -75,6 +75,9 @@ class Cache:
                     raise ValueError, 'Cache Version Mismatch'
                 if version_data['BITBAKE_VER'] != bb.__version__:
                     raise ValueError, 'Bitbake Version Mismatch'
+            except EOFError:
+                bb.msg.note(1, bb.msg.domain.Cache, "Truncated cache found, rebuilding...")
+                self.depends_cache = {}
             except (ValueError, KeyError):
                 bb.msg.note(1, bb.msg.domain.Cache, "Invalid cache found, rebuilding...")
                 self.depends_cache = {}
