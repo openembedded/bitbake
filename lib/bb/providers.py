@@ -90,7 +90,7 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         else:
             pv_str = preferred_v
         if not (preferred_e is None):
-            pv_str = '%d:%s' % (preferred_e, pv_str)
+            pv_str = '%s:%s' % (preferred_e, pv_str)
         itemstr = ""
         if item:
             itemstr = " (for item %s)" % item
@@ -173,10 +173,10 @@ def filterProviders(providers, item, cfgData, dataCache):
                 continue
             oldver = "%s-%s" % (pv, pr)
             if pe > 0:
-                oldver = "%d:%s" % (pe, oldver)
+                oldver = "%s:%s" % (pe, oldver)
             newver = "%s-%s" % (newvers[1], newvers[2])
             if newvers[0] > 0:
-                newver = "%d:%s" % (newvers[0], newver)
+                newver = "%s:%s" % (newvers[0], newver)
             if (newver != oldver):
                 extra_chat = "%s (%s) already staged but upgrading to %s to satisfy %s" % (pn, oldver, newver, item)
             else:

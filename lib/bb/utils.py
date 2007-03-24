@@ -65,7 +65,7 @@ def vercmp(ta, tb):
     (ea, va, ra) = ta
     (eb, vb, rb) = tb
 
-    r = ea-eb
+    r = int(ea)-int(eb)
     if (r == 0):
         r = vercmp_part(va, vb)
     if (r == 0):

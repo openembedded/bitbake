@@ -111,7 +111,7 @@ class BBCooker:
 
         return self.tryBuildPackage(fn, item, self.configuration.cmd, the_data, build_depends)
 
-    def showVersions( self ):
+    def showVersions(self):
         pkg_pn = self.status.pkg_pn
         preferred_versions = {}
         latest_versions = {}
@@ -130,11 +130,11 @@ class BBCooker:
             latest = latest_versions[p]
 
             if pref != latest:
-                prefstr = pref[0][0] + "-" + pref[0][1]
+                prefstr = pref[0][0] + ":" + pref[0][1] + '-' + pref[0][2]
             else:
                 prefstr = ""
 
-            print "%-30s %20s %20s" % (p, latest[0][0] + "-" + latest[0][1],
+            print "%-30s %20s %20s" % (p, latest[0][0] + ":" + latest[0][1] + "-" + latest[0][2],
                                         prefstr)
 
 

@@ -254,7 +254,7 @@ class Cache:
         """
 
         pn       = self.getVar('PN', file_name, True)
-        pe       = int(self.getVar('PE', file_name, True) or "0")
+        pe       = self.getVar('PE', file_name, True) or "0"
         pv       = self.getVar('PV', file_name, True)
         pr       = self.getVar('PR', file_name, True)
         dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
