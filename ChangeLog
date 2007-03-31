@@ -4,6 +4,7 @@ Changes in Bitbake 1.9.x:
 	- Use TMPDIR/anonfunc as a __anonfunc temp directory (T)
 	- Catch truncated cache file errors
 	- Allow operations other than assignment on flag variables
+	- Add code to handle inter-task dependencies
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

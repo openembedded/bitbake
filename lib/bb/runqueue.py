@@ -122,6 +122,15 @@ class RunQueue:
                                 dep = taskData.fn_index[depdata]
                                 depends.append(taskData.gettask_id(dep, taskname))
 
+                idepends = taskData.tasks_idepends[task]
+                for idepend in idepends:
+                    depid = int(idepend.split(":")[0])
+                    if depid in taskData.build_targets:
+                        depdata = taskData.build_targets[depid][0]
+                        if depdata:
+                            dep = taskData.fn_index[depdata]
+                            depends.append(taskData.gettask_id(dep, idepend.split(":")[1]))
+
                 def add_recursive_build(depid):
                     """
                     Add build depends of depid to depends

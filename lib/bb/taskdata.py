@@ -43,6 +43,7 @@ class TaskData:
         self.tasks_fnid = []
         self.tasks_name = []
         self.tasks_tdepends = []
+        self.tasks_idepends = []
         # Cache to speed up task ID lookups
         self.tasks_lookup = {}
 
@@ -108,6 +109,7 @@ class TaskData:
         self.tasks_name.append(task)
         self.tasks_fnid.append(fnid)
         self.tasks_tdepends.append([])
+        self.tasks_idepends.append([])
 
         listid = len(self.tasks_name) - 1
 
@@ -134,14 +136,25 @@ class TaskData:
         if fnid in self.tasks_fnid:
             return
 
-        # Work out task dependencies
         for task in task_graph.allnodes():
+
+            # Work out task dependencies
             parentids = []
             for dep in task_graph.getparents(task):
                 parentid = self.gettask_id(fn, dep)
                 parentids.append(parentid)
             taskid = self.gettask_id(fn, task)
             self.tasks_tdepends[taskid].extend(parentids)
+
+            # Touch all intertask dependencies
+            if 'depends' in task_deps and task in task_deps['depends']:
+                ids = []
+                print "123" + task_deps['depends'][task] + "456"
+                for dep in task_deps['depends'][task].split(" "):
+                    if dep:
+                        print dep
+                        ids.append(str(self.getbuild_id(dep.split(":")[0])) + ":" + dep.split(":")[1])
+                self.tasks_idepends[taskid].extend(ids)
 
         # Work out build dependencies
         if not fnid in self.depids:
