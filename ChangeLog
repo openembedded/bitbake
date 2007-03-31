@@ -3,6 +3,7 @@ Changes in Bitbake 1.9.x:
 	- Treat python functions the same as shell functions for logging
 	- Use TMPDIR/anonfunc as a __anonfunc temp directory (T)
 	- Catch truncated cache file errors
+	- Allow operations other than assignment on flag variables
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

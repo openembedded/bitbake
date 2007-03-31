@@ -161,6 +161,12 @@ def handle(fn, data, include = 0):
     return data
 
 def feeder(lineno, s, fn, data):
+    def getFunc(groupd, key, data):
+        if 'flag' in groupd and groupd['flag'] != None:
+            return bb.data.getVarFlag(key, groupd['flag'], data)
+        else:
+            return bb.data.getVar(key, data)
+
     m = __config_regexp__.match(s)
     if m:
         groupd = m.groupdict()
@@ -168,19 +174,19 @@ def feeder(lineno, s, fn, data):
         if "exp" in groupd and groupd["exp"] != None:
             bb.data.setVarFlag(key, "export", 1, data)
         if "ques" in groupd and groupd["ques"] != None:
-            val = bb.data.getVar(key, data)
+            val = getFunc(groupd, key, data)
             if val == None:
                 val = groupd["value"]
         elif "colon" in groupd and groupd["colon"] != None:
             val = bb.data.expand(groupd["value"], data)
         elif "append" in groupd and groupd["append"] != None:
-            val = "%s %s" % ((bb.data.getVar(key, data) or ""), groupd["value"])
+            val = "%s %s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
         elif "prepend" in groupd and groupd["prepend"] != None:
-            val = "%s %s" % (groupd["value"], (bb.data.getVar(key, data) or ""))
+            val = "%s %s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
         elif "postdot" in groupd and groupd["postdot"] != None:
-            val = "%s%s" % ((bb.data.getVar(key, data) or ""), groupd["value"])
+            val = "%s%s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
         elif "predot" in groupd and groupd["predot"] != None:
-            val = "%s%s" % (groupd["value"], (bb.data.getVar(key, data) or ""))
+            val = "%s%s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
         else:
             val = groupd["value"]
         if 'flag' in groupd and groupd['flag'] != None:
