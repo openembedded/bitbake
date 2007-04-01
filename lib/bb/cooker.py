@@ -161,17 +161,13 @@ class BBCooker:
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
-    def generateDotGraph( self, pkgs_to_build, ignore_deps ):
+    def generateDotGraph( self, pkgs_to_build ):
         """
         Generate a task dependency graph. 
 
         pkgs_to_build A list of packages that needs to be built
-        ignore_deps   A list of names where processing of dependencies
-                      should be stopped. e.g. dependencies that get
         """
 
-        for dep in ignore_deps:
-            self.status.ignored_dependencies.add(dep)
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
@@ -462,6 +458,8 @@ class BBCooker:
 
         ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
         self.status.ignored_dependencies = Set( ignore.split() )
+        for dep in self.configuration.extra_assume_provided:
+            self.status.ignored_dependencies.add(dep)
 
         self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
@@ -520,7 +518,7 @@ class BBCooker:
                     pkgs_to_build.append(t)
 
             if self.configuration.dot_graph:
-                self.generateDotGraph( pkgs_to_build, self.configuration.ignored_dot_deps )
+                self.generateDotGraph( pkgs_to_build )
                 sys.exit( 0 )
 
             return self.buildTargets(pkgs_to_build)

@@ -96,8 +96,8 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-g", "--graphviz", help = "emit the dependency trees of the specified packages in the dot syntax",
                 action = "store_true", dest = "dot_graph", default = False )
 
-    parser.add_option( "-I", "--ignore-deps", help = """Stop processing at the given list of dependencies when generating dependency graphs. This can help to make the graph more appealing""",
-                action = "append", dest = "ignored_dot_deps", default = [] )
+    parser.add_option( "-I", "--ignore-deps", help = """Assume these dependencies don't exist and are already provided (equivalent to ASSUME_PROVIDED). Useful to make dependency graphs more appealing""",
+                action = "append", dest = "extra_assume_provided", default = [] )
 
     parser.add_option( "-l", "--log-domains", help = """Show debug logging for the specified logging domains""",
                 action = "append", dest = "debug_domains", default = [] )
