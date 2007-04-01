@@ -1,6 +1,7 @@
 Changes in Bitbake 1.8.2:
 	- Catch truncated cache file errors
 	- Add PE (Package Epoch) support from Philipp Zabel (pH5)
+	- Add code to handle inter-task dependencies
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
