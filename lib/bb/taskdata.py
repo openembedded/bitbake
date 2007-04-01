@@ -149,10 +149,8 @@ class TaskData:
             # Touch all intertask dependencies
             if 'depends' in task_deps and task in task_deps['depends']:
                 ids = []
-                print "123" + task_deps['depends'][task] + "456"
                 for dep in task_deps['depends'][task].split(" "):
                     if dep:
-                        print dep
                         ids.append(str(self.getbuild_id(dep.split(":")[0])) + ":" + dep.split(":")[1])
                 self.tasks_idepends[taskid].extend(ids)
 
