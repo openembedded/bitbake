@@ -62,10 +62,12 @@ def vercmp_part(a, b):
             return -1
 
 def vercmp(ta, tb):
-    (va, ra) = ta
-    (vb, rb) = tb
+    (ea, va, ra) = ta
+    (eb, vb, rb) = tb
 
-    r = vercmp_part(va, vb)
+    r = int(ea)-int(eb)
+    if (r == 0):
+        r = vercmp_part(va, vb)
     if (r == 0):
         r = vercmp_part(ra, rb)
     return r
