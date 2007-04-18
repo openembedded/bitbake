@@ -108,6 +108,8 @@ class Cache:
             # We're trying to access data in the cache which doesn't exist
             # yet setData hasn't been called to setup the right access. Very bad.
             bb.msg.error(bb.msg.domain.Cache, "Parsing error data_fn %s and fn %s don't match" % (self.data_fn, fn))
+            import traceback						
+            traceback.print_stack()
 
         result = bb.data.getVar(var, self.data, exp)
         self.depends_cache[fn][var] = result
