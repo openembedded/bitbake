@@ -537,6 +537,7 @@ class TaskData:
                 except bb.providers.NoProvider:
                     targetid = self.getbuild_id(target)
                     if self.abort and targetid in self.external_targets:
+                        bb.msg.error(bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (target, self.get_dependees_str(target)))
                         raise
                     self.remove_buildtarget(targetid)
             for target in self.get_unresolved_run_targets(dataCache):
