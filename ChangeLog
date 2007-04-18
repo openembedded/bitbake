@@ -5,7 +5,7 @@ Changes in Bitbake 1.9.x:
 	- Catch truncated cache file errors
 	- Allow operations other than assignment on flag variables
 	- Add code to handle inter-task dependencies
-	- Make -I option a generic one to extend ASSUME_PROVIDED
+	- Fix cache errors when generation dotGraphs
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
