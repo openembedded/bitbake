@@ -72,8 +72,8 @@ def inherit(files, d):
         if not file in __inherit_cache:
             bb.msg.debug(2, bb.msg.domain.Parsing, "BB %s:%d: inheriting %s" % (fn, lineno, file))
             __inherit_cache.append( file )
+            data.setVar('__inherit_cache', __inherit_cache, d)
             include(fn, file, d, "inherit")
-    data.setVar('__inherit_cache', __inherit_cache, d)
 
 
 def handle(fn, d, include = 0):
