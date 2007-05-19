@@ -1,5 +1,5 @@
 Changes in Bitbake 1.8.x:
-	- Make sure __inherit_cache is updated before calling include()
+	- Make sure __inherit_cache is updated before calling include() (from Michael Krelin)
 
 Changes in Bitbake 1.8.2:
 	- Catch truncated cache file errors

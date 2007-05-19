@@ -74,7 +74,7 @@ def inherit(files, d):
             __inherit_cache.append( file )
             data.setVar('__inherit_cache', __inherit_cache, d)
             include(fn, file, d, "inherit")
-
+            __inherit_cache = data.getVar('__inherit_cache', d) or []
 
 def handle(fn, d, include = 0):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
