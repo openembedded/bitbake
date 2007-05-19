@@ -1,5 +1,5 @@
 Changes in BitBake 1.6.7:
-    - Make sure __inherit_cache is updated before calling include()
+    - Make sure __inherit_cache is updated before calling include() (from Michael Krelin)
 
 Changes in BitBake 1.6.5:
     - Update the MANIFEST file
