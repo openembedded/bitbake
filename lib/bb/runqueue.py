@@ -89,11 +89,11 @@ class RunQueue:
         runq_build = []
         runq_done = []
 
-        if len(self.runq_fnid) == 0:
+        taskData = self.taskData
+
+        if len(taskData.tasks_name) == 0:
             # Nothing to do
             return
-
-        taskData = self.taskData
 
         bb.msg.note(1, bb.msg.domain.RunQueue, "Preparing Runqueue")
 
