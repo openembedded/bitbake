@@ -26,7 +26,7 @@ import sys, os, getopt, glob, copy, os.path, re, time
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
 from sets import Set
-import itertools
+import itertools, sre_constants
 
 parsespin = itertools.cycle( r'|/-\\' )
 

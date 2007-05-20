@@ -8,7 +8,8 @@ Changes in Bitbake 1.9.x:
 	- Fix cache errors when generation dotGraphs
 	- Make sure __inherit_cache is updated before calling include() (from Michael Krelin)
 	- Fix bug when target was in ASSUME_PROVIDED (#2236)
-	- Raise ParseError for filenames with multiple underscores instead of infinitely looping
+	- Raise ParseError for filenames with multiple underscores instead of infinitely looping (#2062)
+	- Fix invalid regexp in BBMASK error handling (missing import) (#1124)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
