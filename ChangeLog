@@ -3,6 +3,8 @@ Changes in Bitbake 1.8.x:
 	- Fix bug when target was in ASSUME_PROVIDED (#2236)
 	- Raise ParseError for filenames with multiple underscores instead of infinitely looping (#2062)
 	- Fix invalid regexp in BBMASK error handling (missing import) (#1124)
+	- Don't run build sanity checks on incomplete builds
+	- Promote certain warnings from debug to note 2 level
 
 Changes in Bitbake 1.8.2:
 	- Catch truncated cache file errors

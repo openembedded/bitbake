@@ -348,7 +348,7 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            bb.msg.debug(1, bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (item, self.get_dependees_str(item)))
+            bb.msg.note(2, bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (item, self.get_dependees_str(item)))
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
@@ -365,7 +365,7 @@ class TaskData:
                 eligible.remove(p)
 
         if not eligible:
-            bb.msg.debug(1, bb.msg.domain.Provider, "No providers of build target %s after filtering (for %s)" % (item, self.get_dependees_str(item)))
+            bb.msg.note(2, bb.msg.domain.Provider, "No providers of build target %s after filtering (for %s)" % (item, self.get_dependees_str(item)))
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
@@ -503,7 +503,7 @@ class TaskData:
         Mark a build target as failed (unbuildable)
         Trigger removal of any files that have this as a dependency
         """
-        bb.msg.debug(1, bb.msg.domain.Provider, "Removing failed build target %s" % self.build_names_index[targetid])
+        bb.msg.note(2, bb.msg.domain.Provider, "Removing failed build target %s" % self.build_names_index[targetid])
         self.failed_deps.append(targetid)
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
