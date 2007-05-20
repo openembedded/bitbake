@@ -7,6 +7,7 @@ Changes in Bitbake 1.9.x:
 	- Add code to handle inter-task dependencies
 	- Fix cache errors when generation dotGraphs
 	- Make sure __inherit_cache is updated before calling include() (from Michael Krelin)
+	- Fix bug when target was in ASSUME_PROVIDED (#2236)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
