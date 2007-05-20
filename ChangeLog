@@ -1,5 +1,6 @@
 Changes in Bitbake 1.8.x:
 	- Make sure __inherit_cache is updated before calling include() (from Michael Krelin)
+	- Fix bug when target was in ASSUME_PROVIDED (#2236)
 
 Changes in Bitbake 1.8.2:
 	- Catch truncated cache file errors
