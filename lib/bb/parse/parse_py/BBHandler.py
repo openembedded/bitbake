@@ -377,6 +377,8 @@ def vars_from_file(mypkg, d):
     myfile = os.path.splitext(os.path.basename(mypkg))
     parts = myfile[0].split('_')
     __pkgsplit_cache__[mypkg] = parts
+    if len(parts) > 3:
+        raise ParseError("Unable to generate default variables from the filename: %s (too many underscores)" % mypkg)
     exp = 3 - len(parts)
     tmplist = []
     while exp != 0:
