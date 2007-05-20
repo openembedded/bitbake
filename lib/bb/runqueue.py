@@ -540,8 +540,8 @@ class RunQueue:
                      self.stats.taskFailed()
                 del self.build_pids[result[0]]
                 self.active_builds = self.active_builds - 1
-            if len(self.failed_fnids) > 0:
-                return self.failed_fnids
+            bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (self.stats.completed, self.stats.skipped, self.stats.failed))
+            return self.failed_fnids
         except KeyboardInterrupt:
             bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % self.active_builds)
             for k, v in self.build_pids.iteritems():
