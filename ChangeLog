@@ -1,6 +1,7 @@
 Changes in BitBake 1.6.7:
     - Make sure __inherit_cache is updated before calling include() (from Michael Krelin)
-    - Raise ParseError for filenames with multiple underscores instead of infinitely looping
+    - Raise ParseError for filenames with multiple underscores instead of infinitely looping (#2062)
+    - Fix invalid regexp in BBMASK error handling (missing import) (#1124)
 
 Changes in BitBake 1.6.5:
     - Update the MANIFEST file

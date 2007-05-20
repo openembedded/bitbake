@@ -27,7 +27,7 @@ sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'l
 import bb
 from bb import utils, data, parse, event, cache, providers
 from sets import Set
-import itertools, optparse
+import itertools, optparse, sre_constants
 
 parsespin = itertools.cycle( r'|/-\\' )
 
