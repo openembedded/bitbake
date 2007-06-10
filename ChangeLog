@@ -1,3 +1,6 @@
+Changes in BitBake 1.6.9:
+
+
 Changes in BitBake 1.6.7:
     - Make sure __inherit_cache is updated before calling include() (from Michael Krelin)
     - Raise ParseError for filenames with multiple underscores instead of infinitely looping (#2062)
