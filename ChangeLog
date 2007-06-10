@@ -11,6 +11,7 @@ Changes in Bitbake 1.9.x:
 	- Raise ParseError for filenames with multiple underscores instead of infinitely looping (#2062)
 	- Fix invalid regexp in BBMASK error handling (missing import) (#1124)
 	- Promote certain warnings from debug to note 2 level
+	- Update manual
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

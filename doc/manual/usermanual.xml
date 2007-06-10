@@ -176,6 +176,12 @@ include</literal> directive.</para>
                 <para>This would result in <varname>DEPENDS</varname> containing <literal>dependencywithcond</literal>.</para>
             </section>
             <section>
+                <title>Variable Flags</title>
+                <para>Variables can have associated flags which provide a way of tagging extra information onto a variable. Several flags are used internally by bitbake but they can be used externally too if needed. The standard operations mentioned above also work on flags.</para>
+                <para><screen><varname>VARIABLE</varname>[<varname>SOMEFLAG</varname>] = "value"</screen></para>
+                <para>In this example, <varname>VARIABLE</varname> has a flag, <varname>SOMEFLAG</varname> which is set to <literal>value</literal>.</para>
+            </section>
+            <section>
                 <title>Inheritance</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
                 <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudamentary form of inheritence.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.oeclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
@@ -212,6 +218,42 @@ method one can get the name of the triggered event.</para><para>The above event 
 of the event and the content of the <varname>FILE</varname> variable.</para>
             </section>
         </section>
+        <section>
+            <title>Dependency Handling</title>
+            <para>Bitbake 1.7.x onwards works with the metadata at the task level since this is optimal when dealing with multiple threads of execution. A robust method of specifing task dependencies is therefore needed. </para>
+            <section>
+                <title>Dependencies internal to the .bb file</title>
+                <para>Where the dependencies are internal to a given .bb file, the dependencies are handled by the previously detailed addtask directive.</para>
+            </section>
+
+            <section>
+                <title>DEPENDS</title>
+                <para>DEPENDS is taken to specify build time dependencies. The 'deptask' flag for tasks is used to signify the task of each DEPENDS which must have completed before that task can be executed.</para>
+                <para><screen>do_configure[deptask] = "do_populate_staging"</screen></para>
+                <para>means the do_populate_staging task of each item in DEPENDS must have completed before do_configure can execute.</para>
+            </section>
+            <section>
+                <title>RDEPENDS</title>
+                <para>RDEPENDS is taken to specify runtime dependencies. The 'rdeptask' flag for tasks is used to signify the task of each RDEPENDS which must have completed before that task can be executed.</para>
+                <para><screen>do_package_write[rdeptask] = "do_package"</screen></para>
+                <para>means the do_package task of each item in RDEPENDS must have completed before do_package_write can execute.</para>
+            </section>
+            <section>
+                <title>Recursive DEPENDS</title>
+                <para>These are specified with the 'recdeptask' flag and is used signify the task(s) of each DEPENDS which must have completed before that task can be executed. It applies recursively so also, the DEPENDS of each item in the original DEPENDS must be met and so on.</para>
+            </section>
+            <section>
+                <title>Recursive RDEPENDS</title>
+                <para>These are specified with the 'recrdeptask' flag and is used signify the task(s) of each RDEPENDS which must have completed before that task can be executed. It applies recursively so also, the RDEPENDS of each item in the original RDEPENDS must be met and so on. It also runs all DEPENDS first too.</para>
+            </section>
+            <section>
+                <title>Inter Task</title>
+                <para>The 'depends' flag for tasks is a more generic form of which allows an interdependency on specific tasks rather than specifying the data in DEPENDS or RDEPENDS.</para>
+                <para><screen>do_patch[depends] = "quilt-native:do_populate_staging"</screen></para>
+                <para>means the do_populate_staging task of the target quilt-native must have completed before the do_patch can execute.</para>
+            </section>
+        </section>
+
         <section>
             <title>Parsing</title>
             <section>
@@ -371,6 +413,8 @@ options:
                         Stop processing at the given list of dependencies when
                         generating dependency graphs. This can help to make
                         the graph more appealing
+  -l DEBUG_DOMAINS, --log-domains=DEBUG_DOMAINS
+                        Show debug logging for the specified logging domains
 
 </screen>
                 </para>
@@ -401,11 +445,19 @@ options:
                     <title>Generating dependency graphs</title>
                     <para>BitBake is able to generate dependency graphs using the dot syntax. These graphs can be converted
 to images using the <application>dot</application> application from <ulink url="http://www.graphviz.org">graphviz</ulink>. 
-Three files will be written into the current working directory, <emphasis>depends.dot</emphasis> containing <varname>DEPENDS</varname> variables, <emphasis>rdepends.dot</emphasis> and <emphasis>alldepends.dot</emphasis> containing both <varname>DEPENDS</varname> and <varname>RDEPENDS</varname>. To stop depending on common depends one can use the <prompt>-I depend</prompt> to omit these from the graph. This can lead to more readable graphs. E.g. this way <varname>DEPENDS</varname> from inherited classes, e.g. base.bbclass, can be removed from the graph.</para>
+Two files will be written into the current working directory, <emphasis>depends.dot</emphasis> containing dependency information at the package level and <emphasis>task-depends.dot</emphasis> containing a breakdown of the dependencies at the task level. To stop depending on common depends one can use the <prompt>-I depend</prompt> to omit these from the graph. This can lead to more readable graphs. E.g. this way <varname>DEPENDS</varname> from inherited classes, e.g. base.bbclass, can be removed from the graph.</para>
                     <screen><prompt>$ </prompt>bitbake -g blah</screen>
                     <screen><prompt>$ </prompt>bitbake -g -I virtual/whatever -I bloom blah</screen>
                 </example>
                 </para>
+            </section>
+            <section>
+                <title>Special variables</title>
+                <para>Certain variables affect bitbake operation:</para>
+                <section>
+                    <title><varname>BB_NUMBER_THREADS</varname></title>
+                    <para> The number of threads bitbake should run at once (default: 1).</para>
+                </section>
             </section>
             <section>
                 <title>Metadata</title>
