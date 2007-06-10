@@ -66,9 +66,9 @@ def inherit(files, d):
         if not file in __inherit_cache.split():
             debug(2, "BB %s:%d: inheriting %s" % (fn, lineno, file))
             __inherit_cache += " %s" % file
+            data.setVar('__inherit_cache', __inherit_cache, d)
             include(fn, file, d)
-    data.setVar('__inherit_cache', __inherit_cache, d)
-
+            __inherit_cache = data.getVar('__inherit_cache', d) or ""
 
 def handle(fn, d, include = 0):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __bbpath_found__, __residue__
@@ -367,6 +367,8 @@ def vars_from_file(mypkg, d):
     myfile = os.path.splitext(os.path.basename(mypkg))
     parts = myfile[0].split('_')
     __pkgsplit_cache__[mypkg] = parts
+    if len(parts) > 3:
+        raise ParseError("Unable to generate default variables from the filename: %s (too many underscores)" % mypkg)
     exp = 3 - len(parts)
     tmplist = []
     while exp != 0:
