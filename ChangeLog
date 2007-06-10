@@ -5,6 +5,7 @@ Changes in Bitbake 1.8.x:
 	- Fix invalid regexp in BBMASK error handling (missing import) (#1124)
 	- Don't run build sanity checks on incomplete builds
 	- Promote certain warnings from debug to note 2 level
+	- Update manual
 
 Changes in Bitbake 1.8.2:
 	- Catch truncated cache file errors
