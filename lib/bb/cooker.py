@@ -595,7 +595,7 @@ class BBCooker:
         return (finalfiles, masked)
 
     def parse_bbfiles(self, filelist, masked, progressCallback = None):
-        parsed, cached, skipped = 0, 0, 0
+        parsed, cached, skipped, error = 0, 0, 0, 0
         for i in xrange( len( filelist ) ):
             f = filelist[i]
 
@@ -638,6 +638,7 @@ class BBCooker:
                 self.bb_cache.sync()
                 raise
             except Exception, e:
+                error += 1
                 self.bb_cache.remove(f)
                 bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))
             except:
@@ -649,3 +650,6 @@ class BBCooker:
             bb.msg.note(1, bb.msg.domain.Collection, "Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ))
 
         self.bb_cache.sync()
+
+        if error > 0:
+            bb.msg.fatal(bb.msg.domain.Collection, "Parsing errors found, exiting...")

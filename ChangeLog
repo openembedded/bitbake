@@ -12,6 +12,8 @@ Changes in Bitbake 1.9.x:
 	- Fix invalid regexp in BBMASK error handling (missing import) (#1124)
 	- Promote certain warnings from debug to note 2 level
 	- Update manual
+	- Correctly redirect stdin when forking
+	- If parsing errors are found, exit, too many users miss the errors
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
