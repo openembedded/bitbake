@@ -492,7 +492,8 @@ class RunQueue:
                     # signal.signal(signal.SIGINT, signal.SIG_IGN)
                     # Make the child the process group leader
                     os.setpgid(0, 0)
-                    sys.stdin = open('/dev/null', 'r')
+                    newsi = os.open('/dev/null', os.O_RDWR)
+                    os.dup2(newsi, sys.stdin.fileno())
                     self.cooker.configuration.cmd = taskname[3:]
                     try: 
                         self.cooker.tryBuild(fn, False)
