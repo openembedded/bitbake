@@ -95,7 +95,7 @@ class RunQueue:
             # Nothing to do
             return
 
-        bb.msg.note(1, bb.msg.domain.RunQueue, "Preparing Runqueue")
+        bb.msg.note(1, bb.msg.domain.RunQueue, "Preparing runqueue")
 
         for task in range(len(taskData.tasks_name)):
             fnid = taskData.tasks_fnid[task]
