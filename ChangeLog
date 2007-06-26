@@ -14,6 +14,7 @@ Changes in Bitbake 1.9.x:
 	- Update manual
 	- Correctly redirect stdin when forking
 	- If parsing errors are found, exit, too many users miss the errors
+	- Remove supriours PREFERRED_PROVIDER warnings
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
