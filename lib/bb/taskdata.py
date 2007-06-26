@@ -448,6 +448,7 @@ class TaskData:
                     eligible.remove(p)
                     eligible = [p] + eligible
                     preferred.append(p)
+                    break
 
         if len(eligible) > 1 and len(preferred) == 0:
             if item not in self.consider_msgs_cache:
