@@ -112,7 +112,7 @@ def handle(fn, d, include = 0):
                 f = open(j, 'r')
                 break
         if f is None:
-            raise IOError("file not found")
+            raise IOError("file %s not found" % fn)
     else:
         f = open(fn,'r')
         abs_fn = fn

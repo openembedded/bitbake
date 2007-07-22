@@ -16,6 +16,7 @@ Changes in Bitbake 1.9.x:
 	- If parsing errors are found, exit, too many users miss the errors
 	- Remove supriours PREFERRED_PROVIDER warnings
 	- svn fetcher: Add _buildsvncommand function
+	- Improve certain error messages
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
