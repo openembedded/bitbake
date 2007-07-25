@@ -25,6 +25,7 @@ import bb
 from   bb    import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
+from   bb.fetch import runfetchcmd
 
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
@@ -34,19 +35,6 @@ def prunedir(topdir):
             os.remove(os.path.join(root, name))
         for name in dirs:
             os.rmdir(os.path.join(root, name))
-
-def rungitcmd(cmd,d):
-
-    bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
-
-    # Need to export PATH as git is likely to be in metadata paths 
-    # rather than host provided
-    pathcmd = 'export PATH=%s; %s' % (data.expand('${PATH}', d), cmd)
-
-    myret = os.system(pathcmd)
-
-    if myret != 0:
-        raise FetchError("Git: %s failed" % pathcmd)
 
 class Git(Fetch):
     """Class to fetch a module or modules from git repositories"""
@@ -96,32 +84,32 @@ class Git(Fetch):
             if Fetch.try_mirror(d, repofilename):    
                 bb.mkdirhier(repodir)
                 os.chdir(repodir)
-                rungitcmd("tar -xzf %s" % (repofile),d)
+                runfetchcmd("tar -xzf %s" % (repofile), d)
             else:
-                rungitcmd("git clone -n %s://%s%s %s" % (ud.proto, ud.host, ud.path, repodir),d)
+                runfetchcmd("git clone -n %s://%s%s %s" % (ud.proto, ud.host, ud.path, repodir), d)
 
         os.chdir(repodir)
-        rungitcmd("git pull %s://%s%s" % (ud.proto, ud.host, ud.path),d)
-        rungitcmd("git pull --tags %s://%s%s" % (ud.proto, ud.host, ud.path),d)
-        rungitcmd("git prune-packed", d)
-        rungitcmd("git pack-redundant --all | xargs -r rm", d)
+        runfetchcmd("git pull %s://%s%s" % (ud.proto, ud.host, ud.path), d)
+        runfetchcmd("git pull --tags %s://%s%s" % (ud.proto, ud.host, ud.path), d)
+        runfetchcmd("git prune-packed", d)
+        runfetchcmd("git pack-redundant --all | xargs -r rm", d)
         # Remove all but the .git directory
-        rungitcmd("rm * -Rf", d)
+        runfetchcmd("rm * -Rf", d)
         # old method of downloading tags
-        #rungitcmd("rsync -a --verbose --stats --progress rsync://%s%s/ %s" % (ud.host, ud.path, os.path.join(repodir, ".git", "")),d)
+        #runfetchcmd("rsync -a --verbose --stats --progress rsync://%s%s/ %s" % (ud.host, ud.path, os.path.join(repodir, ".git", "")), d)
 
         os.chdir(repodir)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
-        rungitcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ),d)
+        runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
 
         if os.path.exists(codir):
             prunedir(codir)
 
         bb.mkdirhier(codir)
         os.chdir(repodir)
-        rungitcmd("git read-tree %s" % (ud.tag),d)
-        rungitcmd("git checkout-index -q -f --prefix=%s -a" % (os.path.join(codir, "git", "")),d)
+        runfetchcmd("git read-tree %s" % (ud.tag), d)
+        runfetchcmd("git checkout-index -q -f --prefix=%s -a" % (os.path.join(codir, "git", "")), d)
 
         os.chdir(codir)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
-        rungitcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ),d)
+        runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)

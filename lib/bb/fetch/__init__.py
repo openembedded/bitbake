@@ -142,6 +142,36 @@ def localpath(url, d):
         return ud.localpath
     return url
 
+def runfetchcmd(cmd, d, quiet = False):
+
+    bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
+
+    # Need to export PATH as binary could be in metadata paths
+    # rather than host provided
+    pathcmd = 'export PATH=%s; %s' % (data.expand('${PATH}', d), cmd)
+
+    stdout_handle = os.popen(pathcmd, "r")
+    output = ""
+
+    while 1:
+        line = stdout_handle.readline()
+        if not line:
+            break
+        if not quiet:
+            print line
+        output += line
+
+    status =  stdout_handle.close() or 0
+    signal = status >> 8
+    exitstatus = status & 0xff
+
+    if signal:
+        raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % pathcmd, signal, output)
+    elif status != 0:
+        raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % pathcmd, status, output)
+
+    return output
+
 class FetchData(object):
     """Class for fetcher variable store"""
     def __init__(self):

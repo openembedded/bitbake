@@ -30,6 +30,7 @@ from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
 from   bb.fetch import MissingParameterError
+from   bb.fetch import runfetchcmd
 
 class Svn(Fetch):
     """Class to fetch a module or modules from svn repositories"""
@@ -130,7 +131,7 @@ class Svn(Fetch):
             # update sources there
             os.chdir(moddir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnupdatecmd)
-            myret = os.system(svnupdatecmd)
+            runfetchcmd(svnupdatecmd, d)
         else:
             svnfetchcmd = self._buildsvncommand(ud, d, "fetch")
             bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
@@ -138,18 +139,17 @@ class Svn(Fetch):
             bb.mkdirhier(pkgdir)
             os.chdir(pkgdir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnfetchcmd)
-            myret = os.system(svnfetchcmd)
-
-        if myret != 0:
-            raise FetchError(ud.module)
+            runfetchcmd(svnfetchcmd, d)
 
         os.chdir(pkgdir)
         # tar them up to a defined filename
-        myret = os.system("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)))
-        if myret != 0:
+        try:
+            runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)), d)
+        except:
+            t, v, tb = sys.exc_info()
             try:
                 os.unlink(ud.localpath)
             except OSError:
                 pass
-            raise FetchError(ud.module)
+            raise t, v, tb
 
