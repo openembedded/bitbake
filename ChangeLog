@@ -1,4 +1,8 @@
 Changes in Bitbake 1.8.x:
+	- Rewrite svn fetcher to make adding extra operations easier 
+	  as part of future SRCDATE="now" fixes
+	  (requires new FETCHCMD_svn definition in bitbake.conf)
+	- Change SVNDIR layout to be more unique (fixes #2644 and #2624)
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking
