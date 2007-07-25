@@ -42,8 +42,9 @@ class Svn(Fetch):
     def localpath(self, url, ud, d):
         if not "module" in ud.parm:
             raise MissingParameterError("svn method needs a 'module' parameter")
-        else:
-            ud.module = ud.parm["module"]
+
+        ud.module = ud.parm["module"]
+        ud.moddir = ud.module.replace('/', '.')
 
         ud.revision = ""
         if 'rev' in ud.parm:
@@ -52,7 +53,7 @@ class Svn(Fetch):
         if ud.revision:
             ud.date = ""
 
-        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
+        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.moddir, ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
@@ -115,7 +116,11 @@ class Svn(Fetch):
             return
 
         pkg = data.expand('${PN}', d)
-        pkgdir = os.path.join(data.expand('${SVNDIR}', d), pkg)
+        relpath = ud.path
+        if relpath.startswith('/'):
+            # Remove leading slash as os.path.join can't cope
+            relpath = relpath[1:]
+        pkgdir = os.path.join(data.expand('${SVNDIR}', d), ud.host, relpath)
         moddir = os.path.join(pkgdir, ud.module)
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + moddir + "'")
 
