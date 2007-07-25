@@ -153,3 +153,17 @@ class Svn(Fetch):
                 pass
             raise t, v, tb
 
+    def latest_revision(self, url, ud, d):
+        output = runfetchcmd(self._buildsvncommand(ud, d, "info"), d, True)
+
+        revision = None
+        for line in output.splitlines():
+            if "Last Changed Rev" in line:
+                revision = line.split(":")[1].strip()
+
+        return revision
+
+    def sortable_revision(self, url, ud, d):
+
+        return self.latest_revision(url, ud, d)
+
