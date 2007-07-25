@@ -17,6 +17,10 @@ Changes in Bitbake 1.9.x:
 	- Remove supriours PREFERRED_PROVIDER warnings
 	- svn fetcher: Add _buildsvncommand function
 	- Improve certain error messages
+	- Rewrite svn fetcher to make adding extra operations easier 
+	  as part of future SRCDATE="now" fixes
+	  (requires new FETCHCMD_svn definition in bitbake.conf)
+	- Change SVNDIR layout to be more unique (fixes #2644 and #2624)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
