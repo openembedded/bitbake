@@ -113,3 +113,9 @@ class Git(Fetch):
         os.chdir(codir)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
         runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
+
+    def latest_revision(self, url, ud, d):
+
+        output = rungitcmd("git ls-remote %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.tag), d, True)
+        return output.split()[0]
+
