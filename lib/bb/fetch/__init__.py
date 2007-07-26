@@ -94,9 +94,7 @@ def initdata(url, d):
     if fn not in urldata:
         urldata[fn] = {}
     if url not in urldata[fn]:
-        ud = FetchData()
-        (ud.type, ud.host, ud.path, ud.user, ud.pswd, ud.parm) = bb.decodeurl(data.expand(url, d))
-        ud.date = Fetch.getSRCDate(ud, d)
+        ud = FetchData(url, d)
         for m in methods:
             if m.supports(url, ud, d):
                 ud.localpath = m.localpath(url, ud, d)
@@ -174,9 +172,11 @@ def runfetchcmd(cmd, d, quiet = False):
 
 class FetchData(object):
     """Class for fetcher variable store"""
-    def __init__(self):
+    def __init__(self, url, d):
         self.localfile = ""
-
+        (self.type, self.host, self.path, self.user, self.pswd, self.parm) = bb.decodeurl(data.expand(url, d))
+        self.date = Fetch.getSRCDate(self, d)
+        self.force = False
 
 class Fetch(object):
     """Base class for 'fetch'ing data"""
