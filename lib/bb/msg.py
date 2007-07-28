@@ -37,6 +37,7 @@ domain = bb.utils.Enum(
     'Depends',
     'Fetcher',
     'Parsing',
+    'PersistData',
     'Provider',
     'RunQueue',
     'TaskData',

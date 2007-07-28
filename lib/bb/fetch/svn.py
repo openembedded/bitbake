@@ -30,6 +30,7 @@ from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
 from   bb.fetch import MissingParameterError
+from   bb.fetch import runfetchcmd
 
 class Svn(Fetch):
     """Class to fetch a module or modules from svn repositories"""
@@ -48,19 +49,19 @@ class Svn(Fetch):
 
         ud.revision = ""
         if 'rev' in ud.parm:
-            ud.revision = ud.parm['rev']
-
-        if ud.revision:
             ud.date = ""
+            ud.revision = ud.parm['rev']
+        elif ud.date == "now":
+            ud.date = ""
+            # FIXME caching
+            ud.revision = self.latest_revision(url, ud, d)
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.moddir, ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def forcefetch(self, url, ud, d):
-        if (ud.date == "now"):
-            return True
-        return False
+        return ud.force
 
     def _buildsvncommand(self, ud, d, command):
         """
@@ -80,11 +81,11 @@ class Svn(Fetch):
 
         svnroot = ud.host + ud.path
 
-        # either use the revision, or SRCDATE in braces, or nothing for SRCDATE = "now"
+        # either use the revision, or SRCDATE in braces,
         options = []
         if ud.revision:
             options.append("-r %s" % ud.revision)
-        elif ud.date != "now":
+        elif ud.date:
             options.append("-r {%s}" % ud.date)
 
         if ud.user:
@@ -130,7 +131,7 @@ class Svn(Fetch):
             # update sources there
             os.chdir(moddir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnupdatecmd)
-            myret = os.system(svnupdatecmd)
+            runfetchcmd(svnupdatecmd, d)
         else:
             svnfetchcmd = self._buildsvncommand(ud, d, "fetch")
             bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
@@ -138,18 +139,31 @@ class Svn(Fetch):
             bb.mkdirhier(pkgdir)
             os.chdir(pkgdir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnfetchcmd)
-            myret = os.system(svnfetchcmd)
-
-        if myret != 0:
-            raise FetchError(ud.module)
+            runfetchcmd(svnfetchcmd, d)
 
         os.chdir(pkgdir)
         # tar them up to a defined filename
-        myret = os.system("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)))
-        if myret != 0:
+        try:
+            runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)), d)
+        except:
+            t, v, tb = sys.exc_info()
             try:
                 os.unlink(ud.localpath)
             except OSError:
                 pass
-            raise FetchError(ud.module)
+            raise t, v, tb
+
+    def latest_revision(self, url, ud, d):
+        output = runfetchcmd("LANG= LC_ALL= " + self._buildsvncommand(ud, d, "info"), d, True)
+
+        revision = None
+        for line in output.splitlines():
+            if "Last Changed Rev" in line:
+                revision = line.split(":")[1].strip()
+
+        return revision
+
+    def sortable_revision(self, url, ud, d):
+
+        return self.latest_revision(url, ud, d)
 

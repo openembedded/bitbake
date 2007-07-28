@@ -3,6 +3,8 @@ Changes in Bitbake 1.8.x:
 	  as part of future SRCDATE="now" fixes
 	  (requires new FETCHCMD_svn definition in bitbake.conf)
 	- Change SVNDIR layout to be more unique (fixes #2644 and #2624)
+	- Import persistent data store from trunk
+	- Sync fetcher code with that in trunk
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking
