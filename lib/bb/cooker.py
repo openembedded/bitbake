@@ -332,6 +332,8 @@ class BBCooker:
                 if bb.data.getVarFlag(var, 'handler', data):
                     bb.event.register(var,bb.data.getVar(var, data))
 
+            bb.fetch.fetcher_init(self.configuration.data)
+
         except IOError, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (afile, str(e)))
         except IOError:

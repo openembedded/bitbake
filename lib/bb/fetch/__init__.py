@@ -27,6 +27,12 @@ BitBake build tools.
 import os, re
 import bb
 from   bb import data
+from   bb import persist_data
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 class FetchError(Exception):
     """Exception raised when a download fails"""
@@ -74,74 +80,106 @@ def uri_replace(uri, uri_find, uri_replace, d):
     return bb.encodeurl(result_decoded)
 
 methods = []
-urldata = {}
 
-def init(urls = [], d = None):
-    if d == None:
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "BUG init called with None as data object!!!")
-        return
+def fetcher_init(d):
+    """
+    Called to initilize the fetchers once the configuration data is known
+    Calls before this must not hit the cache.
+    """
+    pd = persist_data.PersistData(d)
+    # Clear any cached data
+    pd.delDomain("BB_URLDATA")
+    # Make sure our domain exists
+    pd.addDomain("BB_URLDATA")
 
-    for m in methods:
-        m.urls = []
+# Function call order is usually:
+#   1. init
+#   2. go
+#   3. localpaths
+# localpath can be called at any time
 
-    for u in urls:
-        ud = initdata(u, d)
-        if ud.method:
-            ud.method.urls.append(u)
+def init(urls, d, cache = True):
+    urldata = {}
 
-def initdata(url, d):
+    if cache:
+        urldata, pd, fn = getdata(d)
+
+    for url in urls:
+        if url not in urldata:
+            ud = FetchData(url, d)
+            for m in methods:
+                if m.supports(url, ud, d):
+                    ud.init(m, d)
+                    break
+            urldata[url] = ud
+
+    if cache:
+        pd.setValue("BB_URLDATA", fn, pickle.dumps(urldata, 0))
+
+    return urldata
+
+def getdata(d):
+    urldata = {}
     fn = bb.data.getVar('FILE', d, 1)
-    if fn not in urldata:
-        urldata[fn] = {}
-    if url not in urldata[fn]:
-        ud = FetchData(url, d)
-        for m in methods:
-            if m.supports(url, ud, d):
-                ud.localpath = m.localpath(url, ud, d)
-                ud.md5 = ud.localpath + '.md5'
-                # if user sets localpath for file, use it instead.
-                if "localpath" in ud.parm:
-                    ud.localpath = ud.parm["localpath"]
-                ud.method = m
-                break
-        urldata[fn][url] = ud
-    return urldata[fn][url]
+    pd = persist_data.PersistData(d)
+    encdata = pd.getValue("BB_URLDATA", fn)
+    if encdata:
+        urldata = pickle.loads(str(encdata))
 
-def go(d):
-    """Fetch all urls"""
-    fn = bb.data.getVar('FILE', d, 1)
-    for m in methods:
-        for u in m.urls:
-            ud = urldata[fn][u]
-            if ud.localfile and not m.forcefetch(u, ud, d) and os.path.exists(urldata[fn][u].md5):
-                # File already present along with md5 stamp file
-                # Touch md5 file to show activity
-                os.utime(ud.md5, None)
-                continue
-            # RP - is olddir needed?
-            # olddir = os.path.abspath(os.getcwd())
-            m.go(u, ud	, d)
-            # os.chdir(olddir)
-            if ud.localfile and not m.forcefetch(u, ud, d):
-                Fetch.write_md5sum(u, ud, d)
+    return urldata, pd, fn
 
-def localpaths(d):
-    """Return a list of the local filenames, assuming successful fetch"""
+def go(d, urldata = None):
+    """
+    Fetch all urls
+    """
+    if not urldata:
+        urldata, pd, fn = getdata(d)
+
+    for u in urldata:
+        ud = urldata[u]
+        m = ud.method
+        if ud.localfile and not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
+            # File already present along with md5 stamp file
+            # Touch md5 file to show activity
+            os.utime(ud.md5, None)
+            continue
+        # RP - is olddir needed?
+        # olddir = os.path.abspath(os.getcwd())
+        m.go(u, ud, d)
+        # os.chdir(olddir)
+        if ud.localfile and not m.forcefetch(u, ud, d):
+            Fetch.write_md5sum(u, ud, d)
+
+def localpaths(d, urldata = None):
+    """
+    Return a list of the local filenames, assuming successful fetch
+    """
     local = []
-    fn = bb.data.getVar('FILE', d, 1)
-    for m in methods:
-        for u in m.urls:
-            local.append(urldata[fn][u].localpath)
+    if not urldata:
+        urldata, pd, fn = getdata(d)
+
+    for u in urldata:
+        ud = urldata[u]      
+        local.append(ud.localpath)
+
     return local
 
-def localpath(url, d):
-    ud = initdata(url, d)
-    if ud.method:
-        return ud.localpath
+def localpath(url, d, cache = True):
+    """
+    Called from the parser with cache=False since the cache isn't ready 
+    at this point. Also called from classed in OE e.g. patch.bbclass
+    """
+    ud = init([url], d, cache)
+    if ud[url].method:
+        return ud[url].localpath
     return url
 
 def runfetchcmd(cmd, d, quiet = False):
-
+    """
+    Run cmd returning the command output
+    Raise an error if interrupted or cmd fails
+    Optionally echo command output to stdout
+    """
     bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
 
     # Need to export PATH as binary could be in metadata paths
@@ -176,7 +214,16 @@ class FetchData(object):
         self.localfile = ""
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = bb.decodeurl(data.expand(url, d))
         self.date = Fetch.getSRCDate(self, d)
+        self.url = url
         self.force = False
+
+    def init(self, method, d):
+        self.method = method
+        self.localpath = method.localpath(self.url, self, d)
+        self.md5 = self.localpath + '.md5'
+        # if user sets localpath for file, use it instead.
+        if "localpath" in self.parm:
+            self.localpath = self.parm["localpath"]
 
 class Fetch(object):
     """Base class for 'fetch'ing data"""
@@ -308,11 +355,11 @@ import svk
 import ssh
 import perforce
 
-methods.append(cvs.Cvs())
-methods.append(git.Git())
 methods.append(local.Local())
-methods.append(svn.Svn())
 methods.append(wget.Wget())
+methods.append(svn.Svn())
+methods.append(git.Git())
+methods.append(cvs.Cvs())
 methods.append(svk.Svk())
 methods.append(ssh.SSH())
 methods.append(perforce.Perforce())
