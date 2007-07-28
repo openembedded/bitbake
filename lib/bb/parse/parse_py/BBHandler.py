@@ -400,14 +400,14 @@ def set_additional_vars(file, d, include):
 
     from bb import fetch
     try:
-        fetch.init(src_uri.split(), d)
+        ud = fetch.init(src_uri.split(), d)
+        a += fetch.localpaths(d, ud)
     except fetch.NoMethodError:
         pass
     except bb.MalformedUrl,e:
         raise ParseError("Unable to generate local paths for SRC_URI due to malformed uri: %s" % e)
-
-    a += fetch.localpaths(d)
     del fetch
+
     data.setVar('A', " ".join(a), d)
 
 
