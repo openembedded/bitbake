@@ -45,14 +45,17 @@ def localpath(fn, d):
     if os.path.exists(fn):
         return fn
 
+    if "://" not in fn:
+        return fn
+
     localfn = None
     try:
-        localfn = bb.fetch.localpath(fn, d)
+        localfn = bb.fetch.localpath(fn, d, False)
     except bb.MalformedUrl:
         pass
 
     if not localfn:
-        localfn = fn
+        return fn
     return localfn
 
 def obtain(fn, data):
@@ -67,14 +70,14 @@ def obtain(fn, data):
             return localfn
         bb.mkdirhier(dldir)
         try:
-            bb.fetch.init([fn])
+            ud = bb.fetch.init([fn], data, False)
         except bb.fetch.NoMethodError:
             (type, value, traceback) = sys.exc_info()
             bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: no method: %s" % value)
             return localfn
 
         try:
-            bb.fetch.go(data)
+            bb.fetch.go(data, ud)
         except bb.fetch.MissingParameterError:
             (type, value, traceback) = sys.exc_info()
             bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: missing parameters: %s" % value)
