@@ -25,7 +25,7 @@
 #
 #Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-from bb import data, fetch, event, mkdirhier, utils
+from bb import data, event, mkdirhier, utils
 import bb, os, sys
 
 # events
