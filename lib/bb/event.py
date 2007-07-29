@@ -155,6 +155,8 @@ def getName(e):
     else:
         return e.__name__
 
+class ConfigParsed(Event):
+    """Configuration Parsing Complete"""
 
 class PkgBase(Event):
     """Base class for package events"""

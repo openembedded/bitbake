@@ -334,6 +334,8 @@ class BBCooker:
 
             bb.fetch.fetcher_init(self.configuration.data)
 
+            bb.event.fire(bb.event.ConfigParsed(self.configuration.data))
+
         except IOError, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (afile, str(e)))
         except IOError:
