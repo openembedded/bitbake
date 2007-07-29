@@ -20,7 +20,10 @@ import bb, os
 try:
     import sqlite3
 except ImportError:
-    bb.msg.fatal(bb.msg.domain.PersistData, "Importing sqlite3 failed, please install it.")
+    try:
+        from pysqlite2 import dbapi2 as sqlite3
+    except ImportError:
+        bb.msg.fatal(bb.msg.domain.PersistData, "Importing sqlite3 and pysqlite2 failed, please install one of them. A 'python-pysqlite2' like package is likely to be what you need.")
 
 class PersistData:
     """
@@ -47,7 +50,7 @@ class PersistData:
         self.cachefile = os.path.join(self.cachedir,"bb_persist_data.sqlite3")
         bb.msg.debug(1, bb.msg.domain.PersistData, "Using '%s' as the persistent data cache" % self.cachefile)
 
-        self.connection = sqlite3.connect(self.cachefile, isolation_level=None)
+        self.connection = sqlite3.connect(self.cachefile, timeout=5, isolation_level=None)
 
     def addDomain(self, domain):
         """
