@@ -37,7 +37,6 @@ class PersistData:
     """
     def __init__(self, d):
         self.cachedir = bb.data.getVar("CACHE", d, True)
-        self.cachedir = "/tmp"
         if self.cachedir in [None, '']:
             bb.msg.fatal(bb.msg.domain.PersistData, "Please set the 'CACHE' variable.")
         try:
