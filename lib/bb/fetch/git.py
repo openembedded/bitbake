@@ -53,6 +53,7 @@ class Git(Fetch):
         ud.tag = "master"
         if 'tag' in ud.parm:
             ud.tag = ud.parm['tag']
+        # FIXME, set tag to latest revision so local filestash works
 
         ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.tag), d)
 

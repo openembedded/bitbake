@@ -87,10 +87,14 @@ def fetcher_init(d):
     Calls before this must not hit the cache.
     """
     pd = persist_data.PersistData(d)
-    # Clear any cached data
+    # Clear any cached url data
     pd.delDomain("BB_URLDATA")
-    # Make sure our domain exists
+    # When to drop SCM head revisions should be controled by user policy
+    pd.delDomain("BB_URI_HEADREVS")
+    # Make sure our domains exist
     pd.addDomain("BB_URLDATA")
+    pd.addDomain("BB_URI_HEADREVS")
+    pd.addDomain("BB_URI_LOCALCOUNT")
 
 # Function call order is usually:
 #   1. init
@@ -163,6 +167,35 @@ def localpaths(d, urldata = None):
         local.append(ud.localpath)
 
     return local
+
+def get_srcrev(d):
+    """
+    Return the version string for the current package
+    (usually to be used as PV)
+    Most packages usually only have one SCM so we just pass on the call.
+    In the multi SCM case, we build a value based on SRCREV_FORMAT which must 
+    have been set.
+    """
+    urldata, pd, fn = getdata(d)
+    if len(urldata) == 0:
+        src_uri = bb.data.getVar('SRC_URI', d, 1).split(" ")
+        urldata = init(src_uri, d, True)
+
+    scms = []
+    for u in urldata:
+        ud = urldata[u]
+        if ud.method.suppports_srcrev():
+            scms.append(u)
+
+    if len(scms) == 0:
+        bb.msg.error(bb.msg.domain.Fetcher, "SRCREV was used yet no valid SCM was found in SRC_URI")
+        raise ParameterError
+
+    if len(scms) == 1:
+        return ud.method.sortable_revision(scms[0], urldata[scms[0]], d)
+
+    bb.msg.error(bb.msg.domain.Fetcher, "Sorry, support for SRCREV_FORMAT still needs to be written")
+    raise ParameterError
 
 def localpath(url, d, cache = True):
     """
@@ -259,6 +292,12 @@ class Fetch(object):
         """
         return False
 
+    def suppports_srcrev(self):
+        """
+        The fetcher supports auto source revisions (SRCREV)
+        """
+        return False
+
     def go(self, url, urldata, d):
         """
         Fetch urls
@@ -345,6 +384,32 @@ class Fetch(object):
         md5out.write(md5data)
         md5out.close()
     write_md5sum = staticmethod(write_md5sum)
+
+    def latest_revision(self, url, ud, d):
+        """
+        Look in the cache for the latest revision, if not present ask the SCM.
+        """
+        if not self._latest_revision:
+            raise ParameterError
+
+        pd = persist_data.PersistData(d)
+        key = self._revision_key(url, ud, d)
+        rev = pd.getValue("BB_URI_HEADREVS", key)
+        if rev != None:
+            return str(rev)
+
+        rev = self._latest_revision(url, ud, d)
+        pd.setValue("BB_URI_HEADREVS", key, rev)
+        return rev
+
+    def sortable_revision(self, url, ud, d):
+        """
+        
+        """
+        if not self._sortable_revision:
+            raise ParameterError
+
+        return self._sortable_revision(url, ud, d)
 
 import cvs
 import git

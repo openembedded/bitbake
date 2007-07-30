@@ -45,23 +45,37 @@ class Svn(Fetch):
             raise MissingParameterError("svn method needs a 'module' parameter")
 
         ud.module = ud.parm["module"]
-        ud.moddir = ud.module.replace('/', '.')
 
-        ud.revision = ""
+        # Create paths to svn checkouts
+        relpath = ud.path
+        if relpath.startswith('/'):
+            # Remove leading slash as os.path.join can't cope
+            relpath = relpath[1:]
+        ud.pkgdir = os.path.join(data.expand('${SVNDIR}', d), ud.host, relpath)
+        ud.moddir = os.path.join(ud.pkgdir, ud.module)
+
         if 'rev' in ud.parm:
-            ud.revision = ud.parm['rev']
-
-        if ud.revision:
             ud.date = ""
+            ud.revision = ud.parm['rev']
+        elif 'date' in ud.date:
+            ud.date = ud.parm['date']
+            ud.revision = ""
+        else:
+            ud.revision = self.latest_revision(url, ud, d)
+            #
+            # ***Nasty hack***
+            # If DATE in unexpanded PV, use ud.date (which is set from SRCDATE)
+            # Will warn people to switch to SRCREV here
+            #
+            pv = data.getVar("PV", d, 0)
+            if "DATE" in pv:
+                ud.revision = ""
+            else:
+                ud.date = ""
 
-        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.moddir, ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
+        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
-    def forcefetch(self, url, ud, d):
-        if (ud.date == "now"):
-            return True
-        return False
 
     def _buildsvncommand(self, ud, d, command):
         """
@@ -81,12 +95,8 @@ class Svn(Fetch):
 
         svnroot = ud.host + ud.path
 
-        # either use the revision, or SRCDATE in braces, or nothing for SRCDATE = "now"
+        # either use the revision, or SRCDATE in braces,
         options = []
-        if ud.revision:
-            options.append("-r %s" % ud.revision)
-        elif ud.date != "now":
-            options.append("-r {%s}" % ud.date)
 
         if ud.user:
             options.append("--username %s" % ud.user)
@@ -94,14 +104,20 @@ class Svn(Fetch):
         if ud.pswd:
             options.append("--password %s" % ud.pswd)
 
-        if command is "fetch":
-            svncmd = "%s co %s %s://%s/%s %s" % (basecmd, " ".join(options), proto, svnroot, ud.module, ud.module)
-        elif command is "update":
-            svncmd = "%s update %s" % (basecmd, " ".join(options))
-        elif command is "info":
+        if command is "info":
             svncmd = "%s info %s %s://%s/%s" % (basecmd, " ".join(options), proto, svnroot, ud.module)
         else:
-            raise FetchError("Invalid svn command %s" % command)
+            if ud.revision:
+                options.append("-r %s" % ud.revision)
+            elif ud.date:
+                options.append("-r {%s}" % ud.date)
+
+            if command is "fetch":
+                svncmd = "%s co %s %s://%s/%s %s" % (basecmd, " ".join(options), proto, svnroot, ud.module, ud.module)
+            elif command is "update":
+                svncmd = "%s update %s" % (basecmd, " ".join(options))
+            else:
+                raise FetchError("Invalid svn command %s" % command)
 
         if svn_rsh:
             svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
@@ -116,32 +132,25 @@ class Svn(Fetch):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % ud.localpath)
             return
 
-        pkg = data.expand('${PN}', d)
-        relpath = ud.path
-        if relpath.startswith('/'):
-            # Remove leading slash as os.path.join can't cope
-            relpath = relpath[1:]
-        pkgdir = os.path.join(data.expand('${SVNDIR}', d), ud.host, relpath)
-        moddir = os.path.join(pkgdir, ud.module)
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + moddir + "'")
+        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + ud.moddir + "'")
 
-        if os.access(os.path.join(moddir, '.svn'), os.R_OK):
+        if os.access(os.path.join(ud.moddir, '.svn'), os.R_OK):
             svnupdatecmd = self._buildsvncommand(ud, d, "update")
             bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
             # update sources there
-            os.chdir(moddir)
+            os.chdir(ud.moddir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnupdatecmd)
             runfetchcmd(svnupdatecmd, d)
         else:
             svnfetchcmd = self._buildsvncommand(ud, d, "fetch")
             bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
             # check out sources there
-            bb.mkdirhier(pkgdir)
-            os.chdir(pkgdir)
+            bb.mkdirhier(ud.pkgdir)
+            os.chdir(ud.pkgdir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnfetchcmd)
             runfetchcmd(svnfetchcmd, d)
 
-        os.chdir(pkgdir)
+        os.chdir(ud.pkgdir)
         # tar them up to a defined filename
         try:
             runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)), d)
@@ -153,8 +162,22 @@ class Svn(Fetch):
                 pass
             raise t, v, tb
 
-    def latest_revision(self, url, ud, d):
-        output = runfetchcmd(self._buildsvncommand(ud, d, "info"), d, True)
+    def suppports_srcrev(self):
+        return True
+
+    def _revision_key(self, url, ud, d):
+        """
+        Return a unique key for the url
+        """
+        return "svn:" + ud.moddir
+
+    def _latest_revision(self, url, ud, d):
+        """
+        Return the latest upstream revision number
+        """
+        bb.msg.debug(2, bb.msg.domain.Fetcher, "SVN fetcher hitting network for %s" % url)
+
+        output = runfetchcmd("LANG= LC_ALL= " + self._buildsvncommand(ud, d, "info"), d, True)
 
         revision = None
         for line in output.splitlines():
@@ -163,7 +186,11 @@ class Svn(Fetch):
 
         return revision
 
-    def sortable_revision(self, url, ud, d):
+    def _sortable_revision(self, url, ud, d):
+        """
+        Return a sortable revision number which in our case is the revision number
+        (use the cached version to avoid network access)
+        """
 
         return self.latest_revision(url, ud, d)
 
