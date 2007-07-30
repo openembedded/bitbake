@@ -4,7 +4,7 @@ Changes in Bitbake 1.8.x:
 	  (requires new FETCHCMD_svn definition in bitbake.conf)
 	- Change SVNDIR layout to be more unique (fixes #2644 and #2624)
 	- Import persistent data store from trunk
-	- Sync fetcher code with that in trunk
+	- Sync fetcher code with that in trunk, adding SRCREV support for svn
 	- Add ConfigParsed Event after configuration parsing is complete
 
 Changes in Bitbake 1.8.6:
