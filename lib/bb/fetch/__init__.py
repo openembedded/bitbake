@@ -178,7 +178,7 @@ def get_srcrev(d):
     """
     urldata, pd, fn = getdata(d)
     if len(urldata) == 0:
-        src_uri = bb.data.getVar('SRC_URI', d, 1).split(" ")
+        src_uri = bb.data.getVar('SRC_URI', d, 1).split()
         urldata = init(src_uri, d, True)
 
     scms = []
