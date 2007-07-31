@@ -235,9 +235,9 @@ def runfetchcmd(cmd, d, quiet = False):
     exitstatus = status & 0xff
 
     if signal:
-        raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % pathcmd, signal, output)
+        raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (pathcmd, signal, output))
     elif status != 0:
-        raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % pathcmd, status, output)
+        raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (pathcmd, status, output))
 
     return output
 
