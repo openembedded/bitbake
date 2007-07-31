@@ -177,7 +177,7 @@ class Svn(Fetch):
         """
         bb.msg.debug(2, bb.msg.domain.Fetcher, "SVN fetcher hitting network for %s" % url)
 
-        output = runfetchcmd("LANG= LC_ALL= " + self._buildsvncommand(ud, d, "info"), d, True)
+        output = runfetchcmd("LANG=C LC_ALL=C " + self._buildsvncommand(ud, d, "info"), d, True)
 
         revision = None
         for line in output.splitlines():
