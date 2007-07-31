@@ -114,6 +114,7 @@ def init(urls, d, cache = True):
             for m in methods:
                 if m.supports(url, ud, d):
                     ud.init(m, d)
+                    ud.setup_localpath(d) 
                     break
             urldata[url] = ud
 
@@ -147,10 +148,7 @@ def go(d, urldata = None):
             # Touch md5 file to show activity
             os.utime(ud.md5, None)
             continue
-        # RP - is olddir needed?
-        # olddir = os.path.abspath(os.getcwd())
         m.go(u, ud, d)
-        # os.chdir(olddir)
         if ud.localfile and not m.forcefetch(u, ud, d):
             Fetch.write_md5sum(u, ud, d)
 
@@ -176,23 +174,33 @@ def get_srcrev(d):
     In the multi SCM case, we build a value based on SRCREV_FORMAT which must 
     have been set.
     """
+    scms = []
     urldata, pd, fn = getdata(d)
     if len(urldata) == 0:
         src_uri = bb.data.getVar('SRC_URI', d, 1).split()
-        urldata = init(src_uri, d, True)
-
-    scms = []
-    for u in urldata:
-        ud = urldata[u]
-        if ud.method.suppports_srcrev():
-            scms.append(u)
+        for url in src_uri:
+            if url not in urldata:
+                ud = FetchData(url, d)
+                for m in methods:
+                    if m.supports(url, ud, d):
+                        ud.init(m, d)
+                        break
+                urldata[url] = ud
+                if ud.method.suppports_srcrev():
+                    scms.append(url)
+                    ud.setup_localpath(d) 
+    else:
+        for u in urldata:
+            ud = urldata[u]
+            if ud.method.suppports_srcrev():
+                scms.append(u)
 
     if len(scms) == 0:
         bb.msg.error(bb.msg.domain.Fetcher, "SRCREV was used yet no valid SCM was found in SRC_URI")
         raise ParameterError
 
     if len(scms) == 1:
-        return ud.method.sortable_revision(scms[0], urldata[scms[0]], d)
+        return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d)
 
     bb.msg.error(bb.msg.domain.Fetcher, "Sorry, support for SRCREV_FORMAT still needs to be written")
     raise ParameterError
@@ -252,11 +260,15 @@ class FetchData(object):
 
     def init(self, method, d):
         self.method = method
-        self.localpath = method.localpath(self.url, self, d)
-        self.md5 = self.localpath + '.md5'
-        # if user sets localpath for file, use it instead.
+
+    def setup_localpath(self, d):
         if "localpath" in self.parm:
             self.localpath = self.parm["localpath"]
+        else:
+            self.localpath = self.method.localpath(self.url, self, d)
+        self.md5 = self.localpath + '.md5'
+        # if user sets localpath for file, use it instead.
+
 
 class Fetch(object):
     """Base class for 'fetch'ing data"""
