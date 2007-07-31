@@ -61,7 +61,6 @@ class Svn(Fetch):
             ud.date = ud.parm['date']
             ud.revision = ""
         else:
-            ud.revision = self.latest_revision(url, ud, d)
             #
             # ***Nasty hack***
             # If DATE in unexpanded PV, use ud.date (which is set from SRCDATE)
@@ -71,6 +70,7 @@ class Svn(Fetch):
             if "DATE" in pv:
                 ud.revision = ""
             else:
+                ud.revision = self.latest_revision(url, ud, d)
                 ud.date = ""
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
@@ -105,7 +105,7 @@ class Svn(Fetch):
             options.append("--password %s" % ud.pswd)
 
         if command is "info":
-            svncmd = "%s info %s %s://%s/%s" % (basecmd, " ".join(options), proto, svnroot, ud.module)
+            svncmd = "%s info %s %s://%s/%s/" % (basecmd, " ".join(options), proto, svnroot, ud.module)
         else:
             if ud.revision:
                 options.append("-r %s" % ud.revision)
