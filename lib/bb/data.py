@@ -337,6 +337,12 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if getVarFlag(var, "python", d):
         return 0
 
+    export = getVarFlag(var, "export", d)
+    unexport = getVarFlag(var, "unexport", d)
+    func = getVarFlag(var, "func", d)
+    if not all and not export and not unexport and not func:
+        return 0
+
     try:
         if all:
             oval = getVar(var, d, 0)
@@ -362,28 +368,28 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return 0
 
+    varExpanded = expand(var, d)
+
+    if unexport:
+        o.write('unset %s\n' % varExpanded)
+        return 1
+
     val.rstrip()
     if not val:
         return 0
-	
-    varExpanded = expand(var, d)
 
-    if getVarFlag(var, "func", d):
-#       NOTE: should probably check for unbalanced {} within the var
+    if func:
+        # NOTE: should probably check for unbalanced {} within the var
         o.write("%s() {\n%s\n}\n" % (varExpanded, val))
-    else:
-        if getVarFlag(var, "unexport", d):
-            o.write('unset %s\n' % varExpanded)
-            return 1
-        if getVarFlag(var, "export", d):
-            o.write('export ')
-        else:
-            if not all:
-                return 0
-#       if we're going to output this within doublequotes,
-#       to a shell, we need to escape the quotes in the var
-        alter = re.sub('"', '\\"', val.strip())
-        o.write('%s="%s"\n' % (varExpanded, alter))
+        return 1
+
+    if export:
+        o.write('export ')
+
+    # if we're going to output this within doublequotes,
+    # to a shell, we need to escape the quotes in the var
+    alter = re.sub('"', '\\"', val.strip())
+    o.write('%s="%s"\n' % (varExpanded, alter))
     return 1
 
 
