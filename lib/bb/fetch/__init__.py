@@ -256,7 +256,6 @@ class FetchData(object):
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = bb.decodeurl(data.expand(url, d))
         self.date = Fetch.getSRCDate(self, d)
         self.url = url
-        self.force = False
 
     def init(self, method, d):
         self.method = method
@@ -401,7 +400,7 @@ class Fetch(object):
         """
         Look in the cache for the latest revision, if not present ask the SCM.
         """
-        if not self._latest_revision:
+        if not hasattr(self, "_latest_revision"):
             raise ParameterError
 
         pd = persist_data.PersistData(d)
@@ -418,10 +417,28 @@ class Fetch(object):
         """
         
         """
-        if not self._sortable_revision:
-            raise ParameterError
+        if hasattr(self, "_sortable_revision"):
+            return self._sortable_revision(url, ud, d)
 
-        return self._sortable_revision(url, ud, d)
+        pd = persist_data.PersistData(d)
+        key = self._revision_key(url, ud, d)
+        latest_rev = self.latest_revision(url, ud, d)
+        last_rev = pd.getValue("BB_URI_LOCALCOUNT", key + "_rev")
+        count = pd.getValue("BB_URI_LOCALCOUNT", key + "_count")
+
+        if last_rev == latest_rev:
+            return str(count + "+" + latest_rev)
+
+        if count is None:
+            count = "0"
+        else:
+            count = str(int(count) + 1)
+
+        pd.setValue("BB_URI_LOCALCOUNT", key + "_rev", latest_rev)
+        pd.setValue("BB_URI_LOCALCOUNT", key + "_count", count)
+
+        return str(count + "+" + latest_rev)
+
 
 import cvs
 import git

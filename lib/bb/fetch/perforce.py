@@ -125,7 +125,7 @@ class Perforce(Fetch):
         """
 
         # try to use the tarball stash
-        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
+        if Fetch.try_mirror(d, ud.localfile):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping perforce checkout." % ud.localpath)
             return
 

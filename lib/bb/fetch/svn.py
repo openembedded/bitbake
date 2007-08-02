@@ -62,15 +62,22 @@ class Svn(Fetch):
             ud.revision = ""
         else:
             #
-            # ***Nasty hack***
+            # ***Nasty hacks***
             # If DATE in unexpanded PV, use ud.date (which is set from SRCDATE)
             # Will warn people to switch to SRCREV here
+            #
+            # How can we tell when a user has overriden SRCDATE? 
+            # check for "get_srcdate" in unexpanded SRCREV - ugly
             #
             pv = data.getVar("PV", d, 0)
             if "DATE" in pv:
                 ud.revision = ""
             else:
-                ud.revision = self.latest_revision(url, ud, d)
+                rev = data.getVar("SRCREV", d, 0)
+                if "get_srcrev" in rev:
+                    ud.revision = self.latest_revision(url, ud, d)
+                else:
+                    ud.revision = rev
                 ud.date = ""
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
@@ -128,7 +135,7 @@ class Svn(Fetch):
         """Fetch url"""
 
         # try to use the tarball stash
-        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
+        if Fetch.try_mirror(d, ud.localfile):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % ud.localpath)
             return
 
