@@ -126,6 +126,6 @@ class Git(Fetch):
 
     def _latest_revision(self, url, ud, d):
 
-        output = runfetchcmd("git ls-remote %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.tag), d, True)
+        output = runfetchcmd("git ls-remote %s://%s%s" % (ud.proto, ud.host, ud.path), d, True)
         return output.split()[0]
 
