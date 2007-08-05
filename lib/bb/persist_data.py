@@ -82,13 +82,25 @@ class PersistData:
         for row in data:
             rows = rows + 1
         if rows:
-            self.connection.execute("UPDATE %s SET value=? WHERE key=?;" % domain, [value, key])
+            self._execute("UPDATE %s SET value=? WHERE key=?;" % domain, [value, key])
         else:
-            self.connection.execute("INSERT into %s(key, value) values (?, ?);" % domain, [key, value])
+            self._execute("INSERT into %s(key, value) values (?, ?);" % domain, [key, value])
 
     def delValue(self, domain, key):
         """
         Deletes a key/value pair
         """
-        self.connection.execute("DELETE from %s where key=?;" % domain, [key])
+        self._execute("DELETE from %s where key=?;" % domain, [key])
+
+    def _execute(self, *query):
+        while True:	
+            try:
+                self.connection.execute(*query)
+                return
+            except sqlite3.OperationalError, e:
+                if 'database is locked' in str(e):
+                    continue
+                raise
+        
+        
 

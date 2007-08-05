@@ -30,6 +30,7 @@ lib/bb/parse/__init__.py
 lib/bb/parse/parse_py/__init__.py
 lib/bb/parse/parse_py/BBHandler.py
 lib/bb/parse/parse_py/ConfHandler.py
+lib/bb/persist_data.py
 lib/bb/providers.py
 lib/bb/runqueue.py
 lib/bb/shell.py
