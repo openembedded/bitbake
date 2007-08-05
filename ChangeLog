@@ -24,6 +24,7 @@ Changes in Bitbake 1.9.x:
 	- Add ConfigParsed Event after configuration parsing is complete
 	- Add SRCREV support for svn fetcher
 	- data.emit_var() - only call getVar if we need the variable
+	- Stop generating the A variable (seems to be legacy code)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
