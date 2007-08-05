@@ -110,6 +110,7 @@ class RunQueue:
                 if 'deptask' in task_deps and taskData.tasks_name[task] in task_deps['deptask']:
                     taskname = task_deps['deptask'][taskData.tasks_name[task]]
                     for depid in taskData.depids[fnid]:
+                        # Won't be in build_targets if ASSUME_PROVIDED
                         if depid in taskData.build_targets:
                             depdata = taskData.build_targets[depid][0]
                             if depdata:
@@ -130,6 +131,7 @@ class RunQueue:
                 for idepend in idepends:
                     depid = int(idepend.split(":")[0])
                     if depid in taskData.build_targets:
+                        # Won't be in build_targets if ASSUME_PROVIDED
                         depdata = taskData.build_targets[depid][0]
                         if depdata:
                             dep = taskData.fn_index[depdata]
@@ -161,6 +163,11 @@ class RunQueue:
                             for nextdepid in taskData.rdepids[fnid]:
                                 if nextdepid not in rdep_seen:
                                     add_recursive_run(nextdepid)
+                            idepends = taskData.tasks_idepends[depid]
+                            for idepend in idepends:
+                                nextdepid = int(idepend.split(":")[0])
+                                if nextdepid not in dep_seen:
+                                    add_recursive_build(nextdepid)
 
                 def add_recursive_run(rdepid):
                     """
@@ -188,18 +195,27 @@ class RunQueue:
                             for nextdepid in taskData.rdepids[fnid]:
                                 if nextdepid not in rdep_seen:
                                     add_recursive_run(nextdepid)
+                            idepends = taskData.tasks_idepends[rdepid]
+                            for idepend in idepends:
+                                nextdepid = int(idepend.split(":")[0])
+                                if nextdepid not in dep_seen:
+                                    add_recursive_build(nextdepid)
 
 
                 # Resolve Recursive Runtime Depends
-                # Also includes all Build Depends (and their runtime depends)
+                # Also includes all thier build depends, intertask depends and runtime depends
                 if 'recrdeptask' in task_deps and taskData.tasks_name[task] in task_deps['recrdeptask']:
                     for taskname in task_deps['recrdeptask'][taskData.tasks_name[task]].split():
                         dep_seen = []
                         rdep_seen = []
+                        idep_seen = []
                         for depid in taskData.depids[fnid]:
                             add_recursive_build(depid)
                         for rdepid in taskData.rdepids[fnid]:
                             add_recursive_run(rdepid)
+                        for idepend in idepends:
+                            depid = int(idepend.split(":")[0])
+                            add_recursive_build(depid)
 
                 #Prune self references
                 if task in depends:
