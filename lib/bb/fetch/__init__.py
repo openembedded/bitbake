@@ -88,8 +88,15 @@ def fetcher_init(d):
     Calls before this must not hit the cache.
     """
     pd = persist_data.PersistData(d)
-    # When to drop SCM head revisions should be controled by user policy
-    pd.delDomain("BB_URI_HEADREVS")
+    # When to drop SCM head revisions controled by user policy
+    srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
+    if srcrev_policy == "cache":
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "Keeping SRCREV cache due to cache policy of: %s" % srcrev_policy)
+    elif srcrev_policy == "clear":
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "Clearing SRCREV cache due to cache policy of: %s" % srcrev_policy)
+        pd.delDomain("BB_URI_HEADREVS")
+    else:
+        bb.msg.fatal(bb.msg.domain.Fetcher, "Invalid SRCREV cache policy of: %s" % srcrev_policy)
     # Make sure our domains exist
     pd.addDomain("BB_URI_HEADREVS")
     pd.addDomain("BB_URI_LOCALCOUNT")
