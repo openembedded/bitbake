@@ -80,6 +80,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
     return bb.encodeurl(result_decoded)
 
 methods = []
+urldata_cache = {}
 
 def fetcher_init(d):
     """
@@ -87,12 +88,9 @@ def fetcher_init(d):
     Calls before this must not hit the cache.
     """
     pd = persist_data.PersistData(d)
-    # Clear any cached url data
-    pd.delDomain("BB_URLDATA")
     # When to drop SCM head revisions should be controled by user policy
     pd.delDomain("BB_URI_HEADREVS")
     # Make sure our domains exist
-    pd.addDomain("BB_URLDATA")
     pd.addDomain("BB_URI_HEADREVS")
     pd.addDomain("BB_URI_LOCALCOUNT")
 
@@ -102,43 +100,30 @@ def fetcher_init(d):
 #   3. localpaths
 # localpath can be called at any time
 
-def init(urls, d, cache = True):
+def init(urls, d, setup = True):
     urldata = {}
-
-    if cache:
-        urldata, pd, fn = getdata(d)
+    fn = bb.data.getVar('FILE', d, 1)
+    if fn in urldata_cache:
+        urldata = urldata_cache[fn]
 
     for url in urls:
         if url not in urldata:
-            ud = FetchData(url, d)
-            for m in methods:
-                if m.supports(url, ud, d):
-                    ud.init(m, d)
-                    ud.setup_localpath(d) 
-                    break
-            urldata[url] = ud
+            urldata[url] = FetchData(url, d)
 
-    if cache:
-        pd.setValue("BB_URLDATA", fn, pickle.dumps(urldata, 0))
+    if setup:
+        for url in urldata:
+            if not urldata[url].setup:
+                urldata[url].setup_localpath(d) 
 
+    urldata_cache[fn] = urldata
     return urldata
 
-def getdata(d):
-    urldata = {}
-    fn = bb.data.getVar('FILE', d, 1)
-    pd = persist_data.PersistData(d)
-    encdata = pd.getValue("BB_URLDATA", fn)
-    if encdata:
-        urldata = pickle.loads(str(encdata))
-
-    return urldata, pd, fn
-
-def go(d, urldata = None):
+def go(d):
     """
     Fetch all urls
+    init must have previously been called
     """
-    if not urldata:
-        urldata, pd, fn = getdata(d)
+    urldata = init([], d, True)
 
     for u in urldata:
         ud = urldata[u]
@@ -152,13 +137,12 @@ def go(d, urldata = None):
         if ud.localfile and not m.forcefetch(u, ud, d):
             Fetch.write_md5sum(u, ud, d)
 
-def localpaths(d, urldata = None):
+def localpaths(d):
     """
     Return a list of the local filenames, assuming successful fetch
     """
     local = []
-    if not urldata:
-        urldata, pd, fn = getdata(d)
+    urldata = init([], d, True)
 
     for u in urldata:
         ud = urldata[u]      
@@ -175,25 +159,14 @@ def get_srcrev(d):
     have been set.
     """
     scms = []
-    urldata, pd, fn = getdata(d)
-    if len(urldata) == 0:
-        src_uri = bb.data.getVar('SRC_URI', d, 1).split()
-        for url in src_uri:
-            if url not in urldata:
-                ud = FetchData(url, d)
-                for m in methods:
-                    if m.supports(url, ud, d):
-                        ud.init(m, d)
-                        break
-                urldata[url] = ud
-                if ud.method.suppports_srcrev():
-                    scms.append(url)
-                    ud.setup_localpath(d) 
-    else:
-        for u in urldata:
-            ud = urldata[u]
-            if ud.method.suppports_srcrev():
-                scms.append(u)
+    # Only call setup_localpath on URIs which suppports_srcrev() 
+    urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d, False)
+    for u in urldata:
+        ud = urldata[u]
+        if ud.method.suppports_srcrev():
+            if not ud.setup:
+                ud.setup_localpath(d)
+            scms.append(u)
 
     if len(scms) == 0:
         bb.msg.error(bb.msg.domain.Fetcher, "SRCREV was used yet no valid SCM was found in SRC_URI")
@@ -210,7 +183,7 @@ def localpath(url, d, cache = True):
     Called from the parser with cache=False since the cache isn't ready 
     at this point. Also called from classed in OE e.g. patch.bbclass
     """
-    ud = init([url], d, cache)
+    ud = init([url], d)
     if ud[url].method:
         return ud[url].localpath
     return url
@@ -250,17 +223,22 @@ def runfetchcmd(cmd, d, quiet = False):
     return output
 
 class FetchData(object):
-    """Class for fetcher variable store"""
+    """
+    A class which represents the fetcher state for a given URI.
+    """
     def __init__(self, url, d):
         self.localfile = ""
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = bb.decodeurl(data.expand(url, d))
         self.date = Fetch.getSRCDate(self, d)
         self.url = url
-
-    def init(self, method, d):
-        self.method = method
+        self.setup = False
+        for m in methods:
+            if m.supports(url, self, d):
+                self.method = m
+                break
 
     def setup_localpath(self, d):
+        self.setup = True
         if "localpath" in self.parm:
             self.localpath = self.parm["localpath"]
         else:
