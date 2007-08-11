@@ -10,6 +10,8 @@ Changes in Bitbake 1.8.x:
 	- Stop generating the A variable (seems to be legacy code)
 	- Make sure intertask depends get processed correcting in recursive depends
 	- Add pn-PN to overrides when evaluating PREFERRED_VERSION
+	- Improve the progress indicator by skipping tasks that have 
+	  already run before starting the build rather than during it
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking

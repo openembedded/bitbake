@@ -70,7 +70,7 @@ def obtain(fn, data):
             return localfn
         bb.mkdirhier(dldir)
         try:
-            ud = bb.fetch.init([fn], data)
+            bb.fetch.init([fn], data)
         except bb.fetch.NoMethodError:
             (type, value, traceback) = sys.exc_info()
             bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: no method: %s" % value)
