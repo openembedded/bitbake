@@ -89,7 +89,7 @@ def fetcher_init(d):
     """
     pd = persist_data.PersistData(d)
     # When to drop SCM head revisions should be controled by user policy
-    #pd.delDomain("BB_URI_HEADREVS")
+    pd.delDomain("BB_URI_HEADREVS")
     # Make sure our domains exist
     pd.addDomain("BB_URI_HEADREVS")
     pd.addDomain("BB_URI_LOCALCOUNT")
