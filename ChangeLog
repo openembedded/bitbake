@@ -12,6 +12,7 @@ Changes in Bitbake 1.8.x:
 	- Add pn-PN to overrides when evaluating PREFERRED_VERSION
 	- Improve the progress indicator by skipping tasks that have 
 	  already run before starting the build rather than during it
+	- Add profiling option (-P)		
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking
