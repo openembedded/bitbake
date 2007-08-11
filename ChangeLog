@@ -8,6 +8,8 @@ Changes in Bitbake 1.8.x:
 	- Add ConfigParsed Event after configuration parsing is complete
 	- data.emit_var() - only call getVar if we need the variable
 	- Stop generating the A variable (seems to be legacy code)
+	- Make sure intertask depends get processed correcting in recursive depends
+	- Add pn-PN to overrides when evaluating PREFERRED_VERSION
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking

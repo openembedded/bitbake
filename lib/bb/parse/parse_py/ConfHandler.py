@@ -70,14 +70,14 @@ def obtain(fn, data):
             return localfn
         bb.mkdirhier(dldir)
         try:
-            ud = bb.fetch.init([fn], data, False)
+            ud = bb.fetch.init([fn], data)
         except bb.fetch.NoMethodError:
             (type, value, traceback) = sys.exc_info()
             bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: no method: %s" % value)
             return localfn
 
         try:
-            bb.fetch.go(data, ud)
+            bb.fetch.go(data)
         except bb.fetch.MissingParameterError:
             (type, value, traceback) = sys.exc_info()
             bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: missing parameters: %s" % value)
