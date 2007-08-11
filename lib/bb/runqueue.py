@@ -482,6 +482,18 @@ class RunQueue:
         def sigint_handler(signum, frame):
             raise KeyboardInterrupt
 
+        # Find any tasks with current stamps and remove them from the queue
+        for task1 in range(len(self.runq_fnid)):
+            task = self.prio_map[task1]
+            fn = self.taskData.fn_index[self.runq_fnid[task]]
+            taskname = self.runq_task[task]
+            if bb.build.stamp_is_current(taskname, self.dataCache, fn):
+                bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
+                self.runq_running[task] = 1
+                self.task_complete(task)
+                self.stats.taskCompleted()
+                self.stats.taskSkipped()
+
         while True:
             task = self.get_next_task()
             if task is not None:
