@@ -14,6 +14,7 @@ Changes in Bitbake 1.8.x:
 	  already run before starting the build rather than during it
 	- Add profiling option (-P)
 	- Add BB_SRCREV_POLICY variable (clear or cache) to control SRCREV cache
+	- Add SRCREV_FORMAT support
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking
