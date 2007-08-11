@@ -56,7 +56,7 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     preferred_file = None
 
     localdata = data.createCopy(cfgData)
-    bb.data.setVar('OVERRIDES', "%s:%s" % (pn, data.getVar('OVERRIDES', localdata)), localdata)
+    bb.data.setVar('OVERRIDES', "pn-%s:%s:%s" % (pn, pn, data.getVar('OVERRIDES', localdata)), localdata)
     bb.data.update_data(localdata)
 
     preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, localdata, True)
