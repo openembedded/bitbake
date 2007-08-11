@@ -29,7 +29,7 @@ Changes in Bitbake 1.9.x:
 	- Add pn-PN to overrides when evaluating PREFERRED_VERSION
 	- Improve the progress indicator by skipping tasks that have 
 	  already run before starting the build rather than during it
-
+	- Add profiling option (-P)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

@@ -102,6 +102,8 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-l", "--log-domains", help = """Show debug logging for the specified logging domains""",
                 action = "append", dest = "debug_domains", default = [] )
 
+    parser.add_option( "-P", "--profile", help = "profile the command and print a report",
+               action = "store_true", dest = "profile", default = False )
 
     options, args = parser.parse_args(sys.argv)
 
@@ -110,8 +112,23 @@ Default BBFILES are the .bb files in the current directory.""" )
     configuration.pkgs_to_build.extend(args[1:])
 
     cooker = bb.cooker.BBCooker(configuration)
-    cooker.cook()
 
+    if configuration.profile:
+        try:
+            import cProfile as profile
+        except:
+            import profile
+
+        profile.runctx("cooker.cook()", globals(), locals(), "profile.log")
+        import pstats
+        p = pstats.Stats('profile.log')
+        p.sort_stats('time')
+        p.print_stats()
+        p.print_callers()
+        p.sort_stats('cumulative')
+        p.print_stats()
+    else:
+        cooker.cook()
 
 if __name__ == "__main__":
     print """WARNING, WARNING, WARNING
