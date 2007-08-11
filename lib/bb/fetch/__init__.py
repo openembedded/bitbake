@@ -182,8 +182,21 @@ def get_srcrev(d):
     if len(scms) == 1:
         return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d)
 
-    bb.msg.error(bb.msg.domain.Fetcher, "Sorry, support for SRCREV_FORMAT still needs to be written")
-    raise ParameterError
+    #
+    # Mutiple SCMs are in SRC_URI so we resort to SRCREV_FORMAT
+    #
+    format = bb.data.getVar('SRCREV_FORMAT', d, 1)
+    if not format:
+        bb.msg.error(bb.msg.domain.Fetcher, "The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
+        raise ParameterError
+
+    for scm in scms:
+        if 'name' in urldata[scm].parm:
+            name = urldata[scm].parm["name"]
+            rev = urldata[scm].method.sortable_revision(scm, urldata[scm], d)
+            format = format.replace(name, rev)
+
+    return format
 
 def localpath(url, d, cache = True):
     """

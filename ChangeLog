@@ -31,6 +31,7 @@ Changes in Bitbake 1.9.x:
 	  already run before starting the build rather than during it
 	- Add profiling option (-P)
 	- Add BB_SRCREV_POLICY variable (clear or cache) to control SRCREV cache
+	- Add SRCREV_FORMAT support
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
