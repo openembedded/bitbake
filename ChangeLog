@@ -34,6 +34,7 @@ Changes in Bitbake 1.9.x:
 	- Add SRCREV_FORMAT support
 	- Fix local fetcher's localpath return values
 	- Apply OVERRIDES before performing immediate expansions
+	- Allow the -b -e option combination to take regular expressions
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
