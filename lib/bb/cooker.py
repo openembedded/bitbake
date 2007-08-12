@@ -143,10 +143,11 @@ class BBCooker:
         if self.configuration.buildfile:
             self.cb = None
             self.bb_cache = bb.cache.init(self)
+            bf = self.matchFile(self.configuration.buildfile)
             try:
-                self.configuration.data = self.bb_cache.loadDataFull(self.configuration.buildfile, self.configuration.data)
+                self.configuration.data = self.bb_cache.loadDataFull(bf, self.configuration.data)
             except IOError, e:
-                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to read %s: %s" % ( self.configuration.buildfile, e ))
+                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to read %s: %s" % (bf, e))
             except Exception, e:
                 bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit variables and shell functions
@@ -377,14 +378,15 @@ class BBCooker:
             bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
         bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.gmtime()),self.configuration.data)
 
-    def buildFile(self, buildfile):
+    def matchFile(self, buildfile):
         """
-        Build the file matching regexp buildfile
+        Convert the fragment buildfile into a real file
+        Error if there are too many matches
         """
-
         bf = os.path.abspath(buildfile)
         try:
             os.stat(bf)
+            return bf
         except OSError:
             (filelist, masked) = self.collect_bbfiles()
             regexp = re.compile(buildfile)
@@ -398,7 +400,14 @@ class BBCooker:
                 for f in matches:
                     bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
                 sys.exit(1)
-            bf = matches[0]		    
+            return matches[0]		    
+
+    def buildFile(self, buildfile):
+        """
+        Build the file matching regexp buildfile
+        """
+
+        bf = self.matchFile(buildfile)
 
         bbfile_data = bb.parse.handle(bf, self.configuration.data)
 
