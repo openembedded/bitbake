@@ -33,6 +33,7 @@ Changes in Bitbake 1.9.x:
 	- Add BB_SRCREV_POLICY variable (clear or cache) to control SRCREV cache
 	- Add SRCREV_FORMAT support
 	- Fix local fetcher's localpath return values
+	- Apply OVERRIDES before performing immediate expansions
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

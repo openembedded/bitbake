@@ -181,7 +181,9 @@ def feeder(lineno, s, fn, data):
             if val == None:
                 val = groupd["value"]
         elif "colon" in groupd and groupd["colon"] != None:
-            val = bb.data.expand(groupd["value"], data)
+            e = data.createCopy()
+            bb.data.update_data(e)
+            val = bb.data.expand(groupd["value"], e)
         elif "append" in groupd and groupd["append"] != None:
             val = "%s %s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
         elif "prepend" in groupd and groupd["prepend"] != None:
