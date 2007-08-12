@@ -38,9 +38,11 @@ class Local(Fetch):
         return urldata.type in ['file','patch']
 
     def localpath(self, url, urldata, d):
-        """Return the local filename of a given url assuming a successful fetch.
+        """
+        Return the local filename of a given url assuming a successful fetch.
         """
         path = url.split("://")[1]
+        path = path.split(";")[0]
         newpath = path
         if path[0] != "/":
             filespath = data.getVar('FILESPATH', d, 1)
