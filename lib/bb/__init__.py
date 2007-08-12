@@ -345,14 +345,20 @@ def encodeurl(decoded):
 #######################################################################
 
 def which(path, item, direction = 0):
-    """Useful function for locating a file in a PATH"""
-    found = ""
+    """
+    Locate a file in a PATH
+    """
+
+    paths = (path or "").split(':')
+    if direction != 0:
+        paths.reverse()
+
     for p in (path or "").split(':'):
-        if os.path.exists(os.path.join(p, item)):
-            found = os.path.join(p, item)
-            if direction == 0:
-                break
-    return found
+        next = os.path.join(p, item)
+        if os.path.exists(next):
+            return next
+
+    return ""
 
 #######################################################################
 
