@@ -144,7 +144,7 @@ class BBCooker:
             else:
                 prefstr = ""
 
-            print "%-30s %20s %20s" % (p, latest[0][0] + ":" + latest[0][1] + "-" + latest[0][2], prefstr)
+            bb.msg.plain("%-30s %20s %20s" % (p, latest[0][0] + "-" + latest[0][1] + "-" + latest[0][2], prefstr))
 
     def showEnvironment(self, buildfile = None):
         """
@@ -163,17 +163,22 @@ class BBCooker:
             except Exception, e:
                 bb.msg.error(bb.msg.domain.Parsing, "%s" % e)
                 raise
+
+        class dummywrite:
+            def write(self, output):
+                bb.msg.plain(output)
+
         # emit variables and shell functions
         try:
             data.update_data( self.configuration.data )
-            data.emit_env(sys.__stdout__, self.configuration.data, True)
+            data.emit_env(dummywrite(), self.configuration.data, True)
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
         data.expandKeys(self.configuration.data)
         for e in self.configuration.data.keys():
             if data.getVarFlag( e, 'python', self.configuration.data ):
-                sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
+                bb.msg.plain("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
     def generateDotGraph(self, pkgs_to_build):
         """
@@ -245,8 +250,8 @@ class BBCooker:
                 #    print >> depends_file, '"%s" -> "%s"' % (pn, taskdata.build_names_index[dep])
         print >> depends_file,  "}"
         print >> tdepends_file,  "}"
-        bb.msg.note(1, bb.msg.domain.Collection, "Dependencies saved to 'depends.dot'")
-        bb.msg.note(1, bb.msg.domain.Collection, "Task dependencies saved to 'task-depends.dot'")
+        bb.msg.plain("Dependencies saved to 'depends.dot'")
+        bb.msg.plain("Task dependencies saved to 'task-depends.dot'")
 
     def buildDepgraph( self ):
         all_depends = self.status.all_depends
