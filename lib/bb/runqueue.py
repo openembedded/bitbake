@@ -490,6 +490,7 @@ class RunQueue:
             if bb.build.stamp_is_current(taskname, self.dataCache, fn):
                 bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
                 self.runq_running[task] = 1
+                self.runq_buildable[task] = 1
                 self.task_complete(task)
                 self.stats.taskCompleted()
                 self.stats.taskSkipped()
@@ -503,6 +504,7 @@ class RunQueue:
                 if bb.build.stamp_is_current(taskname, self.dataCache, fn):
                     bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
                     self.runq_running[task] = 1
+                    self.runq_buildable[task] = 1
                     self.task_complete(task)
                     self.stats.taskCompleted()
                     self.stats.taskSkipped()
