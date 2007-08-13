@@ -288,6 +288,10 @@ def expandKeys(alterdata, readdata = None):
             src = getVarFlag(key, i, readdata) or []
             dest.extend(src)
             setVarFlag(ekey, i, dest, alterdata)
+            
+            if key in alterdata._special_values[i]:
+                alterdata._special_values[i].remove(key)
+                alterdata._special_values[i].add(ekey)
 
         delVar(key, alterdata)
 

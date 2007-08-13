@@ -30,6 +30,12 @@ import itertools, sre_constants
 
 parsespin = itertools.cycle( r'|/-\\' )
 
+class MultipleMatches(Exception):
+    """
+    Exception raised when multiple file matches are found
+    """
+
+
 #============================================================================#
 # BBCooker
 #============================================================================#
@@ -137,13 +143,15 @@ class BBCooker:
             print "%-30s %20s %20s" % (p, latest[0][0] + ":" + latest[0][1] + "-" + latest[0][2],
                                         prefstr)
 
+    def showEnvironment(self, buildfile = None):
+        """
+        Show the outer or per-package environment
+        """
 
-    def showEnvironment( self ):
-        """Show the outer or per-package environment"""
-        if self.configuration.buildfile:
+        if buildfile:
             self.cb = None
             self.bb_cache = bb.cache.init(self)
-            bf = self.matchFile(self.configuration.buildfile)
+            bf = self.matchFile(buildfile)
             try:
                 self.configuration.data = self.bb_cache.loadDataFull(bf, self.configuration.data)
             except IOError, e:
@@ -157,12 +165,12 @@ class BBCooker:
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
-        data.expandKeys( self.configuration.data )	
+        data.expandKeys(self.configuration.data)
         for e in self.configuration.data.keys():
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
-    def generateDotGraph( self, pkgs_to_build ):
+    def generateDotGraph(self, pkgs_to_build):
         """
         Generate a task dependency graph. 
 
@@ -176,13 +184,11 @@ class BBCooker:
         taskdata = bb.taskdata.TaskData(self.configuration.abort)
 
         runlist = []
-        try:
-            for k in pkgs_to_build:
-                taskdata.add_provider(localdata, self.status, k)
-                runlist.append([k, "do_%s" % self.configuration.cmd])
-            taskdata.add_unresolved(localdata, self.status)
-        except bb.providers.NoProvider:
-            sys.exit(1)
+        for k in pkgs_to_build:
+            taskdata.add_provider(localdata, self.status, k)
+            runlist.append([k, "do_%s" % self.configuration.cmd])
+        taskdata.add_unresolved(localdata, self.status)
+
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
         rq.prepare_runqueue()
 
@@ -207,7 +213,7 @@ class BBCooker:
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
                 packages = []
-                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)		
+                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)
                 for depend in self.status.deps[fn]:
                     print >> depends_file, '"%s" -> "%s"' % (pn, depend)
                 rdepends = self.status.rundeps[fn]
@@ -313,7 +319,6 @@ class BBCooker:
             bb.data.update_data( self.configuration.data )
             bb.data.expandKeys( self.configuration.data )
             shell.start( self )
-            sys.exit( 0 )
 
     def parseConfigurationFile( self, afile ):
         try:
@@ -374,17 +379,17 @@ class BBCooker:
         """
         if not bb.data.getVar("BUILDNAME", self.configuration.data):
             bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
-        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.gmtime()),self.configuration.data)
+        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.gmtime()), self.configuration.data)
 
-    def matchFile(self, buildfile):
+    def matchFiles(self, buildfile):
         """
-        Convert the fragment buildfile into a real file
-        Error if there are too many matches
+        Find the .bb files which match the expression in 'buildfile'.
         """
+
         bf = os.path.abspath(buildfile)
         try:
             os.stat(bf)
-            return bf
+            return [bf]
         except OSError:
             (filelist, masked) = self.collect_bbfiles()
             regexp = re.compile(buildfile)
@@ -393,39 +398,47 @@ class BBCooker:
                 if regexp.search(f) and os.path.isfile(f):
                     bf = f
                     matches.append(f)
-            if len(matches) != 1:
-                bb.msg.error(bb.msg.domain.Parsing, "Unable to match %s (%s matches found):" % (buildfile, len(matches)))
-                for f in matches:
-                    bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
-                sys.exit(1)
-            return matches[0]		    
+            return matches
 
-    def buildFile(self, buildfile):
+    def matchFile(self, buildfile):
+        """
+        Find the .bb file which matches the expression in 'buildfile'.
+        Raise an error if multiple files
+        """
+        matches = self.matchFiles(buildfile)
+        if len(matches) != 1:
+            bb.msg.error(bb.msg.domain.Parsing, "Unable to match %s (%s matches found):" % (buildfile, len(matches)))
+            for f in matches:
+                bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
+            raise MultipleMatches
+        return matches[0]
+
+    def buildFile(self, buildfile, task):
         """
         Build the file matching regexp buildfile
         """
 
         bf = self.matchFile(buildfile)
-
+        self.buildSetVars()
         bbfile_data = bb.parse.handle(bf, self.configuration.data)
 
         # Remove stamp for target if force mode active
         if self.configuration.force:
-            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (self.configuration.cmd, bf))
-            bb.build.del_stamp('do_%s' % self.configuration.cmd, bbfile_data)
+            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (task, bf))
+            bb.build.del_stamp('do_%s' % task, bbfile_data)
 
         item = bb.data.getVar('PN', bbfile_data, 1)
         try:
-            self.tryBuildPackage(bf, item, self.configuration.cmd, bbfile_data, True)
+            self.tryBuildPackage(bf, item, task, bbfile_data, True)
         except bb.build.EventException:
             bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
-
-        sys.exit(0)
 
     def buildTargets(self, targets):
         """
         Attempt to build the targets specified
         """
+
+        self.buildSetVars()
 
         buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
         bb.event.fire(bb.event.BuildStarted(buildname, targets, self.configuration.event_data))
@@ -437,13 +450,10 @@ class BBCooker:
         taskdata = bb.taskdata.TaskData(self.configuration.abort)
 
         runlist = []
-        try:
-            for k in targets:
-                taskdata.add_provider(localdata, self.status, k)
-                runlist.append([k, "do_%s" % self.configuration.cmd])
-            taskdata.add_unresolved(localdata, self.status)
-        except bb.providers.NoProvider:
-            sys.exit(1)
+        for k in targets:
+            taskdata.add_provider(localdata, self.status, k)
+            runlist.append([k, "do_%s" % self.configuration.cmd])
+        taskdata.add_unresolved(localdata, self.status)
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
         rq.prepare_runqueue()
@@ -454,8 +464,6 @@ class BBCooker:
                 bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
             sys.exit(1)
         bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
-
-        sys.exit(0)
 
     def updateCache(self):
         # Import Psyco if available and not disabled
@@ -472,7 +480,8 @@ class BBCooker:
         self.status = bb.cache.CacheData()
 
         ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
-        self.status.ignored_dependencies = Set( ignore.split() )
+        self.status.ignored_dependencies = Set(ignore.split())
+
         for dep in self.configuration.extra_assume_provided:
             self.status.ignored_dependencies.add(dep)
 
@@ -492,17 +501,24 @@ class BBCooker:
         build.
         """
 
+        
         if self.configuration.show_environment:
-            self.showEnvironment()
-            sys.exit( 0 )
-
-        self.buildSetVars()
+            try:
+                self.showEnvironment(self.configuration.buildfile)
+            except bb.cooker.MultipleMatches:
+                 sys.exit(1)
+            sys.exit(0)
 
         if self.configuration.interactive:
             self.interactiveMode()
+            sys.exit(0)
 
         if self.configuration.buildfile is not None:
-            return self.buildFile(self.configuration.buildfile)
+            try:
+                 self.buildFile(self.configuration.buildfile, self.configuration.cmd)
+            except bb.cooker.MultipleMatches:
+                 sys.exit(1)
+            sys.exit(0)
 
         # initialise the parsing status now we know we will need deps
         self.updateCache()
@@ -525,7 +541,7 @@ class BBCooker:
         try:
             if self.configuration.show_versions:
                 self.showVersions()
-                sys.exit( 0 )
+                sys.exit(0)
             if 'world' in pkgs_to_build:
                 self.buildWorldTargetList()
                 pkgs_to_build.remove('world')
@@ -534,10 +550,13 @@ class BBCooker:
 
             if self.configuration.dot_graph:
                 self.generateDotGraph( pkgs_to_build )
-                sys.exit( 0 )
+                sys.exit(0)
 
-            return self.buildTargets(pkgs_to_build)
+            self.buildTargets(pkgs_to_build)
+            sys.exit(0)
 
+        except bb.providers.NoProvider:
+            sys.exit(1)
         except KeyboardInterrupt:
             bb.msg.note(1, bb.msg.domain.Collection, "KeyboardInterrupt - Build not completed.")
             sys.exit(1)
