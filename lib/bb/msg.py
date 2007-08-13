@@ -98,12 +98,12 @@ def set_debug_domains(domains):
 
 def debug(level, domain, msg, fn = None):
     bb.event.fire(MsgDebug(msg, None))
-    if debug_level[domain] >= level:
+    if not domain or debug_level[domain] >= level:
         print 'DEBUG: ' + msg
 
 def note(level, domain, msg, fn = None):
     bb.event.fire(MsgNote(msg, None))
-    if level == 1 or verbose or debug_level[domain] >= 1:
+    if level == 1 or verbose or not domain or debug_level[domain] >= 1:
         print 'NOTE: ' + msg
 
 def warn(domain, msg, fn = None):
