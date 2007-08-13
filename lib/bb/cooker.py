@@ -73,6 +73,10 @@ class BBCooker:
         if not self.configuration.cmd:
             self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data) or "build"
 
+        bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, True)
+        if bbpkgs:
+            self.configuration.pkgs_to_build.extend(bbpkgs.split())
+
         #
         # Special updated configuration we use for firing events
         #
@@ -140,8 +144,7 @@ class BBCooker:
             else:
                 prefstr = ""
 
-            print "%-30s %20s %20s" % (p, latest[0][0] + ":" + latest[0][1] + "-" + latest[0][2],
-                                        prefstr)
+            print "%-30s %20s %20s" % (p, latest[0][0] + ":" + latest[0][1] + "-" + latest[0][2], prefstr)
 
     def showEnvironment(self, buildfile = None):
         """
@@ -155,9 +158,11 @@ class BBCooker:
             try:
                 self.configuration.data = self.bb_cache.loadDataFull(bf, self.configuration.data)
             except IOError, e:
-                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to read %s: %s" % (bf, e))
+                bb.msg.error(bb.msg.domain.Parsing, "Unable to read %s: %s" % (bf, e))
+                raise
             except Exception, e:
-                bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
+                bb.msg.error(bb.msg.domain.Parsing, "%s" % e)
+                raise
         # emit variables and shell functions
         try:
             data.update_data( self.configuration.data )
@@ -527,26 +532,14 @@ class BBCooker:
             bb.msg.note(1, bb.msg.domain.Collection, "Requested parsing .bb files only.  Exiting.")
             return 0
 
-        pkgs_to_build = self.configuration.pkgs_to_build
-
-        bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, 1)
-        if bbpkgs:
-            pkgs_to_build.extend(bbpkgs.split())
-        if len(pkgs_to_build) == 0 and not self.configuration.show_versions \
-                             and not self.configuration.show_environment:
-                print "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
-                print "for usage information."
-                sys.exit(0)
-
         try:
             if self.configuration.show_versions:
                 self.showVersions()
                 sys.exit(0)
-            if 'world' in pkgs_to_build:
-                self.buildWorldTargetList()
-                pkgs_to_build.remove('world')
-                for t in self.status.world_target:
-                    pkgs_to_build.append(t)
+
+            pkgs_to_build = checkPackages(self.configuration.pkgs_to_build)
+            if not pkgs_to_build:
+                sys.exit(1)
 
             if self.configuration.dot_graph:
                 self.generateDotGraph( pkgs_to_build )
@@ -560,6 +553,21 @@ class BBCooker:
         except KeyboardInterrupt:
             bb.msg.note(1, bb.msg.domain.Collection, "KeyboardInterrupt - Build not completed.")
             sys.exit(1)
+
+    def checkPackages(self, pkgs_to_build):
+
+        if len(pkgs_to_build) == 0:
+            bb.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
+            + "for usage information.")
+            return None
+
+        if 'world' in pkgs_to_build:
+            self.buildWorldTargetList()
+            pkgs_to_build.remove('world')
+            for t in self.status.world_target:
+                pkgs_to_build.append(t)
+
+        return pkgs_to_build
 
     def get_bbfiles( self, path = os.getcwd() ):
         """Get list of default .bb files by reading out the current directory"""
