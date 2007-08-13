@@ -289,6 +289,7 @@ def expandKeys(alterdata, readdata = None):
             dest.extend(src)
             setVarFlag(ekey, i, dest, alterdata)
             
+            # Pending proper fix - create renameVar in data_smart.py
             if key in alterdata._special_values[i]:
                 alterdata._special_values[i].remove(key)
                 alterdata._special_values[i].add(ekey)
