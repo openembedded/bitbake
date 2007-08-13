@@ -97,17 +97,23 @@ class MalformedUrl(Exception):
 #######################################################################
 #######################################################################
 
+def plain(*args):
+    bb.msg.warn(None, ''.join(args))
+
 def debug(lvl, *args):
-    bb.msg.std_debug(lvl, ''.join(args))
+    bb.msg.debug(lvl, None, ''.join(args))
 
 def note(*args):
-    bb.msg.std_note(''.join(args))
+    bb.msg.note(1, None, ''.join(args))
+
+def warn(*args):
+    bb.msg.warn(1, None, ''.join(args))
 
 def error(*args):
-    bb.msg.std_error(''.join(args))
+    bb.msg.error(None, ''.join(args))
 
 def fatal(*args):
-    bb.msg.std_fatal(''.join(args))
+    bb.msg.fatal(None, ''.join(args))
 
 
 #######################################################################

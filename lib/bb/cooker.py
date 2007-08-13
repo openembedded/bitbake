@@ -537,7 +537,7 @@ class BBCooker:
                 self.showVersions()
                 sys.exit(0)
 
-            pkgs_to_build = checkPackages(self.configuration.pkgs_to_build)
+            pkgs_to_build = self.checkPackages(self.configuration.pkgs_to_build)
             if not pkgs_to_build:
                 sys.exit(1)
 
