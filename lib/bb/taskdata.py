@@ -357,7 +357,7 @@ class TaskData:
 
         all_p = dataCache.providers[item]
 
-        eligible = bb.providers.filterProviders(all_p, item, cfgData, dataCache)
+        eligible, foundUnique = bb.providers.filterProviders(all_p, item, cfgData, dataCache)
 
         for p in eligible:
             fnid = self.getfn_id(p)
@@ -369,22 +369,7 @@ class TaskData:
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
-        prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, cfgData, 1)
-        if prefervar:
-            dataCache.preferred[item] = prefervar
-
-        discriminated = False
-        if item in dataCache.preferred:
-            for p in eligible:
-                pn = dataCache.pkg_fn[p]
-                if dataCache.preferred[item] == pn:
-                    bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
-                    eligible.remove(p)
-                    eligible = [p] + eligible
-                    discriminated = True
-                    break
-
-        if len(eligible) > 1 and discriminated == False:
+        if len(eligible) > 1 and foundUnique == False:
             if item not in self.consider_msgs_cache:
                 providers_list = []
                 for fn in eligible:
@@ -424,7 +409,7 @@ class TaskData:
             bb.event.fire(bb.event.NoProvider(item, cfgData, runtime=True))
             raise bb.providers.NoRProvider(item)
 
-        eligible = bb.providers.filterProviders(all_p, item, cfgData, dataCache)
+        eligible, numberPreferred = bb.providers.filterProvidersRunTime(all_p, item, cfgData, dataCache)
 
         for p in eligible:
             fnid = self.getfn_id(p)
@@ -436,21 +421,7 @@ class TaskData:
             bb.event.fire(bb.event.NoProvider(item, cfgData, runtime=True))
             raise bb.providers.NoRProvider(item)
 
-        # Should use dataCache.preferred here?
-        preferred = []
-        for p in eligible:
-            pn = dataCache.pkg_fn[p]
-            provides = dataCache.pn_provides[pn]
-            for provide in provides:
-                prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, cfgData, 1)
-                if prefervar == pn:
-                    bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
-                    eligible.remove(p)
-                    eligible = [p] + eligible
-                    preferred.append(p)
-                    break
-
-        if len(eligible) > 1 and len(preferred) == 0:
+        if len(eligible) > 1 and numberPreferred == 0:
             if item not in self.consider_msgs_cache:
                 providers_list = []
                 for fn in eligible:
@@ -460,12 +431,12 @@ class TaskData:
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list, cfgData, runtime=True))
             self.consider_msgs_cache.append(item)
 
-        if len(preferred) > 1:
+        if numberPreferred > 1:
             if item not in self.consider_msgs_cache:
                 providers_list = []
-                for fn in preferred:
+                for fn in eligible:
                     providers_list.append(dataCache.pkg_fn[fn])
-                bb.msg.note(2, bb.msg.domain.Provider, "multiple preferred providers are available for runtime %s (%s);" % (item, ", ".join(providers_list)))
+                bb.msg.note(2, bb.msg.domain.Provider, "multiple providers are available for runtime %s (top %s entries preferred) (%s);" % (item, numberPreferred, ", ".join(providers_list)))
                 bb.msg.note(2, bb.msg.domain.Provider, "consider defining only one PREFERRED_PROVIDER entry to match runtime %s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item,providers_list, cfgData, runtime=True))
             self.consider_msgs_cache.append(item)
