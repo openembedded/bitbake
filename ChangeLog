@@ -41,6 +41,8 @@ Changes in Bitbake 1.9.x:
 	- Sort the list of providers before processing so dependency problems are 
 	  reproducible rather than effectively random
 	- Fix/improve bitbake -s output
+	- Add locking for fetchers so only one tries to fetch a given file at 
+	  a given time
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
