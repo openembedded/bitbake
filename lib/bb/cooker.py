@@ -135,16 +135,20 @@ class BBCooker:
         pkg_list = pkg_pn.keys()
         pkg_list.sort()
 
+        bb.msg.plain("%-35s %25s %25s" % ("Package Name", "Latest Version", "Preferred Version"))
+        bb.msg.plain("%-35s %25s %25s\n" % ("============", "==============", "================="))
+
         for p in pkg_list:
             pref = preferred_versions[p]
             latest = latest_versions[p]
 
-            if pref != latest:
-                prefstr = pref[0][0] + ":" + pref[0][1] + '-' + pref[0][2]
-            else:
+            prefstr = pref[0][0] + ":" + pref[0][1] + '-' + pref[0][2]
+            lateststr = latest[0][0] + ":" + latest[0][1] + "-" + latest[0][2]
+
+            if pref == latest:
                 prefstr = ""
 
-            bb.msg.plain("%-30s %20s %20s" % (p, latest[0][0] + "-" + latest[0][1] + "-" + latest[0][2], prefstr))
+            bb.msg.plain("%-35s %25s %25s" % (p, lateststr, prefstr))
 
     def showEnvironment(self, buildfile = None):
         """
