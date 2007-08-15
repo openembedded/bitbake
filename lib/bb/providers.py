@@ -128,6 +128,11 @@ def _filterProviders(providers, item, cfgData, dataCache):
     eligible = []
     preferred_versions = {}
 
+    # The order of providers depends on the order of the files on the disk 
+    # up to here. Sort pkg_pn to make dependency issues reproducible rather
+    # than effectively random.
+    providers.sort()
+
     # Collate providers by PN
     pkg_pn = {}
     for p in providers:
