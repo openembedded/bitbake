@@ -96,6 +96,19 @@ def getVar(var, d, exp = 0):
     """
     return d.getVar(var,exp)
 
+
+def renameVar(key, newkey, d):
+    """Renames a variable from key to newkey
+
+    Example:
+        >>> d = init()
+        >>> setVar('TEST', 'testcontents', d)
+        >>> renameVar('TEST', 'TEST2', d)
+        >>> print getVar('TEST2', d)
+        testcontents
+    """
+    d.renameVar(key, newkey)
+
 def delVar(var, d):
     """Removes a variable from the data set
 
@@ -276,25 +289,8 @@ def expandKeys(alterdata, readdata = None):
         ekey = expand(key, readdata)
         if key == ekey:
             continue
-        val = getVar(key, alterdata)
-        if val is None:
-            continue
-#        import copy
-#        setVarFlags(ekey, copy.copy(getVarFlags(key, readdata)), alterdata)
-        setVar(ekey, val, alterdata)
 
-        for i in ('_append', '_prepend'):
-            dest = getVarFlag(ekey, i, alterdata) or []
-            src = getVarFlag(key, i, readdata) or []
-            dest.extend(src)
-            setVarFlag(ekey, i, dest, alterdata)
-            
-            # Pending proper fix - create renameVar in data_smart.py
-            if key in alterdata._special_values[i]:
-                alterdata._special_values[i].remove(key)
-                alterdata._special_values[i].add(ekey)
-
-        delVar(key, alterdata)
+        renameVar(key, ekey, alterdata)
 
 def expandData(alterdata, readdata = None):
     """For each variable in alterdata, expand it, and update the var contents.
