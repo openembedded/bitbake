@@ -82,6 +82,8 @@ def exec_func(func, d, dirs = None):
     if not body:
         return
 
+    ispython = data.getVarFlag(func, "python", d)
+
     if not dirs:
         dirs = (data.getVarFlag(func, 'dirs', d) or "").split()
     for adir in dirs:
@@ -116,7 +118,7 @@ def exec_func(func, d, dirs = None):
     # Handle logfiles
     si = file('/dev/null', 'r')
     try:
-        if bb.msg.debug_level['default'] > 0:
+        if bb.msg.debug_level['default'] > 0 or ispython:
             so = os.popen("tee \"%s\"" % logfile, "w")
         else:
             so = file(logfile, 'w')
@@ -138,7 +140,7 @@ def exec_func(func, d, dirs = None):
 
     try:
         # Run the function
-        if data.getVarFlag(func, "python", d):
+        if ispython:
             exec_func_python(func, d, runfile, logfile)
         else:
             exec_func_shell(func, d, runfile, logfile)
