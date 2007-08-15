@@ -123,7 +123,7 @@ def fatal(domain, msg, fn = None):
     print 'ERROR: ' + msg
     sys.exit(1)
 
-def plain(domain, msg):
-    bb.event.fire(MsgPlain(msg, None), fn = None)
+def plain(msg, fn = None):
+    bb.event.fire(MsgPlain(msg, None))
     print msg
 
