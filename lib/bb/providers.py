@@ -120,13 +120,18 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
 
     return (latest,latest_f,preferred_ver, preferred_file)
 
-def filterProviders(providers, item, cfgData, dataCache):
+def _filterProviders(providers, item, cfgData, dataCache):
     """
     Take a list of providers and filter/reorder according to the 
     environment variables and previous build results
     """
     eligible = []
     preferred_versions = {}
+
+    # The order of providers depends on the order of the files on the disk 
+    # up to here. Sort pkg_pn to make dependency issues reproducible rather
+    # than effectively random.
+    providers.sort()
 
     # Collate providers by PN
     pkg_pn = {}
@@ -187,7 +192,61 @@ def filterProviders(providers, item, cfgData, dataCache):
             eligible = [fn] + eligible
             break
 
-    return eligible
+    return eligible, preferred_versions
+
+
+def filterProviders(providers, item, cfgData, dataCache):
+    """
+    Take a list of providers and filter/reorder according to the 
+    environment variables and previous build results
+    Takes a "normal" target item
+    """
+
+    eligible, pref_vers = _filterProviders(providers, item, cfgData, dataCache)
+
+    prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, cfgData, 1)
+    if prefervar:
+        dataCache.preferred[item] = prefervar
+
+    foundUnique = False
+    if item in dataCache.preferred:
+        for p in eligible:
+            pn = dataCache.pkg_fn[p]
+            if dataCache.preferred[item] == pn:
+                bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
+                eligible.remove(p)
+                eligible = [p] + eligible
+                foundUnique = True
+                break
+
+    return eligible, foundUnique
+
+def filterProvidersRunTime(providers, item, cfgData, dataCache):
+    """
+    Take a list of providers and filter/reorder according to the 
+    environment variables and previous build results
+    Takes a "runtime" target item
+    """
+
+    eligible, pref_vers = _filterProviders(providers, item, cfgData, dataCache)
+
+    # Should use dataCache.preferred here?
+    preferred = []
+    for p in eligible:
+        pn = dataCache.pkg_fn[p]
+        provides = dataCache.pn_provides[pn]
+        for provide in provides:
+            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, cfgData, 1)
+            if prefervar == pn:
+                bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
+                eligible.remove(p)
+                eligible = [p] + eligible
+                preferred.append(p)
+                break
+
+    numberPreferred = len(preferred)
+
+    return eligible, numberPreferred
 
 def getRuntimeProviders(dataCache, rdepend):
     """

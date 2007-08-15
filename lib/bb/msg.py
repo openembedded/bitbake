@@ -66,6 +66,9 @@ class MsgError(MsgBase):
 class MsgFatal(MsgBase):
     """Fatal Message"""
 
+class MsgPlain(MsgBase):
+    """General output"""
+
 #
 # Message control functions
 #
@@ -87,51 +90,40 @@ def set_debug_domains(domains):
                 bb.msg.debug_level[ddomain] = bb.msg.debug_level[ddomain] + 1
                 found = True
         if not found:
-            std_warn("Logging domain %s is not valid, ignoring" % domain)
+            bb.msg.warn(None, "Logging domain %s is not valid, ignoring" % domain)
 
 #
 # Message handling functions
 #
 
 def debug(level, domain, msg, fn = None):
+    bb.event.fire(MsgDebug(msg, None))
+    if not domain:
+        domain = 'default'
     if debug_level[domain] >= level:
-        bb.event.fire(MsgDebug(msg, None))
         print 'DEBUG: ' + msg
 
 def note(level, domain, msg, fn = None):
+    bb.event.fire(MsgNote(msg, None))
+    if not domain:
+        domain = 'default'
     if level == 1 or verbose or debug_level[domain] >= 1:
-        std_note(msg)
+        print 'NOTE: ' + msg
 
 def warn(domain, msg, fn = None):
-    std_warn(msg)
-
-def error(domain, msg, fn = None):
-    std_error(msg)
-
-def fatal(domain, msg, fn = None):
-    std_fatal(msg)
-
-#
-# Compatibility functions for the original message interface
-#
-def std_debug(lvl, msg):
-    if debug_level['default'] >= lvl:
-        bb.event.fire(MsgDebug(msg, None))
-        print 'DEBUG: ' + msg
-
-def std_note(msg):
-    bb.event.fire(MsgNote(msg, None))
-    print 'NOTE: ' + msg
-
-def std_warn(msg):
     bb.event.fire(MsgWarn(msg, None))
     print 'WARNING: ' + msg
 
-def std_error(msg):
+def error(domain, msg, fn = None):
     bb.event.fire(MsgError(msg, None))
     print 'ERROR: ' + msg
 
-def std_fatal(msg):
+def fatal(domain, msg, fn = None):
     bb.event.fire(MsgFatal(msg, None))
     print 'ERROR: ' + msg
     sys.exit(1)
+
+def plain(msg, fn = None):
+    bb.event.fire(MsgPlain(msg, None))
+    print msg
+

@@ -18,6 +18,9 @@ Changes in Bitbake 1.8.x:
 	- Fix local fetcher's localpath return values
 	- Apply OVERRIDES before performing immediate expansions
 	- Allow the -b -e option combination to take regular expressions
+	- Add plain message function to bb.msg
+	- Sort the list of providers before processing so dependency problems are 
+	  reproducible rather than effectively random
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking
