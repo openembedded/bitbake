@@ -21,6 +21,9 @@ Changes in Bitbake 1.8.x:
 	- Add plain message function to bb.msg
 	- Sort the list of providers before processing so dependency problems are 
 	  reproducible rather than effectively random
+	- Add locking for fetchers so only one tries to fetch a given file at 
+	  a given time
+       
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking

@@ -24,7 +24,7 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import os, re
+import os, re, fcntl
 import bb
 from   bb import data
 from   bb import persist_data
@@ -140,9 +140,21 @@ def go(d):
             # Touch md5 file to show activity
             os.utime(ud.md5, None)
             continue
+        lf = open(ud.lockfile, "a+")
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        if ud.localfile and not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
+            # If someone else fetched this before we got the lock, 
+            # notice and don't try again
+            os.utime(ud.md5, None)
+            fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+            lf.close
+            continue
         m.go(u, ud, d)
         if ud.localfile and not m.forcefetch(u, ud, d):
             Fetch.write_md5sum(u, ud, d)
+        fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+        lf.close
+
 
 def localpaths(d):
     """
@@ -264,6 +276,7 @@ class FetchData(object):
         else:
             self.localpath = self.method.localpath(self.url, self, d)
         self.md5 = self.localpath + '.md5'
+        self.lockfile = self.localpath + '.lock'
         # if user sets localpath for file, use it instead.
 
 
