@@ -170,6 +170,28 @@ class DataSmart:
             return self.expand(value,var)
         return value
 
+    def renameVar(self, key, newkey):
+        """
+        Rename the variable key to newkey 
+        """
+        val = self.getVar(key, 0)
+        if val is None:
+            return
+
+        self.setVar(newkey, val)
+
+        for i in ('_append', '_prepend'):
+            dest = self.getVarFlag(newkey, i) or []
+            src = self.getVarFlag(key, i) or []
+            dest.extend(src)
+            self.setVarFlag(newkey, i, dest)
+            
+            if key in self._special_values[i]:
+                self._special_values[i].remove(key)
+                self._special_values[i].add(newkey)
+
+        self.delVar(key)
+
     def delVar(self,var):
         self.expand_cache = {}
         self.dict[var] = {}

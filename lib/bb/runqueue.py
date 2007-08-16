@@ -22,7 +22,7 @@ Handles preparation and execution of a queue of tasks
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from bb import msg, data, fetch, event, mkdirhier, utils
+from bb import msg, data, event, mkdirhier, utils
 from sets import Set 
 import bb, os, sys
 import signal
@@ -113,7 +113,7 @@ class RunQueue:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         if depid in taskData.build_targets:
                             depdata = taskData.build_targets[depid][0]
-                            if depdata:
+                            if depdata is not None:
                                 dep = taskData.fn_index[depdata]
                                 depends.append(taskData.gettask_id(dep, taskname))
 
@@ -123,7 +123,7 @@ class RunQueue:
                     for depid in taskData.rdepids[fnid]:
                         if depid in taskData.run_targets:
                             depdata = taskData.run_targets[depid][0]
-                            if depdata:
+                            if depdata is not None:
                                 dep = taskData.fn_index[depdata]
                                 depends.append(taskData.gettask_id(dep, taskname))
 
@@ -133,7 +133,7 @@ class RunQueue:
                     if depid in taskData.build_targets:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         depdata = taskData.build_targets[depid][0]
-                        if depdata:
+                        if depdata is not None:
                             dep = taskData.fn_index[depdata]
                             depends.append(taskData.gettask_id(dep, idepend.split(":")[1]))
 
@@ -148,11 +148,11 @@ class RunQueue:
                     dep_seen.append(depid)
                     if depid in taskData.build_targets:
                         depdata = taskData.build_targets[depid][0]
-                        if depdata:
+                        if depdata is not None:
                             dep = taskData.fn_index[depdata]
                             # Need to avoid creating new tasks here
                             taskid = taskData.gettask_id(dep, taskname, False)
-                            if taskid:
+                            if taskid is not None:
                                 depends.append(taskid)
                                 fnid = taskData.tasks_fnid[taskid]
                             else:
@@ -180,11 +180,11 @@ class RunQueue:
                     rdep_seen.append(rdepid)
                     if rdepid in taskData.run_targets:
                         depdata = taskData.run_targets[rdepid][0]
-                        if depdata:
+                        if depdata is not None:
                             dep = taskData.fn_index[depdata]
                             # Need to avoid creating new tasks here
                             taskid = taskData.gettask_id(dep, taskname, False)
-                            if taskid:
+                            if taskid is not None:
                                 depends.append(taskid)
                                 fnid = taskData.tasks_fnid[taskid]
                             else:
