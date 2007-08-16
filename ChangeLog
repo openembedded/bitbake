@@ -25,6 +25,7 @@ Changes in Bitbake 1.8.x:
 	- Fix int(0)/None confusion in runqueue.py which causes random gaps in dependency chains
 	- Fix handling of variables with expansion in the name using _append/_prepend
 	  e.g. RRECOMMENDS_${PN}_append_xyz = "abc"
+	- Expand data in addtasks
        
 
 Changes in Bitbake 1.8.6:
