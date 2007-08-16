@@ -399,9 +399,13 @@ def add_task(task, deps, d):
     task_graph = data.getVar('_task_graph', d)
     if not task_graph:
         task_graph = bb.digraph()
+
+    task = data.expand(task, d)
+
     data.setVarFlag(task, 'task', 1, d)
     task_graph.addnode(task, None)
     for dep in deps:
+        dep = data.expand(dep, d)
         if not task_graph.hasnode(dep):
             task_graph.addnode(dep, None)
         task_graph.addnode(task, dep)
