@@ -186,7 +186,7 @@ class DataSmart:
             dest.extend(src)
             self.setVarFlag(newkey, i, dest)
             
-            if key in self._special_values[i]:
+            if self._special_values.has_key(i) and key in self._special_values[i]:
                 self._special_values[i].remove(key)
                 self._special_values[i].add(newkey)
 
