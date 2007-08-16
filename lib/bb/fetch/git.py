@@ -51,7 +51,7 @@ class Git(Fetch):
             ud.proto = ud.parm['protocol']
 
         tag = data.getVar("SRCREV", d, 0)
-        if 'tag' in ud.parm and len(tag) == 40:
+        if 'tag' in ud.parm and len(ud.parm['tag']) == 40:
             ud.tag = ud.parm['tag']
         elif tag and "get_srcrev" not in tag and len(tag) == 40:
             ud.tag = tag
