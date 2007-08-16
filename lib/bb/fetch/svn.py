@@ -74,11 +74,14 @@ class Svn(Fetch):
                 ud.revision = ""
             else:
                 rev = data.getVar("SRCREV", d, 0)
-                if "get_srcrev" in rev:
+                if rev and "get_srcrev" in rev:
                     ud.revision = self.latest_revision(url, ud, d)
-                else:
+                    ud.date = ""
+                else if rev:
                     ud.revision = rev
-                ud.date = ""
+                    ud.date = ""
+		else:
+                    ud.revision = ""		
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
