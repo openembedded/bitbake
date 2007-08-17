@@ -176,15 +176,23 @@ def handle(fn, d, include = 0):
                 if bb.event.register(var,handler) == bb.event.Registered:
                     all_handlers[var] = handler
 
+            tasklist = {}
             for var in data.getVar('__BBTASKS', d) or []:
+                if var not in tasklist:
+                    tasklist[var] = []
                 deps = data.getVarFlag(var, 'deps', d) or []
+                for p in deps:
+                    if p not in tasklist[var]:
+                        tasklist[var].append(p)
+
                 postdeps = data.getVarFlag(var, 'postdeps', d) or []
-                bb.build.add_task(var, deps, d)
                 for p in postdeps:
-                    pdeps = data.getVarFlag(p, 'deps', d) or []
-                    pdeps.append(var)
-                    data.setVarFlag(p, 'deps', pdeps, d)
-                    bb.build.add_task(p, pdeps, d)
+                    if p not in tasklist:
+                        tasklist[p] = []
+                    if var not in tasklist[p]:
+                        tasklist[p].append(var)
+
+            bb.build.add_tasks(tasklist, d)
 
             # now add the handlers
             if not len(all_handlers) == 0:
