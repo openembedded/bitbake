@@ -395,38 +395,41 @@ def del_stamp(task, d, file_name = None):
     """
     stamp_internal(task, d, file_name)
 
-def add_task(task, deps, d):
+def add_tasks(tasklist, d):
     task_graph = data.getVar('_task_graph', d)
+    task_deps = data.getVar('_task_deps', d)
     if not task_graph:
         task_graph = bb.digraph()
-
-    task = data.expand(task, d)
-
-    data.setVarFlag(task, 'task', 1, d)
-    task_graph.addnode(task, None)
-    for dep in deps:
-        dep = data.expand(dep, d)
-        if not task_graph.hasnode(dep):
-            task_graph.addnode(dep, None)
-        task_graph.addnode(task, dep)
-    # don't assume holding a reference
-    data.setVar('_task_graph', task_graph, d)
-
-    task_deps = data.getVar('_task_deps', d)
     if not task_deps:
         task_deps = {}
-    def getTask(name):
-        deptask = data.getVarFlag(task, name, d)
-        if deptask:
-            deptask = data.expand(deptask, d)
-            if not name in task_deps:
-                task_deps[name] = {}
-            task_deps[name][task] = deptask
-    getTask('deptask')
-    getTask('rdeptask')
-    getTask('recrdeptask')
-    getTask('nostamp')
 
+    for task in tasklist:
+        deps = tasklist[task]
+        task = data.expand(task, d)
+
+        data.setVarFlag(task, 'task', 1, d)
+        task_graph.addnode(task, None)
+        for dep in deps:
+            dep = data.expand(dep, d)
+            if not task_graph.hasnode(dep):
+                task_graph.addnode(dep, None)
+            task_graph.addnode(task, dep)
+
+        flags = data.getVarFlags(task, d)    
+        def getTask(name):
+            if name in flags:
+                deptask = data.expand(flags[name], d)
+                if not name in task_deps:
+                    task_deps[name] = {}
+                task_deps[name][task] = deptask
+        getTask('depends')
+        getTask('deptask')
+        getTask('rdeptask')
+        getTask('recrdeptask')
+        getTask('nostamp')
+
+    # don't assume holding a reference
+    data.setVar('_task_graph', task_graph, d)
     data.setVar('_task_deps', task_deps, d)
 
 def remove_task(task, kill, d):
