@@ -450,10 +450,12 @@ class TaskData:
             self.add_runtime_target(fn, item)
             self.add_tasks(fn, dataCache)
 
-    def fail_fnid(self, fnid):
+    def fail_fnid(self, fnid, missing_list = []):
         """
         Mark a file as failed (unbuildable)
         Remove any references from build and runtime provider lists
+
+        missing_list, A list of missing requirements for this target
         """
         if fnid in self.failed_fnids:
             return
@@ -463,14 +465,14 @@ class TaskData:
             if fnid in self.build_targets[target]:
                 self.build_targets[target].remove(fnid)
                 if len(self.build_targets[target]) == 0:
-                    self.remove_buildtarget(target)
+                    self.remove_buildtarget(target, missing_list)
         for target in self.run_targets:
             if fnid in self.run_targets[target]:
                 self.run_targets[target].remove(fnid)
                 if len(self.run_targets[target]) == 0:
-                    self.remove_runtarget(target)
+                    self.remove_runtarget(target, missing_list)
 
-    def remove_buildtarget(self, targetid):
+    def remove_buildtarget(self, targetid, missing_list = []):
         """
         Mark a build target as failed (unbuildable)
         Trigger removal of any files that have this as a dependency
@@ -479,21 +481,21 @@ class TaskData:
         self.failed_deps.append(targetid)
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
-            self.fail_fnid(fnid)
+            self.fail_fnid(fnid, [self.build_names_index[targetid]]+missing_list)
         if self.abort and targetid in self.external_targets:
-            bb.msg.error(bb.msg.domain.Provider, "No buildable providers available for required build target %s" % self.build_names_index[targetid])
+            bb.msg.error(bb.msg.domain.Provider, "No buildable providers available for required build target %s ('%s')" % (self.build_names_index[targetid], missing_list))
             raise bb.providers.NoProvider
 
-    def remove_runtarget(self, targetid):
+    def remove_runtarget(self, targetid, missing_list = []):
         """
         Mark a run target as failed (unbuildable)
         Trigger removal of any files that have this as a dependency
         """
-        bb.msg.note(1, bb.msg.domain.Provider, "Removing failed runtime build target %s" % self.run_names_index[targetid])
+        bb.msg.note(1, bb.msg.domain.Provider, "Removing failed runtime build target %s  ('%s')" % (self.run_names_index[targetid], missing_list))
         self.failed_rdeps.append(targetid)
         dependees = self.get_rdependees(targetid)
         for fnid in dependees:
-            self.fail_fnid(fnid)
+            self.fail_fnid(fnid, [self.run_names_index[targetid]]+missing_list)
 
     def add_unresolved(self, cfgData, dataCache):
         """
