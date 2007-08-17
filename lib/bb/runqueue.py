@@ -137,7 +137,7 @@ class RunQueue:
                             dep = taskData.fn_index[depdata]
                             depends.append(taskData.gettask_id(dep, idepend.split(":")[1]))
 
-                def add_recursive_build(depid):
+                def add_recursive_build(depid, depfnid):
                     """
                     Add build depends of depid to depends
                     (if we've not see it before)
@@ -150,26 +150,28 @@ class RunQueue:
                         depdata = taskData.build_targets[depid][0]
                         if depdata is not None:
                             dep = taskData.fn_index[depdata]
+                            idepends = []
                             # Need to avoid creating new tasks here
                             taskid = taskData.gettask_id(dep, taskname, False)
                             if taskid is not None:
                                 depends.append(taskid)
                                 fnid = taskData.tasks_fnid[taskid]
+                                idepends = taskData.tasks_idepends[taskid]
+                                #print "Added %s (%s) due to %s" % (taskid, taskData.fn_index[fnid], taskData.fn_index[depfnid])
                             else:
                                 fnid = taskData.getfn_id(dep)
                             for nextdepid in taskData.depids[fnid]:
                                 if nextdepid not in dep_seen:
-                                    add_recursive_build(nextdepid)
+                                    add_recursive_build(nextdepid, fnid)
                             for nextdepid in taskData.rdepids[fnid]:
                                 if nextdepid not in rdep_seen:
-                                    add_recursive_run(nextdepid)
-                            idepends = taskData.tasks_idepends[depid]
+                                    add_recursive_run(nextdepid, fnid)
                             for idepend in idepends:
                                 nextdepid = int(idepend.split(":")[0])
                                 if nextdepid not in dep_seen:
-                                    add_recursive_build(nextdepid)
+                                    add_recursive_build(nextdepid, fnid)
 
-                def add_recursive_run(rdepid):
+                def add_recursive_run(rdepid, depfnid):
                     """
                     Add runtime depends of rdepid to depends
                     (if we've not see it before)
@@ -182,24 +184,26 @@ class RunQueue:
                         depdata = taskData.run_targets[rdepid][0]
                         if depdata is not None:
                             dep = taskData.fn_index[depdata]
+                            idepends = []
                             # Need to avoid creating new tasks here
                             taskid = taskData.gettask_id(dep, taskname, False)
                             if taskid is not None:
                                 depends.append(taskid)
                                 fnid = taskData.tasks_fnid[taskid]
+                                idepends = taskData.tasks_idepends[taskid]
+                                #print "Added %s (%s) due to %s" % (taskid, taskData.fn_index[fnid], taskData.fn_index[depfnid])
                             else:
                                 fnid = taskData.getfn_id(dep)
                             for nextdepid in taskData.depids[fnid]:
                                 if nextdepid not in dep_seen:
-                                    add_recursive_build(nextdepid)
+                                    add_recursive_build(nextdepid, fnid)
                             for nextdepid in taskData.rdepids[fnid]:
                                 if nextdepid not in rdep_seen:
-                                    add_recursive_run(nextdepid)
-                            idepends = taskData.tasks_idepends[rdepid]
+                                    add_recursive_run(nextdepid, fnid)
                             for idepend in idepends:
                                 nextdepid = int(idepend.split(":")[0])
                                 if nextdepid not in dep_seen:
-                                    add_recursive_build(nextdepid)
+                                    add_recursive_build(nextdepid, fnid)
 
 
                 # Resolve Recursive Runtime Depends
@@ -210,12 +214,12 @@ class RunQueue:
                         rdep_seen = []
                         idep_seen = []
                         for depid in taskData.depids[fnid]:
-                            add_recursive_build(depid)
+                            add_recursive_build(depid, fnid)
                         for rdepid in taskData.rdepids[fnid]:
-                            add_recursive_run(rdepid)
+                            add_recursive_run(rdepid, fnid)
                         for idepend in idepends:
                             depid = int(idepend.split(":")[0])
-                            add_recursive_build(depid)
+                            add_recursive_build(depid, fnid)
 
                 #Prune self references
                 if task in depends:
