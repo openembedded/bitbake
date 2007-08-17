@@ -1124,7 +1124,12 @@ class digraph:
 
     def allnodes(self):
         "returns all nodes in the dictionary"
-        return self.dict.keys()
+        keys = self.dict.keys()
+        ret = []
+        for key in keys:
+            ret.append(key)
+        ret.sort()
+        return ret
 
     def firstzero(self):
         "returns first node with zero references, or NULL if no such node exists"
@@ -1168,7 +1173,12 @@ class digraph:
     def getparents(self, item):
         if not self.hasnode(item):
             return []
-        return self.dict[item][1]
+        parents = self.dict[item][1]
+        ret = []
+        for parent in parents:
+            ret.append(parent)
+        ret.sort()
+        return ret
 
     def getchildren(self, item):
         if not self.hasnode(item):
