@@ -531,14 +531,26 @@ class TaskData:
         """
         bb.msg.debug(3, bb.msg.domain.TaskData, "build_names:")
         bb.msg.debug(3, bb.msg.domain.TaskData, ", ".join(self.build_names_index))
+
         bb.msg.debug(3, bb.msg.domain.TaskData, "run_names:")
         bb.msg.debug(3, bb.msg.domain.TaskData, ", ".join(self.run_names_index))
+
         bb.msg.debug(3, bb.msg.domain.TaskData, "build_targets:")
-        for target in self.build_targets.keys():
-            bb.msg.debug(3, bb.msg.domain.TaskData, " %s: %s" % (self.build_names_index[target], self.build_targets[target]))
+        for buildid in range(len(self.build_names_index)):
+            target = self.build_names_index[buildid]
+            targets = "None"
+            if buildid in self.build_targets:
+                targets = self.build_targets[buildid]
+            bb.msg.debug(3, bb.msg.domain.TaskData, " (%s)%s: %s" % (buildid, target, targets))
+
         bb.msg.debug(3, bb.msg.domain.TaskData, "run_targets:")
-        for target in self.run_targets.keys():
-            bb.msg.debug(3, bb.msg.domain.TaskData, " %s: %s" % (self.run_names_index[target], self.run_targets[target]))
+        for runid in range(len(self.run_names_index)):
+            target = self.run_names_index[runid]
+            targets = "None"
+            if runid in self.run_targets:
+                targets = self.run_targets[runid]
+            bb.msg.debug(3, bb.msg.domain.TaskData, " (%s)%s: %s" % (runid, target, targets))
+
         bb.msg.debug(3, bb.msg.domain.TaskData, "tasks:")
         for task in range(len(self.tasks_name)):
             bb.msg.debug(3, bb.msg.domain.TaskData, " (%s)%s - %s: %s" % (
@@ -546,6 +558,7 @@ class TaskData:
                 self.fn_index[self.tasks_fnid[task]], 
                 self.tasks_name[task], 
                 self.tasks_tdepends[task]))
+
         bb.msg.debug(3, bb.msg.domain.TaskData, "runtime ids (per fn):")
         for fnid in self.rdepids:
             bb.msg.debug(3, bb.msg.domain.TaskData, " %s %s: %s" % (fnid, self.fn_index[fnid], self.rdepids[fnid]))
