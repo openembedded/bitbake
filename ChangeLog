@@ -48,6 +48,7 @@ Changes in Bitbake 1.9.x:
 	  error message.
 	- Rework add_task to be more efficient (6% speedup, 7% number of function calls reduction)
 	- Sort digraph output to make builds more reproducible
+	- Split expandKeys into two for loops to benefit from the expand_cache (12% speedup)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

@@ -282,6 +282,7 @@ def expandKeys(alterdata, readdata = None):
     if readdata == None:
         readdata = alterdata
 
+    todolist = {}
     for key in keys(alterdata):
         if not '${' in key:
             continue
@@ -289,7 +290,13 @@ def expandKeys(alterdata, readdata = None):
         ekey = expand(key, readdata)
         if key == ekey:
             continue
+        todolist[key] = ekey
 
+    # These two for loops are split for performance to maximise the 
+    # usefulness of the expand cache
+
+    for key in todolist:
+        ekey = todolist[key]
         renameVar(key, ekey, alterdata)
 
 def expandData(alterdata, readdata = None):
