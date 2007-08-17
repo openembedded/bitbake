@@ -46,6 +46,8 @@ Changes in Bitbake 1.9.x:
 	- Expand data in addtasks
 	- Print the list of missing DEPENDS,RDEPENDS for the "No buildable providers available for required...."
 	  error message.
+	- Rework add_task to be more efficient (6% speedup, 7% number of function calls reduction)
+	- Sort digraph output to make builds more reproducible
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
