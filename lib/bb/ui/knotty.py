@@ -31,6 +31,10 @@ parsespin = itertools.cycle( r'|/-\\' )
 
 def init(frontend, eventHandler):
 
+    # Get values of variables which control our output
+    includelogs = frontend.runCommand(["readVariable", "BBINCLUDELOGS"])
+    loglines = frontend.runCommand(["readVariable", "BBINCLUDELOGS_LINES"])
+
     try:
         cmdline = frontend.runCommand(["getCmdLineAction"])
         #print cmdline
@@ -38,10 +42,11 @@ def init(frontend, eventHandler):
             return
         ret = frontend.runCommand(cmdline)
         if ret != True:
-            print "Cook failed: %s" % ret
-
+            print "Couldn't get default commandlind! %s" % ret
+            return
     except xmlrpclib.Fault, x:
-        print x
+        print "XMLRPC Fault getting commandline:\n %s" % x
+        return
 
     shutdown = 0
     while True:
@@ -71,23 +76,20 @@ def init(frontend, eventHandler):
             if event[0].startswith('bb.build.TaskFailed'):
                 logfile = event[1]['logfile']
                 if logfile:
-#                    if bb.data.getVar("BBINCLUDELOGS", d):
-                        print "ERROR: Logged data stored in %s" % logfile
+                    print "ERROR: Logfile of failure stored in %s." % logfile
+                    if includelogs:
                         print "Log data follows:\n"
-#                    number_of_lines = data.getVar("BBINCLUDELOGS_LINES", d)
-#                    if number_of_lines:
-#                        os.system('tail -n%s %s' % (number_of_lines, logfile))
-#                    else:
-                        f = open(logfile, "r")
-                        while True:
-                            l = f.readline()
-                            if l == '':
-                                break
-                            l = l.rstrip()
-                            print '| %s' % l
-                        f.close()
-#                else:
-#                    bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
+                        if loglines:
+                            os.system('tail -n%s %s' % (loglines, logfile))
+                        else:
+                            f = open(logfile, "r")
+                            while True:
+                                l = f.readline()
+                                if l == '':
+                                    break
+                                l = l.rstrip()
+                                print '| %s' % l
+                            f.close()
             if event[0].startswith('bb.build.Task'):
                 print "NOTE: %s" % event[1]['_message']
                 continue
