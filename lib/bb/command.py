@@ -114,16 +114,6 @@ class CommandsOnline:
         """
         return command.cooker.commandlineAction
 
-    def showEnvironment(self, command, params):
-        """
-        Print the environment
-        """
-        bfile = params[0]
-
-        command.cooker.showEnvironment(bfile)
-
-        bb.event.fire(bb.command.CookerCommandCompleted(command.cooker.configuration.event_data))
-
 class CommandsOffline:
     """
     A class of offline commands
@@ -165,6 +155,14 @@ class CommandsOffline:
         command.cooker.showVersions()
         command.finishOfflineCommand()
 
+    def showEnvironment(self, command, params):
+        """
+        Print the environment
+        """
+        bfile = params[0]
+
+        command.cooker.showEnvironment(bfile)
+        command.finishOfflineCommand()
 
 class CookerCommandCompleted(bb.event.Event):
     """
