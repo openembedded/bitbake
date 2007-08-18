@@ -114,6 +114,17 @@ class CommandsOnline:
         """
         return command.cooker.commandlineAction
 
+    def readVariable(self, command, params):
+        """
+        Read the value of a variable from configuration.data
+        """
+        varname = params[0]
+        expand = True
+        if len(params) > 1:
+            expand = params[1]
+
+        return bb.data.getVar(varname, command.cooker.configuration.data, expand)
+
 class CommandsOffline:
     """
     A class of offline commands
@@ -171,6 +182,9 @@ class CommandsOffline:
         command.cooker.updateCache()
         command.finishOfflineCommand()
 
+#
+# Events
+#
 class CookerCommandCompleted(bb.event.Event):
     """
     Cooker command completed
