@@ -47,7 +47,9 @@ class TaskBase(event.Event):
 
     def __init__(self, t, d ):
         self._task = t
+        self._package = bb.data.getVar("PF", d, 1)
         event.Event.__init__(self, d)
+        self._message = "package %s: task %s: %s" % (bb.data.getVar("PF", d, 1), t, bb.event.getName(self)[4:])
 
     def getTask(self):
         return self._task
@@ -108,7 +110,9 @@ def exec_func(func, d, dirs = None):
     if not t:
         bb.msg.fatal(bb.msg.domain.Build, "T not set")
     mkdirhier(t)
-    logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
+    # Gross hack, FIXME
+    import random
+    logfile = "%s/log.%s.%s.%s" % (t, func, str(os.getpid()),random.random())
     runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
 
     # Change to correct directory (if specified)
