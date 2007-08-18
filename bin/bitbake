@@ -114,6 +114,10 @@ Default BBFILES are the .bb files in the current directory.""" )
     configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
 
+    cooker = bb.cooker.BBCooker(configuration)
+    host = cooker.server.host
+    port = cooker.server.port
+
     # Save a logfile for cooker somewhere
     t = bb.data.getVar('TMPDIR', cooker.configuration.data, True)
     if not t:
@@ -122,9 +126,6 @@ Default BBFILES are the .bb files in the current directory.""" )
     bb.mkdirhier(t)
     cooker_logfile = "%s/log.cooker.%s" % (t, str(os.getpid()))
 
-    cooker = bb.cooker.BBCooker(configuration)
-    host = cooker.server.host
-    port = cooker.server.port
     daemonize.createDaemon(cooker.serve, cooker_logfile)
     del cooker
 
