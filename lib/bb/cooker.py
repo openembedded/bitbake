@@ -25,16 +25,28 @@
 import sys, os, getopt, glob, copy, os.path, re, time
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
+from bb import xmlrpcserver, command
 from sets import Set
 import itertools, sre_constants
-
-parsespin = itertools.cycle( r'|/-\\' )
 
 class MultipleMatches(Exception):
     """
     Exception raised when multiple file matches are found
     """
 
+class ParsingErrorsFound(Exception):
+    """
+    Exception raised when parsing errors are found
+    """
+
+# Different states cooker can be in
+cookerClean = 1
+cookerParsed = 2
+
+# Different action states the cooker can be in
+cookerRun = 1           # Cooker is running normally
+cookerShutdown = 2      # Active tasks should be brought to a controlled stop
+cookerStop = 3          # Stop, now!
 
 #============================================================================#
 # BBCooker
@@ -49,6 +61,9 @@ class BBCooker:
 
         self.cache = None
         self.bb_cache = None
+
+        self.server = bb.xmlrpcserver.BitBakeXMLRPCServer()
+        self.server.register_function(self.showEnvironment)
 
         self.configuration = configuration
 
@@ -95,6 +110,49 @@ class BBCooker:
                 tcattr[3] = tcattr[3] & ~termios.TOSTOP
                 termios.tcsetattr(fd, termios.TCSANOW, tcattr)
 
+        #
+        # Parse any commandline into actions
+        #
+
+        if self.configuration.show_environment:
+            self.commandlineAction = ("showEnvironment", self.configuration.buildfile)
+        elif self.configuration.buildfile is not None:
+            self.commandlineAction = ("buildFile", self.configuration.buildfile, self.configuration.cmd)
+        elif self.configuration.show_versions:
+            self.commandlineAction = ("showVersions")
+        elif self.configuration.dot_graph:
+            self.commandlineAction = ("generateDotGraph", self.configuration.pkgs_to_build)
+        else:
+            self.commandlineAction = ("buildTargets", self.configuration.pkgs_to_build)
+
+        # FIXME - implement
+        #if self.configuration.interactive:
+        #    self.interactiveMode()
+        #
+        #if self.configuration.parse_only:
+        #    self.updateCache()
+        #    bb.msg.note(1, bb.msg.domain.Collection, "Requested parsing .bb files only.  Exiting.")
+        #    return 0
+
+        self.command = bb.command.Command(self)
+        self.cookerIdle = True
+        self.cookerState = cookerClean
+        self.cookerAction = cookerRun
+        self.server.register_idle_function(self.runCommands, self)
+
+
+    def runCommands(self, server, data, abort):
+        """
+        Run any queued offline command
+        This is done by the idle handler so it runs in true context rather than
+        tied to any UI.
+        """
+        if self.cookerIdle and not abort:
+            self.command.runOfflineCommand()
+
+        # Always reschedule
+        return True
+
     def tryBuildPackage(self, fn, item, task, the_data, build_depends):
         """
         Build one task of a package, optionally build following task depends
@@ -134,6 +192,10 @@ class BBCooker:
         return self.tryBuildPackage(fn, item, self.configuration.cmd, the_data, build_depends)
 
     def showVersions(self):
+
+        # Need files parsed
+        self.updateCache()
+
         pkg_pn = self.status.pkg_pn
         preferred_versions = {}
         latest_versions = {}
@@ -203,6 +265,10 @@ class BBCooker:
         pkgs_to_build A list of packages that needs to be built
         """
 
+        pkgs_to_build = self.checkPackages(pkgs_to_build)
+
+        # Need files parsed
+        self.updateCache()
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
@@ -321,19 +387,6 @@ class BBCooker:
             # drop reference count now
             self.status.possible_world = None
             self.status.all_depends    = None
-
-    def myProgressCallback( self, x, y, f, from_cache ):
-        """Update any tty with the progress change"""
-        if os.isatty(sys.stdout.fileno()):
-            sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
-            sys.stdout.flush()
-        else:
-            if x == 1:
-                sys.stdout.write("Parsing .bb files, please wait...")
-                sys.stdout.flush()
-            if x == y:
-                sys.stdout.write("done.")
-                sys.stdout.flush()
 
     def interactiveMode( self ):
         """Drop off into a shell"""
@@ -459,10 +512,37 @@ class BBCooker:
         except bb.build.EventException:
             bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
 
+        bb.event.fire(bb.command.CookerCommandCompleted(self.configuration.event_data))
+
     def buildTargets(self, targets):
         """
         Attempt to build the targets specified
         """
+
+        targets = self.checkPackages(targets)
+
+        # Need files parsed
+        self.updateCache()
+
+        def buildTargetsIdle(server, rq, abort):
+
+            if abort or self.cookerAction == cookerStop:
+                rq.finish_runqueue(True)
+            elif self.cookerAction == cookerShutdown:
+                rq.finish_runqueue(False)
+            failures = 0
+            try:
+                retval = rq.execute_runqueue()
+            except runqueue.TaskFailure, fnids:
+                for fnid in fnids:
+                    bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+                    failures = failures + 1
+                retval = False
+            if not retval:
+                bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
+                self.cookerIdle = True
+                self.command.finishOfflineCommand()
+            return retval
 
         self.buildSetVars()
 
@@ -482,16 +562,15 @@ class BBCooker:
         taskdata.add_unresolved(localdata, self.status)
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
-        rq.prepare_runqueue()
-        try:
-            failures = rq.execute_runqueue()
-        except runqueue.TaskFailure, fnids:
-            for fnid in fnids:
-                bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
-            sys.exit(1)
-        bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
+
+        self.cookerIdle = False
+        self.server.register_idle_function(buildTargetsIdle, rq)
 
     def updateCache(self):
+
+        if self.cookerState == cookerParsed:
+            return
+
         # Import Psyco if available and not disabled
         if not self.configuration.disable_psyco:
             try:
@@ -515,65 +594,12 @@ class BBCooker:
 
         bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
         (filelist, masked) = self.collect_bbfiles()
-        self.parse_bbfiles(filelist, masked, self.myProgressCallback)
+        self.parse_bbfiles(filelist, masked)
         bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
 
         self.buildDepgraph()
 
-    def cook(self):
-        """
-        We are building stuff here. We do the building
-        from here. By default we try to execute task
-        build.
-        """
-
-        
-        if self.configuration.show_environment:
-            try:
-                self.showEnvironment(self.configuration.buildfile)
-            except bb.cooker.MultipleMatches:
-                 sys.exit(1)
-            sys.exit(0)
-
-        if self.configuration.interactive:
-            self.interactiveMode()
-            sys.exit(0)
-
-        if self.configuration.buildfile is not None:
-            try:
-                 self.buildFile(self.configuration.buildfile, self.configuration.cmd)
-            except bb.cooker.MultipleMatches:
-                 sys.exit(1)
-            sys.exit(0)
-
-        # initialise the parsing status now we know we will need deps
-        self.updateCache()
-
-        if self.configuration.parse_only:
-            bb.msg.note(1, bb.msg.domain.Collection, "Requested parsing .bb files only.  Exiting.")
-            return 0
-
-        try:
-            if self.configuration.show_versions:
-                self.showVersions()
-                sys.exit(0)
-
-            pkgs_to_build = self.checkPackages(self.configuration.pkgs_to_build)
-            if not pkgs_to_build:
-                sys.exit(1)
-
-            if self.configuration.dot_graph:
-                self.generateDotGraph( pkgs_to_build )
-                sys.exit(0)
-
-            self.buildTargets(pkgs_to_build)
-            sys.exit(0)
-
-        except bb.providers.NoProvider:
-            sys.exit(1)
-        except KeyboardInterrupt:
-            bb.msg.note(1, bb.msg.domain.Collection, "KeyboardInterrupt - Build not completed.")
-            sys.exit(1)
+        self.cookerState = cookerParsed
 
     def checkPackages(self, pkgs_to_build):
 
@@ -657,9 +683,9 @@ class BBCooker:
 
         return (finalfiles, masked)
 
-    def parse_bbfiles(self, filelist, masked, progressCallback = None):
-        parsed, cached, skipped, error = 0, 0, 0, 0
-        for i in xrange( len( filelist ) ):
+    def parse_bbfiles(self, filelist, masked):
+        parsed, cached, skipped, error, total = 0, 0, 0, 0, len(filelist)
+        for i in xrange(total):
             f = filelist[i]
 
             bb.msg.debug(1, bb.msg.domain.Collection, "parsing %s" % f)
@@ -689,11 +715,8 @@ class BBCooker:
 
                 self.bb_cache.handle_data(f, self.status)
 
-                # now inform the caller
-                if progressCallback is not None:
-                    progressCallback( i + 1, len( filelist ), f, fromCache )
-
             except IOError, e:
+                error += 1
                 self.bb_cache.remove(f)
                 bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
                 pass
@@ -707,12 +730,50 @@ class BBCooker:
             except:
                 self.bb_cache.remove(f)
                 raise
-
-        if progressCallback is not None:
-            print "\r" # need newline after Handling Bitbake files message
-            bb.msg.note(1, bb.msg.domain.Collection, "Parsing finished. %d cached, %d parsed, %d skipped, %d masked." % ( cached, parsed, skipped, masked ))
+            finally:
+                bb.event.fire(bb.event.ParseProgress(self.configuration.event_data, cached, parsed, skipped, masked, error, total))
 
         self.bb_cache.sync()
-
         if error > 0:
-            bb.msg.fatal(bb.msg.domain.Collection, "Parsing errors found, exiting...")
+             raise ParsingErrorsFound
+
+    def serve(self):
+        self.server.cooker = self
+
+        if self.configuration.profile:
+            try:
+                import cProfile as profile
+            except:
+                import profile
+
+            profile.runctx("self.server.serve_forever()", globals(), locals(), "profile.log")
+
+            # Redirect stdout to capture profile information
+            pout = open('profile.log.processed', 'w')
+            so = sys.stdout.fileno()
+            os.dup2(pout.fileno(), so)
+
+            import pstats
+            p = pstats.Stats('profile.log')
+            p.sort_stats('time')
+            p.print_stats()
+            p.print_callers()
+            p.sort_stats('cumulative')
+            p.print_stats()
+
+            os.dup2(so, pout.fileno())
+            pout.flush()
+            pout.close()
+        else:
+            self.server.serve_forever()
+        
+        bb.event.fire(CookerExit(self.configuration.event_data))
+        
+class CookerExit(bb.event.Event):
+    """
+    Notify clients of the Cooker shutdown
+    """
+
+    def __init__(self, d):
+        bb.event.Event.__init__(self, d)
+
