@@ -7,7 +7,7 @@ BitBake 'RunQueue' implementation
 Handles preparation and execution of a queue of tasks
 """
 
-# Copyright (C) 2006  Richard Purdie
+# Copyright (C) 2006-2007  Richard Purdie
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -37,19 +37,38 @@ class RunQueueStats:
     """
     Holds statistics on the tasks handled by the associated runQueue
     """
-    def __init__(self):
+    def __init__(self, total):
         self.completed = 0
         self.skipped = 0
         self.failed = 0
+        self.active = 0
+        self.total = total
 
     def taskFailed(self):
+        self.active = self.active - 1
         self.failed = self.failed + 1
 
     def taskCompleted(self):
+        self.active = self.active - 1
         self.completed = self.completed + 1
 
     def taskSkipped(self):
+        self.active = self.active + 1
         self.skipped = self.skipped + 1
+
+    def taskActive(self):
+        self.active = self.active + 1
+
+# These values indicate the next step due to be run in the 
+# runQueue state machine
+runQueuePrepare = 2
+runQueueRunInit = 3
+runQueueRunning = 4
+runQueueFailedCleanUp = 5
+runQueueFailed = 6
+runQueueCleanUp = 7
+runQueueComplete = 8
+runQueueChildProcess = 9
 
 class RunQueue:
     """
@@ -60,18 +79,20 @@ class RunQueue:
         self.cooker = cooker
         self.dataCache = dataCache
         self.taskData = taskData
+        self.cfgData = cfgData
         self.targets = targets
 
         self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData) or 1)
 
     def reset_runqueue(self):
-
         self.runq_fnid = []
         self.runq_task = []
         self.runq_depends = []
         self.runq_revdeps = []
         self.runq_weight = []
         self.prio_map = []
+
+        self.state = runQueuePrepare
 
     def get_user_idstring(self, task):
         fn = self.taskData.fn_index[self.runq_fnid[task]]
@@ -389,6 +410,8 @@ class RunQueue:
 
         #self.dump_data(taskData)
 
+        self.state = runQueueRunInit
+
     def execute_runqueue(self):
         """
         Run the tasks in a queue prepared by prepare_runqueue
@@ -396,45 +419,60 @@ class RunQueue:
         (if the abort on failure configuration option isn't set)
         """
 
-        failures = 0
-        while 1:
-            failed_fnids = []
-            try:
-                self.execute_runqueue_internal()
-            finally:
-                if self.master_process:
-                    failed_fnids = self.finish_runqueue()
-            if len(failed_fnids) == 0:
-                return failures
-            if self.taskData.abort:
-                raise bb.runqueue.TaskFailure(failed_fnids)
-            for fnid in failed_fnids:
-                #print "Failure: %s %s %s" % (fnid, self.taskData.fn_index[fnid],  self.runq_task[fnid])
-                self.taskData.fail_fnid(fnid)
-                failures = failures + 1
-            self.reset_runqueue()
+        if self.state is runQueuePrepare:
             self.prepare_runqueue()
+
+        if self.state is runQueueRunInit:
+            bb.msg.note(1, bb.msg.domain.RunQueue, "Executing runqueue")
+            self.execute_runqueue_initVars()
+
+        if self.state is runQueueRunning:
+            self.execute_runqueue_internal()
+
+        if self.state is runQueueFailedCleanUp:
+            self.finish_runqueue()
+
+        if self.state is runQueueCleanUp:
+            self.finish_runqueue()
+
+        if self.state is runQueueFailed:
+            if self.taskData.abort:
+                raise bb.runqueue.TaskFailure(self.failed_fnids)
+            self.reset_runqueue()
+
+        if self.state is runQueueComplete:
+            # All done
+            bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (self.stats.completed, self.stats.skipped, self.stats.failed))
+            return False
+
+        if self.state is runQueueChildProcess:
+            print "Child process"
+            return False
+
+        # Loop
+        return True
 
     def execute_runqueue_initVars(self):
 
-        self.stats = RunQueueStats()
+        self.stats = RunQueueStats(len(self.runq_fnid))
 
-        self.active_builds = 0
         self.runq_buildable = []
         self.runq_running = []
         self.runq_complete = []
         self.build_pids = {}
         self.failed_fnids = []
-        self.master_process = True
 
         # Mark initial buildable tasks
-        for task in range(len(self.runq_fnid)):
+        for task in range(self.stats.total):
             self.runq_running.append(0)
             self.runq_complete.append(0)
             if len(self.runq_depends[task]) == 0:
                 self.runq_buildable.append(1)
             else:
                 self.runq_buildable.append(0)
+
+        self.state = runQueueRunning
+
 
     def task_complete(self, task):
         """
@@ -458,11 +496,25 @@ class RunQueue:
                 taskname = self.runq_task[revdep]
                 bb.msg.debug(1, bb.msg.domain.RunQueue, "Marking task %s (%s, %s) as buildable" % (revdep, fn, taskname))
 
+    def task_fail(self, task, exitcode):
+        """
+        Called when a task has failed
+        Updates the state engine with the failure
+        """
+        bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed with %s" % (task, self.get_user_idstring(task), exitcode))
+        self.stats.taskFailed()
+        fnid = self.runq_fnid[task]
+        self.failed_fnids.append(fnid)
+        if not self.taskData.abort:
+            self.taskData.fail_fnid(fnid)
+        self.state = runQueueFailedCleanUp
+        bb.event.fire(runQueueTaskFailed(task, self.stats, self, self.cfgData))
+
     def get_next_task(self):
         """
         Return the id of the highest priority task that is buildable
         """
-        for task1 in range(len(self.runq_fnid)):
+        for task1 in range(self.stats.total):
             task = self.prio_map[task1]
             if self.runq_running[task] == 1:
                 continue
@@ -475,16 +527,9 @@ class RunQueue:
         Run the tasks in a queue prepared by prepare_runqueue
         """
 
-        bb.msg.note(1, bb.msg.domain.RunQueue, "Executing runqueue")
-
-        self.execute_runqueue_initVars()
-
-        if len(self.runq_fnid) == 0:
+        if self.stats.total == 0:
             # nothing to do
-            return []
-
-        def sigint_handler(signum, frame):
-            raise KeyboardInterrupt
+            self.state = runQueueCleanup
 
         # Find any tasks with current stamps and remove them from the queue
         for task1 in range(len(self.runq_fnid)):
@@ -500,7 +545,9 @@ class RunQueue:
                 self.stats.taskSkipped()
 
         while True:
-            task = self.get_next_task()
+            task = None
+            if self.stats.active < self.number_tasks:
+                task = self.get_next_task()
             if task is not None:
                 fn = self.taskData.fn_index[self.runq_fnid[task]]
 
@@ -514,16 +561,14 @@ class RunQueue:
                     self.stats.taskSkipped()
                     continue
 
-                bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.active_builds + 1, len(self.runq_fnid), task, self.get_user_idstring(task)))
+                bb.event.fire(runQueueTaskStarted(task, self.stats, self, self.cfgData))
+                bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + 1, self.stats.total, task, self.get_user_idstring(task)))
                 try: 
                     pid = os.fork() 
                 except OSError, e: 
                     bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
                 if pid == 0:
-                    # Bypass master process' handling
-                    self.master_process = False
-                    # Stop Ctrl+C being sent to children
-                    # signal.signal(signal.SIGINT, signal.SIG_IGN)
+                    self.state = runQueueChildProcess
                     # Make the child the process group leader
                     os.setpgid(0, 0)
                     newsi = os.open('/dev/null', os.O_RDWR)
@@ -540,71 +585,80 @@ class RunQueue:
                     sys.exit(0)
                 self.build_pids[pid] = task
                 self.runq_running[task] = 1
-                self.active_builds = self.active_builds + 1
-                if self.active_builds < self.number_tasks:
+                self.stats.taskActive()
+                if self.stats.active < self.number_tasks:
                     continue
-            if self.active_builds > 0:
-                result = os.waitpid(-1, 0)
-                self.active_builds = self.active_builds - 1
+            if self.stats.active > 0:
+                result = os.waitpid(-1, os.WNOHANG)
+                if result[0] is 0 and result[1] is 0:
+                    return
                 task = self.build_pids[result[0]]
+                del self.build_pids[result[0]]
                 if result[1] != 0:
-                    del self.build_pids[result[0]]
-                    bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (task, self.get_user_idstring(task)))
-                    self.failed_fnids.append(self.runq_fnid[task])
-                    self.stats.taskFailed()
-                    break
+                    self.task_fail(task, result[1])
+                    return
                 self.task_complete(task)
                 self.stats.taskCompleted()
-                del self.build_pids[result[0]]
+                bb.event.fire(runQueueTaskCompleted(task, self.stats, self, self.cfgData))
                 continue
+
+            # Sanity Checks
+            for task in range(self.stats.total):
+                if self.runq_buildable[task] == 0:
+                    bb.msg.error(bb.msg.domain.RunQueue, "Task %s never buildable!" % task)
+                if self.runq_running[task] == 0:
+                    bb.msg.error(bb.msg.domain.RunQueue, "Task %s never ran!" % task)
+                if self.runq_complete[task] == 0:
+                    bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
+            self.state = runQueueComplete
             return
 
-    def finish_runqueue(self):
+    def finish_runqueue_now(self):
+        bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % self.stats.active)
+        for k, v in self.build_pids.iteritems():
+             try:
+                 os.kill(-k, signal.SIGINT)
+             except:
+                 pass
+
+    def finish_runqueue(self, now = False):
+        self.state = runQueueCleanUp
+        if now:
+            self.finish_runqueue_now()
         try:
-            while self.active_builds > 0:
-                bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.active_builds)
+            while self.stats.active > 0:
+                bb.event.fire(runQueueExitWait(self.stats.active, self.cfgData))
+                bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.stats.active)
                 tasknum = 1
                 for k, v in self.build_pids.iteritems():
-                     bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (%s)" % (tasknum, self.get_user_idstring(v), k))
-                     tasknum = tasknum + 1
-                result = os.waitpid(-1, 0)
+                    bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (%s)" % (tasknum, self.get_user_idstring(v), k))
+                    tasknum = tasknum + 1
+                result = os.waitpid(-1, os.WNOHANG)
+                if result[0] is 0 and result[1] is 0:
+                    return
                 task = self.build_pids[result[0]]
-                if result[1] != 0:
-                     bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed" % (task, self.get_user_idstring(task)))
-                     self.failed_fnids.append(self.runq_fnid[task])
-                     self.stats.taskFailed()
                 del self.build_pids[result[0]]
-                self.active_builds = self.active_builds - 1
-            if len(self.failed_fnids) > 0:
-                return self.failed_fnids
-        except KeyboardInterrupt:
-            bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % self.active_builds)
-            for k, v in self.build_pids.iteritems():
-                 try:
-                     os.kill(-k, signal.SIGINT)
-                 except:
-                     pass
+                if result[1] != 0:
+                    self.task_fail(task, result[1])
+                else:
+                    self.stats.taskCompleted()
+                    bb.event.fire(runQueueTaskCompleted(task, self.stats, self, self.cfgData))
+            if self.state is runQueueFailedCleanUp:
+                self.state = runQueueFailed
+                return
+        except:
+            self.finish_runqueue_now()
             raise
 
-        # Sanity Checks
-        for task in range(len(self.runq_fnid)):
-            if self.runq_buildable[task] == 0:
-                bb.msg.error(bb.msg.domain.RunQueue, "Task %s never buildable!" % task)
-            if self.runq_running[task] == 0:
-                bb.msg.error(bb.msg.domain.RunQueue, "Task %s never ran!" % task)
-            if self.runq_complete[task] == 0:
-                bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
-
-        bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (self.stats.completed, self.stats.skipped, self.stats.failed))
-
-        return self.failed_fnids
+        self.state = runQueueComplete
+        return
 
     def dump_data(self, taskQueue):
         """
         Dump some debug information on the internal data structures
         """
         bb.msg.debug(3, bb.msg.domain.RunQueue, "run_tasks:")
-        for task in range(len(self.runq_fnid)):
+        for task in range(self.stats.total):
                 bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
                         taskQueue.fn_index[self.runq_fnid[task]], 
                         self.runq_task[task], 
@@ -613,7 +667,7 @@ class RunQueue:
                         self.runq_revdeps[task]))
 
         bb.msg.debug(3, bb.msg.domain.RunQueue, "sorted_tasks:")
-        for task1 in range(len(self.runq_fnid)):
+        for task1 in range(self.stats.total):
             if task1 in self.prio_map:
                 task = self.prio_map[task1]
                 bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
@@ -622,3 +676,57 @@ class RunQueue:
                         self.runq_weight[task], 
                         self.runq_depends[task], 
                         self.runq_revdeps[task]))
+
+
+class TaskFailure(Exception):
+    """
+    Exception raised when a task in a runqueue fails
+    """
+    def __init__(self, x): 
+        self.args = x
+
+
+class runQueueExitWait(bb.event.Event):
+    """
+    Event when waiting for task processes to exit
+    """
+
+    def __init__(self, remain, d):
+        self.remain = remain
+        self.message = "Waiting for %s active tasks to finish" % remain
+        bb.event.Event.__init__(self, d)
+
+class runQueueEvent(bb.event.Event):
+    """
+    Base runQueue event class
+    """
+    def __init__(self, task, stats, rq, d):
+        self.taskid = task
+        self.taskstring = rq.get_user_idstring(task)
+        self.stats = stats
+        bb.event.Event.__init__(self, d)
+
+class runQueueTaskStarted(runQueueEvent):
+    """
+    Event notifing a task was started
+    """
+    def __init__(self, task, stats, rq, d):
+        runQueueEvent.__init__(self, task, stats, rq, d)
+        self.message = "Running task %s (%d of %d) (%s)" % (task, stats.completed + stats.active + 1, self.stats.total, self.taskstring)
+
+class runQueueTaskFailed(runQueueEvent):
+    """
+    Event notifing a task failed
+    """
+    def __init__(self, task, stats, rq, d):
+        runQueueEvent.__init__(self, task, stats, rq, d)
+        self.message = "Task %s failed (%s)" % (task, self.taskstring)
+
+class runQueueTaskCompleted(runQueueEvent):
+    """
+    Event notifing a task completed
+    """
+    def __init__(self, task, stats, rq, d):
+        runQueueEvent.__init__(self, task, stats, rq, d)
+        self.message = "Task %s completed (%s)" % (task, self.taskstring)
+
