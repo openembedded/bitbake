@@ -84,16 +84,15 @@ class BBUIEventQueue:
         while not server.quit:
             server.handle_request()
         server.server_close()
-        try:
-            self.BBServer.unregisterEventHandler(self.EventHandle)
-        except:
-            pass
-        sys._exit(0)
 
     def system_quit( self ):
         """
         Shut down the callback thread
         """
+        try:
+            self.BBServer.unregisterEventHandler(self.EventHandle)
+        except:
+            pass
         self.server.quit = True
 
 class UIXMLRPCServer (SimpleXMLRPCServer):
