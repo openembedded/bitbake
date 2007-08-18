@@ -32,6 +32,7 @@ Changes in Bitbake 1.8.x:
 	- Sort digraph output to make builds more reproducible
 	- Split expandKeys into two for loops to benefit from the expand_cache (12% speedup)
 	- runqueue.py: Fix idepends handling to avoid dependency errors
+	- Clear the terminal TOSTOP flag if set (and warn the user)
 
 Changes in Bitbake 1.8.6:
 	- Correctly redirect stdin when forking
