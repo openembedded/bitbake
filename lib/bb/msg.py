@@ -97,22 +97,19 @@ def set_debug_domains(domains):
 #
 
 def debug(level, domain, msg, fn = None):
-    bb.event.fire(MsgDebug(msg, None))
     if not domain:
         domain = 'default'
     if debug_level[domain] >= level:
-        print 'DEBUG: ' + msg
+        bb.event.fire(MsgDebug(msg, None))
 
 def note(level, domain, msg, fn = None):
-    bb.event.fire(MsgNote(msg, None))
     if not domain:
         domain = 'default'
     if level == 1 or verbose or debug_level[domain] >= 1:
-        print 'NOTE: ' + msg
+        bb.event.fire(MsgNote(msg, None))
 
 def warn(domain, msg, fn = None):
     bb.event.fire(MsgWarn(msg, None))
-    print 'WARNING: ' + msg
 
 def error(domain, msg, fn = None):
     bb.event.fire(MsgError(msg, None))
@@ -120,10 +117,9 @@ def error(domain, msg, fn = None):
 
 def fatal(domain, msg, fn = None):
     bb.event.fire(MsgFatal(msg, None))
-    print 'ERROR: ' + msg
+    print 'FATAL: ' + msg
     sys.exit(1)
 
 def plain(msg, fn = None):
     bb.event.fire(MsgPlain(msg, None))
-    print msg
 
