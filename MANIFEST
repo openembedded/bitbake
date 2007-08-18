@@ -10,7 +10,9 @@ lib/bb/__init__.py
 lib/bb/build.py
 lib/bb/cache.py
 lib/bb/cooker.py
+lib/bb/command.py
 lib/bb/COW.py
+lib/bb/daemonize.py
 lib/bb/data.py
 lib/bb/data_smart.py
 lib/bb/event.py
@@ -35,7 +37,13 @@ lib/bb/providers.py
 lib/bb/runqueue.py
 lib/bb/shell.py
 lib/bb/taskdata.py
+lib/bb/ui/__init__.py
+lib/bb/ui/knotty.py
+lib/bb/ui/ncurses.py
+lib/bb/ui/uievent.py
+lib/bb/ui/uihelper.py
 lib/bb/utils.py
+lib/bb/xmlrpcserver.py
 setup.py
 doc/COPYING.GPL
 doc/COPYING.MIT
