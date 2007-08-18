@@ -164,6 +164,13 @@ class CommandsOffline:
         command.cooker.showEnvironment(bfile)
         command.finishOfflineCommand()
 
+    def parseFiles(self, command, params):
+        """
+        Parse the .bb files
+        """
+        command.cooker.updateCache()
+        command.finishOfflineCommand()
+
 class CookerCommandCompleted(bb.event.Event):
     """
     Cooker command completed

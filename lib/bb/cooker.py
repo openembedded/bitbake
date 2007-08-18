@@ -121,20 +121,22 @@ class BBCooker:
         #
 
         if self.configuration.show_environment:
-            self.commandlineAction = ("showEnvironment", self.configuration.buildfile)
+            self.commandlineAction = ["showEnvironment", self.configuration.buildfile]
         elif self.configuration.buildfile is not None:
-            self.commandlineAction = ("buildFile", self.configuration.buildfile, self.configuration.cmd)
+            self.commandlineAction = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
         elif self.configuration.show_versions:
-            self.commandlineAction = ("showVersions")
+            self.commandlineAction = ["showVersions"]
+        elif self.configuration.parse_only:
+            self.commandlineAction = ["parseFiles"]
         elif self.configuration.dot_graph:
             if self.configuration.pkgs_to_build:
-                self.commandlineAction = ("generateDotGraph", self.configuration.pkgs_to_build)
+                self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build]
             else:
                 self.commandlineAction = None
                 bb.error("Please specify a package name for dependency graph generation.")
         else:
             if self.configuration.pkgs_to_build:
-                self.commandlineAction = ("buildTargets", self.configuration.pkgs_to_build)
+                self.commandlineAction = ["buildTargets", self.configuration.pkgs_to_build]
             else:
                 self.commandlineAction = None
                 bb.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
@@ -142,11 +144,6 @@ class BBCooker:
         # FIXME - implement
         #if self.configuration.interactive:
         #    self.interactiveMode()
-        #
-        #if self.configuration.parse_only:
-        #    self.updateCache()
-        #    bb.msg.note(1, bb.msg.domain.Collection, "Requested parsing .bb files only.  Exiting.")
-        #    return 0
 
         self.command = bb.command.Command(self)
         self.cookerIdle = True
