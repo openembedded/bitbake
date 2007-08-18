@@ -63,7 +63,7 @@ class BBCooker:
         self.bb_cache = None
 
         self.server = bb.xmlrpcserver.BitBakeXMLRPCServer()
-        self.server.register_function(self.showEnvironment)
+        #self.server.register_function(self.showEnvironment)
 
         self.configuration = configuration
 
@@ -243,13 +243,17 @@ class BBCooker:
                 raise
 
         class dummywrite:
+            def __init__(self):
+                self.writebuf = ""
             def write(self, output):
-                bb.msg.plain(output)
+                self.writebuf = self.writebuf + output
 
         # emit variables and shell functions
         try:
             data.update_data( self.configuration.data )
-            data.emit_env(dummywrite(), self.configuration.data, True)
+            wb = dummywrite()
+            data.emit_env(wb, self.configuration.data, True)
+            bb.msg.plain(wb.writebuf)
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
