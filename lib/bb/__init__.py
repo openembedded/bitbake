@@ -55,6 +55,7 @@ __all__ = [
 # modules
     "parse",
     "data",
+    "command",
     "event",
     "build",
     "fetch",
