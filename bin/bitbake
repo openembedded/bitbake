@@ -22,10 +22,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sys, os, getopt, re, time, optparse
+import sys, os, getopt, re, time, optparse, xmlrpclib
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
 from bb import cooker
+from bb import daemonize
+from bb import ui
+from bb.ui import uievent
 
 __version__ = "1.9.0"
 
@@ -111,28 +114,61 @@ Default BBFILES are the .bb files in the current directory.""" )
     configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
 
+    # Save a logfile for cooker somewhere
+    t = bb.data.getVar('TMPDIR', cooker.configuration.data, True)
+    if not t:
+       bb.msg.fatal(bb.msg.domain.Build, "TMPDIR not set")
+    t = os.path.join(t, "cooker")
+    bb.mkdirhier(t)
+    cooker_logfile = "%s/log.cooker.%s" % (t, str(os.getpid()))
+
     cooker = bb.cooker.BBCooker(configuration)
+    host = cooker.server.host
+    port = cooker.server.port
+    daemonize.createDaemon(cooker.serve, cooker_logfile)
+    del cooker
 
-    if configuration.profile:
+    # Setup a frontend connection to the cooker with ui event queue
+    frontend = xmlrpclib.Server("http://%s:%s" % (host, port))
+    eventHandler = uievent.BBUIEventQueue(frontend)
+
+    # Launch the UI
+    try:
+        curseUI = True
+        curseUI = False
+
+        if not os.isatty(sys.stdout.fileno()):
+            curseUI = False
+
+        if curseUI:
+            try:
+                import curses
+            except ImportError, details:
+                curseUI = False
+
+        if curseUI:
+            from bb.ui import ncurses
+            ncurses.init(frontend, eventHandler)
+        else:
+            from bb.ui import knotty
+            knotty.init(frontend, eventHandler)
+
+    finally:
+        # Don't wait for server indefinitely
+        import socket
+        socket.setdefaulttimeout(2) 
         try:
-            import cProfile as profile
+            eventHandler.system_quit()
         except:
-            import profile
-
-        profile.runctx("cooker.cook()", globals(), locals(), "profile.log")
-        import pstats
-        p = pstats.Stats('profile.log')
-        p.sort_stats('time')
-        p.print_stats()
-        p.print_callers()
-        p.sort_stats('cumulative')
-        p.print_stats()
-    else:
-        cooker.cook()
+            pass
+        try:
+            frontend.system.quit()
+        except:
+            pass
 
 if __name__ == "__main__":
     print """WARNING, WARNING, WARNING
-This is a Bitbake from the Unstable/Development 1.9 Branch.
+This is a Bitbake from the Unstable/Development 1.9 Branch. This software contains gaping security holes and is dangerous to use!
 You might want to use the bitbake-1.8 stable branch (if you are not a BitBake developer or tester). I'm going to sleep 5 seconds now to make sure you see that."""
     import time
     time.sleep(5)
