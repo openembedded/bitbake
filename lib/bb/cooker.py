@@ -83,6 +83,16 @@ class BBCooker:
         self.configuration.event_data = bb.data.createCopy(self.configuration.data)
         bb.data.update_data(self.configuration.event_data)
 
+        #
+        # TOSTOP must not be set or our children will hang when they output
+        #
+        import termios
+        tcattr = termios.tcgetattr(sys.stdout.fileno())
+        if tcattr[3] & termios.TOSTOP:
+            bb.msg.note(1, bb.msg.domain.Build, "The terminal had the TOSTOP bit set, clearing...")
+            tcattr[3] = tcattr[3] & ~termios.TOSTOP
+            termios.tcsetattr(sys.stdout.fileno(), termios.TCSANOW, tcattr)
+
     def tryBuildPackage(self, fn, item, task, the_data, build_depends):
         """
         Build one task of a package, optionally build following task depends
