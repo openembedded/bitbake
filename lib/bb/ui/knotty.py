@@ -34,6 +34,8 @@ def init(frontend, eventHandler):
     try:
         cmdline = frontend.runCommand(["getCmdLineAction"])
         #print cmdline
+        if not cmdline:
+            return
         ret = frontend.runCommand(cmdline)
         if ret != True:
             print "Cook failed: %s" % ret

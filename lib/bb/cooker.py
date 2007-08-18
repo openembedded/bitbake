@@ -39,6 +39,12 @@ class ParsingErrorsFound(Exception):
     Exception raised when parsing errors are found
     """
 
+class NothingToBuild(Exception):
+    """
+    Exception raised when there is nothing to build
+    """
+
+
 # Different states cooker can be in
 cookerClean = 1
 cookerParsed = 2
@@ -121,9 +127,17 @@ class BBCooker:
         elif self.configuration.show_versions:
             self.commandlineAction = ("showVersions")
         elif self.configuration.dot_graph:
-            self.commandlineAction = ("generateDotGraph", self.configuration.pkgs_to_build)
+            if self.configuration.pkgs_to_build:
+                self.commandlineAction = ("generateDotGraph", self.configuration.pkgs_to_build)
+            else:
+                self.commandlineAction = None
+                bb.error("Please specify a package name for dependency graph generation.")
         else:
-            self.commandlineAction = ("buildTargets", self.configuration.pkgs_to_build)
+            if self.configuration.pkgs_to_build:
+                self.commandlineAction = ("buildTargets", self.configuration.pkgs_to_build)
+            else:
+                self.commandlineAction = None
+                bb.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
 
         # FIXME - implement
         #if self.configuration.interactive:
@@ -608,9 +622,7 @@ class BBCooker:
     def checkPackages(self, pkgs_to_build):
 
         if len(pkgs_to_build) == 0:
-            bb.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
-            + "for usage information.")
-            return None
+            raise NothingToBuild
 
         if 'world' in pkgs_to_build:
             self.buildWorldTargetList()
