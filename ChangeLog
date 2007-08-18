@@ -1,4 +1,6 @@
-Changes in Bitbake 1.8.x:
+Changes in BitBake 1.8.x:
+
+Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
 	  as part of future SRCDATE="now" fixes
 	  (requires new FETCHCMD_svn definition in bitbake.conf)
