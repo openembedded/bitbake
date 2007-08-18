@@ -164,6 +164,7 @@ class PkgBase(Event):
     def __init__(self, t, d):
         self._pkg = t
         Event.__init__(self, d)
+        self._message = "package %s: %s" % (bb.data.getVar("P", d, 1), getName(self)[3:])
 
     def getPkg(self):
         return self._pkg
@@ -301,11 +302,12 @@ class ParseProgress(Event):
     Parsing Progress Event
     """
 
-    def __init__(self, d, cached, parsed, skipped, masked, total):
+    def __init__(self, d, cached, parsed, skipped, masked, errors, total):
         Event.__init__(self, d)
         self.cached = cached
         self.parsed = parsed
         self.skipped = skipped
         self.masked = masked
+        self.errors = errors
         self.sofar = cached + parsed + skipped + masked
         self.total = total
