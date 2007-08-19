@@ -92,7 +92,7 @@ class BBCooker:
         self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
 
         if not self.configuration.cmd:
-            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data) or "build"
+            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data, True) or "build"
 
         bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, True)
         if bbpkgs:
@@ -104,9 +104,7 @@ class BBCooker:
         self.configuration.event_data = bb.data.createCopy(self.configuration.data)
         bb.data.update_data(self.configuration.event_data)
 
-        #
         # TOSTOP must not be set or our children will hang when they output
-        #
         fd = sys.stdout.fileno()
         if os.isatty(fd):
             import termios
@@ -116,10 +114,14 @@ class BBCooker:
                 tcattr[3] = tcattr[3] & ~termios.TOSTOP
                 termios.tcsetattr(fd, termios.TCSANOW, tcattr)
 
-        #
+        # Change nice level if we're asked to
+        nice = bb.data.getVar("BB_NICE_LEVEL", self.configuration.data, True)
+        if nice:
+            curnice = os.nice(0)
+            nice = int(nice) - curnice
+            bb.msg.note(2, bb.msg.domain.Build, "Renice to %s " % os.nice(nice))
+ 
         # Parse any commandline into actions
-        #
-
         if self.configuration.show_environment:
             self.commandlineAction = ["showEnvironment", self.configuration.buildfile]
         elif self.configuration.buildfile is not None:
