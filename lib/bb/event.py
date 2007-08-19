@@ -309,5 +309,5 @@ class ParseProgress(Event):
         self.skipped = skipped
         self.masked = masked
         self.errors = errors
-        self.sofar = cached + parsed + skipped + masked
+        self.sofar = cached + parsed + skipped
         self.total = total
