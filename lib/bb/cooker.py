@@ -368,7 +368,11 @@ class BBCooker:
 
         # Handle PREFERRED_PROVIDERS
         for p in (bb.data.getVar('PREFERRED_PROVIDERS', localdata, 1) or "").split():
-            (providee, provider) = p.split(':')
+            try:
+                (providee, provider) = p.split(':')
+            except:
+                bb.msg.fatal(bb.msg.domain.Provider, "Malformed option in PREFERRED_PROVIDERS variable: %s" % p)
+                continue
             if providee in self.status.preferred and self.status.preferred[providee] != provider:
                 bb.msg.error(bb.msg.domain.Provider, "conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.status.preferred[providee]))
             self.status.preferred[providee] = provider
