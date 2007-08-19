@@ -284,10 +284,11 @@ def decodeurl(url):
         raise MalformedUrl(url)
     user = m.group('user')
     parm = m.group('parm')
-    m = re.compile('(?P<host>[^/;]+)(?P<path>/[^;]+)').match(location)
-    if m:
-        host = m.group('host')
-        path = m.group('path')
+
+    locidx = location.find('/')
+    if locidx != -1:
+        host = location[:locidx]
+        path = location[locidx:]
     else:
         host = ""
         path = location
