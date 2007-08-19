@@ -78,18 +78,24 @@ def init(frontend, eventHandler):
                 if logfile:
                     print "ERROR: Logfile of failure stored in %s." % logfile
                     if includelogs:
-                        print "Log data follows:\n"
-                        if loglines:
-                            os.system('tail -n%s %s' % (loglines, logfile))
-                        else:
-                            f = open(logfile, "r")
-                            while True:
-                                l = f.readline()
-                                if l == '':
-                                    break
-                                l = l.rstrip()
+                        print "Log data follows:"
+                        f = open(logfile, "r")
+                        lines = []
+                        while True:
+                            l = f.readline()
+                            if l == '':
+                                break
+                            l = l.rstrip()
+                            if loglines:
+                                lines.append(' | %s' % l)
+                                if len(lines) > int(loglines):
+                                    lines.pop(0)
+                            else:
                                 print '| %s' % l
-                            f.close()
+                        f.close()
+                        if lines:
+                            for line in lines:
+                                print line
             if event[0].startswith('bb.build.Task'):
                 print "NOTE: %s" % event[1]['_message']
                 continue
