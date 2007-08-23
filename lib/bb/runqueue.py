@@ -657,7 +657,7 @@ class RunQueue:
         Dump some debug information on the internal data structures
         """
         bb.msg.debug(3, bb.msg.domain.RunQueue, "run_tasks:")
-        for task in range(self.stats.total):
+        for task in range(len(self.runq_task)):
                 bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
                         taskQueue.fn_index[self.runq_fnid[task]], 
                         self.runq_task[task], 
@@ -666,7 +666,7 @@ class RunQueue:
                         self.runq_revdeps[task]))
 
         bb.msg.debug(3, bb.msg.domain.RunQueue, "sorted_tasks:")
-        for task1 in range(self.stats.total):
+        for task1 in range(len(self.runq_task)):
             if task1 in self.prio_map:
                 task = self.prio_map[task1]
                 bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
