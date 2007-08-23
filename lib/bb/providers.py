@@ -31,12 +31,12 @@ class NoProvider(Exception):
 class NoRProvider(Exception):
     """Exception raised when no provider of a runtime dependency can be found"""
 
-def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
+
+def sortPriorities(pn, dataCache, pkg_pn = None):
     """
-    If there is a PREFERRED_VERSION, find the highest-priority bbfile
-    providing that version.  If not, find the latest version provided by
-    an bbfile in the highest-priority set.
+    Reorder pkg_pn by file priority
     """
+
     if not pkg_pn:
         pkg_pn = dataCache.pkg_pn
 
@@ -52,6 +52,14 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     tmp_pn = []
     for p in p_list:
         tmp_pn = [priorities[p]] + tmp_pn
+
+    return tmp_pn
+
+
+def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
+    """
+    Find the first provider in pkg_pn with a PREFERRED_VERSION set.
+    """
 
     preferred_file = None
 
@@ -76,7 +84,7 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
             preferred_e = None
             preferred_r = None
 
-        for file_set in tmp_pn:
+        for file_set in pkg_pn:
             for f in file_set:
                 pe,pv,pr = dataCache.pkg_pepvpr[f]
                 if preferred_v == pv and (preferred_r == pr or preferred_r == None) and (preferred_e == pe or preferred_e == None):
@@ -99,14 +107,17 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         else:
             bb.msg.debug(1, bb.msg.domain.Provider, "selecting %s as PREFERRED_VERSION %s of package %s%s" % (preferred_file, pv_str, pn, itemstr))
 
-    del localdata
+    return (preferred_v, preferred_file)
 
-    # get highest priority file set
-    files = tmp_pn[0]
+
+def findLatestProvider(pn, cfgData, dataCache, file_set):
+    """
+    Return the highest version of the providers in file_set.
+    """
     latest = None
     latest_p = 0
     latest_f = None
-    for file_name in files:
+    for file_name in file_set:
         pe,pv,pr = dataCache.pkg_pepvpr[file_name]
         dp = dataCache.pkg_dp[file_name]
 
@@ -114,11 +125,29 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
             latest = (pe, pv, pr)
             latest_f = file_name
             latest_p = dp
+
+    return (latest, latest_f)
+
+
+def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
+    """
+    If there is a PREFERRED_VERSION, find the highest-priority bbfile
+    providing that version.  If not, find the latest version provided by
+    an bbfile in the highest-priority set.
+    """
+
+    sortpkg_pn = sortPriorities(pn, dataCache, pkg_pn)
+    # Find the highest priority provider with a PREFERRED_VERSION set
+    (preferred_ver, preferred_file) = findPreferredProvider(pn, cfgData, dataCache, sortpkg_pn, item)
+    # Find the latest version of the highest priority provider
+    (latest, latest_f) = findLatestProvider(pn, cfgData, dataCache, sortpkg_pn[0])
+
     if preferred_file is None:
         preferred_file = latest_f
         preferred_ver = latest
 
-    return (latest,latest_f,preferred_ver, preferred_file)
+    return (latest, latest_f, preferred_ver, preferred_file)
+
 
 def _filterProviders(providers, item, cfgData, dataCache):
     """
@@ -127,6 +156,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
     """
     eligible = []
     preferred_versions = {}
+    sortpkg_pn = {}
 
     # The order of providers depends on the order of the files on the disk 
     # up to here. Sort pkg_pn to make dependency issues reproducible rather
@@ -143,14 +173,23 @@ def _filterProviders(providers, item, cfgData, dataCache):
 
     bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
+    # First add PREFERRED_VERSIONS
     for pn in pkg_pn.keys():
-        preferred_versions[pn] = bb.providers.findBestProvider(pn, cfgData, dataCache, pkg_pn, item)[2:4]
+        sortpkg_pn[pn] = sortPriorities(pn, dataCache, pkg_pn)
+        preferred_versions[pn] = findPreferredProvider(pn, cfgData, dataCache, sortpkg_pn[pn], item)
+        if preferred_versions[pn][1]:
+            eligible.append(preferred_versions[pn][1])
+
+    # Now add latest verisons
+    for pn in pkg_pn.keys():
+        if pn in preferred_versions and preferred_versions[pn][1]:
+            continue
+        preferred_versions[pn] = findLatestProvider(pn, cfgData, dataCache, sortpkg_pn[pn][0])
         eligible.append(preferred_versions[pn][1])
 
     if len(eligible) == 0:
         bb.msg.error(bb.msg.domain.Provider, "no eligible providers for %s" % item)
         return 0
-
 
     # If pn == item, give it a slight default preference
     # This means PREFERRED_PROVIDER_foobar defaults to foobar if available
@@ -171,7 +210,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
         pe, pv, pr = dataCache.pkg_pepvpr[p]
 
         stamp = '%s.do_populate_staging' % dataCache.stamp[p]
-        if os.path.exists(stamp):
+        if 0 and os.path.exists(stamp):
             (newvers, fn) = preferred_versions[pn]
             if not fn in eligible:
                 # package was made ineligible by already-failed check
@@ -192,7 +231,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
             eligible = [fn] + eligible
             break
 
-    return eligible, preferred_versions
+    return eligible
 
 
 def filterProviders(providers, item, cfgData, dataCache):
@@ -202,7 +241,7 @@ def filterProviders(providers, item, cfgData, dataCache):
     Takes a "normal" target item
     """
 
-    eligible, pref_vers = _filterProviders(providers, item, cfgData, dataCache)
+    eligible = _filterProviders(providers, item, cfgData, dataCache)
 
     prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, cfgData, 1)
     if prefervar:
@@ -219,6 +258,8 @@ def filterProviders(providers, item, cfgData, dataCache):
                 foundUnique = True
                 break
 
+    bb.msg.debug(1, bb.msg.domain.Provider, "sorted providers for %s are: %s" % (item, eligible))
+
     return eligible, foundUnique
 
 def filterProvidersRunTime(providers, item, cfgData, dataCache):
@@ -228,7 +269,7 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
     Takes a "runtime" target item
     """
 
-    eligible, pref_vers = _filterProviders(providers, item, cfgData, dataCache)
+    eligible = _filterProviders(providers, item, cfgData, dataCache)
 
     # Should use dataCache.preferred here?
     preferred = []
@@ -245,6 +286,8 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
                 break
 
     numberPreferred = len(preferred)
+
+    bb.msg.debug(1, bb.msg.domain.Provider, "sorted providers for %s are: %s" % (item, eligible))
 
     return eligible, numberPreferred
 
