@@ -1,4 +1,5 @@
 Changes in BitBake 1.8.x:
+	- Psyco is available only for x86 - do not use it on other architectures.
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
