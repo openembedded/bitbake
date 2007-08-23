@@ -34,7 +34,7 @@ class NoRProvider(Exception):
 
 def sortPriorities(pn, dataCache, pkg_pn = None):
     """
-    Reorder pkg_pn by file priority
+    Reorder pkg_pn by file priority and default preference
     """
 
     if not pkg_pn:
@@ -44,14 +44,20 @@ def sortPriorities(pn, dataCache, pkg_pn = None):
     priorities = {}
     for f in files:
         priority = dataCache.bbfile_priority[f]
+        preference = dataCache.pkg_dp[f]
         if priority not in priorities:
-            priorities[priority] = []
-        priorities[priority].append(f)
-    p_list = priorities.keys()
-    p_list.sort(lambda a, b: a - b)
+            priorities[priority] = {}
+        if preference not in priorities[priority]:
+            priorities[priority][preference] = []
+        priorities[priority][preference].append(f)
+    pri_list = priorities.keys()
+    pri_list.sort(lambda a, b: a - b)
     tmp_pn = []
-    for p in p_list:
-        tmp_pn = [priorities[p]] + tmp_pn
+    for pri in pri_list:
+        pref_list = priorities[pri].keys()
+        pref_list.sort(lambda a, b: a - b)
+        for pref in priorities[pri]:
+            tmp_pn = [priorities[pri][pref]] + tmp_pn
 
     return tmp_pn
 
