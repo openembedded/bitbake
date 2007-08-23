@@ -52,6 +52,7 @@ Changes in Bitbake 1.9.x:
 	- runqueue.py: Fix idepends handling to avoid dependency errors
 	- Clear the terminal TOSTOP flag if set (and warn the user)
 	- Fix regression from r653 and make SRCDATE/CVSDATE work for packages again
+	- Psyco is used only on x86 as there is no support for other architectures.
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

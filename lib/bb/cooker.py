@@ -593,15 +593,17 @@ class BBCooker:
             return
 
         # Import Psyco if available and not disabled
-        if not self.configuration.disable_psyco:
-            try:
-                import psyco
-            except ImportError:
-                bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+        import platform
+        if platform.machine() in ['i386', 'i486', 'i586', 'i686']:
+            if not self.configuration.disable_psyco:
+                try:
+                    import psyco
+                except ImportError:
+                    bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+                else:
+                    psyco.bind( self.parse_bbfiles )
             else:
-                psyco.bind( self.parse_bbfiles )
-        else:
-            bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
+                bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
 
         self.status = bb.cache.CacheData()
 
