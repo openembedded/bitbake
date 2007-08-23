@@ -210,7 +210,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
         pe, pv, pr = dataCache.pkg_pepvpr[p]
 
         stamp = '%s.do_populate_staging' % dataCache.stamp[p]
-        if 0 and os.path.exists(stamp):
+        if os.path.exists(stamp):
             (newvers, fn) = preferred_versions[pn]
             if not fn in eligible:
                 # package was made ineligible by already-failed check
