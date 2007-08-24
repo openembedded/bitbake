@@ -52,7 +52,12 @@ Changes in Bitbake 1.9.x:
 	- runqueue.py: Fix idepends handling to avoid dependency errors
 	- Clear the terminal TOSTOP flag if set (and warn the user)
 	- Fix regression from r653 and make SRCDATE/CVSDATE work for packages again
+	- Fix a bug in bb.decodeurl where http://some.where.com/somefile.tgz decoded to host="" (#1530)
+	- Warn about malformed PREFERRED_PROVIDERS (#1072)
+	- Add support for BB_NICE_LEVEL option (#1627)
 	- Psyco is used only on x86 as there is no support for other architectures.
+	- Sort initial providers list by default preference (#1145, #2024)
+	- Improve provider sorting so prefered versions have preference over latest versions (#768)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
