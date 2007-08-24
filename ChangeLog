@@ -1,5 +1,13 @@
 Changes in BitBake 1.8.x:
 	- Psyco is available only for x86 - do not use it on other architectures.
+	- Sort initial providers list by default preference (#1145, #2024)
+	- Improve provider sorting so prefered versions have preference over latest versions (#768)
+	- Fix a bug in bb.decodeurl where http://some.where.com/somefile.tgz decoded to host="" (#1530)
+	- Warn about malformed PREFERRED_PROVIDERS (#1072)
+	- Add support for BB_NICE_LEVEL option (#1627)
+	- Sort initial providers list by default preference (#1145, #2024)
+	- Improve provider sorting so prefered versions have preference over latest versions (#768)
+		
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
