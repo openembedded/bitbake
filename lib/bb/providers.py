@@ -55,9 +55,11 @@ def sortPriorities(pn, dataCache, pkg_pn = None):
     tmp_pn = []
     for pri in pri_list:
         pref_list = priorities[pri].keys()
-        pref_list.sort(lambda a, b: a - b)
-        for pref in priorities[pri]:
-            tmp_pn = [priorities[pri][pref]] + tmp_pn
+        pref_list.sort(lambda a, b: b - a)
+        tmp_pref = []
+        for pref in pref_list:
+            tmp_pref.extend(priorities[pri][pref])
+        tmp_pn = [tmp_pref] + tmp_pn
 
     return tmp_pn
 
@@ -119,6 +121,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
 def findLatestProvider(pn, cfgData, dataCache, file_set):
     """
     Return the highest version of the providers in file_set.
+    Take default preferences into account.
     """
     latest = None
     latest_p = 0
