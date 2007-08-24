@@ -85,6 +85,13 @@ class BBCooker:
                 tcattr[3] = tcattr[3] & ~termios.TOSTOP
                 termios.tcsetattr(fd, termios.TCSANOW, tcattr)
 
+        # Change nice level if we're asked to
+        nice = bb.data.getVar("BB_NICE_LEVEL", self.configuration.data, True)
+        if nice:
+            curnice = os.nice(0)
+            nice = int(nice) - curnice
+            bb.msg.note(2, bb.msg.domain.Build, "Renice to %s " % os.nice(nice))
+ 
 
     def tryBuildPackage(self, fn, item, task, the_data, build_depends):
         """
