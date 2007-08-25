@@ -150,13 +150,22 @@ class CommandsOffline:
 
         command.cooker.buildTargets(pkgs_to_build)
 
+    def generateDepTreeEvent(self, command, params):
+        """
+        Generate an event containing the dependency information
+        """
+        pkgs_to_build = params[0]
+
+        command.cooker.generateDepTreeEvent(pkgs_to_build)
+        command.finishOfflineCommand()
+
     def generateDotGraph(self, command, params):
         """
         Dump dependency information to disk as .dot files
         """
         pkgs_to_build = params[0]
 
-        command.cooker.generateDotGraph(pkgs_to_build)
+        command.cooker.generateDotGraphFiles(pkgs_to_build)
         command.finishOfflineCommand()
 
     def showVersions(self, command, params):
