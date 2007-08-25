@@ -49,7 +49,7 @@
 
 """
 
-import os, sys, curses, time, random, threading, itertools
+import os, sys, curses, time, random, threading, itertools, time
 from curses.textpad import Textbox
 import bb
 from bb import ui
@@ -216,14 +216,22 @@ class NCursesUI:
         helper = uihelper.BBUIHelper()
    
         try:
-            frontend.runCommand("cook")
+            cmdline = frontend.runCommand(["getCmdLineAction"])
+            #print cmdline
+            if not cmdline:
+                return
+            ret = frontend.runCommand(cmdline)
+            if ret != True:
+                print "Couldn't get default commandlind! %s" % ret
+                return
         except xmlrpclib.Fault, x:
-            print x
+            print "XMLRPC Fault getting commandline:\n %s" % x
+            return
 
         exitflag = False
         while not exitflag:
             try:
-                event = eventHandler.waitEvent()
+                event = eventHandler.waitEvent(0.25)
                 if not event:
                     continue
                 helper.eventHandler(event)
@@ -269,7 +277,13 @@ class NCursesUI:
 #                            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
 
 
-                if event[0] == 'bb.event.CookerCommandCompleted':
+                if event[0] == 'bb.command.CookerCommandCompleted':
+                    exitflag = True
+                if event[0] == 'bb.command.CookerCommandFailed':
+                    mw.appendText("Command execution failed: %s" % event[1]['error'])
+                    time.sleep(2)
+                    exitflag = True
+                if event[0] == 'bb.cooker.CookerExit':
                     exitflag = True
 
                 tasks = helper.getTasks()
