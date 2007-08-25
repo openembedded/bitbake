@@ -163,7 +163,7 @@ class Svn(Fetch):
         os.chdir(ud.pkgdir)
         # tar them up to a defined filename
         try:
-            runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)), d)
+            runfetchcmd("tar -czf %s %s" % (ud.localpath, ud.module), d)
         except:
             t, v, tb = sys.exc_info()
             try:
