@@ -311,3 +311,13 @@ class ParseProgress(Event):
         self.errors = errors
         self.sofar = cached + parsed + skipped
         self.total = total
+
+class DepTreeGenerated(Event):
+    """
+    Event when a dependency tree has been generated
+    """
+
+    def __init__(self, d, depgraph):
+        Event.__init__(self, d)
+        self._depgraph = depgraph
+
