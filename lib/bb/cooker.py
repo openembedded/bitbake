@@ -7,7 +7,7 @@
 # Copyright (C) 2003 - 2005 Michael 'Mickey' Lauer
 # Copyright (C) 2005        Holger Hans Peter Freyther
 # Copyright (C) 2005        ROAD GmbH
-# Copyright (C) 2006        Richard Purdie
+# Copyright (C) 2006 - 2007 Richard Purdie
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -275,11 +275,9 @@ class BBCooker:
             if data.getVarFlag( e, 'python', self.configuration.data ):
                 bb.msg.plain("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
 
-    def generateDotGraph(self, pkgs_to_build):
+    def generateDepTreeData(self, pkgs_to_build):
         """
-        Generate a task dependency graph. 
-
-        pkgs_to_build A list of packages that needs to be built
+        Create a dependency tree of pkgs_to_build, returning the data.
         """
 
         pkgs_to_build = self.checkPackages(pkgs_to_build)
@@ -302,10 +300,15 @@ class BBCooker:
         rq.prepare_runqueue()
 
         seen_fnids = []  
-        depends_file = file('depends.dot', 'w' )
-        tdepends_file = file('task-depends.dot', 'w' )
-        print >> depends_file, "digraph depends {"
-        print >> tdepends_file, "digraph depends {"
+        depend_tree = {}
+        depend_tree["depends"] = {}
+        depend_tree["tdepends"] = {}
+        depend_tree["pn"] = {}
+        depend_tree["rdepends-pn"] = {}
+        depend_tree["packages"] = {}
+        depend_tree["rdepends-pkg"] = {}
+        depend_tree["rrecs-pkg"] = {}
+
         rq.prio_map.reverse()
         for task1 in range(len(rq.runq_fnid)):
             task = rq.prio_map[task1]
@@ -314,42 +317,117 @@ class BBCooker:
             fn = taskdata.fn_index[fnid]
             pn = self.status.pkg_fn[fn]
             version  = "%s:%s-%s" % self.status.pkg_pepvpr[fn]
-            print >> tdepends_file, '"%s.%s" [label="%s %s\\n%s\\n%s"]' % (pn, taskname, pn, taskname, version, fn)
+            if pn not in depend_tree["pn"]:
+                depend_tree["pn"][pn] = {}
+                depend_tree["pn"][pn]["filename"] = fn
+                depend_tree["pn"][pn]["version"] = version
             for dep in rq.runq_depends[task]:
                 depfn = taskdata.fn_index[rq.runq_fnid[dep]]
                 deppn = self.status.pkg_fn[depfn]
-                print >> tdepends_file, '"%s.%s" -> "%s.%s"' % (pn, rq.runq_task[task], deppn, rq.runq_task[dep])
+                dotname = "%s.%s" % (pn, rq.runq_task[task])
+                if not dotname in depend_tree["tdepends"]:
+                    depend_tree["tdepends"][dotname] = []
+                depend_tree["tdepends"][dotname].append("%s.%s" % (deppn, rq.runq_task[dep]))
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
                 packages = []
-                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)
-                for depend in self.status.deps[fn]:
-                    print >> depends_file, '"%s" -> "%s"' % (pn, depend)
+
+                depend_tree["depends"][pn] = []
+                for dep in taskdata.depids[fnid]:
+                    depend_tree["depends"][pn].append(taskdata.build_names_index[dep])
+
+                depend_tree["rdepends-pn"][pn] = []
+                for rdep in taskdata.rdepids[fnid]:
+                        depend_tree["rdepends-pn"][pn].append(taskdata.run_names_index[rdep])
+
                 rdepends = self.status.rundeps[fn]
                 for package in rdepends:
+                    depend_tree["rdepends-pkg"][package] = []
                     for rdepend in rdepends[package]:
-                        print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+                        depend_tree["rdepends-pkg"][package].append(rdepend)
                     packages.append(package)
+
                 rrecs = self.status.runrecs[fn]
                 for package in rrecs:
+                    depend_tree["rrecs-pkg"][package] = []
                     for rdepend in rrecs[package]:
-                        print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+                        depend_tree["rrecs-pkg"][package].append(rdepend)
                     if not package in packages:
                         packages.append(package)
+
                 for package in packages:
-                    if package != pn:
-                        print >> depends_file, '"%s" [label="%s(%s) %s\\n%s"]' % (package, package, pn, version, fn)
-                        for depend in self.status.deps[fn]:
-                            print >> depends_file, '"%s" -> "%s"' % (package, depend)
-                # Prints a flattened form of the above where subpackages of a package are merged into the main pn
-                #print >> depends_file, '"%s" [label="%s %s\\n%s\\n%s"]' % (pn, pn, taskname, version, fn)
-                #for rdep in taskdata.rdepids[fnid]:
-                #    print >> depends_file, '"%s" -> "%s" [style=dashed]' % (pn, taskdata.run_names_index[rdep])
-                #for dep in taskdata.depids[fnid]:
-                #    print >> depends_file, '"%s" -> "%s"' % (pn, taskdata.build_names_index[dep])
+                    if package not in depend_tree["packages"]:
+                        depend_tree["packages"][package] = {}
+                        depend_tree["packages"][package]["pn"] = pn
+                        depend_tree["packages"][package]["filename"] = fn
+                        depend_tree["packages"][package]["version"] = version
+
+        return depend_tree
+
+
+    def generateDepTreeEvent(self, pkgs_to_build):
+        """
+        Create a task dependency graph of pkgs_to_build.
+        Generate an event with the result
+        """
+        depgraph = self.generateDepTreeData(pkgs_to_build)
+        bb.event.fire(bb.event.DepTreeGenerated(self.configuration.data, depgraph))
+
+    def generateDotGraphFiles(self, pkgs_to_build):
+        """
+        Create a task dependency graph of pkgs_to_build.
+        Save the result to a set of .dot files.
+        """
+
+        depgraph = self.generateDepTreeData(pkgs_to_build)
+
+        # Prints a flattened form of package-depends below where subpackages of a package are merged into the main pn
+        depends_file = file('pn-depends.dot', 'w' )
+        print >> depends_file, "digraph depends {"
+        for pn in depgraph["pn"]:
+            fn = depgraph["pn"][pn]["filename"]
+            version = depgraph["pn"][pn]["version"]
+            print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)
+        for pn in depgraph["depends"]:
+            for depend in depgraph["depends"][pn]:
+                print >> depends_file, '"%s" -> "%s"' % (pn, depend)
+        for pn in depgraph["rdepends-pn"]:
+            for rdepend in depgraph["rdepends-pn"][pn]:
+                print >> depends_file, '"%s" -> "%s" [style=dashed]' % (pn, rdepend)
         print >> depends_file,  "}"
+        bb.msg.plain("PN dependencies saved to 'pn-depends.dot'")
+
+        depends_file = file('package-depends.dot', 'w' )
+        print >> depends_file, "digraph depends {"
+        for package in depgraph["packages"]:
+            pn = depgraph["packages"][package]["pn"]
+            fn = depgraph["packages"][package]["filename"]
+            version = depgraph["packages"][package]["version"]
+            if package == pn:
+                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)
+            else:
+                print >> depends_file, '"%s" [label="%s(%s) %s\\n%s"]' % (package, package, pn, version, fn)
+            for depend in depgraph["depends"][pn]:
+                print >> depends_file, '"%s" -> "%s"' % (package, depend)
+        for package in depgraph["rdepends-pkg"]:
+            for rdepend in depgraph["rdepends-pkg"][package]:
+                print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+        for package in depgraph["rrecs-pkg"]:
+            for rdepend in depgraph["rrecs-pkg"][package]:
+                print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+        print >> depends_file,  "}"
+        bb.msg.plain("Package dependencies saved to 'package-depends.dot'")
+
+        tdepends_file = file('task-depends.dot', 'w' )
+        print >> tdepends_file, "digraph depends {"
+        for task in depgraph["tdepends"]:
+            (pn, taskname) = task.rsplit(".", 1)
+            fn = depgraph["pn"][pn]["filename"]
+            version = depgraph["pn"][pn]["version"]
+            print >> tdepends_file, '"%s.%s" [label="%s %s\\n%s\\n%s"]' % (pn, taskname, pn, taskname, version, fn)
+            for dep in depgraph["tdepends"][task]:
+                print >> tdepends_file, '"%s" -> "%s"' % (task, dep)
         print >> tdepends_file,  "}"
-        bb.msg.plain("Dependencies saved to 'depends.dot'")
         bb.msg.plain("Task dependencies saved to 'task-depends.dot'")
 
     def buildDepgraph( self ):
