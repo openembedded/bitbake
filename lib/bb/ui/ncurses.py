@@ -125,7 +125,7 @@ class NCursesUI:
         """Title Window"""
         def __init__( self, x, y, width, height ):
             NCursesUI.Window.__init__( self, x, y, width, height )
-            version = "1.8.0" # FIXME compute version
+            version = bb.__version__
             title = "BitBake %s" % version
             credit = "(C) 2003-2007 Team BitBake"
             #self.win.hline( 2, 1, curses.ACS_HLINE, width-2 )
