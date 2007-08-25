@@ -108,11 +108,27 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-P", "--profile", help = "profile the command and print a report",
                action = "store_true", dest = "profile", default = False )
 
+    parser.add_option( "-u", "--ui", help = "userinterface to use",
+               action = "store", dest = "ui")
+
     options, args = parser.parse_args(sys.argv)
 
     configuration = BBConfiguration(options)
     configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
+
+
+    # Work out which UI(s) to use
+    curseUI = False
+    if configuration.ui:
+        if configuration.ui == "ncurses":
+            curseUI = True
+        elif configuration.ui == "knotty" or configuration.ui == "tty" or configuration.ui == "file":
+            curseUI = False
+        else:
+            print "FATAL: Invalid user interface '%s' specified." % configuration.ui
+            sys.exit(1)
+
 
     cooker = bb.cooker.BBCooker(configuration)
     host = cooker.server.host
@@ -135,9 +151,7 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     # Launch the UI
     try:
-        curseUI = True
-        curseUI = False
-
+        # Disable UIs that need a terminal
         if not os.isatty(sys.stdout.fileno()):
             curseUI = False
 
