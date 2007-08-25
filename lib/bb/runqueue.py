@@ -7,7 +7,7 @@ BitBake 'RunQueue' implementation
 Handles preparation and execution of a queue of tasks
 """
 
-# Copyright (C) 2006  Richard Purdie
+# Copyright (C) 2006-2007  Richard Purdie
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -63,6 +63,7 @@ class RunQueue:
         self.targets = targets
 
         self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData) or 1)
+        self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData) or "").split()
 
     def reset_runqueue(self):
 
@@ -372,6 +373,29 @@ class RunQueue:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) not processed!\nThis is probably a circular dependency (the chain might be printed above)." % (task, self.get_user_idstring(task)))
             if runq_weight1[task] != 0:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) count not zero!" % (task, self.get_user_idstring(task)))
+
+
+        # Check for mulitple taska building the same provider
+        prov_list = {}
+        seen_fn = []
+        for task in range(len(self.runq_fnid)):
+            fn = taskData.fn_index[self.runq_fnid[task]]
+            if fn in seen_fn:
+                continue
+            seen_fn.append(fn)
+            for prov in self.dataCache.fn_provides[fn]:
+                if prov not in prov_list:
+                    prov_list[prov] = [fn]
+                elif fn not in prov_list[prov]: 
+                    prov_list[prov].append(fn)
+        error = False
+        for prov in prov_list:
+            if len(prov_list[prov]) > 1 and prov not in self.multi_provider_whitelist:
+                error = True
+                bb.msg.error(bb.msg.domain.RunQueue, "Multiple files due to be built which all provide %s (%s)" % (prov, " ".join(prov_list[prov])))
+        #if error:
+        #    bb.msg.fatal(bb.msg.domain.RunQueue, "Corrupted metadata configuration detected, aborting...")
+
 
         # Make a weight sorted map
         from copy import deepcopy
