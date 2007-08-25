@@ -39,7 +39,7 @@ except ImportError:
     import pickle
     bb.msg.note(1, bb.msg.domain.Cache, "Importing cPickle failed. Falling back to a very slow implementation.")
 
-__cache_version__ = "126"
+__cache_version__ = "127"
 
 class Cache:
     """
@@ -288,10 +288,12 @@ class Cache:
             cacheData.pn_provides[pn] = Set()
         cacheData.pn_provides[pn] |= provides
 
+        cacheData.fn_provides[file_name] = Set()
         for provide in provides:
             if provide not in cacheData.providers:
                 cacheData.providers[provide] = []
             cacheData.providers[provide].append(file_name)
+            cacheData.fn_provides[file_name].add(provide)
 
         cacheData.deps[file_name] = Set()
         for dep in depends:
@@ -416,6 +418,7 @@ class CacheData:
         self.pkg_pepvpr = {}
         self.pkg_dp = {}
         self.pn_provides = {}
+        self.fn_provides = {}
         self.all_depends = Set()
         self.deps = {}
         self.rundeps = {}

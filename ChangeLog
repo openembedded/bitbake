@@ -58,6 +58,8 @@ Changes in Bitbake 1.9.x:
 	- Psyco is used only on x86 as there is no support for other architectures.
 	- Sort initial providers list by default preference (#1145, #2024)
 	- Improve provider sorting so prefered versions have preference over latest versions (#768)
+	- Detect builds of tasks with overlapping providers and warn (will become a fatal error) (#1359)
+	- Add MULTI_PROVIDER_WHITELIST variable to allow known safe multiple providers to be listed
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
