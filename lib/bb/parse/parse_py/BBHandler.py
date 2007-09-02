@@ -161,7 +161,7 @@ def handle(fn, d, include = 0):
                 if t:
                     data.setVar('T', t, d)
             except Exception, e:
-                bb.msg.debug(1, bb.msg.domain.Parsing, "executing anonymous function: %s" % e)
+                bb.msg.debug(1, bb.msg.domain.Parsing, "Exception when executing anonymous function: %s" % e)
                 raise
             data.delVar("__anonqueue", d)
             data.delVar("__anonfunc", d)
