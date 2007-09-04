@@ -61,6 +61,7 @@ Changes in Bitbake 1.9.x:
 	- Detect builds of tasks with overlapping providers and warn (will become a fatal error) (#1359)
 	- Add MULTI_PROVIDER_WHITELIST variable to allow known safe multiple providers to be listed
 	- Handle paths in svn fetcher module parameter
+	- Support the syntax "export VARIABLE"
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
