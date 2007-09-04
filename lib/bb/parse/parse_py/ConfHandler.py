@@ -31,6 +31,7 @@ from bb.parse import ParseError
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|(?P<predot>=\.)|(?P<postdot>\.=)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 __require_regexp__ = re.compile( r"require\s+(.+)" )
+__export_regexp__ = re.compile( r"export\s+(.+)" )
 
 def init(data):
     if not bb.data.getVar('TOPDIR', data):
@@ -212,6 +213,11 @@ def feeder(lineno, s, fn, data):
     if m:
         s = bb.data.expand(m.group(1), data)
         include(fn, s, data, "include required")
+        return
+
+    m = __export_regexp__.match(s)
+    if m:
+        bb.data.setVarFlag(m.group(1), "export", 1, data)
         return
 
     raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));
