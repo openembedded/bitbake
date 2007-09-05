@@ -461,6 +461,7 @@ import svk
 import ssh
 import perforce
 import bzr
+import hg
 
 methods.append(local.Local())
 methods.append(wget.Wget())
@@ -471,3 +472,4 @@ methods.append(svk.Svk())
 methods.append(ssh.SSH())
 methods.append(perforce.Perforce())
 methods.append(bzr.Bzr())
+methods.append(hg.Hg())
