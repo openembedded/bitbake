@@ -9,6 +9,7 @@ Changes in BitBake 1.8.x:
 	- Add MULTI_PROVIDER_WHITELIST variable to allow known safe multiple providers to be listed
 	- Handle paths in svn fetcher module parameter
 	- Support the syntax "export VARIABLE"
+	- Add bzr fetcher
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
