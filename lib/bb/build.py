@@ -86,10 +86,13 @@ def exec_func(func, d, dirs = None):
 
     ispython = data.getVarFlag(func, "python", d)
 
+    cleandirs = (data.expand(data.getVarFlag(func, 'cleandirs', d), d) or "").split()
+    for cdir in cleandirs:
+        os.system("rm -rf %s" % cdir)
+
     if not dirs:
-        dirs = (data.getVarFlag(func, 'dirs', d) or "").split()
+        dirs = (data.expand(data.getVarFlag(func, 'dirs', d), d) or "").split()
     for adir in dirs:
-        adir = data.expand(adir, d)
         mkdirhier(adir)
 
     if len(dirs) > 0:
