@@ -87,7 +87,7 @@ class Bzr(Fetch):
             if command is "fetch":
                 bzrcmd = "%s co %s %s://%s" % (basecmd, " ".join(options), proto, bzrroot)
             elif command is "update":
-                bzrcmd = "%s update %s" % (basecmd, " ".join(options))
+                bzrcmd = "%s pull %s --overwrite" % (basecmd, " ".join(options))
             else:
                 raise FetchError("Invalid bzr command %s" % command)
 
@@ -101,8 +101,7 @@ class Bzr(Fetch):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping bzr checkout." % ud.localpath)
             return
 
-        # Updating is disabled until bzr supports the syntax "bzr update -r X" to specify a revision
-        if 0 and os.access(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir), '.bzr'), os.R_OK):
+        if os.access(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir), '.bzr'), os.R_OK):
             bzrcmd = self._buildbzrcommand(ud, d, "update")
             bb.msg.debug(1, bb.msg.domain.Fetcher, "BZR Update %s" % loc)
             os.chdir(os.path.join (ud.pkgdir, os.path.basename(ud.path)))
@@ -145,10 +144,7 @@ class Bzr(Fetch):
 
         output = runfetchcmd(self._buildbzrcommand(ud, d, "revno"), d, True)
 
-        for line in output.splitlines():
-            revision = line
-
-        return revision
+        return output.strip()
 
     def _sortable_revision(self, url, ud, d):
         """
