@@ -66,6 +66,7 @@ Changes in Bitbake 1.9.x:
 	- Add support for cleaning directories before a task in the form:
 	  do_taskname[cleandirs] = "dir"
 	- bzr fetcher tweaks from Robert Schuster (#2913)
+	- Add mercurial (hg) fetcher from Robert Schuster (#2913)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
