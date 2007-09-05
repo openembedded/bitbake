@@ -10,6 +10,8 @@ Changes in BitBake 1.8.x:
 	- Handle paths in svn fetcher module parameter
 	- Support the syntax "export VARIABLE"
 	- Add bzr fetcher
+	- Add support for cleaning directories before a task in the form:
+	  do_taskname[cleandirs] = "dir"
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
