@@ -17,7 +17,9 @@ lib/bb/data.py
 lib/bb/data_smart.py
 lib/bb/event.py
 lib/bb/fetch/__init__.py
+lib/bb/fetch/bzr.py
 lib/bb/fetch/cvs.py
+lib/bb/fetch/hg.py
 lib/bb/fetch/git.py
 lib/bb/fetch/local.py
 lib/bb/fetch/perforce.py
