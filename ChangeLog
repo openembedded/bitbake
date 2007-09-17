@@ -67,6 +67,7 @@ Changes in Bitbake 1.9.x:
 	  do_taskname[cleandirs] = "dir"
 	- bzr fetcher tweaks from Robert Schuster (#2913)
 	- Add mercurial (hg) fetcher from Robert Schuster (#2913)
+	- Don't add duplicates to BBPATH
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
