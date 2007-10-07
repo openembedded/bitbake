@@ -375,7 +375,7 @@ class RunQueue:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) count not zero!" % (task, self.get_user_idstring(task)))
 
 
-        # Check for mulitple taska building the same provider
+        # Check for multiple tasks building the same provider
         prov_list = {}
         seen_fn = []
         for task in range(len(self.runq_fnid)):
