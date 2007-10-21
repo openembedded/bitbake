@@ -14,6 +14,7 @@ Changes in BitBake 1.8.x:
 	  do_taskname[cleandirs] = "dir"
 	- bzr fetcher tweaks from Robert Schuster (#2913)
 	- Add mercurial (hg) fetcher from Robert Schuster (#2913)
+	- Fix bogus preferred_version return values
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 

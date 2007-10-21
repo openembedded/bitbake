@@ -70,6 +70,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     """
 
     preferred_file = None
+    preferred_ver = None
 
     localdata = data.createCopy(cfgData)
     bb.data.setVar('OVERRIDES', "pn-%s:%s:%s" % (pn, pn, data.getVar('OVERRIDES', localdata)), localdata)
@@ -115,7 +116,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         else:
             bb.msg.debug(1, bb.msg.domain.Provider, "selecting %s as PREFERRED_VERSION %s of package %s%s" % (preferred_file, pv_str, pn, itemstr))
 
-    return (preferred_v, preferred_file)
+    return (preferred_ver, preferred_file)
 
 
 def findLatestProvider(pn, cfgData, dataCache, file_set):
