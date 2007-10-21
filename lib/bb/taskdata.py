@@ -149,7 +149,7 @@ class TaskData:
             # Touch all intertask dependencies
             if 'depends' in task_deps and task in task_deps['depends']:
                 ids = []
-                for dep in task_deps['depends'][task].split(" "):
+                for dep in task_deps['depends'][task].split():
                     if dep:
                         ids.append(str(self.getbuild_id(dep.split(":")[0])) + ":" + dep.split(":")[1])
                 self.tasks_idepends[taskid].extend(ids)
@@ -559,7 +559,11 @@ class TaskData:
                 self.tasks_name[task], 
                 self.tasks_tdepends[task]))
 
-        bb.msg.debug(3, bb.msg.domain.TaskData, "runtime ids (per fn):")
+        bb.msg.debug(3, bb.msg.domain.TaskData, "dependency ids (per fn):")
+        for fnid in self.depids:
+            bb.msg.debug(3, bb.msg.domain.TaskData, " %s %s: %s" % (fnid, self.fn_index[fnid], self.depids[fnid]))
+
+        bb.msg.debug(3, bb.msg.domain.TaskData, "runtime dependency ids (per fn):")
         for fnid in self.rdepids:
             bb.msg.debug(3, bb.msg.domain.TaskData, " %s %s: %s" % (fnid, self.fn_index[fnid], self.rdepids[fnid]))
 
