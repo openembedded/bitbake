@@ -370,9 +370,6 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if type(val) is not types.StringType:
         return 0
 
-    if getVarFlag(var, 'matchesenv', d):
-        return 0
-
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return 0
 
@@ -381,6 +378,9 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if unexport:
         o.write('unset %s\n' % varExpanded)
         return 1
+
+    if getVarFlag(var, 'matchesenv', d):
+        return 0
 
     val.rstrip()
     if not val:

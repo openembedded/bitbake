@@ -16,6 +16,7 @@ Changes in BitBake 1.8.x:
 	- Add mercurial (hg) fetcher from Robert Schuster (#2913)
 	- Fix bogus preferred_version return values
 	- Fix 'depends' flag splitting
+	- Fix unexport handling (#3135)
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
