@@ -17,6 +17,7 @@ Changes in BitBake 1.8.x:
 	- Fix bogus preferred_version return values
 	- Fix 'depends' flag splitting
 	- Fix unexport handling (#3135)
+	- Add bb.copyfile function similar to bb.movefile (and improve movefile error reporting)
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
