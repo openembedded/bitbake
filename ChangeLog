@@ -71,6 +71,7 @@ Changes in Bitbake 1.9.x:
 	- Fix preferred_version return values (providers.py)
 	- Fix 'depends' flag splitting
 	- Fix unexport handling (#3135)
+	- Add bb.copyfile function similar to bb.movefile (and improve movefile error reporting)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

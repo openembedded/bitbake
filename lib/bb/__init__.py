@@ -156,8 +156,7 @@ def movefile(src,dest,newmtime=None,sstat=None):
         if not sstat:
             sstat=os.lstat(src)
     except Exception, e:
-        print "!!! Stating source file failed... movefile()"
-        print "!!!",e
+        print "movefile: Stating source file failed...", e
         return None
 
     destexists=1
@@ -181,13 +180,11 @@ def movefile(src,dest,newmtime=None,sstat=None):
             if destexists and not stat.S_ISDIR(dstat[stat.ST_MODE]):
                 os.unlink(dest)
             os.symlink(target,dest)
-#            os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+            #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
             os.unlink(src)
             return os.lstat(dest)
         except Exception, e:
-            print "!!! failed to properly create symlink:"
-            print "!!!",dest,"->",target
-            print "!!!",e
+            print "movefile: failed to properly create symlink:", dest, "->", target, e
             return None
 
     renamefailed=1
@@ -199,8 +196,7 @@ def movefile(src,dest,newmtime=None,sstat=None):
             import errno
             if e[0]!=errno.EXDEV:
                 # Some random error.
-                print "!!! Failed to move",src,"to",dest
-                print "!!!",e
+                print "movefile: Failed to move", src, "to", dest, e
                 return None
             # Invalid cross-device-link 'bind' mounted or actually Cross-Device
 
@@ -212,16 +208,13 @@ def movefile(src,dest,newmtime=None,sstat=None):
                 os.rename(dest+"#new",dest)
                 didcopy=1
             except Exception, e:
-                print '!!! copy',src,'->',dest,'failed.'
-                print "!!!",e
+                print 'movefile: copy', src, '->', dest, 'failed.', e
                 return None
         else:
             #we don't yet handle special, so we need to fall back to /bin/mv
             a=getstatusoutput("/bin/mv -f "+"'"+src+"' '"+dest+"'")
             if a[0]!=0:
-                print "!!! Failed to move special file:"
-                print "!!! '"+src+"' to '"+dest+"'"
-                print "!!!",a
+                print "movefile: Failed to move special file:" + src + "' to '" + dest + "'", a
                 return None # failure
         try:
             if didcopy:
@@ -229,9 +222,7 @@ def movefile(src,dest,newmtime=None,sstat=None):
                 os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
                 os.unlink(src)
         except Exception, e:
-            print "!!! Failed to chown/chmod/unlink in movefile()"
-            print "!!!",dest
-            print "!!!",e
+            print "movefile: Failed to chown/chmod/unlink", dest, e
             return None
 
     if newmtime:
@@ -241,7 +232,75 @@ def movefile(src,dest,newmtime=None,sstat=None):
         newmtime=sstat[stat.ST_MTIME]
     return newmtime
 
+def copyfile(src,dest,newmtime=None,sstat=None):
+    """
+    Copies a file from src to dest, preserving all permissions and
+    attributes; mtime will be preserved even when moving across
+    filesystems.  Returns true on success and false on failure.
+    """
+    import os, stat, shutil
 
+    #print "copyfile("+src+","+dest+","+str(newmtime)+","+str(sstat)+")"
+    try:
+        if not sstat:
+            sstat=os.lstat(src)
+    except Exception, e:
+        print "copyfile: Stating source file failed...", e
+        return False
+
+    destexists=1
+    try:
+        dstat=os.lstat(dest)
+    except:
+        dstat=os.lstat(os.path.dirname(dest))
+        destexists=0
+
+    if destexists:
+        if stat.S_ISLNK(dstat[stat.ST_MODE]):
+            try:
+                os.unlink(dest)
+                destexists=0
+            except Exception, e:
+                pass
+
+    if stat.S_ISLNK(sstat[stat.ST_MODE]):
+        try:
+            target=os.readlink(src)
+            if destexists and not stat.S_ISDIR(dstat[stat.ST_MODE]):
+                os.unlink(dest)
+            os.symlink(target,dest)
+            #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+            return os.lstat(dest)
+        except Exception, e:
+            print "copyfile: failed to properly create symlink:", dest, "->", target, e
+            return False
+
+    if stat.S_ISREG(sstat[stat.ST_MODE]):
+            try: # For safety copy then move it over.
+                shutil.copyfile(src,dest+"#new")
+                os.rename(dest+"#new",dest)
+            except Exception, e:
+                print 'copyfile: copy', src, '->', dest, 'failed.', e
+                return False
+    else:
+            #we don't yet handle special, so we need to fall back to /bin/mv
+            a=getstatusoutput("/bin/cp -f "+"'"+src+"' '"+dest+"'")
+            if a[0]!=0:
+                print "copyfile: Failed to copy special file:" + src + "' to '" + dest + "'", a
+                return False # failure
+    try:
+        os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+        os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
+    except Exception, e:
+        print "copyfile: Failed to chown/chmod/unlink", dest, e
+        return False
+
+    if newmtime:
+        os.utime(dest,(newmtime,newmtime))
+    else:
+        os.utime(dest, (sstat[stat.ST_ATIME], sstat[stat.ST_MTIME]))
+        newmtime=sstat[stat.ST_MTIME]
+    return newmtime
 
 #######################################################################
 #######################################################################
