@@ -130,14 +130,15 @@ class RunQueue:
 
                 # Resolve Depends
                 if 'deptask' in task_deps and taskData.tasks_name[task] in task_deps['deptask']:
-                    taskname = task_deps['deptask'][taskData.tasks_name[task]]
+                    tasknames = task_deps['deptask'][taskData.tasks_name[task]].split()
                     for depid in taskData.depids[fnid]:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         if depid in taskData.build_targets:
                             depdata = taskData.build_targets[depid][0]
                             if depdata is not None:
                                 dep = taskData.fn_index[depdata]
-                                depends.append(taskData.gettask_id(dep, taskname))
+                                for taskname in tasknames:
+                                    depends.append(taskData.gettask_id(dep, taskname))
 
                 # Resolve Runtime Depends
                 if 'rdeptask' in task_deps and taskData.tasks_name[task] in task_deps['rdeptask']:
@@ -373,7 +374,6 @@ class RunQueue:
             if len(next_points) == 0:
                 break           
 
-
         # Sanity Checks
         for task in range(len(self.runq_fnid)):
             if runq_done[task] == 0:
@@ -397,7 +397,7 @@ class RunQueue:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) count not zero!" % (task, self.get_user_idstring(task)))
 
 
-        # Check for mulitple taska building the same provider
+        # Check for mulitple tasks building the same provider
         prov_list = {}
         seen_fn = []
         for task in range(len(self.runq_fnid)):
