@@ -109,14 +109,15 @@ class RunQueue:
 
                 # Resolve Depends
                 if 'deptask' in task_deps and taskData.tasks_name[task] in task_deps['deptask']:
-                    taskname = task_deps['deptask'][taskData.tasks_name[task]]
+                    tasknames = task_deps['deptask'][taskData.tasks_name[task]].split()
                     for depid in taskData.depids[fnid]:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         if depid in taskData.build_targets:
                             depdata = taskData.build_targets[depid][0]
                             if depdata is not None:
                                 dep = taskData.fn_index[depdata]
-                                depends.append(taskData.gettask_id(dep, taskname))
+                                for taskname in tasknames:
+                                    depends.append(taskData.gettask_id(dep, taskname))
 
                 # Resolve Runtime Depends
                 if 'rdeptask' in task_deps and taskData.tasks_name[task] in task_deps['rdeptask']:
