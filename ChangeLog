@@ -73,6 +73,10 @@ Changes in Bitbake 1.9.x:
 	- Fix unexport handling (#3135)
 	- Add bb.copyfile function similar to bb.movefile (and improve movefile error reporting)
 	- Allow multiple options for deptask flag
+	- Use git-fetch instead of git-pull removing any need for merges when 
+	  fetching (we don't care about the index). Fixes fetch errors.
+	- Add BB_GENERATE_MIRROR_TARBALLS option, set to 0 to make git fetches 
+	  faster at the expense of not creating mirror tarballs.
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

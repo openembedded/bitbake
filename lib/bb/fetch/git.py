@@ -89,16 +89,16 @@ class Git(Fetch):
         os.chdir(repodir)
         # Remove all but the .git directory
         runfetchcmd("rm * -Rf", d)
-        runfetchcmd("git pull %s://%s%s" % (ud.proto, ud.host, ud.path), d)
+        runfetchcmd("git fetch %s://%s%s" % (ud.proto, ud.host, ud.path), d)
         runfetchcmd("git pull --tags %s://%s%s" % (ud.proto, ud.host, ud.path), d)
         runfetchcmd("git prune-packed", d)
         runfetchcmd("git pack-redundant --all | xargs -r rm", d)
-        # old method of downloading tags
-        #runfetchcmd("rsync -a --verbose --stats --progress rsync://%s%s/ %s" % (ud.host, ud.path, os.path.join(repodir, ".git", "")), d)
 
         os.chdir(repodir)
-        bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
-        runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
+        mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
+        if mirror_tarballs != "0": 
+            bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
+            runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
 
         if os.path.exists(codir):
             prunedir(codir)
