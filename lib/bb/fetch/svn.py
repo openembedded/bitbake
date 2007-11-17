@@ -62,19 +62,16 @@ class Svn(Fetch):
             ud.revision = ""
         else:
             #
-            # ***Nasty hacks***
+            # ***Nasty hack***
             # If DATE in unexpanded PV, use ud.date (which is set from SRCDATE)
-            # Will warn people to switch to SRCREV here
-            #
-            # How can we tell when a user has overriden SRCDATE? 
-            # check for "get_srcdate" in unexpanded SRCREV - ugly
+            # Should warn people to switch to SRCREV here
             #
             pv = data.getVar("PV", d, 0)
             if "DATE" in pv:
                 ud.revision = ""
             else:
-                rev = data.getVar("SRCREV", d, 0)
-                if rev and "get_srcrev" in rev:
+                rev = Fetch.srcrev_internal_helper(ud, d)
+                if rev is True:
                     ud.revision = self.latest_revision(url, ud, d)
                     ud.date = ""
                 elif rev:
@@ -199,8 +196,9 @@ class Svn(Fetch):
     def _sortable_revision(self, url, ud, d):
         """
         Return a sortable revision number which in our case is the revision number
-        (use the cached version to avoid network access)
         """
 
-        return self.latest_revision(url, ud, d)
+        return self._build_revision(url, ud, d)
 
+    def _build_revision(self, url, ud, d):
+        return ud.revision

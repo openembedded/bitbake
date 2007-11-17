@@ -45,19 +45,15 @@ class Bzr(Fetch):
             relpath = relpath[1:]
         ud.pkgdir = os.path.join(data.expand('${BZRDIR}', d), ud.host, relpath)
 
-        if 'rev' in ud.parm:
-            ud.revision = ud.parm['rev']
-        else:
-            # ***Nasty hack***
-            rev = data.getVar("SRCREV", d, 0)
-            if rev and "get_srcrev" in rev:
-                ud.revision = self.latest_revision(url, ud, d)
-            elif rev:
-                ud.revision = rev
-            else:
-                ud.revision = ""
+        revision = Fetch.srcrev_internal_helper(ud, d)
+        if revision is True:
+            ud.revision = self.latest_revision(url, ud, d)	
+        elif revision:
+            ud.revision = revision
 
-        
+        if not ud.revision:
+            ud.revision = self.latest_revision(url, ud, d)	
+
         ud.localfile = data.expand('bzr_%s_%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.revision), d)
         
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
@@ -149,7 +145,10 @@ class Bzr(Fetch):
     def _sortable_revision(self, url, ud, d):
         """
         Return a sortable revision number which in our case is the revision number
-        (use the cached version to avoid network access)
         """
 
-        return self.latest_revision(url, ud, d)
+        return self._build_revision(url, ud, d)
+
+    def _build_revision(self, url, ud, d):
+        return ud.revision
+

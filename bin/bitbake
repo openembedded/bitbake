@@ -53,7 +53,7 @@ def main():
     usage = """%prog [options] [package ...]
 
 Executes the specified task (default is 'build') for a given set of BitBake files.
-It expects that BBFILES is defined, which is a space seperated list of files to
+It expects that BBFILES is defined, which is a space separated list of files to
 be executed.  BBFILES does support wildcards.
 Default BBFILES are the .bb files in the current directory.""" )
 
