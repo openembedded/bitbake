@@ -37,7 +37,7 @@ class Perforce(Fetch):
         return ud.type in ['p4']
 
     def doparse(url,d):
-        parm=[]
+        parm = {}
         path = url.split("://")[1]
         delim = path.find("@");
         if delim != -1:
