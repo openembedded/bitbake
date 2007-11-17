@@ -170,6 +170,8 @@ def localpaths(d):
 
     return local
 
+srcrev_internal_call = False
+
 def get_srcrev(d):
     """
     Return the version string for the current package
@@ -178,7 +180,21 @@ def get_srcrev(d):
     In the multi SCM case, we build a value based on SRCREV_FORMAT which must 
     have been set.
     """
+
+    #
+    # Ugly code alert. localpath in the fetchers will try to evaluate SRCREV which 
+    # could translate into a call to here. If it does, we need to catch this
+    # and provide some way so it knows get_srcrev is active instead of being
+    # some number etc. hence the srcrev_internal_call tracking and the magic  
+    # "SRCREVINACTION" return value.
+    #
+    # Neater solutions welcome!
+    #
+    if bb.fetch.srcrev_internal_call:
+        return "SRCREVINACTION"
+
     scms = []
+
     # Only call setup_localpath on URIs which suppports_srcrev() 
     urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d, False)
     for u in urldata:
@@ -273,12 +289,17 @@ class FetchData(object):
     def setup_localpath(self, d):
         self.setup = True
         if "localpath" in self.parm:
+            # if user sets localpath for file, use it instead.
             self.localpath = self.parm["localpath"]
         else:
+            bb.fetch.srcrev_internal_call = True
             self.localpath = self.method.localpath(self.url, self, d)
+            bb.fetch.srcrev_internal_call = False
+            # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
+            # Horrible...
+            bb.data.delVar("ISHOULDNEVEREXIST", d)
         self.md5 = self.localpath + '.md5'
         self.lockfile = self.localpath + '.lock'
-        # if user sets localpath for file, use it instead.
 
 
 class Fetch(object):
@@ -344,6 +365,34 @@ class Fetch(object):
 
         return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
     getSRCDate = staticmethod(getSRCDate)
+
+    def srcrev_internal_helper(ud, d):
+        """
+        Return:
+            a) a source revision if specified
+	    b) True if auto srcrev is in action
+	    c) False otherwise
+        """
+
+        if 'rev' in ud.parm:
+            return ud.parm['rev']
+
+        if 'tag' in ud.parm:
+            return ud.parm['tag']
+
+        rev = None
+        if 'name' in ud.parm:
+            pn = data.getVar("PN", d, 1)
+            rev = data.getVar("SRCREV_pn-" + pn + "_" + ud.parm['name'], d, 1)
+        if not rev:
+            rev = data.getVar("SRCREV", d, 1)
+        if not rev:
+            return False
+        if rev is "SRCREVINACTION":
+            return True
+        return rev
+
+    srcrev_internal_helper = staticmethod(srcrev_internal_helper)
 
     def try_mirror(d, tarfn):
         """
@@ -434,7 +483,7 @@ class Fetch(object):
 
         pd = persist_data.PersistData(d)
         key = self._revision_key(url, ud, d)
-        latest_rev = self.latest_revision(url, ud, d)
+        latest_rev = self._build_revision(url, ud, d)
         last_rev = pd.getValue("BB_URI_LOCALCOUNT", key + "_rev")
         count = pd.getValue("BB_URI_LOCALCOUNT", key + "_count")
 
