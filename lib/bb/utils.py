@@ -22,7 +22,7 @@ BitBake Utility Functions
 digits = "0123456789"
 ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-import re
+import re, fcntl, os
 
 def explode_version(s):
     r = []
@@ -202,3 +202,38 @@ def Enum(*names):
    constants = tuple(constants)
    EnumType = EnumClass()
    return EnumType
+
+def lockfile(name):
+    """
+    Use the file fn as a lock file, return when the lock has been aquired.
+    Returns a variable to pass to unlockfile().
+    """
+    while True:
+        # If we leave the lockfiles lying around there is no problem
+        # but we should clean up after ourselves. This gives potential
+        # for races though. To work around this, when we aquire the lock 
+        # we check the file we locked was still the lock file on disk. 
+        # by comparing inode numbers. If they don't match or the lockfile 
+        # no longer exists, we start again.
+
+        # This implementation is unfair since the last person to request the 
+        # lock is the most likely to win it.
+
+        lf = open(name, "a+")
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+        statinfo = os.fstat(lf.fileno())
+        if os.path.exists(lf.name):
+           statinfo2 = os.stat(lf.name)
+           if statinfo.st_ino == statinfo2.st_ino:
+               return lf
+        # File no longer exists or changed, retry
+        lf.close
+
+def unlockfile(lf):
+    """
+    Unlock a file locked using lockfile()				
+    """
+    os.unlink(lf.name)
+    fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+    lf.close
+
