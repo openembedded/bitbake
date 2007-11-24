@@ -141,21 +141,18 @@ def go(d):
                 # Touch md5 file to show activity
                 os.utime(ud.md5, None)
                 continue
-            lf = open(ud.lockfile, "a+")
-            fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+            lf = bb.utils.lockfile(ud.lockfile)
             if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
                 # If someone else fetched this before we got the lock, 
                 # notice and don't try again
                 os.utime(ud.md5, None)
-                fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
-                lf.close
+                bb.utils.unlockfile(lf)
                 continue
         m.go(u, ud, d)
         if ud.localfile:
             if not m.forcefetch(u, ud, d):
                 Fetch.write_md5sum(u, ud, d)
-            fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
-            lf.close
+            bb.utils.unlockfile(lf)
 
 def localpaths(d):
     """
