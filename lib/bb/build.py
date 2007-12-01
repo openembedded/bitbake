@@ -145,6 +145,11 @@ def exec_func(func, d, dirs = None):
     os.dup2(so.fileno(), oso[1])
     os.dup2(se.fileno(), ose[1])
 
+    locks = []
+    lockfiles = (data.expand(data.getVarFlag(func, 'lockfiles', d), d) or "").split()
+    for lock in lockfiles:
+        locks.append(bb.utils.lockfile(lock))
+
     try:
         # Run the function
         if ispython:
@@ -159,6 +164,11 @@ def exec_func(func, d, dirs = None):
             pass
 
     finally:
+
+        # Unlock any lockfiles
+        for lock in locks:
+            bb.utils.unlockfile(lock)
+
         # Restore the backup fds
         os.dup2(osi[0], osi[1])
         os.dup2(oso[0], oso[1])
@@ -299,7 +309,7 @@ def exec_task(task, d):
         task_graph.walkdown(task, execute)
 
     # make stamp, or cause event and raise exception
-    if not data.getVarFlag(task, 'nostamp', d):
+    if not data.getVarFlag(task, 'nostamp', d) and not data.getVarFlag(task, 'selfstamp', d):
         make_stamp(task, d)
 
 def extract_stamp_data(d, fn):
