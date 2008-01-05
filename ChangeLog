@@ -28,6 +28,7 @@ Changes in BitBake 1.8.x:
 	- Add support for task selfstamp and lockfiles flags
 	- Disable task number acceleration since it can allow the tasks to run 
 	  out of sequence
+	- Improve runqueue code comments
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 

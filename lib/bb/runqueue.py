@@ -97,6 +97,16 @@ class RunQueue:
             return
 
         bb.msg.note(1, bb.msg.domain.RunQueue, "Preparing runqueue")
+        # Step A - Work out a list of tasks to run
+        #
+        # Taskdata gives us a list of possible providers for a every target 
+        # ordered by priority (build_targets, run_targets). It also gives
+        # information on each of those providers.
+        #
+        # To create the actual list of tasks to execute we fix the list of 
+        # providers and then resolve the dependencies into task IDs. This 
+        # process is repeated for each type of dependency (tdepends, deptask, 
+        # rdeptast, recrdeptask, idepends).
 
         for task in range(len(taskData.tasks_name)):
             fnid = taskData.tasks_fnid[task]
@@ -105,9 +115,15 @@ class RunQueue:
 
             if fnid not in taskData.failed_fnids:
 
+                # Resolve task internal dependencies 
+                #
+                # e.g. addtask before X after Y
                 depends = taskData.tasks_tdepends[task]
 
-                # Resolve Depends
+                # Resolve 'deptask' dependencies 
+                #
+                # e.g. do_sometask[deptask] = "do_someothertask"
+                # (makes sure sometask runs after someothertask of all DEPENDS)
                 if 'deptask' in task_deps and taskData.tasks_name[task] in task_deps['deptask']:
                     tasknames = task_deps['deptask'][taskData.tasks_name[task]].split()
                     for depid in taskData.depids[fnid]:
@@ -119,7 +135,10 @@ class RunQueue:
                                 for taskname in tasknames:
                                     depends.append(taskData.gettask_id(dep, taskname))
 
-                # Resolve Runtime Depends
+                # Resolve 'rdeptask' dependencies 
+                #
+                # e.g. do_sometask[rdeptask] = "do_someothertask"
+                # (makes sure sometask runs after someothertask of all RDEPENDS)
                 if 'rdeptask' in task_deps and taskData.tasks_name[task] in task_deps['rdeptask']:
                     taskname = task_deps['rdeptask'][taskData.tasks_name[task]]
                     for depid in taskData.rdepids[fnid]:
@@ -129,6 +148,10 @@ class RunQueue:
                                 dep = taskData.fn_index[depdata]
                                 depends.append(taskData.gettask_id(dep, taskname))
 
+                # Resolve inter-task dependencies 
+                #
+                # e.g. do_sometask[depends] = "targetname:do_someothertask"
+                # (makes sure sometask runs after targetname's someothertask)
                 idepends = taskData.tasks_idepends[task]
                 for idepend in idepends:
                     depid = int(idepend.split(":")[0])
@@ -207,9 +230,10 @@ class RunQueue:
                                 if nextdepid not in dep_seen:
                                     add_recursive_build(nextdepid, fnid)
 
-
-                # Resolve Recursive Runtime Depends
-                # Also includes all thier build depends, intertask depends and runtime depends
+                # Resolve recursive 'recrdeptask' dependencies 
+                #
+                # e.g. do_sometask[recrdeptask] = "do_someothertask"
+                # (makes sure sometask runs after someothertask of all DEPENDS, RDEPENDS and intertask dependencies, recursively)
                 if 'recrdeptask' in task_deps and taskData.tasks_name[task] in task_deps['recrdeptask']:
                     for taskname in task_deps['recrdeptask'][taskData.tasks_name[task]].split():
                         dep_seen = []
@@ -223,7 +247,7 @@ class RunQueue:
                             depid = int(idepend.split(":")[0])
                             add_recursive_build(depid, fnid)
 
-                #Prune self references
+                # Rmove all self references
                 if task in depends:
                     newdep = []
                     bb.msg.debug(2, bb.msg.domain.RunQueue, "Task %s (%s %s) contains self reference! %s" % (task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], depends))
@@ -242,6 +266,13 @@ class RunQueue:
             runq_weight1.append(0)
             runq_build.append(0)
             runq_done.append(0)
+
+
+        # Step B - Mark all active tasks
+        #
+        # Start with the tasks we were asked to run and mark all dependencies
+        # as active too. If the task is to be 'forced', clear its stamp. Once
+        # all active tasks are marked, prune the ones we don't need.
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Marking Active Tasks")
 
@@ -284,7 +315,10 @@ class RunQueue:
 
             mark_active(listid, 1)
 
-        # Prune inactive tasks
+        # Step C - Prune all inactive tasks
+        #
+        # Once all active tasks are marked, prune the ones we don't need.
+
         maps = []
         delcount = 0
         for listid in range(len(self.runq_fnid)):
@@ -302,6 +336,11 @@ class RunQueue:
                 delcount = delcount + 1
                 maps.append(-1)
 
+        #
+        # Step D - Sanity checks and computation
+        #
+
+        # Check to make sure we still have tasks to run
         if len(self.runq_fnid) == 0:
             if not taskData.abort:
                 bb.msg.note(1, bb.msg.domain.RunQueue, "All possible tasks have been run but build incomplete (--continue mode). See errors above for incomplete tasks.")
@@ -321,10 +360,13 @@ class RunQueue:
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Assign Weightings")
 
+        # Generate a list of reverse dependencies to ease future calculations
         for listid in range(len(self.runq_fnid)):
             for dep in self.runq_depends[listid]:
                 self.runq_revdeps[dep].add(listid)
 
+        # Identify tasks at the end of dependency chains
+        # Error on circular dependency loops (length two)
         endpoints = []
         for listid in range(len(self.runq_fnid)):
             revdeps = self.runq_revdeps[listid]
@@ -376,7 +418,7 @@ class RunQueue:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) count not zero!" % (task, self.get_user_idstring(task)))
 
 
-        # Check for multiple tasks building the same provider
+        # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
         seen_fn = []
         for task in range(len(self.runq_fnid)):
