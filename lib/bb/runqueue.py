@@ -498,18 +498,19 @@ class RunQueue:
 
         self.state = runQueueRunning
 
+     # RP - this code allows tasks to run out of the correct order - disabled, FIXME
         # Find any tasks with current stamps and remove them from the queue
-        for task1 in range(self.stats.total):
-            task = self.prio_map[task1]
-            fn = self.taskData.fn_index[self.runq_fnid[task]]
-            taskname = self.runq_task[task]
-            if bb.build.stamp_is_current(taskname, self.dataCache, fn):
-                bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
-                self.runq_running[task] = 1
-                self.runq_buildable[task] = 1
-                self.task_complete(task)
-                self.stats.taskCompleted()
-                self.stats.taskSkipped()
+     #   for task1 in range(self.stats.total):
+     #       task = self.prio_map[task1]
+     #       fn = self.taskData.fn_index[self.runq_fnid[task]]
+     #       taskname = self.runq_task[task]
+     #       if bb.build.stamp_is_current(taskname, self.dataCache, fn):
+     #           bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
+     #           self.runq_running[task] = 1
+     #           self.runq_buildable[task] = 1
+     #           self.task_complete(task)
+     #           self.stats.taskCompleted()
+     #           self.stats.taskSkipped()
 
     def task_complete(self, task):
         """
