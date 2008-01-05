@@ -82,6 +82,7 @@ Changes in Bitbake 1.9.x:
 	- Add support for task selfstamp and lockfiles flags
 	- Disable task number acceleration since it can allow the tasks to run 
 	  out of sequence
+	- Improve runqueue code comments
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
