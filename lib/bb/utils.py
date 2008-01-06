@@ -205,13 +205,13 @@ def Enum(*names):
 
 def lockfile(name):
     """
-    Use the file fn as a lock file, return when the lock has been aquired.
+    Use the file fn as a lock file, return when the lock has been acquired.
     Returns a variable to pass to unlockfile().
     """
     while True:
         # If we leave the lockfiles lying around there is no problem
         # but we should clean up after ourselves. This gives potential
-        # for races though. To work around this, when we aquire the lock 
+        # for races though. To work around this, when we acquire the lock 
         # we check the file we locked was still the lock file on disk. 
         # by comparing inode numbers. If they don't match or the lockfile 
         # no longer exists, we start again.

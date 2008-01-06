@@ -35,6 +35,7 @@ Changes in BitBake 1.8.x:
 	- Add support for "-e target" (#3432)
 	- Fix shell showdata command (#3259)
 	- Fix shell data updating problems (#1880)
+	- Properly raise errors for invalid source URI protocols
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 

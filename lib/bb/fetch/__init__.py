@@ -281,7 +281,8 @@ class FetchData(object):
         for m in methods:
             if m.supports(url, self, d):
                 self.method = m
-                break
+                return
+        raise NoMethodError("Missing implementation for url %s" % url)
 
     def setup_localpath(self, d):
         self.setup = True
