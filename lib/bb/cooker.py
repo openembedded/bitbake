@@ -523,8 +523,6 @@ class BBCooker:
         except ImportError, details:
             bb.msg.fatal(bb.msg.domain.Parsing, "Sorry, shell not available (%s)" % details )
         else:
-            bb.data.update_data( self.configuration.data )
-            bb.data.expandKeys( self.configuration.data )
             shell.start( self )
 
     def parseConfigurationFile( self, afile ):
