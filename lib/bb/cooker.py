@@ -162,11 +162,12 @@ class BBCooker:
                                         prefstr)
 
 
-    def showEnvironment( self ):
-        """Show the outer or per-package environment"""
+    def showEnvironment(self , buildfile = None, pkgs_to_build = []):
+        """
+        Show the outer or per-package environment
+        """
         fn = None
         envdata = None
-        pkgs_to_build = self.configuration.pkgs_to_build
 
         if 'world' in pkgs_to_build:
             print "'world' is not a valid target for --environment."
@@ -176,17 +177,14 @@ class BBCooker:
             print "Only one target can be used with the --environment option."
             sys.exit(1)
 
-        if self.configuration.buildfile:
-
+        if buildfile:
             if len(pkgs_to_build) > 0:
                 print "No target should be used with the --environment and --buildfile options."
                 sys.exit(1)
             self.cb = None
             self.bb_cache = bb.cache.init(self)
-            fn = self.matchFile(self.configuration.buildfile)
-
+            fn = self.matchFile(buildfile)
         elif len(pkgs_to_build) == 1:
-
             self.updateCache()
 
             localdata = data.createCopy(self.configuration.data)
@@ -564,7 +562,7 @@ class BBCooker:
         """
 
         if self.configuration.show_environment:
-            self.showEnvironment()
+            self.showEnvironment(self.configuration.buildfile, self.configuration.pkgs_to_build)
             sys.exit( 0 )
 
         self.buildSetVars()

@@ -217,8 +217,8 @@ class BitBakeShellCommands:
     edit.usage = "<providee>"
 
     def environment( self, params ):
-        """Dump out the outer BitBake environment (see bbread)"""
-        data.emit_env(sys.__stdout__, cooker.configuration.data, True)
+        """Dump out the outer BitBake environment"""
+        cooker.showEnvironment()
 
     def exit_( self, params ):
         """Leave the BitBake Shell"""
@@ -501,8 +501,8 @@ SRC_URI = ""
         interpreter.interact( "SHELL: Expert Mode - BitBake Python %s\nType 'help' for more information, press CTRL-D to switch back to BBSHELL." % sys.version )
 
     def showdata( self, params ):
-        """Execute 'showdata' on a providee"""
-        self.build( params, "showdata" )
+        """Show the parsed metadata for a given providee"""
+        cooker.showEnvironment(None, params)
     showdata.usage = "<providee>"
 
     def setVar( self, params ):
