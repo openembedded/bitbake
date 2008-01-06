@@ -123,7 +123,16 @@ class BBCooker:
  
         # Parse any commandline into actions
         if self.configuration.show_environment:
-            self.commandlineAction = ["showEnvironment", self.configuration.buildfile]
+            self.commandlineAction = None
+
+            if 'world' in self.configuration.pkgs_to_build:
+                bb.error("'world' is not a valid target for --environment.")
+            elif len(self.configuration.pkgs_to_build) > 1:
+                bb.error("Only one target can be used with the --environment option.")
+            elif self.configuration.buildfile and len(self.configuration.pkgs_to_build) > 0:
+                bb.error("No target should be used with the --environment and --buildfile options.")
+            else:
+                self.commandlineAction = ["showEnvironment", self.configuration.buildfile, self.configuration.pkgs_to_build]
         elif self.configuration.buildfile is not None:
             self.commandlineAction = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
         elif self.configuration.show_versions:
@@ -237,19 +246,39 @@ class BBCooker:
 
             bb.msg.plain("%-35s %25s %25s" % (p, lateststr, prefstr))
 
-    def showEnvironment(self, buildfile = None):
+    def showEnvironment(self, buildfile = None, pkgs_to_build = []):
         """
         Show the outer or per-package environment
         """
+        fn = None
+        envdata = None
 
         if buildfile:
             self.cb = None
             self.bb_cache = bb.cache.init(self)
-            bf = self.matchFile(buildfile)
+            fn = self.matchFile(buildfile)
+        elif len(pkgs_to_build) == 1:
+            self.updateCache()
+
+            localdata = data.createCopy(self.configuration.data)
+            bb.data.update_data(localdata)
+            bb.data.expandKeys(localdata)
+
+            taskdata = bb.taskdata.TaskData(self.configuration.abort)
+            taskdata.add_provider(localdata, self.status, pkgs_to_build[0])
+            taskdata.add_unresolved(localdata, self.status)
+
+            targetid = taskdata.getbuild_id(pkgs_to_build[0])
+            fnid = taskdata.build_targets[targetid][0]
+            fn = taskdata.fn_index[fnid]
+        else:
+            envdata = self.configuration.data
+
+        if fn:
             try:
-                self.configuration.data = self.bb_cache.loadDataFull(bf, self.configuration.data)
+                envdata = self.bb_cache.loadDataFull(fn, self.configuration.data)
             except IOError, e:
-                bb.msg.error(bb.msg.domain.Parsing, "Unable to read %s: %s" % (bf, e))
+                bb.msg.error(bb.msg.domain.Parsing, "Unable to read %s: %s" % (fn, e))
                 raise
             except Exception, e:
                 bb.msg.error(bb.msg.domain.Parsing, "%s" % e)
@@ -263,17 +292,17 @@ class BBCooker:
 
         # emit variables and shell functions
         try:
-            data.update_data( self.configuration.data )
+            data.update_data(envdata)
             wb = dummywrite()
-            data.emit_env(wb, self.configuration.data, True)
+            data.emit_env(wb, envdata, True)
             bb.msg.plain(wb.writebuf)
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
-        data.expandKeys(self.configuration.data)
-        for e in self.configuration.data.keys():
-            if data.getVarFlag( e, 'python', self.configuration.data ):
-                bb.msg.plain("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
+        data.expandKeys(envdata)
+        for e in envdata.keys():
+            if data.getVarFlag( e, 'python', envdata ):
+                bb.msg.plain("\npython %s () {\n%s}\n" % (e, data.getVar(e, envdata, 1)))
 
     def generateDepTreeData(self, pkgs_to_build):
         """
