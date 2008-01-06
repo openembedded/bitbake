@@ -180,8 +180,9 @@ class CommandsOffline:
         Print the environment
         """
         bfile = params[0]
+        pkg = params[1]
 
-        command.cooker.showEnvironment(bfile)
+        command.cooker.showEnvironment(bfile, pkg)
         command.finishOfflineCommand()
 
     def parseFiles(self, command, params):
