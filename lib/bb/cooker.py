@@ -258,9 +258,8 @@ class BBCooker:
         tdepends_file = file('task-depends.dot', 'w' )
         print >> depends_file, "digraph depends {"
         print >> tdepends_file, "digraph depends {"
-        rq.prio_map.reverse()
-        for task1 in range(len(rq.runq_fnid)):
-            task = rq.prio_map[task1]
+
+        for task in range(len(rq.runq_fnid)):
             taskname = rq.runq_task[task]
             fnid = rq.runq_fnid[task]
             fn = taskdata.fn_index[fnid]
