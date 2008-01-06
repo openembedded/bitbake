@@ -67,6 +67,10 @@ class BBCooker:
         if not self.configuration.cmd:
             self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data) or "build"
 
+        bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, True)
+        if bbpkgs:
+            self.configuration.pkgs_to_build.extend(bbpkgs.split())
+
         #
         # Special updated configuration we use for firing events
         #
@@ -160,27 +164,68 @@ class BBCooker:
 
     def showEnvironment( self ):
         """Show the outer or per-package environment"""
+        fn = None
+        envdata = None
+        pkgs_to_build = self.configuration.pkgs_to_build
+
+        if 'world' in pkgs_to_build:
+            print "'world' is not a valid target for --environment."
+            sys.exit(1)
+
+        if len(pkgs_to_build) > 1:
+            print "Only one target can be used with the --environment option."
+            sys.exit(1)
+
         if self.configuration.buildfile:
+
+            if len(pkgs_to_build) > 0:
+                print "No target should be used with the --environment and --buildfile options."
+                sys.exit(1)
             self.cb = None
             self.bb_cache = bb.cache.init(self)
-            bf = self.matchFile(self.configuration.buildfile)
+            fn = self.matchFile(self.configuration.buildfile)
+
+        elif len(pkgs_to_build) == 1:
+
+            self.updateCache()
+
+            localdata = data.createCopy(self.configuration.data)
+            bb.data.update_data(localdata)
+            bb.data.expandKeys(localdata)
+
+            taskdata = bb.taskdata.TaskData(self.configuration.abort)
+
             try:
-                self.configuration.data = self.bb_cache.loadDataFull(bf, self.configuration.data)
+                taskdata.add_provider(localdata, self.status, pkgs_to_build[0])
+                taskdata.add_unresolved(localdata, self.status)
+            except bb.providers.NoProvider:
+                sys.exit(1)
+
+            targetid = taskdata.getbuild_id(pkgs_to_build[0])
+            fnid = taskdata.build_targets[targetid][0]
+            fn = taskdata.fn_index[fnid]
+        else:
+            envdata = self.configuration.data
+
+        if fn:
+            try:
+                envdata = self.bb_cache.loadDataFull(fn, self.configuration.data)
             except IOError, e:
-                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to read %s: %s" % (bf, e))
+                bb.msg.fatal(bb.msg.domain.Parsing, "Unable to read %s: %s" % (fn, e))
             except Exception, e:
                 bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
+
         # emit variables and shell functions
         try:
-            data.update_data( self.configuration.data )
-            data.emit_env(sys.__stdout__, self.configuration.data, True)
+            data.update_data( envdata )
+            data.emit_env(sys.__stdout__, envdata, True)
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
-        data.expandKeys( self.configuration.data )	
-        for e in self.configuration.data.keys():
-            if data.getVarFlag( e, 'python', self.configuration.data ):
-                sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, self.configuration.data, 1)))
+        data.expandKeys( envdata )	
+        for e in envdata.keys():
+            if data.getVarFlag( e, 'python', envdata ):
+                sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, envdata, 1)))
 
     def generateDotGraph( self, pkgs_to_build, ignore_deps ):
         """
@@ -539,11 +584,7 @@ class BBCooker:
 
         pkgs_to_build = self.configuration.pkgs_to_build
 
-        bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, 1)
-        if bbpkgs:
-            pkgs_to_build.extend(bbpkgs.split())
-        if len(pkgs_to_build) == 0 and not self.configuration.show_versions \
-                             and not self.configuration.show_environment:
+        if len(pkgs_to_build) == 0 and not self.configuration.show_versions:
                 print "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help'"
                 print "for usage information."
                 sys.exit(0)

@@ -32,6 +32,7 @@ Changes in BitBake 1.8.x:
 	- Add task scheduler abstraction and some example schedulers
 	- Improve circular dependency chain debugging code and user feedback
 	- Don't give a stacktrace for invalid tasks, have a user friendly message (#3431)
+	- Add support for "-e target" (#3432)
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
