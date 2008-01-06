@@ -85,6 +85,7 @@ Changes in Bitbake 1.9.x:
 	- Improve runqueue code comments
 	- Add task scheduler abstraction and some example schedulers
 	- Improve circular dependency chain debugging code and user feedback
+	- Don't give a stacktrace for invalid tasks, have a user friendly message (#3431)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

@@ -553,6 +553,9 @@ class RunQueue:
             if fnid in taskData.failed_fnids:
                 continue
 
+            if target[1] not in taskData.tasks_lookup[fnid]:
+                bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s does not exist for target %s" % (target[1], target[0]))
+
             listid = taskData.tasks_lookup[fnid][target[1]]
 
             mark_active(listid, 1)
