@@ -34,6 +34,7 @@ Changes in BitBake 1.8.x:
 	- Don't give a stacktrace for invalid tasks, have a user friendly message (#3431)
 	- Add support for "-e target" (#3432)
 	- Fix shell showdata command (#3259)
+	- Fix shell data updating problems (#1880)
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
