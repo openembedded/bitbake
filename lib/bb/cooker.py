@@ -338,9 +338,7 @@ class BBCooker:
         depend_tree["rdepends-pkg"] = {}
         depend_tree["rrecs-pkg"] = {}
 
-        rq.prio_map.reverse()
-        for task1 in range(len(rq.runq_fnid)):
-            task = rq.prio_map[task1]
+        for task in range(len(rq.runq_fnid)):
             taskname = rq.runq_task[task]
             fnid = rq.runq_fnid[task]
             fn = taskdata.fn_index[fnid]
