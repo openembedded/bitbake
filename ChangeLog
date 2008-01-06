@@ -29,6 +29,8 @@ Changes in BitBake 1.8.x:
 	- Disable task number acceleration since it can allow the tasks to run 
 	  out of sequence
 	- Improve runqueue code comments
+	- Add task scheduler abstraction and some example schedulers
+	- Improve circular dependency chain debugging code and user feedback
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
