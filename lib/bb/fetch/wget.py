@@ -66,10 +66,10 @@ class Wget(Fetch):
             if ret != 0:
                 return False
 
-            # check if sourceforge did send us to the mirror page
+            # Sanity check since wget can pretend it succeed when it didn't
+            # Also, this used to happen if sourceforge sent us to the mirror page
             if not os.path.exists(ud.localpath):
-                os.system("rm %s*" % ud.localpath) # FIXME shell quote it
-                bb.msg.debug(2, bb.msg.domain.Fetcher, "sourceforge.net send us to the mirror on %s" % ud.basename)
+                bb.msg.debug(2, bb.msg.domain.Fetcher, "The fetch command for %s returned success but %s doesn't exist?..." % (uri, ud.localpath))
                 return False
 
             return True
