@@ -50,6 +50,8 @@ class Git(Fetch):
         if 'protocol' in ud.parm:
             ud.proto = ud.parm['protocol']
 
+        ud.branch = ud.parm.get("branch", "")
+
         tag = Fetch.srcrev_internal_helper(ud, d)
         if tag is True:
             ud.tag = self.latest_revision(url, ud, d)	
@@ -130,7 +132,8 @@ class Git(Fetch):
 
     def _latest_revision(self, url, ud, d):
 
-        output = runfetchcmd("git ls-remote %s://%s%s" % (ud.proto, ud.host, ud.path), d, True)
+        bb.msg.note(1, bb.msg.domain.Fetcher, "Calling git ls-remote %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch ) )
+        output = runfetchcmd("git ls-remote %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch), d, True)
         return output.split()[0]
 
     def _build_revision(self, url, ud, d):

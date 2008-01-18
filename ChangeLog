@@ -91,6 +91,7 @@ Changes in Bitbake 1.9.x:
 	- Fix shell data updating problems (#1880)
 	- Properly raise errors for invalid source URI protocols
 	- Change the wget fetcher failure handling to avoid lockfile problems
+    - Add support for branches in git fetcher (Otavio Salvador, Michael Lauer)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
