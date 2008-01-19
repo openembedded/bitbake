@@ -37,7 +37,9 @@ Changes in BitBake 1.8.x:
 	- Fix shell data updating problems (#1880)
 	- Properly raise errors for invalid source URI protocols
 	- Change the wget fetcher failure handling to avoid lockfile problems
-        - Add support for branches in git fetcher (Otavio Salvador, Michael Lauer)
+	- Add git branch support
+	- Add support for branches in git fetcher (Otavio Salvador, Michael Lauer)
+	- Make taskdata and runqueue errors more user friendly
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 
