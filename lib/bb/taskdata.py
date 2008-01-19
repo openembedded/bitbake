@@ -330,7 +330,7 @@ class TaskData:
             self.add_provider_internal(cfgData, dataCache, item)
         except bb.providers.NoProvider:
             if self.abort:
-                bb.msg.error(bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (item, self.get_dependees_str(item)))
+                bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
                 raise
             targetid = self.getbuild_id(item)
             self.remove_buildtarget(targetid)
@@ -348,7 +348,7 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            bb.msg.note(2, bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (item, self.get_dependees_str(item)))
+            bb.msg.note(2, bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
@@ -365,7 +365,7 @@ class TaskData:
                 eligible.remove(p)
 
         if not eligible:
-            bb.msg.note(2, bb.msg.domain.Provider, "No providers of build target %s after filtering (for %s)" % (item, self.get_dependees_str(item)))
+            bb.msg.note(2, bb.msg.domain.Provider, "No buildable provider PROVIDES '%s' but '%s' DEPENDS on or otherwise requires it. Enable debugging and see earlier logs to find unbuildable providers." % (item, self.get_dependees_str(item)))
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
@@ -376,7 +376,7 @@ class TaskData:
                     providers_list.append(dataCache.pkg_fn[fn])
                 bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available for %s (%s);" % (item, ", ".join(providers_list)))
                 bb.msg.note(1, bb.msg.domain.Provider, "consider defining PREFERRED_PROVIDER_%s" % item)
-                bb.event.fire(bb.event.MultipleProviders(item,providers_list,cfgData))
+                bb.event.fire(bb.event.MultipleProviders(item, providers_list, cfgData))
             self.consider_msgs_cache.append(item)
 
         for fn in eligible:
@@ -405,7 +405,7 @@ class TaskData:
         all_p = bb.providers.getRuntimeProviders(dataCache, item)
 
         if not all_p:
-            bb.msg.error(bb.msg.domain.Provider, "No providers of runtime build target %s (for %s)" % (item, self.get_rdependees_str(item)))
+            bb.msg.error(bb.msg.domain.Provider, "'%s' RDEPENDS/RRECOMMENDS or otherwise requires the runtime entity '%s' but it wasn't found in any PACKAGE or RPROVIDES variables" % (self.get_rdependees_str(item), item))
             bb.event.fire(bb.event.NoProvider(item, cfgData, runtime=True))
             raise bb.providers.NoRProvider(item)
 
@@ -417,7 +417,7 @@ class TaskData:
                 eligible.remove(p)
 
         if not eligible:
-            bb.msg.error(bb.msg.domain.Provider, "No providers of runtime build target %s after filtering (for %s)" % (item, self.get_rdependees_str(item)))
+            bb.msg.error(bb.msg.domain.Provider, "'%s' RDEPENDS/RRECOMMENDS or otherwise requires the runtime entity '%s' but it wasn't found in any PACKAGE or RPROVIDES variables of any buildable targets.\nEnable debugging and see earlier logs to find unbuildable targets." % (self.get_rdependees_str(item), item))
             bb.event.fire(bb.event.NoProvider(item, cfgData, runtime=True))
             raise bb.providers.NoRProvider(item)
 
@@ -446,7 +446,7 @@ class TaskData:
             fnid = self.getfn_id(fn)
             if fnid in self.failed_fnids:
                 continue
-            bb.msg.debug(2, bb.msg.domain.Provider, "adding %s to satisfy runtime %s" % (fn, item))
+            bb.msg.debug(2, bb.msg.domain.Provider, "adding '%s' to satisfy runtime '%s'" % (fn, item))
             self.add_runtime_target(fn, item)
             self.add_tasks(fn, dataCache)
 
@@ -459,7 +459,9 @@ class TaskData:
         """
         if fnid in self.failed_fnids:
             return
-        bb.msg.debug(1, bb.msg.domain.Provider, "Removing failed file %s" % self.fn_index[fnid])
+        if not missing_list:
+            missing_list = [fnid]
+        bb.msg.debug(1, bb.msg.domain.Provider, "File '%s' is unbuildable, removing..." % self.fn_index[fnid])
         self.failed_fnids.append(fnid)
         for target in self.build_targets:
             if fnid in self.build_targets[target]:
@@ -477,13 +479,17 @@ class TaskData:
         Mark a build target as failed (unbuildable)
         Trigger removal of any files that have this as a dependency
         """
-        bb.msg.note(2, bb.msg.domain.Provider, "Removing failed build target %s" % self.build_names_index[targetid])
+        if not missing_list:
+            missing_list = [self.build_names_index[targetid]]
+        else:
+            missing_list = [self.build_names_index[targetid]] + missing_list
+        bb.msg.note(2, bb.msg.domain.Provider, "Target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s" % (self.build_names_index[targetid], missing_list))
         self.failed_deps.append(targetid)
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
-            self.fail_fnid(fnid, [self.build_names_index[targetid]]+missing_list)
+            self.fail_fnid(fnid, missing_list)
         if self.abort and targetid in self.external_targets:
-            bb.msg.error(bb.msg.domain.Provider, "No buildable providers available for required build target %s ('%s')" % (self.build_names_index[targetid], missing_list))
+            bb.msg.error(bb.msg.domain.Provider, "Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s" % (self.build_names_index[targetid], missing_list))
             raise bb.providers.NoProvider
 
     def remove_runtarget(self, targetid, missing_list = []):
@@ -491,17 +497,22 @@ class TaskData:
         Mark a run target as failed (unbuildable)
         Trigger removal of any files that have this as a dependency
         """
-        bb.msg.note(1, bb.msg.domain.Provider, "Removing failed runtime build target %s  ('%s')" % (self.run_names_index[targetid], missing_list))
+        if not missing_list:
+            missing_list = [self.run_names_index[targetid]]
+        else:
+            missing_list = [self.run_names_index[targetid]] + missing_list
+
+        bb.msg.note(1, bb.msg.domain.Provider, "Runtime target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s" % (self.run_names_index[targetid], missing_list))
         self.failed_rdeps.append(targetid)
         dependees = self.get_rdependees(targetid)
         for fnid in dependees:
-            self.fail_fnid(fnid, [self.run_names_index[targetid]]+missing_list)
+            self.fail_fnid(fnid, missing_list)
 
     def add_unresolved(self, cfgData, dataCache):
         """
         Resolve all unresolved build and runtime targets
         """
-        bb.msg.note(1, bb.msg.domain.TaskData, "Resolving missing task queue dependencies")
+        bb.msg.note(1, bb.msg.domain.TaskData, "Resolving any missing task queue dependencies")
         while 1:
             added = 0
             for target in self.get_unresolved_build_targets(dataCache):
@@ -511,7 +522,7 @@ class TaskData:
                 except bb.providers.NoProvider:
                     targetid = self.getbuild_id(target)
                     if self.abort and targetid in self.external_targets:
-                        bb.msg.error(bb.msg.domain.Provider, "No providers of build target %s (for %s)" % (target, self.get_dependees_str(target)))
+                        bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (target, self.get_dependees_str(target)))
                         raise
                     self.remove_buildtarget(targetid)
             for target in self.get_unresolved_run_targets(dataCache):
