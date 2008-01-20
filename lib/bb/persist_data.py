@@ -23,7 +23,11 @@ except ImportError:
     try:
         from pysqlite2 import dbapi2 as sqlite3
     except ImportError:
-        bb.msg.fatal(bb.msg.domain.PersistData, "Importing sqlite3 and pysqlite2 failed, please install one of them. A 'python-pysqlite2' like package is likely to be what you need.")
+        bb.msg.fatal(bb.msg.domain.PersistData, "Importing sqlite3 and pysqlite2 failed, please install one of them. Python 2.5 or a 'python-pysqlite2' like package is likely to be what you need.")
+
+sqlversion = sqlite3.sqlite_version_info
+if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
+    bb.msg.fatal(bb.msg.domain.PersistData, "sqlite3 version 3.3.0 or later is required.")
 
 class PersistData:
     """
