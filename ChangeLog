@@ -1,4 +1,4 @@
-Changes in BitBake 1.8.x:
+Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
 	- Fix a bug in bb.decodeurl where http://some.where.com/somefile.tgz decoded to host="" (#1530)
 	- Warn about malformed PREFERRED_PROVIDERS (#1072)
