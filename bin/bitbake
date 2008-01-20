@@ -49,8 +49,8 @@ class BBConfiguration( object ):
 #============================================================================#
 
 def main():
-    pythonver = sys.version.split(".")
-    if int(pythonver[0]) < 2 or int(pythonver[1]) < 5:
+    pythonver = sys.version_info
+    if pythonver[0] < 2 or (pythonver[0] == 2 and pythonver[1] < 5):
         print "Sorry, bitbake needs python 2.5 or later."
         sys.exit(1)
 
