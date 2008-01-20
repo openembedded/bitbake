@@ -49,6 +49,11 @@ class BBConfiguration( object ):
 #============================================================================#
 
 def main():
+    pythonver = sys.version.split(".")
+    if int(pythonver[0]) < 2 or int(pythonver[1]) < 5:
+        print "Sorry, bitbake needs python 2.5 or later."
+        sys.exit(1)
+
     parser = optparse.OptionParser( version = "BitBake Build Tool Core version %s, %%prog version %s" % ( bb.__version__, __version__ ),
     usage = """%prog [options] [package ...]
 
