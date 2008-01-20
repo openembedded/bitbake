@@ -131,8 +131,9 @@ class Git(Fetch):
         return "git:" + ud.host + ud.path.replace('/', '.')
 
     def _latest_revision(self, url, ud, d):
-
-        bb.msg.note(1, bb.msg.domain.Fetcher, "Calling git ls-remote %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch ) )
+        """
+        Compute the HEAD revision for the url
+        """
         output = runfetchcmd("git ls-remote %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch), d, True)
         return output.split()[0]
 
