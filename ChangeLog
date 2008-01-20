@@ -93,6 +93,7 @@ Changes in Bitbake 1.9.x:
 	- Change the wget fetcher failure handling to avoid lockfile problems
 	- Add support for branches in git fetcher (Otavio Salvador, Michael Lauer)
 	- Make taskdata and runqueue errors more user friendly
+	- Add norecurse and fullpath options to cvs fetcher
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
