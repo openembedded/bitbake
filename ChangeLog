@@ -1,5 +1,6 @@
 Changes in BitBake 1.8.x:
 	- Fix exit code for build failures in --continue mode
+	- Fix git branch tags fetching
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.

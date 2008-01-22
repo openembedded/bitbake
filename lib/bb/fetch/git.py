@@ -96,7 +96,7 @@ class Git(Fetch):
         # Remove all but the .git directory
         runfetchcmd("rm * -Rf", d)
         runfetchcmd("git fetch %s://%s%s" % (ud.proto, ud.host, ud.path), d)
-        runfetchcmd("git pull --tags %s://%s%s" % (ud.proto, ud.host, ud.path), d)
+        runfetchcmd("git fetch --tags %s://%s%s" % (ud.proto, ud.host, ud.path), d)
         runfetchcmd("git prune-packed", d)
         runfetchcmd("git pack-redundant --all | xargs -r rm", d)
 
