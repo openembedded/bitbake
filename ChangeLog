@@ -95,6 +95,7 @@ Changes in Bitbake 1.9.x:
 	- Make taskdata and runqueue errors more user friendly
 	- Add norecurse and fullpath options to cvs fetcher
 	- Fix exit code for build failures in --continue mode
+	- Fix git branch tags fetching
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
