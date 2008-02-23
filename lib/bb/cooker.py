@@ -387,19 +387,15 @@ class BBCooker:
         try:
             self.configuration.data = bb.parse.handle( afile, self.configuration.data )
 
-            # Add the handlers we inherited by INHERIT
-            # we need to do this manually as it is not guranteed
-            # we will pick up these classes... as we only INHERIT
-            # on .inc and .bb files but not on .conf
-            data = bb.data.createCopy( self.configuration.data )
-            inherits  = ["base"] + (bb.data.getVar('INHERIT', data, True ) or "").split()
+            # Handle any INHERITs and inherit the base class
+            inherits  = ["base"] + (bb.data.getVar('INHERIT', self.configuration.data, True ) or "").split()
             for inherit in inherits:
-                data = bb.parse.handle( os.path.join('classes', '%s.bbclass' % inherit ), data, True )
+                self.configuration.data = bb.parse.handle(os.path.join('classes', '%s.bbclass' % inherit), self.configuration.data, True )
 
-            # FIXME: This assumes that we included at least one .inc file
-            for var in bb.data.keys(data):
-                if bb.data.getVarFlag(var, 'handler', data):
-                    bb.event.register(var,bb.data.getVar(var, data))
+            # Nomally we only register event handlers at the end of parsing .bb files
+            # We register any handlers we've found so far here...
+            for var in data.getVar('__BBHANDLERS', self.configuration.data) or []:
+                bb.event.register(var,bb.data.getVar(var, self.configuration.data))
 
             bb.fetch.fetcher_init(self.configuration.data)
 
