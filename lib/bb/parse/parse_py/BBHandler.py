@@ -95,6 +95,10 @@ def handle(fn, d, include = 0):
     if ext == ".bbclass":
         __classname__ = root
         classes.append(__classname__)
+        __inherit_cache = data.getVar('__inherit_cache', d) or []
+        if not fn in __inherit_cache:
+            __inherit_cache.append(fn)
+            data.setVar('__inherit_cache', __inherit_cache, d)
 
     if include != 0:
         oldfile = data.getVar('FILE', d)
@@ -128,10 +132,6 @@ def handle(fn, d, include = 0):
 
     if ext != ".bbclass":
         data.setVar('FILE', fn, d)
-        i = (data.getVar("INHERIT", d, 1) or "").split()
-        if not "base" in i and __classname__ != "base":
-            i[0:0] = ["base"]
-        inherit(i, d)
 
     lineno = 0
     while 1:
@@ -173,10 +173,8 @@ def handle(fn, d, include = 0):
             all_handlers = {} 
             for var in data.getVar('__BBHANDLERS', d) or []:
                 # try to add the handler
-                # if we added it remember the choiche
                 handler = data.getVar(var,d)
-                if bb.event.register(var,handler) == bb.event.Registered:
-                    all_handlers[var] = handler
+                bb.event.register(var, handler)
 
             tasklist = {}
             for var in data.getVar('__BBTASKS', d) or []:
@@ -195,10 +193,6 @@ def handle(fn, d, include = 0):
                         tasklist[p].append(var)
 
             bb.build.add_tasks(tasklist, d)
-
-            # now add the handlers
-            if not len(all_handlers) == 0:
-                data.setVar('__all_handlers__', all_handlers, d)
 
         bbpath.pop(0)
     if oldfile:
