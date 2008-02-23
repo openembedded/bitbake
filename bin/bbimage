@@ -79,6 +79,11 @@ if cfg_bb is None:
     fatal("Unable to open/parse %s" % os.path.join('conf', 'bitbake.conf'))
     usage(1)
 
+# Handle any INHERITs and inherit the base class
+inherits  = ["base"] + (bb.data.getVar('INHERIT', cfg_bb, True ) or "").split()
+for inherit in inherits:
+    cfg_bb = bb.parse.handle(os.path.join('classes', '%s.bbclass' % inherit), cfg_bb, True )
+
 rootfs = None
 extra_files = []
 
