@@ -106,7 +106,6 @@ def exec_func(func, d, dirs = None):
         adir = dirs[-1]
     else:
         adir = data.getVar('B', d, 1)
-        mkdirhier(adir)
 
     # Save current directory
     try:
