@@ -74,12 +74,21 @@ def exec_func(func, d, dirs = None):
     if not body:
         return
 
-    cleandirs = (data.expand(data.getVarFlag(func, 'cleandirs', d), d) or "").split()
+    flags = data.getVarFlags(func, d)
+    for item in ['deps', 'check', 'interactive', 'python', 'cleandirs', 'dirs', 'lockfiles', 'fakeroot']:
+        if not item in flags:
+            flags[item] = None
+
+    ispython = flags['python']
+
+    cleandirs = (data.expand(flags['cleandirs'], d) or "").split()
     for cdir in cleandirs:
         os.system("rm -rf %s" % cdir)
 
-    if not dirs:
-        dirs = (data.expand(data.getVarFlag(func, 'dirs', d), d) or "").split()
+    if dirs:
+        dirs = data.expand(dirs, d)
+    else:
+        dirs = (data.expand(flags['dirs'], d) or "").split()
     for adir in dirs:
         mkdirhier(adir)
 
@@ -87,25 +96,24 @@ def exec_func(func, d, dirs = None):
         adir = dirs[-1]
     else:
         adir = data.getVar('B', d, 1)
-
-    adir = data.expand(adir, d)
+        mkdirhier(adir)
 
     try:
         prevdir = os.getcwd()
     except OSError:
-        prevdir = data.expand('${TOPDIR}', d)
+        prevdir = data.getVar('TOPDIR', d, True)
     if adir and os.access(adir, os.F_OK):
         os.chdir(adir)
 
     locks = []
-    lockfiles = (data.expand(data.getVarFlag(func, 'lockfiles', d), d) or "").split()
+    lockfiles = (data.expand(flags['lockfiles'], d) or "").split()
     for lock in lockfiles:
         locks.append(bb.utils.lockfile(lock))
 
-    if data.getVarFlag(func, "python", d):
+    if flags['python']:
         exec_func_python(func, d)
     else:
-        exec_func_shell(func, d)
+        exec_func_shell(func, d, flags)
 
     for lock in locks:
         bb.utils.unlockfile(lock)
@@ -117,19 +125,20 @@ def exec_func_python(func, d):
     """Execute a python BB 'function'"""
     import re, os
 
+    bbfile = bb.data.getVar('FILE', d, 1)
     tmp  = "def " + func + "():\n%s" % data.getVar(func, d)
     tmp += '\n' + func + '()'
-    comp = utils.better_compile(tmp, func, bb.data.getVar('FILE', d, 1) )
+    comp = utils.better_compile(tmp, func, bbfile)
     prevdir = os.getcwd()
     g = {} # globals
     g['bb'] = bb
     g['os'] = os
     g['d'] = d
-    utils.better_exec(comp,g,tmp, bb.data.getVar('FILE',d,1))
+    utils.better_exec(comp, g, tmp, bbfile)
     if os.path.exists(prevdir):
         os.chdir(prevdir)
 
-def exec_func_shell(func, d):
+def exec_func_shell(func, d, flags):
     """Execute a shell BB 'function' Returns true if execution was successful.
 
     For this, it creates a bash shell script in the tmp dectory, writes the local
@@ -141,9 +150,9 @@ def exec_func_shell(func, d):
     """
     import sys
 
-    deps = data.getVarFlag(func, 'deps', d)
-    check = data.getVarFlag(func, 'check', d)
-    interact = data.getVarFlag(func, 'interactive', d)
+    deps = flags['deps']
+    check = flags['check']
+    interact = flags['interactive']
     if check in globals():
         if globals()[check](func, deps):
             return
@@ -195,7 +204,7 @@ def exec_func_shell(func, d):
 
     # execute function
     prevdir = os.getcwd()
-    if data.getVarFlag(func, "fakeroot", d):
+    if flags['fakeroot']:
         maybe_fakeroot = "PATH=\"%s\" fakeroot " % bb.data.getVar("PATH", d, 1)
     else:
         maybe_fakeroot = ''
