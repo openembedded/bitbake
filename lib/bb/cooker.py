@@ -672,7 +672,7 @@ class BBCooker:
         for i in xrange( len( filelist ) ):
             f = filelist[i]
 
-            bb.msg.debug(1, bb.msg.domain.Collection, "parsing %s" % f)
+            #bb.msg.debug(1, bb.msg.domain.Collection, "parsing %s" % f)
 
             # read a file's metadata
             try:
