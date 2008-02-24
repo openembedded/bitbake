@@ -102,7 +102,8 @@ Changes in Bitbake 1.9.x:
 	- Fix getVarFlags bug in data_smart
 	- Optmise cache handling by more quickly detecting an invalid cache, only 
 	  saving the cache when its changed, moving the cache validity check into
-	  the parsing loop and factoring some getVar calls outside a for loop.
+	  the parsing loop and factoring some getVar calls outside a for loop
+	- Cooker: Remove a debug message from the parsing loop to lower overhead
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
