@@ -99,6 +99,7 @@ Changes in Bitbake 1.9.x:
 	- Change parseConfigurationFile so it works on real data, not a copy
 	- Handle 'base' inherit and all other INHERITs from parseConfigurationFile 
 	  instead of BBHandler
+	- Fix getVarFlags bug in data_smart
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

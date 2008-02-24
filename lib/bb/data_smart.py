@@ -232,10 +232,10 @@ class DataSmart:
         flags = {}
 
         if local_var:
-            for i in self.dict[var].keys():
+            for i in local_var.keys():
                 if i == "content":
                     continue
-                flags[i] = self.dict[var][i]
+                flags[i] = local_var[i]
 
         if len(flags) == 0:
             return None
