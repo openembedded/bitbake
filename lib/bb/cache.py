@@ -50,9 +50,11 @@ class Cache:
 
         self.cachedir = bb.data.getVar("CACHE", cooker.configuration.data, True)
         self.clean = {}
+        self.checked = {}
         self.depends_cache = {}
         self.data = None
         self.data_fn = None
+        self.cacheclean = True
 
         if self.cachedir in [None, '']:
             self.has_cache = False
@@ -67,9 +69,20 @@ class Cache:
             except OSError:
                 bb.mkdirhier( self.cachedir )
 
-        if self.has_cache and (self.mtime(self.cachefile)):
+        if not self.has_cache:
+            return            
+
+        # If any of configuration.data's dependencies are newer than the
+        # cache there isn't even any point in loading it...
+        newest_mtime = 0
+        deps = bb.data.getVar("__depends", cooker.configuration.data, True)
+        for f,old_mtime in deps:
+            if old_mtime > newest_mtime:
+                newest_mtime = old_mtime
+
+        if self.mtime(self.cachefile) >= newest_mtime:
             try:
-                p = pickle.Unpickler( file(self.cachefile,"rb"))
+                p = pickle.Unpickler(file(self.cachefile, "rb"))
                 self.depends_cache, version_data = p.load()
                 if version_data['CACHE_VER'] != __cache_version__:
                     raise ValueError, 'Cache Version Mismatch'
@@ -81,11 +94,8 @@ class Cache:
             except (ValueError, KeyError):
                 bb.msg.note(1, bb.msg.domain.Cache, "Invalid cache found, rebuilding...")
                 self.depends_cache = {}
-
-        if self.depends_cache:
-            for fn in self.depends_cache.keys():
-                self.clean[fn] = ""
-                self.cacheValidUpdate(fn)
+        else:
+            bb.msg.note(1, bb.msg.domain.Cache, "Out of date cache found, rebuilding...")
 
     def getVar(self, var, fn, exp = 0):
         """
@@ -97,7 +107,6 @@ class Cache:
           2. We're learning what data to cache - serve from data 
              backend but add a copy of the data to the cache.
         """
-
         if fn in self.clean:
             return self.depends_cache[fn][var]
 
@@ -108,9 +117,8 @@ class Cache:
             # We're trying to access data in the cache which doesn't exist
             # yet setData hasn't been called to setup the right access. Very bad.
             bb.msg.error(bb.msg.domain.Cache, "Parsing error data_fn %s and fn %s don't match" % (self.data_fn, fn))
-            import traceback						
-            traceback.print_stack()
 
+        self.cacheclean = False
         result = bb.data.getVar(var, self.data, exp)
         self.depends_cache[fn][var] = result
         return result
@@ -133,6 +141,8 @@ class Cache:
         Return a complete set of data for fn.
         To do this, we need to parse the file.
         """
+        bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s (full)" % fn)
+
         bb_data, skipped = self.load_bbfile(fn, cfgData)
         return bb_data
 
@@ -144,10 +154,14 @@ class Cache:
         to record the variables accessed.
         Return the cache status and whether the file was skipped when parsed
         """
+        if fn not in self.checked:
+            self.cacheValidUpdate(fn)
         if self.cacheValid(fn):
             if "SKIPPED" in self.depends_cache[fn]:
                 return True, True
             return True, False
+
+        bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s" % fn)
 
         bb_data, skipped = self.load_bbfile(fn, cfgData)
         self.setData(fn, bb_data)
@@ -174,15 +188,20 @@ class Cache:
         if not self.has_cache:
             return False
 
-        # Check file still exists
-        if self.mtime(fn) == 0:
-            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s not longer exists" % fn)
-            self.remove(fn)
-            return False
+        self.checked[fn] = ""
+
+        # Pretend we're clean so getVar works
+        self.clean[fn] = ""
 
         # File isn't in depends_cache
         if not fn in self.depends_cache:
             bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s is not cached" % fn)
+            self.remove(fn)
+            return False
+
+        # Check file still exists
+        if self.mtime(fn) == 0:
+            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s not longer exists" % fn)
             self.remove(fn)
             return False
 
@@ -197,6 +216,7 @@ class Cache:
         for f,old_mtime in depends:
             # Check if file still exists
             if self.mtime(f) == 0:
+                self.remove(fn)
                 return False
 
             new_mtime = bb.parse.cached_mtime(f)
@@ -205,7 +225,7 @@ class Cache:
                 self.remove(fn)
                 return False
 
-        bb.msg.debug(2, bb.msg.domain.Cache, "Depends Cache: %s is clean" % fn)
+        #bb.msg.debug(2, bb.msg.domain.Cache, "Depends Cache: %s is clean" % fn)
         if not fn in self.clean:
             self.clean[fn] = ""
 
@@ -238,6 +258,10 @@ class Cache:
         """
 
         if not self.has_cache:
+            return
+
+        if self.cacheclean:
+            bb.msg.note(1, bb.msg.domain.Cache, "Cache is clean, not saving.")
             return
 
         version_data = {}
@@ -330,14 +354,16 @@ class Cache:
         if not file_name in cacheData.runrecs:
             cacheData.runrecs[file_name] = {}
 
+        rdepends = bb.utils.explode_deps(self.getVar('RDEPENDS', file_name, True) or "")
+        rrecommends = bb.utils.explode_deps(self.getVar('RRECOMMENDS', file_name, True) or "")
         for package in packages + [pn]:
             if not package in cacheData.rundeps[file_name]:
                 cacheData.rundeps[file_name][package] = {}
             if not package in cacheData.runrecs[file_name]:
                 cacheData.runrecs[file_name][package] = {}
 
-            add_dep(cacheData.rundeps[file_name][package], bb.utils.explode_deps(self.getVar('RDEPENDS', file_name, True) or ""))
-            add_dep(cacheData.runrecs[file_name][package], bb.utils.explode_deps(self.getVar('RRECOMMENDS', file_name, True) or ""))
+            add_dep(cacheData.rundeps[file_name][package], rdepends)
+            add_dep(cacheData.runrecs[file_name][package], rrecommends)
             add_dep(cacheData.rundeps[file_name][package], bb.utils.explode_deps(self.getVar("RDEPENDS_%s" % package, file_name, True) or ""))
             add_dep(cacheData.runrecs[file_name][package], bb.utils.explode_deps(self.getVar("RRECOMMENDS_%s" % package, file_name, True) or ""))
 
