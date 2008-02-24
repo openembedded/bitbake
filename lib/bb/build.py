@@ -84,14 +84,21 @@ def exec_func(func, d, dirs = None):
     if not body:
         return
 
-    ispython = data.getVarFlag(func, "python", d)
+    flags = data.getVarFlags(func, d)
+    for item in ['deps', 'check', 'interactive', 'python', 'cleandirs', 'dirs', 'lockfiles', 'fakeroot']:
+        if not item in flags:
+            flags[item] = None
 
-    cleandirs = (data.expand(data.getVarFlag(func, 'cleandirs', d), d) or "").split()
+    ispython = flags['python']
+
+    cleandirs = (data.expand(flags['cleandirs'], d) or "").split()
     for cdir in cleandirs:
         os.system("rm -rf %s" % cdir)
 
-    if not dirs:
-        dirs = (data.expand(data.getVarFlag(func, 'dirs', d), d) or "").split()
+    if dirs:
+        dirs = data.expand(dirs, d)
+    else:
+        dirs = (data.expand(flags['dirs'], d) or "").split()
     for adir in dirs:
         mkdirhier(adir)
 
@@ -99,14 +106,13 @@ def exec_func(func, d, dirs = None):
         adir = dirs[-1]
     else:
         adir = data.getVar('B', d, 1)
-
-    adir = data.expand(adir, d)
+        mkdirhier(adir)
 
     # Save current directory
     try:
         prevdir = os.getcwd()
     except OSError:
-        prevdir = data.expand('${TOPDIR}', d)
+        prevdir = data.getVar('TOPDIR', d, True)
 
     # Setup logfiles
     t = data.getVar('T', d, 1)
@@ -146,7 +152,7 @@ def exec_func(func, d, dirs = None):
     os.dup2(se.fileno(), ose[1])
 
     locks = []
-    lockfiles = (data.expand(data.getVarFlag(func, 'lockfiles', d), d) or "").split()
+    lockfiles = (data.expand(flags['lockfiles'], d) or "").split()
     for lock in lockfiles:
         locks.append(bb.utils.lockfile(lock))
 
@@ -155,7 +161,7 @@ def exec_func(func, d, dirs = None):
         if ispython:
             exec_func_python(func, d, runfile, logfile)
         else:
-            exec_func_shell(func, d, runfile, logfile)
+            exec_func_shell(func, d, runfile, logfile, flags)
 
         # Restore original directory
         try:
@@ -188,20 +194,21 @@ def exec_func_python(func, d, runfile, logfile):
     """Execute a python BB 'function'"""
     import re, os
 
+    bbfile = bb.data.getVar('FILE', d, 1)
     tmp  = "def " + func + "():\n%s" % data.getVar(func, d)
     tmp += '\n' + func + '()'
 
     f = open(runfile, "w")
     f.write(tmp)
-    comp = utils.better_compile(tmp, func, bb.data.getVar('FILE', d, 1) )
+    comp = utils.better_compile(tmp, func, bbfile)
     g = {} # globals
     g['bb'] = bb
     g['os'] = os
     g['d'] = d
-    utils.better_exec(comp, g, tmp, bb.data.getVar('FILE',d,1))
+    utils.better_exec(comp, g, tmp, bbfile)
 
 
-def exec_func_shell(func, d, runfile, logfile):
+def exec_func_shell(func, d, runfile, logfile, flags):
     """Execute a shell BB 'function' Returns true if execution was successful.
 
     For this, it creates a bash shell script in the tmp dectory, writes the local
@@ -212,8 +219,8 @@ def exec_func_shell(func, d, runfile, logfile):
     item in the list is where we will chdir/cd to.
     """
 
-    deps = data.getVarFlag(func, 'deps', d)
-    check = data.getVarFlag(func, 'check', d)
+    deps = flags['deps']
+    check = flags['check']
     if check in globals():
         if globals()[check](func, deps):
             return
@@ -232,7 +239,7 @@ def exec_func_shell(func, d, runfile, logfile):
         raise FuncFailed("Function not specified for exec_func_shell")
 
     # execute function
-    if data.getVarFlag(func, "fakeroot", d):
+    if flags['fakeroot']:
         maybe_fakeroot = "PATH=\"%s\" fakeroot " % bb.data.getVar("PATH", d, 1)
     else:
         maybe_fakeroot = ''

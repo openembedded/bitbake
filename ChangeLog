@@ -104,6 +104,7 @@ Changes in Bitbake 1.9.x:
 	  saving the cache when its changed, moving the cache validity check into
 	  the parsing loop and factoring some getVar calls outside a for loop
 	- Cooker: Remove a debug message from the parsing loop to lower overhead
+	- Convert build.py exec_task to use getVarFlags
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
