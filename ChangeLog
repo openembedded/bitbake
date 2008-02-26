@@ -12,6 +12,7 @@ Changes in BitBake 1.8.x:
 	- Convert build.py exec_task to use getVarFlags
 	- Update shell to use cooker.buildFile
 	- Add StampUpdate event
+	- Convert -b option to use taskdata/runqueue
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
