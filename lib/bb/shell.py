@@ -243,27 +243,13 @@ class BitBakeShellCommands:
         oldcmd = cooker.configuration.cmd
         cooker.configuration.cmd = cmd
 
-        thisdata = data.createCopy(cooker.configuration.data)
-        data.update_data(thisdata)
-        data.expandKeys(thisdata)
-
         try:
-            bbfile_data = parse.handle( bf, thisdata )
+            cooker.buildFile(bf)
         except parse.ParseError:
             print "ERROR: Unable to open or parse '%s'" % bf
-        else:
-            # Remove stamp for target if force mode active
-            if cooker.configuration.force:
-                bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (cmd, bf))
-                bb.build.del_stamp('do_%s' % cmd, bbfile_data)
-
-            item = data.getVar('PN', bbfile_data, 1)
-            data.setVar( "_task_cache", [], bbfile_data ) # force
-            try:
-                cooker.tryBuildPackage( os.path.abspath( bf ), item, cmd, bbfile_data, True )
-            except build.EventException, e:
-                print "ERROR: Couldn't build '%s'" % name
-                last_exception = e
+        except build.EventException, e:
+            print "ERROR: Couldn't build '%s'" % name
+            last_exception = e
 
         cooker.configuration.cmd = oldcmd
     fileBuild.usage = "<bbfile>"
@@ -586,6 +572,7 @@ SRC_URI = ""
 
 def completeFilePath( bbfile ):
     """Get the complete bbfile path"""
+    if not cooker.status: return bbfile
     if not cooker.status.pkg_fn: return bbfile
     for key in cooker.status.pkg_fn.keys():
         if key.endswith( bbfile ):
