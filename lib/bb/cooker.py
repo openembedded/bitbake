@@ -125,7 +125,6 @@ class BBCooker:
         build_depends is a list of previous build dependencies (not runtime)
         If build_depends is empty, we're dealing with a runtime depends
         """
-
         the_data = self.bb_cache.loadDataFull(fn, self.configuration.data)
 
         item = self.status.pkg_fn[fn]
@@ -184,6 +183,8 @@ class BBCooker:
             self.cb = None
             self.bb_cache = bb.cache.init(self)
             fn = self.matchFile(buildfile)
+            if not fn:
+                sys.exit(1)
         elif len(pkgs_to_build) == 1:
             self.updateCache()
 
@@ -220,7 +221,7 @@ class BBCooker:
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
         # emit the metadata which isnt valid shell
-        data.expandKeys( envdata )	
+        data.expandKeys( envdata )
         for e in envdata.keys():
             if data.getVarFlag( e, 'python', envdata ):
                 sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, data.getVar(e, envdata, 1)))
@@ -273,7 +274,7 @@ class BBCooker:
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
                 packages = []
-                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)		
+                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)
                 for depend in self.status.deps[fn]:
                     print >> depends_file, '"%s" -> "%s"' % (pn, depend)
                 rdepends = self.status.rundeps[fn]
@@ -459,21 +460,24 @@ class BBCooker:
                 bb.msg.error(bb.msg.domain.Parsing, "Unable to match %s (%s matches found):" % (buildfile, len(matches)))
                 for f in matches:
                     bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
-                sys.exit(1)
-            return matches[0]		    
+                return False
+            return matches[0]
 
     def buildFile(self, buildfile):
         """
         Build the file matching regexp buildfile
         """
 
-        bf = self.matchFile(buildfile)
+        # Make sure our target is a fully qualified filename
+        fn = self.matchFile(buildfile)
+        if not fn:
+            return False
 
-        bbfile_data = bb.parse.handle(bf, self.configuration.data)
+        bbfile_data = bb.parse.handle(fn, self.configuration.data)
 
         # Remove stamp for target if force mode active
         if self.configuration.force:
-            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (self.configuration.cmd, bf))
+            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (self.configuration.cmd, fn))
             bb.build.del_stamp('do_%s' % self.configuration.cmd, bbfile_data)
 
         item = bb.data.getVar('PN', bbfile_data, 1)
@@ -482,7 +486,7 @@ class BBCooker:
         except bb.build.EventException:
             bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
 
-        sys.exit(0)
+        return True
 
     def buildTargets(self, targets):
         """
@@ -564,7 +568,9 @@ class BBCooker:
             self.interactiveMode()
 
         if self.configuration.buildfile is not None:
-            return self.buildFile(self.configuration.buildfile)
+            if not self.buildFile(self.configuration.buildfile):
+                sys.exit(1)
+            sys.exit(0)
 
         # initialise the parsing status now we know we will need deps
         self.updateCache()
