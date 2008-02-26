@@ -804,19 +804,11 @@ class RunQueue:
 
         event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp, self.cfgdata))
 
-     # RP - this code allows tasks to run out of the correct order - disabled, FIXME
-        # Find any tasks with current stamps and remove them from the queue
-     #   for task1 in range(self.stats.total):
-     #       task = self.prio_map[task1]
-     #       fn = self.taskData.fn_index[self.runq_fnid[task]]
-     #       taskname = self.runq_task[task]
-     #       if bb.build.stamp_is_current(taskname, self.dataCache, fn):
-     #           bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
-     #           self.runq_running[task] = 1
-     #           self.runq_buildable[task] = 1
-     #           self.task_complete(task)
-     #           self.stats.taskCompleted()
-     #           self.stats.taskSkipped()
+        # Find out which tasks have current stamps which we can skip when the
+        # time comes
+        self.currentstamps = self.check_stamps()
+        self.stats.taskSkipped(len(self.currentstamps))
+        self.stats.taskCompleted(len(self.currentstamps))
 
     def task_complete(self, task):
         """
@@ -871,13 +863,13 @@ class RunQueue:
                 fn = self.taskData.fn_index[self.runq_fnid[task]]
 
                 taskname = self.runq_task[task]
-                if bb.build.stamp_is_current(taskname, self.dataCache, fn):
+                if task in self.currentstamps:
                     bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
                     self.runq_running[task] = 1
                     self.runq_buildable[task] = 1
                     self.task_complete(task)
-                    self.stats.taskCompleted()
-                    self.stats.taskSkipped()
+                    #self.stats.taskCompleted()
+                    #self.stats.taskSkipped()
                     continue
 
                 bb.event.fire(runQueueTaskStarted(task, self.stats, self, self.cfgData))
@@ -894,7 +886,7 @@ class RunQueue:
                     os.dup2(newsi, sys.stdin.fileno())
                     self.cooker.configuration.cmd = taskname[3:]
                     try: 
-                        self.cooker.tryBuild(fn, False)
+                        self.cooker.tryBuild(fn)
                     except bb.build.EventException:
                         bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
                         sys.exit(1)
