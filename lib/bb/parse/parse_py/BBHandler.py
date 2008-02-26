@@ -174,22 +174,7 @@ def handle(fn, d, include = 0):
                 handler = data.getVar(var,d)
                 bb.event.register(var, handler)
 
-            tasklist = {}
-            for var in data.getVar('__BBTASKS', d) or []:
-                if var not in tasklist:
-                    tasklist[var] = []
-                deps = data.getVarFlag(var, 'deps', d) or []
-                for p in deps:
-                    if p not in tasklist[var]:
-                        tasklist[var].append(p)
-
-                postdeps = data.getVarFlag(var, 'postdeps', d) or []
-                for p in postdeps:
-                    if p not in tasklist:
-                        tasklist[p] = []
-                    if var not in tasklist[p]:
-                        tasklist[p].append(var)
-
+            tasklist = data.getVar('__BBTASKS', d) or []
             bb.build.add_tasks(tasklist, d)
 
         bbpath.pop(0)
@@ -336,15 +321,23 @@ def feeder(lineno, s, fn, root, d):
         data.setVarFlag(var, "task", 1, d)
 
         bbtasks = data.getVar('__BBTASKS', d) or []
-        bbtasks.append(var)
+        if not var in bbtasks:
+            bbtasks.append(var)
         data.setVar('__BBTASKS', bbtasks, d)
 
+        existing = data.getVarFlag(var, "deps", d) or []
         if after is not None:
-#           set up deps for function
-            data.setVarFlag(var, "deps", after.split(), d)
+            # set up deps for function
+            for entry in after.split():
+                if entry not in existing:
+                    existing.append(entry)
+        data.setVarFlag(var, "deps", existing, d)
         if before is not None:
-#           set up things that depend on this func
-            data.setVarFlag(var, "postdeps", before.split(), d)
+            # set up things that depend on this func
+            for entry in before.split():
+                existing = data.getVarFlag(entry, "deps", d) or []
+                if var not in existing:
+                    data.setVarFlag(entry, "deps", [var] + existing, d)
         return
 
     m = __addhandler_regexp__.match(s)

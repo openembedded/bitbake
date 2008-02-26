@@ -290,7 +290,6 @@ class Cache:
         packages_dynamic = (self.getVar('PACKAGES_DYNAMIC', file_name, True) or "").split()
         rprovides = (self.getVar("RPROVIDES", file_name, True) or "").split()
 
-        cacheData.task_queues[file_name] = self.getVar("_task_graph", file_name, True)
         cacheData.task_deps[file_name] = self.getVar("_task_deps", file_name, True)
 
         # build PackageName to FileName lookup table

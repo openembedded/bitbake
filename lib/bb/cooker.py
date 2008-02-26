@@ -97,14 +97,12 @@ class BBCooker:
             bb.msg.note(2, bb.msg.domain.Build, "Renice to %s " % os.nice(nice))
  
 
-    def tryBuildPackage(self, fn, item, task, the_data, build_depends):
+    def tryBuildPackage(self, fn, item, task, the_data):
         """
         Build one task of a package, optionally build following task depends
         """
         bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
-            if not build_depends:
-                bb.data.setVarFlag('do_%s' % task, 'dontrundeps', 1, the_data)
             if not self.configuration.dry_run:
                 bb.build.exec_task('do_%s' % task, the_data)
             bb.event.fire(bb.event.PkgSucceeded(item, the_data))
@@ -119,7 +117,7 @@ class BBCooker:
             bb.event.fire(bb.event.PkgFailed(item, the_data))
             raise
 
-    def tryBuild( self, fn, build_depends):
+    def tryBuild(self, fn):
         """
         Build a provider and its dependencies. 
         build_depends is a list of previous build dependencies (not runtime)
@@ -129,10 +127,10 @@ class BBCooker:
 
         item = self.status.pkg_fn[fn]
 
-        if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
-            return True
+        #if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
+        #    return True
 
-        return self.tryBuildPackage(fn, item, self.configuration.cmd, the_data, build_depends)
+        return self.tryBuildPackage(fn, item, self.configuration.cmd, the_data)
 
     def showVersions(self):
         pkg_pn = self.status.pkg_pn

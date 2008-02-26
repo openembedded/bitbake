@@ -124,7 +124,6 @@ class TaskData:
         Add tasks for a given fn to the database
         """
 
-        task_graph = dataCache.task_queues[fn]
         task_deps = dataCache.task_deps[fn]
 
         fnid = self.getfn_id(fn)
@@ -136,11 +135,11 @@ class TaskData:
         if fnid in self.tasks_fnid:
             return
 
-        for task in task_graph.allnodes():
+        for task in task_deps['tasks']:
 
             # Work out task dependencies
             parentids = []
-            for dep in task_graph.getparents(task):
+            for dep in task_deps['parents'][task]:
                 parentid = self.gettask_id(fn, dep)
                 parentids.append(parentid)
             taskid = self.gettask_id(fn, task)

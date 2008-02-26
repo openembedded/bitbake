@@ -263,71 +263,28 @@ def exec_task(task, d):
        a function is that a task exists in the task digraph, and therefore
        has dependencies amongst other tasks."""
 
-    # check if the task is in the graph..
-    task_graph = data.getVar('_task_graph', d)
-    if not task_graph:
-        task_graph = bb.digraph()
-        data.setVar('_task_graph', task_graph, d)
-    task_cache = data.getVar('_task_cache', d)
-    if not task_cache:
-        task_cache = []
-        data.setVar('_task_cache', task_cache, d)
-    if not task_graph.hasnode(task):
-        raise EventException("Missing node in task graph", InvalidTask(task, d))
+    # Check whther this is a valid task
+    if not data.getVarFlag(task, 'task', d):
+        raise EventException("No such task", InvalidTask(task, d))
 
-    # check whether this task needs executing..
-    if stamp_is_current(task, d):
-        return 1
-
-    # follow digraph path up, then execute our way back down
-    def execute(graph, item):
-        if data.getVarFlag(item, 'task', d):
-            if item in task_cache:
-                return 1
-
-            if task != item:
-                # deeper than toplevel, exec w/ deps
-                exec_task(item, d)
-                return 1
-
-            try:
-                bb.msg.debug(1, bb.msg.domain.Build, "Executing task %s" % item)
-                old_overrides = data.getVar('OVERRIDES', d, 0)
-                localdata = data.createCopy(d)
-                data.setVar('OVERRIDES', 'task_%s:%s' % (item, old_overrides), localdata)
-                data.update_data(localdata)
-                event.fire(TaskStarted(item, localdata))
-                exec_func(item, localdata)
-                event.fire(TaskSucceeded(item, localdata))
-                task_cache.append(item)
-                data.setVar('_task_cache', task_cache, d)
-            except FuncFailed, reason:
-                bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % reason )
-                failedevent = TaskFailed(item, d)
-                event.fire(failedevent)
-                raise EventException("Function failed in task: %s" % reason, failedevent)
-
-    if data.getVarFlag(task, 'dontrundeps', d):
-        execute(None, task)
-    else:
-        task_graph.walkdown(task, execute)
+    try:
+        bb.msg.debug(1, bb.msg.domain.Build, "Executing task %s" % task)
+        old_overrides = data.getVar('OVERRIDES', d, 0)
+        localdata = data.createCopy(d)
+        data.setVar('OVERRIDES', 'task_%s:%s' % (task, old_overrides), localdata)
+        data.update_data(localdata)
+        event.fire(TaskStarted(task, localdata))
+        exec_func(task, localdata)
+        event.fire(TaskSucceeded(task, localdata))
+    except FuncFailed, reason:
+        bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % reason )
+        failedevent = TaskFailed(task, d)
+        event.fire(failedevent)
+        raise EventException("Function failed in task: %s" % reason, failedevent)
 
     # make stamp, or cause event and raise exception
     if not data.getVarFlag(task, 'nostamp', d) and not data.getVarFlag(task, 'selfstamp', d):
         make_stamp(task, d)
-
-def extract_stamp_data(d, fn):
-    """
-    Extracts stamp data from d which is either a data dictonary (fn unset) 
-    or a dataCache entry (fn set). 
-    """
-    if fn:
-        return (d.task_queues[fn], d.stamp[fn], d.task_deps[fn])
-    task_graph = data.getVar('_task_graph', d)
-    if not task_graph:
-        task_graph = bb.digraph()
-        data.setVar('_task_graph', task_graph, d)
-    return (task_graph, data.getVar('STAMP', d, 1), None)
 
 def extract_stamp(d, fn):
     """
@@ -337,49 +294,6 @@ def extract_stamp(d, fn):
     if fn:
         return d.stamp[fn]
     return data.getVar('STAMP', d, 1)
-
-def stamp_is_current(task, d, file_name = None, checkdeps = 1):
-    """
-    Check status of a given task's stamp. 
-    Returns 0 if it is not current and needs updating.
-    (d can be a data dict or dataCache)
-    """
-
-    (task_graph, stampfn, taskdep) = extract_stamp_data(d, file_name)
-
-    if not stampfn:
-        return 0
-
-    stampfile = "%s.%s" % (stampfn, task)
-    if not os.access(stampfile, os.F_OK):
-        return 0
-
-    if checkdeps == 0:
-        return 1
-
-    import stat
-    tasktime = os.stat(stampfile)[stat.ST_MTIME]
-
-    _deps = []
-    def checkStamp(graph, task):
-        # check for existance
-        if file_name:
-            if 'nostamp' in taskdep and task in taskdep['nostamp']:
-                return 1
-        else:
-            if data.getVarFlag(task, 'nostamp', d):
-                return 1
-
-        if not stamp_is_current(task, d, file_name, 0						):
-            return 0
-
-        depfile = "%s.%s" % (stampfn, task)
-        deptime = os.stat(depfile)[stat.ST_MTIME]
-        if deptime > tasktime:
-            return 0
-        return 1
-
-    return task_graph.walkdown(task, checkStamp)
 
 def stamp_internal(task, d, file_name):
     """
@@ -417,40 +331,35 @@ def del_stamp(task, d, file_name = None):
     stamp_internal(task, d, file_name)
 
 def add_tasks(tasklist, d):
-    task_graph = data.getVar('_task_graph', d)
     task_deps = data.getVar('_task_deps', d)
-    if not task_graph:
-        task_graph = bb.digraph()
     if not task_deps:
         task_deps = {}
+    if not 'tasks' in task_deps:
+        task_deps['tasks'] = []
 
     for task in tasklist:
-        deps = tasklist[task]
         task = data.expand(task, d)
-
         data.setVarFlag(task, 'task', 1, d)
-        task_graph.addnode(task, None)
-        for dep in deps:
-            dep = data.expand(dep, d)
-            if not task_graph.hasnode(dep):
-                task_graph.addnode(dep, None)
-            task_graph.addnode(task, dep)
+
+        if not task in task_deps['tasks']:
+            task_deps['tasks'].append(task)
 
         flags = data.getVarFlags(task, d)    
         def getTask(name):
+            if not name in task_deps:
+                task_deps[name] = {}
             if name in flags:
                 deptask = data.expand(flags[name], d)
-                if not name in task_deps:
-                    task_deps[name] = {}
                 task_deps[name][task] = deptask
+        getTask('deps')        
         getTask('depends')
         getTask('deptask')
         getTask('rdeptask')
         getTask('recrdeptask')
         getTask('nostamp')
+        task_deps['parents'] = task_deps['deps']
 
     # don't assume holding a reference
-    data.setVar('_task_graph', task_graph, d)
     data.setVar('_task_deps', task_deps, d)
 
 def remove_task(task, kill, d):
@@ -458,22 +367,5 @@ def remove_task(task, kill, d):
 
        If kill is 1, also remove tasks that depend on this task."""
 
-    task_graph = data.getVar('_task_graph', d)
-    if not task_graph:
-        task_graph = bb.digraph()
-    if not task_graph.hasnode(task):
-        return
-
     data.delVarFlag(task, 'task', d)
-    ref = 1
-    if kill == 1:
-        ref = 2
-    task_graph.delnode(task, ref)
-    data.setVar('_task_graph', task_graph, d)
 
-def task_exists(task, d):
-    task_graph = data.getVar('_task_graph', d)
-    if not task_graph:
-        task_graph = bb.digraph()
-        data.setVar('_task_graph', task_graph, d)
-    return task_graph.hasnode(task)
