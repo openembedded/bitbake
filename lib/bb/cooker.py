@@ -617,21 +617,53 @@ class BBCooker:
         Build the file matching regexp buildfile
         """
 
-        bf = self.matchFile(buildfile)
+        fn = self.matchFile(buildfile)
         self.buildSetVars()
-        bbfile_data = bb.parse.handle(bf, self.configuration.data)
+        bbfile_data = bb.parse.handle(fn, self.configuration.data)
+
+        # Load data into the cache for fn
+        self.bb_cache = bb.cache.init(self)
+        self.bb_cache.loadData(fn, self.configuration.data)      
+
+        # Parse the loaded cache data
+        self.status = bb.cache.CacheData()
+        self.bb_cache.handle_data(fn, self.status)  
+
+        # Tweak some variables
+        item = self.bb_cache.getVar('PN', fn, True)
+        self.status.ignored_dependencies = Set()
+        self.status.bbfile_priority[fn] = 1
+
+        # Remove external dependencies
+        self.status.task_deps[fn]['depends'] = {}
+        self.status.deps[fn] = []
+        self.status.rundeps[fn] = []
+        self.status.runrecs[fn] = []
 
         # Remove stamp for target if force mode active
         if self.configuration.force:
-            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (task, bf))
+            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (task, fn))
             bb.build.del_stamp('do_%s' % task, bbfile_data)
 
-        item = bb.data.getVar('PN', bbfile_data, 1)
-        try:
-            self.tryBuildPackage(bf, item, task, bbfile_data, True)
-        except bb.build.EventException:
-            bb.msg.error(bb.msg.domain.Build,  "Build of '%s' failed" % item )
+        # Setup taskdata structure
+        taskdata = bb.taskdata.TaskData(self.configuration.abort)
+        taskdata.add_provider(self.configuration.data, self.status, item)
 
+        buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
+        bb.event.fire(bb.event.BuildStarted(buildname, [item], self.configuration.event_data))
+
+        # Execute the runqueue
+        runlist = [[item, "do_%s" % self.configuration.cmd]]
+        rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
+        rq.prepare_runqueue()
+        try:
+            failures = rq.execute_runqueue()
+        except runqueue.TaskFailure, fnids:
+            for fnid in fnids:
+                bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+            return False
+
+        bb.event.fire(bb.event.BuildCompleted(buildname, [item], self.configuration.event_data, failures))
         bb.event.fire(bb.command.CookerCommandCompleted(self.configuration.event_data))
 
     def buildTargets(self, targets):

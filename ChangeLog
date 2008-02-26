@@ -107,6 +107,7 @@ Changes in Bitbake 1.9.x:
 	- Convert build.py exec_task to use getVarFlags
 	- Update shell to use cooker.buildFile
 	- Add StampUpdate event
+	- Convert -b option to use taskdata/runqueue
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
