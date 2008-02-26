@@ -26,6 +26,7 @@ from bb import msg, data, event, mkdirhier, utils
 from sets import Set 
 import bb, os, sys
 import signal
+import stat
 
 class TaskFailure(Exception):
     """Exception raised when a task in a runqueue fails"""
@@ -45,11 +46,11 @@ class RunQueueStats:
     def taskFailed(self):
         self.failed = self.failed + 1
 
-    def taskCompleted(self):
-        self.completed = self.completed + 1
+    def taskCompleted(self, number = 1):
+        self.completed = self.completed + number
 
-    def taskSkipped(self):
-        self.skipped = self.skipped + 1
+    def taskSkipped(self, number = 1):
+        self.skipped = self.skipped + number
 
 class RunQueueScheduler:
     """
@@ -144,6 +145,7 @@ class RunQueue:
         self.taskData = taskData
         self.targets = targets
 
+        self.cfgdata = cfgData
         self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData) or 1)
         self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData) or "").split()
 
@@ -512,6 +514,7 @@ class RunQueue:
             for depend in depends:
                 mark_active(depend, depth+1)
 
+        self.target_pairs = []
         for target in self.targets:
             targetid = taskData.getbuild_id(target[0])
 
@@ -522,10 +525,11 @@ class RunQueue:
                 continue
 
             fnid = taskData.build_targets[targetid][0]
+            fn = taskData.fn_index[fnid]
+            self.target_pairs.append((fn, target[1]))
 
             # Remove stamps for targets if force mode active
             if self.cooker.configuration.force:
-                fn = taskData.fn_index[fnid]
                 bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (target[1], fn))
                 bb.build.del_stamp(target[1], self.dataCache, fn)
 
@@ -636,6 +640,86 @@ class RunQueue:
 
         #self.dump_data(taskData)
 
+    def check_stamps(self):
+        unchecked = {}
+        current = []
+        notcurrent = []
+        buildable = []
+        for task in range(len(self.runq_fnid)):
+            unchecked[task] = ""
+            if len(self.runq_depends[task]) == 0:
+                buildable.append(task)
+
+        for task in range(len(self.runq_fnid)):
+            if task not in unchecked:
+                continue
+            fn = self.taskData.fn_index[self.runq_fnid[task]]
+            taskname = self.runq_task[task]
+            stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
+            # If the stamp is missing its not current
+            if not os.access(stampfile, os.F_OK):
+                del unchecked[task]
+                notcurrent.append(task)
+                continue
+            # If its a 'nostamp' task, it's not current
+            taskdep = self.dataCache.task_deps[fn]
+            if 'nostamp' in taskdep and task in taskdep['nostamp']:
+                del unchecked[task]
+                notcurrent.append(task)
+                continue
+
+        while (len(buildable) > 0):
+            nextbuildable = []
+            for task in buildable:
+                if task in unchecked:
+                    fn = self.taskData.fn_index[self.runq_fnid[task]]
+                    taskname = self.runq_task[task]
+                    stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
+                    iscurrent = True
+
+                    t1 = os.stat(stampfile)[stat.ST_MTIME]
+                    for dep in self.runq_depends[task]:
+                        if iscurrent:
+                            fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
+                            taskname2 = self.runq_task[dep]
+                            stampfile2 = "%s.%s" % (self.dataCache.stamp[fn2], taskname2)
+                            if fn == fn2:
+                                if dep in notcurrent:
+                                    iscurrent = False
+                                else:
+                                    t2 = os.stat(stampfile2)[stat.ST_MTIME]
+                                    if t1 < t2:
+                                        iscurrent = False
+                    del unchecked[task]
+                    if iscurrent:
+                        current.append(task)
+                    else:
+                       notcurrent.append(task)
+
+                for revdep in self.runq_revdeps[task]:
+                    alldeps = 1
+                    for dep in self.runq_depends[revdep]:
+                        if dep in unchecked:
+                            alldeps = 0
+                    if alldeps == 1:
+                        nextbuildable.append(revdep)
+
+            buildable = nextbuildable
+
+        #for task in range(len(self.runq_fnid)):
+        #    fn = self.taskData.fn_index[self.runq_fnid[task]]
+        #    taskname = self.runq_task[task]
+        #    print "%s %s.%s" % (task, taskname, fn)
+
+        #print "Unchecked: %s" % unchecked
+        #print "Current: %s" % current
+        #print "Not current: %s" % notcurrent
+
+        if len(unchecked) > 0:
+            bb.fatal("check_stamps fatal internal error")
+        return current
+
+
     def execute_runqueue(self):
         """
         Run the tasks in a queue prepared by prepare_runqueue
@@ -720,6 +804,8 @@ class RunQueue:
 
         def sigint_handler(signum, frame):
             raise KeyboardInterrupt
+
+        event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp, self.cfgdata))
 
         # RP - this code allows tasks to run out of the correct order - disabled, FIXME
         # Find any tasks with current stamps and remove them from the queue

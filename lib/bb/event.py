@@ -127,6 +127,23 @@ def getName(e):
 class ConfigParsed(Event):
     """Configuration Parsing Complete"""
 
+class StampUpdate(Event):
+    """Trigger for any adjustment of the stamp files to happen"""
+
+    def __init__(self, targets, stampfns, d):
+        self._targets = targets
+        self._stampfns = stampfns
+        Event.__init__(self, d)
+
+    def getStampPrefix(self):
+        return self._stampfns
+
+    def getTargets(self):
+        return self._targets
+
+    stampPrefix = property(getStampPrefix)
+    targets = property(getTargets)
+
 class PkgBase(Event):
     """Base class for package events"""
 

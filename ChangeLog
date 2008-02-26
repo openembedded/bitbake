@@ -11,6 +11,7 @@ Changes in BitBake 1.8.x:
 	- Cooker: Remove a debug message from the parsing loop to lower overhead
 	- Convert build.py exec_task to use getVarFlags
 	- Update shell to use cooker.buildFile
+	- Add StampUpdate event
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
