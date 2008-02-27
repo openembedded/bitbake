@@ -110,6 +110,8 @@ Changes in Bitbake 1.9.x:
 	- Convert -b option to use taskdata/runqueue
 	- Remove digraph and switch to new stamp checking code. exec_task no longer
 	  honours dependencies
+	- Make fetcher timestamp updating non-fatal when permissions don't allow 
+	  updates
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

@@ -139,13 +139,21 @@ def go(d):
             if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
                 # File already present along with md5 stamp file
                 # Touch md5 file to show activity
-                os.utime(ud.md5, None)
+                try:
+                    os.utime(ud.md5, None)
+                except:
+                    # Errors aren't fatal here
+                    pass
                 continue
             lf = bb.utils.lockfile(ud.lockfile)
             if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
                 # If someone else fetched this before we got the lock, 
                 # notice and don't try again
-                os.utime(ud.md5, None)
+                try:
+                    os.utime(ud.md5, None)
+                except:
+                    # Errors aren't fatal here
+                    pass
                 bb.utils.unlockfile(lf)
                 continue
         m.go(u, ud, d)
