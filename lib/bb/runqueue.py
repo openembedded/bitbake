@@ -694,7 +694,7 @@ class RunQueue:
                     if iscurrent:
                         current.append(task)
                     else:
-                       notcurrent.append(task)
+                        notcurrent.append(task)
 
                 for revdep in self.runq_revdeps[task]:
                     alldeps = 1
@@ -702,7 +702,8 @@ class RunQueue:
                         if dep in unchecked:
                             alldeps = 0
                     if alldeps == 1:
-                        nextbuildable.append(revdep)
+                        if revdep in unchecked:
+                            nextbuildable.append(revdep)
 
             buildable = nextbuildable
 
