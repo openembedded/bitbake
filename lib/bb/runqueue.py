@@ -146,8 +146,10 @@ class RunQueue:
         self.targets = targets
 
         self.cfgdata = cfgData
-        self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData) or 1)
-        self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData) or "").split()
+        self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData, 1) or 1)
+        self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData, 1) or "").split()
+        self.scheduler = bb.data.getVar("BB_SCHEDULER", cfgData, 1) or "speed"
+        self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, 1) or "perfile"
 
     def reset_runqueue(self):
 
@@ -612,10 +614,11 @@ class RunQueue:
         self.runq_weight = self.calculate_task_weights(endpoints)
 
         # Decide what order to execute the tasks in, pick a scheduler
-        # FIXME - Allow user selection
         #self.sched = RunQueueScheduler(self)
-        self.sched = RunQueueSchedulerSpeed(self)
-        #self.sched = RunQueueSchedulerCompletion(self)
+        if self.scheduler == "completion":
+            self.sched = RunQueueSchedulerCompletion(self)
+        else:
+            self.sched = RunQueueSchedulerSpeed(self)
 
         # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
@@ -645,6 +648,12 @@ class RunQueue:
         current = []
         notcurrent = []
         buildable = []
+
+        if self.stamppolicy == "perfile":
+            fulldeptree = False
+        else:
+            fulldeptree = True
+
         for task in range(len(self.runq_fnid)):
             unchecked[task] = ""
             if len(self.runq_depends[task]) == 0:
@@ -683,7 +692,7 @@ class RunQueue:
                             fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
                             taskname2 = self.runq_task[dep]
                             stampfile2 = "%s.%s" % (self.dataCache.stamp[fn2], taskname2)
-                            if fn == fn2:
+                            if fulldeptree or fn == fn2:
                                 if dep in notcurrent:
                                     iscurrent = False
                                 else:

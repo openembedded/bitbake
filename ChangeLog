@@ -17,6 +17,10 @@ Changes in BitBake 1.8.x:
 	  honours dependencies
 	- Make fetcher timestamp updating non-fatal when permissions don't allow 
 	  updates
+	- Add BB_SCHEDULER variable/option ("completion" or "speed") controlling
+	  the way bitbake schedules tasks
+	- Add BB_STAMP_POLICY variable/option ("perfile" or "full") controlling
+	  how extensively stamps are looked at for validity
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
