@@ -338,6 +338,8 @@ def add_tasks(tasklist, d):
         task_deps = {}
     if not 'tasks' in task_deps:
         task_deps['tasks'] = []
+    if not 'parents' in task_deps:
+        task_deps['parents'] = {}
 
     for task in tasklist:
         task = data.expand(task, d)
@@ -353,13 +355,15 @@ def add_tasks(tasklist, d):
             if name in flags:
                 deptask = data.expand(flags[name], d)
                 task_deps[name][task] = deptask
-        getTask('deps')        
         getTask('depends')
         getTask('deptask')
         getTask('rdeptask')
         getTask('recrdeptask')
         getTask('nostamp')
-        task_deps['parents'] = task_deps['deps']
+        task_deps['parents'][task] = []
+        for dep in flags['deps']:
+            dep = data.expand(dep, d)
+            task_deps['parents'][task].append(dep)
 
     # don't assume holding a reference
     data.setVar('_task_deps', task_deps, d)
