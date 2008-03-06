@@ -150,7 +150,7 @@ class TaskData:
                 ids = []
                 for dep in task_deps['depends'][task].split():
                     if dep:
-                        ids.append(str(self.getbuild_id(dep.split(":")[0])) + ":" + dep.split(":")[1])
+                        ids.append(((self.getbuild_id(dep.split(":")[0])), dep.split(":")[1]))
                 self.tasks_idepends[taskid].extend(ids)
 
         # Work out build dependencies
@@ -458,8 +458,6 @@ class TaskData:
         """
         if fnid in self.failed_fnids:
             return
-        if not missing_list:
-            missing_list = [fnid]
         bb.msg.debug(1, bb.msg.domain.Provider, "File '%s' is unbuildable, removing..." % self.fn_index[fnid])
         self.failed_fnids.append(fnid)
         for target in self.build_targets:
@@ -487,6 +485,12 @@ class TaskData:
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
             self.fail_fnid(fnid, missing_list)
+        for taskid in range(len(self.tasks_idepends)):
+            idepends = self.tasks_idepends[taskid]
+            for (idependid, idependtask) in idepends:
+                if idependid == targetid:
+                    self.fail_fnid(self.tasks_fnid[taskid], missing_list)
+
         if self.abort and targetid in self.external_targets:
             bb.msg.error(bb.msg.domain.Provider, "Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s" % (self.build_names_index[targetid], missing_list))
             raise bb.providers.NoProvider
