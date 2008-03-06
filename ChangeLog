@@ -116,6 +116,8 @@ Changes in Bitbake 1.9.x:
 	  the way bitbake schedules tasks
 	- Add BB_STAMP_POLICY variable/option ("perfile" or "full") controlling
 	  how extensively stamps are looked at for validity
+	- When handling build target failures make sure idepends are checked and
+	  failed where needed. Fixes --continue mode crashes.
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
