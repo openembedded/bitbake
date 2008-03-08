@@ -473,11 +473,11 @@ class BBCooker:
 
         # Load data into the cache for fn
         self.bb_cache = bb.cache.init(self)
-        self.bb_cache.loadData(fn, self.configuration.data)      
+        self.bb_cache.loadData(fn, self.configuration.data)
 
         # Parse the loaded cache data
         self.status = bb.cache.CacheData()
-        self.bb_cache.handle_data(fn, self.status)  
+        self.bb_cache.handle_data(fn, self.status)
 
         # Tweak some variables
         item = self.bb_cache.getVar('PN', fn, True)
@@ -493,7 +493,7 @@ class BBCooker:
         # Remove stamp for target if force mode active
         if self.configuration.force:
             bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (self.configuration.cmd, fn))
-            bb.build.del_stamp('do_%s' % self.configuration.cmd, bbfile_data)
+            bb.build.del_stamp('do_%s' % self.configuration.cmd, self.status, fn)
 
         # Setup taskdata structure
         taskdata = bb.taskdata.TaskData(self.configuration.abort)
