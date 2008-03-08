@@ -641,7 +641,7 @@ class BBCooker:
         # Remove stamp for target if force mode active
         if self.configuration.force:
             bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (task, fn))
-            bb.build.del_stamp('do_%s' % task, bbfile_data)
+            bb.build.del_stamp('do_%s' % task, self.status, fn)
 
         # Setup taskdata structure
         taskdata = bb.taskdata.TaskData(self.configuration.abort)
