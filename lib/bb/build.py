@@ -264,7 +264,7 @@ def exec_task(task, d):
         raise EventException("No such task", InvalidTask(task, d))
 
     try:
-        bb.msg.debug(1, bb.msg.domain.Build, "Executing task %s" % item)
+        bb.msg.debug(1, bb.msg.domain.Build, "Executing task %s" % task)
         old_overrides = data.getVar('OVERRIDES', d, 0)
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', 'task_%s:%s' % (item, old_overrides), localdata)
