@@ -877,7 +877,7 @@ class RunQueue:
 
         self.state = runQueueRunning
 
-        event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp, self.cfgdata))
+        event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp, self.cfgData))
 
     def task_complete(self, task):
         """
