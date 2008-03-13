@@ -730,6 +730,40 @@ class RunQueue:
             bb.fatal("check_stamps fatal internal error")
         return current
 
+    def check_stamp(self, task):
+
+        if self.stamppolicy == "perfile":
+            fulldeptree = False
+        else:
+            fulldeptree = True
+
+        fn = self.taskData.fn_index[self.runq_fnid[task]]
+        taskname = self.runq_task[task]
+        stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
+        # If the stamp is missing its not current
+        if not os.access(stampfile, os.F_OK):
+            return False
+        # If its a 'nostamp' task, it's not current
+        taskdep = self.dataCache.task_deps[fn]
+        if 'nostamp' in taskdep and task in taskdep['nostamp']:
+            return False
+
+        iscurrent = True
+        t1 =  os.stat(stampfile)[stat.ST_MTIME]
+        for dep in self.runq_depends[task]:
+            if iscurrent:
+                fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
+                taskname2 = self.runq_task[dep]
+                stampfile2 = "%s.%s" % (self.dataCache.stamp[fn2], taskname2)
+                if fulldeptree or fn == fn2:
+                    try:
+                        t2 = os.stat(stampfile2)[stat.ST_MTIME]
+                        if t1 < t2:
+                            iscurrent = False
+                    except:
+                        iscurrent = False
+
+        return iscurrent
 
     def execute_runqueue(self):
         """
@@ -818,25 +852,18 @@ class RunQueue:
 
         event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp, self.cfgdata))
 
-        # Find out which tasks have current stamps which we can skip when the
-        # time comes
-        currentstamps = self.check_stamps()
-        self.stats.taskSkipped(len(currentstamps))
-        self.stats.taskCompleted(len(currentstamps))
-
         while True:
             task = self.sched.next()
             if task is not None:
                 fn = self.taskData.fn_index[self.runq_fnid[task]]
 
                 taskname = self.runq_task[task]
-                if task in currentstamps:
-                #if bb.build.stamp_is_current(taskname, self.dataCache, fn):
+                if self.check_stamp(task):
                     bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
                     self.runq_running[task] = 1
                     self.task_complete(task)
-                    #self.stats.taskCompleted()
-                    #self.stats.taskSkipped()
+                    self.stats.taskCompleted()
+                    self.stats.taskSkipped()
                     continue
 
                 bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.active_builds + 1, len(self.runq_fnid), task, self.get_user_idstring(task)))
