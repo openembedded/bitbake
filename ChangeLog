@@ -119,6 +119,8 @@ Changes in Bitbake 1.9.x:
 	- When handling build target failures make sure idepends are checked and
 	  failed where needed. Fixes --continue mode crashes.
 	- Fix -f (force) in conjunction with -b
+	- Fix problems with recrdeptask handling where some idepends weren't handled
+	  correctly.
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
