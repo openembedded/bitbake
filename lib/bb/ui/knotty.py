@@ -134,6 +134,8 @@ def init(frontend, eventHandler):
                 continue
             if event[0].startswith('bb.runqueue.runQueue'):
                 continue
+            if event[0].startswith('bb.event.StampUpdate'):
+                continue
             print "Unknown Event: %s" % event
 
         except KeyboardInterrupt:
