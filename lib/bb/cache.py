@@ -80,7 +80,7 @@ class Cache:
             if old_mtime > newest_mtime:
                 newest_mtime = old_mtime
 
-        if self.mtime(self.cachefile) >= newest_mtime:
+        if bb.parse.cached_mtime_noerror(self.cachefile) >= newest_mtime:
             try:
                 p = pickle.Unpickler(file(self.cachefile, "rb"))
                 self.depends_cache, version_data = p.load()
@@ -199,31 +199,34 @@ class Cache:
             self.remove(fn)
             return False
 
+        mtime = bb.parse.cached_mtime_noerror(fn) 
+
         # Check file still exists
-        if self.mtime(fn) == 0:
+        if mtime == 0:
             bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s not longer exists" % fn)
             self.remove(fn)
             return False
 
         # Check the file's timestamp
-        if bb.parse.cached_mtime(fn) > self.getVar("CACHETIMESTAMP", fn, True):
+        if mtime > self.getVar("CACHETIMESTAMP", fn, True):
             bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s changed" % fn)
             self.remove(fn)
             return False
 
         # Check dependencies are still valid
         depends = self.getVar("__depends", fn, True)
-        for f,old_mtime in depends:
-            # Check if file still exists
-            if self.mtime(f) == 0:
-                self.remove(fn)
-                return False
+        if depends:
+            for f,old_mtime in depends:
+                fmtime = bb.parse.cached_mtime_noerror(f)
+                # Check if file still exists
+                if fmtime == 0:
+                    self.remove(fn)
+                    return False
 
-            new_mtime = bb.parse.cached_mtime(f)
-            if (new_mtime > old_mtime):
-                bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s's dependency %s changed" % (fn, f))
-                self.remove(fn)
-                return False
+                if (fmtime > old_mtime):
+                    bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s's dependency %s changed" % (fn, f))
+                    self.remove(fn)
+                    return False
 
         #bb.msg.debug(2, bb.msg.domain.Cache, "Depends Cache: %s is clean" % fn)
         if not fn in self.clean:
@@ -284,7 +287,6 @@ class Cache:
         pv       = self.getVar('PV', file_name, True)
         pr       = self.getVar('PR', file_name, True)
         dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
-        provides  = Set([pn] + (self.getVar("PROVIDES", file_name, True) or "").split())
         depends   = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")
         packages  = (self.getVar('PACKAGES', file_name, True) or "").split()
         packages_dynamic = (self.getVar('PACKAGES_DYNAMIC', file_name, True) or "").split()
@@ -304,24 +306,31 @@ class Cache:
         cacheData.pkg_pepvpr[file_name] = (pe,pv,pr)
         cacheData.pkg_dp[file_name] = dp
 
+        provides = [pn]
+        for provide in (self.getVar("PROVIDES", file_name, True) or "").split():
+            if provide not in provides:
+                provides.append(provide)
+
         # Build forward and reverse provider hashes
         # Forward: virtual -> [filenames]
         # Reverse: PN -> [virtuals]
         if pn not in cacheData.pn_provides:
-            cacheData.pn_provides[pn] = Set()
-        cacheData.pn_provides[pn] |= provides
+            cacheData.pn_provides[pn] = []
 
-        cacheData.fn_provides[file_name] = Set()
+        cacheData.fn_provides[file_name] = provides
         for provide in provides:
             if provide not in cacheData.providers:
                 cacheData.providers[provide] = []
             cacheData.providers[provide].append(file_name)
-            cacheData.fn_provides[file_name].add(provide)
+            if not provide in cacheData.pn_provides[pn]:
+                cacheData.pn_provides[pn].append(provide)
 
-        cacheData.deps[file_name] = Set()
+        cacheData.deps[file_name] = []
         for dep in depends:
-            cacheData.all_depends.add(dep)
-            cacheData.deps[file_name].add(dep)
+            if not dep in cacheData.deps[file_name]:
+                cacheData.deps[file_name].append(dep)
+            if not dep in cacheData.all_depends:
+                cacheData.all_depends.append(dep)
 
         # Build reverse hash for PACKAGES, so runtime dependencies 
         # can be be resolved (RDEPENDS, RRECOMMENDS etc.)
@@ -343,28 +352,21 @@ class Cache:
 
         # Build hash of runtime depends and rececommends
 
-        def add_dep(deplist, deps):
-            for dep in deps:
-                if not dep in deplist:
-                    deplist[dep] = ""
-
         if not file_name in cacheData.rundeps:
             cacheData.rundeps[file_name] = {}
         if not file_name in cacheData.runrecs:
             cacheData.runrecs[file_name] = {}
 
-        rdepends = bb.utils.explode_deps(self.getVar('RDEPENDS', file_name, True) or "")
-        rrecommends = bb.utils.explode_deps(self.getVar('RRECOMMENDS', file_name, True) or "")
+        rdepends = self.getVar('RDEPENDS', file_name, True) or ""
+        rrecommends = self.getVar('RRECOMMENDS', file_name, True) or ""
         for package in packages + [pn]:
             if not package in cacheData.rundeps[file_name]:
-                cacheData.rundeps[file_name][package] = {}
+                cacheData.rundeps[file_name][package] = []
             if not package in cacheData.runrecs[file_name]:
-                cacheData.runrecs[file_name][package] = {}
+                cacheData.runrecs[file_name][package] = []
 
-            add_dep(cacheData.rundeps[file_name][package], rdepends)
-            add_dep(cacheData.runrecs[file_name][package], rrecommends)
-            add_dep(cacheData.rundeps[file_name][package], bb.utils.explode_deps(self.getVar("RDEPENDS_%s" % package, file_name, True) or ""))
-            add_dep(cacheData.runrecs[file_name][package], bb.utils.explode_deps(self.getVar("RRECOMMENDS_%s" % package, file_name, True) or ""))
+            cacheData.rundeps[file_name][package] = rdepends + " " + (self.getVar("RDEPENDS_%s" % package, file_name, True) or "")
+            cacheData.runrecs[file_name][package] = rrecommends + " " + (self.getVar("RRECOMMENDS_%s" % package, file_name, True) or "")
 
         # Collect files we may need for possible world-dep
         # calculations
@@ -385,7 +387,7 @@ class Cache:
         data.setVar('TMPDIR', data.getVar('TMPDIR', config, 1) or "", config)
         bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         oldpath = os.path.abspath(os.getcwd())
-        if self.mtime(bbfile_loc):
+        if bb.parse.cached_mtime_noerror(bbfile_loc):
             os.chdir(bbfile_loc)
         bb_data = data.init_db(config)
         try:
@@ -444,7 +446,7 @@ class CacheData:
         self.pkg_dp = {}
         self.pn_provides = {}
         self.fn_provides = {}
-        self.all_depends = Set()
+        self.all_depends = []
         self.deps = {}
         self.rundeps = {}
         self.runrecs = {}

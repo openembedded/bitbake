@@ -167,11 +167,11 @@ class TaskData:
             rdepends = dataCache.rundeps[fn]
             rrecs = dataCache.runrecs[fn]
             for package in rdepends:
-                for rdepend in rdepends[package]:
+                for rdepend in bb.utils.explode_deps(rdepends[package]):
                     bb.msg.debug(2, bb.msg.domain.TaskData, "Added runtime dependency %s for %s" % (rdepend, fn))
                     rdependids[self.getrun_id(rdepend)] = None
             for package in rrecs:
-                for rdepend in rrecs[package]:
+                for rdepend in bb.utils.explode_deps(rrecs[package]):
                     bb.msg.debug(2, bb.msg.domain.TaskData, "Added runtime recommendation %s for %s" % (rdepend, fn))
                     rdependids[self.getrun_id(rdepend)] = None
             self.rdepids[fnid] = rdependids.keys()
