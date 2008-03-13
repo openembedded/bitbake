@@ -655,6 +655,16 @@ class RunQueue:
             if len(self.runq_depends[task]) == 0:
                 buildable.append(task)
 
+        def check_buildable(self, task, buildable):
+             for revdep in self.runq_revdeps[task]:
+                alldeps = 1
+                for dep in self.runq_depends[revdep]:
+                    if dep in unchecked:
+                        alldeps = 0
+                if alldeps == 1:
+                    if revdep in unchecked:
+                        buildable.append(revdep)
+
         for task in range(len(self.runq_fnid)):
             if task not in unchecked:
                 continue
@@ -665,12 +675,14 @@ class RunQueue:
             if not os.access(stampfile, os.F_OK):
                 del unchecked[task]
                 notcurrent.append(task)
+                check_buildable(self, task, buildable)
                 continue
             # If its a 'nostamp' task, it's not current
             taskdep = self.dataCache.task_deps[fn]
             if 'nostamp' in taskdep and task in taskdep['nostamp']:
                 del unchecked[task]
                 notcurrent.append(task)
+                check_buildable(self, task, buildable)
                 continue
 
         while (len(buildable) > 0):
@@ -701,14 +713,7 @@ class RunQueue:
                     else:
                         notcurrent.append(task)
 
-                for revdep in self.runq_revdeps[task]:
-                    alldeps = 1
-                    for dep in self.runq_depends[revdep]:
-                        if dep in unchecked:
-                            alldeps = 0
-                    if alldeps == 1:
-                        if revdep in unchecked:
-                            nextbuildable.append(revdep)
+                check_buildable(self, task, nextbuildable)
 
             buildable = nextbuildable
 
