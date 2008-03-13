@@ -91,7 +91,7 @@ class Cache:
             except EOFError:
                 bb.msg.note(1, bb.msg.domain.Cache, "Truncated cache found, rebuilding...")
                 self.depends_cache = {}
-            except (ValueError, KeyError):
+            except:
                 bb.msg.note(1, bb.msg.domain.Cache, "Invalid cache found, rebuilding...")
                 self.depends_cache = {}
         else:
