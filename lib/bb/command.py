@@ -140,7 +140,6 @@ class CommandsOffline:
         task = params[1]
 
         command.cooker.buildFile(bfile, task)
-        command.finishOfflineCommand()
 
     def buildTargets(self, command, params):
         """

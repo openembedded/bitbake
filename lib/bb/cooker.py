@@ -652,17 +652,31 @@ class BBCooker:
 
         # Execute the runqueue
         runlist = [[item, "do_%s" % self.configuration.cmd]]
-        rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
-        rq.prepare_runqueue()
-        try:
-            failures = rq.execute_runqueue()
-        except runqueue.TaskFailure, fnids:
-            for fnid in fnids:
-                bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
-            return False
 
-        bb.event.fire(bb.event.BuildCompleted(buildname, [item], self.configuration.event_data, failures))
-        bb.event.fire(bb.command.CookerCommandCompleted(self.configuration.event_data))
+        rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
+
+        def buildFileIdle(server, rq, abort):
+
+            if abort or self.cookerAction == cookerStop:
+                rq.finish_runqueue(True)
+            elif self.cookerAction == cookerShutdown:
+                rq.finish_runqueue(False)
+            failures = 0
+            try:
+                retval = rq.execute_runqueue()
+            except runqueue.TaskFailure, fnids:
+                for fnid in fnids:
+                    bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+                    failures = failures + 1
+                retval = False
+            if not retval:
+                self.cookerIdle = True
+                self.command.finishOfflineCommand()
+                bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
+            return retval
+
+        self.cookerIdle = False
+        self.server.register_idle_function(buildFileIdle, rq)
 
     def buildTargets(self, targets):
         """
@@ -689,9 +703,9 @@ class BBCooker:
                     failures = failures + 1
                 retval = False
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
                 self.cookerIdle = True
                 self.command.finishOfflineCommand()
+                bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
             return retval
 
         self.buildSetVars()
