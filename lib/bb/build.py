@@ -267,11 +267,11 @@ def exec_task(task, d):
         bb.msg.debug(1, bb.msg.domain.Build, "Executing task %s" % task)
         old_overrides = data.getVar('OVERRIDES', d, 0)
         localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', 'task_%s:%s' % (item, old_overrides), localdata)
+        data.setVar('OVERRIDES', 'task_%s:%s' % (task, old_overrides), localdata)
         data.update_data(localdata)
-        event.fire(TaskStarted(item, localdata))
-        exec_func(item, localdata)
-        event.fire(TaskSucceeded(item, localdata))
+        event.fire(TaskStarted(task, localdata))
+        exec_func(task, localdata)
+        event.fire(TaskSucceeded(task, localdata))
     except FuncFailed, message:
         # Try to extract the optional logfile
         try:
@@ -280,7 +280,7 @@ def exec_task(task, d):
             logfile = None
             msg = message
         bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % message )
-        failedevent = TaskFailed(msg, logfile, item, d)
+        failedevent = TaskFailed(msg, logfile, task, d)
         event.fire(failedevent)
         raise EventException("Function failed in task: %s" % message, failedevent)
 
