@@ -617,7 +617,6 @@ class BBCooker:
 
         fn = self.matchFile(buildfile)
         self.buildSetVars()
-        bbfile_data = bb.parse.handle(fn, self.configuration.data)
 
         # Load data into the cache for fn
         self.bb_cache = bb.cache.init(self)
