@@ -39,16 +39,17 @@ def init(frontend, eventHandler):
         cmdline = frontend.runCommand(["getCmdLineAction"])
         #print cmdline
         if not cmdline:
-            return
+            return 1
         ret = frontend.runCommand(cmdline)
         if ret != True:
-            print "Couldn't get default commandlind! %s" % ret
-            return
+            print "Couldn't get default commandline! %s" % ret
+            return 1
     except xmlrpclib.Fault, x:
         print "XMLRPC Fault getting commandline:\n %s" % x
-        return
+        return 1
 
     shutdown = 0
+    return_value = 0
     while True:
         try:
             event = eventHandler.waitEvent(0.25)
@@ -71,9 +72,11 @@ def init(frontend, eventHandler):
                 print 'WARNING: ' + event[1]['_message']
                 continue
             if event[0].startswith('bb.msg.MsgError'):
+                return_value = 1
                 print 'ERROR: ' + event[1]['_message']
                 continue
             if event[0].startswith('bb.build.TaskFailed'):
+                return_value = 1
                 logfile = event[1]['logfile']
                 if logfile:
                     print "ERROR: Logfile of failure stored in %s." % logfile
@@ -120,6 +123,7 @@ def init(frontend, eventHandler):
             if event[0] == 'bb.command.CookerCommandCompleted':
                 break
             if event[0] == 'bb.command.CookerCommandFailed':
+                return_value = 1
                 print "Command execution failed: %s" % event[1]['error']
                 break
             if event[0] == 'bb.cooker.CookerExit':
@@ -150,3 +154,4 @@ def init(frontend, eventHandler):
                 frontend.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass
+    return return_value

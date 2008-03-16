@@ -49,6 +49,7 @@ class BBConfiguration( object ):
 #============================================================================#
 
 def main():
+    return_value = 0
     pythonver = sys.version_info
     if pythonver[0] < 2 or (pythonver[0] == 2 and pythonver[1] < 5):
         print "Sorry, bitbake needs python 2.5 or later."
@@ -171,7 +172,7 @@ Default BBFILES are the .bb files in the current directory.""" )
             ncurses.init(frontend, eventHandler)
         else:
             from bb.ui import knotty
-            knotty.init(frontend, eventHandler)
+            return_value = knotty.init(frontend, eventHandler)
 
     finally:
         # Don't wait for server indefinitely
@@ -185,6 +186,7 @@ Default BBFILES are the .bb files in the current directory.""" )
             frontend.system.quit()
         except:
             pass
+        return return_value
 
 if __name__ == "__main__":
     print """WARNING, WARNING, WARNING
@@ -192,4 +194,4 @@ This is a Bitbake from the Unstable/Development 1.9 Branch. This software contai
 You might want to use the bitbake-1.8 stable branch (if you are not a BitBake developer or tester). I'm going to sleep 5 seconds now to make sure you see that."""
     import time
     time.sleep(5)
-    main()
+    sys.exit(main())

@@ -121,6 +121,7 @@ Changes in Bitbake 1.9.x:
 	- Fix -f (force) in conjunction with -b
 	- Fix problems with recrdeptask handling where some idepends weren't handled
 	  correctly.
+	- Handle exit codes correctly (from pH5)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
