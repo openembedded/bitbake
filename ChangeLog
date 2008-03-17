@@ -26,6 +26,7 @@ Changes in BitBake 1.8.x:
 	  failed where needed. Fixes --continue mode crashes.
 	- Fix problems with recrdeptask handling where some idepends weren't handled
 	  correctly.
+	- Work around refs/HEAD issues with git over http (#3410)
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
