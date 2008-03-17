@@ -122,6 +122,7 @@ Changes in Bitbake 1.9.x:
 	- Fix problems with recrdeptask handling where some idepends weren't handled
 	  correctly.
 	- Handle exit codes correctly (from pH5)
+	- Work around refs/HEAD issues with git over http (#3410)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
