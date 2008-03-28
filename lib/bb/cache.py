@@ -208,7 +208,7 @@ class Cache:
             return False
 
         # Check the file's timestamp
-        if mtime > self.getVar("CACHETIMESTAMP", fn, True):
+        if mtime != self.getVar("CACHETIMESTAMP", fn, True):
             bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s changed" % fn)
             self.remove(fn)
             return False
@@ -223,7 +223,7 @@ class Cache:
                     self.remove(fn)
                     return False
 
-                if (fmtime > old_mtime):
+                if (fmtime != old_mtime):
                     bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s's dependency %s changed" % (fn, f))
                     self.remove(fn)
                     return False
