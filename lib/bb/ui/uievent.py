@@ -102,7 +102,7 @@ class UIXMLRPCServer (SimpleXMLRPCServer):
         SimpleXMLRPCServer.__init__( self,
                                     interface,
                                     requestHandler=SimpleXMLRPCRequestHandler,
-                                    logRequests=False)
+                                    logRequests=False, allow_none=True)
 
     def get_request(self):
         while not self.quit:
