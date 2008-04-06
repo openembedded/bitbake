@@ -2,7 +2,7 @@
 # BitBake XMLRPC Server
 #
 # Copyright (C) 2006 - 2007  Michael 'Mickey' Lauer
-# Copyright (C) 2006 - 2007  Richard Purdie
+# Copyright (C) 2006 - 2008  Richard Purdie
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -31,71 +31,78 @@
     in the server's main loop.
 """
 
-""" 
-Python 2.4 doesn't support the allow_none option to
-SimpleXMLRPCServer. We therefore 'adjust' xmlrpclib...
-"""
+import bb
 import xmlrpclib
-import traceback
-class MyMarshall(xmlrpclib.Marshaller):
-
-    def __init__(self, encoding = None, allow_none = 0):
-        self.memo = {}
-        self.data = None
-        self.encoding = encoding
-        self.allow_none = 1
-xmlrpclib.Marshaller = MyMarshall
-
-class MyFault(xmlrpclib.Error):
-    """Indicates an XML-RPC fault package."""
-    def __init__(self, faultCode, faultString, **extra):
-        xmlrpclib.Error.__init__(self)
-        self.faultCode = faultCode
-        self.faultString = faultString
-        self.faultTraceBack = str(traceback.print_exc())
-    def __repr__(self):
-        return ("<Fault %s: %s>" % (self.faultCode, repr(self.faultString)))
-xmlrpclib.Fault = MyFault
-
 
 DEBUG = False
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import os, sys, inspect, select
 
+class BitBakeServerCommands():
+    def __init__(self, server, cooker):
+        self.cooker = cooker
+        self.server = server
+
+    def registerEventHandler(self, host, port):
+        """
+        Register a remote UI Event Handler
+        """
+        s = xmlrpclib.Server("http://%s:%d" % (host, port), allow_none=True)
+        return bb.event.register_UIHhandler(s)
+
+    def unregisterEventHandler(self, handlerNum):
+        """
+        Unregister a remote UI Event Handler
+        """
+        return bb.event.unregister_UIHhandler(handlerNum)
+
+    def runCommand(self, command):
+        """
+        Run a cooker command on the server
+        """
+        return self.cooker.command.runCommand(command)
+
+    def terminateServer(self):
+        """
+        Trigger the server to quit
+        """
+        self.server.quit = True
+        print "Server (cooker) exitting"
+        return
+
+    def ping(self):
+        """
+        Dummy method which can be used to check the server is still alive
+        """
+        return True
+
 class BitBakeXMLRPCServer(SimpleXMLRPCServer):
     # remove this when you're done with debugging
     # allow_reuse_address = True
 
-    def __init__(self, interface = ("localhost", 0)):
+    def __init__(self, cooker, interface = ("localhost", 0)):
         """
 	Constructor
 	"""
         SimpleXMLRPCServer.__init__(self, interface,
                                     requestHandler=SimpleXMLRPCRequestHandler,
-                                    logRequests=False)
-        self.host, self.port = self.socket.getsockname()
-        self.register_introspection_functions()
-        self.autoregister_all_functions("xmlrpc_")
-        self.register_quit_function()
+                                    logRequests=False, allow_none=True)
         self._idlefuns = {}
+        self.host, self.port = self.socket.getsockname()
+        #self.register_introspection_functions()
+        commands = BitBakeServerCommands(self, cooker)
+        self.autoregister_all_functions(commands, "")
 
-    def autoregister_all_functions(self, prefix):
+    def autoregister_all_functions(self, context, prefix):
         """
         Convenience method for registering all functions in the scope
         of this class that start with a common prefix
         """
-        methodlist = inspect.getmembers(self, inspect.ismethod)
+        methodlist = inspect.getmembers(context, inspect.ismethod)
         for name, method in methodlist:
             if name.startswith(prefix):
                 self.register_function(method, name[len(prefix):])
-
-    def register_quit_function(self):
-        """
-        Register a quit function. That gives us a chance to quit from
-        serve_forever which otherwise would serve forever (sic!)
-        """
-        self.register_function(self.system_quit, "system.quit")
 
     def register_idle_function(self, function, data):
         """Register a function to be called while the server is idle"""
@@ -147,33 +154,4 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
                         import traceback
                         traceback.print_exc()
                         pass
-            else:
-                self.socket.setblocking(0)
-                return self.socket.accept()
 
-    def shutdown(self):
-        """
-        Trigger a controlled shutdown
-        """
-        s = xmlrpclib.Server("http://%s:%d" % (self.host, self.port))
-        s.system.quit()
-
-    def system_quit(self):
-        """
-        Trigger the server to quit
-        """
-        self.quit = True
-        print "Server (cooker) exitting"
-        return
-
-    def xmlrpc_registerEventHandler(self, host, port):
-        import bb
-        s = xmlrpclib.Server("http://%s:%d" % (host, port))
-        return bb.event.register_UIHhandler(s)
-
-    def xmlrpc_unregisterEventHandler(self, handlerNum):
-        import bb
-        return bb.event.unregister_UIHhandler(handlerNum)
-
-    def xmlrpc_runCommand(self, command):
-        return self.cooker.command.runCommand(command)

@@ -68,7 +68,7 @@ class BBCooker:
         self.cache = None
         self.bb_cache = None
 
-        self.server = bb.xmlrpcserver.BitBakeXMLRPCServer()
+        self.server = bb.xmlrpcserver.BitBakeXMLRPCServer(self)
         #self.server.register_function(self.showEnvironment)
 
         self.configuration = configuration
@@ -901,7 +901,6 @@ class BBCooker:
              raise ParsingErrorsFound
 
     def serve(self):
-        self.server.cooker = self
 
         if self.configuration.profile:
             try:
