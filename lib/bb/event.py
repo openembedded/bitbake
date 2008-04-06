@@ -47,24 +47,23 @@ Registered        = 10
 AlreadyRegistered = 14
 
 # Internal
-_handlers = []
-_handlers_dict = {}
+_handlers = {}
 _ui_handlers = {}
 _ui_handler_seq = 0
 
-def tmpHandler(event):
-    """Default handler for code events"""
-    return NotHandled
-
-def defaultTmpHandler():
-    tmp = "def tmpHandler(e):\n\t\"\"\"heh\"\"\"\n\treturn NotHandled"
-    comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event.defaultTmpHandler")
-    return comp
-
 def fire(event):
     """Fire off an Event"""
-    databack = event.data
-    databack1 = event._data
+
+    for handler in _handlers:
+        h = _handlers[handler]
+        if type(h).__name__ == "code":
+            exec(h)
+            tmpHandler(event)
+        else:
+            h(event)
+
+    # Remove the event data elements for UI handlers - too much data otherwise
+    # They can request data if they need it
     event.data = None
     event._data = None
 
@@ -79,35 +78,27 @@ def fire(event):
     for h in errors:
         del _ui_handlers[h]
 
-    event.data = databack
-    event._data = databack1
-
-    for h in _handlers:
-        if type(h).__name__ == "code":
-            exec(h)
-            if tmpHandler(event) == Handled:
-                return Handled
-        else:
-            if h(event) == Handled:
-                return Handled
-    return NotHandled
-
 def register(name, handler):
     """Register an Event handler"""
 
     # already registered
-    if name in _handlers_dict:
+    if name in _handlers:
         return AlreadyRegistered
 
     if handler is not None:
-#       handle string containing python code
+        # handle string containing python code
         if type(handler).__name__ == "str":
-            _registerCode(handler)
+            tmp = "def tmpHandler(e):\n%s" % handler
+            comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._registerCode")
+            _handlers[name] = comp
         else:
-            _handlers.append(handler)
+            _handlers[name] = handler
 
-        _handlers_dict[name] = 1
         return Registered
+
+def remove(name, handler):
+    """Remove an Event handler"""
+    _handlers.pop(name)
 
 def register_UIHhandler(handler):
     bb.event._ui_handler_seq = bb.event._ui_handler_seq + 1
@@ -118,35 +109,6 @@ def unregister_UIHhandler(handlerNum):
     if handlerNum in _ui_handlers:
         del _ui_handlers[handlerNum]
     return
-
-def _registerCode(handlerStr):
-    """Register a 'code' Event.
-       Deprecated interface; call register instead.
-
-       Expects to be passed python code as a string, which will
-       be passed in turn to compile() and then exec().  Note that
-       the code will be within a function, so should have had
-       appropriate tabbing put in place."""
-    tmp = "def tmpHandler(e):\n%s" % handlerStr
-    comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._registerCode")
-#   prevent duplicate registration
-    _handlers.append(comp)
-
-def remove(name, handler):
-    """Remove an Event handler"""
-
-    _handlers_dict.pop(name)
-    if type(handler).__name__ == "str":
-        return _removeCode(handler)
-    else:
-        _handlers.remove(handler)
-
-def _removeCode(handlerStr):
-    """Remove a 'code' Event handler
-       Deprecated interface; call remove instead."""
-    tmp = "def tmpHandler(e):\n%s" % handlerStr
-    comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._removeCode")
-    _handlers.remove(comp)
 
 def getName(e):
     """Returns the name of a class or class instance"""
