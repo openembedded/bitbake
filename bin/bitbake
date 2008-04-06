@@ -126,13 +126,16 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     # Work out which UI(s) to use
     curseUI = False
+    depexplorerUI = False
     if configuration.ui:
         if configuration.ui == "ncurses":
             curseUI = True
         elif configuration.ui == "knotty" or configuration.ui == "tty" or configuration.ui == "file":
             curseUI = False
+        elif configuration.ui == "depexp":
+            depexplorerUI = True
         else:
-            print "FATAL: Invalid user interface '%s' specified." % configuration.ui
+            print "FATAL: Invalid user interface '%s' specified.\nValid interfaces are 'ncurses', 'depexp' or the default, 'knotty'." % configuration.ui
             sys.exit(1)
 
 
@@ -151,9 +154,10 @@ Default BBFILES are the .bb files in the current directory.""" )
     daemonize.createDaemon(cooker.serve, cooker_logfile)
     del cooker
 
-    # Setup a frontend connection to the cooker with ui event queue
-    frontend = xmlrpclib.Server("http://%s:%s" % (host, port))
-    eventHandler = uievent.BBUIEventQueue(frontend)
+    # Setup a connection to the server (cooker)
+    server = xmlrpclib.Server("http://%s:%s" % (host, port),  allow_none=True)
+    # Setup an event receiving queue
+    eventHandler = uievent.BBUIEventQueue(server)
 
     # Launch the UI
     try:
@@ -169,10 +173,13 @@ Default BBFILES are the .bb files in the current directory.""" )
 
         if curseUI:
             from bb.ui import ncurses
-            ncurses.init(frontend, eventHandler)
+            ncurses.init(server, eventHandler)
+        elif depexplorerUI:
+            from bb.ui import depexplorer
+            depexplorer.init(server, eventHandler)
         else:
             from bb.ui import knotty
-            return_value = knotty.init(frontend, eventHandler)
+            return_value = knotty.init(server, eventHandler)
 
     finally:
         # Don't wait for server indefinitely
@@ -183,7 +190,7 @@ Default BBFILES are the .bb files in the current directory.""" )
         except:
             pass
         try:
-            frontend.system.quit()
+            server.terminateServer()
         except:
             pass
         return return_value
@@ -194,4 +201,5 @@ This is a Bitbake from the Unstable/Development 1.9 Branch. This software contai
 You might want to use the bitbake-1.8 stable branch (if you are not a BitBake developer or tester). I'm going to sleep 5 seconds now to make sure you see that."""
     import time
     time.sleep(5)
-    sys.exit(main())
+    ret = main()
+    sys.exit(ret)
