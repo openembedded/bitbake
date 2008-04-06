@@ -29,18 +29,18 @@ import xmlrpclib
 
 parsespin = itertools.cycle( r'|/-\\' )
 
-def init(frontend, eventHandler):
+def init(server, eventHandler):
 
     # Get values of variables which control our output
-    includelogs = frontend.runCommand(["readVariable", "BBINCLUDELOGS"])
-    loglines = frontend.runCommand(["readVariable", "BBINCLUDELOGS_LINES"])
+    includelogs = server.runCommand(["readVariable", "BBINCLUDELOGS"])
+    loglines = server.runCommand(["readVariable", "BBINCLUDELOGS_LINES"])
 
     try:
-        cmdline = frontend.runCommand(["getCmdLineAction"])
+        cmdline = server.runCommand(["getCmdLineAction"])
         #print cmdline
         if not cmdline:
             return 1
-        ret = frontend.runCommand(cmdline)
+        ret = server.runCommand(cmdline)
         if ret != True:
             print "Couldn't get default commandline! %s" % ret
             return 1
@@ -148,10 +148,10 @@ def init(frontend, eventHandler):
                 break
             if shutdown == 1:
                 print "\nSecond Keyboard Interrupt, stopping...\n"
-                frontend.runCommand(["stateStop"])
+                server.runCommand(["stateStop"])
             if shutdown == 0:
                 print "\nKeyboard Interrupt, closing down...\n"
-                frontend.runCommand(["stateShutdown"])
+                server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass
     return return_value
