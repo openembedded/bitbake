@@ -248,13 +248,22 @@ def runfetchcmd(cmd, d, quiet = False):
     Raise an error if interrupted or cmd fails
     Optionally echo command output to stdout
     """
-    bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
 
     # Need to export PATH as binary could be in metadata paths
     # rather than host provided
-    pathcmd = 'export PATH=%s; %s' % (data.expand('${PATH}', d), cmd)
+    # Also include some other variables.
+    # FIXME: Should really include all export varaiables?
+    exportvars = ['PATH', 'GIT_PROXY_HOST', 'GIT_PROXY_PORT', 'GIT_PROXY_COMMAND']
 
-    stdout_handle = os.popen(pathcmd, "r")
+    for var in exportvars:
+        val = data.getVar(var, d, True)
+        if val:
+            cmd = 'export ' + var + '=%s; %s' % (val, cmd)
+
+    bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
+
+    # redirect stderr to stdout
+    stdout_handle = os.popen(cmd + " 2>&1", "r")
     output = ""
 
     while 1:
@@ -270,9 +279,9 @@ def runfetchcmd(cmd, d, quiet = False):
     exitstatus = status & 0xff
 
     if signal:
-        raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (pathcmd, signal, output))
+        raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (cmd, signal, output))
     elif status != 0:
-        raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (pathcmd, status, output))
+        raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, status, output))
 
     return output
 
