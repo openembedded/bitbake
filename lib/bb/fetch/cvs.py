@@ -102,7 +102,14 @@ class Cvs(Fetch):
         if method == "dir":
             cvsroot = ud.path
         else:
-            cvsroot = ":" + method + ":" + ud.user
+            cvsroot = ":" + method
+            cvsproxyhost = data.getVar('CVS_PROXY_HOST', d, True)
+            if cvsproxyhost:
+                cvsroot += ";proxy=" + cvsproxyhost
+            cvsproxyport = data.getVar('CVS_PROXY_PORT', d, True)
+            if cvsproxyport:
+                cvsroot += ";proxyport=" + cvsproxyport
+            cvsroot += ":" + ud.user
             if ud.pswd:
                 cvsroot += ":" + ud.pswd
             cvsroot += "@" + ud.host + ":" + cvs_port + ud.path
