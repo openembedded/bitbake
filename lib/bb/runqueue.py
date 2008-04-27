@@ -65,7 +65,6 @@ class RunQueueStats:
 runQueuePrepare = 2
 runQueueRunInit = 3
 runQueueRunning = 4
-runQueueFailedCleanUp = 5
 runQueueFailed = 6
 runQueueCleanUp = 7
 runQueueComplete = 8
@@ -833,15 +832,14 @@ class RunQueue:
         if self.state is runQueueRunning:
             self.execute_runqueue_internal()
 
-        if self.state is runQueueFailedCleanUp:
-            self.finish_runqueue()
-
         if self.state is runQueueCleanUp:
             self.finish_runqueue()
 
         if self.state is runQueueFailed:
             if self.taskData.abort:
                 raise bb.runqueue.TaskFailure(self.failed_fnids)
+            for fnid in self.failed_fnids:
+                self.taskData.fail_fnid(fnid)
             self.reset_runqueue()
 
         if self.state is runQueueComplete:
@@ -910,10 +908,9 @@ class RunQueue:
         self.stats.taskFailed()
         fnid = self.runq_fnid[task]
         self.failed_fnids.append(fnid)
-        if not self.taskData.abort:
-            self.taskData.fail_fnid(fnid)
-        self.state = runQueueFailedCleanUp
         bb.event.fire(runQueueTaskFailed(task, self.stats, self, self.cfgData))
+        if self.taskData.abort:
+            self.state = runQueueCleanup
 
     def execute_runqueue_internal(self):
         """
@@ -982,6 +979,10 @@ class RunQueue:
                 bb.event.fire(runQueueTaskCompleted(task, self.stats, self, self.cfgData))
                 continue
 
+            if len(self.failed_fnids) != 0:
+                self.state = runQueueFailed
+                return
+
             # Sanity Checks
             for task in range(self.stats.total):
                 if self.runq_buildable[task] == 0:
@@ -1023,12 +1024,13 @@ class RunQueue:
                 else:
                     self.stats.taskCompleted()
                     bb.event.fire(runQueueTaskCompleted(task, self.stats, self, self.cfgData))
-            if self.state is runQueueFailedCleanUp:
-                self.state = runQueueFailed
-                return
         except:
             self.finish_runqueue_now()
             raise
+
+        if len(self.failed_fnids) != 0:
+            self.state = runQueueFailed
+            return
 
         self.state = runQueueComplete
         return
