@@ -1,7 +1,7 @@
 #
 # BitBake Curses UI Implementation
 #
-# Handling output to TTYs or files (no TTY)
+# Implements an ncurses frontend for the BitBake utility.
 #
 # Copyright (C) 2006 Michael 'Mickey' Lauer
 # Copyright (C) 2006-2007 Richard Purdie
@@ -20,21 +20,16 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """
-    This module implements an ncurses frontend for the BitBake utility.
-
     We have the following windows:
 
-        1.) Title Window: Shows the title, credits, version, etc.
-        2.) Main Window: Shows what we are ultimately building and how far we are.
-        3.) Thread Activity Window: Shows one status line for every concurrent bitbake thread.
-        4.) Command Line Window: Contains an interactive command line where you can interact w/ Bitbake.
+        1.) Main Window: Shows what we are ultimately building and how far we are. Includes status bar
+        2.) Thread Activity Window: Shows one status line for every concurrent bitbake thread.
+        3.) Command Line Window: Contains an interactive command line where you can interact w/ Bitbake.
 
     Basic window layout is like that:
 
         |---------------------------------------------------------|
-        |-                <Title Window>                          |
-        |---------------------------------------------------------|
-        | <Main Window>               | <Task Activity Window>    |
+        | <Main Window>               | <Thread Activity Window>  |
         |                             | 0: foo do_compile complete|
         | Building Gtk+-2.6.10        | 1: bar do_patch complete  |
         | Status: 60%                 | ...                       |
@@ -62,6 +57,8 @@ Y = 1
 WIDTH = 2
 HEIGHT = 3
 
+MAXSTATUSLENGTH = 32
+
 class NCursesUI:
     """
     NCurses UI Class
@@ -81,7 +78,7 @@ class NCursesUI:
             """
             self.erase()
             self.setScrolling()
-            self.win.refresh()
+            self.win.noutrefresh()
 
         def erase( self ):
             self.win.erase()
@@ -93,19 +90,19 @@ class NCursesUI:
         def setBoxed( self ):
             self.boxed = True
             self.win.box()
-            self.win.refresh()
+            self.win.noutrefresh()
 
         def setText( self, x, y, text, *args ):
             self.win.addstr( y, x, text, *args )
-            self.win.refresh()
+            self.win.noutrefresh()
 
         def appendText( self, text, *args ):
             self.win.addstr( text, *args )
-            self.win.refresh()
+            self.win.noutrefresh()
 
         def drawHline( self, y ):
             self.win.hline( y, 0, curses.ACS_HLINE, self.dimensions[WIDTH] )
-            self.win.refresh()
+            self.win.noutrefresh()
 
     class DecoratedWindow( Window ):
         """Base class for windows with a box and a title bar"""
@@ -120,18 +117,18 @@ class NCursesUI:
             self.decoration.setText( 1, 1, title.center( self.dimensions[WIDTH]-2 ), curses.A_BOLD )
 
     #-------------------------------------------------------------------------#
-    class TitleWindow( Window ):
+#    class TitleWindow( Window ):
     #-------------------------------------------------------------------------#
-        """Title Window"""
-        def __init__( self, x, y, width, height ):
-            NCursesUI.Window.__init__( self, x, y, width, height )
-            version = bb.__version__
-            title = "BitBake %s" % version
-            credit = "(C) 2003-2007 Team BitBake"
-            #self.win.hline( 2, 1, curses.ACS_HLINE, width-2 )
-            self.win.border()
-            self.setText( 1, 1, title.center( self.dimensions[WIDTH]-2 ), curses.A_BOLD )
-            self.setText( 1, 2, credit.center( self.dimensions[WIDTH]-2 ), curses.A_BOLD )
+#        """Title Window"""
+#        def __init__( self, x, y, width, height ):
+#            NCursesUI.Window.__init__( self, x, y, width, height )
+#            version = bb.__version__
+#            title = "BitBake %s" % version
+#            credit = "(C) 2003-2007 Team BitBake"
+#            #self.win.hline( 2, 1, curses.ACS_HLINE, width-2 )
+#            self.win.border()
+#            self.setText( 1, 1, title.center( self.dimensions[WIDTH]-2 ), curses.A_BOLD )
+#            self.setText( 1, 2, credit.center( self.dimensions[WIDTH]-2 ), curses.A_BOLD )
 
     #-------------------------------------------------------------------------#
     class ThreadActivityWindow( DecoratedWindow ):
@@ -154,8 +151,20 @@ class NCursesUI:
     #-------------------------------------------------------------------------#
         """Main Window"""
         def __init__( self, x, y, width, height ):
-            NCursesUI.DecoratedWindow.__init__( self, "Main Window", x, y, width, height )
+            self.StatusPosition = width - MAXSTATUSLENGTH
+            NCursesUI.DecoratedWindow.__init__( self, None, x, y, width, height )
             curses.nl()
+
+        def setTitle( self, title ):
+            title = "BitBake %s" % bb.__version__
+            self.decoration.setText( 2, 1, title, curses.A_BOLD )
+            self.decoration.setText( self.StatusPosition - 8, 1, "Status:", curses.A_BOLD )
+
+        def setStatus(self, status):
+            while len(status) < MAXSTATUSLENGTH:
+                status = status + " "
+            self.decoration.setText( self.StatusPosition, 1, status, curses.A_BOLD )
+
 
     #-------------------------------------------------------------------------#
     class ShellOutputWindow( DecoratedWindow ):
@@ -177,7 +186,7 @@ class NCursesUI:
 #            t.start()
 
     #-------------------------------------------------------------------------#
-    def main(self, stdscr, frontend, eventHandler):
+    def main(self, stdscr, server, eventHandler):
     #-------------------------------------------------------------------------#
         height, width = stdscr.getmaxyx()
 
@@ -188,7 +197,7 @@ class NCursesUI:
         # CLI_x = full
 
         main_left = 0
-        main_top = 4
+        main_top = 0
         main_height = ( height / 3 * 2 )
         main_width = ( width / 3 ) * 2
         clo_left = main_left
@@ -204,23 +213,23 @@ class NCursesUI:
         thread_height = main_height
         thread_width = width - main_width
 
-        tw = self.TitleWindow( 0, 0, width, main_top )
+        #tw = self.TitleWindow( 0, 0, width, main_top )
         mw = self.MainWindow( main_left, main_top, main_width, main_height )
         taw = self.ThreadActivityWindow( thread_left, thread_top, thread_width, thread_height )
         clo = self.ShellOutputWindow( clo_left, clo_top, clo_width, clo_height )
         cli = self.ShellInputWindow( cli_left, cli_top, cli_width, cli_height )
         cli.setText( 0, 0, "BB>" )
 
-#        mw.drawHline( 2 )
+        mw.setStatus("Idle")
 
         helper = uihelper.BBUIHelper()
+        shutdown = 0
    
         try:
-            cmdline = frontend.runCommand(["getCmdLineAction"])
-            #print cmdline
+            cmdline = server.runCommand(["getCmdLineAction"])
             if not cmdline:
                 return
-            ret = frontend.runCommand(cmdline)
+            ret = server.runCommand(cmdline)
             if ret != True:
                 print "Couldn't get default commandlind! %s" % ret
                 return
@@ -253,10 +262,12 @@ class NCursesUI:
                 if event[0].startswith('bb.event.ParseProgress'):
                     x = event[1]['sofar']
                     y = event[1]['total']
-                    taw.setText(0, 0, "Parsing: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
                     if x == y:
+                        mw.setStatus("Idle")
                         mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked." 
                                 % ( event[1]['cached'], event[1]['parsed'], event[1]['skipped'], event[1]['masked'] ))
+                    else:
+                        mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
 #                if event[0].startswith('bb.build.TaskFailed'):
 #                    if event[1]['logfile']:
 #                        if data.getVar("BBINCLUDELOGS", d):
@@ -276,7 +287,6 @@ class NCursesUI:
 #                        else:
 #                            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
 
-
                 if event[0] == 'bb.command.CookerCommandCompleted':
                     exitflag = True
                 if event[0] == 'bb.command.CookerCommandFailed':
@@ -286,16 +296,38 @@ class NCursesUI:
                 if event[0] == 'bb.cooker.CookerExit':
                     exitflag = True
 
-                tasks = helper.getTasks()
-                if tasks:
-                    taw.setText(0, 0, "Active Tasks:\n")
-                for task in tasks:
-                    taw.appendText(task)
+                if helper.needUpdate:
+                    activetasks, failedtasks = helper.getTasks()
+                    taw.erase()
+                    taw.setText(0, 0, "")
+                    if activetasks:
+                        taw.appendText("Active Tasks:\n")
+                        for task in activetasks:
+                            taw.appendText(task)
+                    if failedtasks:
+                        taw.appendText("Failed Tasks:\n")
+                        for task in failedtasks:
+                            taw.appendText(task)
 
                 curses.doupdate()
             except KeyboardInterrupt:
-                exitflag = True
+                if shutdown == 2:
+                    mw.appendText("Third Keyboard Interrupt, exit.\n")
+                    exitflag = True
+                if shutdown == 1:
+                    mw.appendText("Second Keyboard Interrupt, stopping...\n")
+                    server.runCommand(["stateStop"])
+                if shutdown == 0:
+                    mw.appendText("Keyboard Interrupt, closing down...\n")
+                    server.runCommand(["stateShutdown"])
+                shutdown = shutdown + 1
+                pass
 
-def init(frontend, eventHandler):
+def init(server, eventHandler):
     ui = NCursesUI()
-    curses.wrapper(ui.main, frontend, eventHandler)    
+    try:
+        curses.wrapper(ui.main, server, eventHandler)
+    except:
+        import traceback
+        traceback.print_exc()
+
