@@ -29,6 +29,7 @@ Changes in BitBake 1.8.x:
 	- Work around refs/HEAD issues with git over http (#3410)
 	- Add proxy support to the CVS fetcher (from Cyril Chemparathy)
 	- Improve runfetchcmd so errors are seen and various GIT variables are exported
+	- Add ability to fetchers to check URL validity without downloading
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.

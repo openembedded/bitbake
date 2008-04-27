@@ -48,11 +48,13 @@ class Wget(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
-    def go(self, uri, ud, d):
+    def go(self, uri, ud, d, checkonly = False):
         """Fetch urls"""
 
         def fetch_uri(uri, ud, d):
-            if os.path.exists(ud.localpath):
+            if checkonly:
+                fetchcmd = data.getVar("FETCHCOMMAND", d, 1) + " " + data.getVar("FETCHOPTION_checkonly", d, 1)
+            elif os.path.exists(ud.localpath):
                 # file exists, but we didnt complete it.. trying again..
                 fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
             else:
@@ -83,10 +85,10 @@ class Wget(Fetch):
             newuri = uri_replace(uri, find, replace, d)
             if newuri != uri:
                 if fetch_uri(newuri, ud, localdata):
-                    return
+                    return True
 
         if fetch_uri(uri, ud, localdata):
-            return
+            return True
 
         # try mirrors
         mirrors = [ i.split() for i in (data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
@@ -94,6 +96,10 @@ class Wget(Fetch):
             newuri = uri_replace(uri, find, replace, d)
             if newuri != uri:
                 if fetch_uri(newuri, ud, localdata):
-                    return
+                    return True
 
         raise FetchError(uri)
+
+
+    def checkstatus(self, uri, ud, d):
+        return self.go(uri, ud, d, True)

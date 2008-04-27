@@ -59,3 +59,11 @@ class Local(Fetch):
         """Fetch urls (no-op for Local method)"""
         # no need to fetch local files, we'll deal with them in place.
         return 1
+
+    def checkstatus(self, url, urldata, d):
+        """
+        Check the status of the url
+        """
+        if os.path.exists(urldata.localpath):
+           return True
+        return False
