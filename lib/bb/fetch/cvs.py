@@ -118,7 +118,7 @@ class Cvs(Fetch):
         if 'norecurse' in ud.parm:
             options.append("-l")
         if ud.date:
-            options.append("-D %s" % ud.date)
+            options.append("-D \"%s UTC\"" % ud.date)
         if ud.tag:
             options.append("-r %s" % ud.tag)
 
