@@ -53,7 +53,7 @@ class Wget(Fetch):
 
         def fetch_uri(uri, ud, d):
             if checkonly:
-                fetchcmd = data.getVar("FETCHCOMMAND", d, 1) + " " + data.getVar("FETCHOPTION_checkonly", d, 1)
+                fetchcmd = data.getVar("CHECKCOMMAND", d, 1)
             elif os.path.exists(ud.localpath):
                 # file exists, but we didnt complete it.. trying again..
                 fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
