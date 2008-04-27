@@ -162,6 +162,22 @@ def go(d):
                 Fetch.write_md5sum(u, ud, d)
             bb.utils.unlockfile(lf)
 
+
+def checkstatus(d):
+    """
+    Check all urls exist upstream
+    init must have previously been called
+    """
+    urldata = init([], d, True)
+
+    for u in urldata:
+        ud = urldata[u]
+        m = ud.method
+        bb.msg.note(1, bb.msg.domain.Fetcher, "Testing URL %s" % u)
+        ret = m.checkstatus(u, ud, d)
+        if not ret:
+            bb.msg.fatal(bb.msg.domain.Fetcher, "URL %s doesn't work" % u)
+
 def localpaths(d):
     """
     Return a list of the local filenames, assuming successful fetch
@@ -363,6 +379,14 @@ class Fetch(object):
         Assumes localpath was called first
         """
         raise NoMethodError("Missing implementation for url")
+
+    def checkstatus(self, url, urldata, d):
+        """
+        Check the status of a URL
+        Assumes localpath was called first
+        """
+        bb.msg.note(1, bb.msg.domain.Fetcher, "URL %s could not be checked for status since no method exists." % url)
+        return True
 
     def getSRCDate(urldata, d):
         """
