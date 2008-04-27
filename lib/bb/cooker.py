@@ -307,10 +307,10 @@ class BBCooker:
         Create a dependency tree of pkgs_to_build, returning the data.
         """
 
-        pkgs_to_build = self.checkPackages(pkgs_to_build)
-
         # Need files parsed
         self.updateCache()
+
+        pkgs_to_build = self.checkPackages(pkgs_to_build)
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
@@ -682,10 +682,10 @@ class BBCooker:
         Attempt to build the targets specified
         """
 
-        targets = self.checkPackages(targets)
-
         # Need files parsed
         self.updateCache()
+
+        targets = self.checkPackages(targets)
 
         def buildTargetsIdle(server, rq, abort):
 
