@@ -150,6 +150,7 @@ class RunQueue:
         self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData, 1) or "").split()
         self.scheduler = bb.data.getVar("BB_SCHEDULER", cfgData, 1) or "speed"
         self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, 1) or "perfile"
+        self.stampwhitelist = bb.data.getVar("BB_STAMP_WHITELIST", cfgData, 1) or []
 
     def reset_runqueue(self):
 
@@ -667,6 +668,18 @@ class RunQueue:
         #if error:
         #    bb.msg.fatal(bb.msg.domain.RunQueue, "Corrupted metadata configuration detected, aborting...")
 
+
+        # Create a whitelist usable by the stamp checks
+        stampfnwhitelist = []
+        for entry in self.stampwhitelist.split():
+            entryid = self.taskData.getbuild_id(entry)
+            if entryid not in self.taskData.build_targets:
+                continue
+            fnid = self.taskData.build_targets[entryid][0]
+            fn = self.taskData.fn_index[fnid]
+            stampfnwhitelist.append(fn)
+        self.stampfnwhitelist = stampfnwhitelist
+
         #self.dump_data(taskData)
 
     def check_stamps(self):
@@ -679,6 +692,9 @@ class RunQueue:
             fulldeptree = False
         else:
             fulldeptree = True
+            stampwhitelist = []
+            if self.stamppolicy == "whitelist":
+                stampwhitelist = self.self.stampfnwhitelist
 
         for task in range(len(self.runq_fnid)):
             unchecked[task] = ""
@@ -730,7 +746,7 @@ class RunQueue:
                             fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
                             taskname2 = self.runq_task[dep]
                             stampfile2 = "%s.%s" % (self.dataCache.stamp[fn2], taskname2)
-                            if fulldeptree or fn == fn2:
+                            if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
                                 if dep in notcurrent:
                                     iscurrent = False
                                 else:
@@ -766,6 +782,9 @@ class RunQueue:
             fulldeptree = False
         else:
             fulldeptree = True
+            stampwhitelist = []
+            if self.stamppolicy == "whitelist":
+                stampwhitelist = self.stampfnwhitelist
 
         fn = self.taskData.fn_index[self.runq_fnid[task]]
         taskname = self.runq_task[task]
@@ -785,7 +804,7 @@ class RunQueue:
                 fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
                 taskname2 = self.runq_task[dep]
                 stampfile2 = "%s.%s" % (self.dataCache.stamp[fn2], taskname2)
-                if fulldeptree or fn == fn2:
+                if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
                     try:
                         t2 = os.stat(stampfile2)[stat.ST_MTIME]
                         if t1 < t2:

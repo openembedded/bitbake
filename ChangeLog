@@ -31,6 +31,8 @@ Changes in BitBake 1.8.x:
 	- Improve runfetchcmd so errors are seen and various GIT variables are exported
 	- Add ability to fetchers to check URL validity without downloading
 	- Improve runtime PREFERRED_PROVIDERS warning message
+	- Add BB_STAMP_WHITELIST option which contains a list of stamps to ignore when
+	  checking stamp dependencies and using a BB_STAMP_POLICY of "whitelist"
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
