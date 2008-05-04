@@ -283,19 +283,25 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
 
     # Should use dataCache.preferred here?
     preferred = []
+    preferred_vars = []
     for p in eligible:
         pn = dataCache.pkg_fn[p]
         provides = dataCache.pn_provides[pn]
         for provide in provides:
             prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, cfgData, 1)
             if prefervar == pn:
-                bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s due to PREFERRED_PROVIDERS" % (pn, item))
+                var = "PREFERRED_PROVIDERS_%s = %s" % (provide, prefervar)
+                bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s due to %s" % (pn, item, var))
+                preferred_vars.append(var)
                 eligible.remove(p)
                 eligible = [p] + eligible
                 preferred.append(p)
                 break
 
     numberPreferred = len(preferred)
+
+    if numberPreferred > 1:
+        bb.msg.error(bb.msg.domain.Provider, "Conflicting PREFERRED_PROVIDERS entries were found which resulted in an attempt to select multiple providers (%s) for runtime dependecy %s\nThe entries resulting in this conflict were: %s" % (preferred, item, preferred_vars))
 
     bb.msg.debug(1, bb.msg.domain.Provider, "sorted providers for %s are: %s" % (item, eligible))
 
