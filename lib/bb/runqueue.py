@@ -150,7 +150,7 @@ class RunQueue:
         self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData, 1) or "").split()
         self.scheduler = bb.data.getVar("BB_SCHEDULER", cfgData, 1) or "speed"
         self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, 1) or "perfile"
-        self.stampwhitelist = bb.data.getVar("BB_STAMP_WHITELIST", cfgData, 1) or []
+        self.stampwhitelist = bb.data.getVar("BB_STAMP_WHITELIST", cfgData, 1) or ""
 
     def reset_runqueue(self):
 
