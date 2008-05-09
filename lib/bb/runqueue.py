@@ -164,6 +164,12 @@ class RunQueue:
         taskname = self.runq_task[task]
         return "%s, %s" % (fn, taskname)
 
+    def get_task_id(self, fnid, taskname):
+        for listid in range(len(self.runq_fnid)):
+            if self.runq_fnid[listid] == fnid and self.runq_task[listid] == taskname:
+                return listid
+        return None
+
     def circular_depchains_handler(self, tasks):
         """
         Some tasks aren't buildable, likely due to circular dependency issues.
@@ -780,7 +786,7 @@ class RunQueue:
             bb.fatal("check_stamps fatal internal error")
         return current
 
-    def check_stamp(self, task):
+    def check_stamp_task(self, task):
 
         if self.stamppolicy == "perfile":
             fulldeptree = False
@@ -795,10 +801,12 @@ class RunQueue:
         stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
         # If the stamp is missing its not current
         if not os.access(stampfile, os.F_OK):
+            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stampfile %s not available\n" % stampfile)
             return False
         # If its a 'nostamp' task, it's not current
         taskdep = self.dataCache.task_deps[fn]
         if 'nostamp' in taskdep and task in taskdep['nostamp']:
+            bb.msg.debug(2, bb.msg.domain.RunQueue, "%s.%s is nostamp\n" % (fn, taskname))
             return False
 
         iscurrent = True
@@ -812,8 +820,10 @@ class RunQueue:
                     try:
                         t2 = os.stat(stampfile2)[stat.ST_MTIME]
                         if t1 < t2:
+                            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stampfile %s < %s" % (stampfile,stampfile2))
                             iscurrent = False
                     except:
+                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Exception reading %s for %s" % (stampfile2 ,stampfile))
                         iscurrent = False
 
         return iscurrent
@@ -911,7 +921,7 @@ class RunQueue:
                 fn = self.taskData.fn_index[self.runq_fnid[task]]
 
                 taskname = self.runq_task[task]
-                if self.check_stamp(task):
+                if self.check_stamp_task(task):
                     bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
                     self.runq_running[task] = 1
                     self.task_complete(task)
@@ -936,7 +946,8 @@ class RunQueue:
                     newsi = os.open('/dev/null', os.O_RDWR)
                     os.dup2(newsi, sys.stdin.fileno())
                     self.cooker.configuration.cmd = taskname[3:]
-                    try: 
+                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
+                    try:
                         self.cooker.tryBuild(fn)
                     except bb.build.EventException:
                         bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
@@ -1029,3 +1040,13 @@ class RunQueue:
                         self.runq_weight[task], 
                         self.runq_depends[task], 
                         self.runq_revdeps[task]))
+
+
+def check_stamp_fn(fn, taskname, d):
+    rq = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", d)
+    fnid = rq.taskData.getfn_id(fn)
+    taskid = rq.get_task_id(fnid, taskname)
+    if taskid is not None:
+        return rq.check_stamp_task(taskid)
+    return None
+
