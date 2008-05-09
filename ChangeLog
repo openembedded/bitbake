@@ -133,6 +133,7 @@ Changes in Bitbake 1.9.x:
 	  leads to builds being non-deterministic.
 	- Flush stdout/stderr before forking to fix duplicate console output
 	- Make sure recrdeps tasks include all inter-task dependencies of a given fn
+	- Add bb.runqueue.check_stamp_fn() for use by packaged-staging
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
