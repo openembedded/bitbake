@@ -91,6 +91,16 @@ class TaskData:
 
         return self.fn_index.index(name)
 
+    def gettask_ids(self, fnid):
+        """
+        Return an array of the ID numbers matching a given fnid.
+        """
+        ids = []
+        if fnid in self.tasks_lookup:
+            for task in self.tasks_lookup[fnid]:
+                ids.append(self.tasks_lookup[fnid][task])
+        return ids
+
     def gettask_id(self, fn, task, create = True):
         """
         Return an ID number for the task matching fn and task.

@@ -36,6 +36,7 @@ Changes in BitBake 1.8.x:
 	- No longer weight providers on the basis of a package being "already staged". This
 	  leads to builds being non-deterministic.
 	- Flush stdout/stderr before forking to fix duplicate console output
+	- Make sure recrdeps tasks include all inter-task dependencies of a given fn
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
