@@ -417,8 +417,12 @@ class RunQueue:
                         return []
                     if task in recursive_tdepends:
                         return recursive_tdepends[task]
-                    rectdepends = [task]
-                    nextdeps = [task]
+
+                    fnid = taskData.tasks_fnid[task]
+                    taskids = taskData.gettask_ids(fnid)
+
+                    rectdepends = taskids
+                    nextdeps = taskids
                     while len(nextdeps) != 0:
                         newdeps = []
                         for nextdep in nextdeps:

@@ -132,6 +132,7 @@ Changes in Bitbake 1.9.x:
 	- No longer weight providers on the basis of a package being "already staged". This
 	  leads to builds being non-deterministic.
 	- Flush stdout/stderr before forking to fix duplicate console output
+	- Make sure recrdeps tasks include all inter-task dependencies of a given fn
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
