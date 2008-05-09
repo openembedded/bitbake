@@ -213,34 +213,6 @@ def _filterProviders(providers, item, cfgData, dataCache):
         eligible.remove(fn)
         eligible = [fn] + eligible
 
-    # look to see if one of them is already staged, or marked as preferred.
-    # if so, bump it to the head of the queue
-    for p in providers:
-        pn = dataCache.pkg_fn[p]
-        pe, pv, pr = dataCache.pkg_pepvpr[p]
-
-        stamp = '%s.do_populate_staging' % dataCache.stamp[p]
-        if os.path.exists(stamp):
-            (newvers, fn) = preferred_versions[pn]
-            if not fn in eligible:
-                # package was made ineligible by already-failed check
-                continue
-            oldver = "%s-%s" % (pv, pr)
-            if pe > 0:
-                oldver = "%s:%s" % (pe, oldver)
-            newver = "%s-%s" % (newvers[1], newvers[2])
-            if newvers[0] > 0:
-                newver = "%s:%s" % (newvers[0], newver)
-            if (newver != oldver):
-                extra_chat = "%s (%s) already staged but upgrading to %s to satisfy %s" % (pn, oldver, newver, item)
-            else:
-                extra_chat = "Selecting already-staged %s (%s) to satisfy %s" % (pn, oldver, item)
-
-            bb.msg.note(2, bb.msg.domain.Provider, "%s" % extra_chat)
-            eligible.remove(fn)
-            eligible = [fn] + eligible
-            break
-
     return eligible
 
 

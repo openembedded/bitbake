@@ -33,6 +33,8 @@ Changes in BitBake 1.8.x:
 	- Improve runtime PREFERRED_PROVIDERS warning message
 	- Add BB_STAMP_WHITELIST option which contains a list of stamps to ignore when
 	  checking stamp dependencies and using a BB_STAMP_POLICY of "whitelist"
+	- No longer weight providers on the basis of a package being "already staged". This
+	  leads to builds being non-deterministic.
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
