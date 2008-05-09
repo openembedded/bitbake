@@ -916,6 +916,8 @@ class RunQueue:
                     continue
 
                 bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.active_builds + 1, len(self.runq_fnid), task, self.get_user_idstring(task)))
+                sys.stdout.flush()
+                sys.stderr.flush()
                 try: 
                     pid = os.fork() 
                 except OSError, e: 
