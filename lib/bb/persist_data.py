@@ -43,9 +43,9 @@ class PersistData:
     Why sqlite? It handles all the locking issues for us.
     """
     def __init__(self, d):
-        self.cachedir = bb.data.getVar("CACHE", d, True)
+        self.cachedir = bb.data.getVar("PERSISTENT_DIR", d, True) or bb.data.getVar("CACHE", d, True)
         if self.cachedir in [None, '']:
-            bb.msg.fatal(bb.msg.domain.PersistData, "Please set the 'CACHE' variable.")
+            bb.msg.fatal(bb.msg.domain.PersistData, "Please set the 'PERSISTENT_DIR' or 'CACHE' variable.")
         try:
             os.stat(self.cachedir)
         except OSError:
