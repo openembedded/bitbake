@@ -479,14 +479,7 @@ class Fetch(object):
     verify_md5sum = staticmethod(verify_md5sum)
 
     def write_md5sum(url, ud, d):
-        if bb.which(data.getVar('PATH', d), 'md5sum'):
-            try:
-                md5pipe = os.popen('md5sum ' + ud.localpath)
-                md5data = (md5pipe.readline().split() or [ "" ])[0]
-                md5pipe.close()
-            except OSError:
-                md5data = ""
-
+        md5data = bb.utils.md5_file(ud.localpath)
         # verify the md5sum
         if not Fetch.verify_md5sum(ud, md5data):
             raise MD5SumError(url)
