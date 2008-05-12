@@ -237,3 +237,34 @@ def unlockfile(lf):
     fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
     lf.close
 
+def md5_file(filename):
+    """
+    Return the hex string representation of the MD5 checksum of filename.
+    """
+    try:
+        import hashlib
+        m = hashlib.md5()
+    except ImportError:
+        import md5
+        m = md5.new()
+    
+    for line in open(filename):
+        m.update(line)
+    return m.hexdigest()
+
+def sha256_file(filename):
+    """
+    Return the hex string representation of the 256-bit SHA checksum of
+    filename.  On Python 2.4 this will return None, so callers will need to
+    handle that by either skipping SHA checks, or running a standalone sha256sum
+    binary.
+    """
+    try:
+        import hashlib
+    except ImportError:
+        return None
+
+    s = hashlib.sha256()
+    for line in open(filename):
+        s.update(line)
+    return s.hexdigest()
