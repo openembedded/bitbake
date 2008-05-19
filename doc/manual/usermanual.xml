@@ -415,6 +415,7 @@ options:
                         the graph more appealing
   -l DEBUG_DOMAINS, --log-domains=DEBUG_DOMAINS
                         Show debug logging for the specified logging domains
+  -P, --profile         profile the command and print a report
 
 </screen>
                 </para>
