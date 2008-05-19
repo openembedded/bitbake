@@ -41,6 +41,7 @@ Changes in BitBake 1.8.x:
 	- Add PERSISTENT_DIR to store the PersistData in a persistent
 	  directory != the cache dir.
 	- Add md5 and sha256 checksum generation functions to utils.py
+	- Make sure Build Completed events are generated even when tasks fail
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.

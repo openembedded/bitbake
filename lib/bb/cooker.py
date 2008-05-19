@@ -509,8 +509,11 @@ class BBCooker:
         try:
             failures = rq.execute_runqueue()
         except runqueue.TaskFailure, fnids:
+            failures = 0
             for fnid in fnids:
                 bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+                failures = failures + 1
+            bb.event.fire(bb.event.BuildCompleted(buildname, [item], self.configuration.event_data, failures))
             return False
         bb.event.fire(bb.event.BuildCompleted(buildname, [item], self.configuration.event_data, failures))
         return True
@@ -543,8 +546,11 @@ class BBCooker:
         try:
             failures = rq.execute_runqueue()
         except runqueue.TaskFailure, fnids:
+            failures = 0
             for fnid in fnids:
                 bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+                failures = failures + 1
+            bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
             sys.exit(1)
         bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
 
