@@ -137,6 +137,7 @@ Changes in Bitbake 1.9.x:
 	- Add PERSISTENT_DIR to store the PersistData in a persistent
 	  directory != the cache dir.
 	- Add md5 and sha256 checksum generation functions to utils.py
+	- Correctly handle '-' characters in class names (#2958)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
