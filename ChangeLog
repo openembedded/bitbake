@@ -42,6 +42,7 @@ Changes in BitBake 1.8.x:
 	  directory != the cache dir.
 	- Add md5 and sha256 checksum generation functions to utils.py
 	- Make sure Build Completed events are generated even when tasks fail
+	- Correctly handle '-' characters in class names (#2958)
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.

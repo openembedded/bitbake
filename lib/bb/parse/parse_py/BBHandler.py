@@ -93,7 +93,7 @@ def handle(fn, d, include = 0):
     init(d)
 
     if ext == ".bbclass":
-        __classname__ = root
+        __classname__ = root.replace('-','_')
         classes.append(__classname__)
         __inherit_cache = data.getVar('__inherit_cache', d) or []
         if not fn in __inherit_cache:
@@ -247,7 +247,7 @@ def feeder(lineno, s, fn, root, d):
 
     m = __func_start_regexp__.match(s)
     if m:
-        __infunc__ = m.group("func") or "__anonymous"
+        __infunc__ = (m.group("func") or "__anonymous").replace('-','_')
         key = __infunc__
         if data.getVar(key, d):
 #           clean up old version of this piece of metadata, as its
