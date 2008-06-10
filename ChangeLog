@@ -45,6 +45,7 @@ Changes in BitBake 1.8.x:
 	- Correctly handle '-' characters in class names (#2958)
 	- Make sure expandKeys has been called on the data dictonary before running tasks
 	- Correctly add a task override in the form task-TASKNAME.
+	- Revert the '-' character fix in class names since it breaks things
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
