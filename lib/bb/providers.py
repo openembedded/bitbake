@@ -298,9 +298,9 @@ def getRuntimeProviders(dataCache, rdepend):
     for pattern in dataCache.packages_dynamic:
         try:
             regexp = re.compile(pattern)
-	except:
+        except:
             bb.msg.error(bb.msg.domain.Provider, "Error parsing re expression: %s" % pattern)
-	    raise
+            raise
         if regexp.match(rdepend):
             rproviders += dataCache.packages_dynamic[pattern]
 
