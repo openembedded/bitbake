@@ -118,7 +118,11 @@ class Cvs(Fetch):
         if 'norecurse' in ud.parm:
             options.append("-l")
         if ud.date:
-            options.append("-D \"%s UTC\"" % ud.date)
+            # treat YYYYMMDDHHMM specially for CVS
+            if len(ud.date) == 12:
+                options.append("-D \"%s %s:%s UTC\"" % (ud.date[0:8], ud.date[8:10], ud.date[10:12]))
+            else:
+                options.append("-D \"%s UTC\"" % ud.date)
         if ud.tag:
             options.append("-r %s" % ud.tag)
 
