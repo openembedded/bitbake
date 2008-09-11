@@ -16,10 +16,15 @@ endif
 
 syn case match
 
-
 " Catch incorrect syntax (only matches if nothing else does)
 "
 syn match bbUnmatched		"."
+
+
+syn include @python syntax/python.vim
+if exists("b:current_syntax")
+  unlet b:current_syntax
+endif
 
 
 " Other
@@ -34,21 +39,25 @@ syn match bbArrayBrackets	"[\[\]]" contained
 " BitBake strings
 
 syn match bbContinue		"\\$"
-syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ contained keepend contains=bbTodo,bbContinue,bbVarDeref
-syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ contained keepend contains=bbTodo,bbContinue,bbVarDeref
-
+syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ contained keepend contains=bbTodo,bbContinue,bbVarInlinePy,bbVarDeref
+syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ contained keepend contains=bbTodo,bbContinue,bbVarInlinePy,bbVarDeref
 
 " BitBake variable metadata
 
-syn keyword bbExportFlag	export contained nextgroup=bbIdentifier skipwhite
-syn match bbVarDeref	"${[a-zA-Z0-9\-_\.]\+}" contained
-syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA-Z0-9\-_\.]\+\)\?\)\s*\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
+syn match bbVarBraces "[\${}]"
+syn region bbVarDeref matchgroup=bbVarBraces start="${" end="}" contained
+" syn region bbVarDeref start="${" end="}" contained
+" syn region bbVarInlinePy start="${@" end="}" contained contains=@python
+syn region bbVarInlinePy matchgroup=bbVarBraces start="${@" end="}" contained contains=@python
 
-syn match bbIdentifier		"[a-zA-Z0-9\-_\.]\+" display contained
+syn keyword bbExportFlag	export contained nextgroup=bbIdentifier skipwhite
+" syn match bbVarDeref	"${[a-zA-Z0-9\-_\.]\+}" contained
+syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA/-Z0-9\-_\.]\+\)\?\)\s*\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
+
+syn match bbIdentifier		"[a-zA-Z0-9\-_\./]\+" display contained
 "syn keyword bbVarEq	= display contained nextgroup=bbVarValue
 syn match bbVarEq		"\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)" contained nextgroup=bbVarValue
-syn match bbVarValue		".*$" contained contains=bbString,bbVarDeref
-
+syn match bbVarValue		".*$" contained contains=bbString
 
 " BitBake variable metadata flags
 syn match bbVarFlagDef		"^\([a-zA-Z0-9\-_\.]\+\)\(\[[a-zA-Z0-9\-_\.]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
@@ -61,10 +70,6 @@ syn match bbFunction	"\h\w*" display contained
 
 
 " BitBake python metadata
-syn include @python syntax/python.vim
-if exists("b:current_syntax")
-  unlet b:current_syntax
-endif
 
 syn keyword bbPythonFlag	python contained nextgroup=bbFunction
 syn match bbPythonFuncDef	"^\(python\s\+\)\(\w\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion skipwhite
@@ -98,7 +103,6 @@ syn match bbStatementRest		".*$" contained contains=bbString,bbVarDeref
 "
 hi def link bbArrayBrackets	Statement
 hi def link bbUnmatched		Error
-hi def link bbVarDeref		String
 hi def link bbContinue		Special
 hi def link bbDef		Statement
 hi def link bbPythonFlag	Type
@@ -116,5 +120,8 @@ hi def link bbIdentifier	Identifier
 hi def link bbVarEq		Operator
 hi def link bbQuote		String
 hi def link bbVarValue		String
+" hi def link bbVarInlinePy	PreProc
+hi def link bbVarDeref		PreProc
+hi def link bbVarBraces		PreProc
 
 let b:current_syntax = "bb"
