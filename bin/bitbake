@@ -140,6 +140,17 @@ Default BBFILES are the .bb files in the current directory.""" )
 
 
     cooker = bb.cooker.BBCooker(configuration)
+
+    # Optionally clean up the environment
+    if 'BB_PRESERVE_ENV' not in os.environ:
+        if 'BB_ENV_WHITELIST' in os.environ:
+            good_vars = os.environ['BB_ENV_WHITELIST'].split()
+        else:
+            good_vars = bb.utils.preserved_envvars_list()
+        if 'BB_ENV_EXTRAWHITE' in os.environ:
+            good_vars.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
+        bb.utils.filter_environment(good_vars)
+
     cooker.parseConfiguration()
     host = cooker.server.host
     port = cooker.server.port

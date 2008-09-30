@@ -149,6 +149,11 @@ Changes in Bitbake 1.9.x:
 	- Fix PACKAGES_DYNAMIC handling of packages with '++' in the name
 	- Rename __depends to __base_depends after configuration parsing so we don't
 	  recheck the validity of the config files time after time
+	- Add better environmental variable handling. By default it will now only pass certain 
+	  whitelisted variables into the data store. If BB_PRESERVE_ENV is set bitbake will use
+	  all variable from the environment. If BB_ENV_WHITELIST is set, that whitelist will be
+	  used instead of the internal bitbake one. Alternatively, BB_ENV_EXTRAWHITE can be used
+	  to extend the internal whitelist.
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
