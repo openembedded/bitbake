@@ -146,6 +146,7 @@ Changes in Bitbake 1.9.x:
 	- Move prunedir function to utils.py and add explode_dep_versions function
 	- Raise an exception if SRCREV == 'INVALID'
 	- Fix hg fetcher username/password handling and fix crash
+	- Fix PACKAGES_DYNAMIC handling of packages with '++' in the name
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
