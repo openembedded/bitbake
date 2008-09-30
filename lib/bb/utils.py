@@ -176,7 +176,7 @@ def better_exec(code, context, text, realfile):
             raise
 
         # print the Header of the Error Message
-        bb.msg.error(bb.msg.domain.Util, "Error in executing python function in: ", realfile)
+        bb.msg.error(bb.msg.domain.Util, "Error in executing python function in: %s" % realfile)
         bb.msg.error(bb.msg.domain.Util, "Exception:%s Message:%s" % (t,value) )
 
         # let us find the line number now
