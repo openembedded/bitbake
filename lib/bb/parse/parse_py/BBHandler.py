@@ -122,8 +122,10 @@ def handle(fn, d, include = 0):
         abs_fn = fn
 
     if ext != ".bbclass":
-        bbpath.insert(0, os.path.dirname(abs_fn))
-        data.setVar('BBPATH', ":".join(bbpath), d)
+        dname = os.path.dirname(abs_fn)
+        if bbpath[0] != dname:
+            bbpath.insert(0, dname)
+            data.setVar('BBPATH', ":".join(bbpath), d)
 
     if include:
         bb.parse.mark_dependency(d, abs_fn)
