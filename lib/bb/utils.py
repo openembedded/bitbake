@@ -296,6 +296,60 @@ def sha256_file(filename):
         s.update(line)
     return s.hexdigest()
 
+def preserved_envvars_list():
+    return [
+        'BBPATH',
+        'BB_PRESERVE_ENV',
+        'BB_ENV_WHITELIST',
+        'BB_ENV_EXTRAWHITE',
+        'COLORTERM',
+        'DBUS_SESSION_BUS_ADDRESS',
+        'DESKTOP_SESSION',
+        'DESKTOP_STARTUP_ID',
+        'DISPLAY',
+        'GNOME_KEYRING_PID',
+        'GNOME_KEYRING_SOCKET',
+        'GPG_AGENT_INFO',
+        'GTK_RC_FILES',
+        'HOME',
+        'LANG',
+        'LOGNAME',
+        'PATH',
+        'PWD',
+        'SESSION_MANAGER',
+        'SHELL',
+        'SSH_AUTH_SOCK',
+        'TERM',
+        'USER',
+        'USERNAME',
+        '_',
+        'XAUTHORITY',
+        'XDG_DATA_DIRS',
+        'XDG_SESSION_COOKIE',
+    ]
+
+def filter_environment(good_vars):
+    """
+    Create a pristine environment for bitbake. This will remove variables that
+    are not known and may influence the build in a negative way.
+    """
+
+    import bb
+
+    removed_vars = []
+    for key in os.environ.keys():
+        if key in good_vars:
+            continue
+        
+        removed_vars.append(key)
+        os.unsetenv(key)
+        del os.environ[key]
+
+    if len(removed_vars):
+        bb.debug(1, "Removed the following variables from the environment:", ",".join(removed_vars))
+
+    return removed_vars
+
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
     # CAUTION:  This is dangerous!

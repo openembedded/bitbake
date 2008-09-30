@@ -324,21 +324,15 @@ def expandData(alterdata, readdata = None):
         if val != expanded:
             setVar(key, expanded, alterdata)
 
-import os
-
 def inheritFromOS(d):
     """Inherit variables from the environment."""
-#   fakeroot needs to be able to set these
-    non_inherit_vars = [ "LD_LIBRARY_PATH", "LD_PRELOAD" ]
     for s in os.environ.keys():
-        if not s in non_inherit_vars:
-            try:
-                setVar(s, os.environ[s], d)
-                setVarFlag(s, 'matchesenv', '1', d)
-            except TypeError:
-                pass
-
-import sys
+        try:
+            setVar(s, os.environ[s], d)
+        except TypeError:
+            pass
+        os.unsetenv(s)
+        del os.environ[s]
 
 def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     """Emit a variable to be sourced by a shell."""
@@ -378,9 +372,6 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if unexport:
         o.write('unset %s\n' % varExpanded)
         return 1
-
-    if getVarFlag(var, 'matchesenv', d):
-        return 0
 
     val.rstrip()
     if not val:

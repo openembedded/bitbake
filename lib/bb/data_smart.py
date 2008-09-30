@@ -149,9 +149,6 @@ class DataSmart:
 
         if not var in self.dict:
             self._makeShadowCopy(var)
-        if self.getVarFlag(var, 'matchesenv'):
-            self.delVarFlag(var, 'matchesenv')
-            self.setVarFlag(var, 'export', 1)
 
         # more cookies for the cookie monster
         if '_' in var:
