@@ -50,6 +50,10 @@ def cached_mtime_noerror(f):
             return 0
     return __mtime_cache[f]
 
+def update_mtime(f):
+    __mtime_cache[f] = os.stat(f)[8]
+    return __mtime_cache[f]
+
 def mark_dependency(d, f):
     if f.startswith('./'):
         f = "%s/%s" % (os.getcwd(), f[2:])
