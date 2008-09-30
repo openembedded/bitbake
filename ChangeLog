@@ -144,6 +144,7 @@ Changes in Bitbake 1.9.x:
 	- When a regexp fails to compile for PACKAGES_DYNAMIC, print a more useful error (#4444)
 	- Allow to checkout CVS by Date and Time. Just add HHmm to the SRCDATE.
 	- Move prunedir function to utils.py and add explode_dep_versions function
+	- Raise an exception if SRCREV == 'INVALID'
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
