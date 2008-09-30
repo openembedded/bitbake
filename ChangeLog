@@ -154,6 +154,7 @@ Changes in Bitbake 1.9.x:
 	  all variable from the environment. If BB_ENV_WHITELIST is set, that whitelist will be
 	  used instead of the internal bitbake one. Alternatively, BB_ENV_EXTRAWHITE can be used
 	  to extend the internal whitelist.
+	- Perforce fetcher fix to use commandline options instead of being overriden by the environment
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
