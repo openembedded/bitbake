@@ -51,6 +51,7 @@ Changes in BitBake 1.8.x:
 	- Move prunedir function to utils.py and add explode_dep_versions function
 	- Raise an exception if SRCREV == 'INVALID'
 	- Fix hg fetcher username/password handling and fix crash
+	- Fix PACKAGES_DYNAMIC handling of packages with '++' in the name
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
