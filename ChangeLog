@@ -48,6 +48,7 @@ Changes in BitBake 1.8.x:
 	- Revert the '-' character fix in class names since it breaks things
 	- When a regexp fails to compile for PACKAGES_DYNAMIC, print a more useful error (#4444)
 	- Allow to checkout CVS by Date and Time. Just add HHmm to the SRCDATE.
+	- Move prunedir function to utils.py and add explode_dep_versions function
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
