@@ -67,14 +67,15 @@ class Perforce(Fetch):
     doparse = staticmethod(doparse)
 
     def getcset(d, depot,host,user,pswd,parm):
+        p4opt = ""
         if "cset" in parm:
             return parm["cset"];
         if user:
-            data.setVar('P4USER', user, d)
+            p4opt += " -u %s" % (user)
         if pswd:
-            data.setVar('P4PASSWD', pswd, d)
+            p4opt += " -P %s" % (pswd)
         if host:
-            data.setVar('P4PORT', host, d)
+            p4opt += " -p %s" % (host)
 
         p4date = data.getVar("P4DATE", d, 1)
         if "revision" in parm:
@@ -85,8 +86,8 @@ class Perforce(Fetch):
             depot += "@%s" % (p4date)
 
         p4cmd = data.getVar('FETCHCOMMAND_p4', d, 1)
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s changes -m 1 %s" % (p4cmd, depot))
-        p4file = os.popen("%s changes -m 1 %s" % (p4cmd,depot))
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
+        p4file = os.popen("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
         cset = p4file.readline().strip()
         bb.msg.debug(1, bb.msg.domain.Fetcher, "READ %s" % (cset))
         if not cset:
@@ -146,14 +147,15 @@ class Perforce(Fetch):
         data.update_data(localdata)
 
         # Get the p4 command
+        p4opt = ""
         if user:
-            data.setVar('P4USER', user, localdata)
+            p4opt += " -u %s" % (user)
 
         if pswd:
-            data.setVar('P4PASSWD', pswd, localdata)
+            p4opt += " -P %s" % (pswd)
 
         if host:
-            data.setVar('P4PORT', host, localdata)
+            p4opt += " -p %s" % (host)
 
         p4cmd = data.getVar('FETCHCOMMAND', localdata, 1)
 
@@ -175,8 +177,8 @@ class Perforce(Fetch):
 
         os.chdir(tmpfile)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
-        bb.msg.note(1, bb.msg.domain.Fetcher, "%s files %s" % (p4cmd, depot))
-        p4file = os.popen("%s files %s" % (p4cmd, depot))
+        bb.msg.note(1, bb.msg.domain.Fetcher, "%s%s files %s" % (p4cmd, p4opt, depot))
+        p4file = os.popen("%s%s files %s" % (p4cmd, p4opt, depot))
 
         if not p4file:
             bb.error("Fetch: unable to get the P4 files from %s" % (depot))
@@ -193,7 +195,7 @@ class Perforce(Fetch):
             dest = list[0][len(path)+1:]
             where = dest.find("#")
 
-            os.system("%s print -o %s/%s %s" % (p4cmd, module,dest[:where],list[0]))
+            os.system("%s%s print -o %s/%s %s" % (p4cmd, p4opt, module,dest[:where],list[0]))
             count = count + 1
             
         if count == 0:
