@@ -86,6 +86,10 @@ class BBCooker:
 
         self.configuration.data = bb.data.init()
 
+    def parseConfiguration(self):
+
+        bb.data.inheritFromOS(self.configuration.data)
+
         for f in self.configuration.file:
             self.parseConfigurationFile( f )
 

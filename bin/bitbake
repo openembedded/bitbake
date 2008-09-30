@@ -140,6 +140,7 @@ Default BBFILES are the .bb files in the current directory.""" )
 
 
     cooker = bb.cooker.BBCooker(configuration)
+    cooker.parseConfiguration()
     host = cooker.server.host
     port = cooker.server.port
 
