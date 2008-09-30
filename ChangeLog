@@ -52,6 +52,8 @@ Changes in BitBake 1.8.x:
 	- Raise an exception if SRCREV == 'INVALID'
 	- Fix hg fetcher username/password handling and fix crash
 	- Fix PACKAGES_DYNAMIC handling of packages with '++' in the name
+	- Rename __depends to __base_depends after configuration parsing so we don't
+	  recheck the validity of the config files time after time
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.

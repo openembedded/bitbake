@@ -579,6 +579,7 @@ class BBCooker:
 
         bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
         (filelist, masked) = self.collect_bbfiles()
+        bb.data.renameVar("__depends", "__base_depends", self.configuration.data)
         self.parse_bbfiles(filelist, masked, self.myProgressCallback)
         bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
 
