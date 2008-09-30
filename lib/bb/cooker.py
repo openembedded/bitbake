@@ -758,6 +758,7 @@ class BBCooker:
         self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
         bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
+        bb.data.renameVar("__depends", "__base_depends", self.configuration.data)
         (filelist, masked) = self.collect_bbfiles()
         self.parse_bbfiles(filelist, masked)
         bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")

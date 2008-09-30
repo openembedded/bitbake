@@ -147,6 +147,8 @@ Changes in Bitbake 1.9.x:
 	- Raise an exception if SRCREV == 'INVALID'
 	- Fix hg fetcher username/password handling and fix crash
 	- Fix PACKAGES_DYNAMIC handling of packages with '++' in the name
+	- Rename __depends to __base_depends after configuration parsing so we don't
+	  recheck the validity of the config files time after time
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
