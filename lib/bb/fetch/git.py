@@ -27,15 +27,6 @@ from   bb.fetch import Fetch
 from   bb.fetch import FetchError
 from   bb.fetch import runfetchcmd
 
-def prunedir(topdir):
-    # Delete everything reachable from the directory named in 'topdir'.
-    # CAUTION:  This is dangerous!
-    for root, dirs, files in os.walk(topdir, topdown=False):
-        for name in files:
-            os.remove(os.path.join(root, name))
-        for name in dirs:
-            os.rmdir(os.path.join(root, name))
-
 class Git(Fetch):
     """Class to fetch a module or modules from git repositories"""
     def supports(self, url, ud, d):
@@ -107,7 +98,7 @@ class Git(Fetch):
             runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
 
         if os.path.exists(codir):
-            prunedir(codir)
+            bb.utils.prunedir(codir)
 
         bb.mkdirhier(codir)
         os.chdir(repodir)
@@ -119,7 +110,7 @@ class Git(Fetch):
         runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
 
         os.chdir(repodir)
-        prunedir(codir)
+        bb.utils.prunedir(codir)
 
     def suppports_srcrev(self):
         return True

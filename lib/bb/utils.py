@@ -96,7 +96,34 @@ def explode_deps(s):
             #r[-1] += ' ' + ' '.join(j)
     return r
 
+def explode_dep_versions(s):
+    """
+    Take an RDEPENDS style string of format:
+    "DEPEND1 (optional version) DEPEND2 (optional version) ..."
+    and return a dictonary of dependencies and versions.
+    """
+    r = {}
+    l = s.split()
+    lastdep = None
+    lastver = ""
+    inversion = False
+    for i in l:
+        if i[0] == '(':
+            inversion = True
+            lastver = i[1:] or ""
+            #j = []
+        elif inversion and i.endswith(')'):
+            inversion = False
+            lastver = lastver + " " + (i[:-1] or "")
+            r[lastdep] = lastver
+        elif not inversion:
+            r[i] = None
+            lastdep = i
+            lastver = ""
+        elif inversion:
+            lastver = lastver + " " + i
 
+    return r
 
 def _print_trace(body, line):
     """
@@ -268,3 +295,13 @@ def sha256_file(filename):
     for line in open(filename):
         s.update(line)
     return s.hexdigest()
+
+def prunedir(topdir):
+    # Delete everything reachable from the directory named in 'topdir'.
+    # CAUTION:  This is dangerous!
+    for root, dirs, files in os.walk(topdir, topdown=False):
+        for name in files:
+            os.remove(os.path.join(root, name))
+        for name in dirs:
+            os.rmdir(os.path.join(root, name))
+    os.rmdir(topdir)
