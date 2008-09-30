@@ -49,6 +49,9 @@ class ParameterError(Exception):
 class MD5SumError(Exception):
     """Exception raised when a MD5SUM of a file does not match the expected one"""
 
+class InvalidSRCREV(Exception):
+    """Exception raised when an invalid SRCREV is encountered"""
+
 def uri_replace(uri, uri_find, uri_replace, d):
 #   bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: operating on %s" % uri)
     if not uri or not uri_find or not uri_replace:
@@ -425,6 +428,8 @@ class Fetch(object):
             rev = data.getVar("SRCREV_pn-" + pn + "_" + ud.parm['name'], d, 1)
         if not rev:
             rev = data.getVar("SRCREV", d, 1)
+        if rev == "INVALID":
+            raise InvalidSRCREV("Please set SRCREV to a valid value")
         if not rev:
             return False
         if rev is "SRCREVINACTION":
