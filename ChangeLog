@@ -104,6 +104,7 @@ Changes in BitBake 1.8.10:
 	- Add support for branches in git fetcher (Otavio Salvador, Michael Lauer)
 	- Make taskdata and runqueue errors more user friendly
 	- Add norecurse and fullpath options to cvs fetcher
+	- bb.utils.prunedir can cope with symlinks to directories without exceptions
 
 Changes in Bitbake 1.8.8:
 	- Rewrite svn fetcher to make adding extra operations easier 

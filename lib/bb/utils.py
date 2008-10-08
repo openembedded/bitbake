@@ -357,6 +357,9 @@ def prunedir(topdir):
         for name in files:
             os.remove(os.path.join(root, name))
         for name in dirs:
-            os.rmdir(os.path.join(root, name))
+            if os.path.islink(os.path.join(root, name)):
+                os.remove(os.path.join(root, name))
+            else:
+                os.rmdir(os.path.join(root, name))
     os.rmdir(topdir)
 
