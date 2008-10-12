@@ -148,6 +148,10 @@ class Git(Fetch):
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
         repodir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
 
+        key = "GIT_CACHED_REVISION-%s-%s"  % (gitsrcname, ud.tag)
+        if bb.data.getVar(key, d):
+            return bb.data.getVar(key, d)
+
 
         # Runtime warning on wrongly configured sources
         if ud.tag == "1":
@@ -168,6 +172,8 @@ class Git(Fetch):
         output = runfetchcmd("git rev-list %s -- 2> /dev/null | wc -l" % ud.tag, d, quiet=True)
         os.chdir(cwd)
 
-        return "%s+%s" % (output.split()[0], ud.tag)
+        sortable_revision = "%s+%s" % (output.split()[0], ud.tag)
+        bb.data.setVar(key, sortable_revision, d)
+        return sortable_revision
         
 
