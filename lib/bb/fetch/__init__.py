@@ -520,6 +520,8 @@ class Fetch(object):
 
         pd = persist_data.PersistData(d)
         key = self._revision_key(url, ud, d)
+        key = "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
+
         latest_rev = self._build_revision(url, ud, d)
         last_rev = pd.getValue("BB_URI_LOCALCOUNT", key + "_rev")
         count = pd.getValue("BB_URI_LOCALCOUNT", key + "_count")
