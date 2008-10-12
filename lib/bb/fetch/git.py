@@ -62,7 +62,7 @@ class Git(Fetch):
     def go(self, loc, ud, d):
         """Fetch url"""
 
-        if Fetch.try_mirror(d, ud.localfile):
+        if os.access(os.path.join(data.getVar("DL_DIR", d, True), ud.localfile), os.R_OK):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % ud.localpath)
             return
 
