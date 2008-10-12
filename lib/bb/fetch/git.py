@@ -136,3 +136,38 @@ class Git(Fetch):
     def _build_revision(self, url, ud, d):
         return ud.tag
 
+    def _want_sortable_revision(self, url, ud, d):
+        return bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True) or False
+
+    def _sortable_revision(self, url, ud, d):
+        """
+        This is only called when _want_sortable_revision called true
+
+        We will have to get the updated revision.
+        """
+        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
+        repodir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
+
+
+        # Runtime warning on wrongly configured sources
+        if ud.tag == "1":
+            bb.msg.error(1, bb.msg.domain.Fetcher, "SRCREV is '1'. This indicates a configuration error of %s" % url)
+            return "0+1"
+
+        cwd = os.getcwd()
+
+        # Check if we have the rev already
+        if not os.path.exists(repodir):
+            print "no repo"
+            self.go(None, ud, d)
+
+        os.chdir(repodir)
+        if not self._contains_ref(ud.tag, d):
+            self.go(None, ud, d)
+
+        output = runfetchcmd("git rev-list %s -- 2> /dev/null | wc -l" % ud.tag, d, quiet=True)
+        os.chdir(cwd)
+
+        return "%s+%s" % (output.split()[0], ud.tag)
+        
+
