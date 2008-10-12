@@ -85,11 +85,12 @@ class Git(Fetch):
 
         os.chdir(repodir)
         # Remove all but the .git directory
-        runfetchcmd("rm * -Rf", d)
-        runfetchcmd("git fetch %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch), d)
-        runfetchcmd("git fetch --tags %s://%s%s" % (ud.proto, ud.host, ud.path), d)
-        runfetchcmd("git prune-packed", d)
-        runfetchcmd("git pack-redundant --all | xargs -r rm", d)
+        if not self._contains_ref(ud.tag, d):
+            runfetchcmd("rm * -Rf", d)
+            runfetchcmd("git fetch %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch), d)
+            runfetchcmd("git fetch --tags %s://%s%s" % (ud.proto, ud.host, ud.path), d)
+            runfetchcmd("git prune-packed", d)
+            runfetchcmd("git pack-redundant --all | xargs -r rm", d)
 
         os.chdir(repodir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
@@ -114,6 +115,10 @@ class Git(Fetch):
 
     def suppports_srcrev(self):
         return True
+
+    def _contains_ref(self, tag, d):
+        output = runfetchcmd("git log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % tag, d, quiet=True)
+        return output.split()[0] != "0"
 
     def _revision_key(self, url, ud, d):
         """
