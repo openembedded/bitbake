@@ -805,7 +805,7 @@ class RunQueue:
             return False
         # If its a 'nostamp' task, it's not current
         taskdep = self.dataCache.task_deps[fn]
-        if 'nostamp' in taskdep and task in taskdep['nostamp']:
+        if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
             bb.msg.debug(2, bb.msg.domain.RunQueue, "%s.%s is nostamp\n" % (fn, taskname))
             return False
 
