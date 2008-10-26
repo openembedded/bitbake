@@ -79,7 +79,7 @@ class Hg(Fetch):
             host = "/"
             ud.host = "localhost"
 
-        if ud.user == None:
+        if not ud.user:
             hgroot = host + ud.path
         else:
             hgroot = ud.user + "@" + host + ud.path
