@@ -339,7 +339,10 @@ class TaskData:
             self.add_provider_internal(cfgData, dataCache, item)
         except bb.providers.NoProvider:
             if self.abort:
-                bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
+                if self.get_rdependees_str(item):
+                    bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
+                else:
+                    bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s'" % (item))
                 raise
             targetid = self.getbuild_id(item)
             self.remove_buildtarget(targetid)
@@ -357,7 +360,10 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            bb.msg.note(2, bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
+            if self.get_rdependees_str(item):
+                bb.msg.note(2, bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
+            else:
+                bb.msg.note(2, bb.msg.domain.Provider, "Nothing PROVIDES '%s'" % (item))
             bb.event.fire(bb.event.NoProvider(item, cfgData))
             raise bb.providers.NoProvider(item)
 
@@ -535,7 +541,10 @@ class TaskData:
                 except bb.providers.NoProvider:
                     targetid = self.getbuild_id(target)
                     if self.abort and targetid in self.external_targets:
-                        bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (target, self.get_dependees_str(target)))
+                        if self.get_rdependees_str(target):
+                            bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (target, self.get_dependees_str(target)))
+                        else:
+                            bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s'" % (target))
                         raise
                     self.remove_buildtarget(targetid)
             for target in self.get_unresolved_run_targets(dataCache):
