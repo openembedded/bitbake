@@ -95,7 +95,11 @@ class Cache:
                 bb.msg.note(1, bb.msg.domain.Cache, "Invalid cache found, rebuilding...")
                 self.depends_cache = {}
         else:
-            bb.msg.note(1, bb.msg.domain.Cache, "Out of date cache found, rebuilding...")
+            try:
+                os.stat( self.cachefile )
+                bb.msg.note(1, bb.msg.domain.Cache, "Out of date cache found, rebuilding...")
+            except OSError:
+                pass
 
     def getVar(self, var, fn, exp = 0):
         """
