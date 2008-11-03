@@ -114,13 +114,15 @@ class Svn(Fetch):
         if command is "info":
             svncmd = "%s info %s %s://%s/%s/" % (basecmd, " ".join(options), proto, svnroot, ud.module)
         else:
+            suffix = ""
             if ud.revision:
                 options.append("-r %s" % ud.revision)
+                suffix = "@%s" % (ud.revision)
             elif ud.date:
                 options.append("-r {%s}" % ud.date)
 
             if command is "fetch":
-                svncmd = "%s co %s %s://%s/%s %s" % (basecmd, " ".join(options), proto, svnroot, ud.module, ud.module)
+                svncmd = "%s co %s %s://%s/%s%s %s" % (basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
             elif command is "update":
                 svncmd = "%s update %s" % (basecmd, " ".join(options))
             else:
