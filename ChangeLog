@@ -60,6 +60,7 @@ Changes in BitBake 1.8.x:
 	  used instead of the internal bitbake one. Alternatively, BB_ENV_EXTRAWHITE can be used
 	  to extend the internal whitelist.
 	- Perforce fetcher fix to use commandline options instead of being overriden by the environment
+	- use @rev when doing a svn checkout
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
