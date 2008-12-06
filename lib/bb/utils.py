@@ -359,6 +359,21 @@ def filter_environment(good_vars):
 
     return removed_vars
 
+def clean_environment():
+    """
+    Clean up any spurious environment variables. This will remove any
+    variables the user hasn't chose to preserve.
+    """
+    if 'BB_PRESERVE_ENV' not in os.environ:
+        if 'BB_ENV_WHITELIST' in os.environ:
+            good_vars = os.environ['BB_ENV_WHITELIST'].split()
+        else:
+            good_vars = preserved_envvars_list()
+        if 'BB_ENV_EXTRAWHITE' in os.environ:
+            good_vars.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
+        filter_environment(good_vars)
+
+
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
     # CAUTION:  This is dangerous!

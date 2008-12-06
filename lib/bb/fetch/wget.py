@@ -60,9 +60,34 @@ class Wget(Fetch):
             else:
                 fetchcmd = data.getVar("FETCHCOMMAND", d, 1)
 
+            uri = uri.split(";")[0]
+            uri_decoded = list(bb.decodeurl(uri))
+            uri_type = uri_decoded[0]
+            uri_host = uri_decoded[1]
+
             bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
             fetchcmd = fetchcmd.replace("${URI}", uri)
             fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
+            httpproxy = None
+            ftpproxy = None
+            if uri_type == 'http':
+                httpproxy = data.getVar("HTTP_PROXY", d, True)
+                httpproxy_ignore = (data.getVar("HTTP_PROXY_IGNORE", d, True) or "").split()
+                for p in httpproxy_ignore:
+                    if uri_host.endswith(p):
+                        httpproxy = None
+                        break
+            if uri_type == 'ftp':
+                ftpproxy = data.getVar("FTP_PROXY", d, True)
+                ftpproxy_ignore = (data.getVar("HTTP_PROXY_IGNORE", d, True) or "").split()
+                for p in ftpproxy_ignore:
+                    if uri_host.endswith(p):
+                        ftpproxy = None
+                        break
+            if httpproxy:
+                fetchcmd = "http_proxy=" + httpproxy + " " + fetchcmd
+            if ftpproxy:
+                fetchcmd = "ftp_proxy=" + ftpproxy + " " + fetchcmd
             bb.msg.debug(2, bb.msg.domain.Fetcher, "executing " + fetchcmd)
             ret = os.system(fetchcmd)
             if ret != 0:
