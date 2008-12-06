@@ -204,8 +204,15 @@ def exec_func_python(func, d, runfile, logfile):
     g['bb'] = bb
     g['os'] = os
     g['d'] = d
-    utils.better_exec(comp, g, tmp, bbfile)
+    try:
+        utils.better_exec(comp, g, tmp, bbfile)
+    except:
+        (t,value,tb) = sys.exc_info()
 
+        if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
+            raise
+        bb.msg.error(bb.msg.domain.Build, "Function %s failed" % func)
+        raise FuncFailed("function %s failed" % func, logfile)
 
 def exec_func_shell(func, d, runfile, logfile, flags):
     """Execute a shell BB 'function' Returns true if execution was successful.
