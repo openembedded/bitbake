@@ -158,6 +158,7 @@ Changes in Bitbake 1.9.x:
 	- bb.utils.prunedir can cope with symlinks to directoriees without exceptions
 	- use @rev when doing a svn checkout
 	- Add osc fetcher (from Joshua Lock in Poky)
+	- When SRCREV autorevisioning for a recipe is in use, don't cache the recipe
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
