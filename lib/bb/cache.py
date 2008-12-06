@@ -39,7 +39,7 @@ except ImportError:
     import pickle
     bb.msg.note(1, bb.msg.domain.Cache, "Importing cPickle failed. Falling back to a very slow implementation.")
 
-__cache_version__ = "129"
+__cache_version__ = "130"
 
 class Cache:
     """
@@ -263,6 +263,7 @@ class Cache:
         Save the cache
         Called from the parser when complete (or exiting)
         """
+        import copy
 
         if not self.has_cache:
             return
@@ -275,8 +276,14 @@ class Cache:
         version_data['CACHE_VER'] = __cache_version__
         version_data['BITBAKE_VER'] = bb.__version__
 
+        cache_data = copy.deepcopy(self.depends_cache)
+        for fn in self.depends_cache:
+            if '__BB_DONT_CACHE' in self.depends_cache[fn] and self.depends_cache[fn]['__BB_DONT_CACHE']:
+                bb.msg.debug(2, bb.msg.domain.Cache, "Not caching %s, marked as not cacheable" % fn)
+                del cache_data[fn]
+
         p = pickle.Pickler(file(self.cachefile, "wb" ), -1 )
-        p.dump([self.depends_cache, version_data])
+        p.dump([cache_data, version_data])
 
     def mtime(self, cachefile):
         return bb.parse.cached_mtime_noerror(cachefile)
@@ -377,6 +384,8 @@ class Cache:
         if not self.getVar('BROKEN', file_name, True) and not self.getVar('EXCLUDE_FROM_WORLD', file_name, True):
             cacheData.possible_world.append(file_name)
 
+        # Touch this to make sure its in the cache
+        self.getVar('__BB_DONT_CACHE', file_name, True)
 
     def load_bbfile( self, bbfile , config):
         """

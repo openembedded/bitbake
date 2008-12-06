@@ -62,6 +62,7 @@ Changes in BitBake 1.8.x:
 	- Perforce fetcher fix to use commandline options instead of being overriden by the environment
 	- use @rev when doing a svn checkout
 	- Add osc fetcher (from Joshua Lock in Poky)
+	- When SRCREV autorevisioning for a recipe is in use, don't cache the recipe
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
