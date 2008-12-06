@@ -63,6 +63,9 @@ Changes in BitBake 1.8.x:
 	- use @rev when doing a svn checkout
 	- Add osc fetcher (from Joshua Lock in Poky)
 	- When SRCREV autorevisioning for a recipe is in use, don't cache the recipe
+	- Add tryaltconfigs option to control whether bitbake trys using alternative providers
+	  to fulfil failed dependencies. It defaults to off, changing the default since this
+	  behaviour confuses many users and isn't often useful.
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
