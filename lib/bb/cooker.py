@@ -596,6 +596,9 @@ class BBCooker:
         build.
         """
 
+        # Wipe the OS environment
+        bb.utils.empty_environment()
+
         if self.configuration.show_environment:
             self.showEnvironment(self.configuration.buildfile, self.configuration.pkgs_to_build)
             sys.exit( 0 )
