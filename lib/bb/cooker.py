@@ -145,13 +145,13 @@ class BBCooker:
             self.commandlineAction = ["parseFiles"]
         elif self.configuration.dot_graph:
             if self.configuration.pkgs_to_build:
-                self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build]
+                self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
                 self.commandlineAction = None
                 bb.error("Please specify a package name for dependency graph generation.")
         else:
             if self.configuration.pkgs_to_build:
-                self.commandlineAction = ["buildTargets", self.configuration.pkgs_to_build]
+                self.commandlineAction = ["buildTargets", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
                 self.commandlineAction = None
                 bb.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
@@ -302,13 +302,17 @@ class BBCooker:
             if data.getVarFlag( e, 'python', envdata ):
                 bb.msg.plain("\npython %s () {\n%s}\n" % (e, data.getVar(e, envdata, 1)))
 
-    def generateDepTreeData(self, pkgs_to_build):
+    def generateDepTreeData(self, pkgs_to_build, task):
         """
         Create a dependency tree of pkgs_to_build, returning the data.
         """
 
         # Need files parsed
         self.updateCache()
+
+        # If we are told to do the None task then query the default task
+        if (task == None):
+            task = self.configuration.cmd
 
         pkgs_to_build = self.checkPackages(pkgs_to_build)
 
@@ -320,7 +324,7 @@ class BBCooker:
         runlist = []
         for k in pkgs_to_build:
             taskdata.add_provider(localdata, self.status, k)
-            runlist.append([k, "do_%s" % self.configuration.cmd])
+            runlist.append([k, "do_%s" % task])
         taskdata.add_unresolved(localdata, self.status)
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
@@ -390,21 +394,21 @@ class BBCooker:
         return depend_tree
 
 
-    def generateDepTreeEvent(self, pkgs_to_build):
+    def generateDepTreeEvent(self, pkgs_to_build, task):
         """
         Create a task dependency graph of pkgs_to_build.
         Generate an event with the result
         """
-        depgraph = self.generateDepTreeData(pkgs_to_build)
+        depgraph = self.generateDepTreeData(pkgs_to_build, task)
         bb.event.fire(bb.event.DepTreeGenerated(self.configuration.data, depgraph))
 
-    def generateDotGraphFiles(self, pkgs_to_build):
+    def generateDotGraphFiles(self, pkgs_to_build, task):
         """
         Create a task dependency graph of pkgs_to_build.
         Save the result to a set of .dot files.
         """
 
-        depgraph = self.generateDepTreeData(pkgs_to_build)
+        depgraph = self.generateDepTreeData(pkgs_to_build, task)
 
         # Prints a flattened form of package-depends below where subpackages of a package are merged into the main pn
         depends_file = file('pn-depends.dot', 'w' )
@@ -615,6 +619,10 @@ class BBCooker:
         Build the file matching regexp buildfile
         """
 
+        # If we are told to do the None task then query the default task
+        if (task == None):
+            task = self.configuration.cmd
+
         fn = self.matchFile(buildfile)
         self.buildSetVars()
 
@@ -650,7 +658,7 @@ class BBCooker:
         bb.event.fire(bb.event.BuildStarted(buildname, [item], self.configuration.event_data))
 
         # Execute the runqueue
-        runlist = [[item, "do_%s" % self.configuration.cmd]]
+        runlist = [[item, "do_%s" % task]]
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
 
@@ -677,13 +685,17 @@ class BBCooker:
         self.cookerIdle = False
         self.server.register_idle_function(buildFileIdle, rq)
 
-    def buildTargets(self, targets):
+    def buildTargets(self, targets, task):
         """
         Attempt to build the targets specified
         """
 
         # Need files parsed
         self.updateCache()
+
+        # If we are told to do the NULL task then query the default task
+        if (task == None):
+            task = self.configuration.cmd
 
         targets = self.checkPackages(targets)
 
@@ -721,7 +733,7 @@ class BBCooker:
         runlist = []
         for k in targets:
             taskdata.add_provider(localdata, self.status, k)
-            runlist.append([k, "do_%s" % self.configuration.cmd])
+            runlist.append([k, "do_%s" % task])
         taskdata.add_unresolved(localdata, self.status)
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
@@ -902,6 +914,10 @@ class BBCooker:
              raise ParsingErrorsFound
 
     def serve(self):
+
+        # Empty the environment. The environment will be populated as
+        # necessary from the data store.
+        bb.utils.empty_environment()
 
         if self.configuration.profile:
             try:

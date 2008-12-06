@@ -146,16 +146,18 @@ class CommandsAsync:
         Build a set of targets
         """
         pkgs_to_build = params[0]
+        task = params[1]
 
-        command.cooker.buildTargets(pkgs_to_build)
+        command.cooker.buildTargets(pkgs_to_build, task)
 
     def generateDepTreeEvent(self, command, params):
         """
         Generate an event containing the dependency information
         """
         pkgs_to_build = params[0]
+        task = params[1]
 
-        command.cooker.generateDepTreeEvent(pkgs_to_build)
+        command.cooker.generateDepTreeEvent(pkgs_to_build, task)
         command.finishAsyncCommand()
 
     def generateDotGraph(self, command, params):
@@ -163,8 +165,9 @@ class CommandsAsync:
         Dump dependency information to disk as .dot files
         """
         pkgs_to_build = params[0]
+        task = params[1]
 
-        command.cooker.generateDotGraphFiles(pkgs_to_build)
+        command.cooker.generateDotGraphFiles(pkgs_to_build, task)
         command.finishAsyncCommand()
 
     def showVersions(self, command, params):

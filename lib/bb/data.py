@@ -331,8 +331,6 @@ def inheritFromOS(d):
             setVar(s, os.environ[s], d)
         except TypeError:
             pass
-        os.unsetenv(s)
-        del os.environ[s]
 
 def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     """Emit a variable to be sourced by a shell."""

@@ -373,6 +373,13 @@ def clean_environment():
             good_vars.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
         filter_environment(good_vars)
 
+def empty_environment():
+    """
+    Remove all variable from the environment.
+    """
+    for s in os.environ.keys():
+        os.unsetenv(s)
+        del os.environ[s]
 
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
