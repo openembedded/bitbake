@@ -163,6 +163,7 @@ Changes in Bitbake 1.9.x:
 	  to fulfil failed dependencies. It defaults to off, changing the default since this
 	  behaviour confuses many users and isn't often useful.
 	- Improve lock file function error handling
+	- Add username handling to the git fetcher (Robert Bragg)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
