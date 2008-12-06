@@ -67,6 +67,7 @@ Changes in BitBake 1.8.x:
 	  to fulfil failed dependencies. It defaults to off, changing the default since this
 	  behaviour confuses many users and isn't often useful.
 	- Improve lock file function error handling
+	- Add username handling to the git fetcher (Robert Bragg)
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.

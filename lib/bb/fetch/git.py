@@ -66,6 +66,11 @@ class Git(Fetch):
             bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % ud.localpath)
             return
 
+        if ud.user:
+            username = ud.user + '@'
+        else:
+            username = ""
+
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
 
         repofilename = 'git_%s.tar.gz' % (gitsrcname)
@@ -81,14 +86,14 @@ class Git(Fetch):
                 os.chdir(repodir)
                 runfetchcmd("tar -xzf %s" % (repofile), d)
             else:
-                runfetchcmd("git clone -n %s://%s%s %s" % (ud.proto, ud.host, ud.path, repodir), d)
+                runfetchcmd("git clone -n %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, repodir), d)
 
         os.chdir(repodir)
         # Remove all but the .git directory
         if not self._contains_ref(ud.tag, d):
             runfetchcmd("rm * -Rf", d)
-            runfetchcmd("git fetch %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch), d)
-            runfetchcmd("git fetch --tags %s://%s%s" % (ud.proto, ud.host, ud.path), d)
+            runfetchcmd("git fetch %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.branch), d)
+            runfetchcmd("git fetch --tags %s://%s%s%s" % (ud.proto, username, ud.host, ud.path), d)
             runfetchcmd("git prune-packed", d)
             runfetchcmd("git pack-redundant --all | xargs -r rm", d)
 
