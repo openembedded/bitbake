@@ -126,22 +126,6 @@ Default BBFILES are the .bb files in the current directory.""" )
     configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
 
-
-    # Work out which UI(s) to use
-    curseUI = False
-    depexplorerUI = False
-    if configuration.ui:
-        if configuration.ui == "ncurses":
-            curseUI = True
-        elif configuration.ui == "knotty" or configuration.ui == "tty" or configuration.ui == "file":
-            curseUI = False
-        elif configuration.ui == "depexp":
-            depexplorerUI = True
-        else:
-            print "FATAL: Invalid user interface '%s' specified.\nValid interfaces are 'ncurses', 'depexp' or the default, 'knotty'." % configuration.ui
-            sys.exit(1)
-
-
     cooker = bb.cooker.BBCooker(configuration)
 
     # Clear away any spurious environment variables. But don't wipe the
@@ -170,27 +154,22 @@ Default BBFILES are the .bb files in the current directory.""" )
     eventHandler = uievent.BBUIEventQueue(server)
 
     # Launch the UI
+    if configuration.ui:
+        ui = configuration.ui
+    else:
+        ui = "knotty"
+
     try:
-        # Disable UIs that need a terminal
-        if not os.isatty(sys.stdout.fileno()):
-            curseUI = False
-
-        if curseUI:
-            try:
-                import curses
-            except ImportError, details:
-                curseUI = False
-
-        if curseUI:
-            from bb.ui import ncurses
-            ncurses.init(server, eventHandler)
-        elif depexplorerUI:
-            from bb.ui import depexplorer
-            depexplorer.init(server, eventHandler)
-        else:
-            from bb.ui import knotty
-            return_value = knotty.init(server, eventHandler)
-
+            # Dynamically load the UI based on the ui name. Although we
+            # suggest a fixed set this allows you to have flexibility in which
+            # ones are available.
+            exec "from bb.ui import " + ui
+            exec "return_value = " + ui + ".init(server, eventHandler)"
+    except ImportError:
+        print "FATAL: Invalid user interface '%s' specified. " % ui
+        print "Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'."
+    except Exception, e:
+        print "FATAL: Unable to start to '%s' UI: %s." % (configuration.ui, e.message)
     finally:
         # Don't wait for server indefinitely
         import socket

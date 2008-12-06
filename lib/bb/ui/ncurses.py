@@ -245,8 +245,6 @@ class NCursesUI:
                     continue
                 helper.eventHandler(event)
                 #mw.appendText("%s\n" % event[0])
-                if event[0].startswith('bb.event.Pkg'):
-                    mw.appendText("NOTE: %s\n" % event[1]['_message'])
                 if event[0].startswith('bb.build.Task'):
                     mw.appendText("NOTE: %s\n" % event[1]['_message'])
                 if event[0].startswith('bb.msg.MsgDebug'):
@@ -324,6 +322,9 @@ class NCursesUI:
                 pass
 
 def init(server, eventHandler):
+    if not os.isatty(sys.stdout.fileno()):
+        print "FATAL: Unable to run 'ncurses' UI without a TTY."
+        return
     ui = NCursesUI()
     try:
         curses.wrapper(ui.main, server, eventHandler)

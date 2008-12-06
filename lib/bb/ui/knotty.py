@@ -56,9 +56,6 @@ def init(server, eventHandler):
             if event is None:
                 continue
             #print event
-            if event[0].startswith('bb.event.Pkg'):
-                print "NOTE: %s" % event[1]['_message']
-                continue
             if event[0].startswith('bb.msg.MsgPlain'):
                 print event[1]['_message']
                 continue
@@ -75,12 +72,16 @@ def init(server, eventHandler):
                 return_value = 1
                 print 'ERROR: ' + event[1]['_message']
                 continue
+            if event[0].startswith('bb.msg.MsgFatal'):
+                return_value = 1
+                print 'FATAL: ' + event[1]['_message']
+                break
             if event[0].startswith('bb.build.TaskFailed'):
                 return_value = 1
                 logfile = event[1]['logfile']
                 if logfile:
                     print "ERROR: Logfile of failure stored in %s." % logfile
-                    if includelogs:
+                    if 1 or includelogs:
                         print "Log data follows:"
                         f = open(logfile, "r")
                         lines = []
@@ -139,6 +140,8 @@ def init(server, eventHandler):
             if event[0].startswith('bb.runqueue.runQueue'):
                 continue
             if event[0].startswith('bb.event.StampUpdate'):
+                continue
+            if event[0].startswith('bb.event.ConfigParsed'):
                 continue
             print "Unknown Event: %s" % event
 

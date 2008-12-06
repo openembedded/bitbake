@@ -202,7 +202,7 @@ def init(server, eventHandler):
         if not cmdline or cmdline[0] != "generateDotGraph":
             print "This UI is only compatible with the -g option"
             return
-        ret = server.runCommand(["generateDepTreeEvent", cmdline[1]])
+        ret = server.runCommand(["generateDepTreeEvent", cmdline[1], cmdline[2]])
         if ret != True:
             print "Couldn't run command! %s" % ret
             return
