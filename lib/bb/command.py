@@ -114,7 +114,7 @@ class CommandsSync:
         """
         return command.cooker.commandlineAction
 
-    def readVariable(self, command, params):
+    def getVariable(self, command, params):
         """
         Read the value of a variable from configuration.data
         """
@@ -124,6 +124,15 @@ class CommandsSync:
             expand = params[1]
 
         return bb.data.getVar(varname, command.cooker.configuration.data, expand)
+
+    def setVariable(self, command, params):
+        """
+        Set the value of variable in configuration.data
+        """
+        varname = params[0]
+        value = params[1]
+        bb.data.setVar(varname, value, command.cooker.configuration.data)
+
 
 class CommandsAsync:
     """

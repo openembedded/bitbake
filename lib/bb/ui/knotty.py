@@ -32,8 +32,8 @@ parsespin = itertools.cycle( r'|/-\\' )
 def init(server, eventHandler):
 
     # Get values of variables which control our output
-    includelogs = server.runCommand(["readVariable", "BBINCLUDELOGS"])
-    loglines = server.runCommand(["readVariable", "BBINCLUDELOGS_LINES"])
+    includelogs = server.runCommand(["getVariable", "BBINCLUDELOGS"])
+    loglines = server.runCommand(["getVariable", "BBINCLUDELOGS_LINES"])
 
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
