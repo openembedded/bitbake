@@ -162,6 +162,7 @@ Changes in Bitbake 1.9.x:
 	- Add tryaltconfigs option to control whether bitbake trys using alternative providers
 	  to fulfil failed dependencies. It defaults to off, changing the default since this
 	  behaviour confuses many users and isn't often useful.
+	- Improve lock file function error handling
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
