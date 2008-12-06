@@ -199,7 +199,7 @@ class BBCooker:
             bb.event.fire(bb.event.PkgFailed(item, the_data))
             raise
 
-    def tryBuild(self, fn):
+    def tryBuild(self, fn, task):
         """
         Build a provider and its dependencies. 
         build_depends is a list of previous build dependencies (not runtime)
@@ -213,7 +213,7 @@ class BBCooker:
         #if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
         #    return True
 
-        return self.tryBuildPackage(fn, item, self.configuration.cmd, the_data)
+        return self.tryBuildPackage(fn, item, task, the_data)
 
     def showVersions(self):
 

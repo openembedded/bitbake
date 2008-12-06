@@ -993,10 +993,9 @@ class RunQueue:
                     os.setpgid(0, 0)
                     newsi = os.open('/dev/null', os.O_RDWR)
                     os.dup2(newsi, sys.stdin.fileno())
-                    self.cooker.configuration.cmd = taskname[3:]
                     bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
                     try:
-                        self.cooker.tryBuild(fn)
+                        self.cooker.tryBuild(fn, taskname[3:])
                     except bb.build.EventException:
                         bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
                         sys.exit(1)
