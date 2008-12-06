@@ -235,6 +235,12 @@ def lockfile(name):
     Use the file fn as a lock file, return when the lock has been acquired.
     Returns a variable to pass to unlockfile().
     """
+    path = os.path.dirname(name)
+    if not os.path.isdir(path):
+        import bb, sys
+        bb.msg.error(bb.msg.domain.Util, "Error, lockfile path does not exist!: %s" % path)
+        sys.exit(1)
+
     while True:
         # If we leave the lockfiles lying around there is no problem
         # but we should clean up after ourselves. This gives potential
@@ -246,15 +252,18 @@ def lockfile(name):
         # This implementation is unfair since the last person to request the 
         # lock is the most likely to win it.
 
-        lf = open(name, "a+")
-        fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
-        statinfo = os.fstat(lf.fileno())
-        if os.path.exists(lf.name):
-           statinfo2 = os.stat(lf.name)
-           if statinfo.st_ino == statinfo2.st_ino:
-               return lf
-        # File no longer exists or changed, retry
-        lf.close
+        try:
+            lf = open(name, "a+")
+            fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+            statinfo = os.fstat(lf.fileno())
+            if os.path.exists(lf.name):
+               statinfo2 = os.stat(lf.name)
+               if statinfo.st_ino == statinfo2.st_ino:
+                   return lf
+            # File no longer exists or changed, retry
+            lf.close
+        except Exception, e:
+            continue
 
 def unlockfile(lf):
     """

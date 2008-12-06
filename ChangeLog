@@ -66,6 +66,7 @@ Changes in BitBake 1.8.x:
 	- Add tryaltconfigs option to control whether bitbake trys using alternative providers
 	  to fulfil failed dependencies. It defaults to off, changing the default since this
 	  behaviour confuses many users and isn't often useful.
+	- Improve lock file function error handling
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
