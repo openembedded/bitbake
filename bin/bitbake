@@ -133,17 +133,13 @@ Default BBFILES are the .bb files in the current directory.""" )
     # of the UIs (e.g. for DISPLAY, etc.)
     bb.utils.clean_environment()
 
-    cooker.parseConfiguration()
+    cooker.parseCommandLine()
     host = cooker.server.host
     port = cooker.server.port
 
-    # Save a logfile for cooker somewhere
-    t = bb.data.getVar('TMPDIR', cooker.configuration.data, True)
-    if not t:
-       bb.msg.fatal(bb.msg.domain.Build, "TMPDIR not set")
-    t = os.path.join(t, "cooker")
-    bb.mkdirhier(t)
-    cooker_logfile = "%s/log.cooker.%s" % (t, str(os.getpid()))
+    # Save a logfile for cooker into the current working directory. When the
+    # server is daemonized this logfile will be truncated.
+    cooker_logfile = os.path.join (os.getcwd(), "cooker.log")
 
     daemonize.createDaemon(cooker.serve, cooker_logfile)
     del cooker
