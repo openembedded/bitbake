@@ -971,8 +971,6 @@ class RunQueue:
                     self.stats.taskSkipped()
                     continue
 
-                bb.event.fire(runQueueTaskStarted(task, self.stats, self, self.cfgData))
-                bb.msg.note(1, bb.msg.domain.RunQueue, "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + 1, self.stats.total, task, self.get_user_idstring(task)))
                 sys.stdout.flush()
                 sys.stderr.flush()
                 try: 
@@ -984,6 +982,12 @@ class RunQueue:
                     # events
                     bb.event.worker_pid = os.getpid()
 
+                    bb.event.fire(runQueueTaskStarted(task, self.stats, self, self.cfgData))
+                    bb.msg.note(1, bb.msg.domain.RunQueue,
+                                "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + 1,
+                                                                        self.stats.total,
+                                                                        task,
+                                                                        self.get_user_idstring(task)))
                     self.state = runQueueChildProcess
                     # Make the child the process group leader
                     os.setpgid(0, 0)
