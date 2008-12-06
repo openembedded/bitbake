@@ -86,8 +86,6 @@ class BBCooker:
 
         self.configuration.data = bb.data.init()
 
-    def parseConfiguration(self):
-
         bb.data.inheritFromOS(self.configuration.data)
 
         for f in self.configuration.file:
@@ -118,13 +116,23 @@ class BBCooker:
                 tcattr[3] = tcattr[3] & ~termios.TOSTOP
                 termios.tcsetattr(fd, termios.TCSANOW, tcattr)
 
+        self.command = bb.command.Command(self)
+        self.cookerIdle = True
+        self.cookerState = cookerClean
+        self.cookerAction = cookerRun
+        self.server.register_idle_function(self.runCommands, self)
+
+    def parseConfiguration(self):
+
+
         # Change nice level if we're asked to
         nice = bb.data.getVar("BB_NICE_LEVEL", self.configuration.data, True)
         if nice:
             curnice = os.nice(0)
             nice = int(nice) - curnice
             bb.msg.note(2, bb.msg.domain.Build, "Renice to %s " % os.nice(nice))
- 
+
+    def parseCommandLine(self):
         # Parse any commandline into actions
         if self.configuration.show_environment:
             self.commandlineAction = None
@@ -143,6 +151,9 @@ class BBCooker:
             self.commandlineAction = ["showVersions"]
         elif self.configuration.parse_only:
             self.commandlineAction = ["parseFiles"]
+        # FIXME - implement
+        #elif self.configuration.interactive:
+        #    self.interactiveMode()
         elif self.configuration.dot_graph:
             if self.configuration.pkgs_to_build:
                 self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
@@ -155,17 +166,6 @@ class BBCooker:
             else:
                 self.commandlineAction = None
                 bb.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
-
-        # FIXME - implement
-        #if self.configuration.interactive:
-        #    self.interactiveMode()
-
-        self.command = bb.command.Command(self)
-        self.cookerIdle = True
-        self.cookerState = cookerClean
-        self.cookerAction = cookerRun
-        self.server.register_idle_function(self.runCommands, self)
-
 
     def runCommands(self, server, data, abort):
         """
@@ -545,8 +545,6 @@ class BBCooker:
 
         except IOError, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (afile, str(e)))
-        except IOError:
-            bb.msg.fatal(bb.msg.domain.Parsing, "Unable to open %s" % afile )
         except bb.parse.ParseError, details:
             bb.msg.fatal(bb.msg.domain.Parsing, "Unable to parse %s (%s)" % (afile, details) )
 
@@ -618,6 +616,10 @@ class BBCooker:
         """
         Build the file matching regexp buildfile
         """
+
+        # Parse the configuration here. We need to do it explicitly here since
+        # buildFile() doesn't use the cache
+        self.parseConfiguration()
 
         # If we are told to do the None task then query the default task
         if (task == None):
@@ -743,6 +745,7 @@ class BBCooker:
 
     def updateCache(self):
 
+        self.parseConfiguration ()
         if self.cookerState == cookerParsed:
             return
 
