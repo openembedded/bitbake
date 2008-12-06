@@ -30,7 +30,7 @@ class TaskData:
     """
     BitBake Task Data implementation
     """
-    def __init__(self, abort = True):
+    def __init__(self, abort = True, tryaltconfigs = False):
         self.build_names_index = []
         self.run_names_index = []
         self.fn_index = []
@@ -57,6 +57,7 @@ class TaskData:
         self.failed_fnids = []
 
         self.abort = abort
+        self.tryaltconfigs = tryaltconfigs
 
     def getbuild_id(self, name):
         """

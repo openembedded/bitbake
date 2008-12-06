@@ -869,7 +869,7 @@ class RunQueue:
             self.finish_runqueue()
 
         if self.state is runQueueFailed:
-            if self.taskData.abort:
+            if not self.taskData.tryaltconfigs:
                 raise bb.runqueue.TaskFailure(self.failed_fnids)
             for fnid in self.failed_fnids:
                 self.taskData.fail_fnid(fnid)
