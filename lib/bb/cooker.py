@@ -169,12 +169,12 @@ class BBCooker:
 
     def runCommands(self, server, data, abort):
         """
-        Run any queued offline command
+        Run any queued asynchronous command
         This is done by the idle handler so it runs in true context rather than
         tied to any UI.
         """
         if self.cookerIdle and not abort:
-            self.command.runOfflineCommand()
+            self.command.runAsyncCommand()
 
         # Always reschedule
         return True
@@ -674,7 +674,7 @@ class BBCooker:
                 retval = False
             if not retval:
                 self.cookerIdle = True
-                self.command.finishOfflineCommand()
+                self.command.finishAsyncCommand()
                 bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
             return retval
 
@@ -707,7 +707,7 @@ class BBCooker:
                 retval = False
             if not retval:
                 self.cookerIdle = True
-                self.command.finishOfflineCommand()
+                self.command.finishAsyncCommand()
                 bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
             return retval
 

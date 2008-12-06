@@ -21,79 +21,79 @@ Provide an interface to interact with the bitbake server through 'commands'
 
 """
 The bitbake server takes 'commands' from its UI/commandline. 
-Commands are either 'online' of 'offline' in nature. 
-Offline commands return data to the client in the form of events.
-Online commands must only return data through the function return value
+Commands are either synchronous or asynchronous.
+Async commands return data to the client in the form of events.
+Sync commands must only return data through the function return value
 and must not trigger events, directly or indirectly.
 Commands are queued in a CommandQueue
 """
 
 import bb
 
-offline_cmds = {}
-online_cmds = {}
+async_cmds = {}
+sync_cmds = {}
 
 class Command:
     """
-    A queue of 'offline' commands for bitbake
+    A queue of asynchronous commands for bitbake
     """
     def __init__(self, cooker):
 
         self.cooker = cooker
-        self.cmds_online = CommandsOnline()
-        self.cmds_offline = CommandsOffline()
+        self.cmds_sync = CommandsSync()
+        self.cmds_async = CommandsAsync()
 
         # FIXME Add lock for this
-        self.currentOfflineCommand = None
+        self.currentAsyncCommand = None
 
-        for attr in CommandsOnline.__dict__:
+        for attr in CommandsSync.__dict__:
             command = attr[:].lower()
-            method = getattr(CommandsOnline, attr)
-            online_cmds[command] = (method)
+            method = getattr(CommandsSync, attr)
+            sync_cmds[command] = (method)
 
-        for attr in CommandsOffline.__dict__:
+        for attr in CommandsAsync.__dict__:
             command = attr[:].lower()
-            method = getattr(CommandsOffline, attr)
-            offline_cmds[command] = (method)
+            method = getattr(CommandsAsync, attr)
+            async_cmds[command] = (method)
 
     def runCommand(self, commandline):
         try:
             command = commandline.pop(0)
-            if command in CommandsOnline.__dict__:
+            if command in CommandsSync.__dict__:
                 # Can run online commands straight away            
-                return getattr(CommandsOnline, command)(self.cmds_online, self, commandline)
-            if self.currentOfflineCommand is not None:
-                return "Busy (%s in progress)" % self.currentOfflineCommand[0]
-            if command not in CommandsOffline.__dict__:
+                return getattr(CommandsSync, command)(self.cmds_sync, self, commandline)
+            if self.currentAsyncCommand is not None:
+                return "Busy (%s in progress)" % self.currentAsyncCommand[0]
+            if command not in CommandsAsync.__dict__:
                 return "No such command"
-            self.currentOfflineCommand = (command, commandline)
+            self.currentAsyncCommand = (command, commandline)
             return True
         except:
             import traceback
             return traceback.format_exc()
 
-    def runOfflineCommand(self):
+    def runAsyncCommand(self):
         try:
-            if self.currentOfflineCommand is not None:
-                (command, options) = self.currentOfflineCommand
-                getattr(CommandsOffline, command)(self.cmds_offline, self, options)
+            if self.currentAsyncCommand is not None:
+                (command, options) = self.currentAsyncCommand
+                getattr(CommandsAsync, command)(self.cmds_async, self, options)
         except:
             import traceback
-            self.finishOfflineCommand(traceback.format_exc())
+            self.finishAsyncCommand(traceback.format_exc())
 
-    def finishOfflineCommand(self, error = None):
+    def finishAsyncCommand(self, error = None):
         if error:
             bb.event.fire(bb.command.CookerCommandFailed(self.cooker.configuration.event_data, error))
         else:
             bb.event.fire(bb.command.CookerCommandCompleted(self.cooker.configuration.event_data))
-        self.currentOfflineCommand = None
+        self.currentAsyncCommand = None
 
 
-class CommandsOnline:
+class CommandsSync:
     """
-    A class of online commands
+    A class of synchronous commands
     These should run quickly so as not to hurt interactive performance.
-    These must not influence any running offline command.
+    These must not influence any running synchronous command.
     """
 
     def stateShutdown(self, command, params):
@@ -125,9 +125,9 @@ class CommandsOnline:
 
         return bb.data.getVar(varname, command.cooker.configuration.data, expand)
 
-class CommandsOffline:
+class CommandsAsync:
     """
-    A class of offline commands
+    A class of asynchronous commands
     These functions communicate via generated events.
     Any function that requires metadata parsing should be here.
     """
@@ -156,7 +156,7 @@ class CommandsOffline:
         pkgs_to_build = params[0]
 
         command.cooker.generateDepTreeEvent(pkgs_to_build)
-        command.finishOfflineCommand()
+        command.finishAsyncCommand()
 
     def generateDotGraph(self, command, params):
         """
@@ -165,14 +165,14 @@ class CommandsOffline:
         pkgs_to_build = params[0]
 
         command.cooker.generateDotGraphFiles(pkgs_to_build)
-        command.finishOfflineCommand()
+        command.finishAsyncCommand()
 
     def showVersions(self, command, params):
         """
         Show the currently selected versions
         """
         command.cooker.showVersions()
-        command.finishOfflineCommand()
+        command.finishAsyncCommand()
 
     def showEnvironment(self, command, params):
         """
@@ -182,14 +182,14 @@ class CommandsOffline:
         pkg = params[1]
 
         command.cooker.showEnvironment(bfile, pkg)
-        command.finishOfflineCommand()
+        command.finishAsyncCommand()
 
     def parseFiles(self, command, params):
         """
         Parse the .bb files
         """
         command.cooker.updateCache()
-        command.finishOfflineCommand()
+        command.finishAsyncCommand()
 
 #
 # Events
