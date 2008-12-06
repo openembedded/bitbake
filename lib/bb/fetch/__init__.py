@@ -274,7 +274,7 @@ def runfetchcmd(cmd, d, quiet = False):
     # rather than host provided
     # Also include some other variables.
     # FIXME: Should really include all export varaiables?
-    exportvars = ['PATH', 'GIT_PROXY_HOST', 'GIT_PROXY_PORT', 'GIT_PROXY_COMMAND']
+    exportvars = ['PATH', 'GIT_PROXY_HOST', 'GIT_PROXY_PORT', 'GIT_CONFIG', 'http_proxy', 'ftp_proxy', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID']
 
     for var in exportvars:
         val = data.getVar(var, d, True)
@@ -315,6 +315,10 @@ class FetchData(object):
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = bb.decodeurl(data.expand(url, d))
         self.date = Fetch.getSRCDate(self, d)
         self.url = url
+        if not self.user and "user" in self.parm:
+            self.user = self.parm["user"]
+        if not self.pswd and "pswd" in self.parm:
+            self.pswd = self.parm["pswd"]
         self.setup = False
         for m in methods:
             if m.supports(url, self, d):
@@ -465,6 +469,12 @@ class Fetch(object):
             uri = stash + tarfn
             bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
             fetchcmd = fetchcmd.replace("${URI}", uri)
+            httpproxy = data.getVar("http_proxy", d, True)
+            ftpproxy = data.getVar("ftp_proxy", d, True)
+            if httpproxy:
+                fetchcmd = "http_proxy=" + httpproxy + " " + fetchcmd
+            if ftpproxy:
+                fetchcmd = "ftp_proxy=" + ftpproxy + " " + fetchcmd
             ret = os.system(fetchcmd)
             if ret == 0:
                 bb.msg.note(1, bb.msg.domain.Fetcher, "Fetched %s from tarball stash, skipping checkout" % tarfn)
