@@ -183,20 +183,16 @@ class BBCooker:
         """
         Build one task of a package, optionally build following task depends
         """
-        bb.event.fire(bb.event.PkgStarted(item, the_data))
         try:
             if not self.configuration.dry_run:
                 bb.build.exec_task('do_%s' % task, the_data)
-            bb.event.fire(bb.event.PkgSucceeded(item, the_data))
             return True
         except bb.build.FuncFailed:
             bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
-            bb.event.fire(bb.event.PkgFailed(item, the_data))
             raise
         except bb.build.EventException, e:
             event = e.args[1]
             bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
-            bb.event.fire(bb.event.PkgFailed(item, the_data))
             raise
 
     def tryBuild(self, fn, task):

@@ -213,18 +213,6 @@ class DepBase(PkgBase):
     dep = property(getDep, setDep, None, "dep property")
 
 
-class PkgStarted(PkgBase):
-    """Package build started"""
-
-
-class PkgFailed(PkgBase):
-    """Package build failed"""
-
-
-class PkgSucceeded(PkgBase):
-    """Package build completed"""
-
-
 class BuildStarted(BuildBase):
     """bbmake build run started"""
 
