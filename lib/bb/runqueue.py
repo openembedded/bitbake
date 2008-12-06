@@ -980,6 +980,10 @@ class RunQueue:
                 except OSError, e: 
                     bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
                 if pid == 0:
+                    # Save out the PID so that the event can include it the
+                    # events
+                    bb.event.worker_pid = os.getpid()
+
                     self.state = runQueueChildProcess
                     # Make the child the process group leader
                     os.setpgid(0, 0)

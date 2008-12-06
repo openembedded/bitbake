@@ -25,12 +25,17 @@ BitBake build tools.
 import os, re
 import bb.utils
 
+# This is the pid for which we should generate the event. This is set when
+# the runqueue forks off.
+worker_pid = 0
+
 class Event:
     """Base class for events"""
     type = "Event"
 
     def __init__(self, d):
         self._data = d
+        self.pid = worker_pid
 
     def getData(self):
         return self._data
