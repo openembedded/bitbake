@@ -68,6 +68,7 @@ Changes in BitBake 1.8.x:
 	  behaviour confuses many users and isn't often useful.
 	- Improve lock file function error handling
 	- Add username handling to the git fetcher (Robert Bragg)
+	- Add support for HTTP_PROXY and HTTP_PROXY_IGNORE variables to the wget fetcher
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
