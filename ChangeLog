@@ -1,4 +1,4 @@
-Changes in BitBake 1.8.x:
+Changes in BitBake 1.8.12:
 	- Fix -f (force) in conjunction with -b
 	- Fix exit code for build failures in --continue mode
 	- Fix git branch tags fetching
