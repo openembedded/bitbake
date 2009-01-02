@@ -394,3 +394,14 @@ def prunedir(topdir):
                 os.rmdir(os.path.join(root, name))
     os.rmdir(topdir)
 
+#
+# Could also use return re.compile("(%s)" % "|".join(map(re.escape, suffixes))).sub(lambda mo: "", var)
+# but thats possibly insane and suffixes is probably going to be small
+#
+def prune_suffix(var, suffixes, d):
+    # See if var ends with any of the suffixes listed and 
+    # remove it if found
+    for suffix in suffixes:
+        if var.endswith(suffix):
+            return var.replace(suffix, "")
+    return var

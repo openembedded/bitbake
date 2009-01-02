@@ -1,5 +1,6 @@
 Changes in BitBake 1.8.x:
-
+	- Add bb.utils.prune_suffix function
+ 
 Changes in BitBake 1.8.12:
 	- Fix -f (force) in conjunction with -b
 	- Fix exit code for build failures in --continue mode
