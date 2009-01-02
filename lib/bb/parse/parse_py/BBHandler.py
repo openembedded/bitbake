@@ -76,6 +76,40 @@ def inherit(files, d):
             include(fn, file, d, "inherit")
             __inherit_cache = data.getVar('__inherit_cache', d) or []
 
+
+def finalise(fn, d):
+    data.expandKeys(d)
+    data.update_data(d)
+    anonqueue = data.getVar("__anonqueue", d, 1) or []
+    body = [x['content'] for x in anonqueue]
+    flag = { 'python' : 1, 'func' : 1 }
+    data.setVar("__anonfunc", "\n".join(body), d)
+    data.setVarFlags("__anonfunc", flag, d)
+    from bb import build
+    try:
+        t = data.getVar('T', d)
+        data.setVar('T', '${TMPDIR}/anonfunc/', d)
+        build.exec_func("__anonfunc", d)
+        data.delVar('T', d)
+        if t:
+            data.setVar('T', t, d)
+    except Exception, e:
+        bb.msg.debug(1, bb.msg.domain.Parsing, "Exception when executing anonymous function: %s" % e)
+        raise
+    data.delVar("__anonqueue", d)
+    data.delVar("__anonfunc", d)
+    data.update_data(d)
+
+    all_handlers = {} 
+    for var in data.getVar('__BBHANDLERS', d) or []:
+        # try to add the handler
+        handler = data.getVar(var,d)
+        bb.event.register(var, handler)
+
+    tasklist = data.getVar('__BBTASKS', d) or []
+    bb.build.add_tasks(tasklist, d)
+
+
 def handle(fn, d, include = 0):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
     __body__ = []
@@ -147,37 +181,7 @@ def handle(fn, d, include = 0):
         classes.remove(__classname__)
     else:
         if include == 0:
-            data.expandKeys(d)
-            data.update_data(d)
-            anonqueue = data.getVar("__anonqueue", d, 1) or []
-            body = [x['content'] for x in anonqueue]
-            flag = { 'python' : 1, 'func' : 1 }
-            data.setVar("__anonfunc", "\n".join(body), d)
-            data.setVarFlags("__anonfunc", flag, d)
-            from bb import build
-            try:
-                t = data.getVar('T', d)
-                data.setVar('T', '${TMPDIR}/anonfunc/', d)
-                build.exec_func("__anonfunc", d)
-                data.delVar('T', d)
-                if t:
-                    data.setVar('T', t, d)
-            except Exception, e:
-                bb.msg.debug(1, bb.msg.domain.Parsing, "Exception when executing anonymous function: %s" % e)
-                raise
-            data.delVar("__anonqueue", d)
-            data.delVar("__anonfunc", d)
-            set_additional_vars(fn, d, include)
-            data.update_data(d)
-
-            all_handlers = {} 
-            for var in data.getVar('__BBHANDLERS', d) or []:
-                # try to add the handler
-                handler = data.getVar(var,d)
-                bb.event.register(var, handler)
-
-            tasklist = data.getVar('__BBTASKS', d) or []
-            bb.build.add_tasks(tasklist, d)
+            finalise(fn, d)
 
         bbpath.pop(0)
     if oldfile:
@@ -383,32 +387,6 @@ def vars_from_file(mypkg, d):
         tmplist.append(None)
     parts.extend(tmplist)
     return parts
-
-def set_additional_vars(file, d, include):
-    """Deduce rest of variables, e.g. ${A} out of ${SRC_URI}"""
-
-    return
-    # Nothing seems to use this variable
-    #bb.msg.debug(2, bb.msg.domain.Parsing, "BB %s: set_additional_vars" % file)
-
-    #src_uri = data.getVar('SRC_URI', d, 1)
-    #if not src_uri:
-    #    return
-
-    #a = (data.getVar('A', d, 1) or '').split()
-
-    #from bb import fetch
-    #try:
-    #    ud = fetch.init(src_uri.split(), d)
-    #    a += fetch.localpaths(d, ud)
-    #except fetch.NoMethodError:
-    #    pass
-    #except bb.MalformedUrl,e:
-    #    raise ParseError("Unable to generate local paths for SRC_URI due to malformed uri: %s" % e)
-    #del fetch
-
-    #data.setVar('A', " ".join(a), d)
-
 
 # Add us to the handlers list
 from bb.parse import handlers
