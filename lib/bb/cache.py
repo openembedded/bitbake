@@ -59,7 +59,7 @@ class Cache:
         if self.cachedir in [None, '']:
             self.has_cache = False
             bb.msg.note(1, bb.msg.domain.Cache, "Not using a cache. Set CACHE = <directory> to enable.")
-	    return
+            return
 
         self.has_cache = True
         self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
