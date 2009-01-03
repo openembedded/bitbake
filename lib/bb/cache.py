@@ -59,18 +59,16 @@ class Cache:
         if self.cachedir in [None, '']:
             self.has_cache = False
             bb.msg.note(1, bb.msg.domain.Cache, "Not using a cache. Set CACHE = <directory> to enable.")
-        else:
-            self.has_cache = True
-            self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
-            
-            bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
-            try:
-                os.stat( self.cachedir )
-            except OSError:
-                bb.mkdirhier( self.cachedir )
+            return
 
-        if not self.has_cache:
-            return            
+        self.has_cache = True
+        self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
+            
+        bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
+        try:
+            os.stat( self.cachedir )
+        except OSError:
+            bb.mkdirhier( self.cachedir )
 
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
