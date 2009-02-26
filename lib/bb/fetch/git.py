@@ -49,11 +49,8 @@ class Git(Fetch):
         elif tag:
             ud.tag = tag
 
-        if not ud.tag:
+        if not ud.tag or ud.tag == "master":
             ud.tag = self.latest_revision(url, ud, d)	
-
-        if ud.tag == "master":
-            ud.tag = self.latest_revision(url, ud, d)
 
         ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.tag), d)
 
