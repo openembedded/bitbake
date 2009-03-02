@@ -89,6 +89,11 @@ share common metadata between many packages.</para></listitem>
                 <para>This results in <varname>A</varname> containing <literal>aval</literal> and <varname>B</varname> containing <literal>preavalpost</literal>.</para>
             </section>
             <section>
+                <title>Setting a default value (?=)</title>
+                <para><screen><varname>A</varname> ?= "aval"</screen></para>
+                <para>If <varname>A</varname> is set before the above is called, it will retain it's previous value. If <varname>A</varname> is unset prior to the above call, <varname>A</varname> will be set to <literal>aval</literal>.</para>
+            </section>
+            <section>
                 <title>Immediate variable expansion (:=)</title>
                 <para>:= results in a variable's contents being expanded immediately, rather than when the variable is actually used.</para>
                 <para><screen><varname>T</varname> = "123"
