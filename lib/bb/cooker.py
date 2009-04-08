@@ -72,7 +72,7 @@ class BBCooker:
             self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data) or "build"
 
         bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, True)
-        if bbpkgs:
+        if bbpkgs and len(self.configuration.pkgs_to_build) == 0:
             self.configuration.pkgs_to_build.extend(bbpkgs.split())
 
         #
