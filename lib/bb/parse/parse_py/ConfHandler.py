@@ -102,6 +102,13 @@ def include(oldfn, fn, data, error_out):
     fn = bb.data.expand(fn, data)
     oldfn = bb.data.expand(oldfn, data)
 
+    if not os.path.isabs(fn):
+        dname = os.path.dirname(oldfn)
+        bbpath = "%s:%s" % (dname, bb.data.getVar("BBPATH", data, 1))
+        abs_fn = bb.which(bbpath, fn)
+        if abs_fn:
+            fn = abs_fn
+
     from bb.parse import handle
     try:
         ret = handle(fn, data, True)
