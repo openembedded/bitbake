@@ -839,7 +839,11 @@ class BBCooker:
                 if dirfiles:
                     newfiles += dirfiles
                     continue
-            newfiles += glob.glob(f) or [ f ]
+            else:
+                globbed = glob.glob(f)
+                if not globbed and os.path.exists(f):
+                    globbed = [f]
+                newfiles += globbed
 
         bbmask = bb.data.getVar('BBMASK', self.configuration.data, 1)
 
@@ -852,9 +856,8 @@ class BBCooker:
             bb.msg.fatal(bb.msg.domain.Collection, "BBMASK is not a valid regular expression.")
 
         finalfiles = []
-        for i in xrange( len( newfiles ) ):
-            f = newfiles[i]
-            if bbmask and bbmask_compiled.search(f):
+        for f in newfiles:
+            if bbmask_compiled.search(f):
                 bb.msg.debug(1, bb.msg.domain.Collection, "skipping masked file %s" % f)
                 masked += 1
                 continue
