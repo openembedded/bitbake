@@ -281,13 +281,13 @@ class BBCooker:
                     print >> depends_file, '"%s" -> "%s"' % (pn, depend)
                 rdepends = self.status.rundeps[fn]
                 for package in rdepends:
-                    for rdepend in rdepends[package]:
-                        print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+                    for rdepend in re.findall("([\w.-]+)(\ \(.+\))?", rdepends[package]):
+                        print >> depends_file, '"%s" -> "%s%s" [style=dashed]' % (package, rdepend[0], rdepend[1])
                     packages.append(package)
                 rrecs = self.status.runrecs[fn]
                 for package in rrecs:
-                    for rdepend in rrecs[package]:
-                        print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+                    for rdepend in re.findall("([\w.-]+)(\ \(.+\))?", rrecs[package]):
+                        print >> depends_file, '"%s" -> "%s%s" [style=dashed]' % (package, rdepend[0], rdepend[1])
                     if not package in packages:
                         packages.append(package)
                 for package in packages:
