@@ -37,9 +37,12 @@ class Git(Fetch):
 
     def localpath(self, url, ud, d):
 
-        ud.proto = "rsync"
         if 'protocol' in ud.parm:
             ud.proto = ud.parm['protocol']
+        elif not ud.host:
+            ud.proto = 'file'
+        else:
+            ud.proto = "rsync"
 
         ud.branch = ud.parm.get("branch", "master")
 
