@@ -133,9 +133,10 @@ def go(d):
     Fetch all urls
     init must have previously been called
     """
-    urldata = init([], d, True)
+    urls = d.getVar("SRC_URI", 1).split()
+    urldata = init(urls, d, True)
 
-    for u in urldata:
+    for u in urls:
         ud = urldata[u]
         m = ud.method
         if ud.localfile:
