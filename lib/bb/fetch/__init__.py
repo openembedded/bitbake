@@ -464,21 +464,26 @@ class Fetch(object):
         if pn:
             src_tarball_stash = (data.getVar('SRC_TARBALL_STASH_%s' % pn, d, True) or data.getVar('CVS_TARBALL_STASH_%s' % pn, d, True) or data.getVar('SRC_TARBALL_STASH', d, True) or data.getVar('CVS_TARBALL_STASH', d, True) or "").split()
 
+        ld = d.createCopy()
         for stash in src_tarball_stash:
-            fetchcmd = data.getVar("FETCHCOMMAND_mirror", d, True) or data.getVar("FETCHCOMMAND_wget", d, True)
-            uri = stash + tarfn
-            bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
-            fetchcmd = fetchcmd.replace("${URI}", uri)
-            httpproxy = data.getVar("http_proxy", d, True)
-            ftpproxy = data.getVar("ftp_proxy", d, True)
-            if httpproxy:
-                fetchcmd = "http_proxy=" + httpproxy + " " + fetchcmd
-            if ftpproxy:
-                fetchcmd = "ftp_proxy=" + ftpproxy + " " + fetchcmd
-            ret = os.system(fetchcmd)
-            if ret == 0:
-                bb.msg.note(1, bb.msg.domain.Fetcher, "Fetched %s from tarball stash, skipping checkout" % tarfn)
+            url = stash + tarfn
+            try:
+                ud = FetchData(url, ld)
+            except bb.fetch.NoMethodError:
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "No method for %s" % url)
+                continue
+
+            ud.setup_localpath(ld)
+
+            try:
+                ud.method.go(url, ud, ld)
                 return True
+            except (bb.fetch.MissingParameterError,
+                    bb.fetch.FetchError,
+                    bb.fetch.MD5SumError):
+                import sys
+                (type, value, traceback) = sys.exc_info()
+                bb.msg.debug(2, bb.msg.domain.Fetcher, "Tarball stash fetch failure: %s" % value)
         return False
     try_mirror = staticmethod(try_mirror)
 
