@@ -23,7 +23,6 @@ Handles preparation and execution of a queue of tasks
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from bb import msg, data, event, mkdirhier, utils
-from sets import Set 
 import bb, os, sys
 import signal
 import stat
@@ -544,8 +543,8 @@ class RunQueue:
 
             self.runq_fnid.append(taskData.tasks_fnid[task])
             self.runq_task.append(taskData.tasks_name[task])
-            self.runq_depends.append(Set(depends))
-            self.runq_revdeps.append(Set())
+            self.runq_depends.append(set(depends))
+            self.runq_revdeps.append(set())
 
             runq_build.append(0)
 
@@ -641,7 +640,7 @@ class RunQueue:
                 if maps[origdep] == -1:
                     bb.msg.fatal(bb.msg.domain.RunQueue, "Invalid mapping - Should never happen!")
                 newdeps.append(maps[origdep])
-            self.runq_depends[listid] = Set(newdeps)
+            self.runq_depends[listid] = set(newdeps)
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Assign Weightings")
 

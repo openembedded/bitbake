@@ -32,7 +32,6 @@ import copy, os, re, sys, time, types
 import bb
 from bb   import utils, methodpool
 from COW  import COWDictBase
-from sets import Set
 from new  import classobj
 
 
@@ -142,7 +141,7 @@ class DataSmart:
             try:
                 self._special_values[keyword].add( base )
             except:
-                self._special_values[keyword] = Set()
+                self._special_values[keyword] = set()
                 self._special_values[keyword].add( base )
 
             return
@@ -154,7 +153,7 @@ class DataSmart:
         if '_' in var:
             override = var[var.rfind('_')+1:]
             if not self._seen_overrides.has_key(override):
-                self._seen_overrides[override] = Set()
+                self._seen_overrides[override] = set()
             self._seen_overrides[override].add( var )
 
         # setting var
