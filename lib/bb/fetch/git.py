@@ -20,11 +20,10 @@ BitBake 'Fetch' git implementation
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os, re
+import os
 import bb
 from   bb    import data
 from   bb.fetch import Fetch
-from   bb.fetch import FetchError
 from   bb.fetch import runfetchcmd
 
 class Git(Fetch):

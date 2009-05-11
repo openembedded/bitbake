@@ -24,15 +24,10 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import os, re, fcntl
+import os, re
 import bb
 from   bb import data
 from   bb import persist_data
-
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 class FetchError(Exception):
     """Exception raised when a download fails"""
@@ -65,7 +60,6 @@ def uri_replace(uri, uri_find, uri_replace, d):
         result_decoded[loc] = uri_decoded[loc]
         import types
         if type(i) == types.StringType:
-            import re
             if (re.match(i, uri_decoded[loc])):
                 result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
                 if uri_find_decoded.index(i) == 2:

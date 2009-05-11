@@ -25,7 +25,7 @@ This implementation is for svk. It is based on the svn implementation
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import os, re
+import os
 import bb
 from   bb import data
 from   bb.fetch import Fetch

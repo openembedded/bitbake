@@ -24,7 +24,7 @@ BitBake 'Fetch' implementation for mercurial DRCS (hg).
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import os, re
+import os
 import sys
 import bb
 from bb import data

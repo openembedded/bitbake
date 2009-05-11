@@ -25,12 +25,11 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import os, re
+import os
 import bb
 from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
-from   bb.fetch import MissingParameterError
 
 class Perforce(Fetch):
     def supports(self, url, ud, d):
