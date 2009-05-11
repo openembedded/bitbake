@@ -37,7 +37,7 @@ the speed is more critical here.
 #
 #Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import sys, os, re, time, types
+import sys, os, re, types
 if sys.argv[0][-5:] == "pydoc":
     path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:

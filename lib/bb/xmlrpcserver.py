@@ -37,7 +37,7 @@ import xmlrpclib
 DEBUG = False
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
-import os, sys, inspect, select
+import inspect, select
 
 class BitBakeServerCommands():
     def __init__(self, server, cooker):

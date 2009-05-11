@@ -23,8 +23,6 @@
 # Assign a file to __warn__ to get warnings about slow operations.
 #
 
-from inspect import getmro
-
 import copy
 import types
 types.ImmutableTypes = tuple([ \
