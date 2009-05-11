@@ -275,7 +275,7 @@ def runfetchcmd(cmd, d, quiet = False):
     # rather than host provided
     # Also include some other variables.
     # FIXME: Should really include all export varaiables?
-    exportvars = ['PATH', 'GIT_PROXY_HOST', 'GIT_PROXY_PORT', 'GIT_CONFIG', 'http_proxy', 'ftp_proxy', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID']
+    exportvars = ['PATH', 'GIT_PROXY_HOST', 'GIT_PROXY_PORT', 'GIT_CONFIG', 'http_proxy', 'ftp_proxy', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID', 'HOME']
 
     for var in exportvars:
         val = data.getVar(var, d, True)
