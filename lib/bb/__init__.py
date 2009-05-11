@@ -1129,4 +1129,5 @@ def dep_opconvert(mysplit, myuse):
 
 if __name__ == "__main__":
     import doctest, bb
+    bb.msg.set_debug_level(0)
     doctest.testmod(bb)
