@@ -31,7 +31,6 @@
 import os, re
 import bb.data
 import bb.utils
-from sets import Set
 
 try:
     import cPickle as pickle
@@ -471,6 +470,6 @@ class CacheData:
         (set elsewhere)
         """
         self.ignored_dependencies = []
-        self.world_target = Set()
+        self.world_target = set()
         self.bbfile_priority = {}
         self.bbfile_config_priorities = []
