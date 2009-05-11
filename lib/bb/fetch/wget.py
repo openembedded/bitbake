@@ -66,7 +66,7 @@ class Wget(Fetch):
             uri_host = uri_decoded[1]
 
             bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
-            fetchcmd = fetchcmd.replace("${URI}", uri)
+            fetchcmd = fetchcmd.replace("${URI}", uri.split(";")[0])
             fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
             httpproxy = None
             ftpproxy = None
