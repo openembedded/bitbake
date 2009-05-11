@@ -170,6 +170,7 @@ Changes in Bitbake 1.9.x:
 	- Also allow user and pswd options in SRC_URIs globally (from Poky)
 	- Improve proxy handling when using mirrors (from Poky)
 	- Add bb.utils.prune_suffix function
+	- Fix hg checkouts of specific revisions
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
