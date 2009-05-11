@@ -67,6 +67,7 @@ class Svk(Fetch):
 
         svkroot = ud.host + ud.path
 
+        # pyflakes claims date is not known... it looks right
         svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, ud.module)
 
         if ud.revision:
