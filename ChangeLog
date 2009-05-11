@@ -172,6 +172,7 @@ Changes in Bitbake 1.9.x:
 	- Add bb.utils.prune_suffix function
 	- Fix hg checkouts of specific revisions (from Poky)
 	- Fix wget fetching of urls with parameters specified (from Poky)
+	- Add username handling to git fetcher (from Poky)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series

@@ -134,7 +134,12 @@ class Git(Fetch):
         """
         Compute the HEAD revision for the url
         """
-        output = runfetchcmd("git ls-remote %s://%s%s %s" % (ud.proto, ud.host, ud.path, ud.branch), d, True)
+        if ud.user:
+            username = ud.user + '@'
+        else:
+            username = ""
+
+        output = runfetchcmd("git ls-remote %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.branch), d, True)
         return output.split()[0]
 
     def _build_revision(self, url, ud, d):
