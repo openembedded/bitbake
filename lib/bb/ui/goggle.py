@@ -20,8 +20,7 @@
 
 import gobject
 import gtk
-import threading
-import bb.ui.uihelper
+import xmlrpclib
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView, RunningBuild
 
 def event_handle_idle_func (eventHandler, build):

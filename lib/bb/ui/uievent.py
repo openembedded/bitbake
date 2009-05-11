@@ -24,7 +24,7 @@ server and queue them for the UI to process. This process must be used to avoid
 client/server deadlocks.
 """
 
-import sys, socket, threading
+import socket, threading
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 class BBUIEventQueue:

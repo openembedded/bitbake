@@ -20,6 +20,7 @@
 import gobject
 import gtk
 import threading
+import xmlrpclib
 
 # Package Model
 (COL_PKG_NAME) = (0)

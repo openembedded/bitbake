@@ -20,9 +20,7 @@
 
 import gtk
 import gobject
-import gtk.glade
 import threading
-import urllib2
 import os
 import datetime
 import time

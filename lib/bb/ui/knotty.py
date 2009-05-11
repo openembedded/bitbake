@@ -19,11 +19,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
-import bb
-from bb import cooker
 
 import sys
-import time
 import itertools
 import xmlrpclib
 

@@ -20,7 +20,6 @@
 
 import gtk
 import gobject
-import gtk.glade
 
 class RunningBuildModel (gtk.TreeStore):
     (COL_TYPE, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_ACTIVE) = (0, 1, 2, 3, 4, 5)

@@ -44,9 +44,9 @@
 
 """
 
-import os, sys, curses, time, random, threading, itertools, time
-from curses.textpad import Textbox
+import os, sys, curses, itertools, time
 import bb
+import xmlrpclib
 from bb import ui
 from bb.ui import uihelper
 
@@ -180,6 +180,7 @@ class NCursesUI:
         def __init__( self, x, y, width, height ):
             NCursesUI.Window.__init__( self, x, y, width, height )
 
+# put that to the top again from curses.textpad import Textbox
 #            self.textbox = Textbox( self.win )
 #            t = threading.Thread()
 #            t.run = self.textbox.edit

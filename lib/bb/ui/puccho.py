@@ -24,7 +24,6 @@ import gtk.glade
 import threading
 import urllib2
 import os
-import datetime
 
 from bb.ui.crumbs.buildmanager import BuildManager, BuildConfiguration
 from bb.ui.crumbs.buildmanager import BuildManagerTreeView
