@@ -78,6 +78,7 @@ Changes in BitBake 1.8.12:
 	- Improve proxy handling when using mirrors (from Poky)
 	- Fix hg checkouts of specific revisions (from Poky)
 	- Fix wget fetching of urls with parameters specified (from Poky)
+	- Add username handling to git fetcher (from Poky)
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
