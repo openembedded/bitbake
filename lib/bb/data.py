@@ -329,6 +329,7 @@ def inheritFromOS(d):
     for s in os.environ.keys():
         try:
             setVar(s, os.environ[s], d)
+            setVarFlag(s, "export", True, d)
         except TypeError:
             pass
 

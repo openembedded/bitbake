@@ -518,7 +518,7 @@ SRC_URI = ""
 
     def stage( self, params ):
         """Execute 'stage' on a providee"""
-        self.build( params, "stage" )
+        self.build( params, "populate_staging" )
     stage.usage = "<providee>"
 
     def status( self, params ):

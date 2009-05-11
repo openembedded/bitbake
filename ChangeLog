@@ -80,6 +80,8 @@ Changes in BitBake 1.8.12:
 	- Fix wget fetching of urls with parameters specified (from Poky)
 	- Add username handling to git fetcher (from Poky)
 	- Set HOME environmental variable when running fetcher commands (from Poky)
+	- Make sure allowed variables inherited from the environment are exported again (from Poky)
+	- When running a stage task in bbshell, run populate_staging, not the stage task (from Poky)
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.
