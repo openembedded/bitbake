@@ -297,9 +297,8 @@ def getRuntimeProviders(dataCache, rdepend):
 
     # Only search dynamic packages if we can't find anything in other variables
     for pattern in dataCache.packages_dynamic:
-        pattern = pattern.replace('+', "\+")
         try:
-            regexp = re.compile(pattern)
+            regexp = re.compile(pattern.replace('+', "\+"))
         except:
             bb.msg.error(bb.msg.domain.Provider, "Error parsing re expression: %s" % pattern)
             raise
