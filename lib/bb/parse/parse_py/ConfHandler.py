@@ -47,55 +47,7 @@ def init(data):
 
 
 def supports(fn, d):
-    return localpath(fn, d)[-5:] == ".conf"
-
-def localpath(fn, d):
-    if os.path.exists(fn):
-        return fn
-
-    if "://" not in fn:
-        return fn
-
-    localfn = None
-    try:
-        localfn = bb.fetch.localpath(fn, d, False)
-    except bb.MalformedUrl:
-        pass
-
-    if not localfn:
-        return fn
-    return localfn
-
-def obtain(fn, data):
-    import sys, bb
-    fn = bb.data.expand(fn, data)
-    localfn = bb.data.expand(localpath(fn, data), data)
-
-    if localfn != fn:
-        dldir = bb.data.getVar('DL_DIR', data, 1)
-        if not dldir:
-            bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: DL_DIR not defined")
-            return localfn
-        bb.mkdirhier(dldir)
-        try:
-            bb.fetch.init([fn], data)
-        except bb.fetch.NoMethodError:
-            (type, value, traceback) = sys.exc_info()
-            bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: no method: %s" % value)
-            return localfn
-
-        try:
-            bb.fetch.go(data)
-        except bb.fetch.MissingParameterError:
-            (type, value, traceback) = sys.exc_info()
-            bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: missing parameters: %s" % value)
-            return localfn
-        except bb.fetch.FetchError:
-            (type, value, traceback) = sys.exc_info()
-            bb.msg.debug(1, bb.msg.domain.Parsing, "obtain: failed: %s" % value)
-            return localfn
-    return localfn
-
+    return fn[-5:] == ".conf"
 
 def include(oldfn, fn, data, error_out):
     """
@@ -136,7 +88,6 @@ def handle(fn, data, include = 0):
     else:
         oldfile = bb.data.getVar('FILE', data)
 
-    fn = obtain(fn, data)
     if not os.path.isabs(fn):
         f = None
         bbpath = bb.data.getVar("BBPATH", data, 1) or []

@@ -29,7 +29,7 @@ import re, bb, os, sys, time, string
 import bb.fetch, bb.build, bb.utils
 from bb import data, fetch, methodpool
 
-from ConfHandler import include, localpath, obtain, init
+from ConfHandler import include, init
 from bb.parse import ParseError
 
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
@@ -57,8 +57,7 @@ IN_PYTHON_EOF = -9999999999999
 __parsed_methods__ = methodpool.get_parsed_dict()
 
 def supports(fn, d):
-    localfn = localpath(fn, d)
-    return localfn[-3:] == ".bb" or localfn[-8:] == ".bbclass" or localfn[-4:] == ".inc"
+    return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
 
 def inherit(files, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or []
@@ -146,7 +145,6 @@ def handle(fn, d, include = 0):
     else:
         oldfile = None
 
-    fn = obtain(fn, d)
     bbpath = (data.getVar('BBPATH', d, 1) or '').split(':')
     if not os.path.isabs(fn):
         f = None
