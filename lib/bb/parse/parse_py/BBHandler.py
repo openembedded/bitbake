@@ -168,6 +168,11 @@ def handleBBHandlers(m, d):
         data.setVarFlag(h, "handler", 1, d)
     data.setVar('__BBHANDLERS', bbhands, d)
 
+def handleInherit(m, d):
+    files = m.group(1)
+    n = __word__.findall(files)
+    inherit(n, d)
+
 def supports(fn, d):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
 
@@ -376,10 +381,7 @@ def feeder(lineno, s, fn, root, d):
 
     m = __inherit_regexp__.match(s)
     if m:
-
-        files = m.group(1)
-        n = __word__.findall(files)
-        inherit(n, d)
+        handleInherit(m, d)
         return
 
     from bb.parse import ConfHandler
