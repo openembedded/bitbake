@@ -25,7 +25,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import re, bb.data, os, sys
-from bb.parse import ParseError
+from bb.parse import ParseError, resolve_file
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|(?P<predot>=\.)|(?P<postdot>\.=)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
@@ -77,10 +77,6 @@ def include(oldfn, fn, data, error_out):
         bb.msg.debug(2, bb.msg.domain.Parsing, "CONF file '%s' not found" % fn)
 
 def handle(fn, data, include = 0):
-    if include:
-        inc_string = "including"
-    else:
-        inc_string = "reading"
     init(data)
 
     if include == 0:
@@ -88,22 +84,7 @@ def handle(fn, data, include = 0):
     else:
         oldfile = bb.data.getVar('FILE', data)
 
-    if not os.path.isabs(fn):
-        f = None
-        bbpath = bb.data.getVar("BBPATH", data, 1) or []
-        for p in bbpath.split(":"):
-            currname = os.path.join(p, fn)
-            if os.access(currname, os.R_OK):
-                f = open(currname, 'r')
-                abs_fn = currname
-                bb.msg.debug(2, bb.msg.domain.Parsing, "CONF %s %s" % (inc_string, currname))
-                break
-        if f is None:
-            raise IOError("file '%s' not found" % fn)
-    else:
-        f = open(fn,'r')
-        bb.msg.debug(1, bb.msg.domain.Parsing, "CONF %s %s" % (inc_string,fn))
-        abs_fn = fn
+    (f, abs_fn) = resolve_file(fn, data)
 
     if include:
         bb.parse.mark_dependency(data, abs_fn)

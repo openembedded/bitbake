@@ -30,7 +30,7 @@ import bb.fetch, bb.build, bb.utils
 from bb import data, fetch, methodpool
 
 from ConfHandler import include, init
-from bb.parse import ParseError
+from bb.parse import ParseError, resolve_file
 
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
@@ -145,20 +145,7 @@ def handle(fn, d, include = 0):
     else:
         oldfile = None
 
-    bbpath = (data.getVar('BBPATH', d, 1) or '').split(':')
-    if not os.path.isabs(fn):
-        f = None
-        for p in bbpath:
-            j = os.path.join(p, fn)
-            if os.access(j, os.R_OK):
-                abs_fn = j
-                f = open(j, 'r')
-                break
-        if f is None:
-            raise IOError("file %s not found" % fn)
-    else:
-        f = open(fn,'r')
-        abs_fn = fn
+    (f, abs_fn) = resolve_file(fn, d)
 
     if include:
         bb.parse.mark_dependency(d, abs_fn)
@@ -203,7 +190,6 @@ def handle(fn, d, include = 0):
                 darray[cls] = based
             return darray
    
-        bbpath.pop(0)
     if oldfile:
         bb.data.setVar("FILE", oldfile, d)
 
