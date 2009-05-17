@@ -56,6 +56,20 @@ IN_PYTHON_EOF = -9999999999999
 
 __parsed_methods__ = methodpool.get_parsed_dict()
 
+# parsing routines, to be moved into AST classes
+def handleMethod(func_name, body, d):
+    if func_name == "__anonymous":
+        funcname = ("__anon_%s_%s" % (lineno, fn.translate(string.maketrans('/.+-', '____'))))
+        if not funcname in methodpool._parsed_fns:
+            text = "def %s(d):\n" % (funcname) + '\n'.join(body)
+            methodpool.insert_method(funcname, text, fn)
+        anonfuncs = data.getVar('__BBANONFUNCS', d) or []
+        anonfuncs.append(funcname)
+        data.setVar('__BBANONFUNCS', anonfuncs, d)
+    else:
+        data.setVarFlag(func_name, "func", 1, d)
+        data.setVar(func_name, '\n'.join(body), d)
+
 def supports(fn, d):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
 
@@ -204,17 +218,7 @@ def feeder(lineno, s, fn, root, d):
     if __infunc__:
         if s == '}':
             __body__.append('')
-            if __infunc__ == "__anonymous":
-                funcname = ("__anon_%s_%s" % (lineno, fn.translate(string.maketrans('/.+-', '____'))))
-                if not funcname in methodpool._parsed_fns:
-                    text = "def %s(d):\n" % (funcname) + '\n'.join(__body__)
-                    methodpool.insert_method(funcname, text, fn)
-                anonfuncs = data.getVar('__BBANONFUNCS', d) or []
-                anonfuncs.append(funcname)
-                data.setVar('__BBANONFUNCS', anonfuncs, d)
-            else:
-                data.setVarFlag(__infunc__, "func", 1, d)
-                data.setVar(__infunc__, '\n'.join(__body__), d)
+            handleMethod(__infunc__, __body__, d)
             __infunc__ = ""
             __body__ = []
         else:
