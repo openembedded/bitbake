@@ -328,7 +328,7 @@ class Cache:
         version_data['CACHE_VER'] = __cache_version__
         version_data['BITBAKE_VER'] = bb.__version__
 
-        cache_data = copy.deepcopy(self.depends_cache)
+        cache_data = copy.copy(self.depends_cache)
         for fn in self.depends_cache:
             if '__BB_DONT_CACHE' in self.depends_cache[fn] and self.depends_cache[fn]['__BB_DONT_CACHE']:
                 bb.msg.debug(2, bb.msg.domain.Cache, "Not caching %s, marked as not cacheable" % fn)
