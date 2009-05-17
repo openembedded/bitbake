@@ -93,6 +93,81 @@ def handleMethodFlags(key, m, d):
     else:
         data.delVarFlag(key, "fakeroot", d)
 
+def handleExportFuncs(m, d):
+    fns = m.group(1)
+    n = __word__.findall(fns)
+    for f in n:
+        allvars = []
+        allvars.append(f)
+        allvars.append(classes[-1] + "_" + f)
+
+        vars = [[ allvars[0], allvars[1] ]]
+        if len(classes) > 1 and classes[-2] is not None:
+            allvars.append(classes[-2] + "_" + f)
+            vars = []
+            vars.append([allvars[2], allvars[1]])
+            vars.append([allvars[0], allvars[2]])
+
+        for (var, calledvar) in vars:
+            if data.getVar(var, d) and not data.getVarFlag(var, 'export_func', d):
+                continue
+
+            if data.getVar(var, d):
+                data.setVarFlag(var, 'python', None, d)
+                data.setVarFlag(var, 'func', None, d)
+
+            for flag in [ "func", "python" ]:
+                if data.getVarFlag(calledvar, flag, d):
+                    data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag, d), d)
+            for flag in [ "dirs" ]:
+                if data.getVarFlag(var, flag, d):
+                    data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag, d), d)
+
+            if data.getVarFlag(calledvar, "python", d):
+                data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n", d)
+            else:
+                data.setVar(var, "\t" + calledvar + "\n", d)
+            data.setVarFlag(var, 'export_func', '1', d)
+
+def handleAddTask(m, d):
+    func = m.group("func")
+    before = m.group("before")
+    after = m.group("after")
+    if func is None:
+        return
+    if func[:3] != "do_":
+        var = "do_" + func
+
+    data.setVarFlag(var, "task", 1, d)
+
+    bbtasks = data.getVar('__BBTASKS', d) or []
+    if not var in bbtasks:
+        bbtasks.append(var)
+    data.setVar('__BBTASKS', bbtasks, d)
+
+    existing = data.getVarFlag(var, "deps", d) or []
+    if after is not None:
+        # set up deps for function
+        for entry in after.split():
+            if entry not in existing:
+                existing.append(entry)
+    data.setVarFlag(var, "deps", existing, d)
+    if before is not None:
+        # set up things that depend on this func
+        for entry in before.split():
+            existing = data.getVarFlag(entry, "deps", d) or []
+            if var not in existing:
+                data.setVarFlag(entry, "deps", [var] + existing, d)
+
+def handleBBHandlers(m, d):
+    fns = m.group(1)
+    hs = __word__.findall(fns)
+    bbhands = data.getVar('__BBHANDLERS', d) or []
+    for h in hs:
+        bbhands.append(h)
+        data.setVarFlag(h, "handler", 1, d)
+    data.setVar('__BBHANDLERS', bbhands, d)
+
 def supports(fn, d):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
 
@@ -286,84 +361,17 @@ def feeder(lineno, s, fn, root, d):
 
     m = __export_func_regexp__.match(s)
     if m:
-        fns = m.group(1)
-        n = __word__.findall(fns)
-        for f in n:
-            allvars = []
-            allvars.append(f)
-            allvars.append(classes[-1] + "_" + f)
-
-            vars = [[ allvars[0], allvars[1] ]]
-            if len(classes) > 1 and classes[-2] is not None:
-                allvars.append(classes[-2] + "_" + f)
-                vars = []
-                vars.append([allvars[2], allvars[1]])
-                vars.append([allvars[0], allvars[2]])
-
-            for (var, calledvar) in vars:
-                if data.getVar(var, d) and not data.getVarFlag(var, 'export_func', d):
-                    continue
-
-                if data.getVar(var, d):
-                    data.setVarFlag(var, 'python', None, d)
-                    data.setVarFlag(var, 'func', None, d)
-
-                for flag in [ "func", "python" ]:
-                    if data.getVarFlag(calledvar, flag, d):
-                        data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag, d), d)
-                for flag in [ "dirs" ]:
-                    if data.getVarFlag(var, flag, d):
-                        data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag, d), d)
-
-                if data.getVarFlag(calledvar, "python", d):
-                    data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n", d)
-                else:
-                    data.setVar(var, "\t" + calledvar + "\n", d)
-                data.setVarFlag(var, 'export_func', '1', d)
-
+        handleExportFuncs(m, d)
         return
 
     m = __addtask_regexp__.match(s)
     if m:
-        func = m.group("func")
-        before = m.group("before")
-        after = m.group("after")
-        if func is None:
-            return
-        if func[:3] != "do_":
-            var = "do_" + func
-
-        data.setVarFlag(var, "task", 1, d)
-
-        bbtasks = data.getVar('__BBTASKS', d) or []
-        if not var in bbtasks:
-            bbtasks.append(var)
-        data.setVar('__BBTASKS', bbtasks, d)
-
-        existing = data.getVarFlag(var, "deps", d) or []
-        if after is not None:
-            # set up deps for function
-            for entry in after.split():
-                if entry not in existing:
-                    existing.append(entry)
-        data.setVarFlag(var, "deps", existing, d)
-        if before is not None:
-            # set up things that depend on this func
-            for entry in before.split():
-                existing = data.getVarFlag(entry, "deps", d) or []
-                if var not in existing:
-                    data.setVarFlag(entry, "deps", [var] + existing, d)
+        handleAddTask(m, d)
         return
 
     m = __addhandler_regexp__.match(s)
     if m:
-        fns = m.group(1)
-        hs = __word__.findall(fns)
-        bbhands = data.getVar('__BBHANDLERS', d) or []
-        for h in hs:
-            bbhands.append(h)
-            data.setVarFlag(h, "handler", 1, d)
-        data.setVar('__BBHANDLERS', bbhands, d)
+        handleBBHandlers(m, d)
         return
 
     m = __inherit_regexp__.match(s)
