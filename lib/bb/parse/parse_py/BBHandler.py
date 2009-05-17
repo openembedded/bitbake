@@ -70,6 +70,29 @@ def handleMethod(func_name, body, d):
         data.setVarFlag(func_name, "func", 1, d)
         data.setVar(func_name, '\n'.join(body), d)
 
+def handlePythonMethod(root, body, fn):
+    # Note we will add root to parsedmethods after having parse
+    # 'this' file. This means we will not parse methods from
+    # bb classes twice
+    if not root in __parsed_methods__:
+        text = '\n'.join(body)
+        methodpool.insert_method(root, text, fn)
+
+def handleMethodFlags(key, m, d):
+    if data.getVar(key, d):
+        # Clean up old version of this piece of metadata, as its
+        # flags could cause problems
+        data.setVarFlag(key, 'python', None, d)
+        data.setVarFlag(key, 'fakeroot', None, d)
+    if m.group("py") is not None:
+        data.setVarFlag(key, "python", "1", d)
+    else:
+        data.delVarFlag(key, "python", d)
+    if m.group("fr") is not None:
+        data.setVarFlag(key, "fakeroot", "1", d)
+    else:
+        data.delVarFlag(key, "fakeroot", d)
+
 def supports(fn, d):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
 
@@ -231,12 +254,7 @@ def feeder(lineno, s, fn, root, d):
             __body__.append(s)
             return
         else:
-            # Note we will add root to parsedmethods after having parse
-            # 'this' file. This means we will not parse methods from
-            # bb classes twice
-            if not root  in __parsed_methods__:
-                text = '\n'.join(__body__)
-                methodpool.insert_method( root, text, fn )
+            handlePythonMethod(root, __body__, fn)
             __body__ = []
             __inpython__ = False
 
@@ -257,20 +275,7 @@ def feeder(lineno, s, fn, root, d):
     m = __func_start_regexp__.match(s)
     if m:
         __infunc__ = m.group("func") or "__anonymous"
-        key = __infunc__
-        if data.getVar(key, d):
-#           clean up old version of this piece of metadata, as its
-#           flags could cause problems
-            data.setVarFlag(key, 'python', None, d)
-            data.setVarFlag(key, 'fakeroot', None, d)
-        if m.group("py") is not None:
-            data.setVarFlag(key, "python", "1", d)
-        else:
-            data.delVarFlag(key, "python", d)
-        if m.group("fr") is not None:
-            data.setVarFlag(key, "fakeroot", "1", d)
-        else:
-            data.delVarFlag(key, "fakeroot", d)
+        handleMethodFlags(__infunc__, m, d)
         return
 
     m = __def_regexp__.match(s)
