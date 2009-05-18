@@ -230,6 +230,7 @@ def feeder(lineno, s, fn, root, d, statements):
     from bb.parse import ConfHandler
     return ConfHandler.feeder(lineno, s, fn, d, statements)
 
+# Used by OpenEmbedded metadata
 __pkgsplit_cache__={}
 def vars_from_file(mypkg, d):
     if not mypkg:
