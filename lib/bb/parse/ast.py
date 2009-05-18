@@ -30,13 +30,85 @@ class StatementGroup:
     def __init__(self):
         self.statements = []
 
+    def append(self, statement):
+        self.statements.append(statement)
+
     def eval(self, data):
         """
         Apply each statement on the data... in order
         """
         map(lambda x: x.eval(data), self.statements)
 
+class IncludeNode:
+    def __init__(self, what_file, fn, lineno):
+        self.what_file = what_file
+        self.from_fn = fn
+        self.from_lineno = lineno
+
+    def eval(self, data):
+        """
+        Include the file and evaluate the statements
+        """
+        s = bb.data.expand(self.what_file, data)
+        bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (self.from_fn, self.from_lineno, s))
+
+        # TODO: Cache those includes...
+        statements = StatementGroup()
+        bb.parse.ConfHandler.include(statements, self.from_fn, s, data, False)
+        statements.eval(data)
+
+class ExportNode:
+    def __init__(self, var):
+        self.var = var
+
+    def eval(self, data):
+        bb.data.setVarFlag(self.var, "export", 1, data)
+
+class DataNode:
+    """
+    Various data related updates. For the sake of sanity
+    we have one class doing all this. This means that all
+    this need to be re-evaluated... we might be able to do
+    that faster with multiple classes.
+    """
+    def __init__(self, groupd):
+        self.groupd = groupd
+
+    def eval(self, data):
+        groupd = self.groupd
+        key = groupd["var"]
+        if "exp" in groupd and groupd["exp"] != None:
+            bb.data.setVarFlag(key, "export", 1, data)
+        if "ques" in groupd and groupd["ques"] != None:
+            val = getFunc(groupd, key, data)
+            if val == None:
+                val = groupd["value"]
+        elif "colon" in groupd and groupd["colon"] != None:
+            e = data.createCopy()
+            bb.data.update_data(e)
+            val = bb.data.expand(groupd["value"], e)
+        elif "append" in groupd and groupd["append"] != None:
+            val = "%s %s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
+        elif "prepend" in groupd and groupd["prepend"] != None:
+            val = "%s %s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
+        elif "postdot" in groupd and groupd["postdot"] != None:
+            val = "%s%s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
+        elif "predot" in groupd and groupd["predot"] != None:
+            val = "%s%s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
+        else:
+            val = groupd["value"]
+        if 'flag' in groupd and groupd['flag'] != None:
+            bb.msg.debug(3, bb.msg.domain.Parsing, "setVarFlag(%s, %s, %s, data)" % (key, groupd['flag'], val))
+            bb.data.setVarFlag(key, groupd['flag'], val, data)
+        else:
+            bb.data.setVar(key, val, data)
+
+        
+
 def handleInclude(statements, m, fn, lineno, data, force):
+    # AST handling
+    statements.append(IncludeNode(m.group(1), fn, lineno))
+
     s = bb.data.expand(m.group(1), data)
     bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (fn, lineno, s))
     if force:
@@ -45,9 +117,15 @@ def handleInclude(statements, m, fn, lineno, data, force):
         bb.parse.ConfHandler.include(statements, fn, s, data, False)
 
 def handleExport(statements, m, data):
+    # AST handling
+    statements.append(ExportNode(m.group(1)))
+
     bb.data.setVarFlag(m.group(1), "export", 1, data)
 
 def handleData(statements, groupd, data):
+    # AST handling
+    statements.append(DataNode(groupd))
+
     key = groupd["var"]
     if "exp" in groupd and groupd["exp"] != None:
         bb.data.setVarFlag(key, "export", 1, data)
