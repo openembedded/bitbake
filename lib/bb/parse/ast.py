@@ -197,3 +197,42 @@ def handleInherit(statements, m, d):
     n = __word__.findall(files)
     bb.parse.BBHandler.inherit(statements, n, d)
 
+def finalise(fn, d):
+    bb.data.expandKeys(d)
+    bb.data.update_data(d)
+    anonqueue = bb.data.getVar("__anonqueue", d, 1) or []
+    body = [x['content'] for x in anonqueue]
+    flag = { 'python' : 1, 'func' : 1 }
+    bb.data.setVar("__anonfunc", "\n".join(body), d)
+    bb.data.setVarFlags("__anonfunc", flag, d)
+    from bb import build
+    try:
+        t = bb.data.getVar('T', d)
+        bb.data.setVar('T', '${TMPDIR}/anonfunc/', d)
+        anonfuncs = bb.data.getVar('__BBANONFUNCS', d) or []
+        code = ""
+        for f in anonfuncs:
+            code = code + "    %s(d)\n" % f
+        bb.data.setVar("__anonfunc", code, d)        
+        build.exec_func("__anonfunc", d)
+        bb.data.delVar('T', d)
+        if t:
+            bb.data.setVar('T', t, d)
+    except Exception, e:
+        bb.msg.debug(1, bb.msg.domain.Parsing, "Exception when executing anonymous function: %s" % e)
+        raise
+    bb.data.delVar("__anonqueue", d)
+    bb.data.delVar("__anonfunc", d)
+    bb.data.update_data(d)
+
+    all_handlers = {} 
+    for var in bb.data.getVar('__BBHANDLERS', d) or []:
+        # try to add the handler
+        handler = bb.data.getVar(var,d)
+        bb.event.register(var, handler)
+
+    tasklist = bb.data.getVar('__BBTASKS', d) or []
+    bb.build.add_tasks(tasklist, d)
+
+    bb.event.fire(bb.event.RecipeParsed(fn), d)
+
