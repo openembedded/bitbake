@@ -68,11 +68,15 @@ def supports(fn, data):
             return 1
     return 0
 
-def handle(fn, data, include = 0):
+def handle(fn, data, include = 0, statements = None):
     """Call the handler that is appropriate for this file"""
+    if not statements:
+        import ast
+        statements = ast.StatementGroup()
+
     for h in handlers:
         if h['supports'](fn, data):
-            return h['handle'](fn, data, include)
+            return h['handle'](fn, data, include, statements)
     raise ParseError("%s is not a BitBake file" % fn)
 
 def init(fn, data):
