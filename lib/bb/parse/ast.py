@@ -208,7 +208,49 @@ class ExportFuncsNode:
                 else:
                     bb.data.setVar(var, "\t" + calledvar + "\n", data)
                 bb.data.setVarFlag(var, 'export_func', '1', data)
-        
+
+class AddTaskNode:
+    def __init__(self, func, before, after):
+        self.func = func
+        self.before = before
+        self.after = after
+
+    def eval(self, data):
+        var = self.func
+        if self.func[:3] != "do_":
+            var = "do_" + self.func
+
+        bb.data.setVarFlag(var, "task", 1, data)
+        bbtasks = bb.data.getVar('__BBTASKS', data) or []
+        if not var in bbtasks:
+            bbtasks.append(var)
+        bb.data.setVar('__BBTASKS', bbtasks, data)
+
+        existing = bb.data.getVarFlag(var, "deps", data) or []
+        if self.after is not None:
+            # set up deps for function
+            for entry in self.after.split():
+                if entry not in existing:
+                    existing.append(entry)
+        bb.data.setVarFlag(var, "deps", existing, data)
+        if self.before is not None:
+            # set up things that depend on this func
+            for entry in self.before.split():
+                existing = bb.data.getVarFlag(entry, "deps", data) or []
+                if var not in existing:
+                    bb.data.setVarFlag(entry, "deps", [var] + existing, data)
+
+class BBHandlerNode:
+    def __init__(self, fns):
+        self.hs = __word__.findall(fns)
+
+    def eval(self, data):
+        bbhands = bb.data.getVar('__BBHANDLERS', data) or []
+        for h in self.hs:
+            bbhands.append(h)
+            bb.data.setVarFlag(h, "handler", 1, data)
+        bb.data.setVar('__BBHANDLERS', bbhands, data)
+ 
 def handleInclude(statements, m, fn, lineno, data, force):
     # AST handling
     statements.append(IncludeNode(m.group(1), fn, lineno, force))
@@ -248,38 +290,13 @@ def handleAddTask(statements, m, d):
     after = m.group("after")
     if func is None:
         return
-    if func[:3] != "do_":
-        var = "do_" + func
 
-    bb.data.setVarFlag(var, "task", 1, d)
-
-    bbtasks = bb.data.getVar('__BBTASKS', d) or []
-    if not var in bbtasks:
-        bbtasks.append(var)
-    bb.data.setVar('__BBTASKS', bbtasks, d)
-
-    existing = bb.data.getVarFlag(var, "deps", d) or []
-    if after is not None:
-        # set up deps for function
-        for entry in after.split():
-            if entry not in existing:
-                existing.append(entry)
-    bb.data.setVarFlag(var, "deps", existing, d)
-    if before is not None:
-        # set up things that depend on this func
-        for entry in before.split():
-            existing = bb.data.getVarFlag(entry, "deps", d) or []
-            if var not in existing:
-                bb.data.setVarFlag(entry, "deps", [var] + existing, d)
+    statements.append(AddTaskNode(func, before, after))
+    statements[-1].eval(d)
 
 def handleBBHandlers(statements, m, d):
-    fns = m.group(1)
-    hs = __word__.findall(fns)
-    bbhands = bb.data.getVar('__BBHANDLERS', d) or []
-    for h in hs:
-        bbhands.append(h)
-        bb.data.setVarFlag(h, "handler", 1, d)
-    bb.data.setVar('__BBHANDLERS', bbhands, d)
+    statements.append(BBHandlerNode(m.group(1)))
+    statements[-1].eval(d)
 
 def handleInherit(statements, m, d):
     files = m.group(1)
