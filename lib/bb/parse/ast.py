@@ -62,7 +62,7 @@ class IncludeNode:
             bb.parse.ConfHandler.include(statements, self.from_fn, s, data, "include required")
         else:
             bb.parse.ConfHandler.include(statements, self.from_fn, s, data, False)
-        statements.eval(data)
+        #statements.eval(data)
 
 class ExportNode:
     def __init__(self, var):
@@ -120,13 +120,7 @@ class DataNode:
 def handleInclude(statements, m, fn, lineno, data, force):
     # AST handling
     statements.append(IncludeNode(m.group(1), fn, lineno, force))
-
-    s = bb.data.expand(m.group(1), data)
-    bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (fn, lineno, s))
-    if force:
-        bb.parse.ConfHandler.include(statements, fn, s, data, "include required")
-    else:
-        bb.parse.ConfHandler.include(statements, fn, s, data, False)
+    statements[-1].eval(data)
 
 def handleExport(statements, m, data):
     # AST handling
