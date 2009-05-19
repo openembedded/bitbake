@@ -131,8 +131,7 @@ def handleInclude(statements, m, fn, lineno, data, force):
 def handleExport(statements, m, data):
     # AST handling
     statements.append(ExportNode(m.group(1)))
-
-    bb.data.setVarFlag(m.group(1), "export", 1, data)
+    statements[-1].eval(data)
 
 def handleData(statements, groupd, data):
     # AST handling
