@@ -84,7 +84,8 @@ def handle(fn, data, include):
     else:
         oldfile = bb.data.getVar('FILE', data)
 
-    (f, abs_fn) = resolve_file(fn, data)
+    abs_fn = resolve_file(fn, data)
+    f = open(abs_fn, 'r')
 
     if include:
         bb.parse.mark_dependency(data, abs_fn)

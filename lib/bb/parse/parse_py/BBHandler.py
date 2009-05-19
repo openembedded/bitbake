@@ -80,12 +80,13 @@ def inherit(files, d):
             include(fn, file, d, "inherit")
             __inherit_cache = data.getVar('__inherit_cache', d) or []
 
-def get_statements(filename, absolsute_filename, base_name, file):
+def get_statements(filename, absolsute_filename, base_name):
     global cached_statements
 
     try:
         return cached_statements[absolsute_filename]
     except KeyError:
+        file = open(absolsute_filename, 'r')
         statements = ast.StatementGroup()
 
         lineno = 0
@@ -133,13 +134,13 @@ def handle(fn, d, include):
     else:
         oldfile = None
 
-    (f, abs_fn) = resolve_file(fn, d)
+    abs_fn = resolve_file(fn, d)
 
     if include:
         bb.parse.mark_dependency(d, abs_fn)
 
     # actual loading
-    statements = get_statements(fn, abs_fn, base_name, f)
+    statements = get_statements(fn, abs_fn, base_name)
 
     # DONE WITH PARSING... time to evaluate
     if ext != ".bbclass":
