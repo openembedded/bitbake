@@ -26,12 +26,6 @@ import bb, re, string
 __word__ = re.compile(r"\S+")
 __parsed_methods__ = bb.methodpool.get_parsed_dict()
 
-def getFunc(groupd, key, data):
-    if 'flag' in groupd and groupd['flag'] != None:
-        return bb.data.getVarFlag(key, groupd['flag'], data)
-    else:
-        return bb.data.getVar(key, data)
-
 class StatementGroup:
     def __init__(self):
         self.statements = []
@@ -44,6 +38,9 @@ class StatementGroup:
         Apply each statement on the data... in order
         """
         map(lambda x: x.eval(data), self.statements)
+
+    def __getitem__(self, item):
+        return self.statements.__getitem__(item)
 
 class IncludeNode:
     def __init__(self, what_file, fn, lineno, force):
@@ -140,33 +137,7 @@ def handleExport(statements, m, data):
 def handleData(statements, groupd, data):
     # AST handling
     statements.append(DataNode(groupd))
-
-    key = groupd["var"]
-    if "exp" in groupd and groupd["exp"] != None:
-        bb.data.setVarFlag(key, "export", 1, data)
-    if "ques" in groupd and groupd["ques"] != None:
-        val = getFunc(groupd, key, data)
-        if val == None:
-            val = groupd["value"]
-    elif "colon" in groupd and groupd["colon"] != None:
-        e = data.createCopy()
-        bb.data.update_data(e)
-        val = bb.data.expand(groupd["value"], e)
-    elif "append" in groupd and groupd["append"] != None:
-        val = "%s %s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
-    elif "prepend" in groupd and groupd["prepend"] != None:
-        val = "%s %s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
-    elif "postdot" in groupd and groupd["postdot"] != None:
-        val = "%s%s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
-    elif "predot" in groupd and groupd["predot"] != None:
-        val = "%s%s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
-    else:
-        val = groupd["value"]
-    if 'flag' in groupd and groupd['flag'] != None:
-        bb.msg.debug(3, bb.msg.domain.Parsing, "setVarFlag(%s, %s, %s, data)" % (key, groupd['flag'], val))
-        bb.data.setVarFlag(key, groupd['flag'], val, data)
-    else:
-        bb.data.setVar(key, val, data)
+    statements[-1].eval(data)
 
 def handleMethod(statements, func_name, lineno, fn, body, d):
     if func_name == "__anonymous":
