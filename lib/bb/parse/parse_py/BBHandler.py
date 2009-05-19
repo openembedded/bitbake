@@ -78,6 +78,22 @@ def inherit(files, d):
             include(fn, file, d, "inherit")
             __inherit_cache = data.getVar('__inherit_cache', d) or []
 
+def get_statements(filename, absolsute_filename, base_name, file):
+    statements = ast.StatementGroup()
+
+    lineno = 0
+    while 1:
+        lineno = lineno + 1
+        s = file.readline()
+        if not s: break
+        s = s.rstrip()
+        feeder(lineno, s, filename, base_name, statements)
+    if __inpython__:
+        # add a blank line to close out any python definition
+        feeder(IN_PYTHON_EOF, "", filename, base_name, statements)
+
+    return statements
+
 def handle(fn, d, include):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
     __body__ = []
@@ -113,17 +129,8 @@ def handle(fn, d, include):
     if include:
         bb.parse.mark_dependency(d, abs_fn)
 
-    statements = ast.StatementGroup()
-    lineno = 0
-    while 1:
-        lineno = lineno + 1
-        s = f.readline()
-        if not s: break
-        s = s.rstrip()
-        feeder(lineno, s, fn, base_name, statements)
-    if __inpython__:
-        # add a blank line to close out any python definition
-        feeder(IN_PYTHON_EOF, "", fn, base_name, statements)
+    # actual loading
+    statements = get_statements(fn, abs_fn, base_name, f)
 
     # DONE WITH PARSING... time to evaluate
     if ext != ".bbclass":
