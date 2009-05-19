@@ -170,6 +170,45 @@ class MethodFlagsNode:
         else:
             bb.data.delVarFlag(self.key, "fakeroot", data)
 
+class ExportFuncsNode:
+    def __init__(self, fns, classes):
+        self.n = __word__.findall(fns)
+        self.classes = classes
+
+    def eval(self, data):
+        for f in self.n:
+            allvars = []
+            allvars.append(f)
+            allvars.append(self.classes[-1] + "_" + f)
+
+            vars = [[ allvars[0], allvars[1] ]]
+            if len(self.classes) > 1 and self.classes[-2] is not None:
+                allvars.append(self.classes[-2] + "_" + f)
+                vars = []
+                vars.append([allvars[2], allvars[1]])
+                vars.append([allvars[0], allvars[2]])
+
+            for (var, calledvar) in vars:
+                if bb.data.getVar(var, data) and not bb.data.getVarFlag(var, 'export_func', data):
+                    continue
+
+                if bb.data.getVar(var, data):
+                    bb.data.setVarFlag(var, 'python', None, data)
+                    bb.data.setVarFlag(var, 'func', None, data)
+
+                for flag in [ "func", "python" ]:
+                    if bb.data.getVarFlag(calledvar, flag, data):
+                        bb.data.setVarFlag(var, flag, bb.data.getVarFlag(calledvar, flag, data), data)
+                for flag in [ "dirs" ]:
+                    if bb.data.getVarFlag(var, flag, data):
+                        bb.data.setVarFlag(calledvar, flag, bb.data.getVarFlag(var, flag, data), data)
+
+                if bb.data.getVarFlag(calledvar, "python", data):
+                    bb.data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n", data)
+                else:
+                    bb.data.setVar(var, "\t" + calledvar + "\n", data)
+                bb.data.setVarFlag(var, 'export_func', '1', data)
+        
 def handleInclude(statements, m, fn, lineno, data, force):
     # AST handling
     statements.append(IncludeNode(m.group(1), fn, lineno, force))
@@ -200,40 +239,8 @@ def handleMethodFlags(statements, key, m, d):
     statements[-1].eval(d)
 
 def handleExportFuncs(statements, m, classes, d):
-    fns = m.group(1)
-    n = __word__.findall(fns)
-    for f in n:
-        allvars = []
-        allvars.append(f)
-        allvars.append(classes[-1] + "_" + f)
-
-        vars = [[ allvars[0], allvars[1] ]]
-        if len(classes) > 1 and classes[-2] is not None:
-            allvars.append(classes[-2] + "_" + f)
-            vars = []
-            vars.append([allvars[2], allvars[1]])
-            vars.append([allvars[0], allvars[2]])
-
-        for (var, calledvar) in vars:
-            if bb.data.getVar(var, d) and not bb.data.getVarFlag(var, 'export_func', d):
-                continue
-
-            if bb.data.getVar(var, d):
-                bb.data.setVarFlag(var, 'python', None, d)
-                bb.data.setVarFlag(var, 'func', None, d)
-
-            for flag in [ "func", "python" ]:
-                if bb.data.getVarFlag(calledvar, flag, d):
-                    bb.data.setVarFlag(var, flag, bb.data.getVarFlag(calledvar, flag, d), d)
-            for flag in [ "dirs" ]:
-                if bb.data.getVarFlag(var, flag, d):
-                    bb.data.setVarFlag(calledvar, flag, bb.data.getVarFlag(var, flag, d), d)
-
-            if bb.data.getVarFlag(calledvar, "python", d):
-                bb.data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n", d)
-            else:
-                bb.data.setVar(var, "\t" + calledvar + "\n", d)
-            bb.data.setVarFlag(var, 'export_func', '1', d)
+    statements.append(ExportFuncsNode(m.group(1), classes))
+    statements[-1].eval(d)
 
 def handleAddTask(statements, m, d):
     func = m.group("func")
