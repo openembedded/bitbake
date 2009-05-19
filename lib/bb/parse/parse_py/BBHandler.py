@@ -50,6 +50,8 @@ __body__   = []
 __classname__ = ""
 classes = [ None, ]
 
+cached_statements = {}
+
 # We need to indicate EOF to the feeder. This code is so messy that
 # factoring it out to a close_parse_file method is out of question.
 # We will use the IN_PYTHON_EOF as an indicator to just close the method
@@ -79,20 +81,27 @@ def inherit(files, d):
             __inherit_cache = data.getVar('__inherit_cache', d) or []
 
 def get_statements(filename, absolsute_filename, base_name, file):
-    statements = ast.StatementGroup()
+    global cached_statements
 
-    lineno = 0
-    while 1:
-        lineno = lineno + 1
-        s = file.readline()
-        if not s: break
-        s = s.rstrip()
-        feeder(lineno, s, filename, base_name, statements)
-    if __inpython__:
-        # add a blank line to close out any python definition
-        feeder(IN_PYTHON_EOF, "", filename, base_name, statements)
+    try:
+        return cached_statements[absolsute_filename]
+    except KeyError:
+        statements = ast.StatementGroup()
 
-    return statements
+        lineno = 0
+        while 1:
+            lineno = lineno + 1
+            s = file.readline()
+            if not s: break
+            s = s.rstrip()
+            feeder(lineno, s, filename, base_name, statements)
+        if __inpython__:
+            # add a blank line to close out any python definition
+            feeder(IN_PYTHON_EOF, "", filename, base_name, statements)
+
+        if filename.endswith(".bbclass") or filename.endswith(".inc"):
+            cached_statements[absolsute_filename] = statements
+        return statements
 
 def handle(fn, d, include):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
