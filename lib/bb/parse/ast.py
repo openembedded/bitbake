@@ -116,6 +116,40 @@ class DataNode:
         else:
             bb.data.setVar(key, val, data)
 
+class MethodNode:
+    def __init__(self, func_name, body, lineno, fn):
+        self.func_name = func_name
+        self.body = body
+        self.fn = fn
+        self.lineno = lineno
+
+    def eval(self, data):
+        if self.func_name == "__anonymous":
+            funcname = ("__anon_%s_%s" % (self.lineno, self.fn.translate(string.maketrans('/.+-', '____'))))
+            if not funcname in bb.methodpool._parsed_fns:
+                text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
+                bb.methodpool.insert_method(funcname, text, fn)
+            anonfuncs = bb.data.getVar('__BBANONFUNCS', data) or []
+            anonfuncs.append(funcname)
+            bb.data.setVar('__BBANONFUNCS', anonfuncs, data)
+        else:
+            bb.data.setVarFlag(self.func_name, "func", 1, data)
+            bb.data.setVar(self.func_name, '\n'.join(self.body), data)
+
+class PythonMethodNode:
+    def __init__(self, root, body, fn):
+        self.root = root
+        self.body = body
+        self.fn = fn
+
+    def eval(self, data):
+        # Note we will add root to parsedmethods after having parse
+        # 'this' file. This means we will not parse methods from
+        # bb classes twice
+        if not self.root  in __parsed_methods__:
+            text = '\n'.join(self.body)
+            bb.methodpool.insert_method(self.root, text, self.fn)
+        
         
 def handleInclude(statements, m, fn, lineno, data, force):
     # AST handling
@@ -133,25 +167,14 @@ def handleData(statements, groupd, data):
     statements[-1].eval(data)
 
 def handleMethod(statements, func_name, lineno, fn, body, d):
-    if func_name == "__anonymous":
-        funcname = ("__anon_%s_%s" % (lineno, fn.translate(string.maketrans('/.+-', '____'))))
-        if not funcname in bb.methodpool._parsed_fns:
-            text = "def %s(d):\n" % (funcname) + '\n'.join(body)
-            bb.methodpool.insert_method(funcname, text, fn)
-        anonfuncs = bb.data.getVar('__BBANONFUNCS', d) or []
-        anonfuncs.append(funcname)
-        bb.data.setVar('__BBANONFUNCS', anonfuncs, d)
-    else:
-        bb.data.setVarFlag(func_name, "func", 1, d)
-        bb.data.setVar(func_name, '\n'.join(body), d)
+    # AST handling
+    statements.append(MethodNode(func_name, body, lineno, fn))
+    statements[-1].eval(d)
 
 def handlePythonMethod(statements, root, body, fn):
-    # Note we will add root to parsedmethods after having parse
-    # 'this' file. This means we will not parse methods from
-    # bb classes twice
-    if not root in __parsed_methods__:
-        text = '\n'.join(body)
-        bb.methodpool.insert_method(root, text, fn)
+    # AST handling
+    statements.append(PythonMethodNode(root, body, fn))
+    statements[-1].eval(None)
 
 def handleMethodFlags(statements, key, m, d):
     if bb.data.getVar(key, d):
