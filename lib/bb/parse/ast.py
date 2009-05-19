@@ -149,8 +149,27 @@ class PythonMethodNode:
         if not self.root  in __parsed_methods__:
             text = '\n'.join(self.body)
             bb.methodpool.insert_method(self.root, text, self.fn)
-        
-        
+
+class MethodFlagsNode:
+    def __init__(self, key, m):
+        self.key = key
+        self.m = m
+
+    def eval(self, data):
+        if bb.data.getVar(self.key, data):
+            # clean up old version of this piece of metadata, as its
+            # flags could cause problems
+            bb.data.setVarFlag(self.key, 'python', None, data)
+            bb.data.setVarFlag(self.key, 'fakeroot', None, data)
+        if self.m.group("py") is not None:
+            bb.data.setVarFlag(self.key, "python", "1", data)
+        else:
+            bb.data.delVarFlag(self.key, "python", data)
+        if self.m.group("fr") is not None:
+            bb.data.setVarFlag(self.key, "fakeroot", "1", data)
+        else:
+            bb.data.delVarFlag(self.key, "fakeroot", data)
+
 def handleInclude(statements, m, fn, lineno, data, force):
     # AST handling
     statements.append(IncludeNode(m.group(1), fn, lineno, force))
@@ -177,19 +196,8 @@ def handlePythonMethod(statements, root, body, fn):
     statements[-1].eval(None)
 
 def handleMethodFlags(statements, key, m, d):
-    if bb.data.getVar(key, d):
-        # Clean up old version of this piece of metadata, as its
-        # flags could cause problems
-        bb.data.setVarFlag(key, 'python', None, d)
-        bb.data.setVarFlag(key, 'fakeroot', None, d)
-    if m.group("py") is not None:
-        bb.data.setVarFlag(key, "python", "1", d)
-    else:
-        bb.data.delVarFlag(key, "python", d)
-    if m.group("fr") is not None:
-        bb.data.setVarFlag(key, "fakeroot", "1", d)
-    else:
-        bb.data.delVarFlag(key, "fakeroot", d)
+    statements.append(MethodFlagsNode(key, m))
+    statements[-1].eval(d)
 
 def handleExportFuncs(statements, m, classes, d):
     fns = m.group(1)
