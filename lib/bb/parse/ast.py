@@ -250,6 +250,14 @@ class BBHandlerNode:
             bbhands.append(h)
             bb.data.setVarFlag(h, "handler", 1, data)
         bb.data.setVar('__BBHANDLERS', bbhands, data)
+
+class InheritNode:
+    def __init__(self, files):
+        self.n = __word__.findall(files)
+
+    def eval(self, data):
+        statements = StatementGroup()
+        bb.parse.BBHandler.inherit(statements, self.n, data)
  
 def handleInclude(statements, m, fn, lineno, data, force):
     # AST handling
@@ -301,7 +309,8 @@ def handleBBHandlers(statements, m, d):
 def handleInherit(statements, m, d):
     files = m.group(1)
     n = __word__.findall(files)
-    bb.parse.BBHandler.inherit(statements, n, d)
+    statements.append(InheritNode(m.group(1)))
+    statements[-1].eval(d)
 
 def finalise(fn, d):
     bb.data.expandKeys(d)
