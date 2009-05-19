@@ -62,7 +62,7 @@ IN_PYTHON_EOF = -9999999999999
 def supports(fn, d):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
 
-def inherit(statements, files, d):
+def inherit(files, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or []
     fn = ""
     lineno = 0
@@ -75,10 +75,10 @@ def inherit(statements, files, d):
             bb.msg.debug(2, bb.msg.domain.Parsing, "BB %s:%d: inheriting %s" % (fn, lineno, file))
             __inherit_cache.append( file )
             data.setVar('__inherit_cache', __inherit_cache, d)
-            include(statements, fn, file, d, "inherit")
+            include(fn, file, d, "inherit")
             __inherit_cache = data.getVar('__inherit_cache', d) or []
 
-def handle(fn, d, include, statements):
+def handle(fn, d, include):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
     __body__ = []
     __infunc__ = ""
@@ -113,19 +113,24 @@ def handle(fn, d, include, statements):
     if include:
         bb.parse.mark_dependency(d, abs_fn)
 
-    if ext != ".bbclass":
-        data.setVar('FILE', fn, d)
-
+    statements = ast.StatementGroup()
     lineno = 0
     while 1:
         lineno = lineno + 1
         s = f.readline()
         if not s: break
         s = s.rstrip()
-        feeder(lineno, s, fn, base_name, d, statements)
+        feeder(lineno, s, fn, base_name, statements)
     if __inpython__:
         # add a blank line to close out any python definition
-        feeder(IN_PYTHON_EOF, "", fn, base_name, d, statements)
+        feeder(IN_PYTHON_EOF, "", fn, base_name, statements)
+
+    # DONE WITH PARSING... time to evaluate
+    if ext != ".bbclass":
+        data.setVar('FILE', fn, d)
+
+    statements.eval(d)
+
     if ext == ".bbclass":
         classes.remove(__classname__)
     else:
@@ -145,7 +150,7 @@ def handle(fn, d, include, statements):
                 pn = data.getVar('PN', d, True)
                 based = bb.data.createCopy(d)
                 data.setVar('PN', pn + '-' + cls, based)
-                inherit(statements, [cls], based)
+                inherit([cls], based)
                 try:
                     ast.finalise(fn, based)
                 except bb.parse.SkipPackage:
@@ -162,12 +167,12 @@ def handle(fn, d, include, statements):
 
     return d
 
-def feeder(lineno, s, fn, root, d, statements):
+def feeder(lineno, s, fn, root, statements):
     global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, classes, bb, __residue__
     if __infunc__:
         if s == '}':
             __body__.append('')
-            ast.handleMethod(statements, __infunc__, lineno, fn, __body__, d)
+            ast.handleMethod(statements, __infunc__, lineno, fn, __body__)
             __infunc__ = ""
             __body__ = []
         else:
@@ -201,7 +206,7 @@ def feeder(lineno, s, fn, root, d, statements):
     m = __func_start_regexp__.match(s)
     if m:
         __infunc__ = m.group("func") or "__anonymous"
-        ast.handleMethodFlags(statements, __infunc__, m, d)
+        ast.handleMethodFlags(statements, __infunc__, m)
         return
 
     m = __def_regexp__.match(s)
@@ -212,26 +217,26 @@ def feeder(lineno, s, fn, root, d, statements):
 
     m = __export_func_regexp__.match(s)
     if m:
-        ast.handleExportFuncs(statements, m, classes, d)
+        ast.handleExportFuncs(statements, m, classes)
         return
 
     m = __addtask_regexp__.match(s)
     if m:
-        ast.handleAddTask(statements, m, d)
+        ast.handleAddTask(statements, m)
         return
 
     m = __addhandler_regexp__.match(s)
     if m:
-        ast.handleBBHandlers(statements, m, d)
+        ast.handleBBHandlers(statements, m)
         return
 
     m = __inherit_regexp__.match(s)
     if m:
-        ast.handleInherit(statements, m, d)
+        ast.handleInherit(statements, m)
         return
 
     from bb.parse import ConfHandler
-    return ConfHandler.feeder(lineno, s, fn, d, statements)
+    return ConfHandler.feeder(lineno, s, fn, statements)
 
 # Add us to the handlers list
 from bb.parse import handlers

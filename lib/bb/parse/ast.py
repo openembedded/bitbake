@@ -56,13 +56,11 @@ class IncludeNode:
         s = bb.data.expand(self.what_file, data)
         bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (self.from_fn, self.from_lineno, s))
 
-        # TODO: Cache those includes...
-        statements = StatementGroup()
+        # TODO: Cache those includes... maybe not here though
         if self.force:
-            bb.parse.ConfHandler.include(statements, self.from_fn, s, data, "include required")
+            bb.parse.ConfHandler.include(self.from_fn, s, data, "include required")
         else:
-            bb.parse.ConfHandler.include(statements, self.from_fn, s, data, False)
-        #statements.eval(data)
+            bb.parse.ConfHandler.include(self.from_fn, s, data, False)
 
 class ExportNode:
     def __init__(self, var):
@@ -256,43 +254,30 @@ class InheritNode:
         self.n = __word__.findall(files)
 
     def eval(self, data):
-        statements = StatementGroup()
-        bb.parse.BBHandler.inherit(statements, self.n, data)
+        bb.parse.BBHandler.inherit(self.n, data)
  
-def handleInclude(statements, m, fn, lineno, data, force):
-    # AST handling
+def handleInclude(statements, m, fn, lineno, force):
     statements.append(IncludeNode(m.group(1), fn, lineno, force))
-    statements[-1].eval(data)
 
-def handleExport(statements, m, data):
-    # AST handling
+def handleExport(statements, m):
     statements.append(ExportNode(m.group(1)))
-    statements[-1].eval(data)
 
-def handleData(statements, groupd, data):
-    # AST handling
+def handleData(statements, groupd):
     statements.append(DataNode(groupd))
-    statements[-1].eval(data)
 
-def handleMethod(statements, func_name, lineno, fn, body, d):
-    # AST handling
+def handleMethod(statements, func_name, lineno, fn, body):
     statements.append(MethodNode(func_name, body, lineno, fn))
-    statements[-1].eval(d)
 
 def handlePythonMethod(statements, root, body, fn):
-    # AST handling
     statements.append(PythonMethodNode(root, body, fn))
-    statements[-1].eval(None)
 
-def handleMethodFlags(statements, key, m, d):
+def handleMethodFlags(statements, key, m):
     statements.append(MethodFlagsNode(key, m))
-    statements[-1].eval(d)
 
-def handleExportFuncs(statements, m, classes, d):
+def handleExportFuncs(statements, m, classes):
     statements.append(ExportFuncsNode(m.group(1), classes))
-    statements[-1].eval(d)
 
-def handleAddTask(statements, m, d):
+def handleAddTask(statements, m):
     func = m.group("func")
     before = m.group("before")
     after = m.group("after")
@@ -300,17 +285,14 @@ def handleAddTask(statements, m, d):
         return
 
     statements.append(AddTaskNode(func, before, after))
-    statements[-1].eval(d)
 
-def handleBBHandlers(statements, m, d):
+def handleBBHandlers(statements, m):
     statements.append(BBHandlerNode(m.group(1)))
-    statements[-1].eval(d)
 
-def handleInherit(statements, m, d):
+def handleInherit(statements, m):
     files = m.group(1)
     n = __word__.findall(files)
     statements.append(InheritNode(m.group(1)))
-    statements[-1].eval(d)
 
 def finalise(fn, d):
     bb.data.expandKeys(d)

@@ -49,7 +49,7 @@ def init(data):
 def supports(fn, d):
     return fn[-5:] == ".conf"
 
-def include(statements, oldfn, fn, data, error_out):
+def include(oldfn, fn, data, error_out):
     """
 
     error_out If True a ParseError will be reaised if the to be included
@@ -70,13 +70,13 @@ def include(statements, oldfn, fn, data, error_out):
 
     from bb.parse import handle
     try:
-        ret = handle(fn, data, True, statements)
+        ret = handle(fn, data, True)
     except IOError:
         if error_out:
             raise ParseError("Could not %(error_out)s file %(fn)s" % vars() )
         bb.msg.debug(2, bb.msg.domain.Parsing, "CONF file '%s' not found" % fn)
 
-def handle(fn, data, include, statements):
+def handle(fn, data, include):
     init(data)
 
     if include == 0:
@@ -89,8 +89,8 @@ def handle(fn, data, include, statements):
     if include:
         bb.parse.mark_dependency(data, abs_fn)
 
+    statements = ast.StatementGroup()
     lineno = 0
-    bb.data.setVar('FILE', fn, data)
     while 1:
         lineno = lineno + 1
         s = f.readline()
@@ -103,32 +103,36 @@ def handle(fn, data, include, statements):
             s2 = f.readline()[:-1].strip()
             lineno = lineno + 1
             s = s[:-1] + s2
-        feeder(lineno, s, fn, data, statements)
+        feeder(lineno, s, fn, statements)
 
+    # DONE WITH PARSING... time to evaluate
+    bb.data.setVar('FILE', fn, data)
+    statements.eval(data)
     if oldfile:
         bb.data.setVar('FILE', oldfile, data)
+
     return data
 
-def feeder(lineno, s, fn, data, statements):
+def feeder(lineno, s, fn, statements):
     m = __config_regexp__.match(s)
     if m:
         groupd = m.groupdict()
-        ast.handleData(statements, groupd, data)
+        ast.handleData(statements, groupd)
         return
 
     m = __include_regexp__.match(s)
     if m:
-        ast.handleInclude(statements, m, fn, lineno, data, False)
+        ast.handleInclude(statements, m, fn, lineno, False)
         return
 
     m = __require_regexp__.match(s)
     if m:
-        ast.handleInclude(statements, m, fn, lineno, data, True)
+        ast.handleInclude(statements, m, fn, lineno, True)
         return
 
     m = __export_regexp__.match(s)
     if m:
-        ast.handleExport(statements, m, data)
+        ast.handleExport(statements, m)
         return
 
     raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));
