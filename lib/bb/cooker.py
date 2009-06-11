@@ -219,18 +219,15 @@ class BBCooker:
         latest_versions = {}
 
         # Sort by priority
-        for pn in pkg_pn.keys():
+        for pn in pkg_pn:
             (last_ver,last_file,pref_ver,pref_file) = bb.providers.findBestProvider(pn, self.configuration.data, self.status)
             preferred_versions[pn] = (pref_ver, pref_file)
             latest_versions[pn] = (last_ver, last_file)
 
-        pkg_list = pkg_pn.keys()
-        pkg_list.sort()
-
         bb.msg.plain("%-35s %25s %25s" % ("Package Name", "Latest Version", "Preferred Version"))
         bb.msg.plain("%-35s %25s %25s\n" % ("============", "==============", "================="))
 
-        for p in pkg_list:
+        for p in sorted(pkg_pn):
             pref = preferred_versions[p]
             latest = latest_versions[p]
 
@@ -487,7 +484,7 @@ class BBCooker:
             self.status.preferred[providee] = provider
 
         # Calculate priorities for each file
-        for p in self.status.pkg_fn.keys():
+        for p in self.status.pkg_fn:
             self.status.bbfile_priority[p] = calc_bbfile_priority(p)
 
     def buildWorldTargetList(self):

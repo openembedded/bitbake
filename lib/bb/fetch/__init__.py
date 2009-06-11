@@ -139,7 +139,7 @@ def encodeurl(decoded):
         url += "%s" % host
     url += "%s" % path
     if p:
-        for parm in p.keys():
+        for parm in p:
             url += ";%s=%s" % (parm, p[parm])
 
     return url
@@ -169,7 +169,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
 #               bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: no match")
                 return uri
 #           else:
-#               for j in i.keys():
+#               for j in i:
 #                   FIXME: apply replacements against options
     return bb.encodeurl(result_decoded)
 

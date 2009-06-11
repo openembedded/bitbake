@@ -96,7 +96,7 @@ def mangle (func, line, d):
         varmap["${datadir}"] = "${STAGING_DATADIR}"
 
         matched = 0
-        for key in varmap.keys():
+        for key in varmap:
             if dest.startswith(key):
                 dest = varmap[key] + "/" + dest[len(key):]
                 matched = 1

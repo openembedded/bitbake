@@ -50,14 +50,10 @@ def sortPriorities(pn, dataCache, pkg_pn = None):
         if preference not in priorities[priority]:
             priorities[priority][preference] = []
         priorities[priority][preference].append(f)
-    pri_list = priorities.keys()
-    pri_list.sort(lambda a, b: a - b)
     tmp_pn = []
-    for pri in pri_list:
-        pref_list = priorities[pri].keys()
-        pref_list.sort(lambda a, b: b - a)
+    for pri in sorted(priorities, lambda a, b: a - b):
         tmp_pref = []
-        for pref in pref_list:
+        for pref in sorted(priorities[pri], lambda a, b: b - a):
             tmp_pref.extend(priorities[pri][pref])
         tmp_pn = [tmp_pref] + tmp_pn
 
@@ -196,14 +192,14 @@ def _filterProviders(providers, item, cfgData, dataCache):
     bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
 
     # First add PREFERRED_VERSIONS
-    for pn in pkg_pn.keys():
+    for pn in pkg_pn:
         sortpkg_pn[pn] = sortPriorities(pn, dataCache, pkg_pn)
         preferred_versions[pn] = findPreferredProvider(pn, cfgData, dataCache, sortpkg_pn[pn], item)
         if preferred_versions[pn][1]:
             eligible.append(preferred_versions[pn][1])
 
     # Now add latest versions
-    for pn in sortpkg_pn.keys():
+    for pn in sortpkg_pn:
         if pn in preferred_versions and preferred_versions[pn][1]:
             continue
         preferred_versions[pn] = findLatestProvider(pn, cfgData, dataCache, sortpkg_pn[pn][0])

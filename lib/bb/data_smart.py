@@ -219,7 +219,7 @@ class DataSmart:
         if not var in self.dict:
             self._makeShadowCopy(var)
 
-        for i in flags.keys():
+        for i in flags:
             if i == "content":
                 continue
             self.dict[var][i] = flags[i]
@@ -229,7 +229,7 @@ class DataSmart:
         flags = {}
 
         if local_var:
-            for i in local_var.keys():
+            for i in local_var:
                 if i == "content":
                     continue
                 flags[i] = local_var[i]
