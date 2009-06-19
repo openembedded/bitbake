@@ -83,6 +83,7 @@ Changes in BitBake 1.8.12:
 	  proxies to work better. (from Poky)
 	- Also allow user and pswd options in SRC_URIs globally (from Poky)
 	- Improve proxy handling when using mirrors (from Poky)
+	- Addition of BBCLASSEXTEND support for allowing one recipe to provide multiple targets (from Poky)
 
 Changes in BitBake 1.8.10:
 	- Psyco is available only for x86 - do not use it on other architectures.

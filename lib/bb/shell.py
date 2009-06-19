@@ -276,7 +276,7 @@ class BitBakeShellCommands:
         print "SHELL: Parsing '%s'" % bbfile
         parse.update_mtime( bbfile )
         cooker.bb_cache.cacheValidUpdate(bbfile)
-        fromCache = cooker.bb_cache.loadData(bbfile, cooker.configuration.data)
+        fromCache = cooker.bb_cache.loadData(bbfile, cooker.configuration.data, cooker.status)
         cooker.bb_cache.sync()
         if False: #fromCache:
             print "SHELL: File has not been updated, not reparsing"
