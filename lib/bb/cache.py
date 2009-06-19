@@ -62,7 +62,7 @@ class Cache:
 
         self.has_cache = True
         self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
-            
+
         bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
         try:
             os.stat( self.cachedir )
@@ -124,30 +124,59 @@ class Cache:
         self.depends_cache[fn][var] = result
         return result
 
-    def setData(self, fn, data):
+    def setData(self, virtualfn, fn, data):
         """
         Called to prime bb_cache ready to learn which variables to cache.
         Will be followed by calls to self.getVar which aren't cached
         but can be fulfilled from self.data.
         """
-        self.data_fn = fn
+        self.data_fn = virtualfn
         self.data = data
 
         # Make sure __depends makes the depends_cache
-        self.getVar("__depends", fn, True)
-        self.depends_cache[fn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
+        self.getVar("__depends", virtualfn, True)
+        self.depends_cache[virtualfn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
 
-    def loadDataFull(self, fn, cfgData):
+    def virtualfn2realfn(self, virtualfn):
+        """
+        Convert a virtual file name to a real one + the associated subclass keyword
+        """
+
+        fn = virtualfn
+        cls = ""
+        if virtualfn.startswith('virtual:'):
+            cls = virtualfn.split(':', 2)[1]
+            fn = virtualfn.replace('virtual:' + cls + ':', '')
+        #bb.msg.debug(2, bb.msg.domain.Cache, "virtualfn2realfn %s to %s %s" % (virtualfn, fn, cls))
+        return (fn, cls)
+
+    def realfn2virtual(self, realfn, cls):
+        """
+        Convert a real filename + the associated subclass keyword to a virtual filename
+        """
+        if cls == "":
+            #bb.msg.debug(2, bb.msg.domain.Cache, "realfn2virtual %s and '%s' to %s" % (realfn, cls, realfn))
+            return realfn
+        #bb.msg.debug(2, bb.msg.domain.Cache, "realfn2virtual %s and %s to %s" % (realfn, cls, "virtual:" + cls + ":" + realfn))
+        return "virtual:" + cls + ":" + realfn
+
+    def loadDataFull(self, virtualfn, cfgData):
         """
         Return a complete set of data for fn.
         To do this, we need to parse the file.
         """
+
+        (fn, cls) = self.virtualfn2realfn(virtualfn)
+
         bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s (full)" % fn)
 
         bb_data, skipped = self.load_bbfile(fn, cfgData)
+        if isinstance(bb_data, dict):
+            return bb_data[cls]
+
         return bb_data
 
-    def loadData(self, fn, cfgData):
+    def loadData(self, fn, cfgData, cacheData):
         """
         Load a subset of data for fn.
         If the cached data is valid we do nothing,
@@ -160,12 +189,36 @@ class Cache:
         if self.cacheValid(fn):
             if "SKIPPED" in self.depends_cache[fn]:
                 return True, True
+            self.handle_data(fn, cacheData)
+            multi = self.getVar('BBCLASSEXTEND', fn, True)
+            if multi:
+                for cls in multi.split():
+                    virtualfn = self.realfn2virtual(fn, cls)
+                    # Pretend we're clean so getVar works
+                    self.clean[virtualfn] = ""
+                    self.handle_data(virtualfn, cacheData)
             return True, False
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s" % fn)
 
         bb_data, skipped = self.load_bbfile(fn, cfgData)
-        self.setData(fn, bb_data)
+
+        if skipped:
+           if isinstance(bb_data, dict):
+               self.setData(fn, fn, bb_data[""])
+           else:
+               self.setData(fn, fn, bb_data)
+           return False, skipped
+
+        if isinstance(bb_data, dict):
+            for data in bb_data:
+                virtualfn = self.realfn2virtual(fn, data)
+                self.setData(virtualfn, fn, bb_data[data])
+                self.handle_data(virtualfn, cacheData)
+            return False, skipped
+
+        self.setData(fn, fn, bb_data)
+        self.handle_data(fn, cacheData)
         return False, skipped
 
     def cacheValid(self, fn):
@@ -383,6 +436,7 @@ class Cache:
 
         # Touch this to make sure its in the cache
         self.getVar('__BB_DONT_CACHE', file_name, True)
+        self.getVar('BBCLASSEXTEND', file_name, True)
 
     def load_bbfile( self, bbfile , config):
         """

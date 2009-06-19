@@ -175,8 +175,21 @@ def handle(fn, d, include = 0):
         classes.remove(__classname__)
     else:
         if include == 0:
-            finalise(fn, d)
-
+            multi = data.getVar('BBCLASSEXTEND', d, 1)
+            if multi:
+                based = bb.data.createCopy(d)
+                finalise(fn, based)
+                darray = {"": based}
+                for cls in multi.split():
+                    pn = data.getVar('PN', d, True)
+                    based = bb.data.createCopy(d)
+                    data.setVar('PN', pn + '-' + cls, based)
+                    inherit([cls], based)
+                    finalise(fn, based)
+                    darray[cls] = based
+                return darray
+            else:
+                finalise(fn, d)
         bbpath.pop(0)
     if oldfile:
         bb.data.setVar("FILE", oldfile, d)

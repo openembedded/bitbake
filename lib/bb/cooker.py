@@ -627,13 +627,10 @@ class BBCooker:
         fn = self.matchFile(buildfile)
         self.buildSetVars()
 
-        # Load data into the cache for fn
+        # Load data into the cache for fn and parse the loaded cache data
         self.bb_cache = bb.cache.init(self)
-        self.bb_cache.loadData(fn, self.configuration.data)      
-
-        # Parse the loaded cache data
         self.status = bb.cache.CacheData()
-        self.bb_cache.handle_data(fn, self.status)  
+        self.bb_cache.loadData(fn, self.configuration.data, self.status)      
 
         # Tweak some variables
         item = self.bb_cache.getVar('PN', fn, True)
@@ -873,7 +870,7 @@ class BBCooker:
 
             # read a file's metadata
             try:
-                fromCache, skip = self.bb_cache.loadData(f, self.configuration.data)
+                fromCache, skip = self.bb_cache.loadData(f, self.configuration.data, self.status)
                 if skip:
                     skipped += 1
                     bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
@@ -881,7 +878,6 @@ class BBCooker:
                     continue
                 elif fromCache: cached += 1
                 else: parsed += 1
-                deps = None
 
                 # Disabled by RP as was no longer functional
                 # allow metadata files to add items to BBFILES
@@ -893,8 +889,6 @@ class BBCooker:
                 #            if not os.path.isabs(aof):
                 #                aof = os.path.join(os.path.dirname(f),aof)
                 #            files.append(aof)
-
-                self.bb_cache.handle_data(f, self.status)
 
             except IOError, e:
                 error += 1

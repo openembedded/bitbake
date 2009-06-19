@@ -177,6 +177,7 @@ Changes in Bitbake 1.9.x:
 	- Make sure allowed variables inherited from the environment are exported again (from Poky)
 	- When running a stage task in bbshell, run populate_staging, not the stage task (from Poky)
 	- Fix + character escaping from PACKAGES_DYNAMIC (thanks Otavio Salvador)
+	- Addition of BBCLASSEXTEND support for allowing one recipe to provide multiple targets (from Poky)
 
 Changes in Bitbake 1.8.0:
 	- Release 1.7.x as a stable series
