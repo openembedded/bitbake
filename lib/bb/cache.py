@@ -273,7 +273,7 @@ class Cache:
             for f,old_mtime in depends:
                 fmtime = bb.parse.cached_mtime_noerror(f)
                 # Check if file still exists
-                if fmtime == 0:
+                if old_mtime != 0 and fmtime == 0:
                     self.remove(fn)
                     return False
 
