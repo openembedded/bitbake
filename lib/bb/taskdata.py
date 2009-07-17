@@ -373,11 +373,7 @@ class TaskData:
         all_p = dataCache.providers[item]
 
         eligible, foundUnique = bb.providers.filterProviders(all_p, item, cfgData, dataCache)
-
-        for p in eligible:
-            fnid = self.getfn_id(p)
-            if fnid in self.failed_fnids:
-                eligible.remove(p)
+        eligible = [p for p in eligible if not self.getfn_id(p) in self.failed_fnids]
 
         if not eligible:
             bb.msg.note(2, bb.msg.domain.Provider, "No buildable provider PROVIDES '%s' but '%s' DEPENDS on or otherwise requires it. Enable debugging and see earlier logs to find unbuildable providers." % (item, self.get_dependees_str(item)))
@@ -425,11 +421,7 @@ class TaskData:
             raise bb.providers.NoRProvider(item)
 
         eligible, numberPreferred = bb.providers.filterProvidersRunTime(all_p, item, cfgData, dataCache)
-
-        for p in eligible:
-            fnid = self.getfn_id(p)
-            if fnid in self.failed_fnids:
-                eligible.remove(p)
+        eligible = [p for p in eligible if not self.getfn_id(p) in self.failed_fnids]
 
         if not eligible:
             bb.msg.error(bb.msg.domain.Provider, "'%s' RDEPENDS/RRECOMMENDS or otherwise requires the runtime entity '%s' but it wasn't found in any PACKAGE or RPROVIDES variables of any buildable targets.\nEnable debugging and see earlier logs to find unbuildable targets." % (self.get_rdependees_str(item), item))
