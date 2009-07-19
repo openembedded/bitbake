@@ -50,6 +50,100 @@ class MD5SumError(Exception):
 class InvalidSRCREV(Exception):
     """Exception raised when an invalid SRCREV is encountered"""
 
+def decodeurl(url):
+    """Decodes an URL into the tokens (scheme, network location, path,
+    user, password, parameters).
+
+    >>> decodeurl("http://www.google.com/index.html")
+    ('http', 'www.google.com', '/index.html', '', '', {})
+
+    CVS url with username, host and cvsroot. The cvs module to check out is in the
+    parameters:
+
+    >>> decodeurl("cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg")
+    ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'})
+
+    Dito, but this time the username has a password part. And we also request a special tag
+    to check out.
+
+    >>> decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
+    ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
+    """
+
+    m = re.compile('(?P<type>[^:]*)://((?P<user>.+)@)?(?P<location>[^;]+)(;(?P<parm>.*))?').match(url)
+    if not m:
+        raise MalformedUrl(url)
+
+    type = m.group('type')
+    location = m.group('location')
+    if not location:
+        raise MalformedUrl(url)
+    user = m.group('user')
+    parm = m.group('parm')
+
+    locidx = location.find('/')
+    if locidx != -1:
+        host = location[:locidx]
+        path = location[locidx:]
+    else:
+        host = ""
+        path = location
+    if user:
+        m = re.compile('(?P<user>[^:]+)(:?(?P<pswd>.*))').match(user)
+        if m:
+            user = m.group('user')
+            pswd = m.group('pswd')
+    else:
+        user = ''
+        pswd = ''
+
+    p = {}
+    if parm:
+        for s in parm.split(';'):
+            s1,s2 = s.split('=')
+            p[s1] = s2
+
+    return (type, host, path, user, pswd, p)
+
+def encodeurl(decoded):
+    """Encodes a URL from tokens (scheme, network location, path,
+    user, password, parameters).
+
+    >>> encodeurl(['http', 'www.google.com', '/index.html', '', '', {}])
+    'http://www.google.com/index.html'
+
+    CVS with username, host and cvsroot. The cvs module to check out is in the
+    parameters:
+
+    >>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}])
+    'cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg'
+
+    Dito, but this time the username has a password part. And we also request a special tag
+    to check out.
+
+    >>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'}])
+    'cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg'
+    """
+
+    (type, host, path, user, pswd, p) = decoded
+
+    if not type or not path:
+        fatal("invalid or missing parameters for url encoding")
+    url = '%s://' % type
+    if user:
+        url += "%s" % user
+        if pswd:
+            url += ":%s" % pswd
+        url += "@"
+    if host:
+        url += "%s" % host
+    url += "%s" % path
+    if p:
+        for parm in p.keys():
+            url += ";%s=%s" % (parm, p[parm])
+
+    return url
+
 def uri_replace(uri, uri_find, uri_replace, d):
 #   bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: operating on %s" % uri)
     if not uri or not uri_find or not uri_replace:
