@@ -23,7 +23,7 @@ digits = "0123456789"
 ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 separators = ".-"
 
-import re, fcntl, os, types
+import re, fcntl, os, types, bb
 
 def explode_version(s):
     r = []
@@ -435,10 +435,10 @@ def mkdirhier(dir):
     directory already exists like os.makedirs
     """
 
-    debug(3, "mkdirhier(%s)" % dir)
+    bb.debug(3, "mkdirhier(%s)" % dir)
     try:
         os.makedirs(dir)
-        debug(2, "created " + dir)
+        bb.debug(2, "created " + dir)
     except OSError, e:
         if e.errno != 17: raise e
 
@@ -832,32 +832,32 @@ def ververify(myorigval,silent=1):
 
     if len(myorigval) == 0:
         if not silent:
-            error("package version is empty")
+            bb.error("package version is empty")
         __ververify_cache__[myorigval] = 0
         return 0
     myval = myorigval.split('.')
     if len(myval)==0:
         if not silent:
-            error("package name has empty version string")
+            bb.error("package name has empty version string")
         __ververify_cache__[myorigval] = 0
         return 0
     # all but the last version must be a numeric
     for x in myval[:-1]:
         if not len(x):
             if not silent:
-                error("package version has two points in a row")
+                bb.error("package version has two points in a row")
             __ververify_cache__[myorigval] = 0
             return 0
         try:
             foo = int(x)
         except:
             if not silent:
-                error("package version contains non-numeric '"+x+"'")
+                bb.error("package version contains non-numeric '"+x+"'")
             __ververify_cache__[myorigval] = 0
             return 0
     if not len(myval[-1]):
             if not silent:
-                error("package version has trailing dot")
+                bb.error("package version has trailing dot")
             __ververify_cache__[myorigval] = 0
             return 0
     try:
@@ -880,7 +880,7 @@ def ververify(myorigval,silent=1):
     ep=string.split(myval[-1],"_")
     if len(ep)!= 2:
         if not silent:
-            error("package version has more than one letter at then end")
+            bb.error("package version has more than one letter at then end")
         __ververify_cache__[myorigval] = 0
         return 0
     try:
@@ -888,7 +888,7 @@ def ververify(myorigval,silent=1):
     except:
         # this needs to be numeric, i.e. the "1" in "1_alpha"
         if not silent:
-            error("package version must have numeric part before the '_'")
+            bb.error("package version must have numeric part before the '_'")
         __ververify_cache__[myorigval] = 0
         return 0
 
@@ -907,7 +907,7 @@ def ververify(myorigval,silent=1):
                     # if no _package_weights_ work, *then* we return 0
                     pass
     if not silent:
-        error("package version extension after '_' is invalid")
+        bb.error("package version extension after '_' is invalid")
     __ververify_cache__[myorigval] = 0
     return 0
 
@@ -962,13 +962,13 @@ def pkgsplit(mypkg, silent=1):
     myparts = string.split(mypkg,'-')
     if len(myparts) < 2:
         if not silent:
-            error("package name without name or version part")
+            bb.error("package name without name or version part")
         __pkgsplit_cache__[mypkg] = None
         return None
     for x in myparts:
         if len(x) == 0:
             if not silent:
-                error("package name with empty name or version part")
+                bb.error("package name with empty name or version part")
             __pkgsplit_cache__[mypkg] = None
             return None
     # verify rev
@@ -1008,7 +1008,7 @@ def pkgsplit(mypkg, silent=1):
         else:
             for x in myparts[:-1]:
                 if ververify(x):
-                    if not silent: error("package name has multiple version parts")
+                    if not silent: bb.error("package name has multiple version parts")
                     __pkgsplit_cache__[mypkg] = None
                     return None
             myval = [string.join(myparts[:-1],"-"), myparts[-1],"r0"]
@@ -1127,7 +1127,7 @@ def dep_opconvert(mysplit, myuse):
             try:
                 mynew = dep_opconvert(mysplit[mypos+1],myuse)
             except Exception, e:
-                error("unable to satisfy OR dependancy: " + string.join(mysplit," || "))
+                bb.error("unable to satisfy OR dependancy: " + string.join(mysplit," || "))
                 raise e
             mynew[0:0] = ["||"]
             newsplit.append(mynew)
