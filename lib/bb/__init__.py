@@ -80,11 +80,6 @@ if "BBDEBUG" in os.environ:
     if level:
         bb.msg.set_debug_level(level)
 
-# For compatibility
-from bb.fetch import MalformedUrl, encodeurl, decodeurl
-from bb.data import VarExpandError
-
-
 #######################################################################
 #######################################################################
 #
@@ -1018,6 +1013,10 @@ def dep_opconvert(mysplit, myuse):
             newsplit.append(mysplit[mypos])
             mypos += 1
     return newsplit
+
+# For compatibility
+from bb.fetch import MalformedUrl, encodeurl, decodeurl
+from bb.data import VarExpandError
 
 if __name__ == "__main__":
     import doctest, bb
