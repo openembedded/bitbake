@@ -80,11 +80,9 @@ if "BBDEBUG" in os.environ:
     if level:
         bb.msg.set_debug_level(level)
 
-class VarExpandError(Exception):
-    pass
-
-class MalformedUrl(Exception):
-    """Exception raised when encountering an invalid url"""
+# For compatibility
+from bb.fetch import MalformedUrl
+from bb.data import VarExpandError
 
 
 #######################################################################

@@ -29,6 +29,9 @@ import bb
 from   bb import data
 from   bb import persist_data
 
+class MalformedUrl(Exception):
+    """Exception raised when encountering an invalid url"""
+
 class FetchError(Exception):
     """Exception raised when a download fails"""
 
