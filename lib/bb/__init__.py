@@ -68,24 +68,13 @@ __all__ = [
 
 import sys, os, types, re, string, bb
 
-#projectdir = os.path.dirname(os.path.dirname(os.path.abspath(sys.argv[0])))
-projectdir = os.getcwd()
-
 if "BBDEBUG" in os.environ:
     level = int(os.environ["BBDEBUG"])
     if level:
         bb.msg.set_debug_level(level)
 
-#######################################################################
-#######################################################################
-#
-# SECTION: Debug
-#
-# PURPOSE: little functions to make yourself known
-#
-#######################################################################
-#######################################################################
 
+# Messaging convenience functions
 def plain(*args):
     bb.msg.plain(''.join(args))
 
