@@ -26,23 +26,14 @@ import bb, re, string
 __word__ = re.compile(r"\S+")
 __parsed_methods__ = bb.methodpool.get_parsed_dict()
 
-class StatementGroup:
-    def __init__(self):
-        self.statements = []
-
-    def append(self, statement):
-        self.statements.append(statement)
-
+class StatementGroup(list):
     def eval(self, data):
-        """
-        Apply each statement on the data... in order
-        """
-        map(lambda x: x.eval(data), self.statements)
+        map(lambda x: x.eval(data), self)
 
-    def __getitem__(self, item):
-        return self.statements.__getitem__(item)
+class AstNode(object):
+    pass
 
-class IncludeNode:
+class IncludeNode(AstNode):
     def __init__(self, what_file, fn, lineno, force):
         self.what_file = what_file
         self.from_fn = fn
@@ -62,14 +53,14 @@ class IncludeNode:
         else:
             bb.parse.ConfHandler.include(self.from_fn, s, data, False)
 
-class ExportNode:
+class ExportNode(AstNode):
     def __init__(self, var):
         self.var = var
 
     def eval(self, data):
         bb.data.setVarFlag(self.var, "export", 1, data)
 
-class DataNode:
+class DataNode(AstNode):
     """
     Various data related updates. For the sake of sanity
     we have one class doing all this. This means that all
@@ -134,7 +125,7 @@ class MethodNode:
             bb.data.setVarFlag(self.func_name, "func", 1, data)
             bb.data.setVar(self.func_name, '\n'.join(self.body), data)
 
-class PythonMethodNode:
+class PythonMethodNode(AstNode):
     def __init__(self, root, body, fn):
         self.root = root
         self.body = body
@@ -148,7 +139,7 @@ class PythonMethodNode:
             text = '\n'.join(self.body)
             bb.methodpool.insert_method(self.root, text, self.fn)
 
-class MethodFlagsNode:
+class MethodFlagsNode(AstNode):
     def __init__(self, key, m):
         self.key = key
         self.m = m
@@ -168,7 +159,7 @@ class MethodFlagsNode:
         else:
             bb.data.delVarFlag(self.key, "fakeroot", data)
 
-class ExportFuncsNode:
+class ExportFuncsNode(AstNode):
     def __init__(self, fns, classes):
         self.n = __word__.findall(fns)
         self.classes = classes
@@ -207,7 +198,7 @@ class ExportFuncsNode:
                     bb.data.setVar(var, "\t" + calledvar + "\n", data)
                 bb.data.setVarFlag(var, 'export_func', '1', data)
 
-class AddTaskNode:
+class AddTaskNode(AstNode):
     def __init__(self, func, before, after):
         self.func = func
         self.before = before
@@ -238,7 +229,7 @@ class AddTaskNode:
                 if var not in existing:
                     bb.data.setVarFlag(entry, "deps", [var] + existing, data)
 
-class BBHandlerNode:
+class BBHandlerNode(AstNode):
     def __init__(self, fns):
         self.hs = __word__.findall(fns)
 
@@ -249,7 +240,7 @@ class BBHandlerNode:
             bb.data.setVarFlag(h, "handler", 1, data)
         bb.data.setVar('__BBHANDLERS', bbhands, data)
 
-class InheritNode:
+class InheritNode(AstNode):
     def __init__(self, files):
         self.n = __word__.findall(files)
 
