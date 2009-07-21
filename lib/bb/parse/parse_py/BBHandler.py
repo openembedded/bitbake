@@ -32,6 +32,9 @@ from bb import data, fetch
 from ConfHandler import include, init
 from bb.parse import ParseError, resolve_file, ast
 
+# For compatibility
+from bb.parse import vars_from_file
+
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
@@ -229,27 +232,6 @@ def feeder(lineno, s, fn, root, d, statements):
 
     from bb.parse import ConfHandler
     return ConfHandler.feeder(lineno, s, fn, d, statements)
-
-# Used by OpenEmbedded metadata
-__pkgsplit_cache__={}
-def vars_from_file(mypkg, d):
-    if not mypkg:
-        return (None, None, None)
-    if mypkg in __pkgsplit_cache__:
-        return __pkgsplit_cache__[mypkg]
-
-    myfile = os.path.splitext(os.path.basename(mypkg))
-    parts = myfile[0].split('_')
-    __pkgsplit_cache__[mypkg] = parts
-    if len(parts) > 3:
-        raise ParseError("Unable to generate default variables from the filename: %s (too many underscores)" % mypkg)
-    exp = 3 - len(parts)
-    tmplist = []
-    while exp != 0:
-        exp -= 1
-        tmplist.append(None)
-    parts.extend(tmplist)
-    return parts
 
 # Add us to the handlers list
 from bb.parse import handlers

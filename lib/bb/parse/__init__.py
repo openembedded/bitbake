@@ -103,5 +103,25 @@ def resolve_file(fn, d):
     bb.msg.debug(2, bb.msg.domain.Parsing, "LOAD %s" % abs_fn)
     return (f, abs_fn)
 
+# Used by OpenEmbedded metadata
+__pkgsplit_cache__={}
+def vars_from_file(mypkg, d):
+    if not mypkg:
+        return (None, None, None)
+    if mypkg in __pkgsplit_cache__:
+        return __pkgsplit_cache__[mypkg]
+
+    myfile = os.path.splitext(os.path.basename(mypkg))
+    parts = myfile[0].split('_')
+    __pkgsplit_cache__[mypkg] = parts
+    if len(parts) > 3:
+        raise ParseError("Unable to generate default variables from the filename: %s (too many underscores)" % mypkg)
+    exp = 3 - len(parts)
+    tmplist = []
+    while exp != 0:
+        exp -= 1
+        tmplist.append(None)
+    parts.extend(tmplist)
+    return parts
 
 from bb.parse.parse_py import __version__, ConfHandler, BBHandler
