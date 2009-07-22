@@ -104,4 +104,4 @@ def resolve_file(fn, d):
     return (f, abs_fn)
 
 
-from parse_py import __version__, ConfHandler, BBHandler
+from bb.parse.parse_py import __version__, ConfHandler, BBHandler
