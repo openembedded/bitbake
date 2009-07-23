@@ -925,38 +925,40 @@ class CookerParser:
 
     def parse_next(self):
         print "Pointer %d" % self.pointer
-        f = self.filelist[self.pointer]
-        cooker = self.cooker
 
-        try:
-            fromCache, skip = cooker.bb_cache.loadData(f, cooker.configuration.data, cooker.status)
-            if skip:
-                self.skipped += 1
-                bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
-                cooker.bb_cache.skip(f)
-            elif fromCache: self.cached += 1
-            else: self.parsed += 1
+        if self.pointer < len(self.filelist):
+            f = self.filelist[self.pointer]
+            cooker = self.cooker
 
-        except IOError, e:
-            self.error += 1
-            cooker.bb_cache.remove(f)
-            bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
-            pass
-        except KeyboardInterrupt:
-            cooker.bb_cache.remove(f)
-            cooker.bb_cache.sync()
-            raise
-        except Exception, e:
-            self.error += 1
-            cooker.bb_cache.remove(f)
-            bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))
-        except:
-            cooker.bb_cache.remove(f)
-            raise
-        finally:
-            bb.event.fire(bb.event.ParseProgress(cooker.configuration.event_data, self.cached, self.parsed, self.skipped, self.masked, self.error, self.total))
+            try:
+                fromCache, skip = cooker.bb_cache.loadData(f, cooker.configuration.data, cooker.status)
+                if skip:
+                    self.skipped += 1
+                    bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
+                    cooker.bb_cache.skip(f)
+                elif fromCache: self.cached += 1
+                else: self.parsed += 1
 
-        self.pointer += 1
+            except IOError, e:
+                self.error += 1
+                cooker.bb_cache.remove(f)
+                bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
+                pass
+            except KeyboardInterrupt:
+                cooker.bb_cache.remove(f)
+                cooker.bb_cache.sync()
+                raise
+            except Exception, e:
+                self.error += 1
+                cooker.bb_cache.remove(f)
+                bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))
+            except:
+                cooker.bb_cache.remove(f)
+                raise
+            finally:
+                bb.event.fire(bb.event.ParseProgress(cooker.configuration.event_data, self.cached, self.parsed, self.skipped, self.masked, self.error, self.total))
+
+            self.pointer += 1
 
         if self.pointer >= self.total:
             cooker.bb_cache.sync()
