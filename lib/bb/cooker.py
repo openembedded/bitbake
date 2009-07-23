@@ -141,8 +141,10 @@ class BBCooker:
                 bb.error("Only one target can be used with the --environment option.")
             elif self.configuration.buildfile and len(self.configuration.pkgs_to_build) > 0:
                 bb.error("No target should be used with the --environment and --buildfile options.")
+            elif self.configuration.buildfile is not None or len(self.configuration.pkgs_to_build) > 0:
+                self.commandlineAction = ["showEnvironmentPackage", self.configuration.buildfile, self.configuration.pkgs_to_build]
             else:
-                self.commandlineAction = ["showEnvironment", self.configuration.buildfile, self.configuration.pkgs_to_build]
+                self.commandlineAction = ["showEnvironment"]
         elif self.configuration.buildfile is not None:
             self.commandlineAction = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
         elif self.configuration.show_versions:
