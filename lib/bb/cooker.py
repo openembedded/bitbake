@@ -46,7 +46,8 @@ class NothingToBuild(Exception):
 
 # Different states cooker can be in
 cookerClean = 1
-cookerParsed = 2
+cookerParsing = 2
+cookerParsed = 3
 
 # Different action states the cooker can be in
 cookerRun = 1           # Cooker is running normally
@@ -116,10 +117,8 @@ class BBCooker:
                 termios.tcsetattr(fd, termios.TCSANOW, tcattr)
 
         self.command = bb.command.Command(self)
-        self.cookerIdle = True
         self.cookerState = cookerClean
         self.cookerAction = cookerRun
-        self.server.register_idle_function(self.runCommands, self)
 
     def parseConfiguration(self):
 
@@ -172,11 +171,8 @@ class BBCooker:
         This is done by the idle handler so it runs in true context rather than
         tied to any UI.
         """
-        if self.cookerIdle and not abort:
-            self.command.runAsyncCommand()
 
-        # Always reschedule
-        return True
+        return self.command.runAsyncCommand()
 
     def tryBuildPackage(self, fn, item, task, the_data):
         """
@@ -675,12 +671,11 @@ class BBCooker:
                     failures = failures + 1
                 retval = False
             if not retval:
-                self.cookerIdle = True
                 self.command.finishAsyncCommand()
                 bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
-            return retval
+                return False
+            return 0.5
 
-        self.cookerIdle = False
         self.server.register_idle_function(buildFileIdle, rq)
 
     def buildTargets(self, targets, task):
@@ -712,10 +707,10 @@ class BBCooker:
                     failures = failures + 1
                 retval = False
             if not retval:
-                self.cookerIdle = True
                 self.command.finishAsyncCommand()
                 bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
-            return retval
+                return None
+            return 0.5
 
         self.buildSetVars()
 
@@ -736,47 +731,54 @@ class BBCooker:
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
 
-        self.cookerIdle = False
         self.server.register_idle_function(buildTargetsIdle, rq)
 
     def updateCache(self):
 
-        self.parseConfiguration ()
         if self.cookerState == cookerParsed:
             return
 
-        # Import Psyco if available and not disabled
-        import platform
-        if platform.machine() in ['i386', 'i486', 'i586', 'i686']:
-            if not self.configuration.disable_psyco:
-                try:
-                    import psyco
-                except ImportError:
-                    bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+        if self.cookerState != cookerParsing:
+
+            self.parseConfiguration ()
+
+            # Import Psyco if available and not disabled
+            import platform
+            if platform.machine() in ['i386', 'i486', 'i586', 'i686']:
+                if not self.configuration.disable_psyco:
+                    try:
+                        import psyco
+                    except ImportError:
+                        bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+                    else:
+                        psyco.bind( CookerParser.parse_next )
                 else:
-                    psyco.bind( self.parse_bbfiles )
-            else:
-                bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
+                    bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
 
-        self.status = bb.cache.CacheData()
+            self.status = bb.cache.CacheData()
 
-        ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
-        self.status.ignored_dependencies = set(ignore.split())
+            ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
+            self.status.ignored_dependencies = set(ignore.split())
+    
+            for dep in self.configuration.extra_assume_provided:
+                self.status.ignored_dependencies.add(dep)
+    
+            self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
-        for dep in self.configuration.extra_assume_provided:
-            self.status.ignored_dependencies.add(dep)
+            bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
+            (filelist, masked) = self.collect_bbfiles()
+            bb.data.renameVar("__depends", "__base_depends", self.configuration.data)
 
-        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
+            self.parser = CookerParser(self, filelist, masked)
+            self.cookerState = cookerParsing
 
-        bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
-        (filelist, masked) = self.collect_bbfiles()
-        bb.data.renameVar("__depends", "__base_depends", self.configuration.data)
-        self.parse_bbfiles(filelist, masked)
-        bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
+        if not self.parser.parse_next():
+            bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
+            self.buildDepgraph()
+            self.cookerState = cookerParsed
+            return None
 
-        self.buildDepgraph()
-
-        self.cookerState = cookerParsed
+        return 0.00001
 
     def checkPackages(self, pkgs_to_build):
 
@@ -861,57 +863,6 @@ class BBCooker:
 
         return (finalfiles, masked)
 
-    def parse_bbfiles(self, filelist, masked):
-        parsed, cached, skipped, error, total = 0, 0, 0, 0, len(filelist)
-        for i in xrange(total):
-            f = filelist[i]
-
-            #bb.msg.debug(1, bb.msg.domain.Collection, "parsing %s" % f)
-
-            # read a file's metadata
-            try:
-                fromCache, skip = self.bb_cache.loadData(f, self.configuration.data, self.status)
-                if skip:
-                    skipped += 1
-                    bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
-                    self.bb_cache.skip(f)
-                    continue
-                elif fromCache: cached += 1
-                else: parsed += 1
-
-                # Disabled by RP as was no longer functional
-                # allow metadata files to add items to BBFILES
-                #data.update_data(self.pkgdata[f])
-                #addbbfiles = self.bb_cache.getVar('BBFILES', f, False) or None
-                #if addbbfiles:
-                #    for aof in addbbfiles.split():
-                #        if not files.count(aof):
-                #            if not os.path.isabs(aof):
-                #                aof = os.path.join(os.path.dirname(f),aof)
-                #            files.append(aof)
-
-            except IOError, e:
-                error += 1
-                self.bb_cache.remove(f)
-                bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
-                pass
-            except KeyboardInterrupt:
-                self.bb_cache.sync()
-                raise
-            except Exception, e:
-                error += 1
-                self.bb_cache.remove(f)
-                bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))
-            except:
-                self.bb_cache.remove(f)
-                raise
-            finally:
-                bb.event.fire(bb.event.ParseProgress(self.configuration.event_data, cached, parsed, skipped, masked, error, total))
-
-        self.bb_cache.sync()
-        if error > 0:
-             raise ParsingErrorsFound
-
     def serve(self):
 
         # Empty the environment. The environment will be populated as
@@ -954,4 +905,63 @@ class CookerExit(bb.event.Event):
 
     def __init__(self, d):
         bb.event.Event.__init__(self, d)
+
+class CookerParser:
+    def __init__(self, cooker, filelist, masked):
+        # Internal data
+        self.filelist = filelist
+        self.cooker = cooker
+
+        # Accounting statistics
+        self.parsed = 0
+        self.cached = 0
+        self.skipped = 0
+        self.error = 0
+        self.masked = masked
+        self.total = len(filelist)
+
+        # Pointer to the next file to parse
+        self.pointer = 0
+
+    def parse_next(self):
+        print "Pointer %d" % self.pointer
+        f = self.filelist[self.pointer]
+        cooker = self.cooker
+
+        try:
+            fromCache, skip = cooker.bb_cache.loadData(f, cooker.configuration.data, cooker.status)
+            if skip:
+                self.skipped += 1
+                bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
+                cooker.bb_cache.skip(f)
+            elif fromCache: self.cached += 1
+            else: self.parsed += 1
+
+        except IOError, e:
+            self.error += 1
+            cooker.bb_cache.remove(f)
+            bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
+            pass
+        except KeyboardInterrupt:
+            cooker.bb_cache.remove(f)
+            cooker.bb_cache.sync()
+            raise
+        except Exception, e:
+            self.error += 1
+            cooker.bb_cache.remove(f)
+            bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))
+        except:
+            cooker.bb_cache.remove(f)
+            raise
+        finally:
+            bb.event.fire(bb.event.ParseProgress(cooker.configuration.event_data, self.cached, self.parsed, self.skipped, self.masked, self.error, self.total))
+
+        self.pointer += 1
+
+        if self.pointer >= self.total:
+            cooker.bb_cache.sync()
+            if self.error > 0:
+                raise ParsingErrorsFound
+            return False
+        return True
 

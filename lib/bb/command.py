@@ -60,13 +60,14 @@ class Command:
         try:
             command = commandline.pop(0)
             if command in CommandsSync.__dict__:
-                # Can run online commands straight away            
+                # Can run synchronous commands straight away            
                 return getattr(CommandsSync, command)(self.cmds_sync, self, commandline)
             if self.currentAsyncCommand is not None:
                 return "Busy (%s in progress)" % self.currentAsyncCommand[0]
             if command not in CommandsAsync.__dict__:
                 return "No such command"
             self.currentAsyncCommand = (command, commandline)
+            self.cooker.server.register_idle_function(self.cooker.runCommands, self.cooker)
             return True
         except:
             import traceback
@@ -76,10 +77,20 @@ class Command:
         try:
             if self.currentAsyncCommand is not None:
                 (command, options) = self.currentAsyncCommand
-                getattr(CommandsAsync, command)(self.cmds_async, self, options)
+                commandmethod = getattr(CommandsAsync, command)
+                needcache = getattr( commandmethod, "needcache" )
+                if needcache and self.cooker.cookerState != bb.cooker.cookerParsed:
+                    self.cooker.updateCache()
+                    return True
+                else:
+                    commandmethod(self.cmds_async, self, options)
+                    return False
+            else:
+                return False
         except:
             import traceback
             self.finishAsyncCommand(traceback.format_exc())
+            return False
 
     def finishAsyncCommand(self, error = None):
         if error:
@@ -149,6 +160,7 @@ class CommandsAsync:
         task = params[1]
 
         command.cooker.buildFile(bfile, task)
+    buildFile.needcache = False
 
     def buildTargets(self, command, params):
         """
@@ -158,6 +170,7 @@ class CommandsAsync:
         task = params[1]
 
         command.cooker.buildTargets(pkgs_to_build, task)
+    buildTargets.needcache = True
 
     def generateDepTreeEvent(self, command, params):
         """
@@ -168,6 +181,7 @@ class CommandsAsync:
 
         command.cooker.generateDepTreeEvent(pkgs_to_build, task)
         command.finishAsyncCommand()
+    generateDepTreeEvent.needcache = True
 
     def generateDotGraph(self, command, params):
         """
@@ -178,6 +192,7 @@ class CommandsAsync:
 
         command.cooker.generateDotGraphFiles(pkgs_to_build, task)
         command.finishAsyncCommand()
+    generateDotGraph.needcache = True
 
     def showVersions(self, command, params):
         """
@@ -185,6 +200,7 @@ class CommandsAsync:
         """
         command.cooker.showVersions()
         command.finishAsyncCommand()
+    showVersions.needcache = True
 
     def showEnvironment(self, command, params):
         """
@@ -195,6 +211,7 @@ class CommandsAsync:
 
         command.cooker.showEnvironment(bfile, pkg)
         command.finishAsyncCommand()
+    showEnvironment.needcache = True
 
     def parseFiles(self, command, params):
         """
@@ -202,6 +219,7 @@ class CommandsAsync:
         """
         command.cooker.updateCache()
         command.finishAsyncCommand()
+    parseFiles.needcache = True
 
 #
 # Events

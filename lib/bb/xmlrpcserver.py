@@ -115,7 +115,24 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
         """
         self.quit = False
         while not self.quit:
+            #print "Idle queue length %s" % len(self._idlefuns)
+            if len(self._idlefuns) == 0:
+                self.timeout = None
+            else:
+                self.timeout = 0
             self.handle_request()
+            #print "Idle timeout, running idle functions"
+            for function, data in self._idlefuns.items():
+                try:
+                    retval = function(self, data, False)
+                    if not retval:
+                        del self._idlefuns[function]
+                except SystemExit:
+                    raise
+                except:
+                    import traceback
+                    traceback.print_exc()
+                    pass
 
         # Tell idle functions we're exiting
         for function, data in self._idlefuns.items():
@@ -126,32 +143,3 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
 
         self.server_close()
         return
-
-    def get_request(self):
-        """
-        Get next request. Behaves like the parent class unless a waitpid callback
-        has been set. In that case, we regularly check waitpid when the server is idle
-        """
-        while True:
-            # wait 500 ms for an xmlrpc request
-            if DEBUG: 
-                print "DEBUG: select'ing 500ms waiting for an xmlrpc request..."
-            ifds, ofds, xfds = select.select([self.socket.fileno()], [], [], 0.5)
-            if ifds:
-                return self.socket.accept()
-            # call idle functions only if we're not shutting down atm to prevent a recursion
-            if not self.quit:
-                if DEBUG: 
-                    print "DEBUG: server is idle -- calling idle functions..."
-                for function, data in self._idlefuns.items():
-                    try:
-                        retval = function(self, data, False)
-                        if not retval:
-                            del self._idlefuns[function]
-                    except SystemExit:
-                        raise
-                    except:
-                        import traceback
-                        traceback.print_exc()
-                        pass
-
