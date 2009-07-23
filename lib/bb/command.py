@@ -202,23 +202,25 @@ class CommandsAsync:
         command.finishAsyncCommand()
     showVersions.needcache = True
 
-    def showEnvironmentPackage(self, command, params):
+    def showEnvironmentTarget(self, command, params):
         """
-        Print the environment of a recipe
+        Print the environment of a target recipe
+        (needs the cache to work out which recipe to use)
         """
-        bfile = params[0]
-        pkg = params[1]
+        pkg = params[0]
 
-        command.cooker.showEnvironment(bfile, pkg)
+        command.cooker.showEnvironment(None, pkg)
         command.finishAsyncCommand()
-    showEnvironmentPackage.needcache = True
+    showEnvironmentTarget.needcache = True
 
     def showEnvironment(self, command, params):
         """
         Print the standard environment
+        or if specified the environment for a specified recipe
         """
+        bfile = params[0]
 
-        command.cooker.showEnvironment()
+        command.cooker.showEnvironment(bfile)
         command.finishAsyncCommand()
     showEnvironment.needcache = False
 
