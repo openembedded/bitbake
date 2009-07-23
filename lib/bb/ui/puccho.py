@@ -217,7 +217,7 @@ class BuildSetupDialog (gtk.Dialog):
         button.show_all ()
 
         # Pull in *just* the table from the Glade XML data.
-        gxml = gtk.glade.XML ("bitbake-dev/lib/bb/ui/crumbs/puccho.glade",
+        gxml = gtk.glade.XML (os.path.dirname(__file__) + "/crumbs/puccho.glade",
             root = "build_table")
         table = gxml.get_widget ("build_table")
         self.vbox.pack_start (table, True, False, 0)
@@ -347,7 +347,7 @@ class MainWindow (gtk.Window):
 
       # Pull in *just* the main vbox from the Glade XML data and then pack
       # that inside the window
-      gxml = gtk.glade.XML ("bitbake-dev/lib/bb/ui/crumbs/puccho.glade",
+      gxml = gtk.glade.XML (os.path.dirname(__file__) + "/crumbs/puccho.glade",
           root = "main_window_vbox")
       vbox = gxml.get_widget ("main_window_vbox")
       self.add (vbox)
