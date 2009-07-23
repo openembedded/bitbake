@@ -381,6 +381,16 @@ def empty_environment():
         os.unsetenv(s)
         del os.environ[s]
 
+def build_environment(d):
+    """
+    Build an environment from all exported variables.
+    """
+    import bb
+    for var in bb.data.keys(d):
+        export = bb.data.getVarFlag(var, "export", d)
+        if export:
+            os.environ[var] = bb.data.getVar(var, d, True)
+
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
     # CAUTION:  This is dangerous!
