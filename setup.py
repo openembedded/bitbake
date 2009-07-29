@@ -17,54 +17,59 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-
-from distutils.core import setup
 import os, sys
+sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
+from bb import __version__
 
-bbdir = os.path.join(sys.prefix, 'share', 'bitbake')
-docdir = os.path.join(sys.prefix, 'share', 'doc')
-# bbdir = os.path.join('bitbake')
-# docdir = os.path.join('doc')
+from glob import glob
+from distutils.command.clean import clean
+from distutils.command.build import build
 
-def clean_doc(type):
-    origpath = os.path.abspath(os.curdir)
-    os.chdir(os.path.join(origpath, 'doc', 'manual'))
-    make = os.environ.get('MAKE') or 'make'
-    os.system('%s clean-%s' % (make, type))
+from ez_setup import use_setuptools
+use_setuptools()
 
-def generate_doc(type):
-    origpath = os.path.abspath(os.curdir)
-    os.chdir(os.path.join(origpath, 'doc', 'manual'))
-    make = os.environ.get('MAKE') or 'make'
-    ret = os.system('%s %s' % (make, type))
-    if ret != 0:
-        print "ERROR: Unable to generate html documentation."
-        sys.exit(ret)
-    os.chdir(origpath)
+from setuptools import setup, find_packages
 
-if 'bdist' in sys.argv[1:]:
-    generate_doc('html')
 
-sys.path.append(os.path.join(os.path.dirname(sys.argv[0]), 'lib'))
-import bb
-import glob
+doctype = "html"
+
+class Clean(clean):
+    def run(self):
+        clean.run(self)
+        origpath = os.path.abspath(os.curdir)
+        os.chdir(os.path.join(origpath, 'doc', 'manual'))
+        make = os.environ.get('MAKE') or 'make'
+        os.system('%s clean-%s' % (make, doctype))
+
+class Build(build):
+    def run(self):
+        build.run(self)
+        origpath = os.path.abspath(os.curdir)
+        os.chdir(os.path.join(origpath, 'doc', 'manual'))
+        make = os.environ.get('MAKE') or 'make'
+        ret = os.system('%s %s' % (make, doctype))
+        if ret != 0:
+            print "ERROR: Unable to generate html documentation."
+            sys.exit(ret)
+        os.chdir(origpath)
+
 setup(name='bitbake',
-      version=bb.__version__,
+      version=__version__,
+      package_dir={"": "lib"},
+      packages=find_packages("lib"),
+      scripts=["bin/bitbake", "bin/bbimage"],
+      # package_data={"bb": ["data"]},
+      data_files=[("share/bitbake", glob("conf/*") + glob("classes/*")),
+                  ("share/doc/bitbake-%s/manual" % __version__, glob("doc/manual/html/*"))],
+      cmdclass={
+          "build": Build,
+          "clean": Clean,
+      },
+
       license='GPLv2',
       url='http://developer.berlios.de/projects/bitbake/',
       description='BitBake build tool',
       long_description='BitBake is a simple tool for the execution of tasks. It is derived from Portage, which is the package management system used by the Gentoo Linux distribution. It is most commonly used to build packages, as it can easily use its rudamentary inheritence to abstract common operations, such as fetching sources, unpacking them, patching them, compiling them, and so on.  It is the basis of the OpenEmbedded project, which is being used for OpenZaurus, Familiar, and a number of other Linux distributions.',
-      author='Chris Larson',
-      author_email='clarson@elinux.org',
-      packages=['bb', 'bb.fetch', 'bb.parse', 'bb.parse.parse_py', 'bb.ui'],
-      package_dir={'bb': os.path.join('lib', 'bb')},
-      scripts=[os.path.join('bin', 'bitbake'),
-               os.path.join('bin', 'bbimage')],
-      data_files=[(os.path.join(bbdir, 'conf'), [os.path.join('conf', 'bitbake.conf')]),
-                  (os.path.join(bbdir, 'classes'), [os.path.join('classes', 'base.bbclass')]),
-                  (os.path.join(docdir, 'bitbake-%s' % bb.__version__, 'html'), glob.glob(os.path.join('doc', 'manual', 'html', '*.html'))),
-                  (os.path.join(docdir, 'bitbake-%s' % bb.__version__, 'pdf'), glob.glob(os.path.join('doc', 'manual', 'pdf', '*.pdf'))),],
-     )
-
-if 'bdist' in sys.argv[1:]:
-    clean_doc('html')
+      author='BitBake Development Team',
+      author_email='bitbake-dev@lists.berlios.de',
+)

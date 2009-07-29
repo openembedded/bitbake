@@ -1,0 +1,11 @@
+include COPYING
+include ChangeLog
+include AUTHORS
+include contrib/*
+include contrib/vim/*/*
+include conf/*
+include classes/*
+include doc/*
+include doc/manual/*
+include ez_setup.py
+include HEADER

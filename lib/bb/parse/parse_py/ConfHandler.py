@@ -34,10 +34,17 @@ __require_regexp__ = re.compile( r"require\s+(.+)" )
 __export_regexp__ = re.compile( r"export\s+(.+)" )
 
 def init(data):
-    if not bb.data.getVar('TOPDIR', data):
-        bb.data.setVar('TOPDIR', os.getcwd(), data)
+    topdir = bb.data.getVar('TOPDIR', data)
+    if not topdir:
+        topdir = os.getcwd()
+        bb.data.setVar('TOPDIR', topdir, data)
     if not bb.data.getVar('BBPATH', data):
-        bb.data.setVar('BBPATH', os.path.join(sys.prefix, 'share', 'bitbake'), data)
+        from pkg_resources import Requirement, resource_filename
+        bitbake = Requirement.parse("bitbake")
+        datadir = resource_filename(bitbake, "../share/bitbake")
+        basedir = resource_filename(bitbake, "..")
+        bb.data.setVar('BBPATH', '%s:%s:%s' % (topdir, datadir, basedir), data)
+
 
 def supports(fn, d):
     return localpath(fn, d)[-5:] == ".conf"
