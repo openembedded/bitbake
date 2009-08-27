@@ -29,7 +29,8 @@ import sys              # System-specific parameters and functions.
 
 # Default daemon parameters.
 # File mode creation mask of the daemon.
-UMASK = 0
+# For BitBake's children, we do want to inherit the parent umask.
+UMASK = None
 
 # Default maximum for the number of available file descriptors.
 MAXFD = 1024
@@ -107,7 +108,8 @@ def createDaemon(function, logfile):
       if (pid == 0):	# The second child.
          # We probably don't want the file mode creation mask inherited from
          # the parent, so we give the child complete control over permissions.
-         os.umask(UMASK)
+         if UMASK is not None:
+             os.umask(UMASK)
       else:
          # Parent (the first child) of the second child.
          os._exit(0)
