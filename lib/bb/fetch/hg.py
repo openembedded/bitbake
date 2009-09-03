@@ -36,12 +36,19 @@ from bb.fetch import runfetchcmd
 from bb.fetch import logger
 
 class Hg(Fetch):
-    """Class to fetch a from mercurial repositories"""
+    """Class to fetch from mercurial repositories"""
     def supports(self, url, ud, d):
         """
         Check to see if a given url can be fetched with mercurial.
         """
         return ud.type in ['hg']
+
+    def forcefetch(self, url, ud, d):
+        if 'rev' in ud.parm:
+            revTag = ud.parm['rev']
+        else:
+            revTag = "tip"
+        return revTag == "tip"
 
     def localpath(self, url, ud, d):
         if not "module" in ud.parm:
