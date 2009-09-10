@@ -48,6 +48,17 @@ class BBConfiguration( object ):
             setattr( self, key, val )
 
 
+def print_exception(exc, value, tb):
+    """
+    Print the exception to stderr, only showing the traceback if bitbake
+    debugging is enabled.
+    """
+    if not bb.msg.debug_level['default']:
+        tb = None
+
+    sys.__excepthook__(exc, value, tb)
+
+
 #============================================================================#
 # main
 #============================================================================#
@@ -147,6 +158,8 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     daemonize.createDaemon(cooker.serve, cooker_logfile)
     del cooker
+
+    sys.excepthook = print_exception
 
     # Setup a connection to the server (cooker)
     server = xmlrpclib.Server("http://%s:%s" % (host, port),  allow_none=True)
