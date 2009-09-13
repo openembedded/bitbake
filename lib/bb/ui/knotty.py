@@ -140,6 +140,8 @@ def init(server, eventHandler):
                 continue
             if event[0].startswith('bb.event.ConfigParsed'):
                 continue
+            if event[0].startswith('bb.event.RecipeParsed'):
+                continue
             print "Unknown Event: %s" % event
 
         except KeyboardInterrupt:
