@@ -204,6 +204,11 @@ class BitBakeShellCommands:
         self.build( params, "configure" )
     configure.usage = "<providee>"
 
+    def install( self, params ):
+        """Execute 'install' on a providee"""
+        self.build( params, "install" )
+    install.usage = "<providee>"
+
     def edit( self, params ):
         """Call $EDITOR on a providee"""
         name = params[0]
