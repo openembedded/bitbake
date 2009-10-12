@@ -21,8 +21,9 @@ BitBake Utility Functions
 
 digits = "0123456789"
 ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+separators = ".-"
 
-import re, fcntl, os
+import re, fcntl, os, types
 
 def explode_version(s):
     r = []
@@ -39,12 +40,15 @@ def explode_version(s):
             r.append(m.group(1))
             s = m.group(2)
             continue
+        r.append(s[0])
         s = s[1:]
     return r
 
 def vercmp_part(a, b):
     va = explode_version(a)
     vb = explode_version(b)
+    sa = False
+    sb = False
     while True:
         if va == []:
             ca = None
@@ -56,6 +60,16 @@ def vercmp_part(a, b):
             cb = vb.pop(0)
         if ca == None and cb == None:
             return 0
+
+        if type(ca) is types.StringType:
+            sa = ca in separators
+        if type(cb) is types.StringType:
+            sb = cb in separators
+        if sa and not sb:
+            return -1
+        if not sa and sb:
+            return 1
+
         if ca > cb:
             return 1
         if ca < cb:
