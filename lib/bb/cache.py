@@ -331,6 +331,9 @@ class Cache:
             if '__BB_DONT_CACHE' in self.depends_cache[fn] and self.depends_cache[fn]['__BB_DONT_CACHE']:
                 bb.msg.debug(2, bb.msg.domain.Cache, "Not caching %s, marked as not cacheable" % fn)
                 del cache_data[fn]
+            elif 'PV' in self.depends_cache[fn] and 'SRCREVINACTION' in self.depends_cache[fn]['PV']:
+                bb.msg.error(bb.msg.domain.Cache, "Not caching %s as it had SRCREVINACTION in PV. Please report this bug" % fn)
+                del cache_data[fn]
 
         p = pickle.Pickler(file(self.cachefile, "wb" ), -1 )
         p.dump([cache_data, version_data])
@@ -346,6 +349,8 @@ class Cache:
         pn       = self.getVar('PN', file_name, True)
         pe       = self.getVar('PE', file_name, True) or "0"
         pv       = self.getVar('PV', file_name, True)
+        if 'SRCREVINACTION' in pv:
+            bb.note("Found SRCREVINACTION in PV (%s) or %s. Please report this bug." % (pv, file_name))
         pr       = self.getVar('PR', file_name, True)
         dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
         depends   = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")
