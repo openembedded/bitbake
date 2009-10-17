@@ -28,6 +28,13 @@
 from bb import data, event, mkdirhier, utils
 import bb, os, sys
 
+# When we execute a python function we'd like certain things 
+# in all namespaces, hence we add them to __builtins__
+# If we do not do this and use the exec globals, they will
+# not be available to subfunctions.
+__builtins__['bb'] = bb
+__builtins__['os'] = os
+
 # events
 class FuncFailed(Exception):
     """
@@ -205,8 +212,6 @@ def exec_func_python(func, d, runfile, logfile):
     f.write(tmp)
     comp = utils.better_compile(tmp, func, bbfile)
     g = {} # globals
-    g['bb'] = bb
-    g['os'] = os
     g['d'] = d
     try:
         utils.better_exec(comp, g, tmp, bbfile)
