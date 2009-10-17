@@ -351,9 +351,11 @@ class FetchData(object):
             # if user sets localpath for file, use it instead.
             self.localpath = self.parm["localpath"]
         else:
-            bb.fetch.srcrev_internal_call = True
-            self.localpath = self.method.localpath(self.url, self, d)
-            bb.fetch.srcrev_internal_call = False
+            try:
+                bb.fetch.srcrev_internal_call = True
+                self.localpath = self.method.localpath(self.url, self, d)
+            finally:
+                bb.fetch.srcrev_internal_call = False
             # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
             # Horrible...
             bb.data.delVar("ISHOULDNEVEREXIST", d)
