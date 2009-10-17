@@ -69,6 +69,17 @@ class PersistData:
         """
         self.connection.execute("DROP TABLE IF EXISTS %s;" % domain)
 
+    def getKeyValues(self, domain):
+        """
+        Return a list of key + value pairs for a domain
+        """
+        ret = {}
+        data = self.connection.execute("SELECT key, value from %s;" % domain)
+        for row in data:
+            ret[str(row[0])] = str(row[1])
+
+	return ret
+
     def getValue(self, domain, key):
         """
         Return the value of a key for a domain

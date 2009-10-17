@@ -78,6 +78,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
 
 methods = []
 urldata_cache = {}
+saved_headrevs = {}
 
 def fetcher_init(d):
     """
@@ -91,12 +92,36 @@ def fetcher_init(d):
         bb.msg.debug(1, bb.msg.domain.Fetcher, "Keeping SRCREV cache due to cache policy of: %s" % srcrev_policy)
     elif srcrev_policy == "clear":
         bb.msg.debug(1, bb.msg.domain.Fetcher, "Clearing SRCREV cache due to cache policy of: %s" % srcrev_policy)
+        try:
+            bb.fetch.saved_headrevs = pd.getKeyValues("BB_URI_HEADREVS")
+        except:
+            pass
         pd.delDomain("BB_URI_HEADREVS")
     else:
         bb.msg.fatal(bb.msg.domain.Fetcher, "Invalid SRCREV cache policy of: %s" % srcrev_policy)
     # Make sure our domains exist
     pd.addDomain("BB_URI_HEADREVS")
     pd.addDomain("BB_URI_LOCALCOUNT")
+
+def fetcher_compare_revisons(d):
+    """
+    Compare the revisions in the persistant cache with current values and
+    return true/false on whether they've changed.
+    """
+
+    pd = persist_data.PersistData(d)
+    data = pd.getKeyValues("BB_URI_HEADREVS")
+    data2 = bb.fetch.saved_headrevs
+
+    changed = False
+    for key in data:
+        if key not in data2 or data2[key] != data[key]:
+            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s changed" % key)
+            changed = True
+            return True
+        else:
+            bb.msg.debug(2, bb.msg.domain.Fetcher, "%s did not change" % key)
+    return False
 
 # Function call order is usually:
 #   1. init

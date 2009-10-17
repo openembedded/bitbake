@@ -147,6 +147,8 @@ class BBCooker:
                 self.commandlineAction = ["showEnvironment", self.configuration.buildfile]
         elif self.configuration.buildfile is not None:
             self.commandlineAction = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
+        elif self.configuration.revisions_changed:
+            self.commandlineAction = ["compareRevisions"]
         elif self.configuration.show_versions:
             self.commandlineAction = ["showVersions"]
         elif self.configuration.parse_only:
@@ -240,6 +242,10 @@ class BBCooker:
                 prefstr = ""
 
             bb.msg.plain("%-35s %25s %25s" % (p, lateststr, prefstr))
+
+    def compareRevisions(self):
+        ret = bb.fetch.fetcher_compare_revisons(self.configuration.data)
+        bb.event.fire(bb.command.CookerCommandSetExitCode(self.configuration.event_data, ret))
 
     def showEnvironment(self, buildfile = None, pkgs_to_build = []):
         """

@@ -95,7 +95,7 @@ class Wget(Fetch):
 
             # Sanity check since wget can pretend it succeed when it didn't
             # Also, this used to happen if sourceforge sent us to the mirror page
-            if not os.path.exists(ud.localpath):
+            if not os.path.exists(ud.localpath) and not checkonly:
                 bb.msg.debug(2, bb.msg.domain.Fetcher, "The fetch command for %s returned success but %s doesn't exist?..." % (uri, ud.localpath))
                 return False
 

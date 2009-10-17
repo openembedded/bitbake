@@ -232,6 +232,14 @@ class CommandsAsync:
         command.finishAsyncCommand()
     parseFiles.needcache = True
 
+    def compareRevisions(self, command, params):
+        """
+        Parse the .bb files
+        """
+        command.cooker.compareRevisions()
+        command.finishAsyncCommand()
+    compareRevisions.needcache = True
+
 #
 # Events
 #
@@ -250,3 +258,14 @@ class CookerCommandFailed(bb.event.Event):
     def  __init__(self, data, error):
         bb.event.Event.__init__(self, data)
         self.error = error
+
+class CookerCommandSetExitCode(bb.event.Event):
+    """
+    Set the exit code for a cooker command
+    """
+    def  __init__(self, data, exitcode):
+        bb.event.Event.__init__(self, data)
+        self.exitcode = int(exitcode)
+
+
+

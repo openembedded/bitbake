@@ -135,6 +135,9 @@ Default BBFILES are the .bb files in the current directory.""" )
     parser.add_option( "-u", "--ui", help = "userinterface to use",
                action = "store", dest = "ui")
 
+    parser.add_option( "", "--revisions-changed", help = "Set the exit code depending on whether upstream floating revisions have changed or not",
+               action = "store_true", dest = "revisions_changed", default = False )
+
     options, args = parser.parse_args(sys.argv)
 
     configuration = BBConfiguration(options)
