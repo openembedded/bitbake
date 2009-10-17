@@ -236,13 +236,6 @@ def feeder(lineno, s, fn, root, d):
             if not root  in __parsed_methods__:
                 text = '\n'.join(__body__)
                 methodpool.insert_method( root, text, fn )
-                funcs = data.getVar('__functions__', d) or {}
-                if not funcs.has_key( root ):
-                    funcs[root] = text 
-                else:
-                    funcs[root] = "%s\n%s" % (funcs[root], text)
-
-                data.setVar('__functions__', funcs, d)
             __body__ = []
             __inpython__ = False
 
