@@ -120,6 +120,9 @@ def init(server, eventHandler):
 
             if event[0] == 'bb.command.CookerCommandCompleted':
                 break
+            if event[0] == 'bb.command.CookerCommandSetExitCode':
+                return_value = event[1]['exitcode']
+                continue
             if event[0] == 'bb.command.CookerCommandFailed':
                 return_value = 1
                 print "Command execution failed: %s" % event[1]['error']
