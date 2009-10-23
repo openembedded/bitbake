@@ -67,11 +67,10 @@ class Svk(Fetch):
 
         svkroot = ud.host + ud.path
 
-        # pyflakes claims date is not known... it looks right
-        svkcmd = "svk co -r {%s} %s/%s" % (date, svkroot, ud.module)
+        svkcmd = "svk co -r {%s} %s/%s" % (ud.date, svkroot, ud.module)
 
         if ud.revision:
-            svkcmd = "svk co -r %s/%s" % (ud.revision, svkroot, ud.module)
+            svkcmd = "svk co -r %s %s/%s" % (ud.revision, svkroot, ud.module)
 
         # create temp directory
         localdata = data.createCopy(d)
