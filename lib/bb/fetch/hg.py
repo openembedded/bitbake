@@ -57,6 +57,14 @@ class Hg(Fetch):
 
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
+        else:
+            tag = Fetch.srcrev_internal_helper(ud, d)
+            if tag is True:
+                ud.revision = self.latest_revision(url, ud, d)
+            elif tag:
+                ud.revision = tag
+            else:
+                ud.revision = self.latest_revision(url, ud, d)
 
         ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
@@ -148,3 +156,23 @@ class Hg(Fetch):
             except OSError:
                 pass
             raise t, v, tb
+
+    def suppports_srcrev(self):
+        return True
+
+    def _latest_revision(self, url, ud, d):
+        """
+        Compute tip revision for the url
+        """
+        output = runfetchcmd(self._buildhgcommand(ud, d, "info"), d)
+        return output.strip()
+
+    def _build_revision(self, url, ud, d):
+        return ud.revision
+
+    def _revision_key(self, url, ud, d):
+        """
+        Return a unique key for the url
+        """
+        return "hg:" + ud.moddir
+
