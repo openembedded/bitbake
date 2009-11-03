@@ -94,7 +94,7 @@ def finalise(fn, d):
         for f in anonfuncs:
             code = code + "    %s(d)\n" % f
         data.setVar("__anonfunc", code, d)        
-        build.exec_func_python("__anonfunc", d)
+        build.exec_func("__anonfunc", d)
         data.delVar('T', d)
         if t:
             data.setVar('T', t, d)
