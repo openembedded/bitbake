@@ -553,14 +553,13 @@ class Fetch(object):
         """
         
         """
-        has_want_sortable = hasattr(self, "_want_sortable_revision")
+        has_sortable_valid = hasattr(self, "_sortable_revision_valid")
         has_sortable = hasattr(self, "_sortable_revision")
 
-        if not has_want_sortable and has_sortable:
+        if has_sortable and not has_sortable_valid:
             return self._sortable_revision(url, ud, d)
-        elif has_want_sortable and self._want_sortable_revision(url, ud, d) and has_sortable:
+        elif has_sortable and self._sortable_revision_valid(url, ud, d):
             return self._sortable_revision(url, ud, d)
-        
 
         pd = persist_data.PersistData(d)
         key = self.generate_revision_key(url, ud, d)

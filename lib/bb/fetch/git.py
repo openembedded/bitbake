@@ -145,12 +145,12 @@ class Git(Fetch):
     def _build_revision(self, url, ud, d):
         return ud.tag
 
-    def _want_sortable_revision(self, url, ud, d):
+    def _sortable_revision_valid(self, url, ud, d):
         return bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True) or False
 
     def _sortable_revision(self, url, ud, d):
         """
-        This is only called when _want_sortable_revision called true
+        This is only called when _sortable_revision_valid called true
 
         We will have to get the updated revision.
         """
