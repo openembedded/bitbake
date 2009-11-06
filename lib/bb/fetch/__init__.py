@@ -128,12 +128,13 @@ def init(urls, d, setup = True):
     urldata_cache[fn] = urldata
     return urldata
 
-def go(d):
+def go(d, urls = None):
     """
     Fetch all urls
     init must have previously been called
     """
-    urls = d.getVar("SRC_URI", 1).split()
+    if not urls:
+        urls = d.getVar("SRC_URI", 1).split()
     urldata = init(urls, d, True)
 
     for u in urls:
