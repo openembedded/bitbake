@@ -25,7 +25,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, bb, os, sys, time
+import re, bb, os, sys, time, string
 import bb.fetch, bb.build, bb.utils
 from bb import data, fetch, methodpool
 
@@ -88,7 +88,12 @@ def finalise(fn, d):
     from bb import build
     try:
         t = data.getVar('T', d)
-        data.setVar('T', '${TMPDIR}/', d)
+        data.setVar('T', '${TMPDIR}/anonfunc/', d)
+        anonfuncs = data.getVar('__BBANONFUNCS', d) or []
+        code = ""
+        for f in anonfuncs:
+            code = code + "    %s(d)\n" % f
+        data.setVar("__anonfunc", code, d)        
         build.exec_func("__anonfunc", d)
         data.delVar('T', d)
         if t:
@@ -205,17 +210,17 @@ def feeder(lineno, s, fn, root, d):
     if __infunc__:
         if s == '}':
             __body__.append('')
-            data.setVar(__infunc__, '\n'.join(__body__), d)
-            data.setVarFlag(__infunc__, "func", 1, d)
             if __infunc__ == "__anonymous":
-                anonqueue = bb.data.getVar("__anonqueue", d) or []
-                anonitem = {}
-                anonitem["content"] = bb.data.getVar("__anonymous", d)
-                anonitem["flags"] = bb.data.getVarFlags("__anonymous", d)
-                anonqueue.append(anonitem)
-                bb.data.setVar("__anonqueue", anonqueue, d)
-                bb.data.delVarFlags("__anonymous", d)
-                bb.data.delVar("__anonymous", d)
+                funcname = ("__anon_%s_%s" % (lineno, fn.translate(string.maketrans('/.+-', '____'))))
+                if not funcname in methodpool._parsed_fns:
+                    text = "def %s(d):\n" % (funcname) + '\n'.join(__body__)
+                    methodpool.insert_method(funcname, text, fn)
+                anonfuncs = data.getVar('__BBANONFUNCS', d) or []
+                anonfuncs.append(funcname)
+                data.setVar('__BBANONFUNCS', anonfuncs, d)
+            else:
+                data.setVarFlag(__infunc__, "func", 1, d)
+                data.setVar(__infunc__, '\n'.join(__body__), d)
             __infunc__ = ""
             __body__ = []
         else:
