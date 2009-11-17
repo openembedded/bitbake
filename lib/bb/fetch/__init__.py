@@ -467,6 +467,23 @@ class Fetch(object):
 
     srcrev_internal_helper = staticmethod(srcrev_internal_helper)
 
+    def localcount_internal_helper(ud, d):
+        """
+        Return:
+            a) a locked localcount if specified
+            b) None otherwise
+        """
+
+        localcount= None
+        if 'name' in ud.parm:
+            pn = data.getVar("PN", d, 1)
+            localcount = data.getVar("LOCALCOUNT_" + ud.parm['name'], d, 1)
+        if not localcount:
+            localcount = data.getVar("LOCALCOUNT", d, 1)
+        return localcount
+
+    localcount_internal_helper = staticmethod(localcount_internal_helper)
+
     def try_mirror(d, tarfn):
         """
         Try to use a mirrored version of the sources. We do this
@@ -568,13 +585,20 @@ class Fetch(object):
 
         latest_rev = self._build_revision(url, ud, d)
         last_rev = pd.getValue("BB_URI_LOCALCOUNT", key + "_rev")
-        count = pd.getValue("BB_URI_LOCALCOUNT", key + "_count")
+        uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
+        count = None
+        if uselocalcount:
+            count = Fetch.localcount_internal_helper(ud, d)
+        if count is None:
+            count = pd.getValue("BB_URI_LOCALCOUNT", key + "_count")
 
         if last_rev == latest_rev:
             return str(count + "+" + latest_rev)
 
         if count is None:
             count = "0"
+        elif uselocalcount:
+            count = str(count)
         else:
             count = str(int(count) + 1)
 
