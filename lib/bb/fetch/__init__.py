@@ -99,6 +99,12 @@ def fetcher_init(d):
         pd.delDomain("BB_URI_HEADREVS")
     else:
         bb.msg.fatal(bb.msg.domain.Fetcher, "Invalid SRCREV cache policy of: %s" % srcrev_policy)
+
+    for m in methods:
+        bb.note(str(m))
+        if hasattr(m, "init"):
+            m.init(d)
+
     # Make sure our domains exist
     pd.addDomain("BB_URI_HEADREVS")
     pd.addDomain("BB_URI_LOCALCOUNT")
@@ -572,12 +578,9 @@ class Fetch(object):
         """
         
         """
-        has_sortable_valid = hasattr(self, "_sortable_revision_valid")
         has_sortable = hasattr(self, "_sortable_revision")
 
-        if has_sortable and not has_sortable_valid:
-            return self._sortable_revision(url, ud, d)
-        elif has_sortable and self._sortable_revision_valid(url, ud, d):
+        if has_sortable:
             return self._sortable_revision(url, ud, d)
 
         pd = persist_data.PersistData(d)

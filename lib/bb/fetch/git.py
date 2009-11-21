@@ -28,6 +28,12 @@ from   bb.fetch import runfetchcmd
 
 class Git(Fetch):
     """Class to fetch a module or modules from git repositories"""
+    def init(self, d):
+        #
+        # Only enable _sortable revision if the key is set
+        #
+        if bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True):
+            self._sortable_revision = self._sortable_revision_disabled
     def supports(self, url, ud, d):
         """
         Check to see if a given url can be fetched with git.
@@ -145,10 +151,7 @@ class Git(Fetch):
     def _build_revision(self, url, ud, d):
         return ud.tag
 
-    def _sortable_revision_valid(self, url, ud, d):
-        return bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True) or False
-
-    def _sortable_revision(self, url, ud, d):
+    def _sortable_revision_disabled(self, url, ud, d):
         """
         This is only called when _sortable_revision_valid called true
 
