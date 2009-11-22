@@ -578,9 +578,7 @@ class Fetch(object):
         """
         
         """
-        has_sortable = hasattr(self, "_sortable_revision")
-
-        if has_sortable:
+        if hasattr(self, "_sortable_revision"):
             return self._sortable_revision(url, ud, d)
 
         pd = persist_data.PersistData(d)
@@ -598,9 +596,13 @@ class Fetch(object):
         if last_rev == latest_rev:
             return str(count + "+" + latest_rev)
 
+        buildindex_provided = hasattr(self, "_sortable_buildindex")
+        if buildindex_provided:
+            count = self._sortable_buildindex(url, ud, d, latest_rev)
+
         if count is None:
             count = "0"
-        elif uselocalcount:
+        elif uselocalcount or buildindex_provided:
             count = str(count)
         else:
             count = str(int(count) + 1)

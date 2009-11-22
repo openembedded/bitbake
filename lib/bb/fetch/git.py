@@ -32,8 +32,8 @@ class Git(Fetch):
         #
         # Only enable _sortable revision if the key is set
         #
-        if bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True):
-            self._sortable_revision = self._sortable_revision_disabled
+        if bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True) or True:
+            self._sortable_buildindex = self._sortable_buildindex_disabled
     def supports(self, url, ud, d):
         """
         Check to see if a given url can be fetched with git.
@@ -151,24 +151,13 @@ class Git(Fetch):
     def _build_revision(self, url, ud, d):
         return ud.tag
 
-    def _sortable_revision_disabled(self, url, ud, d):
+    def _sortable_buildindex_disabled(self, url, ud, d, rev):
         """
-        This is only called when _sortable_revision_valid called true
-
-        We will have to get the updated revision.
+        Return a suitable buildindex for the revision specified. This is done by counting revisions 
+        using "git rev-list" which may or may not work in different circumstances.
         """
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
         repodir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
-
-        key = "GIT_CACHED_REVISION-%s-%s"  % (gitsrcname, ud.tag)
-        if bb.data.getVar(key, d):
-            return bb.data.getVar(key, d)
-
-
-        # Runtime warning on wrongly configured sources
-        if ud.tag == "1":
-            bb.msg.error(1, bb.msg.domain.Fetcher, "SRCREV is '1'. This indicates a configuration error of %s" % url)
-            return "0+1"
 
         cwd = os.getcwd()
 
@@ -176,16 +165,19 @@ class Git(Fetch):
         if not os.path.exists(repodir):
             print "no repo"
             self.go(None, ud, d)
+            if not os.path.exists(repodir):
+                bb.msg.error(bb.msg.domain.Fetcher, "GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value" % (url, repodir))
+                return None
+
 
         os.chdir(repodir)
-        if not self._contains_ref(ud.tag, d):
+        if not self._contains_ref(rev, d):
             self.go(None, ud, d)
 
-        output = runfetchcmd("git rev-list %s -- 2> /dev/null | wc -l" % ud.tag, d, quiet=True)
+        output = runfetchcmd("git rev-list %s -- 2> /dev/null | wc -l" % rev, d, quiet=True)
         os.chdir(cwd)
 
-        sortable_revision = "%s+%s" % (output.split()[0], ud.tag)
-        bb.data.setVar(key, sortable_revision, d)
-        return sortable_revision
-        
+        buildindex = "%s" % output.split()[0]
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "GIT repository for %s in %s is returning %s revisions in rev-list before %s" % (url, repodir, buildindex, rev))
+        return buildindex        
 
