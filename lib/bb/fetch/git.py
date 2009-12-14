@@ -64,7 +64,10 @@ class Git(Fetch):
         if not ud.tag or ud.tag == "master":
             ud.tag = self.latest_revision(url, ud, d)	
 
-        ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.tag), d)
+        if 'fullclone' in ud.parm:
+            ud.localfile = ud.mirrortarball
+        else:
+            ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.tag), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
@@ -104,9 +107,12 @@ class Git(Fetch):
 
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
-        if mirror_tarballs != "0": 
+        if mirror_tarballs != "0" or 'fullclone' in ud.parm: 
             bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
             runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
+
+        if 'fullclone' in ud.parm:
+            return
 
         if os.path.exists(codir):
             bb.utils.prunedir(codir)
