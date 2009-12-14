@@ -51,6 +51,10 @@ class Git(Fetch):
 
         ud.branch = ud.parm.get("branch", "master")
 
+        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
+        ud.mirrortarball = 'git_%s.tar.gz' % (gitsrcname)
+        ud.clonedir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
+
         tag = Fetch.srcrev_internal_helper(ud, d)
         if tag is True:
             ud.tag = self.latest_revision(url, ud, d)	
@@ -76,24 +80,20 @@ class Git(Fetch):
         else:
             username = ""
 
-        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
-
-        repofilename = 'git_%s.tar.gz' % (gitsrcname)
-        repofile = os.path.join(data.getVar("DL_DIR", d, 1), repofilename)
-        repodir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
+        repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
 
         coname = '%s' % (ud.tag)
-        codir = os.path.join(repodir, coname)
+        codir = os.path.join(ud.clonedir, coname)
 
-        if not os.path.exists(repodir):
-            if Fetch.try_mirror(d, repofilename):    
-                bb.mkdirhier(repodir)
-                os.chdir(repodir)
+        if not os.path.exists(ud.clonedir):
+            if Fetch.try_mirror(d, ud.mirrortarball):    
+                bb.mkdirhier(ud.clonedir)
+                os.chdir(ud.clonedir)
                 runfetchcmd("tar -xzf %s" % (repofile), d)
             else:
-                runfetchcmd("git clone -n %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, repodir), d)
+                runfetchcmd("git clone -n %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.clonedir), d)
 
-        os.chdir(repodir)
+        os.chdir(ud.clonedir)
         # Remove all but the .git directory
         if not self._contains_ref(ud.tag, d):
             runfetchcmd("rm * -Rf", d)
@@ -102,7 +102,7 @@ class Git(Fetch):
             runfetchcmd("git prune-packed", d)
             runfetchcmd("git pack-redundant --all | xargs -r rm", d)
 
-        os.chdir(repodir)
+        os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
         if mirror_tarballs != "0": 
             bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
@@ -112,7 +112,7 @@ class Git(Fetch):
             bb.utils.prunedir(codir)
 
         bb.mkdirhier(codir)
-        os.chdir(repodir)
+        os.chdir(ud.clonedir)
         runfetchcmd("git read-tree %s" % (ud.tag), d)
         runfetchcmd("git checkout-index -q -f --prefix=%s -a" % (os.path.join(codir, "git", "")), d)
 
@@ -120,7 +120,7 @@ class Git(Fetch):
         bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
         runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
 
-        os.chdir(repodir)
+        os.chdir(ud.clonedir)
         bb.utils.prunedir(codir)
 
     def suppports_srcrev(self):
@@ -156,21 +156,19 @@ class Git(Fetch):
         Return a suitable buildindex for the revision specified. This is done by counting revisions 
         using "git rev-list" which may or may not work in different circumstances.
         """
-        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
-        repodir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
 
         cwd = os.getcwd()
 
         # Check if we have the rev already
-        if not os.path.exists(repodir):
+        if not os.path.exists(ud.clonedir):
             print "no repo"
             self.go(None, ud, d)
-            if not os.path.exists(repodir):
-                bb.msg.error(bb.msg.domain.Fetcher, "GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value" % (url, repodir))
+            if not os.path.exists(ud.clonedir):
+                bb.msg.error(bb.msg.domain.Fetcher, "GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value" % (url, ud.clonedir))
                 return None
 
 
-        os.chdir(repodir)
+        os.chdir(ud.clonedir)
         if not self._contains_ref(rev, d):
             self.go(None, ud, d)
 
