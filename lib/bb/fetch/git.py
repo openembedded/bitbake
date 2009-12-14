@@ -64,10 +64,18 @@ class Git(Fetch):
         if not ud.tag or ud.tag == "master":
             ud.tag = self.latest_revision(url, ud, d)	
 
+        subdir = ud.parm.get("subpath", "")
+        if subdir != "":
+            if subdir.endswith("/"):
+                subdir = subdir[:-1]
+            subdirpath = os.path.join(ud.path, subdir);
+        else:
+            subdirpath = ud.path;
+
         if 'fullclone' in ud.parm:
             ud.localfile = ud.mirrortarball
         else:
-            ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.tag), d)
+            ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, subdirpath.replace('/', '.'), ud.tag), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
@@ -117,10 +125,27 @@ class Git(Fetch):
         if os.path.exists(codir):
             bb.utils.prunedir(codir)
 
+        subdir = ud.parm.get("subpath", "")
+        if subdir != "":
+            if subdir.endswith("/"):
+                subdirbase = os.path.basename(subdir[:-1])
+            else:
+                subdirbase = os.path.basename(subdir)
+        else:
+            subdirbase = ""
+
+        if subdir != "":
+            readpathspec = ":%s" % (subdir)
+            codir = os.path.join(codir, "git")
+            coprefix = os.path.join(codir, subdirbase, "")
+        else:
+            readpathspec = ""
+            coprefix = os.path.join(codir, "git", "")
+
         bb.mkdirhier(codir)
         os.chdir(ud.clonedir)
-        runfetchcmd("git read-tree %s" % (ud.tag), d)
-        runfetchcmd("git checkout-index -q -f --prefix=%s -a" % (os.path.join(codir, "git", "")), d)
+        runfetchcmd("git read-tree %s%s" % (ud.tag, readpathspec), d)
+        runfetchcmd("git checkout-index -q -f --prefix=%s -a" % (coprefix), d)
 
         os.chdir(codir)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
