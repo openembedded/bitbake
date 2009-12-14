@@ -151,7 +151,10 @@ class Git(Fetch):
         else:
             username = ""
 
-        output = runfetchcmd("git ls-remote %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.branch), d, True)
+        cmd = "git ls-remote %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.branch)
+        output = runfetchcmd(cmd, d, True)
+        if not output:
+            raise bb.fetch.FetchError("Fetch command %s gave empty output\n" % (cmd))
         return output.split()[0]
 
     def _build_revision(self, url, ud, d):
