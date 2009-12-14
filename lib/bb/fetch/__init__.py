@@ -101,7 +101,6 @@ def fetcher_init(d):
         bb.msg.fatal(bb.msg.domain.Fetcher, "Invalid SRCREV cache policy of: %s" % srcrev_policy)
 
     for m in methods:
-        bb.note(str(m))
         if hasattr(m, "init"):
             m.init(d)
 
