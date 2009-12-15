@@ -25,6 +25,19 @@ Task data collection and handling
 
 import bb
 
+def re_match_strings(target, strings):
+    """
+    Whether or not the string 'target' matches
+    any one string of the strings which can be regular expression string
+    """
+    import re
+
+    for name in strings:
+        if (name==target or
+                re.search(name,target)!=None):
+            return True
+    return False
+
 class TaskData:
     """
     BitBake Task Data implementation
@@ -261,7 +274,7 @@ class TaskData:
         """
         unresolved = []
         for target in self.build_names_index:
-            if target in dataCache.ignored_dependencies:
+            if re_match_strings(target, dataCache.ignored_dependencies):
                 continue
             if self.build_names_index.index(target) in self.failed_deps:
                 continue
@@ -276,7 +289,7 @@ class TaskData:
         """
         unresolved = []
         for target in self.run_names_index:
-            if target in dataCache.ignored_dependencies:
+            if re_match_strings(target, dataCache.ignored_dependencies):
                 continue
             if self.run_names_index.index(target) in self.failed_rdeps:
                 continue
@@ -356,7 +369,7 @@ class TaskData:
         added internally during dependency resolution
         """
 
-        if item in dataCache.ignored_dependencies:
+        if re_match_strings(item, dataCache.ignored_dependencies):
             return
 
         if not item in dataCache.providers:
@@ -407,7 +420,7 @@ class TaskData:
         (takes item names from RDEPENDS/PACKAGES namespace)
         """
 
-        if item in dataCache.ignored_dependencies:
+        if re_match_strings(item, dataCache.ignored_dependencies):
             return
 
         if self.have_runtime_target(item):
