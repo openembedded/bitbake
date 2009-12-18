@@ -32,7 +32,7 @@ class Git(Fetch):
         #
         # Only enable _sortable revision if the key is set
         #
-        if bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True) or True:
+        if bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True):
             self._sortable_buildindex = self._sortable_buildindex_disabled
     def supports(self, url, ud, d):
         """
@@ -194,6 +194,7 @@ class Git(Fetch):
         cwd = os.getcwd()
 
         # Check if we have the rev already
+
         if not os.path.exists(ud.clonedir):
             print "no repo"
             self.go(None, ud, d)
