@@ -63,14 +63,13 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration):
+    def __init__(self, configuration, server):
         self.status = None
 
         self.cache = None
         self.bb_cache = None
 
-        self.server = bb.server.xmlrpc.BitBakeXMLRPCServer(self)
-        #self.server.register_function(self.showEnvironment)
+        self.server = server.BitBakeServer(self)
 
         self.configuration = configuration
 

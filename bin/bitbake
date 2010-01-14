@@ -144,7 +144,11 @@ Default BBFILES are the .bb files in the current directory.""" )
     configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
 
-    cooker = bb.cooker.BBCooker(configuration)
+    # Save a logfile for cooker into the current working directory. When the
+    # server is daemonized this logfile will be truncated.
+    cooker_logfile = os.path.join (os.getcwd(), "cooker.log")
+
+    cooker = bb.cooker.BBCooker(configuration, bb.server.xmlrpc)
 
     # Clear away any spurious environment variables. But don't wipe the
     # environment totally. This is necessary to ensure the correct operation
@@ -154,10 +158,6 @@ Default BBFILES are the .bb files in the current directory.""" )
     cooker.parseCommandLine()
     host = cooker.server.host
     port = cooker.server.port
-
-    # Save a logfile for cooker into the current working directory. When the
-    # server is daemonized this logfile will be truncated.
-    cooker_logfile = os.path.join (os.getcwd(), "cooker.log")
 
     daemonize.createDaemon(cooker.serve, cooker_logfile)
     del cooker

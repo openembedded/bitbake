@@ -77,7 +77,7 @@ class BitBakeServerCommands():
         """
         return True
 
-class BitBakeXMLRPCServer(SimpleXMLRPCServer):
+class BitBakeServer(SimpleXMLRPCServer):
     # remove this when you're done with debugging
     # allow_reuse_address = True
 
