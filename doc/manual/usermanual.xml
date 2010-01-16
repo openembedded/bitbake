@@ -119,7 +119,7 @@ will be introduced.</para>
             </section>
             <section>
                 <title>Conditional metadata set</title>
-                <para>OVERRIDES is a <quote>:</quote> seperated variable containing each item you want to satisfy conditions.  So, if you have a variable which is conditional on <quote>arm</quote>, and <quote>arm</quote> is in OVERRIDES, then the <quote>arm</quote> specific version of the variable is used rather than the non-conditional version.  Example:</para>
+                <para>OVERRIDES is a <quote>:</quote> separated variable containing each item you want to satisfy conditions.  So, if you have a variable which is conditional on <quote>arm</quote>, and <quote>arm</quote> is in OVERRIDES, then the <quote>arm</quote> specific version of the variable is used rather than the non-conditional version.  Example:</para>
                 <para><screen><varname>OVERRIDES</varname> = "architecture:os:machine"
 <varname>TEST</varname> = "defaultvalue"
 <varname>TEST_os</varname> = "osspecificvalue"
@@ -184,7 +184,7 @@ include</literal> directive.</para>
             <section>
                 <title>Inheritance</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudamentary form of inheritence.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.oeclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
+                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudimentary form of inheritance.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.oeclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
             </section>
             <section>
                 <title>Tasks</title>
@@ -263,11 +263,11 @@ of the event and the content of the <varname>FILE</varname> variable.</para>
             </section>
             <section>
                 <title>Classes</title>
-                <para>BitBake classes are our rudamentary inheritence mechanism.  As briefly mentioned in the metadata introduction, they're parsed when an <literal>inherit</literal> directive is encountered, and they are located in classes/ relative to the dirs in <envar>BBPATH</envar>.</para>
+                <para>BitBake classes are our rudimentary inheritance mechanism.  As briefly mentioned in the metadata introduction, they're parsed when an <literal>inherit</literal> directive is encountered, and they are located in classes/ relative to the dirs in <envar>BBPATH</envar>.</para>
             </section>
             <section>
                 <title>.bb Files</title>
-                <para>A BitBake (.bb) file is a logical unit of tasks to be executed.  Normally this is a package to be built.  Inter-.bb dependencies are obeyed.  The files themselves are located via the <varname>BBFILES</varname> variable, which is set to a space seperated list of .bb files, and does handle wildcards.</para>
+                <para>A BitBake (.bb) file is a logical unit of tasks to be executed.  Normally this is a package to be built.  Inter-.bb dependencies are obeyed.  The files themselves are located via the <varname>BBFILES</varname> variable, which is set to a space separated list of .bb files, and does handle wildcards.</para>
             </section>
         </section>
     </chapter>
@@ -364,7 +364,7 @@ will be tried first when fetching a file if that fails the actual file will be t
 usage: bitbake [options] [package ...]
 
 Executes the specified task (default is 'build') for a given set of BitBake files.
-It expects that BBFILES is defined, which is a space seperated list of files to
+It expects that BBFILES is defined, which is a space separated list of files to
 be executed.  BBFILES does support wildcards.
 Default BBFILES are the .bb files in the current directory.
 
@@ -386,7 +386,7 @@ options:
                         it depends on, i.e. 'compile' does not implicitly call
                         stage for the dependencies (IOW: use only if you know
                         what you are doing). Depending on the base.bbclass a
-                        listtasks tasks is defined and will show available
+                        listtasks task is defined and will show available
                         tasks
   -r FILE, --read=FILE  read the specified file before bitbake.conf
   -v, --verbose         output more chit-chat to the terminal
@@ -455,12 +455,12 @@ Two files will be written into the current working directory, <emphasis>depends.
             </section>
             <section>
                 <title>Metadata</title>
-                <para>As you may have seen in the usage information, or in the information about .bb files, the BBFILES variable is how the bitbake tool locates its files.  This variable is a space seperated list of files that are available, and supports wildcards.
+                <para>As you may have seen in the usage information, or in the information about .bb files, the BBFILES variable is how the bitbake tool locates its files.  This variable is a space separated list of files that are available, and supports wildcards.
                 <example>
                     <title>Setting BBFILES</title>
                     <programlisting><varname>BBFILES</varname> = "/path/to/bbfiles/*.bb"</programlisting>
                 </example></para>
-                <para>With regard to dependencies, it expects the .bb to define a <varname>DEPENDS</varname> variable, which contains a space seperated list of <quote>package names</quote>, which themselves are the <varname>PN</varname> variable.  The <varname>PN</varname> variable is, in general, by default, set to a component of the .bb filename.</para>
+                <para>With regard to dependencies, it expects the .bb to define a <varname>DEPENDS</varname> variable, which contains a space separated list of <quote>package names</quote>, which themselves are the <varname>PN</varname> variable.  The <varname>PN</varname> variable is, in general, by default, set to a component of the .bb filename.</para>
                 <example>
                     <title>Depending on another .bb</title>
                     <para>a.bb:
