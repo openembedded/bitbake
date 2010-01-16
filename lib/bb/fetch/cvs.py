@@ -41,7 +41,7 @@ class Cvs(Fetch):
         """
         Check to see if a given url can be fetched with cvs.
         """
-        return ud.type in ['cvs', 'pserver']
+        return ud.type in ['cvs']
 
     def localpath(self, url, ud, d):
         if not "module" in ud.parm:
