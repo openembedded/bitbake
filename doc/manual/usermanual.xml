@@ -352,15 +352,7 @@ will be tried first when fetching a file if that fails the actual file will be t
 
 
     <chapter>
-        <title>Commands</title>
-        <section>
-            <title>bbread</title>
-            <para>bbread is a command for displaying BitBake metadata.  When run with no arguments, it has the core parse 'conf/bitbake.conf', as located in BBPATH, and displays that.  If you supply a file on the commandline, such as a .bb, then it parses that afterwards, using the aforementioned configuration metadata.</para>
-        <para><emphasis>NOTE: the stand a lone bbread command was removed. Instead of bbread use bitbake -e.
-        </emphasis></para>
-        </section>
-        <section>
-            <title>bitbake</title>
+        <title>The bitbake command</title>
             <section>
                 <title>Introduction</title>
                 <para>bitbake is the primary command in the system.  It facilitates executing tasks in a single .bb file, or executing a given task on a set of multiple .bb files, accounting for interdependencies amongst them.</para>
@@ -515,6 +507,5 @@ BBFILE_PRIORITY_upstream = "5"
 BBFILE_PRIORITY_local = "10"</screen>
                 </example>
             </section>
-        </section>
     </chapter>
 </book>
