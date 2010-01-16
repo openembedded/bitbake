@@ -211,6 +211,6 @@ class Git(Fetch):
         os.chdir(cwd)
 
         buildindex = "%s" % output.split()[0]
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "GIT repository for %s in %s is returning %s revisions in rev-list before %s" % (url, repodir, buildindex, rev))
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "GIT repository for %s in %s is returning %s revisions in rev-list before %s" % (url, ud.clonedir, buildindex, rev))
         return buildindex        
 
