@@ -36,7 +36,7 @@ class Wget(Fetch):
     """Class to fetch urls via 'wget'"""
     def supports(self, url, ud, d):
         """
-        Check to see if a given url can be fetched with cvs.
+        Check to see if a given url can be fetched with wget.
         """
         return ud.type in ['http','https','ftp']
 

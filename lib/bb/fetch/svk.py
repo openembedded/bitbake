@@ -36,7 +36,7 @@ class Svk(Fetch):
     """Class to fetch a module or modules from svk repositories"""
     def supports(self, url, ud, d):
         """
-        Check to see if a given url can be fetched with cvs.
+        Check to see if a given url can be fetched with svk.
         """
         return ud.type in ['svk']
 
