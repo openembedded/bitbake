@@ -116,26 +116,32 @@ class BitBakeServer(SimpleXMLRPCServer):
         Serve Requests. Overloaded to honor a quit command
         """
         self.quit = False
+        self.timeout = 0 # Run Idle calls for our first callback
         while not self.quit:
             #print "Idle queue length %s" % len(self._idlefuns)
-            if len(self._idlefuns) == 0:
-                self.timeout = None
-            else:
-                self.timeout = 0
             self.handle_request()
             #print "Idle timeout, running idle functions"
+            nextsleep = None
             for function, data in self._idlefuns.items():
                 try:
                     retval = function(self, data, False)
-                    if not retval:
+                    if retval is False:
                         del self._idlefuns[function]
+                    elif retval is True:
+                        nextsleep = 0
+                    elif nextsleep is 0:
+                        continue
+                    elif nextsleep is None:
+                        nextsleep = retval
+                    elif retval < nextsleep:
+                        nextsleep = retval
                 except SystemExit:
                     raise
                 except:
                     import traceback
                     traceback.print_exc()
                     pass
-
+            self.timeout = nextsleep
         # Tell idle functions we're exiting
         for function, data in self._idlefuns.items():
             try:

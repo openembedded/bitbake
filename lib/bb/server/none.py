@@ -31,6 +31,7 @@
     in the server's main loop.
 """
 
+import time
 import bb
 from bb.ui import uievent
 import xmlrpclib
@@ -49,7 +50,7 @@ class BitBakeServerCommands():
         """
         Run a cooker command on the server
         """
-        print "Running Command %s" % command
+        #print "Running Command %s" % command
         return self.cooker.command.runCommand(command)
 
     def terminateServer(self):
@@ -92,7 +93,10 @@ class BBUIEventQueue:
         return self.eventQueue.pop(0)
 
     def waitEvent(self, delay):
-        self.BBServer.idle_commands()
+        event = self.getEvent()
+        if event:
+            return event
+        self.BBServer.idle_commands(delay)
         return self.getEvent()
 
     def queue_event(self, event):
@@ -114,23 +118,32 @@ class BitBakeServer():
         assert callable(function)
         self._idlefuns[function] = data
 
-    def idle_commands(self):
+    def idle_commands(self, delay):
         #print "Idle queue length %s" % len(self._idlefuns)
         #print "Idle timeout, running idle functions"
         #if len(self._idlefuns) == 0:
-
-
+        nextsleep = delay
         for function, data in self._idlefuns.items():
-                try:
-                    retval = function(self, data, False)
-                    if not retval:
-                        del self._idlefuns[function]
-                except SystemExit:
-                    raise
-                except:
-                    import traceback
-                    traceback.print_exc()
-                    pass
+            try:
+                retval = function(self, data, False)
+                #print "Idle function returned %s" % (retval)
+                if retval is False:
+                    del self._idlefuns[function]
+                elif retval is True:
+                    nextsleep = None
+                elif nextsleep is None:
+                    continue
+                elif retval < nextsleep:
+                    nextsleep = retval
+            except SystemExit:
+                raise
+            except:
+                import traceback
+                traceback.print_exc()
+                pass
+        if nextsleep is not None:
+            #print "Sleeping for %s (%s)" % (nextsleep, delay)
+            time.sleep(nextsleep)
 
     def server_exit(self):
         # Tell idle functions we're exiting

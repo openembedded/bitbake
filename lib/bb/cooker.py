@@ -786,7 +786,7 @@ class BBCooker:
             self.cookerState = cookerParsed
             return None
 
-        return 0.00001
+        return True
 
     def checkPackages(self, pkgs_to_build):
 
