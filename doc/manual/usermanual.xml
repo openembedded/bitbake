@@ -184,7 +184,7 @@ include</literal> directive.</para>
             <section>
                 <title>Inheritance</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudamentary form of inheritence.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.oeclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
+                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudimentary form of inheritance.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.oeclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
             </section>
             <section>
                 <title>Tasks</title>
@@ -263,7 +263,7 @@ of the event and the content of the <varname>FILE</varname> variable.</para>
             </section>
             <section>
                 <title>Classes</title>
-                <para>BitBake classes are our rudamentary inheritence mechanism.  As briefly mentioned in the metadata introduction, they're parsed when an <literal>inherit</literal> directive is encountered, and they are located in classes/ relative to the dirs in <envar>BBPATH</envar>.</para>
+                <para>BitBake classes are our rudimentary inheritance mechanism.  As briefly mentioned in the metadata introduction, they're parsed when an <literal>inherit</literal> directive is encountered, and they are located in classes/ relative to the dirs in <envar>BBPATH</envar>.</para>
             </section>
             <section>
                 <title>.bb Files</title>
@@ -352,15 +352,7 @@ will be tried first when fetching a file if that fails the actual file will be t
 
 
     <chapter>
-        <title>Commands</title>
-        <section>
-            <title>bbread</title>
-            <para>bbread is a command for displaying BitBake metadata.  When run with no arguments, it has the core parse 'conf/bitbake.conf', as located in BBPATH, and displays that.  If you supply a file on the commandline, such as a .bb, then it parses that afterwards, using the aforementioned configuration metadata.</para>
-        <para><emphasis>NOTE: the stand a lone bbread command was removed. Instead of bbread use bitbake -e.
-        </emphasis></para>
-        </section>
-        <section>
-            <title>bitbake</title>
+        <title>The bitbake command</title>
             <section>
                 <title>Introduction</title>
                 <para>bitbake is the primary command in the system.  It facilitates executing tasks in a single .bb file, or executing a given task on a set of multiple .bb files, accounting for interdependencies amongst them.</para>
@@ -394,7 +386,7 @@ options:
                         it depends on, i.e. 'compile' does not implicitly call
                         stage for the dependencies (IOW: use only if you know
                         what you are doing). Depending on the base.bbclass a
-                        listtasks tasks is defined and will show available
+                        listtasks task is defined and will show available
                         tasks
   -r FILE, --read=FILE  read the specified file before bitbake.conf
   -v, --verbose         output more chit-chat to the terminal
@@ -515,6 +507,5 @@ BBFILE_PRIORITY_upstream = "5"
 BBFILE_PRIORITY_local = "10"</screen>
                 </example>
             </section>
-        </section>
     </chapter>
 </book>
