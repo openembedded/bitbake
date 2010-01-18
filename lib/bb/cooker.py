@@ -932,8 +932,6 @@ class CookerParser:
         self.pointer = 0
 
     def parse_next(self):
-        print "Pointer %d" % self.pointer
-
         if self.pointer < len(self.filelist):
             f = self.filelist[self.pointer]
             cooker = self.cooker

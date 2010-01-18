@@ -1,5 +1,5 @@
 #
-# BitBake XMLRPC Server
+# BitBake 'dummy' Passthrough Server
 #
 # Copyright (C) 2006 - 2007  Michael 'Mickey' Lauer
 # Copyright (C) 2006 - 2008  Richard Purdie
@@ -32,9 +32,8 @@
 """
 
 import bb
-import xmlrpclib
-from bb import daemonize
 from bb.ui import uievent
+import xmlrpclib
 
 DEBUG = False
 
@@ -46,30 +45,18 @@ class BitBakeServerCommands():
         self.cooker = cooker
         self.server = server
 
-    def registerEventHandler(self, host, port):
-        """
-        Register a remote UI Event Handler
-        """
-        s = xmlrpclib.Server("http://%s:%d" % (host, port), allow_none=True)
-        return bb.event.register_UIHhandler(s)
-
-    def unregisterEventHandler(self, handlerNum):
-        """
-        Unregister a remote UI Event Handler
-        """
-        return bb.event.unregister_UIHhandler(handlerNum)
-
     def runCommand(self, command):
         """
         Run a cooker command on the server
         """
+        print "Running Command %s" % command
         return self.cooker.command.runCommand(command)
 
     def terminateServer(self):
         """
         Trigger the server to quit
         """
-        self.server.quit = True
+        self.server.server_exit()
         print "Server (cooker) exitting"
         return
 
@@ -79,52 +66,61 @@ class BitBakeServerCommands():
         """
         return True
 
-class BitBakeServer(SimpleXMLRPCServer):
+eventQueue = []
+
+class BBUIEventQueue:
+    class event:
+        def __init__(self, parent):
+            self.parent = parent
+        @staticmethod
+        def send(event):
+            event = xmlrpclib.loads(xmlrpclib.dumps(event, allow_none=True))
+            bb.server.none.eventQueue.append(event[0])
+        @staticmethod
+        def quit():
+            return
+
+    def __init__(self, BBServer):
+        self.eventQueue = bb.server.none.eventQueue
+        self.BBServer = BBServer
+        self.EventHandle = bb.event.register_UIHhandler(self)
+
+    def getEvent(self):
+        if len(self.eventQueue) == 0:
+            return None
+
+        return self.eventQueue.pop(0)
+
+    def waitEvent(self, delay):
+        self.BBServer.idle_commands()
+        return self.getEvent()
+
+    def queue_event(self, event):
+        self.eventQueue.append(event)
+
+    def system_quit( self ):
+        bb.event.unregister_UIHhandler(self.EventHandle)
+
+class BitBakeServer():
     # remove this when you're done with debugging
     # allow_reuse_address = True
 
-    def __init__(self, cooker, interface = ("localhost", 0)):
-        """
-	Constructor
-	"""
-        SimpleXMLRPCServer.__init__(self, interface,
-                                    requestHandler=SimpleXMLRPCRequestHandler,
-                                    logRequests=False, allow_none=True)
+    def __init__(self, cooker):
         self._idlefuns = {}
-        self.host, self.port = self.socket.getsockname()
-        #self.register_introspection_functions()
-        commands = BitBakeServerCommands(self, cooker)
-        self.autoregister_all_functions(commands, "")
-
-    def autoregister_all_functions(self, context, prefix):
-        """
-        Convenience method for registering all functions in the scope
-        of this class that start with a common prefix
-        """
-        methodlist = inspect.getmembers(context, inspect.ismethod)
-        for name, method in methodlist:
-            if name.startswith(prefix):
-                self.register_function(method, name[len(prefix):])
+        self.commands = BitBakeServerCommands(self, cooker)
 
     def register_idle_function(self, function, data):
         """Register a function to be called while the server is idle"""
         assert callable(function)
         self._idlefuns[function] = data
 
-    def serve_forever(self):
-        """
-        Serve Requests. Overloaded to honor a quit command
-        """
-        self.quit = False
-        while not self.quit:
-            #print "Idle queue length %s" % len(self._idlefuns)
-            if len(self._idlefuns) == 0:
-                self.timeout = None
-            else:
-                self.timeout = 0
-            self.handle_request()
-            #print "Idle timeout, running idle functions"
-            for function, data in self._idlefuns.items():
+    def idle_commands(self):
+        #print "Idle queue length %s" % len(self._idlefuns)
+        #print "Idle timeout, running idle functions"
+        #if len(self._idlefuns) == 0:
+
+
+        for function, data in self._idlefuns.items():
                 try:
                     retval = function(self, data, False)
                     if not retval:
@@ -136,6 +132,7 @@ class BitBakeServer(SimpleXMLRPCServer):
                     traceback.print_exc()
                     pass
 
+    def server_exit(self):
         # Tell idle functions we're exiting
         for function, data in self._idlefuns.items():
             try:
@@ -143,27 +140,23 @@ class BitBakeServer(SimpleXMLRPCServer):
             except:
                 pass
 
-        self.server_close()
-        return
-
 class BitbakeServerInfo():
     def __init__(self, server):
-        self.host = server.host
-        self.port = server.port
+        self.server = server
+        self.commands = server.commands
 
 class BitBakeServerFork():
-    def __init__(self, command, logfile):
-        daemonize.createDaemon(command, logfile)
+    def __init__(self, serverinfo, command, logfile):
+        serverinfo.forkCommand = command
+        serverinfo.logfile = logfile
 
 class BitBakeServerConnection():
     def __init__(self, serverinfo):
-        self.connection = xmlrpclib.Server("http://%s:%s" % (serverinfo.host, serverinfo.port),  allow_none=True)
-        self.events = uievent.BBUIEventQueue(self.connection)
+        self.server = serverinfo.server
+        self.connection = serverinfo.commands
+        self.events = bb.server.none.BBUIEventQueue(self.server)
 
     def terminate(self):
-        # Don't wait for server indefinitely
-        import socket
-        socket.setdefaulttimeout(2) 
         try:
             self.events.system_quit()
         except:

@@ -26,9 +26,8 @@ import sys, os, getopt, re, time, optparse, xmlrpclib
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
 import bb
 from bb import cooker
-from bb import daemonize
 from bb import ui
-from bb.ui import uievent
+
 
 __version__ = "1.9.0"
 
@@ -144,11 +143,14 @@ Default BBFILES are the .bb files in the current directory.""" )
     configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
 
+    #server = bb.server.xmlrpc
+    server = bb.server.none
+
     # Save a logfile for cooker into the current working directory. When the
     # server is daemonized this logfile will be truncated.
     cooker_logfile = os.path.join (os.getcwd(), "cooker.log")
 
-    cooker = bb.cooker.BBCooker(configuration, bb.server.xmlrpc)
+    cooker = bb.cooker.BBCooker(configuration, server)
 
     # Clear away any spurious environment variables. But don't wipe the
     # environment totally. This is necessary to ensure the correct operation
@@ -156,18 +158,16 @@ Default BBFILES are the .bb files in the current directory.""" )
     bb.utils.clean_environment()
 
     cooker.parseCommandLine()
-    host = cooker.server.host
-    port = cooker.server.port
 
-    daemonize.createDaemon(cooker.serve, cooker_logfile)
+    serverinfo = server.BitbakeServerInfo(cooker.server)
+
+    server.BitBakeServerFork(serverinfo, cooker.serve, cooker_logfile)
     del cooker
 
     sys.excepthook = print_exception
 
     # Setup a connection to the server (cooker)
-    server = xmlrpclib.Server("http://%s:%s" % (host, port),  allow_none=True)
-    # Setup an event receiving queue
-    eventHandler = uievent.BBUIEventQueue(server)
+    serverConnection = server.BitBakeServerConnection(serverinfo)
 
     # Launch the UI
     if configuration.ui:
@@ -180,31 +180,16 @@ Default BBFILES are the .bb files in the current directory.""" )
             # suggest a fixed set this allows you to have flexibility in which
             # ones are available.
             exec "from bb.ui import " + ui
-            exec "return_value = " + ui + ".init(server, eventHandler)"
+            exec "return_value = " + ui + ".init(serverConnection.connection, serverConnection.events)"
     except ImportError:
         print "FATAL: Invalid user interface '%s' specified. " % ui
         print "Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'."
     except Exception, e:
         print "FATAL: Unable to start to '%s' UI: %s." % (configuration.ui, e.message)
     finally:
-        # Don't wait for server indefinitely
-        import socket
-        socket.setdefaulttimeout(2) 
-        try:
-            eventHandler.system_quit()
-        except:
-            pass
-        try:
-            server.terminateServer()
-        except:
-            pass
+        serverConnection.terminate()
         return return_value
 
 if __name__ == "__main__":
-    print """WARNING, WARNING, WARNING
-This is a Bitbake from the Unstable/Development 1.9 Branch. This software contains gaping security holes and is dangerous to use!
-You might want to use the bitbake-1.8 stable branch (if you are not a BitBake developer or tester). I'm going to sleep 5 seconds now to make sure you see that."""
-    import time
-    time.sleep(5)
     ret = main()
     sys.exit(ret)
