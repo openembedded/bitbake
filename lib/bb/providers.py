@@ -63,6 +63,18 @@ def sortPriorities(pn, dataCache, pkg_pn = None):
 
     return tmp_pn
 
+def preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
+    """
+    Check if the version pe,pv,pr is the preferred one.
+    If there is preferred version defined and ends with '%', then pv has to start with that version after removing the '%' 
+    """
+    if (pr == preferred_r or preferred_r == None):
+        if (pe == preferred_e or preferred_e == None):
+            if preferred_v == pv:
+                return True
+            if preferred_v != None and preferred_v.endswith('%') and pv.startswith(preferred_v[:len(preferred_v)-1]):
+                return True
+    return False
 
 def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     """
@@ -96,7 +108,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         for file_set in pkg_pn:
             for f in file_set:
                 pe,pv,pr = dataCache.pkg_pepvpr[f]
-                if preferred_v == pv and (preferred_r == pr or preferred_r == None) and (preferred_e == pe or preferred_e == None):
+                if preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
                     preferred_file = f
                     preferred_ver = (pe, pv, pr)
                     break
