@@ -171,14 +171,15 @@ class DataSmart:
         Rename the variable key to newkey 
         """
         val = self.getVar(key, 0)
-        if val is None:
-            return
-
-        self.setVar(newkey, val)
+        if val is not None:
+            self.setVar(newkey, val)
 
         for i in ('_append', '_prepend'):
+            src = self.getVarFlag(key, i)
+            if src is None:
+                continue
+
             dest = self.getVarFlag(newkey, i) or []
-            src = self.getVarFlag(key, i) or []
             dest.extend(src)
             self.setVarFlag(newkey, i, dest)
             
