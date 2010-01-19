@@ -141,6 +141,8 @@ class BitBakeServer(SimpleXMLRPCServer):
                     import traceback
                     traceback.print_exc()
                     pass
+            if nextsleep is None and len(self._idlefuns) > 0:
+                nextsleep = 0  
             self.timeout = nextsleep
         # Tell idle functions we're exiting
         for function, data in self._idlefuns.items():
@@ -158,7 +160,7 @@ class BitbakeServerInfo():
         self.port = server.port
 
 class BitBakeServerFork():
-    def __init__(self, command, logfile):
+    def __init__(self, serverinfo, command, logfile):
         daemonize.createDaemon(command, logfile)
 
 class BitBakeServerConnection():
