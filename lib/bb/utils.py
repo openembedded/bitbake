@@ -389,7 +389,7 @@ def clean_environment():
 
 def empty_environment():
     """
-    Remove all variable from the environment.
+    Remove all variables from the environment.
     """
     for s in os.environ.keys():
         os.unsetenv(s)
