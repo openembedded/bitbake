@@ -32,7 +32,7 @@
 """
 
 import bb
-import xmlrpclib
+import xmlrpclib, sys
 from bb import daemonize
 from bb.ui import uievent
 
@@ -40,6 +40,10 @@ DEBUG = False
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import inspect, select
+
+if sys.hexversion < 0x020600F0:
+    print "Sorry, python 2.6 or later is required for bitbake's XMLRPC mode"
+    sys.exit(1)
 
 class BitBakeServerCommands():
     def __init__(self, server, cooker):

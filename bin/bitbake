@@ -31,8 +31,8 @@ from bb import ui
 
 __version__ = "1.9.0"
 
-if sys.hexversion < 0x020600F0:
-    print "Sorry, python 2.6 or later is required for this version of bitbake"
+if sys.hexversion < 0x020500F0:
+    print "Sorry, python 2.5 or later is required for this version of bitbake"
     sys.exit(1)
 
 #============================================================================#
