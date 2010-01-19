@@ -47,9 +47,9 @@ domain = bb.utils.Enum(
 class MsgBase(bb.event.Event):
     """Base class for messages"""
 
-    def __init__(self, msg, d ):
+    def __init__(self, msg):
         self._message = msg
-        event.Event.__init__(self, d)
+        event.Event.__init__(self)
 
 class MsgDebug(MsgBase):
     """Debug Message"""
@@ -100,26 +100,26 @@ def debug(level, domain, msg, fn = None):
     if not domain:
         domain = 'default'
     if debug_level[domain] >= level:
-        bb.event.fire(MsgDebug(msg, None))
+        bb.event.fire(MsgDebug(msg), None)
 
 def note(level, domain, msg, fn = None):
     if not domain:
         domain = 'default'
     if level == 1 or verbose or debug_level[domain] >= 1:
-        bb.event.fire(MsgNote(msg, None))
+        bb.event.fire(MsgNote(msg), None)
 
 def warn(domain, msg, fn = None):
-    bb.event.fire(MsgWarn(msg, None))
+    bb.event.fire(MsgWarn(msg), None)
 
 def error(domain, msg, fn = None):
-    bb.event.fire(MsgError(msg, None))
+    bb.event.fire(MsgError(msg), None)
     print 'ERROR: ' + msg
 
 def fatal(domain, msg, fn = None):
-    bb.event.fire(MsgFatal(msg, None))
+    bb.event.fire(MsgFatal(msg), None)
     print 'FATAL: ' + msg
     sys.exit(1)
 
 def plain(msg, fn = None):
-    bb.event.fire(MsgPlain(msg, None))
+    bb.event.fire(MsgPlain(msg), None)
 

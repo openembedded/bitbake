@@ -870,7 +870,7 @@ class RunQueue:
 
         self.state = runQueueRunning
 
-        event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp, self.cfgData))
+        event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp), self.cfgData)
 
     def task_complete(self, task):
         """
@@ -903,7 +903,7 @@ class RunQueue:
         self.stats.taskFailed()
         fnid = self.runq_fnid[task]
         self.failed_fnids.append(fnid)
-        bb.event.fire(runQueueTaskFailed(task, self.stats, self, self.cfgData))
+        bb.event.fire(runQueueTaskFailed(task, self.stats, self), self.cfgData)
         if self.taskData.abort:
             self.state = runQueueCleanup
 
@@ -944,7 +944,7 @@ class RunQueue:
                     # events
                     bb.event.worker_pid = os.getpid()
 
-                    bb.event.fire(runQueueTaskStarted(task, self.stats, self, self.cfgData))
+                    bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
                     bb.msg.note(1, bb.msg.domain.RunQueue,
                                 "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + 1,
                                                                         self.stats.total,
@@ -981,7 +981,7 @@ class RunQueue:
                     return
                 self.task_complete(task)
                 self.stats.taskCompleted()
-                bb.event.fire(runQueueTaskCompleted(task, self.stats, self, self.cfgData))
+                bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
                 continue
 
             if len(self.failed_fnids) != 0:
@@ -1013,7 +1013,7 @@ class RunQueue:
             self.finish_runqueue_now()
         try:
             while self.stats.active > 0:
-                bb.event.fire(runQueueExitWait(self.stats.active, self.cfgData))
+                bb.event.fire(runQueueExitWait(self.stats.active), self.cfgData)
                 bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.stats.active)
                 tasknum = 1
                 for k, v in self.build_pids.iteritems():
@@ -1028,7 +1028,7 @@ class RunQueue:
                     self.task_fail(task, result[1])
                 else:
                     self.stats.taskCompleted()
-                    bb.event.fire(runQueueTaskCompleted(task, self.stats, self, self.cfgData))
+                    bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
         except:
             self.finish_runqueue_now()
             raise
@@ -1078,43 +1078,43 @@ class runQueueExitWait(bb.event.Event):
     Event when waiting for task processes to exit
     """
 
-    def __init__(self, remain, d):
+    def __init__(self, remain):
         self.remain = remain
         self.message = "Waiting for %s active tasks to finish" % remain
-        bb.event.Event.__init__(self, d)
+        bb.event.Event.__init__(self)
 
 class runQueueEvent(bb.event.Event):
     """
     Base runQueue event class
     """
-    def __init__(self, task, stats, rq, d):
+    def __init__(self, task, stats, rq):
         self.taskid = task
         self.taskstring = rq.get_user_idstring(task)
         self.stats = stats
-        bb.event.Event.__init__(self, d)
+        bb.event.Event.__init__(self)
 
 class runQueueTaskStarted(runQueueEvent):
     """
     Event notifing a task was started
     """
-    def __init__(self, task, stats, rq, d):
-        runQueueEvent.__init__(self, task, stats, rq, d)
+    def __init__(self, task, stats, rq):
+        runQueueEvent.__init__(self, task, stats, rq)
         self.message = "Running task %s (%d of %d) (%s)" % (task, stats.completed + stats.active + 1, self.stats.total, self.taskstring)
 
 class runQueueTaskFailed(runQueueEvent):
     """
     Event notifing a task failed
     """
-    def __init__(self, task, stats, rq, d):
-        runQueueEvent.__init__(self, task, stats, rq, d)
+    def __init__(self, task, stats, rq):
+        runQueueEvent.__init__(self, task, stats, rq)
         self.message = "Task %s failed (%s)" % (task, self.taskstring)
 
 class runQueueTaskCompleted(runQueueEvent):
     """
     Event notifing a task completed
     """
-    def __init__(self, task, stats, rq, d):
-        runQueueEvent.__init__(self, task, stats, rq, d)
+    def __init__(self, task, stats, rq):
+        runQueueEvent.__init__(self, task, stats, rq)
         self.message = "Task %s completed (%s)" % (task, self.taskstring)
 
 def check_stamp_fn(fn, taskname, d):

@@ -245,7 +245,7 @@ class BBCooker:
 
     def compareRevisions(self):
         ret = bb.fetch.fetcher_compare_revisons(self.configuration.data)
-        bb.event.fire(bb.command.CookerCommandSetExitCode(self.configuration.event_data, ret))
+        bb.event.fire(bb.command.CookerCommandSetExitCode(ret), self.configuration.event_data)
 
     def showEnvironment(self, buildfile = None, pkgs_to_build = []):
         """
@@ -403,7 +403,7 @@ class BBCooker:
         Generate an event with the result
         """
         depgraph = self.generateDepTreeData(pkgs_to_build, task)
-        bb.event.fire(bb.event.DepTreeGenerated(self.configuration.data, depgraph))
+        bb.event.fire(bb.event.DepTreeGenerated(depgraph), self.configuration.data)
 
     def generateDotGraphFiles(self, pkgs_to_build, task):
         """
@@ -544,7 +544,7 @@ class BBCooker:
 
             bb.fetch.fetcher_init(self.configuration.data)
 
-            bb.event.fire(bb.event.ConfigParsed(self.configuration.data))
+            bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
 
         except IOError, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (afile, str(e)))
@@ -657,7 +657,7 @@ class BBCooker:
         taskdata.add_provider(self.configuration.data, self.status, item)
 
         buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
-        bb.event.fire(bb.event.BuildStarted(buildname, [item], self.configuration.event_data))
+        bb.event.fire(bb.event.BuildStarted(buildname, [item]), self.configuration.event_data)
 
         # Execute the runqueue
         runlist = [[item, "do_%s" % task]]
@@ -680,7 +680,7 @@ class BBCooker:
                 retval = False
             if not retval:
                 self.command.finishAsyncCommand()
-                bb.event.fire(bb.event.BuildCompleted(buildname, item, self.configuration.event_data, failures))
+                bb.event.fire(bb.event.BuildCompleted(buildname, item, failures), self.configuration.event_data)
                 return False
             return 0.5
 
@@ -716,14 +716,14 @@ class BBCooker:
                 retval = False
             if not retval:
                 self.command.finishAsyncCommand()
-                bb.event.fire(bb.event.BuildCompleted(buildname, targets, self.configuration.event_data, failures))
+                bb.event.fire(bb.event.BuildCompleted(buildname, targets, failures), self.configuration.event_data)
                 return None
             return 0.5
 
         self.buildSetVars()
 
         buildname = bb.data.getVar("BUILDNAME", self.configuration.data)
-        bb.event.fire(bb.event.BuildStarted(buildname, targets, self.configuration.event_data))
+        bb.event.fire(bb.event.BuildStarted(buildname, targets), self.configuration.event_data)
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
@@ -904,15 +904,15 @@ class BBCooker:
         else:
             self.server.serve_forever()
         
-        bb.event.fire(CookerExit(self.configuration.event_data))
+        bb.event.fire(CookerExit(), self.configuration.event_data)
         
 class CookerExit(bb.event.Event):
     """
     Notify clients of the Cooker shutdown
     """
 
-    def __init__(self, d):
-        bb.event.Event.__init__(self, d)
+    def __init__(self):
+        bb.event.Event.__init__(self)
 
 class CookerParser:
     def __init__(self, cooker, filelist, masked):
@@ -962,7 +962,7 @@ class CookerParser:
                 cooker.bb_cache.remove(f)
                 raise
             finally:
-                bb.event.fire(bb.event.ParseProgress(cooker.configuration.event_data, self.cached, self.parsed, self.skipped, self.masked, self.error, self.total))
+                bb.event.fire(bb.event.ParseProgress(self.cached, self.parsed, self.skipped, self.masked, self.error, self.total), cooker.configuration.event_data)
 
             self.pointer += 1
 

@@ -94,9 +94,9 @@ class Command:
 
     def finishAsyncCommand(self, error = None):
         if error:
-            bb.event.fire(bb.command.CookerCommandFailed(self.cooker.configuration.event_data, error))
+            bb.event.fire(bb.command.CookerCommandFailed(error), self.cooker.configuration.event_data)
         else:
-            bb.event.fire(bb.command.CookerCommandCompleted(self.cooker.configuration.event_data))
+            bb.event.fire(bb.command.CookerCommandCompleted(), self.cooker.configuration.event_data)
         self.currentAsyncCommand = None
 
 
@@ -247,24 +247,24 @@ class CookerCommandCompleted(bb.event.Event):
     """
     Cooker command completed
     """
-    def  __init__(self, data):
-        bb.event.Event.__init__(self, data)
+    def  __init__(self):
+        bb.event.Event.__init__(self)
 
 
 class CookerCommandFailed(bb.event.Event):
     """
     Cooker command completed
     """
-    def  __init__(self, data, error):
-        bb.event.Event.__init__(self, data)
+    def  __init__(self, error):
+        bb.event.Event.__init__(self)
         self.error = error
 
 class CookerCommandSetExitCode(bb.event.Event):
     """
     Set the exit code for a cooker command
     """
-    def  __init__(self, data, exitcode):
-        bb.event.Event.__init__(self, data)
+    def  __init__(self, exitcode):
+        bb.event.Event.__init__(self)
         self.exitcode = int(exitcode)
 
 

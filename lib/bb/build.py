@@ -55,7 +55,7 @@ class TaskBase(event.Event):
     def __init__(self, t, d ):
         self._task = t
         self._package = bb.data.getVar("PF", d, 1)
-        event.Event.__init__(self, d)
+        event.Event.__init__(self)
         self._message = "package %s: task %s: %s" % (bb.data.getVar("PF", d, 1), t, bb.event.getName(self)[4:])
 
     def getTask(self):
@@ -286,9 +286,9 @@ def exec_task(task, d):
         data.setVar('OVERRIDES', 'task-%s:%s' % (task[3:], old_overrides), localdata)
         data.update_data(localdata)
         data.expandKeys(localdata)
-        event.fire(TaskStarted(task, localdata))
+        event.fire(TaskStarted(task, localdata), localdata)
         exec_func(task, localdata)
-        event.fire(TaskSucceeded(task, localdata))
+        event.fire(TaskSucceeded(task, localdata), localdata)
     except FuncFailed, message:
         # Try to extract the optional logfile
         try:
@@ -298,7 +298,7 @@ def exec_task(task, d):
             msg = message
         bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % message )
         failedevent = TaskFailed(msg, logfile, task, d)
-        event.fire(failedevent)
+        event.fire(failedevent, d)
         raise EventException("Function failed in task: %s" % message, failedevent)
 
     # make stamp, or cause event and raise exception

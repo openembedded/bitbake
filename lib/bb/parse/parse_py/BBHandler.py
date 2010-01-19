@@ -114,7 +114,7 @@ def finalise(fn, d):
     tasklist = data.getVar('__BBTASKS', d) or []
     bb.build.add_tasks(tasklist, d)
 
-    bb.event.fire(bb.event.RecipeParsed(fn, d))
+    bb.event.fire(bb.event.RecipeParsed(fn), d)
 
 
 def handle(fn, d, include = 0):
