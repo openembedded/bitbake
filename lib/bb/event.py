@@ -136,23 +136,6 @@ class StampUpdate(Event):
     stampPrefix = property(getStampPrefix)
     targets = property(getTargets)
 
-class PkgBase(Event):
-    """Base class for package events"""
-
-    def __init__(self, t, d):
-        self._pkg = t
-        Event.__init__(self, d)
-        self._message = "package %s: %s" % (bb.data.getVar("P", d, 1), getName(self)[3:])
-
-    def getPkg(self):
-        return self._pkg
-
-    def setPkg(self, pkg):
-        self._pkg = pkg
-
-    pkg = property(getPkg, setPkg, None, "pkg property")
-
-
 class BuildBase(Event):
     """Base class for bbmake run events"""
 
@@ -191,20 +174,7 @@ class BuildBase(Event):
     cfg = property(getCfg, setCfg, None, "cfg property")
 
 
-class DepBase(PkgBase):
-    """Base class for dependency events"""
 
-    def __init__(self, t, data, d):
-        self._dep = d
-        PkgBase.__init__(self, t, data)
-
-    def getDep(self):
-        return self._dep
-
-    def setDep(self, dep):
-        self._dep = dep
-
-    dep = property(getDep, setDep, None, "dep property")
 
 
 class BuildStarted(BuildBase):
@@ -215,12 +185,7 @@ class BuildCompleted(BuildBase):
     """bbmake build run completed"""
 
 
-class UnsatisfiedDep(DepBase):
-    """Unsatisfied Dependency"""
 
-
-class RecursiveDep(DepBase):
-    """Recursive Dependency"""
 
 class NoProvider(Event):
     """No Provider for an Event"""
