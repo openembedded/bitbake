@@ -24,6 +24,7 @@ BitBake build tools.
 
 import os, re
 import bb.utils
+import pickle
 
 # This is the pid for which we should generate the event. This is set when
 # the runqueue forks off.
@@ -62,9 +63,11 @@ def fire(event, d):
     errors = []
     for h in _ui_handlers:
         #print "Sending event %s" % event
-        classid = "%s.%s" % (event.__class__.__module__, event.__class__.__name__)
         try:
-            _ui_handlers[h].event.send((classid, event))
+             # We use pickle here since it better handles object instances
+             # which xmlrpc's marshaller does not. Events *must* be serializable
+             # by pickle.
+            _ui_handlers[h].event.send((pickle.dumps(event)))
         except:
             errors.append(h)
     for h in errors:

@@ -35,6 +35,7 @@ import time
 import bb
 from bb.ui import uievent
 import xmlrpclib
+import pickle
 
 DEBUG = False
 
@@ -58,7 +59,7 @@ class BitBakeServerCommands():
         Trigger the server to quit
         """
         self.server.server_exit()
-        print "Server (cooker) exitting"
+        #print "Server (cooker) exitting"
         return
 
     def ping(self):
@@ -75,8 +76,7 @@ class BBUIEventQueue:
             self.parent = parent
         @staticmethod
         def send(event):
-            event = xmlrpclib.loads(xmlrpclib.dumps(event, allow_none=True))
-            bb.server.none.eventQueue.append(event[0])
+            bb.server.none.eventQueue.append(pickle.loads(event))
         @staticmethod
         def quit():
             return

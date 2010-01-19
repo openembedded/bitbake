@@ -53,29 +53,29 @@ def init(server, eventHandler):
             if event is None:
                 continue
             #print event
-            if event[0].startswith('bb.msg.MsgPlain'):
-                print event[1]['_message']
+            if isinstance(event, bb.msg.MsgPlain):
+                print event._message
                 continue
-            if event[0].startswith('bb.msg.MsgDebug'):
-                print 'DEBUG: ' + event[1]['_message']
+            if isinstance(event, bb.msg.MsgDebug):
+                print 'DEBUG: ' + event._message
                 continue
-            if event[0].startswith('bb.msg.MsgNote'):
-                print 'NOTE: ' + event[1]['_message']
+            if isinstance(event, bb.msg.MsgNote):
+                print 'NOTE: ' + event._message
                 continue
-            if event[0].startswith('bb.msg.MsgWarn'):
-                print 'WARNING: ' + event[1]['_message']
+            if isinstance(event, bb.msg.MsgWarn):
+                print 'WARNING: ' + event._message
                 continue
-            if event[0].startswith('bb.msg.MsgError'):
+            if isinstance(event, bb.msg.MsgError):
                 return_value = 1
-                print 'ERROR: ' + event[1]['_message']
+                print 'ERROR: ' + event._message
                 continue
-            if event[0].startswith('bb.msg.MsgFatal'):
+            if isinstance(event, bb.msg.MsgFatal):
                 return_value = 1
-                print 'FATAL: ' + event[1]['_message']
+                print 'FATAL: ' + event._message
                 break
-            if event[0].startswith('bb.build.TaskFailed'):
+            if isinstance(event, bb.build.TaskFailed):
                 return_value = 1
-                logfile = event[1]['logfile']
+                logfile = event.logfile
                 if logfile:
                     print "ERROR: Logfile of failure stored in %s." % logfile
                     if 1 or includelogs:
@@ -97,12 +97,12 @@ def init(server, eventHandler):
                         if lines:
                             for line in lines:
                                 print line
-            if event[0].startswith('bb.build.Task'):
-                print "NOTE: %s" % event[1]['_message']
+            if isinstance(event, bb.build.TaskBase):
+                print "NOTE: %s" % event._message
                 continue
-            if event[0].startswith('bb.event.ParseProgress'):
-                x = event[1]['sofar']
-                y = event[1]['total']
+            if isinstance(event, bb.event.ParseProgress):
+                x = event.sofar
+                y = event.total
                 if os.isatty(sys.stdout.fileno()):
                     sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
                     sys.stdout.flush()
@@ -115,35 +115,35 @@ def init(server, eventHandler):
                         sys.stdout.flush()
                 if x == y:
                     print("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors." 
-                        % ( event[1]['cached'], event[1]['parsed'], event[1]['skipped'], event[1]['masked'], event[1]['errors']))
+                        % ( event.cached, event.parsed, event.skipped, event.masked, event.errors))
                 continue
 
-            if event[0] == 'bb.command.CookerCommandCompleted':
+            if isinstance(event, bb.command.CookerCommandCompleted):
                 break
-            if event[0] == 'bb.command.CookerCommandSetExitCode':
-                return_value = event[1]['exitcode']
+            if isinstance(event, bb.command.CookerCommandSetExitCode):
+                return_value = event.exitcode
                 continue
-            if event[0] == 'bb.command.CookerCommandFailed':
+            if isinstance(event, bb.command.CookerCommandFailed):
                 return_value = 1
-                print "Command execution failed: %s" % event[1]['error']
+                print "Command execution failed: %s" % event.error
                 break
-            if event[0] == 'bb.cooker.CookerExit':
+            if isinstance(event, bb.cooker.CookerExit):
                 break
 
             # ignore
-            if event[0].startswith('bb.event.BuildStarted'):
+            if isinstance(event, bb.event.BuildStarted):
                 continue
-            if event[0].startswith('bb.event.BuildCompleted'):
+            if isinstance(event, bb.event.BuildCompleted):
                 continue
-            if event[0].startswith('bb.event.MultipleProviders'):
+            if isinstance(event, bb.event.MultipleProviders):
                 continue
-            if event[0].startswith('bb.runqueue.runQueue'):
+            if isinstance(event, bb.runqueue.runQueueEvent):
                 continue
-            if event[0].startswith('bb.event.StampUpdate'):
+            if isinstance(event, bb.event.StampUpdate):
                 continue
-            if event[0].startswith('bb.event.ConfigParsed'):
+            if isinstance(event, bb.event.ConfigParsed):
                 continue
-            if event[0].startswith('bb.event.RecipeParsed'):
+            if isinstance(event, bb.event.RecipeParsed):
                 continue
             print "Unknown Event: %s" % event
 

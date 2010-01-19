@@ -24,7 +24,7 @@ server and queue them for the UI to process. This process must be used to avoid
 client/server deadlocks.
 """
 
-import socket, threading
+import socket, threading, pickle
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 
 class BBUIEventQueue:
@@ -55,7 +55,6 @@ class BBUIEventQueue:
             self.eventQueueNotify.clear()
 
         self.eventQueueLock.release()
-
         return item
 
     def waitEvent(self, delay):
@@ -63,9 +62,8 @@ class BBUIEventQueue:
         return self.getEvent()
 
     def queue_event(self, event):
-
         self.eventQueueLock.acquire()
-        self.eventQueue.append(event)
+        self.eventQueue.append(pickle.loads(event))
         self.eventQueueNotify.set()
         self.eventQueueLock.release()
 
