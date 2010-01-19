@@ -246,29 +246,29 @@ class NCursesUI:
                     continue
                 helper.eventHandler(event)
                 #mw.appendText("%s\n" % event[0])
-                if event[0].startswith('bb.build.Task'):
-                    mw.appendText("NOTE: %s\n" % event[1]['_message'])
-                if event[0].startswith('bb.msg.MsgDebug'):
-                    mw.appendText('DEBUG: ' + event[1]['_message'] + '\n')
-                if event[0].startswith('bb.msg.MsgNote'):
-                    mw.appendText('NOTE: ' + event[1]['_message'] + '\n')
-                if event[0].startswith('bb.msg.MsgWarn'):
-                    mw.appendText('WARNING: ' + event[1]['_message'] + '\n')
-                if event[0].startswith('bb.msg.MsgError'):
-                    mw.appendText('ERROR: ' + event[1]['_message'] + '\n')
-                if event[0].startswith('bb.msg.MsgFatal'):
-                    mw.appendText('FATAL: ' + event[1]['_message'] + '\n')
-                if event[0].startswith('bb.event.ParseProgress'):
-                    x = event[1]['sofar']
-                    y = event[1]['total']
+                if isinstance(event, bb.build.Task):
+                    mw.appendText("NOTE: %s\n" % event._message)
+                if isinstance(event, bb.msg.MsgDebug):
+                    mw.appendText('DEBUG: ' + event._message + '\n')
+                if isinstance(event, bb.msg.MsgNote):
+                    mw.appendText('NOTE: ' + event._message + '\n')
+                if isinstance(event, bb.msg.MsgWarn):
+                    mw.appendText('WARNING: ' + event._message + '\n')
+                if isinstance(event, bb.msg.MsgError):
+                    mw.appendText('ERROR: ' + event._message + '\n')
+                if isinstance(event, bb.msg.MsgFatal):
+                    mw.appendText('FATAL: ' + event._message + '\n')
+                if isinstance(event, bb.event.ParseProgress):
+                    x = event.sofar
+                    y = event.total
                     if x == y:
                         mw.setStatus("Idle")
                         mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked." 
-                                % ( event[1]['cached'], event[1]['parsed'], event[1]['skipped'], event[1]['masked'] ))
+                                % ( event.cached, event.parsed, event.skipped, event.masked ))
                     else:
                         mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
-#                if event[0].startswith('bb.build.TaskFailed'):
-#                    if event[1]['logfile']:
+#                if isinstance(event, bb.build.TaskFailed):
+#                    if event.logfile:
 #                        if data.getVar("BBINCLUDELOGS", d):
 #                            bb.msg.error(bb.msg.domain.Build, "log data follows (%s)" % logfile)
 #                            number_of_lines = data.getVar("BBINCLUDELOGS_LINES", d)
@@ -286,13 +286,13 @@ class NCursesUI:
 #                        else:
 #                            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
 
-                if event[0] == 'bb.command.CookerCommandCompleted':
+                if isinstance(event, bb.command.CookerCommandCompleted):
                     exitflag = True
-                if event[0] == 'bb.command.CookerCommandFailed':
-                    mw.appendText("Command execution failed: %s" % event[1]['error'])
+                if isinstance(event, bb.command.CookerCommandFailed):
+                    mw.appendText("Command execution failed: %s" % event.error)
                     time.sleep(2)
                     exitflag = True
-                if event[0] == 'bb.cooker.CookerExit':
+                if isinstance(event, bb.cooker.CookerExit):
                     exitflag = True
 
                 if helper.needUpdate:

@@ -229,12 +229,12 @@ def init(server, eventHandler):
 
             if event is None:
                 continue
-            if event[0].startswith('bb.event.ParseProgress'):
-                x = event[1]['sofar']
-                y = event[1]['total']
+            if isinstance(event, bb.event.ParseProgress):
+                x = event.sofar
+                y = event.total
                 if x == y:
                     print("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors." 
-                        % ( event[1]['cached'], event[1]['parsed'], event[1]['skipped'], event[1]['masked'], event[1]['errors']))
+                        % ( event.cached, event.parsed, event.skipped, event.masked, event.errors))
                     pbar.hide()
                 gtk.gdk.threads_enter()
                 pbar.progress.set_fraction(float(x)/float(y))
@@ -242,17 +242,17 @@ def init(server, eventHandler):
                 gtk.gdk.threads_leave()
                 continue
 
-            if event[0] == "bb.event.DepTreeGenerated":
+            if isinstance(event, bb.event.DepTreeGenerated):
                 gtk.gdk.threads_enter()
-                parse(event[1]['_depgraph'], dep.pkg_model, dep.depends_model)
+                parse(event._depgraph, dep.pkg_model, dep.depends_model)
                 gtk.gdk.threads_leave()
 
-            if event[0] == 'bb.command.CookerCommandCompleted':
+            if isinstance(event, bb.command.CookerCommandCompleted):
                 continue
-            if event[0] == 'bb.command.CookerCommandFailed':
-                print "Command execution failed: %s" % event[1]['error']
+            if isinstance(event, bb.command.CookerCommandFailed):
+                print "Command execution failed: %s" % event.error
                 break
-            if event[0] == 'bb.cooker.CookerExit':
+            if isinstance(event, bb.cooker.CookerExit):
                 break
 
             continue

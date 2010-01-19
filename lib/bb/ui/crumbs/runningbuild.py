@@ -61,36 +61,36 @@ class RunningBuild (gobject.GObject):
         # If we have a pid attached to this message/event try and get the
         # (package, task) pair for it. If we get that then get the parent iter
         # for the message.
-        if event[1].has_key ('pid'):
-            pid = event[1]['pid']
+        if hassattr(event, 'pid'):
+            pid = event.pid
             if self.pids_to_task.has_key(pid):
                 (package, task) = self.pids_to_task[pid]
                 parent = self.tasks_to_iter[(package, task)]
 
-        if event[0].startswith('bb.msg.Msg'):
+        if isinstance(event, bb.msg.Msg):
             # Set a pretty icon for the message based on it's type.
-            if (event[0].startswith ('bb.msg.MsgWarn')):
+            if isinstance(event, bb.msg.MsgWarn):
                 icon = "dialog-warning"
-            elif (event[0].startswith ('bb.msg.MsgErr')):
+            elif isinstance(event, bb.msg.MsgErr):
                 icon = "dialog-error"
             else:
                 icon = None
 
             # Ignore the "Running task i of n .." messages
-            if (event[1]['_message'].startswith ("Running task")):
+            if (event._message.startswith ("Running task")):
                 return
 
             # Add the message to the tree either at the top level if parent is
             # None otherwise as a descendent of a task.
             self.model.append (parent, 
-                               (event[0].split()[-1], # e.g. MsgWarn, MsgError
+                               (event.__name__.split()[-1], # e.g. MsgWarn, MsgError
                                 package, 
                                 task,
-                                event[1]['_message'],
+                                event._message,
                                 icon, 
                                 False))
-        elif event[0].startswith('bb.build.TaskStarted'):
-            (package, task) = (event[1]['_package'], event[1]['_task'])
+        elif isinstance(event, bb.build.TaskStarted):
+            (package, task) = (event._package, event._task)
 
             # Save out this PID.
             self.pids_to_task[pid] = (package,task)
@@ -128,9 +128,9 @@ class RunningBuild (gobject.GObject):
             # Mark this task as active.
             self.model.set(i, self.model.COL_ICON, "gtk-execute")
 
-        elif event[0].startswith('bb.build.Task'):
+        elif isinstance(event, bb.build.Task):
 
-            if event[0].startswith('bb.build.TaskFailed'):
+            if isinstance(event, bb.build.TaskFailed):
                 # Mark the task as failed
                 i = self.tasks_to_iter[(package, task)]
                 self.model.set(i, self.model.COL_ICON, "dialog-error")
@@ -153,8 +153,8 @@ class RunningBuild (gobject.GObject):
             del self.tasks_to_iter[(package, task)]
             del self.pids_to_task[pid]
 
-        elif event[0].startswith('bb.event.BuildCompleted'):
-            failures = int (event[1]['_failures'])
+        elif isinstance(event, bb.event.BuildCompleted):
+            failures = int (event._failures)
 
             # Emit the appropriate signal depending on the number of failures
             if (failures > 1):

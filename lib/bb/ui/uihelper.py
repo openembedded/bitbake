@@ -24,25 +24,25 @@ class BBUIHelper:
         self.failed_tasks = {}
 
     def eventHandler(self, event):
-        if event[0].startswith('bb.build.TaskStarted'):
-            self.running_tasks["%s %s\n" % (event[1]['_package'], event[1]['_task'])] = ""
+        if isinstance(event, bb.build.TaskStarted):
+            self.running_tasks["%s %s\n" % (event._package, event._task)] = ""
             self.needUpdate = True
-        if event[0].startswith('bb.build.TaskSucceeded'):
-            del self.running_tasks["%s %s\n" % (event[1]['_package'], event[1]['_task'])]
+        if isinstance(event, bb.build.TaskSucceeded):
+            del self.running_tasks["%s %s\n" % (event._package, event._task)]
             self.needUpdate = True
-        if event[0].startswith('bb.build.TaskFailed'):
-            del self.running_tasks["%s %s\n" % (event[1]['_package'], event[1]['_task'])]
-            self.failed_tasks["%s %s\n" % (event[1]['_package'], event[1]['_task'])] = ""
+        if isinstance(event, bb.build.TaskFailed):
+            del self.running_tasks["%s %s\n" % (event._package, event._task)]
+            self.failed_tasks["%s %s\n" % (event._package, event._task)] = ""
             self.needUpdate = True
 
         # Add runqueue event handling
-        #if event[0].startswith('bb.runqueue.runQueueTaskCompleted'):
+        #if isinstance(event, bb.runqueue.runQueueTaskCompleted):
         #    a = 1
-        #if event[0].startswith('bb.runqueue.runQueueTaskStarted'):
+        #if isinstance(event, bb.runqueue.runQueueTaskStarted):
         #    a = 1
-        #if event[0].startswith('bb.runqueue.runQueueTaskFailed'):
+        #if isinstance(event, bb.runqueue.runQueueTaskFailed):
         #    a = 1
-        #if event[0].startswith('bb.runqueue.runQueueExitWait'):
+        #if isinstance(event, bb.runqueue.runQueueExitWait):
         #    a = 1
 
     def getTasks(self):
