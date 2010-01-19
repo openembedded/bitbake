@@ -329,7 +329,8 @@ def feeder(lineno, s, fn, root, d):
         after = m.group("after")
         if func is None:
             return
-        var = "do_" + func
+        if func[:3] != "do_":
+            var = "do_" + func
 
         data.setVarFlag(var, "task", 1, d)
 
