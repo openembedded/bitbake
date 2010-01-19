@@ -29,6 +29,7 @@ import pickle
 # This is the pid for which we should generate the event. This is set when
 # the runqueue forks off.
 worker_pid = 0
+worker_pipe = None
 
 class Event:
     """Base class for events"""
@@ -49,6 +50,10 @@ _ui_handler_seq = 0
 
 def fire(event, d):
     """Fire off an Event"""
+
+    if worker_pid != 0:
+        worker_fire(event, d)
+        return
 
     for handler in _handlers:
         h = _handlers[handler]
@@ -72,6 +77,18 @@ def fire(event, d):
             errors.append(h)
     for h in errors:
         del _ui_handlers[h]
+
+def worker_fire(event, d):
+    data = "<event>" + pickle.dumps(event) + "</event>"
+    if os.write(worker_pipe, data) != len (data):
+        print "Error sending event to server (short write)"
+
+def fire_from_worker(event, d):
+    if not event.startswith("<event>") or not event.endswith("</event>"):
+        print "Error, not an event"
+        return
+    event = pickle.loads(event[7:-8])
+    bb.event.fire(event, d)
 
 def register(name, handler):
     """Register an Event handler"""
