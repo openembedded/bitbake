@@ -453,6 +453,8 @@ def main():
     except bb.parse.ParseError:
         bb.fatal( "Unable to parse %s" % config_file )
 
+    if isinstance(documentation, dict):
+        documentation = documentation[""]
 
     # Assuming we've the file loaded now, we will initialize the 'tree'
     doc = Documentation()
