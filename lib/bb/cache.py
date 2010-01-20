@@ -134,7 +134,18 @@ class Cache:
         self.data = data
 
         # Make sure __depends makes the depends_cache
-        self.getVar("__depends", virtualfn, True)
+        # If we're a virtual class we need to make sure all our depends are appended 
+        # to the depends of fn.
+        depends = self.getVar("__depends", virtualfn, True) or []
+        if "__depends" not in self.depends_cache[fn] or not self.depends_cache[fn]["__depends"]:
+            self.depends_cache[fn]["__depends"] = depends
+        for dep in depends:
+            if dep not in self.depends_cache[fn]["__depends"]:
+                self.depends_cache[fn]["__depends"].append(dep)
+
+        # Make sure BBCLASSEXTEND always makes the cache too
+        self.getVar('BBCLASSEXTEND', virtualfn, True)
+
         self.depends_cache[virtualfn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
 
     def virtualfn2realfn(self, virtualfn):
@@ -170,11 +181,8 @@ class Cache:
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s (full)" % fn)
 
-        bb_data, skipped = self.load_bbfile(fn, cfgData)
-        if isinstance(bb_data, dict):
-            return bb_data[cls]
-
-        return bb_data
+        bb_data = self.load_bbfile(fn, cfgData)
+        return bb_data[cls]
 
     def loadData(self, fn, cfgData, cacheData):
         """
@@ -184,42 +192,39 @@ class Cache:
         to record the variables accessed.
         Return the cache status and whether the file was skipped when parsed
         """
+        skipped = 0
+        virtuals = 0
+
         if fn not in self.checked:
             self.cacheValidUpdate(fn)
+
         if self.cacheValid(fn):
-            if "SKIPPED" in self.depends_cache[fn]:
-                return True, True
-            self.handle_data(fn, cacheData)
             multi = self.getVar('BBCLASSEXTEND', fn, True)
-            if multi:
-                for cls in multi.split():
-                    virtualfn = self.realfn2virtual(fn, cls)
-                    # Pretend we're clean so getVar works
-                    self.clean[virtualfn] = ""
-                    self.handle_data(virtualfn, cacheData)
-            return True, False
+            for cls in (multi or "").split() + [""]:
+                virtualfn = self.realfn2virtual(fn, cls)
+                if self.depends_cache[virtualfn]["__SKIPPED"]:
+                    skipped += 1
+                    bb.msg.debug(1, bb.msg.domain.Cache, "Skipping %s" % virtualfn)
+                    continue
+                self.handle_data(virtualfn, cacheData)
+                virtuals += 1
+            return True, skipped, virtuals
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s" % fn)
 
-        bb_data, skipped = self.load_bbfile(fn, cfgData)
+        bb_data = self.load_bbfile(fn, cfgData)
 
-        if skipped:
-           if isinstance(bb_data, dict):
-               self.setData(fn, fn, bb_data[""])
-           else:
-               self.setData(fn, fn, bb_data)
-           return False, skipped
-
-        if isinstance(bb_data, dict):
-            for data in bb_data:
-                virtualfn = self.realfn2virtual(fn, data)
-                self.setData(virtualfn, fn, bb_data[data])
+        for data in bb_data:
+            virtualfn = self.realfn2virtual(fn, data)
+            self.setData(virtualfn, fn, bb_data[data])
+            if self.getVar("__SKIPPED", virtualfn, True):
+                skipped += 1
+                bb.msg.debug(1, bb.msg.domain.Cache, "Skipping %s" % virtualfn)
+            else:
                 self.handle_data(virtualfn, cacheData)
-            return False, skipped
+                virtuals += 1
+        return False, skipped, virtuals
 
-        self.setData(fn, fn, bb_data)
-        self.handle_data(fn, cacheData)
-        return False, skipped
 
     def cacheValid(self, fn):
         """
@@ -286,16 +291,13 @@ class Cache:
         if not fn in self.clean:
             self.clean[fn] = ""
 
-        return True
+        # Mark extended class data as clean too
+        multi = self.getVar('BBCLASSEXTEND', fn, True)
+        for cls in (multi or "").split():
+            virtualfn = self.realfn2virtual(fn, cls)
+            self.clean[virtualfn] = ""
 
-    def skip(self, fn):
-        """
-        Mark a fn as skipped
-        Called from the parser
-        """
-        if not fn in self.depends_cache:
-            self.depends_cache[fn] = {}
-        self.depends_cache[fn]["SKIPPED"] = "1"
+        return True
 
     def remove(self, fn):
         """
@@ -462,10 +464,7 @@ class Cache:
         try:
             bb_data = parse.handle(bbfile, bb_data) # read .bb data
             os.chdir(oldpath)
-            return bb_data, False
-        except bb.parse.SkipPackage:
-            os.chdir(oldpath)
-            return bb_data, True
+            return bb_data
         except:
             os.chdir(oldpath)
             raise

@@ -923,10 +923,12 @@ class CookerParser:
         # Accounting statistics
         self.parsed = 0
         self.cached = 0
-        self.skipped = 0
         self.error = 0
         self.masked = masked
         self.total = len(filelist)
+
+        self.skipped = 0
+        self.virtuals = 0
 
         # Pointer to the next file to parse
         self.pointer = 0
@@ -937,13 +939,14 @@ class CookerParser:
             cooker = self.cooker
 
             try:
-                fromCache, skip = cooker.bb_cache.loadData(f, cooker.configuration.data, cooker.status)
-                if skip:
-                    self.skipped += 1
-                    bb.msg.debug(2, bb.msg.domain.Collection, "skipping %s" % f)
-                    cooker.bb_cache.skip(f)
-                elif fromCache: self.cached += 1
-                else: self.parsed += 1
+                fromCache, skipped, virtuals = cooker.bb_cache.loadData(f, cooker.configuration.data, cooker.status)
+                if fromCache:
+                    self.cached += 1
+                else:
+                    self.parsed += 1
+
+                self.skipped += skipped
+                self.virtuals += virtuals
 
             except IOError, e:
                 self.error += 1
@@ -962,7 +965,7 @@ class CookerParser:
                 cooker.bb_cache.remove(f)
                 raise
             finally:
-                bb.event.fire(bb.event.ParseProgress(self.cached, self.parsed, self.skipped, self.masked, self.error, self.total), cooker.configuration.event_data)
+                bb.event.fire(bb.event.ParseProgress(self.cached, self.parsed, self.skipped, self.masked, self.virtuals, self.error, self.total), cooker.configuration.event_data)
 
             self.pointer += 1
 

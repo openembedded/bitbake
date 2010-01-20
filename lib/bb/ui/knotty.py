@@ -114,8 +114,8 @@ def init(server, eventHandler):
                         sys.stdout.write("done.")
                         sys.stdout.flush()
                 if x == y:
-                    print("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors." 
-                        % ( event.cached, event.parsed, event.skipped, event.masked, event.errors))
+                    print("\nParsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors." 
+                        % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors))
                 continue
 
             if isinstance(event, bb.command.CookerCommandCompleted):

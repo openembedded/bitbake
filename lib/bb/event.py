@@ -253,14 +253,15 @@ class ParseProgress(Event):
     Parsing Progress Event
     """
 
-    def __init__(self, cached, parsed, skipped, masked, errors, total):
+    def __init__(self, cached, parsed, skipped, masked, virtuals, errors, total):
         Event.__init__(self)
         self.cached = cached
         self.parsed = parsed
         self.skipped = skipped
+        self.virtuals = virtuals
         self.masked = masked
         self.errors = errors
-        self.sofar = cached + parsed + skipped
+        self.sofar = cached + parsed
         self.total = total
 
 class DepTreeGenerated(Event):
