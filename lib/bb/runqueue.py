@@ -1042,11 +1042,11 @@ class RunQueue:
         try:
             while self.stats.active > 0:
                 bb.event.fire(runQueueExitWait(self.stats.active), self.cfgData)
-                bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.stats.active)
-                tasknum = 1
-                for k, v in self.build_pids.iteritems():
-                    bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (pid %s)" % (tasknum, self.get_user_idstring(v), k))
-                    tasknum = tasknum + 1
+                #bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.stats.active)
+                #tasknum = 1
+                #for k, v in self.build_pids.iteritems():
+                #    bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (pid %s)" % (tasknum, self.get_user_idstring(v), k))
+                #    tasknum = tasknum + 1
                 result = os.waitpid(-1, os.WNOHANG)
                 if result[0] is 0 and result[1] is 0:
                     return

@@ -23,6 +23,9 @@ import os
 import sys
 import itertools
 import xmlrpclib
+from bb import ui
+from bb.ui import uihelper
+
 
 parsespin = itertools.cycle( r'|/-\\' )
 
@@ -31,6 +34,8 @@ def init(server, eventHandler):
     # Get values of variables which control our output
     includelogs = server.runCommand(["getVariable", "BBINCLUDELOGS"])
     loglines = server.runCommand(["getVariable", "BBINCLUDELOGS_LINES"])
+
+    helper = uihelper.BBUIHelper()
 
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
@@ -53,6 +58,19 @@ def init(server, eventHandler):
             if event is None:
                 continue
             #print event
+            helper.eventHandler(event)
+            if isinstance(event, bb.runqueue.runQueueExitWait):
+                if not shutdown:
+                    shutdown = 1
+            if shutdown and helper.needUpdate:
+                activetasks, failedtasks = helper.getTasks()
+                if activetasks:
+                    print "Waiting for %s active tasks to finish:" % len(activetasks)
+                    tasknum = 1
+                    for task in activetasks:
+                        print "%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task)
+                        tasknum = tasknum + 1
+
             if isinstance(event, bb.msg.MsgPlain):
                 print event._message
                 continue
@@ -138,6 +156,8 @@ def init(server, eventHandler):
             if isinstance(event, bb.event.MultipleProviders):
                 continue
             if isinstance(event, bb.runqueue.runQueueEvent):
+                continue
+            if isinstance(event, bb.runqueue.runQueueExitWait):
                 continue
             if isinstance(event, bb.event.StampUpdate):
                 continue

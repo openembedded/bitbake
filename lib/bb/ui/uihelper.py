@@ -21,18 +21,18 @@ class BBUIHelper:
     def __init__(self):
         self.needUpdate = False
         self.running_tasks = {}
-        self.failed_tasks = {}
+        self.failed_tasks = []
 
     def eventHandler(self, event):
         if isinstance(event, bb.build.TaskStarted):
-            self.running_tasks["%s %s\n" % (event._package, event._task)] = ""
+            self.running_tasks[event.pid] = { 'title' : "%s %s" % (event._package, event._task) }
             self.needUpdate = True
         if isinstance(event, bb.build.TaskSucceeded):
-            del self.running_tasks["%s %s\n" % (event._package, event._task)]
+            del self.running_tasks[event.pid]
             self.needUpdate = True
         if isinstance(event, bb.build.TaskFailed):
-            del self.running_tasks["%s %s\n" % (event._package, event._task)]
-            self.failed_tasks["%s %s\n" % (event._package, event._task)] = ""
+            del self.running_tasks[event.pid]
+            self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
             self.needUpdate = True
 
         # Add runqueue event handling
@@ -46,4 +46,5 @@ class BBUIHelper:
         #    a = 1
 
     def getTasks(self):
+        self.needUpdate = False
         return (self.running_tasks, self.failed_tasks)
