@@ -37,7 +37,10 @@ __export_regexp__ = re.compile( r"export\s+(.+)" )
 def handleInclude(m, fn, lineno, data, force):
     s = bb.data.expand(m.group(1), data)
     bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (fn, lineno, s))
-    include(fn, s, data, False)
+    if force:
+        include(fn, s, data, "include required")
+    else
+        include(fn, s, data, False)
 
 def handleExport(m, data):
     bb.data.setVarFlag(m.group(1), "export", 1, data)
