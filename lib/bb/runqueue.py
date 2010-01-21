@@ -954,6 +954,12 @@ class RunQueue:
                     # No stdin
                     newsi = os.open('/dev/null', os.O_RDWR)
                     os.dup2(newsi, sys.stdin.fileno())
+                    # Stdout to a logfile
+                    #logout = data.expand("${TMPDIR}/log/stdout.%s" % os.getpid(), self.cfgData, True)
+                    #mkdirhier(os.path.dirname(logout))
+                    #newso = open(logout, 'w')
+                    #os.dup2(newso.fileno(), sys.stdout.fileno())
+                    #os.dup2(newso.fileno(), sys.stderr.fileno())
 
                     bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
                     bb.msg.note(1, bb.msg.domain.RunQueue,
@@ -1026,6 +1032,10 @@ class RunQueue:
 
     def finish_runqueue(self, now = False):
         self.state = runQueueCleanUp
+
+        for pipe in self.build_pipes:
+            self.build_pipes[pipe].read()
+
         if now:
             self.finish_runqueue_now()
         try:
@@ -1034,7 +1044,7 @@ class RunQueue:
                 bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.stats.active)
                 tasknum = 1
                 for k, v in self.build_pids.iteritems():
-                    bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (%s)" % (tasknum, self.get_user_idstring(v), k))
+                    bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (pid %s)" % (tasknum, self.get_user_idstring(v), k))
                     tasknum = tasknum + 1
                 result = os.waitpid(-1, os.WNOHANG)
                 if result[0] is 0 and result[1] is 0:
