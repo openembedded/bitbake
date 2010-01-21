@@ -22,7 +22,7 @@ BitBake build tools.
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os, re
+import os, re, sys
 import bb.utils
 import pickle
 
@@ -80,8 +80,11 @@ def fire(event, d):
 
 def worker_fire(event, d):
     data = "<event>" + pickle.dumps(event) + "</event>"
-    if os.write(worker_pipe, data) != len (data):
-        print "Error sending event to server (short write)"
+    try:
+        if os.write(worker_pipe, data) != len (data):
+            print "Error sending event to server (short write)"
+    except OSError:
+        sys.exit(1)
 
 def fire_from_worker(event, d):
     if not event.startswith("<event>") or not event.endswith("</event>"):
