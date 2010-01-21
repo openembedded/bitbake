@@ -98,7 +98,7 @@ class MalformedUrl(Exception):
 #######################################################################
 
 def plain(*args):
-    bb.msg.warn(''.join(args))
+    bb.msg.plain(''.join(args))
 
 def debug(lvl, *args):
     bb.msg.debug(lvl, None, ''.join(args))
@@ -107,7 +107,7 @@ def note(*args):
     bb.msg.note(1, None, ''.join(args))
 
 def warn(*args):
-    bb.msg.warn(1, None, ''.join(args))
+    bb.msg.warn(None, ''.join(args))
 
 def error(*args):
     bb.msg.error(None, ''.join(args))
