@@ -1,127 +1,122 @@
 " Vim syntax file
+" Language:     BitBake bb/bbclasses/inc
+" Author:       Chris Larson <kergoth@handhelds.org>
+"               Ricardo Salveti <rsalveti@rsalveti.net>
+" Copyright:    Copyright (C) 2004  Chris Larson <kergoth@handhelds.org>
+"               Copyright (C) 2008  Ricardo Salveti <rsalveti@rsalveti.net>
 "
-" Copyright (C) 2004  Chris Larson <kergoth@handhelds.org>
 " This file is licensed under the MIT license, see COPYING.MIT in
 " this source distribution for the terms.
 "
-" Language:	BitBake
-" Maintainer:	Chris Larson <kergoth@handhelds.org>
-" Filenames:	*.bb, *.bbclass
+" Syntax highlighting for bb, bbclasses and inc files.
+"
+" It's an entirely new type, just has specific syntax in shell and python code
 
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
-  finish
+if &compatible || v:version < 600
+    finish
+endif
+if exists("b:current_syntax")
+    finish
 endif
 
+" BitBake syntax
+
+" Matching case
 syn case match
 
-" Catch incorrect syntax (only matches if nothing else does)
-"
-syn match bbUnmatched		"."
+" Indicates the error when nothing is matched
+syn match bbUnmatched           "."
 
+" Comments
+syn cluster bbCommentGroup      contains=bbTodo,@Spell
+syn keyword bbTodo              COMBAK FIXME TODO XXX contained
+syn match bbComment             "#.*$" contains=@bbCommentGroup
 
-syn include @python syntax/python.vim
-if exists("b:current_syntax")
-  unlet b:current_syntax
-endif
-
-
-" Other
-
-syn match bbComment		"^#.*$" display contains=bbTodo
-syn keyword bbTodo		TODO FIXME XXX contained
-syn match bbDelimiter		"[(){}=]" contained
-syn match bbQuote		/['"]/ contained
-syn match bbArrayBrackets	"[\[\]]" contained
-
+" String helpers
+syn match bbQuote               +['"]+ contained 
+syn match bbDelimiter           "[(){}=]" contained
+syn match bbArrayBrackets       "[\[\]]" contained
 
 " BitBake strings
+syn match bbContinue            "\\$"
+syn region bbString             matchgroup=bbQuote start=+"+ skip=+\\$+ excludenl end=+"+ contained keepend contains=bbTodo,bbContinue,bbVarDeref,@Spell
+syn region bbString             matchgroup=bbQuote start=+'+ skip=+\\$+ excludenl end=+'+ contained keepend contains=bbTodo,bbContinue,bbVarDeref,@Spell
 
-syn match bbContinue		"\\$"
-syn region bbString		matchgroup=bbQuote start=/"/ skip=/\\$/ excludenl end=/"/ contained keepend contains=bbTodo,bbContinue,bbVarInlinePy,bbVarDeref
-syn region bbString		matchgroup=bbQuote start=/'/ skip=/\\$/ excludenl end=/'/ contained keepend contains=bbTodo,bbContinue,bbVarInlinePy,bbVarDeref
+" Vars definition
+syn keyword bbExportFlag        export contained nextgroup=bbIdentifier skipwhite
+syn match bbIdentifier          "[a-zA-Z0-9\-_\.\/\+]\+" display contained
+syn match bbVarDeref            "${[a-zA-Z0-9\-_\.\/\+]\+}" contained
+syn match bbVarEq               "\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)" contained nextgroup=bbVarValue
+syn match bbVarDef              "^\(export\s*\)\?\([a-zA-Z0-9\-_\.\/\+]\+\(_[${}a-zA-Z0-9\-_\.\/\+]\+\)\?\)\s*\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
+syn match bbVarValue            ".*$" contained contains=bbString,bbVarDeref,bbVarPyValue
+syn match bbVarPyValue          "${@[a-zA-Z0-9\-_\.\(\)]\+}" contained
 
-" BitBake variable metadata
+" Vars metadata flags
+syn match bbVarFlagDef          "^\([a-zA-Z0-9\-_\.]\+\)\(\[[a-zA-Z0-9\-_\.]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
+syn region bbVarFlagFlag        matchgroup=bbArrayBrackets start="\[" end="\]\s*\(=\)\@=" keepend excludenl contained contains=bbIdentifier nextgroup=bbVarEq
 
-syn match bbVarBraces "[\${}]"
-syn region bbVarDeref matchgroup=bbVarBraces start="${" end="}" contained
-" syn region bbVarDeref start="${" end="}" contained
-" syn region bbVarInlinePy start="${@" end="}" contained contains=@python
-syn region bbVarInlinePy matchgroup=bbVarBraces start="${@" end="}" contained contains=@python
+" Includes and requires
+syn keyword bbInclude           inherit include require contained 
+syn match bbIncludeRest         ".*$" contained contains=bbString,bbVarDeref
+syn match bbIncludeLine         "^\(inherit\|include\|require\)\s\+" contains=bbInclude nextgroup=bbIncludeRest
 
-syn keyword bbExportFlag	export contained nextgroup=bbIdentifier skipwhite
-" syn match bbVarDeref	"${[a-zA-Z0-9\-_\.]\+}" contained
-syn match bbVarDef		"^\(export\s*\)\?\([a-zA-Z0-9\-_\.]\+\(_[${}a-zA/-Z0-9\-_\.]\+\)\?\)\s*\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
+" Add taks and similar
+syn keyword bbStatement         addtask addhandler after before EXPORT_FUNCTIONS contained
+syn match bbStatementRest       ".*$" skipwhite contained contains=bbStatement
+syn match bbStatementLine       "^\(addtask\|addhandler\|after\|before\|EXPORT_FUNCTIONS\)\s\+" contains=bbStatement nextgroup=bbStatementRest
 
-syn match bbIdentifier		"[a-zA-Z0-9\-_\./]\+" display contained
-"syn keyword bbVarEq	= display contained nextgroup=bbVarValue
-syn match bbVarEq		"\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)" contained nextgroup=bbVarValue
-syn match bbVarValue		".*$" contained contains=bbString
+" OE Important Functions
+syn keyword bbOEFunctions       do_fetch do_unpack do_patch do_configure do_compile do_stage do_install do_package contained
 
-" BitBake variable metadata flags
-syn match bbVarFlagDef		"^\([a-zA-Z0-9\-_\.]\+\)\(\[[a-zA-Z0-9\-_\.]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
-syn region bbVarFlagFlag	matchgroup=bbArrayBrackets start="\[" end="\]\s*\(=\)\@=" keepend excludenl contained contains=bbIdentifier nextgroup=bbVarEq
-"syn match bbVarFlagFlag		"\[\([a-zA-Z0-9\-_\.]\+\)\]\s*\(=\)\@=" contains=bbIdentifier nextgroup=bbVarEq
-
-
-" Functions!
-syn match bbFunction	"\h\w*" display contained
-
-
-" BitBake python metadata
-
-syn keyword bbPythonFlag	python contained nextgroup=bbFunction
-syn match bbPythonFuncDef	"^\(python\s\+\)\(\w\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPythonFlag,bbFunction,bbDelimiter nextgroup=bbPythonFuncRegion skipwhite
-syn region bbPythonFuncRegion	matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@python
-"hi def link bbPythonFuncRegion	Comment
-
+" Generic Functions
+syn match bbFunction            "\h[0-9A-Za-z_-]*" display contained contains=bbOEFunctions
 
 " BitBake shell metadata
 syn include @shell syntax/sh.vim
 if exists("b:current_syntax")
   unlet b:current_syntax
 endif
+syn keyword bbShFakeRootFlag    fakeroot contained
+syn match bbShFuncDef           "^\(fakeroot\s*\)\?\([0-9A-Za-z_}${-]\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbShFakeRootFlag,bbFunction,bbDelimiter nextgroup=bbShFuncRegion skipwhite
+syn region bbShFuncRegion       matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@shell
 
-syn keyword bbFakerootFlag	fakeroot contained nextgroup=bbFunction
-syn match bbShellFuncDef	"^\(fakeroot\s*\)\?\(\w\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbFakerootFlag,bbFunction,bbDelimiter nextgroup=bbShellFuncRegion skipwhite
-syn region bbShellFuncRegion	matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@shell
-"hi def link bbShellFuncRegion	Comment
-
+" BitBake python metadata
+syn include @python syntax/python.vim
+if exists("b:current_syntax")
+  unlet b:current_syntax
+endif
+syn keyword bbPyFlag            python contained
+syn match bbPyFuncDef           "^\(python\s\+\)\([0-9A-Za-z_-]\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPyFlag,bbFunction,bbDelimiter nextgroup=bbPyFuncRegion skipwhite 
+syn region bbPyFuncRegion       matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@python
 
 " BitBake 'def'd python functions
-syn keyword bbDef	def	contained
-syn region bbDefRegion		start='^def\s\+\w\+\s*([^)]*)\s*:\s*$' end='^\(\s\|$\)\@!' contains=@python
+syn keyword bbPyDef             def contained
+syn region bbPyDefRegion        start='^\(def\s\+\)\([0-9A-Za-z_-]\+\)\(\s*(.*)\s*\):\s*$' end='^\(\s\|$\)\@!' contains=@python
 
-
-" BitBake statements
-syn keyword bbStatement		include inherit require addtask addhandler EXPORT_FUNCTIONS display contained
-syn match bbStatementLine	"^\(include\|inherit\|require\|addtask\|addhandler\|EXPORT_FUNCTIONS\)\s\+" contains=bbStatement nextgroup=bbStatementRest
-syn match bbStatementRest		".*$" contained contains=bbString,bbVarDeref
-
-" Highlight
-"
-hi def link bbArrayBrackets	Statement
-hi def link bbUnmatched		Error
-hi def link bbContinue		Special
-hi def link bbDef		Statement
-hi def link bbPythonFlag	Type
-hi def link bbExportFlag	Type
-hi def link bbFakerootFlag	Type
-hi def link bbStatement		Statement
-hi def link bbString		String
-hi def link bbTodo		Todo
-hi def link bbComment		Comment
-hi def link bbOperator		Operator
-hi def link bbError		Error
-hi def link bbFunction		Function
-hi def link bbDelimiter		Delimiter
-hi def link bbIdentifier	Identifier
-hi def link bbVarEq		Operator
-hi def link bbQuote		String
-hi def link bbVarValue		String
-" hi def link bbVarInlinePy	PreProc
-hi def link bbVarDeref		PreProc
-hi def link bbVarBraces		PreProc
+" Highlighting Definitions
+hi def link bbUnmatched         Error
+hi def link bbInclude           Include
+hi def link bbTodo              Todo
+hi def link bbComment           Comment
+hi def link bbQuote             String
+hi def link bbString            String
+hi def link bbDelimiter         Keyword
+hi def link bbArrayBrackets     Statement
+hi def link bbContinue          Special
+hi def link bbExportFlag        Type
+hi def link bbIdentifier	    Identifier
+hi def link bbVarDeref          PreProc
+hi def link bbVarDef            Identifier
+hi def link bbVarValue          String
+hi def link bbShFakeRootFlag    Type
+hi def link bbFunction          Function
+hi def link bbPyFlag            Type
+hi def link bbPyDef             Statement
+hi def link bbStatement         Statement
+hi def link bbStatementRest     Identifier
+hi def link bbOEFunctions       Special
+hi def link bbVarPyValue        PreProc
 
 let b:current_syntax = "bb"
+
+
