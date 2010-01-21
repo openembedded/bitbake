@@ -26,6 +26,7 @@ from bb import msg, data, event, mkdirhier, utils
 import bb, os, sys
 import signal
 import stat
+import fcntl
 
 class TaskFailure(Exception):
     """Exception raised when a task in a runqueue fails"""
@@ -1161,12 +1162,16 @@ class runQueuePipe():
     def __init__(self, pipein, pipeout, d):
         self.fd = pipein
         os.close(pipeout)
+        fcntl.fcntl(self.fd, fcntl.F_SETFL, fcntl.fcntl(self.fd, fcntl.F_GETFL) | os.O_NONBLOCK)
         self.queue = ""
         self.d = d
 
     def read(self):
         start = len(self.queue)
-        self.queue = self.queue + os.read(self.fd, 1024)
+        try:
+            self.queue = self.queue + os.read(self.fd, 1024)
+        except OSError:
+            pass
         end = len(self.queue)
         index = self.queue.find("</event>")
         while index != -1:
