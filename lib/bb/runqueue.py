@@ -906,7 +906,7 @@ class RunQueue:
         self.failed_fnids.append(fnid)
         bb.event.fire(runQueueTaskFailed(task, self.stats, self), self.cfgData)
         if self.taskData.abort:
-            self.state = runQueueCleanup
+            self.state = runQueueCleanUp
 
     def execute_runqueue_internal(self):
         """
