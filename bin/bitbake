@@ -27,6 +27,7 @@ sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'l
 import bb
 from bb import cooker
 from bb import ui
+from bb import server
 
 
 __version__ = "1.9.0"
