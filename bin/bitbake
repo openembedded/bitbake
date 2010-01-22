@@ -28,7 +28,8 @@ import bb
 from bb import cooker
 from bb import ui
 from bb import server
-
+from bb.server import none
+#from bb.server import xmlrpc
 
 __version__ = "1.9.0"
 
