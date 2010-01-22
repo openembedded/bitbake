@@ -26,7 +26,6 @@ import sys, os, getopt, glob, copy, os.path, re, time
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
 from bb import command
-import bb.server.xmlrpc
 import itertools, sre_constants
 
 class MultipleMatches(Exception):
