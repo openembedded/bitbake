@@ -39,7 +39,7 @@ def handleInclude(m, fn, lineno, data, force):
     bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (fn, lineno, s))
     if force:
         include(fn, s, data, "include required")
-    else
+    else:
         include(fn, s, data, False)
 
 def handleExport(m, data):
