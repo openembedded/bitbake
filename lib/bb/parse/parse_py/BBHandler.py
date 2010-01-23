@@ -57,7 +57,7 @@ IN_PYTHON_EOF = -9999999999999
 __parsed_methods__ = methodpool.get_parsed_dict()
 
 # parsing routines, to be moved into AST classes
-def handleMethod(func_name, body, d):
+def handleMethod(func_name, lineno, fn, body, d):
     if func_name == "__anonymous":
         funcname = ("__anon_%s_%s" % (lineno, fn.translate(string.maketrans('/.+-', '____'))))
         if not funcname in methodpool._parsed_fns:
@@ -321,7 +321,7 @@ def feeder(lineno, s, fn, root, d):
     if __infunc__:
         if s == '}':
             __body__.append('')
-            handleMethod(__infunc__, __body__, d)
+            handleMethod(__infunc__, lineno, fn, __body__, d)
             __infunc__ = ""
             __body__ = []
         else:
