@@ -77,6 +77,8 @@ class Git(Fetch):
         else:
             ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, subdirpath.replace('/', '.'), ud.tag), d)
 
+        ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
+
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def go(self, loc, ud, d):
@@ -99,16 +101,16 @@ class Git(Fetch):
                 os.chdir(ud.clonedir)
                 runfetchcmd("tar -xzf %s" % (repofile), d)
             except:
-                runfetchcmd("git clone -n %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.clonedir), d)
+                runfetchcmd("%s clone -n %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.clonedir), d)
 
         os.chdir(ud.clonedir)
         # Remove all but the .git directory
         if not self._contains_ref(ud.tag, d):
             runfetchcmd("rm * -Rf", d)
-            runfetchcmd("git fetch %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.branch), d)
-            runfetchcmd("git fetch --tags %s://%s%s%s" % (ud.proto, username, ud.host, ud.path), d)
-            runfetchcmd("git prune-packed", d)
-            runfetchcmd("git pack-redundant --all | xargs -r rm", d)
+            runfetchcmd("%s fetch %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.branch), d)
+            runfetchcmd("%s fetch --tags %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
+            runfetchcmd("%s prune-packed" % ud.basecmd, d)
+            runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
 
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
@@ -141,8 +143,8 @@ class Git(Fetch):
 
         bb.mkdirhier(codir)
         os.chdir(ud.clonedir)
-        runfetchcmd("git read-tree %s%s" % (ud.tag, readpathspec), d)
-        runfetchcmd("git checkout-index -q -f --prefix=%s -a" % (coprefix), d)
+        runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
+        runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, coprefix), d)
 
         os.chdir(codir)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
@@ -155,7 +157,8 @@ class Git(Fetch):
         return True
 
     def _contains_ref(self, tag, d):
-        output = runfetchcmd("git log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % tag, d, quiet=True)
+        basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
+        output = runfetchcmd("%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (basecmd, tag), d, quiet=True)
         return output.split()[0] != "0"
 
     def _revision_key(self, url, ud, d):
@@ -173,7 +176,7 @@ class Git(Fetch):
         else:
             username = ""
 
-        cmd = "git ls-remote %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.branch)
+        cmd = "%s ls-remote %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.branch)
         output = runfetchcmd(cmd, d, True)
         if not output:
             raise bb.fetch.FetchError("Fetch command %s gave empty output\n" % (cmd))
@@ -204,7 +207,7 @@ class Git(Fetch):
         if not self._contains_ref(rev, d):
             self.go(None, ud, d)
 
-        output = runfetchcmd("git rev-list %s -- 2> /dev/null | wc -l" % rev, d, quiet=True)
+        output = runfetchcmd("%s rev-list %s -- 2> /dev/null | wc -l" % (ud.basecmd, rev), d, quiet=True)
         os.chdir(cwd)
 
         buildindex = "%s" % output.split()[0]
