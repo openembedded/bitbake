@@ -125,9 +125,7 @@ def exec_func(func, d, dirs = None):
     if not t:
         bb.msg.fatal(bb.msg.domain.Build, "T not set")
     mkdirhier(t)
-    # Gross hack, FIXME
-    import random
-    logfile = "%s/log.%s.%s.%s" % (t, func, str(os.getpid()),random.random())
+    logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
     runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
 
     # Change to correct directory (if specified)
