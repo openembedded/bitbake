@@ -62,9 +62,6 @@ class Svk(Fetch):
     def go(self, loc, ud, d):
         """Fetch urls"""
 
-        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
-            return
-
         svkroot = ud.host + ud.path
 
         svkcmd = "svk co -r {%s} %s/%s" % (ud.date, svkroot, ud.module)

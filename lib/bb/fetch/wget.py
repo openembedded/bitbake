@@ -30,7 +30,6 @@ import bb
 from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
-from   bb.fetch import uri_replace
 
 class Wget(Fetch):
     """Class to fetch urls via 'wget'"""
@@ -105,23 +104,8 @@ class Wget(Fetch):
         data.setVar('OVERRIDES', "wget:" + data.getVar('OVERRIDES', localdata), localdata)
         data.update_data(localdata)
 
-        premirrors = [ i.split() for i in (data.getVar('PREMIRRORS', localdata, 1) or "").split('\n') if i ]
-        for (find, replace) in premirrors:
-            newuri = uri_replace(uri, find, replace, d)
-            if newuri != uri:
-                if fetch_uri(newuri, ud, localdata):
-                    return True
-
         if fetch_uri(uri, ud, localdata):
             return True
-
-        # try mirrors
-        mirrors = [ i.split() for i in (data.getVar('MIRRORS', localdata, 1) or "").split('\n') if i ]
-        for (find, replace) in mirrors:
-            newuri = uri_replace(uri, find, replace, d)
-            if newuri != uri:
-                if fetch_uri(newuri, ud, localdata):
-                    return True
 
         raise FetchError(uri)
 

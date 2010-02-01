@@ -91,11 +91,6 @@ class Osc(Fetch):
         Fetch url
         """
 
-        # Try to use the tarball stash
-        if Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping osc checkout." % ud.localpath)
-            return
-
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + ud.moddir + "'")
 
         if os.access(os.path.join(data.expand('${OSCDIR}', d), ud.path, ud.module), os.R_OK):

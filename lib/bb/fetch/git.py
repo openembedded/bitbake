@@ -82,10 +82,6 @@ class Git(Fetch):
     def go(self, loc, ud, d):
         """Fetch url"""
 
-        if Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists (or was stashed). Skipping git checkout." % ud.localpath)
-            return
-
         if ud.user:
             username = ud.user + '@'
         else:
@@ -97,11 +93,12 @@ class Git(Fetch):
         codir = os.path.join(ud.clonedir, coname)
 
         if not os.path.exists(ud.clonedir):
-            if Fetch.try_mirror(d, ud.mirrortarball):    
+            try:
+                Fetch.try_mirrors(ud.mirrortarball)
                 bb.mkdirhier(ud.clonedir)
                 os.chdir(ud.clonedir)
                 runfetchcmd("tar -xzf %s" % (repofile), d)
-            else:
+            except:
                 runfetchcmd("git clone -n %s://%s%s%s %s" % (ud.proto, username, ud.host, ud.path, ud.clonedir), d)
 
         os.chdir(ud.clonedir)

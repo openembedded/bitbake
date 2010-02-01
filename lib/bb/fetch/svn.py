@@ -136,11 +136,6 @@ class Svn(Fetch):
     def go(self, loc, ud, d):
         """Fetch url"""
 
-        # try to use the tarball stash
-        if Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping svn checkout." % ud.localpath)
-            return
-
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + ud.moddir + "'")
 
         if os.access(os.path.join(ud.moddir, '.svn'), os.R_OK):

@@ -91,11 +91,6 @@ class Bzr(Fetch):
     def go(self, loc, ud, d):
         """Fetch url"""
 
-        # try to use the tarball stash
-        if Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping bzr checkout." % ud.localpath)
-            return
-
         if os.access(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir), '.bzr'), os.R_OK):
             bzrcmd = self._buildbzrcommand(ud, d, "update")
             bb.msg.debug(1, bb.msg.domain.Fetcher, "BZR Update %s" % loc)

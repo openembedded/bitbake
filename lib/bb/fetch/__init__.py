@@ -185,7 +185,18 @@ def go(d, urls = None):
                     pass
                 bb.utils.unlockfile(lf)
                 continue
-        m.go(u, ud, d)
+
+        # First try fetching uri, u, from PREMIRRORS
+        mirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', d, 1) or "").split('\n') if i ]
+        if not  try_mirrors(d, u, mirrors):
+            # Next try fetching from the original uri, u
+            try:
+                m.go(u, ud, d)
+            except:
+                # Finally, try fetching uri, u, from MIRRORS
+                mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', d, 1) or "").split('\n') if i ]
+                try_mirrors (d, u, mirrors)
+
         if ud.localfile:
             if not m.forcefetch(u, ud, d):
                 Fetch.write_md5sum(u, ud, d)
@@ -331,6 +342,44 @@ def runfetchcmd(cmd, d, quiet = False):
         raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, status, output))
 
     return output
+
+def try_mirrors(d, uri, mirrors):
+    """
+    Try to use a mirrored version of the sources.
+    This method will be automatically called before the fetchers go.
+
+    d Is a bb.data instance
+    uri is the original uri we're trying to download
+    mirrors is the list of mirrors we're going to try
+    """
+    fpath = os.path.join(data.getVar("DL_DIR", d, 1), os.path.basename(uri))
+    if os.access(fpath, os.R_OK):
+        bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % fpath)
+        return True
+
+    ld = d.createCopy()
+    for (find, replace) in mirrors:
+        newuri = uri_replace(uri, find, replace, ld)
+        if newuri != uri:
+            try:
+                ud = FetchData(newuri, ld)
+            except bb.fetch.NoMethodError:
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "No method for %s" % url)
+                continue
+
+            ud.setup_localpath(ld)
+
+            try:
+                ud.method.go(newuri, ud, ld)
+                return True
+            except (bb.fetch.MissingParameterError,
+                    bb.fetch.FetchError,
+                    bb.fetch.MD5SumError):
+                import sys
+                (type, value, traceback) = sys.exc_info()
+                bb.msg.debug(2, bb.msg.domain.Fetcher, "Mirror fetch failure: %s" % value)
+                return False
+
 
 class FetchData(object):
     """
@@ -488,49 +537,6 @@ class Fetch(object):
         return localcount
 
     localcount_internal_helper = staticmethod(localcount_internal_helper)
-
-    def try_mirror(d, tarfn):
-        """
-        Try to use a mirrored version of the sources. We do this
-        to avoid massive loads on foreign cvs and svn servers.
-        This method will be used by the different fetcher
-        implementations.
-
-        d Is a bb.data instance
-        tarfn is the name of the tarball
-        """
-        tarpath = os.path.join(data.getVar("DL_DIR", d, 1), tarfn)
-        if os.access(tarpath, os.R_OK):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % tarfn)
-            return True
-
-        pn = data.getVar('PN', d, True)
-        src_tarball_stash = None
-        if pn:
-            src_tarball_stash = (data.getVar('SRC_TARBALL_STASH_%s' % pn, d, True) or data.getVar('CVS_TARBALL_STASH_%s' % pn, d, True) or data.getVar('SRC_TARBALL_STASH', d, True) or data.getVar('CVS_TARBALL_STASH', d, True) or "").split()
-
-        ld = d.createCopy()
-        for stash in src_tarball_stash:
-            url = stash + tarfn
-            try:
-                ud = FetchData(url, ld)
-            except bb.fetch.NoMethodError:
-                bb.msg.debug(1, bb.msg.domain.Fetcher, "No method for %s" % url)
-                continue
-
-            ud.setup_localpath(ld)
-
-            try:
-                ud.method.go(url, ud, ld)
-                return True
-            except (bb.fetch.MissingParameterError,
-                    bb.fetch.FetchError,
-                    bb.fetch.MD5SumError):
-                import sys
-                (type, value, traceback) = sys.exc_info()
-                bb.msg.debug(2, bb.msg.domain.Fetcher, "Tarball stash fetch failure: %s" % value)
-        return False
-    try_mirror = staticmethod(try_mirror)
 
     def verify_md5sum(ud, got_sum):
         """

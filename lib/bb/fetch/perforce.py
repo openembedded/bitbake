@@ -124,11 +124,6 @@ class Perforce(Fetch):
         Fetch urls
         """
 
-        # try to use the tarball stash
-        if Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping perforce checkout." % ud.localpath)
-            return
-
         (host,depot,user,pswd,parm) = Perforce.doparse(loc, d)
 
         if depot.find('/...') != -1:

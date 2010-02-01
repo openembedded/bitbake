@@ -77,11 +77,6 @@ class Cvs(Fetch):
 
     def go(self, loc, ud, d):
 
-        # try to use the tarball stash
-        if not self.forcefetch(loc, ud, d) and Fetch.try_mirror(d, ud.localfile):
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists or was mirrored, skipping cvs checkout." % ud.localpath)
-            return
-
         method = "pserver"
         if "method" in ud.parm:
             method = ud.parm["method"]
