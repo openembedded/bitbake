@@ -188,14 +188,19 @@ def go(d, urls = None):
 
         # First try fetching uri, u, from PREMIRRORS
         mirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', d, 1) or "").split('\n') if i ]
-        if not  try_mirrors(d, u, mirrors):
+        localpath = try_mirrors(d, u, mirrors)
+        if not localpath:
             # Next try fetching from the original uri, u
             try:
                 m.go(u, ud, d)
+                localpath = ud.localpath
             except:
                 # Finally, try fetching uri, u, from MIRRORS
                 mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', d, 1) or "").split('\n') if i ]
-                try_mirrors (d, u, mirrors)
+                localpath = try_mirrors (d, u, mirrors)
+
+        if localpath:
+            ud.localpath = localpath
 
         if ud.localfile:
             if not m.forcefetch(u, ud, d):
@@ -355,7 +360,7 @@ def try_mirrors(d, uri, mirrors):
     fpath = os.path.join(data.getVar("DL_DIR", d, 1), os.path.basename(uri))
     if os.access(fpath, os.R_OK):
         bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % fpath)
-        return True
+        return fpath
 
     ld = d.createCopy()
     for (find, replace) in mirrors:
@@ -371,14 +376,14 @@ def try_mirrors(d, uri, mirrors):
 
             try:
                 ud.method.go(newuri, ud, ld)
-                return True
+                return ud.localpath
             except (bb.fetch.MissingParameterError,
                     bb.fetch.FetchError,
                     bb.fetch.MD5SumError):
                 import sys
                 (type, value, traceback) = sys.exc_info()
                 bb.msg.debug(2, bb.msg.domain.Fetcher, "Mirror fetch failure: %s" % value)
-                return False
+                return ""
 
 
 class FetchData(object):
@@ -415,8 +420,11 @@ class FetchData(object):
             # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
             # Horrible...
             bb.data.delVar("ISHOULDNEVEREXIST", d)
-        self.md5 = self.localpath + '.md5'
-        self.lockfile = self.localpath + '.lock'
+
+        # Note: These files should always be in DL_DIR whereas localpath may not be.
+        basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
+        self.md5 = basepath + '.md5'
+        self.lockfile = basepath + '.lock'
 
 
 class Fetch(object):
