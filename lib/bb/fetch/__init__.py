@@ -412,14 +412,28 @@ class FetchData(object):
             # if user sets localpath for file, use it instead.
             self.localpath = self.parm["localpath"]
         else:
-            try:
-                bb.fetch.srcrev_internal_call = True
-                self.localpath = self.method.localpath(self.url, self, d)
-            finally:
-                bb.fetch.srcrev_internal_call = False
-            # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
-            # Horrible...
-            bb.data.delVar("ISHOULDNEVEREXIST", d)
+            premirrors = bb.data.getVar('PREMIRRORS', d)
+            local = ""
+            if premirrors and self.url:
+                aurl = self.url.split(";")[0]
+                mirrors = [ i.split() for i in (premirrors or "").split('\n') if i ]
+                for (find, replace) in mirrors:
+                    if replace.startswith("file://"):
+                        path = aurl.split("://")[1]
+                        path = path.split(";")[0]
+                        local = replace.split("://")[1] + os.path.basename(path)
+                        if local == aurl or not os.path.exists(local) or os.path.isdir(local):
+                            local = ""
+                self.localpath = local
+            if not local:
+                try:
+                    bb.fetch.srcrev_internal_call = True
+                    self.localpath = self.method.localpath(self.url, self, d)
+                finally:
+                    bb.fetch.srcrev_internal_call = False
+                # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
+                # Horrible...
+                bb.data.delVar("ISHOULDNEVEREXIST", d)
 
         # Note: These files should always be in DL_DIR whereas localpath may not be.
         basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
