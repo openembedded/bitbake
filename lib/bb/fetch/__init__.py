@@ -383,7 +383,8 @@ def try_mirrors(d, uri, mirrors):
                 import sys
                 (type, value, traceback) = sys.exc_info()
                 bb.msg.debug(2, bb.msg.domain.Fetcher, "Mirror fetch failure: %s" % value)
-                return ""
+                continue
+    return None
 
 
 class FetchData(object):
