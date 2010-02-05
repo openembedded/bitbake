@@ -369,7 +369,7 @@ def try_mirrors(d, uri, mirrors, check = False):
     mirrors is the list of mirrors we're going to try
     """
     fpath = os.path.join(data.getVar("DL_DIR", d, 1), os.path.basename(uri))
-    if not check and os.access.path(fpath, os.R_OK):
+    if not check and os.access(fpath, os.R_OK):
         bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % fpath)
         return fpath
 
@@ -387,9 +387,9 @@ def try_mirrors(d, uri, mirrors, check = False):
 
             try:
                 if check:
-                    ud.method.go(newuri, ud, ld)
-                else:
                     ud.method.checkstatus(newuri, ud, ld)
+                else:
+                    ud.method.go(newuri, ud, ld)
                 return ud.localpath
             except (bb.fetch.MissingParameterError,
                     bb.fetch.FetchError,
