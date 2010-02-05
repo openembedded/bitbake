@@ -219,7 +219,18 @@ def checkstatus(d):
         ud = urldata[u]
         m = ud.method
         bb.msg.note(1, bb.msg.domain.Fetcher, "Testing URL %s" % u)
-        ret = m.checkstatus(u, ud, d)
+        # First try checking uri, u, from PREMIRRORS
+        mirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', d, 1) or "").split('\n') if i ]
+        ret = try_mirrors(d, u, mirrors, True)
+        if not ret:
+            # Next try checking from the original uri, u
+            try:
+                ret = m.checkstatus(u, ud, d)
+            except:
+                # Finally, try checking uri, u, from MIRRORS
+                mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', d, 1) or "").split('\n') if i ]
+                ret = try_mirrors (d, u, mirrors, True)
+
         if not ret:
             bb.msg.fatal(bb.msg.domain.Fetcher, "URL %s doesn't work" % u)
 
@@ -348,7 +359,7 @@ def runfetchcmd(cmd, d, quiet = False):
 
     return output
 
-def try_mirrors(d, uri, mirrors):
+def try_mirrors(d, uri, mirrors, check = False):
     """
     Try to use a mirrored version of the sources.
     This method will be automatically called before the fetchers go.
@@ -358,7 +369,7 @@ def try_mirrors(d, uri, mirrors):
     mirrors is the list of mirrors we're going to try
     """
     fpath = os.path.join(data.getVar("DL_DIR", d, 1), os.path.basename(uri))
-    if os.access(fpath, os.R_OK):
+    if not check and os.access.path(fpath, os.R_OK):
         bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % fpath)
         return fpath
 
@@ -375,7 +386,10 @@ def try_mirrors(d, uri, mirrors):
             ud.setup_localpath(ld)
 
             try:
-                ud.method.go(newuri, ud, ld)
+                if check:
+                    ud.method.go(newuri, ud, ld)
+                else:
+                    ud.method.checkstatus(newuri, ud, ld)
                 return ud.localpath
             except (bb.fetch.MissingParameterError,
                     bb.fetch.FetchError,
