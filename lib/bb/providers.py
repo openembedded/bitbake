@@ -224,6 +224,8 @@ def _filterProviders(providers, item, cfgData, dataCache):
             continue
         eligible.remove(fn)
         eligible = [fn] + eligible
+    # sort eligible according to their DEFAULT_PREFERENCE
+    eligible.sort(lambda a, b: dataCache.pkg_dp[b] - dataCache.pkg_dp[a])
 
     return eligible
 
