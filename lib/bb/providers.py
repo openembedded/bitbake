@@ -202,7 +202,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
         if preferred_versions[pn][1]:
             eligible.append(preferred_versions[pn][1])
 
-    # Now add latest verisons
+    # Now add latest versions
     for pn in sortpkg_pn.keys():
         if pn in preferred_versions and preferred_versions[pn][1]:
             continue
