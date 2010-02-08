@@ -175,8 +175,16 @@ class RunQueue:
         self.runq_task = []
         self.runq_depends = []
         self.runq_revdeps = []
-
         self.state = runQueuePrepare
+
+    def runq_depends_names(self, ids):
+        import re
+        ret = []
+        for id in self.runq_depends[ids]:
+            nam = os.path.basename(self.get_user_idstring(id))
+            nam = re.sub("_[^,]*,", ",", nam)
+            ret.extend([nam])
+        return ret
 
     def get_user_idstring(self, task):
         fn = self.taskData.fn_index[self.runq_fnid[task]]
@@ -248,7 +256,7 @@ class RunQueue:
                         valid_chains.append(new_chain)
                         msgs.append("Dependency loop #%d found:\n" % len(valid_chains))
                         for dep in new_chain:
-                            msgs.append("  Task %s (%s) (depends: %s)\n" % (dep, self.get_user_idstring(dep), self.runq_depends[dep]))
+                            msgs.append("  Task %s (%s) (dependent Tasks %s)\n" % (dep, self.get_user_idstring(dep), self.runq_depends_names(dep)))
                         msgs.append("\n")
                     if len(valid_chains) > 10:
                         msgs.append("Aborted dependency loops search after 10 matches.\n")
