@@ -560,7 +560,7 @@ class TaskData:
                     added = added + 1
                 except bb.providers.NoRProvider:
                     self.remove_runtarget(self.getrun_id(target))
-            bb.msg.debug(1, bb.msg.domain.TaskData, "Resolved " + str(added) + " extra dependecies")
+            bb.msg.debug(1, bb.msg.domain.TaskData, "Resolved " + str(added) + " extra dependencies")
             if added == 0:
                 break
         # self.dump_data()
