@@ -25,60 +25,13 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import re, bb.data, os, sys
-from bb.parse import ParseError, resolve_file
+from bb.parse import ParseError, resolve_file, ast
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|(?P<predot>=\.)|(?P<postdot>\.=)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __include_regexp__ = re.compile( r"include\s+(.+)" )
 __require_regexp__ = re.compile( r"require\s+(.+)" )
 __export_regexp__ = re.compile( r"export\s+(.+)" )
-
-# routines for the parser, to be turned into an AST
-def handleInclude(m, fn, lineno, data, force):
-    s = bb.data.expand(m.group(1), data)
-    bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (fn, lineno, s))
-    if force:
-        include(fn, s, data, "include required")
-    else:
-        include(fn, s, data, False)
-
-def handleExport(m, data):
-    bb.data.setVarFlag(m.group(1), "export", 1, data)
-
-def handleData(groupd, data):
-    key = groupd["var"]
-    if "exp" in groupd and groupd["exp"] != None:
-        bb.data.setVarFlag(key, "export", 1, data)
-    if "ques" in groupd and groupd["ques"] != None:
-        val = getFunc(groupd, key, data)
-        if val == None:
-            val = groupd["value"]
-    elif "colon" in groupd and groupd["colon"] != None:
-        e = data.createCopy()
-        bb.data.update_data(e)
-        val = bb.data.expand(groupd["value"], e)
-    elif "append" in groupd and groupd["append"] != None:
-        val = "%s %s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
-    elif "prepend" in groupd and groupd["prepend"] != None:
-        val = "%s %s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
-    elif "postdot" in groupd and groupd["postdot"] != None:
-        val = "%s%s" % ((getFunc(groupd, key, data) or ""), groupd["value"])
-    elif "predot" in groupd and groupd["predot"] != None:
-        val = "%s%s" % (groupd["value"], (getFunc(groupd, key, data) or ""))
-    else:
-        val = groupd["value"]
-    if 'flag' in groupd and groupd['flag'] != None:
-        bb.msg.debug(3, bb.msg.domain.Parsing, "setVarFlag(%s, %s, %s, data)" % (key, groupd['flag'], val))
-        bb.data.setVarFlag(key, groupd['flag'], val, data)
-    else:
-        bb.data.setVar(key, val, data)
-
-def getFunc(groupd, key, data):
-    if 'flag' in groupd and groupd['flag'] != None:
-        return bb.data.getVarFlag(key, groupd['flag'], data)
-    else:
-        return bb.data.getVar(key, data)
-
 
 def init(data):
     topdir = bb.data.getVar('TOPDIR', data)
@@ -160,22 +113,22 @@ def feeder(lineno, s, fn, data):
     m = __config_regexp__.match(s)
     if m:
         groupd = m.groupdict()
-        handleData(groupd, data)
+        ast.handleData(groupd, data)
         return
 
     m = __include_regexp__.match(s)
     if m:
-        handleInclude(m, fn, lineno, data, False)
+        ast.handleInclude(m, fn, lineno, data, False)
         return
 
     m = __require_regexp__.match(s)
     if m:
-        handleInclude(m, fn, lineno, data, True)
+        ast.handleInclude(m, fn, lineno, data, True)
         return
 
     m = __export_regexp__.match(s)
     if m:
-        handleExport(m, data)
+        ast.handleExport(m, data)
         return
 
     raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));

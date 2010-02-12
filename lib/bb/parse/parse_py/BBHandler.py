@@ -27,10 +27,10 @@
 
 import re, bb, os, sys, time, string
 import bb.fetch, bb.build, bb.utils
-from bb import data, fetch, methodpool
+from bb import data, fetch
 
 from ConfHandler import include, init
-from bb.parse import ParseError, resolve_file
+from bb.parse import ParseError, resolve_file, ast
 
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
@@ -39,7 +39,7 @@ __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<
 __addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
 __def_regexp__           = re.compile( r"def\s+(\w+).*:" )
 __python_func_regexp__   = re.compile( r"(\s+.*)|(^$)" )
-__word__ = re.compile(r"\S+")
+
 
 __infunc__ = ""
 __inpython__ = False
@@ -54,124 +54,7 @@ classes = [ None, ]
 # The two parts using it are tightly integrated anyway
 IN_PYTHON_EOF = -9999999999999
 
-__parsed_methods__ = methodpool.get_parsed_dict()
 
-# parsing routines, to be moved into AST classes
-def handleMethod(func_name, lineno, fn, body, d):
-    if func_name == "__anonymous":
-        funcname = ("__anon_%s_%s" % (lineno, fn.translate(string.maketrans('/.+-', '____'))))
-        if not funcname in methodpool._parsed_fns:
-            text = "def %s(d):\n" % (funcname) + '\n'.join(body)
-            methodpool.insert_method(funcname, text, fn)
-        anonfuncs = data.getVar('__BBANONFUNCS', d) or []
-        anonfuncs.append(funcname)
-        data.setVar('__BBANONFUNCS', anonfuncs, d)
-    else:
-        data.setVarFlag(func_name, "func", 1, d)
-        data.setVar(func_name, '\n'.join(body), d)
-
-def handlePythonMethod(root, body, fn):
-    # Note we will add root to parsedmethods after having parse
-    # 'this' file. This means we will not parse methods from
-    # bb classes twice
-    if not root in __parsed_methods__:
-        text = '\n'.join(body)
-        methodpool.insert_method(root, text, fn)
-
-def handleMethodFlags(key, m, d):
-    if data.getVar(key, d):
-        # Clean up old version of this piece of metadata, as its
-        # flags could cause problems
-        data.setVarFlag(key, 'python', None, d)
-        data.setVarFlag(key, 'fakeroot', None, d)
-    if m.group("py") is not None:
-        data.setVarFlag(key, "python", "1", d)
-    else:
-        data.delVarFlag(key, "python", d)
-    if m.group("fr") is not None:
-        data.setVarFlag(key, "fakeroot", "1", d)
-    else:
-        data.delVarFlag(key, "fakeroot", d)
-
-def handleExportFuncs(m, d):
-    fns = m.group(1)
-    n = __word__.findall(fns)
-    for f in n:
-        allvars = []
-        allvars.append(f)
-        allvars.append(classes[-1] + "_" + f)
-
-        vars = [[ allvars[0], allvars[1] ]]
-        if len(classes) > 1 and classes[-2] is not None:
-            allvars.append(classes[-2] + "_" + f)
-            vars = []
-            vars.append([allvars[2], allvars[1]])
-            vars.append([allvars[0], allvars[2]])
-
-        for (var, calledvar) in vars:
-            if data.getVar(var, d) and not data.getVarFlag(var, 'export_func', d):
-                continue
-
-            if data.getVar(var, d):
-                data.setVarFlag(var, 'python', None, d)
-                data.setVarFlag(var, 'func', None, d)
-
-            for flag in [ "func", "python" ]:
-                if data.getVarFlag(calledvar, flag, d):
-                    data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag, d), d)
-            for flag in [ "dirs" ]:
-                if data.getVarFlag(var, flag, d):
-                    data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag, d), d)
-
-            if data.getVarFlag(calledvar, "python", d):
-                data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n", d)
-            else:
-                data.setVar(var, "\t" + calledvar + "\n", d)
-            data.setVarFlag(var, 'export_func', '1', d)
-
-def handleAddTask(m, d):
-    func = m.group("func")
-    before = m.group("before")
-    after = m.group("after")
-    if func is None:
-        return
-    if func[:3] != "do_":
-        var = "do_" + func
-
-    data.setVarFlag(var, "task", 1, d)
-
-    bbtasks = data.getVar('__BBTASKS', d) or []
-    if not var in bbtasks:
-        bbtasks.append(var)
-    data.setVar('__BBTASKS', bbtasks, d)
-
-    existing = data.getVarFlag(var, "deps", d) or []
-    if after is not None:
-        # set up deps for function
-        for entry in after.split():
-            if entry not in existing:
-                existing.append(entry)
-    data.setVarFlag(var, "deps", existing, d)
-    if before is not None:
-        # set up things that depend on this func
-        for entry in before.split():
-            existing = data.getVarFlag(entry, "deps", d) or []
-            if var not in existing:
-                data.setVarFlag(entry, "deps", [var] + existing, d)
-
-def handleBBHandlers(m, d):
-    fns = m.group(1)
-    hs = __word__.findall(fns)
-    bbhands = data.getVar('__BBHANDLERS', d) or []
-    for h in hs:
-        bbhands.append(h)
-        data.setVarFlag(h, "handler", 1, d)
-    data.setVar('__BBHANDLERS', bbhands, d)
-
-def handleInherit(m, d):
-    files = m.group(1)
-    n = __word__.findall(files)
-    inherit(n, d)
 
 def supports(fn, d):
     return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
@@ -312,7 +195,7 @@ def handle(fn, d, include = 0):
 
     # we have parsed the bb class now
     if ext == ".bbclass" or ext == ".inc":
-        __parsed_methods__[base_name] = 1
+        bb.methodpool.get_parsed_dict()[base_name] = 1
 
     return d
 
@@ -321,7 +204,7 @@ def feeder(lineno, s, fn, root, d):
     if __infunc__:
         if s == '}':
             __body__.append('')
-            handleMethod(__infunc__, lineno, fn, __body__, d)
+            ast.handleMethod(__infunc__, __body__, d)
             __infunc__ = ""
             __body__ = []
         else:
@@ -334,7 +217,7 @@ def feeder(lineno, s, fn, root, d):
             __body__.append(s)
             return
         else:
-            handlePythonMethod(root, __body__, fn)
+            ast.handlePythonMethod(root, __body__, fn)
             __body__ = []
             __inpython__ = False
 
@@ -355,7 +238,7 @@ def feeder(lineno, s, fn, root, d):
     m = __func_start_regexp__.match(s)
     if m:
         __infunc__ = m.group("func") or "__anonymous"
-        handleMethodFlags(__infunc__, m, d)
+        ast.handleMethodFlags(__infunc__, m, d)
         return
 
     m = __def_regexp__.match(s)
@@ -366,22 +249,22 @@ def feeder(lineno, s, fn, root, d):
 
     m = __export_func_regexp__.match(s)
     if m:
-        handleExportFuncs(m, d)
+        ast.handleExportFuncs(m, classes, d)
         return
 
     m = __addtask_regexp__.match(s)
     if m:
-        handleAddTask(m, d)
+        ast.handleAddTask(m, d  )
         return
 
     m = __addhandler_regexp__.match(s)
     if m:
-        handleBBHandlers(m, d)
+        ast.handleBBHandlers(m, d)
         return
 
     m = __inherit_regexp__.match(s)
     if m:
-        handleInherit(m, d)
+        ast.handleInherit(m, d)
         return
 
     from bb.parse import ConfHandler
