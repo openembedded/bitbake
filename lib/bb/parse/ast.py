@@ -40,10 +40,11 @@ class StatementGroup:
         map(lambda x: x.eval(data), self.statements)
 
 class IncludeNode:
-    def __init__(self, what_file, fn, lineno):
+    def __init__(self, what_file, fn, lineno, force):
         self.what_file = what_file
         self.from_fn = fn
         self.from_lineno = lineno
+        self.force = force
 
     def eval(self, data):
         """
@@ -54,7 +55,10 @@ class IncludeNode:
 
         # TODO: Cache those includes...
         statements = StatementGroup()
-        bb.parse.ConfHandler.include(statements, self.from_fn, s, data, False)
+        if force:
+            bb.parse.ConfHandler.include(statements, self.from_fn, s, data, "include required")
+        else:
+            bb.parse.ConfHandler.include(statements, self.from_fn, s, data, False)
         statements.eval(data)
 
 class ExportNode:
@@ -107,7 +111,7 @@ class DataNode:
 
 def handleInclude(statements, m, fn, lineno, data, force):
     # AST handling
-    statements.append(IncludeNode(m.group(1), fn, lineno))
+    statements.append(IncludeNode(m.group(1), fn, lineno, force))
 
     s = bb.data.expand(m.group(1), data)
     bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (fn, lineno, s))
