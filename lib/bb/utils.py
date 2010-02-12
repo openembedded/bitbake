@@ -403,7 +403,7 @@ def build_environment(d):
     for var in bb.data.keys(d):
         export = bb.data.getVarFlag(var, "export", d)
         if export:
-            os.environ[var] = bb.data.getVar(var, d, True)
+            os.environ[var] = bb.data.getVar(var, d, True) or ""
 
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
