@@ -58,7 +58,7 @@ class IncludeNode:
 
         # TODO: Cache those includes...
         statements = StatementGroup()
-        if force:
+        if self.force:
             bb.parse.ConfHandler.include(statements, self.from_fn, s, data, "include required")
         else:
             bb.parse.ConfHandler.include(statements, self.from_fn, s, data, False)
@@ -128,7 +128,7 @@ class MethodNode:
             funcname = ("__anon_%s_%s" % (self.lineno, self.fn.translate(string.maketrans('/.+-', '____'))))
             if not funcname in bb.methodpool._parsed_fns:
                 text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
-                bb.methodpool.insert_method(funcname, text, fn)
+                bb.methodpool.insert_method(funcname, text, self.fn)
             anonfuncs = bb.data.getVar('__BBANONFUNCS', data) or []
             anonfuncs.append(funcname)
             bb.data.setVar('__BBANONFUNCS', anonfuncs, data)
