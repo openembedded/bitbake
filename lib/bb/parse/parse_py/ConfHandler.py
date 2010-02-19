@@ -39,11 +39,7 @@ def init(data):
         topdir = os.getcwd()
         bb.data.setVar('TOPDIR', topdir, data)
     if not bb.data.getVar('BBPATH', data):
-        from pkg_resources import Requirement, resource_filename
-        bitbake = Requirement.parse("bitbake")
-        datadir = resource_filename(bitbake, "../share/bitbake")
-        basedir = resource_filename(bitbake, "..")
-        bb.data.setVar('BBPATH', '%s:%s:%s' % (topdir, datadir, basedir), data)
+        bb.fatal("The BBPATH environment variable must be set")
 
 
 def supports(fn, d):
