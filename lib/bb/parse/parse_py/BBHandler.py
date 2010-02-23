@@ -152,8 +152,7 @@ def handle(fn, d, include):
         classes.remove(__classname__)
     else:
         if include == 0:
-            multi = data.getVar('BBCLASSEXTEND', d, 1)
-            if multi:
+            if data.getVar('BBCLASSEXTEND', d, 1):
                 based = bb.data.createCopy(d)
             else:
                 based = d
@@ -163,7 +162,7 @@ def handle(fn, d, include):
                 bb.data.setVar("__SKIPPED", True, based)
             darray = {"": based}
 
-            for cls in (multi or "").split():
+            for cls in (data.getVar('BBCLASSEXTEND', based, 1) or "").split():
                 pn = data.getVar('PN', d, True)
                 based = bb.data.createCopy(d)
                 data.setVar('PN', pn + '-' + cls, based)
