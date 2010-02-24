@@ -766,6 +766,7 @@ import perforce
 import bzr
 import hg
 import osc
+import repo
 
 methods.append(local.Local())
 methods.append(wget.Wget())
@@ -778,3 +779,4 @@ methods.append(perforce.Perforce())
 methods.append(bzr.Bzr())
 methods.append(hg.Hg())
 methods.append(osc.Osc())
+methods.append(repo.Repo())
