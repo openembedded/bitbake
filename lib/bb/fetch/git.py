@@ -176,7 +176,8 @@ class Git(Fetch):
         else:
             username = ""
 
-        cmd = "%s ls-remote %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.branch)
+        basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
+        cmd = "%s ls-remote %s://%s%s%s %s" % (basecmd, ud.proto, username, ud.host, ud.path, ud.branch)
         output = runfetchcmd(cmd, d, True)
         if not output:
             raise bb.fetch.FetchError("Fetch command %s gave empty output\n" % (cmd))
