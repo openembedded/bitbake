@@ -99,9 +99,15 @@ class DataNode(AstNode):
             val = "%s%s" % (groupd["value"], (self.getFunc(key, data) or ""))
         else:
             val = groupd["value"]
+
         if 'flag' in groupd and groupd['flag'] != None:
             bb.msg.debug(3, bb.msg.domain.Parsing, "setVarFlag(%s, %s, %s, data)" % (key, groupd['flag'], val))
             bb.data.setVarFlag(key, groupd['flag'], val, data)
+        elif groupd["lazyques"]:
+            assigned = bb.data.getVar("__lazy_assigned", data) or []
+            assigned.append(key)
+            bb.data.setVar("__lazy_assigned", assigned, data)
+            bb.data.setVarFlag(key, "defaultval", val, data)
         else:
             bb.data.setVar(key, val, data)
 
@@ -286,6 +292,11 @@ def handleInherit(statements, m):
     statements.append(InheritNode(m.group(1)))
 
 def finalise(fn, d):
+    for lazykey in bb.data.getVar("__lazy_assigned", d) or ():
+        if bb.data.getVar(lazykey, d) is None:
+            val = bb.data.getVarFlag(lazykey, "defaultval", d)
+            bb.data.setVar(lazykey, val, d)
+
     bb.data.expandKeys(d)
     bb.data.update_data(d)
     anonqueue = bb.data.getVar("__anonqueue", d, 1) or []

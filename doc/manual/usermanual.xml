@@ -91,7 +91,13 @@ share common metadata between many packages.</para></listitem>
             <section>
                 <title>Setting a default value (?=)</title>
                 <para><screen><varname>A</varname> ?= "aval"</screen></para>
-                <para>If <varname>A</varname> is set before the above is called, it will retain it's previous value. If <varname>A</varname> is unset prior to the above call, <varname>A</varname> will be set to <literal>aval</literal>.</para>
+                <para>If <varname>A</varname> is set before the above is called, it will retain it's previous value. If <varname>A</varname> is unset prior to the above call, <varname>A</varname> will be set to <literal>aval</literal>.  Note that this assignment is immediate, so if there are multiple ?= assignments to a single variable, the first of those will be used.</para>
+            </section>
+            <section>
+                <title>Setting a default value (??=)</title>
+                <para><screen><varname>A</varname> ??= "somevalue"</screen></para>
+                <para><screen><varname>A</varname> ??= "someothervalue"</screen></para>
+                <para>If <varname>A</varname> is set before the above, it will retain that value.  If <varname>A</varname> is unset prior to the above, <varname>A</varname> will be set to <literal>someothervalue</literal>.  This is a lazy version of ??=, in that the assignment does not occur until the end of the parsing process, so that the last, rather than the first, ??= assignment to a given variable will be used.</para>
             </section>
             <section>
                 <title>Immediate variable expansion (:=)</title>
