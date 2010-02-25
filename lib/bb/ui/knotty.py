@@ -95,7 +95,7 @@ def init(server, eventHandler):
                 return_value = 1
                 logfile = event.logfile
                 if logfile:
-                    print "ERROR: Logfile of failure stored in %s." % logfile
+                    print "ERROR: Logfile of failure stored in: %s" % logfile
                     if 1 or includelogs:
                         print "Log data follows:"
                         f = open(logfile, "r")
