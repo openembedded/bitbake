@@ -832,7 +832,8 @@ class BBCooker:
             files = self.get_bbfiles()
 
         if not len(files):
-            bb.msg.error(bb.msg.domain.Collection, "no files to build.")
+            bb.msg.error(bb.msg.domain.Collection, "no recipe files to build, check your BBPATH and BBFILES?")
+            bb.event.fire(CookerExit(), self.configuration.event_data)
 
         newfiles = []
         for f in files:
