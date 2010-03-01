@@ -152,26 +152,28 @@ def handle(fn, d, include):
         classes.remove(__classname__)
     else:
         if include == 0:
-            if data.getVar('BBCLASSEXTEND', d, 1):
-                based = bb.data.createCopy(d)
-            else:
-                based = d
+            safe_d = d
+            d = bb.data.createCopy(safe_d)
             try:
-                ast.finalise(fn, based)
+                ast.finalise(fn, d)
             except bb.parse.SkipPackage:
-                bb.data.setVar("__SKIPPED", True, based)
-            darray = {"": based}
+                bb.data.setVar("__SKIPPED", True, d)
+            darray = {"": d}
 
-            for cls in (data.getVar('BBCLASSEXTEND', based, 1) or "").split():
+            extended = bb.data.getVar("BBCLASSEXTEND", d, True)
+            if extended:
+                bb.data.setVar("BBCLASSEXTEND", extended, safe_d)
+
+            for cls in (extended or "").split():
                 pn = data.getVar('PN', d, True)
-                based = bb.data.createCopy(d)
-                data.setVar('PN', pn + '-' + cls, based)
-                inherit([cls], based)
+                variant_d = bb.data.createCopy(safe_d)
+                data.setVar('PN', pn + '-' + cls, variant_d)
+                inherit([cls], variant_d)
                 try:
-                    ast.finalise(fn, based)
+                    ast.finalise(fn, variant_d)
                 except bb.parse.SkipPackage:
-                    bb.data.setVar("__SKIPPED", True, based)
-                darray[cls] = based
+                    bb.data.setVar("__SKIPPED", True, variant_d)
+                darray[cls] = variant_d
             return darray
    
     if oldfile:
