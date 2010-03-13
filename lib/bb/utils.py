@@ -166,7 +166,7 @@ def better_compile(text, file, realfile):
         # split the text into lines again
         body = text.split('\n')
         bb.msg.error(bb.msg.domain.Util, "Error in compiling python function in: ", realfile)
-        bb.msg.error(bb.msg.domain.Util, "The lines resulting into this error were:")
+        bb.msg.error(bb.msg.domain.Util, "The lines leading to this error were:")
         bb.msg.error(bb.msg.domain.Util, "\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
 
         _print_trace(body, e.lineno)
