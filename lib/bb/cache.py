@@ -143,8 +143,8 @@ class Cache:
             if dep not in self.depends_cache[fn]["__depends"]:
                 self.depends_cache[fn]["__depends"].append(dep)
 
-        # Make sure BBCLASSEXTEND always makes the cache too
-        self.getVar('BBCLASSEXTEND', virtualfn, True)
+        # Make sure the variants always make it into the cache too
+        self.getVar('__VARIANTS', virtualfn, True)
 
         self.depends_cache[virtualfn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
 
@@ -199,7 +199,7 @@ class Cache:
             self.cacheValidUpdate(fn)
 
         if self.cacheValid(fn):
-            multi = self.getVar('BBCLASSEXTEND', fn, True)
+            multi = self.getVar('__VARIANTS', fn, True)
             for cls in (multi or "").split() + [""]:
                 virtualfn = self.realfn2virtual(fn, cls)
                 if self.depends_cache[virtualfn]["__SKIPPED"]:
@@ -292,7 +292,7 @@ class Cache:
             self.clean[fn] = ""
 
         # Mark extended class data as clean too
-        multi = self.getVar('BBCLASSEXTEND', fn, True)
+        multi = self.getVar('__VARIANTS', fn, True)
         for cls in (multi or "").split():
             virtualfn = self.realfn2virtual(fn, cls)
             self.clean[virtualfn] = ""
@@ -443,7 +443,7 @@ class Cache:
 
         # Touch this to make sure its in the cache
         self.getVar('__BB_DONT_CACHE', file_name, True)
-        self.getVar('BBCLASSEXTEND', file_name, True)
+        self.getVar('__VARIANTS', file_name, True)
 
     def load_bbfile( self, bbfile , config):
         """

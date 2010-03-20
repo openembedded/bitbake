@@ -228,6 +228,18 @@ This event handler gets called every time an event is triggered. A global variab
 method one can get the name of the triggered event.</para><para>The above event handler prints the name
 of the event and the content of the <varname>FILE</varname> variable.</para>
             </section>
+            <section>
+                <title>Variants</title>
+                <para>Two Bitbake features exist to facilitate the creation of multiple buildable incarnations from a single recipe file.</para>
+                <para>The first is <varname>BBCLASSEXTEND</varname>.  This variable is a space separated list of classes to utilize to "extend" the recipe for each variant.  As an example, setting <screen>BBCLASSEXTEND = "native"</screen> results in a second incarnation of the current recipe being available.  This second incarantion will have the "native" class inherited.</para>
+                <para>The second feature is <varname>BBVERSIONS</varname>.  This variable allows a single recipe to be able to build multiple versions of a project from a single recipe file, and allows you to specify conditional metadata (using the <varname>OVERRIDES</varname> mechanism) for a single version, or an optionally named range of versions:</para>
+                <para><screen>BBVERSIONS = "1.0 2.0 git"
+SRC_URI_git = "git://someurl/somepath.git"</screen></para>
+                <para><screen>BBVERSIONS = "1.0.[0-6]:1.0.0+ \
+              1.0.[7-9]:1.0.7+"
+SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;patch=1"</screen></para>
+                <para>Note that the name of the range will default to the original version of the recipe, so given OE, a recipe file of foo_1.0.0+.bb will default the name of its versions to 1.0.0+.  This is useful, as the range name is not only placed into overrides, it's also made available for the metadata to use in the form of the <varname>BPV</varname> variable, for use in file:// search paths (<varname>FILESPATH</varname>).</para>
+            </section>
         </section>
         <section>
             <title>Dependency Handling</title>
@@ -270,7 +282,7 @@ of the event and the content of the <varname>FILE</varname> variable.</para>
             <section>
                 <title>Configuration Files</title>
                 <para>The first of the classifications of metadata in BitBake is configuration metadata.  This metadata is global, and therefore affects <emphasis>all</emphasis> packages and tasks which are executed.</para>
-                <papa>Bitbake will first search the current working directory for an optional "conf/bblayers.conf" configuration file. This file is expected to contain a BBLAYERS variable which is a space delimited list of 'layer' directories. For each directory in this list a "conf/layer.conf" file will be searched for and parsed with the LAYERDIR variable being set to the directory where the layer was found. The idea is these files will setup BBPATH and other variables correctly for a given build directory automatically for the user.</para>
+                <para>Bitbake will first search the current working directory for an optional "conf/bblayers.conf" configuration file. This file is expected to contain a BBLAYERS variable which is a space delimited list of 'layer' directories. For each directory in this list a "conf/layer.conf" file will be searched for and parsed with the LAYERDIR variable being set to the directory where the layer was found. The idea is these files will setup BBPATH and other variables correctly for a given build directory automatically for the user.</para>
                 <para>Bitbake will then expect to find 'conf/bitbake.conf' somewhere in the user specified <envar>BBPATH</envar>.  That configuration file generally has include directives to pull in any other metadata (generally files specific to architecture, machine, <emphasis>local</emphasis> and so on.</para>
                 <para>Only variable definitions and include directives are allowed in .conf files.</para>
             </section>

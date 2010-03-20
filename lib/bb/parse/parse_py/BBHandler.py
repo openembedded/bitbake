@@ -152,30 +152,8 @@ def handle(fn, d, include):
         classes.remove(__classname__)
     else:
         if include == 0:
-            safe_d = d
-            d = bb.data.createCopy(safe_d)
-            try:
-                ast.finalise(fn, d)
-            except bb.parse.SkipPackage:
-                bb.data.setVar("__SKIPPED", True, d)
-            darray = {"": d}
+            return ast.multi_finalize(fn, d)
 
-            extended = bb.data.getVar("BBCLASSEXTEND", d, True)
-            if extended:
-                bb.data.setVar("BBCLASSEXTEND", extended, safe_d)
-
-            for cls in (extended or "").split():
-                pn = data.getVar('PN', d, True)
-                variant_d = bb.data.createCopy(safe_d)
-                data.setVar('PN', pn + '-' + cls, variant_d)
-                inherit([cls], variant_d)
-                try:
-                    ast.finalise(fn, variant_d)
-                except bb.parse.SkipPackage:
-                    bb.data.setVar("__SKIPPED", True, variant_d)
-                darray[cls] = variant_d
-            return darray
-   
     if oldfile:
         bb.data.setVar("FILE", oldfile, d)
 

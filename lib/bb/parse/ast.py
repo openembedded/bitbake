@@ -22,9 +22,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import bb, re, string
+from itertools import chain
 
 __word__ = re.compile(r"\S+")
 __parsed_methods__ = bb.methodpool.get_parsed_dict()
+_bbversions_re = re.compile(r"\[(?P<from>[0-9]+)-(?P<to>[0-9]+)\]")
 
 class StatementGroup(list):
     def eval(self, data):
@@ -335,3 +337,115 @@ def finalise(fn, d):
 
     bb.event.fire(bb.event.RecipeParsed(fn), d)
 
+def _create_variants(datastores, names, function):
+    def create_variant(name, orig_d, arg = None):
+        new_d = bb.data.createCopy(orig_d)
+        function(arg or name, new_d)
+        datastores[name] = new_d
+
+    for variant, variant_d in datastores.items():
+        for name in names:
+            if not variant:
+                # Based on main recipe
+                create_variant(name, variant_d)
+            else:
+                create_variant("%s-%s" % (variant, name), variant_d, name)
+
+def _expand_versions(versions):
+    def expand_one(version, start, end):
+        for i in xrange(start, end + 1):
+            ver = _bbversions_re.sub(str(i), version, 1)
+            yield ver
+
+    versions = iter(versions)
+    while True:
+        try:
+            version = versions.next()
+        except StopIteration:
+            break
+
+        range_ver = _bbversions_re.search(version)
+        if not range_ver:
+            yield version
+        else:
+            newversions = expand_one(version, int(range_ver.group("from")),
+                                     int(range_ver.group("to")))
+            versions = chain(newversions, versions)
+
+def multi_finalize(fn, d):
+    safe_d = d
+
+    d = bb.data.createCopy(safe_d)
+    try:
+        finalise(fn, d)
+    except bb.parse.SkipPackage:
+        bb.data.setVar("__SKIPPED", True, d)
+    datastores = {"": safe_d}
+
+    versions = (d.getVar("BBVERSIONS", True) or "").split()
+    if versions:
+        pv = orig_pv = d.getVar("PV", True)
+        baseversions = {}
+
+        def verfunc(ver, d, pv_d = None):
+            if pv_d is None:
+                pv_d = d
+
+            overrides = d.getVar("OVERRIDES", True).split(":")
+            pv_d.setVar("PV", ver)
+            overrides.append(ver)
+            bpv = baseversions.get(ver) or orig_pv
+            pv_d.setVar("BPV", bpv)
+            overrides.append(bpv)
+            d.setVar("OVERRIDES", ":".join(overrides))
+
+        versions = list(_expand_versions(versions))
+        for pos, version in enumerate(list(versions)):
+            try:
+                pv, bpv = version.split(":", 2)
+            except ValueError:
+                pass
+            else:
+                versions[pos] = pv
+                baseversions[pv] = bpv
+
+        if pv in versions and not baseversions.get(pv):
+            versions.remove(pv)
+        else:
+            pv = versions.pop()
+
+            # This is necessary because our existing main datastore
+            # has already been finalized with the old PV, we need one
+            # that's been finalized with the new PV.
+            d = bb.data.createCopy(safe_d)
+            verfunc(pv, d, safe_d)
+            try:
+                finalise(fn, d)
+            except bb.parse.SkipPackage:
+                bb.data.setVar("__SKIPPED", True, d)
+
+        _create_variants(datastores, versions, verfunc)
+
+    extended = d.getVar("BBCLASSEXTEND", True) or ""
+    if extended:
+        pn = d.getVar("PN", True)
+        def extendfunc(name, d):
+            d.setVar("PN", "%s-%s" % (pn, name))
+            bb.parse.BBHandler.inherit([name], d)
+
+        safe_d.setVar("BBCLASSEXTEND", extended)
+        _create_variants(datastores, extended.split(), extendfunc)
+
+    for variant, variant_d in datastores.items():
+        if variant:
+            try:
+                finalise(fn, variant_d)
+            except bb.parse.SkipPackage:
+                bb.data.setVar("__SKIPPED", True, variant_d)
+
+    if len(datastores) > 1:
+        variants = filter(None, datastores.keys())
+        safe_d.setVar("__VARIANTS", " ".join(variants))
+
+    datastores[""] = d
+    return datastores
