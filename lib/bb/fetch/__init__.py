@@ -524,7 +524,7 @@ class FetchData(object):
             # if user sets localpath for file, use it instead.
             self.localpath = self.parm["localpath"]
         else:
-            premirrors = bb.data.getVar('PREMIRRORS', d)
+            premirrors = bb.data.getVar('PREMIRRORS', d, True)
             local = ""
             if premirrors and self.url:
                 aurl = self.url.split(";")[0]
