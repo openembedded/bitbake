@@ -641,13 +641,19 @@ class BBCooker:
         if (task == None):
             task = self.configuration.cmd
 
-        fn = self.matchFile(buildfile)
+        self.bb_cache = bb.cache.init(self)
+        self.status = bb.cache.CacheData()
+
+        (fn, cls) = self.bb_cache.virtualfn2realfn(buildfile)
+        buildfile = self.matchFile(fn)
+        fn = self.bb_cache.realfn2virtual(buildfile, cls)
+
         self.buildSetVars()
 
         # Load data into the cache for fn and parse the loaded cache data
-        self.bb_cache = bb.cache.init(self)
-        self.status = bb.cache.CacheData()
-        self.bb_cache.loadData(fn, self.configuration.data, self.status)      
+        the_data = self.bb_cache.loadDataFull(fn, self.configuration.data)
+        self.bb_cache.setData(fn, buildfile, the_data)
+        self.bb_cache.handle_data(fn, self.status)
 
         # Tweak some variables
         item = self.bb_cache.getVar('PN', fn, True)

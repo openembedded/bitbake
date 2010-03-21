@@ -137,6 +137,7 @@ class Cache:
         # If we're a virtual class we need to make sure all our depends are appended 
         # to the depends of fn.
         depends = self.getVar("__depends", virtualfn, True) or []
+        self.depends_cache.setdefault(fn, {})
         if "__depends" not in self.depends_cache[fn] or not self.depends_cache[fn]["__depends"]:
             self.depends_cache[fn]["__depends"] = depends
         for dep in depends:
