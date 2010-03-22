@@ -87,10 +87,7 @@ class BBCooker:
 
         bb.data.inheritFromOS(self.configuration.data)
 
-        for f in self.configuration.file:
-            self.parseConfigurationFile( f )
-
-        self.parseConfigurationFile( os.path.join( "conf", "bitbake.conf" ) )
+        self.parseConfigurationFiles(self.configuration.file)
 
         if not self.configuration.cmd:
             self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data, True) or "build"
@@ -524,9 +521,29 @@ class BBCooker:
         else:
             shell.start( self )
 
-    def parseConfigurationFile( self, afile ):
+    def parseConfigurationFiles(self, files):
         try:
-            self.configuration.data = bb.parse.handle( afile, self.configuration.data )
+            data = self.configuration.data
+            for f in files:
+                data = bb.parse.handle(f, data)
+
+            layerconf = os.path.join(os.getcwd(), "conf", "bblayers.conf")
+            if os.path.exists(layerconf):
+                bb.msg.debug(2, bb.msg.domain.Parsing, "Found bblayers.conf (%s)" % layerconf)
+                data = bb.parse.handle(layerconf, data)
+
+                layers = (bb.data.getVar('BBLAYERS', data, True) or "").split()
+
+                for layer in layers:
+                    bb.msg.debug(2, bb.msg.domain.Parsing, "Adding layer %s" % layer)
+                    bb.data.setVar('LAYERDIR', layer, data)
+                    data = bb.parse.handle(os.path.join(layer, "conf", "layer.conf"), data)
+
+                bb.data.delVar('LAYERDIR', data)
+
+            data = bb.parse.handle(os.path.join("conf", "bitbake.conf"), data)
+
+            self.configuration.data = data
 
             # Handle any INHERITs and inherit the base class
             inherits  = ["base"] + (bb.data.getVar('INHERIT', self.configuration.data, True ) or "").split()
@@ -543,9 +560,9 @@ class BBCooker:
             bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
 
         except IOError, e:
-            bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (afile, str(e)))
+            bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (files, str(e)))
         except bb.parse.ParseError, details:
-            bb.msg.fatal(bb.msg.domain.Parsing, "Unable to parse %s (%s)" % (afile, details) )
+            bb.msg.fatal(bb.msg.domain.Parsing, "Unable to parse %s (%s)" % (files, details) )
 
     def handleCollections( self, collections ):
         """Handle collections"""
