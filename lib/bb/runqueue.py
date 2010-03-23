@@ -978,6 +978,7 @@ class RunQueue:
                                                                         self.get_user_idstring(task)))
 
                     bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
+                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
                     try:
                         self.cooker.tryBuild(fn, taskname[3:])
                     except bb.build.EventException:
@@ -1157,6 +1158,7 @@ class runQueueTaskCompleted(runQueueEvent):
 
 def check_stamp_fn(fn, taskname, d):
     rq = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", d)
+    fn = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", d)
     fnid = rq.taskData.getfn_id(fn)
     taskid = rq.get_task_id(fnid, taskname)
     if taskid is not None:
