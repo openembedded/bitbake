@@ -30,7 +30,7 @@ import fcntl
 
 class TaskFailure(Exception):
     """Exception raised when a task in a runqueue fails"""
-    def __init__(self, x): 
+    def __init__(self, x):
         self.args = x
 
 
@@ -60,7 +60,7 @@ class RunQueueStats:
     def taskActive(self):
         self.active = self.active + 1
 
-# These values indicate the next step due to be run in the 
+# These values indicate the next step due to be run in the
 # runQueue state machine
 runQueuePrepare = 2
 runQueueRunInit = 3
@@ -76,7 +76,7 @@ class RunQueueScheduler:
     """
     def __init__(self, runqueue):
         """
-        The default scheduler just returns the first buildable task (the 
+        The default scheduler just returns the first buildable task (the
         priority map is sorted by task numer)
         """
         self.rq = runqueue
@@ -123,10 +123,10 @@ class RunQueueSchedulerSpeed(RunQueueScheduler):
 
 class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
     """
-    A scheduler optimised to complete .bb files are quickly as possible. The 
-    priority map is sorted by task weight, but then reordered so once a given 
+    A scheduler optimised to complete .bb files are quickly as possible. The
+    priority map is sorted by task weight, but then reordered so once a given
     .bb file starts to build, its completed as quickly as possible. This works
-    well where disk space is at a premium and classes like OE's rm_work are in 
+    well where disk space is at a premium and classes like OE's rm_work are in
     force.
     """
     def __init__(self, runqueue):
@@ -135,7 +135,7 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
 
         #FIXME - whilst this groups all fnids together it does not reorder the
         #fnid groups optimally.
- 
+
         basemap = deepcopy(self.prio_map)
         self.prio_map = []
         while (len(basemap) > 0):
@@ -231,7 +231,7 @@ class RunQueue:
                 if chain1[index] != chain2[index]:
                     return False
             return True
-            
+
         def chain_array_contains(chain, chain_array):
             """
             Return True if chain_array contains chain
@@ -286,7 +286,7 @@ class RunQueue:
 
     def calculate_task_weights(self, endpoints):
         """
-        Calculate a number representing the "weight" of each task. Heavier weighted tasks 
+        Calculate a number representing the "weight" of each task. Heavier weighted tasks
         have more dependencies and hence should be executed sooner for maximum speed.
 
         This function also sanity checks the task list finding tasks that its not
@@ -318,7 +318,7 @@ class RunQueue:
                         task_done[revdep] = True
             endpoints = next_points
             if len(next_points) == 0:
-                break      
+                break
 
         # Circular dependency sanity check
         problem_tasks = []
@@ -345,7 +345,7 @@ class RunQueue:
 
     def prepare_runqueue(self):
         """
-        Turn a set of taskData into a RunQueue and compute data needed 
+        Turn a set of taskData into a RunQueue and compute data needed
         to optimise the execution order.
         """
 
@@ -365,12 +365,12 @@ class RunQueue:
         # Step A - Work out a list of tasks to run
         #
         # Taskdata gives us a list of possible providers for every build and run
-        # target ordered by priority. It also gives information on each of those 
+        # target ordered by priority. It also gives information on each of those
         # providers.
         #
-        # To create the actual list of tasks to execute we fix the list of 
-        # providers and then resolve the dependencies into task IDs. This 
-        # process is repeated for each type of dependency (tdepends, deptask, 
+        # To create the actual list of tasks to execute we fix the list of
+        # providers and then resolve the dependencies into task IDs. This
+        # process is repeated for each type of dependency (tdepends, deptask,
         # rdeptast, recrdeptask, idepends).
 
         def add_build_dependencies(depids, tasknames, depends):
@@ -411,12 +411,12 @@ class RunQueue:
 
             if fnid not in taskData.failed_fnids:
 
-                # Resolve task internal dependencies 
+                # Resolve task internal dependencies
                 #
                 # e.g. addtask before X after Y
                 depends = taskData.tasks_tdepends[task]
 
-                # Resolve 'deptask' dependencies 
+                # Resolve 'deptask' dependencies
                 #
                 # e.g. do_sometask[deptask] = "do_someothertask"
                 # (makes sure sometask runs after someothertask of all DEPENDS)
@@ -424,7 +424,7 @@ class RunQueue:
                     tasknames = task_deps['deptask'][taskData.tasks_name[task]].split()
                     add_build_dependencies(taskData.depids[fnid], tasknames, depends)
 
-                # Resolve 'rdeptask' dependencies 
+                # Resolve 'rdeptask' dependencies
                 #
                 # e.g. do_sometask[rdeptask] = "do_someothertask"
                 # (makes sure sometask runs after someothertask of all RDEPENDS)
@@ -432,7 +432,7 @@ class RunQueue:
                     taskname = task_deps['rdeptask'][taskData.tasks_name[task]]
                     add_runtime_dependencies(taskData.rdepids[fnid], [taskname], depends)
 
-                # Resolve inter-task dependencies 
+                # Resolve inter-task dependencies
                 #
                 # e.g. do_sometask[depends] = "targetname:do_someothertask"
                 # (makes sure sometask runs after targetname's someothertask)
@@ -467,8 +467,8 @@ class RunQueue:
                     newdep = []
                     bb.msg.debug(2, bb.msg.domain.RunQueue, "Task %s (%s %s) contains self reference! %s" % (task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], depends))
                     for dep in depends:
-                       if task != dep:
-                          newdep.append(dep)
+                        if task != dep:
+                            newdep.append(dep)
                     depends = newdep
 
             self.runq_fnid.append(taskData.tasks_fnid[task])
@@ -482,7 +482,7 @@ class RunQueue:
         #
         # Build a list of recursive cumulative dependencies for each fnid
         # We do this by fnid, since if A depends on some task in B
-        # we're interested in later tasks B's fnid might have but B itself 
+        # we're interested in later tasks B's fnid might have but B itself
         # doesn't depend on
         #
         # Algorithm is O(tasks) + O(tasks)*O(fnids)
@@ -513,7 +513,7 @@ class RunQueue:
             if len(runq_recrdepends[task]) > 0:
                 taskfnid = self.runq_fnid[task]
                 for dep in reccumdepends[taskfnid]:
-                    # Ignore self references 
+                    # Ignore self references
                     if dep == task:
                         continue
                     for taskname in runq_recrdepends[task]:
@@ -635,7 +635,7 @@ class RunQueue:
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Compute totals (have %s endpoint(s))" % len(endpoints))
 
-        # Calculate task weights 
+        # Calculate task weights
         # Check of higher length circular dependencies
         self.runq_weight = self.calculate_task_weights(endpoints)
 
@@ -657,7 +657,7 @@ class RunQueue:
             for prov in self.dataCache.fn_provides[fn]:
                 if prov not in prov_list:
                     prov_list[prov] = [fn]
-                elif fn not in prov_list[prov]: 
+                elif fn not in prov_list[prov]:
                     prov_list[prov].append(fn)
         error = False
         for prov in prov_list:
@@ -703,7 +703,7 @@ class RunQueue:
                 buildable.append(task)
 
         def check_buildable(self, task, buildable):
-             for revdep in self.runq_revdeps[task]:
+            for revdep in self.runq_revdeps[task]:
                 alldeps = 1
                 for dep in self.runq_depends[revdep]:
                     if dep in unchecked:
@@ -811,10 +811,10 @@ class RunQueue:
                     try:
                         t2 = os.stat(stampfile2)[stat.ST_MTIME]
                         if t1 < t2:
-                            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stampfile %s < %s" % (stampfile,stampfile2))
+                            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stampfile %s < %s" % (stampfile, stampfile2))
                             iscurrent = False
                     except:
-                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Exception reading %s for %s" % (stampfile2 ,stampfile))
+                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Exception reading %s for %s" % (stampfile2 , stampfile))
                         iscurrent = False
 
         return iscurrent
@@ -885,7 +885,7 @@ class RunQueue:
     def task_complete(self, task):
         """
         Mark a task as completed
-        Look at the reverse dependencies and mark any task with 
+        Look at the reverse dependencies and mark any task with
         completed dependencies as buildable
         """
         self.runq_complete[task] = 1
@@ -1032,10 +1032,10 @@ class RunQueue:
     def finish_runqueue_now(self):
         bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % self.stats.active)
         for k, v in self.build_pids.iteritems():
-             try:
-                 os.kill(-k, signal.SIGINT)
-             except:
-                 pass
+            try:
+                os.kill(-k, signal.SIGINT)
+            except:
+                pass
         for pipe in self.build_pipes:
             self.build_pipes[pipe].read()
 
@@ -1084,30 +1084,30 @@ class RunQueue:
         """
         bb.msg.debug(3, bb.msg.domain.RunQueue, "run_tasks:")
         for task in range(len(self.runq_task)):
-                bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
-                        taskQueue.fn_index[self.runq_fnid[task]], 
-                        self.runq_task[task], 
-                        self.runq_weight[task], 
-                        self.runq_depends[task], 
-                        self.runq_revdeps[task]))
+            bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task,
+                taskQueue.fn_index[self.runq_fnid[task]],
+                self.runq_task[task],
+                self.runq_weight[task],
+                self.runq_depends[task],
+                self.runq_revdeps[task]))
 
         bb.msg.debug(3, bb.msg.domain.RunQueue, "sorted_tasks:")
         for task1 in range(len(self.runq_task)):
             if task1 in self.prio_map:
                 task = self.prio_map[task1]
-                bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task, 
-                        taskQueue.fn_index[self.runq_fnid[task]], 
-                        self.runq_task[task], 
-                        self.runq_weight[task], 
-                        self.runq_depends[task], 
-                        self.runq_revdeps[task]))
+                bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task,
+                    taskQueue.fn_index[self.runq_fnid[task]],
+                    self.runq_task[task],
+                    self.runq_weight[task],
+                    self.runq_depends[task],
+                    self.runq_revdeps[task]))
 
 
 class TaskFailure(Exception):
     """
     Exception raised when a task in a runqueue fails
     """
-    def __init__(self, x): 
+    def __init__(self, x):
         self.args = x
 
 
@@ -1194,4 +1194,3 @@ class runQueuePipe():
         if len(self.queue) > 0:
             print "Warning, worker left partial message"
         os.close(self.fd)
-

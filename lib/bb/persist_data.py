@@ -33,11 +33,11 @@ class PersistData:
     """
     BitBake Persistent Data Store
 
-    Used to store data in a central location such that other threads/tasks can 
+    Used to store data in a central location such that other threads/tasks can
     access them at some future date.
 
-    The "domain" is used as a key to isolate each data pool and in this 
-    implementation corresponds to an SQL table. The SQL table consists of a 
+    The "domain" is used as a key to isolate each data pool and in this
+    implementation corresponds to an SQL table. The SQL table consists of a
     simple key and value pair.
 
     Why sqlite? It handles all the locking issues for us.
@@ -78,7 +78,7 @@ class PersistData:
         for row in data:
             ret[str(row[0])] = str(row[1])
 
-	return ret
+        return ret
 
     def getValue(self, domain, key):
         """
@@ -108,7 +108,7 @@ class PersistData:
         self._execute("DELETE from %s where key=?;" % domain, [key])
 
     def _execute(self, *query):
-        while True:	
+        while True:
             try:
                 self.connection.execute(*query)
                 return
@@ -116,6 +116,3 @@ class PersistData:
                 if 'database is locked' in str(e):
                     continue
                 raise
-        
-        
-

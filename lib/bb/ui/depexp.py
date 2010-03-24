@@ -233,7 +233,7 @@ def init(server, eventHandler):
                 x = event.sofar
                 y = event.total
                 if x == y:
-                    print("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors." 
+                    print("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors."
                         % ( event.cached, event.parsed, event.skipped, event.masked, event.errors))
                     pbar.hide()
                 gtk.gdk.threads_enter()
@@ -269,4 +269,3 @@ def init(server, eventHandler):
                 server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass
-

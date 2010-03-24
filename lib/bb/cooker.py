@@ -192,7 +192,7 @@ class BBCooker:
 
     def tryBuild(self, fn, task):
         """
-        Build a provider and its dependencies. 
+        Build a provider and its dependencies.
         build_depends is a list of previous build dependencies (not runtime)
         If build_depends is empty, we're dealing with a runtime depends
         """
@@ -217,7 +217,7 @@ class BBCooker:
 
         # Sort by priority
         for pn in pkg_pn:
-            (last_ver,last_file,pref_ver,pref_file) = bb.providers.findBestProvider(pn, self.configuration.data, self.status)
+            (last_ver, last_file, pref_ver, pref_file) = bb.providers.findBestProvider(pn, self.configuration.data, self.status)
             preferred_versions[pn] = (pref_ver, pref_file)
             latest_versions[pn] = (last_ver, last_file)
 
@@ -326,7 +326,7 @@ class BBCooker:
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
         rq.prepare_runqueue()
 
-        seen_fnids = []  
+        seen_fnids = []
         depend_tree = {}
         depend_tree["depends"] = {}
         depend_tree["tdepends"] = {}
@@ -363,7 +363,7 @@ class BBCooker:
 
                 depend_tree["rdepends-pn"][pn] = []
                 for rdep in taskdata.rdepids[fnid]:
-                        depend_tree["rdepends-pn"][pn].append(taskdata.run_names_index[rdep])
+                    depend_tree["rdepends-pn"][pn].append(taskdata.run_names_index[rdep])
 
                 rdepends = self.status.rundeps[fn]
                 for package in rdepends:
@@ -553,7 +553,7 @@ class BBCooker:
             # Nomally we only register event handlers at the end of parsing .bb files
             # We register any handlers we've found so far here...
             for var in data.getVar('__BBHANDLERS', self.configuration.data) or []:
-                bb.event.register(var,bb.data.getVar(var, self.configuration.data))
+                bb.event.register(var, bb.data.getVar(var, self.configuration.data))
 
             bb.fetch.fetcher_init(self.configuration.data)
 
@@ -594,7 +594,7 @@ class BBCooker:
         """
         if not bb.data.getVar("BUILDNAME", self.configuration.data):
             bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
-        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S',time.gmtime()), self.configuration.data)
+        bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S', time.gmtime()), self.configuration.data)
 
     def matchFiles(self, buildfile):
         """
@@ -786,10 +786,10 @@ class BBCooker:
 
             ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
             self.status.ignored_dependencies = set(ignore.split())
-    
+
             for dep in self.configuration.extra_assume_provided:
                 self.status.ignored_dependencies.add(dep)
-    
+
             self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
             bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
@@ -827,7 +827,7 @@ class BBCooker:
         for f in contents:
             (root, ext) = os.path.splitext(f)
             if ext == ".bb":
-                bbfiles.append(os.path.abspath(os.path.join(os.getcwd(),f)))
+                bbfiles.append(os.path.abspath(os.path.join(os.getcwd(), f)))
         return bbfiles
 
     def find_bbfiles( self, path ):
@@ -839,7 +839,7 @@ class BBCooker:
             for ignored in ('SCCS', 'CVS', '.svn'):
                 if ignored in dirs:
                     dirs.remove(ignored)
-            found += [join(dir,f) for f in files if f.endswith('.bb')]
+            found += [join(dir, f) for f in files if f.endswith('.bb')]
 
         return found
 
@@ -923,9 +923,9 @@ class BBCooker:
             pout.close()
         else:
             self.server.serve_forever()
-        
+
         bb.event.fire(CookerExit(), self.configuration.event_data)
-        
+
 class CookerExit(bb.event.Event):
     """
     Notify clients of the Cooker shutdown
@@ -995,4 +995,3 @@ class CookerParser:
                 raise ParsingErrorsFound
             return False
         return True
-

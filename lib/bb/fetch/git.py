@@ -57,12 +57,12 @@ class Git(Fetch):
 
         tag = Fetch.srcrev_internal_helper(ud, d)
         if tag is True:
-            ud.tag = self.latest_revision(url, ud, d)	
+            ud.tag = self.latest_revision(url, ud, d)
         elif tag:
             ud.tag = tag
 
         if not ud.tag or ud.tag == "master":
-            ud.tag = self.latest_revision(url, ud, d)	
+            ud.tag = self.latest_revision(url, ud, d)
 
         subdir = ud.parm.get("subpath", "")
         if subdir != "":
@@ -114,7 +114,7 @@ class Git(Fetch):
 
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
-        if mirror_tarballs != "0" or 'fullclone' in ud.parm: 
+        if mirror_tarballs != "0" or 'fullclone' in ud.parm:
             bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
             runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
 
@@ -188,7 +188,7 @@ class Git(Fetch):
 
     def _sortable_buildindex_disabled(self, url, ud, d, rev):
         """
-        Return a suitable buildindex for the revision specified. This is done by counting revisions 
+        Return a suitable buildindex for the revision specified. This is done by counting revisions
         using "git rev-list" which may or may not work in different circumstances.
         """
 
@@ -213,5 +213,4 @@ class Git(Fetch):
 
         buildindex = "%s" % output.split()[0]
         bb.msg.debug(1, bb.msg.domain.Fetcher, "GIT repository for %s in %s is returning %s revisions in rev-list before %s" % (url, ud.clonedir, buildindex, rev))
-        return buildindex        
-
+        return buildindex

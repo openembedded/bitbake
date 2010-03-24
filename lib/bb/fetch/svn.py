@@ -78,7 +78,7 @@ class Svn(Fetch):
                     ud.revision = rev
                     ud.date = ""
                 else:
-                    ud.revision = ""		
+                    ud.revision = ""
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 

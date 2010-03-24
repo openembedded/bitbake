@@ -178,4 +178,3 @@ class BitBakeServerConnection():
             self.connection.terminateServer()
         except:
             pass
-

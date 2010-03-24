@@ -89,8 +89,8 @@ class BitBakeServer(SimpleXMLRPCServer):
 
     def __init__(self, cooker, interface = ("localhost", 0)):
         """
-	Constructor
-	"""
+        Constructor
+        """
         SimpleXMLRPCServer.__init__(self, interface,
                                     requestHandler=SimpleXMLRPCRequestHandler,
                                     logRequests=False, allow_none=True)
@@ -146,7 +146,7 @@ class BitBakeServer(SimpleXMLRPCServer):
                     traceback.print_exc()
                     pass
             if nextsleep is None and len(self._idlefuns) > 0:
-                nextsleep = 0  
+                nextsleep = 0
             self.timeout = nextsleep
         # Tell idle functions we're exiting
         for function, data in self._idlefuns.items():
@@ -175,7 +175,7 @@ class BitBakeServerConnection():
     def terminate(self):
         # Don't wait for server indefinitely
         import socket
-        socket.setdefaulttimeout(2) 
+        socket.setdefaulttimeout(2)
         try:
             self.events.system_quit()
         except:
@@ -184,4 +184,3 @@ class BitBakeServerConnection():
             self.connection.terminateServer()
         except:
             pass
-

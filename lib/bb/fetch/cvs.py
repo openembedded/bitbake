@@ -157,7 +157,7 @@ class Cvs(Fetch):
             try:
                 os.rmdir(moddir)
             except OSError:
-                 pass
+                pass
             raise FetchError(ud.module)
 
         # tar them up to a defined filename

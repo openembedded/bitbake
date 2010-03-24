@@ -20,7 +20,7 @@ Provide an interface to interact with the bitbake server through 'commands'
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 """
-The bitbake server takes 'commands' from its UI/commandline. 
+The bitbake server takes 'commands' from its UI/commandline.
 Commands are either synchronous or asynchronous.
 Async commands return data to the client in the form of events.
 Sync commands must only return data through the function return value
@@ -62,7 +62,7 @@ class Command:
         try:
             command = commandline.pop(0)
             if command in CommandsSync.__dict__:
-                # Can run synchronous commands straight away            
+                # Can run synchronous commands straight away
                 return getattr(CommandsSync, command)(self.cmds_sync, self, commandline)
             if self.currentAsyncCommand is not None:
                 return "Busy (%s in progress)" % self.currentAsyncCommand[0]
@@ -268,6 +268,3 @@ class CookerCommandSetExitCode(bb.event.Event):
     def  __init__(self, exitcode):
         bb.event.Event.__init__(self)
         self.exitcode = int(exitcode)
-
-
-

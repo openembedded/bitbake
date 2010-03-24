@@ -19,7 +19,7 @@
 
 
 """
-Use this class to fork off a thread to recieve event callbacks from the bitbake 
+Use this class to fork off a thread to recieve event callbacks from the bitbake
 server and queue them for the UI to process. This process must be used to avoid
 client/server deadlocks.
 """
@@ -116,10 +116,9 @@ class UIXMLRPCServer (SimpleXMLRPCServer):
         if request is None:
             return
         SimpleXMLRPCServer.close_request(self, request)
-        
+
     def process_request(self, request, client_address):
         if request is None:
             return
         SimpleXMLRPCServer.process_request(self, request, client_address)
-
 

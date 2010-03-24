@@ -134,9 +134,9 @@ class Hg(Fetch):
             os.chdir(ud.pkgdir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % fetchcmd)
             runfetchcmd(fetchcmd, d)
-	
-	# Even when we clone (fetch), we still need to update as hg's clone
-	# won't checkout the specified revision if its on a branch
+
+        # Even when we clone (fetch), we still need to update as hg's clone
+        # won't checkout the specified revision if its on a branch
         updatecmd = self._buildhgcommand(ud, d, "update")
         bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % updatecmd)
         runfetchcmd(updatecmd, d)
@@ -170,4 +170,3 @@ class Hg(Fetch):
         Return a unique key for the url
         """
         return "hg:" + ud.moddir
-

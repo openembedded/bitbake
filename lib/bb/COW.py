@@ -3,7 +3,7 @@
 #
 # This is a copy on write dictionary and set which abuses classes to try and be nice and fast.
 #
-# Copyright (C) 2006 Tim Amsell 
+# Copyright (C) 2006 Tim Amsell
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -18,7 +18,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#Please Note: 
+#Please Note:
 # Be careful when using mutable types (ie Dict and Lists) - operations involving these are SLOW.
 # Assign a file to __warn__ to get warnings about slow operations.
 #
@@ -40,7 +40,7 @@ MUTABLE = "__mutable__"
 
 class COWMeta(type):
     pass
- 
+
 class COWDictMeta(COWMeta):
     __warn__ = False
     __hasmutable__ = False
@@ -64,7 +64,7 @@ class COWDictMeta(COWMeta):
                 cls.__hasmutable__ = True
             key += MUTABLE
         setattr(cls, key, value)
-    
+
     def __getmutable__(cls, key, readonly=False):
         nkey = key + MUTABLE
         try:
@@ -98,8 +98,8 @@ class COWDictMeta(COWMeta):
                 value = getattr(cls, key)
             except AttributeError:
                 value = cls.__getmutable__(key, readonly)
-            
-            # This is for values which have been deleted 
+
+            # This is for values which have been deleted
             if value is cls.__marker__:
                 raise AttributeError("key %s does not exist." % key)
 
@@ -127,7 +127,7 @@ class COWDictMeta(COWMeta):
     def iter(cls, type, readonly=False):
         for key in dir(cls):
             if key.startswith("__"):
-                    continue
+                continue
 
             if key.endswith(MUTABLE):
                 key = key[:-len(MUTABLE)]
@@ -176,13 +176,13 @@ class COWSetMeta(COWDictMeta):
 
     def remove(cls, value):
         COWDictMeta.__delitem__(cls, repr(hash(value)))
- 
+
     def __in__(cls, value):
         return COWDictMeta.has_key(repr(hash(value)))
 
     def iterkeys(cls):
         raise TypeError("sets don't have keys")
-    
+
     def iteritems(cls):
         raise TypeError("sets don't have 'items'")
 
@@ -286,7 +286,7 @@ if __name__ == "__main__":
         print "Boo!"
     else:
         print "Yay - has_key with delete works!"
-    
+
     print "a", a
     for x in a.iteritems():
         print x

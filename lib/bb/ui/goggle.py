@@ -25,13 +25,13 @@ from bb.ui.crumbs.runningbuild import RunningBuildTreeView, RunningBuild
 
 def event_handle_idle_func (eventHandler, build):
 
-  # Consume as many messages as we can in the time available to us
-  event = eventHandler.getEvent()
-  while event:
-      build.handle_event (event)
-      event = eventHandler.getEvent()
+    # Consume as many messages as we can in the time available to us
+    event = eventHandler.getEvent()
+    while event:
+        build.handle_event (event)
+        event = eventHandler.getEvent()
 
-  return True
+    return True
 
 class MainWindow (gtk.Window):
     def __init__ (self):
@@ -74,4 +74,3 @@ def init (server, eventHandler):
                          running_build)
 
     gtk.main()
-

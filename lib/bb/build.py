@@ -28,7 +28,7 @@
 from bb import data, event, mkdirhier, utils
 import bb, os, sys
 
-# When we execute a python function we'd like certain things 
+# When we execute a python function we'd like certain things
 # in all namespaces, hence we add them to __builtins__
 # If we do not do this and use the exec globals, they will
 # not be available to subfunctions.
@@ -212,7 +212,7 @@ def exec_func_python(func, d, runfile, logfile):
     try:
         utils.better_exec(comp, {"d": d}, tmp, bbfile)
     except:
-        (t,value,tb) = sys.exc_info()
+        (t, value, tb) = sys.exc_info()
 
         if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
             raise
@@ -303,8 +303,8 @@ def exec_task(task, d):
 
 def extract_stamp(d, fn):
     """
-    Extracts stamp format which is either a data dictonary (fn unset) 
-    or a dataCache entry (fn set). 
+    Extracts stamp format which is either a data dictonary (fn unset)
+    or a dataCache entry (fn set).
     """
     if fn:
         return d.stamp[fn]
@@ -361,7 +361,7 @@ def add_tasks(tasklist, d):
         if not task in task_deps['tasks']:
             task_deps['tasks'].append(task)
 
-        flags = data.getVarFlags(task, d)    
+        flags = data.getVarFlags(task, d)
         def getTask(name):
             if not name in task_deps:
                 task_deps[name] = {}
@@ -387,4 +387,3 @@ def remove_task(task, kill, d):
        If kill is 1, also remove tasks that depend on this task."""
 
     data.delVarFlag(task, 'task', d)
-

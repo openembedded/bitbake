@@ -62,7 +62,7 @@ def sortPriorities(pn, dataCache, pkg_pn = None):
 def preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
     """
     Check if the version pe,pv,pr is the preferred one.
-    If there is preferred version defined and ends with '%', then pv has to start with that version after removing the '%' 
+    If there is preferred version defined and ends with '%', then pv has to start with that version after removing the '%'
     """
     if (pr == preferred_r or preferred_r == None):
         if (pe == preferred_e or preferred_e == None):
@@ -103,7 +103,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
 
         for file_set in pkg_pn:
             for f in file_set:
-                pe,pv,pr = dataCache.pkg_pepvpr[f]
+                pe, pv, pr = dataCache.pkg_pepvpr[f]
                 if preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
                     preferred_file = f
                     preferred_ver = (pe, pv, pr)
@@ -136,7 +136,7 @@ def findLatestProvider(pn, cfgData, dataCache, file_set):
     latest_p = 0
     latest_f = None
     for file_name in file_set:
-        pe,pv,pr = dataCache.pkg_pepvpr[file_name]
+        pe, pv, pr = dataCache.pkg_pepvpr[file_name]
         dp = dataCache.pkg_dp[file_name]
 
         if (latest is None) or ((latest_p == dp) and (utils.vercmp(latest, (pe, pv, pr)) < 0)) or (dp > latest_p):
@@ -169,14 +169,14 @@ def findBestProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
 
 def _filterProviders(providers, item, cfgData, dataCache):
     """
-    Take a list of providers and filter/reorder according to the 
+    Take a list of providers and filter/reorder according to the
     environment variables and previous build results
     """
     eligible = []
     preferred_versions = {}
     sortpkg_pn = {}
 
-    # The order of providers depends on the order of the files on the disk 
+    # The order of providers depends on the order of the files on the disk
     # up to here. Sort pkg_pn to make dependency issues reproducible rather
     # than effectively random.
     providers.sort()
@@ -226,7 +226,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
 
 def filterProviders(providers, item, cfgData, dataCache):
     """
-    Take a list of providers and filter/reorder according to the 
+    Take a list of providers and filter/reorder according to the
     environment variables and previous build results
     Takes a "normal" target item
     """
@@ -254,7 +254,7 @@ def filterProviders(providers, item, cfgData, dataCache):
 
 def filterProvidersRunTime(providers, item, cfgData, dataCache):
     """
-    Take a list of providers and filter/reorder according to the 
+    Take a list of providers and filter/reorder according to the
     environment variables and previous build results
     Takes a "runtime" target item
     """
@@ -297,7 +297,7 @@ def getRuntimeProviders(dataCache, rdepend):
     rproviders = []
 
     if rdepend in dataCache.rproviders:
-       rproviders += dataCache.rproviders[rdepend]
+        rproviders += dataCache.rproviders[rdepend]
 
     if rdepend in dataCache.packages:
         rproviders += dataCache.packages[rdepend]

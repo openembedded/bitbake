@@ -136,7 +136,7 @@ class NCursesUI:
         """Thread Activity Window"""
         def __init__( self, x, y, width, height ):
             NCursesUI.DecoratedWindow.__init__( self, "Thread Activity", x, y, width, height )
-    
+
         def setStatus( self, thread, text ):
             line = "%02d: %s" % ( thread, text )
             width = self.dimensions[WIDTH]
@@ -225,7 +225,7 @@ class NCursesUI:
 
         helper = uihelper.BBUIHelper()
         shutdown = 0
-   
+
         try:
             cmdline = server.runCommand(["getCmdLineAction"])
             if not cmdline:
@@ -263,7 +263,7 @@ class NCursesUI:
                     y = event.total
                     if x == y:
                         mw.setStatus("Idle")
-                        mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked." 
+                        mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked."
                                 % ( event.cached, event.parsed, event.skipped, event.masked ))
                     else:
                         mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
@@ -332,4 +332,3 @@ def init(server, eventHandler):
     except:
         import traceback
         traceback.print_exc()
-

@@ -89,9 +89,9 @@ def fire_ui_handlers(event, d):
 def fire(event, d):
     """Fire off an Event"""
 
-    # We can fire class handlers in the worker process context and this is 
+    # We can fire class handlers in the worker process context and this is
     # desired so they get the task based datastore.
-    # UI handlers need to be fired in the server context so we defer this. They 
+    # UI handlers need to be fired in the server context so we defer this. They
     # don't have a datastore so the datastore context isn't a problem.
 
     fire_class_handlers(event, d)
@@ -297,4 +297,3 @@ class DepTreeGenerated(Event):
     def __init__(self, depgraph):
         Event.__init__(self)
         self._depgraph = depgraph
-

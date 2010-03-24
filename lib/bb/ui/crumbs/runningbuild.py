@@ -24,7 +24,7 @@ import gobject
 class RunningBuildModel (gtk.TreeStore):
     (COL_TYPE, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_ACTIVE) = (0, 1, 2, 3, 4, 5)
     def __init__ (self):
-        gtk.TreeStore.__init__ (self, 
+        gtk.TreeStore.__init__ (self,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
@@ -34,7 +34,7 @@ class RunningBuildModel (gtk.TreeStore):
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
-          'build-succeeded' : (gobject.SIGNAL_RUN_LAST, 
+          'build-succeeded' : (gobject.SIGNAL_RUN_LAST,
                                gobject.TYPE_NONE,
                                ()),
           'build-failed' : (gobject.SIGNAL_RUN_LAST,
@@ -82,12 +82,12 @@ class RunningBuild (gobject.GObject):
 
             # Add the message to the tree either at the top level if parent is
             # None otherwise as a descendent of a task.
-            self.model.append (parent, 
+            self.model.append (parent,
                                (event.__name__.split()[-1], # e.g. MsgWarn, MsgError
-                                package, 
+                                package,
                                 task,
                                 event._message,
-                                icon, 
+                                icon,
                                 False))
         elif isinstance(event, bb.build.TaskStarted):
             (package, task) = (event._package, event._task)
@@ -101,10 +101,10 @@ class RunningBuild (gobject.GObject):
             if (self.tasks_to_iter.has_key ((package, None))):
                 parent = self.tasks_to_iter[(package, None)]
             else:
-                parent = self.model.append (None, (None, 
-                                                   package, 
+                parent = self.model.append (None, (None,
+                                                   package,
                                                    None,
-                                                   "Package: %s" % (package), 
+                                                   "Package: %s" % (package),
                                                    None,
                                                    False))
                 self.tasks_to_iter[(package, None)] = parent
@@ -114,10 +114,10 @@ class RunningBuild (gobject.GObject):
             self.model.set(parent, self.model.COL_ICON, "gtk-execute")
 
             # Add an entry in the model for this task
-            i = self.model.append (parent, (None, 
-                                            package, 
+            i = self.model.append (parent, (None,
+                                            package,
                                             task,
-                                            "Task: %s" % (task), 
+                                            "Task: %s" % (task),
                                             None,
                                             False))
 
@@ -176,5 +176,3 @@ class RunningBuildTreeView (gtk.TreeView):
         renderer = gtk.CellRendererText ()
         col = gtk.TreeViewColumn ("Message", renderer, text=3)
         self.append_column (col)
-
-

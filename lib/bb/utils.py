@@ -19,10 +19,11 @@ BitBake Utility Functions
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-separators = ".-"
-
 import re, fcntl, os, types, bb, string, stat, shutil, time
 from commands import getstatusoutput
+
+# Version comparison
+separators = ".-"
 
 # Context used in better_exec, eval
 _context = {
@@ -92,19 +93,19 @@ def vercmp(ta, tb):
         r = vercmp_part(ra, rb)
     return r
 
-_package_weights_ = {"pre":-2,"p":0,"alpha":-4,"beta":-3,"rc":-1}    # dicts are unordered
-_package_ends_    = ["pre", "p", "alpha", "beta", "rc", "cvs", "bk", "HEAD" ]            # so we need ordered list
+_package_weights_ = {"pre":-2, "p":0, "alpha":-4, "beta":-3, "rc":-1}    # dicts are unordered
+_package_ends_ = ["pre", "p", "alpha", "beta", "rc", "cvs", "bk", "HEAD" ]            # so we need ordered list
 
 def relparse(myver):
     """Parses the last elements of a version number into a triplet, that can
     later be compared.
     """
 
-    number   = 0
-    p1       = 0
-    p2       = 0
+    number = 0
+    p1 = 0
+    p2 = 0
     mynewver = myver.split('_')
-    if len(mynewver)==2:
+    if len(mynewver) == 2:
         # an _package_weights_
         number = float(mynewver[0])
         match = 0
@@ -132,15 +133,15 @@ def relparse(myver):
         divider = len(myver)-1
         if myver[divider:] not in "1234567890":
             #letter at end
-            p1     = ord(myver[divider:])
+            p1 = ord(myver[divider:])
             number = float(myver[0:divider])
         else:
             number = float(myver)
-    return [number,p1,p2]
+    return [number, p1, p2]
 
 __vercmp_cache__ = {}
 
-def vercmp_string(val1,val2):
+def vercmp_string(val1, val2):
     """This takes two version strings and returns an integer to tell you whether
     the versions are the same, val1>val2 or val2>val1.
     """
@@ -148,13 +149,13 @@ def vercmp_string(val1,val2):
     # quick short-circuit
     if val1 == val2:
         return 0
-    valkey = val1+" "+val2
+    valkey = val1 + " " + val2
 
     # cache lookup
     try:
         return __vercmp_cache__[valkey]
         try:
-            return - __vercmp_cache__[val2+" "+val1]
+            return - __vercmp_cache__[val2 + " " + val1]
         except KeyError:
             pass
     except KeyError:
@@ -175,21 +176,21 @@ def vercmp_string(val1,val2):
     # replace '-' by '.'
     # FIXME: Is it needed? can val1/2 contain '-'?
 
-    val1 = string.split(val1,'-')
+    val1 = val1.split("-")
     if len(val1) == 2:
-        val1[0] = val1[0] +"."+ val1[1]
-    val2 = string.split(val2,'-')
+        val1[0] = val1[0] + "." + val1[1]
+    val2 = val2.split("-")
     if len(val2) == 2:
-        val2[0] = val2[0] +"."+ val2[1]
+        val2[0] = val2[0] + "." + val2[1]
 
-    val1 = string.split(val1[0],'.')
-    val2 = string.split(val2[0],'.')
+    val1 = val1[0].split('.')
+    val2 = val2[0].split('.')
 
     # add back decimal point so that .03 does not become "3" !
-    for x in range(1,len(val1)):
+    for x in range(1, len(val1)):
         if val1[x][0] == '0' :
             val1[x] = '.' + val1[x]
-    for x in range(1,len(val2)):
+    for x in range(1, len(val2)):
         if val2[x][0] == '0' :
             val2[x] = '.' + val2[x]
 
@@ -206,10 +207,10 @@ def vercmp_string(val1,val2):
         val2[-1] += '_' + val2_prepart
     # The above code will extend version numbers out so they
     # have the same number of digits.
-    for x in range(0,len(val1)):
+    for x in range(0, len(val1)):
         cmp1 = relparse(val1[x])
         cmp2 = relparse(val2[x])
-        for y in range(0,3):
+        for y in range(0, 3):
             myret = cmp1[y] - cmp2[y]
             if myret != 0:
                 __vercmp_cache__[valkey] = myret
@@ -278,9 +279,9 @@ def _print_trace(body, line):
 
     # print the environment of the method
     bb.msg.error(bb.msg.domain.Util, "Printing the environment of the function")
-    min_line = max(1,line-4)
-    max_line = min(line+4,len(body)-1)
-    for i in range(min_line,max_line+1):
+    min_line = max(1, line-4)
+    max_line = min(line + 4, len(body)-1)
+    for i in range(min_line, max_line + 1):
         bb.msg.error(bb.msg.domain.Util, "\t%.4d:%s" % (i, body[i-1]) )
 
 
@@ -292,7 +293,7 @@ def better_compile(text, file, realfile, mode = "exec"):
     try:
         return compile(text, file, mode)
     except Exception, e:
-        import bb,sys
+        import bb, sys
 
         # split the text into lines again
         body = text.split('\n')
@@ -311,18 +312,18 @@ def better_exec(code, context, text, realfile):
     print the lines that are responsible for the
     error.
     """
-    import bb,sys
+    import bb, sys
     try:
         exec code in _context, context
     except:
-        (t,value,tb) = sys.exc_info()
+        (t, value, tb) = sys.exc_info()
 
         if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
             raise
 
         # print the Header of the Error Message
         bb.msg.error(bb.msg.domain.Util, "Error in executing python function in: %s" % realfile)
-        bb.msg.error(bb.msg.domain.Util, "Exception:%s Message:%s" % (t,value) )
+        bb.msg.error(bb.msg.domain.Util, "Exception:%s Message:%s" % (t, value))
 
         # let us find the line number now
         while tb.tb_next:
@@ -332,7 +333,7 @@ def better_exec(code, context, text, realfile):
         line = traceback.tb_lineno(tb)
 
         _print_trace( text.split('\n'), line )
-        
+
         raise
 
 def simple_exec(code, context):
@@ -355,22 +356,22 @@ def lockfile(name):
     while True:
         # If we leave the lockfiles lying around there is no problem
         # but we should clean up after ourselves. This gives potential
-        # for races though. To work around this, when we acquire the lock 
-        # we check the file we locked was still the lock file on disk. 
-        # by comparing inode numbers. If they don't match or the lockfile 
+        # for races though. To work around this, when we acquire the lock
+        # we check the file we locked was still the lock file on disk.
+        # by comparing inode numbers. If they don't match or the lockfile
         # no longer exists, we start again.
 
-        # This implementation is unfair since the last person to request the 
+        # This implementation is unfair since the last person to request the
         # lock is the most likely to win it.
 
         try:
-            lf = open(name, "a+")
+            lf = open(name, "a + ")
             fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
             statinfo = os.fstat(lf.fileno())
             if os.path.exists(lf.name):
-               statinfo2 = os.stat(lf.name)
-               if statinfo.st_ino == statinfo2.st_ino:
-                   return lf
+                statinfo2 = os.stat(lf.name)
+                if statinfo.st_ino == statinfo2.st_ino:
+                    return lf
             # File no longer exists or changed, retry
             lf.close
         except Exception, e:
@@ -378,7 +379,7 @@ def lockfile(name):
 
 def unlockfile(lf):
     """
-    Unlock a file locked using lockfile()				
+    Unlock a file locked using lockfile()
     """
     os.unlink(lf.name)
     fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
@@ -394,7 +395,7 @@ def md5_file(filename):
     except ImportError:
         import md5
         m = md5.new()
-    
+
     for line in open(filename):
         m.update(line)
     return m.hexdigest()
@@ -460,7 +461,7 @@ def filter_environment(good_vars):
     for key in os.environ.keys():
         if key in good_vars:
             continue
-        
+
         removed_vars.append(key)
         os.unsetenv(key)
         del os.environ[key]
@@ -505,7 +506,7 @@ def build_environment(d):
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
     # CAUTION:  This is dangerous!
-    for root, dirs, files in os.walk(topdir, topdown=False):
+    for root, dirs, files in os.walk(topdir, topdown = False):
         for name in files:
             os.remove(os.path.join(root, name))
         for name in dirs:
@@ -520,7 +521,7 @@ def prunedir(topdir):
 # but thats possibly insane and suffixes is probably going to be small
 #
 def prune_suffix(var, suffixes, d):
-    # See if var ends with any of the suffixes listed and 
+    # See if var ends with any of the suffixes listed and
     # remove it if found
     for suffix in suffixes:
         if var.endswith(suffix):
@@ -541,42 +542,42 @@ def mkdirhier(dir):
 
 import stat
 
-def movefile(src,dest,newmtime=None,sstat=None):
+def movefile(src, dest, newmtime = None, sstat = None):
     """Moves a file from src to dest, preserving all permissions and
     attributes; mtime will be preserved even when moving across
     filesystems.  Returns true on success and false on failure. Move is
     atomic.
     """
 
-    #print "movefile("+src+","+dest+","+str(newmtime)+","+str(sstat)+")"
+    #print "movefile(" + src + "," + dest + "," + str(newmtime) + "," + str(sstat) + ")"
     try:
         if not sstat:
-            sstat=os.lstat(src)
+            sstat = os.lstat(src)
     except Exception, e:
         print "movefile: Stating source file failed...", e
         return None
 
-    destexists=1
+    destexists = 1
     try:
-        dstat=os.lstat(dest)
+        dstat = os.lstat(dest)
     except:
-        dstat=os.lstat(os.path.dirname(dest))
-        destexists=0
+        dstat = os.lstat(os.path.dirname(dest))
+        destexists = 0
 
     if destexists:
         if stat.S_ISLNK(dstat[stat.ST_MODE]):
             try:
                 os.unlink(dest)
-                destexists=0
+                destexists = 0
             except Exception, e:
                 pass
 
     if stat.S_ISLNK(sstat[stat.ST_MODE]):
         try:
-            target=os.readlink(src)
+            target = os.readlink(src)
             if destexists and not stat.S_ISDIR(dstat[stat.ST_MODE]):
                 os.unlink(dest)
-            os.symlink(target,dest)
+            os.symlink(target, dest)
             #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
             os.unlink(src)
             return os.lstat(dest)
@@ -584,38 +585,38 @@ def movefile(src,dest,newmtime=None,sstat=None):
             print "movefile: failed to properly create symlink:", dest, "->", target, e
             return None
 
-    renamefailed=1
-    if sstat[stat.ST_DEV]==dstat[stat.ST_DEV]:
+    renamefailed = 1
+    if sstat[stat.ST_DEV] == dstat[stat.ST_DEV]:
         try:
-            ret=os.rename(src,dest)
-            renamefailed=0
+            ret = os.rename(src, dest)
+            renamefailed = 0
         except Exception, e:
             import errno
-            if e[0]!=errno.EXDEV:
+            if e[0] != errno.EXDEV:
                 # Some random error.
                 print "movefile: Failed to move", src, "to", dest, e
                 return None
             # Invalid cross-device-link 'bind' mounted or actually Cross-Device
 
     if renamefailed:
-        didcopy=0
+        didcopy = 0
         if stat.S_ISREG(sstat[stat.ST_MODE]):
             try: # For safety copy then move it over.
-                shutil.copyfile(src,dest+"#new")
-                os.rename(dest+"#new",dest)
-                didcopy=1
+                shutil.copyfile(src, dest + "#new")
+                os.rename(dest + "#new", dest)
+                didcopy = 1
             except Exception, e:
                 print 'movefile: copy', src, '->', dest, 'failed.', e
                 return None
         else:
             #we don't yet handle special, so we need to fall back to /bin/mv
-            a=getstatusoutput("/bin/mv -f "+"'"+src+"' '"+dest+"'")
-            if a[0]!=0:
+            a = getstatusoutput("/bin/mv -f " + "'" + src + "' '" + dest + "'")
+            if a[0] != 0:
                 print "movefile: Failed to move special file:" + src + "' to '" + dest + "'", a
                 return None # failure
         try:
             if didcopy:
-                os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+                os.lchown(dest, sstat[stat.ST_UID], sstat[stat.ST_GID])
                 os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
                 os.unlink(src)
         except Exception, e:
@@ -623,47 +624,47 @@ def movefile(src,dest,newmtime=None,sstat=None):
             return None
 
     if newmtime:
-        os.utime(dest,(newmtime,newmtime))
+        os.utime(dest, (newmtime, newmtime))
     else:
         os.utime(dest, (sstat[stat.ST_ATIME], sstat[stat.ST_MTIME]))
-        newmtime=sstat[stat.ST_MTIME]
+        newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
-def copyfile(src,dest,newmtime=None,sstat=None):
+def copyfile(src, dest, newmtime = None, sstat = None):
     """
     Copies a file from src to dest, preserving all permissions and
     attributes; mtime will be preserved even when moving across
     filesystems.  Returns true on success and false on failure.
     """
-    #print "copyfile("+src+","+dest+","+str(newmtime)+","+str(sstat)+")"
+    #print "copyfile(" + src + "," + dest + "," + str(newmtime) + "," + str(sstat) + ")"
     try:
         if not sstat:
-            sstat=os.lstat(src)
+            sstat = os.lstat(src)
     except Exception, e:
         print "copyfile: Stating source file failed...", e
         return False
 
-    destexists=1
+    destexists = 1
     try:
-        dstat=os.lstat(dest)
+        dstat = os.lstat(dest)
     except:
-        dstat=os.lstat(os.path.dirname(dest))
-        destexists=0
+        dstat = os.lstat(os.path.dirname(dest))
+        destexists = 0
 
     if destexists:
         if stat.S_ISLNK(dstat[stat.ST_MODE]):
             try:
                 os.unlink(dest)
-                destexists=0
+                destexists = 0
             except Exception, e:
                 pass
 
     if stat.S_ISLNK(sstat[stat.ST_MODE]):
         try:
-            target=os.readlink(src)
+            target = os.readlink(src)
             if destexists and not stat.S_ISDIR(dstat[stat.ST_MODE]):
                 os.unlink(dest)
-            os.symlink(target,dest)
+            os.symlink(target, dest)
             #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
             return os.lstat(dest)
         except Exception, e:
@@ -671,30 +672,30 @@ def copyfile(src,dest,newmtime=None,sstat=None):
             return False
 
     if stat.S_ISREG(sstat[stat.ST_MODE]):
-            try: # For safety copy then move it over.
-                shutil.copyfile(src,dest+"#new")
-                os.rename(dest+"#new",dest)
-            except Exception, e:
-                print 'copyfile: copy', src, '->', dest, 'failed.', e
-                return False
+        try: # For safety copy then move it over.
+            shutil.copyfile(src, dest + "#new")
+            os.rename(dest + "#new", dest)
+        except Exception, e:
+            print 'copyfile: copy', src, '->', dest, 'failed.', e
+            return False
     else:
-            #we don't yet handle special, so we need to fall back to /bin/mv
-            a=getstatusoutput("/bin/cp -f "+"'"+src+"' '"+dest+"'")
-            if a[0]!=0:
-                print "copyfile: Failed to copy special file:" + src + "' to '" + dest + "'", a
-                return False # failure
+        #we don't yet handle special, so we need to fall back to /bin/mv
+        a = getstatusoutput("/bin/cp -f " + "'" + src + "' '" + dest + "'")
+        if a[0] != 0:
+            print "copyfile: Failed to copy special file:" + src + "' to '" + dest + "'", a
+            return False # failure
     try:
-        os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+        os.lchown(dest, sstat[stat.ST_UID], sstat[stat.ST_GID])
         os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
     except Exception, e:
         print "copyfile: Failed to chown/chmod/unlink", dest, e
         return False
 
     if newmtime:
-        os.utime(dest,(newmtime,newmtime))
+        os.utime(dest, (newmtime, newmtime))
     else:
         os.utime(dest, (sstat[stat.ST_ATIME], sstat[stat.ST_MTIME]))
-        newmtime=sstat[stat.ST_MTIME]
+        newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
 def which(path, item, direction = 0):

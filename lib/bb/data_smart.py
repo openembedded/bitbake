@@ -31,11 +31,11 @@ BitBake build tools.
 import copy, os, re, sys, time, types
 import bb
 from bb   import utils, methodpool
-from COW  import COWDictBase
+from bb.COW  import COWDictBase
 from new  import classobj
 
 
-__setvar_keyword__ = ["_append","_prepend"]
+__setvar_keyword__ = ["_append", "_prepend"]
 __setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?')
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
@@ -51,7 +51,7 @@ class DataSmart:
 
         self.expand_cache = {}
 
-    def expand(self,s, varname):
+    def expand(self, s, varname):
         def var_sub(match):
             key = match.group()[2:-1]
             if varname and key:
@@ -165,7 +165,7 @@ class DataSmart:
         if not var in self.dict:
             self.dict[var] = {}
 
-    def _findVar(self,var):
+    def _findVar(self, var):
         _dest = self.dict
 
         while (_dest and var not in _dest):
@@ -189,7 +189,7 @@ class DataSmart:
         else:
             self.initVar(var)
 
-    def setVar(self,var,value):
+    def setVar(self, var, value):
         self.expand_cache = {}
         match  = __setvar_regexp__.match(var)
         if match and match.group("keyword") in __setvar_keyword__:
@@ -223,16 +223,16 @@ class DataSmart:
         # setting var
         self.dict[var]["content"] = value
 
-    def getVar(self,var,exp):
-        value = self.getVarFlag(var,"content")
+    def getVar(self, var, exp):
+        value = self.getVarFlag(var, "content")
 
         if exp and value:
-            return self.expand(value,var)
+            return self.expand(value, var)
         return value
 
     def renameVar(self, key, newkey):
         """
-        Rename the variable key to newkey 
+        Rename the variable key to newkey
         """
         val = self.getVar(key, 0)
         if val is not None:
@@ -246,30 +246,30 @@ class DataSmart:
             dest = self.getVarFlag(newkey, i) or []
             dest.extend(src)
             self.setVarFlag(newkey, i, dest)
-            
+
             if self._special_values.has_key(i) and key in self._special_values[i]:
                 self._special_values[i].remove(key)
                 self._special_values[i].add(newkey)
 
         self.delVar(key)
 
-    def delVar(self,var):
+    def delVar(self, var):
         self.expand_cache = {}
         self.dict[var] = {}
 
-    def setVarFlag(self,var,flag,flagvalue):
+    def setVarFlag(self, var, flag, flagvalue):
         if not var in self.dict:
             self._makeShadowCopy(var)
         self.dict[var][flag] = flagvalue
 
-    def getVarFlag(self,var,flag):
+    def getVarFlag(self, var, flag):
         local_var = self._findVar(var)
         if local_var:
             if flag in local_var:
                 return copy.copy(local_var[flag])
         return None
 
-    def delVarFlag(self,var,flag):
+    def delVarFlag(self, var, flag):
         local_var = self._findVar(var)
         if not local_var:
             return
@@ -279,7 +279,7 @@ class DataSmart:
         if var in self.dict and flag in self.dict[var]:
             del self.dict[var][flag]
 
-    def setVarFlags(self,var,flags):
+    def setVarFlags(self, var, flags):
         if not var in self.dict:
             self._makeShadowCopy(var)
 
@@ -288,7 +288,7 @@ class DataSmart:
                 continue
             self.dict[var][i] = flags[i]
 
-    def getVarFlags(self,var):
+    def getVarFlags(self, var):
         local_var = self._findVar(var)
         flags = {}
 
@@ -303,7 +303,7 @@ class DataSmart:
         return flags
 
 
-    def delVarFlags(self,var):
+    def delVarFlags(self, var):
         if not var in self.dict:
             self._makeShadowCopy(var)
 
@@ -333,21 +333,19 @@ class DataSmart:
     def keys(self):
         def _keys(d, mykey):
             if "_data" in d:
-                _keys(d["_data"],mykey)
+                _keys(d["_data"], mykey)
 
             for key in d.keys():
                 if key != "_data":
                     mykey[key] = None
         keytab = {}
-        _keys(self.dict,keytab)
+        _keys(self.dict, keytab)
         return keytab.keys()
 
-    def __getitem__(self,item):
+    def __getitem__(self, item):
         #print "Warning deprecated"
         return self.getVar(item, False)
 
-    def __setitem__(self,var,data):
+    def __setitem__(self, var, data):
         #print "Warning deprecated"
-        self.setVar(var,data)
-
-
+        self.setVar(var, data)

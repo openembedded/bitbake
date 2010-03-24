@@ -85,7 +85,7 @@ def decodeurl(url):
     p = {}
     if parm:
         for s in parm.split(';'):
-            s1,s2 = s.split('=')
+            s1, s2 = s.split('=')
             p[s1] = s2
 
     return (type, host, path, user, pswd, p)
@@ -121,7 +121,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
     uri_decoded = list(decodeurl(uri))
     uri_find_decoded = list(decodeurl(uri_find))
     uri_replace_decoded = list(decodeurl(uri_replace))
-    result_decoded = ['','','','','',{}]
+    result_decoded = ['', '', '', '', '', {}]
     for i in uri_find_decoded:
         loc = uri_find_decoded.index(i)
         result_decoded[loc] = uri_decoded[loc]
@@ -214,7 +214,7 @@ def init(urls, d, setup = True):
     if setup:
         for url in urldata:
             if not urldata[url].setup:
-                urldata[url].setup_localpath(d) 
+                urldata[url].setup_localpath(d)
 
     urldata_cache[fn] = urldata
     return urldata
@@ -243,7 +243,7 @@ def go(d, urls = None):
                 continue
             lf = bb.utils.lockfile(ud.lockfile)
             if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
-                # If someone else fetched this before we got the lock, 
+                # If someone else fetched this before we got the lock,
                 # notice and don't try again
                 try:
                     os.utime(ud.md5, None)
@@ -309,7 +309,7 @@ def localpaths(d):
     urldata = init([], d, True)
 
     for u in urldata:
-        ud = urldata[u]      
+        ud = urldata[u]
         local.append(ud.localpath)
 
     return local
@@ -321,15 +321,15 @@ def get_srcrev(d):
     Return the version string for the current package
     (usually to be used as PV)
     Most packages usually only have one SCM so we just pass on the call.
-    In the multi SCM case, we build a value based on SRCREV_FORMAT which must 
+    In the multi SCM case, we build a value based on SRCREV_FORMAT which must
     have been set.
     """
 
     #
-    # Ugly code alert. localpath in the fetchers will try to evaluate SRCREV which 
+    # Ugly code alert. localpath in the fetchers will try to evaluate SRCREV which
     # could translate into a call to here. If it does, we need to catch this
     # and provide some way so it knows get_srcrev is active instead of being
-    # some number etc. hence the srcrev_internal_call tracking and the magic  
+    # some number etc. hence the srcrev_internal_call tracking and the magic
     # "SRCREVINACTION" return value.
     #
     # Neater solutions welcome!
@@ -339,7 +339,7 @@ def get_srcrev(d):
 
     scms = []
 
-    # Only call setup_localpath on URIs which suppports_srcrev() 
+    # Only call setup_localpath on URIs which suppports_srcrev()
     urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d, False)
     for u in urldata:
         ud = urldata[u]
@@ -352,7 +352,7 @@ def get_srcrev(d):
         bb.msg.error(bb.msg.domain.Fetcher, "SRCREV was used yet no valid SCM was found in SRC_URI")
         raise ParameterError
 
-    bb.data.setVar('__BB_DONT_CACHE','1', d)
+    bb.data.setVar('__BB_DONT_CACHE', '1', d)
 
     if len(scms) == 1:
         return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d)
@@ -375,7 +375,7 @@ def get_srcrev(d):
 
 def localpath(url, d, cache = True):
     """
-    Called from the parser with cache=False since the cache isn't ready 
+    Called from the parser with cache=False since the cache isn't ready
     at this point. Also called from classed in OE e.g. patch.bbclass
     """
     ud = init([url], d)
@@ -538,7 +538,7 @@ class Fetch(object):
     def localpath(self, url, urldata, d):
         """
         Return the local filename of a given url assuming a successful fetch.
-        Can also setup variables in urldata for use in go (saving code duplication 
+        Can also setup variables in urldata for use in go (saving code duplication
         and duplicate code execution)
         """
         return url
@@ -599,8 +599,8 @@ class Fetch(object):
         """
         Return:
             a) a source revision if specified
-	    b) True if auto srcrev is in action
-	    c) False otherwise
+            b) True if auto srcrev is in action
+            c) False otherwise
         """
 
         if 'rev' in ud.parm:
@@ -632,7 +632,7 @@ class Fetch(object):
             b) None otherwise
         """
 
-        localcount= None
+        localcount = None
         if 'name' in ud.parm:
             pn = data.getVar("PN", d, 1)
             localcount = data.getVar("LOCALCOUNT_" + ud.parm['name'], d, 1)
@@ -685,7 +685,7 @@ class Fetch(object):
 
     def sortable_revision(self, url, ud, d):
         """
-        
+
         """
         if hasattr(self, "_sortable_revision"):
             return self._sortable_revision(url, ud, d)

@@ -168,7 +168,7 @@ class BitBakeShellCommands:
                 tasks.append([name, "do_%s" % cmd])
 
             td.add_unresolved(localdata, cooker.status)
-            
+
             rq = runqueue.RunQueue(cooker, localdata, cooker.status, td, tasks)
             rq.prepare_runqueue()
             rq.execute_runqueue()
@@ -295,7 +295,7 @@ class BitBakeShellCommands:
         """Show a comprehensive list of commands and their purpose"""
         print "="*30, "Available Commands", "="*30
         for cmd in sorted(cmds):
-            function,numparams,usage,helptext = cmds[cmd]
+            function, numparams, usage, helptext = cmds[cmd]
             print "| %s | %s" % (usage.ljust(30), helptext)
         print "="*78
 
@@ -343,7 +343,7 @@ class BitBakeShellCommands:
                 return False
             print "SHELL: Creating '%s/%s'" % ( fulldirname, filename )
             newpackage = open( "%s/%s" % ( fulldirname, filename ), "w" )
-            print >>newpackage,"""DESCRIPTION = ""
+            print >>newpackage, """DESCRIPTION = ""
 SECTION = ""
 AUTHOR = ""
 HOMEPAGE = ""
@@ -583,7 +583,7 @@ def sendToPastebin( desc, content ):
     mydata["nick"] = "%s@%s" % ( os.environ.get( "USER", "unknown" ), socket.gethostname() or "unknown" )
     mydata["text"] = content
     params = urllib.urlencode( mydata )
-    headers = {"Content-type": "application/x-www-form-urlencoded","Accept": "text/plain"}
+    headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
 
     host = "rafb.net"
     conn = httplib.HTTPConnection( "%s:80" % host )

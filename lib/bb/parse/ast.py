@@ -254,7 +254,7 @@ class InheritNode(AstNode):
 
     def eval(self, data):
         bb.parse.BBHandler.inherit(self.n, data)
- 
+
 def handleInclude(statements, m, fn, lineno, force):
     statements.append(IncludeNode(m.group(1), fn, lineno, force))
 

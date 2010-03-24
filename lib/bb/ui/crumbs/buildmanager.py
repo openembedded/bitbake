@@ -28,7 +28,7 @@ import time
 class BuildConfiguration:
     """ Represents a potential *or* historic *or* concrete build. It
     encompasses all the things that we need to tell bitbake to do to make it
-    build what we want it to build. 
+    build what we want it to build.
 
     It also stored the metadata URL and the set of possible machines (and the
     distros / images / uris for these. Apart from the metdata URL these are
@@ -73,8 +73,8 @@ class BuildConfiguration:
         return self.urls
 
     # It might be a lot lot better if we stored these in like, bitbake conf
-    # file format. 
-    @staticmethod 
+    # file format.
+    @staticmethod
     def load_from_file (filename):
         f = open (filename, "r")
 
@@ -140,13 +140,13 @@ class BuildResult(gobject.GObject):
     ".conf" in the directory for the build.
 
     This is GObject so that it can be included in the TreeStore."""
-    
+
     (STATE_COMPLETE, STATE_FAILED, STATE_ONGOING) = \
         (0, 1, 2)
 
     def __init__ (self, parent, identifier):
         gobject.GObject.__init__ (self)
-        self.date = None 
+        self.date = None
 
         self.files = []
         self.status = None
@@ -181,7 +181,7 @@ class BuildResult(gobject.GObject):
                 self.add_file (file)
 
     def add_file (self, file):
-        # Just add the file for now. Don't care about the type. 
+        # Just add the file for now. Don't care about the type.
         self.files += [(file, None)]
 
 class BuildManagerModel (gtk.TreeStore):
@@ -194,7 +194,7 @@ class BuildManagerModel (gtk.TreeStore):
 
     def __init__ (self):
         gtk.TreeStore.__init__ (self,
-            gobject.TYPE_STRING, 
+            gobject.TYPE_STRING,
             gobject.TYPE_STRING,
             gobject.TYPE_STRING,
             gobject.TYPE_STRING,
@@ -207,7 +207,7 @@ class BuildManager (gobject.GObject):
     "results" directory but is also used for starting a new build."""
 
     __gsignals__ = {
-        'population-finished' : (gobject.SIGNAL_RUN_LAST, 
+        'population-finished' : (gobject.SIGNAL_RUN_LAST,
                                  gobject.TYPE_NONE,
                                  ()),
         'populate-error' : (gobject.SIGNAL_RUN_LAST,
@@ -220,13 +220,13 @@ class BuildManager (gobject.GObject):
         date = long (time.mktime (result.date.timetuple()))
 
         # Add a top level entry for the build
-        
-        self.model.set (iter, 
+
+        self.model.set (iter,
             BuildManagerModel.COL_IDENT, result.identifier,
             BuildManagerModel.COL_DESC, result.conf.image,
-            BuildManagerModel.COL_MACHINE, result.conf.machine, 
-            BuildManagerModel.COL_DISTRO, result.conf.distro, 
-            BuildManagerModel.COL_BUILD_RESULT, result, 
+            BuildManagerModel.COL_MACHINE, result.conf.machine,
+            BuildManagerModel.COL_DISTRO, result.conf.distro,
+            BuildManagerModel.COL_BUILD_RESULT, result,
             BuildManagerModel.COL_DATE, date,
             BuildManagerModel.COL_STATE, result.state)
 
@@ -257,7 +257,7 @@ class BuildManager (gobject.GObject):
 
         while (iter):
             (ident, state) = self.model.get(iter,
-                BuildManagerModel.COL_IDENT, 
+                BuildManagerModel.COL_IDENT,
                 BuildManagerModel.COL_STATE)
 
             if state == BuildResult.STATE_ONGOING:
@@ -422,29 +422,29 @@ class BuildManagerTreeView (gtk.TreeView):
 
         # Misc descriptiony thing
         renderer = gtk.CellRendererText ()
-        col = gtk.TreeViewColumn (None, renderer, 
+        col = gtk.TreeViewColumn (None, renderer,
             text=BuildManagerModel.COL_DESC)
         self.append_column (col)
 
         # Machine
         renderer = gtk.CellRendererText ()
-        col = gtk.TreeViewColumn ("Machine", renderer, 
+        col = gtk.TreeViewColumn ("Machine", renderer,
             text=BuildManagerModel.COL_MACHINE)
         self.append_column (col)
 
         # distro
         renderer = gtk.CellRendererText ()
-        col = gtk.TreeViewColumn ("Distribution", renderer, 
+        col = gtk.TreeViewColumn ("Distribution", renderer,
             text=BuildManagerModel.COL_DISTRO)
         self.append_column (col)
 
         # date (using a custom function for formatting the cell contents it
         # takes epoch -> human readable string)
         renderer = gtk.CellRendererText ()
-        col = gtk.TreeViewColumn ("Date", renderer, 
+        col = gtk.TreeViewColumn ("Date", renderer,
             text=BuildManagerModel.COL_DATE)
         self.append_column (col)
-        col.set_cell_data_func (renderer, 
+        col.set_cell_data_func (renderer,
             self.date_format_custom_cell_data_func)
 
         # For status.
@@ -454,4 +454,3 @@ class BuildManagerTreeView (gtk.TreeView):
         self.append_column (col)
         col.set_cell_data_func (renderer,
             self.state_format_custom_cell_data_fun)
-

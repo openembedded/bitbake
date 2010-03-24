@@ -11,7 +11,7 @@ operations. At night the cookie monster came by and
 suggested 'give me cookies on setting the variables and
 things will work out'. Taking this suggestion into account
 applying the skills from the not yet passed 'Entwurf und
-Analyse von Algorithmen' lecture and the cookie 
+Analyse von Algorithmen' lecture and the cookie
 monster seems to be right. We will track setVar more carefully
 to have faster update_data and expandKeys operations.
 
@@ -42,7 +42,7 @@ if sys.argv[0][-5:] == "pydoc":
     path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:
     path = os.path.dirname(os.path.dirname(sys.argv[0]))
-sys.path.insert(0,path)
+sys.path.insert(0, path)
 
 from bb import data_smart
 import bb
@@ -62,14 +62,14 @@ def init_db(parent = None):
         return _dict_type()
 
 def createCopy(source):
-     """Link the source set to the destination
-     If one does not find the value in the destination set,
-     search will go on to the source set to get the value.
-     Value from source are copy-on-write. i.e. any try to
-     modify one of them will end up putting the modified value
-     in the destination set.
-     """
-     return source.createCopy()
+    """Link the source set to the destination
+    If one does not find the value in the destination set,
+    search will go on to the source set to get the value.
+    Value from source are copy-on-write. i.e. any try to
+    modify one of them will end up putting the modified value
+    in the destination set.
+    """
+    return source.createCopy()
 
 def initVar(var, d):
     """Non-destructive var init for data structure"""
@@ -78,12 +78,12 @@ def initVar(var, d):
 
 def setVar(var, value, d):
     """Set a variable to a given value"""
-    d.setVar(var,value)
+    d.setVar(var, value)
 
 
 def getVar(var, d, exp = 0):
     """Gets the value of a variable"""
-    return d.getVar(var,exp)
+    return d.getVar(var, exp)
 
 
 def renameVar(key, newkey, d):
@@ -96,15 +96,15 @@ def delVar(var, d):
 
 def setVarFlag(var, flag, flagvalue, d):
     """Set a flag for a given variable to a given value"""
-    d.setVarFlag(var,flag,flagvalue)
+    d.setVarFlag(var, flag, flagvalue)
 
 def getVarFlag(var, flag, d):
     """Gets given flag from given var"""
-    return d.getVarFlag(var,flag)
+    return d.getVarFlag(var, flag)
 
 def delVarFlag(var, flag, d):
     """Removes a given flag from the variable's flags"""
-    d.delVarFlag(var,flag)
+    d.delVarFlag(var, flag)
 
 def setVarFlags(var, flags, d):
     """Set the flags for a given variable
@@ -114,7 +114,7 @@ def setVarFlags(var, flags, d):
         flags. Think of this method as
         addVarFlags
     """
-    d.setVarFlags(var,flags)
+    d.setVarFlags(var, flags)
 
 def getVarFlags(var, d):
     """Gets a variable's flags"""
@@ -178,7 +178,7 @@ def expandKeys(alterdata, readdata = None):
             continue
         todolist[key] = ekey
 
-    # These two for loops are split for performance to maximise the 
+    # These two for loops are split for performance to maximise the
     # usefulness of the expand cache
 
     for key in todolist:
@@ -266,7 +266,6 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     alter = re.sub('"', '\\"', val.strip())
     o.write('%s="%s"\n' % (varExpanded, alter))
     return 1
-
 
 def emit_env(o=sys.__stdout__, d = init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""

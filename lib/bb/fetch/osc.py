@@ -16,7 +16,7 @@ from    bb.fetch import MissingParameterError
 from    bb.fetch import runfetchcmd
 
 class Osc(Fetch):
-    """Class to fetch a module or modules from Opensuse build server 
+    """Class to fetch a module or modules from Opensuse build server
        repositories."""
 
     def supports(self, url, ud, d):
@@ -64,7 +64,7 @@ class Osc(Fetch):
         proto = "ocs"
         if "proto" in ud.parm:
             proto = ud.parm["proto"]
-        
+
         options = []
 
         config = "-c %s" % self.generate_config(ud, d)
@@ -108,7 +108,7 @@ class Osc(Fetch):
             os.chdir(ud.pkgdir)
             bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % oscfetchcmd)
             runfetchcmd(oscfetchcmd, d)
-        
+
         os.chdir(os.path.join(ud.pkgdir + ud.path))
         # tar them up to a defined filename
         try:
@@ -131,7 +131,7 @@ class Osc(Fetch):
 
         config_path = "%s/oscrc" % data.expand('${OSCDIR}', d)
         if (os.path.exists(config_path)):
-            os.remove(config_path) 
+            os.remove(config_path)
 
         f = open(config_path, 'w')
         f.write("[general]\n")
@@ -146,5 +146,5 @@ class Osc(Fetch):
         f.write("user = %s\n" % ud.parm["user"])
         f.write("pass = %s\n" % ud.parm["pswd"])
         f.close()
-        
+
         return config_path

@@ -46,15 +46,15 @@ class Bzr(Fetch):
 
         revision = Fetch.srcrev_internal_helper(ud, d)
         if revision is True:
-            ud.revision = self.latest_revision(url, ud, d)	
+            ud.revision = self.latest_revision(url, ud, d)
         elif revision:
             ud.revision = revision
 
         if not ud.revision:
-            ud.revision = self.latest_revision(url, ud, d)	
+            ud.revision = self.latest_revision(url, ud, d)
 
         ud.localfile = data.expand('bzr_%s_%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.revision), d)
-        
+
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def _buildbzrcommand(self, ud, d, command):
@@ -145,4 +145,3 @@ class Bzr(Fetch):
 
     def _build_revision(self, url, ud, d):
         return ud.revision
-

@@ -95,7 +95,7 @@ class Perforce(Fetch):
         return cset.split(' ')[1]
     getcset = staticmethod(getcset)
 
-    def localpath(self, url, ud, d):        
+    def localpath(self, url, ud, d):
 
         (host,path,user,pswd,parm) = Perforce.doparse(url,d)
 
@@ -180,7 +180,7 @@ class Perforce(Fetch):
 
         count = 0
 
-        for file in p4file: 
+        for file in p4file:
             list = file.split()
 
             if list[2] == "delete":
@@ -191,7 +191,7 @@ class Perforce(Fetch):
 
             os.system("%s%s print -o %s/%s %s" % (p4cmd, p4opt, module,dest[:where],list[0]))
             count = count + 1
-            
+
         if count == 0:
             bb.msg.error(bb.msg.domain.Fetcher, "Fetch:  No files gathered from the P4 fetch")
             raise FetchError(module)
@@ -205,5 +205,3 @@ class Perforce(Fetch):
             raise FetchError(module)
         # cleanup
         os.system('rm -rf %s' % tmpfile)
-
-

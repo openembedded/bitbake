@@ -33,7 +33,7 @@ def _NamedTuple(name, fields):
     Tuple = collections.namedtuple(name, " ".join(fields))
     return Tuple(*range(len(fields)))
 
-domain = _NamedTuple("Domain",(
+domain = _NamedTuple("Domain", (
     "Default",
     "Build",
     "Cache",

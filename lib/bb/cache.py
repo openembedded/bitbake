@@ -73,7 +73,7 @@ class Cache:
         # cache there isn't even any point in loading it...
         newest_mtime = 0
         deps = bb.data.getVar("__depends", data, True)
-        for f,old_mtime in deps:
+        for f, old_mtime in deps:
             if old_mtime > newest_mtime:
                 newest_mtime = old_mtime
 
@@ -102,10 +102,10 @@ class Cache:
         """
         Gets the value of a variable
         (similar to getVar in the data class)
-        
+
         There are two scenarios:
           1. We have cached data - serve from depends_cache[fn]
-          2. We're learning what data to cache - serve from data 
+          2. We're learning what data to cache - serve from data
              backend but add a copy of the data to the cache.
         """
         if fn in self.clean:
@@ -134,7 +134,7 @@ class Cache:
         self.data = data
 
         # Make sure __depends makes the depends_cache
-        # If we're a virtual class we need to make sure all our depends are appended 
+        # If we're a virtual class we need to make sure all our depends are appended
         # to the depends of fn.
         depends = self.getVar("__depends", virtualfn, True) or []
         self.depends_cache.setdefault(fn, {})
@@ -259,7 +259,7 @@ class Cache:
             self.remove(fn)
             return False
 
-        mtime = bb.parse.cached_mtime_noerror(fn) 
+        mtime = bb.parse.cached_mtime_noerror(fn)
 
         # Check file still exists
         if mtime == 0:
@@ -276,7 +276,7 @@ class Cache:
         # Check dependencies are still valid
         depends = self.getVar("__depends", fn, True)
         if depends:
-            for f,old_mtime in depends:
+            for f, old_mtime in depends:
                 fmtime = bb.parse.cached_mtime_noerror(f)
                 # Check if file still exists
                 if old_mtime != 0 and fmtime == 0:
@@ -346,7 +346,7 @@ class Cache:
 
     def handle_data(self, file_name, cacheData):
         """
-        Save data we need into the cache 
+        Save data we need into the cache
         """
 
         pn       = self.getVar('PN', file_name, True)
@@ -372,7 +372,7 @@ class Cache:
 
         # build FileName to PackageName lookup table
         cacheData.pkg_fn[file_name] = pn
-        cacheData.pkg_pepvpr[file_name] = (pe,pv,pr)
+        cacheData.pkg_pepvpr[file_name] = (pe, pv, pr)
         cacheData.pkg_dp[file_name] = dp
 
         provides = [pn]
@@ -401,13 +401,13 @@ class Cache:
             if not dep in cacheData.all_depends:
                 cacheData.all_depends.append(dep)
 
-        # Build reverse hash for PACKAGES, so runtime dependencies 
+        # Build reverse hash for PACKAGES, so runtime dependencies
         # can be be resolved (RDEPENDS, RRECOMMENDS etc.)
         for package in packages:
             if not package in cacheData.packages:
                 cacheData.packages[package] = []
             cacheData.packages[package].append(file_name)
-            rprovides += (self.getVar("RPROVIDES_%s" % package, file_name, 1) or "").split() 
+            rprovides += (self.getVar("RPROVIDES_%s" % package, file_name, 1) or "").split()
 
         for package in packages_dynamic:
             if not package in cacheData.packages_dynamic:
@@ -472,12 +472,12 @@ class Cache:
 
 def init(cooker):
     """
-    The Objective: Cache the minimum amount of data possible yet get to the 
+    The Objective: Cache the minimum amount of data possible yet get to the
     stage of building packages (i.e. tryBuild) without reparsing any .bb files.
 
-    To do this, we intercept getVar calls and only cache the variables we see 
-    being accessed. We rely on the cache getVar calls being made for all 
-    variables bitbake might need to use to reach this stage. For each cached 
+    To do this, we intercept getVar calls and only cache the variables we see
+    being accessed. We rely on the cache getVar calls being made for all
+    variables bitbake might need to use to reach this stage. For each cached
     file we need to track:
 
     * Its mtime

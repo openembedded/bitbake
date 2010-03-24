@@ -84,7 +84,7 @@ class TaskData:
 
     def getrun_id(self, name):
         """
-        Return an ID number for the run target name. 
+        Return an ID number for the run target name.
         If it doesn't exist, create one.
         """
         if not name in self.run_names_index:
@@ -95,7 +95,7 @@ class TaskData:
 
     def getfn_id(self, name):
         """
-        Return an ID number for the filename. 
+        Return an ID number for the filename.
         If it doesn't exist, create one.
         """
         if not name in self.fn_index:
@@ -271,7 +271,7 @@ class TaskData:
 
     def get_unresolved_build_targets(self, dataCache):
         """
-        Return a list of build targets who's providers 
+        Return a list of build targets who's providers
         are unknown.
         """
         unresolved = []
@@ -286,7 +286,7 @@ class TaskData:
 
     def get_unresolved_run_targets(self, dataCache):
         """
-        Return a list of runtime targets who's providers 
+        Return a list of runtime targets who's providers
         are unknown.
         """
         unresolved = []
@@ -304,7 +304,7 @@ class TaskData:
         Return a list of providers of item
         """
         targetid = self.getbuild_id(item)
-   
+
         return self.build_targets[targetid]
 
     def get_dependees(self, itemid):
@@ -367,7 +367,7 @@ class TaskData:
     def add_provider_internal(self, cfgData, dataCache, item):
         """
         Add the providers of item to the task data
-        Mark entries were specifically added externally as against dependencies 
+        Mark entries were specifically added externally as against dependencies
         added internally during dependency resolution
         """
 
@@ -450,7 +450,7 @@ class TaskData:
                     providers_list.append(dataCache.pkg_fn[fn])
                 bb.msg.note(2, bb.msg.domain.Provider, "multiple providers are available for runtime %s (%s);" % (item, ", ".join(providers_list)))
                 bb.msg.note(2, bb.msg.domain.Provider, "consider defining a PREFERRED_PROVIDER entry to match runtime %s" % item)
-                bb.event.fire(bb.event.MultipleProviders(item,providers_list, runtime=True), cfgData)
+                bb.event.fire(bb.event.MultipleProviders(item, providers_list, runtime=True), cfgData)
             self.consider_msgs_cache.append(item)
 
         if numberPreferred > 1:
@@ -460,7 +460,7 @@ class TaskData:
                     providers_list.append(dataCache.pkg_fn[fn])
                 bb.msg.note(2, bb.msg.domain.Provider, "multiple providers are available for runtime %s (top %s entries preferred) (%s);" % (item, numberPreferred, ", ".join(providers_list)))
                 bb.msg.note(2, bb.msg.domain.Provider, "consider defining only one PREFERRED_PROVIDER entry to match runtime %s" % item)
-                bb.event.fire(bb.event.MultipleProviders(item,providers_list, runtime=True), cfgData)
+                bb.event.fire(bb.event.MultipleProviders(item, providers_list, runtime=True), cfgData)
             self.consider_msgs_cache.append(item)
 
         # run through the list until we find one that we can build
@@ -594,9 +594,9 @@ class TaskData:
         bb.msg.debug(3, bb.msg.domain.TaskData, "tasks:")
         for task in range(len(self.tasks_name)):
             bb.msg.debug(3, bb.msg.domain.TaskData, " (%s)%s - %s: %s" % (
-                task, 
-                self.fn_index[self.tasks_fnid[task]], 
-                self.tasks_name[task], 
+                task,
+                self.fn_index[self.tasks_fnid[task]],
+                self.tasks_name[task],
                 self.tasks_tdepends[task]))
 
         bb.msg.debug(3, bb.msg.domain.TaskData, "dependency ids (per fn):")
@@ -606,5 +606,3 @@ class TaskData:
         bb.msg.debug(3, bb.msg.domain.TaskData, "runtime dependency ids (per fn):")
         for fnid in self.rdepids:
             bb.msg.debug(3, bb.msg.domain.TaskData, " %s %s: %s" % (fnid, self.fn_index[fnid], self.rdepids[fnid]))
-
-
