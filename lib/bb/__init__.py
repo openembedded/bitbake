@@ -32,20 +32,7 @@ __all__ = [
 
     "mkdirhier",
     "movefile",
-
-    "tokenize",
-    "evaluate",
-    "flatten",
-    "relparse",
-    "ververify",
-    "isjustname",
-    "isspecific",
-    "pkgsplit",
-    "catpkgsplit",
     "vercmp",
-    "pkgcmp",
-    "dep_parenreduce",
-    "dep_opconvert",
 
 # fetch
     "decodeurl",
@@ -98,10 +85,7 @@ def fatal(*args):
 from bb.fetch import MalformedUrl, encodeurl, decodeurl
 from bb.data import VarExpandError
 from bb.utils import mkdirhier, movefile, copyfile, which
-from bb.utils import tokenize, evaluate, flatten
-from bb.utils import vercmp, pkgcmp, relparse, ververify
-from bb.utils import pkgsplit, catpkgsplit, isjustname, isspecific
-from bb.utils import dep_parenreduce, dep_opconvert
+from bb.utils import vercmp
 
 if __name__ == "__main__":
     import doctest, bb
