@@ -611,7 +611,7 @@ def which(path, item, direction = 0):
     if direction != 0:
         paths.reverse()
 
-    for p in (path or "").split(':'):
+    for p in paths:
         next = os.path.join(p, item)
         if os.path.exists(next):
             return next
