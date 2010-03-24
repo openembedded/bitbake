@@ -19,23 +19,21 @@ BitBake Utility Functions
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-digits = "0123456789"
-ascii_letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 separators = ".-"
 
-import re, fcntl, os, types, bb
+import re, fcntl, os, types, bb, string
 
 def explode_version(s):
     r = []
     alpha_regexp = re.compile('^([a-zA-Z]+)(.*)$')
     numeric_regexp = re.compile('^(\d+)(.*)$')
     while (s != ''):
-        if s[0] in digits:
+        if s[0] in string.digits:
             m = numeric_regexp.match(s)
             r.append(int(m.group(1)))
             s = m.group(2)
             continue
-        if s[0] in ascii_letters:
+        if s[0] in string.letters:
             m = alpha_regexp.match(s)
             r.append(m.group(1))
             s = m.group(2)
