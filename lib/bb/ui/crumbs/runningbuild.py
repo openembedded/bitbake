@@ -61,7 +61,7 @@ class RunningBuild (gobject.GObject):
         # If we have a pid attached to this message/event try and get the
         # (package, task) pair for it. If we get that then get the parent iter
         # for the message.
-        if hassattr(event, 'pid'):
+        if hasattr(event, 'pid'):
             pid = event.pid
             if self.pids_to_task.has_key(pid):
                 (package, task) = self.pids_to_task[pid]
