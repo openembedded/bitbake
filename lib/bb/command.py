@@ -28,7 +28,9 @@ and must not trigger events, directly or indirectly.
 Commands are queued in a CommandQueue
 """
 
-import bb
+import bb.event
+import bb.cooker
+import bb.data
 
 async_cmds = {}
 sync_cmds = {}
@@ -94,9 +96,9 @@ class Command:
 
     def finishAsyncCommand(self, error = None):
         if error:
-            bb.event.fire(bb.command.CookerCommandFailed(error), self.cooker.configuration.event_data)
+            bb.event.fire(CookerCommandFailed(error), self.cooker.configuration.event_data)
         else:
-            bb.event.fire(bb.command.CookerCommandCompleted(), self.cooker.configuration.event_data)
+            bb.event.fire(CookerCommandCompleted(), self.cooker.configuration.event_data)
         self.currentAsyncCommand = None
 
 
