@@ -50,9 +50,12 @@ import bb
 _dict_type = data_smart.DataSmart
 
 def init():
+    """Return a new object representing the Bitbake data"""
     return _dict_type()
 
 def init_db(parent = None):
+    """Return a new object representing the Bitbake data,
+    optionally based on an existing object"""
     if parent:
         return parent.createCopy()
     else:
