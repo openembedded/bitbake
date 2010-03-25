@@ -53,7 +53,7 @@ __all__ = [
     "providers",
  ]
 
-import sys, os, types, re, string, bb
+import sys, os, types, re, string
 
 if "BBDEBUG" in os.environ:
     level = int(os.environ["BBDEBUG"])
@@ -86,6 +86,7 @@ from bb.fetch import MalformedUrl, encodeurl, decodeurl
 from bb.data import VarExpandError
 from bb.utils import mkdirhier, movefile, copyfile, which
 from bb.utils import vercmp
+
 
 if __name__ == "__main__":
     import doctest, bb
