@@ -128,7 +128,7 @@ def encodeurl(decoded):
     (type, host, path, user, pswd, p) = decoded
 
     if not type or not path:
-        fatal("invalid or missing parameters for url encoding")
+        bb.msg.fatal(bb.msg.domain.Fetcher, "invalid or missing parameters for url encoding")
     url = '%s://' % type
     if user:
         url += "%s" % user
@@ -477,7 +477,7 @@ def try_mirrors(d, uri, mirrors, check = False):
             try:
                 ud = FetchData(newuri, ld)
             except bb.fetch.NoMethodError:
-                bb.msg.debug(1, bb.msg.domain.Fetcher, "No method for %s" % url)
+                bb.msg.debug(1, bb.msg.domain.Fetcher, "No method for %s" % uri)
                 continue
 
             ud.setup_localpath(ld)

@@ -924,7 +924,7 @@ class RunQueue:
 
         if self.stats.total == 0:
             # nothing to do
-            self.state = runQueueCleanup
+            self.state = runQueueCleanUp
 
         while True:
             task = None

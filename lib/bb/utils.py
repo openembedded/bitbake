@@ -21,7 +21,8 @@ BitBake Utility Functions
 
 separators = ".-"
 
-import re, fcntl, os, types, bb, string
+import re, fcntl, os, types, bb, string, stat, shutil
+from commands import getstatusoutput
 
 def explode_version(s):
     r = []
@@ -516,7 +517,7 @@ def movefile(src,dest,newmtime=None,sstat=None):
                 return None # failure
         try:
             if didcopy:
-                missingos.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
+                os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
                 os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
                 os.unlink(src)
         except Exception, e:
@@ -536,8 +537,6 @@ def copyfile(src,dest,newmtime=None,sstat=None):
     attributes; mtime will be preserved even when moving across
     filesystems.  Returns true on success and false on failure.
     """
-    import os, stat, shutil
-
     #print "copyfile("+src+","+dest+","+str(newmtime)+","+str(sstat)+")"
     try:
         if not sstat:
