@@ -38,7 +38,7 @@ except ImportError:
     import pickle
     bb.msg.note(1, bb.msg.domain.Cache, "Importing cPickle failed. Falling back to a very slow implementation.")
 
-__cache_version__ = "130"
+__cache_version__ = "131"
 
 class Cache:
     """
