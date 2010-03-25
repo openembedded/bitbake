@@ -48,13 +48,7 @@ _handlers = {}
 _ui_handlers = {}
 _ui_handler_seq = 0
 
-def fire(event, d):
-    """Fire off an Event"""
-
-    if worker_pid != 0:
-        worker_fire(event, d)
-        return
-
+def fire_class_handlers(event, d):
     for handler in _handlers:
         h = _handlers[handler]
         event.data = d
@@ -65,6 +59,7 @@ def fire(event, d):
             h(event)
         del event.data
 
+def fire_ui_handlers(event, d):
     errors = []
     for h in _ui_handlers:
         #print "Sending event %s" % event
@@ -77,6 +72,20 @@ def fire(event, d):
             errors.append(h)
     for h in errors:
         del _ui_handlers[h]
+
+def fire(event, d):
+    """Fire off an Event"""
+
+    # We can fire class handlers in the worker process context and this is 
+    # desired so they get the task based datastore.
+    # UI handlers need to be fired in the server context so we defer this. They 
+    # don't have a datastore so the datastore context isn't a problem.
+
+    fire_class_handlers(event, d)
+    if worker_pid != 0:
+        worker_fire(event, d)
+    else:
+        fire_ui_handlers(event, d)
 
 def worker_fire(event, d):
     data = "<event>" + pickle.dumps(event) + "</event>"
@@ -91,7 +100,7 @@ def fire_from_worker(event, d):
         print "Error, not an event"
         return
     event = pickle.loads(event[7:-8])
-    bb.event.fire(event, d)
+    fire_ui_handlers(event, d)
 
 def register(name, handler):
     """Register an Event handler"""
