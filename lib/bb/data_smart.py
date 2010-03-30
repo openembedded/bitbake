@@ -39,11 +39,6 @@ __setvar_keyword__ = ["_append","_prepend"]
 __setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?')
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
-_expand_globals = {
-    "os": os,
-    "bb": bb,
-    "time": time,
-}
 
 
 class DataSmart:
@@ -55,7 +50,12 @@ class DataSmart:
         self._seen_overrides = seen
 
         self.expand_cache = {}
-        self.expand_locals = {"d": self}
+        self.expand_context = {
+            "os": os,
+            "bb": bb,
+            "time": time,
+            "d": self
+        }
 
     def expand(self,s, varname):
         def var_sub(match):
@@ -70,9 +70,9 @@ class DataSmart:
                 return match.group()
 
         def python_sub(match):
-            import bb
             code = match.group()[3:-1]
-            s = eval(code, _expand_globals, self.expand_locals)
+            codeobj = compile(code.strip(), varname or "<expansion>", "eval")
+            s = eval(codeobj, self.expand_context)
             if type(s) == types.IntType: s = str(s)
             return s
 
