@@ -50,7 +50,7 @@ class DataSmart:
         self._seen_overrides = seen
 
         self.expand_cache = {}
-        self.expand_context = {
+        self.expand_globals = {
             "os": os,
             "bb": bb,
             "time": time,
@@ -72,7 +72,7 @@ class DataSmart:
         def python_sub(match):
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), varname or "<expansion>", "eval")
-            s = eval(codeobj, self.expand_context)
+            s = eval(codeobj, self.expand_globals, {})
             if type(s) == types.IntType: s = str(s)
             return s
 
