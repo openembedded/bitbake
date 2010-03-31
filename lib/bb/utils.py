@@ -318,13 +318,15 @@ def better_compile(text, file, realfile, mode = "exec"):
         # exit now
         sys.exit(1)
 
-def better_exec(code, context, text, realfile):
+def better_exec(code, context, text, realfile = "<code>"):
     """
     Similiar to better_compile, better_exec will
     print the lines that are responsible for the
     error.
     """
     import bb.parse
+    if not hasattr(code, "co_filename"):
+        code = better_compile(code, realfile, realfile)
     try:
         exec(code, _context, context)
     except:
@@ -334,7 +336,7 @@ def better_exec(code, context, text, realfile):
             raise
 
         # print the Header of the Error Message
-        bb.msg.error(bb.msg.domain.Util, "Error in executing python function in: %s" % realfile)
+        bb.msg.error(bb.msg.domain.Util, "Error in executing python function in: %s" % code.co_filename)
         bb.msg.error(bb.msg.domain.Util, "Exception:%s Message:%s" % (t, value))
 
         # let us find the line number now
