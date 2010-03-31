@@ -58,7 +58,7 @@ def fire_class_handlers(event, d):
         event.data = d
         if type(h).__name__ == "code":
             locals = {"e": event}
-            exec h in bb.utils._context, locals
+            bb.utils.simple_exec(h, locals)
             bb.utils.better_eval("tmpHandler(e)", locals)
         else:
             h(event)

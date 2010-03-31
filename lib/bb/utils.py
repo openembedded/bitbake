@@ -210,6 +210,9 @@ def better_exec(code, context, text, realfile):
         
         raise
 
+def simple_exec(code, context):
+    exec code in _context, context
+
 def better_eval(source, locals):
     return eval(source, _context, locals)
 
