@@ -48,13 +48,18 @@ _handlers = {}
 _ui_handlers = {}
 _ui_handler_seq = 0
 
+# For compatibility
+bb.utils._context["NotHandled"] = NotHandled
+bb.utils._context["Handled"] = Handled
+
 def fire_class_handlers(event, d):
     for handler in _handlers:
         h = _handlers[handler]
         event.data = d
         if type(h).__name__ == "code":
-            exec(h)
-            tmpHandler(event)
+            locals = {"e": event}
+            exec h in bb.utils._context, locals
+            bb.utils.better_eval("tmpHandler(e)", locals)
         else:
             h(event)
         del event.data

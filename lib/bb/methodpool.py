@@ -27,7 +27,7 @@
     a method pool to do this task.
 
     This pool will be used to compile and execute the functions. It
-    will be smart enough to 
+    will be smart enough to
 """
 
 from bb.utils import better_compile, better_exec
@@ -43,8 +43,8 @@ def insert_method(modulename, code, fn):
     Add code of a module should be added. The methods
     will be simply added, no checking will be done
     """
-    comp = better_compile(code, "<bb>", fn )
-    better_exec(comp, __builtins__, code, fn)
+    comp = better_compile(code, modulename, fn )
+    better_exec(comp, None, code, fn)
 
     # now some instrumentation
     code = comp.co_names
@@ -59,7 +59,7 @@ def insert_method(modulename, code, fn):
 def check_insert_method(modulename, code, fn):
     """
     Add the code if it wasnt added before. The module
-    name will be used for that 
+    name will be used for that
 
     Variables:
         @modulename a short name e.g. base.bbclass
@@ -81,4 +81,4 @@ def get_parsed_dict():
     """
     shortcut
     """
-    return _parsed_methods    
+    return _parsed_methods

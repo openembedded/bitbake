@@ -21,8 +21,15 @@ BitBake Utility Functions
 
 separators = ".-"
 
-import re, fcntl, os, types, bb, string, stat, shutil
+import re, fcntl, os, types, bb, string, stat, shutil, time
 from commands import getstatusoutput
+
+# Context used in better_exec, eval
+_context = {
+    "os": os,
+    "bb": bb,
+    "time": time,
+}
 
 def explode_version(s):
     r = []
@@ -152,13 +159,13 @@ def _print_trace(body, line):
         bb.msg.error(bb.msg.domain.Util, "\t%.4d:%s" % (i, body[i-1]) )
 
 
-def better_compile(text, file, realfile):
+def better_compile(text, file, realfile, mode = "exec"):
     """
     A better compile method. This method
     will print  the offending lines.
     """
     try:
-        return compile(text, file, "exec")
+        return compile(text, file, mode)
     except Exception, e:
         import bb,sys
 
@@ -181,7 +188,7 @@ def better_exec(code, context, text, realfile):
     """
     import bb,sys
     try:
-        exec code in context
+        exec code in _context, context
     except:
         (t,value,tb) = sys.exc_info()
 
@@ -202,6 +209,9 @@ def better_exec(code, context, text, realfile):
         _print_trace( text.split('\n'), line )
         
         raise
+
+def better_eval(source, locals):
+    return eval(source, _context, locals)
 
 def Enum(*names):
    """

@@ -122,12 +122,8 @@ class MethodNode:
 
     def eval(self, data):
         if self.func_name == "__anonymous":
-            funcname = ("__anon_%s_%s" % (self.lineno, self.fn.translate(string.maketrans('/.+-', '____'))))
-            if not funcname in bb.methodpool._parsed_fns:
-                text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
-                bb.methodpool.insert_method(funcname, text, self.fn)
             anonfuncs = bb.data.getVar('__BBANONFUNCS', data) or []
-            anonfuncs.append(funcname)
+            anonfuncs.append((self.fn, "\n".join(self.body)))
             bb.data.setVar('__BBANONFUNCS', anonfuncs, data)
         else:
             bb.data.setVarFlag(self.func_name, "func", 1, data)
@@ -143,7 +139,7 @@ class PythonMethodNode(AstNode):
         # Note we will add root to parsedmethods after having parse
         # 'this' file. This means we will not parse methods from
         # bb classes twice
-        if not self.root  in __parsed_methods__:
+        if not bb.methodpool.parsed_module(self.root):
             text = '\n'.join(self.body)
             bb.methodpool.insert_method(self.root, text, self.fn)
 
@@ -301,32 +297,12 @@ def finalise(fn, d):
 
     bb.data.expandKeys(d)
     bb.data.update_data(d)
-    anonqueue = bb.data.getVar("__anonqueue", d, 1) or []
-    body = [x['content'] for x in anonqueue]
-    flag = { 'python' : 1, 'func' : 1 }
-    bb.data.setVar("__anonfunc", "\n".join(body), d)
-    bb.data.setVarFlags("__anonfunc", flag, d)
-    from bb import build
-    try:
-        t = bb.data.getVar('T', d)
-        bb.data.setVar('T', '${TMPDIR}/anonfunc/', d)
-        anonfuncs = bb.data.getVar('__BBANONFUNCS', d) or []
-        code = ""
-        for f in anonfuncs:
-            code = code + "    %s(d)\n" % f
-        bb.data.setVar("__anonfunc", code, d)        
-        build.exec_func("__anonfunc", d)
-        bb.data.delVar('T', d)
-        if t:
-            bb.data.setVar('T', t, d)
-    except Exception, e:
-        bb.msg.debug(1, bb.msg.domain.Parsing, "Exception when executing anonymous function: %s" % e)
-        raise
-    bb.data.delVar("__anonqueue", d)
-    bb.data.delVar("__anonfunc", d)
+    for fn, func in bb.data.getVar("__BBANONFUNCS", d) or []:
+        funcdef = "def __anonfunc(d):\n%s\n__anonfunc(d)" % func.rstrip()
+        bb.utils.better_exec(funcdef, {"d": d}, funcdef, fn)
     bb.data.update_data(d)
 
-    all_handlers = {} 
+    all_handlers = {}
     for var in bb.data.getVar('__BBHANDLERS', d) or []:
         # try to add the handler
         handler = bb.data.getVar(var,d)

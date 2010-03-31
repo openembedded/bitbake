@@ -203,16 +203,14 @@ def exec_func_python(func, d, runfile, logfile):
     import re, os
 
     bbfile = bb.data.getVar('FILE', d, 1)
-    tmp  = "def " + func + "():\n%s" % data.getVar(func, d)
-    tmp += '\n' + func + '()'
+    tmp  = "def " + func + "(d):\n%s" % data.getVar(func, d)
+    tmp += '\n' + func + '(d)'
 
     f = open(runfile, "w")
     f.write(tmp)
     comp = utils.better_compile(tmp, func, bbfile)
-    g = {} # globals
-    g['d'] = d
     try:
-        utils.better_exec(comp, g, tmp, bbfile)
+        utils.better_exec(comp, {"d": d}, tmp, bbfile)
     except:
         (t,value,tb) = sys.exc_info()
 
