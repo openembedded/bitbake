@@ -122,8 +122,12 @@ class MethodNode:
 
     def eval(self, data):
         if self.func_name == "__anonymous":
+            funcname = ("__anon_%s_%s" % (self.lineno, self.fn.translate(string.maketrans('/.+-', '____'))))
+            if not funcname in bb.methodpool._parsed_fns:
+                text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
+                bb.methodpool.insert_method(funcname, text, self.fn)
             anonfuncs = bb.data.getVar('__BBANONFUNCS', data) or []
-            anonfuncs.append((self.fn, "\n".join(self.body)))
+            anonfuncs.append(funcname)
             bb.data.setVar('__BBANONFUNCS', anonfuncs, data)
         else:
             bb.data.setVarFlag(self.func_name, "func", 1, data)
@@ -297,9 +301,10 @@ def finalise(fn, d):
 
     bb.data.expandKeys(d)
     bb.data.update_data(d)
-    for fn, func in bb.data.getVar("__BBANONFUNCS", d) or []:
-        funcdef = "def __anonfunc(d):\n%s\n__anonfunc(d)" % func.rstrip()
-        bb.utils.better_exec(funcdef, {"d": d}, funcdef, fn)
+    code = []
+    for funcname in bb.data.getVar("__BBANONFUNCS", d) or []:
+        code.append("%s(d)" % funcname)
+    bb.utils.simple_exec("\n".join(code), {"d": d})
     bb.data.update_data(d)
 
     all_handlers = {}
