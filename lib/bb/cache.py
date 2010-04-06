@@ -44,10 +44,10 @@ class Cache:
     """
     BitBake Cache implementation
     """
-    def __init__(self, cooker):
+    def __init__(self, data):
 
 
-        self.cachedir = bb.data.getVar("CACHE", cooker.configuration.data, True)
+        self.cachedir = bb.data.getVar("CACHE", data, True)
         self.clean = {}
         self.checked = {}
         self.depends_cache = {}
@@ -72,7 +72,7 @@ class Cache:
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
         newest_mtime = 0
-        deps = bb.data.getVar("__depends", cooker.configuration.data, True)
+        deps = bb.data.getVar("__depends", data, True)
         for f,old_mtime in deps:
             if old_mtime > newest_mtime:
                 newest_mtime = old_mtime
@@ -486,7 +486,7 @@ def init(cooker):
     Files causing parsing errors are evicted from the cache.
 
     """
-    return Cache(cooker)
+    return Cache(cooker.configuration.data)
 
 
 
