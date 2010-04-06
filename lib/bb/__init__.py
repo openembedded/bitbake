@@ -85,7 +85,7 @@ def fatal(*args):
 from bb.fetch import MalformedUrl, encodeurl, decodeurl
 from bb.data import VarExpandError
 from bb.utils import mkdirhier, movefile, copyfile, which
-from bb.utils import vercmp
+from bb.utils import vercmp_string as vercmp
 
 
 if __name__ == "__main__":
