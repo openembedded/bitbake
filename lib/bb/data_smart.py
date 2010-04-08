@@ -28,11 +28,10 @@ BitBake build tools.
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import copy, os, re, sys, time, types
+import copy, re, sys, types
 import bb
-from bb   import utils, methodpool
+from bb   import utils
 from bb.COW  import COWDictBase
-from new  import classobj
 
 
 __setvar_keyword__ = ["_append", "_prepend"]

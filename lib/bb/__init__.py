@@ -53,7 +53,8 @@ __all__ = [
     "providers",
  ]
 
-import sys, os, types, re, string
+import os
+import bb.msg
 
 if "BBDEBUG" in os.environ:
     level = int(os.environ["BBDEBUG"])

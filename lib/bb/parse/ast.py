@@ -22,6 +22,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import bb, re, string
+from bb import methodpool
 from itertools import chain
 
 __word__ = re.compile(r"\S+")

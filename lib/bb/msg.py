@@ -22,9 +22,10 @@ Message handling infrastructure for bitbake
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sys, bb
+import sys
 import collections
-from bb import event
+import bb
+import bb.event
 
 debug_level = collections.defaultdict(lambda: 0)
 verbose = False
@@ -54,7 +55,7 @@ class MsgBase(bb.event.Event):
 
     def __init__(self, msg):
         self._message = msg
-        event.Event.__init__(self)
+        bb.event.Event.__init__(self)
 
 class MsgDebug(MsgBase):
     """Debug Message"""

@@ -22,7 +22,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sys, os, getopt, re, time, optparse, xmlrpclib
+import sys, os, optparse
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),
                                 'lib'))
 

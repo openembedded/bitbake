@@ -25,12 +25,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, bb, os, sys, time, string
+import re, bb, os
 import bb.fetch, bb.build, bb.utils
-from bb import data, fetch
+from bb import data
 
 from ConfHandler import include, init
-from bb.parse import ParseError, resolve_file, ast
+from bb.parse import resolve_file, ast
 
 # For compatibility
 from bb.parse import vars_from_file

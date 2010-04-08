@@ -200,7 +200,6 @@ def exec_func(func, d, dirs = None):
 
 def exec_func_python(func, d, runfile, logfile):
     """Execute a python BB 'function'"""
-    import re, os
 
     bbfile = bb.data.getVar('FILE', d, 1)
     tmp  = "def " + func + "(d):\n%s" % data.getVar(func, d)

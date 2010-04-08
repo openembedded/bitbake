@@ -24,7 +24,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, bb.data, os, sys
+import re, bb.data, os
 import bb.utils
 from bb.parse import ParseError, resolve_file, ast
 

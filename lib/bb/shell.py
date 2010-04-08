@@ -56,8 +56,8 @@ try:
     set
 except NameError:
     from sets import Set as set
-import sys, os, readline, socket, httplib, urllib, commands, popen2, copy, shlex, Queue, fnmatch
-from bb import data, parse, build, fatal, cache, taskdata, runqueue, providers as Providers
+import sys, os, readline, socket, httplib, urllib, commands, popen2, shlex, Queue, fnmatch
+from bb import data, parse, build, cache, taskdata, runqueue, providers as Providers
 
 __version__ = "0.5.3.1"
 __credits__ = """BitBake Shell Version %s (C) 2005 Michael 'Mickey' Lauer <mickey@Vanille.de>

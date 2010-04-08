@@ -28,7 +28,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 
-import os, re
+import os
 import bb.data
 import bb.utils
 
@@ -452,14 +452,13 @@ class Cache:
         Return the data and whether parsing resulted in the file being skipped
         """
 
-        import bb
-        from bb import utils, data, parse, debug, event, fatal
+        from bb import data, parse
 
         # expand tmpdir to include this topdir
         data.setVar('TMPDIR', data.getVar('TMPDIR', config, 1) or "", config)
         bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         oldpath = os.path.abspath(os.getcwd())
-        if bb.parse.cached_mtime_noerror(bbfile_loc):
+        if parse.cached_mtime_noerror(bbfile_loc):
             os.chdir(bbfile_loc)
         bb_data = data.init_db(config)
         try:

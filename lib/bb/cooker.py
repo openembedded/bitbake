@@ -22,11 +22,10 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sys, os, getopt, glob, copy, os.path, re, time
+import sys, os, glob, os.path, re, time
 import bb
-from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
-from bb import command
-import itertools, sre_constants
+from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
+import sre_constants
 
 class MultipleMatches(Exception):
     """

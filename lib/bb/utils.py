@@ -19,7 +19,11 @@ BitBake Utility Functions
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, fcntl, os, types, bb, string, stat, shutil, time
+import re, fcntl, os, types, string, stat, shutil, time
+import sys
+import bb
+import errno
+import bb.msg
 from commands import getstatusoutput
 
 # Version comparison
@@ -275,8 +279,6 @@ def _print_trace(body, line):
     """
     Print the Environment of a Text Body
     """
-    import bb
-
     # print the environment of the method
     bb.msg.error(bb.msg.domain.Util, "Printing the environment of the function")
     min_line = max(1, line-4)
@@ -293,8 +295,6 @@ def better_compile(text, file, realfile, mode = "exec"):
     try:
         return compile(text, file, mode)
     except Exception, e:
-        import bb, sys
-
         # split the text into lines again
         body = text.split('\n')
         bb.msg.error(bb.msg.domain.Util, "Error in compiling python function in: ", realfile)
@@ -312,7 +312,7 @@ def better_exec(code, context, text, realfile):
     print the lines that are responsible for the
     error.
     """
-    import bb, sys
+    import bb.parse
     try:
         exec code in _context, context
     except:
@@ -349,7 +349,6 @@ def lockfile(name):
     """
     path = os.path.dirname(name)
     if not os.path.isdir(path):
-        import bb, sys
         bb.msg.error(bb.msg.domain.Util, "Error, lockfile path does not exist!: %s" % path)
         sys.exit(1)
 
@@ -455,8 +454,6 @@ def filter_environment(good_vars):
     are not known and may influence the build in a negative way.
     """
 
-    import bb
-
     removed_vars = []
     for key in os.environ.keys():
         if key in good_vars:
@@ -497,7 +494,7 @@ def build_environment(d):
     """
     Build an environment from all exported variables.
     """
-    import bb
+    import bb.data
     for var in bb.data.keys(d):
         export = bb.data.getVarFlag(var, "export", d)
         if export:
@@ -538,9 +535,8 @@ def mkdirhier(dir):
         os.makedirs(dir)
         bb.msg.debug(2, bb.msg.domain.Util, "created " + dir)
     except OSError, e:
-        if e.errno != 17: raise e
-
-import stat
+        if e.errno != errno.EEXIST:
+            raise e
 
 def movefile(src, dest, newmtime = None, sstat = None):
     """Moves a file from src to dest, preserving all permissions and
@@ -591,7 +587,6 @@ def movefile(src, dest, newmtime = None, sstat = None):
             ret = os.rename(src, dest)
             renamefailed = 0
         except Exception, e:
-            import errno
             if e[0] != errno.EXDEV:
                 # Some random error.
                 print "movefile: Failed to move", src, "to", dest, e
