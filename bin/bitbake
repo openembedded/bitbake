@@ -47,6 +47,7 @@ class BBConfiguration( object ):
     def __init__( self, options ):
         for key, val in options.__dict__.items():
             setattr( self, key, val )
+        self.pkgs_to_build = []
 
 
 def print_exception(exc, value, tb):
@@ -142,7 +143,6 @@ Default BBFILES are the .bb files in the current directory.""" )
     options, args = parser.parse_args(sys.argv)
 
     configuration = BBConfiguration(options)
-    configuration.pkgs_to_build = []
     configuration.pkgs_to_build.extend(args[1:])
 
     #server = bb.server.xmlrpc
