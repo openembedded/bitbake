@@ -95,6 +95,71 @@ class DataSmart:
 
         return s
 
+    def finalize(self):
+        """Performs final steps upon the datastore, including application of overrides"""
+        overrides = (self.getVar("OVERRIDES", True) or "").split(":")
+
+        #
+        # Well let us see what breaks here. We used to iterate
+        # over each variable and apply the override and then
+        # do the line expanding.
+        # If we have bad luck - which we will have - the keys
+        # where in some order that is so important for this
+        # method which we don't have anymore.
+        # Anyway we will fix that and write test cases this
+        # time.
+
+        #
+        # First we apply all overrides
+        # Then  we will handle _append and _prepend
+        #
+
+        for o in overrides:
+            # calculate '_'+override
+            l    = len(o)+1
+
+            # see if one should even try
+            if not self._seen_overrides.has_key(o):
+                continue
+
+            vars = self._seen_overrides[o]
+            for var in vars:
+                name = var[:-l]
+                try:
+                    self.renameVar(var, name)
+                except:
+                    bb.msg.note(1, bb.msg.domain.Data, "Untracked delVar")
+
+        # now on to the appends and prepends
+        if self._special_values.has_key("_append"):
+            appends = self._special_values['_append'] or []
+            for append in appends:
+                for (a, o) in self.getVarFlag(append, '_append') or []:
+                    # maybe the OVERRIDE was not yet added so keep the append
+                    if (o and o in overrides) or not o:
+                        self.delVarFlag(append, '_append')
+                    if o and not o in overrides:
+                        continue
+
+                    sval = self.getVar(append, False) or ""
+                    sval += a
+                    self.setVar(append, sval)
+
+
+        if self._special_values.has_key("_prepend"):
+            prepends = self._special_values['_prepend'] or []
+
+            for prepend in prepends:
+                for (a, o) in self.getVarFlag(prepend, '_prepend') or []:
+                    # maybe the OVERRIDE was not yet added so keep the prepend
+                    if (o and o in overrides) or not o:
+                        self.delVarFlag(prepend, '_prepend')
+                    if o and not o in overrides:
+                        continue
+
+                    sval = a + (self.getVar(prepend, False) or "")
+                    self.setVar(prepend, sval)
+
     def initVar(self, var):
         self.expand_cache = {}
         if not var in self.dict:
