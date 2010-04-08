@@ -23,6 +23,7 @@ BitBake build tools.
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os, re, sys
+import warnings
 import bb.utils
 import pickle
 
@@ -38,7 +39,7 @@ class Event:
         self.pid = worker_pid
 
 NotHandled = 0
-Handled = 1
+Handled    = 1
 
 Registered        = 10
 AlreadyRegistered = 14
@@ -59,7 +60,10 @@ def fire_class_handlers(event, d):
         if type(h).__name__ == "code":
             locals = {"e": event}
             bb.utils.simple_exec(h, locals)
-            bb.utils.better_eval("tmpHandler(e)", locals)
+            ret = bb.utils.better_eval("tmpHandler(e)", locals)
+            if ret is not None:
+                warnings.warn("Using Handled/NotHandled in event handlers is deprecated",
+                              DeprecationWarning, stacklevel = 2)
         else:
             h(event)
         del event.data
