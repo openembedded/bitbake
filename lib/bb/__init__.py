@@ -84,6 +84,5 @@ def fatal(*args):
 
 # For compatibility
 from bb.fetch import MalformedUrl, encodeurl, decodeurl
-from bb.data import VarExpandError
 from bb.utils import mkdirhier, movefile, copyfile, which
 from bb.utils import vercmp_string as vercmp

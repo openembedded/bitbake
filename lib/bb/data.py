@@ -47,9 +47,6 @@ sys.path.insert(0, path)
 from bb import data_smart
 import bb
 
-class VarExpandError(Exception):
-    pass
-
 _dict_type = data_smart.DataSmart
 
 def init():
