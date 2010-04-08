@@ -125,34 +125,6 @@ def keys(d):
     """Return a list of keys in d"""
     return d.keys()
 
-def getData(d):
-    """Returns the data object used"""
-    return d
-
-def setData(newData, d):
-    """Sets the data object to the supplied value"""
-    d = newData
-
-
-##
-## Cookie Monsters' query functions
-##
-def _get_override_vars(d, override):
-    """
-    Internal!!!
-
-    Get the Names of Variables that have a specific
-    override. This function returns a iterable
-    Set or an empty list
-    """
-    return []
-
-def _get_var_flags_triple(d):
-    """
-    Internal!!!
-
-    """
-    return []
 
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
