@@ -293,7 +293,7 @@ def handleInherit(statements, m):
     n = __word__.findall(files)
     statements.append(InheritNode(m.group(1)))
 
-def finalise(fn, d):
+def finalize(fn, d):
     for lazykey in bb.data.getVar("__lazy_assigned", d) or ():
         if bb.data.getVar(lazykey, d) is None:
             val = bb.data.getVarFlag(lazykey, "defaultval", d)
@@ -358,7 +358,7 @@ def multi_finalize(fn, d):
 
     d = bb.data.createCopy(safe_d)
     try:
-        finalise(fn, d)
+        finalize(fn, d)
     except bb.parse.SkipPackage:
         bb.data.setVar("__SKIPPED", True, d)
     datastores = {"": safe_d}
@@ -401,7 +401,7 @@ def multi_finalize(fn, d):
             d = bb.data.createCopy(safe_d)
             verfunc(pv, d, safe_d)
             try:
-                finalise(fn, d)
+                finalize(fn, d)
             except bb.parse.SkipPackage:
                 bb.data.setVar("__SKIPPED", True, d)
 
@@ -420,7 +420,7 @@ def multi_finalize(fn, d):
     for variant, variant_d in datastores.items():
         if variant:
             try:
-                finalise(fn, variant_d)
+                finalize(fn, variant_d)
             except bb.parse.SkipPackage:
                 bb.data.setVar("__SKIPPED", True, variant_d)
 
