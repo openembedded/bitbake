@@ -126,7 +126,7 @@ class DataSmart:
                 name = var[:-l]
                 try:
                     self.renameVar(var, name)
-                except:
+                except Exception:
                     bb.msg.note(1, bb.msg.domain.Data, "Untracked delVar")
 
         # now on to the appends and prepends
@@ -203,7 +203,7 @@ class DataSmart:
             # pay the cookie monster
             try:
                 self._special_values[keyword].add( base )
-            except:
+            except KeyError:
                 self._special_values[keyword] = set()
                 self._special_values[keyword].add( base )
 
