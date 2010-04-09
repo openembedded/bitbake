@@ -584,7 +584,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
     renamefailed = 1
     if sstat[stat.ST_DEV] == dstat[stat.ST_DEV]:
         try:
-            ret = os.rename(src, dest)
+            os.rename(src, dest)
             renamefailed = 0
         except Exception, e:
             if e[0] != errno.EXDEV:
