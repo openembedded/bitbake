@@ -178,12 +178,12 @@ Default BBFILES are the .bb files in the current directory.""" )
         ui = "knotty"
 
     try:
-            # Dynamically load the UI based on the ui name. Although we
-            # suggest a fixed set this allows you to have flexibility in which
-            # ones are available.
-            exec "from bb.ui import " + ui
-            exec "return_value = " + ui + ".init(serverConnection.connection, serverConnection.events)"
-    except ImportError:
+        # Dynamically load the UI based on the ui name. Although we
+        # suggest a fixed set this allows you to have flexibility in which
+        # ones are available.
+        uimodule = __import__("bb.ui", fromlist=[ui])
+        return_value = getattr(uimodule, ui).init(serverConnection.connection, serverConnection.events)
+    except AttributeError:
         print "FATAL: Invalid user interface '%s' specified. " % ui
         print "Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'."
     except Exception, e:
