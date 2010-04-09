@@ -246,7 +246,7 @@ class NCursesUI:
                     continue
                 helper.eventHandler(event)
                 #mw.appendText("%s\n" % event[0])
-                if isinstance(event, bb.build.Task):
+                if isinstance(event, bb.build.TaskBase):
                     mw.appendText("NOTE: %s\n" % event._message)
                 if isinstance(event, bb.msg.MsgDebug):
                     mw.appendText('DEBUG: ' + event._message + '\n')
