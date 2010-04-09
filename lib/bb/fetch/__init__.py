@@ -53,21 +53,6 @@ class InvalidSRCREV(Exception):
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
     user, password, parameters).
-
-    >>> decodeurl("http://www.google.com/index.html")
-    ('http', 'www.google.com', '/index.html', '', '', {})
-
-    CVS url with username, host and cvsroot. The cvs module to check out is in the
-    parameters:
-
-    >>> decodeurl("cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg")
-    ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'})
-
-    Dito, but this time the username has a password part. And we also request a special tag
-    to check out.
-
-    >>> decodeurl("cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;module=familiar/dist/ipkg;tag=V0-99-81")
-    ('cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'})
     """
 
     m = re.compile('(?P<type>[^:]*)://((?P<user>.+)@)?(?P<location>[^;]+)(;(?P<parm>.*))?').match(url)
@@ -108,21 +93,6 @@ def decodeurl(url):
 def encodeurl(decoded):
     """Encodes a URL from tokens (scheme, network location, path,
     user, password, parameters).
-
-    >>> encodeurl(['http', 'www.google.com', '/index.html', '', '', {}])
-    'http://www.google.com/index.html'
-
-    CVS with username, host and cvsroot. The cvs module to check out is in the
-    parameters:
-
-    >>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', '', {'module': 'familiar/dist/ipkg'}])
-    'cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg'
-
-    Dito, but this time the username has a password part. And we also request a special tag
-    to check out.
-
-    >>> encodeurl(['cvs', 'cvs.handhelds.org', '/cvs', 'anoncvs', 'anonymous', {'tag': 'V0-99-81', 'module': 'familiar/dist/ipkg'}])
-    'cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg'
     """
 
     (type, host, path, user, pswd, p) = decoded

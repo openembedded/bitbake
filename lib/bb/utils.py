@@ -97,14 +97,7 @@ _package_ends_    = ["pre", "p", "alpha", "beta", "rc", "cvs", "bk", "HEAD" ]   
 
 def relparse(myver):
     """Parses the last elements of a version number into a triplet, that can
-    later be compared:
-
-    >>> relparse('1.2_pre3')
-    [1.2, -2, 3.0]
-    >>> relparse('1.2b')
-    [1.2, 98, 0]
-    >>> relparse('1.2')
-    [1.2, 0, 0]
+    later be compared.
     """
 
     number   = 0
@@ -150,17 +143,6 @@ __vercmp_cache__ = {}
 def vercmp_string(val1,val2):
     """This takes two version strings and returns an integer to tell you whether
     the versions are the same, val1>val2 or val2>val1.
-
-    >>> vercmp('1', '2')
-    -1.0
-    >>> vercmp('2', '1')
-    1.0
-    >>> vercmp('1', '1.0')
-    0
-    >>> vercmp('1', '1.1')
-    -1.0
-    >>> vercmp('1.1', '1_p2')
-    1.0
     """
 
     # quick short-circuit

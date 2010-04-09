@@ -77,90 +77,33 @@ def initVar(var, d):
 
 
 def setVar(var, value, d):
-    """Set a variable to a given value
-
-    Example:
-        >>> d = init()
-        >>> setVar('TEST', 'testcontents', d)
-        >>> print getVar('TEST', d)
-        testcontents
-    """
+    """Set a variable to a given value"""
     d.setVar(var,value)
 
 
 def getVar(var, d, exp = 0):
-    """Gets the value of a variable
-
-    Example:
-        >>> d = init()
-        >>> setVar('TEST', 'testcontents', d)
-        >>> print getVar('TEST', d)
-        testcontents
-    """
+    """Gets the value of a variable"""
     return d.getVar(var,exp)
 
 
 def renameVar(key, newkey, d):
-    """Renames a variable from key to newkey
-
-    Example:
-        >>> d = init()
-        >>> setVar('TEST', 'testcontents', d)
-        >>> renameVar('TEST', 'TEST2', d)
-        >>> print getVar('TEST2', d)
-        testcontents
-    """
+    """Renames a variable from key to newkey"""
     d.renameVar(key, newkey)
 
 def delVar(var, d):
-    """Removes a variable from the data set
-
-    Example:
-        >>> d = init()
-        >>> setVar('TEST', 'testcontents', d)
-        >>> print getVar('TEST', d)
-        testcontents
-        >>> delVar('TEST', d)
-        >>> print getVar('TEST', d)
-        None
-    """
+    """Removes a variable from the data set"""
     d.delVar(var)
 
 def setVarFlag(var, flag, flagvalue, d):
-    """Set a flag for a given variable to a given value
-
-    Example:
-        >>> d = init()
-        >>> setVarFlag('TEST', 'python', 1, d)
-        >>> print getVarFlag('TEST', 'python', d)
-        1
-    """
+    """Set a flag for a given variable to a given value"""
     d.setVarFlag(var,flag,flagvalue)
 
 def getVarFlag(var, flag, d):
-    """Gets given flag from given var
-
-    Example:
-        >>> d = init()
-        >>> setVarFlag('TEST', 'python', 1, d)
-        >>> print getVarFlag('TEST', 'python', d)
-        1
-    """
+    """Gets given flag from given var"""
     return d.getVarFlag(var,flag)
 
 def delVarFlag(var, flag, d):
-    """Removes a given flag from the variable's flags
-
-    Example:
-        >>> d = init()
-        >>> setVarFlag('TEST', 'testflag', 1, d)
-        >>> print getVarFlag('TEST', 'testflag', d)
-        1
-        >>> delVarFlag('TEST', 'testflag', d)
-        >>> print getVarFlag('TEST', 'testflag', d)
-        None
-
-    """
+    """Removes a given flag from the variable's flags"""
     d.delVarFlag(var,flag)
 
 def setVarFlags(var, flags, d):
@@ -170,54 +113,19 @@ def setVarFlags(var, flags, d):
         setVarFlags will not clear previous
         flags. Think of this method as
         addVarFlags
-
-    Example:
-        >>> d = init()
-        >>> myflags = {}
-        >>> myflags['test'] = 'blah'
-        >>> setVarFlags('TEST', myflags, d)
-        >>> print getVarFlag('TEST', 'test', d)
-        blah
     """
     d.setVarFlags(var,flags)
 
 def getVarFlags(var, d):
-    """Gets a variable's flags
-
-    Example:
-        >>> d = init()
-        >>> setVarFlag('TEST', 'test', 'blah', d)
-        >>> print getVarFlags('TEST', d)['test']
-        blah
-    """
+    """Gets a variable's flags"""
     return d.getVarFlags(var)
 
 def delVarFlags(var, d):
-    """Removes a variable's flags
-
-    Example:
-        >>> data = init()
-        >>> setVarFlag('TEST', 'testflag', 1, data)
-        >>> print getVarFlag('TEST', 'testflag', data)
-        1
-        >>> delVarFlags('TEST', data)
-        >>> print getVarFlags('TEST', data)
-        None
-
-    """
+    """Removes a variable's flags"""
     d.delVarFlags(var)
 
 def keys(d):
-    """Return a list of keys in d
-
-    Example:
-        >>> d = init()
-        >>> setVar('TEST',  1, d)
-        >>> setVar('MOO' ,  2, d)
-        >>> setVarFlag('TEST', 'test', 1, d)
-        >>> keys(d)
-        ['TEST', 'MOO']
-    """
+    """Return a list of keys in d"""
     return d.keys()
 
 def getData(d):
@@ -253,32 +161,7 @@ __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 def expand(s, d, varname = None):
-    """Variable expansion using the data store.
-
-    Example:
-        Standard expansion:
-        >>> d = init()
-        >>> setVar('A', 'sshd', d)
-        >>> print expand('/usr/bin/${A}', d)
-        /usr/bin/sshd
-
-        Python expansion:
-        >>> d = init()
-        >>> print expand('result: ${@37 * 72}', d)
-        result: 2664
-
-        Shell expansion:
-        >>> d = init()
-        >>> print expand('${TARGET_MOO}', d)
-        ${TARGET_MOO}
-        >>> setVar('TARGET_MOO', 'yupp', d)
-        >>> print expand('${TARGET_MOO}',d)
-        yupp
-        >>> setVar('SRC_URI', 'http://somebug.${TARGET_MOO}', d)
-        >>> delVar('TARGET_MOO', d)
-        >>> print expand('${SRC_URI}', d)
-        http://somebug.${TARGET_MOO}
-    """
+    """Variable expansion using the data store"""
     return d.expand(s, varname)
 
 def expandKeys(alterdata, readdata = None):
@@ -304,17 +187,8 @@ def expandKeys(alterdata, readdata = None):
 
 def expandData(alterdata, readdata = None):
     """For each variable in alterdata, expand it, and update the var contents.
-       Replacements use data from readdata.
-
-    Example:
-        >>> a=init()
-        >>> b=init()
-        >>> setVar("dlmsg", "dl_dir is ${DL_DIR}", a)
-        >>> setVar("DL_DIR", "/path/to/whatever", b)
-        >>> expandData(a, b)
-        >>> print getVar("dlmsg", a)
-        dl_dir is /path/to/whatever
-       """
+       Replacements use data from readdata
+    """
     if readdata == None:
         readdata = alterdata
 
@@ -552,14 +426,3 @@ def inherits_class(klass, d):
     if os.path.join('classes', '%s.bbclass' % klass) in val:
         return True
     return False
-
-def _test():
-    """Start a doctest run on this module"""
-    import doctest
-    import bb
-    from bb import data
-    bb.msg.set_debug_level(0)
-    doctest.testmod(data)
-
-if __name__ == "__main__":
-    _test()
