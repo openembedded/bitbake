@@ -101,25 +101,34 @@ def debug(level, domain, msg, fn = None):
         domain = 'default'
     if debug_level[domain] >= level:
         bb.event.fire(MsgDebug(msg), None)
+        if not bb.event._ui_handlers:
+            print 'DEBUG: ' + msg
 
 def note(level, domain, msg, fn = None):
     if not domain:
         domain = 'default'
     if level == 1 or verbose or debug_level[domain] >= 1:
         bb.event.fire(MsgNote(msg), None)
+        if not bb.event._ui_handlers:
+            print 'NOTE: ' + msg
 
 def warn(domain, msg, fn = None):
     bb.event.fire(MsgWarn(msg), None)
+    if not bb.event._ui_handlers:
+        print 'WARNING: ' + msg
 
 def error(domain, msg, fn = None):
     bb.event.fire(MsgError(msg), None)
-    print 'ERROR: ' + msg
+    if not bb.event._ui_handlers:
+        print 'ERROR: ' + msg
 
 def fatal(domain, msg, fn = None):
     bb.event.fire(MsgFatal(msg), None)
-    print 'FATAL: ' + msg
+    if not bb.event._ui_handlers:
+        print 'FATAL: ' + msg
     sys.exit(1)
 
 def plain(msg, fn = None):
     bb.event.fire(MsgPlain(msg), None)
-
+    if not bb.event._ui_handlers:
+        print msg
