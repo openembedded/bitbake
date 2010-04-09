@@ -24,7 +24,10 @@
 
 import sys, os, getopt, re, time, optparse, xmlrpclib
 sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
+
+import warnings
 import bb
+import bb.msg
 from bb import cooker
 from bb import ui
 from bb import server
@@ -60,6 +63,21 @@ def print_exception(exc, value, tb):
 
     sys.__excepthook__(exc, value, tb)
 
+sys.excepthook = print_exception
+
+
+_warnings_showwarning = warnings.showwarning
+def _showwarning(message, category, filename, lineno, file=None, line=None):
+    """Display python warning messages using bb.msg"""
+    if file is not None:
+        if _warnings_showwarning is not None:
+            _warnings_showwarning(message, category, filename, lineno, file, line)
+    else:
+        s = warnings.formatwarning(message, category, filename, lineno)
+        s = s.split("\n")[0]
+        bb.msg.warn(None, s)
+
+warnings.showwarning = _showwarning
 
 #============================================================================#
 # main
@@ -165,8 +183,6 @@ Default BBFILES are the .bb files in the current directory.""" )
 
     server.BitBakeServerFork(serverinfo, cooker.serve, cooker_logfile)
     del cooker
-
-    sys.excepthook = print_exception
 
     # Setup a connection to the server (cooker)
     serverConnection = server.BitBakeServerConnection(serverinfo)
