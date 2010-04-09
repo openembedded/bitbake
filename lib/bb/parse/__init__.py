@@ -24,8 +24,6 @@ File parsers for the BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-__all__ = [ 'ParseError', 'SkipPackage', 'cached_mtime', 'mark_dependency',
-            'supports', 'handle', 'init' ]
 handlers = []
 
 import bb, os

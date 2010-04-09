@@ -27,7 +27,5 @@ File parsers for the BitBake build tools.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 __version__ = '1.0'
 
-__all__ = [ 'ConfHandler', 'BBHandler']
-
 import ConfHandler
 import BBHandler
