@@ -54,6 +54,10 @@ bb.utils._context["NotHandled"] = NotHandled
 bb.utils._context["Handled"] = Handled
 
 def fire_class_handlers(event, d):
+    import bb.msg
+    if isinstance(event, bb.msg.MsgBase):
+        return
+
     for handler in _handlers:
         h = _handlers[handler]
         event.data = d
