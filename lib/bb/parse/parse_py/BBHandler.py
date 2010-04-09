@@ -33,7 +33,7 @@ from ConfHandler import include, init
 from bb.parse import resolve_file, ast
 
 # For compatibility
-from bb.parse import vars_from_file
+bb.deprecate_import(__name__, "bb.parse", ["vars_from_file"])
 
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )

@@ -52,7 +52,45 @@ def fatal(*args):
     bb.msg.fatal(None, ''.join(args))
 
 
+def deprecated(func, name = None, advice = ""):
+    """This is a decorator which can be used to mark functions
+    as deprecated. It will result in a warning being emmitted
+    when the function is used."""
+    import warnings
+
+    if advice:
+        advice = ": %s" % advice
+    if name is None:
+        name = func.__name__
+
+    def newFunc(*args, **kwargs):
+        warnings.warn("Call to deprecated function %s%s." % (name,
+                                                             advice),
+                      category = DeprecationWarning,
+                      stacklevel = 2)
+        return func(*args, **kwargs)
+    newFunc.__name__ = func.__name__
+    newFunc.__doc__ = func.__doc__
+    newFunc.__dict__.update(func.__dict__)
+    return newFunc
+
 # For compatibility
-from bb.fetch import MalformedUrl, encodeurl, decodeurl
-from bb.utils import mkdirhier, movefile, copyfile, which
-from bb.utils import vercmp_string as vercmp
+def deprecate_import(current, modulename, fromlist, renames = None):
+    """Import objects from one module into another, wrapping them with a DeprecationWarning"""
+    import sys
+
+    module = __import__(modulename, fromlist = fromlist)
+    for position, objname in enumerate(fromlist):
+        obj = getattr(module, objname)
+        newobj = deprecated(obj, "{0}.{1}".format(current, objname),
+                            "Please use {0}.{1} instead".format(modulename, objname))
+        if renames:
+            newname = renames[position]
+        else:
+            newname = objname
+
+        setattr(sys.modules[current], newname, newobj)
+
+deprecate_import(__name__, "bb.fetch", ("MalformedUrl", "encodeurl", "decodeurl"))
+deprecate_import(__name__, "bb.utils", ("mkdirhier", "movefile", "copyfile", "which"))
+deprecate_import(__name__, "bb.utils", ["vercmp_string"], ["vercmp"])
