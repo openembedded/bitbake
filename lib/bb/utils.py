@@ -506,7 +506,7 @@ def filter_environment(good_vars):
         del os.environ[key]
 
     if len(removed_vars):
-        bb.debug(1, "Removed the following variables from the environment:", ",".join(removed_vars))
+        bb.msg.debug(1, bb.msg.domain.Util, "Removed the following variables from the environment:", ",".join(removed_vars))
 
     return removed_vars
 
@@ -572,10 +572,10 @@ def mkdirhier(dir):
     directory already exists like os.makedirs
     """
 
-    bb.debug(3, "mkdirhier(%s)" % dir)
+    bb.msg.debug(3, bb.msg.domain.Util, "mkdirhier(%s)" % dir)
     try:
         os.makedirs(dir)
-        bb.debug(2, "created " + dir)
+        bb.msg.debug(2, bb.msg.domain.Util, "created " + dir)
     except OSError, e:
         if e.errno != 17: raise e
 

@@ -132,11 +132,11 @@ class BBCooker:
             self.commandlineAction = None
 
             if 'world' in self.configuration.pkgs_to_build:
-                bb.error("'world' is not a valid target for --environment.")
+                bb.msg.error(bb.msg.domain.Build, "'world' is not a valid target for --environment.")
             elif len(self.configuration.pkgs_to_build) > 1:
-                bb.error("Only one target can be used with the --environment option.")
+                bb.msg.error(bb.msg.domain.Build, "Only one target can be used with the --environment option.")
             elif self.configuration.buildfile and len(self.configuration.pkgs_to_build) > 0:
-                bb.error("No target should be used with the --environment and --buildfile options.")
+                bb.msg.error(bb.msg.domain.Build, "No target should be used with the --environment and --buildfile options.")
             elif len(self.configuration.pkgs_to_build) > 0:
                 self.commandlineAction = ["showEnvironmentTarget", self.configuration.pkgs_to_build]
             else:
@@ -157,13 +157,13 @@ class BBCooker:
                 self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
                 self.commandlineAction = None
-                bb.error("Please specify a package name for dependency graph generation.")
+                bb.msg.error(bb.msg.domain.Build, "Please specify a package name for dependency graph generation.")
         else:
             if self.configuration.pkgs_to_build:
                 self.commandlineAction = ["buildTargets", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
                 self.commandlineAction = None
-                bb.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
+                bb.msg.error(bb.msg.domain.Build, "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
 
     def runCommands(self, server, data, abort):
         """

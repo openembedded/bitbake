@@ -353,7 +353,7 @@ class Cache:
         pe       = self.getVar('PE', file_name, True) or "0"
         pv       = self.getVar('PV', file_name, True)
         if 'SRCREVINACTION' in pv:
-            bb.note("Found SRCREVINACTION in PV (%s) or %s. Please report this bug." % (pv, file_name))
+            bb.msg.note(1, bb.msg.domain.Cache, "Found SRCREVINACTION in PV (%s) or %s. Please report this bug." % (pv, file_name))
         pr       = self.getVar('PR', file_name, True)
         dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
         depends   = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")

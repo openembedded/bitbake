@@ -39,7 +39,7 @@ def init(data):
         topdir = os.getcwd()
         bb.data.setVar('TOPDIR', topdir, data)
     if not bb.data.getVar('BBPATH', data):
-        bb.fatal("The BBPATH environment variable must be set")
+        bb.msg.fatal(bb.msg.domain.Parsing, "The BBPATH environment variable must be set")
 
 
 def supports(fn, d):

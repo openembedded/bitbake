@@ -774,7 +774,7 @@ class RunQueue:
         #print "Not current: %s" % notcurrent
 
         if len(unchecked) > 0:
-            bb.fatal("check_stamps fatal internal error")
+            bb.msg.fatal(bb.msg.domain.RunQueue, "check_stamps fatal internal error")
         return current
 
     def check_stamp_task(self, task):
