@@ -23,13 +23,17 @@ Message handling infrastructure for bitbake
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import sys, bb
+import collections
 from bb import event
 
-debug_level = {}
-
+debug_level = collections.defaultdict(lambda: 0)
 verbose = False
 
-domain = bb.utils.Enum(
+def _NamedTuple(name, fields):
+    Tuple = collections.namedtuple(name, " ".join(fields))
+    return Tuple(*range(len(fields)))
+
+domain = _NamedTuple("Domain",(
     'Build',
     'Cache',
     'Collection',
@@ -41,7 +45,7 @@ domain = bb.utils.Enum(
     'Provider',
     'RunQueue',
     'TaskData',
-    'Util')
+    'Util'))
 
 
 class MsgBase(bb.event.Event):
@@ -74,23 +78,21 @@ class MsgPlain(MsgBase):
 #
 
 def set_debug_level(level):
-    bb.msg.debug_level = {}
-    for domain in bb.msg.domain:
-        bb.msg.debug_level[domain] = level
-    bb.msg.debug_level['default'] = level
+    for d in domain:
+        debug_level[d] = level
+    debug_level['default'] = level
 
 def set_verbose(level):
-    bb.msg.verbose = level
+    verbose = level
 
-def set_debug_domains(domains):
-    for domain in domains:
-        found = False
-        for ddomain in bb.msg.domain:
-            if domain == str(ddomain):
-                bb.msg.debug_level[ddomain] = bb.msg.debug_level[ddomain] + 1
-                found = True
-        if not found:
-            bb.msg.warn(None, "Logging domain %s is not valid, ignoring" % domain)
+def set_debug_domains(domain_strings):
+    for domainstr in domain_strings:
+        for d in domain:
+            if domain._fields[d] == domainstr:
+                debug_level[d] += 1
+                break
+        else:
+            warn(None, "Logging domain %s is not valid, ignoring" % domain)
 
 #
 # Message handling functions
