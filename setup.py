@@ -49,7 +49,7 @@ class Build(build):
         make = os.environ.get('MAKE') or 'make'
         ret = os.system('%s %s' % (make, doctype))
         if ret != 0:
-            print "ERROR: Unable to generate html documentation."
+            print("ERROR: Unable to generate html documentation.")
             sys.exit(ret)
         os.chdir(origpath)
 

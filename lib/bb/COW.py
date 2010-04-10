@@ -23,6 +23,7 @@
 # Assign a file to __warn__ to get warnings about slow operations.
 #
 
+from __future__ import print_function
 import copy
 import types
 types.ImmutableTypes = tuple([ \
@@ -77,7 +78,7 @@ class COWDictMeta(COWMeta):
             return value
 
         if not cls.__warn__ is False and not isinstance(value, COWMeta):
-            print >> cls.__warn__, "Warning: Doing a copy because %s is a mutable type." % key
+            print("Warning: Doing a copy because %s is a mutable type." % key, file=cls.__warn__)
         try:
             value = value.copy()
         except AttributeError, e:
@@ -153,11 +154,11 @@ class COWDictMeta(COWMeta):
         return cls.iter("keys")
     def itervalues(cls, readonly=False):
         if not cls.__warn__ is False and cls.__hasmutable__ and readonly is False:
-            print >> cls.__warn__, "Warning: If you arn't going to change any of the values call with True."
+            print("Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
         return cls.iter("values", readonly)
     def iteritems(cls, readonly=False):
         if not cls.__warn__ is False and cls.__hasmutable__ and readonly is False:
-            print >> cls.__warn__, "Warning: If you arn't going to change any of the values call with True."
+            print("Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
         return cls.iter("items", readonly)
 
 class COWSetMeta(COWDictMeta):
@@ -199,120 +200,120 @@ if __name__ == "__main__":
     import sys
     COWDictBase.__warn__ = sys.stderr
     a = COWDictBase()
-    print "a", a
+    print("a", a)
 
     a['a'] = 'a'
     a['b'] = 'b'
     a['dict'] = {}
 
     b = a.copy()
-    print "b", b
+    print("b", b)
     b['c'] = 'b'
 
-    print
+    print()
 
-    print "a", a
+    print("a", a)
     for x in a.iteritems():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b.iteritems():
-        print x
-    print
+        print(x)
+    print()
 
     b['dict']['a'] = 'b'
     b['a'] = 'c'
 
-    print "a", a
+    print("a", a)
     for x in a.iteritems():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b.iteritems():
-        print x
-    print
+        print(x)
+    print()
 
     try:
         b['dict2']
     except KeyError, e:
-        print "Okay!"
+        print("Okay!")
 
     a['set'] = COWSetBase()
     a['set'].add("o1")
     a['set'].add("o1")
     a['set'].add("o2")
 
-    print "a", a
+    print("a", a)
     for x in a['set'].itervalues():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b['set'].itervalues():
-        print x
-    print
+        print(x)
+    print()
 
     b['set'].add('o3')
 
-    print "a", a
+    print("a", a)
     for x in a['set'].itervalues():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b['set'].itervalues():
-        print x
-    print
+        print(x)
+    print()
 
     a['set2'] = set()
     a['set2'].add("o1")
     a['set2'].add("o1")
     a['set2'].add("o2")
 
-    print "a", a
+    print("a", a)
     for x in a.iteritems():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b.iteritems(readonly=True):
-        print x
-    print
+        print(x)
+    print()
 
     del b['b']
     try:
-        print b['b']
+        print(b['b'])
     except KeyError:
-        print "Yay! deleted key raises error"
+        print("Yay! deleted key raises error")
 
     if b.has_key('b'):
-        print "Boo!"
+        print("Boo!")
     else:
-        print "Yay - has_key with delete works!"
+        print("Yay - has_key with delete works!")
 
-    print "a", a
+    print("a", a)
     for x in a.iteritems():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b.iteritems(readonly=True):
-        print x
-    print
+        print(x)
+    print()
 
     b.__revertitem__('b')
 
-    print "a", a
+    print("a", a)
     for x in a.iteritems():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b.iteritems(readonly=True):
-        print x
-    print
+        print(x)
+    print()
 
     b.__revertitem__('dict')
-    print "a", a
+    print("a", a)
     for x in a.iteritems():
-        print x
-    print "--"
-    print "b", b
+        print(x)
+    print("--")
+    print("b", b)
     for x in b.iteritems(readonly=True):
-        print x
-    print
+        print(x)
+    print()

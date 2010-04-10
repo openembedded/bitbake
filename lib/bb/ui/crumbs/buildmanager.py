@@ -158,7 +158,7 @@ class BuildResult(gobject.GObject):
         # pull it out.
         # TODO: Better to stat a file?
         (_ , date, revision) = identifier.split ("-")
-        print date
+        print(date)
 
         year = int (date[0:4])
         month = int (date[4:6])
@@ -386,7 +386,7 @@ class BuildManager (gobject.GObject):
             server.runCommand(["buildTargets", [conf.image], "rootfs"])
 
         except Exception, e:
-            print e
+            print(e)
 
 class BuildManagerTreeView (gtk.TreeView):
     """ The tree view for the build manager. This shows the historic builds

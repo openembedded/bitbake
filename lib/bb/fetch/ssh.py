@@ -114,5 +114,5 @@ class SSH(Fetch):
 
         (exitstatus, output) = commands.getstatusoutput(cmd)
         if exitstatus != 0:
-            print output
+            print(output)
             raise FetchError('Unable to fetch %s' % url)

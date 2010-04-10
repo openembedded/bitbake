@@ -412,7 +412,7 @@ def runfetchcmd(cmd, d, quiet = False):
         if not line:
             break
         if not quiet:
-            print line,
+            print(line, end=' ')
         output += line
 
     status =  stdout_handle.close() or 0

@@ -197,7 +197,7 @@ class Git(Fetch):
         # Check if we have the rev already
 
         if not os.path.exists(ud.clonedir):
-            print "no repo"
+            print("no repo")
             self.go(None, ud, d)
             if not os.path.exists(ud.clonedir):
                 bb.msg.error(bb.msg.domain.Fetcher, "GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value" % (url, ud.clonedir))

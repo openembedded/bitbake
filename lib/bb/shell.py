@@ -98,7 +98,7 @@ class BitBakeShellCommands:
 
     def _checkParsed( self ):
         if not parsed:
-            print "SHELL: This command needs to parse bbfiles..."
+            print("SHELL: This command needs to parse bbfiles...")
             self.parse( None )
 
     def _findProvider( self, item ):
@@ -119,28 +119,28 @@ class BitBakeShellCommands:
         """Register a new name for a command"""
         new, old = params
         if not old in cmds:
-            print "ERROR: Command '%s' not known" % old
+            print("ERROR: Command '%s' not known" % old)
         else:
             cmds[new] = cmds[old]
-            print "OK"
+            print("OK")
     alias.usage = "<alias> <command>"
 
     def buffer( self, params ):
         """Dump specified output buffer"""
         index = params[0]
-        print self._shell.myout.buffer( int( index ) )
+        print(self._shell.myout.buffer( int( index ) ))
     buffer.usage = "<index>"
 
     def buffers( self, params ):
         """Show the available output buffers"""
         commands = self._shell.myout.bufferedCommands()
         if not commands:
-            print "SHELL: No buffered commands available yet. Start doing something."
+            print("SHELL: No buffered commands available yet. Start doing something.")
         else:
-            print "="*35, "Available Output Buffers", "="*27
+            print("="*35, "Available Output Buffers", "="*27)
             for index, cmd in enumerate( commands ):
-                print "| %s %s" % ( str( index ).ljust( 3 ), cmd )
-            print "="*88
+                print("| %s %s" % ( str( index ).ljust( 3 ), cmd ))
+            print("="*88)
 
     def build( self, params, cmd = "build" ):
         """Build a providee"""
@@ -149,7 +149,7 @@ class BitBakeShellCommands:
         self._checkParsed()
         names = globfilter( cooker.status.pkg_pn, globexpr )
         if len( names ) == 0: names = [ globexpr ]
-        print "SHELL: Building %s" % ' '.join( names )
+        print("SHELL: Building %s" % ' '.join( names ))
 
         td = taskdata.TaskData(cooker.configuration.abort)
         localdata = data.createCopy(cooker.configuration.data)
@@ -174,16 +174,16 @@ class BitBakeShellCommands:
             rq.execute_runqueue()
 
         except Providers.NoProvider:
-            print "ERROR: No Provider"
+            print("ERROR: No Provider")
             last_exception = Providers.NoProvider
 
         except runqueue.TaskFailure, fnids:
             for fnid in fnids:
-                print "ERROR: '%s' failed" % td.fn_index[fnid]
+                print("ERROR: '%s' failed" % td.fn_index[fnid])
             last_exception = runqueue.TaskFailure
 
         except build.EventException, e:
-            print "ERROR: Couldn't build '%s'" % names
+            print("ERROR: Couldn't build '%s'" % names)
             last_exception = e
 
 
@@ -216,7 +216,7 @@ class BitBakeShellCommands:
         if bbfile is not None:
             os.system( "%s %s" % ( os.environ.get( "EDITOR", "vi" ), bbfile ) )
         else:
-            print "ERROR: Nothing provides '%s'" % name
+            print("ERROR: Nothing provides '%s'" % name)
     edit.usage = "<providee>"
 
     def environment( self, params ):
@@ -239,14 +239,14 @@ class BitBakeShellCommands:
         global last_exception
         name = params[0]
         bf = completeFilePath( name )
-        print "SHELL: Calling '%s' on '%s'" % ( cmd, bf )
+        print("SHELL: Calling '%s' on '%s'" % ( cmd, bf ))
 
         try:
             cooker.buildFile(bf, cmd)
         except parse.ParseError:
-            print "ERROR: Unable to open or parse '%s'" % bf
+            print("ERROR: Unable to open or parse '%s'" % bf)
         except build.EventException, e:
-            print "ERROR: Couldn't build '%s'" % name
+            print("ERROR: Couldn't build '%s'" % name)
             last_exception = e
 
     fileBuild.usage = "<bbfile>"
@@ -270,62 +270,62 @@ class BitBakeShellCommands:
     def fileReparse( self, params ):
         """(re)Parse a bb file"""
         bbfile = params[0]
-        print "SHELL: Parsing '%s'" % bbfile
+        print("SHELL: Parsing '%s'" % bbfile)
         parse.update_mtime( bbfile )
         cooker.bb_cache.cacheValidUpdate(bbfile)
         fromCache = cooker.bb_cache.loadData(bbfile, cooker.configuration.data, cooker.status)
         cooker.bb_cache.sync()
         if False: #fromCache:
-            print "SHELL: File has not been updated, not reparsing"
+            print("SHELL: File has not been updated, not reparsing")
         else:
-            print "SHELL: Parsed"
+            print("SHELL: Parsed")
     fileReparse.usage = "<bbfile>"
 
     def abort( self, params ):
         """Toggle abort task execution flag (see bitbake -k)"""
         cooker.configuration.abort = not cooker.configuration.abort
-        print "SHELL: Abort Flag is now '%s'" % repr( cooker.configuration.abort )
+        print("SHELL: Abort Flag is now '%s'" % repr( cooker.configuration.abort ))
 
     def force( self, params ):
         """Toggle force task execution flag (see bitbake -f)"""
         cooker.configuration.force = not cooker.configuration.force
-        print "SHELL: Force Flag is now '%s'" % repr( cooker.configuration.force )
+        print("SHELL: Force Flag is now '%s'" % repr( cooker.configuration.force ))
 
     def help( self, params ):
         """Show a comprehensive list of commands and their purpose"""
-        print "="*30, "Available Commands", "="*30
+        print("="*30, "Available Commands", "="*30)
         for cmd in sorted(cmds):
             function, numparams, usage, helptext = cmds[cmd]
-            print "| %s | %s" % (usage.ljust(30), helptext)
-        print "="*78
+            print("| %s | %s" % (usage.ljust(30), helptext))
+        print("="*78)
 
     def lastError( self, params ):
         """Show the reason or log that was produced by the last BitBake event exception"""
         if last_exception is None:
-            print "SHELL: No Errors yet (Phew)..."
+            print("SHELL: No Errors yet (Phew)...")
         else:
             reason, event = last_exception.args
-            print "SHELL: Reason for the last error: '%s'" % reason
+            print("SHELL: Reason for the last error: '%s'" % reason)
             if ':' in reason:
                 msg, filename = reason.split( ':' )
                 filename = filename.strip()
-                print "SHELL: Dumping log file for last error:"
+                print("SHELL: Dumping log file for last error:")
                 try:
-                    print open( filename ).read()
+                    print(open( filename ).read())
                 except IOError:
-                    print "ERROR: Couldn't open '%s'" % filename
+                    print("ERROR: Couldn't open '%s'" % filename)
 
     def match( self, params ):
         """Dump all files or providers matching a glob expression"""
         what, globexpr = params
         if what == "files":
             self._checkParsed()
-            for key in globfilter( cooker.status.pkg_fn, globexpr ): print key
+            for key in globfilter( cooker.status.pkg_fn, globexpr ): print(key)
         elif what == "providers":
             self._checkParsed()
-            for key in globfilter( cooker.status.pkg_pn, globexpr ): print key
+            for key in globfilter( cooker.status.pkg_pn, globexpr ): print(key)
         else:
-            print "Usage: match %s" % self.print_.usage
+            print("Usage: match %s" % self.print_.usage)
     match.usage = "<files|providers> <glob>"
 
     def new( self, params ):
@@ -335,15 +335,15 @@ class BitBakeShellCommands:
         fulldirname = "%s/%s" % ( packages, dirname )
 
         if not os.path.exists( fulldirname ):
-            print "SHELL: Creating '%s'" % fulldirname
+            print("SHELL: Creating '%s'" % fulldirname)
             os.mkdir( fulldirname )
         if os.path.exists( fulldirname ) and os.path.isdir( fulldirname ):
             if os.path.exists( "%s/%s" % ( fulldirname, filename ) ):
-                print "SHELL: ERROR: %s/%s already exists" % ( fulldirname, filename )
+                print("SHELL: ERROR: %s/%s already exists" % ( fulldirname, filename ))
                 return False
-            print "SHELL: Creating '%s/%s'" % ( fulldirname, filename )
+            print("SHELL: Creating '%s/%s'" % ( fulldirname, filename ))
             newpackage = open( "%s/%s" % ( fulldirname, filename ), "w" )
-            print >>newpackage, """DESCRIPTION = ""
+            print("""DESCRIPTION = ""
 SECTION = ""
 AUTHOR = ""
 HOMEPAGE = ""
@@ -370,7 +370,7 @@ SRC_URI = ""
 #do_install() {
 #
 #}
-"""
+""", file=newpackage)
             newpackage.close()
             os.system( "%s %s/%s" % ( os.environ.get( "EDITOR" ), fulldirname, filename ) )
     new.usage = "<directory> <filename>"
@@ -390,14 +390,14 @@ SRC_URI = ""
     def pasteLog( self, params ):
         """Send the last event exception error log (if there is one) to http://rafb.net/paste"""
         if last_exception is None:
-            print "SHELL: No Errors yet (Phew)..."
+            print("SHELL: No Errors yet (Phew)...")
         else:
             reason, event = last_exception.args
-            print "SHELL: Reason for the last error: '%s'" % reason
+            print("SHELL: Reason for the last error: '%s'" % reason)
             if ':' in reason:
                 msg, filename = reason.split( ':' )
                 filename = filename.strip()
-                print "SHELL: Pasting log file to pastebin..."
+                print("SHELL: Pasting log file to pastebin...")
 
                 file = open( filename ).read()
                 sendToPastebin( "contents of " + filename, file )
@@ -419,23 +419,23 @@ SRC_URI = ""
         cooker.buildDepgraph()
         global parsed
         parsed = True
-        print
+        print()
 
     def reparse( self, params ):
         """(re)Parse a providee's bb file"""
         bbfile = self._findProvider( params[0] )
         if bbfile is not None:
-            print "SHELL: Found bbfile '%s' for '%s'" % ( bbfile, params[0] )
+            print("SHELL: Found bbfile '%s' for '%s'" % ( bbfile, params[0] ))
             self.fileReparse( [ bbfile ] )
         else:
-            print "ERROR: Nothing provides '%s'" % params[0]
+            print("ERROR: Nothing provides '%s'" % params[0])
     reparse.usage = "<providee>"
 
     def getvar( self, params ):
         """Dump the contents of an outer BitBake environment variable"""
         var = params[0]
         value = data.getVar( var, cooker.configuration.data, 1 )
-        print value
+        print(value)
     getvar.usage = "<variable>"
 
     def peek( self, params ):
@@ -445,9 +445,9 @@ SRC_URI = ""
         if bbfile is not None:
             the_data = cooker.bb_cache.loadDataFull(bbfile, cooker.configuration.data)
             value = the_data.getVar( var, 1 )
-            print value
+            print(value)
         else:
-            print "ERROR: Nothing provides '%s'" % name
+            print("ERROR: Nothing provides '%s'" % name)
     peek.usage = "<providee> <variable>"
 
     def poke( self, params ):
@@ -455,7 +455,7 @@ SRC_URI = ""
         name, var, value = params
         bbfile = self._findProvider( name )
         if bbfile is not None:
-            print "ERROR: Sorry, this functionality is currently broken"
+            print("ERROR: Sorry, this functionality is currently broken")
             #d = cooker.pkgdata[bbfile]
             #data.setVar( var, value, d )
 
@@ -463,7 +463,7 @@ SRC_URI = ""
             #cooker.pkgdata.setDirty(bbfile, d)
             #print "OK"
         else:
-            print "ERROR: Nothing provides '%s'" % name
+            print("ERROR: Nothing provides '%s'" % name)
     poke.usage = "<providee> <variable> <value>"
 
     def print_( self, params ):
@@ -471,12 +471,12 @@ SRC_URI = ""
         what = params[0]
         if what == "files":
             self._checkParsed()
-            for key in cooker.status.pkg_fn: print key
+            for key in cooker.status.pkg_fn: print(key)
         elif what == "providers":
             self._checkParsed()
-            for key in cooker.status.providers: print key
+            for key in cooker.status.providers: print(key)
         else:
-            print "Usage: print %s" % self.print_.usage
+            print("Usage: print %s" % self.print_.usage)
     print_.usage = "<files|providers>"
 
     def python( self, params ):
@@ -496,7 +496,7 @@ SRC_URI = ""
         """Set an outer BitBake environment variable"""
         var, value = params
         data.setVar( var, value, cooker.configuration.data )
-        print "OK"
+        print("OK")
     setVar.usage = "<variable> <value>"
 
     def rebuild( self, params ):
@@ -508,7 +508,7 @@ SRC_URI = ""
     def shell( self, params ):
         """Execute a shell command and dump the output"""
         if params != "":
-            print commands.getoutput( " ".join( params ) )
+            print(commands.getoutput( " ".join( params ) ))
     shell.usage = "<...>"
 
     def stage( self, params ):
@@ -518,17 +518,17 @@ SRC_URI = ""
 
     def status( self, params ):
         """<just for testing>"""
-        print "-" * 78
-        print "building list = '%s'" % cooker.building_list
-        print "build path = '%s'" % cooker.build_path
-        print "consider_msgs_cache = '%s'" % cooker.consider_msgs_cache
-        print "build stats = '%s'" % cooker.stats
-        if last_exception is not None: print "last_exception = '%s'" % repr( last_exception.args )
-        print "memory output contents = '%s'" % self._shell.myout._buffer
+        print("-" * 78)
+        print("building list = '%s'" % cooker.building_list)
+        print("build path = '%s'" % cooker.build_path)
+        print("consider_msgs_cache = '%s'" % cooker.consider_msgs_cache)
+        print("build stats = '%s'" % cooker.stats)
+        if last_exception is not None: print("last_exception = '%s'" % repr( last_exception.args ))
+        print("memory output contents = '%s'" % self._shell.myout._buffer)
 
     def test( self, params ):
         """<just for testing>"""
-        print "testCommand called with '%s'" % params
+        print("testCommand called with '%s'" % params)
 
     def unpack( self, params ):
         """Execute 'unpack' on a providee"""
@@ -553,12 +553,12 @@ SRC_URI = ""
         try:
             providers = cooker.status.providers[item]
         except KeyError:
-            print "SHELL: ERROR: Nothing provides", preferred
+            print("SHELL: ERROR: Nothing provides", preferred)
         else:
             for provider in providers:
                 if provider == pf: provider = " (***) %s" % provider
                 else:              provider = "       %s" % provider
-                print provider
+                print(provider)
     which.usage = "<providee>"
 
 ##########################################################################
@@ -594,9 +594,9 @@ def sendToPastebin( desc, content ):
 
     if response.status == 302:
         location = response.getheader( "location" ) or "unknown"
-        print "SHELL: Pasted to http://%s%s" % ( host, location )
+        print("SHELL: Pasted to http://%s%s" % ( host, location ))
     else:
-        print "ERROR: %s %s" % ( response.status, response.reason )
+        print("ERROR: %s %s" % ( response.status, response.reason ))
 
 def completer( text, state ):
     """Return a possible readline completion"""
@@ -718,7 +718,7 @@ class BitBakeShell:
         except IOError:
             pass  # It doesn't exist yet.
 
-        print __credits__
+        print(__credits__)
 
     def cleanup( self ):
         """Write readline history and clean up resources"""
@@ -726,7 +726,7 @@ class BitBakeShell:
         try:
             readline.write_history_file( self.historyfilename )
         except:
-            print "SHELL: Unable to save command history"
+            print("SHELL: Unable to save command history")
 
     def registerCommand( self, command, function, numparams = 0, usage = "", helptext = "" ):
         """Register a command"""
@@ -740,11 +740,11 @@ class BitBakeShell:
         try:
             function, numparams, usage, helptext = cmds[command]
         except KeyError:
-            print "SHELL: ERROR: '%s' command is not a valid command." % command
+            print("SHELL: ERROR: '%s' command is not a valid command." % command)
             self.myout.removeLast()
         else:
             if (numparams != -1) and (not len( params ) == numparams):
-                print "Usage: '%s'" % usage
+                print("Usage: '%s'" % usage)
                 return
 
             result = function( self.commands, params )
@@ -759,7 +759,7 @@ class BitBakeShell:
                 if not cmdline:
                     continue
                 if "|" in cmdline:
-                    print "ERROR: '|' in startup file is not allowed. Ignoring line"
+                    print("ERROR: '|' in startup file is not allowed. Ignoring line")
                     continue
                 self.commandQ.put( cmdline.strip() )
 
@@ -801,10 +801,10 @@ class BitBakeShell:
                                 sys.stdout.write( pipe.fromchild.read() )
                         #
             except EOFError:
-                print
+                print()
                 return
             except KeyboardInterrupt:
-                print
+                print()
 
 ##########################################################################
 # Start function - called from the BitBake command line utility
@@ -819,4 +819,4 @@ def start( aCooker ):
     bbshell.cleanup()
 
 if __name__ == "__main__":
-    print "SHELL: Sorry, this program should only be called by BitBake."
+    print("SHELL: Sorry, this program should only be called by BitBake.")

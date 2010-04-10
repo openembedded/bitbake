@@ -22,6 +22,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from __future__ import print_function
 import sys, os, glob, os.path, re, time
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
@@ -407,51 +408,51 @@ class BBCooker:
 
         # Prints a flattened form of package-depends below where subpackages of a package are merged into the main pn
         depends_file = file('pn-depends.dot', 'w' )
-        print >> depends_file, "digraph depends {"
+        print("digraph depends {", file=depends_file)
         for pn in depgraph["pn"]:
             fn = depgraph["pn"][pn]["filename"]
             version = depgraph["pn"][pn]["version"]
-            print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)
+            print('"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn), file=depends_file)
         for pn in depgraph["depends"]:
             for depend in depgraph["depends"][pn]:
-                print >> depends_file, '"%s" -> "%s"' % (pn, depend)
+                print('"%s" -> "%s"' % (pn, depend), file=depends_file)
         for pn in depgraph["rdepends-pn"]:
             for rdepend in depgraph["rdepends-pn"][pn]:
-                print >> depends_file, '"%s" -> "%s" [style=dashed]' % (pn, rdepend)
-        print >> depends_file,  "}"
+                print('"%s" -> "%s" [style=dashed]' % (pn, rdepend), file=depends_file)
+        print("}", file=depends_file)
         bb.msg.plain("PN dependencies saved to 'pn-depends.dot'")
 
         depends_file = file('package-depends.dot', 'w' )
-        print >> depends_file, "digraph depends {"
+        print("digraph depends {", file=depends_file)
         for package in depgraph["packages"]:
             pn = depgraph["packages"][package]["pn"]
             fn = depgraph["packages"][package]["filename"]
             version = depgraph["packages"][package]["version"]
             if package == pn:
-                print >> depends_file, '"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn)
+                print('"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn), file=depends_file)
             else:
-                print >> depends_file, '"%s" [label="%s(%s) %s\\n%s"]' % (package, package, pn, version, fn)
+                print('"%s" [label="%s(%s) %s\\n%s"]' % (package, package, pn, version, fn), file=depends_file)
             for depend in depgraph["depends"][pn]:
-                print >> depends_file, '"%s" -> "%s"' % (package, depend)
+                print('"%s" -> "%s"' % (package, depend), file=depends_file)
         for package in depgraph["rdepends-pkg"]:
             for rdepend in depgraph["rdepends-pkg"][package]:
-                print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
+                print('"%s" -> "%s" [style=dashed]' % (package, rdepend), file=depends_file)
         for package in depgraph["rrecs-pkg"]:
             for rdepend in depgraph["rrecs-pkg"][package]:
-                print >> depends_file, '"%s" -> "%s" [style=dashed]' % (package, rdepend)
-        print >> depends_file,  "}"
+                print('"%s" -> "%s" [style=dashed]' % (package, rdepend), file=depends_file)
+        print("}", file=depends_file)
         bb.msg.plain("Package dependencies saved to 'package-depends.dot'")
 
         tdepends_file = file('task-depends.dot', 'w' )
-        print >> tdepends_file, "digraph depends {"
+        print("digraph depends {", file=tdepends_file)
         for task in depgraph["tdepends"]:
             (pn, taskname) = task.rsplit(".", 1)
             fn = depgraph["pn"][pn]["filename"]
             version = depgraph["pn"][pn]["version"]
-            print >> tdepends_file, '"%s.%s" [label="%s %s\\n%s\\n%s"]' % (pn, taskname, pn, taskname, version, fn)
+            print('"%s.%s" [label="%s %s\\n%s\\n%s"]' % (pn, taskname, pn, taskname, version, fn), file=tdepends_file)
             for dep in depgraph["tdepends"][task]:
-                print >> tdepends_file, '"%s" -> "%s"' % (task, dep)
-        print >> tdepends_file,  "}"
+                print('"%s" -> "%s"' % (task, dep), file=tdepends_file)
+        print("}", file=tdepends_file)
         bb.msg.plain("Task dependencies saved to 'task-depends.dot'")
 
     def buildDepgraph( self ):

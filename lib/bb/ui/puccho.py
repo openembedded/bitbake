@@ -110,7 +110,7 @@ class MetaDataLoader(gobject.GObject):
             except Exception, e:
                 gobject.idle_add (MetaDataLoader.emit_error_signal, self.loader,
                     "Unable to download repository metadata")
-                print e
+                print(e)
 
     def try_fetch_from_url (self, url):
         # Try and download the metadata. Firing a signal if successful
@@ -326,8 +326,8 @@ class MainWindow (gtk.Window):
         conf = None
         if (response_id == BuildSetupDialog.RESPONSE_BUILD):
             dialog.update_configuration()
-            print dialog.configuration.machine, dialog.configuration.distro, \
-                dialog.configuration.image
+            print(dialog.configuration.machine, dialog.configuration.distro, \
+                dialog.configuration.image)
             conf = dialog.configuration
 
         dialog.destroy()
@@ -383,11 +383,11 @@ def running_build_succeeded_cb (running_build, manager):
     # BuildManager. It can then hook onto the signals directly and drive
     # interesting things it cares about.
     manager.notify_build_succeeded ()
-    print "build succeeded"
+    print("build succeeded")
 
 def running_build_failed_cb (running_build, manager):
     # As above
-    print "build failed"
+    print("build failed")
     manager.notify_build_failed ()
 
 def init (server, eventHandler):

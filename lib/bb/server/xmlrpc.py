@@ -42,7 +42,7 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import inspect, select
 
 if sys.hexversion < 0x020600F0:
-    print "Sorry, python 2.6 or later is required for bitbake's XMLRPC mode"
+    print("Sorry, python 2.6 or later is required for bitbake's XMLRPC mode")
     sys.exit(1)
 
 class BitBakeServerCommands():
@@ -74,7 +74,7 @@ class BitBakeServerCommands():
         Trigger the server to quit
         """
         self.server.quit = True
-        print "Server (cooker) exitting"
+        print("Server (cooker) exitting")
         return
 
     def ping(self):

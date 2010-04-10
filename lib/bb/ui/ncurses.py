@@ -232,10 +232,10 @@ class NCursesUI:
                 return
             ret = server.runCommand(cmdline)
             if ret != True:
-                print "Couldn't get default commandlind! %s" % ret
+                print("Couldn't get default commandlind! %s" % ret)
                 return
         except xmlrpclib.Fault, x:
-            print "XMLRPC Fault getting commandline:\n %s" % x
+            print("XMLRPC Fault getting commandline:\n %s" % x)
             return
 
         exitflag = False
@@ -324,7 +324,7 @@ class NCursesUI:
 
 def init(server, eventHandler):
     if not os.isatty(sys.stdout.fileno()):
-        print "FATAL: Unable to run 'ncurses' UI without a TTY."
+        print("FATAL: Unable to run 'ncurses' UI without a TTY.")
         return
     ui = NCursesUI()
     try:

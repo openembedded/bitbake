@@ -44,10 +44,10 @@ def init(server, eventHandler):
             return 1
         ret = server.runCommand(cmdline)
         if ret != True:
-            print "Couldn't get default commandline! %s" % ret
+            print("Couldn't get default commandline! %s" % ret)
             return 1
     except xmlrpclib.Fault, x:
-        print "XMLRPC Fault getting commandline:\n %s" % x
+        print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
     shutdown = 0
@@ -65,39 +65,39 @@ def init(server, eventHandler):
             if shutdown and helper.needUpdate:
                 activetasks, failedtasks = helper.getTasks()
                 if activetasks:
-                    print "Waiting for %s active tasks to finish:" % len(activetasks)
+                    print("Waiting for %s active tasks to finish:" % len(activetasks))
                     tasknum = 1
                     for task in activetasks:
-                        print "%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task)
+                        print("%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task))
                         tasknum = tasknum + 1
 
             if isinstance(event, bb.msg.MsgPlain):
-                print event._message
+                print(event._message)
                 continue
             if isinstance(event, bb.msg.MsgDebug):
-                print 'DEBUG: ' + event._message
+                print('DEBUG: ' + event._message)
                 continue
             if isinstance(event, bb.msg.MsgNote):
-                print 'NOTE: ' + event._message
+                print('NOTE: ' + event._message)
                 continue
             if isinstance(event, bb.msg.MsgWarn):
-                print 'WARNING: ' + event._message
+                print('WARNING: ' + event._message)
                 continue
             if isinstance(event, bb.msg.MsgError):
                 return_value = 1
-                print 'ERROR: ' + event._message
+                print('ERROR: ' + event._message)
                 continue
             if isinstance(event, bb.msg.MsgFatal):
                 return_value = 1
-                print 'FATAL: ' + event._message
+                print('FATAL: ' + event._message)
                 break
             if isinstance(event, bb.build.TaskFailed):
                 return_value = 1
                 logfile = event.logfile
                 if logfile:
-                    print "ERROR: Logfile of failure stored in: %s" % logfile
+                    print("ERROR: Logfile of failure stored in: %s" % logfile)
                     if 1 or includelogs:
-                        print "Log data follows:"
+                        print("Log data follows:")
                         f = open(logfile, "r")
                         lines = []
                         while True:
@@ -110,13 +110,13 @@ def init(server, eventHandler):
                                 if len(lines) > int(loglines):
                                     lines.pop(0)
                             else:
-                                print '| %s' % l
+                                print('| %s' % l)
                         f.close()
                         if lines:
                             for line in lines:
-                                print line
+                                print(line)
             if isinstance(event, bb.build.TaskBase):
-                print "NOTE: %s" % event._message
+                print("NOTE: %s" % event._message)
                 continue
             if isinstance(event, bb.event.ParseProgress):
                 x = event.sofar
@@ -132,8 +132,8 @@ def init(server, eventHandler):
                         sys.stdout.write("done.")
                         sys.stdout.flush()
                 if x == y:
-                    print("\nParsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
-                        % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors))
+                    print(("\nParsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
+                        % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
             if isinstance(event, bb.command.CookerCommandCompleted):
@@ -143,7 +143,7 @@ def init(server, eventHandler):
                 continue
             if isinstance(event, bb.command.CookerCommandFailed):
                 return_value = 1
-                print "Command execution failed: %s" % event.error
+                print("Command execution failed: %s" % event.error)
                 break
             if isinstance(event, bb.cooker.CookerExit):
                 break
@@ -165,17 +165,17 @@ def init(server, eventHandler):
                 continue
             if isinstance(event, bb.event.RecipeParsed):
                 continue
-            print "Unknown Event: %s" % event
+            print("Unknown Event: %s" % event)
 
         except KeyboardInterrupt:
             if shutdown == 2:
-                print "\nThird Keyboard Interrupt, exit.\n"
+                print("\nThird Keyboard Interrupt, exit.\n")
                 break
             if shutdown == 1:
-                print "\nSecond Keyboard Interrupt, stopping...\n"
+                print("\nSecond Keyboard Interrupt, stopping...\n")
                 server.runCommand(["stateStop"])
             if shutdown == 0:
-                print "\nKeyboard Interrupt, closing down...\n"
+                print("\nKeyboard Interrupt, closing down...\n")
                 server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass

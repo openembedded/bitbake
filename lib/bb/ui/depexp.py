@@ -201,14 +201,14 @@ def init(server, eventHandler):
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
         if not cmdline or cmdline[0] != "generateDotGraph":
-            print "This UI is only compatible with the -g option"
+            print("This UI is only compatible with the -g option")
             return
         ret = server.runCommand(["generateDepTreeEvent", cmdline[1], cmdline[2]])
         if ret != True:
-            print "Couldn't run command! %s" % ret
+            print("Couldn't run command! %s" % ret)
             return
     except xmlrpclib.Fault, x:
-        print "XMLRPC Fault getting commandline:\n %s" % x
+        print("XMLRPC Fault getting commandline:\n %s" % x)
         return
 
     shutdown = 0
@@ -233,8 +233,8 @@ def init(server, eventHandler):
                 x = event.sofar
                 y = event.total
                 if x == y:
-                    print("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors."
-                        % ( event.cached, event.parsed, event.skipped, event.masked, event.errors))
+                    print(("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors."
+                        % ( event.cached, event.parsed, event.skipped, event.masked, event.errors)))
                     pbar.hide()
                 gtk.gdk.threads_enter()
                 pbar.progress.set_fraction(float(x)/float(y))
@@ -250,7 +250,7 @@ def init(server, eventHandler):
             if isinstance(event, bb.command.CookerCommandCompleted):
                 continue
             if isinstance(event, bb.command.CookerCommandFailed):
-                print "Command execution failed: %s" % event.error
+                print("Command execution failed: %s" % event.error)
                 break
             if isinstance(event, bb.cooker.CookerExit):
                 break
@@ -259,13 +259,13 @@ def init(server, eventHandler):
 
         except KeyboardInterrupt:
             if shutdown == 2:
-                print "\nThird Keyboard Interrupt, exit.\n"
+                print("\nThird Keyboard Interrupt, exit.\n")
                 break
             if shutdown == 1:
-                print "\nSecond Keyboard Interrupt, stopping...\n"
+                print("\nSecond Keyboard Interrupt, stopping...\n")
                 server.runCommand(["stateStop"])
             if shutdown == 0:
-                print "\nKeyboard Interrupt, closing down...\n"
+                print("\nKeyboard Interrupt, closing down...\n")
                 server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass

@@ -852,7 +852,7 @@ class RunQueue:
             return False
 
         if self.state is runQueueChildProcess:
-            print "Child process"
+            print("Child process")
             return False
 
         # Loop
@@ -1192,5 +1192,5 @@ class runQueuePipe():
         while self.read():
             continue
         if len(self.queue) > 0:
-            print "Warning, worker left partial message"
+            print("Warning, worker left partial message")
         os.close(self.fd)

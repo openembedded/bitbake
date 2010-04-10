@@ -550,7 +550,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
         if not sstat:
             sstat = os.lstat(src)
     except Exception, e:
-        print "movefile: Stating source file failed...", e
+        print("movefile: Stating source file failed...", e)
         return None
 
     destexists = 1
@@ -578,7 +578,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
             os.unlink(src)
             return os.lstat(dest)
         except Exception, e:
-            print "movefile: failed to properly create symlink:", dest, "->", target, e
+            print("movefile: failed to properly create symlink:", dest, "->", target, e)
             return None
 
     renamefailed = 1
@@ -589,7 +589,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
         except Exception, e:
             if e[0] != errno.EXDEV:
                 # Some random error.
-                print "movefile: Failed to move", src, "to", dest, e
+                print("movefile: Failed to move", src, "to", dest, e)
                 return None
             # Invalid cross-device-link 'bind' mounted or actually Cross-Device
 
@@ -601,13 +601,13 @@ def movefile(src, dest, newmtime = None, sstat = None):
                 os.rename(dest + "#new", dest)
                 didcopy = 1
             except Exception, e:
-                print 'movefile: copy', src, '->', dest, 'failed.', e
+                print('movefile: copy', src, '->', dest, 'failed.', e)
                 return None
         else:
             #we don't yet handle special, so we need to fall back to /bin/mv
             a = getstatusoutput("/bin/mv -f " + "'" + src + "' '" + dest + "'")
             if a[0] != 0:
-                print "movefile: Failed to move special file:" + src + "' to '" + dest + "'", a
+                print("movefile: Failed to move special file:" + src + "' to '" + dest + "'", a)
                 return None # failure
         try:
             if didcopy:
@@ -615,7 +615,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
                 os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
                 os.unlink(src)
         except Exception, e:
-            print "movefile: Failed to chown/chmod/unlink", dest, e
+            print("movefile: Failed to chown/chmod/unlink", dest, e)
             return None
 
     if newmtime:
@@ -636,7 +636,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         if not sstat:
             sstat = os.lstat(src)
     except Exception, e:
-        print "copyfile: Stating source file failed...", e
+        print("copyfile: Stating source file failed...", e)
         return False
 
     destexists = 1
@@ -663,7 +663,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
             #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
             return os.lstat(dest)
         except Exception, e:
-            print "copyfile: failed to properly create symlink:", dest, "->", target, e
+            print("copyfile: failed to properly create symlink:", dest, "->", target, e)
             return False
 
     if stat.S_ISREG(sstat[stat.ST_MODE]):
@@ -671,19 +671,19 @@ def copyfile(src, dest, newmtime = None, sstat = None):
             shutil.copyfile(src, dest + "#new")
             os.rename(dest + "#new", dest)
         except Exception, e:
-            print 'copyfile: copy', src, '->', dest, 'failed.', e
+            print('copyfile: copy', src, '->', dest, 'failed.', e)
             return False
     else:
         #we don't yet handle special, so we need to fall back to /bin/mv
         a = getstatusoutput("/bin/cp -f " + "'" + src + "' '" + dest + "'")
         if a[0] != 0:
-            print "copyfile: Failed to copy special file:" + src + "' to '" + dest + "'", a
+            print("copyfile: Failed to copy special file:" + src + "' to '" + dest + "'", a)
             return False # failure
     try:
         os.lchown(dest, sstat[stat.ST_UID], sstat[stat.ST_GID])
         os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
     except Exception, e:
-        print "copyfile: Failed to chown/chmod/unlink", dest, e
+        print("copyfile: Failed to chown/chmod/unlink", dest, e)
         return False
 
     if newmtime:

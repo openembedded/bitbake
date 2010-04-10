@@ -55,15 +55,15 @@ def init (server, eventHandler):
     window.cur_build_tv.set_model (running_build.model)
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
-        print cmdline
+        print(cmdline)
         if not cmdline:
             return 1
         ret = server.runCommand(cmdline)
         if ret != True:
-            print "Couldn't get default commandline! %s" % ret
+            print("Couldn't get default commandline! %s" % ret)
             return 1
     except xmlrpclib.Fault, x:
-        print "XMLRPC Fault getting commandline:\n %s" % x
+        print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
     # Use a timeout function for probing the event queue to find out if we
