@@ -301,12 +301,12 @@ class NCursesUI:
                     taw.setText(0, 0, "")
                     if activetasks:
                         taw.appendText("Active Tasks:\n")
-                        for task in activetasks:
-                            taw.appendText(task)
+                        for task in activetasks.itervalues():
+                            taw.appendText(task["title"])
                     if failedtasks:
                         taw.appendText("Failed Tasks:\n")
                         for task in failedtasks:
-                            taw.appendText(task)
+                            taw.appendText(task["title"])
 
                 curses.doupdate()
             except KeyboardInterrupt:
