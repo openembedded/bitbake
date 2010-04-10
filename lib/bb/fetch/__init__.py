@@ -118,9 +118,9 @@ def uri_replace(uri, uri_find, uri_replace, d):
 #   bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: operating on %s" % uri)
     if not uri or not uri_find or not uri_replace:
         bb.msg.debug(1, bb.msg.domain.Fetcher, "uri_replace: passed an undefined value, not replacing")
-    uri_decoded = list(bb.decodeurl(uri))
-    uri_find_decoded = list(bb.decodeurl(uri_find))
-    uri_replace_decoded = list(bb.decodeurl(uri_replace))
+    uri_decoded = list(decodeurl(uri))
+    uri_find_decoded = list(decodeurl(uri_find))
+    uri_replace_decoded = list(decodeurl(uri_replace))
     result_decoded = ['','','','','',{}]
     for i in uri_find_decoded:
         loc = uri_find_decoded.index(i)
@@ -141,7 +141,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
 #           else:
 #               for j in i:
 #                   FIXME: apply replacements against options
-    return bb.encodeurl(result_decoded)
+    return encodeurl(result_decoded)
 
 methods = []
 urldata_cache = {}
@@ -474,7 +474,7 @@ class FetchData(object):
     """
     def __init__(self, url, d):
         self.localfile = ""
-        (self.type, self.host, self.path, self.user, self.pswd, self.parm) = bb.decodeurl(data.expand(url, d))
+        (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(data.expand(url, d))
         self.date = Fetch.getSRCDate(self, d)
         self.url = url
         if not self.user and "user" in self.parm:

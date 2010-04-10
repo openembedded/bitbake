@@ -25,6 +25,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import re, bb.data, os, sys
+import bb.utils
 from bb.parse import ParseError, resolve_file, ast
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
@@ -60,7 +61,7 @@ def include(oldfn, fn, data, error_out):
     if not os.path.isabs(fn):
         dname = os.path.dirname(oldfn)
         bbpath = "%s:%s" % (dname, bb.data.getVar("BBPATH", data, 1))
-        abs_fn = bb.which(bbpath, fn)
+        abs_fn = bb.utils.which(bbpath, fn)
         if abs_fn:
             fn = abs_fn
 

@@ -29,6 +29,7 @@ __all__ = [ 'ParseError', 'SkipPackage', 'cached_mtime', 'mark_dependency',
 handlers = []
 
 import bb, os
+import bb.utils
 
 class ParseError(Exception):
     """Exception raised when parsing fails"""
@@ -82,7 +83,7 @@ def init(fn, data):
 
 def resolve_file(fn, d):
     if not os.path.isabs(fn):
-        fn = bb.which(bb.data.getVar("BBPATH", d, 1), fn)
+        fn = bb.utils.which(bb.data.getVar("BBPATH", d, 1), fn)
         if not fn:
             raise IOError("file %s not found" % fn)
 
