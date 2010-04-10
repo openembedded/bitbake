@@ -86,14 +86,14 @@ def set_debug_level(level):
 def set_verbose(level):
     verbose = level
 
-def set_debug_domains(msgdomainstrings):
-    for domainstr in msgdomainstrings:
+def set_debug_domains(strdomains):
+    for domainstr in strdomains:
         for d in domain:
             if domain._fields[d] == domainstr:
                 debug_level[d] += 1
                 break
         else:
-            warn(None, "Logging domain %s is not valid, ignoring" % domain)
+            warn(None, "Logging domain %s is not valid, ignoring" % domainstr)
 
 #
 # Message handling functions
