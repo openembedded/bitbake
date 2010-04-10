@@ -83,6 +83,9 @@ def set_debug_level(level):
         debug_level[d] = level
     debug_level[domain.Default] = level
 
+def get_debug_level(msgdomain = domain.Default):
+    return debug_level[msgdomain]
+
 def set_verbose(level):
     verbose = level
 
