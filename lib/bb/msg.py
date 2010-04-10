@@ -34,18 +34,19 @@ def _NamedTuple(name, fields):
     return Tuple(*range(len(fields)))
 
 domain = _NamedTuple("Domain",(
-    'Build',
-    'Cache',
-    'Collection',
-    'Data',
-    'Depends',
-    'Fetcher',
-    'Parsing',
-    'PersistData',
-    'Provider',
-    'RunQueue',
-    'TaskData',
-    'Util'))
+    "Default",
+    "Build",
+    "Cache",
+    "Collection",
+    "Data",
+    "Depends",
+    "Fetcher",
+    "Parsing",
+    "PersistData",
+    "Provider",
+    "RunQueue",
+    "TaskData",
+    "Util"))
 
 
 class MsgBase(bb.event.Event):
@@ -80,13 +81,13 @@ class MsgPlain(MsgBase):
 def set_debug_level(level):
     for d in domain:
         debug_level[d] = level
-    debug_level['default'] = level
+    debug_level[domain.Default] = level
 
 def set_verbose(level):
     verbose = level
 
-def set_debug_domains(domain_strings):
-    for domainstr in domain_strings:
+def set_debug_domains(msgdomainstrings):
+    for domainstr in msgdomainstrings:
         for d in domain:
             if domain._fields[d] == domainstr:
                 debug_level[d] += 1
@@ -98,33 +99,35 @@ def set_debug_domains(domain_strings):
 # Message handling functions
 #
 
-def debug(level, domain, msg, fn = None):
-    if not domain:
-        domain = 'default'
-    if debug_level[domain] >= level:
+def debug(level, msgdomain, msg, fn = None):
+    if not msgdomain:
+        msgdomain = domain.Default
+
+    if debug_level[msgdomain] >= level:
         bb.event.fire(MsgDebug(msg), None)
         if not bb.event._ui_handlers:
             print 'DEBUG: ' + msg
 
-def note(level, domain, msg, fn = None):
-    if not domain:
-        domain = 'default'
-    if level == 1 or verbose or debug_level[domain] >= 1:
+def note(level, msgdomain, msg, fn = None):
+    if not msgdomain:
+        msgdomain = domain.Default
+
+    if level == 1 or verbose or debug_level[msgdomain] >= 1:
         bb.event.fire(MsgNote(msg), None)
         if not bb.event._ui_handlers:
             print 'NOTE: ' + msg
 
-def warn(domain, msg, fn = None):
+def warn(msgdomain, msg, fn = None):
     bb.event.fire(MsgWarn(msg), None)
     if not bb.event._ui_handlers:
         print 'WARNING: ' + msg
 
-def error(domain, msg, fn = None):
+def error(msgdomain, msg, fn = None):
     bb.event.fire(MsgError(msg), None)
     if not bb.event._ui_handlers:
         print 'ERROR: ' + msg
 
-def fatal(domain, msg, fn = None):
+def fatal(msgdomain, msg, fn = None):
     bb.event.fire(MsgFatal(msg), None)
     if not bb.event._ui_handlers:
         print 'FATAL: ' + msg
