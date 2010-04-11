@@ -27,6 +27,7 @@ BitBake build tools.
 
 import os
 import bb
+import bb.utils
 from   bb import data
 from   bb.fetch import Fetch
 
@@ -47,7 +48,7 @@ class Local(Fetch):
         if path[0] != "/":
             filespath = data.getVar('FILESPATH', d, 1)
             if filespath:
-                newpath = bb.which(filespath, path)
+                newpath = bb.utils.which(filespath, path)
             if not newpath:
                 filesdir = data.getVar('FILESDIR', d, 1)
                 if filesdir:

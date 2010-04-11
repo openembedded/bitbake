@@ -30,6 +30,7 @@ import bb
 from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
+from   bb.fetch import encodeurl, decodeurl
 
 class Wget(Fetch):
     """Class to fetch urls via 'wget'"""
@@ -41,7 +42,7 @@ class Wget(Fetch):
 
     def localpath(self, url, ud, d):
 
-        url = bb.encodeurl([ud.type, ud.host, ud.path, ud.user, ud.pswd, {}])
+        url = encodeurl([ud.type, ud.host, ud.path, ud.user, ud.pswd, {}])
         ud.basename = os.path.basename(ud.path)
         ud.localfile = data.expand(os.path.basename(url), d)
 
@@ -60,7 +61,7 @@ class Wget(Fetch):
                 fetchcmd = data.getVar("FETCHCOMMAND", d, 1)
 
             uri = uri.split(";")[0]
-            uri_decoded = list(bb.decodeurl(uri))
+            uri_decoded = list(decodeurl(uri))
             uri_type = uri_decoded[0]
             uri_host = uri_decoded[1]
 

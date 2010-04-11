@@ -16,6 +16,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import bb, os
+import bb.utils
 
 try:
     import sqlite3
@@ -49,7 +50,7 @@ class PersistData:
         try:
             os.stat(self.cachedir)
         except OSError:
-            bb.mkdirhier(self.cachedir)
+            bb.utils.mkdirhier(self.cachedir)
 
         self.cachefile = os.path.join(self.cachedir,"bb_persist_data.sqlite3")
         bb.msg.debug(1, bb.msg.domain.PersistData, "Using '%s' as the persistent data cache" % self.cachefile)

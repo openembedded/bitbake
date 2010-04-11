@@ -27,6 +27,7 @@
 
 from bb import data, event, mkdirhier, utils
 import bb, os, sys
+import bb.utils
 
 # When we execute a python function we'd like certain things
 # in all namespaces, hence we add them to __builtins__
@@ -107,7 +108,7 @@ def exec_func(func, d, dirs = None):
     else:
         dirs = (data.expand(flags['dirs'], d) or "").split()
     for adir in dirs:
-        mkdirhier(adir)
+        bb.utils.mkdirhier(adir)
 
     if len(dirs) > 0:
         adir = dirs[-1]
@@ -124,7 +125,7 @@ def exec_func(func, d, dirs = None):
     t = data.getVar('T', d, 1)
     if not t:
         bb.msg.fatal(bb.msg.domain.Build, "T not set")
-    mkdirhier(t)
+    bb.utils.mkdirhier(t)
     logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
     runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
 
@@ -320,7 +321,7 @@ def stamp_internal(task, d, file_name):
     if not stamp:
         return
     stamp = "%s.%s" % (stamp, task)
-    mkdirhier(os.path.dirname(stamp))
+    bb.utils.mkdirhier(os.path.dirname(stamp))
     # Remove the file and recreate to force timestamp
     # change on broken NFS filesystems
     if os.access(stamp, os.F_OK):
