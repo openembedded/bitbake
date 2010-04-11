@@ -157,22 +157,6 @@ def expandKeys(alterdata, readdata = None):
         ekey = todolist[key]
         renameVar(key, ekey, alterdata)
 
-def expandData(alterdata, readdata = None):
-    """For each variable in alterdata, expand it, and update the var contents.
-       Replacements use data from readdata
-    """
-    if readdata == None:
-        readdata = alterdata
-
-    for key in keys(alterdata):
-        val = getVar(key, alterdata)
-        if type(val) is not types.StringType:
-            continue
-        expanded = expand(val, readdata)
-#       print "key is %s, val is %s, expanded is %s" % (key, val, expanded)
-        if val != expanded:
-            setVar(key, expanded, alterdata)
-
 def inheritFromOS(d):
     """Inherit variables from the environment."""
     for s in os.environ.keys():
