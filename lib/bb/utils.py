@@ -19,7 +19,7 @@ BitBake Utility Functions
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, fcntl, os, types, string, stat, shutil, time
+import re, fcntl, os, string, stat, shutil, time
 import sys
 import bb
 import errno
@@ -72,9 +72,9 @@ def vercmp_part(a, b):
         if ca == None and cb == None:
             return 0
 
-        if isinstance(ca, types.StringType):
+        if isinstance(ca, basestring):
             sa = ca in separators
-        if isinstance(cb, types.StringType):
+        if isinstance(cb, basestring):
             sb = cb in separators
         if sa and not sb:
             return -1

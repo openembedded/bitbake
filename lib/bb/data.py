@@ -37,7 +37,7 @@ the speed is more critical here.
 #
 #Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import sys, os, re, types
+import sys, os, re
 if sys.argv[0][-5:] == "pydoc":
     path = os.path.dirname(os.path.dirname(sys.argv[1]))
 else:
@@ -193,7 +193,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if all:
         o.write('# %s=%s\n' % (var, oval))
 
-    if not isinstance(val, types.StringType):
+    if not isinstance(val, basestring):
         return 0
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:

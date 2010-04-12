@@ -28,7 +28,7 @@ BitBake build tools.
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import copy, re, sys, types
+import copy, re, sys
 import bb
 from bb   import utils
 from bb.COW  import COWDictBase
@@ -66,10 +66,10 @@ class DataSmart:
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), varname or "<expansion>", "eval")
             s = utils.better_eval(codeobj, {"d": self})
-            if isinstance(s, types.IntType): s = str(s)
+            if isinstance(s, int): s = str(s)
             return s
 
-        if not isinstance(s, types.StringType): # sanity check
+        if not isinstance(s, basestring): # sanity check
             return s
 
         if varname and varname in self.expand_cache:
@@ -81,7 +81,7 @@ class DataSmart:
                 s = __expand_var_regexp__.sub(var_sub, s)
                 s = __expand_python_regexp__.sub(python_sub, s)
                 if s == olds: break
-                if not isinstance(s, types.StringType): # sanity check
+                if not isinstance(s, basestring): # sanity check
                     bb.msg.error(bb.msg.domain.Data, 'expansion of %s returned non-string %s' % (olds, s))
             except KeyboardInterrupt:
                 raise

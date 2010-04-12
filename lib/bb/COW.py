@@ -26,16 +26,17 @@
 from __future__ import print_function
 import copy
 import types
-types.ImmutableTypes = tuple([ \
-    types.BooleanType, \
-    types.ComplexType, \
-    types.FloatType, \
-    types.IntType, \
-    types.LongType, \
-    types.NoneType, \
-    types.TupleType, \
-    frozenset] + \
-    list(types.StringTypes))
+ImmutableTypes = (
+    types.NoneType,
+    bool,
+    complex,
+    float,
+    int,
+    long,
+    tuple,
+    frozenset,
+    basestring
+)
 
 MUTABLE = "__mutable__"
 
@@ -60,7 +61,7 @@ class COWDictMeta(COWMeta):
     __call__ = cow
 
     def __setitem__(cls, key, value):
-        if not isinstance(value, types.ImmutableTypes):
+        if not isinstance(value, ImmutableTypes):
             if not isinstance(value, COWMeta):
                 cls.__hasmutable__ = True
             key += MUTABLE

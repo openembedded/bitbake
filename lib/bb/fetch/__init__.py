@@ -126,8 +126,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
     for i in uri_find_decoded:
         loc = uri_find_decoded.index(i)
         result_decoded[loc] = uri_decoded[loc]
-        import types
-        if type(i) == types.StringType:
+        if isinstance(i, basestring):
             if (re.match(i, uri_decoded[loc])):
                 result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
                 if uri_find_decoded.index(i) == 2:
