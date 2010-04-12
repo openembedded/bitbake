@@ -234,7 +234,7 @@ class NCursesUI:
             if ret != True:
                 print("Couldn't get default commandlind! %s" % ret)
                 return
-        except xmlrpclib.Fault, x:
+        except xmlrpclib.Fault as x:
             print("XMLRPC Fault getting commandline:\n %s" % x)
             return
 

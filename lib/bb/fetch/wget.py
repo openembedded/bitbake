@@ -38,7 +38,7 @@ class Wget(Fetch):
         """
         Check to see if a given url can be fetched with wget.
         """
-        return ud.type in ['http','https','ftp']
+        return ud.type in ['http', 'https', 'ftp']
 
     def localpath(self, url, ud, d):
 

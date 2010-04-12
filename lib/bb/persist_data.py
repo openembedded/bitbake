@@ -52,7 +52,7 @@ class PersistData:
         except OSError:
             bb.utils.mkdirhier(self.cachedir)
 
-        self.cachefile = os.path.join(self.cachedir,"bb_persist_data.sqlite3")
+        self.cachefile = os.path.join(self.cachedir, "bb_persist_data.sqlite3")
         bb.msg.debug(1, bb.msg.domain.PersistData, "Using '%s' as the persistent data cache" % self.cachefile)
 
         self.connection = sqlite3.connect(self.cachefile, timeout=5, isolation_level=None)
@@ -113,7 +113,7 @@ class PersistData:
             try:
                 self.connection.execute(*query)
                 return
-            except sqlite3.OperationalError, e:
+            except sqlite3.OperationalError as e:
                 if 'database is locked' in str(e):
                     continue
                 raise

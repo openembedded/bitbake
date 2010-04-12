@@ -46,7 +46,7 @@ def init(server, eventHandler):
         if ret != True:
             print("Couldn't get default commandline! %s" % ret)
             return 1
-    except xmlrpclib.Fault, x:
+    except xmlrpclib.Fault as x:
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 

@@ -66,10 +66,10 @@ class DataSmart:
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), varname or "<expansion>", "eval")
             s = utils.better_eval(codeobj, {"d": self})
-            if type(s) == types.IntType: s = str(s)
+            if isinstance(s, types.IntType): s = str(s)
             return s
 
-        if type(s) is not types.StringType: # sanity check
+        if not isinstance(s, types.StringType): # sanity check
             return s
 
         if varname and varname in self.expand_cache:
@@ -81,7 +81,7 @@ class DataSmart:
                 s = __expand_var_regexp__.sub(var_sub, s)
                 s = __expand_python_regexp__.sub(python_sub, s)
                 if s == olds: break
-                if type(s) is not types.StringType: # sanity check
+                if not isinstance(s, types.StringType): # sanity check
                     bb.msg.error(bb.msg.domain.Data, 'expansion of %s returned non-string %s' % (olds, s))
             except KeyboardInterrupt:
                 raise
@@ -118,7 +118,7 @@ class DataSmart:
             l    = len(o)+1
 
             # see if one should even try
-            if not self._seen_overrides.has_key(o):
+            if o not in self._seen_overrides:
                 continue
 
             vars = self._seen_overrides[o]
@@ -130,7 +130,7 @@ class DataSmart:
                     bb.msg.note(1, bb.msg.domain.Data, "Untracked delVar")
 
         # now on to the appends and prepends
-        if self._special_values.has_key("_append"):
+        if "_append" in self._special_values:
             appends = self._special_values['_append'] or []
             for append in appends:
                 for (a, o) in self.getVarFlag(append, '_append') or []:
@@ -145,7 +145,7 @@ class DataSmart:
                     self.setVar(append, sval)
 
 
-        if self._special_values.has_key("_prepend"):
+        if "_prepend" in self._special_values:
             prepends = self._special_values['_prepend'] or []
 
             for prepend in prepends:
@@ -215,7 +215,7 @@ class DataSmart:
         # more cookies for the cookie monster
         if '_' in var:
             override = var[var.rfind('_')+1:]
-            if not self._seen_overrides.has_key(override):
+            if override not in self._seen_overrides:
                 self._seen_overrides[override] = set()
             self._seen_overrides[override].add( var )
 
@@ -246,7 +246,7 @@ class DataSmart:
             dest.extend(src)
             self.setVarFlag(newkey, i, dest)
 
-            if self._special_values.has_key(i) and key in self._special_values[i]:
+            if i in self._special_values and key in self._special_values[i]:
                 self._special_values[i].remove(key)
                 self._special_values[i].add(newkey)
 

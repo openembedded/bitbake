@@ -90,7 +90,7 @@ def get_statements(filename, absolsute_filename, base_name):
         statements = ast.StatementGroup()
 
         lineno = 0
-        while 1:
+        while True:
             lineno = lineno + 1
             s = file.readline()
             if not s: break
@@ -118,7 +118,7 @@ def handle(fn, d, include):
         bb.msg.debug(2, bb.msg.domain.Parsing, "BB " + fn + ": handle(data, include)")
 
     (root, ext) = os.path.splitext(os.path.basename(fn))
-    base_name = "%s%s" % (root,ext)
+    base_name = "%s%s" % (root, ext)
     init(d)
 
     if ext == ".bbclass":
@@ -164,7 +164,7 @@ def handle(fn, d, include):
     return d
 
 def feeder(lineno, s, fn, root, statements):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__,__infunc__, __body__, classes, bb, __residue__
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__, __infunc__, __body__, classes, bb, __residue__
     if __infunc__:
         if s == '}':
             __body__.append('')

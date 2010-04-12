@@ -35,15 +35,15 @@ class Perforce(Fetch):
     def supports(self, url, ud, d):
         return ud.type in ['p4']
 
-    def doparse(url,d):
+    def doparse(url, d):
         parm = {}
         path = url.split("://")[1]
         delim = path.find("@");
         if delim != -1:
-            (user,pswd,host,port) = path.split('@')[0].split(":")
+            (user, pswd, host, port) = path.split('@')[0].split(":")
             path = path.split('@')[1]
         else:
-            (host,port) = data.getVar('P4PORT', d).split(':')
+            (host, port) = data.getVar('P4PORT', d).split(':')
             user = ""
             pswd = ""
 
@@ -53,19 +53,19 @@ class Perforce(Fetch):
             plist = path.split(';')
             for item in plist:
                 if item.count('='):
-                    (key,value) = item.split('=')
+                    (key, value) = item.split('=')
                     keys.append(key)
                     values.append(value)
 
-            parm = dict(zip(keys,values))
+            parm = dict(zip(keys, values))
         path = "//" + path.split(';')[0]
         host += ":%s" % (port)
         parm["cset"] = Perforce.getcset(d, path, host, user, pswd, parm)
 
-        return host,path,user,pswd,parm
+        return host, path, user, pswd, parm
     doparse = staticmethod(doparse)
 
-    def getcset(d, depot,host,user,pswd,parm):
+    def getcset(d, depot, host, user, pswd, parm):
         p4opt = ""
         if "cset" in parm:
             return parm["cset"];
@@ -97,7 +97,7 @@ class Perforce(Fetch):
 
     def localpath(self, url, ud, d):
 
-        (host,path,user,pswd,parm) = Perforce.doparse(url,d)
+        (host, path, user, pswd, parm) = Perforce.doparse(url, d)
 
         # If a label is specified, we use that as our filename
 
@@ -115,7 +115,7 @@ class Perforce(Fetch):
 
         cset = Perforce.getcset(d, path, host, user, pswd, parm)
 
-        ud.localfile = data.expand('%s+%s+%s.tar.gz' % (host,base.replace('/', '.'), cset), d)
+        ud.localfile = data.expand('%s+%s+%s.tar.gz' % (host, base.replace('/', '.'), cset), d)
 
         return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
 
@@ -124,7 +124,7 @@ class Perforce(Fetch):
         Fetch urls
         """
 
-        (host,depot,user,pswd,parm) = Perforce.doparse(loc, d)
+        (host, depot, user, pswd, parm) = Perforce.doparse(loc, d)
 
         if depot.find('/...') != -1:
             path = depot[:depot.find('/...')]
@@ -164,10 +164,10 @@ class Perforce(Fetch):
             raise FetchError(module)
 
         if "label" in parm:
-            depot = "%s@%s" % (depot,parm["label"])
+            depot = "%s@%s" % (depot, parm["label"])
         else:
             cset = Perforce.getcset(d, depot, host, user, pswd, parm)
-            depot = "%s@%s" % (depot,cset)
+            depot = "%s@%s" % (depot, cset)
 
         os.chdir(tmpfile)
         bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
@@ -189,7 +189,7 @@ class Perforce(Fetch):
             dest = list[0][len(path)+1:]
             where = dest.find("#")
 
-            os.system("%s%s print -o %s/%s %s" % (p4cmd, p4opt, module,dest[:where],list[0]))
+            os.system("%s%s print -o %s/%s %s" % (p4cmd, p4opt, module, dest[:where], list[0]))
             count = count + 1
 
         if count == 0:

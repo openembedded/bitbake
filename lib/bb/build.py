@@ -140,7 +140,7 @@ def exec_func(func, d, dirs = None):
             so = os.popen("tee \"%s\"" % logfile, "w")
         else:
             so = file(logfile, 'w')
-    except OSError, e:
+    except OSError as e:
         bb.msg.error(bb.msg.domain.Build, "opening log file: %s" % e)
         pass
 
@@ -285,7 +285,7 @@ def exec_task(task, d):
         event.fire(TaskStarted(task, localdata), localdata)
         exec_func(task, localdata)
         event.fire(TaskSucceeded(task, localdata), localdata)
-    except FuncFailed, message:
+    except FuncFailed as message:
         # Try to extract the optional logfile
         try:
             (msg, logfile) = message

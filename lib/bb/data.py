@@ -193,7 +193,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if all:
         o.write('# %s=%s\n' % (var, oval))
 
-    if type(val) is not types.StringType:
+    if not isinstance(val, types.StringType):
         return 0
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:

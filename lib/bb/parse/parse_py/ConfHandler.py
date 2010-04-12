@@ -89,7 +89,7 @@ def handle(fn, data, include):
 
     statements = ast.StatementGroup()
     lineno = 0
-    while 1:
+    while True:
         lineno = lineno + 1
         s = f.readline()
         if not s: break

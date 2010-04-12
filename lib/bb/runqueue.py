@@ -109,8 +109,7 @@ class RunQueueSchedulerSpeed(RunQueueScheduler):
 
         self.rq = runqueue
 
-        sortweight = deepcopy(self.rq.runq_weight)
-        sortweight.sort()
+        sortweight = sorted(deepcopy(self.rq.runq_weight))
         copyweight = deepcopy(self.rq.runq_weight)
         self.prio_map = []
 
@@ -307,7 +306,7 @@ class RunQueue:
             weight[listid] = 1
             task_done[listid] = True
 
-        while 1:
+        while True:
             next_points = []
             for listid in endpoints:
                 for revdep in self.runq_depends[listid]:
@@ -631,7 +630,7 @@ class RunQueue:
             for dep in revdeps:
                 if dep in self.runq_depends[listid]:
                     #self.dump_data(taskData)
-                    bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep] , taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
+                    bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep], taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
 
         bb.msg.note(2, bb.msg.domain.RunQueue, "Compute totals (have %s endpoint(s))" % len(endpoints))
 
@@ -814,7 +813,7 @@ class RunQueue:
                             bb.msg.debug(2, bb.msg.domain.RunQueue, "Stampfile %s < %s" % (stampfile, stampfile2))
                             iscurrent = False
                     except:
-                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Exception reading %s for %s" % (stampfile2 , stampfile))
+                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Exception reading %s for %s" % (stampfile2, stampfile))
                         iscurrent = False
 
         return iscurrent
@@ -948,7 +947,7 @@ class RunQueue:
                 try:
                     pipein, pipeout = os.pipe()
                     pid = os.fork() 
-                except OSError, e: 
+                except OSError as e: 
                     bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
                 if pid == 0:
                     os.close(pipein)

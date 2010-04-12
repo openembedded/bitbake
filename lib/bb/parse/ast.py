@@ -311,7 +311,7 @@ def finalize(fn, d):
     all_handlers = {}
     for var in bb.data.getVar('__BBHANDLERS', d) or []:
         # try to add the handler
-        handler = bb.data.getVar(var,d)
+        handler = bb.data.getVar(var, d)
         bb.event.register(var, handler)
 
     tasklist = bb.data.getVar('__BBTASKS', d) or []

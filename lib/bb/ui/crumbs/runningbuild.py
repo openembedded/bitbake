@@ -63,7 +63,7 @@ class RunningBuild (gobject.GObject):
         # for the message.
         if hasattr(event, 'pid'):
             pid = event.pid
-            if self.pids_to_task.has_key(pid):
+            if pid in self.pids_to_task:
                 (package, task) = self.pids_to_task[pid]
                 parent = self.tasks_to_iter[(package, task)]
 
@@ -93,12 +93,12 @@ class RunningBuild (gobject.GObject):
             (package, task) = (event._package, event._task)
 
             # Save out this PID.
-            self.pids_to_task[pid] = (package,task)
+            self.pids_to_task[pid] = (package, task)
 
             # Check if we already have this package in our model. If so then
             # that can be the parent for the task. Otherwise we create a new
             # top level for the package.
-            if (self.tasks_to_iter.has_key ((package, None))):
+            if ((package, None) in self.tasks_to_iter):
                 parent = self.tasks_to_iter[(package, None)]
             else:
                 parent = self.model.append (None, (None,

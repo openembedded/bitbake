@@ -112,7 +112,7 @@ class BitBakeServer(SimpleXMLRPCServer):
 
     def register_idle_function(self, function, data):
         """Register a function to be called while the server is idle"""
-        assert callable(function)
+        assert hasattr(function, '__call__')
         self._idlefuns[function] = data
 
     def serve_forever(self):

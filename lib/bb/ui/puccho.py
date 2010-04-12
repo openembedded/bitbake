@@ -104,10 +104,10 @@ class MetaDataLoader(gobject.GObject):
                 gobject.idle_add (MetaDataLoader.emit_success_signal,
                     self.loader)
 
-            except MetaDataLoader.LoaderThread.LoaderImportException, e:
+            except MetaDataLoader.LoaderThread.LoaderImportException as e:
                 gobject.idle_add (MetaDataLoader.emit_error_signal, self.loader,
                     "Repository metadata corrupt")
-            except Exception, e:
+            except Exception as e:
                 gobject.idle_add (MetaDataLoader.emit_error_signal, self.loader,
                     "Unable to download repository metadata")
                 print(e)
@@ -211,7 +211,7 @@ class BuildSetupDialog (gtk.Dialog):
         # Build
         button = gtk.Button ("_Build", None, True)
         image = gtk.Image ()
-        image.set_from_stock (gtk.STOCK_EXECUTE,gtk.ICON_SIZE_BUTTON)
+        image.set_from_stock (gtk.STOCK_EXECUTE, gtk.ICON_SIZE_BUTTON)
         button.set_image (image)
         self.add_action_widget (button, BuildSetupDialog.RESPONSE_BUILD)
         button.show_all ()

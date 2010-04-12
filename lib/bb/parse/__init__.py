@@ -37,12 +37,12 @@ class SkipPackage(Exception):
 
 __mtime_cache = {}
 def cached_mtime(f):
-    if not __mtime_cache.has_key(f):
+    if f not in __mtime_cache:
         __mtime_cache[f] = os.stat(f)[8]
     return __mtime_cache[f]
 
 def cached_mtime_noerror(f):
-    if not __mtime_cache.has_key(f):
+    if f not in __mtime_cache:
         try:
             __mtime_cache[f] = os.stat(f)[8]
         except OSError:

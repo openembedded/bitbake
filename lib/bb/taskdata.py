@@ -34,7 +34,7 @@ def re_match_strings(target, strings):
 
     for name in strings:
         if (name==target or
-                re.search(name,target)!=None):
+                re.search(name, target)!=None):
             return True
     return False
 
@@ -539,7 +539,7 @@ class TaskData:
         Resolve all unresolved build and runtime targets
         """
         bb.msg.note(1, bb.msg.domain.TaskData, "Resolving any missing task queue dependencies")
-        while 1:
+        while True:
             added = 0
             for target in self.get_unresolved_build_targets(dataCache):
                 try:

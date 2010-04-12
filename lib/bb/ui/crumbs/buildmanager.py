@@ -157,7 +157,7 @@ class BuildResult(gobject.GObject):
         # format build-<year><month><day>-<ordinal> we can easily
         # pull it out.
         # TODO: Better to stat a file?
-        (_ , date, revision) = identifier.split ("-")
+        (_, date, revision) = identifier.split ("-")
         print(date)
 
         year = int (date[0:4])
@@ -385,7 +385,7 @@ class BuildManager (gobject.GObject):
                 build_directory])
             server.runCommand(["buildTargets", [conf.image], "rootfs"])
 
-        except Exception, e:
+        except Exception as e:
             print(e)
 
 class BuildManagerTreeView (gtk.TreeView):

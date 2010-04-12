@@ -110,7 +110,7 @@ class UIXMLRPCServer (SimpleXMLRPCServer):
                 return (sock, addr)
             except socket.timeout:
                 pass
-        return (None,None)
+        return (None, None)
 
     def close_request(self, request):
         if request is None:

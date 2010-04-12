@@ -61,7 +61,7 @@ class Cache:
             return
 
         self.has_cache = True
-        self.cachefile = os.path.join(self.cachedir,"bb_cache.dat")
+        self.cachefile = os.path.join(self.cachedir, "bb_cache.dat")
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
         try:
@@ -82,9 +82,9 @@ class Cache:
                 p = pickle.Unpickler(file(self.cachefile, "rb"))
                 self.depends_cache, version_data = p.load()
                 if version_data['CACHE_VER'] != __cache_version__:
-                    raise ValueError, 'Cache Version Mismatch'
+                    raise ValueError('Cache Version Mismatch')
                 if version_data['BITBAKE_VER'] != bb.__version__:
-                    raise ValueError, 'Bitbake Version Mismatch'
+                    raise ValueError('Bitbake Version Mismatch')
             except EOFError:
                 bb.msg.note(1, bb.msg.domain.Cache, "Truncated cache found, rebuilding...")
                 self.depends_cache = {}
@@ -446,7 +446,7 @@ class Cache:
         self.getVar('__BB_DONT_CACHE', file_name, True)
         self.getVar('__VARIANTS', file_name, True)
 
-    def load_bbfile( self, bbfile , config):
+    def load_bbfile( self, bbfile, config):
         """
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped

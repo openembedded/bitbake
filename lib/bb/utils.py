@@ -72,9 +72,9 @@ def vercmp_part(a, b):
         if ca == None and cb == None:
             return 0
 
-        if type(ca) is types.StringType:
+        if isinstance(ca, types.StringType):
             sa = ca in separators
-        if type(cb) is types.StringType:
+        if isinstance(cb, types.StringType):
             sb = cb in separators
         if sa and not sb:
             return -1
@@ -294,7 +294,7 @@ def better_compile(text, file, realfile, mode = "exec"):
     """
     try:
         return compile(text, file, mode)
-    except Exception, e:
+    except Exception as e:
         # split the text into lines again
         body = text.split('\n')
         bb.msg.error(bb.msg.domain.Util, "Error in compiling python function in: ", realfile)
@@ -373,7 +373,7 @@ def lockfile(name):
                     return lf
             # File no longer exists or changed, retry
             lf.close
-        except Exception, e:
+        except Exception as e:
             continue
 
 def unlockfile(lf):
@@ -534,7 +534,7 @@ def mkdirhier(dir):
     try:
         os.makedirs(dir)
         bb.msg.debug(2, bb.msg.domain.Util, "created " + dir)
-    except OSError, e:
+    except OSError as e:
         if e.errno != errno.EEXIST:
             raise e
 
@@ -549,7 +549,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
     try:
         if not sstat:
             sstat = os.lstat(src)
-    except Exception, e:
+    except Exception as e:
         print("movefile: Stating source file failed...", e)
         return None
 
@@ -565,7 +565,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
             try:
                 os.unlink(dest)
                 destexists = 0
-            except Exception, e:
+            except Exception as e:
                 pass
 
     if stat.S_ISLNK(sstat[stat.ST_MODE]):
@@ -577,7 +577,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
             #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
             os.unlink(src)
             return os.lstat(dest)
-        except Exception, e:
+        except Exception as e:
             print("movefile: failed to properly create symlink:", dest, "->", target, e)
             return None
 
@@ -586,7 +586,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
         try:
             os.rename(src, dest)
             renamefailed = 0
-        except Exception, e:
+        except Exception as e:
             if e[0] != errno.EXDEV:
                 # Some random error.
                 print("movefile: Failed to move", src, "to", dest, e)
@@ -600,7 +600,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
                 shutil.copyfile(src, dest + "#new")
                 os.rename(dest + "#new", dest)
                 didcopy = 1
-            except Exception, e:
+            except Exception as e:
                 print('movefile: copy', src, '->', dest, 'failed.', e)
                 return None
         else:
@@ -614,7 +614,7 @@ def movefile(src, dest, newmtime = None, sstat = None):
                 os.lchown(dest, sstat[stat.ST_UID], sstat[stat.ST_GID])
                 os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
                 os.unlink(src)
-        except Exception, e:
+        except Exception as e:
             print("movefile: Failed to chown/chmod/unlink", dest, e)
             return None
 
@@ -635,7 +635,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
     try:
         if not sstat:
             sstat = os.lstat(src)
-    except Exception, e:
+    except Exception as e:
         print("copyfile: Stating source file failed...", e)
         return False
 
@@ -651,7 +651,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
             try:
                 os.unlink(dest)
                 destexists = 0
-            except Exception, e:
+            except Exception as e:
                 pass
 
     if stat.S_ISLNK(sstat[stat.ST_MODE]):
@@ -662,7 +662,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
             os.symlink(target, dest)
             #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
             return os.lstat(dest)
-        except Exception, e:
+        except Exception as e:
             print("copyfile: failed to properly create symlink:", dest, "->", target, e)
             return False
 
@@ -670,7 +670,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         try: # For safety copy then move it over.
             shutil.copyfile(src, dest + "#new")
             os.rename(dest + "#new", dest)
-        except Exception, e:
+        except Exception as e:
             print('copyfile: copy', src, '->', dest, 'failed.', e)
             return False
     else:
@@ -682,7 +682,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
     try:
         os.lchown(dest, sstat[stat.ST_UID], sstat[stat.ST_GID])
         os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
-    except Exception, e:
+    except Exception as e:
         print("copyfile: Failed to chown/chmod/unlink", dest, e)
         return False
 

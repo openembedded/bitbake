@@ -139,8 +139,8 @@ class Cvs(Fetch):
         bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory")
         pkg = data.expand('${PN}', d)
         pkgdir = os.path.join(data.expand('${CVSDIR}', localdata), pkg)
-        moddir = os.path.join(pkgdir,localdir)
-        if os.access(os.path.join(moddir,'CVS'), os.R_OK):
+        moddir = os.path.join(pkgdir, localdir)
+        if os.access(os.path.join(moddir, 'CVS'), os.R_OK):
             bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
             # update sources there
             os.chdir(moddir)
