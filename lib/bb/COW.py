@@ -119,6 +119,9 @@ class COWDictMeta(COWMeta):
             key += MUTABLE
         delattr(cls, key)
 
+    def __contains__(cls, key):
+        return cls.has_key(key)
+
     def has_key(cls, key):
         value = cls.__getreadonly__(key, cls.__marker__)
         if value is cls.__marker__:
