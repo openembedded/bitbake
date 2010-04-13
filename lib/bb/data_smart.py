@@ -29,6 +29,7 @@ BitBake build tools.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import copy, re, sys
+from collections import MutableMapping
 import bb
 from bb   import utils
 from bb.COW  import COWDictBase
@@ -40,7 +41,7 @@ __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 
-class DataSmart:
+class DataSmart(MutableMapping):
     def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
         self.dict = {}
 
@@ -328,23 +329,28 @@ class DataSmart:
 
         return data
 
-    # Dictionary Methods
-    def keys(self):
-        def _keys(d, mykey):
+    def __iter__(self):
+        seen = set()
+        def _keys(d):
             if "_data" in d:
-                _keys(d["_data"], mykey)
+                for key in _keys(d["_data"]):
+                    yield key
 
-            for key in d.keys():
+            for key in d:
                 if key != "_data":
-                    mykey[key] = None
-        keytab = {}
-        _keys(self.dict, keytab)
-        return keytab.keys()
+                    if not key in seen:
+                        seen.add(key)
+                        yield key
+        return _keys(self.dict)
+
+    def __len__(self):
+        return len(frozenset(self))
 
     def __getitem__(self, item):
-        #print "Warning deprecated"
         return self.getVar(item, False)
 
-    def __setitem__(self, var, data):
-        #print "Warning deprecated"
-        self.setVar(var, data)
+    def __setitem__(self, var, value):
+        self.setVar(var, value)
+
+    def __delitem__(self, var):
+        self.delVar(var)
