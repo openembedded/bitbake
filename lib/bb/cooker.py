@@ -521,14 +521,23 @@ class BBCooker:
         else:
             shell.start( self )
 
+    def _findLayerConf(self):
+        path = os.getcwd()
+        while path != "/":
+            bblayers = os.path.join(path, "conf", "bblayers.conf")
+            if os.path.exists(bblayers):
+                return bblayers
+
+            path, _ = os.path.split(path)
+
     def parseConfigurationFiles(self, files):
         try:
             data = self.configuration.data
             for f in files:
                 data = bb.parse.handle(f, data)
 
-            layerconf = os.path.join(os.getcwd(), "conf", "bblayers.conf")
-            if os.path.exists(layerconf):
+            layerconf = self._findLayerConf()
+            if layerconf:
                 bb.msg.debug(2, bb.msg.domain.Parsing, "Found bblayers.conf (%s)" % layerconf)
                 data = bb.parse.handle(layerconf, data)
 
@@ -575,6 +584,7 @@ class BBCooker:
             bb.fetch.fetcher_init(self.configuration.data)
 
             bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
+
 
         except IOError, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (files, str(e)))
