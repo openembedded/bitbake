@@ -541,6 +541,9 @@ class BBCooker:
 
                 bb.data.delVar('LAYERDIR', data)
 
+            if not data.getVar("BBPATH", True):
+                bb.fatal("The BBPATH variable is not set")
+
             data = bb.parse.handle(os.path.join("conf", "bitbake.conf"), data)
 
             self.configuration.data = data

@@ -37,10 +37,7 @@ __export_regexp__ = re.compile( r"export\s+(.+)" )
 def init(data):
     topdir = bb.data.getVar('TOPDIR', data)
     if not topdir:
-        topdir = os.getcwd()
-        bb.data.setVar('TOPDIR', topdir, data)
-    if not bb.data.getVar('BBPATH', data):
-        bb.msg.fatal(bb.msg.domain.Parsing, "The BBPATH environment variable must be set")
+        bb.data.setVar('TOPDIR', os.getcwd(), data)
 
 
 def supports(fn, d):
