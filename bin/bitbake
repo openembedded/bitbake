@@ -23,8 +23,8 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import sys
-if sys.hexversion < 0x020600F0:
-    print "Sorry, python 2.6 or later is required for this version of bitbake"
+if sys.version_info < (2, 6, 0):
+    print "Sorry, python 2.6.0 or later is required for this version of bitbake"
     sys.exit(1)
 
 import os
@@ -92,10 +92,6 @@ warnings.simplefilter("ignore", DeprecationWarning)
 
 def main():
     return_value = 0
-    pythonver = sys.version_info
-    if pythonver[0] < 2 or (pythonver[0] == 2 and pythonver[1] < 5):
-        print "Sorry, bitbake needs python 2.5 or later."
-        sys.exit(1)
 
     parser = optparse.OptionParser(
         version = "BitBake Build Tool Core version %s, %%prog version %s" % (bb.__version__, __version__),
