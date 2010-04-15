@@ -23,6 +23,10 @@
 
 __version__ = "1.11.0"
 
+import sys
+if sys.version_info < (2, 6, 0):
+    raise RuntimeError("Sorry, python 2.6.0 or later is required for this version of bitbake")
+
 import os
 import bb.msg
 

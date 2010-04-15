@@ -22,12 +22,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sys
-if sys.version_info < (2, 6, 0):
-    print "Sorry, python 2.6.0 or later is required for this version of bitbake"
-    sys.exit(1)
-
 import os
+import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),
                                 'lib'))
 
