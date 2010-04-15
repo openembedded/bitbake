@@ -22,10 +22,16 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import sys, os, optparse
+import sys
+if sys.hexversion < 0x020600F0:
+    print "Sorry, python 2.6 or later is required for this version of bitbake"
+    sys.exit(1)
+
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),
                                 'lib'))
 
+import optparse
 import warnings
 import bb
 import bb.msg
@@ -37,9 +43,6 @@ from bb.server import none
 
 __version__ = "1.9.0"
 
-if sys.hexversion < 0x020600F0:
-    print "Sorry, python 2.6 or later is required for this version of bitbake"
-    sys.exit(1)
 
 
 #============================================================================#
