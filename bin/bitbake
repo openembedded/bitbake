@@ -31,7 +31,7 @@ from bb import server
 from bb.server import none
 #from bb.server import xmlrpc
 
-__version__ = "1.9.0"
+__version__ = "1.10.0"
 
 if sys.hexversion < 0x020500F0:
     print "Sorry, python 2.5 or later is required for this version of bitbake"
