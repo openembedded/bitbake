@@ -182,13 +182,10 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         if all:
             oval = getVar(var, d, 0)
         val = getVar(var, d, 1)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, bb.build.FuncFailed):
         raise
-    except:
-        excname = str(sys.exc_info()[0])
-        if excname == "bb.build.FuncFailed":
-            raise
-        o.write('# expansion of %s threw %s\n' % (var, excname))
+    except Exception, exc:
+        o.write('# expansion of %s threw %s: %s\n' % (var, exc.__class__.__name__, str(exc)))
         return 0
 
     if all:
