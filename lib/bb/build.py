@@ -99,18 +99,19 @@ def exec_func(func, d, dirs = None):
 
     ispython = flags['python']
 
-    cleandirs = (data.expand(flags['cleandirs'], d) or "").split()
-    for cdir in cleandirs:
-        os.system("rm -rf %s" % cdir)
+    cleandirs = flags['cleandirs']
+    if cleandirs:
+        for cdir in data.expand(cleandirs, d).split():
+            os.system("rm -rf %s" % cdir)
+
+    if dirs is None:
+        dirs = flags['dirs']
+        if dirs:
+            dirs = data.expand(dirs, d).split()
 
     if dirs:
-        dirs = data.expand(dirs, d)
-    else:
-        dirs = (data.expand(flags['dirs'], d) or "").split()
-    for adir in dirs:
-        bb.utils.mkdirhier(adir)
-
-    if len(dirs) > 0:
+        for adir in dirs:
+            bb.utils.mkdirhier(adir)
         adir = dirs[-1]
     else:
         adir = data.getVar('B', d, 1)
@@ -157,9 +158,10 @@ def exec_func(func, d, dirs = None):
     os.dup2(se.fileno(), ose[1])
 
     locks = []
-    lockfiles = (data.expand(flags['lockfiles'], d) or "").split()
-    for lock in lockfiles:
-        locks.append(bb.utils.lockfile(lock))
+    lockfiles = flags['lockfiles']
+    if lockfiles:
+        for lock in data.expand(lockfiles, d).split():
+            locks.append(bb.utils.lockfile(lock))
 
     try:
         # Run the function

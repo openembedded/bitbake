@@ -578,7 +578,7 @@ class BBCooker:
 
             # Nomally we only register event handlers at the end of parsing .bb files
             # We register any handlers we've found so far here...
-            for var in data.getVar('__BBHANDLERS', self.configuration.data) or []:
+            for var in bb.data.getVar('__BBHANDLERS', self.configuration.data) or []:
                 bb.event.register(var, bb.data.getVar(var, self.configuration.data))
 
             bb.fetch.fetcher_init(self.configuration.data)

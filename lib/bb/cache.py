@@ -72,7 +72,7 @@ class Cache:
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
         newest_mtime = 0
-        deps = bb.data.getVar("__depends", data, True)
+        deps = bb.data.getVar("__depends", data)
         for f, old_mtime in deps:
             if old_mtime > newest_mtime:
                 newest_mtime = old_mtime
@@ -136,7 +136,7 @@ class Cache:
         # Make sure __depends makes the depends_cache
         # If we're a virtual class we need to make sure all our depends are appended
         # to the depends of fn.
-        depends = self.getVar("__depends", virtualfn, True) or []
+        depends = self.getVar("__depends", virtualfn) or []
         self.depends_cache.setdefault(fn, {})
         if "__depends" not in self.depends_cache[fn] or not self.depends_cache[fn]["__depends"]:
             self.depends_cache[fn]["__depends"] = depends
@@ -218,7 +218,7 @@ class Cache:
         for data in bb_data:
             virtualfn = self.realfn2virtual(fn, data)
             self.setData(virtualfn, fn, bb_data[data])
-            if self.getVar("__SKIPPED", virtualfn, True):
+            if self.getVar("__SKIPPED", virtualfn):
                 skipped += 1
                 bb.msg.debug(1, bb.msg.domain.Cache, "Skipping %s" % virtualfn)
             else:
@@ -361,7 +361,7 @@ class Cache:
         packages_dynamic = (self.getVar('PACKAGES_DYNAMIC', file_name, True) or "").split()
         rprovides = (self.getVar("RPROVIDES", file_name, True) or "").split()
 
-        cacheData.task_deps[file_name] = self.getVar("_task_deps", file_name, True)
+        cacheData.task_deps[file_name] = self.getVar("_task_deps", file_name)
 
         # build PackageName to FileName lookup table
         if pn not in cacheData.pkg_pn:

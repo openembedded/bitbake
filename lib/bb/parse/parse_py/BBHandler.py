@@ -68,8 +68,8 @@ def inherit(files, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or []
     fn = ""
     lineno = 0
-    files = data.expand(files, d)
     for file in files:
+        file = data.expand(file, d)
         if file[0] != "/" and file[-8:] != ".bbclass":
             file = os.path.join('classes', '%s.bbclass' % file)
 
