@@ -43,6 +43,7 @@ if sys.argv[0][-5:] == "pydoc":
 else:
     path = os.path.dirname(os.path.dirname(sys.argv[0]))
 sys.path.insert(0, path)
+from itertools import groupby
 
 from bb import data_smart
 import bb
@@ -226,17 +227,12 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 def emit_env(o=sys.__stdout__, d = init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
-    env = keys(d)
-
-    for e in env:
-        if getVarFlag(e, "func", d):
-            continue
-        emit_var(e, o, d, all) and o.write('\n')
-
-    for e in env:
-        if not getVarFlag(e, "func", d):
-            continue
-        emit_var(e, o, d) and o.write('\n')
+    isfunc = lambda key: bool(d.getVarFlag(key, "func"))
+    keys = sorted(d.keys(), key=isfunc)
+    grouped = groupby(keys, isfunc)
+    for isfunc, keys in grouped:
+        for key in keys:
+            emit_var(key, o, d, all and not isfunc) and o.write('\n')
 
 def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
