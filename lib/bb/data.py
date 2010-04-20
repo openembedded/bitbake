@@ -194,9 +194,6 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     if all:
         o.write('# %s=%s\n' % (var, oval))
 
-    if not isinstance(val, basestring):
-        return 0
-
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return 0
 
@@ -206,9 +203,10 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         o.write('unset %s\n' % varExpanded)
         return 1
 
-    val.rstrip()
     if not val:
         return 0
+
+    val = str(val)
 
     if func:
         # NOTE: should probably check for unbalanced {} within the var
