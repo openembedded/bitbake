@@ -60,7 +60,7 @@ def print_exception(exc, value, tb):
     Print the exception to stderr, only showing the traceback if bitbake
     debugging is enabled.
     """
-    if not bb.msg.debug_level['default']:
+    if not bb.msg.debug_level[bb.msg.domain.Default]:
         tb = None
 
     sys.__excepthook__(exc, value, tb)
