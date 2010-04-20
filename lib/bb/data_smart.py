@@ -65,9 +65,8 @@ class DataSmart:
         def python_sub(match):
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), varname or "<expansion>", "eval")
-            s = utils.better_eval(codeobj, {"d": self})
-            if isinstance(s, int): s = str(s)
-            return s
+            value = utils.better_eval(codeobj, {"d": self})
+            return str(value)
 
         if not isinstance(s, basestring): # sanity check
             return s
@@ -80,9 +79,8 @@ class DataSmart:
             try:
                 s = __expand_var_regexp__.sub(var_sub, s)
                 s = __expand_python_regexp__.sub(python_sub, s)
-                if s == olds: break
-                if not isinstance(s, basestring): # sanity check
-                    bb.msg.error(bb.msg.domain.Data, 'expansion of %s returned non-string %s' % (olds, s))
+                if s == olds:
+                    break
             except KeyboardInterrupt:
                 raise
             except:
