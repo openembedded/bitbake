@@ -223,7 +223,7 @@ def emit_env(o=sys.__stdout__, d = init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
 
     isfunc = lambda key: bool(d.getVarFlag(key, "func"))
-    keys = sorted(d.keys(), key=isfunc)
+    keys = sorted((key for key in d.keys() if not key.startswith("__")), key=isfunc)
     grouped = groupby(keys, isfunc)
     for isfunc, keys in grouped:
         for key in keys:
