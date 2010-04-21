@@ -94,7 +94,8 @@ class DataSmart:
 
     def finalize(self):
         """Performs final steps upon the datastore, including application of overrides"""
-        overrides = (self.getVar("OVERRIDES", True) or "").split(":")
+
+        overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
 
         #
         # Well let us see what breaks here. We used to iterate
@@ -113,7 +114,7 @@ class DataSmart:
 
         for o in overrides:
             # calculate '_'+override
-            l    = len(o)+1
+            l = len(o) + 1
 
             # see if one should even try
             if o not in self._seen_overrides:
@@ -123,18 +124,18 @@ class DataSmart:
             for var in vars:
                 name = var[:-l]
                 try:
-                    self.renameVar(var, name)
+                    self[name] = self[var]
                 except Exception:
                     bb.msg.note(1, bb.msg.domain.Data, "Untracked delVar")
 
         # now on to the appends and prepends
         if "_append" in self._special_values:
-            appends = self._special_values['_append'] or []
+            appends = self._special_values["_append"] or []
             for append in appends:
-                for (a, o) in self.getVarFlag(append, '_append') or []:
+                for (a, o) in self.getVarFlag(append, "_append") or []:
                     # maybe the OVERRIDE was not yet added so keep the append
                     if (o and o in overrides) or not o:
-                        self.delVarFlag(append, '_append')
+                        self.delVarFlag(append, "_append")
                     if o and not o in overrides:
                         continue
 
@@ -144,13 +145,13 @@ class DataSmart:
 
 
         if "_prepend" in self._special_values:
-            prepends = self._special_values['_prepend'] or []
+            prepends = self._special_values["_prepend"] or []
 
             for prepend in prepends:
-                for (a, o) in self.getVarFlag(prepend, '_prepend') or []:
+                for (a, o) in self.getVarFlag(prepend, "_prepend") or []:
                     # maybe the OVERRIDE was not yet added so keep the prepend
                     if (o and o in overrides) or not o:
-                        self.delVarFlag(prepend, '_prepend')
+                        self.delVarFlag(prepend, "_prepend")
                     if o and not o in overrides:
                         continue
 
