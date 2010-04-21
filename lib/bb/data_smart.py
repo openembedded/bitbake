@@ -164,17 +164,14 @@ class DataSmart:
             self.dict[var] = {}
 
     def _findVar(self, var):
-        _dest = self.dict
+        dest = self.dict
+        while dest:
+            if var in dest:
+                return dest[var]
 
-        while (_dest and var not in _dest):
-            if not "_data" in _dest:
-                _dest = None
+            if "_data" not in dest:
                 break
-            _dest = _dest["_data"]
-
-        if _dest and var in _dest:
-            return _dest[var]
-        return None
+            dest = dest["_data"]
 
     def _makeShadowCopy(self, var):
         if var in self.dict:
