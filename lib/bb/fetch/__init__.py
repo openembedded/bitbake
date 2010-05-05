@@ -232,7 +232,7 @@ def go(d, urls = None):
         ud = urldata[u]
         m = ud.method
         if ud.localfile:
-            if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
+            if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5) and os.path.exists(ud.localfile):
                 # File already present along with md5 stamp file
                 # Touch md5 file to show activity
                 try:
@@ -242,7 +242,7 @@ def go(d, urls = None):
                     pass
                 continue
             lf = bb.utils.lockfile(ud.lockfile)
-            if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5):
+            if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5) and os.path.exists(ud.localfile):
                 # If someone else fetched this before we got the lock,
                 # notice and don't try again
                 try:
