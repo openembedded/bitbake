@@ -37,6 +37,7 @@ from bb.COW  import COWDictBase
 __setvar_keyword__ = ["_append", "_prepend"]
 __setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?')
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
+__expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 
 class DataSmart:
@@ -50,24 +51,22 @@ class DataSmart:
         self.expand_cache = {}
 
     def expand(self, s, varname):
-        def python_sub(code):
-            codeobj = compile(code.strip(), varname or "<expansion>", "eval")
-            value = utils.better_eval(codeobj, {"d": self})
-            return str(value)
-
         def var_sub(match):
             key = match.group()[2:-1]
-            if key[0] == "@":
-                return python_sub(key[1:])
-
-            if varname == key:
-                raise Exception("variable %s references itself!" % varname)
-
+            if varname and key:
+                if varname == key:
+                    raise Exception("variable %s references itself!" % varname)
             var = self.getVar(key, 1)
             if var is not None:
                 return var
             else:
                 return match.group()
+
+        def python_sub(match):
+            code = match.group()[3:-1]
+            codeobj = compile(code.strip(), varname or "<expansion>", "eval")
+            value = utils.better_eval(codeobj, {"d": self})
+            return str(value)
 
         if not isinstance(s, basestring): # sanity check
             return s
@@ -79,6 +78,7 @@ class DataSmart:
             olds = s
             try:
                 s = __expand_var_regexp__.sub(var_sub, s)
+                s = __expand_python_regexp__.sub(python_sub, s)
                 if s == olds:
                     break
             except KeyboardInterrupt:
