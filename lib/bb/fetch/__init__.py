@@ -69,7 +69,7 @@ def decodeurl(url):
     parm = m.group('parm')
 
     locidx = location.find('/')
-    if locidx != -1:
+    if locidx != -1 and type.lower() != 'file':
         host = location[:locidx]
         path = location[locidx:]
     else:
