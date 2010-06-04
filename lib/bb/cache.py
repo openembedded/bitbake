@@ -263,7 +263,7 @@ class Cache:
 
         # Check file still exists
         if mtime == 0:
-            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s not longer exists" % fn)
+            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s no longer exists" % fn)
             self.remove(fn)
             return False
 
