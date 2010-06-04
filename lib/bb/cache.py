@@ -64,10 +64,7 @@ class Cache:
         self.cachefile = os.path.join(self.cachedir, "bb_cache.dat")
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
-        try:
-            os.stat( self.cachedir )
-        except OSError:
-            bb.mkdirhier( self.cachedir )
+        bb.mkdirhier(self.cachedir)
 
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
@@ -92,11 +89,8 @@ class Cache:
                 bb.msg.note(1, bb.msg.domain.Cache, "Invalid cache found, rebuilding...")
                 self.depends_cache = {}
         else:
-            try:
-                os.stat( self.cachefile )
+            if os.path.isfile(self.cachefile):
                 bb.msg.note(1, bb.msg.domain.Cache, "Out of date cache found, rebuilding...")
-            except OSError:
-                pass
 
     def getVar(self, var, fn, exp = 0):
         """
