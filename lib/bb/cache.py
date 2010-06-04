@@ -444,6 +444,7 @@ class Cache:
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped
         """
+        chdir_back = False
 
         from bb import data, parse
 
@@ -451,15 +452,22 @@ class Cache:
         data.setVar('TMPDIR', data.getVar('TMPDIR', config, 1) or "", config)
         bbfile_loc = os.path.abspath(os.path.dirname(bbfile))
         oldpath = os.path.abspath(os.getcwd())
-        if parse.cached_mtime_noerror(bbfile_loc):
-            os.chdir(bbfile_loc)
+        parse.cached_mtime_noerror(bbfile_loc)
         bb_data = data.init_db(config)
+        # The ConfHandler first looks if there is a TOPDIR and if not
+        # then it would call getcwd().
+        # Previously, we chdir()ed to bbfile_loc, called the handler
+        # and finally chdir()ed back, a couple of thousand times. We now
+        # just fill in TOPDIR to point to bbfile_loc if there is no TOPDIR yet.
+        if not data.getVar('TOPDIR', bb_data):
+            chdir_back = True
+            data.setVar('TOPDIR', bbfile_loc, bb_data)
         try:
             bb_data = parse.handle(bbfile, bb_data) # read .bb data
-            os.chdir(oldpath)
+            if chdir_back: os.chdir(oldpath)
             return bb_data
         except:
-            os.chdir(oldpath)
+            if chdir_back: os.chdir(oldpath)
             raise
 
 def init(cooker):
