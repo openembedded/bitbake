@@ -43,7 +43,10 @@ class PersistData:
 
     Why sqlite? It handles all the locking issues for us.
     """
-    def __init__(self, d):
+    def __init__(self, d, persistent_database_connection):
+        if "connection" in persistent_database_connection:
+            self.cursor = persistent_database_connection["connection"].cursor()
+            return
         self.cachedir = bb.data.getVar("PERSISTENT_DIR", d, True) or bb.data.getVar("CACHE", d, True)
         if self.cachedir in [None, '']:
             bb.msg.fatal(bb.msg.domain.PersistData, "Please set the 'PERSISTENT_DIR' or 'CACHE' variable.")
@@ -55,27 +58,29 @@ class PersistData:
         self.cachefile = os.path.join(self.cachedir, "bb_persist_data.sqlite3")
         bb.msg.debug(1, bb.msg.domain.PersistData, "Using '%s' as the persistent data cache" % self.cachefile)
 
-        self.connection = sqlite3.connect(self.cachefile, timeout=5, isolation_level=None)
+        connection = sqlite3.connect(self.cachefile, timeout=5, isolation_level=None)
+        persistent_database_connection["connection"] = connection
+        self.cursor = persistent_database_connection["connection"].cursor()
 
     def addDomain(self, domain):
         """
         Should be called before any domain is used
         Creates it if it doesn't exist.
         """
-        self.connection.execute("CREATE TABLE IF NOT EXISTS %s(key TEXT, value TEXT);" % domain)
+        self.cursor.execute("CREATE TABLE IF NOT EXISTS %s(key TEXT, value TEXT);" % domain)
 
     def delDomain(self, domain):
         """
         Removes a domain and all the data it contains
         """
-        self.connection.execute("DROP TABLE IF EXISTS %s;" % domain)
+        self.cursor.execute("DROP TABLE IF EXISTS %s;" % domain)
 
     def getKeyValues(self, domain):
         """
         Return a list of key + value pairs for a domain
         """
         ret = {}
-        data = self.connection.execute("SELECT key, value from %s;" % domain)
+        data = self.cursor.execute("SELECT key, value from %s;" % domain)
         for row in data:
             ret[str(row[0])] = str(row[1])
 
@@ -85,7 +90,7 @@ class PersistData:
         """
         Return the value of a key for a domain
         """
-        data = self.connection.execute("SELECT * from %s where key=?;" % domain, [key])
+        data = self.cursor.execute("SELECT * from %s where key=?;" % domain, [key])
         for row in data:
             return row[1]
 
@@ -93,7 +98,7 @@ class PersistData:
         """
         Sets the value of a key for a domain
         """
-        data = self.connection.execute("SELECT * from %s where key=?;" % domain, [key])
+        data = self.cursor.execute("SELECT * from %s where key=?;" % domain, [key])
         rows = 0
         for row in data:
             rows = rows + 1
@@ -111,7 +116,7 @@ class PersistData:
     def _execute(self, *query):
         while True:
             try:
-                self.connection.execute(*query)
+                self.cursor.execute(*query)
                 return
             except sqlite3.OperationalError as e:
                 if 'database is locked' in str(e):
