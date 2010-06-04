@@ -106,8 +106,7 @@ class Cache:
         if fn in self.clean:
             return self.depends_cache[fn][var]
 
-        if not fn in self.depends_cache:
-            self.depends_cache[fn] = {}
+        self.depends_cache.setdefault(fn, {})
 
         if fn != self.data_fn:
             # We're trying to access data in the cache which doesn't exist
@@ -131,13 +130,12 @@ class Cache:
         # Make sure __depends makes the depends_cache
         # If we're a virtual class we need to make sure all our depends are appended
         # to the depends of fn.
-        depends = self.getVar("__depends", virtualfn) or []
+        depends = self.getVar("__depends", virtualfn) or set()
         self.depends_cache.setdefault(fn, {})
         if "__depends" not in self.depends_cache[fn] or not self.depends_cache[fn]["__depends"]:
             self.depends_cache[fn]["__depends"] = depends
-        for dep in depends:
-            if dep not in self.depends_cache[fn]["__depends"]:
-                self.depends_cache[fn]["__depends"].append(dep)
+        else:
+            self.depends_cache[fn]["__depends"].update(depends)
 
         # Make sure the variants always make it into the cache too
         self.getVar('__VARIANTS', virtualfn, True)

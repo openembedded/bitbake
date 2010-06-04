@@ -56,8 +56,8 @@ def update_mtime(f):
 def mark_dependency(d, f):
     if f.startswith('./'):
         f = "%s/%s" % (os.getcwd(), f[2:])
-    deps = bb.data.getVar('__depends', d) or []
-    deps.append( (f, cached_mtime(f)) )
+    deps = bb.data.getVar('__depends', d) or set()
+    deps.update([(f, cached_mtime(f))])
     bb.data.setVar('__depends', deps, d)
 
 def supports(fn, data):
