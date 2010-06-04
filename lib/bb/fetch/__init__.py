@@ -153,7 +153,7 @@ def fetcher_init(d):
     Calls before this must not hit the cache.
     """
     pd = persist_data.PersistData(d)
-    # When to drop SCM head revisions controled by user policy
+    # When to drop SCM head revisions controlled by user policy
     srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
     if srcrev_policy == "cache":
         bb.msg.debug(1, bb.msg.domain.Fetcher, "Keeping SRCREV cache due to cache policy of: %s" % srcrev_policy)
