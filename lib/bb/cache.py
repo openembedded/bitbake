@@ -70,9 +70,10 @@ class Cache:
         # cache there isn't even any point in loading it...
         newest_mtime = 0
         deps = bb.data.getVar("__depends", data)
-        for f, old_mtime in deps:
-            if old_mtime > newest_mtime:
-                newest_mtime = old_mtime
+
+        old_mtimes = [old_mtime for f, old_mtime in deps]
+        old_mtimes.append(newest_mtime)
+        newest_mtime = max(old_mtimes)
 
         if bb.parse.cached_mtime_noerror(self.cachefile) >= newest_mtime:
             try:
