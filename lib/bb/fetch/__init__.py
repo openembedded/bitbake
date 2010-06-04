@@ -149,7 +149,7 @@ saved_headrevs = {}
 
 def fetcher_init(d):
     """
-    Called to initilize the fetchers once the configuration data is known
+    Called to initialize the fetchers once the configuration data is known.
     Calls before this must not hit the cache.
     """
     pd = persist_data.PersistData(d)
