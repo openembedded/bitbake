@@ -620,7 +620,7 @@ class BBCooker:
         Setup any variables needed before starting a build
         """
         if not bb.data.getVar("BUILDNAME", self.configuration.data):
-            bb.data.setVar("BUILDNAME", os.popen('date +%Y%m%d%H%M').readline().strip(), self.configuration.data)
+            bb.data.setVar("BUILDNAME", time.strftime('%Y%m%d%H%M'), self.configuration.data)
         bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S', time.gmtime()), self.configuration.data)
 
     def matchFiles(self, buildfile):
