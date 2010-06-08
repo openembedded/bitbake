@@ -147,17 +147,33 @@ def init(server, eventHandler):
                 break
             if isinstance(event, bb.cooker.CookerExit):
                 break
+            if isinstance(event, bb.event.MultipleProviders):
+                print("NOTE: multiple providers are available for %s%s (%s)" % (event._is_runtime and "runtime " or "",
+                                                                                event._item,
+                                                                                ", ".join(event._candidates)))
+                print("NOTE: consider defining a PREFERRED_PROVIDER entry to match %s" % event._item)
+                continue
+            if isinstance(event, bb.event.NoProvider):
+                if event._runtime:
+                    r = "R"
+                else:
+                    r = ""
+
+                if event._dependees:
+                    print("ERROR: Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)" % (r, event._item, ", ".join(event._dependees), r))
+                else:
+                    print("ERROR: Nothing %sPROVIDES '%s'" % (r, event._item))
+                continue
 
             # ignore
             if isinstance(event, (bb.event.BuildBase,
-                                  bb.event.NoProvider,
-                                  bb.event.MultipleProviders,
                                   bb.event.StampUpdate,
                                   bb.event.ConfigParsed,
                                   bb.event.RecipeParsed,
                                   bb.runqueue.runQueueEvent,
                                   bb.runqueue.runQueueExitWait)):
                 continue
+
             print("Unknown Event: %s" % event)
 
         except KeyboardInterrupt:

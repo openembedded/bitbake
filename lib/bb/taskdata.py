@@ -354,13 +354,8 @@ class TaskData:
             self.add_provider_internal(cfgData, dataCache, item)
         except bb.providers.NoProvider:
             if self.abort:
-                if self.get_rdependees_str(item):
-                    bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
-                else:
-                    bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s'" % (item))
                 raise
-            targetid = self.getbuild_id(item)
-            self.remove_buildtarget(targetid)
+            self.remove_buildtarget(self.getbuild_id(item))
 
         self.mark_external_target(item)
 
@@ -375,11 +370,7 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            if self.get_rdependees_str(item):
-                bb.msg.note(2, bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (item, self.get_dependees_str(item)))
-            else:
-                bb.msg.note(2, bb.msg.domain.Provider, "Nothing PROVIDES '%s'" % (item))
-            bb.event.fire(bb.event.NoProvider(item), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_rdependees_str(item)), cfgData)
             raise bb.providers.NoProvider(item)
 
         if self.have_build_target(item):
@@ -391,8 +382,7 @@ class TaskData:
         eligible = [p for p in eligible if not self.getfn_id(p) in self.failed_fnids]
 
         if not eligible:
-            bb.msg.note(2, bb.msg.domain.Provider, "No buildable provider PROVIDES '%s' but '%s' DEPENDS on or otherwise requires it. Enable debugging and see earlier logs to find unbuildable providers." % (item, self.get_dependees_str(item)))
-            bb.event.fire(bb.event.NoProvider(item), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item)), cfgData)
             raise bb.providers.NoProvider(item)
 
         if len(eligible) > 1 and foundUnique == False:
@@ -400,8 +390,6 @@ class TaskData:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(dataCache.pkg_fn[fn])
-                bb.msg.note(1, bb.msg.domain.Provider, "multiple providers are available for %s (%s);" % (item, ", ".join(providers_list)))
-                bb.msg.note(1, bb.msg.domain.Provider, "consider defining PREFERRED_PROVIDER_%s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item, providers_list), cfgData)
             self.consider_msgs_cache.append(item)
 
@@ -431,16 +419,14 @@ class TaskData:
         all_p = bb.providers.getRuntimeProviders(dataCache, item)
 
         if not all_p:
-            bb.msg.error(bb.msg.domain.Provider, "'%s' RDEPENDS/RRECOMMENDS or otherwise requires the runtime entity '%s' but it wasn't found in any PACKAGE or RPROVIDES variables" % (self.get_rdependees_str(item), item))
-            bb.event.fire(bb.event.NoProvider(item, runtime=True), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, runtime=True, dependees=self.get_rdependees_str(item)), cfgData)
             raise bb.providers.NoRProvider(item)
 
         eligible, numberPreferred = bb.providers.filterProvidersRunTime(all_p, item, cfgData, dataCache)
         eligible = [p for p in eligible if not self.getfn_id(p) in self.failed_fnids]
 
         if not eligible:
-            bb.msg.error(bb.msg.domain.Provider, "'%s' RDEPENDS/RRECOMMENDS or otherwise requires the runtime entity '%s' but it wasn't found in any PACKAGE or RPROVIDES variables of any buildable targets.\nEnable debugging and see earlier logs to find unbuildable targets." % (self.get_rdependees_str(item), item))
-            bb.event.fire(bb.event.NoProvider(item, runtime=True), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, runtime=True, dependees=self.get_rdependees_str(item)), cfgData)
             raise bb.providers.NoRProvider(item)
 
         if len(eligible) > 1 and numberPreferred == 0:
@@ -448,8 +434,6 @@ class TaskData:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(dataCache.pkg_fn[fn])
-                bb.msg.note(2, bb.msg.domain.Provider, "multiple providers are available for runtime %s (%s);" % (item, ", ".join(providers_list)))
-                bb.msg.note(2, bb.msg.domain.Provider, "consider defining a PREFERRED_PROVIDER entry to match runtime %s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item, providers_list, runtime=True), cfgData)
             self.consider_msgs_cache.append(item)
 
@@ -458,8 +442,6 @@ class TaskData:
                 providers_list = []
                 for fn in eligible:
                     providers_list.append(dataCache.pkg_fn[fn])
-                bb.msg.note(2, bb.msg.domain.Provider, "multiple providers are available for runtime %s (top %s entries preferred) (%s);" % (item, numberPreferred, ", ".join(providers_list)))
-                bb.msg.note(2, bb.msg.domain.Provider, "consider defining only one PREFERRED_PROVIDER entry to match runtime %s" % item)
                 bb.event.fire(bb.event.MultipleProviders(item, providers_list, runtime=True), cfgData)
             self.consider_msgs_cache.append(item)
 
@@ -515,8 +497,9 @@ class TaskData:
                     self.fail_fnid(self.tasks_fnid[taskid], missing_list)
 
         if self.abort and targetid in self.external_targets:
-            bb.msg.error(bb.msg.domain.Provider, "Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s" % (self.build_names_index[targetid], missing_list))
-            raise bb.providers.NoProvider
+            target = self.build_names_index[targetid]
+            bb.msg.error(bb.msg.domain.Provider, "Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s" % (target, missing_list))
+            raise bb.providers.NoProvider(target)
 
     def remove_runtarget(self, targetid, missing_list = []):
         """
@@ -548,10 +531,6 @@ class TaskData:
                 except bb.providers.NoProvider:
                     targetid = self.getbuild_id(target)
                     if self.abort and targetid in self.external_targets:
-                        if self.get_rdependees_str(target):
-                            bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s' (but '%s' DEPENDS on or otherwise requires it)" % (target, self.get_dependees_str(target)))
-                        else:
-                            bb.msg.error(bb.msg.domain.Provider, "Nothing PROVIDES '%s'" % (target))
                         raise
                     self.remove_buildtarget(targetid)
             for target in self.get_unresolved_run_targets(dataCache):
