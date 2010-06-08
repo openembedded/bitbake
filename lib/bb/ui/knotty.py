@@ -149,21 +149,14 @@ def init(server, eventHandler):
                 break
 
             # ignore
-            if isinstance(event, bb.event.BuildStarted):
-                continue
-            if isinstance(event, bb.event.BuildCompleted):
-                continue
-            if isinstance(event, bb.event.MultipleProviders):
-                continue
-            if isinstance(event, bb.runqueue.runQueueEvent):
-                continue
-            if isinstance(event, bb.runqueue.runQueueExitWait):
-                continue
-            if isinstance(event, bb.event.StampUpdate):
-                continue
-            if isinstance(event, bb.event.ConfigParsed):
-                continue
-            if isinstance(event, bb.event.RecipeParsed):
+            if isinstance(event, (bb.event.BuildBase,
+                                  bb.event.NoProvider,
+                                  bb.event.MultipleProviders,
+                                  bb.event.StampUpdate,
+                                  bb.event.ConfigParsed,
+                                  bb.event.RecipeParsed,
+                                  bb.runqueue.runQueueEvent,
+                                  bb.runqueue.runQueueExitWait)):
                 continue
             print("Unknown Event: %s" % event)
 
