@@ -204,6 +204,7 @@ def fetcher_compare_revisons(d):
 
 def init(urls, d, setup = True):
     urldata = {}
+
     fn = bb.data.getVar('FILE', d, 1)
     if fn in urldata_cache:
         urldata = urldata_cache[fn]
@@ -400,7 +401,7 @@ def runfetchcmd(cmd, d, quiet = False):
     for var in exportvars:
         val = data.getVar(var, d, True)
         if val:
-            cmd = 'export ' + var + '=%s; %s' % (val, cmd)
+            cmd = 'export ' + var + '=\"%s\"; %s' % (val, cmd)
 
     bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
 

@@ -31,6 +31,7 @@ from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
 from   bb.fetch import encodeurl, decodeurl
+from   bb.fetch import runfetchcmd
 
 class Wget(Fetch):
     """Class to fetch urls via 'wget'"""
@@ -65,33 +66,12 @@ class Wget(Fetch):
             uri_type = uri_decoded[0]
             uri_host = uri_decoded[1]
 
-            bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
             fetchcmd = fetchcmd.replace("${URI}", uri.split(";")[0])
             fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
-            httpproxy = None
-            ftpproxy = None
-            if uri_type == 'http':
-                httpproxy = data.getVar("HTTP_PROXY", d, True)
-                httpproxy_ignore = (data.getVar("HTTP_PROXY_IGNORE", d, True) or "").split()
-                for p in httpproxy_ignore:
-                    if uri_host.endswith(p):
-                        httpproxy = None
-                        break
-            if uri_type == 'ftp':
-                ftpproxy = data.getVar("FTP_PROXY", d, True)
-                ftpproxy_ignore = (data.getVar("HTTP_PROXY_IGNORE", d, True) or "").split()
-                for p in ftpproxy_ignore:
-                    if uri_host.endswith(p):
-                        ftpproxy = None
-                        break
-            if httpproxy:
-                fetchcmd = "http_proxy=" + httpproxy + " " + fetchcmd
-            if ftpproxy:
-                fetchcmd = "ftp_proxy=" + ftpproxy + " " + fetchcmd
+
+            bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
             bb.msg.debug(2, bb.msg.domain.Fetcher, "executing " + fetchcmd)
-            ret = os.system(fetchcmd)
-            if ret != 0:
-                return False
+            runfetchcmd(fetchcmd, d)
 
             # Sanity check since wget can pretend it succeed when it didn't
             # Also, this used to happen if sourceforge sent us to the mirror page
