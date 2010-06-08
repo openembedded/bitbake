@@ -87,7 +87,7 @@ warnings.simplefilter("ignore", DeprecationWarning)
 #============================================================================#
 
 def main():
-    return_value = 0
+    return_value = 1
 
     parser = optparse.OptionParser(
         version = "BitBake Build Tool Core version %s, %%prog version %s" % (bb.__version__, __version__),
@@ -198,13 +198,16 @@ Default BBFILES are the .bb files in the current directory.""")
         # suggest a fixed set this allows you to have flexibility in which
         # ones are available.
         uimodule = __import__("bb.ui", fromlist = [ui])
-        return_value = getattr(uimodule, ui).init(serverConnection.connection, serverConnection.events)
+        ui_init = getattr(uimodule, ui).init
     except AttributeError:
         print "FATAL: Invalid user interface '%s' specified. " % ui
         print "Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'."
-    except Exception, e:
-        print "FATAL: Unable to start to '%s' UI: %s" % (configuration.ui, e)
-        raise
+    else:
+        try:
+            return_value = ui_init(serverConnection.connection, serverConnection.events)
+        except Exception, e:
+            print "FATAL: Unable to start to '%s' UI: %s" % (ui, e)
+            raise
     finally:
         serverConnection.terminate()
         return return_value
