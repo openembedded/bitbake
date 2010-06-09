@@ -728,13 +728,12 @@ def init_logger(logger, verbose, debug, debug_domains):
     Set verbosity and debug levels in the logger
     """
 
-    if verbose:
-        logger.set_verbose(True)
-
     if debug:
-        logger.set_debug_level(debug)
+        bb.msg.set_debug_level(debug)
+    elif verbose:
+        bb.msg.set_verbose(True)
     else:
-        logger.set_debug_level(0)
+        bb.msg.set_debug_level(0)
 
     if debug_domains:
-        logger.set_debug_domains(debug_domains)
+        bb.msg.set_debug_domains(debug_domains)

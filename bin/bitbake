@@ -23,7 +23,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
-import sys
+import sys, logging
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),
                                 'lib'))
 
@@ -31,6 +31,7 @@ import optparse
 import warnings
 from traceback import format_exception
 import bb
+from bb import event
 import bb.msg
 from bb import cooker
 from bb import ui
@@ -39,7 +40,7 @@ from bb.server import none
 #from bb.server import xmlrpc
 
 __version__ = "1.11.0"
-
+logger = logging.getLogger("BitBake")
 
 
 #============================================================================#
@@ -158,6 +159,8 @@ Default BBFILES are the .bb files in the current directory.""")
 
     configuration = BBConfiguration(options)
     configuration.pkgs_to_build.extend(args[1:])
+
+    logger.addHandler(event.LogHandler())
 
     #server = bb.server.xmlrpc
     server = bb.server.none

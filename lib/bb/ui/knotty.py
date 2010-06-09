@@ -72,23 +72,23 @@ def init(server, eventHandler):
                         print("%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task))
                         tasknum = tasknum + 1
 
-            if isinstance(event, bb.msg.MsgPlain):
+            if isinstance(event, bb.event.MsgPlain):
                 print(event._message)
                 continue
-            if isinstance(event, bb.msg.MsgDebug):
+            if isinstance(event, bb.event.MsgDebug):
                 print('DEBUG: ' + event._message)
                 continue
-            if isinstance(event, bb.msg.MsgNote):
+            if isinstance(event, bb.event.MsgNote):
                 print('NOTE: ' + event._message)
                 continue
-            if isinstance(event, bb.msg.MsgWarn):
+            if isinstance(event, bb.event.MsgWarn):
                 print('WARNING: ' + event._message)
                 continue
-            if isinstance(event, bb.msg.MsgError):
+            if isinstance(event, bb.event.MsgError):
                 return_value = 1
                 print('ERROR: ' + event._message)
                 continue
-            if isinstance(event, bb.msg.MsgFatal):
+            if isinstance(event, bb.event.MsgFatal):
                 return_value = 1
                 print('FATAL: ' + event._message)
                 break

@@ -17,20 +17,12 @@
 
 - Leverage the python logging module
 
-  - Create a new logging Handler which instantiates MsgBase derived objects
-    and passes them along, either via bb.event or directly over the
-    appropriate queues to the other processes.
-  - Alter the bb.msg functions to use the logging module.
-  - Convert bb modules to stop using the bb.msg functions.
-  - Switch the messaging wrappers in the bb package to use the logging module
-    directly, as we'll be deprecating the bb.msg versions, but these should
-    stay around for the metadata to use.
-  - Deprecate the bb.msg functions.
-  - Do we want to use the logging module in any of the UIs, for local
-    messages, as well?  If we do, we don't want those to use our handler which
-    sends the Msg events to the UI :)
-    Looks like we may be able to use removeHandler.. will have to see how it
-    interacts with parent/child loggers.
+- Convert bb modules to stop using the bb.msg functions.
+- Switch the messaging wrappers in the bb package to use the logging module
+  directly, as we'll be deprecating the bb.msg versions, but these should
+  stay around for the metadata to use.
+- Deprecate the bb.msg functions.
+- Should we use the logging module rather than print in the knotty ui?
 
 Long term, high impact:
 

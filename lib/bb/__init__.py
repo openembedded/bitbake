@@ -28,7 +28,17 @@ if sys.version_info < (2, 6, 0):
     raise RuntimeError("Sorry, python 2.6.0 or later is required for this version of bitbake")
 
 import os
+import logging
 import bb.msg
+
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+
+logging.raiseExceptions = False
+logger = logging.getLogger("BitBake")
+logger.addHandler(NullHandler())
+logger.setLevel(logging.INFO)
 
 if "BBDEBUG" in os.environ:
     level = int(os.environ["BBDEBUG"])
