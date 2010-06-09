@@ -80,13 +80,13 @@ def inherit(files, d):
             include(fn, file, d, "inherit")
             __inherit_cache = data.getVar('__inherit_cache', d) or []
 
-def get_statements(filename, absolsute_filename, base_name):
+def get_statements(filename, absolute_filename, base_name):
     global cached_statements
 
     try:
-        return cached_statements[absolsute_filename]
+        return cached_statements[absolute_filename]
     except KeyError:
-        file = open(absolsute_filename, 'r')
+        file = open(absolute_filename, 'r')
         statements = ast.StatementGroup()
 
         lineno = 0
@@ -101,7 +101,7 @@ def get_statements(filename, absolsute_filename, base_name):
             feeder(IN_PYTHON_EOF, "", filename, base_name, statements)
 
         if filename.endswith(".bbclass") or filename.endswith(".inc"):
-            cached_statements[absolsute_filename] = statements
+            cached_statements[absolute_filename] = statements
         return statements
 
 def handle(fn, d, include):
