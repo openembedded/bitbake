@@ -128,13 +128,11 @@ def warn(msgdomain, msg, fn = None):
 
 def error(msgdomain, msg, fn = None):
     bb.event.fire(MsgError(msg), None)
-    if not bb.event._ui_handlers:
-        print('ERROR: ' + msg)
+    print 'ERROR: ' + msg
 
 def fatal(msgdomain, msg, fn = None):
     bb.event.fire(MsgFatal(msg), None)
-    if not bb.event._ui_handlers:
-        print('FATAL: ' + msg)
+    print('FATAL: ' + msg)
     sys.exit(1)
 
 def plain(msg, fn = None):
