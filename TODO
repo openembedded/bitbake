@@ -1,6 +1,42 @@
-On popular request by popular people a list of tasks to-do:
+- Continue pylint / pyflakes / pychecker / pep8 fixups
+- Drop os.system usage in favor of direct subprocess usage or a subprocess
+  wrapper
+- Kill the execution of 'tee' for the task log file in build.py
+- Leverage the python logging module
 
-	-Kill insecure usage of os.system either by properly escaping
-         the strings or a faster replacement not involving /bin/sh
-	-Introduce a -p option to automatically hotshot/profile the
-	 run
+  - Create a new logging Handler which instantiates MsgBase derived objects
+    and passes them along, either via bb.event or directly over the
+    appropriate queues to the other processes.
+  - Alter the bb.msg functions to use the logging module.
+  - Convert bb modules to stop using the bb.msg functions.
+  - Switch the messaging wrappers in the bb package to use the logging module
+    directly, as we'll be deprecating the bb.msg versions, but these should
+    stay around for the metadata to use.
+  - Deprecate the bb.msg functions.
+  - Do we want to use the logging module in any of the UIs, for local
+    messages, as well?  If we do, we don't want those to use our handler which
+    sends the Msg events to the UI :)
+    Looks like we may be able to use removeHandler.. will have to see how it
+    interacts with parent/child loggers.
+
+Uncertain:
+
+  - Leverage the python 2.6 multiprocessing module
+
+    - Worker processes for bb.cooker
+    - Server / UI processes
+
+  - Create a bitbake configuration class which is utilized by the library, not
+    just bin/bitbake.  This class should be responsible for extracting
+    configuration parameters from the metadata for bitbake internal use, as well
+    as pulling specific items like BBDEBUG, and importing settings from an
+    optparse options object.
+
+  - Python version bits
+
+    - Utilize the new string formatting where appropriate
+    - Do we need to take into account the bytes literals changes?
+    - Do we have any file-like objects that would benefit from using the "io"
+      module?
+    - Do we want to leverage the abstract base classes in collections?
+    - Aside: Set methods now accept multiple iterables
