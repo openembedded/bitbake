@@ -70,7 +70,7 @@ def deprecated(func, name = None, advice = ""):
     def newFunc(*args, **kwargs):
         warnings.warn("Call to deprecated function %s%s." % (name,
                                                              advice),
-                      category = DeprecationWarning,
+                      category = PendingDeprecationWarning,
                       stacklevel = 2)
         return func(*args, **kwargs)
     newFunc.__name__ = func.__name__
