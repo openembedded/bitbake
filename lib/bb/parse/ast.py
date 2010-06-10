@@ -104,7 +104,6 @@ class DataNode(AstNode):
             val = groupd["value"]
 
         if 'flag' in groupd and groupd['flag'] != None:
-            bb.msg.debug(3, bb.msg.domain.Parsing, "setVarFlag(%s, %s, %s, data)" % (key, groupd['flag'], val))
             bb.data.setVarFlag(key, groupd['flag'], val, data)
         elif groupd["lazyques"]:
             assigned = bb.data.getVar("__lazy_assigned", data) or []
