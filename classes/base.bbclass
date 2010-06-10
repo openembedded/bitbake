@@ -35,18 +35,6 @@ bbfatal() {
 	exit 1
 }
 
-bbdebug() {
-	test $# -ge 2 || {
-		echo "Usage: bbdebug level \"message\""
-		exit 1
-	}
-
-	test ${@bb.msg.debug_level['default']} -ge $1 && {
-		shift
-		echo "DEBUG:" $*
-	}
-}
-
 addtask showdata
 do_showdata[nostamp] = "1"
 python do_showdata() {

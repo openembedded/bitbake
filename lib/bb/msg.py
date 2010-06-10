@@ -109,19 +109,24 @@ def set_debug_domains(domainargs):
 def debug(level, msgdomain, msg, fn = None):
     level = logging.DEBUG - (level - 1)
     if not msgdomain:
-        logger.log(level, msg)
+        logger.debug(level, msg)
     else:
-        loggers[msgdomain].log(level, msg)
+        loggers[msgdomain].debug(level, msg)
 
 def plain(msg, fn = None):
-    logger.log(logging.INFO + 1, msg)
+    logger.plain(msg)
 
 def note(level, msgdomain, msg, fn = None):
-    level = logging.INFO - (level - 1)
-    if not msgdomain:
-        logger.log(level, msg)
+    if level > 1:
+        if msgdomain:
+            logger.verbose(msg)
+        else:
+            loggers[msgdomain].verbose(msg)
     else:
-        loggers[msgdomain].log(level, msg)
+        if msgdomain:
+            logger.info(msg)
+        else:
+            loggers[msgdomain].info(msg)
 
 def warn(msgdomain, msg, fn = None):
     if not msgdomain:

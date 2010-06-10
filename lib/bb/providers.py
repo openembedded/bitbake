@@ -22,8 +22,11 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import re
+import logging
 from bb import data, utils
 import bb
+
+logger = logging.getLogger("BitBake.Provider")
 
 class NoProvider(Exception):
     """Exception raised when no provider of a build dependency can be found"""
@@ -120,9 +123,9 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         if item:
             itemstr = " (for item %s)" % item
         if preferred_file is None:
-            bb.msg.note(1, bb.msg.domain.Provider, "preferred version %s of %s not available%s" % (pv_str, pn, itemstr))
+            logger.info("preferred version %s of %s not available%s", pv_str, pn, itemstr)
         else:
-            bb.msg.debug(1, bb.msg.domain.Provider, "selecting %s as PREFERRED_VERSION %s of package %s%s" % (preferred_file, pv_str, pn, itemstr))
+            logger.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s%s", preferred_file, pv_str, pn, itemstr)
 
     return (preferred_ver, preferred_file)
 
@@ -189,7 +192,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
             pkg_pn[pn] = []
         pkg_pn[pn].append(p)
 
-    bb.msg.debug(1, bb.msg.domain.Provider, "providers for %s are: %s" % (item, pkg_pn.keys()))
+    logger.debug(1, "providers for %s are: %s", item, pkg_pn.keys())
 
     # First add PREFERRED_VERSIONS
     for pn in pkg_pn:
@@ -206,7 +209,7 @@ def _filterProviders(providers, item, cfgData, dataCache):
         eligible.append(preferred_versions[pn][1])
 
     if len(eligible) == 0:
-        bb.msg.error(bb.msg.domain.Provider, "no eligible providers for %s" % item)
+        logger.error("no eligible providers for %s", item)
         return 0
 
     # If pn == item, give it a slight default preference
@@ -242,13 +245,13 @@ def filterProviders(providers, item, cfgData, dataCache):
         for p in eligible:
             pn = dataCache.pkg_fn[p]
             if dataCache.preferred[item] == pn:
-                bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy %s due to PREFERRED_PROVIDERS" % (pn, item))
+                logger.verbose("selecting %s to satisfy %s due to PREFERRED_PROVIDERS", pn, item)
                 eligible.remove(p)
                 eligible = [p] + eligible
                 foundUnique = True
                 break
 
-    bb.msg.debug(1, bb.msg.domain.Provider, "sorted providers for %s are: %s" % (item, eligible))
+    logger.debug(1, "sorted providers for %s are: %s", item, eligible)
 
     return eligible, foundUnique
 
@@ -268,11 +271,11 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
         pn = dataCache.pkg_fn[p]
         provides = dataCache.pn_provides[pn]
         for provide in provides:
-            bb.msg.note(2, bb.msg.domain.Provider, "checking PREFERRED_PROVIDER_%s" % (provide))
+            logger.verbose("checking PREFERRED_PROVIDER_%s", provide)
             prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, cfgData, 1)
             if prefervar == pn:
                 var = "PREFERRED_PROVIDER_%s = %s" % (provide, prefervar)
-                bb.msg.note(2, bb.msg.domain.Provider, "selecting %s to satisfy runtime %s due to %s" % (pn, item, var))
+                logger.verbose("selecting %s to satisfy runtime %s due to %s", pn, item, var)
                 preferred_vars.append(var)
                 eligible.remove(p)
                 eligible = [p] + eligible
@@ -282,9 +285,9 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
     numberPreferred = len(preferred)
 
     if numberPreferred > 1:
-        bb.msg.error(bb.msg.domain.Provider, "Conflicting PREFERRED_PROVIDER entries were found which resulted in an attempt to select multiple providers (%s) for runtime dependecy %s\nThe entries resulting in this conflict were: %s" % (preferred, item, preferred_vars))
+        logger.error("Conflicting PREFERRED_PROVIDER entries were found which resulted in an attempt to select multiple providers (%s) for runtime dependecy %s\nThe entries resulting in this conflict were: %s", preferred, item, preferred_vars)
 
-    bb.msg.debug(1, bb.msg.domain.Provider, "sorted providers for %s are: %s" % (item, eligible))
+    logger.debug(1, "sorted providers for %s are: %s", item, eligible)
 
     return eligible, numberPreferred
 
@@ -314,7 +317,7 @@ def getRuntimeProviders(dataCache, rdepend):
             try:
                 regexp = re.compile(pattern)
             except:
-                bb.msg.error(bb.msg.domain.Provider, "Error parsing re expression: %s" % pattern)
+                logger.error("Error parsing regular expression '%s'", pattern)
                 raise
             regexp_cache[pattern] = regexp
         if regexp.match(rdepend):

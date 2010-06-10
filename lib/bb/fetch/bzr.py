@@ -25,11 +25,10 @@ BitBake 'Fetch' implementation for bzr.
 
 import os
 import sys
+import logging
 import bb
 from bb import data
-from bb.fetch import Fetch
-from bb.fetch import FetchError
-from bb.fetch import runfetchcmd
+from bb.fetch import Fetch, FetchError, runfetchcmd, logger
 
 class Bzr(Fetch):
     def supports(self, url, ud, d):
@@ -93,16 +92,16 @@ class Bzr(Fetch):
 
         if os.access(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir), '.bzr'), os.R_OK):
             bzrcmd = self._buildbzrcommand(ud, d, "update")
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "BZR Update %s" % loc)
+            logger.debug(1, "BZR Update %s", loc)
             os.chdir(os.path.join (ud.pkgdir, os.path.basename(ud.path)))
             runfetchcmd(bzrcmd, d)
         else:
             os.system("rm -rf %s" % os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir)))
             bzrcmd = self._buildbzrcommand(ud, d, "fetch")
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "BZR Checkout %s" % loc)
+            logger.debug(1, "BZR Checkout %s", loc)
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % bzrcmd)
+            logger.debug(1, "Running %s", bzrcmd)
             runfetchcmd(bzrcmd, d)
 
         os.chdir(ud.pkgdir)
@@ -130,7 +129,7 @@ class Bzr(Fetch):
         """
         Return the latest upstream revision number
         """
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "BZR fetcher hitting network for %s" % url)
+        logger.debug(2, "BZR fetcher hitting network for %s", url)
 
         output = runfetchcmd(self._buildbzrcommand(ud, d, "revno"), d, True)
 

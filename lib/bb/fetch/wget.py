@@ -26,13 +26,11 @@ BitBake build tools.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import os
+import logging
 import bb
 import urllib
 from   bb import data
-from   bb.fetch import Fetch
-from   bb.fetch import FetchError
-from   bb.fetch import encodeurl, decodeurl
-from   bb.fetch import runfetchcmd
+from   bb.fetch import Fetch, FetchError, encodeurl, decodeurl, logger, runfetchcmd
 
 class Wget(Fetch):
     """Class to fetch urls via 'wget'"""
@@ -69,15 +67,14 @@ class Wget(Fetch):
 
             fetchcmd = fetchcmd.replace("${URI}", uri.split(";")[0])
             fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
-
-            bb.msg.note(1, bb.msg.domain.Fetcher, "fetch " + uri)
-            bb.msg.debug(2, bb.msg.domain.Fetcher, "executing " + fetchcmd)
+            logger.info("fetch " + uri)
+            logger.debug(2, "executing " + fetchcmd)
             runfetchcmd(fetchcmd, d)
 
             # Sanity check since wget can pretend it succeed when it didn't
             # Also, this used to happen if sourceforge sent us to the mirror page
             if not os.path.exists(ud.localpath) and not checkonly:
-                bb.msg.debug(2, bb.msg.domain.Fetcher, "The fetch command for %s returned success but %s doesn't exist?..." % (uri, ud.localpath))
+                logger.debug(2, "The fetch command for %s returned success but %s doesn't exist?...", uri, ud.localpath)
                 return False
 
             return True

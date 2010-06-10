@@ -27,11 +27,12 @@
 
 from __future__ import absolute_import
 import re, bb, os
+import logging
 import bb.fetch, bb.build, bb.utils
 from bb import data
 
 from . import ConfHandler
-from .. import resolve_file, ast
+from .. import resolve_file, ast, logger
 from .ConfHandler import include, init
 
 # For compatibility
@@ -76,7 +77,7 @@ def inherit(files, d):
             file = os.path.join('classes', '%s.bbclass' % file)
 
         if not file in __inherit_cache:
-            bb.msg.debug(2, bb.msg.domain.Parsing, "BB %s:%d: inheriting %s" % (fn, lineno, file))
+            logger.log(logging.DEBUG -1, "BB %s:%d: inheriting %s", fn, lineno, file)
             __inherit_cache.append( file )
             data.setVar('__inherit_cache', __inherit_cache, d)
             include(fn, file, d, "inherit")
@@ -115,9 +116,9 @@ def handle(fn, d, include):
 
 
     if include == 0:
-        bb.msg.debug(2, bb.msg.domain.Parsing, "BB " + fn + ": handle(data)")
+        logger.debug(2, "BB %s: handle(data)", fn)
     else:
-        bb.msg.debug(2, bb.msg.domain.Parsing, "BB " + fn + ": handle(data, include)")
+        logger.debug(2, "BB %s: handle(data, include)", fn)
 
     (root, ext) = os.path.splitext(os.path.basename(fn))
     base_name = "%s%s" % (root, ext)

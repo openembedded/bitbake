@@ -57,23 +57,23 @@ class BBConfiguration(object):
         self.pkgs_to_build = []
 
 
-def print_exception(exc, value, tb):
-    """Send exception information through bb.msg"""
-    bb.fatal("".join(format_exception(exc, value, tb, limit=8)))
+def print_exception(*exc_info):
+    logger.error("Uncaught exception: ", exc_info=exc_info)
+    sys.exit(1)
 
 sys.excepthook = print_exception
 
 
+# Display bitbake/OE warnings via the BitBake.Warnings logger, ignoring others"""
+warnlog = logging.getLogger("BitBake.Warnings")
 _warnings_showwarning = warnings.showwarning
 def _showwarning(message, category, filename, lineno, file=None, line=None):
-    """Display python warning messages using bb.msg"""
     if file is not None:
         if _warnings_showwarning is not None:
             _warnings_showwarning(message, category, filename, lineno, file, line)
     else:
         s = warnings.formatwarning(message, category, filename, lineno)
-        s = s.split("\n")[0]
-        bb.msg.warn(None, s)
+        warnlog.warn(s)
 
 warnings.showwarning = _showwarning
 warnings.filterwarnings("ignore")

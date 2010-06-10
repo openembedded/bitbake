@@ -21,10 +21,13 @@ BitBake Utility Functions
 
 import re, fcntl, os, string, stat, shutil, time
 import sys
-import bb
 import errno
+import logging
+import bb
 import bb.msg
 from commands import getstatusoutput
+
+logger = logging.getLogger("BitBake.Util")
 
 # Version comparison
 separators = ".-"
@@ -292,11 +295,11 @@ def _print_trace(body, line):
     Print the Environment of a Text Body
     """
     # print the environment of the method
-    bb.msg.error(bb.msg.domain.Util, "Printing the environment of the function")
+    logger.error("Printing the environment of the function")
     min_line = max(1, line-4)
     max_line = min(line + 4, len(body)-1)
     for i in range(min_line, max_line + 1):
-        bb.msg.error(bb.msg.domain.Util, "\t%.4d:%s" % (i, body[i-1]) )
+        logger.error("\t%.4d:%s", i, body[i-1])
 
 
 def better_compile(text, file, realfile, mode = "exec"):
@@ -309,9 +312,9 @@ def better_compile(text, file, realfile, mode = "exec"):
     except Exception as e:
         # split the text into lines again
         body = text.split('\n')
-        bb.msg.error(bb.msg.domain.Util, "Error in compiling python function in: %s" % (realfile))
-        bb.msg.error(bb.msg.domain.Util, "The lines leading to this error were:")
-        bb.msg.error(bb.msg.domain.Util, "\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
+        logger.error("Error in compiling python function in %s", realfile)
+        logger.error("The lines leading to this error were:")
+        logger.error("\t%d:%s:'%s'", e.lineno, e.__class__.__name__, body[e.lineno-1])
 
         _print_trace(body, e.lineno)
 
@@ -335,9 +338,7 @@ def better_exec(code, context, text, realfile = "<code>"):
         if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
             raise
 
-        # print the Header of the Error Message
-        bb.msg.error(bb.msg.domain.Util, "Error in executing python function in: %s" % code.co_filename)
-        bb.msg.error(bb.msg.domain.Util, "Exception:%s Message:%s" % (t, value))
+        logger.exception("Error executing python function in '%s'", code.co_filename)
 
         # let us find the line number now
         while tb.tb_next:
@@ -363,7 +364,7 @@ def lockfile(name):
     """
     path = os.path.dirname(name)
     if not os.path.isdir(path):
-        bb.msg.error(bb.msg.domain.Util, "Error, lockfile path does not exist!: %s" % path)
+        logger.error("Lockfile path '%s' does not exist", path)
         sys.exit(1)
 
     while True:
@@ -478,7 +479,7 @@ def filter_environment(good_vars):
         del os.environ[key]
 
     if len(removed_vars):
-        bb.msg.debug(1, bb.msg.domain.Util, "Removed the following variables from the environment: %s" % (", ".join(removed_vars)))
+        logger.debug(1, "Removed the following variables from the environment: %s", ", ".join(removed_vars))
 
     return removed_vars
 
@@ -544,10 +545,10 @@ def mkdirhier(dir):
     directory already exists like os.makedirs
     """
 
-    bb.msg.debug(3, bb.msg.domain.Util, "mkdirhier(%s)" % dir)
+    logger.debug(3, "mkdirhier(%s)", dir)
     try:
         os.makedirs(dir)
-        bb.msg.debug(2, bb.msg.domain.Util, "created " + dir)
+        logger.debug(2, "created " + dir)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise e

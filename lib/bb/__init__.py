@@ -35,7 +35,25 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
+Logger = logging.getLoggerClass()
+class BBLogger(Logger):
+    def __init__(self, name):
+        if name.split(".")[0] == "BitBake":
+            self.debug = self.bbdebug
+        Logger.__init__(self, name)
+
+    def bbdebug(self, level, msg, *args, **kwargs):
+        return self.log(logging.DEBUG - level - 1, msg, *args, **kwargs)
+
+    def plain(self, msg, *args, **kwargs):
+        return self.log(logging.INFO + 1, msg, *args, **kwargs)
+
+    def verbose(self, msg, *args, **kwargs):
+        return self.log(logging.INFO - 1, msg, *args, **kwargs)
+
 logging.raiseExceptions = False
+logging.setLoggerClass(BBLogger)
+
 logger = logging.getLogger("BitBake")
 logger.addHandler(NullHandler())
 logger.setLevel(logging.INFO)
@@ -48,22 +66,23 @@ if "BBDEBUG" in os.environ:
 
 # Messaging convenience functions
 def plain(*args):
-    bb.msg.plain(''.join(args))
+    logger.plain(''.join(args))
 
 def debug(lvl, *args):
-    bb.msg.debug(lvl, None, ''.join(args))
+    logger.debug(lvl, ''.join(args))
 
 def note(*args):
-    bb.msg.note(1, None, ''.join(args))
+    logger.info(''.join(args))
 
 def warn(*args):
-    bb.msg.warn(None, ''.join(args))
+    logger.warn(''.join(args))
 
 def error(*args):
-    bb.msg.error(None, ''.join(args))
+    logger.error(''.join(args))
 
 def fatal(*args):
-    bb.msg.fatal(None, ''.join(args))
+    logger.critical(''.join(args))
+    sys.exit(1)
 
 
 def deprecated(func, name = None, advice = ""):

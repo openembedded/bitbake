@@ -22,14 +22,17 @@ Handles preparation and execution of a queue of tasks
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import bb, os, sys
+import os
+import sys
 import signal
 import stat
 import fcntl
 import logging
+import bb
 from bb import msg, data, event
 
 bblogger = logging.getLogger("BitBake")
+logger = logging.getLogger("BitBake.RunQueue")
 
 class TaskFailure(Exception):
     """Exception raised when a task in a runqueue fails"""
@@ -359,14 +362,14 @@ class RunQueue:
         for task in range(numTasks):
             if task_done[task] is False or deps_left[task] != 0:
                 problem_tasks.append(task)
-                bb.msg.debug(2, bb.msg.domain.RunQueue, "Task %s (%s) is not buildable\n" % (task, self.get_user_idstring(task)))
-                bb.msg.debug(2, bb.msg.domain.RunQueue, "(Complete marker was %s and the remaining dependency count was %s)\n\n" % (task_done[task], deps_left[task]))
+                logger.debug(2, "Task %s (%s) is not buildable\n", task, self.get_user_idstring(task))
+                logger.debug(2, "(Complete marker was %s and the remaining dependency count was %s)\n\n", task_done[task], deps_left[task])
 
         if problem_tasks:
             message = "Unbuildable tasks were found.\n"
             message = message + "These are usually caused by circular dependencies and any circular dependency chains found will be printed below. Increase the debug level to see a list of unbuildable tasks.\n\n"
             message = message + "Identifying dependency loops (this may take a short while)...\n"
-            bb.msg.error(bb.msg.domain.RunQueue, message)
+            logger.error(message)
 
             msgs = self.circular_depchains_handler(problem_tasks)
 
@@ -394,7 +397,7 @@ class RunQueue:
             # Nothing to do
             return
 
-        bb.msg.note(1, bb.msg.domain.RunQueue, "Preparing runqueue")
+        logger.info("Preparing runqueue")
 
         # Step A - Work out a list of tasks to run
         #
@@ -441,7 +444,7 @@ class RunQueue:
             fn = taskData.fn_index[fnid]
             task_deps = self.dataCache.task_deps[fn]
 
-            bb.msg.debug(2, bb.msg.domain.RunQueue, "Processing %s:%s" %(fn, taskData.tasks_name[task]))
+            logger.debug(2, "Processing %s:%s", fn, taskData.tasks_name[task])
 
             if fnid not in taskData.failed_fnids:
 
@@ -501,7 +504,7 @@ class RunQueue:
                 # Rmove all self references
                 if task in depends:
                     newdep = []
-                    bb.msg.debug(2, bb.msg.domain.RunQueue, "Task %s (%s %s) contains self reference! %s" % (task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], depends))
+                    logger.debug(2, "Task %s (%s %s) contains self reference! %s", task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], depends)
                     for dep in depends:
                         if task != dep:
                             newdep.append(dep)
@@ -562,7 +565,7 @@ class RunQueue:
         # as active too. If the task is to be 'forced', clear its stamp. Once
         # all active tasks are marked, prune the ones we don't need.
 
-        bb.msg.note(2, bb.msg.domain.RunQueue, "Marking Active Tasks")
+        logger.verbose("Marking Active Tasks")
 
         def mark_active(listid, depth):
             """
@@ -595,7 +598,7 @@ class RunQueue:
 
             # Remove stamps for targets if force mode active
             if self.cooker.configuration.force:
-                bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (target[1], fn))
+                logger.verbose("Remove stamp %s, %s", target[1], fn)
                 bb.build.del_stamp(target[1], self.dataCache, fn)
 
             if fnid in taskData.failed_fnids:
@@ -637,7 +640,7 @@ class RunQueue:
             else:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "No active tasks and not in --continue mode?! Please report this bug.")
 
-        bb.msg.note(2, bb.msg.domain.RunQueue, "Pruned %s inactive tasks, %s left" % (delcount, len(self.runq_fnid)))
+        logger.verbose("Pruned %s inactive tasks, %s left", delcount, len(self.runq_fnid))
 
         # Remap the dependencies to account for the deleted tasks
         # Check we didn't delete a task we depend on
@@ -650,7 +653,7 @@ class RunQueue:
                 newdeps.append(maps[origdep])
             self.runq_depends[listid] = set(newdeps)
 
-        bb.msg.note(2, bb.msg.domain.RunQueue, "Assign Weightings")
+        logger.verbose("Assign Weightings")
 
         # Generate a list of reverse dependencies to ease future calculations
         for listid in range(len(self.runq_fnid)):
@@ -669,7 +672,7 @@ class RunQueue:
                     #self.dump_data(taskData)
                     bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep], taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
 
-        bb.msg.note(2, bb.msg.domain.RunQueue, "Compute totals (have %s endpoint(s))" % len(endpoints))
+        logger.verbose("Compute totals (have %s endpoint(s))", len(endpoints))
 
         # Calculate task weights
         # Check of higher length circular dependencies
@@ -678,7 +681,7 @@ class RunQueue:
         for scheduler in self.schedulers:
             if self.scheduler == scheduler.name:
                 self.sched = scheduler(self)
-                bb.msg.debug(1, bb.msg.domain.RunQueue, "Using runqueue scheduler '%s'" % scheduler.name)
+                logger.debug(1, "Using runqueue scheduler '%s'", scheduler.name)
                 break
         else:
             bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
@@ -701,9 +704,7 @@ class RunQueue:
         for prov in prov_list:
             if len(prov_list[prov]) > 1 and prov not in self.multi_provider_whitelist:
                 error = True
-                bb.msg.error(bb.msg.domain.RunQueue, "Multiple .bb files are due to be built which each provide %s (%s).\n This usually means one provides something the other doesn't and should." % (prov, " ".join(prov_list[prov])))
-        #if error:
-        #    bb.msg.fatal(bb.msg.domain.RunQueue, "Corrupted metadata configuration detected, aborting...")
+                logger.error("Multiple .bb files are due to be built which each provide %s (%s).\n This usually means one provides something the other doesn't and should.", prov, " ".join(prov_list[prov]))
 
 
         # Create a whitelist usable by the stamp checks
@@ -831,12 +832,12 @@ class RunQueue:
         stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
         # If the stamp is missing its not current
         if not os.access(stampfile, os.F_OK):
-            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stampfile %s not available\n" % stampfile)
+            logger.debug(2, "Stampfile %s not available\n", stampfile)
             return False
         # If its a 'nostamp' task, it's not current
         taskdep = self.dataCache.task_deps[fn]
         if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
-            bb.msg.debug(2, bb.msg.domain.RunQueue, "%s.%s is nostamp\n" % (fn, taskname))
+            logger.debug(2, "%s.%s is nostamp\n", fn, taskname)
             return False
 
         iscurrent = True
@@ -850,10 +851,10 @@ class RunQueue:
                     try:
                         t2 = os.stat(stampfile2)[stat.ST_MTIME]
                         if t1 < t2:
-                            bb.msg.debug(2, bb.msg.domain.RunQueue, "Stampfile %s < %s" % (stampfile, stampfile2))
+                            logger.debug(2, "Stampfile %s < %s", stampfile, stampfile2)
                             iscurrent = False
                     except:
-                        bb.msg.debug(2, bb.msg.domain.RunQueue, "Exception reading %s for %s" % (stampfile2, stampfile))
+                        logger.debug(2, "Exception reading %s for %s", stampfile2, stampfile)
                         iscurrent = False
 
         return iscurrent
@@ -869,7 +870,7 @@ class RunQueue:
             self.prepare_runqueue()
 
         if self.state is runQueueRunInit:
-            bb.msg.note(1, bb.msg.domain.RunQueue, "Executing runqueue")
+            logger.info("Executing runqueue")
             self.execute_runqueue_initVars()
 
         if self.state is runQueueRunning:
@@ -887,7 +888,7 @@ class RunQueue:
 
         if self.state is runQueueComplete:
             # All done
-            bb.msg.note(1, bb.msg.domain.RunQueue, "Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed." % (self.stats.completed, self.stats.skipped, self.stats.failed))
+            logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.stats.completed, self.stats.skipped, self.stats.failed)
             return False
 
         if self.state is runQueueChildProcess:
@@ -941,14 +942,14 @@ class RunQueue:
                 self.runq_buildable[revdep] = 1
                 fn = self.taskData.fn_index[self.runq_fnid[revdep]]
                 taskname = self.runq_task[revdep]
-                bb.msg.debug(1, bb.msg.domain.RunQueue, "Marking task %s (%s, %s) as buildable" % (revdep, fn, taskname))
+                logger.debug(1, "Marking task %s (%s, %s) as buildable", revdep, fn, taskname)
 
     def task_fail(self, task, exitcode):
         """
         Called when a task has failed
         Updates the state engine with the failure
         """
-        bb.msg.error(bb.msg.domain.RunQueue, "Task %s (%s) failed with %s" % (task, self.get_user_idstring(task), exitcode))
+        logger.error("Task %s (%s) failed with %s", task, self.get_user_idstring(task), exitcode)
         self.stats.taskFailed()
         fnid = self.runq_fnid[task]
         self.failed_fnids.append(fnid)
@@ -971,7 +972,7 @@ class RunQueue:
 
                 taskname = self.runq_task[task]
                 if self.check_stamp_task(task, taskname):
-                    bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
+                    logger.debug(2, "Stamp current task %s (%s)", task, self.get_user_idstring(task))
                     self.runq_running[task] = 1
                     self.runq_buildable[task] = 1
                     self.task_complete(task)
@@ -1001,11 +1002,11 @@ class RunQueue:
             # Sanity Checks
             for task in range(self.stats.total):
                 if self.runq_buildable[task] == 0:
-                    bb.msg.error(bb.msg.domain.RunQueue, "Task %s never buildable!" % task)
+                    logger.error("Task %s never buildable!", task)
                 if self.runq_running[task] == 0:
-                    bb.msg.error(bb.msg.domain.RunQueue, "Task %s never ran!" % task)
+                    logger.error("Task %s never ran!", task)
                 if self.runq_complete[task] == 0:
-                    bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
+                    logger.error("Task %s never completed!", task)
             self.state = runQueueComplete
             return
 
@@ -1030,7 +1031,7 @@ class RunQueue:
 
     def finish_runqueue_now(self):
         if self.stats.active:
-            bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGTERM to remaining %s tasks" % self.stats.active)
+            logger.info("Sending SIGTERM to remaining %s tasks", self.stats.active)
             for k, v in self.build_pids.iteritems():
                 try:
                     os.kill(-k, signal.SIGTERM)
@@ -1097,11 +1098,10 @@ class RunQueue:
             #os.dup2(newso.fileno(), sys.stderr.fileno())
 
             bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
-            bb.msg.note(1, bb.msg.domain.RunQueue,
-                        "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + self.stats.failed + 1,
-                                                                self.stats.total,
-                                                                task,
-                                                                self.get_user_idstring(task)))
+            logger.info("Running task %d of %d (ID: %s, %s)", self.stats.completed + self.stats.active + self.stats.failed + 1,
+                                                              self.stats.total,
+                                                              task,
+                                                              self.get_user_idstring(task))
 
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
@@ -1114,12 +1114,10 @@ class RunQueue:
 
             except bb.build.EventException as e:
                 event = e.args[1]
-                bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
+                logger.error("%s event exception, aborting" % bb.event.getName(event))
                 os._exit(1)
             except Exception:
-                from traceback import format_exc
-                bb.msg.error(bb.msg.domain.Build, "Build of %s %s failed" % (fn, taskname))
-                bb.msg.error(bb.msg.domain.Build, format_exc())
+                logger.exception("Build of %s %s failed", fn, taskname)
                 os._exit(1)
             os._exit(0)
         return pid, pipein, pipeout
@@ -1129,25 +1127,25 @@ class RunQueue:
         """
         Dump some debug information on the internal data structures
         """
-        bb.msg.debug(3, bb.msg.domain.RunQueue, "run_tasks:")
+        logger.debug(3, "run_tasks:")
         for task in range(len(self.runq_task)):
-            bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task,
-                taskQueue.fn_index[self.runq_fnid[task]],
-                self.runq_task[task],
-                self.runq_weight[task],
-                self.runq_depends[task],
-                self.runq_revdeps[task]))
+            logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
+                       taskQueue.fn_index[self.runq_fnid[task]],
+                       self.runq_task[task],
+                       self.runq_weight[task],
+                       self.runq_depends[task],
+                       self.runq_revdeps[task])
 
-        bb.msg.debug(3, bb.msg.domain.RunQueue, "sorted_tasks:")
+        logger.debug(3, "sorted_tasks:")
         for task1 in range(len(self.runq_task)):
             if task1 in self.prio_map:
                 task = self.prio_map[task1]
-                bb.msg.debug(3, bb.msg.domain.RunQueue, " (%s)%s - %s: %s   Deps %s RevDeps %s" % (task,
-                    taskQueue.fn_index[self.runq_fnid[task]],
-                    self.runq_task[task],
-                    self.runq_weight[task],
-                    self.runq_depends[task],
-                    self.runq_revdeps[task]))
+                logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
+                           taskQueue.fn_index[self.runq_fnid[task]],
+                           self.runq_task[task],
+                           self.runq_weight[task],
+                           self.runq_depends[task],
+                           self.runq_revdeps[task])
 
 
 class TaskFailure(Exception):

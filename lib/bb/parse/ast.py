@@ -23,9 +23,13 @@
 
 from __future__ import absolute_import
 from future_builtins import filter
-import bb, re, string
-from bb import methodpool
+import re
+import string
+import logging
+import bb
 import itertools
+from bb import methodpool
+from bb.parse import logger
 
 __word__ = re.compile(r"\S+")
 __parsed_methods__ = bb.methodpool.get_parsed_dict()
@@ -51,7 +55,7 @@ class IncludeNode(AstNode):
         Include the file and evaluate the statements
         """
         s = bb.data.expand(self.what_file, data)
-        bb.msg.debug(3, bb.msg.domain.Parsing, "CONF %s:%d: including %s" % (self.from_fn, self.from_lineno, s))
+        logger.debug(2, "CONF %s:%s: including %s", self.from_fn, self.from_lineno, s)
 
         # TODO: Cache those includes... maybe not here though
         if self.force:
@@ -359,7 +363,7 @@ def _expand_versions(versions):
 def multi_finalize(fn, d):
     appends = (d.getVar("__BBAPPEND", True) or "").split()
     for append in appends:
-        bb.msg.debug(2, bb.msg.domain.Parsing, "Appending .bbappend file " + append + " to " + fn)
+        logger.debug(2, "Appending .bbappend file %s to %s", append, fn)
         bb.parse.BBHandler.handle(append, d, True)
 
     safe_d = d

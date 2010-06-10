@@ -24,11 +24,18 @@
 
 from __future__ import print_function
 import sys, os, glob, os.path, re, time
+import logging
 import sre_constants
 from cStringIO import StringIO
 from contextlib import closing
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
+
+logger      = logging.getLogger("BitBake")
+collectlog  = logging.getLogger("BitBake.Collection")
+buildlog    = logging.getLogger("BitBake.Build")
+parselog    = logging.getLogger("BitBake.Parsing")
+providerlog = logging.getLogger("BitBake.Provider")
 
 class MultipleMatches(Exception):
     """
@@ -99,7 +106,7 @@ class BBCooker:
             import termios
             tcattr = termios.tcgetattr(fd)
             if tcattr[3] & termios.TOSTOP:
-                bb.msg.note(1, bb.msg.domain.Build, "The terminal had the TOSTOP bit set, clearing...")
+                buildlog.info("The terminal had the TOSTOP bit set, clearing...")
                 tcattr[3] = tcattr[3] & ~termios.TOSTOP
                 termios.tcsetattr(fd, termios.TCSANOW, tcattr)
 
@@ -115,7 +122,7 @@ class BBCooker:
         if nice:
             curnice = os.nice(0)
             nice = int(nice) - curnice
-            bb.msg.note(2, bb.msg.domain.Build, "Renice to %s " % os.nice(nice))
+            buildlog.verbose("Renice to %s " % os.nice(nice))
 
     def parseCommandLine(self):
         # Parse any commandline into actions
@@ -123,11 +130,11 @@ class BBCooker:
             self.commandlineAction = None
 
             if 'world' in self.configuration.pkgs_to_build:
-                bb.msg.error(bb.msg.domain.Build, "'world' is not a valid target for --environment.")
+                buildlog.error("'world' is not a valid target for --environment.")
             elif len(self.configuration.pkgs_to_build) > 1:
-                bb.msg.error(bb.msg.domain.Build, "Only one target can be used with the --environment option.")
+                buildlog.error("Only one target can be used with the --environment option.")
             elif self.configuration.buildfile and len(self.configuration.pkgs_to_build) > 0:
-                bb.msg.error(bb.msg.domain.Build, "No target should be used with the --environment and --buildfile options.")
+                buildlog.error("No target should be used with the --environment and --buildfile options.")
             elif len(self.configuration.pkgs_to_build) > 0:
                 self.commandlineAction = ["showEnvironmentTarget", self.configuration.pkgs_to_build]
             else:
@@ -145,13 +152,13 @@ class BBCooker:
                 self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
                 self.commandlineAction = None
-                bb.msg.error(bb.msg.domain.Build, "Please specify a package name for dependency graph generation.")
+                buildlog.error("Please specify a package name for dependency graph generation.")
         else:
             if self.configuration.pkgs_to_build:
                 self.commandlineAction = ["buildTargets", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
                 self.commandlineAction = None
-                bb.msg.error(bb.msg.domain.Build, "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
+                buildlog.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
 
     def runCommands(self, server, data, abort):
         """
@@ -177,8 +184,8 @@ class BBCooker:
             preferred_versions[pn] = (pref_ver, pref_file)
             latest_versions[pn] = (last_ver, last_file)
 
-        bb.msg.plain("%-35s %25s %25s" % ("Package Name", "Latest Version", "Preferred Version"))
-        bb.msg.plain("%-35s %25s %25s\n" % ("============", "==============", "================="))
+        logger.plain("%-35s %25s %25s", "Package Name", "Latest Version", "Preferred Version")
+        logger.plain("%-35s %25s %25s\n", "============", "==============", "=================")
 
         for p in sorted(pkg_pn):
             pref = preferred_versions[p]
@@ -190,7 +197,7 @@ class BBCooker:
             if pref == latest:
                 prefstr = ""
 
-            bb.msg.plain("%-35s %25s %25s" % (p, lateststr, prefstr))
+            logger.plain("%-35s %25s %25s", p, lateststr, prefstr)
 
     def compareRevisions(self):
         ret = bb.fetch.fetcher_compare_revisons(self.configuration.data)
@@ -227,27 +234,21 @@ class BBCooker:
         if fn:
             try:
                 envdata = self.bb_cache.loadDataFull(fn, self.get_file_appends(fn), self.configuration.data)
-            except IOError as e:
-                bb.msg.error(bb.msg.domain.Parsing, "Unable to read %s: %s" % (fn, e))
-                raise
-            except Exception as e:
-                bb.msg.error(bb.msg.domain.Parsing, "%s" % e)
+            except Exception, e:
+                parselog.exception("Unable to read %s", fn)
                 raise
 
         # emit variables and shell functions
-        try:
-            data.update_data(envdata)
-            with closing(StringIO()) as env:
-                data.emit_env(env, envdata, True)
-                bb.msg.plain(env.getvalue())
-        except Exception as e:
-            bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
+        data.update_data(envdata)
+        with closing(StringIO()) as env:
+            data.emit_env(env, envdata, True)
+            logger.plain(env.getvalue())
 
         # emit the metadata which isnt valid shell
         data.expandKeys(envdata)
         for e in envdata.keys():
             if data.getVarFlag( e, 'python', envdata ):
-                bb.msg.plain("\npython %s () {\n%s}\n" % (e, data.getVar(e, envdata, 1)))
+                logger.plain("\npython %s () {\n%s}\n", e, data.getVar(e, envdata, 1))
 
     def generateDepTreeData(self, pkgs_to_build, task):
         """
@@ -371,7 +372,7 @@ class BBCooker:
             for rdepend in depgraph["rdepends-pn"][pn]:
                 print('"%s" -> "%s" [style=dashed]' % (pn, rdepend), file=depends_file)
         print("}", file=depends_file)
-        bb.msg.plain("PN dependencies saved to 'pn-depends.dot'")
+        logger.info("PN dependencies saved to 'pn-depends.dot'")
 
         depends_file = file('package-depends.dot', 'w' )
         print("digraph depends {", file=depends_file)
@@ -392,7 +393,7 @@ class BBCooker:
             for rdepend in depgraph["rrecs-pkg"][package]:
                 print('"%s" -> "%s" [style=dashed]' % (package, rdepend), file=depends_file)
         print("}", file=depends_file)
-        bb.msg.plain("Package dependencies saved to 'package-depends.dot'")
+        logger.info("Package dependencies saved to 'package-depends.dot'")
 
         tdepends_file = file('task-depends.dot', 'w' )
         print("digraph depends {", file=tdepends_file)
@@ -404,7 +405,7 @@ class BBCooker:
             for dep in depgraph["tdepends"][task]:
                 print('"%s" -> "%s"' % (task, dep), file=tdepends_file)
         print("}", file=tdepends_file)
-        bb.msg.plain("Task dependencies saved to 'task-depends.dot'")
+        logger.info("Task dependencies saved to 'task-depends.dot'")
 
     def buildDepgraph( self ):
         all_depends = self.status.all_depends
@@ -428,10 +429,10 @@ class BBCooker:
             try:
                 (providee, provider) = p.split(':')
             except:
-                bb.msg.fatal(bb.msg.domain.Provider, "Malformed option in PREFERRED_PROVIDERS variable: %s" % p)
+                providerlog.critical("Malformed option in PREFERRED_PROVIDERS variable: %s" % p)
                 continue
             if providee in self.status.preferred and self.status.preferred[providee] != provider:
-                bb.msg.error(bb.msg.domain.Provider, "conflicting preferences for %s: both %s and %s specified" % (providee, provider, self.status.preferred[providee]))
+                providerlog.error("conflicting preferences for %s: both %s and %s specified", providee, provider, self.status.preferred[providee])
             self.status.preferred[providee] = provider
 
         # Calculate priorities for each file
@@ -440,8 +441,7 @@ class BBCooker:
 
         for collection, pattern, regex, _ in self.status.bbfile_config_priorities:
             if not regex in matched:
-                bb.msg.warn(bb.msg.domain.Provider, "No bb files matched BBFILE_PATTERN_%s '%s'" %
-                                                    (collection, pattern))
+                collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
     def buildWorldTargetList(self):
         """
@@ -449,19 +449,19 @@ class BBCooker:
         """
         all_depends = self.status.all_depends
         pn_provides = self.status.pn_provides
-        bb.msg.debug(1, bb.msg.domain.Parsing, "collating packages for \"world\"")
+        parselog.debug(1, "collating packages for \"world\"")
         for f in self.status.possible_world:
             terminal = True
             pn = self.status.pkg_fn[f]
 
             for p in pn_provides[pn]:
                 if p.startswith('virtual/'):
-                    bb.msg.debug(2, bb.msg.domain.Parsing, "World build skipping %s due to %s provider starting with virtual/" % (f, p))
+                    parselog.debug(2, "World build skipping %s due to %s provider starting with virtual/", f, p)
                     terminal = False
                     break
                 for pf in self.status.providers[p]:
                     if self.status.pkg_fn[pf] != pn:
-                        bb.msg.debug(2, bb.msg.domain.Parsing, "World build skipping %s due to both us and %s providing %s" % (f, pf, p))
+                        parselog.debug(2, "World build skipping %s due to both us and %s providing %s", f, pf, p)
                         terminal = False
                         break
             if terminal:
@@ -475,8 +475,9 @@ class BBCooker:
         """Drop off into a shell"""
         try:
             from bb import shell
-        except ImportError as details:
-            bb.msg.fatal(bb.msg.domain.Parsing, "Sorry, shell not available (%s)" % details )
+        except ImportError:
+            parselog.exception("Interactive mode not available")
+            sys.exit(1)
         else:
             shell.start( self )
 
@@ -497,14 +498,14 @@ class BBCooker:
 
             layerconf = self._findLayerConf()
             if layerconf:
-                bb.msg.debug(2, bb.msg.domain.Parsing, "Found bblayers.conf (%s)" % layerconf)
+                parselog.debug(2, "Found bblayers.conf (%s)", layerconf)
                 data = bb.parse.handle(layerconf, data)
 
                 layers = (bb.data.getVar('BBLAYERS', data, True) or "").split()
 
                 data = bb.data.createCopy(data)
                 for layer in layers:
-                    bb.msg.debug(2, bb.msg.domain.Parsing, "Adding layer %s" % layer)
+                    parselog.debug(2, "Adding layer %s", layer)
                     bb.data.setVar('LAYERDIR', layer, data)
                     data = bb.parse.handle(os.path.join(layer, "conf", "layer.conf"), data)
 
@@ -524,7 +525,7 @@ class BBCooker:
                 bb.data.delVar('LAYERDIR', data)
 
             if not data.getVar("BBPATH", True):
-                bb.fatal("The BBPATH variable is not set")
+                raise SystemExit("The BBPATH variable is not set")
 
             data = bb.parse.handle(os.path.join("conf", "bitbake.conf"), data)
 
@@ -545,10 +546,9 @@ class BBCooker:
             bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
 
 
-        except IOError as e:
-            bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (files, str(e)))
-        except bb.parse.ParseError as details:
-            bb.msg.fatal(bb.msg.domain.Parsing, "Unable to parse %s (%s)" % (files, details) )
+        except (IOError, bb.parse.ParseError):
+            parselog.exception("Error when parsing %s", files)
+            sys.exit(1)
 
     def handleCollections( self, collections ):
         """Handle collections"""
@@ -557,22 +557,22 @@ class BBCooker:
             for c in collection_list:
                 regex = bb.data.getVar("BBFILE_PATTERN_%s" % c, self.configuration.data, 1)
                 if regex == None:
-                    bb.msg.error(bb.msg.domain.Parsing, "BBFILE_PATTERN_%s not defined" % c)
+                    parselog.error("BBFILE_PATTERN_%s not defined" % c)
                     continue
                 priority = bb.data.getVar("BBFILE_PRIORITY_%s" % c, self.configuration.data, 1)
                 if priority == None:
-                    bb.msg.error(bb.msg.domain.Parsing, "BBFILE_PRIORITY_%s not defined" % c)
+                    parselog.error("BBFILE_PRIORITY_%s not defined" % c)
                     continue
                 try:
                     cre = re.compile(regex)
                 except re.error:
-                    bb.msg.error(bb.msg.domain.Parsing, "BBFILE_PATTERN_%s \"%s\" is not a valid regular expression" % (c, regex))
+                    parselog.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression", c, regex)
                     continue
                 try:
                     pri = int(priority)
                     self.status.bbfile_config_priorities.append((c, regex, cre, pri))
                 except ValueError:
-                    bb.msg.error(bb.msg.domain.Parsing, "invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
+                    parselog.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"", c, priority)
 
     def buildSetVars(self):
         """
@@ -608,9 +608,9 @@ class BBCooker:
         """
         matches = self.matchFiles(buildfile)
         if len(matches) != 1:
-            bb.msg.error(bb.msg.domain.Parsing, "Unable to match %s (%s matches found):" % (buildfile, len(matches)))
+            parselog.error("Unable to match %s (%s matches found):" % (buildfile, len(matches)))
             for f in matches:
-                bb.msg.error(bb.msg.domain.Parsing, "    %s" % f)
+                parselog.error("    %s" % f)
             raise MultipleMatches
         return matches[0]
 
@@ -654,7 +654,7 @@ class BBCooker:
 
         # Remove stamp for target if force mode active
         if self.configuration.force:
-            bb.msg.note(2, bb.msg.domain.RunQueue, "Remove stamp %s, %s" % (task, fn))
+            logger.verbose("Remove stamp %s, %s", task, fn)
             bb.build.del_stamp('do_%s' % task, self.status, fn)
 
         # Setup taskdata structure
@@ -680,7 +680,7 @@ class BBCooker:
                 retval = rq.execute_runqueue()
             except runqueue.TaskFailure as exc:
                 for fnid in exc.args:
-                    bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+                    buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
                     failures = failures + 1
                 retval = False
             if not retval:
@@ -716,7 +716,7 @@ class BBCooker:
                 retval = rq.execute_runqueue()
             except runqueue.TaskFailure as exc:
                 for fnid in exc.args:
-                    bb.msg.error(bb.msg.domain.Build, "'%s' failed" % taskdata.fn_index[fnid])
+                    buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
                     failures = failures + 1
                 retval = False
             if not retval:
@@ -762,11 +762,11 @@ class BBCooker:
                     try:
                         import psyco
                     except ImportError:
-                        bb.msg.note(1, bb.msg.domain.Collection, "Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
+                        collectlog.info("Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
                     else:
                         psyco.bind( CookerParser.parse_next )
                 else:
-                    bb.msg.note(1, bb.msg.domain.Collection, "You have disabled Psyco. This decreases performance.")
+                    collectlog.info("You have disabled Psyco. This decreases performance.")
 
             self.status = bb.cache.CacheData()
 
@@ -785,7 +785,7 @@ class BBCooker:
             self.cookerState = cookerParsing
 
         if not self.parser.parse_next():
-            bb.msg.debug(1, bb.msg.domain.Collection, "parsing complete")
+            collectlog.debug(1, "parsing complete")
             self.buildDepgraph()
             self.cookerState = cookerParsed
             return None
@@ -833,7 +833,7 @@ class BBCooker:
         parsed, cached, skipped, masked = 0, 0, 0, 0
         self.bb_cache = bb.cache.init(self)
 
-        bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
+        collectlog.debug(1, "collecting .bb files")
 
         files = (data.getVar( "BBFILES", self.configuration.data, 1 ) or "").split()
         data.setVar("BBFILES", " ".join(files), self.configuration.data)
@@ -842,7 +842,7 @@ class BBCooker:
             files = self.get_bbfiles()
 
         if not len(files):
-            bb.msg.error(bb.msg.domain.Collection, "no recipe files to build, check your BBPATH and BBFILES?")
+            collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
             bb.event.fire(CookerExit(), self.configuration.event_data)
 
         newfiles = set()
@@ -862,13 +862,14 @@ class BBCooker:
             try:
                 bbmask_compiled = re.compile(bbmask)
             except sre_constants.error:
-                bb.msg.fatal(bb.msg.domain.Collection, "BBMASK is not a valid regular expression.")
+                collectlog.critical("BBMASK is not a valid regular expression, ignoring.")
+                return list(newfiles), 0
 
         bbfiles = []
         bbappend = []
         for f in newfiles:
             if bbmask and bbmask_compiled.search(f):
-                bb.msg.debug(1, bb.msg.domain.Collection, "skipping masked file %s" % f)
+                collectlog.debug(1, "skipping masked file %s", f)
                 masked += 1
                 continue
             if f.endswith('.bb'):
@@ -876,7 +877,7 @@ class BBCooker:
             elif f.endswith('.bbappend'):
                 bbappend.append(f)
             else:
-                bb.msg.note(1, bb.msg.domain.Collection, "File %s of unknown filetype in BBFILES? Ignorning..." % f)
+                collectlog.debug(1, "skipping %s: unknown file extension", f)
 
         # Build a list of .bbappend files for each .bb file
         self.appendlist = {}
@@ -975,11 +976,6 @@ class CookerParser:
                 self.skipped += skipped
                 self.virtuals += virtuals
 
-            except IOError as e:
-                self.error += 1
-                cooker.bb_cache.remove(f)
-                bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
-                pass
             except KeyboardInterrupt:
                 cooker.bb_cache.remove(f)
                 cooker.bb_cache.sync()
@@ -987,7 +983,7 @@ class CookerParser:
             except Exception as e:
                 self.error += 1
                 cooker.bb_cache.remove(f)
-                bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))
+                parselog.exception("Unable to open %s", f)
             except:
                 cooker.bb_cache.remove(f)
                 raise

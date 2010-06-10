@@ -26,12 +26,14 @@ BitBake 'Fetch' implementation for mercurial DRCS (hg).
 
 import os
 import sys
+import logging
 import bb
 from bb import data
 from bb.fetch import Fetch
 from bb.fetch import FetchError
 from bb.fetch import MissingParameterError
 from bb.fetch import runfetchcmd
+from bb.fetch import logger
 
 class Hg(Fetch):
     """Class to fetch a from mercurial repositories"""
@@ -116,29 +118,29 @@ class Hg(Fetch):
     def go(self, loc, ud, d):
         """Fetch url"""
 
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + ud.moddir + "'")
+        logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")
 
         if os.access(os.path.join(ud.moddir, '.hg'), os.R_OK):
             updatecmd = self._buildhgcommand(ud, d, "pull")
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
+            logger.info("Update " + loc)
             # update sources there
             os.chdir(ud.moddir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % updatecmd)
+            logger.debug(1, "Running %s", updatecmd)
             runfetchcmd(updatecmd, d)
 
         else:
             fetchcmd = self._buildhgcommand(ud, d, "fetch")
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
+            logger.info("Fetch " + loc)
             # check out sources there
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % fetchcmd)
+            logger.debug(1, "Running %s", fetchcmd)
             runfetchcmd(fetchcmd, d)
 
         # Even when we clone (fetch), we still need to update as hg's clone
         # won't checkout the specified revision if its on a branch
         updatecmd = self._buildhgcommand(ud, d, "update")
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % updatecmd)
+        logger.debug(1, "Running %s", updatecmd)
         runfetchcmd(updatecmd, d)
 
         os.chdir(ud.pkgdir)

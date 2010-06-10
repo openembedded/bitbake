@@ -25,6 +25,7 @@ import bb
 from   bb    import data
 from   bb.fetch import Fetch
 from   bb.fetch import runfetchcmd
+from   bb.fetch import logger
 
 class Git(Fetch):
     """Class to fetch a module or modules from git repositories"""
@@ -115,7 +116,7 @@ class Git(Fetch):
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
         if mirror_tarballs != "0" or 'fullclone' in ud.parm:
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git repository")
+            logger.info("Creating tarball of git repository")
             runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
 
         if 'fullclone' in ud.parm:
@@ -147,7 +148,7 @@ class Git(Fetch):
         runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, coprefix), d)
 
         os.chdir(codir)
-        bb.msg.note(1, bb.msg.domain.Fetcher, "Creating tarball of git checkout")
+        logger.info("Creating tarball of git checkout")
         runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
 
         os.chdir(ud.clonedir)
@@ -200,7 +201,7 @@ class Git(Fetch):
             print("no repo")
             self.go(None, ud, d)
             if not os.path.exists(ud.clonedir):
-                bb.msg.error(bb.msg.domain.Fetcher, "GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value" % (url, ud.clonedir))
+                logger.error("GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value", url, ud.clonedir)
                 return None
 
 
@@ -212,5 +213,5 @@ class Git(Fetch):
         os.chdir(cwd)
 
         buildindex = "%s" % output.split()[0]
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "GIT repository for %s in %s is returning %s revisions in rev-list before %s" % (url, ud.clonedir, buildindex, rev))
+        logger.debug(1, "GIT repository for %s in %s is returning %s revisions in rev-list before %s", url, ud.clonedir, buildindex, rev)
         return buildindex

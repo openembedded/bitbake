@@ -66,7 +66,7 @@ class Local(Fetch):
         Check the status of the url
         """
         if urldata.localpath.find("*") != -1:
-            bb.msg.note(1, bb.msg.domain.Fetcher, "URL %s looks like a glob and was therefore not checked." % url)
+            logger.info("URL %s looks like a glob and was therefore not checked.", url)
             return True
         if os.path.exists(urldata.localpath):
             return True

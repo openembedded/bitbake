@@ -8,6 +8,7 @@ Based on the svn "Fetch" implementation.
 
 import  os
 import  sys
+import logging
 import  bb
 from    bb       import data
 from    bb.fetch import Fetch
@@ -91,22 +92,22 @@ class Osc(Fetch):
         Fetch url
         """
 
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + ud.moddir + "'")
+        logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")
 
         if os.access(os.path.join(data.expand('${OSCDIR}', d), ud.path, ud.module), os.R_OK):
             oscupdatecmd = self._buildosccommand(ud, d, "update")
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Update "+ loc)
+            logger.info("Update "+ loc)
             # update sources there
             os.chdir(ud.moddir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % oscupdatecmd)
+            logger.debug(1, "Running %s", oscupdatecmd)
             runfetchcmd(oscupdatecmd, d)
         else:
             oscfetchcmd = self._buildosccommand(ud, d, "fetch")
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
+            logger.info("Fetch " + loc)
             # check out sources there
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % oscfetchcmd)
+            logger.debug(1, "Running %s", oscfetchcmd)
             runfetchcmd(oscfetchcmd, d)
 
         os.chdir(os.path.join(ud.pkgdir + ud.path))
