@@ -328,17 +328,5 @@ class MsgPlain(MsgBase):
 class LogHandler(logging.Handler):
     """Dispatch logging messages as bitbake events"""
 
-    messages = (
-        (logging.DEBUG, MsgDebug),
-        (logging.INFO, MsgNote),
-        (logging.WARNING, MsgWarn),
-        (logging.ERROR, MsgError),
-        (logging.CRITICAL, MsgFatal),
-    )
-
     def emit(self, record):
-        for level, msgclass in self.messages:
-            if record.levelno <= level:
-                msg = self.format(record)
-                fire(msgclass(msg), None)
-                break
+        fire(record, None)

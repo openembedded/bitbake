@@ -23,10 +23,13 @@ Handles preparation and execution of a queue of tasks
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import bb, os, sys
-from bb import msg, data, event
 import signal
 import stat
 import fcntl
+import logging
+from bb import msg, data, event
+
+bblogger = logging.getLogger("BitBake")
 
 class TaskFailure(Exception):
     """Exception raised when a task in a runqueue fails"""
@@ -1074,6 +1077,11 @@ class RunQueue:
             # events
             bb.event.worker_pid = os.getpid()
             bb.event.worker_pipe = pipeout
+
+            # Child processes should send their messages to the UI
+            # process via the server process, not print them
+            # themselves
+            bblogger.handlers = [bb.event.LogHandler()]
 
             self.state = runQueueChildProcess
             # Make the child the process group leader

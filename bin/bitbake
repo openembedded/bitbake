@@ -160,7 +160,8 @@ Default BBFILES are the .bb files in the current directory.""")
     configuration = BBConfiguration(options)
     configuration.pkgs_to_build.extend(args[1:])
 
-    logger.addHandler(event.LogHandler())
+    loghandler = event.LogHandler()
+    logger.addHandler(loghandler)
 
     #server = bb.server.xmlrpc
     server = bb.server.none
@@ -185,6 +186,8 @@ Default BBFILES are the .bb files in the current directory.""")
 
     server.BitBakeServerFork(serverinfo, cooker.serve, cooker_logfile)
     del cooker
+
+    logger.removeHandler(loghandler)
 
     # Setup a connection to the server (cooker)
     serverConnection = server.BitBakeServerConnection(serverinfo)
