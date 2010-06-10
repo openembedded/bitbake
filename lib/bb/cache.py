@@ -64,7 +64,7 @@ class Cache:
         self.cachefile = os.path.join(self.cachedir, "bb_cache.dat")
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
-        bb.mkdirhier(self.cachedir)
+        bb.utils.mkdirhier(self.cachedir)
 
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
