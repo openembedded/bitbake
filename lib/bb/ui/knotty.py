@@ -18,8 +18,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import os
+from __future__ import division
 
+import os
 import sys
 import itertools
 import xmlrpclib
@@ -122,7 +123,7 @@ def init(server, eventHandler):
                 x = event.sofar
                 y = event.total
                 if os.isatty(sys.stdout.fileno()):
-                    sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
+                    sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100//y ) )
                     sys.stdout.flush()
                 else:
                     if x == 1:
