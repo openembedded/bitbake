@@ -94,7 +94,7 @@ def init(server, eventHandler):
             if isinstance(event, bb.build.TaskFailed):
                 return_value = 1
                 logfile = event.logfile
-                if logfile:
+                if logfile and os.path.exists(logfile):
                     print("ERROR: Logfile of failure stored in: %s" % logfile)
                     if 1 or includelogs:
                         print("Log data follows:")
