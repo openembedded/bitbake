@@ -980,10 +980,11 @@ class RunQueue:
                     try:
                         self.cooker.tryBuild(fn, taskname[3:])
                     except bb.build.EventException:
-                        bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
                         os._exit(1)
-                    except:
-                        bb.msg.error(bb.msg.domain.Build, "Build of " + fn + " " + taskname + " failed")
+                    except Exception:
+                        from traceback import format_exc
+                        bb.msg.error(bb.msg.domain.Build, "Build of %s %s failed" % (fn, taskname))
+                        bb.msg.error(bb.msg.domain.Build, format_exc())
                         os._exit(1)
                     os._exit(0)
 
