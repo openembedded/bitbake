@@ -125,7 +125,7 @@ def exec_func(func, d, dirs = None):
     # Setup logfiles
     t = data.getVar('T', d, 1)
     if not t:
-        bb.msg.fatal(bb.msg.domain.Build, "T not set")
+        raise SystemExit("T variable not set, unable to build")
     bb.utils.mkdirhier(t)
     logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
     runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
