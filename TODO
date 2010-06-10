@@ -6,6 +6,14 @@
 - Drop os.system usage in favor of direct subprocess usage or a subprocess
   wrapper
 - Kill the execution of 'tee' for the task log file in build.py
+- Fix up the exception handling
+
+  - Kill exec_task's catch of FuncFailed, instead catch it in the other
+    callers of exec_task/exec_func
+  - What exactly is the purpose of the "EventException"?  I can see using an
+    exception like that, *perhaps*, to abstract away exceptions raised by
+    event handlers, but it has no place in bb.build.exec_task
+
 - Leverage the python logging module
 
   - Create a new logging Handler which instantiates MsgBase derived objects
