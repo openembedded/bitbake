@@ -99,7 +99,7 @@ def encodeurl(decoded):
     (type, host, path, user, pswd, p) = decoded
 
     if not type or not path:
-        bb.msg.fatal(bb.msg.domain.Fetcher, "invalid or missing parameters for url encoding")
+        raise MissingParameterError("Type or path url components missing when encoding %s" % decoded)
     url = '%s://' % type
     if user:
         url += "%s" % user
@@ -166,7 +166,7 @@ def fetcher_init(d):
             pass
         pd.delDomain("BB_URI_HEADREVS")
     else:
-        bb.msg.fatal(bb.msg.domain.Fetcher, "Invalid SRCREV cache policy of: %s" % srcrev_policy)
+        raise FetchError("Invalid SRCREV cache policy of: %s" % srcrev_policy)
 
     for m in methods:
         if hasattr(m, "init"):
@@ -301,7 +301,7 @@ def checkstatus(d):
                 ret = try_mirrors (d, u, mirrors, True)
 
         if not ret:
-            bb.msg.fatal(bb.msg.domain.Fetcher, "URL %s doesn't work" % u)
+            raise FetchError("URL %s doesn't work" % u)
 
 def localpaths(d):
     """
