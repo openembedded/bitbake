@@ -89,7 +89,16 @@ class Command:
                     return False
             else:
                 return False
-        except:
+        except KeyboardInterrupt as exc:
+            self.finishAsyncCommand("Interrupted")
+            return False
+        except SystemExit as exc:
+            arg = exc.args[0]
+            if isinstance(arg, basestring):
+                self.finishAsyncCommand(arg)
+            else:
+                self.finishAsyncCommand("Exited with %s" % arg)
+        except Exception:
             import traceback
             self.finishAsyncCommand(traceback.format_exc())
             return False
