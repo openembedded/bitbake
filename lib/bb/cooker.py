@@ -24,9 +24,11 @@
 
 from __future__ import print_function
 import sys, os, glob, os.path, re, time
+import sre_constants
+from cStringIO import StringIO
+from contextlib import closing
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
-import sre_constants
 
 class MultipleMatches(Exception):
     """
@@ -278,20 +280,15 @@ class BBCooker:
                 bb.msg.error(bb.msg.domain.Parsing, "%s" % e)
                 raise
 
-        class dummywrite:
-            def __init__(self):
-                self.writebuf = ""
-            def write(self, output):
-                self.writebuf = self.writebuf + output
-
         # emit variables and shell functions
         try:
             data.update_data(envdata)
-            wb = dummywrite()
-            data.emit_env(wb, envdata, True)
-            bb.msg.plain(wb.writebuf)
+            with closing(StringIO()) as env:
+                data.emit_env(env, envdata, True)
+                bb.msg.plain(env.getvalue())
         except Exception, e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
+
         # emit the metadata which isnt valid shell
         data.expandKeys(envdata)
         for e in envdata.keys():
