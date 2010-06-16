@@ -195,9 +195,9 @@ Default BBFILES are the .bb files in the current directory.""")
         except Exception, e:
             print "FATAL: Unable to start to '%s' UI: %s" % (ui, e)
             raise
-    finally:
-        serverConnection.terminate()
-        return return_value
+
+    serverConnection.terminate()
+    return return_value
 
 if __name__ == "__main__":
     ret = main()
