@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])),
 
 import optparse
 import warnings
+from traceback import format_exception
 import bb
 import bb.msg
 from bb import cooker
@@ -53,6 +54,13 @@ class BBConfiguration(object):
         for key, val in options.__dict__.items():
             setattr(self, key, val)
         self.pkgs_to_build = []
+
+
+def print_exception(exc, value, tb):
+    """Send exception information through bb.msg"""
+    bb.fatal("".join(format_exception(exc, value, tb)))
+
+sys.excepthook = print_exception
 
 
 _warnings_showwarning = warnings.showwarning
