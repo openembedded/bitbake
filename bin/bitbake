@@ -58,7 +58,7 @@ class BBConfiguration(object):
 
 def print_exception(exc, value, tb):
     """Send exception information through bb.msg"""
-    bb.fatal("".join(format_exception(exc, value, tb)))
+    bb.fatal("".join(format_exception(exc, value, tb, limit=8)))
 
 sys.excepthook = print_exception
 
