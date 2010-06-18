@@ -52,6 +52,7 @@ PROBLEMS:
 # Import and setup global variables
 ##########################################################################
 
+from __future__ import print_function
 try:
     set
 except NameError:
