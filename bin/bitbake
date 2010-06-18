@@ -105,9 +105,6 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("-f", "--force", help = "force run of specified cmd, regardless of stamp status",
                action = "store_true", dest = "force", default = False)
 
-    parser.add_option("-i", "--interactive", help = "drop into the interactive mode also called the BitBake shell.",
-               action = "store_true", dest = "interactive", default = False)
-
     parser.add_option("-c", "--cmd", help = "Specify task to execute. Note that this only executes the specified task for the providee and the packages it depends on, i.e. 'compile' does not implicitly call stage for the dependencies (IOW: use only if you know what you are doing). Depending on the base.bbclass a listtasks tasks is defined and will show available tasks",
                action = "store", dest = "cmd")
 

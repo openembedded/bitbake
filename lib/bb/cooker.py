@@ -151,9 +151,6 @@ class BBCooker:
             self.commandlineAction = ["showVersions"]
         elif self.configuration.parse_only:
             self.commandlineAction = ["parseFiles"]
-        # FIXME - implement
-        #elif self.configuration.interactive:
-        #    self.interactiveMode()
         elif self.configuration.dot_graph:
             if self.configuration.pkgs_to_build:
                 self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
