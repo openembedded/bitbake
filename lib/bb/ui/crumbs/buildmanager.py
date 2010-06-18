@@ -76,31 +76,30 @@ class BuildConfiguration:
     # file format.
     @staticmethod
     def load_from_file (filename):
-        f = open (filename, "r")
 
         conf = BuildConfiguration()
-        for line in f.readlines():
-            data = line.split (";")[1]
-            if (line.startswith ("metadata-url;")):
-                conf.metadata_url = data.strip()
-                continue
-            if (line.startswith ("url;")):
-                conf.urls += [data.strip()]
-                continue
-            if (line.startswith ("extra-url;")):
-                conf.extra_urls += [data.strip()]
-                continue
-            if (line.startswith ("machine;")):
-                conf.machine = data.strip()
-                continue
-            if (line.startswith ("distribution;")):
-                conf.distro = data.strip()
-                continue
-            if (line.startswith ("image;")):
-                conf.image = data.strip()
-                continue
+        with open(filename, "r") as f:
+            for line in f:
+                data = line.split (";")[1]
+                if (line.startswith ("metadata-url;")):
+                    conf.metadata_url = data.strip()
+                    continue
+                if (line.startswith ("url;")):
+                    conf.urls += [data.strip()]
+                    continue
+                if (line.startswith ("extra-url;")):
+                    conf.extra_urls += [data.strip()]
+                    continue
+                if (line.startswith ("machine;")):
+                    conf.machine = data.strip()
+                    continue
+                if (line.startswith ("distribution;")):
+                    conf.distro = data.strip()
+                    continue
+                if (line.startswith ("image;")):
+                    conf.image = data.strip()
+                    continue
 
-        f.close ()
         return conf
 
     # Serialise to a file. This is part of the build process and we use this

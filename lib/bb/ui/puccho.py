@@ -24,6 +24,7 @@ import gtk.glade
 import threading
 import urllib2
 import os
+import contextlib
 
 from bb.ui.crumbs.buildmanager import BuildManager, BuildConfiguration
 from bb.ui.crumbs.buildmanager import BuildManagerTreeView
@@ -77,20 +78,19 @@ class MetaDataLoader(gobject.GObject):
         def run (self):
             result = {}
             try:
-                f = urllib2.urlopen (self.url)
+                with contextlib.closing (urllib2.urlopen (self.url)) as f:
+                    # Parse the metadata format. The format is....
+                    # <machine>;<default distro>|<distro>...;<default image>|<image>...;<type##url>|...
+                    for line in f:
+                        components = line.split(";")
+                        if (len (components) < 4):
+                            raise MetaDataLoader.LoaderThread.LoaderImportException
+                        machine = components[0]
+                        distros = components[1].split("|")
+                        images = components[2].split("|")
+                        urls = components[3].split("|")
 
-                # Parse the metadata format. The format is....
-                # <machine>;<default distro>|<distro>...;<default image>|<image>...;<type##url>|...
-                for line in f.readlines():
-                    components = line.split(";")
-                    if (len (components) < 4):
-                        raise MetaDataLoader.LoaderThread.LoaderImportException
-                    machine = components[0]
-                    distros = components[1].split("|")
-                    images = components[2].split("|")
-                    urls = components[3].split("|")
-
-                    result[machine] = (distros, images, urls)
+                        result[machine] = (distros, images, urls)
 
                 # Create an object representing this *potential*
                 # configuration. It can become concrete if the machine, distro
