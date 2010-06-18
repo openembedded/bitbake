@@ -110,7 +110,7 @@ def debug(level, msgdomain, msg, fn = None):
     if debug_level[msgdomain] >= level:
         bb.event.fire(MsgDebug(msg), None)
         if not bb.event._ui_handlers:
-            print('DEBUG: ' + msg)
+            print('DEBUG: %s' % (msg))
 
 def note(level, msgdomain, msg, fn = None):
     if not msgdomain:
@@ -119,20 +119,20 @@ def note(level, msgdomain, msg, fn = None):
     if level == 1 or verbose or debug_level[msgdomain] >= 1:
         bb.event.fire(MsgNote(msg), None)
         if not bb.event._ui_handlers:
-            print('NOTE: ' + msg)
+            print('NOTE: %s' % (msg))
 
 def warn(msgdomain, msg, fn = None):
     bb.event.fire(MsgWarn(msg), None)
     if not bb.event._ui_handlers:
-        print('WARNING: ' + msg)
+        print('WARNING: %s' % (msg))
 
 def error(msgdomain, msg, fn = None):
     bb.event.fire(MsgError(msg), None)
-    print 'ERROR: ' + msg
+    print('ERROR: %s' % (msg))
 
 def fatal(msgdomain, msg, fn = None):
     bb.event.fire(MsgFatal(msg), None)
-    print('FATAL: ' + msg)
+    print('FATAL: %s' % (msg))
     sys.exit(1)
 
 def plain(msg, fn = None):

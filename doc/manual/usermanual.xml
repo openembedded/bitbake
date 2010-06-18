@@ -218,8 +218,8 @@ python myclass_eventhandler() {
     from bb.event import getName
     from bb import data
 
-    print "The name of the Event is %s" % getName(e)
-    print "The file we run for is %s" % data.getVar('FILE', e.data, True)
+    print("The name of the Event is %s" % getName(e))
+    print("The file we run for is %s" % data.getVar('FILE', e.data, True))
 }
 </screen></para><para>
 This event handler gets called every time an event is triggered. A global variable <varname>e</varname> is defined. <varname>e</varname>.data contains an instance of bb.data. With the getName(<varname>e</varname>)

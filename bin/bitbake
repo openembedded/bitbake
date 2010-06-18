@@ -195,13 +195,13 @@ Default BBFILES are the .bb files in the current directory.""")
         uimodule = __import__("bb.ui", fromlist = [ui])
         ui_init = getattr(uimodule, ui).init
     except AttributeError:
-        print "FATAL: Invalid user interface '%s' specified. " % ui
-        print "Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'."
+        print("FATAL: Invalid user interface '%s' specified. " % ui)
+        print("Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'.")
     else:
         try:
             return_value = ui_init(serverConnection.connection, serverConnection.events)
         except Exception as e:
-            print "FATAL: Unable to start to '%s' UI: %s" % (ui, e)
+            print("FATAL: Unable to start to '%s' UI: %s" % (ui, e))
             raise
     finally:
         serverConnection.terminate()
