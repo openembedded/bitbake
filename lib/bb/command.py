@@ -98,6 +98,7 @@ class Command:
                 self.finishAsyncCommand(arg)
             else:
                 self.finishAsyncCommand("Exited with %s" % arg)
+            return False
         except Exception:
             import traceback
             self.finishAsyncCommand(traceback.format_exc())
