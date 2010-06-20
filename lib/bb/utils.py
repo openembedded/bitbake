@@ -314,7 +314,7 @@ def better_exec(code, context, text, realfile):
     """
     import bb.parse
     try:
-        exec code in _context, context
+        exec(code, _context, context)
     except:
         (t, value, tb) = sys.exc_info()
 
@@ -337,7 +337,7 @@ def better_exec(code, context, text, realfile):
         raise
 
 def simple_exec(code, context):
-    exec code in _context, context
+    exec(code, _context, context)
 
 def better_eval(source, locals):
     return eval(source, _context, locals)

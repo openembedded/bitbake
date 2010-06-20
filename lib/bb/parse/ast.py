@@ -23,7 +23,7 @@
 
 import bb, re, string
 from bb import methodpool
-from itertools import chain
+import itertools
 
 __word__ = re.compile(r"\S+")
 __parsed_methods__ = bb.methodpool.get_parsed_dict()
@@ -31,7 +31,8 @@ _bbversions_re = re.compile(r"\[(?P<from>[0-9]+)-(?P<to>[0-9]+)\]")
 
 class StatementGroup(list):
     def eval(self, data):
-        map(lambda x: x.eval(data), self)
+        for statement in self:
+            statement.eval(data)
 
 class AstNode(object):
     pass
@@ -341,7 +342,7 @@ def _expand_versions(versions):
     versions = iter(versions)
     while True:
         try:
-            version = versions.next()
+            version = next(versions)
         except StopIteration:
             break
 
@@ -351,7 +352,7 @@ def _expand_versions(versions):
         else:
             newversions = expand_one(version, int(range_ver.group("from")),
                                      int(range_ver.group("to")))
-            versions = chain(newversions, versions)
+            versions = itertools.chain(newversions, versions)
 
 def multi_finalize(fn, d):
     safe_d = d
@@ -417,7 +418,7 @@ def multi_finalize(fn, d):
         safe_d.setVar("BBCLASSEXTEND", extended)
         _create_variants(datastores, extended.split(), extendfunc)
 
-    for variant, variant_d in datastores.items():
+    for variant, variant_d in datastores.iteritems():
         if variant:
             try:
                 finalize(fn, variant_d)
@@ -425,7 +426,7 @@ def multi_finalize(fn, d):
                 bb.data.setVar("__SKIPPED", True, variant_d)
 
     if len(datastores) > 1:
-        variants = filter(None, datastores.keys())
+        variants = filter(None, datastores.iterkeys())
         safe_d.setVar("__VARIANTS", " ".join(variants))
 
     datastores[""] = d

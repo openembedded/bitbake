@@ -928,7 +928,7 @@ class RunQueue:
         while True:
             task = None
             if self.stats.active < self.number_tasks:
-                task = self.sched.next()
+                task = next(self.sched)
             if task is not None:
                 fn = self.taskData.fn_index[self.runq_fnid[task]]
 

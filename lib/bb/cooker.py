@@ -184,7 +184,7 @@ class BBCooker:
         except bb.build.FuncFailed:
             bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
             raise
-        except bb.build.EventException, e:
+        except bb.build.EventException as e:
             event = e.args[1]
             bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
             raise
@@ -270,10 +270,10 @@ class BBCooker:
         if fn:
             try:
                 envdata = self.bb_cache.loadDataFull(fn, self.configuration.data)
-            except IOError, e:
+            except IOError as e:
                 bb.msg.error(bb.msg.domain.Parsing, "Unable to read %s: %s" % (fn, e))
                 raise
-            except Exception, e:
+            except Exception as e:
                 bb.msg.error(bb.msg.domain.Parsing, "%s" % e)
                 raise
 
@@ -283,7 +283,7 @@ class BBCooker:
             with closing(StringIO()) as env:
                 data.emit_env(env, envdata, True)
                 bb.msg.plain(env.getvalue())
-        except Exception, e:
+        except Exception as e:
             bb.msg.fatal(bb.msg.domain.Parsing, "%s" % e)
 
         # emit the metadata which isnt valid shell
@@ -510,7 +510,7 @@ class BBCooker:
         """Drop off into a shell"""
         try:
             from bb import shell
-        except ImportError, details:
+        except ImportError as details:
             bb.msg.fatal(bb.msg.domain.Parsing, "Sorry, shell not available (%s)" % details )
         else:
             shell.start( self )
@@ -580,9 +580,9 @@ class BBCooker:
             bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
 
 
-        except IOError, e:
+        except IOError as e:
             bb.msg.fatal(bb.msg.domain.Parsing, "Error when parsing %s: %s" % (files, str(e)))
-        except bb.parse.ParseError, details:
+        except bb.parse.ParseError as details:
             bb.msg.fatal(bb.msg.domain.Parsing, "Unable to parse %s (%s)" % (files, details) )
 
     def handleCollections( self, collections ):
@@ -989,7 +989,7 @@ class CookerParser:
                 self.skipped += skipped
                 self.virtuals += virtuals
 
-            except IOError, e:
+            except IOError as e:
                 self.error += 1
                 cooker.bb_cache.remove(f)
                 bb.msg.error(bb.msg.domain.Collection, "opening %s: %s" % (f, e))
@@ -998,7 +998,7 @@ class CookerParser:
                 cooker.bb_cache.remove(f)
                 cooker.bb_cache.sync()
                 raise
-            except Exception, e:
+            except Exception as e:
                 self.error += 1
                 cooker.bb_cache.remove(f)
                 bb.msg.error(bb.msg.domain.Collection, "%s while parsing %s" % (e, f))

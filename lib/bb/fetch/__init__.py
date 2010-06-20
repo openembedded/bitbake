@@ -409,7 +409,7 @@ def runfetchcmd(cmd, d, quiet = False):
     stdout_handle = os.popen(cmd + " 2>&1", "r")
     output = ""
 
-    while 1:
+    while True:
         line = stdout_handle.readline()
         if not line:
             break

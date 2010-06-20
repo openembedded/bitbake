@@ -123,7 +123,7 @@ def init(server, eventHandler):
                 x = event.sofar
                 y = event.total
                 if os.isatty(sys.stdout.fileno()):
-                    sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100//y ) )
+                    sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( next(parsespin), x, y, x*100//y ) )
                     sys.stdout.flush()
                 else:
                     if x == 1:

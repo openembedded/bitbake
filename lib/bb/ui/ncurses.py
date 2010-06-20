@@ -266,7 +266,7 @@ class NCursesUI:
                         mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked."
                                 % ( event.cached, event.parsed, event.skipped, event.masked ))
                     else:
-                        mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( parsespin.next(), x, y, x*100/y ) )
+                        mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( next(parsespin), x, y, x*100/y ) )
 #                if isinstance(event, bb.build.TaskFailed):
 #                    if event.logfile:
 #                        if data.getVar("BBINCLUDELOGS", d):

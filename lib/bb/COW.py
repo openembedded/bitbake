@@ -82,7 +82,7 @@ class COWDictMeta(COWMeta):
             print("Warning: Doing a copy because %s is a mutable type." % key, file=cls.__warn__)
         try:
             value = value.copy()
-        except AttributeError, e:
+        except AttributeError as e:
             value = copy.copy(value)
         setattr(cls, nkey, value)
         return value
@@ -106,7 +106,7 @@ class COWDictMeta(COWMeta):
                 raise AttributeError("key %s does not exist." % key)
 
             return value
-        except AttributeError, e:
+        except AttributeError as e:
             if not default is cls.__getmarker__:
                 return default
 
@@ -239,7 +239,7 @@ if __name__ == "__main__":
 
     try:
         b['dict2']
-    except KeyError, e:
+    except KeyError as e:
         print("Okay!")
 
     a['set'] = COWSetBase()
