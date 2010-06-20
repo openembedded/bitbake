@@ -44,6 +44,8 @@
 
 """
 
+from __future__ import division
+
 import os, sys, curses, itertools, time
 import bb
 import xmlrpclib
@@ -199,8 +201,8 @@ class NCursesUI:
 
         main_left = 0
         main_top = 0
-        main_height = ( height / 3 * 2 )
-        main_width = ( width / 3 ) * 2
+        main_height = ( height // 3 * 2 )
+        main_width = ( width // 3 ) * 2
         clo_left = main_left
         clo_top = main_top + main_height
         clo_height = height - main_height - main_top - 1
@@ -266,7 +268,7 @@ class NCursesUI:
                         mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked."
                                 % ( event.cached, event.parsed, event.skipped, event.masked ))
                     else:
-                        mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( next(parsespin), x, y, x*100/y ) )
+                        mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( next(parsespin), x, y, x*100//y ) )
 #                if isinstance(event, bb.build.TaskFailed):
 #                    if event.logfile:
 #                        if data.getVar("BBINCLUDELOGS", d):

@@ -25,12 +25,14 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+from __future__ import absolute_import
 import re, bb, os
 import bb.fetch, bb.build, bb.utils
 from bb import data
 
-from ConfHandler import include, init
-from bb.parse import resolve_file, ast
+from . import ConfHandler
+from .. import resolve_file, ast
+from .ConfHandler import include, init
 
 # For compatibility
 bb.deprecate_import(__name__, "bb.parse", ["vars_from_file"])
@@ -231,10 +233,9 @@ def feeder(lineno, s, fn, root, statements):
         ast.handleInherit(statements, m)
         return
 
-    from bb.parse import ConfHandler
     return ConfHandler.feeder(lineno, s, fn, statements)
 
 # Add us to the handlers list
-from bb.parse import handlers
+from .. import handlers
 handlers.append({'supports': supports, 'handle': handle, 'init': init})
 del handlers

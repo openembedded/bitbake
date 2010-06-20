@@ -24,6 +24,7 @@ BitBake build tools.
 #
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
+from __future__ import absolute_import
 from __future__ import print_function
 import os, re
 import bb
@@ -727,18 +728,18 @@ class Fetch(object):
         key = self._revision_key(url, ud, d)
         return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
 
-import cvs
-import git
-import local
-import svn
-import wget
-import svk
-import ssh
-import perforce
-import bzr
-import hg
-import osc
-import repo
+from . import cvs
+from . import git
+from . import local
+from . import svn
+from . import wget
+from . import svk
+from . import ssh
+from . import perforce
+from . import bzr
+from . import hg
+from . import osc
+from . import repo
 
 methods.append(local.Local())
 methods.append(wget.Wget())
