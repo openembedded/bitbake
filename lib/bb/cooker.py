@@ -457,9 +457,12 @@ class BBCooker:
         bb.data.update_data(localdata)
         bb.data.expandKeys(localdata)
 
+        matched = set()
         def calc_bbfile_priority(filename):
-            for (regex, pri) in self.status.bbfile_config_priorities:
+            for _, _, regex, pri in self.status.bbfile_config_priorities:
                 if regex.match(filename):
+                    if not regex in matched:
+                        matched.add(regex)
                     return pri
             return 0
 
@@ -477,6 +480,11 @@ class BBCooker:
         # Calculate priorities for each file
         for p in self.status.pkg_fn:
             self.status.bbfile_priority[p] = calc_bbfile_priority(p)
+
+        for collection, pattern, regex, _ in self.status.bbfile_config_priorities:
+            if not regex in matched:
+                bb.msg.warn(bb.msg.domain.Provider, "No bb files matched BBFILE_PATTERN_%s '%s'" %
+                                                    (collection, pattern))
 
     def buildWorldTargetList(self):
         """
@@ -605,7 +613,7 @@ class BBCooker:
                     continue
                 try:
                     pri = int(priority)
-                    self.status.bbfile_config_priorities.append((cre, pri))
+                    self.status.bbfile_config_priorities.append((c, regex, cre, pri))
                 except ValueError:
                     bb.msg.error(bb.msg.domain.Parsing, "invalid value for BBFILE_PRIORITY_%s: \"%s\"" % (c, priority))
 
