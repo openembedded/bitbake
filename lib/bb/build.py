@@ -251,7 +251,7 @@ def exec_func_shell(func, d, runfile, logfile, flags):
 
     # execute function
     if flags['fakeroot']:
-        maybe_fakeroot = "PATH=\"%s\" fakeroot " % bb.data.getVar("PATH", d, 1)
+        maybe_fakeroot = "PATH=\"%s\" %s " % (bb.data.getVar("PATH", d, 1), bb.data.getVar("FAKEROOT", d, 1) or "fakeroot")
     else:
         maybe_fakeroot = ''
     lang_environment = "LC_ALL=C "
