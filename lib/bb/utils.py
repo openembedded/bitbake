@@ -720,3 +720,19 @@ def which(path, item, direction = 0):
             return next
 
     return ""
+
+def init_logger(logger, verbose, debug, debug_domains):
+    """
+    Set verbosity and debug levels in the logger
+    """
+
+    if verbose:
+        logger.set_verbose(True)
+
+    if debug:
+        logger.set_debug_level(debug)
+    else:
+        logger.set_debug_level(0)
+
+    if debug_domains:
+        logger.set_debug_domains(debug_domains)

@@ -74,17 +74,6 @@ class BBCooker:
 
         self.configuration = configuration
 
-        if self.configuration.verbose:
-            bb.msg.set_verbose(True)
-
-        if self.configuration.debug:
-            bb.msg.set_debug_level(self.configuration.debug)
-        else:
-            bb.msg.set_debug_level(0)
-
-        if self.configuration.debug_domains:
-            bb.msg.set_debug_domains(self.configuration.debug_domains)
-
         self.configuration.data = bb.data.init()
 
         bb.data.inheritFromOS(self.configuration.data)
