@@ -152,12 +152,12 @@ Default BBFILES are the .bb files in the current directory.""" )
     # server is daemonized this logfile will be truncated.
     cooker_logfile = os.path.join (os.getcwd(), "cooker.log")
 
-    cooker = bb.cooker.BBCooker(configuration, server)
-
     # Clear away any spurious environment variables. But don't wipe the
     # environment totally. This is necessary to ensure the correct operation
     # of the UIs (e.g. for DISPLAY, etc.)
     bb.utils.clean_environment()
+
+    cooker = bb.cooker.BBCooker(configuration, server)
 
     cooker.parseCommandLine()
 
