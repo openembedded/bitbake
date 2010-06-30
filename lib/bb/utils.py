@@ -275,6 +275,18 @@ def explode_dep_versions(s):
 
     return r
 
+def join_deps(deps):
+    """
+    Take the result from explode_dep_versions and generate a dependency string
+    """
+    result = []
+    for dep in deps:
+        if deps[dep]:
+            result.append(dep + " (" + deps[dep] + ")")
+        else:
+            result.append(dep)
+    return ", ".join(result)
+
 def _print_trace(body, line):
     """
     Print the Environment of a Text Body
