@@ -550,7 +550,7 @@ class BBCooker:
                     for key in data.dict:
                         if key != "_data":
                             value = data.getVar(key, False)
-                            if "${LAYERDIR}" in value:
+                            if value and "${LAYERDIR}" in value:
                                 data.setVar(key, value.replace("${LAYERDIR}", layer))
 
                 bb.data.delVar('LAYERDIR', data)
