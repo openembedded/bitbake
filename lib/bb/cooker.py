@@ -162,38 +162,6 @@ class BBCooker:
 
         return self.command.runAsyncCommand()
 
-    def tryBuildPackage(self, fn, item, task, the_data):
-        """
-        Build one task of a package, optionally build following task depends
-        """
-        try:
-            if not self.configuration.dry_run:
-                bb.build.exec_task('do_%s' % task, the_data)
-            return True
-        except bb.build.FuncFailed:
-            bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
-            raise
-        except bb.build.EventException as e:
-            event = e.args[1]
-            bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
-            raise
-
-    def tryBuild(self, fn, task):
-        """
-        Build a provider and its dependencies.
-        build_depends is a list of previous build dependencies (not runtime)
-        If build_depends is empty, we're dealing with a runtime depends
-        """
-
-        the_data = self.bb_cache.loadDataFull(fn, self.configuration.data)
-
-        item = self.status.pkg_fn[fn]
-
-        #if bb.build.stamp_is_current('do_%s' % self.configuration.cmd, the_data):
-        #    return True
-
-        return self.tryBuildPackage(fn, item, task, the_data)
-
     def showVersions(self):
 
         # Need files parsed

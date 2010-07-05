@@ -979,8 +979,18 @@ class RunQueue:
                     bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
                     bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
                     try:
-                        self.cooker.tryBuild(fn, taskname[3:])
-                    except bb.build.EventException:
+                        the_data = self.cooker.bb_cache.loadDataFull(fn, self.cooker.configuration.data)
+
+                        if not self.cooker.configuration.dry_run:
+                            bb.build.exec_task(taskname, the_data)
+                        os._exit(0)
+
+                    except bb.build.FuncFailed:
+                        bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
+                        os._exit(1)
+                    except bb.build.EventException as e:
+                        event = e.args[1]
+                        bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
                         os._exit(1)
                     except Exception:
                         from traceback import format_exc
