@@ -1010,19 +1010,8 @@ class RunQueue:
                 self.build_pipes[pipe].read()
 
             if self.stats.active > 0:
-                result = os.waitpid(-1, os.WNOHANG)
-                if result[0] is 0 and result[1] is 0:
+                if self.runqueue_process_waitpid() is None:
                     return
-                task = self.build_pids[result[0]]
-                del self.build_pids[result[0]]
-                self.build_pipes[result[0]].close()
-                del self.build_pipes[result[0]]
-                if result[1] != 0:
-                    self.task_fail(task, result[1])
-                    return
-                self.task_complete(task)
-                self.stats.taskCompleted()
-                bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
                 continue
 
             if len(self.failed_fnids) != 0:
@@ -1039,6 +1028,25 @@ class RunQueue:
                     bb.msg.error(bb.msg.domain.RunQueue, "Task %s never completed!" % task)
             self.state = runQueueComplete
             return
+
+    def runqueue_process_waitpid(self):
+        """
+        Return none is there are no processes awaiting result collection, otherwise
+        collect the process exit codes and close the information pipe.
+        """
+        result = os.waitpid(-1, os.WNOHANG)
+        if result[0] is 0 and result[1] is 0:
+            return None
+        task = self.build_pids[result[0]]
+        del self.build_pids[result[0]]
+        self.build_pipes[result[0]].close()
+        del self.build_pipes[result[0]]
+        if result[1] != 0:
+            self.task_fail(task, result[1])
+        else:
+            self.task_complete(task)
+            self.stats.taskCompleted()
+            bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
 
     def finish_runqueue_now(self):
         if self.stats.active:
@@ -1062,23 +1070,8 @@ class RunQueue:
         try:
             while self.stats.active > 0:
                 bb.event.fire(runQueueExitWait(self.stats.active), self.cfgData)
-                #bb.msg.note(1, bb.msg.domain.RunQueue, "Waiting for %s active tasks to finish" % self.stats.active)
-                #tasknum = 1
-                #for k, v in self.build_pids.iteritems():
-                #    bb.msg.note(1, bb.msg.domain.RunQueue, "%s: %s (pid %s)" % (tasknum, self.get_user_idstring(v), k))
-                #    tasknum = tasknum + 1
-                result = os.waitpid(-1, os.WNOHANG)
-                if result[0] is 0 and result[1] is 0:
+                if self.runqueue_process_waitpid() is None:
                     return
-                task = self.build_pids[result[0]]
-                del self.build_pids[result[0]]
-                self.build_pipes[result[0]].close()
-                del self.build_pipes[result[0]]
-                if result[1] != 0:
-                    self.task_fail(task, result[1])
-                else:
-                    self.stats.taskCompleted()
-                    bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
         except:
             self.finish_runqueue_now()
             raise
