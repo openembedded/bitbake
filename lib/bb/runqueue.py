@@ -942,62 +942,7 @@ class RunQueue:
                     self.stats.taskSkipped()
                     continue
 
-                sys.stdout.flush()
-                sys.stderr.flush()
-                try:
-                    pipein, pipeout = os.pipe()
-                    pid = os.fork() 
-                except OSError as e: 
-                    bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
-                if pid == 0:
-                    os.close(pipein)
-                    # Save out the PID so that the event can include it the
-                    # events
-                    bb.event.worker_pid = os.getpid()
-                    bb.event.worker_pipe = pipeout
-
-                    self.state = runQueueChildProcess
-                    # Make the child the process group leader
-                    os.setpgid(0, 0)
-                    # No stdin
-                    newsi = os.open('/dev/null', os.O_RDWR)
-                    os.dup2(newsi, sys.stdin.fileno())
-                    # Stdout to a logfile
-                    #logout = data.expand("${TMPDIR}/log/stdout.%s" % os.getpid(), self.cfgData, True)
-                    #mkdirhier(os.path.dirname(logout))
-                    #newso = open(logout, 'w')
-                    #os.dup2(newso.fileno(), sys.stdout.fileno())
-                    #os.dup2(newso.fileno(), sys.stderr.fileno())
-
-                    bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
-                    bb.msg.note(1, bb.msg.domain.RunQueue,
-                                "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + 1,
-                                                                        self.stats.total,
-                                                                        task,
-                                                                        self.get_user_idstring(task)))
-
-                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
-                    bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
-                    try:
-                        the_data = self.cooker.bb_cache.loadDataFull(fn, self.cooker.configuration.data)
-
-                        if not self.cooker.configuration.dry_run:
-                            bb.build.exec_task(taskname, the_data)
-                        os._exit(0)
-
-                    except bb.build.FuncFailed:
-                        bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
-                        os._exit(1)
-                    except bb.build.EventException as e:
-                        event = e.args[1]
-                        bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
-                        os._exit(1)
-                    except Exception:
-                        from traceback import format_exc
-                        bb.msg.error(bb.msg.domain.Build, "Build of %s %s failed" % (fn, taskname))
-                        bb.msg.error(bb.msg.domain.Build, format_exc())
-                        os._exit(1)
-                    os._exit(0)
+                pid, pipein, pipeout = self.fork_off_task(fn, task, taskname)
 
                 self.build_pids[pid] = task
                 self.build_pipes[pid] = runQueuePipe(pipein, pipeout, self.cfgData)
@@ -1082,6 +1027,66 @@ class RunQueue:
 
         self.state = runQueueComplete
         return
+
+    def fork_off_task(self, fn, task, taskname):
+        sys.stdout.flush()
+        sys.stderr.flush()
+        try:
+            pipein, pipeout = os.pipe()
+            pid = os.fork() 
+        except OSError as e: 
+            bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
+        if pid == 0:
+            os.close(pipein)
+            # Save out the PID so that the event can include it the
+            # events
+            bb.event.worker_pid = os.getpid()
+            bb.event.worker_pipe = pipeout
+
+            self.state = runQueueChildProcess
+            # Make the child the process group leader
+            os.setpgid(0, 0)
+            # No stdin
+            newsi = os.open('/dev/null', os.O_RDWR)
+            os.dup2(newsi, sys.stdin.fileno())
+            # Stdout to a logfile
+            #logout = data.expand("${TMPDIR}/log/stdout.%s" % os.getpid(), self.cfgData, True)
+            #mkdirhier(os.path.dirname(logout))
+            #newso = open(logout, 'w')
+            #os.dup2(newso.fileno(), sys.stdout.fileno())
+            #os.dup2(newso.fileno(), sys.stderr.fileno())
+
+            bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
+            bb.msg.note(1, bb.msg.domain.RunQueue,
+                        "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + 1,
+                                                                self.stats.total,
+                                                                task,
+                                                                self.get_user_idstring(task)))
+
+            bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
+            bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
+            try:
+                the_data = self.cooker.bb_cache.loadDataFull(fn, self.cooker.configuration.data)
+
+                if not self.cooker.configuration.dry_run:
+                    bb.build.exec_task(taskname, the_data)
+                os._exit(0)
+
+            except bb.build.FuncFailed:
+                bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
+                os._exit(1)
+            except bb.build.EventException as e:
+                event = e.args[1]
+                bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
+                os._exit(1)
+            except Exception:
+                from traceback import format_exc
+                bb.msg.error(bb.msg.domain.Build, "Build of %s %s failed" % (fn, taskname))
+                bb.msg.error(bb.msg.domain.Build, format_exc())
+                os._exit(1)
+            os._exit(0)
+        return pid, pipein, pipeout
+
 
     def dump_data(self, taskQueue):
         """
