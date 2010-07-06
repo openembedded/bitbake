@@ -851,7 +851,7 @@ class RunQueue:
             return False
 
         if self.state is runQueueChildProcess:
-            print("Child process")
+            print("Child process, eeek, shouldn't happen!")
             return False
 
         # Loop
