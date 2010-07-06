@@ -776,7 +776,7 @@ class RunQueue:
             bb.msg.fatal(bb.msg.domain.RunQueue, "check_stamps fatal internal error")
         return current
 
-    def check_stamp_task(self, task):
+    def check_stamp_task(self, task, taskname = None):
 
         if self.stamppolicy == "perfile":
             fulldeptree = False
@@ -787,7 +787,8 @@ class RunQueue:
                 stampwhitelist = self.stampfnwhitelist
 
         fn = self.taskData.fn_index[self.runq_fnid[task]]
-        taskname = self.runq_task[task]
+        if taskname is None:
+            taskname = self.runq_task[task]
         stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
         # If the stamp is missing its not current
         if not os.access(stampfile, os.F_OK):
@@ -928,12 +929,12 @@ class RunQueue:
         while True:
             task = None
             if self.stats.active < self.number_tasks:
-                task = next(self.sched)
+                task = self.sched.next()
             if task is not None:
                 fn = self.taskData.fn_index[self.runq_fnid[task]]
 
                 taskname = self.runq_task[task]
-                if self.check_stamp_task(task):
+                if self.check_stamp_task(task, taskname):
                     bb.msg.debug(2, bb.msg.domain.RunQueue, "Stamp current task %s (%s)" % (task, self.get_user_idstring(task)))
                     self.runq_running[task] = 1
                     self.runq_buildable[task] = 1
