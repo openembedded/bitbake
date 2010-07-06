@@ -956,7 +956,7 @@ class RunQueue:
                 self.build_pipes[pipe].read()
 
             if self.stats.active > 0:
-                if self.runqueue_process_waitpid() is None:
+                if self.runqueue_process_waitpid(self.task_complete, self.task_fail) is None:
                     return
                 continue
 
@@ -975,7 +975,7 @@ class RunQueue:
             self.state = runQueueComplete
             return
 
-    def runqueue_process_waitpid(self):
+    def runqueue_process_waitpid(self, success, failure):
         """
         Return none is there are no processes awaiting result collection, otherwise
         collect the process exit codes and close the information pipe.
@@ -988,9 +988,9 @@ class RunQueue:
         self.build_pipes[result[0]].close()
         del self.build_pipes[result[0]]
         if result[1] != 0:
-            self.task_fail(task, result[1])
+            failure(task, result[1])
         else:
-            self.task_complete(task)
+            success(task)
             self.stats.taskCompleted()
             bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
 
@@ -1016,7 +1016,7 @@ class RunQueue:
         try:
             while self.stats.active > 0:
                 bb.event.fire(runQueueExitWait(self.stats.active), self.cfgData)
-                if self.runqueue_process_waitpid() is None:
+                if self.runqueue_process_waitpid(self.task_complete, self.task_fail) is None:
                     return
         except:
             self.finish_runqueue_now()
