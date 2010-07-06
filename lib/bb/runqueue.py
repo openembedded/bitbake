@@ -1072,9 +1072,6 @@ class RunQueue:
                     bb.build.exec_task(taskname, the_data)
                 os._exit(0)
 
-            except bb.build.FuncFailed:
-                bb.msg.error(bb.msg.domain.Build, "task stack execution failed")
-                os._exit(1)
             except bb.build.EventException as e:
                 event = e.args[1]
                 bb.msg.error(bb.msg.domain.Build, "%s event exception, aborting" % bb.event.getName(event))
