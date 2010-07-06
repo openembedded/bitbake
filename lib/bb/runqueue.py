@@ -1058,7 +1058,7 @@ class RunQueue:
 
             bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
             bb.msg.note(1, bb.msg.domain.RunQueue,
-                        "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + 1,
+                        "Running task %d of %d (ID: %s, %s)" % (self.stats.completed + self.stats.active + self.stats.failed + 1,
                                                                 self.stats.total,
                                                                 task,
                                                                 self.get_user_idstring(task)))
