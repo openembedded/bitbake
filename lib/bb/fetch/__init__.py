@@ -418,7 +418,7 @@ def runfetchcmd(cmd, d, quiet = False):
             print(line, end=' ')
         output += line
 
-    status =  stdout_handle.close() or 0
+    status = stdout_handle.close() or 0
     signal = status >> 8
     exitstatus = status & 0xff
 

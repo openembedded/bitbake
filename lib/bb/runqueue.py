@@ -811,7 +811,7 @@ class RunQueue:
             return False
 
         iscurrent = True
-        t1 =  os.stat(stampfile)[stat.ST_MTIME]
+        t1 = os.stat(stampfile)[stat.ST_MTIME]
         for dep in self.runq_depends[task]:
             if iscurrent:
                 fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
