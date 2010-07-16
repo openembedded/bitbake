@@ -357,8 +357,12 @@ def _expand_versions(versions):
             versions = itertools.chain(newversions, versions)
 
 def multi_finalize(fn, d):
-    safe_d = d
+    appends = (d.getVar("__BBAPPEND", True) or "").split()
+    for append in appends:
+        bb.msg.debug(2, bb.msg.domain.Parsing, "Appending .bbappend file " + append + " to " + fn)
+        bb.parse.BBHandler.handle(append, d, True)
 
+    safe_d = d
     d = bb.data.createCopy(safe_d)
     try:
         finalize(fn, d)

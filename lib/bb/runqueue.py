@@ -1077,7 +1077,7 @@ class RunQueue:
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
             try:
-                the_data = self.cooker.bb_cache.loadDataFull(fn, self.cooker.configuration.data)
+                the_data = self.cooker.bb_cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
 
                 if not self.cooker.configuration.dry_run:
                     bb.build.exec_task(taskname, the_data)

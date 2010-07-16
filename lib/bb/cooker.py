@@ -226,7 +226,7 @@ class BBCooker:
 
         if fn:
             try:
-                envdata = self.bb_cache.loadDataFull(fn, self.configuration.data)
+                envdata = self.bb_cache.loadDataFull(fn, self.get_file_appends(fn), self.configuration.data)
             except IOError as e:
                 bb.msg.error(bb.msg.domain.Parsing, "Unable to read %s: %s" % (fn, e))
                 raise
@@ -637,7 +637,7 @@ class BBCooker:
         self.buildSetVars()
 
         # Load data into the cache for fn and parse the loaded cache data
-        the_data = self.bb_cache.loadDataFull(fn, self.configuration.data)
+        the_data = self.bb_cache.loadDataFull(fn, self.get_file_appends(fn), self.configuration.data)
         self.bb_cache.setData(fn, buildfile, the_data)
         self.bb_cache.handle_data(fn, self.status)
 
@@ -778,7 +778,6 @@ class BBCooker:
 
             self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
-            bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
             (filelist, masked) = self.collect_bbfiles()
             bb.data.renameVar("__depends", "__base_depends", self.configuration.data)
 
@@ -817,7 +816,7 @@ class BBCooker:
         return bbfiles
 
     def find_bbfiles( self, path ):
-        """Find all the .bb files in a directory"""
+        """Find all the .bb and .bbappend files in a directory"""
         from os.path import join
 
         found = []
@@ -825,7 +824,7 @@ class BBCooker:
             for ignored in ('SCCS', 'CVS', '.svn'):
                 if ignored in dirs:
                     dirs.remove(ignored)
-            found += [join(dir, f) for f in files if f.endswith('.bb')]
+            found += [join(dir, f) for f in files if (f.endswith('.bb') or f.endswith('.bbappend'))]
 
         return found
 
@@ -833,6 +832,8 @@ class BBCooker:
         """Collect all available .bb build files"""
         parsed, cached, skipped, masked = 0, 0, 0, 0
         self.bb_cache = bb.cache.init(self)
+
+        bb.msg.debug(1, bb.msg.domain.Collection, "collecting .bb files")
 
         files = (data.getVar( "BBFILES", self.configuration.data, 1 ) or "").split()
         data.setVar("BBFILES", " ".join(files), self.configuration.data)
@@ -848,9 +849,7 @@ class BBCooker:
         for f in files:
             if os.path.isdir(f):
                 dirfiles = self.find_bbfiles(f)
-                if dirfiles:
-                    newfiles.update(dirfiles)
-                    continue
+                newfiles.update(dirfiles)
             else:
                 globbed = glob.glob(f)
                 if not globbed and os.path.exists(f):
@@ -859,23 +858,45 @@ class BBCooker:
 
         bbmask = bb.data.getVar('BBMASK', self.configuration.data, 1)
 
-        if not bbmask:
-            return (list(newfiles), 0)
+        if bbmask:
+            try:
+                bbmask_compiled = re.compile(bbmask)
+            except sre_constants.error:
+                bb.msg.fatal(bb.msg.domain.Collection, "BBMASK is not a valid regular expression.")
 
-        try:
-            bbmask_compiled = re.compile(bbmask)
-        except sre_constants.error:
-            bb.msg.fatal(bb.msg.domain.Collection, "BBMASK is not a valid regular expression.")
-
-        finalfiles = []
+        bbfiles = []
+        bbappend = []
         for f in newfiles:
-            if bbmask_compiled.search(f):
+            if bbmask and bbmask_compiled.search(f):
                 bb.msg.debug(1, bb.msg.domain.Collection, "skipping masked file %s" % f)
                 masked += 1
                 continue
-            finalfiles.append(f)
+            if f.endswith('.bb'):
+                bbfiles.append(f)
+            elif f.endswith('.bbappend'):
+                bbappend.append(f)
+            else:
+                bb.msg.note(1, bb.msg.domain.Collection, "File %s of unknown filetype in BBFILES? Ignorning..." % f)
 
-        return (finalfiles, masked)
+        # Build a list of .bbappend files for each .bb file
+        self.appendlist = {}
+        for f in bbappend:
+            base = os.path.basename(f).replace('.bbappend', '.bb')
+            if not base in self.appendlist:
+               self.appendlist[base] = []
+            self.appendlist[base].append(f)
+ 
+        return (bbfiles, masked)
+
+    def get_file_appends(self, fn):
+        """
+        Returns a list of .bbappend files to apply to fn
+        NB: collect_files() must have been called prior to this
+        """
+        f = os.path.basename(fn)
+        if f in self.appendlist:
+            return self.appendlist[f] 
+        return []
 
     def serve(self):
 
@@ -945,7 +966,7 @@ class CookerParser:
             f = self.filelist[self.pointer]
 
             try:
-                fromCache, skipped, virtuals = cooker.bb_cache.loadData(f, cooker.configuration.data, cooker.status)
+                fromCache, skipped, virtuals = cooker.bb_cache.loadData(f, cooker.get_file_appends(f), cooker.configuration.data, cooker.status)
                 if fromCache:
                     self.cached += 1
                 else:

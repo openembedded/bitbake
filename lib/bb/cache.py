@@ -165,7 +165,7 @@ class Cache:
         #bb.msg.debug(2, bb.msg.domain.Cache, "realfn2virtual %s and %s to %s" % (realfn, cls, "virtual:" + cls + ":" + realfn))
         return "virtual:" + cls + ":" + realfn
 
-    def loadDataFull(self, virtualfn, cfgData):
+    def loadDataFull(self, virtualfn, appends, cfgData):
         """
         Return a complete set of data for fn.
         To do this, we need to parse the file.
@@ -175,10 +175,10 @@ class Cache:
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s (full)" % fn)
 
-        bb_data = self.load_bbfile(fn, cfgData)
+        bb_data = self.load_bbfile(fn, appends, cfgData)
         return bb_data[cls]
 
-    def loadData(self, fn, cfgData, cacheData):
+    def loadData(self, fn, appends, cfgData, cacheData):
         """
         Load a subset of data for fn.
         If the cached data is valid we do nothing,
@@ -206,7 +206,7 @@ class Cache:
 
         bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s" % fn)
 
-        bb_data = self.load_bbfile(fn, cfgData)
+        bb_data = self.load_bbfile(fn, appends, cfgData)
 
         for data in bb_data:
             virtualfn = self.realfn2virtual(fn, data)
@@ -453,7 +453,7 @@ class Cache:
         self.getVar('__BB_DONT_CACHE', file_name, True)
         self.getVar('__VARIANTS', file_name, True)
 
-    def load_bbfile( self, bbfile, config):
+    def load_bbfile(self, bbfile, appends, config):
         """
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped
@@ -477,6 +477,8 @@ class Cache:
             chdir_back = True
             data.setVar('TOPDIR', bbfile_loc, bb_data)
         try:
+            if appends:
+                data.setVar('__BBAPPEND', " ".join(appends), bb_data)
             bb_data = parse.handle(bbfile, bb_data) # read .bb data
             if chdir_back: os.chdir(oldpath)
             return bb_data
