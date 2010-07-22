@@ -70,10 +70,12 @@ runQueueCleanUp = 7
 runQueueComplete = 8
 runQueueChildProcess = 9
 
-class RunQueueScheduler:
+class RunQueueScheduler(object):
     """
     Control the order tasks are scheduled in.
     """
+    name = "basic"
+
     def __init__(self, runqueue):
         """
         The default scheduler just returns the first buildable task (the
@@ -101,6 +103,8 @@ class RunQueueSchedulerSpeed(RunQueueScheduler):
     A scheduler optimised for speed. The priority map is sorted by task weight,
     heavier weighted tasks (tasks needed by the most other tasks) are run first.
     """
+    name = "speed"
+
     def __init__(self, runqueue):
         """
         The priority map is sorted by task weight.
@@ -128,6 +132,8 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
     well where disk space is at a premium and classes like OE's rm_work are in
     force.
     """
+    name = "completion"
+
     def __init__(self, runqueue):
         RunQueueSchedulerSpeed.__init__(self, runqueue)
         from copy import deepcopy
@@ -638,11 +644,15 @@ class RunQueue:
         # Check of higher length circular dependencies
         self.runq_weight = self.calculate_task_weights(endpoints)
 
-        # Decide what order to execute the tasks in, pick a scheduler
-        #self.sched = RunQueueScheduler(self)
-        if self.scheduler == "completion":
-            self.sched = RunQueueSchedulerCompletion(self)
+        schedulers = [obj for obj in globals().itervalues()
+                      if type(obj) is type and issubclass(obj, RunQueueScheduler)]
+        for scheduler in schedulers:
+            if self.scheduler == scheduler.name:
+                self.sched = scheduler(self)
+                break
         else:
+            bb.error("Invalid scheduler '%s', using default 'speed' scheduler" % self.scheduler)
+            bb.error("Available schedulers: %s" % ", ".join(obj.name for obj in schedulers))
             self.sched = RunQueueSchedulerSpeed(self)
 
         # Sanity Check - Check for multiple tasks building the same provider
