@@ -175,6 +175,25 @@ class RunQueue:
         self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, 1) or "perfile"
         self.stampwhitelist = bb.data.getVar("BB_STAMP_WHITELIST", cfgData, 1) or ""
 
+        self.schedulers = set(obj for obj in globals().itervalues()
+                              if type(obj) is type and issubclass(obj, RunQueueScheduler))
+
+        user_schedulers = bb.data.getVar("BB_SCHEDULERS", cfgData, True)
+        if user_schedulers:
+            for sched in user_schedulers.split():
+                if not "." in sched:
+                    bb.note("Ignoring scheduler '%s' from BB_SCHEDULERS: not an import" % sched)
+                    continue
+
+                modname, name = sched.rsplit(".", 1)
+                try:
+                    module = __import__(modname, fromlist=(name,))
+                except ImportError, exc:
+                    logger.critical("Unable to import scheduler '%s' from '%s': %s" % (name, modname, exc))
+                    raise SystemExit(1)
+                else:
+                    self.schedulers.add(getattr(module, name))
+
     def reset_runqueue(self):
         self.runq_fnid = []
         self.runq_task = []
@@ -646,16 +665,14 @@ class RunQueue:
         # Check of higher length circular dependencies
         self.runq_weight = self.calculate_task_weights(endpoints)
 
-        schedulers = [obj for obj in globals().itervalues()
-                      if type(obj) is type and issubclass(obj, RunQueueScheduler)]
-        for scheduler in schedulers:
+        for scheduler in self.schedulers:
             if self.scheduler == scheduler.name:
                 self.sched = scheduler(self)
+                bb.msg.debug(1, bb.msg.domain.RunQueue, "Using runqueue scheduler '%s'" % scheduler.name)
                 break
         else:
-            bb.error("Invalid scheduler '%s', using default 'speed' scheduler" % self.scheduler)
-            bb.error("Available schedulers: %s" % ", ".join(obj.name for obj in schedulers))
-            self.sched = RunQueueSchedulerSpeed(self)
+            bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
+                     (self.scheduler, ", ".join(obj.name for obj in self.schedulers)))
 
         # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
