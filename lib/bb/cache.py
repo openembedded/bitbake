@@ -285,11 +285,25 @@ class Cache:
         if not fn in self.clean:
             self.clean[fn] = ""
 
+        invalid = False
         # Mark extended class data as clean too
         multi = self.getVar('__VARIANTS', fn, True)
         for cls in (multi or "").split():
             virtualfn = self.realfn2virtual(fn, cls)
             self.clean[virtualfn] = ""
+            if not virtualfn in self.depends_cache:
+                bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s is not cached" % virtualfn)
+                invalid = True
+
+        # If any one of the varients is not present, mark cache as invalid for all
+        if invalid:
+            for cls in (multi or "").split():
+                virtualfn = self.realfn2virtual(fn, cls)
+                bb.msg.debug(2, bb.msg.domain.Cache, "Cache: Removing %s from cache" % virtualfn)
+                del self.clean[virtualfn]
+            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: Removing %s from cache" % fn)
+            del self.clean[fn]
+            return False
 
         return True
 
