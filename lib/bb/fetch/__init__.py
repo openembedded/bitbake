@@ -355,7 +355,8 @@ def get_srcrev(d):
         bb.msg.error(bb.msg.domain.Fetcher, "SRCREV was used yet no valid SCM was found in SRC_URI")
         raise ParameterError
 
-    bb.data.setVar('__BB_DONT_CACHE', '1', d)
+    if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
+        bb.data.setVar('__BB_DONT_CACHE', '1', d)
 
     if len(scms) == 1:
         return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d)
