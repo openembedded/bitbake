@@ -309,7 +309,7 @@ def better_compile(text, file, realfile, mode = "exec"):
     except Exception as e:
         # split the text into lines again
         body = text.split('\n')
-        bb.msg.error(bb.msg.domain.Util, "Error in compiling python function in: ", realfile)
+        bb.msg.error(bb.msg.domain.Util, "Error in compiling python function in: %s" % (realfile))
         bb.msg.error(bb.msg.domain.Util, "The lines leading to this error were:")
         bb.msg.error(bb.msg.domain.Util, "\t%d:%s:'%s'" % (e.lineno, e.__class__.__name__, body[e.lineno-1]))
 
@@ -476,7 +476,7 @@ def filter_environment(good_vars):
         del os.environ[key]
 
     if len(removed_vars):
-        bb.msg.debug(1, bb.msg.domain.Util, "Removed the following variables from the environment:", ",".join(removed_vars))
+        bb.msg.debug(1, bb.msg.domain.Util, "Removed the following variables from the environment: %s" % (", ".join(removed_vars)))
 
     return removed_vars
 
