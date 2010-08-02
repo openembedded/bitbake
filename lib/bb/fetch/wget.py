@@ -27,6 +27,7 @@ BitBake build tools.
 
 import os
 import bb
+import urllib
 from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
@@ -45,7 +46,7 @@ class Wget(Fetch):
 
         url = encodeurl([ud.type, ud.host, ud.path, ud.user, ud.pswd, {}])
         ud.basename = os.path.basename(ud.path)
-        ud.localfile = data.expand(os.path.basename(url), d)
+        ud.localfile = data.expand(urllib.unquote(ud.basename), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
