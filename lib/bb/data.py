@@ -46,6 +46,7 @@ sys.path.insert(0, path)
 from itertools import groupby
 
 from bb import data_smart
+from bb import codeparser
 import bb
 
 _dict_type = data_smart.DataSmart
@@ -229,9 +230,85 @@ def emit_env(o=sys.__stdout__, d = init(), all=False):
         for key in keys:
             emit_var(key, o, d, all and not isfunc) and o.write('\n')
 
+def emit_func(func, o=sys.__stdout__, d = init()):
+    """Emits all items in the data store in a format such that it can be sourced by a shell."""
+
+    keys = (key for key in d.keys() if not key.startswith("__") and not d.getVarFlag(key, "func"))
+    for key in keys:
+        emit_var(key, o, d, False) and o.write('\n')
+
+    emit_var(func, o, d, False) and o.write('\n')
+    newdeps = bb.codeparser.ShellParser().parse_shell(d.getVar(func, True))
+    seen = set()
+    while newdeps:
+        deps = newdeps
+        seen |= deps
+        newdeps = set()
+        for dep in deps:
+            if bb.data.getVarFlag(dep, "func", d):
+               emit_var(dep, o, d, False) and o.write('\n')
+               newdeps |=  bb.codeparser.ShellParser().parse_shell(d.getVar(dep, True))
+        newdeps -= seen
+
 def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
     d.finalize()
+
+def build_dependencies(key, keys, shelldeps, d):
+    deps = set()
+    try:
+        if d.getVarFlag(key, "func"):
+            if d.getVarFlag(key, "python"):
+                parsedvar = d.expandWithRefs(d.getVar(key, False), key)
+                parser = bb.codeparser.PythonParser()
+                parser.parse_python(parsedvar.value)
+                deps = deps | parser.references
+            else:
+                parsedvar = d.expandWithRefs(d.getVar(key, False), key)
+                parser = bb.codeparser.ShellParser()
+                parser.parse_shell(parsedvar.value)
+                deps = deps | shelldeps
+            deps = deps | parsedvar.references
+            deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
+        else:
+            parser = d.expandWithRefs(d.getVar(key, False), key)
+            deps |= parser.references
+            deps = deps | (keys & parser.execs)
+        deps |= set((d.getVarFlag(key, "vardeps") or "").split())
+        deps -= set((d.getVarFlag(key, "vardepsexclude") or "").split())
+    except:
+        bb.note("Error expanding variable %s" % key)
+        raise
+    return deps
+    #bb.note("Variable %s references %s and calls %s" % (key, str(deps), str(execs)))
+    #d.setVarFlag(key, "vardeps", deps)
+
+def generate_dependencies(d):
+
+    keys = set(key for key in d.keys() if not key.startswith("__"))
+    shelldeps = set(key for key in keys if d.getVarFlag(key, "export") and not d.getVarFlag(key, "unexport"))
+
+    deps = {}
+    taskdeps = {}
+
+    tasklist = bb.data.getVar('__BBTASKS', d) or []
+    for task in tasklist:
+        deps[task] = build_dependencies(task, keys, shelldeps, d)
+
+        newdeps = deps[task]
+        seen = set()
+        while newdeps:
+            nextdeps = newdeps
+            seen |= nextdeps
+            newdeps = set()
+            for dep in nextdeps:
+                if dep not in deps:
+                    deps[dep] = build_dependencies(dep, keys, shelldeps, d)
+                newdeps |=  deps[dep]
+            newdeps -= seen
+        taskdeps[task] = seen | newdeps
+        #print "For %s: %s" % (task, str(taskdeps[task]))
+    return taskdeps, deps
 
 def inherits_class(klass, d):
     val = getVar('__inherit_cache', d) or []

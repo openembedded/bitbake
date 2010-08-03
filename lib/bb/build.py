@@ -223,7 +223,7 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
         script.write('#!/bin/sh -e\n')
         if logger.getEffectiveLevel() <= logging.DEBUG:
             script.write("set -x\n")
-        data.emit_env(script, d)
+        data.emit_func(function, script, d)
 
         script.write("%s\n" % function)
         os.fchmod(script.fileno(), 0775)

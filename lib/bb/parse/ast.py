@@ -323,6 +323,8 @@ def finalize(fn, d):
     tasklist = bb.data.getVar('__BBTASKS', d) or []
     bb.build.add_tasks(tasklist, d)
 
+    #bb.data.generate_dependencies(d)
+
     bb.event.fire(bb.event.RecipeParsed(fn), d)
 
 def _create_variants(datastores, names, function):
