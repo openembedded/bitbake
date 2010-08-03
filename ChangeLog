@@ -138,7 +138,7 @@ Changes in Bitbake 1.9.x:
 	  directory != the cache dir.
 	- Add md5 and sha256 checksum generation functions to utils.py
 	- Correctly handle '-' characters in class names (#2958)
-	- Make sure expandKeys has been called on the data dictonary before running tasks
+	- Make sure expandKeys has been called on the data dictionary before running tasks
 	- Correctly add a task override in the form task-TASKNAME.
 	- Revert the '-' character fix in class names since it breaks things
 	- When a regexp fails to compile for PACKAGES_DYNAMIC, print a more useful error (#4444)

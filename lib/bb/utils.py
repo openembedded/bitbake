@@ -250,7 +250,7 @@ def explode_dep_versions(s):
     """
     Take an RDEPENDS style string of format:
     "DEPEND1 (optional version) DEPEND2 (optional version) ..."
-    and return a dictonary of dependencies and versions.
+    and return a dictionary of dependencies and versions.
     """
     r = {}
     l = s.split()
