@@ -265,13 +265,13 @@ class DataSmart(MutableMapping):
             self._makeShadowCopy(var)
         self.dict[var][flag] = flagvalue
 
-    def getVarFlag(self, var, flag, exp = False):
+    def getVarFlag(self, var, flag, expand=False):
         local_var = self._findVar(var)
         value = None
         if local_var:
             if flag in local_var:
                 value = copy.copy(local_var[flag])
-        if exp and value:
+        if expand and value:
             value = self.expand(value, None)
         return value
 

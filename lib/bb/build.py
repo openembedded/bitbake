@@ -278,10 +278,17 @@ def exec_task(fn, task, d):
         except OSError:
            pass
 
+    prefuncs = localdata.getVarFlag(task, 'prefuncs', expand=True)
+    postfuncs = localdata.getVarFlag(task, 'postfuncs', expand=True)
+
     logfile = open(logfn, 'w')
     event.fire(TaskStarted(task, localdata), localdata)
     try:
+        for func in (prefuncs or '').split():
+            exec_func(func, localdata, logfile=logfile)
         exec_func(task, localdata, logfile=logfile)
+        for func in (postfuncs or '').split():
+            exec_func(func, localdata, logfile=logfile)
     except FuncFailed as exc:
         event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
         raise
