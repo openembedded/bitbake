@@ -588,11 +588,11 @@ class BBCooker:
         """
 
         bf = os.path.abspath(buildfile)
+        (filelist, masked) = self.collect_bbfiles()
         try:
             os.stat(bf)
             return [bf]
         except OSError:
-            (filelist, masked) = self.collect_bbfiles()
             regexp = re.compile(buildfile)
             matches = []
             for f in filelist:
