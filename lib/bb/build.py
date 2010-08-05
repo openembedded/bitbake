@@ -104,6 +104,7 @@ def exec_func(func, d, dirs = None):
 
     body = data.getVar(func, d)
     if not body:
+        logger.warn("Function %s doesn't exist" % func)
         return
 
     flags = data.getVarFlags(func, d)
