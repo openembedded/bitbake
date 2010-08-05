@@ -1006,10 +1006,10 @@ class RunQueue:
 
     def finish_runqueue_now(self):
         if self.stats.active:
-            bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGINT to remaining %s tasks" % self.stats.active)
+            bb.msg.note(1, bb.msg.domain.RunQueue, "Sending SIGTERM to remaining %s tasks" % self.stats.active)
             for k, v in self.build_pids.iteritems():
                 try:
-                    os.kill(-k, signal.SIGINT)
+                    os.kill(-k, signal.SIGTERM)
                 except:
                     pass
         for pipe in self.build_pipes:
