@@ -198,11 +198,7 @@ Default BBFILES are the .bb files in the current directory.""")
         print("FATAL: Invalid user interface '%s' specified. " % ui)
         print("Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'.")
     else:
-        try:
-            return_value = ui_init(serverConnection.connection, serverConnection.events)
-        except Exception as e:
-            print("FATAL: Unable to start to '%s' UI: %s" % (ui, e))
-            raise
+        return_value = ui_init(serverConnection.connection, serverConnection.events)
     finally:
         serverConnection.terminate()
 
