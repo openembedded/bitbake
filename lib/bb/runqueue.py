@@ -87,16 +87,23 @@ class RunQueueScheduler(object):
         self.prio_map = []
         self.prio_map.extend(range(numTasks))
 
-    def next(self):
+    def next_buildable_tasks(self):
         """
         Return the id of the first task we find that is buildable
         """
-        for task1 in range(len(self.rq.runq_fnid)):
-            task = self.prio_map[task1]
-            if self.rq.runq_running[task] == 1:
+        for tasknum in range(len(self.rq.runq_fnid)):
+            taskid = self.prio_map[tasknum]
+            if self.rq.runq_running[taskid] == 1:
                 continue
-            if self.rq.runq_buildable[task] == 1:
-                return task
+            if self.rq.runq_buildable[taskid] == 1:
+                yield taskid
+
+    def next(self):
+        """
+        Return the id of the task we should build next
+        """
+        if self.rq.stats.active < self.rq.number_tasks:
+            return next(self.next_buildable_tasks(), None)
 
 class RunQueueSchedulerSpeed(RunQueueScheduler):
     """
@@ -174,6 +181,25 @@ class RunQueue:
         self.scheduler = bb.data.getVar("BB_SCHEDULER", cfgData, 1) or "speed"
         self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, 1) or "perfile"
         self.stampwhitelist = bb.data.getVar("BB_STAMP_WHITELIST", cfgData, 1) or ""
+
+        self.schedulers = set(obj for obj in globals().itervalues()
+                              if type(obj) is type and issubclass(obj, RunQueueScheduler))
+
+        user_schedulers = bb.data.getVar("BB_SCHEDULERS", cfgData, True)
+        if user_schedulers:
+            for sched in user_schedulers.split():
+                if not "." in sched:
+                    bb.note("Ignoring scheduler '%s' from BB_SCHEDULERS: not an import" % sched)
+                    continue
+
+                modname, name = sched.rsplit(".", 1)
+                try:
+                    module = __import__(modname, fromlist=(name,))
+                except ImportError, exc:
+                    logger.critical("Unable to import scheduler '%s' from '%s': %s" % (name, modname, exc))
+                    raise SystemExit(1)
+                else:
+                    self.schedulers.add(getattr(module, name))
 
     def reset_runqueue(self):
         self.runq_fnid = []
@@ -646,16 +672,14 @@ class RunQueue:
         # Check of higher length circular dependencies
         self.runq_weight = self.calculate_task_weights(endpoints)
 
-        schedulers = [obj for obj in globals().itervalues()
-                      if type(obj) is type and issubclass(obj, RunQueueScheduler)]
-        for scheduler in schedulers:
+        for scheduler in self.schedulers:
             if self.scheduler == scheduler.name:
                 self.sched = scheduler(self)
+                bb.msg.debug(1, bb.msg.domain.RunQueue, "Using runqueue scheduler '%s'" % scheduler.name)
                 break
         else:
-            bb.error("Invalid scheduler '%s', using default 'speed' scheduler" % self.scheduler)
-            bb.error("Available schedulers: %s" % ", ".join(obj.name for obj in schedulers))
-            self.sched = RunQueueSchedulerSpeed(self)
+            bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
+                     (self.scheduler, ", ".join(obj.name for obj in self.schedulers)))
 
         # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
@@ -939,10 +963,7 @@ class RunQueue:
             self.state = runQueueCleanUp
 
         while True:
-            task = None
-            if self.stats.active < self.number_tasks:
-                task = self.sched.next()
-            if task is not None:
+            for task in iter(self.sched.next, None):
                 fn = self.taskData.fn_index[self.runq_fnid[task]]
 
                 taskname = self.runq_task[task]
@@ -961,8 +982,6 @@ class RunQueue:
                 self.build_pipes[pid] = runQueuePipe(pipein, pipeout, self.cfgData)
                 self.runq_running[task] = 1
                 self.stats.taskActive()
-                if self.stats.active < self.number_tasks:
-                    continue
 
             for pipe in self.build_pipes:
                 self.build_pipes[pipe].read()
