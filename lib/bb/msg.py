@@ -26,6 +26,7 @@ import sys
 import logging
 import collections
 from itertools import groupby
+import warnings
 import bb
 import bb.event
 
@@ -107,6 +108,8 @@ def set_debug_domains(domainargs):
 #
 
 def debug(level, msgdomain, msg, fn = None):
+    warnings.warn("bb.msg.debug will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
     level = logging.DEBUG - (level - 1)
     if not msgdomain:
         logger.debug(level, msg)
@@ -114,9 +117,13 @@ def debug(level, msgdomain, msg, fn = None):
         loggers[msgdomain].debug(level, msg)
 
 def plain(msg, fn = None):
+    warnings.warn("bb.msg.plain will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
     logger.plain(msg)
 
 def note(level, msgdomain, msg, fn = None):
+    warnings.warn("bb.msg.note will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
     if level > 1:
         if msgdomain:
             logger.verbose(msg)
@@ -129,18 +136,24 @@ def note(level, msgdomain, msg, fn = None):
             loggers[msgdomain].info(msg)
 
 def warn(msgdomain, msg, fn = None):
+    warnings.warn("bb.msg.warn will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
     if not msgdomain:
         logger.warn(msg)
     else:
         loggers[msgdomain].warn(msg)
 
 def error(msgdomain, msg, fn = None):
+    warnings.warn("bb.msg.error will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
     if not msgdomain:
         logger.error(msg)
     else:
         loggers[msgdomain].error(msg)
 
 def fatal(msgdomain, msg, fn = None):
+    warnings.warn("bb.msg.fatal will soon be deprecated in favor of raising appropriate exceptions",
+                  PendingDeprecationWarning, stacklevel=2)
     if not msgdomain:
         logger.critical(msg)
     else:

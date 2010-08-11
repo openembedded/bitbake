@@ -20,7 +20,6 @@
 
 - Audit bb.fatal usage - these should all be able to be replaced with
   exceptions
-- Add deprecation warnings to the bb.msg functions
 - Figure out how to handle the ncurses UI.  Should some of our logging
   formatting stuff be made common to all of bitbake, or perhaps all UIs via
   the UIHelper?
