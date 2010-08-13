@@ -1,3 +1,6 @@
+Changes in Bitbake 1.10.0:
+	- Release 1.9.x as a stable series
+
 Changes in Bitbake 1.9.x:
 	- Add PE (Package Epoch) support from Philipp Zabel (pH5)
 	- Treat python functions the same as shell functions for logging
