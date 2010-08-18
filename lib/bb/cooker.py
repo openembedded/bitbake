@@ -259,7 +259,7 @@ class BBCooker:
         taskdata.add_unresolved(localdata, self.status)
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
-        rq.prepare_runqueue()
+        rq.rqdata.prepare()
 
         seen_fnids = []
         depend_tree = {}
@@ -272,8 +272,8 @@ class BBCooker:
         depend_tree["rrecs-pkg"] = {}
 
         for task in xrange(len(rq.runq_fnid)):
-            taskname = rq.runq_task[task]
-            fnid = rq.runq_fnid[task]
+            taskname = rq.rqdata.runq_task[task]
+            fnid = rq.rqdata.runq_fnid[task]
             fn = taskdata.fn_index[fnid]
             pn = self.status.pkg_fn[fn]
             version  = "%s:%s-%s" % self.status.pkg_pepvpr[fn]
@@ -281,13 +281,13 @@ class BBCooker:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = fn
                 depend_tree["pn"][pn]["version"] = version
-            for dep in rq.runq_depends[task]:
-                depfn = taskdata.fn_index[rq.runq_fnid[dep]]
+            for dep in rq.rqdata.runq_depends[task]:
+                depfn = taskdata.fn_index[rq.rqdata.runq_fnid[dep]]
                 deppn = self.status.pkg_fn[depfn]
-                dotname = "%s.%s" % (pn, rq.runq_task[task])
+                dotname = "%s.%s" % (pn, rq.rqdata.runq_task[task])
                 if not dotname in depend_tree["tdepends"]:
                     depend_tree["tdepends"][dotname] = []
-                depend_tree["tdepends"][dotname].append("%s.%s" % (deppn, rq.runq_task[dep]))
+                depend_tree["tdepends"][dotname].append("%s.%s" % (deppn, rq.rqdata.runq_task[dep]))
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
                 packages = []

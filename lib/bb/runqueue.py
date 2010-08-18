@@ -76,12 +76,13 @@ class RunQueueScheduler(object):
     """
     name = "basic"
 
-    def __init__(self, runqueue):
+    def __init__(self, runqueue, rqdata):
         """
         The default scheduler just returns the first buildable task (the
         priority map is sorted by task numer)
         """
         self.rq = runqueue
+        self.rqdata = rqdata
         numTasks = len(self.rq.runq_fnid)
 
         self.prio_map = []
@@ -112,16 +113,17 @@ class RunQueueSchedulerSpeed(RunQueueScheduler):
     """
     name = "speed"
 
-    def __init__(self, runqueue):
+    def __init__(self, runqueue, rqdata):
         """
         The priority map is sorted by task weight.
         """
         from copy import deepcopy
 
         self.rq = runqueue
+        self.rqdata = rqdata
 
-        sortweight = sorted(deepcopy(self.rq.runq_weight))
-        copyweight = deepcopy(self.rq.runq_weight)
+        sortweight = sorted(deepcopy(self.rqdata.runq_weight))
+        copyweight = deepcopy(self.rqdata.runq_weight)
         self.prio_map = []
 
         for weight in sortweight:
@@ -141,8 +143,8 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
     """
     name = "completion"
 
-    def __init__(self, runqueue):
-        RunQueueSchedulerSpeed.__init__(self, runqueue)
+    def __init__(self, runqueue, rqdata):
+        RunQueueSchedulerSpeed.__init__(self, runqueue, rqdata)
         from copy import deepcopy
 
         #FIXME - whilst this groups all fnids together it does not reorder the
@@ -153,10 +155,10 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
         while (len(basemap) > 0):
             entry = basemap.pop(0)
             self.prio_map.append(entry)
-            fnid = self.rq.runq_fnid[entry]
+            fnid = self.rqdata.runq_fnid[entry]
             todel = []
             for entry in basemap:
-                entry_fnid = self.rq.runq_fnid[entry]
+                entry_fnid = self.rqdata.runq_fnid[entry]
                 if entry_fnid == fnid:
                     todel.append(basemap.index(entry))
                     self.prio_map.append(entry)
@@ -164,49 +166,27 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
             for idx in todel:
                 del basemap[idx]
 
-class RunQueue:
+class RunQueueData:
     """
     BitBake Run Queue implementation
     """
-    def __init__(self, cooker, cfgData, dataCache, taskData, targets):
-        self.reset_runqueue()
+    def __init__(self, rq, cooker, cfgData, dataCache, taskData, targets):
         self.cooker = cooker
         self.dataCache = dataCache
         self.taskData = taskData
-        self.cfgData = cfgData
         self.targets = targets
+        self.rq = rq
 
-        self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData, 1) or 1)
-        self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData, 1) or "").split()
-        self.scheduler = bb.data.getVar("BB_SCHEDULER", cfgData, 1) or "speed"
-        self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, 1) or "perfile"
         self.stampwhitelist = bb.data.getVar("BB_STAMP_WHITELIST", cfgData, 1) or ""
+        self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData, 1) or "").split()
 
-        self.schedulers = set(obj for obj in globals().itervalues()
-                              if type(obj) is type and issubclass(obj, RunQueueScheduler))
+        self.reset()
 
-        user_schedulers = bb.data.getVar("BB_SCHEDULERS", cfgData, True)
-        if user_schedulers:
-            for sched in user_schedulers.split():
-                if not "." in sched:
-                    bb.note("Ignoring scheduler '%s' from BB_SCHEDULERS: not an import" % sched)
-                    continue
-
-                modname, name = sched.rsplit(".", 1)
-                try:
-                    module = __import__(modname, fromlist=(name,))
-                except ImportError, exc:
-                    logger.critical("Unable to import scheduler '%s' from '%s': %s" % (name, modname, exc))
-                    raise SystemExit(1)
-                else:
-                    self.schedulers.add(getattr(module, name))
-
-    def reset_runqueue(self):
+    def reset(self):
         self.runq_fnid = []
         self.runq_task = []
         self.runq_depends = []
         self.runq_revdeps = []
-        self.state = runQueuePrepare
 
     def runq_depends_names(self, ids):
         import re
@@ -374,7 +354,7 @@ class RunQueue:
 
         return weight
 
-    def prepare_runqueue(self):
+    def prepare(self):
         """
         Turn a set of taskData into a RunQueue and compute data needed
         to optimise the execution order.
@@ -672,15 +652,6 @@ class RunQueue:
         # Check of higher length circular dependencies
         self.runq_weight = self.calculate_task_weights(endpoints)
 
-        for scheduler in self.schedulers:
-            if self.scheduler == scheduler.name:
-                self.sched = scheduler(self)
-                logger.debug(1, "Using runqueue scheduler '%s'", scheduler.name)
-                break
-        else:
-            bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
-                     (self.scheduler, ", ".join(obj.name for obj in self.schedulers)))
-
         # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
         seen_fn = []
@@ -714,7 +685,65 @@ class RunQueue:
 
         #self.dump_data(taskData)
 
-        self.state = runQueueRunInit
+    def dump_data(self, taskQueue):
+        """
+        Dump some debug information on the internal data structures
+        """
+        logger.debug(3, "run_tasks:")
+        for task in xrange(len(self.rqdata.runq_task)):
+            logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
+                         taskQueue.fn_index[self.rqdata.runq_fnid[task]],
+                         self.rqdata.runq_task[task],
+                         self.rqdata.runq_weight[task],
+                         self.rqdata.runq_depends[task],
+                         self.rqdata.runq_revdeps[task])
+
+        logger.debug(3, "sorted_tasks:")
+        for task1 in xrange(len(self.rqdata.runq_task)):
+            if task1 in self.prio_map:
+                task = self.prio_map[task1]
+                logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
+                           taskQueue.fn_index[self.rqdata.runq_fnid[task]],
+                           self.rqdata.runq_task[task],
+                           self.rqdata.runq_weight[task],
+                           self.rqdata.runq_depends[task],
+                           self.rqdata.runq_revdeps[task])
+
+
+class RunQueue:
+    def __init__(self, cooker, cfgData, dataCache, taskData, targets):
+
+        self.cooker = cooker
+        self.cfgData = cfgData
+        self.rqdata = RunQueueData(self, cooker, cfgData, dataCache, taskData, targets)
+
+        self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", cfgData, 1) or 1)
+        self.scheduler = bb.data.getVar("BB_SCHEDULER", cfgData, 1) or "speed"
+        self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, 1) or "perfile"
+
+        self.state = runQueuePrepare
+
+    def get_schedulers(self):
+        schedulers = set(obj for obj in globals().values()
+                             if type(obj) is type and
+                                issubclass(obj, RunQueueScheduler))
+
+        user_schedulers = bb.data.getVar("BB_SCHEDULERS", self.cfgData, True)
+        if user_schedulers:
+            for sched in user_schedulers.split():
+                if not "." in sched:
+                    bb.note("Ignoring scheduler '%s' from BB_SCHEDULERS: not an import" % sched)
+                    continue
+
+                modname, name = sched.rsplit(".", 1)
+                try:
+                    module = __import__(modname, fromlist=(name,))
+                except ImportError, exc:
+                    logger.critical("Unable to import scheduler '%s' from '%s': %s" % (name, modname, exc))
+                    raise SystemExit(1)
+                else:
+                    schedulers.add(getattr(module, name))
+        return schedulers
 
     def check_stamps(self):
         unchecked = {}
@@ -728,29 +757,29 @@ class RunQueue:
             fulldeptree = True
             stampwhitelist = []
             if self.stamppolicy == "whitelist":
-                stampwhitelist = self.self.stampfnwhitelist
+                stampwhitelist = self.rqdata.stampfnwhitelist
 
-        for task in xrange(len(self.runq_fnid)):
+        for task in xrange(len(self.rqdata.runq_fnid)):
             unchecked[task] = ""
-            if len(self.runq_depends[task]) == 0:
+            if len(self.rqdata.runq_depends[task]) == 0:
                 buildable.append(task)
 
         def check_buildable(self, task, buildable):
-            for revdep in self.runq_revdeps[task]:
+            for revdep in self.rqdata.runq_revdeps[task]:
                 alldeps = 1
-                for dep in self.runq_depends[revdep]:
+                for dep in self.rqdata.runq_depends[revdep]:
                     if dep in unchecked:
                         alldeps = 0
                 if alldeps == 1:
                     if revdep in unchecked:
                         buildable.append(revdep)
 
-        for task in xrange(len(self.runq_fnid)):
+        for task in xrange(len(self.rqdata.runq_fnid)):
             if task not in unchecked:
                 continue
-            fn = self.taskData.fn_index[self.runq_fnid[task]]
-            taskname = self.runq_task[task]
-            stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
+            fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
+            taskname = self.rqdata.runq_task[task]
+            stampfile = "%s.%s" % (self.rqdata.dataCache.stamp[fn], taskname)
             # If the stamp is missing its not current
             if not os.access(stampfile, os.F_OK):
                 del unchecked[task]
@@ -758,7 +787,7 @@ class RunQueue:
                 check_buildable(self, task, buildable)
                 continue
             # If its a 'nostamp' task, it's not current
-            taskdep = self.dataCache.task_deps[fn]
+            taskdep = self.rqdata.dataCache.task_deps[fn]
             if 'nostamp' in taskdep and task in taskdep['nostamp']:
                 del unchecked[task]
                 notcurrent.append(task)
@@ -769,17 +798,17 @@ class RunQueue:
             nextbuildable = []
             for task in buildable:
                 if task in unchecked:
-                    fn = self.taskData.fn_index[self.runq_fnid[task]]
-                    taskname = self.runq_task[task]
-                    stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
+                    fn = self.taskData.fn_index[self.rqdata.runq_fnid[task]]
+                    taskname = self.rqdata.runq_task[task]
+                    stampfile = "%s.%s" % (self.rqdata.dataCache.stamp[fn], taskname)
                     iscurrent = True
 
                     t1 = os.stat(stampfile)[stat.ST_MTIME]
-                    for dep in self.runq_depends[task]:
+                    for dep in self.rqdata.runq_depends[task]:
                         if iscurrent:
-                            fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
-                            taskname2 = self.runq_task[dep]
-                            stampfile2 = "%s.%s" % (self.dataCache.stamp[fn2], taskname2)
+                            fn2 = self.taskData.fn_index[self.rqdata.runq_fnid[dep]]
+                            taskname2 = self.rqdata.runq_task[dep]
+                            stampfile2 = "%s.%s" % (self.rqdata.dataCache.stamp[fn2], taskname2)
                             if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
                                 if dep in notcurrent:
                                     iscurrent = False
@@ -818,29 +847,29 @@ class RunQueue:
             fulldeptree = True
             stampwhitelist = []
             if self.stamppolicy == "whitelist":
-                stampwhitelist = self.stampfnwhitelist
+                stampwhitelist = self.rqdata.stampfnwhitelist
 
-        fn = self.taskData.fn_index[self.runq_fnid[task]]
+        fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
         if taskname is None:
-            taskname = self.runq_task[task]
-        stampfile = "%s.%s" % (self.dataCache.stamp[fn], taskname)
+            taskname = self.rqdata.runq_task[task]
+        stampfile = "%s.%s" % (self.rqdata.dataCache.stamp[fn], taskname)
         # If the stamp is missing its not current
         if not os.access(stampfile, os.F_OK):
             logger.debug(2, "Stampfile %s not available\n", stampfile)
             return False
         # If its a 'nostamp' task, it's not current
-        taskdep = self.dataCache.task_deps[fn]
+        taskdep = self.rqdata.dataCache.task_deps[fn]
         if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
             logger.debug(2, "%s.%s is nostamp\n", fn, taskname)
             return False
 
         iscurrent = True
         t1 = os.stat(stampfile)[stat.ST_MTIME]
-        for dep in self.runq_depends[task]:
+        for dep in self.rqdata.runq_depends[task]:
             if iscurrent:
-                fn2 = self.taskData.fn_index[self.runq_fnid[dep]]
-                taskname2 = self.runq_task[dep]
-                stampfile2 = "%s.%s" % (self.dataCache.stamp[fn2], taskname2)
+                fn2 = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[dep]]
+                taskname2 = self.rqdata.runq_task[dep]
+                stampfile2 = "%s.%s" % (self.rqdata.dataCache.stamp[fn2], taskname2)
                 if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
                     try:
                         t2 = os.stat(stampfile2)[stat.ST_MTIME]
@@ -855,7 +884,7 @@ class RunQueue:
 
     def execute_runqueue(self):
         """
-        Run the tasks in a queue prepared by prepare_runqueue
+        Run the tasks in a queue prepared by rqdata.prepare()
         Upon failure, optionally try to recover the build using any alternate providers
         (if the abort on failure configuration option isn't set)
         """
@@ -863,7 +892,8 @@ class RunQueue:
         retval = 0.5
 
         if self.state is runQueuePrepare:
-            self.prepare_runqueue()
+            self.rqdata.prepare()
+            self.state = runQueueRunInit
 
         if self.state is runQueueRunInit:
             logger.info("Executing runqueue")
@@ -876,11 +906,11 @@ class RunQueue:
             self.finish_runqueue()
 
         if self.state is runQueueFailed:
-            if not self.taskData.tryaltconfigs:
+            if not self.rqdata.taskData.tryaltconfigs:
                 raise bb.runqueue.TaskFailure(self.failed_fnids)
             for fnid in self.failed_fnids:
-                self.taskData.fail_fnid(fnid)
-            self.reset_runqueue()
+                self.rqdata.taskData.fail_fnid(fnid)
+            self.rqdata.reset()
 
         if self.state is runQueueComplete:
             # All done
@@ -896,7 +926,7 @@ class RunQueue:
 
     def execute_runqueue_initVars(self):
 
-        self.stats = RunQueueStats(len(self.runq_fnid))
+        self.stats = RunQueueStats(len(self.rqdata.runq_fnid))
 
         self.runq_buildable = []
         self.runq_running = []
@@ -909,14 +939,23 @@ class RunQueue:
         for task in xrange(self.stats.total):
             self.runq_running.append(0)
             self.runq_complete.append(0)
-            if len(self.runq_depends[task]) == 0:
+            if len(self.rqdata.runq_depends[task]) == 0:
                 self.runq_buildable.append(1)
             else:
                 self.runq_buildable.append(0)
 
         self.state = runQueueRunning
 
-        event.fire(bb.event.StampUpdate(self.target_pairs, self.dataCache.stamp), self.cfgData)
+        event.fire(bb.event.StampUpdate(self.rqdata.target_pairs, self.rqdata.dataCache.stamp), self.cfgData)
+
+        for scheduler in self.get_schedulers():
+            if self.scheduler == scheduler.name:
+                self.sched = scheduler(self)
+                logger.debug(1, "Using runqueue scheduler '%s'", scheduler.name)
+                break
+        else:
+            bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
+                     (self.scheduler, ", ".join(obj.name for obj in self.schedulers)))
 
     def task_complete(self, task):
         """
@@ -925,19 +964,19 @@ class RunQueue:
         completed dependencies as buildable
         """
         self.runq_complete[task] = 1
-        for revdep in self.runq_revdeps[task]:
+        for revdep in self.rqdata.runq_revdeps[task]:
             if self.runq_running[revdep] == 1:
                 continue
             if self.runq_buildable[revdep] == 1:
                 continue
             alldeps = 1
-            for dep in self.runq_depends[revdep]:
+            for dep in self.rqdata.runq_depends[revdep]:
                 if self.runq_complete[dep] != 1:
                     alldeps = 0
             if alldeps == 1:
                 self.runq_buildable[revdep] = 1
-                fn = self.taskData.fn_index[self.runq_fnid[revdep]]
-                taskname = self.runq_task[revdep]
+                fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[revdep]]
+                taskname = self.rqdata.runq_task[revdep]
                 logger.debug(1, "Marking task %s (%s, %s) as buildable", revdep, fn, taskname)
 
     def task_fail(self, task, exitcode):
@@ -946,17 +985,17 @@ class RunQueue:
         Updates the state engine with the failure
         """
         logger.error("Task %s (%s) failed with exit code '%s'", task,
-                     self.get_user_idstring(task), exitcode)
+                     self.rqdata.get_user_idstring(task), exitcode)
         self.stats.taskFailed()
-        fnid = self.runq_fnid[task]
+        fnid = self.rqdata.runq_fnid[task]
         self.failed_fnids.append(fnid)
         bb.event.fire(runQueueTaskFailed(task, self.stats, self), self.cfgData)
-        if self.taskData.abort:
+        if self.rqdata.taskData.abort:
             self.state = runQueueCleanUp
 
     def execute_runqueue_internal(self):
         """
-        Run the tasks in a queue prepared by prepare_runqueue
+        Run the tasks in a queue prepared by rqdata.prepare()
         """
 
         if self.stats.total == 0:
@@ -965,11 +1004,12 @@ class RunQueue:
 
         while True:
             for task in iter(self.sched.next, None):
-                fn = self.taskData.fn_index[self.runq_fnid[task]]
+                fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
 
-                taskname = self.runq_task[task]
+                taskname = self.rqdata.runq_task[task]
                 if self.check_stamp_task(task, taskname):
-                    logger.debug(2, "Stamp current task %s (%s)", task, self.get_user_idstring(task))
+                    logger.debug(2, "Stamp current task %s (%s)", task,
+                                 self.rqdata.get_user_idstring(task))
                     self.runq_running[task] = 1
                     self.runq_buildable[task] = 1
                     self.task_complete(task)
@@ -1121,31 +1161,6 @@ class RunQueue:
         return pid, pipein, pipeout
 
 
-    def dump_data(self, taskQueue):
-        """
-        Dump some debug information on the internal data structures
-        """
-        logger.debug(3, "run_tasks:")
-        for task in xrange(len(self.runq_task)):
-            logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
-                       taskQueue.fn_index[self.runq_fnid[task]],
-                       self.runq_task[task],
-                       self.runq_weight[task],
-                       self.runq_depends[task],
-                       self.runq_revdeps[task])
-
-        logger.debug(3, "sorted_tasks:")
-        for task1 in xrange(len(self.runq_task)):
-            if task1 in self.prio_map:
-                task = self.prio_map[task1]
-                logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
-                           taskQueue.fn_index[self.runq_fnid[task]],
-                           self.runq_task[task],
-                           self.runq_weight[task],
-                           self.runq_depends[task],
-                           self.runq_revdeps[task])
-
-
 class TaskFailure(Exception):
     """
     Exception raised when a task in a runqueue fails
@@ -1170,7 +1185,7 @@ class runQueueEvent(bb.event.Event):
     """
     def __init__(self, task, stats, rq):
         self.taskid = task
-        self.taskstring = rq.get_user_idstring(task)
+        self.taskstring = rq.rqdata.get_user_idstring(task)
         self.stats = stats
         bb.event.Event.__init__(self)
 
@@ -1201,7 +1216,7 @@ class runQueueTaskCompleted(runQueueEvent):
 def check_stamp_fn(fn, taskname, d):
     rq = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", d)
     fn = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", d)
-    fnid = rq.taskData.getfn_id(fn)
+    fnid = rq.rqdata.taskData.getfn_id(fn)
     taskid = rq.get_task_id(fnid, taskname)
     if taskid is not None:
         return rq.check_stamp_task(taskid)
