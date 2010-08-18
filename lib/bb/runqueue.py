@@ -34,12 +34,6 @@ from bb import msg, data, event
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
 
-class TaskFailure(Exception):
-    """Exception raised when a task in a runqueue fails"""
-    def __init__(self, x):
-        self.args = x
-
-
 class RunQueueStats:
     """
     Holds statistics on the tasks handled by the associated runQueue
