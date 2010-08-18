@@ -1112,6 +1112,13 @@ class RunQueueExecuteTasks(RunQueueExecute):
         if self.rqdata.taskData.abort:
             self.rq.state = runQueueCleanUp
 
+    def task_skip(self, task):
+        self.runq_running[task] = 1
+        self.runq_buildable[task] = 1
+        self.task_complete(task)
+        self.stats.taskCompleted()
+        self.stats.taskSkipped()
+
     def execute(self):
         """
         Run the tasks in a queue prepared by rqdata.prepare()
@@ -1129,11 +1136,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 if self.rq.check_stamp_task(task, taskname):
                     logger.debug(2, "Stamp current task %s (%s)", task,
                                  self.rqdata.get_user_idstring(task))
-                    self.runq_running[task] = 1
-                    self.runq_buildable[task] = 1
-                    self.task_complete(task)
-                    self.stats.taskCompleted()
-                    self.stats.taskSkipped()
+                    self.task_skip(task)
                     continue
                 elif self.cooker.configuration.dry_run:
                     self.runq_running[task] = 1
