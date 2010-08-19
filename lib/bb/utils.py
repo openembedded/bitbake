@@ -313,13 +313,17 @@ def better_compile(text, file, realfile, mode = "exec"):
         # split the text into lines again
         body = text.split('\n')
         logger.error("Error in compiling python function in %s", realfile)
-        logger.error("The lines leading to this error were:")
-        logger.error("\t%d:%s:'%s'", e.lineno, e.__class__.__name__, body[e.lineno-1])
+        logger.error(str(e))
+        if e.lineno:
+            logger.error("The lines leading to this error were:")
+            logger.error("\t%d:%s:'%s'", e.lineno, e.__class__.__name__, body[e.lineno-1])
+            _print_trace(body, e.lineno)
+        else:
+            logger.error("The function causing this error was:")
+            for line in body:
+                logger.error(line)
 
-        _print_trace(body, e.lineno)
-
-        # exit now
-        sys.exit(1)
+        raise
 
 def better_exec(code, context, text, realfile = "<code>"):
     """
