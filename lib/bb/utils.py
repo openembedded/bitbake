@@ -295,7 +295,6 @@ def _print_trace(body, line):
     Print the Environment of a Text Body
     """
     # print the environment of the method
-    logger.error("Printing the environment of the function")
     min_line = max(1, line-4)
     max_line = min(line + 4, len(body)-1)
     for i in xrange(min_line, max_line + 1):
@@ -344,13 +343,18 @@ def better_exec(code, context, text, realfile = "<code>"):
 
         logger.exception("Error executing python function in '%s'", code.co_filename)
 
-        # let us find the line number now
-        while tb.tb_next:
-            tb = tb.tb_next
+        # Strip 'us' from the stack (better_exec call)
+        tb = tb.tb_next
 
         import traceback
-        line = traceback.tb_lineno(tb)
+        tbextract = traceback.extract_tb(tb)
+        tbextract = "\n".join(traceback.format_list(tbextract))
+        bb.msg.error(bb.msg.domain.Util, "Traceback:")
+        for line in tbextract.split('\n'):
+            bb.msg.error(bb.msg.domain.Util, line)
 
+        line = traceback.tb_lineno(tb)
+        bb.msg.error(bb.msg.domain.Util, "The lines leading to this error were:")
         _print_trace( text.split('\n'), line )
         raise
 
