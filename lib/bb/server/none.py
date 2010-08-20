@@ -140,6 +140,7 @@ class BitBakeServer():
             except:
                 import traceback
                 traceback.print_exc()
+                self.commands.runCommand(["stateShutdown"])
                 pass
         if nextsleep is not None:
             #print "Sleeping for %s (%s)" % (nextsleep, delay)
