@@ -695,6 +695,10 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         except Exception as e:
             print('copyfile: copy', src, '->', dest, 'failed.', e)
             return False
+        finally:
+            os.chmod(src, sstat[stat.ST_MODE])
+            os.utime(src, (sstat[stat.ST_ATIME], sstat[stat.ST_MTIME]))
+
     else:
         #we don't yet handle special, so we need to fall back to /bin/mv
         a = getstatusoutput("/bin/cp -f " + "'" + src + "' '" + dest + "'")
