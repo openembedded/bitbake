@@ -369,7 +369,7 @@ class RunQueueData:
 
         if len(taskData.tasks_name) == 0:
             # Nothing to do
-            return
+            return 0
 
         logger.info("Preparing runqueue")
 
@@ -683,7 +683,7 @@ class RunQueueData:
             stampfnwhitelist.append(fn)
         self.stampfnwhitelist = stampfnwhitelist
 
-        #self.dump_data(taskData)
+        return len(self.runq_fnid)
 
     def dump_data(self, taskQueue):
         """
@@ -867,8 +867,11 @@ class RunQueue:
         retval = 0.5
 
         if self.state is runQueuePrepare:
-            self.rqdata.prepare()
-            self.state = runQueueRunInit
+            self.rqexe = RunQueueExecuteDummy(self)
+            if self.rqdata.prepare() is 0:
+                self.state = runQueueComplete
+            else:
+                self.state = runQueueRunInit
 
         if self.state is runQueueRunInit:
             logger.info("Executing runqueue")
@@ -1017,6 +1020,15 @@ class RunQueueExecute:
                 os._exit(1)
             os._exit(0)
         return pid, pipein, pipeout
+
+class RunQueueExecuteDummy(RunQueueExecute):
+    def __init__(self, rq):
+        self.rq = rq
+        self.stats = RunQueueStats(0)
+
+    def finish(self):
+        self.rq.state = runQueueComplete
+        return
 
 class RunQueueExecuteTasks(RunQueueExecute):
     def __init__(self, rq):
