@@ -31,7 +31,7 @@ BitBake build tools.
 import copy, re
 from collections import MutableMapping
 import logging
-import bb
+import bb, bb.codeparser
 from bb   import utils
 from bb.COW  import COWDictBase
 
@@ -41,6 +41,40 @@ __setvar_keyword__ = ["_append", "_prepend"]
 __setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?')
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
+
+
+class VariableParse:
+    def __init__(self, varname, d, val = None):
+        self.varname = varname
+        self.d = d
+        self.value = val
+
+        self.references = set()
+        self.execs = set()
+
+    def var_sub(self, match):
+            key = match.group()[2:-1]
+            if self.varname and key:
+                if self.varname == key:
+                    raise Exception("variable %s references itself!" % self.varname)
+            var = self.d.getVar(key, 1)
+            if var is not None:
+                self.references.add(key)
+                return var
+            else:
+                return match.group()
+
+    def python_sub(self, match):
+            code = match.group()[3:-1]
+            codeobj = compile(code.strip(), self.varname or "<expansion>", "eval")
+
+            parser = bb.codeparser.PythonParser()
+            parser.parse_python(code)
+            self.references |= parser.references
+            self.execs |= parser.execs
+
+            value = utils.better_eval(codeobj, DataContext(self.d))
+            return str(value)
 
 
 class DataContext(dict):
@@ -66,45 +100,37 @@ class DataSmart(MutableMapping):
 
         self.expand_cache = {}
 
-    def expand(self, s, varname):
-        def var_sub(match):
-            key = match.group()[2:-1]
-            if varname and key:
-                if varname == key:
-                    raise Exception("variable %s references itself!" % varname)
-            var = self.getVar(key, 1)
-            if var is not None:
-                return var
-            else:
-                return match.group()
-
-        def python_sub(match):
-            code = match.group()[3:-1]
-            codeobj = compile(code.strip(), varname or "<expansion>", "eval")
-            value = utils.better_eval(codeobj, DataContext(self))
-            return str(value)
+    def expandWithRefs(self, s, varname):
 
         if not isinstance(s, basestring): # sanity check
-            return s
+            return VariableParse(varname, self, s)
 
         if varname and varname in self.expand_cache:
             return self.expand_cache[varname]
 
+        varparse = VariableParse(varname, self)
+
         while s.find('${') != -1:
             olds = s
             try:
-                s = __expand_var_regexp__.sub(var_sub, s)
-                s = __expand_python_regexp__.sub(python_sub, s)
+                s = __expand_var_regexp__.sub(varparse.var_sub, s)
+                s = __expand_python_regexp__.sub(varparse.python_sub, s)
                 if s == olds:
                     break
             except Exception:
                 logger.exception("Error evaluating '%s'", s)
                 raise
 
-        if varname:
-            self.expand_cache[varname] = s
+        varparse.value = s
 
-        return s
+        if varname:
+            self.expand_cache[varname] = varparse
+
+        return varparse
+
+    def expand(self, s, varname):
+        return self.expandWithRefs(s, varname).value
+
 
     def finalize(self):
         """Performs final steps upon the datastore, including application of overrides"""
