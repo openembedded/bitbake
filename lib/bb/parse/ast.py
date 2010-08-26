@@ -141,7 +141,8 @@ class MethodNode:
             bb.data.setVar(self.func_name, '\n'.join(self.body), data)
 
 class PythonMethodNode(AstNode):
-    def __init__(self, root, body, fn):
+    def __init__(self, funcname, root, body, fn):
+        self.func_name = funcname
         self.root = root
         self.body = body
         self.fn = fn
@@ -150,9 +151,12 @@ class PythonMethodNode(AstNode):
         # Note we will add root to parsedmethods after having parse
         # 'this' file. This means we will not parse methods from
         # bb classes twice
+        text = '\n'.join(self.body)
         if not bb.methodpool.parsed_module(self.root):
-            text = '\n'.join(self.body)
             bb.methodpool.insert_method(self.root, text, self.fn)
+        bb.data.setVarFlag(self.func_name, "func", 1, data)
+        bb.data.setVarFlag(self.func_name, "python", 1, data)
+        bb.data.setVar(self.func_name, text, data)
 
 class MethodFlagsNode(AstNode):
     def __init__(self, key, m):
@@ -274,8 +278,8 @@ def handleData(statements, groupd):
 def handleMethod(statements, func_name, lineno, fn, body):
     statements.append(MethodNode(func_name, body, lineno, fn))
 
-def handlePythonMethod(statements, root, body, fn):
-    statements.append(PythonMethodNode(root, body, fn))
+def handlePythonMethod(statements, funcname, root, body, fn):
+    statements.append(PythonMethodNode(funcname, root, body, fn))
 
 def handleMethodFlags(statements, key, m):
     statements.append(MethodFlagsNode(key, m))

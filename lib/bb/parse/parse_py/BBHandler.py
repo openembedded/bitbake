@@ -185,7 +185,7 @@ def feeder(lineno, s, fn, root, statements):
             __body__.append(s)
             return
         else:
-            ast.handlePythonMethod(statements, root, __body__, fn)
+            ast.handlePythonMethod(statements, __inpython__, root, __body__, fn)
             __body__ = []
             __inpython__ = False
 
@@ -212,7 +212,8 @@ def feeder(lineno, s, fn, root, statements):
     m = __def_regexp__.match(s)
     if m:
         __body__.append(s)
-        __inpython__ = True
+        __inpython__ = m.group(1)
+
         return
 
     m = __export_func_regexp__.match(s)
