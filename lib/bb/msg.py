@@ -24,8 +24,9 @@ Message handling infrastructure for bitbake
 
 import sys, bb
 from bb import event
+from collections import defaultdict
 
-debug_level = {}
+debug_level = defaultdict(int)
 
 verbose = False
 
