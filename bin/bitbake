@@ -135,6 +135,9 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("-n", "--dry-run", help = "don't execute, just go through the motions",
                action = "store_true", dest = "dry_run", default = False)
 
+    parser.add_option("-S", "--dump-signatures", help = "don't execute, just dump out the signature construction information",
+               action = "store_true", dest = "dump_signatures", default = False)
+
     parser.add_option("-p", "--parse-only", help = "quit after parsing the BB files (developers only)",
                action = "store_true", dest = "parse_only", default = False)
 

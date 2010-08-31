@@ -485,6 +485,7 @@ class BBCooker:
                 sys.exit(1)
 
         data = self.configuration.data
+        bb.parse.init_parser(data)
         for f in files:
             data = _parse(f, data)
 
@@ -523,6 +524,7 @@ class BBCooker:
 
         bb.fetch.fetcher_init(self.configuration.data)
         bb.codeparser.parser_cache_init(self.configuration.data)
+        bb.parse.init_parser(data)
         bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
 
     def handleCollections( self, collections ):

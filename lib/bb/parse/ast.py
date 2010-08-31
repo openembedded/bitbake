@@ -300,7 +300,7 @@ def handleInherit(statements, m):
     n = __word__.findall(files)
     statements.append(InheritNode(m.group(1)))
 
-def finalize(fn, d):
+def finalize(fn, d, variant = None):
     for lazykey in bb.data.getVar("__lazy_assigned", d) or ():
         if bb.data.getVar(lazykey, d) is None:
             val = bb.data.getVarFlag(lazykey, "defaultval", d)
@@ -323,7 +323,7 @@ def finalize(fn, d):
     tasklist = bb.data.getVar('__BBTASKS', d) or []
     bb.build.add_tasks(tasklist, d)
 
-    #bb.data.generate_dependencies(d)
+    bb.parse.siggen.finalise(fn, d, variant)
 
     bb.event.fire(bb.event.RecipeParsed(fn), d)
 
@@ -433,7 +433,7 @@ def multi_finalize(fn, d):
     for variant, variant_d in datastores.iteritems():
         if variant:
             try:
-                finalize(fn, variant_d)
+                finalize(fn, variant_d, variant)
             except bb.parse.SkipPackage:
                 bb.data.setVar("__SKIPPED", True, variant_d)
 

@@ -188,6 +188,7 @@ class RunQueueData:
         self.runq_task = []
         self.runq_depends = []
         self.runq_revdeps = []
+        self.runq_hash = []
 
     def runq_depends_names(self, ids):
         import re
@@ -489,6 +490,7 @@ class RunQueueData:
             self.runq_task.append(taskData.tasks_name[task])
             self.runq_depends.append(set(depends))
             self.runq_revdeps.append(set())
+            self.runq_hash.append("")
 
             runq_build.append(0)
             runq_recrdepends.append(recrdepends)
@@ -601,6 +603,7 @@ class RunQueueData:
                 del self.runq_depends[listid-delcount]
                 del runq_build[listid-delcount]
                 del self.runq_revdeps[listid-delcount]
+                del self.runq_hash[listid-delcount]
                 delcount = delcount + 1
                 maps.append(-1)
 
@@ -691,6 +694,19 @@ class RunQueueData:
             if not setscene:
                 continue
             self.runq_setscene.append(task)
+
+        # Interate over the task list and call into the siggen code
+        dealtwith = set()
+        todeal = set(range(len(self.runq_fnid)))
+        while len(todeal) > 0:
+            for task in todeal.copy():
+                if len(self.runq_depends[task] - dealtwith) == 0:
+                    dealtwith.add(task)
+                    todeal.remove(task)
+                    procdep = []
+                    for dep in self.runq_depends[task]:
+                        procdep.append(self.taskData.fn_index[self.runq_fnid[dep]] + "." + self.runq_task[dep])
+                    self.runq_hash[task] = bb.parse.siggen.get_taskhash(self.taskData.fn_index[self.runq_fnid[task]], self.runq_task[task], procdep, self.dataCache)
 
         return len(self.runq_fnid)
 
@@ -843,7 +859,9 @@ class RunQueue:
         fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
         if taskname is None:
             taskname = self.rqdata.runq_task[task]
-        stampfile = "%s.%s" % (self.rqdata.dataCache.stamp[fn], taskname)
+
+        stampfile = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn], taskname, self.rqdata.runq_hash[task])
+
         # If the stamp is missing its not current
         if not os.access(stampfile, os.F_OK):
             logger.debug(2, "Stampfile %s not available", stampfile)
@@ -863,9 +881,10 @@ class RunQueue:
             if iscurrent:
                 fn2 = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[dep]]
                 taskname2 = self.rqdata.runq_task[dep]
-                stampfile2 = "%s.%s" % (self.rqdata.dataCache.stamp[fn2], taskname2)
+                stampfile2 = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn2], taskname2, self.rqdata.runq_hash[dep])
+                stampfile3 = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn2], taskname2 + "_setscene", self.rqdata.runq_hash[dep])
                 t2 = get_timestamp(stampfile2)
-                t3 = get_timestamp(stampfile2 + "_setscene")
+                t3 = get_timestamp(stampfile3)
                 if t3 and t3 > t2:
                    continue
                 if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
@@ -892,7 +911,10 @@ class RunQueue:
                 self.state = runQueueSceneInit
 
         if self.state is runQueueSceneInit:
-            self.rqexe = RunQueueExecuteScenequeue(self)
+            if self.cooker.configuration.dump_signatures:
+                self.dump_signatures()
+            else:
+                self.rqexe = RunQueueExecuteScenequeue(self)
 
         if self.state is runQueueSceneRun:
             self.rqexe.execute()
@@ -932,6 +954,20 @@ class RunQueue:
             self.rqexe.finish_now()
         else:
             self.rqexe.finish()
+
+    def dump_signatures(self):
+        self.state = runQueueComplete
+        done = set()
+        bb.note("Reparsing files to collect dependency data")
+        for task in range(len(self.rqdata.runq_fnid)):
+            if self.rqdata.runq_fnid[task] not in done:
+                fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
+                the_data = self.cooker.bb_cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
+                done.add(self.rqdata.runq_fnid[task])
+
+        bb.parse.siggen.dump_sigs(self.rqdata.dataCache)
+
+        return
 
 
 class RunQueueExecute:
@@ -1024,6 +1060,7 @@ class RunQueueExecute:
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
             try:
                 the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
+                the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
                 bb.build.exec_task(fn, taskname, the_data)
             except Exception as exc:
                 logger.critical(str(exc))

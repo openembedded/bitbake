@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "133"
+__cache_version__ = "134"
 
 recipe_fields = (
     'pn',
@@ -70,6 +70,8 @@ recipe_fields = (
     'nocache',
     'variants',
     'file_depends',
+    'tasks',
+    'basetaskhashes',
 )
 
 
@@ -94,20 +96,32 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
                     for pkg in packages)
 
     @classmethod
+    def taskvar(cls, var, tasks, metadata):
+        return dict((task, cls.getvar("%s_task-%s" % (var, task), metadata))
+                    for task in tasks)
+
+    @classmethod
     def getvar(cls, var, metadata):
         return metadata.getVar(var, True) or ''
 
     @classmethod
     def from_metadata(cls, filename, metadata):
+        tasks = metadata.getVar('__BBTASKS', False)
+
         pn = cls.getvar('PN', metadata)
         packages = cls.listvar('PACKAGES', metadata)
         if not pn in packages:
             packages.append(pn)
+
         return RecipeInfo(
+            tasks            = tasks,
+            basetaskhashes   = cls.taskvar('BB_BASEHASH', tasks, metadata),
+
             file_depends     = metadata.getVar('__depends', False),
             task_deps        = metadata.getVar('_task_deps', False) or
                                {'tasks': [], 'parents': {}},
             variants         = cls.listvar('__VARIANTS', metadata) + [''],
+
             skipped          = cls.getvar('__SKIPPED', metadata),
             timestamp        = bb.parse.cached_mtime(filename),
             packages         = cls.listvar('PACKAGES', metadata),
@@ -538,6 +552,8 @@ class CacheData(object):
         self.task_deps = {}
         self.stamp = {}
         self.preferred = {}
+        self.tasks = {}
+        self.basetaskhash = {}
 
         """
         Indirect Cache variables
@@ -594,3 +610,6 @@ class CacheData(object):
         if not info.broken and not info.not_world:
             self.possible_world.append(fn)
 
+        for task, taskhash in info.basetaskhashes.iteritems():
+            identifier = '%s.%s' % (fn, task)
+            self.basetaskhash[identifier] = taskhash

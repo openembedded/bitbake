@@ -30,6 +30,7 @@ import os
 import logging
 import bb
 import bb.utils
+import bb.siggen
 
 logger = logging.getLogger("BitBake.Parsing")
 
@@ -82,6 +83,9 @@ def init(fn, data):
     for h in handlers:
         if h['supports'](fn):
             return h['init'](data)
+
+def init_parser(d):
+    bb.parse.siggen = bb.siggen.init(d)
 
 def resolve_file(fn, d):
     if not os.path.isabs(fn):
