@@ -1,11 +1,20 @@
 import ast
 import codegen
 import logging
-from pysh import pyshyacc, pyshlex
+import os.path
+import bb.utils, bb.data
 from itertools import chain
+from pysh import pyshyacc, pyshlex
 
 
 logger = logging.getLogger('BitBake.CodeParser')
+PARSERCACHE_VERSION = 2
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+    logger.info('Importing cPickle failed.  Falling back to a very slow implementation.')
 
 
 def check_indent(codestr):
@@ -24,6 +33,45 @@ def check_indent(codestr):
     return codestr
 
 pythonparsecache = {}
+shellparsecache = {}
+
+def parser_cachefile(d):
+    cachedir = (bb.data.getVar("PERSISTENT_DIR", d, True) or
+                bb.data.getVar("CACHE", d, True))
+    if cachedir in [None, '']:
+        return None
+    bb.utils.mkdirhier(cachedir)
+    cachefile = os.path.join(cachedir, "bb_codeparser.dat")
+    logger.debug(1, "Using cache in '%s' for codeparser cache", cachefile)
+    return cachefile
+
+def parser_cache_init(d):
+    global pythonparsecache
+    global shellparsecache
+
+    cachefile = parser_cachefile(d)
+    if not cachefile:
+        return
+
+    try:
+        p = pickle.Unpickler(file(cachefile, "rb"))
+        data, version = p.load()
+    except:
+        return
+
+    if version != PARSERCACHE_VERSION:
+        return
+
+    pythonparsecache = data[0]
+    shellparsecache = data[1]
+
+def parser_cache_save(d):
+    cachefile = parser_cachefile(d)
+    if not cachefile:
+        return
+
+    p = pickle.Pickler(file(cachefile, "wb"), -1)
+    p.dump([[pythonparsecache, shellparsecache], PARSERCACHE_VERSION])
 
 class PythonParser():
     class ValueVisitor():
@@ -136,9 +184,11 @@ class PythonParser():
 
     def parse_python(self, node):
 
-        if node in pythonparsecache:
-            self.references = pythonparsecache[node].references
-            self.execs = pythonparsecache[node].execs
+        h = hash(str(node))
+
+        if h in pythonparsecache:
+            self.references = pythonparsecache[h]["refs"]
+            self.execs = pythonparsecache[h]["execs"]
             return
 
         code = compile(check_indent(str(node)), "<string>", "exec",
@@ -153,10 +203,9 @@ class PythonParser():
         self.references.update(visitor.var_execs)
         self.execs = visitor.direct_func_calls
 
-        pythonparsecache[node] = self
-
-
-shellparsecache = {}
+        pythonparsecache[h] = {}
+        pythonparsecache[h]["refs"] = self.references
+        pythonparsecache[h]["execs"] = self.execs
 
 class ShellParser():
     def __init__(self):
@@ -169,9 +218,11 @@ class ShellParser():
         commands it executes.
         """
 
-        if value in pythonparsecache:
-            self.execs = shellparsecache[value].execs
-            return
+        h = hash(str(value))
+
+        if h in shellparsecache:
+            self.execs = shellparsecache[h]["execs"]
+            return self.execs
 
         try:
             tokens, _ = pyshyacc.parse(value, eof=True, debug=False)
@@ -182,7 +233,8 @@ class ShellParser():
             self.process_tokens(token)
         self.execs = set(cmd for cmd in self.allexecs if cmd not in self.funcdefs)
 
-        shellparsecache[value] = self
+        shellparsecache[h] = {}
+        shellparsecache[h]["execs"] = self.execs
 
         return self.execs
 

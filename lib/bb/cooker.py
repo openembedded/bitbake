@@ -522,6 +522,7 @@ class BBCooker:
             bb.event.register(var, bb.data.getVar(var, self.configuration.data))
 
         bb.fetch.fetcher_init(self.configuration.data)
+        bb.codeparser.parser_cache_init(self.configuration.data)
         bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
 
     def handleCollections( self, collections ):
@@ -879,7 +880,7 @@ class BBCooker:
 
     def shutdown(self):
         self.state = state.shutdown
- 
+
     def stop(self):
         self.state = state.stop
 
@@ -955,6 +956,8 @@ class CookerParser(object):
         else:
             self.pool.terminate()
         self.pool.join()
+
+        bb.codeparser.parser_cache_save(self.cfgdata)
 
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
