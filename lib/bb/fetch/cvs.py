@@ -27,11 +27,10 @@ BitBake build tools.
 #
 
 import os
+import logging
 import bb
 from   bb import data
-from   bb.fetch import Fetch
-from   bb.fetch import FetchError
-from   bb.fetch import MissingParameterError
+from bb.fetch import Fetch, FetchError, MissingParameterError, logger
 
 class Cvs(Fetch):
     """
@@ -136,21 +135,21 @@ class Cvs(Fetch):
             cvsupdatecmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvsupdatecmd)
 
         # create module directory
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory")
+        logger.debug(2, "Fetch: checking for module directory")
         pkg = data.expand('${PN}', d)
         pkgdir = os.path.join(data.expand('${CVSDIR}', localdata), pkg)
         moddir = os.path.join(pkgdir, localdir)
         if os.access(os.path.join(moddir, 'CVS'), os.R_OK):
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
+            logger.info("Update " + loc)
             # update sources there
             os.chdir(moddir)
             myret = os.system(cvsupdatecmd)
         else:
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
+            logger.info("Fetch " + loc)
             # check out sources there
             bb.mkdirhier(pkgdir)
             os.chdir(pkgdir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cvscmd)
+            logger.debug(1, "Running %s", cvscmd)
             myret = os.system(cvscmd)
 
         if myret != 0 or not os.access(moddir, os.R_OK):

@@ -26,8 +26,12 @@ File parsers for the BitBake build tools.
 
 handlers = []
 
-import bb, os
+import os
+import logging
+import bb
 import bb.utils
+
+logger = logging.getLogger("BitBake.Parsing")
 
 class ParseError(Exception):
     """Exception raised when parsing fails"""
@@ -87,7 +91,7 @@ def resolve_file(fn, d):
             raise IOError("file %s not found in %s" % (fn, bbpath))
         fn = newfn
 
-    bb.msg.debug(2, bb.msg.domain.Parsing, "LOAD %s" % fn)
+    logger.debug(2, "LOAD %s", fn)
     return fn
 
 # Used by OpenEmbedded metadata

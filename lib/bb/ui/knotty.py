@@ -24,11 +24,21 @@ import os
 import sys
 import itertools
 import xmlrpclib
+import logging
 from bb import ui
 from bb.ui import uihelper
 
-
+logger = logging.getLogger("BitBake")
 parsespin = itertools.cycle( r'|/-\\' )
+
+class BBLogFormatter(logging.Formatter):
+    """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
+
+    def format(self, record):
+        if record.levelno == logging.INFO + 1:
+            return record.getMessage()
+        else:
+            return logging.Formatter.format(self, record)
 
 def init(server, eventHandler):
 
@@ -38,9 +48,23 @@ def init(server, eventHandler):
 
     helper = uihelper.BBUIHelper()
 
+    # Set up logging to stdout in our usual format
+    logging.addLevelName(logging.INFO, "NOTE")
+    logging.addLevelName(logging.CRITICAL, "ERROR")
+
+    for level in xrange(logging.INFO - 1, logging.DEBUG + 1, -1):
+        logging.addLevelName(level, logging.getLevelName(logging.INFO))
+
+    for level in xrange(logging.DEBUG - 1, 0, -1):
+        logging.addLevelName(level, logging.getLevelName(logging.DEBUG))
+
+    console = logging.StreamHandler(sys.stdout)
+    format = BBLogFormatter("%(levelname)s: %(message)s")
+    console.setFormatter(format)
+    logger.addHandler(console)
+
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
-        #print cmdline
         if not cmdline:
             return 1
         ret = server.runCommand(cmdline)
@@ -58,7 +82,6 @@ def init(server, eventHandler):
             event = eventHandler.waitEvent(0.25)
             if event is None:
                 continue
-            #print event
             helper.eventHandler(event)
             if isinstance(event, bb.runqueue.runQueueExitWait):
                 if not shutdown:
@@ -72,26 +95,10 @@ def init(server, eventHandler):
                         print("%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task))
                         tasknum = tasknum + 1
 
-            if isinstance(event, bb.msg.MsgPlain):
-                print(event._message)
+            if isinstance(event, logging.LogRecord):
+                logger.handle(event)
                 continue
-            if isinstance(event, bb.msg.MsgDebug):
-                print('DEBUG: ' + event._message)
-                continue
-            if isinstance(event, bb.msg.MsgNote):
-                print('NOTE: ' + event._message)
-                continue
-            if isinstance(event, bb.msg.MsgWarn):
-                print('WARNING: ' + event._message)
-                continue
-            if isinstance(event, bb.msg.MsgError):
-                return_value = 1
-                print('ERROR: ' + event._message)
-                continue
-            if isinstance(event, bb.msg.MsgFatal):
-                return_value = 1
-                print('FATAL: ' + event._message)
-                break
+
             if isinstance(event, bb.build.TaskFailed):
                 return_value = 1
                 logfile = event.logfile
@@ -117,7 +124,7 @@ def init(server, eventHandler):
                             for line in lines:
                                 print(line)
             if isinstance(event, bb.build.TaskBase):
-                print("NOTE: %s" % event._message)
+                logger.info(event._message)
                 continue
             if isinstance(event, bb.event.ParseProgress):
                 x = event.sofar
@@ -144,15 +151,15 @@ def init(server, eventHandler):
                 continue
             if isinstance(event, bb.command.CookerCommandFailed):
                 return_value = 1
-                print("Command execution failed: %s" % event.error)
+                logger.error("Command execution failed: %s" % event.error)
                 break
             if isinstance(event, bb.cooker.CookerExit):
                 break
             if isinstance(event, bb.event.MultipleProviders):
-                print("NOTE: multiple providers are available for %s%s (%s)" % (event._is_runtime and "runtime " or "",
-                                                                                event._item,
-                                                                                ", ".join(event._candidates)))
-                print("NOTE: consider defining a PREFERRED_PROVIDER entry to match %s" % event._item)
+                logger.info("multiple providers are available for %s%s (%s)", event._is_runtime and "runtime " or "",
+                            event._item,
+                            ", ".join(event._candidates))
+                logger.info("consider defining a PREFERRED_PROVIDER entry to match %s", event._item)
                 continue
             if isinstance(event, bb.event.NoProvider):
                 if event._runtime:
@@ -161,9 +168,9 @@ def init(server, eventHandler):
                     r = ""
 
                 if event._dependees:
-                    print("ERROR: Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)" % (r, event._item, ", ".join(event._dependees), r))
+                    logger.error("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)", r, event._item, ", ".join(event._dependees), r)
                 else:
-                    print("ERROR: Nothing %sPROVIDES '%s'" % (r, event._item))
+                    logger.error("Nothing %sPROVIDES '%s'", r, event._item)
                 continue
 
             # ignore
@@ -175,7 +182,7 @@ def init(server, eventHandler):
                                   bb.runqueue.runQueueExitWait)):
                 continue
 
-            print("Unknown Event: %s" % event)
+            logger.error("Unknown event: %s", event)
 
         except KeyboardInterrupt:
             if shutdown == 2:

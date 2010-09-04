@@ -27,9 +27,12 @@ BitBake build tools.
 from __future__ import absolute_import
 from __future__ import print_function
 import os, re
+import logging
 import bb
 from   bb import data
 from   bb import persist_data
+
+logger = logging.getLogger("BitBake.Fetch")
 
 class MalformedUrl(Exception):
     """Exception raised when encountering an invalid url"""
@@ -117,9 +120,8 @@ def encodeurl(decoded):
     return url
 
 def uri_replace(uri, uri_find, uri_replace, d):
-#   bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: operating on %s" % uri)
     if not uri or not uri_find or not uri_replace:
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "uri_replace: passed an undefined value, not replacing")
+        logger.debug(1, "uri_replace: passed an undefined value, not replacing")
     uri_decoded = list(decodeurl(uri))
     uri_find_decoded = list(decodeurl(uri_find))
     uri_replace_decoded = list(decodeurl(uri_replace))
@@ -135,13 +137,8 @@ def uri_replace(uri, uri_find, uri_replace, d):
                         localfn = bb.fetch.localpath(uri, d)
                         if localfn:
                             result_decoded[loc] = os.path.dirname(result_decoded[loc]) + "/" + os.path.basename(bb.fetch.localpath(uri, d))
-#                       bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: matching %s against %s and replacing with %s" % (i, uri_decoded[loc], uri_replace_decoded[loc]))
             else:
-#               bb.msg.note(1, bb.msg.domain.Fetcher, "uri_replace: no match")
                 return uri
-#           else:
-#               for j in i:
-#                   FIXME: apply replacements against options
     return encodeurl(result_decoded)
 
 methods = []
@@ -158,9 +155,9 @@ def fetcher_init(d):
     # When to drop SCM head revisions controlled by user policy
     srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
     if srcrev_policy == "cache":
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "Keeping SRCREV cache due to cache policy of: %s" % srcrev_policy)
+        logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
     elif srcrev_policy == "clear":
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "Clearing SRCREV cache due to cache policy of: %s" % srcrev_policy)
+        logger.debug(1, "Clearing SRCREV cache due to cache policy of: %s", srcrev_policy)
         try:
             bb.fetch.saved_headrevs = pd.getKeyValues("BB_URI_HEADREVS")
         except:
@@ -190,11 +187,11 @@ def fetcher_compare_revisons(d):
     changed = False
     for key in data:
         if key not in data2 or data2[key] != data[key]:
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "%s changed" % key)
+            logger.debug(1, "%s changed", key)
             changed = True
             return True
         else:
-            bb.msg.debug(2, bb.msg.domain.Fetcher, "%s did not change" % key)
+            logger.debug(2, "%s did not change", key)
     return False
 
 # Function call order is usually:
@@ -288,7 +285,7 @@ def checkstatus(d):
     for u in urldata:
         ud = urldata[u]
         m = ud.method
-        bb.msg.note(1, bb.msg.domain.Fetcher, "Testing URL %s" % u)
+        logger.info("Testing URL %s", u)
         # First try checking uri, u, from PREMIRRORS
         mirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', d, 1) or "").split('\n') if i ]
         ret = try_mirrors(d, u, mirrors, True)
@@ -352,7 +349,7 @@ def get_srcrev(d):
             scms.append(u)
 
     if len(scms) == 0:
-        bb.msg.error(bb.msg.domain.Fetcher, "SRCREV was used yet no valid SCM was found in SRC_URI")
+        logger.error("SRCREV was used yet no valid SCM was found in SRC_URI")
         raise ParameterError
 
     if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
@@ -366,7 +363,7 @@ def get_srcrev(d):
     #
     format = bb.data.getVar('SRCREV_FORMAT', d, 1)
     if not format:
-        bb.msg.error(bb.msg.domain.Fetcher, "The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
+        logger.error("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
         raise ParameterError
 
     for scm in scms:
@@ -405,7 +402,7 @@ def runfetchcmd(cmd, d, quiet = False):
         if val:
             cmd = 'export ' + var + '=\"%s\"; %s' % (val, cmd)
 
-    bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % cmd)
+    logger.debug(1, "Running %s", cmd)
 
     # redirect stderr to stdout
     stdout_handle = os.popen(cmd + " 2>&1", "r")
@@ -441,7 +438,7 @@ def try_mirrors(d, uri, mirrors, check = False):
     """
     fpath = os.path.join(data.getVar("DL_DIR", d, 1), os.path.basename(uri))
     if not check and os.access(fpath, os.R_OK):
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "%s already exists, skipping checkout." % fpath)
+        logger.debug(1, "%s already exists, skipping checkout.", fpath)
         return fpath
 
     ld = d.createCopy()
@@ -451,7 +448,7 @@ def try_mirrors(d, uri, mirrors, check = False):
             try:
                 ud = FetchData(newuri, ld)
             except bb.fetch.NoMethodError:
-                bb.msg.debug(1, bb.msg.domain.Fetcher, "No method for %s" % uri)
+                logger.debug(1, "No method for %s", uri)
                 continue
 
             ud.setup_localpath(ld)
@@ -467,7 +464,7 @@ def try_mirrors(d, uri, mirrors, check = False):
                     bb.fetch.MD5SumError):
                 import sys
                 (type, value, traceback) = sys.exc_info()
-                bb.msg.debug(2, bb.msg.domain.Fetcher, "Mirror fetch failure: %s" % value)
+                logger.debug(2, "Mirror fetch failure: %s", value)
                 continue
     return None
 
@@ -579,7 +576,7 @@ class Fetch(object):
         Check the status of a URL
         Assumes localpath was called first
         """
-        bb.msg.note(1, bb.msg.domain.Fetcher, "URL %s could not be checked for status since no method exists." % url)
+        logger.info("URL %s could not be checked for status since no method exists.", url)
         return True
 
     def getSRCDate(urldata, d):

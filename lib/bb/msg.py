@@ -23,12 +23,27 @@ Message handling infrastructure for bitbake
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import sys
+import logging
 import collections
+from itertools import groupby
+import warnings
 import bb
 import bb.event
 
-debug_level = collections.defaultdict(lambda: 0)
-verbose = False
+class Loggers(dict):
+    def __getitem__(self, key):
+        if key in self:
+            return dict.__getitem__(self, key)
+        else:
+            log = logging.getLogger("BitBake.%s" % domain._fields[key])
+            dict.__setitem__(self, key, log)
+            return log
+
+class DebugLevel(dict):
+    def __getitem__(self, key):
+        if key == "default":
+            key = domain.Default
+        return get_debug_level(key)
 
 def _NamedTuple(name, fields):
     Tuple = collections.namedtuple(name, " ".join(fields))
@@ -48,94 +63,99 @@ domain = _NamedTuple("Domain", (
     "RunQueue",
     "TaskData",
     "Util"))
+logger = logging.getLogger("BitBake")
+loggers = Loggers()
+debug_level = DebugLevel()
 
-
-class MsgBase(bb.event.Event):
-    """Base class for messages"""
-
-    def __init__(self, msg):
-        self._message = msg
-        bb.event.Event.__init__(self)
-
-class MsgDebug(MsgBase):
-    """Debug Message"""
-
-class MsgNote(MsgBase):
-    """Note Message"""
-
-class MsgWarn(MsgBase):
-    """Warning Message"""
-
-class MsgError(MsgBase):
-    """Error Message"""
-
-class MsgFatal(MsgBase):
-    """Fatal Message"""
-
-class MsgPlain(MsgBase):
-    """General output"""
-
-#
 # Message control functions
 #
 
 def set_debug_level(level):
-    for d in domain:
-        debug_level[d] = level
-    debug_level[domain.Default] = level
+    for log in loggers.itervalues():
+        log.setLevel(logging.NOTSET)
+
+    if level:
+        logger.setLevel(logging.DEBUG - level + 1)
+    else:
+        logger.setLevel(logging.INFO)
 
 def get_debug_level(msgdomain = domain.Default):
-    return debug_level[msgdomain]
+    if not msgdomain:
+        level = logger.getEffectiveLevel()
+    else:
+        level = loggers[msgdomain].getEffectiveLevel()
+    return max(0, logging.DEBUG - level + 1)
 
 def set_verbose(level):
-    verbose = level
+    if level:
+        logger.setLevel(logging.INFO - 1)
+    else:
+        logger.setLevel(logging.INFO)
 
-def set_debug_domains(strdomains):
-    for domainstr in strdomains:
-        for d in domain:
-            if domain._fields[d] == domainstr:
-                debug_level[d] += 1
+def set_debug_domains(domainargs):
+    for (domainarg, iterator) in groupby(domainargs):
+        for index, msgdomain in enumerate(domain._fields):
+            if msgdomain == domainarg:
+                level = len(tuple(iterator))
+                if level:
+                    loggers[index].setLevel(logging.DEBUG - level + 1)
                 break
         else:
-            warn(None, "Logging domain %s is not valid, ignoring" % domainstr)
+            warn(None, "Logging domain %s is not valid, ignoring" % domainarg)
 
 #
 # Message handling functions
 #
 
-def debug(level, msgdomain, msg, fn = None):
+def debug(level, msgdomain, msg):
+    warnings.warn("bb.msg.debug will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
+    level = logging.DEBUG - (level - 1)
     if not msgdomain:
-        msgdomain = domain.Default
+        logger.debug(level, msg)
+    else:
+        loggers[msgdomain].debug(level, msg)
 
-    if debug_level[msgdomain] >= level:
-        bb.event.fire(MsgDebug(msg), None)
-        if not bb.event._ui_handlers:
-            print('DEBUG: %s' % (msg))
+def plain(msg):
+    warnings.warn("bb.msg.plain will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
+    logger.plain(msg)
 
-def note(level, msgdomain, msg, fn = None):
+def note(level, msgdomain, msg):
+    warnings.warn("bb.msg.note will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
+    if level > 1:
+        if msgdomain:
+            logger.verbose(msg)
+        else:
+            loggers[msgdomain].verbose(msg)
+    else:
+        if msgdomain:
+            logger.info(msg)
+        else:
+            loggers[msgdomain].info(msg)
+
+def warn(msgdomain, msg):
+    warnings.warn("bb.msg.warn will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
     if not msgdomain:
-        msgdomain = domain.Default
+        logger.warn(msg)
+    else:
+        loggers[msgdomain].warn(msg)
 
-    if level == 1 or verbose or debug_level[msgdomain] >= 1:
-        bb.event.fire(MsgNote(msg), None)
-        if not bb.event._ui_handlers:
-            print('NOTE: %s' % (msg))
+def error(msgdomain, msg):
+    warnings.warn("bb.msg.error will soon be deprecated in favor of the python 'logging' module",
+                  PendingDeprecationWarning, stacklevel=2)
+    if not msgdomain:
+        logger.error(msg)
+    else:
+        loggers[msgdomain].error(msg)
 
-def warn(msgdomain, msg, fn = None):
-    bb.event.fire(MsgWarn(msg), None)
-    if not bb.event._ui_handlers:
-        print('WARNING: %s' % (msg))
-
-def error(msgdomain, msg, fn = None):
-    bb.event.fire(MsgError(msg), None)
-    print('ERROR: %s' % (msg))
-
-def fatal(msgdomain, msg, fn = None):
-    bb.event.fire(MsgFatal(msg), None)
-    print('FATAL: %s' % (msg))
+def fatal(msgdomain, msg):
+    warnings.warn("bb.msg.fatal will soon be deprecated in favor of raising appropriate exceptions",
+                  PendingDeprecationWarning, stacklevel=2)
+    if not msgdomain:
+        logger.critical(msg)
+    else:
+        loggers[msgdomain].critical(msg)
     sys.exit(1)
-
-def plain(msg, fn = None):
-    bb.event.fire(MsgPlain(msg), None)
-    if not bb.event._ui_handlers:
-        print(msg)

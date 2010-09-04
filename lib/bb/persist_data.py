@@ -15,8 +15,12 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import bb, os
+import os
+import logging
+import bb
 import bb.utils
+
+logger = logging.getLogger("BitBake.PersistData")
 
 try:
     import sqlite3
@@ -56,7 +60,7 @@ class PersistData:
             bb.utils.mkdirhier(self.cachedir)
 
         self.cachefile = os.path.join(self.cachedir, "bb_persist_data.sqlite3")
-        bb.msg.debug(1, bb.msg.domain.PersistData, "Using '%s' as the persistent data cache" % self.cachefile)
+        logger.debug(1, "Using '%s' as the persistent data cache", self.cachefile)
 
         connection = sqlite3.connect(self.cachefile, timeout=5, isolation_level=None)
         persistent_database_connection["connection"] = connection

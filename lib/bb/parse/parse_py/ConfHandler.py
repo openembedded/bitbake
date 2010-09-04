@@ -25,8 +25,9 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import re, bb.data, os
+import logging
 import bb.utils
-from bb.parse import ParseError, resolve_file, ast
+from bb.parse import ParseError, resolve_file, ast, logger
 
 #__config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}]+)\s*(?P<colon>:)?(?P<ques>\?)?=\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
 __config_regexp__  = re.compile( r"(?P<exp>export\s*)?(?P<var>[a-zA-Z0-9\-_+.${}/]+)(\[(?P<flag>[a-zA-Z0-9\-_+.]+)\])?\s*((?P<colon>:=)|(?P<lazyques>\?\?=)|(?P<ques>\?=)|(?P<append>\+=)|(?P<prepend>=\+)|(?P<predot>=\.)|(?P<postdot>\.=)|=)\s*(?P<apo>['\"]?)(?P<value>.*)(?P=apo)$")
@@ -68,7 +69,7 @@ def include(oldfn, fn, data, error_out):
     except IOError:
         if error_out:
             raise ParseError("Could not %(error_out)s file %(fn)s" % vars() )
-        bb.msg.debug(2, bb.msg.domain.Parsing, "CONF file '%s' not found" % fn)
+        logger.debug(2, "CONF file '%s' not found", fn)
 
 def handle(fn, data, include):
     init(data)

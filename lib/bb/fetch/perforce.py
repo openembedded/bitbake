@@ -27,10 +27,12 @@ BitBake build tools.
 
 from future_builtins import zip
 import os
+import logging
 import bb
 from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
+from   bb.fetch import logger
 
 class Perforce(Fetch):
     def supports(self, url, ud, d):
@@ -86,10 +88,10 @@ class Perforce(Fetch):
             depot += "@%s" % (p4date)
 
         p4cmd = data.getVar('FETCHCOMMAND_p4', d, 1)
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
+        logger.debug(1, "Running %s%s changes -m 1 %s", p4cmd, p4opt, depot)
         p4file = os.popen("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
         cset = p4file.readline().strip()
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "READ %s" % (cset))
+        logger.debug(1, "READ %s", cset)
         if not cset:
             return -1
 
@@ -155,13 +157,13 @@ class Perforce(Fetch):
         p4cmd = data.getVar('FETCHCOMMAND', localdata, 1)
 
         # create temp directory
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: creating temporary directory")
+        logger.debug(2, "Fetch: creating temporary directory")
         bb.mkdirhier(data.expand('${WORKDIR}', localdata))
         data.setVar('TMPBASE', data.expand('${WORKDIR}/oep4.XXXXXX', localdata), localdata)
         tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
         tmpfile = tmppipe.readline().strip()
         if not tmpfile:
-            bb.msg.error(bb.msg.domain.Fetcher, "Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
+            logger.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
             raise FetchError(module)
 
         if "label" in parm:
@@ -171,12 +173,12 @@ class Perforce(Fetch):
             depot = "%s@%s" % (depot, cset)
 
         os.chdir(tmpfile)
-        bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
-        bb.msg.note(1, bb.msg.domain.Fetcher, "%s%s files %s" % (p4cmd, p4opt, depot))
+        logger.info("Fetch " + loc)
+        logger.info("%s%s files %s", p4cmd, p4opt, depot)
         p4file = os.popen("%s%s files %s" % (p4cmd, p4opt, depot))
 
         if not p4file:
-            bb.msg.error(bb.msg.domain.Fetcher, "Fetch: unable to get the P4 files from %s" % (depot))
+            logger.error("Fetch: unable to get the P4 files from %s", depot)
             raise FetchError(module)
 
         count = 0
@@ -194,7 +196,7 @@ class Perforce(Fetch):
             count = count + 1
 
         if count == 0:
-            bb.msg.error(bb.msg.domain.Fetcher, "Fetch:  No files gathered from the P4 fetch")
+            logger.error("Fetch:  No files gathered from the P4 fetch")
             raise FetchError(module)
 
         myret = os.system("tar -czf %s %s" % (ud.localpath, module))

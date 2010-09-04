@@ -26,8 +26,13 @@
 #Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 from bb import data, event, mkdirhier, utils
-import bb, os, sys
+import os
+import sys
+import logging
+import bb
 import bb.utils
+
+logger = logging.getLogger("BitBake.Build")
 
 # When we execute a python function we'd like certain things
 # in all namespaces, hence we add them to __builtins__
@@ -137,12 +142,12 @@ def exec_func(func, d, dirs = None):
     # Handle logfiles
     si = file('/dev/null', 'r')
     try:
-        if bb.msg.debug_level['default'] > 0 or ispython:
+        if logger.getEffectiveLevel() <= logging.DEBUG or ispython:
             so = os.popen("tee \"%s\"" % logfile, "w")
         else:
             so = file(logfile, 'w')
-    except OSError as e:
-        bb.msg.error(bb.msg.domain.Build, "opening log file: %s" % e)
+    except OSError:
+        logger.exception("Opening log file '%s'", logfile)
         pass
 
     se = so
@@ -193,7 +198,7 @@ def exec_func(func, d, dirs = None):
         se.close()
 
         if os.path.exists(logfile) and os.path.getsize(logfile) == 0:
-            bb.msg.debug(2, bb.msg.domain.Build, "Zero size logfile %s, removing" % logfile)
+            logger.debug(2, "Zero size logfile %s, removing", logfile)
             os.remove(logfile)
 
         # Close the backup fds
@@ -239,7 +244,8 @@ def exec_func_shell(func, d, runfile, logfile, flags):
 
     f = open(runfile, "w")
     f.write("#!/bin/sh -e\n")
-    if bb.msg.debug_level['default'] > 0: f.write("set -x\n")
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        f.write("set -x\n")
     data.emit_env(f, d)
 
     f.write("cd %s\n" % os.getcwd())
@@ -275,7 +281,7 @@ def exec_task(task, d):
         raise EventException("No such task", InvalidTask(task, d))
 
     try:
-        bb.msg.debug(1, bb.msg.domain.Build, "Executing task %s" % task)
+        logger.debug(1, "Executing task %s", task)
         old_overrides = data.getVar('OVERRIDES', d, 0)
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', 'task-%s:%s' % (task[3:], old_overrides), localdata)
@@ -291,7 +297,7 @@ def exec_task(task, d):
         except:
             logfile = None
             msg = message
-        bb.msg.note(1, bb.msg.domain.Build, "Task failed: %s" % message )
+        logger.info("Task failed: %s", message )
         failedevent = TaskFailed(msg, logfile, task, d)
         event.fire(failedevent, d)
         raise EventException("Function failed in task: %s" % message, failedevent)

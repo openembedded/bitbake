@@ -24,8 +24,9 @@ BitBake build tools.
 
 import os, sys
 import warnings
-import bb.utils
 import pickle
+import logging
+import bb.utils
 
 # This is the pid for which we should generate the event. This is set when
 # the runqueue forks off.
@@ -55,7 +56,7 @@ bb.utils._context["Handled"] = Handled
 
 def fire_class_handlers(event, d):
     import bb.msg
-    if isinstance(event, bb.msg.MsgBase):
+    if isinstance(event, MsgBase):
         return
 
     for handler in _handlers:
@@ -298,3 +299,34 @@ class DepTreeGenerated(Event):
     def __init__(self, depgraph):
         Event.__init__(self)
         self._depgraph = depgraph
+
+class MsgBase(Event):
+    """Base class for messages"""
+
+    def __init__(self, msg):
+        self._message = msg
+        Event.__init__(self)
+
+class MsgDebug(MsgBase):
+    """Debug Message"""
+
+class MsgNote(MsgBase):
+    """Note Message"""
+
+class MsgWarn(MsgBase):
+    """Warning Message"""
+
+class MsgError(MsgBase):
+    """Error Message"""
+
+class MsgFatal(MsgBase):
+    """Fatal Message"""
+
+class MsgPlain(MsgBase):
+    """General output"""
+
+class LogHandler(logging.Handler):
+    """Dispatch logging messages as bitbake events"""
+
+    def emit(self, record):
+        fire(record, None)

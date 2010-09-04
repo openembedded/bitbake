@@ -26,11 +26,13 @@ This implementation is for svk. It is based on the svn implementation
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import os
+import logging
 import bb
 from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
 from   bb.fetch import MissingParameterError
+from   bb.fetch import logger
 
 class Svk(Fetch):
     """Class to fetch a module or modules from svk repositories"""
@@ -72,19 +74,19 @@ class Svk(Fetch):
         # create temp directory
         localdata = data.createCopy(d)
         data.update_data(localdata)
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: creating temporary directory")
+        logger.debug(2, "Fetch: creating temporary directory")
         bb.mkdirhier(data.expand('${WORKDIR}', localdata))
         data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
         tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
         tmpfile = tmppipe.readline().strip()
         if not tmpfile:
-            bb.msg.error(bb.msg.domain.Fetcher, "Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
+            logger.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
             raise FetchError(ud.module)
 
         # check out sources there
         os.chdir(tmpfile)
-        bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
-        bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svkcmd)
+        logger.info("Fetch " + loc)
+        logger.debug(1, "Running %s", svkcmd)
         myret = os.system(svkcmd)
         if myret != 0:
             try:

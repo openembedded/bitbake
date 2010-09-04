@@ -25,12 +25,14 @@ BitBake 'Fetch' implementation for svn.
 
 import os
 import sys
+import logging
 import bb
 from   bb import data
 from   bb.fetch import Fetch
 from   bb.fetch import FetchError
 from   bb.fetch import MissingParameterError
 from   bb.fetch import runfetchcmd
+from   bb.fetch import logger
 
 class Svn(Fetch):
     """Class to fetch a module or modules from svn repositories"""
@@ -136,22 +138,22 @@ class Svn(Fetch):
     def go(self, loc, ud, d):
         """Fetch url"""
 
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "Fetch: checking for module directory '" + ud.moddir + "'")
+        logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")
 
         if os.access(os.path.join(ud.moddir, '.svn'), os.R_OK):
             svnupdatecmd = self._buildsvncommand(ud, d, "update")
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Update " + loc)
+            logger.info("Update " + loc)
             # update sources there
             os.chdir(ud.moddir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnupdatecmd)
+            logger.debug(1, "Running %s", svnupdatecmd)
             runfetchcmd(svnupdatecmd, d)
         else:
             svnfetchcmd = self._buildsvncommand(ud, d, "fetch")
-            bb.msg.note(1, bb.msg.domain.Fetcher, "Fetch " + loc)
+            logger.info("Fetch " + loc)
             # check out sources there
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
-            bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % svnfetchcmd)
+            logger.debug(1, "Running %s", svnfetchcmd)
             runfetchcmd(svnfetchcmd, d)
 
         os.chdir(ud.pkgdir)
@@ -179,7 +181,7 @@ class Svn(Fetch):
         """
         Return the latest upstream revision number
         """
-        bb.msg.debug(2, bb.msg.domain.Fetcher, "SVN fetcher hitting network for %s" % url)
+        logger.debug(2, "SVN fetcher hitting network for %s", url)
 
         output = runfetchcmd("LANG=C LC_ALL=C " + self._buildsvncommand(ud, d, "info"), d, True)
 

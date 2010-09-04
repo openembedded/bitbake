@@ -15,22 +15,14 @@
     exception like that, *perhaps*, to abstract away exceptions raised by
     event handlers, but it has no place in bb.build.exec_task
 
-- Leverage the python logging module
+- BUG: if you chmod 000 local.conf, it silently doesn't parse it, when it
+  should really fail, so the user can fix the problem.
 
-  - Create a new logging Handler which instantiates MsgBase derived objects
-    and passes them along, either via bb.event or directly over the
-    appropriate queues to the other processes.
-  - Alter the bb.msg functions to use the logging module.
-  - Convert bb modules to stop using the bb.msg functions.
-  - Switch the messaging wrappers in the bb package to use the logging module
-    directly, as we'll be deprecating the bb.msg versions, but these should
-    stay around for the metadata to use.
-  - Deprecate the bb.msg functions.
-  - Do we want to use the logging module in any of the UIs, for local
-    messages, as well?  If we do, we don't want those to use our handler which
-    sends the Msg events to the UI :)
-    Looks like we may be able to use removeHandler.. will have to see how it
-    interacts with parent/child loggers.
+- Audit bb.fatal usage - these should all be able to be replaced with
+  exceptions
+- Figure out how to handle the ncurses UI.  Should some of our logging
+  formatting stuff be made common to all of bitbake, or perhaps all UIs via
+  the UIHelper?
 
 Long term, high impact:
 

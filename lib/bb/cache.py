@@ -29,14 +29,17 @@
 
 
 import os
+import logging
 import bb.data
 import bb.utils
+
+logger = logging.getLogger("BitBake.Cache")
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-    bb.msg.note(1, bb.msg.domain.Cache, "Importing cPickle failed. Falling back to a very slow implementation.")
+    logger.info("Importing cPickle failed. Falling back to a very slow implementation.")
 
 __cache_version__ = "131"
 
@@ -57,13 +60,13 @@ class Cache:
 
         if self.cachedir in [None, '']:
             self.has_cache = False
-            bb.msg.note(1, bb.msg.domain.Cache, "Not using a cache. Set CACHE = <directory> to enable.")
+            logger.info("Not using a cache. Set CACHE = <directory> to enable.")
             return
 
         self.has_cache = True
         self.cachefile = os.path.join(self.cachedir, "bb_cache.dat")
 
-        bb.msg.debug(1, bb.msg.domain.Cache, "Using cache in '%s'" % self.cachedir)
+        logger.debug(1, "Using cache in '%s'", self.cachedir)
         bb.utils.mkdirhier(self.cachedir)
 
         # If any of configuration.data's dependencies are newer than the
@@ -84,14 +87,14 @@ class Cache:
                 if version_data['BITBAKE_VER'] != bb.__version__:
                     raise ValueError('Bitbake Version Mismatch')
             except EOFError:
-                bb.msg.note(1, bb.msg.domain.Cache, "Truncated cache found, rebuilding...")
+                logger.info("Truncated cache found, rebuilding...")
                 self.depends_cache = {}
             except:
-                bb.msg.note(1, bb.msg.domain.Cache, "Invalid cache found, rebuilding...")
+                logger.info("Invalid cache found, rebuilding...")
                 self.depends_cache = {}
         else:
             if os.path.isfile(self.cachefile):
-                bb.msg.note(1, bb.msg.domain.Cache, "Out of date cache found, rebuilding...")
+                logger.info("Out of date cache found, rebuilding...")
 
     def getVar(self, var, fn, exp = 0):
         """
@@ -111,7 +114,7 @@ class Cache:
         if fn != self.data_fn:
             # We're trying to access data in the cache which doesn't exist
             # yet setData hasn't been called to setup the right access. Very bad.
-            bb.msg.error(bb.msg.domain.Cache, "Parsing error data_fn %s and fn %s don't match" % (self.data_fn, fn))
+            logger.error("data_fn %s and fn %s don't match", self.data_fn, fn)
 
         self.cacheclean = False
         result = bb.data.getVar(var, self.data, exp)
@@ -152,7 +155,6 @@ class Cache:
         if virtualfn.startswith('virtual:'):
             cls = virtualfn.split(':', 2)[1]
             fn = virtualfn.replace('virtual:' + cls + ':', '')
-        #bb.msg.debug(2, bb.msg.domain.Cache, "virtualfn2realfn %s to %s %s" % (virtualfn, fn, cls))
         return (fn, cls)
 
     def realfn2virtual(self, realfn, cls):
@@ -160,9 +162,7 @@ class Cache:
         Convert a real filename + the associated subclass keyword to a virtual filename
         """
         if cls == "":
-            #bb.msg.debug(2, bb.msg.domain.Cache, "realfn2virtual %s and '%s' to %s" % (realfn, cls, realfn))
             return realfn
-        #bb.msg.debug(2, bb.msg.domain.Cache, "realfn2virtual %s and %s to %s" % (realfn, cls, "virtual:" + cls + ":" + realfn))
         return "virtual:" + cls + ":" + realfn
 
     def loadDataFull(self, virtualfn, appends, cfgData):
@@ -173,7 +173,7 @@ class Cache:
 
         (fn, cls) = self.virtualfn2realfn(virtualfn)
 
-        bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s (full)" % fn)
+        logger.debug(1, "Parsing %s (full)", fn)
 
         bb_data = self.load_bbfile(fn, appends, cfgData)
         return bb_data[cls]
@@ -198,13 +198,13 @@ class Cache:
                 virtualfn = self.realfn2virtual(fn, cls)
                 if self.depends_cache[virtualfn]["__SKIPPED"]:
                     skipped += 1
-                    bb.msg.debug(1, bb.msg.domain.Cache, "Skipping %s" % virtualfn)
+                    logger.debug(1, "Skipping %s", virtualfn)
                     continue
                 self.handle_data(virtualfn, cacheData)
                 virtuals += 1
             return True, skipped, virtuals
 
-        bb.msg.debug(1, bb.msg.domain.Cache, "Parsing %s" % fn)
+        logger.debug(1, "Parsing %s", fn)
 
         bb_data = self.load_bbfile(fn, appends, cfgData)
 
@@ -213,7 +213,7 @@ class Cache:
             self.setData(virtualfn, fn, bb_data[data])
             if self.getVar("__SKIPPED", virtualfn):
                 skipped += 1
-                bb.msg.debug(1, bb.msg.domain.Cache, "Skipping %s" % virtualfn)
+                logger.debug(1, "Skipping %s", virtualfn)
             else:
                 self.handle_data(virtualfn, cacheData)
                 virtuals += 1
@@ -248,7 +248,7 @@ class Cache:
 
         # File isn't in depends_cache
         if not fn in self.depends_cache:
-            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s is not cached" % fn)
+            logger.debug(2, "Cache: %s is not cached", fn)
             self.remove(fn)
             return False
 
@@ -256,13 +256,13 @@ class Cache:
 
         # Check file still exists
         if mtime == 0:
-            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s no longer exists" % fn)
+            logger.debug(2, "Cache: %s no longer exists", fn)
             self.remove(fn)
             return False
 
         # Check the file's timestamp
         if mtime != self.getVar("CACHETIMESTAMP", fn, True):
-            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s changed" % fn)
+            logger.debug(2, "Cache: %s changed", fn)
             self.remove(fn)
             return False
 
@@ -277,11 +277,10 @@ class Cache:
                     return False
 
                 if (fmtime != old_mtime):
-                    bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s's dependency %s changed" % (fn, f))
+                    logger.debug(2, "Cache: %s's dependency %s changed", fn, f)
                     self.remove(fn)
                     return False
 
-        #bb.msg.debug(2, bb.msg.domain.Cache, "Depends Cache: %s is clean" % fn)
         if not fn in self.clean:
             self.clean[fn] = ""
 
@@ -292,16 +291,16 @@ class Cache:
             virtualfn = self.realfn2virtual(fn, cls)
             self.clean[virtualfn] = ""
             if not virtualfn in self.depends_cache:
-                bb.msg.debug(2, bb.msg.domain.Cache, "Cache: %s is not cached" % virtualfn)
+                logger.debug(2, "Cache: %s is not cached", virtualfn)
                 invalid = True
 
         # If any one of the varients is not present, mark cache as invalid for all
         if invalid:
             for cls in (multi or "").split():
                 virtualfn = self.realfn2virtual(fn, cls)
-                bb.msg.debug(2, bb.msg.domain.Cache, "Cache: Removing %s from cache" % virtualfn)
+                logger.debug(2, "Cache: Removing %s from cache", virtualfn)
                 del self.clean[virtualfn]
-            bb.msg.debug(2, bb.msg.domain.Cache, "Cache: Removing %s from cache" % fn)
+            logger.debug(2, "Cache: removing %s from cache", fn)
             del self.clean[fn]
             return False
 
@@ -312,7 +311,7 @@ class Cache:
         Remove a fn from the cache
         Called from the parser in error cases
         """
-        bb.msg.debug(1, bb.msg.domain.Cache, "Removing %s from cache" % fn)
+        logger.debug(1, "Removing %s from cache", fn)
         if fn in self.depends_cache:
             del self.depends_cache[fn]
         if fn in self.clean:
@@ -329,7 +328,7 @@ class Cache:
             return
 
         if self.cacheclean:
-            bb.msg.note(1, bb.msg.domain.Cache, "Cache is clean, not saving.")
+            logger.info("Cache is clean, not saving.")
             return
 
         version_data = {}
@@ -339,10 +338,10 @@ class Cache:
         cache_data = copy.copy(self.depends_cache)
         for fn in self.depends_cache:
             if '__BB_DONT_CACHE' in self.depends_cache[fn] and self.depends_cache[fn]['__BB_DONT_CACHE']:
-                bb.msg.debug(2, bb.msg.domain.Cache, "Not caching %s, marked as not cacheable" % fn)
+                logger.debug(2, "Not caching %s, marked as not cacheable", fn)
                 del cache_data[fn]
             elif 'PV' in self.depends_cache[fn] and 'SRCREVINACTION' in self.depends_cache[fn]['PV']:
-                bb.msg.error(bb.msg.domain.Cache, "Not caching %s as it had SRCREVINACTION in PV. Please report this bug" % fn)
+                logger.error("Not caching %s as it had SRCREVINACTION in PV. Please report this bug", fn)
                 del cache_data[fn]
 
         p = pickle.Pickler(file(self.cachefile, "wb" ), -1 )
@@ -360,7 +359,7 @@ class Cache:
         pe       = self.getVar('PE', file_name, True) or "0"
         pv       = self.getVar('PV', file_name, True)
         if 'SRCREVINACTION' in pv:
-            bb.msg.note(1, bb.msg.domain.Cache, "Found SRCREVINACTION in PV (%s) or %s. Please report this bug." % (pv, file_name))
+            logger.info("Found SRCREVINACTION in PV (%s) or %s. Please report this bug.", pv, file_name)
         pr       = self.getVar('PR', file_name, True)
         dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
         depends   = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")

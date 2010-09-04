@@ -23,7 +23,10 @@ Task data collection and handling
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import logging
 import bb
+
+logger = logging.getLogger("BitBake.TaskData")
 
 def re_match_strings(target, strings):
     """
@@ -182,7 +185,7 @@ class TaskData:
         if not fnid in self.depids:
             dependids = {}
             for depend in dataCache.deps[fn]:
-                bb.msg.debug(2, bb.msg.domain.TaskData, "Added dependency %s for %s" % (depend, fn))
+                logger.debug(2, "Added dependency %s for %s", depend, fn)
                 dependids[self.getbuild_id(depend)] = None
             self.depids[fnid] = dependids.keys()
 
@@ -193,11 +196,11 @@ class TaskData:
             rrecs = dataCache.runrecs[fn]
             for package in rdepends:
                 for rdepend in bb.utils.explode_deps(rdepends[package]):
-                    bb.msg.debug(2, bb.msg.domain.TaskData, "Added runtime dependency %s for %s" % (rdepend, fn))
+                    logger.debug(2, "Added runtime dependency %s for %s", rdepend, fn)
                     rdependids[self.getrun_id(rdepend)] = None
             for package in rrecs:
                 for rdepend in bb.utils.explode_deps(rrecs[package]):
-                    bb.msg.debug(2, bb.msg.domain.TaskData, "Added runtime recommendation %s for %s" % (rdepend, fn))
+                    logger.debug(2, "Added runtime recommendation %s for %s", rdepend, fn)
                     rdependids[self.getrun_id(rdepend)] = None
             self.rdepids[fnid] = rdependids.keys()
 
@@ -397,7 +400,7 @@ class TaskData:
             fnid = self.getfn_id(fn)
             if fnid in self.failed_fnids:
                 continue
-            bb.msg.debug(2, bb.msg.domain.Provider, "adding %s to satisfy %s" % (fn, item))
+            logger.debug(2, "adding %s to satisfy %s", fn, item)
             self.add_build_target(fn, item)
             self.add_tasks(fn, dataCache)
 
@@ -450,7 +453,7 @@ class TaskData:
             fnid = self.getfn_id(fn)
             if fnid in self.failed_fnids:
                 continue
-            bb.msg.debug(2, bb.msg.domain.Provider, "adding '%s' to satisfy runtime '%s'" % (fn, item))
+            logger.debug(2, "adding '%s' to satisfy runtime '%s'", fn, item)
             self.add_runtime_target(fn, item)
             self.add_tasks(fn, dataCache)
 
@@ -463,7 +466,7 @@ class TaskData:
         """
         if fnid in self.failed_fnids:
             return
-        bb.msg.debug(1, bb.msg.domain.Provider, "File '%s' is unbuildable, removing..." % self.fn_index[fnid])
+        logger.debug(1, "File '%s' is unbuildable, removing...", self.fn_index[fnid])
         self.failed_fnids.append(fnid)
         for target in self.build_targets:
             if fnid in self.build_targets[target]:
@@ -485,7 +488,7 @@ class TaskData:
             missing_list = [self.build_names_index[targetid]]
         else:
             missing_list = [self.build_names_index[targetid]] + missing_list
-        bb.msg.note(2, bb.msg.domain.Provider, "Target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s" % (self.build_names_index[targetid], missing_list))
+        providerlog.verbose("Target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s", self.build_names_index[targetid], missing_list)
         self.failed_deps.append(targetid)
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
@@ -498,7 +501,7 @@ class TaskData:
 
         if self.abort and targetid in self.external_targets:
             target = self.build_names_index[targetid]
-            bb.msg.error(bb.msg.domain.Provider, "Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s" % (target, missing_list))
+            providerlog.error("Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s", target, missing_list)
             raise bb.providers.NoProvider(target)
 
     def remove_runtarget(self, targetid, missing_list = []):
@@ -511,7 +514,7 @@ class TaskData:
         else:
             missing_list = [self.run_names_index[targetid]] + missing_list
 
-        bb.msg.note(1, bb.msg.domain.Provider, "Runtime target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s" % (self.run_names_index[targetid], missing_list))
+        providerlog.info("Runtime target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s", self.run_names_index[targetid], missing_list)
         self.failed_rdeps.append(targetid)
         dependees = self.get_rdependees(targetid)
         for fnid in dependees:
@@ -521,7 +524,7 @@ class TaskData:
         """
         Resolve all unresolved build and runtime targets
         """
-        bb.msg.note(1, bb.msg.domain.TaskData, "Resolving any missing task queue dependencies")
+        logger.info("Resolving any missing task queue dependencies")
         while True:
             added = 0
             for target in self.get_unresolved_build_targets(dataCache):
@@ -539,7 +542,7 @@ class TaskData:
                     added = added + 1
                 except bb.providers.NoRProvider:
                     self.remove_runtarget(self.getrun_id(target))
-            bb.msg.debug(1, bb.msg.domain.TaskData, "Resolved " + str(added) + " extra dependencies")
+            logger.debug(1, "Resolved " + str(added) + " extra dependencies")
             if added == 0:
                 break
         # self.dump_data()
@@ -548,40 +551,40 @@ class TaskData:
         """
         Dump some debug information on the internal data structures
         """
-        bb.msg.debug(3, bb.msg.domain.TaskData, "build_names:")
-        bb.msg.debug(3, bb.msg.domain.TaskData, ", ".join(self.build_names_index))
+        logger.debug(3, "build_names:")
+        logger.debug(3, ", ".join(self.build_names_index))
 
-        bb.msg.debug(3, bb.msg.domain.TaskData, "run_names:")
-        bb.msg.debug(3, bb.msg.domain.TaskData, ", ".join(self.run_names_index))
+        logger.debug(3, "run_names:")
+        logger.debug(3, ", ".join(self.run_names_index))
 
-        bb.msg.debug(3, bb.msg.domain.TaskData, "build_targets:")
+        logger.debug(3, "build_targets:")
         for buildid in range(len(self.build_names_index)):
             target = self.build_names_index[buildid]
             targets = "None"
             if buildid in self.build_targets:
                 targets = self.build_targets[buildid]
-            bb.msg.debug(3, bb.msg.domain.TaskData, " (%s)%s: %s" % (buildid, target, targets))
+            logger.debug(3, " (%s)%s: %s", buildid, target, targets)
 
-        bb.msg.debug(3, bb.msg.domain.TaskData, "run_targets:")
+        logger.debug(3, "run_targets:")
         for runid in range(len(self.run_names_index)):
             target = self.run_names_index[runid]
             targets = "None"
             if runid in self.run_targets:
                 targets = self.run_targets[runid]
-            bb.msg.debug(3, bb.msg.domain.TaskData, " (%s)%s: %s" % (runid, target, targets))
+            logger.debug(3, " (%s)%s: %s", runid, target, targets)
 
-        bb.msg.debug(3, bb.msg.domain.TaskData, "tasks:")
+        logger.debug(3, "tasks:")
         for task in range(len(self.tasks_name)):
-            bb.msg.debug(3, bb.msg.domain.TaskData, " (%s)%s - %s: %s" % (
-                task,
-                self.fn_index[self.tasks_fnid[task]],
-                self.tasks_name[task],
-                self.tasks_tdepends[task]))
+            logger.debug(3, " (%s)%s - %s: %s",
+                       task,
+                       self.fn_index[self.tasks_fnid[task]],
+                       self.tasks_name[task],
+                       self.tasks_tdepends[task])
 
-        bb.msg.debug(3, bb.msg.domain.TaskData, "dependency ids (per fn):")
+        logger.debug(3, "dependency ids (per fn):")
         for fnid in self.depids:
-            bb.msg.debug(3, bb.msg.domain.TaskData, " %s %s: %s" % (fnid, self.fn_index[fnid], self.depids[fnid]))
+            logger.debug(3, " %s %s: %s", fnid, self.fn_index[fnid], self.depids[fnid])
 
-        bb.msg.debug(3, bb.msg.domain.TaskData, "runtime dependency ids (per fn):")
+        logger.debug(3, "runtime dependency ids (per fn):")
         for fnid in self.rdepids:
-            bb.msg.debug(3, bb.msg.domain.TaskData, " %s %s: %s" % (fnid, self.fn_index[fnid], self.rdepids[fnid]))
+            logger.debug(3, " %s %s: %s", fnid, self.fn_index[fnid], self.rdepids[fnid])
