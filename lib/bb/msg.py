@@ -107,7 +107,7 @@ def set_debug_domains(domainargs):
 # Message handling functions
 #
 
-def debug(level, msgdomain, msg, fn = None):
+def debug(level, msgdomain, msg):
     warnings.warn("bb.msg.debug will soon be deprecated in favor of the python 'logging' module",
                   PendingDeprecationWarning, stacklevel=2)
     level = logging.DEBUG - (level - 1)
@@ -116,12 +116,12 @@ def debug(level, msgdomain, msg, fn = None):
     else:
         loggers[msgdomain].debug(level, msg)
 
-def plain(msg, fn = None):
+def plain(msg):
     warnings.warn("bb.msg.plain will soon be deprecated in favor of the python 'logging' module",
                   PendingDeprecationWarning, stacklevel=2)
     logger.plain(msg)
 
-def note(level, msgdomain, msg, fn = None):
+def note(level, msgdomain, msg):
     warnings.warn("bb.msg.note will soon be deprecated in favor of the python 'logging' module",
                   PendingDeprecationWarning, stacklevel=2)
     if level > 1:
@@ -135,7 +135,7 @@ def note(level, msgdomain, msg, fn = None):
         else:
             loggers[msgdomain].info(msg)
 
-def warn(msgdomain, msg, fn = None):
+def warn(msgdomain, msg):
     warnings.warn("bb.msg.warn will soon be deprecated in favor of the python 'logging' module",
                   PendingDeprecationWarning, stacklevel=2)
     if not msgdomain:
@@ -143,7 +143,7 @@ def warn(msgdomain, msg, fn = None):
     else:
         loggers[msgdomain].warn(msg)
 
-def error(msgdomain, msg, fn = None):
+def error(msgdomain, msg):
     warnings.warn("bb.msg.error will soon be deprecated in favor of the python 'logging' module",
                   PendingDeprecationWarning, stacklevel=2)
     if not msgdomain:
@@ -151,7 +151,7 @@ def error(msgdomain, msg, fn = None):
     else:
         loggers[msgdomain].error(msg)
 
-def fatal(msgdomain, msg, fn = None):
+def fatal(msgdomain, msg):
     warnings.warn("bb.msg.fatal will soon be deprecated in favor of raising appropriate exceptions",
                   PendingDeprecationWarning, stacklevel=2)
     if not msgdomain:
