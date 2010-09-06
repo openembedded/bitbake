@@ -135,6 +135,7 @@ class Hg(Fetch):
 	# Even when we clone (fetch), we still need to update as hg's clone
 	# won't checkout the specified revision if its on a branch
         updatecmd = self._buildhgcommand(ud, d, "update")
+        os.chdir(ud.moddir)
         bb.msg.debug(1, bb.msg.domain.Fetcher, "Running %s" % updatecmd)
         runfetchcmd(updatecmd, d)
 
