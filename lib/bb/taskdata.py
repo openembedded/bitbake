@@ -488,7 +488,7 @@ class TaskData:
             missing_list = [self.build_names_index[targetid]]
         else:
             missing_list = [self.build_names_index[targetid]] + missing_list
-        providerlog.verbose("Target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s", self.build_names_index[targetid], missing_list)
+        logger.verbose("Target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s", self.build_names_index[targetid], missing_list)
         self.failed_deps.append(targetid)
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
@@ -501,7 +501,7 @@ class TaskData:
 
         if self.abort and targetid in self.external_targets:
             target = self.build_names_index[targetid]
-            providerlog.error("Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s", target, missing_list)
+            logger.error("Required build target '%s' has no buildable providers.\nMissing or unbuildable dependency chain was: %s", target, missing_list)
             raise bb.providers.NoProvider(target)
 
     def remove_runtarget(self, targetid, missing_list = []):
@@ -514,7 +514,7 @@ class TaskData:
         else:
             missing_list = [self.run_names_index[targetid]] + missing_list
 
-        providerlog.info("Runtime target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s", self.run_names_index[targetid], missing_list)
+        logger.info("Runtime target '%s' is unbuildable, removing...\nMissing or unbuildable dependency chain was: %s", self.run_names_index[targetid], missing_list)
         self.failed_rdeps.append(targetid)
         dependees = self.get_rdependees(targetid)
         for fnid in dependees:
