@@ -29,7 +29,6 @@ if sys.version_info < (2, 6, 0):
 
 import os
 import logging
-import bb.msg
 
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -57,6 +56,10 @@ logging.setLoggerClass(BBLogger)
 logger = logging.getLogger("BitBake")
 logger.addHandler(NullHandler())
 logger.setLevel(logging.INFO)
+
+# This has to be imported after the setLoggerClass, as the import of bb.msg
+# can result in construction of the various loggers.
+import bb.msg
 
 if "BBDEBUG" in os.environ:
     level = int(os.environ["BBDEBUG"])
