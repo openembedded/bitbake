@@ -644,7 +644,9 @@ class Fetch(object):
         rev = None
         if 'name' in ud.parm:
             pn = data.getVar("PN", d, 1)
-            rev = data.getVar("SRCREV_pn-" + pn + "_" + ud.parm['name'], d, 1)
+            rev = data.getVar("SRCREV_%s_pn-%s" % (ud.parm['name'], pn), d, 1)
+            if not rev:
+                rev = data.getVar("SRCREV_pn-%s_%s" % (pn, ud.parm['name']), d, 1)
         if not rev:
             rev = data.getVar("SRCREV", d, 1)
         if rev == "INVALID":
