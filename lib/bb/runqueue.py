@@ -949,7 +949,8 @@ class RunQueue:
         Called when a task has failed
         Updates the state engine with the failure
         """
-        logger.error("Task %s (%s) failed with %s", task, self.get_user_idstring(task), exitcode)
+        logger.error("Task %s (%s) failed with exit code '%s'", task,
+                     self.get_user_idstring(task), exitcode)
         self.stats.taskFailed()
         fnid = self.runq_fnid[task]
         self.failed_fnids.append(fnid)
@@ -1023,7 +1024,7 @@ class RunQueue:
         self.build_pipes[result[0]].close()
         del self.build_pipes[result[0]]
         if result[1] != 0:
-            failure(task, result[1])
+            failure(task, result[1]>>8)
         else:
             success(task)
             self.stats.taskCompleted()
