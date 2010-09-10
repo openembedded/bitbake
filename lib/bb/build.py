@@ -221,8 +221,8 @@ def exec_func_python(func, d, runfile, logfile):
     comp = utils.better_compile(tmp, func, bbfile)
     try:
         utils.better_exec(comp, {"d": d}, tmp, bbfile)
-    except Exception as exc:
-        if isinstance(exc, (bb.parse.SkipPackage, bb.build.FuncFailed)):
+    except:
+        if sys.exc_info()[0] in (bb.parse.SkipPackage, bb.build.FuncFailed):
             raise
 
         raise FuncFailed(func, d, logfile)
