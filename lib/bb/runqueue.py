@@ -1110,14 +1110,10 @@ class RunQueue:
 
                 if not self.cooker.configuration.dry_run:
                     bb.build.exec_task(taskname, the_data)
-                os._exit(0)
-
-            except bb.build.EventException as e:
-                event = e.args[1]
-                logger.error("%s event exception, aborting" % bb.event.getName(event))
+            except bb.build.FuncFailed as exc:
                 os._exit(1)
-            except Exception:
-                logger.exception("Build of %s %s failed", fn, taskname)
+            except Exception as exc:
+                logger.critical(str(exc))
                 os._exit(1)
             os._exit(0)
         return pid, pipein, pipeout

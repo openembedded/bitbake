@@ -679,9 +679,7 @@ class BBCooker:
             try:
                 retval = rq.execute_runqueue()
             except runqueue.TaskFailure as exc:
-                for fnid in exc.args:
-                    buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
-                    failures = failures + 1
+                failures += len(exc.args)
                 retval = False
             if not retval:
                 bb.event.fire(bb.event.BuildCompleted(buildname, item, failures), self.configuration.event_data)
@@ -715,9 +713,7 @@ class BBCooker:
             try:
                 retval = rq.execute_runqueue()
             except runqueue.TaskFailure as exc:
-                for fnid in exc.args:
-                    buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
-                    failures = failures + 1
+                failures += len(exc.args)
                 retval = False
             if not retval:
                 bb.event.fire(bb.event.BuildCompleted(buildname, targets, failures), self.configuration.event_data)

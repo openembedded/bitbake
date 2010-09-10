@@ -41,19 +41,17 @@ logger = logging.getLogger("BitBake.Build")
 __builtins__['bb'] = bb
 __builtins__['os'] = os
 
-# events
 class FuncFailed(Exception):
-    """
-    Executed function failed
-    First parameter a message
-    Second paramter is a logfile (optional)
-    """
+    def __init__(self, name, metadata, logfile = None):
+        self.name = name
+        self.metadata = metadata
+        self.logfile = logfile
 
-class EventException(Exception):
-    """Exception which is associated with an Event."""
-
-    def __init__(self, msg, event):
-        self.args = msg, event
+    def __str__(self):
+        msg = "Function '%s' failed" % self.name
+        if self.logfile:
+            msg += " (see %s for further information)" % self.logfile
+        return msg
 
 class TaskBase(event.Event):
     """Base class for task events"""
@@ -80,13 +78,18 @@ class TaskSucceeded(TaskBase):
 
 class TaskFailed(TaskBase):
     """Task execution failed"""
-    def __init__(self, msg, logfile, t, d ):
-        self.logfile = logfile
-        self.msg = msg
-        TaskBase.__init__(self, t, d)
 
-class InvalidTask(TaskBase):
-    """Invalid Task"""
+    def __init__(self, task, logfile, metadata):
+        self.logfile = logfile
+        super(TaskFailed, self).__init__(task, metadata)
+
+class InvalidTask(Exception):
+    def __init__(self, task, metadata):
+        self.task = task
+        self.metadata = metadata
+
+    def __str__(self):
+        return "No such task '%s'" % self.task
 
 # functions
 
@@ -218,12 +221,11 @@ def exec_func_python(func, d, runfile, logfile):
     comp = utils.better_compile(tmp, func, bbfile)
     try:
         utils.better_exec(comp, {"d": d}, tmp, bbfile)
-    except:
-        (t, value, tb) = sys.exc_info()
-
-        if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
+    except Exception as exc:
+        if isinstance(exc, (bb.parse.SkipPackage, bb.build.FuncFailed)):
             raise
-        raise FuncFailed("Function %s failed" % func, logfile)
+
+        raise FuncFailed(func, d, logfile)
 
 def exec_func_shell(func, d, runfile, logfile, flags):
     """Execute a shell BB 'function' Returns true if execution was successful.
@@ -253,7 +255,7 @@ def exec_func_shell(func, d, runfile, logfile, flags):
     f.close()
     os.chmod(runfile, 0775)
     if not func:
-        raise FuncFailed("Function not specified for exec_func_shell")
+        raise TypeError("Function argument must be a string")
 
     # execute function
     if flags['fakeroot']:
@@ -266,7 +268,7 @@ def exec_func_shell(func, d, runfile, logfile, flags):
     if ret == 0:
         return
 
-    raise FuncFailed("function %s failed" % func, logfile)
+    raise FuncFailed(func, d, logfile)
 
 
 def exec_task(task, d):
@@ -278,7 +280,7 @@ def exec_task(task, d):
 
     # Check whther this is a valid task
     if not data.getVarFlag(task, 'task', d):
-        raise EventException("No such task", InvalidTask(task, d))
+        raise InvalidTask(task, d)
 
     try:
         logger.debug(1, "Executing task %s", task)
@@ -290,17 +292,10 @@ def exec_task(task, d):
         event.fire(TaskStarted(task, localdata), localdata)
         exec_func(task, localdata)
         event.fire(TaskSucceeded(task, localdata), localdata)
-    except FuncFailed as message:
-        # Try to extract the optional logfile
-        try:
-            (msg, logfile) = message
-        except:
-            logfile = None
-            msg = message
-        logger.info("Task failed: %s", message )
-        failedevent = TaskFailed(msg, logfile, task, d)
-        event.fire(failedevent, d)
-        raise EventException("Function failed in task: %s" % message, failedevent)
+    except FuncFailed as exc:
+        logger.critical(str(exc))
+        event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
+        raise
 
     # make stamp, or cause event and raise exception
     if not data.getVarFlag(task, 'nostamp', d) and not data.getVarFlag(task, 'selfstamp', d):

@@ -180,11 +180,9 @@ class BitBakeShellCommands:
             last_exception = Providers.NoProvider
 
         except runqueue.TaskFailure as fnids:
-            for fnid in fnids:
-                print("ERROR: '%s' failed" % td.fn_index[fnid])
             last_exception = runqueue.TaskFailure
 
-        except build.EventException as e:
+        except build.FuncFailed as e:
             print("ERROR: Couldn't build '%s'" % names)
             last_exception = e
 
@@ -247,7 +245,7 @@ class BitBakeShellCommands:
             cooker.buildFile(bf, cmd)
         except parse.ParseError:
             print("ERROR: Unable to open or parse '%s'" % bf)
-        except build.EventException as e:
+        except build.FuncFailed as e:
             print("ERROR: Couldn't build '%s'" % name)
             last_exception = e
 
