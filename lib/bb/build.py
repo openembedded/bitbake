@@ -49,7 +49,7 @@ class FuncFailed(Exception):
 
     def __str__(self):
         msg = "Function '%s' failed" % self.name
-        if self.logfile:
+        if self.logfile and os.path.exists(self.logfile):
             msg += " (see %s for further information)" % self.logfile
         return msg
 
