@@ -1111,8 +1111,6 @@ class RunQueue:
 
                 if not self.cooker.configuration.dry_run:
                     bb.build.exec_task(taskname, the_data)
-            except bb.build.FuncFailed as exc:
-                os._exit(1)
             except Exception as exc:
                 logger.critical(str(exc))
                 os._exit(1)

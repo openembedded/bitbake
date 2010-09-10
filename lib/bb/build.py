@@ -293,7 +293,6 @@ def exec_task(task, d):
         exec_func(task, localdata)
         event.fire(TaskSucceeded(task, localdata), localdata)
     except FuncFailed as exc:
-        logger.critical(str(exc))
         event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
         raise
 
