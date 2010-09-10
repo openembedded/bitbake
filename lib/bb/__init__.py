@@ -29,6 +29,7 @@ if sys.version_info < (2, 6, 0):
 
 import os
 import logging
+import traceback
 
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -49,6 +50,9 @@ class BBLogger(Logger):
 
     def verbose(self, msg, *args, **kwargs):
         return self.log(logging.INFO - 1, msg, *args, **kwargs)
+
+    def exception(self, msg, *args, **kwargs):
+        return self.critical("%s\n%s" % (msg, traceback.format_exc()), *args, **kwargs)
 
 logging.raiseExceptions = False
 logging.setLoggerClass(BBLogger)
