@@ -58,7 +58,11 @@ class BBConfiguration(object):
 
 
 def print_exception(*exc_info):
-    logger.error("Uncaught exception: ", exc_info=exc_info)
+    if not isinstance(exc_info[0], SystemExit):
+        if isinstance(exc_info[0], KeyboardInterrupt):
+            logger.error("User aborted.")
+        else:
+            logger.error("Uncaught exception: ", exc_info=exc_info)
     sys.exit(1)
 
 sys.excepthook = print_exception
