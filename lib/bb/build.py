@@ -42,15 +42,21 @@ __builtins__['bb'] = bb
 __builtins__['os'] = os
 
 class FuncFailed(Exception):
-    def __init__(self, name, metadata, logfile = None):
-        self.name = name
-        self.metadata = metadata
+    def __init__(self, name, logfile = None):
         self.logfile = logfile
+        if logfile is None:
+            self.name = None
+            self.message = name
+        else:
+            self.name = name
+            self.message = "Function '%s' failed" % name
 
     def __str__(self):
-        msg = "Function '%s' failed" % self.name
         if self.logfile and os.path.exists(self.logfile):
-            msg += " (see %s for further information)" % self.logfile
+            msg = "%s (see %s for further information)" % \
+                  (self.message, self.logfile)
+        else:
+            msg = self.message
         return msg
 
 class TaskBase(event.Event):
