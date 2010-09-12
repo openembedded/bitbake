@@ -231,7 +231,7 @@ def exec_func_python(func, d, runfile, logfile):
         if sys.exc_info()[0] in (bb.parse.SkipPackage, bb.build.FuncFailed):
             raise
 
-        raise FuncFailed(func, d, logfile)
+        raise FuncFailed(func, logfile)
 
 def exec_func_shell(func, d, runfile, logfile, flags):
     """Execute a shell BB 'function' Returns true if execution was successful.
@@ -274,7 +274,7 @@ def exec_func_shell(func, d, runfile, logfile, flags):
     if ret == 0:
         return
 
-    raise FuncFailed(func, d, logfile)
+    raise FuncFailed(func, logfile)
 
 
 def exec_task(task, d):
