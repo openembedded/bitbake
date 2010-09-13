@@ -917,7 +917,7 @@ class RunQueue:
                 self.rqexe = RunQueueExecuteScenequeue(self)
 
         if self.state is runQueueSceneRun:
-            self.rqexe.execute()
+            retval = self.rqexe.execute()
 
         if self.state is runQueueRunInit:
             logger.info("Executing runqueue")
@@ -925,7 +925,7 @@ class RunQueue:
             self.state = runQueueRunning
 
         if self.state is runQueueRunning:
-            self.rqexe.execute()
+            retval = self.rqexe.execute()
 
         if self.state is runQueueCleanUp:
            self.rqexe.finish()
@@ -1197,53 +1197,53 @@ class RunQueueExecuteTasks(RunQueueExecute):
             # nothing to do
             self.rq.state = runQueueCleanUp
 
-        while True:
-            for task in iter(self.sched.next, None):
-                fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
+        task = self.sched.next()
+        if task is not None:
+            fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
 
-                taskname = self.rqdata.runq_task[task]
-                if self.rq.check_stamp_task(task, taskname):
-                    logger.debug(2, "Stamp current task %s (%s)", task,
-                                 self.rqdata.get_user_idstring(task))
-                    self.task_skip(task)
-                    continue
-                elif self.cooker.configuration.dry_run:
-                    self.runq_running[task] = 1
-                    self.runq_buildable[task] = 1
-                    self.stats.taskActive()
-                    self.task_complete(task)
-                    continue
-
-                bb.event.fire(runQueueTaskStarted(task, self.stats, self.rq), self.cfgData)
-                pid, pipein, pipeout = self.fork_off_task(fn, task, taskname)
-
-                self.build_pids[pid] = task
-                self.build_pipes[pid] = runQueuePipe(pipein, pipeout, self.cfgData)
+            taskname = self.rqdata.runq_task[task]
+            if self.rq.check_stamp_task(task, taskname):
+                logger.debug(2, "Stamp current task %s (%s)", task,
+                                self.rqdata.get_user_idstring(task))
+                self.task_skip(task)
+                return True
+            elif self.cooker.configuration.dry_run:
                 self.runq_running[task] = 1
+                self.runq_buildable[task] = 1
                 self.stats.taskActive()
+                self.task_complete(task)
+                return True
 
-            for pipe in self.build_pipes:
-                self.build_pipes[pipe].read()
+            bb.event.fire(runQueueTaskStarted(task, self.stats, self.rq), self.cfgData)
+            pid, pipein, pipeout = self.fork_off_task(fn, task, taskname)
 
-            if self.stats.active > 0:
-                if self.runqueue_process_waitpid() is None:
-                    return
-                continue
+            self.build_pids[pid] = task
+            self.build_pipes[pid] = runQueuePipe(pipein, pipeout, self.cfgData)
+            self.runq_running[task] = 1
+            self.stats.taskActive()
 
-            if len(self.failed_fnids) != 0:
-                self.rq.state = runQueueFailed
-                return
+        for pipe in self.build_pipes:
+            self.build_pipes[pipe].read()
 
-            # Sanity Checks
-            for task in xrange(self.stats.total):
-                if self.runq_buildable[task] == 0:
-                    logger.error("Task %s never buildable!", task)
-                if self.runq_running[task] == 0:
-                    logger.error("Task %s never ran!", task)
-                if self.runq_complete[task] == 0:
-                    logger.error("Task %s never completed!", task)
-            self.rq.state = runQueueComplete
-            return
+        if self.stats.active > 0:
+            if self.runqueue_process_waitpid() is None:
+                return 0.5
+            return True
+
+        if len(self.failed_fnids) != 0:
+            self.rq.state = runQueueFailed
+            return True
+
+        # Sanity Checks
+        for task in xrange(self.stats.total):
+            if self.runq_buildable[task] == 0:
+                logger.error("Task %s never buildable!", task)
+            if self.runq_running[task] == 0:
+                logger.error("Task %s never ran!", task)
+            if self.runq_complete[task] == 0:
+                logger.error("Task %s never completed!", task)
+        self.rq.state = runQueueComplete
+        return True
 
 class RunQueueExecuteScenequeue(RunQueueExecute):
     def __init__(self, rq):
@@ -1432,7 +1432,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         if self.stats.active > 0:
             if self.runqueue_process_waitpid() is None:
-                return True
+                return 0.5
             return True
 
         # Convert scenequeue_covered task numbers into full taskgraph ids
