@@ -118,7 +118,8 @@ class Cache:
 
         self.cacheclean = False
         result = bb.data.getVar(var, self.data, exp)
-        self.depends_cache[fn][var] = result
+        if result is not None:
+            self.depends_cache[fn][var] = result
         return result
 
     def setData(self, virtualfn, fn, data):
@@ -218,7 +219,6 @@ class Cache:
                 self.handle_data(virtualfn, cacheData)
                 virtuals += 1
         return False, skipped, virtuals
-
 
     def cacheValid(self, fn):
         """
@@ -346,6 +346,7 @@ class Cache:
 
         p = pickle.Pickler(file(self.cachefile, "wb" ), -1 )
         p.dump([cache_data, version_data])
+        del self.depends_cache
 
     def mtime(self, cachefile):
         return bb.parse.cached_mtime_noerror(cachefile)
