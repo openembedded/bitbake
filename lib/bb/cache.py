@@ -107,7 +107,7 @@ class Cache:
              backend but add a copy of the data to the cache.
         """
         if fn in self.clean:
-            return self.depends_cache[fn][var]
+            return self.depends_cache[fn].get(var)
 
         self.depends_cache.setdefault(fn, {})
 
