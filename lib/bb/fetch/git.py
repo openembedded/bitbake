@@ -149,7 +149,7 @@ class Git(Fetch):
 
         os.chdir(codir)
         logger.info("Creating tarball of git checkout")
-        runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
+        runfetchcmd("tar --exclude '.git' -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
 
         os.chdir(ud.clonedir)
         bb.utils.prunedir(codir)

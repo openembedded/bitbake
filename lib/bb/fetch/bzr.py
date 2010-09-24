@@ -107,7 +107,7 @@ class Bzr(Fetch):
         os.chdir(ud.pkgdir)
         # tar them up to a defined filename
         try:
-            runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.pkgdir)), d)
+            runfetchcmd("tar --exclude '.bzr' --exclude '.bzrtags' -czf %s %s" % (ud.localpath, os.path.basename(ud.pkgdir)), d)
         except:
             t, v, tb = sys.exc_info()
             try:

@@ -145,7 +145,7 @@ class Hg(Fetch):
 
         os.chdir(ud.pkgdir)
         try:
-            runfetchcmd("tar -czf %s %s" % (ud.localpath, ud.module), d)
+            runfetchcmd("tar --exclude '.hg' --exclude '.hgrags' -czf %s %s" % (ud.localpath, ud.module), d)
         except:
             t, v, tb = sys.exc_info()
             try:

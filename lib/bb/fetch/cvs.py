@@ -162,7 +162,7 @@ class Cvs(Fetch):
         # tar them up to a defined filename
         if 'fullpath' in ud.parm:
             os.chdir(pkgdir)
-            myret = os.system("tar -czf %s %s" % (ud.localpath, localdir))
+            myret = os.system("tar --exclude 'CVS' -czf %s %s" % (ud.localpath, localdir))
         else:
             os.chdir(moddir)
             os.chdir('..')
