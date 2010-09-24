@@ -197,7 +197,7 @@ class Cache:
             multi = self.getVar('__VARIANTS', fn, True)
             for cls in (multi or "").split() + [""]:
                 virtualfn = self.realfn2virtual(fn, cls)
-                if self.depends_cache[virtualfn]["__SKIPPED"]:
+                if self.depends_cache[virtualfn].get("__SKIPPED"):
                     skipped += 1
                     logger.debug(1, "Skipping %s", virtualfn)
                     continue
