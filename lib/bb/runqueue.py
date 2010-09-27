@@ -708,6 +708,19 @@ class RunQueueData:
                         procdep.append(self.taskData.fn_index[self.runq_fnid[dep]] + "." + self.runq_task[dep])
                     self.runq_hash[task] = bb.parse.siggen.get_taskhash(self.taskData.fn_index[self.runq_fnid[task]], self.runq_task[task], procdep, self.dataCache)
 
+        self.hashes = {}
+        self.hash_deps = {}
+        for task in xrange(len(self.runq_fnid)):
+            identifier = '%s.%s' % (self.taskData.fn_index[self.runq_fnid[task]],
+                                    self.runq_task[task])
+            self.hashes[identifier] = self.runq_hash[task]
+            deps = []
+            for dep in self.runq_depends[task]:
+                depidentifier = '%s.%s' % (self.taskData.fn_index[self.runq_fnid[dep]],
+                                           self.runq_task[dep])
+                deps.append(depidentifier)
+            self.hash_deps[identifier] = deps
+
         return len(self.runq_fnid)
 
     def dump_data(self, taskQueue):
@@ -1058,6 +1071,7 @@ class RunQueueExecute:
 
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
+            bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
             try:
                 the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
                 the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
