@@ -168,6 +168,8 @@ class BitBakeServerConnection():
         self.server = serverinfo.server
         self.connection = serverinfo.commands
         self.events = bb.server.none.BBUIEventQueue(self.server)
+        for event in bb.event.ui_queue:
+            self.events.queue_event(event)
 
     def terminate(self):
         try:

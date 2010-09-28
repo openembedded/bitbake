@@ -26,6 +26,7 @@ import os, sys
 import warnings
 import pickle
 import logging
+import atexit
 import bb.utils
 
 # This is the pid for which we should generate the event. This is set when
@@ -73,7 +74,27 @@ def fire_class_handlers(event, d):
             h(event)
         del event.data
 
+ui_queue = []
+@atexit.register
+def print_ui_queue():
+    """If we're exiting before a UI has been spawned, display any queued
+    LogRecords to the console."""
+    logger = logging.getLogger("BitBake")
+    if not _ui_handlers:
+        console = logging.StreamHandler(sys.stdout)
+        console.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        logger.handlers = [console]
+        while ui_queue:
+            event, d = ui_queue.pop()
+            if isinstance(event, logging.LogRecord):
+                logger.handle(event)
+
 def fire_ui_handlers(event, d):
+    if not _ui_handlers:
+        # No UI handlers registered yet, queue up the messages
+        ui_queue.append((event, d))
+        return
+
     errors = []
     for h in _ui_handlers:
         #print "Sending event %s" % event
