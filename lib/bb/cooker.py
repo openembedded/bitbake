@@ -491,9 +491,9 @@ class BBCooker:
             path, _ = os.path.split(path)
 
     def parseConfigurationFiles(self, files):
-        def _parse(f, data):
+        def _parse(f, data, include=False):
             try:
-                return bb.parse.handle(f, data)
+                return bb.parse.handle(f, data, include)
             except (IOError, bb.parse.ParseError) as exc:
                 parselog.critical("Unable to parse %s: %s" % (f, exc))
                 sys.exit(1)

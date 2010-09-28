@@ -85,14 +85,14 @@ def print_ui_queue():
         console.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
         logger.handlers = [console]
         while ui_queue:
-            event, d = ui_queue.pop()
+            event = ui_queue.pop()
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
 
 def fire_ui_handlers(event, d):
     if not _ui_handlers:
         # No UI handlers registered yet, queue up the messages
-        ui_queue.append((event, d))
+        ui_queue.append(event)
         return
 
     errors = []
