@@ -142,8 +142,21 @@ def exec_func(func, d, dirs = None):
     if not t:
         raise SystemExit("T variable not set, unable to build")
     bb.utils.mkdirhier(t)
+    loglink = "%s/log.%s" % (t, func)
     logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
     runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
+
+    # Even though the log file has not yet been opened, lets create the link
+    if loglink:
+        try:
+           os.remove(loglink)
+        except OSError as e:
+           pass
+
+        try:
+           os.symlink(logfile, loglink)
+        except OSError as e:
+           pass
 
     # Change to correct directory (if specified)
     if adir and os.access(adir, os.F_OK):
@@ -210,6 +223,10 @@ def exec_func(func, d, dirs = None):
         if os.path.exists(logfile) and os.path.getsize(logfile) == 0:
             logger.debug(2, "Zero size logfile %s, removing", logfile)
             os.remove(logfile)
+            try:
+               os.remove(loglink)
+            except OSError as e:
+               pass
 
         # Close the backup fds
         os.close(osi[0])
