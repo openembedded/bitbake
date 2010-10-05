@@ -291,10 +291,12 @@ def go(d, urls = None):
             try:
                 m.go(u, ud, d)
                 localpath = ud.localpath
-            except:
+            except FetchError:
                 # Finally, try fetching uri, u, from MIRRORS
                 mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', d, 1) or "").split('\n') if i ]
                 localpath = try_mirrors (d, u, mirrors)
+                if not localpath or not os.path.exists(localpath):
+                    raise FetchError("Unable to fetch URL %s from any source." % u)
 
         if localpath:
             ud.localpath = localpath
