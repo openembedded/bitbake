@@ -72,6 +72,7 @@ recipe_fields = (
     'file_depends',
     'tasks',
     'basetaskhashes',
+    'hashfilename',
 )
 
 
@@ -116,6 +117,7 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
         return RecipeInfo(
             tasks            = tasks,
             basetaskhashes   = cls.taskvar('BB_BASEHASH', tasks, metadata),
+            hashfilename     = cls.getvar('BB_HASHFILENAME', metadata),
 
             file_depends     = metadata.getVar('__depends', False),
             task_deps        = metadata.getVar('_task_deps', False) or
@@ -554,6 +556,7 @@ class CacheData(object):
         self.preferred = {}
         self.tasks = {}
         self.basetaskhash = {}
+        self.hashfn = {}
 
         """
         Indirect Cache variables
@@ -610,6 +613,7 @@ class CacheData(object):
         if not info.broken and not info.not_world:
             self.possible_world.append(fn)
 
+        self.hashfn[fn] = info.hashfilename
         for task, taskhash in info.basetaskhashes.iteritems():
             identifier = '%s.%s' % (fn, task)
             self.basetaskhash[identifier] = taskhash
