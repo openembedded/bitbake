@@ -43,6 +43,18 @@ __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 
+class DataDict(dict):
+    def __init__(self, metadata, **kwargs):
+        self.metadata = metadata
+        dict.__init__(self, **kwargs)
+
+    def __missing__(self, key):
+        value = self.metadata.getVar(key, True)
+        if value is None:
+            raise KeyError(key)
+        else:
+            return value
+
 class DataSmart(MutableMapping):
     def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
         self.dict = {}
@@ -68,7 +80,7 @@ class DataSmart(MutableMapping):
         def python_sub(match):
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), varname or "<expansion>", "eval")
-            value = utils.better_eval(codeobj, {"d": self})
+            value = utils.better_eval(codeobj, DataDict(self, d=self))
             return str(value)
 
         if not isinstance(s, basestring): # sanity check
