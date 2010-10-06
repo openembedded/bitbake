@@ -125,7 +125,7 @@ class DataSmart(MutableMapping):
             for var in vars:
                 name = var[:-l]
                 try:
-                    self[name] = self[var]
+                    self.setVar(name, self.getVar(var, False))
                 except Exception:
                     logger.info("Untracked delVar")
 
@@ -343,7 +343,11 @@ class DataSmart(MutableMapping):
         return len(frozenset(self))
 
     def __getitem__(self, item):
-        return self.getVar(item, False)
+        value = self.getVar(item, False)
+        if value is None:
+            raise KeyError(item)
+        else:
+            return value
 
     def __setitem__(self, var, value):
         self.setVar(var, value)
