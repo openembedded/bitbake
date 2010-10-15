@@ -1,3 +1,10 @@
+Changes in Bitbake 1.10.1:
+	- Fix IndexError encountered when a 'depends' flag references a
+	  nonexistant task. (from master)
+	- Fix clean of the environment. (from master)
+	- Fix bug where a failed fetch could result in a "local file does not
+	  exist" error, rather than the real error. (from master)
+
 Changes in Bitbake 1.10.0:
 	- Release 1.9.x as a stable series
 
