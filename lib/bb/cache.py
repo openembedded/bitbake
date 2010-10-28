@@ -328,7 +328,7 @@ class Cache:
             return
 
         if self.cacheclean:
-            logger.info("Cache is clean, not saving.")
+            logger.debug(2, "Cache is clean, not saving.")
             return
 
         version_data = {}
