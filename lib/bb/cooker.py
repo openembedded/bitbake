@@ -320,14 +320,14 @@ class BBCooker:
                 rdepends = self.status.rundeps[fn]
                 for package in rdepends:
                     depend_tree["rdepends-pkg"][package] = []
-                    for rdepend in rdepends[package]:
+                    for rdepend in bb.utils.explode_deps(rdepends[package]):
                         depend_tree["rdepends-pkg"][package].append(rdepend)
                     packages.append(package)
 
                 rrecs = self.status.runrecs[fn]
                 for package in rrecs:
                     depend_tree["rrecs-pkg"][package] = []
-                    for rdepend in rrecs[package]:
+                    for rdepend in bb.utils.explode_deps(rrecs[package]):
                         depend_tree["rrecs-pkg"][package].append(rdepend)
                     if not package in packages:
                         packages.append(package)
