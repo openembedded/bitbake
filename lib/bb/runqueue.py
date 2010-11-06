@@ -902,10 +902,13 @@ class RunQueue:
                 if t3 and t3 > t2:
                    continue
                 if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
-                    if not t2 or t1 < t2:
-                        logger.debug(2, "Stampfile %s < %s (or does not exist)",
-                                     stampfile, stampfile2)
+                    if not t2:
+                        logger.debug(2, 'Stampfile %s does not exist', stampfile2)
                         iscurrent = False
+                    if t1 < t2:
+                        logger.debug(2, 'Stampfile %s < %s', stampfile, stampfile2)
+                        iscurrent = False
+
         return iscurrent
 
     def execute_runqueue(self):
@@ -1229,7 +1232,20 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 self.task_complete(task)
                 return True
 
-            bb.event.fire(runQueueTaskStarted(task, self.stats, self.rq), self.cfgData)
+            taskdep = self.rqdata.dataCache.task_deps[fn]
+            if 'noexec' in taskdep and taskname in taskdep['noexec']:
+                startevent = runQueueTaskStarted(task, self.stats, self.rq,
+                                                 noexec=True)
+                bb.event.fire(startevent, self.cfgData)
+                self.runq_running[task] = 1
+                self.stats.taskActive()
+                bb.build.make_stamp(taskname, self.rqdata.dataCache, fn)
+                self.task_complete(task)
+                return True
+            else:
+                startevent = runQueueTaskStarted(task, self.stats, self.rq)
+                bb.event.fire(startevent, self.cfgData)
+
             pid, pipein, pipeout = self.fork_off_task(fn, task, taskname)
 
             self.build_pids[pid] = task
@@ -1352,19 +1368,27 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             sq_hashfn = []
             sq_fn = []
             sq_task = []
+            noexec = []
             for task in range(len(self.sq_revdeps)):
                 realtask = self.rqdata.runq_setscene[task]
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
+                taskname = self.rqdata.runq_task[realtask]
+                taskdep = self.rqdata.dataCache.task_deps[fn]
+                if 'noexec' in taskdep and taskname in taskdep['noexec']:
+                    noexec.append(task)
+                    self.task_skip(task)
+                    bb.build.make_stamp(taskname + "_setscene", self.rqdata.dataCache, fn)
+                    continue
                 sq_fn.append(fn)
                 sq_hashfn.append(self.rqdata.dataCache.hashfn[fn])
                 sq_hash.append(self.rqdata.runq_hash[realtask])
-                sq_task.append(self.rqdata.runq_task[realtask])
+                sq_task.append(taskname)
 
             call = self.rq.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
             locs = { "sq_fn" : sq_fn, "sq_task" : sq_task, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.configuration.data }
             valid = bb.utils.better_eval(call, locs)
             for task in range(len(self.sq_revdeps)):
-                if task not in valid:
+                if task not in valid and task not in noexec:
                     logger.debug(2, 'No package found, so skipping setscene task %s',
                                  self.rqdata.get_user_idstring(task))
                     self.task_failoutright(task)
@@ -1515,9 +1539,9 @@ class runQueueTaskStarted(runQueueEvent):
     """
     Event notifing a task was started
     """
-    def __init__(self, task, stats, rq):
+    def __init__(self, task, stats, rq, noexec=False):
         runQueueEvent.__init__(self, task, stats, rq)
-        self.message = "Running task %s (%d of %d) (%s)" % (task, stats.completed + stats.active + 1, self.stats.total, self.taskstring)
+        self.noexec = noexec
 
 class runQueueTaskFailed(runQueueEvent):
     """
@@ -1526,15 +1550,11 @@ class runQueueTaskFailed(runQueueEvent):
     def __init__(self, task, stats, exitcode, rq):
         runQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
-        self.message = "Task %s failed (%s)" % (task, self.taskstring)
 
 class runQueueTaskCompleted(runQueueEvent):
     """
     Event notifing a task completed
     """
-    def __init__(self, task, stats, rq):
-        runQueueEvent.__init__(self, task, stats, rq)
-        self.message = "Task %s completed (%s)" % (task, self.taskstring)
 
 def check_stamp_fn(fn, taskname, d):
     rqexe = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", d)

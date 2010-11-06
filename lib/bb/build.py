@@ -380,6 +380,7 @@ def add_tasks(tasklist, d):
         getTask('rdeptask')
         getTask('recrdeptask')
         getTask('nostamp')
+        getTask('noexec')
         task_deps['parents'][task] = []
         for dep in flags['deps']:
             dep = data.expand(dep, d)
