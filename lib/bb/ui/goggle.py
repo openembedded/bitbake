@@ -45,6 +45,8 @@ class MainWindow (gtk.Window):
         scrolled_window = gtk.ScrolledWindow ()
         self.add (scrolled_window)
         self.cur_build_tv = RunningBuildTreeView()
+        self.connect("delete-event", gtk.main_quit)
+        self.set_default_size(640, 480)
         scrolled_window.add (self.cur_build_tv)
 
 def init (server, eventHandler):
