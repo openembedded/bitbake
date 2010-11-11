@@ -707,6 +707,9 @@ def format_commands(v):
         if v.reverse_status:
             name = '!' + name
         return [name, format_commands(v.commands)]
+    elif isinstance(v, Case):
+        name = ['Case']
+        name += [v.name, format_commands(v.items)]
     elif isinstance(v, SimpleCommand):
         name = ['SimpleCommand']
         if v.words:                
