@@ -67,11 +67,12 @@ class RunningBuild (gobject.GObject):
                 (package, task) = self.pids_to_task[pid]
                 parent = self.tasks_to_iter[(package, task)]
 
-        if isinstance(event, bb.msg.Msg):
+        if isinstance(event, bb.msg.MsgBase):
+
             # Set a pretty icon for the message based on it's type.
             if isinstance(event, bb.msg.MsgWarn):
                 icon = "dialog-warning"
-            elif isinstance(event, bb.msg.MsgErr):
+            elif isinstance(event, bb.msg.MsgError):
                 icon = "dialog-error"
             else:
                 icon = None
@@ -128,7 +129,7 @@ class RunningBuild (gobject.GObject):
             # Mark this task as active.
             self.model.set(i, self.model.COL_ICON, "gtk-execute")
 
-        elif isinstance(event, bb.build.Task):
+        elif isinstance(event, bb.build.TaskBase):
 
             if isinstance(event, bb.build.TaskFailed):
                 # Mark the task as failed
