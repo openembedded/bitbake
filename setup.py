@@ -51,9 +51,10 @@ class Build(build):
 
 setup(name='bitbake',
       version = __version__,
+      requires = ["ply"],
       package_dir = {"": "lib"},
       packages = ["bb.server", "bb.parse.parse_py", "bb.parse", "bb.fetch",
-                  "bb.ui.crumbs", "bb.ui", "bb", "pysh", "ply"],
+                  "bb.ui.crumbs", "bb.ui", "bb", "pysh"],
       py_modules = ["codegen"],
       scripts = ["bin/bitbake"],
       data_files = [("share/bitbake", glob("conf/*") + glob("classes/*")),
