@@ -648,7 +648,10 @@ def p_error(p):
 try:
     import pyshtables
 except ImportError:
-    yacc.yacc(tabmodule = 'pyshtables')
+    outputdir = os.path.dirname(__file__)
+    if not os.access(outputdir, os.W_OK):
+        outputdir = ''
+    yacc.yacc(tabmodule = 'pyshtables', outputdir = outputdir, debug = 0)
 else:
     yacc.yacc(tabmodule = 'pysh.pyshtables', write_tables = 0, debug = 0)
 
