@@ -83,7 +83,7 @@ class RunningBuild (gobject.GObject):
             # Add the message to the tree either at the top level if parent is
             # None otherwise as a descendent of a task.
             self.model.append (parent,
-                               (event.__name__.split()[-1], # e.g. MsgWarn, MsgError
+                               (event.__class__.__name__.split()[-1], # e.g. MsgWarn, MsgError
                                 package,
                                 task,
                                 event._message,
