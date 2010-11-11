@@ -68,6 +68,9 @@ class RunningBuild (gobject.GObject):
                 parent = self.tasks_to_iter[(package, task)]
 
         if isinstance(event, bb.msg.MsgBase):
+            # Ignore the "Running task i of n .."
+            if (event._message.startswith ("Running task")):
+                return # don't add these to the list
 
             # Set a pretty icon for the message based on it's type.
             if isinstance(event, bb.msg.MsgWarn):
@@ -76,10 +79,6 @@ class RunningBuild (gobject.GObject):
                 icon = "dialog-error"
             else:
                 icon = None
-
-            # Ignore the "Running task i of n .." messages
-            if (event._message.startswith ("Running task")):
-                return
 
             # Add the message to the tree either at the top level if parent is
             # None otherwise as a descendent of a task.
