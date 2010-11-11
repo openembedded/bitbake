@@ -24,11 +24,7 @@ from bb import __version__
 from glob import glob
 from distutils.command.clean import clean
 from distutils.command.build import build
-
-from ez_setup import use_setuptools
-use_setuptools()
-
-from setuptools import setup, find_packages
+from distutils.core import setup
 
 
 doctype = "html"
@@ -54,22 +50,22 @@ class Build(build):
         os.chdir(origpath)
 
 setup(name='bitbake',
-      version=__version__,
-      package_dir={"": "lib"},
-      packages=find_packages("lib"),
-      scripts=["bin/bitbake"],
-      # package_data={"bb": ["data"]},
-      data_files=[("share/bitbake", glob("conf/*") + glob("classes/*")),
+      version = __version__,
+      package_dir = {"": "lib"},
+      packages = ["bb.server", "bb.parse.parse_py", "bb.parse", "bb.fetch",
+                  "bb.ui.crumbs", "bb.ui", "bb", "pysh", "ply"],
+      scripts = ["bin/bitbake"],
+      data_files = [("share/bitbake", glob("conf/*") + glob("classes/*")),
                   ("share/doc/bitbake-%s/manual" % __version__, glob("doc/manual/html/*"))],
-      cmdclass={
+      cmdclass = {
           "build": Build,
           "clean": Clean,
       },
 
-      license='GPLv2',
-      url='http://developer.berlios.de/projects/bitbake/',
-      description='BitBake build tool',
-      long_description='BitBake is a simple tool for the execution of tasks. It is derived from Portage, which is the package management system used by the Gentoo Linux distribution. It is most commonly used to build packages, as it can easily use its rudimentary inheritance to abstract common operations, such as fetching sources, unpacking them, patching them, compiling them, and so on.  It is the basis of the OpenEmbedded project, which is being used for OpenZaurus, Familiar, and a number of other Linux distributions.',
-      author='BitBake Development Team',
-      author_email='bitbake-dev@lists.berlios.de',
+      license = 'GPLv2',
+      url = 'http://developer.berlios.de/projects/bitbake/',
+      description = 'BitBake build tool',
+      long_description = 'BitBake is a simple tool for the execution of tasks. It is derived from Portage, which is the package management system used by the Gentoo Linux distribution. It is most commonly used to build packages, as it can easily use its rudimentary inheritance to abstract common operations, such as fetching sources, unpacking them, patching them, compiling them, and so on.  It is the basis of the OpenEmbedded project, which is being used for OpenZaurus, Familiar, and a number of other Linux distributions.',
+      author = 'BitBake Development Team',
+      author_email = 'bitbake-dev@lists.berlios.de',
 )
