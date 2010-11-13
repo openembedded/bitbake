@@ -298,10 +298,12 @@ class Cache:
         if invalid:
             for cls in (multi or "").split():
                 virtualfn = self.realfn2virtual(fn, cls)
-                logger.debug(2, "Cache: Removing %s from cache", virtualfn)
-                del self.clean[virtualfn]
-            logger.debug(2, "Cache: removing %s from cache", fn)
-            del self.clean[fn]
+                if virtualfn in self.clean:
+                    logger.debug(2, "Cache: Removing %s from cache", virtualfn)
+                    del self.clean[virtualfn]
+            if fn in self.clean:
+                logger.debug(2, "Cache: Marking %s as not clean", fn)
+                del self.clean[fn]
             return False
 
         return True
@@ -311,10 +313,11 @@ class Cache:
         Remove a fn from the cache
         Called from the parser in error cases
         """
-        logger.debug(1, "Removing %s from cache", fn)
         if fn in self.depends_cache:
+            logger.debug(1, "Removing %s from cache", fn)
             del self.depends_cache[fn]
         if fn in self.clean:
+            logger.debug(1, "Marking %s as unclean", fn)
             del self.clean[fn]
 
     def sync(self):
