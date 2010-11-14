@@ -65,7 +65,8 @@ IN_PYTHON_EOF = -9999999999999
 
 
 def supports(fn, d):
-    return fn[-3:] == ".bb" or fn[-8:] == ".bbclass" or fn[-4:] == ".inc"
+    """Return True if fn has a supported extension"""
+    return os.path.splitext(fn)[-1] in [".bb", ".bbclass", ".inc"]
 
 def inherit(files, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or []
