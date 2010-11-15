@@ -74,7 +74,7 @@ def inherit(files, d):
     lineno = 0
     for file in files:
         file = data.expand(file, d)
-        if file[0] != "/" and file[-8:] != ".bbclass":
+        if not os.path.isabs(file) and not file.endswith(".bbclass"):
             file = os.path.join('classes', '%s.bbclass' % file)
 
         if not file in __inherit_cache:
