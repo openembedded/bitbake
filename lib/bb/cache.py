@@ -436,16 +436,18 @@ class Cache:
         if not file_name in cacheData.runrecs:
             cacheData.runrecs[file_name] = {}
 
-        rdepends = self.getVar('RDEPENDS', file_name, True) or ""
-        rrecommends = self.getVar('RRECOMMENDS', file_name, True) or ""
+        rdepends = bb.utils.explode_deps(self.getVar('RDEPENDS', file_name, True) or "")
+        rrecommends = bb.utils.explode_deps(self.getVar('RRECOMMENDS', file_name, True) or "")
         for package in packages + [pn]:
             if not package in cacheData.rundeps[file_name]:
                 cacheData.rundeps[file_name][package] = []
             if not package in cacheData.runrecs[file_name]:
                 cacheData.runrecs[file_name][package] = []
 
-            cacheData.rundeps[file_name][package] = rdepends + " " + (self.getVar("RDEPENDS_%s" % package, file_name, True) or "")
-            cacheData.runrecs[file_name][package] = rrecommends + " " + (self.getVar("RRECOMMENDS_%s" % package, file_name, True) or "")
+            rdeps_pkg = bb.utils.explode_deps(self.getVar('RDEPENDS_%s' % package, file_name, True) or "")
+            cacheData.rundeps[file_name][package] = rdepends + rdeps_pkg
+            rrecs_pkg = bb.utils.explode_deps(self.getVar('RDEPENDS_%s' % package, file_name, True) or "")
+            cacheData.runrecs[file_name][package] = rrecommends + rrecs_pkg
 
         # Collect files we may need for possible world-dep
         # calculations
