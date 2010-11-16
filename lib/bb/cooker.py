@@ -638,8 +638,7 @@ class BBCooker:
 
         # Load data into the cache for fn and parse the loaded cache data
         the_data = self.bb_cache.loadDataFull(fn, self.get_file_appends(fn), self.configuration.data)
-        self.bb_cache.setData(fn, buildfile, the_data)
-        self.bb_cache.handle_data(fn, self.status)
+        self.bb_cache.add(fn, the_data, self.status)
 
         # Tweak some variables
         item = self.bb_cache.getVar('PN', fn, True)
