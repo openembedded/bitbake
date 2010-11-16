@@ -30,6 +30,7 @@
 
 import os
 import logging
+from collections import defaultdict
 import bb.data
 import bb.utils
 
@@ -374,8 +375,6 @@ class Cache:
         cacheData.task_deps[file_name] = self.getVar("_task_deps", file_name)
 
         # build PackageName to FileName lookup table
-        if pn not in cacheData.pkg_pn:
-            cacheData.pkg_pn[pn] = []
         cacheData.pkg_pn[pn].append(file_name)
 
         cacheData.stamp[file_name] = self.getVar('STAMP', file_name, True)
@@ -393,18 +392,12 @@ class Cache:
         # Build forward and reverse provider hashes
         # Forward: virtual -> [filenames]
         # Reverse: PN -> [virtuals]
-        if pn not in cacheData.pn_provides:
-            cacheData.pn_provides[pn] = []
-
         cacheData.fn_provides[file_name] = provides
         for provide in provides:
-            if provide not in cacheData.providers:
-                cacheData.providers[provide] = []
             cacheData.providers[provide].append(file_name)
             if not provide in cacheData.pn_provides[pn]:
                 cacheData.pn_provides[pn].append(provide)
 
-        cacheData.deps[file_name] = []
         for dep in depends:
             if not dep in cacheData.deps[file_name]:
                 cacheData.deps[file_name].append(dep)
@@ -414,36 +407,19 @@ class Cache:
         # Build reverse hash for PACKAGES, so runtime dependencies
         # can be be resolved (RDEPENDS, RRECOMMENDS etc.)
         for package in packages:
-            if not package in cacheData.packages:
-                cacheData.packages[package] = []
             cacheData.packages[package].append(file_name)
             rprovides += (self.getVar("RPROVIDES_%s" % package, file_name, 1) or "").split()
 
         for package in packages_dynamic:
-            if not package in cacheData.packages_dynamic:
-                cacheData.packages_dynamic[package] = []
             cacheData.packages_dynamic[package].append(file_name)
 
         for rprovide in rprovides:
-            if not rprovide in cacheData.rproviders:
-                cacheData.rproviders[rprovide] = []
             cacheData.rproviders[rprovide].append(file_name)
 
         # Build hash of runtime depends and rececommends
-
-        if not file_name in cacheData.rundeps:
-            cacheData.rundeps[file_name] = {}
-        if not file_name in cacheData.runrecs:
-            cacheData.runrecs[file_name] = {}
-
         rdepends = bb.utils.explode_deps(self.getVar('RDEPENDS', file_name, True) or "")
         rrecommends = bb.utils.explode_deps(self.getVar('RRECOMMENDS', file_name, True) or "")
         for package in packages + [pn]:
-            if not package in cacheData.rundeps[file_name]:
-                cacheData.rundeps[file_name][package] = []
-            if not package in cacheData.runrecs[file_name]:
-                cacheData.runrecs[file_name][package] = []
-
             rdeps_pkg = bb.utils.explode_deps(self.getVar('RDEPENDS_%s' % package, file_name, True) or "")
             cacheData.rundeps[file_name][package] = rdepends + rdeps_pkg
             rrecs_pkg = bb.utils.explode_deps(self.getVar('RDEPENDS_%s' % package, file_name, True) or "")
@@ -525,21 +501,21 @@ class CacheData:
         Direct cache variables
         (from Cache.handle_data)
         """
-        self.providers   = {}
-        self.rproviders = {}
-        self.packages = {}
-        self.packages_dynamic = {}
+        self.providers   = defaultdict(list)
+        self.rproviders = defaultdict(list)
+        self.packages = defaultdict(list)
+        self.packages_dynamic = defaultdict(list)
         self.possible_world = []
-        self.pkg_pn = {}
+        self.pkg_pn = defaultdict(list)
         self.pkg_fn = {}
         self.pkg_pepvpr = {}
         self.pkg_dp = {}
-        self.pn_provides = {}
+        self.pn_provides = defaultdict(list)
         self.fn_provides = {}
         self.all_depends = []
-        self.deps = {}
-        self.rundeps = {}
-        self.runrecs = {}
+        self.deps = defaultdict(list)
+        self.rundeps = defaultdict(lambda: defaultdict(list))
+        self.runrecs = defaultdict(lambda: defaultdict(list))
         self.task_queues = {}
         self.task_deps = {}
         self.stamp = {}
