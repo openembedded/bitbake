@@ -233,7 +233,6 @@ class Cache(object):
 
         cached = self.cacheValid(fn)
         if not cached:
-            self.cacheclean = False
             logger.debug(1, "Parsing %s", fn)
             datastores = self.load_bbfile(fn, appends, cfgData)
             depends = set()
@@ -245,6 +244,11 @@ class Cache(object):
                 if depends and not variant:
                     data.setVar("__depends", depends)
                 info = RecipeInfo.from_metadata(fn, data)
+                if not info.nocache:
+                    # The recipe was parsed, and is not marked as being
+                    # uncacheable, so we need to ensure that we write out the
+                    # new cache data.
+                    self.cacheclean = False
                 self.depends_cache[virtualfn] = info
 
         info = self.depends_cache[fn]
