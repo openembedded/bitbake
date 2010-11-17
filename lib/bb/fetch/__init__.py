@@ -656,9 +656,7 @@ class Fetch(object):
         """
         Verify the md5sum we wanted with the one we got
         """
-        wanted_sum = None
-        if 'md5sum' in ud.parm:
-            wanted_sum = ud.parm['md5sum']
+        wanted_sum = ud.parm.get('md5sum')
         if not wanted_sum:
             return True
 

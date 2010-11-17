@@ -133,10 +133,7 @@ class Perforce(Fetch):
         else:
             path = depot
 
-        if "module" in parm:
-            module = parm["module"]
-        else:
-            module = os.path.basename(path)
+        module = parm.get('module', os.path.basename(path))
 
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "p4:%s" % data.getVar('OVERRIDES', localdata), localdata)
@@ -206,4 +203,4 @@ class Perforce(Fetch):
                 pass
             raise FetchError(module)
         # cleanup
-        os.system('rm -rf %s' % tmpfile)
+        bb.utils.prunedir(tmpfile)

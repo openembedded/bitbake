@@ -59,9 +59,7 @@ class Osc(Fetch):
 
         basecmd = data.expand('${FETCHCMD_osc}', d)
 
-        proto = "ocs"
-        if "proto" in ud.parm:
-            proto = ud.parm["proto"]
+        proto = ud.parm.get('proto', 'ocs')
 
         options = []
 
@@ -124,7 +122,7 @@ class Osc(Fetch):
         Generate a .oscrc to be used for this run.
         """
 
-        config_path = "%s/oscrc" % data.expand('${OSCDIR}', d)
+        config_path = os.path.join(data.expand('${OSCDIR}', d), "oscrc")
         if (os.path.exists(config_path)):
             os.remove(config_path)
 

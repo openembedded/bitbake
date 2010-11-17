@@ -47,9 +47,7 @@ class Cvs(Fetch):
             raise MissingParameterError("cvs method needs a 'module' parameter")
         ud.module = ud.parm["module"]
 
-        ud.tag = ""
-        if 'tag' in ud.parm:
-            ud.tag = ud.parm['tag']
+        ud.tag = ud.parm.get('tag', "")
 
         # Override the default date in certain cases
         if 'date' in ud.parm:
@@ -76,17 +74,9 @@ class Cvs(Fetch):
 
     def go(self, loc, ud, d):
 
-        method = "pserver"
-        if "method" in ud.parm:
-            method = ud.parm["method"]
-
-        localdir = ud.module
-        if "localdir" in ud.parm:
-            localdir = ud.parm["localdir"]
-
-        cvs_port = ""
-        if "port" in ud.parm:
-            cvs_port = ud.parm["port"]
+        method = ud.parm.get('method', 'pserver')
+        localdir = ud.parm.get('localdir', ud.module)
+        cvs_port = ud.parm.get('port', '')
 
         cvs_rsh = None
         if method == "ext":

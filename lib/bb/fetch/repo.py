@@ -45,24 +45,11 @@ class Repo(Fetch):
         "master".
         """
 
-        if "protocol" in ud.parm:
-            ud.proto = ud.parm["protocol"]
-        else:
-            ud.proto = "git"
-
-        if "branch" in ud.parm:
-            ud.branch = ud.parm["branch"]
-        else:
-            ud.branch = "master"
-
-        if "manifest" in ud.parm:
-            manifest = ud.parm["manifest"]
-            if manifest.endswith(".xml"):
-                ud.manifest = manifest
-            else:
-                ud.manifest = manifest + ".xml"
-        else:
-            ud.manifest = "default.xml"
+        ud.proto = ud.parm.get('protocol', 'git')
+        ud.branch = ud.parm.get('branch', 'master')
+        ud.manifest = ud.parm.get('manifest', 'default.xml')
+        if not ud.manifest.endswith('.xml'):
+            ud.manifest += '.xml'
 
         ud.localfile = data.expand("repo_%s%s_%s_%s.tar.gz" % (ud.host, ud.path.replace("/", "."), ud.manifest, ud.branch), d)
 

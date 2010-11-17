@@ -91,9 +91,7 @@ class Svn(Fetch):
 
         basecmd = data.expand('${FETCHCMD_svn}', d)
 
-        proto = "svn"
-        if "proto" in ud.parm:
-            proto = ud.parm["proto"]
+        proto = ud.parm.get('proto', 'svn')
 
         svn_rsh = None
         if proto == "svn+ssh" and "rsh" in ud.parm:

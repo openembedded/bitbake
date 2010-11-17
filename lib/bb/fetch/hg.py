@@ -44,10 +44,7 @@ class Hg(Fetch):
         return ud.type in ['hg']
 
     def forcefetch(self, url, ud, d):
-        if 'rev' in ud.parm:
-            revTag = ud.parm['rev']
-        else:
-            revTag = "tip"
+        revTag = ud.parm.get('rev', 'tip')
         return revTag == "tip"
 
     def localpath(self, url, ud, d):
@@ -84,9 +81,7 @@ class Hg(Fetch):
 
         basecmd = data.expand('${FETCHCMD_hg}', d)
 
-        proto = "http"
-        if "proto" in ud.parm:
-            proto = ud.parm["proto"]
+        proto = ud.parm.get('proto', 'http')
 
         host = ud.host
         if proto == "file":

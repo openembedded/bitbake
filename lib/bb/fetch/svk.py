@@ -48,18 +48,14 @@ class Svk(Fetch):
         else:
             ud.module = ud.parm["module"]
 
-        ud.revision = ""
-        if 'rev' in ud.parm:
-            ud.revision = ud.parm['rev']
+        ud.revision = ud.parm.get('rev', "")
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def forcefetch(self, url, ud, d):
-        if (ud.date == "now"):
-            return True
-        return False
+        return ud.date == "now"
 
     def go(self, loc, ud, d):
         """Fetch urls"""
@@ -105,4 +101,4 @@ class Svk(Fetch):
                 pass
             raise FetchError(ud.module)
         # cleanup
-        os.system('rm -rf %s' % tmpfile)
+        bb.utils.prunedir(tmpfile)
