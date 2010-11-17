@@ -136,7 +136,7 @@ def uri_replace(uri, uri_find, uri_replace, d):
                     if d:
                         localfn = bb.fetch.localpath(uri, d)
                         if localfn:
-                            result_decoded[loc] = os.path.dirname(result_decoded[loc]) + "/" + os.path.basename(bb.fetch.localpath(uri, d))
+                            result_decoded[loc] = os.path.join(os.path.dirname(result_decoded[loc]), os.path.basename(bb.fetch.localpath(uri, d)))
             else:
                 return uri
     return encodeurl(result_decoded)
