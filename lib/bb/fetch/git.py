@@ -154,7 +154,7 @@ class Git(Fetch):
         os.chdir(ud.clonedir)
         bb.utils.prunedir(codir)
 
-    def suppports_srcrev(self):
+    def supports_srcrev(self):
         return True
 
     def _contains_ref(self, tag, d):

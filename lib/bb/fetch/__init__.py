@@ -341,11 +341,11 @@ def get_srcrev(d):
 
     scms = []
 
-    # Only call setup_localpath on URIs which suppports_srcrev()
+    # Only call setup_localpath on URIs which supports_srcrev()
     urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d, False)
     for u in urldata:
         ud = urldata[u]
-        if ud.method.suppports_srcrev():
+        if ud.method.supports_srcrev():
             if not ud.setup:
                 ud.setup_localpath(d)
             scms.append(u)
@@ -560,7 +560,7 @@ class Fetch(object):
         """
         return False
 
-    def suppports_srcrev(self):
+    def supports_srcrev(self):
         """
         The fetcher supports auto source revisions (SRCREV)
         """

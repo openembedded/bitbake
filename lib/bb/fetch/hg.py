@@ -162,7 +162,7 @@ class Hg(Fetch):
                 pass
             raise t, v, tb
 
-    def suppports_srcrev(self):
+    def supports_srcrev(self):
         return True
 
     def _latest_revision(self, url, ud, d):

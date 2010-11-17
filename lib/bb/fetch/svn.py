@@ -168,7 +168,7 @@ class Svn(Fetch):
                 pass
             raise t, v, tb
 
-    def suppports_srcrev(self):
+    def supports_srcrev(self):
         return True
 
     def _revision_key(self, url, ud, d):

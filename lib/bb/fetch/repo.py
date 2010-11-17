@@ -95,7 +95,7 @@ class Repo(Fetch):
         # Create a cache
         runfetchcmd("tar --exclude=.repo --exclude=.git -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
 
-    def suppports_srcrev(self):
+    def supports_srcrev(self):
         return False
 
     def _build_revision(self, url, ud, d):
