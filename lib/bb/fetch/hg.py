@@ -57,10 +57,7 @@ class Hg(Fetch):
         ud.module = ud.parm["module"]
 
         # Create paths to mercurial checkouts
-        relpath = ud.path
-        if relpath.startswith('/'):
-            # Remove leading slash as os.path.join can't cope
-            relpath = relpath[1:]
+        relpath = self._strip_leading_slashes(ud.path)
         ud.pkgdir = os.path.join(data.expand('${HGDIR}', d), ud.host, relpath)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 

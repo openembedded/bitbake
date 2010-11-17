@@ -37,10 +37,7 @@ class Bzr(Fetch):
     def localpath (self, url, ud, d):
 
         # Create paths to bzr checkouts
-        relpath = ud.path
-        if relpath.startswith('/'):
-            # Remove leading slash as os.path.join can't cope
-            relpath = relpath[1:]
+        relpath = self._strip_leading_slashes(ud.path)
         ud.pkgdir = os.path.join(data.expand('${BZRDIR}', d), ud.host, relpath)
 
         revision = Fetch.srcrev_internal_helper(ud, d)

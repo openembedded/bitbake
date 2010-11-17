@@ -545,6 +545,13 @@ class Fetch(object):
         and duplicate code execution)
         """
         return url
+    def _strip_leading_slashes(self, relpath):
+        """
+        Remove leading slash as os.path.join can't cope
+        """
+        while os.path.isabs(relpath):
+            relpath = relpath[1:]
+        return relpath
 
     def setUrls(self, urls):
         self.__urls = urls

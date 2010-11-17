@@ -33,10 +33,7 @@ class Osc(Fetch):
         ud.module = ud.parm["module"]
 
         # Create paths to osc checkouts
-        relpath = ud.path
-        if relpath.startswith('/'):
-            # Remove leading slash as os.path.join can't cope
-            relpath = relpath[1:]
+        relpath = self._strip_leading_slashes(ud.path)
         ud.pkgdir = os.path.join(data.expand('${OSCDIR}', d), ud.host)
         ud.moddir = os.path.join(ud.pkgdir, relpath, ud.module)
 
@@ -73,10 +70,7 @@ class Osc(Fetch):
         if ud.revision:
             options.append("-r %s" % ud.revision)
 
-        coroot = ud.path
-        if coroot.startswith('/'):
-            # Remove leading slash as os.path.join can't cope
-            coroot= coroot[1:]
+        coroot = self._strip_leading_slashes(ud.path)
 
         if command is "fetch":
             osccmd = "%s %s co %s/%s %s" % (basecmd, config, coroot, ud.module, " ".join(options))

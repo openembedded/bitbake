@@ -113,8 +113,7 @@ class Perforce(Fetch):
         if which != -1:
             base = path[:which]
 
-        if base[0] == "/":
-            base = base[1:]
+        base = self._strip_leading_slashes(base)
 
         cset = Perforce.getcset(d, path, host, user, pswd, parm)
 
