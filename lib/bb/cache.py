@@ -52,8 +52,8 @@ class Cache:
 
 
         self.cachedir = bb.data.getVar("CACHE", data, True)
-        self.clean = {}
-        self.checked = {}
+        self.clean = set()
+        self.checked = set()
         self.depends_cache = {}
         self.data = None
         self.data_fn = None
@@ -242,10 +242,10 @@ class Cache:
         if not self.has_cache:
             return False
 
-        self.checked[fn] = ""
+        self.checked.add(fn)
 
         # Pretend we're clean so getVar works
-        self.clean[fn] = ""
+        self.clean.add(fn)
 
         # File isn't in depends_cache
         if not fn in self.depends_cache:
@@ -282,15 +282,13 @@ class Cache:
                     self.remove(fn)
                     return False
 
-        if not fn in self.clean:
-            self.clean[fn] = ""
-
+        self.clean.add(fn)
         invalid = False
         # Mark extended class data as clean too
         multi = self.getVar('__VARIANTS', fn, True)
         for cls in (multi or "").split():
             virtualfn = self.realfn2virtual(fn, cls)
-            self.clean[virtualfn] = ""
+            self.clean.add(virtualfn)
             if not virtualfn in self.depends_cache:
                 logger.debug(2, "Cache: %s is not cached", virtualfn)
                 invalid = True
@@ -301,10 +299,10 @@ class Cache:
                 virtualfn = self.realfn2virtual(fn, cls)
                 if virtualfn in self.clean:
                     logger.debug(2, "Cache: Removing %s from cache", virtualfn)
-                    del self.clean[virtualfn]
+                    self.clean.remove(virtualfn)
             if fn in self.clean:
                 logger.debug(2, "Cache: Marking %s as not clean", fn)
-                del self.clean[fn]
+                self.clean.remove(fn)
             return False
 
         return True
@@ -319,7 +317,7 @@ class Cache:
             del self.depends_cache[fn]
         if fn in self.clean:
             logger.debug(1, "Marking %s as unclean", fn)
-            del self.clean[fn]
+            self.clean.remove(fn)
 
     def sync(self):
         """
