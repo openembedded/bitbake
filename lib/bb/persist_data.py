@@ -94,7 +94,7 @@ class PersistData:
         """
         Return the value of a key for a domain
         """
-        data = self.cursor.execute("SELECT * from %s where key=?;" % domain, [key])
+        data = self._execute("SELECT * from %s where key=?;" % domain, [key])
         for row in data:
             return row[1]
 
@@ -102,7 +102,7 @@ class PersistData:
         """
         Sets the value of a key for a domain
         """
-        data = self.cursor.execute("SELECT * from %s where key=?;" % domain, [key])
+        data = self._execute("SELECT * from %s where key=?;" % domain, [key])
         rows = 0
         for row in data:
             rows = rows + 1
@@ -120,8 +120,7 @@ class PersistData:
     def _execute(self, *query):
         while True:
             try:
-                self.cursor.execute(*query)
-                return
+                return self.cursor.execute(*query)
             except sqlite3.OperationalError as e:
                 if 'database is locked' in str(e):
                     continue
