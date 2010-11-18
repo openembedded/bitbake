@@ -40,7 +40,8 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
-    logger.info("Importing cPickle failed. Falling back to a very slow implementation.")
+    logger.info("Importing cPickle failed. "
+                "Falling back to a very slow implementation.")
 
 __cache_version__ = "131"
 
@@ -48,9 +49,8 @@ class Cache:
     """
     BitBake Cache implementation
     """
+
     def __init__(self, data):
-
-
         self.cachedir = bb.data.getVar("CACHE", data, True)
         self.clean = set()
         self.checked = set()
@@ -61,7 +61,8 @@ class Cache:
 
         if self.cachedir in [None, '']:
             self.has_cache = False
-            logger.info("Not using a cache. Set CACHE = <directory> to enable.")
+            logger.info("Not using a cache. "
+                        "Set CACHE = <directory> to enable.")
             return
 
         self.has_cache = True
@@ -75,7 +76,7 @@ class Cache:
         newest_mtime = 0
         deps = bb.data.getVar("__depends", data)
 
-        old_mtimes = [old_mtime for f, old_mtime in deps]
+        old_mtimes = [old_mtime for _, old_mtime in deps]
         old_mtimes.append(newest_mtime)
         newest_mtime = max(old_mtimes)
 
@@ -97,7 +98,7 @@ class Cache:
             if os.path.isfile(self.cachefile):
                 logger.info("Out of date cache found, rebuilding...")
 
-    def getVar(self, var, fn, exp = 0):
+    def getVar(self, var, fn, exp=0):
         """
         Gets the value of a variable
         (similar to getVar in the data class)
@@ -114,7 +115,7 @@ class Cache:
 
         if fn != self.data_fn:
             # We're trying to access data in the cache which doesn't exist
-            # yet setData hasn't been called to setup the right access. Very bad.
+            # yet setData hasn't been called to setup the right access
             logger.error("data_fn %s and fn %s don't match", self.data_fn, fn)
 
         self.cacheclean = False
@@ -133,8 +134,8 @@ class Cache:
         self.data = data
 
         # Make sure __depends makes the depends_cache
-        # If we're a virtual class we need to make sure all our depends are appended
-        # to the depends of fn.
+        # If we're a virtual class we need to make sure all our depends are
+        # appended to the depends of fn.
         depends = self.getVar("__depends", virtualfn) or set()
         self.depends_cache.setdefault(fn, {})
         if "__depends" not in self.depends_cache[fn] or not self.depends_cache[fn]["__depends"]:
@@ -147,7 +148,8 @@ class Cache:
 
         self.depends_cache[virtualfn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
 
-    def virtualfn2realfn(self, virtualfn):
+    @staticmethod
+    def virtualfn2realfn(virtualfn):
         """
         Convert a virtual file name to a real one + the associated subclass keyword
         """
@@ -159,7 +161,8 @@ class Cache:
             fn = virtualfn.replace('virtual:' + cls + ':', '')
         return (fn, cls)
 
-    def realfn2virtual(self, realfn, cls):
+    @staticmethod
+    def realfn2virtual(realfn, cls):
         """
         Convert a real filename + the associated subclass keyword to a virtual filename
         """
@@ -278,7 +281,8 @@ class Cache:
                     return False
 
                 if (fmtime != old_mtime):
-                    logger.debug(2, "Cache: %s's dependency %s changed", fn, f)
+                    logger.debug(2, "Cache: %s's dependency %s changed",
+                                    fn, f)
                     self.remove(fn)
                     return False
 
@@ -293,7 +297,7 @@ class Cache:
                 logger.debug(2, "Cache: %s is not cached", virtualfn)
                 invalid = True
 
-        # If any one of the varients is not present, mark cache as invalid for all
+        # If any one of the variants is not present, mark as invalid for all
         if invalid:
             for cls in (multi or "").split():
                 virtualfn = self.realfn2virtual(fn, cls)
@@ -342,15 +346,18 @@ class Cache:
             if '__BB_DONT_CACHE' in self.depends_cache[fn] and self.depends_cache[fn]['__BB_DONT_CACHE']:
                 logger.debug(2, "Not caching %s, marked as not cacheable", fn)
                 del cache_data[fn]
-            elif 'PV' in self.depends_cache[fn] and 'SRCREVINACTION' in self.depends_cache[fn]['PV']:
-                logger.error("Not caching %s as it had SRCREVINACTION in PV. Please report this bug", fn)
+            elif ('PV' in self.depends_cache[fn] and
+                  'SRCREVINACTION' in self.depends_cache[fn]['PV']):
+                logger.error("Not caching %s as it had SRCREVINACTION in PV. "
+                             "Please report this bug", fn)
                 del cache_data[fn]
 
-        p = pickle.Pickler(file(self.cachefile, "wb" ), -1 )
+        p = pickle.Pickler(file(self.cachefile, "wb"), -1)
         p.dump([cache_data, version_data])
         del self.depends_cache
 
-    def mtime(self, cachefile):
+    @staticmethod
+    def mtime(cachefile):
         return bb.parse.cached_mtime_noerror(cachefile)
 
     def handle_data(self, file_name, cacheData):
@@ -358,15 +365,15 @@ class Cache:
         Save data we need into the cache
         """
 
-        pn       = self.getVar('PN', file_name, True)
-        pe       = self.getVar('PE', file_name, True) or "0"
-        pv       = self.getVar('PV', file_name, True)
+        pn = self.getVar('PN', file_name, True)
+        pe = self.getVar('PE', file_name, True) or "0"
+        pv = self.getVar('PV', file_name, True)
         if 'SRCREVINACTION' in pv:
             logger.info("Found SRCREVINACTION in PV (%s) or %s. Please report this bug.", pv, file_name)
-        pr       = self.getVar('PR', file_name, True)
-        dp       = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
-        depends   = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")
-        packages  = (self.getVar('PACKAGES', file_name, True) or "").split()
+        pr = self.getVar('PR', file_name, True)
+        dp = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
+        depends = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")
+        packages = (self.getVar('PACKAGES', file_name, True) or "").split()
         packages_dynamic = (self.getVar('PACKAGES_DYNAMIC', file_name, True) or "").split()
         rprovides = (self.getVar("RPROVIDES", file_name, True) or "").split()
 
@@ -432,7 +439,8 @@ class Cache:
         self.getVar('__BB_DONT_CACHE', file_name, True)
         self.getVar('__VARIANTS', file_name, True)
 
-    def load_bbfile(self, bbfile, appends, config):
+    @staticmethod
+    def load_bbfile(bbfile, appends, config):
         """
         Load and parse one .bb build file
         Return the data and whether parsing resulted in the file being skipped
@@ -458,12 +466,15 @@ class Cache:
         try:
             if appends:
                 data.setVar('__BBAPPEND', " ".join(appends), bb_data)
-            bb_data = parse.handle(bbfile, bb_data) # read .bb data
-            if chdir_back: os.chdir(oldpath)
+            bb_data = parse.handle(bbfile, bb_data)
+            if chdir_back:
+                os.chdir(oldpath)
             return bb_data
         except:
-            if chdir_back: os.chdir(oldpath)
+            if chdir_back:
+                os.chdir(oldpath)
             raise
+
 
 def init(cooker):
     """
@@ -499,7 +510,7 @@ class CacheData:
         Direct cache variables
         (from Cache.handle_data)
         """
-        self.providers   = defaultdict(list)
+        self.providers = defaultdict(list)
         self.rproviders = defaultdict(list)
         self.packages = defaultdict(list)
         self.packages_dynamic = defaultdict(list)
