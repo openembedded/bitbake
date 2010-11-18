@@ -278,6 +278,8 @@ class Cache(object):
                 fmtime = bb.parse.cached_mtime_noerror(f)
                 # Check if file still exists
                 if old_mtime != 0 and fmtime == 0:
+                    logger.debug(2, "Cache: %s's dependency %s was removed",
+                                    fn, f)
                     self.remove(fn)
                     return False
 
