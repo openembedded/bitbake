@@ -144,14 +144,13 @@ def uri_replace(uri, uri_find, uri_replace, d):
 methods = []
 urldata_cache = {}
 saved_headrevs = {}
-persistent_database_connection = {}
 
 def fetcher_init(d):
     """
     Called to initialize the fetchers once the configuration data is known.
     Calls before this must not hit the cache.
     """
-    pd = persist_data.PersistData(d, persistent_database_connection)
+    pd = persist_data.PersistData(d)
     # When to drop SCM head revisions controlled by user policy
     srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
     if srcrev_policy == "cache":
@@ -180,7 +179,7 @@ def fetcher_compare_revisons(d):
     return true/false on whether they've changed.
     """
 
-    pd = persist_data.PersistData(d, persistent_database_connection)
+    pd = persist_data.PersistData(d)
     data = pd.getKeyValues("BB_URI_HEADREVS")
     data2 = bb.fetch.saved_headrevs
 
@@ -681,7 +680,7 @@ class Fetch(object):
         if not hasattr(self, "_latest_revision"):
             raise ParameterError
 
-        pd = persist_data.PersistData(d, persistent_database_connection)
+        pd = persist_data.PersistData(d)
         key = self.generate_revision_key(url, ud, d)
         rev = pd.getValue("BB_URI_HEADREVS", key)
         if rev != None:
@@ -698,7 +697,7 @@ class Fetch(object):
         if hasattr(self, "_sortable_revision"):
             return self._sortable_revision(url, ud, d)
 
-        pd = persist_data.PersistData(d, persistent_database_connection)
+        pd = persist_data.PersistData(d)
         key = self.generate_revision_key(url, ud, d)
 
         latest_rev = self._build_revision(url, ud, d)
