@@ -948,6 +948,7 @@ class CookerParser(object):
         # Internal data
         self.filelist = filelist
         self.cooker = cooker
+        self.cfgdata = cooker.configuration.data
 
         # Accounting statistics
         self.parsed = 0
@@ -971,7 +972,6 @@ class CookerParser(object):
         self.result_queue = multiprocessing.Queue()
 
         self.fromcache = []
-        cfgdata = self.cooker.configuration.data
         for filename in self.filelist:
             appends = self.cooker.get_file_appends(filename)
             if not self.cooker.bb_cache.cacheValid(filename):
@@ -986,13 +986,13 @@ class CookerParser(object):
                 output.put(infos)
 
         self.processes = []
-        num_processes = int(cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
+        num_processes = int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
                             multiprocessing.cpu_count())
         for i in xrange(num_processes):
             process = multiprocessing.Process(target=worker,
                                               args=(self.task_queue,
                                                     self.result_queue,
-                                                    cfgdata))
+                                                    self.cfgdata))
             process.start()
             self.processes.append(process)
 
@@ -1010,24 +1010,24 @@ class CookerParser(object):
         if self.error > 0:
             raise ParsingErrorsFound()
 
-    def progress(self):
-        bb.event.fire(bb.event.ParseProgress(self.cached, self.parsed,
-                                                self.skipped, self.masked,
-                                                self.virtuals, self.error,
-                                                self.total),
-                        self.cooker.configuration.event_data)
-
     def parse_next(self):
         cooker = self.cooker
         if self.current >= self.total:
+            event = bb.event.ParseCompleted(self.cached, self.parsed,
+                                            self.skipped, self.masked,
+                                            self.virtuals, self.error,
+                                            self.total)
+            bb.event.fire(event, self.cfgdata)
             self.shutdown()
             return False
+        elif self.current == 0:
+            bb.event.fire(bb.event.ParseStarted(self.total, self.skipped, self.masked),
+                          self.cfgdata)
 
         try:
             if self.result_queue.empty() and self.fromcache:
                 filename, appends = self.fromcache.pop()
-                _, infos = cooker.bb_cache.load(filename, appends,
-                                                self.cooker.configuration.data)
+                _, infos = cooker.bb_cache.load(filename, appends, self.cfgdata)
                 parsed = False
             else:
                 infos = self.result_queue.get()
@@ -1051,7 +1051,7 @@ class CookerParser(object):
                 if info.skipped:
                     self.skipped += 1
         finally:
-            self.progress()
+            bb.event.fire(bb.event.ParseProgress(self.current), self.cfgdata)
 
         self.current += 1
         return True

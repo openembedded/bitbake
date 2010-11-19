@@ -78,6 +78,7 @@ def init(server, eventHandler):
         return 1
 
     pbar = None
+    interactive = os.isatty(sys.stdout.fileno())
     shutdown = 0
     return_value = 0
     while True:
@@ -129,23 +130,26 @@ def init(server, eventHandler):
             if isinstance(event, bb.build.TaskBase):
                 logger.info(event._message)
                 continue
-            if isinstance(event, bb.event.ParseProgress):
-                current, total = event.sofar, event.total
-                if os.isatty(sys.stdout.fileno()):
-                    if not pbar:
-                        pbar = progressbar.ProgressBar(widgets=widgets,
-                                                       maxval=total).start()
-                    pbar.update(current)
+            if isinstance(event, bb.event.ParseStarted):
+                if interactive:
+                    pbar = progressbar.ProgressBar(widgets=widgets,
+                                                   maxval=event.total).start()
                 else:
-                    if current == 1:
-                        sys.stdout.write("Parsing .bb files, please wait...")
-                        sys.stdout.flush()
-                    if current == total:
-                        sys.stdout.write("done.")
-                        sys.stdout.flush()
-                if current == total:
-                    print(("\nParsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
-                        % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
+                    sys.stdout.write("Parsing recipes...")
+                    sys.stdout.flush()
+                continue
+            if isinstance(event, bb.event.ParseProgress):
+                if interactive:
+                    pbar.update(event.current)
+                continue
+            if isinstance(event, bb.event.ParseCompleted):
+                if interactive:
+                    pbar.update(event.total)
+                else:
+                    sys.stdout.write("done.\n")
+                    sys.stdout.flush()
+                print(("\nParsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
+                    % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
             if isinstance(event, bb.command.CookerCommandCompleted):

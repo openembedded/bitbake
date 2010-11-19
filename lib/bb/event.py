@@ -296,10 +296,16 @@ class MultipleProviders(Event):
         """
         return self._candidates
 
-class ParseProgress(Event):
-    """
-    Parsing Progress Event
-    """
+class ParseStarted(Event):
+    """Recipe parsing for the runqueue has begun"""
+    def __init__(self, total, skipped, masked):
+        Event.__init__(self)
+        self.total = total
+        self.skipped = skipped
+        self.masked = masked
+
+class ParseCompleted(Event):
+    """Recipe parsing for the runqueue has completed"""
 
     def __init__(self, cached, parsed, skipped, masked, virtuals, errors, total):
         Event.__init__(self)
@@ -311,6 +317,12 @@ class ParseProgress(Event):
         self.errors = errors
         self.sofar = cached + parsed
         self.total = total
+
+class ParseProgress(Event):
+    """Recipe parsing progress"""
+
+    def __init__(self, current):
+        self.current = current
 
 class DepTreeGenerated(Event):
     """
