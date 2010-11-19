@@ -218,48 +218,57 @@ class Cache(object):
         bb_data = cls.load_bbfile(fn, appends, cfgData)
         return bb_data[virtual]
 
+    @classmethod
+    def parse(cls, filename, appends, configdata):
+        """Parse the specified filename, returning the recipe information"""
+        infos = []
+        datastores = cls.load_bbfile(filename, appends, configdata)
+        depends = set()
+        for variant, data in sorted(datastores.iteritems(),
+                                    key=lambda i: i[0],
+                                    reverse=True):
+            virtualfn = cls.realfn2virtual(filename, variant)
+            depends |= (data.getVar("__depends", False) or set())
+            if depends and not variant:
+                data.setVar("__depends", depends)
+            info = RecipeInfo.from_metadata(filename, data)
+            infos.append((virtualfn, info))
+        return infos
+
+    def load(self, filename, appends, configdata):
+        """Obtain the recipe information for the specified filename,
+        using cached values if available, otherwise parsing.
+
+        Note that if it does parse to obtain the info, it will not
+        automatically add the information to the cache or to your
+        CacheData.  Use the add or add_info method to do so after
+        running this, or use loadData instead."""
+        cached = self.cacheValid(filename)
+        if cached:
+            infos = []
+            info = self.depends_cache[filename]
+            for variant in info.variants:
+                virtualfn = self.realfn2virtual(filename, variant)
+                infos.append((virtualfn, self.depends_cache[virtualfn]))
+        else:
+            logger.debug(1, "Parsing %s", filename)
+            return self.parse(filename, appends, configdata)
+
+        return cached, infos
+
     def loadData(self, fn, appends, cfgData, cacheData):
-        """
-        Load a subset of data for fn.
-        If the cached data is valid we do nothing,
-        To do this, we need to parse the file and set the system
-        to record the variables accessed.
-        Return the cache status and whether the file was skipped when parsed
-        """
+        """Load the recipe info for the specified filename,
+        parsing and adding to the cache if necessary, and adding
+        the recipe information to the supplied CacheData instance."""
         skipped, virtuals = 0, 0
 
-        if fn not in self.checked:
-            self.cacheValidUpdate(fn)
-
-        cached = self.cacheValid(fn)
-        if not cached:
-            logger.debug(1, "Parsing %s", fn)
-            datastores = self.load_bbfile(fn, appends, cfgData)
-            depends = set()
-            for variant, data in sorted(datastores.iteritems(),
-                                        key=lambda i: i[0],
-                                        reverse=True):
-                virtualfn = self.realfn2virtual(fn, variant)
-                depends |= (data.getVar("__depends", False) or set())
-                if depends and not variant:
-                    data.setVar("__depends", depends)
-                info = RecipeInfo.from_metadata(fn, data)
-                if not info.nocache:
-                    # The recipe was parsed, and is not marked as being
-                    # uncacheable, so we need to ensure that we write out the
-                    # new cache data.
-                    self.cacheclean = False
-                self.depends_cache[virtualfn] = info
-
-        info = self.depends_cache[fn]
-        for variant in info.variants:
-            virtualfn = self.realfn2virtual(fn, variant)
-            vinfo = self.depends_cache[virtualfn]
-            if vinfo.skipped:
+        cached, infos = self.load(fn, appends, cfgData)
+        for virtualfn, info in infos:
+            if info.skipped:
                 logger.debug(1, "Skipping %s", virtualfn)
                 skipped += 1
             else:
-                cacheData.add_from_recipeinfo(virtualfn, vinfo)
+                self.add_info(virtualfn, info, cacheData, not cached)
                 virtuals += 1
 
         return cached, skipped, virtuals
@@ -269,6 +278,9 @@ class Cache(object):
         Is the cache valid for fn?
         Fast version, no timestamps checked.
         """
+        if fn not in self.checked:
+            self.cacheValidUpdate(fn)
+
         # Is cache enabled?
         if not self.has_cache:
             return False
@@ -398,15 +410,23 @@ class Cache(object):
     def mtime(cachefile):
         return bb.parse.cached_mtime_noerror(cachefile)
 
-    def add(self, file_name, data, cacheData):
+    def add_info(self, filename, info, cacheData, parsed=None):
+        self.depends_cache[filename] = info
+        cacheData.add_from_recipeinfo(filename, info)
+        if parsed and not info.nocache:
+            # The recipe was parsed, and is not marked as being
+            # uncacheable, so we need to ensure that we write out the
+            # new cache data.
+            self.cacheclean = False
+
+    def add(self, file_name, data, cacheData, parsed=None):
         """
         Save data we need into the cache
         """
 
         realfn = self.virtualfn2realfn(file_name)[0]
         info = RecipeInfo.from_metadata(realfn, data)
-        self.depends_cache[file_name] = info
-        cacheData.add_from_recipeinfo(file_name, info)
+        self.add_info(file_name, info, cacheData, parsed)
 
     @staticmethod
     def load_bbfile(bbfile, appends, config):

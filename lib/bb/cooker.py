@@ -26,6 +26,8 @@ from __future__ import print_function
 import sys, os, glob, os.path, re, time
 import logging
 import sre_constants
+import multiprocessing
+import signal
 from cStringIO import StringIO
 from contextlib import closing
 import bb
@@ -941,7 +943,7 @@ class CookerExit(bb.event.Event):
     def __init__(self):
         bb.event.Event.__init__(self)
 
-class CookerParser:
+class CookerParser(object):
     def __init__(self, cooker, filelist, masked):
         # Internal data
         self.filelist = filelist
@@ -952,48 +954,104 @@ class CookerParser:
         self.cached = 0
         self.error = 0
         self.masked = masked
-        self.total = len(filelist)
 
         self.skipped = 0
         self.virtuals = 0
+        self.total = len(filelist)
 
-        # Pointer to the next file to parse
-        self.pointer = 0
+        # current to the next file to parse
+        self.current = 0
+        self.result_queue = None
+        self.fromcache = None
+
+        self.launch_processes()
+
+    def launch_processes(self):
+        self.task_queue = multiprocessing.Queue()
+        self.result_queue = multiprocessing.Queue()
+
+        self.fromcache = []
+        cfgdata = self.cooker.configuration.data
+        for filename in self.filelist:
+            appends = self.cooker.get_file_appends(filename)
+            if not self.cooker.bb_cache.cacheValid(filename):
+                self.task_queue.put((filename, appends))
+            else:
+                self.fromcache.append((filename, appends))
+
+        def worker(input, output, cfgdata):
+            signal.signal(signal.SIGINT, signal.SIG_IGN)
+            for filename, appends in iter(input.get, 'STOP'):
+                infos = bb.cache.Cache.parse(filename, appends, cfgdata)
+                output.put(infos)
+
+        self.processes = []
+        num_processes = int(cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
+                            multiprocessing.cpu_count())
+        for i in xrange(num_processes):
+            process = multiprocessing.Process(target=worker,
+                                              args=(self.task_queue,
+                                                    self.result_queue,
+                                                    cfgdata))
+            process.start()
+            self.processes.append(process)
+
+    def shutdown(self, clean=True):
+        self.result_queue.close()
+        for process in self.processes:
+            if clean:
+                self.task_queue.put('STOP')
+            else:
+                process.terminate()
+        self.task_queue.close()
+        for process in self.processes:
+            process.join()
+        self.cooker.bb_cache.sync()
+        if self.error > 0:
+            raise ParsingErrorsFound()
+
+    def progress(self):
+        bb.event.fire(bb.event.ParseProgress(self.cached, self.parsed,
+                                                self.skipped, self.masked,
+                                                self.virtuals, self.error,
+                                                self.total),
+                        self.cooker.configuration.event_data)
 
     def parse_next(self):
         cooker = self.cooker
-        if self.pointer < len(self.filelist):
-            f = self.filelist[self.pointer]
-
-            try:
-                fromCache, skipped, virtuals = cooker.bb_cache.loadData(f, cooker.get_file_appends(f), cooker.configuration.data, cooker.status)
-                if fromCache:
-                    self.cached += 1
-                else:
-                    self.parsed += 1
-
-                self.skipped += skipped
-                self.virtuals += virtuals
-
-            except KeyboardInterrupt:
-                cooker.bb_cache.remove(f)
-                cooker.bb_cache.sync()
-                raise
-            except Exception as e:
-                self.error += 1
-                cooker.bb_cache.remove(f)
-                parselog.exception("Unable to open %s", f)
-            except:
-                cooker.bb_cache.remove(f)
-                raise
-            finally:
-                bb.event.fire(bb.event.ParseProgress(self.cached, self.parsed, self.skipped, self.masked, self.virtuals, self.error, self.total), cooker.configuration.event_data)
-
-            self.pointer += 1
-
-        if self.pointer >= self.total:
-            cooker.bb_cache.sync()
-            if self.error > 0:
-                raise ParsingErrorsFound
+        if self.current >= self.total:
+            self.shutdown()
             return False
+
+        try:
+            if self.result_queue.empty() and self.fromcache:
+                filename, appends = self.fromcache.pop()
+                _, infos = cooker.bb_cache.load(filename, appends,
+                                                self.cooker.configuration.data)
+                parsed = False
+            else:
+                infos = self.result_queue.get()
+                parsed = True
+        except KeyboardInterrupt:
+            self.shutdown(clean=False)
+            raise
+        except Exception as e:
+            self.error += 1
+            parselog.critical(str(e))
+        else:
+            if parsed:
+                self.parsed += 1
+            else:
+                self.cached += 1
+            self.virtuals += len(infos)
+
+            for virtualfn, info in infos:
+                cooker.bb_cache.add_info(virtualfn, info, cooker.status,
+                                         parsed=parsed)
+                if info.skipped:
+                    self.skipped += 1
+        finally:
+            self.progress()
+
+        self.current += 1
         return True
