@@ -171,18 +171,19 @@ class Cache(object):
             return realfn
         return "virtual:" + cls + ":" + realfn
 
-    def loadDataFull(self, virtualfn, appends, cfgData):
+    @classmethod
+    def loadDataFull(cls, virtualfn, appends, cfgData):
         """
         Return a complete set of data for fn.
         To do this, we need to parse the file.
         """
 
-        (fn, cls) = self.virtualfn2realfn(virtualfn)
+        (fn, virtual) = cls.virtualfn2realfn(virtualfn)
 
         logger.debug(1, "Parsing %s (full)", fn)
 
-        bb_data = self.load_bbfile(fn, appends, cfgData)
-        return bb_data[cls]
+        bb_data = cls.load_bbfile(fn, appends, cfgData)
+        return bb_data[virtual]
 
     def loadData(self, fn, appends, cfgData, cacheData):
         """
