@@ -26,6 +26,7 @@ from __future__ import print_function
 import sys, os, glob, os.path, re, time
 import logging
 import sre_constants
+import threading
 import multiprocessing
 import signal
 from cStringIO import StringIO
@@ -1006,7 +1007,7 @@ class CookerParser(object):
         self.task_queue.close()
         for process in self.processes:
             process.join()
-        self.cooker.bb_cache.sync()
+        threading.Thread(target=self.cooker.bb_cache.sync).start()
         if self.error > 0:
             raise ParsingErrorsFound()
 
