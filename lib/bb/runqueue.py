@@ -980,6 +980,15 @@ class RunQueue:
                     self.stats.taskCompleted()
                     self.stats.taskSkipped()
                     continue
+                elif self.cooker.configuration.dry_run:
+                    self.runq_running[task] = 1
+                    self.runq_buildable[task] = 1
+                    self.notify_task_started(task)
+                    self.stats.taskActive()
+                    self.task_complete(task)
+                    self.stats.taskCompleted()
+                    self.notify_task_completed(task)
+                    continue
 
                 pid, pipein, pipeout = self.fork_off_task(fn, task, taskname)
 
@@ -1028,7 +1037,7 @@ class RunQueue:
         else:
             success(task)
             self.stats.taskCompleted()
-            bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
+            self.notify_task_completed(task)
 
     def finish_runqueue_now(self):
         if self.stats.active:
@@ -1065,13 +1074,23 @@ class RunQueue:
         self.state = runQueueComplete
         return
 
+    def notify_task_started(self, task):
+        bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
+        logger.info("Running task %d of %d (ID: %s, %s)", self.stats.completed + self.stats.active + self.stats.failed + 1,
+                                                          self.stats.total,
+                                                          task,
+                                                          self.get_user_idstring(task))
+
+    def notify_task_completed(self, task):
+        bb.event.fire(runQueueTaskCompleted(task, self.stats, self), self.cfgData)
+
     def fork_off_task(self, fn, task, taskname):
         sys.stdout.flush()
         sys.stderr.flush()
         try:
             pipein, pipeout = os.pipe()
-            pid = os.fork() 
-        except OSError as e: 
+            pid = os.fork()
+        except OSError as e:
             bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
         if pid == 0:
             os.close(pipein)
@@ -1091,26 +1110,14 @@ class RunQueue:
             # No stdin
             newsi = os.open('/dev/null', os.O_RDWR)
             os.dup2(newsi, sys.stdin.fileno())
-            # Stdout to a logfile
-            #logout = data.expand("${TMPDIR}/log/stdout.%s" % os.getpid(), self.cfgData, True)
-            #mkdirhier(os.path.dirname(logout))
-            #newso = open(logout, 'w')
-            #os.dup2(newso.fileno(), sys.stdout.fileno())
-            #os.dup2(newso.fileno(), sys.stderr.fileno())
 
-            bb.event.fire(runQueueTaskStarted(task, self.stats, self), self.cfgData)
-            logger.info("Running task %d of %d (ID: %s, %s)", self.stats.completed + self.stats.active + self.stats.failed + 1,
-                                                              self.stats.total,
-                                                              task,
-                                                              self.get_user_idstring(task))
+            self.notify_task_started(task)
 
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
             try:
                 the_data = self.cooker.bb_cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
-
-                if not self.cooker.configuration.dry_run:
-                    bb.build.exec_task(taskname, the_data)
+                bb.build.exec_task(taskname, the_data)
             except Exception as exc:
                 logger.critical(str(exc))
                 os._exit(1)
