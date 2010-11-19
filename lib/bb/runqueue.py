@@ -97,7 +97,7 @@ class RunQueueScheduler(object):
         """
         Return the id of the first task we find that is buildable
         """
-        for tasknum in range(len(self.rq.runq_fnid)):
+        for tasknum in xrange(len(self.rq.runq_fnid)):
             taskid = self.prio_map[tasknum]
             if self.rq.runq_running[taskid] == 1:
                 continue
@@ -229,7 +229,7 @@ class RunQueue:
         return "%s, %s" % (fn, taskname)
 
     def get_task_id(self, fnid, taskname):
-        for listid in range(len(self.runq_fnid)):
+        for listid in xrange(len(self.runq_fnid)):
             if self.runq_fnid[listid] == fnid and self.runq_task[listid] == taskname:
                 return listid
         return None
@@ -251,7 +251,7 @@ class RunQueue:
             """
             lowest = 0
             new_chain = []
-            for entry in range(len(chain)):
+            for entry in xrange(len(chain)):
                 if chain[entry] < chain[lowest]:
                     lowest = entry
             new_chain.extend(chain[lowest:])
@@ -264,7 +264,7 @@ class RunQueue:
             """
             if len(chain1) != len(chain2):
                 return False
-            for index in range(len(chain1)):
+            for index in xrange(len(chain1)):
                 if chain1[index] != chain2[index]:
                     return False
             return True
@@ -335,7 +335,7 @@ class RunQueue:
         deps_left = []
         task_done = []
 
-        for listid in range(numTasks):
+        for listid in xrange(numTasks):
             task_done.append(False)
             weight.append(0)
             deps_left.append(len(self.runq_revdeps[listid]))
@@ -359,7 +359,7 @@ class RunQueue:
 
         # Circular dependency sanity check
         problem_tasks = []
-        for task in range(numTasks):
+        for task in xrange(numTasks):
             if task_done[task] is False or deps_left[task] != 0:
                 problem_tasks.append(task)
                 logger.debug(2, "Task %s (%s) is not buildable\n", task, self.get_user_idstring(task))
@@ -437,7 +437,7 @@ class RunQueue:
                     if taskid is not None:
                         depends.append(taskid)
 
-        for task in range(len(taskData.tasks_name)):
+        for task in xrange(len(taskData.tasks_name)):
             depends = []
             recrdepends = []
             fnid = taskData.tasks_fnid[task]
@@ -527,7 +527,7 @@ class RunQueue:
         # Algorithm is O(tasks) + O(tasks)*O(fnids)
         #
         reccumdepends = {}
-        for task in range(len(self.runq_fnid)):
+        for task in xrange(len(self.runq_fnid)):
             fnid = self.runq_fnid[task]
             if fnid not in reccumdepends:
                 if fnid in tdepends_fnid:
@@ -535,7 +535,7 @@ class RunQueue:
                 else:
                     reccumdepends[fnid] = set()
             reccumdepends[fnid].update(self.runq_depends[task])
-        for task in range(len(self.runq_fnid)):
+        for task in xrange(len(self.runq_fnid)):
             taskfnid = self.runq_fnid[task]
             for fnid in reccumdepends:
                 if task in reccumdepends[fnid]:
@@ -548,7 +548,7 @@ class RunQueue:
         #
         # e.g. do_sometask[recrdeptask] = "do_someothertask"
         # (makes sure sometask runs after someothertask of all DEPENDS, RDEPENDS and intertask dependencies, recursively)
-        for task in range(len(self.runq_fnid)):
+        for task in xrange(len(self.runq_fnid)):
             if len(runq_recrdepends[task]) > 0:
                 taskfnid = self.runq_fnid[task]
                 for dep in reccumdepends[taskfnid]:
@@ -617,7 +617,7 @@ class RunQueue:
 
         maps = []
         delcount = 0
-        for listid in range(len(self.runq_fnid)):
+        for listid in xrange(len(self.runq_fnid)):
             if runq_build[listid-delcount] == 1:
                 maps.append(listid-delcount)
             else:
@@ -644,7 +644,7 @@ class RunQueue:
 
         # Remap the dependencies to account for the deleted tasks
         # Check we didn't delete a task we depend on
-        for listid in range(len(self.runq_fnid)):
+        for listid in xrange(len(self.runq_fnid)):
             newdeps = []
             origdeps = self.runq_depends[listid]
             for origdep in origdeps:
@@ -656,14 +656,14 @@ class RunQueue:
         logger.verbose("Assign Weightings")
 
         # Generate a list of reverse dependencies to ease future calculations
-        for listid in range(len(self.runq_fnid)):
+        for listid in xrange(len(self.runq_fnid)):
             for dep in self.runq_depends[listid]:
                 self.runq_revdeps[dep].add(listid)
 
         # Identify tasks at the end of dependency chains
         # Error on circular dependency loops (length two)
         endpoints = []
-        for listid in range(len(self.runq_fnid)):
+        for listid in xrange(len(self.runq_fnid)):
             revdeps = self.runq_revdeps[listid]
             if len(revdeps) == 0:
                 endpoints.append(listid)
@@ -690,7 +690,7 @@ class RunQueue:
         # Sanity Check - Check for multiple tasks building the same provider
         prov_list = {}
         seen_fn = []
-        for task in range(len(self.runq_fnid)):
+        for task in xrange(len(self.runq_fnid)):
             fn = taskData.fn_index[self.runq_fnid[task]]
             if fn in seen_fn:
                 continue
@@ -736,7 +736,7 @@ class RunQueue:
             if self.stamppolicy == "whitelist":
                 stampwhitelist = self.self.stampfnwhitelist
 
-        for task in range(len(self.runq_fnid)):
+        for task in xrange(len(self.runq_fnid)):
             unchecked[task] = ""
             if len(self.runq_depends[task]) == 0:
                 buildable.append(task)
@@ -751,7 +751,7 @@ class RunQueue:
                     if revdep in unchecked:
                         buildable.append(revdep)
 
-        for task in range(len(self.runq_fnid)):
+        for task in xrange(len(self.runq_fnid)):
             if task not in unchecked:
                 continue
             fn = self.taskData.fn_index[self.runq_fnid[task]]
@@ -910,7 +910,7 @@ class RunQueue:
         self.failed_fnids = []
 
         # Mark initial buildable tasks
-        for task in range(self.stats.total):
+        for task in xrange(self.stats.total):
             self.runq_running.append(0)
             self.runq_complete.append(0)
             if len(self.runq_depends[task]) == 0:
@@ -1010,7 +1010,7 @@ class RunQueue:
                 return
 
             # Sanity Checks
-            for task in range(self.stats.total):
+            for task in xrange(self.stats.total):
                 if self.runq_buildable[task] == 0:
                     logger.error("Task %s never buildable!", task)
                 if self.runq_running[task] == 0:
@@ -1130,7 +1130,7 @@ class RunQueue:
         Dump some debug information on the internal data structures
         """
         logger.debug(3, "run_tasks:")
-        for task in range(len(self.runq_task)):
+        for task in xrange(len(self.runq_task)):
             logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,
                        taskQueue.fn_index[self.runq_fnid[task]],
                        self.runq_task[task],
@@ -1139,7 +1139,7 @@ class RunQueue:
                        self.runq_revdeps[task])
 
         logger.debug(3, "sorted_tasks:")
-        for task1 in range(len(self.runq_task)):
+        for task1 in xrange(len(self.runq_task)):
             if task1 in self.prio_map:
                 task = self.prio_map[task1]
                 logger.debug(3, " (%s)%s - %s: %s   Deps %s RevDeps %s", task,

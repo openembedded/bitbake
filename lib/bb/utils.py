@@ -194,10 +194,10 @@ def vercmp_string(val1, val2):
     val2 = val2[0].split('.')
 
     # add back decimal point so that .03 does not become "3" !
-    for x in range(1, len(val1)):
+    for x in xrange(1, len(val1)):
         if val1[x][0] == '0' :
             val1[x] = '.' + val1[x]
-    for x in range(1, len(val2)):
+    for x in xrange(1, len(val2)):
         if val2[x][0] == '0' :
             val2[x] = '.' + val2[x]
 
@@ -214,10 +214,10 @@ def vercmp_string(val1, val2):
         val2[-1] += '_' + val2_prepart
     # The above code will extend version numbers out so they
     # have the same number of digits.
-    for x in range(0, len(val1)):
+    for x in xrange(0, len(val1)):
         cmp1 = relparse(val1[x])
         cmp2 = relparse(val2[x])
-        for y in range(0, 3):
+        for y in xrange(0, 3):
             myret = cmp1[y] - cmp2[y]
             if myret != 0:
                 __vercmp_cache__[valkey] = myret
@@ -298,7 +298,7 @@ def _print_trace(body, line):
     logger.error("Printing the environment of the function")
     min_line = max(1, line-4)
     max_line = min(line + 4, len(body)-1)
-    for i in range(min_line, max_line + 1):
+    for i in xrange(min_line, max_line + 1):
         logger.error("\t%.4d:%s", i, body[i-1])
 
 

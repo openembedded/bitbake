@@ -493,7 +493,7 @@ class TaskData:
         dependees = self.get_dependees(targetid)
         for fnid in dependees:
             self.fail_fnid(fnid, missing_list)
-        for taskid in range(len(self.tasks_idepends)):
+        for taskid in xrange(len(self.tasks_idepends)):
             idepends = self.tasks_idepends[taskid]
             for (idependid, idependtask) in idepends:
                 if idependid == targetid:
@@ -558,7 +558,7 @@ class TaskData:
         logger.debug(3, ", ".join(self.run_names_index))
 
         logger.debug(3, "build_targets:")
-        for buildid in range(len(self.build_names_index)):
+        for buildid in xrange(len(self.build_names_index)):
             target = self.build_names_index[buildid]
             targets = "None"
             if buildid in self.build_targets:
@@ -566,7 +566,7 @@ class TaskData:
             logger.debug(3, " (%s)%s: %s", buildid, target, targets)
 
         logger.debug(3, "run_targets:")
-        for runid in range(len(self.run_names_index)):
+        for runid in xrange(len(self.run_names_index)):
             target = self.run_names_index[runid]
             targets = "None"
             if runid in self.run_targets:
@@ -574,7 +574,7 @@ class TaskData:
             logger.debug(3, " (%s)%s: %s", runid, target, targets)
 
         logger.debug(3, "tasks:")
-        for task in range(len(self.tasks_name)):
+        for task in xrange(len(self.tasks_name)):
             logger.debug(3, " (%s)%s - %s: %s",
                        task,
                        self.fn_index[self.tasks_fnid[task]],

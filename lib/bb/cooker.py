@@ -288,7 +288,7 @@ class BBCooker:
         depend_tree["rdepends-pkg"] = {}
         depend_tree["rrecs-pkg"] = {}
 
-        for task in range(len(rq.runq_fnid)):
+        for task in xrange(len(rq.runq_fnid)):
             taskname = rq.runq_task[task]
             fnid = rq.runq_fnid[task]
             fn = taskdata.fn_index[fnid]
