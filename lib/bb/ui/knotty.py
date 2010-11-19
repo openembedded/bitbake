@@ -25,11 +25,13 @@ import sys
 import itertools
 import xmlrpclib
 import logging
+import progressbar
 from bb import ui
 from bb.ui import uihelper
 
 logger = logging.getLogger("BitBake")
-parsespin = itertools.cycle( r'|/-\\' )
+widgets = ['Parsing recipes: ', progressbar.Percentage(), ' ',
+           progressbar.Bar(), ' ', progressbar.ETA()]
 
 class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
@@ -75,6 +77,7 @@ def init(server, eventHandler):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
+    pbar = None
     shutdown = 0
     return_value = 0
     while True:
@@ -127,19 +130,20 @@ def init(server, eventHandler):
                 logger.info(event._message)
                 continue
             if isinstance(event, bb.event.ParseProgress):
-                x = event.sofar
-                y = event.total
+                current, total = event.sofar, event.total
                 if os.isatty(sys.stdout.fileno()):
-                    sys.stdout.write("\rNOTE: Handling BitBake files: %s (%04d/%04d) [%2d %%]" % ( next(parsespin), x, y, x*100//y ) )
-                    sys.stdout.flush()
+                    if not pbar:
+                        pbar = progressbar.ProgressBar(widgets=widgets,
+                                                       maxval=total).start()
+                    pbar.update(current)
                 else:
-                    if x == 1:
+                    if current == 1:
                         sys.stdout.write("Parsing .bb files, please wait...")
                         sys.stdout.flush()
-                    if x == y:
+                    if current == total:
                         sys.stdout.write("done.")
                         sys.stdout.flush()
-                if x == y:
+                if current == total:
                     print(("\nParsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
                         % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
