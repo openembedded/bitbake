@@ -388,22 +388,15 @@ class Cache(object):
             logger.debug(2, "Cache is clean, not saving.")
             return
 
-        version_data = {}
-        version_data['CACHE_VER'] = __cache_version__
-        version_data['BITBAKE_VER'] = bb.__version__
+        version_data = {
+            'CACHE_VER': __cache_version__,
+            'BITBAKE_VER': bb.__version__,
+        }
 
-        cache_data = dict(self.depends_cache)
-        for fn, info in self.depends_cache.iteritems():
-            if info.nocache:
-                logger.debug(2, "Not caching %s, marked as not cacheable", fn)
-                del cache_data[fn]
-            elif info.pv and 'SRCREVINACTION' in info.pv:
-                logger.error("Not caching %s as it had SRCREVINACTION in PV. "
-                             "Please report this bug", fn)
-                del cache_data[fn]
+        with open(self.cachefile, "wb") as cachefile:
+            pickle.Pickler(cachefile, -1).dump([self.depends_cache,
+                                                version_data])
 
-        p = pickle.Pickler(file(self.cachefile, "wb"), -1)
-        p.dump([cache_data, version_data])
         del self.depends_cache
 
     @staticmethod
@@ -411,13 +404,11 @@ class Cache(object):
         return bb.parse.cached_mtime_noerror(cachefile)
 
     def add_info(self, filename, info, cacheData, parsed=None):
-        self.depends_cache[filename] = info
         cacheData.add_from_recipeinfo(filename, info)
-        if parsed and not info.nocache:
-            # The recipe was parsed, and is not marked as being
-            # uncacheable, so we need to ensure that we write out the
-            # new cache data.
-            self.cacheclean = False
+        if 'SRCREVINACTION' not in info.pv and not info.nocache:
+            if parsed:
+                self.cacheclean = False
+            self.depends_cache[filename] = info
 
     def add(self, file_name, data, cacheData, parsed=None):
         """
