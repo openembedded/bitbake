@@ -981,9 +981,9 @@ class CookerParser:
         self.pointer = 0
 
     def parse_next(self):
+        cooker = self.cooker
         if self.pointer < len(self.filelist):
             f = self.filelist[self.pointer]
-            cooker = self.cooker
 
             try:
                 fromCache, skipped, virtuals = cooker.bb_cache.loadData(f, cooker.configuration.data, cooker.status)
