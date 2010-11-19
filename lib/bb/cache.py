@@ -158,7 +158,7 @@ class Cache(object):
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
         newest_mtime = 0
-        deps = bb.data.getVar("__depends", data)
+        deps = bb.data.getVar("__base_depends", data)
 
         old_mtimes = [old_mtime for _, old_mtime in deps]
         old_mtimes.append(newest_mtime)

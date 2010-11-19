@@ -272,9 +272,7 @@ class BitBakeShellCommands:
         bbfile = params[0]
         print("SHELL: Parsing '%s'" % bbfile)
         parse.update_mtime( bbfile )
-        cooker.bb_cache.cacheValidUpdate(bbfile)
-        fromCache = cooker.bb_cache.loadData(bbfile, cooker.configuration.data, cooker.status)
-        cooker.bb_cache.sync()
+        cooker.parser.reparse(bbfile)
         if False: #fromCache:
             print("SHELL: File has not been updated, not reparsing")
         else:
@@ -443,7 +441,7 @@ SRC_URI = ""
         name, var = params
         bbfile = self._findProvider( name )
         if bbfile is not None:
-            the_data = cooker.bb_cache.loadDataFull(bbfile, cooker.configuration.data)
+            the_data = cache.Cache.loadDataFull(bbfile, cooker.configuration.data)
             value = the_data.getVar( var, 1 )
             print(value)
         else:
