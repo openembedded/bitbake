@@ -962,6 +962,7 @@ class CookerParser(object):
         self.current = 0
         self.result_queue = None
         self.fromcache = None
+        self.progress_chunk = self.total / 100
 
         self.launch_processes()
 
@@ -1056,7 +1057,7 @@ class CookerParser(object):
                     self.skipped += 1
         finally:
             # only fire events on percentage boundaries
-            if self.current % (self.total/100) == 0:
+            if self.current % self.progress_chunk == 0:
                 bb.event.fire(bb.event.ParseProgress(self.current), self.cfgdata)
 
         self.current += 1
