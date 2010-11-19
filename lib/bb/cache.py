@@ -405,6 +405,9 @@ class Cache(object):
 
     def add_info(self, filename, info, cacheData, parsed=None):
         cacheData.add_from_recipeinfo(filename, info)
+        if not self.has_cache:
+            return
+
         if 'SRCREVINACTION' not in info.pv and not info.nocache:
             if parsed:
                 self.cacheclean = False
