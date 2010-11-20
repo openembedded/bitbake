@@ -60,14 +60,13 @@ class Svn(Fetch):
             ud.date = ud.parm['date']
             ud.revision = ""
         else:
+            #
             # ***Nasty hack***
             # If DATE in unexpanded PV, use ud.date (which is set from SRCDATE)
             # Should warn people to switch to SRCREV here
             #
             pv = data.getVar("PV", d, 0)
             if "DATE" in pv:
-                f = data.getVar("FILE", d, 1)
-                logger.warn("You should switch to SRCREV; pv='%s' in %s" % (pv, f))
                 ud.revision = ""
             else:
                 rev = Fetch.srcrev_internal_helper(ud, d)
