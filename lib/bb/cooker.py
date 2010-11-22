@@ -1048,10 +1048,11 @@ class CookerParser(object):
             self.virtuals += len(infos)
 
             for virtualfn, info in infos:
-                self.bb_cache.add_info(virtualfn, info, self.cooker.status,
-                                       parsed=parsed)
                 if info.skipped:
                     self.skipped += 1
+                else:
+                    self.bb_cache.add_info(virtualfn, info, self.cooker.status,
+                                           parsed=parsed)
         finally:
             # only fire events on percentage boundaries
             if self.current % self.progress_chunk == 0:
