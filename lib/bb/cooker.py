@@ -985,6 +985,7 @@ class CookerParser(object):
             self.shutdown(clean=False)
             bb.fatal('Error parsing %s: %s' % (exc.recipe, exc))
 
+
         self.current += 1
         self.virtuals += len(result)
         if parsed:

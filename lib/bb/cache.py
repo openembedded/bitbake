@@ -189,13 +189,30 @@ class Cache(object):
                 logger.info('Bitbake version mismatch, rebuilding...')
                 return
 
+            cachesize = os.fstat(cachefile.fileno()).st_size
+            bb.event.fire(bb.event.CacheLoadStarted(cachesize), self.data)
+
+            previous_percent = 0
             while cachefile:
                 try:
                     key = pickled.load()
                     value = pickled.load()
                 except Exception:
                     break
+
                 self.depends_cache[key] = value
+
+                # only fire events on even percentage boundaries
+                current_progress = cachefile.tell()
+                current_percent = 100 * current_progress / cachesize
+                if current_percent > previous_percent:
+                    previous_percent = current_percent
+                    bb.event.fire(bb.event.CacheLoadProgress(current_progress),
+                                  self.data)
+
+            bb.event.fire(bb.event.CacheLoadCompleted(cachesize,
+                                                      len(self.depends_cache)),
+                          self.data)
 
     @staticmethod
     def virtualfn2realfn(virtualfn):
@@ -576,3 +593,4 @@ class CacheData(object):
         # calculations
         if not info.broken and not info.not_world:
             self.possible_world.append(fn)
+

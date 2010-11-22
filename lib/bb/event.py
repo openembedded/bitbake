@@ -324,6 +324,25 @@ class ParseProgress(Event):
     def __init__(self, current):
         self.current = current
 
+class CacheLoadStarted(Event):
+    """Loading of the dependency cache has begun"""
+    def __init__(self, total):
+        Event.__init__(self)
+        self.total = total
+
+class CacheLoadProgress(Event):
+    """Cache loading progress"""
+    def __init__(self, current):
+        Event.__init__(self)
+        self.current = current
+
+class CacheLoadCompleted(Event):
+    """Cache loading is complete"""
+    def __init__(self, total):
+        Event.__init__(self)
+        self.total = total
+
+
 class DepTreeGenerated(Event):
     """
     Event when a dependency tree has been generated

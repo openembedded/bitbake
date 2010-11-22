@@ -29,12 +29,14 @@ import bb.msg
 from bb.ui import uihelper
 
 logger = logging.getLogger("BitBake")
-widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
-           progressbar.ETA()]
+interactive = sys.stdout.isatty()
 
 class BBProgress(progressbar.ProgressBar):
     def __init__(self, msg, maxval):
         self.msg = msg
+        widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
+           progressbar.ETA()]
+
         progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets)
 
 class NonInteractiveProgress(object):
@@ -55,6 +57,12 @@ class NonInteractiveProgress(object):
     def finish(self):
         self.fobj.write("done.\n")
         self.fobj.flush()
+
+def new_progress(msg, maxval):
+    if interactive:
+        return BBProgress(msg, maxval)
+    else:
+        return NonInteractiveProgress(msg, maxval)
 
 def main(server, eventHandler):
 
@@ -91,8 +99,9 @@ def main(server, eventHandler):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
+
     parseprogress = None
-    interactive = os.isatty(sys.stdout.fileno())
+    cacheprogress = None
     shutdown = 0
     return_value = 0
     while True:
@@ -144,11 +153,7 @@ def main(server, eventHandler):
                 logger.info(event._message)
                 continue
             if isinstance(event, bb.event.ParseStarted):
-                if interactive:
-                    progress = BBProgress
-                else:
-                    progress = NonInteractiveProgress
-                parseprogress = progress("Parsing recipes", event.total).start()
+                parseprogress = new_progress("Parsing recipes", event.total).start()
                 continue
             if isinstance(event, bb.event.ParseProgress):
                 parseprogress.update(event.current)
@@ -157,6 +162,17 @@ def main(server, eventHandler):
                 parseprogress.finish()
                 print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
                     % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
+                continue
+
+            if isinstance(event, bb.event.CacheLoadStarted):
+                cacheprogress = new_progress("Loading cache", event.total).start()
+                continue
+            if isinstance(event, bb.event.CacheLoadProgress):
+                cacheprogress.update(event.current)
+                continue
+            if isinstance(event, bb.event.CacheLoadCompleted):
+                cacheprogress.finish()
+                print("Loaded %d entries from dependency cache." % event.num_entries)
                 continue
 
             if isinstance(event, bb.command.CommandCompleted):
