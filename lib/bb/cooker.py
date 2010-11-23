@@ -29,6 +29,7 @@ import sre_constants
 import threading
 import multiprocessing
 import signal
+import atexit
 from cStringIO import StringIO
 from contextlib import closing
 import bb
@@ -1003,7 +1004,9 @@ class CookerParser(object):
         self.task_queue.close()
         for process in self.processes:
             process.join()
-        threading.Thread(target=self.bb_cache.sync).start()
+        sync = threading.Thread(target=self.bb_cache.sync)
+        sync.start()
+        atexit.register(lambda: sync.join())
         if self.error > 0:
             raise ParsingErrorsFound()
 
