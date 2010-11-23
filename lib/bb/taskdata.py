@@ -24,6 +24,7 @@ Task data collection and handling
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import logging
+import re
 import bb
 
 logger = logging.getLogger("BitBake.TaskData")
@@ -33,13 +34,8 @@ def re_match_strings(target, strings):
     Whether or not the string 'target' matches
     any one string of the strings which can be regular expression string
     """
-    import re
-
-    for name in strings:
-        if (name==target or
-                re.search(name, target)!=None):
-            return True
-    return False
+    return any(name == target or re.search(name, target) != None
+               for name in strings)
 
 class TaskData:
     """
