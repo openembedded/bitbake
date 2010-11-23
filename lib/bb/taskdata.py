@@ -34,7 +34,7 @@ def re_match_strings(target, strings):
     Whether or not the string 'target' matches
     any one string of the strings which can be regular expression string
     """
-    return any(name == target or re.search(name, target) != None
+    return any(name == target or re.match(name, target)
                for name in strings)
 
 class TaskData:
