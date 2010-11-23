@@ -963,6 +963,8 @@ class CookerParser(object):
         self.result_queue = None
         self.fromcache = None
         self.progress_chunk = self.total / 100
+        self.num_processes = int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
+                                 multiprocessing.cpu_count())
 
     def launch_processes(self):
         self.task_queue = multiprocessing.Queue()
@@ -983,9 +985,7 @@ class CookerParser(object):
                 output.put(infos)
 
         self.processes = []
-        num_processes = int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
-                            multiprocessing.cpu_count())
-        for i in xrange(num_processes):
+        for i in xrange(self.num_processes):
             process = multiprocessing.Process(target=worker,
                                               args=(self.task_queue,
                                                     self.result_queue,
