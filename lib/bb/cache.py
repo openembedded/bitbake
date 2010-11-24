@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "132"
+__cache_version__ = "133"
 
 recipe_fields = (
     'pn',
