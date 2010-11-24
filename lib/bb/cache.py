@@ -99,7 +99,10 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
 
     @classmethod
     def from_metadata(cls, filename, metadata):
+        pn = cls.getvar('PN', metadata)
         packages = cls.listvar('PACKAGES', metadata)
+        if not pn in packages:
+            packages.append(pn)
         return RecipeInfo(
             file_depends     = metadata.getVar('__depends', False),
             task_deps        = metadata.getVar('_task_deps', False) or
@@ -107,8 +110,8 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
             variants         = cls.listvar('__VARIANTS', metadata) + [''],
             skipped          = cls.getvar('__SKIPPED', metadata),
             timestamp        = bb.parse.cached_mtime(filename),
-            packages         = packages,
-            pn               = cls.getvar('PN', metadata),
+            packages         = cls.listvar('PACKAGES', metadata),
+            pn               = pn,
             pe               = cls.getvar('PE', metadata),
             pv               = cls.getvar('PV', metadata),
             pr               = cls.getvar('PR', metadata),
@@ -547,20 +550,16 @@ class CacheData(object):
             self.packages[package].append(fn)
             rprovides += info.rprovides_pkg[package]
 
-        for package in info.packages_dynamic:
-            self.packages_dynamic[package].append(fn)
-
         for rprovide in rprovides:
             self.rproviders[rprovide].append(fn)
 
+        for package in info.packages_dynamic:
+            self.packages_dynamic[package].append(fn)
+
         # Build hash of runtime depends and rececommends
         for package in info.packages + [info.pn]:
-            rundeps, runrecs = list(info.rdepends), list(info.rrecommends)
-            if package in info.packages:
-                rundeps += info.rdepends_pkg[package]
-                runrecs += info.rrecommends_pkg[package]
-            self.rundeps[fn][package] = rundeps
-            self.runrecs[fn][package] = runrecs
+            self.rundeps[fn][package] = list(info.rdepends) + info.rdepends_pkg[package]
+            self.runrecs[fn][package] = list(info.rrecommends) + info.rrecommends_pkg[package]
 
         # Collect files we may need for possible world-dep
         # calculations
