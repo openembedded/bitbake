@@ -82,7 +82,7 @@ class Command:
             if command not in CommandsAsync.__dict__:
                 return "No such command"
             self.currentAsyncCommand = (command, commandline)
-            self.cooker.server.register_idle_function(self.cooker.runCommands, self.cooker)
+            self.cooker.server_registration_cb(self.cooker.runCommands, self.cooker)
             return True
         except:
             import traceback

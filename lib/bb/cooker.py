@@ -28,7 +28,6 @@ import atexit
 import itertools
 import logging
 import multiprocessing
-import signal
 import sre_constants
 import threading
 from cStringIO import StringIO
@@ -63,15 +62,17 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration, server):
+    def __init__(self, configuration, server_registration_cb):
         self.status = None
         self.appendlist = {}
 
-        self.server = server.BitBakeServer(self)
+        self.server_registration_cb = server_registration_cb
 
         self.configuration = configuration
 
         self.configuration.data = bb.data.init()
+
+        self.parseCommandLine()
 
         bb.data.inheritFromOS(self.configuration.data)
 
@@ -675,7 +676,7 @@ class BBCooker:
                 return True
             return 0.5
 
-        self.server.register_idle_function(buildFileIdle, rq)
+        self.server_registration_cb(buildFileIdle, rq)
 
     def buildTargets(self, targets, task):
         """
@@ -731,7 +732,7 @@ class BBCooker:
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
 
-        self.server.register_idle_function(buildTargetsIdle, rq)
+        self.server_registration_cb(buildTargetsIdle, rq)
 
     def updateCache(self):
         if self.state == state.running:
@@ -882,40 +883,6 @@ class BBCooker:
             return self.appendlist[f]
         return []
 
-    def serve(self):
-
-        # Empty the environment. The environment will be populated as
-        # necessary from the data store.
-        bb.utils.empty_environment()
-
-        if self.configuration.profile:
-            try:
-                import cProfile as profile
-            except:
-                import profile
-
-            profile.runctx("self.server.serve_forever()", globals(), locals(), "profile.log")
-
-            # Redirect stdout to capture profile information
-            pout = open('profile.log.processed', 'w')
-            so = sys.stdout.fileno()
-            os.dup2(pout.fileno(), so)
-
-            import pstats
-            p = pstats.Stats('profile.log')
-            p.sort_stats('time')
-            p.print_stats()
-            p.print_callers()
-            p.sort_stats('cumulative')
-            p.print_stats()
-
-            os.dup2(so, pout.fileno())
-            pout.flush()
-            pout.close()
-        else:
-            self.server.serve_forever()
-
-        bb.event.fire(CookerExit(), self.configuration.event_data)
 
     def shutdown(self):
         self.state = state.shutdown
@@ -975,7 +942,6 @@ class CookerParser(object):
 
     def start(self):
         def init(cfg):
-            signal.signal(signal.SIGINT, signal.SIG_IGN)
             parse_file.cfg = cfg
 
         bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)

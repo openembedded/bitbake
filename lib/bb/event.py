@@ -104,7 +104,7 @@ def fire_ui_handlers(event, d):
              # We use pickle here since it better handles object instances
              # which xmlrpc's marshaller does not. Events *must* be serializable
              # by pickle.
-            _ui_handlers[h].event.send((pickle.dumps(event)))
+            _ui_handlers[h].event.send(event)
         except:
             errors.append(h)
     for h in errors:

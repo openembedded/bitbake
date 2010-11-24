@@ -22,12 +22,10 @@ from __future__ import division
 
 import os
 import sys
-import itertools
 import xmlrpclib
 import logging
 import progressbar
 import bb.msg
-from bb import ui
 from bb.ui import uihelper
 
 logger = logging.getLogger("BitBake")
@@ -99,9 +97,8 @@ def main(server, eventHandler):
     return_value = 0
     while True:
         try:
-            event = eventHandler.waitEvent(0.25)
-            if event is None:
-                continue
+            event = eventHandler.get()
+
             helper.eventHandler(event)
             if isinstance(event, bb.runqueue.runQueueExitWait):
                 if not shutdown:
