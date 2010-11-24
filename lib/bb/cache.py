@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "131"
+__cache_version__ = "132"
 
 
 class Cache(object):
@@ -431,7 +431,7 @@ class Cache(object):
         for package in packages + [pn]:
             rdeps_pkg = bb.utils.explode_deps(self.getVar('RDEPENDS_%s' % package, file_name, True) or "")
             cacheData.rundeps[file_name][package] = rdepends + rdeps_pkg
-            rrecs_pkg = bb.utils.explode_deps(self.getVar('RDEPENDS_%s' % package, file_name, True) or "")
+            rrecs_pkg = bb.utils.explode_deps(self.getVar('RRECOMMENDS_%s' % package, file_name, True) or "")
             cacheData.runrecs[file_name][package] = rrecommends + rrecs_pkg
 
         # Collect files we may need for possible world-dep
