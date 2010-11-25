@@ -21,6 +21,7 @@ import gobject
 import gtk
 import threading
 import xmlrpclib
+from bb.ui.crumbs.progress import ProgressBar
 
 # Package Model
 (COL_PKG_NAME) = (0)
@@ -171,18 +172,6 @@ def parse(depgraph, pkg_model, depends_model):
                               COL_DEP_PARENT, package,
                               COL_DEP_PACKAGE, rdepend)
 
-class ProgressBar(gtk.Window):
-    def __init__(self):
-
-        gtk.Window.__init__(self)
-        self.set_title("Parsing .bb files, please wait...")
-        self.set_default_size(500, 0)
-        self.connect("delete-event", gtk.main_quit)
-
-        self.progress = gtk.ProgressBar()
-        self.add(self.progress)
-        self.show_all()
-
 class gtkthread(threading.Thread):
     quit = threading.Event()
     def __init__(self, shutdown):
@@ -217,8 +206,8 @@ def init(server, eventHandler):
     gtkgui.start()
 
     gtk.gdk.threads_enter()
-    pbar = ProgressBar()
     dep = DepExplorer()
+    pbar = ProgressBar(dep)
     gtk.gdk.threads_leave()
 
     while True:
@@ -236,9 +225,9 @@ def init(server, eventHandler):
                     print(("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors."
                         % ( event.cached, event.parsed, event.skipped, event.masked, event.errors)))
                     pbar.hide()
+                    return
                 gtk.gdk.threads_enter()
-                pbar.progress.set_fraction(float(x)/float(y))
-                pbar.progress.set_text("%d/%d (%2d %%)" % (x, y, x*100/y))
+                pbar.update(x, y)
                 gtk.gdk.threads_leave()
                 continue
 
