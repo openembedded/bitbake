@@ -48,7 +48,7 @@ class RunningBuild (gobject.GObject):
         gobject.GObject.__init__ (self)
         self.model = RunningBuildModel()
 
-    def handle_event (self, event):
+    def handle_event (self, event, pbar=None):
         # Handle an event from the event queue, this may result in updating
         # the model and thus the UI. Or it may be to tell us that the build
         # has finished successfully (or not, as the case may be.)
@@ -161,6 +161,14 @@ class RunningBuild (gobject.GObject):
                 self.emit ("build-failed")
             else:
                 self.emit ("build-succeeded")
+
+        elif isinstance(event, bb.event.ParseProgress) and pbar:
+            x = event.sofar
+            y = event.total
+            if x == y:
+                pbar.hide()
+                return
+            pbar.update(x, y)
 
 class RunningBuildTreeView (gtk.TreeView):
     def __init__ (self):
