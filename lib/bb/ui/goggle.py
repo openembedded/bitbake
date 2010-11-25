@@ -22,13 +22,14 @@ import gobject
 import gtk
 import xmlrpclib
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView, RunningBuild
+from bb.ui.crumbs.progress import ProgressBar
 
-def event_handle_idle_func (eventHandler, build):
+def event_handle_idle_func (eventHandler, build, pbar):
 
     # Consume as many messages as we can in the time available to us
     event = eventHandler.getEvent()
     while event:
-        build.handle_event (event)
+        build.handle_event (event, pbar)
         event = eventHandler.getEvent()
 
     return True
@@ -52,6 +53,7 @@ def init (server, eventHandler):
 
     window = MainWindow ()
     window.show_all ()
+    pbar = ProgressBar(window)
 
     # Create the object for the current build
     running_build = RunningBuild ()
@@ -75,6 +77,7 @@ def init (server, eventHandler):
     gobject.timeout_add (200,
                          event_handle_idle_func,
                          eventHandler,
-                         running_build)
+                         running_build,
+                         pbar)
 
     gtk.main()
