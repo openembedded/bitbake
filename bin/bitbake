@@ -29,6 +29,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)),
 
 import optparse
 import warnings
+import signal
 from traceback import format_exception
 try:
     import bb
@@ -39,21 +40,14 @@ import bb.msg
 from bb import cooker
 from bb import ui
 from bb import server
-from bb.server.process import ProcessServer
+from bb.server.process import ProcessServer, ServerCommunicator
 
 from multiprocessing import Queue, Pipe
 
 __version__ = "1.11.0"
 logger = logging.getLogger("BitBake")
 
-class ServerCommunicator():
-    def __init__(self, connection):
-        self.connection = connection
 
-    def runCommand(self, command):
-        # @todo try/except
-        self.connection.send(command)
-        return self.connection.recv()
 
 class BBConfiguration(object):
     """
@@ -196,14 +190,21 @@ Default BBFILES are the .bb files in the current directory.""")
     server.start()
 
     try:
-        return ui_main(server_connection.connection, server_connection.events)
+        return ui_main(ServerCommunicator(ui_channel), event_queue)
     finally:
+        # the server is stopping, so don't let the user do crazy things with
+        # extra Ctrl-C invocations.  If the server does hang, however, the user
+        # won't be able to kill us.
+        #
+        # @todo come up with better mechanism - may need to catch KeyboardInterrupt
+        # here and do a server.terminate()
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         server.stop()
+        server.join()
         ui_channel.close()
         event_queue.close()
-        server.join()
 
-    return return_value
+    return 1
 
 if __name__ == "__main__":
     try:

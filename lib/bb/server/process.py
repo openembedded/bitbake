@@ -20,8 +20,9 @@
     This module implements a multiprocessing.Process based server for bitbake.
 """
 
-import time
 import logging
+import signal
+import time
 import bb
 import bb.event
 from multiprocessing import Process, Event
@@ -29,31 +30,21 @@ from bb.cooker import BBCooker
 
 logger = logging.getLogger('BitBake')
 
-
-class BitBakeServerCommands():
-    def __init__(self, server, cooker):
-        self.cooker = cooker
-        self.server = server
+class ServerCommunicator():
+    def __init__(self, connection):
+        self.connection = connection
 
     def runCommand(self, command):
-        """
-        Run a cooker command on the server
-        """
-        self.server.command_channel.send(self.cooker.command.runCommand(command))
+        # @todo try/except
+        self.connection.send(command)
 
-    def terminateServer(self):
-        """
-        Trigger the server to quit
-        """
-        self.server.stop()
-        #print "Server (cooker) exitting"
-        return
-
-    def ping(self):
-        """
-        Dummy method which can be used to check the server is still alive
-        """
-        return True
+        while True:
+            # don't let the user ctrl-c while we're waiting for a response
+            try:
+                result = self.connection.recv()
+                return result
+            except KeyboardInterrupt:
+                pass
 
 
 class EventAdapter():
@@ -80,7 +71,6 @@ class ProcessServer(Process):
         self.configuration = configuration
         self.cooker = BBCooker(configuration, self.register_idle_function)
         self._idlefunctions = {}
-        self.commands = BitBakeServerCommands(self, self.cooker)
         self.event_handle = bb.event.register_UIHhandler(self)
         self.quit = False
 
@@ -99,12 +89,22 @@ class ProcessServer(Process):
         # Ensure logging messages get sent to the UI as events
         logger.addHandler(bb.event.LogHandler())
 
+        # Ignore SIGINT within the server, as all SIGINT handling is done by
+        # the UI and communicated to us
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
         while self.keep_running.is_set():
-            if self.command_channel.poll():
-                command = self.command_channel.recv()
-                self.commands.runCommand(command)
+            try:
+                if self.command_channel.poll():
+                    command = self.command_channel.recv()
+                    self.runCommand(command)
 
-            self.idle_commands(.1)
+                self.idle_commands(.1)
+            except Exception, exc:
+                logger.exception('Running command %s', command)
+
+        self.event_queue.cancel_join_thread()
+        bb.event.unregister_UIHhandler(self.event_handle)
+        self.command_channel.close()
         return
 
     def idle_commands(self, delay):
@@ -129,7 +129,11 @@ class ProcessServer(Process):
         if nextsleep is not None:
             time.sleep(nextsleep)
 
+    def runCommand(self, command):
+        """
+        Run a cooker command on the server
+        """
+        self.command_channel.send(self.cooker.command.runCommand(command))
+
     def stop(self):
         self.keep_running.clear()
-        bb.event.unregister_UIHhandler(self.event_handle)
-        self.command_channel.close()

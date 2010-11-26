@@ -104,6 +104,8 @@ class BBCooker:
         self.command = bb.command.Command(self)
         self.state = state.initial
 
+        self.parser = None
+
     def parseConfiguration(self):
 
 
@@ -738,6 +740,10 @@ class BBCooker:
         if self.state == state.running:
             return
 
+        if self.state in (state.shutdown, state.stop):
+            self.parser.shutdown(clean=False)
+            sys.exit(1)
+
         if self.state != state.parsing:
             self.parseConfiguration ()
 
@@ -883,10 +889,9 @@ class BBCooker:
             return self.appendlist[f]
         return []
 
-
     def shutdown(self):
         self.state = state.shutdown
-
+ 
     def stop(self):
         self.state = state.stop
 
@@ -965,7 +970,7 @@ class CookerParser(object):
 
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
-        atexit.register(lambda: sync.join())
+        multiprocessing.util.Finalize(None, sync.join, exitpriority=-100)
 
     def load_cached(self):
         for filename, appends in self.fromcache:
@@ -978,13 +983,9 @@ class CookerParser(object):
         except StopIteration:
             self.shutdown()
             return False
-        except KeyboardInterrupt:
-            self.shutdown(clean=False)
-            raise
         except Exception as exc:
             self.shutdown(clean=False)
             bb.fatal('Error parsing %s: %s' % (exc.recipe, exc))
-
 
         self.current += 1
         self.virtuals += len(result)

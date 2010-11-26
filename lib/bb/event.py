@@ -338,9 +338,10 @@ class CacheLoadProgress(Event):
 
 class CacheLoadCompleted(Event):
     """Cache loading is complete"""
-    def __init__(self, total):
+    def __init__(self, total, num_entries):
         Event.__init__(self)
         self.total = total
+        self.num_entries = num_entries
 
 
 class DepTreeGenerated(Event):
