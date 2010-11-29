@@ -168,22 +168,34 @@ class Cache(object):
         newest_mtime = max(old_mtimes)
 
         if bb.parse.cached_mtime_noerror(self.cachefile) >= newest_mtime:
+            self.load_cachefile()
+        elif os.path.isfile(self.cachefile):
+            logger.info("Out of date cache found, rebuilding...")
+
+    def load_cachefile(self):
+        with open(self.cachefile, "rb") as cachefile:
+            pickled = pickle.Unpickler(cachefile)
             try:
-                p = pickle.Unpickler(file(self.cachefile, "rb"))
-                self.depends_cache, version_data = p.load()
-                if version_data['CACHE_VER'] != __cache_version__:
-                    raise ValueError('Cache Version Mismatch')
-                if version_data['BITBAKE_VER'] != bb.__version__:
-                    raise ValueError('Bitbake Version Mismatch')
-            except EOFError:
-                logger.info("Truncated cache found, rebuilding...")
-                self.depends_cache = {}
-            except:
-                logger.info("Invalid cache found, rebuilding...")
-                self.depends_cache = {}
-        else:
-            if os.path.isfile(self.cachefile):
-                logger.info("Out of date cache found, rebuilding...")
+                cache_ver = pickled.load()
+                bitbake_ver = pickled.load()
+            except Exception:
+                logger.info('Invalid cache, rebuilding...')
+                return
+
+            if cache_ver != __cache_version__:
+                logger.info('Cache version mismatch, rebuilding...')
+                return
+            elif bitbake_ver != bb.__version__:
+                logger.info('Bitbake version mismatch, rebuilding...')
+                return
+
+            while cachefile:
+                try:
+                    key = pickled.load()
+                    value = pickled.load()
+                except Exception:
+                    break
+                self.depends_cache[key] = value
 
     @staticmethod
     def virtualfn2realfn(virtualfn):
@@ -391,14 +403,13 @@ class Cache(object):
             logger.debug(2, "Cache is clean, not saving.")
             return
 
-        version_data = {
-            'CACHE_VER': __cache_version__,
-            'BITBAKE_VER': bb.__version__,
-        }
-
         with open(self.cachefile, "wb") as cachefile:
-            pickle.Pickler(cachefile, -1).dump([self.depends_cache,
-                                                version_data])
+            pickler = pickle.Pickler(cachefile, pickle.HIGHEST_PROTOCOL)
+            pickler.dump(__cache_version__)
+            pickler.dump(bb.__version__)
+            for key, value in self.depends_cache.iteritems():
+                pickler.dump(key)
+                pickler.dump(value)
 
         del self.depends_cache
 
