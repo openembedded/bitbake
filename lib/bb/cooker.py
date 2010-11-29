@@ -982,8 +982,12 @@ class CookerParser(object):
         def worker(input, output, cfgdata):
             signal.signal(signal.SIGINT, signal.SIG_IGN)
             for filename, appends in iter(input.get, 'STOP'):
-                infos = bb.cache.Cache.parse(filename, appends, cfgdata)
-                output.put(infos)
+                try:
+                    infos = bb.cache.Cache.parse(filename, appends, cfgdata)
+                except bb.parse.ParseError as exc:
+                    output.put(exc)
+                else:
+                    output.put(infos)
 
         self.processes = []
         for i in xrange(self.num_processes):
@@ -1032,10 +1036,12 @@ class CookerParser(object):
         try:
             if self.result_queue.empty() and self.fromcache:
                 filename, appends = self.fromcache.pop()
-                _, infos = self.bb_cache.load(filename, appends, self.cfgdata)
+                _, result = self.bb_cache.load(filename, appends, self.cfgdata)
                 parsed = False
             else:
-                infos = self.result_queue.get()
+                result = self.result_queue.get()
+                if isinstance(result, Exception):
+                    raise result
                 parsed = True
         except KeyboardInterrupt:
             self.shutdown(clean=False)
@@ -1048,9 +1054,9 @@ class CookerParser(object):
                 self.parsed += 1
             else:
                 self.cached += 1
-            self.virtuals += len(infos)
+            self.virtuals += len(result)
 
-            for virtualfn, info in infos:
+            for virtualfn, info in result:
                 if info.skipped:
                     self.skipped += 1
                 else:
