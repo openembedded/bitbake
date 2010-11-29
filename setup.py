@@ -51,7 +51,7 @@ class Build(build):
 
 setup(name='bitbake',
       version = __version__,
-      requires = ["ply"],
+      requires = ["ply", "progressbar"],
       package_dir = {"": "lib"},
       packages = ["bb.server", "bb.parse.parse_py", "bb.parse", "bb.fetch",
                   "bb.ui.crumbs", "bb.ui", "bb.pysh", "bb"],

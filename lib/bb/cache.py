@@ -30,7 +30,7 @@
 
 import os
 import logging
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 import bb.data
 import bb.utils
 
@@ -43,7 +43,93 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "132"
+__cache_version__ = "133"
+
+recipe_fields = (
+    'pn',
+    'pv',
+    'pr',
+    'pe',
+    'defaultpref',
+    'depends',
+    'provides',
+    'task_deps',
+    'stamp',
+    'broken',
+    'not_world',
+    'skipped',
+    'timestamp',
+    'packages',
+    'packages_dynamic',
+    'rdepends',
+    'rdepends_pkg',
+    'rprovides',
+    'rprovides_pkg',
+    'rrecommends',
+    'rrecommends_pkg',
+    'nocache',
+    'variants',
+    'file_depends',
+)
+
+
+class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
+    __slots__ = ()
+
+    @classmethod
+    def listvar(cls, var, metadata):
+        return cls.getvar(var, metadata).split()
+
+    @classmethod
+    def intvar(cls, var, metadata):
+        return int(cls.getvar(var, metadata) or 0)
+
+    @classmethod
+    def depvar(cls, var, metadata):
+        return bb.utils.explode_deps(cls.getvar(var, metadata))
+
+    @classmethod
+    def pkgvar(cls, var, packages, metadata):
+        return dict((pkg, cls.depvar("%s_%s" % (var, pkg), metadata))
+                    for pkg in packages)
+
+    @classmethod
+    def getvar(cls, var, metadata):
+        return metadata.getVar(var, True) or ''
+
+    @classmethod
+    def from_metadata(cls, filename, metadata):
+        pn = cls.getvar('PN', metadata)
+        packages = cls.listvar('PACKAGES', metadata)
+        if not pn in packages:
+            packages.append(pn)
+        return RecipeInfo(
+            file_depends     = metadata.getVar('__depends', False),
+            task_deps        = metadata.getVar('_task_deps', False) or
+                               {'tasks': [], 'parents': {}},
+            variants         = cls.listvar('__VARIANTS', metadata) + [''],
+            skipped          = cls.getvar('__SKIPPED', metadata),
+            timestamp        = bb.parse.cached_mtime(filename),
+            packages         = cls.listvar('PACKAGES', metadata),
+            pn               = pn,
+            pe               = cls.getvar('PE', metadata),
+            pv               = cls.getvar('PV', metadata),
+            pr               = cls.getvar('PR', metadata),
+            nocache          = cls.getvar('__BB_DONT_CACHE', metadata),
+            defaultpref      = cls.intvar('DEFAULT_PREFERENCE', metadata),
+            broken           = cls.getvar('BROKEN', metadata),
+            not_world        = cls.getvar('EXCLUDE_FROM_WORLD', metadata),
+            stamp            = cls.getvar('STAMP', metadata),
+            packages_dynamic = cls.listvar('PACKAGES_DYNAMIC', metadata),
+            depends          = cls.depvar('DEPENDS', metadata),
+            provides         = cls.depvar('PROVIDES', metadata),
+            rdepends         = cls.depvar('RDEPENDS', metadata),
+            rprovides        = cls.depvar('RPROVIDES', metadata),
+            rrecommends      = cls.depvar('RRECOMMENDS', metadata),
+            rprovides_pkg    = cls.pkgvar('RPROVIDES', packages, metadata),
+            rdepends_pkg     = cls.pkgvar('RDEPENDS', packages, metadata),
+            rrecommends_pkg  = cls.pkgvar('RRECOMMENDS', packages, metadata),
+        )
 
 
 class Cache(object):
@@ -75,79 +161,41 @@ class Cache(object):
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
         newest_mtime = 0
-        deps = bb.data.getVar("__depends", data)
+        deps = bb.data.getVar("__base_depends", data)
 
         old_mtimes = [old_mtime for _, old_mtime in deps]
         old_mtimes.append(newest_mtime)
         newest_mtime = max(old_mtimes)
 
         if bb.parse.cached_mtime_noerror(self.cachefile) >= newest_mtime:
+            self.load_cachefile()
+        elif os.path.isfile(self.cachefile):
+            logger.info("Out of date cache found, rebuilding...")
+
+    def load_cachefile(self):
+        with open(self.cachefile, "rb") as cachefile:
+            pickled = pickle.Unpickler(cachefile)
             try:
-                p = pickle.Unpickler(file(self.cachefile, "rb"))
-                self.depends_cache, version_data = p.load()
-                if version_data['CACHE_VER'] != __cache_version__:
-                    raise ValueError('Cache Version Mismatch')
-                if version_data['BITBAKE_VER'] != bb.__version__:
-                    raise ValueError('Bitbake Version Mismatch')
-            except EOFError:
-                logger.info("Truncated cache found, rebuilding...")
-                self.depends_cache = {}
-            except:
-                logger.info("Invalid cache found, rebuilding...")
-                self.depends_cache = {}
-        else:
-            if os.path.isfile(self.cachefile):
-                logger.info("Out of date cache found, rebuilding...")
+                cache_ver = pickled.load()
+                bitbake_ver = pickled.load()
+            except Exception:
+                logger.info('Invalid cache, rebuilding...')
+                return
 
-    def getVar(self, var, fn, exp=0):
-        """
-        Gets the value of a variable
-        (similar to getVar in the data class)
+            if cache_ver != __cache_version__:
+                logger.info('Cache version mismatch, rebuilding...')
+                return
+            elif bitbake_ver != bb.__version__:
+                logger.info('Bitbake version mismatch, rebuilding...')
+                return
 
-        There are two scenarios:
-          1. We have cached data - serve from depends_cache[fn]
-          2. We're learning what data to cache - serve from data
-             backend but add a copy of the data to the cache.
-        """
-        if fn in self.clean:
-            return self.depends_cache[fn].get(var)
-
-        self.depends_cache.setdefault(fn, {})
-
-        if fn != self.data_fn:
-            # We're trying to access data in the cache which doesn't exist
-            # yet setData hasn't been called to setup the right access
-            logger.error("data_fn %s and fn %s don't match", self.data_fn, fn)
-
-        self.cacheclean = False
-        result = bb.data.getVar(var, self.data, exp)
-        if result is not None:
-            self.depends_cache[fn][var] = result
-        return result
-
-    def setData(self, virtualfn, fn, data):
-        """
-        Called to prime bb_cache ready to learn which variables to cache.
-        Will be followed by calls to self.getVar which aren't cached
-        but can be fulfilled from self.data.
-        """
-        self.data_fn = virtualfn
-        self.data = data
-
-        # Make sure __depends makes the depends_cache
-        # If we're a virtual class we need to make sure all our depends are
-        # appended to the depends of fn.
-        depends = self.getVar("__depends", virtualfn) or set()
-        self.depends_cache.setdefault(fn, {})
-        if "__depends" not in self.depends_cache[fn] or not self.depends_cache[fn]["__depends"]:
-            self.depends_cache[fn]["__depends"] = depends
-        else:
-            self.depends_cache[fn]["__depends"].update(depends)
-
-        # Make sure the variants always make it into the cache too
-        self.getVar('__VARIANTS', virtualfn, True)
-
-        self.depends_cache[virtualfn]["CACHETIMESTAMP"] = bb.parse.cached_mtime(fn)
+            while cachefile:
+                try:
+                    key = pickled.load()
+                    value = pickled.load()
+                except Exception:
+                    break
+                self.depends_cache[key] = value
 
     @staticmethod
     def virtualfn2realfn(virtualfn):
@@ -185,52 +233,69 @@ class Cache(object):
         bb_data = cls.load_bbfile(fn, appends, cfgData)
         return bb_data[virtual]
 
+    @classmethod
+    def parse(cls, filename, appends, configdata):
+        """Parse the specified filename, returning the recipe information"""
+        infos = []
+        datastores = cls.load_bbfile(filename, appends, configdata)
+        depends = set()
+        for variant, data in sorted(datastores.iteritems(),
+                                    key=lambda i: i[0],
+                                    reverse=True):
+            virtualfn = cls.realfn2virtual(filename, variant)
+            depends |= (data.getVar("__depends", False) or set())
+            if depends and not variant:
+                data.setVar("__depends", depends)
+            info = RecipeInfo.from_metadata(filename, data)
+            infos.append((virtualfn, info))
+        return infos
+
+    def load(self, filename, appends, configdata):
+        """Obtain the recipe information for the specified filename,
+        using cached values if available, otherwise parsing.
+
+        Note that if it does parse to obtain the info, it will not
+        automatically add the information to the cache or to your
+        CacheData.  Use the add or add_info method to do so after
+        running this, or use loadData instead."""
+        cached = self.cacheValid(filename)
+        if cached:
+            infos = []
+            info = self.depends_cache[filename]
+            for variant in info.variants:
+                virtualfn = self.realfn2virtual(filename, variant)
+                infos.append((virtualfn, self.depends_cache[virtualfn]))
+        else:
+            logger.debug(1, "Parsing %s", filename)
+            return self.parse(filename, appends, configdata)
+
+        return cached, infos
+
     def loadData(self, fn, appends, cfgData, cacheData):
-        """
-        Load a subset of data for fn.
-        If the cached data is valid we do nothing,
-        To do this, we need to parse the file and set the system
-        to record the variables accessed.
-        Return the cache status and whether the file was skipped when parsed
-        """
-        skipped = 0
-        virtuals = 0
+        """Load the recipe info for the specified filename,
+        parsing and adding to the cache if necessary, and adding
+        the recipe information to the supplied CacheData instance."""
+        skipped, virtuals = 0, 0
 
-        if fn not in self.checked:
-            self.cacheValidUpdate(fn)
-
-        if self.cacheValid(fn):
-            multi = self.getVar('__VARIANTS', fn, True)
-            for cls in (multi or "").split() + [""]:
-                virtualfn = self.realfn2virtual(fn, cls)
-                if self.depends_cache[virtualfn].get("__SKIPPED"):
-                    skipped += 1
-                    logger.debug(1, "Skipping %s", virtualfn)
-                    continue
-                self.handle_data(virtualfn, cacheData)
-                virtuals += 1
-            return True, skipped, virtuals
-
-        logger.debug(1, "Parsing %s", fn)
-
-        bb_data = self.load_bbfile(fn, appends, cfgData)
-
-        for data in bb_data:
-            virtualfn = self.realfn2virtual(fn, data)
-            self.setData(virtualfn, fn, bb_data[data])
-            if self.getVar("__SKIPPED", virtualfn):
-                skipped += 1
+        cached, infos = self.load(fn, appends, cfgData)
+        for virtualfn, info in infos:
+            if info.skipped:
                 logger.debug(1, "Skipping %s", virtualfn)
+                skipped += 1
             else:
-                self.handle_data(virtualfn, cacheData)
+                self.add_info(virtualfn, info, cacheData, not cached)
                 virtuals += 1
-        return False, skipped, virtuals
+
+        return cached, skipped, virtuals
 
     def cacheValid(self, fn):
         """
         Is the cache valid for fn?
         Fast version, no timestamps checked.
         """
+        if fn not in self.checked:
+            self.cacheValidUpdate(fn)
+
         # Is cache enabled?
         if not self.has_cache:
             return False
@@ -266,14 +331,15 @@ class Cache(object):
             self.remove(fn)
             return False
 
+        info = self.depends_cache[fn]
         # Check the file's timestamp
-        if mtime != self.getVar("CACHETIMESTAMP", fn, True):
+        if mtime != info.timestamp:
             logger.debug(2, "Cache: %s changed", fn)
             self.remove(fn)
             return False
 
         # Check dependencies are still valid
-        depends = self.getVar("__depends", fn, True)
+        depends = info.file_depends
         if depends:
             for f, old_mtime in depends:
                 fmtime = bb.parse.cached_mtime_noerror(f)
@@ -290,20 +356,17 @@ class Cache(object):
                     self.remove(fn)
                     return False
 
-        self.clean.add(fn)
         invalid = False
-        # Mark extended class data as clean too
-        multi = self.getVar('__VARIANTS', fn, True)
-        for cls in (multi or "").split():
+        for cls in info.variants:
             virtualfn = self.realfn2virtual(fn, cls)
             self.clean.add(virtualfn)
-            if not virtualfn in self.depends_cache:
+            if virtualfn not in self.depends_cache:
                 logger.debug(2, "Cache: %s is not cached", virtualfn)
                 invalid = True
 
         # If any one of the variants is not present, mark as invalid for all
         if invalid:
-            for cls in (multi or "").split():
+            for cls in info.variants:
                 virtualfn = self.realfn2virtual(fn, cls)
                 if virtualfn in self.clean:
                     logger.debug(2, "Cache: Removing %s from cache", virtualfn)
@@ -332,7 +395,6 @@ class Cache(object):
         Save the cache
         Called from the parser when complete (or exiting)
         """
-        import copy
 
         if not self.has_cache:
             return
@@ -341,107 +403,38 @@ class Cache(object):
             logger.debug(2, "Cache is clean, not saving.")
             return
 
-        version_data = {}
-        version_data['CACHE_VER'] = __cache_version__
-        version_data['BITBAKE_VER'] = bb.__version__
+        with open(self.cachefile, "wb") as cachefile:
+            pickler = pickle.Pickler(cachefile, pickle.HIGHEST_PROTOCOL)
+            pickler.dump(__cache_version__)
+            pickler.dump(bb.__version__)
+            for key, value in self.depends_cache.iteritems():
+                pickler.dump(key)
+                pickler.dump(value)
 
-        cache_data = copy.copy(self.depends_cache)
-        for fn in self.depends_cache:
-            if '__BB_DONT_CACHE' in self.depends_cache[fn] and self.depends_cache[fn]['__BB_DONT_CACHE']:
-                logger.debug(2, "Not caching %s, marked as not cacheable", fn)
-                del cache_data[fn]
-            elif ('PV' in self.depends_cache[fn] and
-                  'SRCREVINACTION' in self.depends_cache[fn]['PV']):
-                logger.error("Not caching %s as it had SRCREVINACTION in PV. "
-                             "Please report this bug", fn)
-                del cache_data[fn]
-
-        p = pickle.Pickler(file(self.cachefile, "wb"), -1)
-        p.dump([cache_data, version_data])
         del self.depends_cache
 
     @staticmethod
     def mtime(cachefile):
         return bb.parse.cached_mtime_noerror(cachefile)
 
-    def handle_data(self, file_name, cacheData):
+    def add_info(self, filename, info, cacheData, parsed=None):
+        cacheData.add_from_recipeinfo(filename, info)
+        if not self.has_cache:
+            return
+
+        if 'SRCREVINACTION' not in info.pv and not info.nocache:
+            if parsed:
+                self.cacheclean = False
+            self.depends_cache[filename] = info
+
+    def add(self, file_name, data, cacheData, parsed=None):
         """
         Save data we need into the cache
         """
 
-        pn = self.getVar('PN', file_name, True)
-        pe = self.getVar('PE', file_name, True) or "0"
-        pv = self.getVar('PV', file_name, True)
-        if 'SRCREVINACTION' in pv:
-            logger.info("Found SRCREVINACTION in PV (%s) or %s. Please report this bug.", pv, file_name)
-        pr = self.getVar('PR', file_name, True)
-        dp = int(self.getVar('DEFAULT_PREFERENCE', file_name, True) or "0")
-        depends = bb.utils.explode_deps(self.getVar("DEPENDS", file_name, True) or "")
-        packages = (self.getVar('PACKAGES', file_name, True) or "").split()
-        packages_dynamic = (self.getVar('PACKAGES_DYNAMIC', file_name, True) or "").split()
-        rprovides = (self.getVar("RPROVIDES", file_name, True) or "").split()
-
-        cacheData.task_deps[file_name] = self.getVar("_task_deps", file_name)
-
-        # build PackageName to FileName lookup table
-        cacheData.pkg_pn[pn].append(file_name)
-
-        cacheData.stamp[file_name] = self.getVar('STAMP', file_name, True)
-
-        # build FileName to PackageName lookup table
-        cacheData.pkg_fn[file_name] = pn
-        cacheData.pkg_pepvpr[file_name] = (pe, pv, pr)
-        cacheData.pkg_dp[file_name] = dp
-
-        provides = [pn]
-        for provide in (self.getVar("PROVIDES", file_name, True) or "").split():
-            if provide not in provides:
-                provides.append(provide)
-
-        # Build forward and reverse provider hashes
-        # Forward: virtual -> [filenames]
-        # Reverse: PN -> [virtuals]
-        cacheData.fn_provides[file_name] = provides
-        for provide in provides:
-            cacheData.providers[provide].append(file_name)
-            if not provide in cacheData.pn_provides[pn]:
-                cacheData.pn_provides[pn].append(provide)
-
-        for dep in depends:
-            if not dep in cacheData.deps[file_name]:
-                cacheData.deps[file_name].append(dep)
-            if not dep in cacheData.all_depends:
-                cacheData.all_depends.append(dep)
-
-        # Build reverse hash for PACKAGES, so runtime dependencies
-        # can be be resolved (RDEPENDS, RRECOMMENDS etc.)
-        for package in packages:
-            cacheData.packages[package].append(file_name)
-            rprovides += (self.getVar("RPROVIDES_%s" % package, file_name, 1) or "").split()
-
-        for package in packages_dynamic:
-            cacheData.packages_dynamic[package].append(file_name)
-
-        for rprovide in rprovides:
-            cacheData.rproviders[rprovide].append(file_name)
-
-        # Build hash of runtime depends and rececommends
-        rdepends = bb.utils.explode_deps(self.getVar('RDEPENDS', file_name, True) or "")
-        rrecommends = bb.utils.explode_deps(self.getVar('RRECOMMENDS', file_name, True) or "")
-        for package in packages + [pn]:
-            rdeps_pkg = bb.utils.explode_deps(self.getVar('RDEPENDS_%s' % package, file_name, True) or "")
-            cacheData.rundeps[file_name][package] = rdepends + rdeps_pkg
-            rrecs_pkg = bb.utils.explode_deps(self.getVar('RRECOMMENDS_%s' % package, file_name, True) or "")
-            cacheData.runrecs[file_name][package] = rrecommends + rrecs_pkg
-
-        # Collect files we may need for possible world-dep
-        # calculations
-        if not self.getVar('BROKEN', file_name, True) and not self.getVar('EXCLUDE_FROM_WORLD', file_name, True):
-            cacheData.possible_world.append(file_name)
-
-        # Touch this to make sure its in the cache
-        self.getVar('__BB_DONT_CACHE', file_name, True)
-        self.getVar('__VARIANTS', file_name, True)
+        realfn = self.virtualfn2realfn(file_name)[0]
+        info = RecipeInfo.from_metadata(realfn, data)
+        self.add_info(file_name, info, cacheData, parsed)
 
     @staticmethod
     def load_bbfile(bbfile, appends, config):
@@ -508,7 +501,6 @@ class CacheData(object):
     def __init__(self):
         """
         Direct cache variables
-        (from Cache.handle_data)
         """
         self.providers = defaultdict(list)
         self.rproviders = defaultdict(list)
@@ -538,3 +530,49 @@ class CacheData(object):
         self.world_target = set()
         self.bbfile_priority = {}
         self.bbfile_config_priorities = []
+
+    def add_from_recipeinfo(self, fn, info):
+        self.task_deps[fn] = info.task_deps
+        self.pkg_fn[fn] = info.pn
+        self.pkg_pn[info.pn].append(fn)
+        self.pkg_pepvpr[fn] = (info.pe, info.pv, info.pr)
+        self.pkg_dp[fn] = info.defaultpref
+        self.stamp[fn] = info.stamp
+
+        provides = [info.pn]
+        for provide in info.provides:
+            if provide not in provides:
+                provides.append(provide)
+        self.fn_provides[fn] = provides
+
+        for provide in provides:
+            self.providers[provide].append(fn)
+            if provide not in self.pn_provides[info.pn]:
+                self.pn_provides[info.pn].append(provide)
+
+        for dep in info.depends:
+            if dep not in self.deps[fn]:
+                self.deps[fn].append(dep)
+            if dep not in self.all_depends:
+                self.all_depends.append(dep)
+
+        rprovides = info.rprovides
+        for package in info.packages:
+            self.packages[package].append(fn)
+            rprovides += info.rprovides_pkg[package]
+
+        for rprovide in rprovides:
+            self.rproviders[rprovide].append(fn)
+
+        for package in info.packages_dynamic:
+            self.packages_dynamic[package].append(fn)
+
+        # Build hash of runtime depends and rececommends
+        for package in info.packages + [info.pn]:
+            self.rundeps[fn][package] = list(info.rdepends) + info.rdepends_pkg[package]
+            self.runrecs[fn][package] = list(info.rrecommends) + info.rrecommends_pkg[package]
+
+        # Collect files we may need for possible world-dep
+        # calculations
+        if not info.broken and not info.not_world:
+            self.possible_world.append(fn)
