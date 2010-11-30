@@ -31,7 +31,7 @@ from bb.ui import uihelper
 
 logger = logging.getLogger("BitBake")
 widgets = ['Parsing recipes: ', progressbar.Percentage(), ' ',
-           progressbar.Bar()]
+           progressbar.Bar(), ' ', progressbar.ETA()]
 
 class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
@@ -144,7 +144,7 @@ def init(server, eventHandler):
                 continue
             if isinstance(event, bb.event.ParseCompleted):
                 if interactive:
-                    pbar.update(event.total)
+                    pbar.update(pbar.maxval)
                 else:
                     sys.stdout.write("done.\n")
                     sys.stdout.flush()
