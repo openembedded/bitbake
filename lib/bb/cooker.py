@@ -977,7 +977,7 @@ class CookerParser(object):
             else:
                 self.fromcache.append((filename, appends))
         self.toparse = self.total - len(self.fromcache)
-        self.progress_chunk = self.toparse / 100
+        self.progress_chunk = max(self.toparse, self.toparse / 100)
 
         def worker(input, output, cfgdata):
             signal.signal(signal.SIGINT, signal.SIG_IGN)
