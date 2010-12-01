@@ -45,6 +45,68 @@ if sys.hexversion < 0x020600F0:
     print("Sorry, python 2.6 or later is required for bitbake's XMLRPC mode")
     sys.exit(1)
 
+##
+# The xmlrpclib.Transport class has undergone various changes in Python 2.7
+# which break BitBake's XMLRPC implementation.
+# To work around this we subclass Transport and have a copy/paste of method
+# implementations from Python 2.6.6's xmlrpclib.
+#
+# Upstream Python bug is #8194 (http://bugs.python.org/issue8194)
+##
+
+class BBTransport(xmlrpclib.Transport):
+    def request(self, host, handler, request_body, verbose=0):
+        h = self.make_connection(host)
+        if verbose:
+            h.set_debuglevel(1)
+
+        self.send_request(h, handler, request_body)
+        self.send_host(h, host)
+        self.send_user_agent(h)
+        self.send_content(h, request_body)
+
+        errcode, errmsg, headers = h.getreply()
+
+        if errcode != 200:
+            raise ProtocolError(
+                host + handler,
+                errcode, errmsg,
+                headers
+                )
+
+        self.verbose = verbose
+
+        try:
+            sock = h._conn.sock
+        except AttributeError:
+            sock = None
+
+        return self._parse_response(h.getfile(), sock)
+
+    def make_connection(self, host):
+        import httplib
+        host, extra_headers, x509 = self.get_host_info(host)
+        return httplib.HTTP(host)
+
+    def _parse_response(self, file, sock):
+        p, u = self.getparser()
+
+        while 1:
+            if sock:
+                response = sock.recv(1024)
+            else:
+                response = file.read(1024)
+            if not response:
+                break
+            if self.verbose:
+                print "body:", repr(response)
+            p.feed(response)
+
+        file.close()
+        p.close()
+
+        return u.close()
+
 class BitBakeServerCommands():
     def __init__(self, server, cooker):
         self.cooker = cooker
@@ -54,7 +116,8 @@ class BitBakeServerCommands():
         """
         Register a remote UI Event Handler
         """
-        s = xmlrpclib.Server("http://%s:%d" % (host, port), allow_none=True)
+        t = BBTransport()
+        s = xmlrpclib.Server("http://%s:%d/" % (host, port), transport=t, allow_none=True)
         return bb.event.register_UIHhandler(s)
 
     def unregisterEventHandler(self, handlerNum):
@@ -169,7 +232,8 @@ class BitBakeServerFork():
 
 class BitBakeServerConnection():
     def __init__(self, serverinfo):
-        self.connection = xmlrpclib.Server("http://%s:%s" % (serverinfo.host, serverinfo.port),  allow_none=True)
+        t = BBTransport()
+        self.connection = xmlrpclib.Server("http://%s:%s" % (serverinfo.host, serverinfo.port), transport=t, allow_none=True)
         self.events = uievent.BBUIEventQueue(self.connection)
         for event in bb.event.ui_queue:
             self.events.queue_event(event)
