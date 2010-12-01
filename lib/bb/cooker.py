@@ -711,7 +711,7 @@ class BBCooker:
             if not retval:
                 bb.event.fire(bb.event.BuildCompleted(buildname, targets, failures), self.configuration.event_data)
                 self.command.finishAsyncCommand()
-                return None
+                return False
             if retval is True:
                 return True
             return 0.5
