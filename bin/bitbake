@@ -30,7 +30,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)),
 import optparse
 import warnings
 from traceback import format_exception
-import bb
+try:
+    import bb
+except RuntimeError, exc:
+    sys.exit(str(exc))
 from bb import event
 import bb.msg
 from bb import cooker
