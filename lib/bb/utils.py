@@ -342,21 +342,38 @@ def better_exec(code, context, text, realfile = "<code>"):
         if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
             raise
 
-        logger.exception("Error executing python function in '%s'", code.co_filename)
+        logger.error('There was an error when executing a python function in: %s', realfile)
 
         # Strip 'us' from the stack (better_exec call)
         tb = tb.tb_next
 
         import traceback
-        tbextract = traceback.extract_tb(tb)
-        tbextract = "\n".join(traceback.format_list(tbextract))
-        bb.msg.error(bb.msg.domain.Util, "Traceback:")
-        for line in tbextract.split('\n'):
-            bb.msg.error(bb.msg.domain.Util, line)
+        textarray = text.split('\n')
+        linefailed = traceback.tb_lineno(tb)
 
-        line = traceback.tb_lineno(tb)
-        bb.msg.error(bb.msg.domain.Util, "The lines leading to this error were:")
-        _print_trace( text.split('\n'), line )
+        tbextract = traceback.extract_tb(tb)
+        tbformat = "\n".join(traceback.format_list(tbextract))
+        logger.error("The stack trace of python calls that resulted in thie exception/failure was:")
+        for line in tbformat.split('\n'):
+            logger.error(line)
+
+        logger.error("The code that was being executed was:")
+        _print_trace(textarray, linefailed)
+        logger.error("(file: '%s', lineno: %s, function: %s)", tbextract[0][0], tbextract[0][1], tbextract[0][2])
+
+        # See if this is a function we constructed and has calls back into other functions in
+        # "text". If so, try and improve the context of the error by diving down the trace
+        level = 0
+        nexttb = tb.tb_next
+        while nexttb is not None:
+            if tbextract[level][0] == tbextract[level+1][0] and tbextract[level+1][2] == tbextract[level][0]:
+                _print_trace(textarray, tbextract[level+1][1])
+                logger.error("(file: '%s', lineno: %s, function: %s)", tbextract[level+1][0], tbextract[level+1][1], tbextract[level+1][2])
+            else:
+                 break
+            nexttb = tb.tb_next
+            level = level + 1
+
         raise
 
 def simple_exec(code, context):
