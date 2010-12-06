@@ -145,31 +145,39 @@ class DataSmart(MutableMapping):
         if "_append" in self._special_values:
             appends = self._special_values["_append"] or []
             for append in appends:
+                keep = []
                 for (a, o) in self.getVarFlag(append, "_append") or []:
-                    # maybe the OVERRIDE was not yet added so keep the append
-                    if (o and o in overrides) or not o:
-                        self.delVarFlag(append, "_append")
                     if o and not o in overrides:
+                        keep.append((a ,o))
                         continue
 
                     sval = self.getVar(append, False) or ""
                     sval += a
                     self.setVar(append, sval)
-
+                # We save overrides that may be applied at some later stage
+                if keep:
+                    self.setVarFlag(append, "_append", keep)
+                else:
+                    self.delVarFlag(append, "_append")
 
         if "_prepend" in self._special_values:
             prepends = self._special_values["_prepend"] or []
-
             for prepend in prepends:
+                keep = []
                 for (a, o) in self.getVarFlag(prepend, "_prepend") or []:
-                    # maybe the OVERRIDE was not yet added so keep the prepend
-                    if (o and o in overrides) or not o:
-                        self.delVarFlag(prepend, "_prepend")
                     if o and not o in overrides:
+                        keep.append((a ,o))
                         continue
 
                     sval = a + (self.getVar(prepend, False) or "")
                     self.setVar(prepend, sval)
+
+                # We save overrides that may be applied at some later stage
+                if keep:
+                    self.setVarFlag(prepend, "_prepend", keep)
+                else:
+                    self.delVarFlag(prepend, "_prepend")
+
 
     def initVar(self, var):
         self.expand_cache = {}
