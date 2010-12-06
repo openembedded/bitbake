@@ -218,6 +218,15 @@ def init(urls, d, setup = True):
     urldata_cache[fn] = urldata
     return urldata
 
+def mirror_from_string(data):
+    return [ i.split() for i in (data or "").replace('\\n','\n').split('\n') if i ]
+
+def removefile(f):
+    try:
+        os.remove(f)
+    except:
+        pass
+
 def go(d, urls = None):
     """
     Fetch all urls
@@ -230,65 +239,64 @@ def go(d, urls = None):
     for u in urls:
         ud = urldata[u]
         m = ud.method
-        if ud.localfile:
-            if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5) and os.path.exists(ud.localfile):
-                # File already present along with md5 stamp file
-                # Touch md5 file to show activity
-                try:
-                    os.utime(ud.md5, None)
-                except:
-                    # Errors aren't fatal here
-                    pass
-                continue
-            lf = bb.utils.lockfile(ud.lockfile)
-            if not m.forcefetch(u, ud, d) and os.path.exists(ud.md5) and os.path.exists(ud.localfile):
-                # If someone else fetched this before we got the lock,
-                # notice and don't try again
-                try:
-                    os.utime(ud.md5, None)
-                except:
-                    # Errors aren't fatal here
-                    pass
-                bb.utils.unlockfile(lf)
-                continue
+        localpath = ""
 
-        # First try fetching uri, u, from PREMIRRORS
-        mirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', d, 1) or "").split('\n') if i ]
-        localpath = try_mirrors(d, u, mirrors)
-        if not localpath:
+        if not ud.localfile:
+            continue
+
+        lf = bb.utils.lockfile(ud.lockfile)
+
+        if m.try_premirror(u, ud, d):
+            # First try fetching uri, u, from PREMIRRORS
+            mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', d, True))
+            localpath = try_mirrors(d, u, mirrors, False, m.forcefetch(u, ud, d))
+        elif os.path.exists(ud.localfile):
+            localpath = ud.localfile
+
+        # Need to re-test forcefetch() which will return true if our copy is too old
+        if m.forcefetch(u, ud, d) or not localpath:
             # Next try fetching from the original uri, u
             try:
                 m.go(u, ud, d)
                 localpath = ud.localpath
             except FetchError:
+                # Remove any incomplete file
+                removefile(ud.localpath)
                 # Finally, try fetching uri, u, from MIRRORS
-                mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', d, 1) or "").split('\n') if i ]
+                mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
                 localpath = try_mirrors (d, u, mirrors)
                 if not localpath or not os.path.exists(localpath):
                     raise FetchError("Unable to fetch URL %s from any source." % u)
 
-        if localpath:
-            ud.localpath = localpath
+        ud.localpath = localpath
+        if os.path.exists(ud.md5):
+            # Touch the md5 file to show active use of the download
+            try:
+                os.utime(ud.md5, None)
+            except:
+                # Errors aren't fatal here
+                pass
+        else:
+            Fetch.write_md5sum(u, ud, d)
 
-        if ud.localfile:
-            if not m.forcefetch(u, ud, d):
-                Fetch.write_md5sum(u, ud, d)
-            bb.utils.unlockfile(lf)
+        bb.utils.unlockfile(lf)
 
-
-def checkstatus(d):
+def checkstatus(d, urls = None):
     """
     Check all urls exist upstream
     init must have previously been called
     """
     urldata = init([], d, True)
 
-    for u in urldata:
+    if not urls:
+        urls = urldata
+
+    for u in urls:
         ud = urldata[u]
         m = ud.method
-        logger.info("Testing URL %s", u)
+        logger.debug("Testing URL %s", u)
         # First try checking uri, u, from PREMIRRORS
-        mirrors = [ i.split() for i in (bb.data.getVar('PREMIRRORS', d, 1) or "").split('\n') if i ]
+        mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', d, True))
         ret = try_mirrors(d, u, mirrors, True)
         if not ret:
             # Next try checking from the original uri, u
@@ -296,7 +304,7 @@ def checkstatus(d):
                 ret = m.checkstatus(u, ud, d)
             except:
                 # Finally, try checking uri, u, from MIRRORS
-                mirrors = [ i.split() for i in (bb.data.getVar('MIRRORS', d, 1) or "").split('\n') if i ]
+                mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
                 ret = try_mirrors (d, u, mirrors, True)
 
         if not ret:
@@ -396,7 +404,10 @@ def runfetchcmd(cmd, d, quiet = False):
     # rather than host provided
     # Also include some other variables.
     # FIXME: Should really include all export varaiables?
-    exportvars = ['PATH', 'GIT_PROXY_COMMAND', 'GIT_PROXY_HOST', 'GIT_PROXY_PORT', 'GIT_CONFIG', 'http_proxy', 'ftp_proxy', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID', 'HOME']
+    exportvars = ['PATH', 'GIT_PROXY_COMMAND', 'GIT_PROXY_HOST',
+                  'GIT_PROXY_PORT', 'GIT_CONFIG', 'http_proxy', 'ftp_proxy',
+                  'https_proxy', 'no_proxy', 'ALL_PROXY', 'all_proxy',
+                  'SSH_AUTH_SOCK', 'SSH_AGENT_PID', 'HOME']
 
     for var in exportvars:
         val = data.getVar(var, d, True)
@@ -428,7 +439,7 @@ def runfetchcmd(cmd, d, quiet = False):
 
     return output
 
-def try_mirrors(d, uri, mirrors, check = False):
+def try_mirrors(d, uri, mirrors, check = False, force = False):
     """
     Try to use a mirrored version of the sources.
     This method will be automatically called before the fetchers go.
@@ -438,7 +449,7 @@ def try_mirrors(d, uri, mirrors, check = False):
     mirrors is the list of mirrors we're going to try
     """
     fpath = os.path.join(data.getVar("DL_DIR", d, 1), os.path.basename(uri))
-    if not check and os.access(fpath, os.R_OK):
+    if not check and os.access(fpath, os.R_OK) and not force:
         logger.debug(1, "%s already exists, skipping checkout.", fpath)
         return fpath
 
@@ -456,16 +467,19 @@ def try_mirrors(d, uri, mirrors, check = False):
 
             try:
                 if check:
-                    ud.method.checkstatus(newuri, ud, ld)
+                    found = ud.method.checkstatus(newuri, ud, ld)
+                    if found:
+                        return found
                 else:
                     ud.method.go(newuri, ud, ld)
-                return ud.localpath
+                    return ud.localpath
             except (bb.fetch.MissingParameterError,
                     bb.fetch.FetchError,
                     bb.fetch.MD5SumError):
                 import sys
                 (type, value, traceback) = sys.exc_info()
                 logger.debug(2, "Mirror fetch failure: %s", value)
+                removefile(ud.localpath)
                 continue
     return None
 
@@ -495,12 +509,13 @@ class FetchData(object):
         if "localpath" in self.parm:
             # if user sets localpath for file, use it instead.
             self.localpath = self.parm["localpath"]
+            self.basename = os.path.basename(self.localpath)
         else:
             premirrors = bb.data.getVar('PREMIRRORS', d, True)
             local = ""
             if premirrors and self.url:
                 aurl = self.url.split(";")[0]
-                mirrors = [ i.split() for i in (premirrors or "").split('\n') if i ]
+                mirrors = mirror_from_string(premirrors)
                 for (find, replace) in mirrors:
                     if replace.startswith("file://"):
                         path = aurl.split("://")[1]
@@ -519,10 +534,11 @@ class FetchData(object):
                 # Horrible...
                 bb.data.delVar("ISHOULDNEVEREXIST", d)
 
-        # Note: These files should always be in DL_DIR whereas localpath may not be.
-        basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
-        self.md5 = basepath + '.md5'
-        self.lockfile = basepath + '.lock'
+        if self.localpath is not None:
+            # Note: These files should always be in DL_DIR whereas localpath may not be.
+            basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
+            self.md5 = basepath + '.md5'
+            self.lockfile = basepath + '.lock'
 
 
 class Fetch(object):
@@ -578,6 +594,17 @@ class Fetch(object):
         Assumes localpath was called first
         """
         raise NoMethodError("Missing implementation for url")
+
+    def try_premirror(self, url, urldata, d):
+        """
+        Should premirrors be used?
+        """
+        if urldata.method.forcefetch(url, urldata, d):
+            return True
+        elif os.path.exists(urldata.md5) and os.path.exists(urldata.localfile):
+            return False
+        else:
+            return True
 
     def checkstatus(self, url, urldata, d):
         """
