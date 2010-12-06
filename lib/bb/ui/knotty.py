@@ -189,6 +189,17 @@ def main(server, eventHandler):
                     logger.error("Nothing %sPROVIDES '%s'", r, event._item)
                 continue
 
+            if isinstance(event, bb.runqueue.runQueueTaskStarted):
+                logger.info("Running task %s of %s (ID: %s, %s)",
+                            event.stats.completed + event.stats.active + event.stats.failed + 1,
+                            event.stats.total, event.taskid, event.taskstring)
+                continue
+
+            if isinstance(event, bb.runqueue.runQueueTaskFailed):
+                logger.error("Task %s (%s) failed with exit code '%s'",
+                             event.taskid, event.taskstring, event.exitcode)
+                continue
+
             # ignore
             if isinstance(event, (bb.event.BuildBase,
                                   bb.event.StampUpdate,
