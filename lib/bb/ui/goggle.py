@@ -33,6 +33,9 @@ def event_handle_idle_func (eventHandler, build):
 
     return True
 
+def scroll_tv_cb (model, path, iter, view):
+    view.scroll_to_cell (path)
+
 class MainWindow (gtk.Window):
     def __init__ (self):
         gtk.Window.__init__ (self, gtk.WINDOW_TOPLEVEL)
@@ -53,6 +56,7 @@ def init (server, eventHandler):
     # Create the object for the current build
     running_build = RunningBuild ()
     window.cur_build_tv.set_model (running_build.model)
+    running_build.model.connect("row-inserted", scroll_tv_cb, window.cur_build_tv)
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
         print(cmdline)
