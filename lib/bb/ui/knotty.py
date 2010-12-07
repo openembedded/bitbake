@@ -30,8 +30,32 @@ from bb import ui
 from bb.ui import uihelper
 
 logger = logging.getLogger("BitBake")
-widgets = ['Parsing recipes: ', progressbar.Percentage(), ' ',
-           progressbar.Bar(), ' ', progressbar.ETA()]
+widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
+           progressbar.ETA()]
+
+class BBProgress(progressbar.ProgressBar):
+    def __init__(self, msg, maxval):
+        self.msg = msg
+        progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets)
+
+class NonInteractiveProgress(object):
+    fobj = sys.stdout
+
+    def __init__(self, msg, maxval):
+        self.msg = msg
+        self.maxval = maxval
+
+    def start(self):
+        self.fobj.write("%s..." % self.msg)
+        self.fobj.flush()
+        return self
+
+    def update(self, value):
+        pass
+
+    def finish(self):
+        self.fobj.write("done.\n")
+        self.fobj.flush()
 
 class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
@@ -77,7 +101,7 @@ def init(server, eventHandler):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
-    pbar = None
+    parseprogress = None
     interactive = os.isatty(sys.stdout.fileno())
     shutdown = 0
     return_value = 0
@@ -132,23 +156,17 @@ def init(server, eventHandler):
                 continue
             if isinstance(event, bb.event.ParseStarted):
                 if interactive:
-                    pbar = progressbar.ProgressBar(widgets=widgets,
-                                                   maxval=event.total).start()
+                    progress = BBProgress
                 else:
-                    sys.stdout.write("Parsing recipes...")
-                    sys.stdout.flush()
+                    progress = NonInteractiveProgress
+                parseprogress = progress("Parsing recipes", event.total).start()
                 continue
             if isinstance(event, bb.event.ParseProgress):
-                if interactive:
-                    pbar.update(event.current)
+                parseprogress.update(event.current)
                 continue
             if isinstance(event, bb.event.ParseCompleted):
-                if interactive:
-                    pbar.update(pbar.maxval)
-                else:
-                    sys.stdout.write("done.\n")
-                    sys.stdout.flush()
-                print(("\nParsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
+                parseprogress.finish()
+                print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
                     % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
