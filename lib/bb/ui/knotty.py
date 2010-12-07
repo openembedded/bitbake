@@ -118,10 +118,8 @@ def init(server, eventHandler):
                 activetasks, failedtasks = helper.getTasks()
                 if activetasks:
                     print("Waiting for %s active tasks to finish:" % len(activetasks))
-                    tasknum = 1
-                    for task in activetasks:
+                    for tasknum, task in enumerate(activetasks):
                         print("%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task))
-                        tasknum = tasknum + 1
 
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
