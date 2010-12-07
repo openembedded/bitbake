@@ -142,42 +142,29 @@ class DataSmart(MutableMapping):
                     logger.info("Untracked delVar")
 
         # now on to the appends and prepends
-        if "_append" in self._special_values:
-            appends = self._special_values["_append"] or []
-            for append in appends:
-                keep = []
-                for (a, o) in self.getVarFlag(append, "_append") or []:
-                    if o and not o in overrides:
-                        keep.append((a ,o))
-                        continue
+        for op in __setvar_keyword__:
+            if op in self._special_values:
+                appends = self._special_values[op] or []
+                for append in appends:
+                    keep = []
+                    for (a, o) in self.getVarFlag(append, op) or []:
+                        if o and not o in overrides:
+                            keep.append((a ,o))
+                            continue
 
-                    sval = self.getVar(append, False) or ""
-                    sval += a
-                    self.setVar(append, sval)
-                # We save overrides that may be applied at some later stage
-                if keep:
-                    self.setVarFlag(append, "_append", keep)
-                else:
-                    self.delVarFlag(append, "_append")
+                        if op is "_append":
+                            sval = self.getVar(append, False) or ""
+                            sval += a
+                            self.setVar(append, sval)
+                        elif op is "_prepend":
+                            sval = a + (self.getVar(append, False) or "")
+                            self.setVar(append, sval)
 
-        if "_prepend" in self._special_values:
-            prepends = self._special_values["_prepend"] or []
-            for prepend in prepends:
-                keep = []
-                for (a, o) in self.getVarFlag(prepend, "_prepend") or []:
-                    if o and not o in overrides:
-                        keep.append((a ,o))
-                        continue
-
-                    sval = a + (self.getVar(prepend, False) or "")
-                    self.setVar(prepend, sval)
-
-                # We save overrides that may be applied at some later stage
-                if keep:
-                    self.setVarFlag(prepend, "_prepend", keep)
-                else:
-                    self.delVarFlag(prepend, "_prepend")
-
+                    # We save overrides that may be applied at some later stage
+                    if keep:
+                        self.setVarFlag(append, op, keep)
+                    else:
+                        self.delVarFlag(append, op)
 
     def initVar(self, var):
         self.expand_cache = {}
