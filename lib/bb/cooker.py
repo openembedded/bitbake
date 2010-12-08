@@ -52,16 +52,8 @@ class NothingToBuild(Exception):
     Exception raised when there is nothing to build
     """
 
-
-# Different states cooker can be in
-cookerClean = 1
-cookerParsing = 2
-cookerParsed = 3
-
-# Different action states the cooker can be in
-cookerRun = 1           # Cooker is running normally
-cookerShutdown = 2      # Active tasks should be brought to a controlled stop
-cookerStop = 3          # Stop, now!
+class state:
+    initial, parsing, running, shutdown, stop = range(5)
 
 #============================================================================#
 # BBCooker
@@ -109,8 +101,7 @@ class BBCooker:
                 termios.tcsetattr(fd, termios.TCSANOW, tcattr)
 
         self.command = bb.command.Command(self)
-        self.cookerState = cookerClean
-        self.cookerAction = cookerRun
+        self.state = state.initial
 
     def parseConfiguration(self):
 
@@ -668,9 +659,9 @@ class BBCooker:
 
         def buildFileIdle(server, rq, abort):
 
-            if abort or self.cookerAction == cookerStop:
+            if abort or self.state == state.stop:
                 rq.finish_runqueue(True)
-            elif self.cookerAction == cookerShutdown:
+            elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
             failures = 0
             try:
@@ -705,9 +696,9 @@ class BBCooker:
         targets = self.checkPackages(targets)
 
         def buildTargetsIdle(server, rq, abort):
-            if abort or self.cookerAction == cookerStop:
+            if abort or self.state == state.stop:
                 rq.finish_runqueue(True)
-            elif self.cookerAction == cookerShutdown:
+            elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
             failures = 0
             try:
@@ -747,12 +738,10 @@ class BBCooker:
         self.server.register_idle_function(buildTargetsIdle, rq)
 
     def updateCache(self):
-
-        if self.cookerState == cookerParsed:
+        if self.state == state.running:
             return
 
-        if self.cookerState != cookerParsing:
-
+        if self.state != state.parsing:
             self.parseConfiguration ()
 
             # Import Psyco if available and not disabled
@@ -782,12 +771,12 @@ class BBCooker:
             bb.data.renameVar("__depends", "__base_depends", self.configuration.data)
 
             self.parser = CookerParser(self, filelist, masked)
-            self.cookerState = cookerParsing
+            self.state = state.parsing
 
         if not self.parser.parse_next():
             collectlog.debug(1, "parsing complete")
             self.buildDepgraph()
-            self.cookerState = cookerParsed
+            self.state = state.running
             return None
 
         return True

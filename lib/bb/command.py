@@ -81,7 +81,8 @@ class Command:
                 (command, options) = self.currentAsyncCommand
                 commandmethod = getattr(CommandsAsync, command)
                 needcache = getattr( commandmethod, "needcache" )
-                if needcache and self.cooker.cookerState != bb.cooker.cookerParsed:
+                if (needcache and self.cooker.state in
+                    (bb.cooker.state.initial, bb.cooker.state.parsing)):
                     self.cooker.updateCache()
                     return True
                 else:
@@ -123,13 +124,13 @@ class CommandsSync:
         """
         Trigger cooker 'shutdown' mode
         """
-        command.cooker.cookerAction = bb.cooker.cookerShutdown
+        command.cooker.state = bb.cooker.state.shutdown
 
     def stateStop(self, command, params):
         """
         Stop the cooker
         """
-        command.cooker.cookerAction = bb.cooker.cookerStop
+        command.cooker.state = bb.cooker.state.stop
 
     def getCmdLineAction(self, command, params):
         """
