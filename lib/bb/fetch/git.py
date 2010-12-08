@@ -180,14 +180,20 @@ class Git(Fetch):
             readpathspec = ""
             coprefix = os.path.join(codir, "git", "")
 
-        bb.mkdirhier(codir)
-        os.chdir(ud.clonedir)
-        runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
-        runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, coprefix), d)
+        scmdata = ud.parm.get("scmdata", "")
+        if scmdata == "keep":
+            runfetchcmd("%s clone -n %s %s" % (ud.basecmd, ud.clonedir, coprefix), d)
+            os.chdir(coprefix)
+            runfetchcmd("%s checkout -q -f %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
+        else:
+            bb.mkdirhier(codir)
+            os.chdir(ud.clonedir)
+            runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
+            runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, coprefix), d)
 
         os.chdir(codir)
         logger.info("Creating tarball of git checkout")
-        runfetchcmd("tar --exclude '.git' -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
+        runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
 
         os.chdir(ud.clonedir)
         bb.utils.prunedir(codir)

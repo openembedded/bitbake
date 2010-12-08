@@ -149,14 +149,20 @@ class Cvs(Fetch):
                 pass
             raise FetchError(ud.module)
 
+        scmdata = ud.parm.get("scmdata", "")
+        if scmdata == "keep":
+            tar_flags = ""
+        else:
+            tar_flags = "--exclude 'CVS'"
+
         # tar them up to a defined filename
         if 'fullpath' in ud.parm:
             os.chdir(pkgdir)
-            myret = os.system("tar --exclude 'CVS' -czf %s %s" % (ud.localpath, localdir))
+            myret = os.system("tar %s -czf %s %s" % (tar_flags, ud.localpath, localdir))
         else:
             os.chdir(moddir)
             os.chdir('..')
-            myret = os.system("tar -czf %s %s" % (ud.localpath, os.path.basename(moddir)))
+            myret = os.system("tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.basename(moddir)))
 
         if myret != 0:
             try:

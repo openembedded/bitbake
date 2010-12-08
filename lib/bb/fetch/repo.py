@@ -79,8 +79,14 @@ class Repo(Fetch):
         runfetchcmd("repo sync", d)
         os.chdir(codir)
 
+        scmdata = ud.parm.get("scmdata", "")
+        if scmdata == "keep":
+            tar_flags = ""
+        else:
+            tar_flags = "--exclude '.repo' --exclude '.git'"
+
         # Create a cache
-        runfetchcmd("tar --exclude=.repo --exclude=.git -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
+        runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.join(".", "*") ), d)
 
     def supports_srcrev(self):
         return False

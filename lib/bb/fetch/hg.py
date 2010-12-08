@@ -143,9 +143,15 @@ class Hg(Fetch):
         logger.debug(1, "Running %s", updatecmd)
         runfetchcmd(updatecmd, d)
 
+        scmdata = ud.parm.get("scmdata", "")
+        if scmdata == "keep":
+            tar_flags = ""
+        else:
+            tar_flags = "--exclude '.hg' --exclude '.hgrags'"
+
         os.chdir(ud.pkgdir)
         try:
-            runfetchcmd("tar --exclude '.hg' --exclude '.hgrags' -czf %s %s" % (ud.localpath, ud.module), d)
+            runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d)
         except:
             t, v, tb = sys.exc_info()
             try:
