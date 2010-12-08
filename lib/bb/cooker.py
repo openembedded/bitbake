@@ -921,6 +921,12 @@ class BBCooker:
 
         bb.event.fire(CookerExit(), self.configuration.event_data)
 
+    def shutdown(self):
+        self.state = state.shutdown
+
+    def stop(self):
+        self.state = state.stop
+
 class CookerExit(bb.event.Event):
     """
     Notify clients of the Cooker shutdown
