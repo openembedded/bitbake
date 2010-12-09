@@ -49,7 +49,7 @@ class MainWindow (gtk.Window):
         self.set_default_size(640, 480)
         scrolled_window.add (self.cur_build_tv)
 
-def init (server, eventHandler):
+def main (server, eventHandler):
     gobject.threads_init()
     gtk.gdk.threads_init()
 

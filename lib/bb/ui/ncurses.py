@@ -324,7 +324,7 @@ class NCursesUI:
                 shutdown = shutdown + 1
                 pass
 
-def init(server, eventHandler):
+def main(server, eventHandler):
     if not os.isatty(sys.stdout.fileno()):
         print("FATAL: Unable to run 'ncurses' UI without a TTY.")
         return

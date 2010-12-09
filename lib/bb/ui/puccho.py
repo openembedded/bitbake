@@ -390,7 +390,7 @@ def running_build_failed_cb (running_build, manager):
     print("build failed")
     manager.notify_build_failed ()
 
-def init (server, eventHandler):
+def main (server, eventHandler):
     # Initialise threading...
     gobject.threads_init()
     gtk.gdk.threads_init()

@@ -185,7 +185,7 @@ class gtkthread(threading.Thread):
         gtk.main()
         gtkthread.quit.set()
 
-def init(server, eventHandler):
+def main(server, eventHandler):
 
     try:
         cmdline = server.runCommand(["getCmdLineAction"])

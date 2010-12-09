@@ -40,15 +40,11 @@ from bb import cooker
 from bb import ui
 from bb import server
 from bb.server import none
-#from bb.server import xmlrpc
 
 __version__ = "1.11.0"
 logger = logging.getLogger("BitBake")
 
 
-#============================================================================#
-# BBOptions
-#============================================================================#
 class BBConfiguration(object):
     """
     Manages build options and configurations for one run
@@ -89,13 +85,8 @@ warnings.filterwarnings("ignore", category=PendingDeprecationWarning)
 warnings.filterwarnings("ignore", category=ImportWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning, module="<string>$")
 
-#============================================================================#
-# main
-#============================================================================#
 
 def main():
-    return_value = 1
-
     parser = optparse.OptionParser(
         version = "BitBake Build Tool Core version %s, %%prog version %s" % (bb.__version__, __version__),
         usage = """%prog [options] [package ...]
@@ -170,7 +161,6 @@ Default BBFILES are the .bb files in the current directory.""")
     loghandler = event.LogHandler()
     logger.addHandler(loghandler)
 
-    #server = bb.server.xmlrpc
     server = bb.server.none
 
     # Save a logfile for cooker into the current working directory. When the
@@ -186,7 +176,6 @@ Default BBFILES are the .bb files in the current directory.""")
     bb.utils.clean_environment()
 
     cooker = bb.cooker.BBCooker(configuration, server)
-
     cooker.parseCommandLine()
 
     serverinfo = server.BitbakeServerInfo(cooker.server)
@@ -197,7 +186,7 @@ Default BBFILES are the .bb files in the current directory.""")
     logger.removeHandler(loghandler)
 
     # Setup a connection to the server (cooker)
-    serverConnection = server.BitBakeServerConnection(serverinfo)
+    server_connection = server.BitBakeServerConnection(serverinfo)
 
     # Launch the UI
     if configuration.ui:
@@ -210,17 +199,15 @@ Default BBFILES are the .bb files in the current directory.""")
             # Dynamically load the UI based on the ui name. Although we
             # suggest a fixed set this allows you to have flexibility in which
             # ones are available.
-            uimodule = __import__("bb.ui", fromlist = [ui])
-            ui_init = getattr(uimodule, ui).init
+            module = __import__("bb.ui", fromlist = [ui])
+            ui_main = getattr(module, ui).main
         except AttributeError:
             print("FATAL: Invalid user interface '%s' specified. " % ui)
             print("Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'.")
         else:
-            return_value = ui_init(serverConnection.connection, serverConnection.events)
+            return ui_main(server_connection.connection, server_connection.events)
     finally:
-        serverConnection.terminate()
-
-    return return_value
+        server_connection.terminate()
 
 if __name__ == "__main__":
     ret = main()

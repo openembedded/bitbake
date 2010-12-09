@@ -66,7 +66,7 @@ class BBLogFormatter(logging.Formatter):
         else:
             return logging.Formatter.format(self, record)
 
-def init(server, eventHandler):
+def main(server, eventHandler):
 
     # Get values of variables which control our output
     includelogs = server.runCommand(["getVariable", "BBINCLUDELOGS"])
