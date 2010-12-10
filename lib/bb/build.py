@@ -209,7 +209,7 @@ def exec_func_python(func, d, runfile, cwd=None):
         if sys.exc_info()[0] in (bb.parse.SkipPackage, bb.build.FuncFailed):
             raise
 
-        raise FuncFailed(func, logfile.name)
+        raise FuncFailed(func, None)
     finally:
         os.chdir(olddir)
 
