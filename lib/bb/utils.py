@@ -794,3 +794,18 @@ def init_logger(logger, verbose, debug, debug_domains):
 
     if debug_domains:
         bb.msg.set_debug_domains(debug_domains)
+
+@contextmanager
+def redirected_fds(from_files, to_files):
+    assert len(from_files) == len(to_files), 'from_files / to_files length mismatch'
+
+    old_fds = []
+    for position, fobj in enumerate(from_files):
+        fd = fobj.fileno()
+        old_fds.append(os.dup(fd))
+        os.dup2(to_files[position].fileno(), fd)
+
+    yield
+
+    for position, fd in enumerate(old_fds):
+        os.dup2(fd, from_files[position].fileno())
