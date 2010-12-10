@@ -371,7 +371,7 @@ def fileslocked(files):
     locks = []
     if files:
         for lockfile in files:
-            locks.append(bb.utils.lockfile(lock))
+            locks.append(bb.utils.lockfile(lockfile))
 
     yield
 
