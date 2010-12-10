@@ -25,13 +25,14 @@
 #
 #Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-from bb import data, event, mkdirhier, utils
 import os
 import sys
 import logging
 import bb
 import bb.utils
 import bb.process
+from contextlib import nested
+from bb import data, event, mkdirhier, utils
 
 logger = logging.getLogger("BitBake.Build")
 
@@ -160,46 +161,41 @@ def exec_func(func, d, dirs = None):
         except OSError:
            pass
 
-    locks = []
-    lockfiles = flags.get('lockfiles')
-    if lockfiles:
-        for lock in data.expand(lockfiles, d).split():
-            locks.append(bb.utils.lockfile(lock))
-
-    # When debugging, ensure stdout from the tasks is shown to the user as
-    # well as written to the log file
     if logger.getEffectiveLevel() <= logging.DEBUG:
         logfile = tee(logfn, 'w')
     else:
         logfile = open(logfn, 'w')
 
-    try:
-        if ispython:
-            exec_func_python(func, d, runfile, logfile, cwd=adir)
-        else:
-            exec_func_shell(func, d, runfile, logfile, cwd=adir, fakeroot=fakeroot)
-    finally:
-        logfile.close()
-        for lock in locks:
-            bb.utils.unlockfile(lock)
+    lockflag = flags.get('lockfiles')
+    if lockflag:
+        lockfiles = [data.expand(f, d) for f in lockflag.split()]
+    else:
+        lockfiles = None
 
-        if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
-            logger.debug(2, "Zero size logfn %s, removing", logfn)
-            bb.utils.remove(logfn)
-            bb.utils.remove(loglink)
+    with nested(logfile, bb.utils.fileslocked(lockfiles)):
+        try:
+            if ispython:
+                exec_func_python(func, d, runfile, cwd=adir)
+            else:
+                exec_func_shell(func, d, runfile, logfile, cwd=adir, fakeroot=fakeroot)
+        finally:
+            if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
+                logger.debug(2, "Zero size logfn %s, removing", logfn)
+                bb.utils.remove(logfn)
+                bb.utils.remove(loglink)
 
-functionfmt = """
+_functionfmt = """
 def {function}(d):
 {body}
 
 {function}(d)
 """
-def exec_func_python(func, d, runfile, logfile, cwd=None):
+def exec_func_python(func, d, runfile, cwd=None):
     """Execute a python BB 'function'"""
 
     bbfile = d.getVar('file', True)
     olddir = os.getcwd()
-    code = functionfmt.format(function=func, body=d.getVar(func, True))
+    code = _functionfmt.format(function=func, body=d.getVar(func, True))
     with open(runfile, 'w') as script:
         script.write(code)
 

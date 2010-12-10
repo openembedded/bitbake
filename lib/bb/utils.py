@@ -26,6 +26,7 @@ import logging
 import bb
 import bb.msg
 from commands import getstatusoutput
+from contextlib import contextmanager
 
 logger = logging.getLogger("BitBake.Util")
 
@@ -363,6 +364,18 @@ def simple_exec(code, context):
 
 def better_eval(source, locals):
     return eval(source, _context, locals)
+
+@contextmanager
+def fileslocked(files):
+    locks = []
+    if files:
+        for lockfile in files:
+            locks.append(bb.utils.lockfile(lock))
+
+    yield
+
+    for lock in locks:
+        bb.utils.unlockfile(lock)
 
 def lockfile(name):
     """
