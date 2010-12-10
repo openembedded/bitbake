@@ -204,7 +204,7 @@ class Git(Fetch):
         """
         Return a unique key for the url
         """
-        return "git:" + ud.host + ud.path.replace('/', '.') + ud.branch
+        return "git:" + ud.host + ud.path.replace('/', '.')
 
     def _latest_revision(self, url, ud, d):
         """
