@@ -31,8 +31,12 @@ import sys
 import logging
 import bb
 import bb.utils
+import bb.process
 
 logger = logging.getLogger("BitBake.Build")
+
+NULL = open('/dev/null', 'r')
+
 
 # When we execute a python function we'd like certain things
 # in all namespaces, hence we add them to __builtins__
@@ -97,7 +101,15 @@ class InvalidTask(Exception):
     def __str__(self):
         return "No such task '%s'" % self.task
 
-# functions
+
+class tee(file):
+    def write(self, string):
+        logger.plain(string)
+        file.write(self, string)
+
+    def __repr__(self):
+        return "<open[tee] file '{0}'>".format(self.name)
+
 
 def exec_func(func, d, dirs = None):
     """Execute an BB 'function'"""
@@ -108,19 +120,13 @@ def exec_func(func, d, dirs = None):
         return
 
     flags = data.getVarFlags(func, d)
-    for item in ['deps', 'check', 'interactive', 'python', 'cleandirs', 'dirs', 'lockfiles', 'fakeroot']:
-        if not item in flags:
-            flags[item] = None
-
-    ispython = flags['python']
-
-    cleandirs = flags['cleandirs']
+    cleandirs = flags.get('cleandirs')
     if cleandirs:
         for cdir in data.expand(cleandirs, d).split():
             os.system("rm -rf %s" % cdir)
 
     if dirs is None:
-        dirs = flags['dirs']
+        dirs = flags.get('dirs')
         if dirs:
             dirs = data.expand(dirs, d).split()
 
@@ -130,177 +136,125 @@ def exec_func(func, d, dirs = None):
         adir = dirs[-1]
     else:
         adir = data.getVar('B', d, 1)
+        bb.utils.mkdirhier(adir)
 
-    # Save current directory
-    try:
-        prevdir = os.getcwd()
-    except OSError:
-        prevdir = data.getVar('TOPDIR', d, True)
+    ispython = flags.get('python')
+    fakeroot = flags.get('fakeroot')
 
-    # Setup logfiles
     t = data.getVar('T', d, 1)
     if not t:
-        raise SystemExit("T variable not set, unable to build")
+        bb.fatal("T variable not set, unable to build")
     bb.utils.mkdirhier(t)
-    loglink = "%s/log.%s" % (t, func)
-    logfile = "%s/log.%s.%s" % (t, func, str(os.getpid()))
-    runfile = "%s/run.%s.%s" % (t, func, str(os.getpid()))
+    loglink = os.path.join(t, 'log.{0}'.format(func))
+    logfn = os.path.join(t, 'log.{0}.{1}'.format(func, os.getpid()))
+    runfile = os.path.join(t, 'run.{0}.{1}'.format(func, os.getpid()))
 
-    # Even though the log file has not yet been opened, lets create the link
     if loglink:
         try:
            os.remove(loglink)
-        except OSError as e:
+        except OSError:
            pass
 
         try:
-           os.symlink(logfile, loglink)
-        except OSError as e:
+           os.symlink(logfn, loglink)
+        except OSError:
            pass
 
-    # Change to correct directory (if specified)
-    if adir and os.access(adir, os.F_OK):
-        os.chdir(adir)
-
-    # Handle logfiles
-    si = file('/dev/null', 'r')
-    try:
-        if logger.getEffectiveLevel() <= logging.DEBUG or ispython:
-            so = os.popen("tee \"%s\"" % logfile, "w")
-        else:
-            so = file(logfile, 'w')
-    except OSError:
-        logger.exception("Opening log file '%s'", logfile)
-        pass
-
-    se = so
-
-    # Dup the existing fds so we dont lose them
-    osi = [os.dup(sys.stdin.fileno()), sys.stdin.fileno()]
-    oso = [os.dup(sys.stdout.fileno()), sys.stdout.fileno()]
-    ose = [os.dup(sys.stderr.fileno()), sys.stderr.fileno()]
-
-    # Replace those fds with our own
-    os.dup2(si.fileno(), osi[1])
-    os.dup2(so.fileno(), oso[1])
-    os.dup2(se.fileno(), ose[1])
-
     locks = []
-    lockfiles = flags['lockfiles']
+    lockfiles = flags.get('lockfiles')
     if lockfiles:
         for lock in data.expand(lockfiles, d).split():
             locks.append(bb.utils.lockfile(lock))
 
+    # When debugging, ensure stdout from the tasks is shown to the user as
+    # well as written to the log file
+    if logger.getEffectiveLevel() <= logging.DEBUG:
+        logfile = tee(logfn, 'w')
+    else:
+        logfile = open(logfn, 'w')
+
     try:
-        # Run the function
         if ispython:
-            exec_func_python(func, d, runfile, logfile)
+            exec_func_python(func, d, runfile, logfile, cwd=adir)
         else:
-            exec_func_shell(func, d, runfile, logfile, flags)
-
-        # Restore original directory
-        try:
-            os.chdir(prevdir)
-        except:
-            pass
-
+            exec_func_shell(func, d, runfile, logfile, cwd=adir, fakeroot=fakeroot)
     finally:
-
-        # Unlock any lockfiles
+        logfile.close()
         for lock in locks:
             bb.utils.unlockfile(lock)
 
-        # Restore the backup fds
-        os.dup2(osi[0], osi[1])
-        os.dup2(oso[0], oso[1])
-        os.dup2(ose[0], ose[1])
+        if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
+            logger.debug(2, "Zero size logfn %s, removing", logfn)
+            bb.utils.remove(logfn)
+            bb.utils.remove(loglink)
 
-        # Close our logs
-        si.close()
-        so.close()
-        se.close()
+functionfmt = """
+def {function}(d):
+{body}
 
-        if os.path.exists(logfile) and os.path.getsize(logfile) == 0:
-            logger.debug(2, "Zero size logfile %s, removing", logfile)
-            os.remove(logfile)
-            try:
-               os.remove(loglink)
-            except OSError as e:
-               pass
-
-        # Close the backup fds
-        os.close(osi[0])
-        os.close(oso[0])
-        os.close(ose[0])
-
-def exec_func_python(func, d, runfile, logfile):
+{function}(d)
+"""
+def exec_func_python(func, d, runfile, logfile, cwd=None):
     """Execute a python BB 'function'"""
 
-    bbfile = bb.data.getVar('FILE', d, 1)
-    tmp  = "def " + func + "(d):\n%s" % data.getVar(func, d)
-    tmp += '\n' + func + '(d)'
+    bbfile = d.getVar('file', True)
+    olddir = os.getcwd()
+    code = functionfmt.format(function=func, body=d.getVar(func, True))
+    with open(runfile, 'w') as script:
+        script.write(code)
 
-    f = open(runfile, "w")
-    f.write(tmp)
-    comp = utils.better_compile(tmp, func, bbfile)
+    if cwd:
+        os.chdir(cwd)
+
     try:
-        utils.better_exec(comp, {"d": d}, tmp, bbfile)
+        comp = utils.better_compile(code, func, bbfile)
+        utils.better_exec(comp, {"d": d}, code, bbfile)
     except:
         if sys.exc_info()[0] in (bb.parse.SkipPackage, bb.build.FuncFailed):
             raise
 
-        raise FuncFailed(func, logfile)
+        raise FuncFailed(func, logfile.name)
+    finally:
+        os.chdir(olddir)
 
-def exec_func_shell(func, d, runfile, logfile, flags):
-    """Execute a shell BB 'function' Returns true if execution was successful.
-
-    For this, it creates a bash shell script in the tmp dectory, writes the local
-    data into it and finally executes. The output of the shell will end in a log file and stdout.
+def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
+    """Execute a shell function from the metadata
 
     Note on directory behavior.  The 'dirs' varflag should contain a list
     of the directories you need created prior to execution.  The last
     item in the list is where we will chdir/cd to.
     """
 
-    deps = flags['deps']
-    check = flags['check']
-    if check in globals():
-        if globals()[check](func, deps):
-            return
+    with open(runfile, 'w') as script:
+        script.write('#!/bin/sh -e\n')
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            script.write("set -x\n")
+        data.emit_env(script, d)
 
-    f = open(runfile, "w")
-    f.write("#!/bin/sh -e\n")
-    if logger.getEffectiveLevel() <= logging.DEBUG:
-        f.write("set -x\n")
-    data.emit_env(f, d)
+        script.write("%s\n" % function)
+        os.fchmod(script.fileno(), 0775)
 
-    f.write("cd %s\n" % os.getcwd())
-    if func: f.write("%s\n" % func)
-    f.close()
-    os.chmod(runfile, 0775)
-    if not func:
-        raise TypeError("Function argument must be a string")
-
-    # execute function
-    if flags['fakeroot']:
-        maybe_fakeroot = "PATH=\"%s\" %s " % (bb.data.getVar("PATH", d, 1), bb.data.getVar("FAKEROOT", d, 1) or "fakeroot")
+    env = {
+        'PATH': d.getVar('PATH', True),
+        'LANG': 'C',
+    }
+    if fakeroot:
+        cmd = ['fakeroot', runfile]
     else:
-        maybe_fakeroot = ''
-    lang_environment = "LC_ALL=C "
-    ret = os.system('%s%ssh -e %s' % (lang_environment, maybe_fakeroot, runfile))
+        cmd = runfile
 
-    if ret == 0:
-        return
-
-    raise FuncFailed(func, logfile)
-
+    try:
+        bb.process.run(cmd, env=env, cwd=cwd, shell=False, stdin=NULL,
+                       log=logfile)
+    except bb.process.CmdError:
+        raise FuncFailed(function, logfile.name)
 
 def exec_task(fn, task, d):
-    """Execute an BB 'task'
+    """Execute a BB 'task'
 
-       The primary difference between executing a task versus executing
-       a function is that a task exists in the task digraph, and therefore
-       has dependencies amongst other tasks."""
+    Execution of a task involves a bit more setup than executing a function,
+    running it with its own local metadata, and with some useful variables set.
+    """
 
     # Check whther this is a valid task
     if not data.getVarFlag(task, 'task', d):

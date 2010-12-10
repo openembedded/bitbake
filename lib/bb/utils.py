@@ -522,6 +522,17 @@ def build_environment(d):
         if export:
             os.environ[var] = bb.data.getVar(var, d, True) or ""
 
+def remove(path, recurse=False):
+    """Equivalent to rm -f or rm -rf"""
+    import os, errno, shutil
+    try:
+        os.unlink(path)
+    except OSError, exc:
+        if recurse and exc.errno == errno.EISDIR:
+            shutil.rmtree(path)
+        elif exc.errno != errno.ENOENT:
+            raise
+
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
     # CAUTION:  This is dangerous!
