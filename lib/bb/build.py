@@ -38,7 +38,7 @@ from bb import data, event, mkdirhier, utils
 bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
 
-NULL = open('/dev/null', 'r')
+NULL = open('/dev/null', 'a')
 
 
 # When we execute a python function we'd like certain things
@@ -205,6 +205,9 @@ def exec_func_python(func, d, runfile, logfile, cwd=None):
     if cwd:
         os.chdir(cwd)
 
+    stdout, stderr = sys.stdout, sys.stderr
+    sys.stdout, sys.stderr = NULL, NULL
+
     handler = logging.StreamHandler(logfile)
     handler.setFormatter(logformatter)
     bblogger.addHandler(handler)
@@ -219,6 +222,7 @@ def exec_func_python(func, d, runfile, logfile, cwd=None):
         raise FuncFailed(func, None)
     finally:
         bblogger.removeHandler(handler)
+        sys.stdout, sys.stderr = stdout, stderr
         os.chdir(olddir)
 
 def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
