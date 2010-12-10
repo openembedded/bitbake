@@ -56,17 +56,6 @@ class BBConfiguration(object):
         self.pkgs_to_build = []
 
 
-def print_exception(*exc_info):
-    if not isinstance(exc_info[0], SystemExit):
-        if isinstance(exc_info[0], KeyboardInterrupt):
-            logger.error("User aborted.")
-        else:
-            logger.error("Uncaught exception: ", exc_info=exc_info)
-    sys.exit(1)
-
-sys.excepthook = print_exception
-
-
 # Display bitbake/OE warnings via the BitBake.Warnings logger, ignoring others"""
 warnlog = logging.getLogger("BitBake.Warnings")
 _warnings_showwarning = warnings.showwarning
@@ -210,5 +199,10 @@ Default BBFILES are the .bb files in the current directory.""")
         server_connection.terminate()
 
 if __name__ == "__main__":
-    ret = main()
+    try:
+        ret = main()
+    except Exception:
+        ret = 1
+        import traceback
+        traceback.print_exc(5)
     sys.exit(ret)
