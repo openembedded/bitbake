@@ -24,7 +24,10 @@ BitBake build tools.
 
 import os, sys
 import warnings
-import pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 import logging
 import atexit
 import bb.utils
