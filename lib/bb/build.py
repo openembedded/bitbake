@@ -139,7 +139,8 @@ def exec_func(func, d, dirs = None):
         adir = dirs[-1]
     else:
         adir = data.getVar('B', d, 1)
-        bb.utils.mkdirhier(adir)
+        if not os.path.exists(adir):
+            adir = None
 
     ispython = flags.get('python')
     fakeroot = flags.get('fakeroot')
