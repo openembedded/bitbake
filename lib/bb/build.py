@@ -29,12 +29,14 @@ import os
 import sys
 import logging
 import bb
+import bb.msg
 import bb.utils
 import bb.process
 from contextlib import nested
 from bb import data, event, mkdirhier, utils
 
-logger = logging.getLogger("BitBake.Build")
+bblogger = logging.getLogger('BitBake')
+logger = logging.getLogger('BitBake.Build')
 
 NULL = open('/dev/null', 'r')
 
@@ -175,7 +177,7 @@ def exec_func(func, d, dirs = None):
     with nested(logfile, bb.utils.fileslocked(lockfiles)):
         try:
             if ispython:
-                exec_func_python(func, d, runfile, cwd=adir)
+                exec_func_python(func, d, runfile, logfile, cwd=adir)
             else:
                 exec_func_shell(func, d, runfile, logfile, cwd=adir, fakeroot=fakeroot)
         finally:
@@ -190,7 +192,8 @@ def {function}(d):
 
 {function}(d)
 """
-def exec_func_python(func, d, runfile, cwd=None):
+logformatter = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+def exec_func_python(func, d, runfile, logfile, cwd=None):
     """Execute a python BB 'function'"""
 
     bbfile = d.getVar('file', True)
@@ -202,6 +205,10 @@ def exec_func_python(func, d, runfile, cwd=None):
     if cwd:
         os.chdir(cwd)
 
+    handler = logging.StreamHandler(logfile)
+    handler.setFormatter(logformatter)
+    bblogger.addHandler(handler)
+
     try:
         comp = utils.better_compile(code, func, bbfile)
         utils.better_exec(comp, {"d": d}, code, bbfile)
@@ -211,6 +218,7 @@ def exec_func_python(func, d, runfile, cwd=None):
 
         raise FuncFailed(func, None)
     finally:
+        bblogger.removeHandler(handler)
         os.chdir(olddir)
 
 def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):

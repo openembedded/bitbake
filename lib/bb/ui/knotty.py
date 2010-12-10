@@ -26,6 +26,7 @@ import itertools
 import xmlrpclib
 import logging
 import progressbar
+import bb.msg
 from bb import ui
 from bb.ui import uihelper
 
@@ -57,15 +58,6 @@ class NonInteractiveProgress(object):
         self.fobj.write("done.\n")
         self.fobj.flush()
 
-class BBLogFormatter(logging.Formatter):
-    """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
-
-    def format(self, record):
-        if record.levelno == logging.INFO + 1:
-            return record.getMessage()
-        else:
-            return logging.Formatter.format(self, record)
-
 def main(server, eventHandler):
 
     # Get values of variables which control our output
@@ -85,7 +77,7 @@ def main(server, eventHandler):
         logging.addLevelName(level, logging.getLevelName(logging.DEBUG))
 
     console = logging.StreamHandler(sys.stdout)
-    format = BBLogFormatter("%(levelname)s: %(message)s")
+    format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
     console.setFormatter(format)
     logger.addHandler(console)
 

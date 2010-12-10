@@ -30,6 +30,15 @@ import warnings
 import bb
 import bb.event
 
+class BBLogFormatter(logging.Formatter):
+    """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
+
+    def format(self, record):
+        if record.levelno == logging.INFO + 1:
+            return record.getMessage()
+        else:
+            return logging.Formatter.format(self, record)
+
 class Loggers(dict):
     def __getitem__(self, key):
         if key in self:
