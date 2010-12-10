@@ -367,6 +367,7 @@ def better_eval(source, locals):
 
 @contextmanager
 def fileslocked(files):
+    """Context manager for locking and unlocking file locks."""
     locks = []
     if files:
         for lockfile in files:
@@ -384,7 +385,7 @@ def lockfile(name):
     """
     path = os.path.dirname(name)
     if not os.path.isdir(path):
-        logger.error("Lockfile path '%s' does not exist", path)
+        logger.error("Lockfile destination directory '%s' does not exist", path)
         sys.exit(1)
 
     while True:
@@ -399,16 +400,16 @@ def lockfile(name):
         # lock is the most likely to win it.
 
         try:
-            lf = open(name, "a + ")
-            fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
-            statinfo = os.fstat(lf.fileno())
+            lf = open(name, 'a+')
+            fileno = lf.fileno()
+            fcntl.flock(fileno, fcntl.LOCK_EX)
+            statinfo = os.fstat(fileno)
             if os.path.exists(lf.name):
                 statinfo2 = os.stat(lf.name)
                 if statinfo.st_ino == statinfo2.st_ino:
                     return lf
-            # File no longer exists or changed, retry
-            lf.close
-        except Exception as e:
+            lf.close()
+        except Exception:
             continue
 
 def unlockfile(lf):
@@ -417,7 +418,7 @@ def unlockfile(lf):
     """
     os.unlink(lf.name)
     fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
-    lf.close
+    lf.close()
 
 def md5_file(filename):
     """
