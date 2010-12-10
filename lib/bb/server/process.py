@@ -22,6 +22,7 @@
 
 import logging
 import signal
+import sys
 import time
 import bb
 import bb.event
@@ -29,6 +30,7 @@ from multiprocessing import Process, Event
 from bb.cooker import BBCooker
 
 logger = logging.getLogger('BitBake')
+NULL = open('/dev/null', 'a')
 
 class ServerCommunicator():
     def __init__(self, connection):
@@ -86,6 +88,13 @@ class ProcessServer(Process):
         self._idlefunctions[function] = data
 
     def run(self):
+        """Run the server, killing off stdin/stdout/stderr"""
+        with bb.utils.redirected_fds([sys.stdin, sys.stdout, sys.stderr],
+                                     [NULL, NULL, NULL]):
+            return self.main()
+
+    def main(self):
+        """Server main loop"""
         # Ensure logging messages get sent to the UI as events
         logger.addHandler(bb.event.LogHandler())
 
@@ -105,7 +114,6 @@ class ProcessServer(Process):
         self.event_queue.cancel_join_thread()
         bb.event.unregister_UIHhandler(self.event_handle)
         self.command_channel.close()
-        return
 
     def idle_commands(self, delay):
         nextsleep = delay
