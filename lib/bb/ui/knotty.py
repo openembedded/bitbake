@@ -160,15 +160,15 @@ def main(server, eventHandler):
                     % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
                 continue
 
-            if isinstance(event, bb.command.CookerCommandCompleted):
+            if isinstance(event, bb.command.CommandCompleted):
                 break
-            if isinstance(event, bb.command.CookerCommandSetExitCode):
+            if isinstance(event, bb.command.CommandFailed):
                 return_value = event.exitcode
-                continue
-            if isinstance(event, bb.command.CookerCommandFailed):
-                return_value = 1
                 logger.error("Command execution failed: %s" % event.error)
                 break
+            if isinstance(event, bb.command.CommandExit):
+                return_value = event.exitcode
+                continue
             if isinstance(event, bb.cooker.CookerExit):
                 break
             if isinstance(event, bb.event.MultipleProviders):

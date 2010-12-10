@@ -35,12 +35,25 @@ import bb.data
 async_cmds = {}
 sync_cmds = {}
 
+
+class CommandCompleted(bb.event.Event):
+    pass
+
+class CommandExit(bb.event.Event):
+    def  __init__(self, exitcode):
+        bb.event.Event.__init__(self)
+        self.exitcode = int(exitcode)
+
+class CommandFailed(CommandExit):
+    def __init__(self, message):
+        self.error = message
+        CommandExit.__init__(self, 1)
+
 class Command:
     """
     A queue of asynchronous commands for bitbake
     """
     def __init__(self, cooker):
-
         self.cooker = cooker
         self.cmds_sync = CommandsSync()
         self.cmds_async = CommandsAsync()
@@ -105,11 +118,13 @@ class Command:
             self.finishAsyncCommand(traceback.format_exc())
             return False
 
-    def finishAsyncCommand(self, error = None):
-        if error:
-            bb.event.fire(CookerCommandFailed(error), self.cooker.configuration.event_data)
+    def finishAsyncCommand(self, msg=None, code=None):
+        if msg:
+            bb.event.fire(CommandFailed(msg), self.cooker.configuration.event_data)
+        elif code:
+            bb.event.fire(CommandExit(code), self.cooker.configuration.event_data)
         else:
-            bb.event.fire(CookerCommandCompleted(), self.cooker.configuration.event_data)
+            bb.event.fire(CommandCompleted(), self.cooker.configuration.event_data)
         self.currentAsyncCommand = None
 
 
@@ -249,33 +264,8 @@ class CommandsAsync:
         """
         Parse the .bb files
         """
-        command.cooker.compareRevisions()
-        command.finishAsyncCommand()
+        if bb.fetch.fetcher_compare_revisions(command.cooker.configuration.data):
+            command.finishAsyncCommand(code=1)
+        else:
+            command.finishAsyncCommand()
     compareRevisions.needcache = True
-
-#
-# Events
-#
-class CookerCommandCompleted(bb.event.Event):
-    """
-    Cooker command completed
-    """
-    def  __init__(self):
-        bb.event.Event.__init__(self)
-
-
-class CookerCommandFailed(bb.event.Event):
-    """
-    Cooker command completed
-    """
-    def  __init__(self, error):
-        bb.event.Event.__init__(self)
-        self.error = error
-
-class CookerCommandSetExitCode(bb.event.Event):
-    """
-    Set the exit code for a cooker command
-    """
-    def  __init__(self, exitcode):
-        bb.event.Event.__init__(self)
-        self.exitcode = int(exitcode)

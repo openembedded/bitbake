@@ -21,6 +21,8 @@ import gobject
 import gtk
 import threading
 import xmlrpclib
+import bb
+import bb.event
 from bb.ui.crumbs.progress import ProgressBar
 
 # Package Model
@@ -236,11 +238,13 @@ def main(server, eventHandler):
                 parse(event._depgraph, dep.pkg_model, dep.depends_model)
                 gtk.gdk.threads_leave()
 
-            if isinstance(event, bb.command.CookerCommandCompleted):
+            if isinstance(event, bb.command.CommandCompleted):
                 continue
-            if isinstance(event, bb.command.CookerCommandFailed):
+            if isinstance(event, bb.command.CommandFailed):
                 print("Command execution failed: %s" % event.error)
-                break
+                return event.exitcode
+            if isinstance(event, bb.command.CommandExit):
+                return event.exitcode
             if isinstance(event, bb.cooker.CookerExit):
                 break
 

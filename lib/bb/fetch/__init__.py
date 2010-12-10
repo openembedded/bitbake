@@ -173,7 +173,7 @@ def fetcher_init(d):
     pd.addDomain("BB_URI_HEADREVS")
     pd.addDomain("BB_URI_LOCALCOUNT")
 
-def fetcher_compare_revisons(d):
+def fetcher_compare_revisions(d):
     """
     Compare the revisions in the persistant cache with current values and
     return true/false on whether they've changed.

@@ -288,11 +288,13 @@ class NCursesUI:
 #                        else:
 #                            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
 
-                if isinstance(event, bb.command.CookerCommandCompleted):
+                if isinstance(event, bb.command.CommandCompleted):
                     exitflag = True
-                if isinstance(event, bb.command.CookerCommandFailed):
+                if isinstance(event, bb.command.CommandFailed):
                     mw.appendText("Command execution failed: %s" % event.error)
                     time.sleep(2)
+                    exitflag = True
+                if isinstance(event, bb.command.CommandExit):
                     exitflag = True
                 if isinstance(event, bb.cooker.CookerExit):
                     exitflag = True

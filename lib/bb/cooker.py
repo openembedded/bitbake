@@ -188,10 +188,6 @@ class BBCooker:
 
             logger.plain("%-35s %25s %25s", p, lateststr, prefstr)
 
-    def compareRevisions(self):
-        ret = bb.fetch.fetcher_compare_revisons(self.configuration.data)
-        bb.event.fire(bb.command.CookerCommandSetExitCode(ret), self.configuration.event_data)
-
     def showEnvironment(self, buildfile = None, pkgs_to_build = []):
         """
         Show the outer or per-package environment
