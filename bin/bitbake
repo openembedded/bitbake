@@ -56,6 +56,23 @@ class BBConfiguration(object):
         self.pkgs_to_build = []
 
 
+def get_ui(config):
+    if config.ui:
+        interface = config.ui
+    else:
+        interface = 'knotty'
+
+    try:
+        # Dynamically load the UI based on the ui name. Although we
+        # suggest a fixed set this allows you to have flexibility in which
+        # ones are available.
+        module = __import__("bb.ui", fromlist = [interface])
+        return getattr(module, interface).main
+    except AttributeError:
+        sys.exit("FATAL: Invalid user interface '%s' specified.\n"
+                 "Valid interfaces: ncurses, depexp, knotty [default]." % interface)
+
+
 # Display bitbake/OE warnings via the BitBake.Warnings logger, ignoring others"""
 warnlog = logging.getLogger("BitBake.Warnings")
 _warnings_showwarning = warnings.showwarning
@@ -148,6 +165,8 @@ Default BBFILES are the .bb files in the current directory.""")
     configuration = BBConfiguration(options)
     configuration.pkgs_to_build.extend(args[1:])
 
+    ui_main = get_ui(configuration)
+
     loghandler = event.LogHandler()
     logger.addHandler(loghandler)
 
@@ -178,24 +197,8 @@ Default BBFILES are the .bb files in the current directory.""")
     # Setup a connection to the server (cooker)
     server_connection = server.BitBakeServerConnection(serverinfo)
 
-    # Launch the UI
-    if configuration.ui:
-        ui = configuration.ui
-    else:
-        ui = "knotty"
-
     try:
-        try:
-            # Dynamically load the UI based on the ui name. Although we
-            # suggest a fixed set this allows you to have flexibility in which
-            # ones are available.
-            module = __import__("bb.ui", fromlist = [ui])
-            ui_main = getattr(module, ui).main
-        except AttributeError:
-            print("FATAL: Invalid user interface '%s' specified. " % ui)
-            print("Valid interfaces are 'ncurses', 'depexp' or the default, 'knotty'.")
-        else:
-            return ui_main(server_connection.connection, server_connection.events)
+        return ui_main(server_connection.connection, server_connection.events)
     finally:
         server_connection.terminate()
 
