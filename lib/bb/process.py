@@ -1,14 +1,15 @@
-import subprocess
-import signal
+import os
 import logging
+import signal
+import subprocess
 
 logger = logging.getLogger('BitBake.Process')
 
 def subprocess_setup():
     # Python installs a SIGPIPE handler by default. This is usually not what
     # non-Python subprocesses expect.
-    print('in preexec hook')
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    os.environ['PWD'] = os.getcwd()
 
 class CmdError(RuntimeError):
     def __init__(self, command):
