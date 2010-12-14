@@ -1,4 +1,3 @@
-import os
 import logging
 import signal
 import subprocess
@@ -9,7 +8,6 @@ def subprocess_setup():
     # Python installs a SIGPIPE handler by default. This is usually not what
     # non-Python subprocesses expect.
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
-    os.environ['PWD'] = os.getcwd()
 
 class CmdError(RuntimeError):
     def __init__(self, command):

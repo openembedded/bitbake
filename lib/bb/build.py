@@ -234,6 +234,9 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
     item in the list is where we will chdir/cd to.
     """
 
+    # Don't let the emitted shell script override PWD
+    d.delVarFlag('PWD', 'export')
+
     with open(runfile, 'w') as script:
         script.write('#!/bin/sh -e\n')
         if logger.getEffectiveLevel() <= logging.DEBUG:
