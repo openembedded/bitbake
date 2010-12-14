@@ -106,26 +106,24 @@ class InvalidTask(Exception):
 
 
 class LogTee(object):
-    def __init__(self, logger, *files):
-        self.files = files
+    def __init__(self, logger, outfile):
+        self.outfile = outfile
         self.logger = logger
+        self.name = self.outfile.name
 
     def write(self, string):
         self.logger.plain(string)
-        for f in self.files:
-            f.write(string)
+        self.outfile.write(string)
 
     def __enter__(self):
-        for f in self.files:
-            f.__enter__()
+        self.outfile.__enter__()
         return self
 
     def __exit__(self, *excinfo):
-        for f in self.files:
-            f.__exit__(*excinfo)
+        self.outfile.__exit__(*excinfo)
 
     def __repr__(self):
-        return '<LogTee {0}>'.format(', '.join(repr(f.name) for f in self.files))
+        return '<LogTee {0}>'.format(self.name)
 
 
 def exec_func(func, d, dirs = None):
