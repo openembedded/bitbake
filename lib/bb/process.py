@@ -10,8 +10,9 @@ def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 class CmdError(RuntimeError):
-    def __init__(self, command):
+    def __init__(self, command, message=None):
         self.command = command
+        self.message = message
 
     def __str__(self):
         if not isinstance(self.command, basestring):
@@ -19,7 +20,10 @@ class CmdError(RuntimeError):
         else:
             cmd = self.command
 
-        return "Execution of '%s' failed" % cmd
+        msg = "Execution of '%s' failed" % cmd
+        if self.message:
+            msg += ': %s' % self.message
+        return msg
 
 class NotFoundError(CmdError):
     def __str__(self):
@@ -94,7 +98,7 @@ def run(cmd, input=None, **options):
         if exc.errno == 2:
             raise NotFoundError(cmd)
         else:
-            raise
+            raise CmdError(cmd, exc)
 
     if log:
         stdout, stderr = _logged_communicate(pipe, log, input)
