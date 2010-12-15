@@ -1226,12 +1226,12 @@ class runQueueTaskCompleted(runQueueEvent):
         self.message = "Task %s completed (%s)" % (task, self.taskstring)
 
 def check_stamp_fn(fn, taskname, d):
-    rq = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", d)
+    rqexe = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", d)
     fn = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", d)
-    fnid = rq.rqdata.taskData.getfn_id(fn)
-    taskid = rq.rqdata.get_task_id(fnid, taskname)
+    fnid = rqexe.rqdata.taskData.getfn_id(fn)
+    taskid = rqexe.rqdata.get_task_id(fnid, taskname)
     if taskid is not None:
-        return rq.check_stamp_task(taskid)
+        return rqexe.rq.check_stamp_task(taskid)
     return None
 
 class runQueuePipe():
