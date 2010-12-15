@@ -256,7 +256,7 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
 
     env = {
         'PATH': d.getVar('PATH', True),
-        'LANG': 'C',
+        'LC_ALL': 'C',
     }
     if fakeroot:
         cmd = ['fakeroot', runfile]
