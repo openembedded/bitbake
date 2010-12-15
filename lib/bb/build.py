@@ -126,7 +126,7 @@ class LogTee(object):
         return '<LogTee {0}>'.format(self.name)
 
 
-def exec_func(func, d, dirs = None):
+def exec_func(func, d, dirs = None, logfile = NULL):
     """Execute an BB 'function'"""
 
     body = data.getVar(func, d)
@@ -157,43 +157,20 @@ def exec_func(func, d, dirs = None):
     ispython = flags.get('python')
     fakeroot = flags.get('fakeroot')
 
-    t = data.getVar('T', d, 1)
-    if not t:
-        bb.fatal("T variable not set, unable to build")
-    bb.utils.mkdirhier(t)
-    loglink = os.path.join(t, 'log.{0}'.format(func))
-    logfn = os.path.join(t, 'log.{0}.{1}'.format(func, os.getpid()))
-    runfile = os.path.join(t, 'run.{0}.{1}'.format(func, os.getpid()))
-
-    if loglink:
-        try:
-           os.remove(loglink)
-        except OSError:
-           pass
-
-        try:
-           os.symlink(logfn, loglink)
-        except OSError:
-           pass
-
     lockflag = flags.get('lockfiles')
     if lockflag:
         lockfiles = [data.expand(f, d) for f in lockflag.split()]
     else:
         lockfiles = None
 
-    logfile = open(logfn, 'w')
-    with nested(logfile, bb.utils.fileslocked(lockfiles)):
-        try:
-            if ispython:
-                exec_func_python(func, d, runfile, logfile, cwd=adir)
-            else:
-                exec_func_shell(func, d, runfile, logfile, cwd=adir, fakeroot=fakeroot)
-        finally:
-            if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
-                logger.debug(2, "Zero size logfn %s, removing", logfn)
-                bb.utils.remove(logfn)
-                bb.utils.remove(loglink)
+    tempdir = data.getVar('T', d, 1)
+    runfile = os.path.join(tempdir, 'run.{0}.{1}'.format(func, os.getpid()))
+
+    with bb.utils.fileslocked(lockfiles):
+        if ispython:
+            exec_func_python(func, d, runfile, logfile, cwd=adir)
+        else:
+            exec_func_shell(func, d, runfile, logfile, cwd=adir, fakeroot=fakeroot)
 
 _functionfmt = """
 def {function}(d):
@@ -272,35 +249,58 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
     except bb.process.CmdError:
         raise FuncFailed(function, logfile.name)
 
+def _task_data(fn, task, d):
+    localdata = data.createCopy(d)
+    localdata.setVar('BB_FILENAME', fn)
+    localdata.setVar('BB_CURRENTTASK', task[3:])
+    localdata.setVar('OVERRIDES', 'task-%s:%s' %
+                     (task[3:], d.getVar('OVERRIDES', False)))
+    localdata.finalize()
+    data.expandKeys(localdata)
+    return localdata
+
 def exec_task(fn, task, d):
     """Execute a BB 'task'
 
     Execution of a task involves a bit more setup than executing a function,
     running it with its own local metadata, and with some useful variables set.
     """
-
-    # Check whther this is a valid task
     if not data.getVarFlag(task, 'task', d):
         raise InvalidTask(task, d)
 
-    try:
-        logger.debug(1, "Executing task %s", task)
-        old_overrides = data.getVar('OVERRIDES', d, 0)
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', 'task-%s:%s' % (task[3:], old_overrides), localdata)
-        data.update_data(localdata)
-        data.expandKeys(localdata)
-        data.setVar('BB_FILENAME', fn, d)
-        data.setVar('BB_CURRENTTASK', task[3:], d)
-        event.fire(TaskStarted(task, localdata), localdata)
-        exec_func(task, localdata)
-        event.fire(TaskSucceeded(task, localdata), localdata)
-    except FuncFailed as exc:
-        event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
-        raise
+    logger.debug(1, "Executing task %s", task)
 
-    # make stamp, or cause event and raise exception
-    if not data.getVarFlag(task, 'nostamp', d) and not data.getVarFlag(task, 'selfstamp', d):
+    localdata = _task_data(fn, task, d)
+    tempdir = localdata.getVar('T', True)
+    if not tempdir:
+        bb.fatal("T variable not set, unable to build")
+
+    bb.utils.mkdirhier(tempdir)
+    loglink = os.path.join(tempdir, 'log.{0}'.format(task))
+    logfn = os.path.join(tempdir, 'log.{0}.{1}'.format(task, os.getpid()))
+    if loglink:
+        bb.utils.remove(loglink)
+
+        try:
+           os.symlink(logfn, loglink)
+        except OSError:
+           pass
+
+    with open(logfn, 'w') as logfile:
+        event.fire(TaskStarted(task, localdata), localdata)
+        try:
+            exec_func(task, localdata, logfile=logfile)
+        except FuncFailed as exc:
+            event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
+            raise
+        finally:
+            if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
+                logger.debug(2, "Zero size logfn %s, removing", logfn)
+                bb.utils.remove(logfn)
+                bb.utils.remove(loglink)
+        event.fire(TaskSucceeded(task, localdata), localdata)
+
+    if not d.getVarFlag(task, 'nostamp') and not d.getVarFlag(task, 'selfstamp'):
         make_stamp(task, d)
 
 def extract_stamp(d, fn):
