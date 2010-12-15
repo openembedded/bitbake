@@ -51,17 +51,13 @@ __builtins__['os'] = os
 class FuncFailed(Exception):
     def __init__(self, name, logfile = None):
         self.logfile = logfile
-        if logfile is None:
-            self.name = None
-            self.message = name
-        else:
-            self.name = name
-            self.message = "Function '%s' failed" % name
+        self.name = name
+        self.message = "Function '%s' failed" % name
 
     def __str__(self):
         if self.logfile and os.path.exists(self.logfile):
-            msg = "%s (see %s for further information)" % \
-                  (self.message, self.logfile)
+            msg = ("%s (see %s for further information)" %
+                   (self.message, self.logfile))
         else:
             msg = self.message
         return msg
