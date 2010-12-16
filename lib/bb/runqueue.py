@@ -83,7 +83,7 @@ class RunQueueScheduler(object):
         """
         self.rq = runqueue
         self.rqdata = rqdata
-        numTasks = len(self.rq.runq_fnid)
+        numTasks = len(self.rqdata.runq_fnid)
 
         self.prio_map = []
         self.prio_map.extend(range(numTasks))
