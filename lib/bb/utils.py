@@ -577,10 +577,8 @@ def mkdirhier(dir):
     directory already exists like os.makedirs
     """
 
-    logger.debug(3, "mkdirhier(%s)", dir)
     try:
         os.makedirs(dir)
-        logger.debug(2, "created " + dir)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise e
