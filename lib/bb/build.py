@@ -282,19 +282,20 @@ def exec_task(fn, task, d):
         except OSError:
            pass
 
-    with open(logfn, 'w') as logfile:
-        event.fire(TaskStarted(task, localdata), localdata)
-        try:
-            exec_func(task, localdata, logfile=logfile)
-        except FuncFailed as exc:
-            event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
-            raise
-        finally:
-            if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
-                logger.debug(2, "Zero size logfn %s, removing", logfn)
-                bb.utils.remove(logfn)
-                bb.utils.remove(loglink)
-        event.fire(TaskSucceeded(task, localdata), localdata)
+    logfile = open(logfn, 'w')
+    event.fire(TaskStarted(task, localdata), localdata)
+    try:
+        exec_func(task, localdata, logfile=logfile)
+    except FuncFailed as exc:
+        event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
+        raise
+    finally:
+        logfile.close()
+        if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
+            logger.debug(2, "Zero size logfn %s, removing", logfn)
+            bb.utils.remove(logfn)
+            bb.utils.remove(loglink)
+    event.fire(TaskSucceeded(task, localdata), localdata)
 
     if not d.getVarFlag(task, 'nostamp') and not d.getVarFlag(task, 'selfstamp'):
         make_stamp(task, d)
