@@ -187,9 +187,6 @@ def exec_func_python(func, d, runfile, logfile, cwd=None):
     if cwd:
         os.chdir(cwd)
 
-    stdout, stderr = sys.stdout, sys.stderr
-    sys.stdout, sys.stderr = NULL, NULL
-
     handler = logging.StreamHandler(logfile)
     handler.setFormatter(logformatter)
     bblogger.addHandler(handler)
@@ -204,7 +201,6 @@ def exec_func_python(func, d, runfile, logfile, cwd=None):
         raise FuncFailed(func, None)
     finally:
         bblogger.removeHandler(handler)
-        sys.stdout, sys.stderr = stdout, stderr
         os.chdir(olddir)
 
 def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
