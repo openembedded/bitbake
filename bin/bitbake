@@ -189,20 +189,26 @@ Default BBFILES are the .bb files in the current directory.""")
     server = ProcessServer(server_channel, event_queue, configuration)
     server.start()
 
+    def shutdown(force=False):
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        server.stop()
+        if force:
+            server.join(0.5)
+            if server.is_alive():
+                server.terminate()
+                server.join()
+        else:
+            server.join()
+        ui_channel.close()
+        event_queue.close()
+        if force:
+            sys.exit(1)
+
+    signal.signal(signal.SIGTERM, lambda i, s: shutdown(force=True))
     try:
         return ui_main(ServerCommunicator(ui_channel), event_queue)
     finally:
-        # the server is stopping, so don't let the user do crazy things with
-        # extra Ctrl-C invocations.  If the server does hang, however, the user
-        # won't be able to kill us.
-        #
-        # @todo come up with better mechanism - may need to catch KeyboardInterrupt
-        # here and do a server.terminate()
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-        server.stop()
-        server.join()
-        ui_channel.close()
-        event_queue.close()
+        shutdown()
 
     return 1
 

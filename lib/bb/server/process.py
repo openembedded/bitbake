@@ -108,7 +108,7 @@ class ProcessServer(Process):
                     self.runCommand(command)
 
                 self.idle_commands(.1)
-            except Exception, exc:
+            except Exception:
                 logger.exception('Running command %s', command)
 
         self.event_queue.cancel_join_thread()
