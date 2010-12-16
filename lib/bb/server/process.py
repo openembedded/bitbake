@@ -114,6 +114,8 @@ class ProcessServer(Process):
         self.event_queue.cancel_join_thread()
         bb.event.unregister_UIHhandler(self.event_handle)
         self.command_channel.close()
+        self.cooker.stop()
+        self.idle_commands(.1)
 
     def idle_commands(self, delay):
         nextsleep = delay
