@@ -938,7 +938,7 @@ class RunQueueExecute:
         self.build_pipes[result[0]].close()
         del self.build_pipes[result[0]]
         if result[1] != 0:
-            self.task_fail(task, result[1])
+            self.task_fail(task, result[1]>>8)
         else:
             self.task_complete(task)
             self.stats.taskCompleted()
