@@ -933,7 +933,11 @@ class CookerExit(bb.event.Event):
 
 def parse_file(task):
     filename, appends = task
-    return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg)
+    try:
+        return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg)
+    except Exception, exc:
+        exc.recipe = filename
+        raise exc
 
 class CookerParser(object):
     def __init__(self, cooker, filelist, masked):
@@ -1013,7 +1017,7 @@ class CookerParser(object):
             raise
         except Exception as exc:
             self.shutdown(clean=False)
-            sys.exit(1)
+            bb.fatal('Error parsing %s: %s' % (exc.recipe, exc))
 
         self.current += 1
         self.virtuals += len(result)
