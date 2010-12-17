@@ -72,16 +72,6 @@ def main(server, eventHandler):
 
     helper = uihelper.BBUIHelper()
 
-    # Set up logging to stdout in our usual format
-    logging.addLevelName(logging.INFO, "NOTE")
-    logging.addLevelName(logging.CRITICAL, "ERROR")
-
-    for level in xrange(logging.INFO - 1, logging.DEBUG + 1, -1):
-        logging.addLevelName(level, logging.getLevelName(logging.INFO))
-
-    for level in xrange(logging.DEBUG - 1, 0, -1):
-        logging.addLevelName(level, logging.getLevelName(logging.DEBUG))
-
     console = logging.StreamHandler(sys.stdout)
     format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
     console.setFormatter(format)

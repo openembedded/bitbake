@@ -33,7 +33,28 @@ import bb.event
 class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
 
+    VERBOSE = 19
+    PLAIN = 21
+    levelnames = {
+        PLAIN  : '',
+        VERBOSE: 'NOTE',
+
+        logging.DEBUG   : 'DEBUG',
+        logging.INFO    : 'NOTE',
+        logging.WARNING : 'WARNING',
+        logging.ERROR   : 'ERROR',
+        logging.CRITICAL: 'ERROR',
+    }
+
+    def getLevelName(self, levelno):
+        try:
+            return self.levelnames[levelno]
+        except KeyError:
+            self.levelnames[levelno] = value = 'Level %d' % levelno
+            return value
+
     def format(self, record):
+        record.levelname = self.getLevelName(record.levelno)
         if record.levelno == logging.INFO + 1:
             return record.getMessage()
         else:
