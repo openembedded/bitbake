@@ -169,7 +169,7 @@ def main(server, eventHandler):
                 break
             if isinstance(event, bb.command.CommandFailed):
                 return_value = event.exitcode
-                logger.error("Command execution failed: %s" % event.error)
+                logger.error("Command execution failed: %s", event.error)
                 break
             if isinstance(event, bb.command.CommandExit):
                 return_value = event.exitcode

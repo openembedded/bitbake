@@ -830,7 +830,7 @@ class RunQueue:
         stampfile = "%s.%s" % (self.rqdata.dataCache.stamp[fn], taskname)
         # If the stamp is missing its not current
         if not os.access(stampfile, os.F_OK):
-            logger.debug(2, "Stampfile %s not available\n", stampfile)
+            logger.debug(2, "Stampfile %s not available", stampfile)
             return False
         # If its a 'nostamp' task, it's not current
         taskdep = self.rqdata.dataCache.task_deps[fn]
