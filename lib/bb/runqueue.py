@@ -937,7 +937,7 @@ class RunQueue:
             retval = self.rqexe.execute()
 
         if self.state is runQueueRunInit:
-            logger.info("Executing runqueue")
+            logger.info("Executing runqueue tasks")
             self.rqexe = RunQueueExecuteTasks(self)
             self.state = runQueueRunning
 
@@ -1122,7 +1122,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     self.rq.scenequeue_covered.add(task)
                     found = True
 
-        logger.info('Full skip list %s', self.rq.scenequeue_covered)
+        logger.debug(1, 'Full skip list %s', self.rq.scenequeue_covered)
 
         for task in self.rq.scenequeue_covered:
             self.task_skip(task)
@@ -1417,8 +1417,8 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         """
 
         index = self.rqdata.runq_setscene[task]
-        logger.info('Found task %s which could be accelerated',
-                    self.rqdata.get_user_idstring(index))
+        logger.debug(1, 'Found task %s which could be accelerated',
+                        self.rqdata.get_user_idstring(index))
 
         self.scenequeue_covered.add(task)
         self.scenequeue_updatecounters(task)
@@ -1508,7 +1508,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         for task in oldcovered:
             self.rq.scenequeue_covered.add(self.rqdata.runq_setscene[task])
 
-        logger.info('We can skip tasks %s', self.rq.scenequeue_covered)
+        logger.debug(1, 'We can skip tasks %s', self.rq.scenequeue_covered)
 
         self.rq.state = runQueueRunInit
         return True
