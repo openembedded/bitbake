@@ -95,9 +95,6 @@ class ProcessServer(Process):
 
     def main(self):
         """Server main loop"""
-        # Ensure logging messages get sent to the UI as events
-        logger.addHandler(bb.event.LogHandler())
-
         # Ignore SIGINT within the server, as all SIGINT handling is done by
         # the UI and communicated to us
         signal.signal(signal.SIGINT, signal.SIG_IGN)
