@@ -42,6 +42,7 @@ from bb import ui
 from bb import server
 from bb.server.process import ProcessServer, ServerCommunicator
 
+from Queue import Empty
 from multiprocessing import Queue, Pipe
 
 __version__ = "1.11.0"
@@ -205,6 +206,13 @@ Default BBFILES are the .bb files in the current directory.""")
                 server.join()
         else:
             server.join()
+        while True:
+            try:
+                event = event_queue.get(block=False)
+            except Empty:
+                break
+            if isinstance(event, logging.LogRecord):
+                logger.handle(event)
         ui_channel.close()
         event_queue.close()
         if force:
