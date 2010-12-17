@@ -37,7 +37,7 @@ from bb import data, event, utils
 bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
 
-NULL = open('/dev/null', 'a')
+NULL = open('/dev/null', 'r+')
 
 
 class FuncFailed(Exception):
