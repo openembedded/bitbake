@@ -500,19 +500,7 @@ class BBCooker:
                 parselog.debug(2, "Adding layer %s", layer)
                 bb.data.setVar('LAYERDIR', layer, data)
                 data = _parse(os.path.join(layer, "conf", "layer.conf"), data)
-
-                # XXX: Hack, relies on the local keys of the datasmart
-                # instance being stored in the 'dict' attribute and makes
-                # assumptions about how variable expansion works, but
-                # there's no better way to force an expansion of a single
-                # variable across the datastore today, and this at least
-                # lets us reference LAYERDIR without having to immediately
-                # eval all our variables that use it.
-                for key in data.dict:
-                    if key != "_data":
-                        value = data.getVar(key, False)
-                        if value and "${LAYERDIR}" in value:
-                            data.setVar(key, value.replace("${LAYERDIR}", layer))
+                data.expandVarref('LAYERDIR')
 
             bb.data.delVar('LAYERDIR', data)
 

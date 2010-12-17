@@ -1,6 +1,4 @@
 - Reimplement the interactive mode as a proper ui
-- Move the LAYERDIR expansion hack into DataSmart, as that's where code that
-  depends upon its internals belongs
 - Continue dropping fatal/SystemExit/sys.exit usage in favor of raising
   appropriate exceptions
 - Continue pylint / pyflakes / pychecker / pep8 fixups
