@@ -86,7 +86,7 @@ def init(fn, data):
 def resolve_file(fn, d):
     if not os.path.isabs(fn):
         bbpath = bb.data.getVar("BBPATH", d, True)
-        newfn = bb.which(bbpath, fn)
+        newfn = bb.utils.which(bbpath, fn)
         if not newfn:
             raise IOError("file %s not found in %s" % (fn, bbpath))
         fn = newfn
