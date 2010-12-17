@@ -44,8 +44,9 @@
 
 """
 
-from __future__ import division
 
+from __future__ import division
+import logging
 import os, sys, curses, itertools, time
 import bb
 import xmlrpclib
@@ -243,32 +244,36 @@ class NCursesUI:
         exitflag = False
         while not exitflag:
             try:
-                event = eventHandler.waitEvent(0.25)
-                if not event:
-                    continue
+                event = eventHandler.get()
+
                 helper.eventHandler(event)
-                #mw.appendText("%s\n" % event[0])
                 if isinstance(event, bb.build.TaskBase):
                     mw.appendText("NOTE: %s\n" % event._message)
-                if isinstance(event, bb.msg.MsgDebug):
-                    mw.appendText('DEBUG: ' + event._message + '\n')
-                if isinstance(event, bb.msg.MsgNote):
-                    mw.appendText('NOTE: ' + event._message + '\n')
-                if isinstance(event, bb.msg.MsgWarn):
-                    mw.appendText('WARNING: ' + event._message + '\n')
-                if isinstance(event, bb.msg.MsgError):
-                    mw.appendText('ERROR: ' + event._message + '\n')
-                if isinstance(event, bb.msg.MsgFatal):
-                    mw.appendText('FATAL: ' + event._message + '\n')
+                if isinstance(event, logging.LogRecord):
+                    mw.appendText(logging.getLevelName(event.levelno) + ': ' + event.getMessage() + '\n')
+
+                if isinstance(event, bb.event.CacheLoadStarted):
+                    self.parse_total = event.total
+                if isinstance(event, bb.event.CacheLoadProgress):
+                    x = event.current
+                    y = self.parse_total
+                    mw.setStatus("Loading Cache:   %s [%2d %%]" % ( next(parsespin), x*100/y ) )
+                if isinstance(event, bb.event.CacheLoadCompleted):
+                    mw.setStatus("Idle")
+                    mw.appendText("Loaded %d entries from dependency cache.\n"
+                                % ( event.num_entries))
+
+                if isinstance(event, bb.event.ParseStarted):
+                    self.parse_total = event.total
                 if isinstance(event, bb.event.ParseProgress):
-                    x = event.sofar
-                    y = event.total
-                    if x == y:
-                        mw.setStatus("Idle")
-                        mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked."
+                    x = event.current
+                    y = self.parse_total
+                    mw.setStatus("Parsing Recipes: %s [%2d %%]" % ( next(parsespin), x*100/y ) )
+                if isinstance(event, bb.event.ParseCompleted):
+                    mw.setStatus("Idle")
+                    mw.appendText("Parsing finished. %d cached, %d parsed, %d skipped, %d masked.\n"
                                 % ( event.cached, event.parsed, event.skipped, event.masked ))
-                    else:
-                        mw.setStatus("Parsing: %s (%04d/%04d) [%2d %%]" % ( next(parsespin), x, y, x*100//y ) )
+
 #                if isinstance(event, bb.build.TaskFailed):
 #                    if event.logfile:
 #                        if data.getVar("BBINCLUDELOGS", d):
@@ -289,7 +294,9 @@ class NCursesUI:
 #                            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
 
                 if isinstance(event, bb.command.CommandCompleted):
-                    exitflag = True
+                    # stop so the user can see the result of the build, but
+                    # also allow them to now exit with a single ^C
+                    shutdown = 2
                 if isinstance(event, bb.command.CommandFailed):
                     mw.appendText("Command execution failed: %s" % event.error)
                     time.sleep(2)
@@ -306,13 +313,18 @@ class NCursesUI:
                     if activetasks:
                         taw.appendText("Active Tasks:\n")
                         for task in activetasks.itervalues():
-                            taw.appendText(task["title"])
+                            taw.appendText(task["title"] + '\n')
                     if failedtasks:
                         taw.appendText("Failed Tasks:\n")
                         for task in failedtasks:
-                            taw.appendText(task["title"])
+                            taw.appendText(task["title"] + '\n')
 
                 curses.doupdate()
+            except EnvironmentError as ioerror:
+                # ignore interrupted io
+                if ioerror.args[0] == 4:
+                    pass
+
             except KeyboardInterrupt:
                 if shutdown == 2:
                     mw.appendText("Third Keyboard Interrupt, exit.\n")

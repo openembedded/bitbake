@@ -19,6 +19,7 @@
 
 import gobject
 import gtk
+import Queue
 import threading
 import xmlrpclib
 import bb
@@ -31,6 +32,7 @@ from bb.ui.crumbs.progress import ProgressBar
 # Dependency Model
 (TYPE_DEP, TYPE_RDEP) = (0, 1)
 (COL_DEP_TYPE, COL_DEP_PARENT, COL_DEP_PACKAGE) = (0, 1, 2)
+
 
 class PackageDepView(gtk.TreeView):
     def __init__(self, model, dep_type, label):
@@ -52,6 +54,7 @@ class PackageDepView(gtk.TreeView):
         self.current = package
         self.filter_model.refilter()
 
+
 class PackageReverseDepView(gtk.TreeView):
     def __init__(self, model, label):
         gtk.TreeView.__init__(self)
@@ -68,6 +71,7 @@ class PackageReverseDepView(gtk.TreeView):
     def set_current_package(self, package):
         self.current = package
         self.filter_model.refilter()
+
 
 class DepExplorer(gtk.Window):
     def __init__(self):
@@ -88,9 +92,12 @@ class DepExplorer(gtk.Window):
         scrolled = gtk.ScrolledWindow()
         scrolled.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         scrolled.set_shadow_type(gtk.SHADOW_IN)
+
         self.pkg_treeview = gtk.TreeView(self.pkg_model)
         self.pkg_treeview.get_selection().connect("changed", self.on_cursor_changed)
-        self.pkg_treeview.append_column(gtk.TreeViewColumn("Package", gtk.CellRendererText(), text=COL_PKG_NAME))
+        column = gtk.TreeViewColumn("Package", gtk.CellRendererText(), text=COL_PKG_NAME)
+        self.pkg_treeview.append_column(column)
+        column.set_sort_column_id(COL_PKG_NAME)
         pane.add1(scrolled)
         scrolled.add(self.pkg_treeview)
 
@@ -156,7 +163,6 @@ class DepExplorer(gtk.Window):
 
 
 def parse(depgraph, pkg_model, depends_model):
-
     for package in depgraph["pn"]:
         pkg_model.set(pkg_model.append(), COL_PKG_NAME, package)
 
@@ -174,6 +180,7 @@ def parse(depgraph, pkg_model, depends_model):
                               COL_DEP_PARENT, package,
                               COL_DEP_PACKAGE, rdepend)
 
+
 class gtkthread(threading.Thread):
     quit = threading.Event()
     def __init__(self, shutdown):
@@ -187,8 +194,8 @@ class gtkthread(threading.Thread):
         gtk.main()
         gtkthread.quit.set()
 
-def main(server, eventHandler):
 
+def main(server, eventHandler):
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
         if not cmdline or cmdline[0] != "generateDotGraph":
@@ -212,25 +219,59 @@ def main(server, eventHandler):
     pbar = ProgressBar(dep)
     gtk.gdk.threads_leave()
 
+    progress_total = 0
     while True:
         try:
-            event = eventHandler.waitEvent(0.25)
+            try:
+                # We must get nonblocking here, else we'll never check the
+                # quit signal
+                event = eventHandler.get(False, 0.25)
+            except Queue.Empty:
+                pass
+            
             if gtkthread.quit.isSet():
+                server.runCommand(["stateStop"])
                 break
 
             if event is None:
                 continue
-            if isinstance(event, bb.event.ParseProgress):
-                x = event.sofar
-                y = event.total
-                if x == y:
-                    print(("\nParsing finished. %d cached, %d parsed, %d skipped, %d masked, %d errors."
-                        % ( event.cached, event.parsed, event.skipped, event.masked, event.errors)))
-                    pbar.hide()
-                    return
+
+            if isinstance(event, bb.event.CacheLoadStarted):
+                progress_total = event.total
                 gtk.gdk.threads_enter()
-                pbar.update(x, y)
+                pbar.set_title("Loading Cache")
+                pbar.update(0, progress_total)
                 gtk.gdk.threads_leave()
+
+            if isinstance(event, bb.event.CacheLoadProgress):
+                x = event.current
+                gtk.gdk.threads_enter()
+                pbar.update(x, progress_total)
+                gtk.gdk.threads_leave()
+                continue
+
+            if isinstance(event, bb.event.CacheLoadCompleted):
+                gtk.gdk.threads_enter()
+                pbar.update(progress_total, progress_total)
+                gtk.gdk.threads_leave()
+                continue
+
+            if isinstance(event, bb.event.ParseStarted):
+                progress_total = event.total
+                gtk.gdk.threads_enter()
+                pbar.set_title("Processing recipes")
+                pbar.update(0, progress_total)
+                gtk.gdk.threads_leave()
+
+            if isinstance(event, bb.event.ParseProgress):
+                x = event.current
+                gtk.gdk.threads_enter()
+                pbar.update(x, progress_total)
+                gtk.gdk.threads_leave()
+                continue
+
+            if isinstance(event, bb.event.ParseCompleted):
+                pbar.hide()
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):
@@ -240,16 +281,22 @@ def main(server, eventHandler):
 
             if isinstance(event, bb.command.CommandCompleted):
                 continue
+
             if isinstance(event, bb.command.CommandFailed):
                 print("Command execution failed: %s" % event.error)
                 return event.exitcode
+
             if isinstance(event, bb.command.CommandExit):
                 return event.exitcode
+
             if isinstance(event, bb.cooker.CookerExit):
                 break
 
             continue
-
+        except EnvironmentError as ioerror:
+            # ignore interrupted io
+            if ioerror.args[0] == 4:
+                pass
         except KeyboardInterrupt:
             if shutdown == 2:
                 print("\nThird Keyboard Interrupt, exit.\n")

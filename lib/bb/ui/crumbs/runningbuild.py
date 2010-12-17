@@ -1,3 +1,4 @@
+
 #
 # BitBake Graphical GTK User Interface
 #
@@ -20,9 +21,20 @@
 
 import gtk
 import gobject
+import logging
+import time
+import urllib
+import urllib2
+
+class Colors(object):
+    OK = "#ffffff"
+    RUNNING = "#aaffaa"
+    WARNING ="#f88017"
+    ERROR = "#ffaaaa"
 
 class RunningBuildModel (gtk.TreeStore):
-    (COL_TYPE, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_ACTIVE) = (0, 1, 2, 3, 4, 5)
+    (COL_LOG, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_COLOR, COL_NUM_ACTIVE) = range(7)
+
     def __init__ (self):
         gtk.TreeStore.__init__ (self,
                                 gobject.TYPE_STRING,
@@ -30,7 +42,8 @@ class RunningBuildModel (gtk.TreeStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
-                                gobject.TYPE_BOOLEAN)
+                                gobject.TYPE_STRING,
+                                gobject.TYPE_INT)
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
@@ -63,32 +76,42 @@ class RunningBuild (gobject.GObject):
         # for the message.
         if hasattr(event, 'pid'):
             pid = event.pid
-            if pid in self.pids_to_task:
-                (package, task) = self.pids_to_task[pid]
-                parent = self.tasks_to_iter[(package, task)]
+        if hasattr(event, 'process'):
+            pid = event.process
 
-        if isinstance(event, bb.msg.MsgBase):
-            # Ignore the "Running task i of n .."
-            if (event._message.startswith ("Running task")):
+        if pid and pid in self.pids_to_task:
+            (package, task) = self.pids_to_task[pid]
+            parent = self.tasks_to_iter[(package, task)]
+
+        if(isinstance(event, logging.LogRecord)):
+            if (event.msg.startswith ("Running task")):
                 return # don't add these to the list
 
-            # Set a pretty icon for the message based on it's type.
-            if isinstance(event, bb.msg.MsgWarn):
-                icon = "dialog-warning"
-            elif isinstance(event, bb.msg.MsgError):
+            if event.levelno >= logging.ERROR:
                 icon = "dialog-error"
+                color = Colors.ERROR
+            elif event.levelno >= logging.WARNING:
+                icon = "dialog-warning"
+                color = Colors.WARNING
             else:
                 icon = None
+                color = Colors.OK
 
-            # Add the message to the tree either at the top level if parent is
-            # None otherwise as a descendent of a task.
-            self.model.append (parent,
-                               (event.__class__.__name__.split()[-1], # e.g. MsgWarn, MsgError
-                                package,
-                                task,
-                                event._message,
-                                icon,
-                                False))
+            # if we know which package we belong to, we'll append onto its list.
+            # otherwise, we'll jump to the top of the master list
+            if parent:
+                tree_add = self.model.append
+            else:
+                tree_add = self.model.prepend
+            tree_add(parent,
+                              (None,
+                               package,
+                               task,
+                               event.getMessage(),
+                               icon,
+                               color,
+                               0))
+
         elif isinstance(event, bb.build.TaskStarted):
             (package, task) = (event._package, event._task)
 
@@ -101,76 +124,142 @@ class RunningBuild (gobject.GObject):
             if ((package, None) in self.tasks_to_iter):
                 parent = self.tasks_to_iter[(package, None)]
             else:
-                parent = self.model.append (None, (None,
+                parent = self.model.prepend(None, (None,
                                                    package,
                                                    None,
                                                    "Package: %s" % (package),
                                                    None,
-                                                   False))
+                                                   Colors.OK,
+                                                   0))
                 self.tasks_to_iter[(package, None)] = parent
 
             # Because this parent package now has an active child mark it as
             # such.
-            self.model.set(parent, self.model.COL_ICON, "gtk-execute")
+            # @todo if parent is already in error, don't mark it green
+            self.model.set(parent, self.model.COL_ICON, "gtk-execute",
+                           self.model.COL_COLOR, Colors.RUNNING)
 
             # Add an entry in the model for this task
             i = self.model.append (parent, (None,
                                             package,
                                             task,
                                             "Task: %s" % (task),
-                                            None,
-                                            False))
+                                            "gtk-execute",
+                                            Colors.RUNNING,
+                                            0))
+
+            # update the parent's active task count
+            num_active = self.model.get(parent, self.model.COL_NUM_ACTIVE)[0] + 1
+            self.model.set(parent, self.model.COL_NUM_ACTIVE, num_active)
 
             # Save out the iter so that we can find it when we have a message
             # that we need to attach to a task.
             self.tasks_to_iter[(package, task)] = i
 
-            # Mark this task as active.
-            self.model.set(i, self.model.COL_ICON, "gtk-execute")
-
         elif isinstance(event, bb.build.TaskBase):
+            current = self.tasks_to_iter[(package, task)]
+            parent = self.tasks_to_iter[(package, None)]
+
+            # remove this task from the parent's active count
+            num_active = self.model.get(parent, self.model.COL_NUM_ACTIVE)[0] - 1
+            self.model.set(parent, self.model.COL_NUM_ACTIVE, num_active)
 
             if isinstance(event, bb.build.TaskFailed):
-                # Mark the task as failed
-                i = self.tasks_to_iter[(package, task)]
-                self.model.set(i, self.model.COL_ICON, "dialog-error")
+                # Mark the task and parent as failed
+                icon = "dialog-error"
+                color = Colors.ERROR
 
-                # Mark the parent package as failed
-                i = self.tasks_to_iter[(package, None)]
-                self.model.set(i, self.model.COL_ICON, "dialog-error")
+                logfile = event.logfile
+                if logfile and os.path.exists(logfile):
+                    with open(logfile) as f:
+                        logdata = f.read()
+                        self.model.append(current, ('pastebin', None, None, logdata, 'gtk-error', Colors.OK, 0))
+
+                for i in (current, parent):
+                    self.model.set(i, self.model.COL_ICON, icon,
+                                   self.model.COL_COLOR, color)
             else:
+                icon = None
+                color = Colors.OK
+
                 # Mark the task as inactive
-                i = self.tasks_to_iter[(package, task)]
-                self.model.set(i, self.model.COL_ICON, None)
+                self.model.set(current, self.model.COL_ICON, icon,
+                               self.model.COL_COLOR, color)
 
-                # Mark the parent package as inactive
+                # Mark the parent package as inactive, but make sure to
+                # preserve error and active states
                 i = self.tasks_to_iter[(package, None)]
-                self.model.set(i, self.model.COL_ICON, None)
-
+                if self.model.get(parent, self.model.COL_ICON) != 'dialog-error':
+                    self.model.set(parent, self.model.COL_ICON, icon)
+                    if num_active == 0:
+                        self.model.set(parent, self.model.COL_COLOR, Colors.OK)
 
             # Clear the iters and the pids since when the task goes away the
             # pid will no longer be used for messages
             del self.tasks_to_iter[(package, task)]
             del self.pids_to_task[pid]
 
+        elif isinstance(event, bb.event.BuildStarted):
+
+            self.model.prepend(None, (None,
+                                      None,
+                                      None,
+                                      "Build Started (%s)" % time.strftime('%m/%d/%Y %H:%M:%S'),
+                                      None,
+                                      Colors.OK,
+                                      0))
         elif isinstance(event, bb.event.BuildCompleted):
             failures = int (event._failures)
+            self.model.prepend(None, (None,
+                                      None,
+                                      None,
+                                      "Build Completed (%s)" % time.strftime('%m/%d/%Y %H:%M:%S'),
+                                      None,
+                                      Colors.OK,
+                                      0))
 
             # Emit the appropriate signal depending on the number of failures
-            if (failures > 1):
+            if (failures >= 1):
                 self.emit ("build-failed")
             else:
                 self.emit ("build-succeeded")
 
+        elif isinstance(event, bb.event.CacheLoadStarted) and pbar:
+            pbar.set_title("Loading cache")
+            self.progress_total = event.total
+            pbar.update(0, self.progress_total)
+        elif isinstance(event, bb.event.CacheLoadProgress) and pbar:
+            pbar.update(event.current, self.progress_total)
+        elif isinstance(event, bb.event.CacheLoadCompleted) and pbar:
+            pbar.update(self.progress_total, self.progress_total)
+
+        elif isinstance(event, bb.event.ParseStarted) and pbar:
+            pbar.set_title("Processing recipes")
+            self.progress_total = event.total
+            pbar.update(0, self.progress_total)
         elif isinstance(event, bb.event.ParseProgress) and pbar:
-            x = event.sofar
-            y = event.total
-            if x == y:
-                pbar.hide()
-                return
-            pbar.update(x, y)
+            pbar.update(event.current, self.progress_total)
+        elif isinstance(event, bb.event.ParseCompleted) and pbar:
+            pbar.hide()
+
+        return
+
+
+def do_pastebin(text):
+    url = 'http://pastebin.com/api_public.php'
+    params = {'paste_code': text, 'paste_format': 'text'}
+
+    req = urllib2.Request(url, urllib.urlencode(params))
+    response = urllib2.urlopen(req)
+    paste_url = response.read()
+
+    return paste_url
+
 
 class RunningBuildTreeView (gtk.TreeView):
+    __gsignals__ = {
+        "button_press_event" : "override"
+        }
     def __init__ (self):
         gtk.TreeView.__init__ (self)
 
@@ -181,6 +270,42 @@ class RunningBuildTreeView (gtk.TreeView):
         self.append_column (col)
 
         # The message of the build.
-        renderer = gtk.CellRendererText ()
-        col = gtk.TreeViewColumn ("Message", renderer, text=3)
-        self.append_column (col)
+        self.message_renderer = gtk.CellRendererText ()
+        self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=3)
+        self.message_column.add_attribute(self.message_renderer, 'background', 5)
+        self.message_renderer.set_property('editable', 5)
+        self.append_column (self.message_column)
+
+    def do_button_press_event(self, event):
+        gtk.TreeView.do_button_press_event(self, event)
+
+        if event.button == 3:
+            selection = super(RunningBuildTreeView, self).get_selection()
+            (model, iter) = selection.get_selected()
+            if iter is not None:
+                can_paste = model.get(iter, model.COL_LOG)[0]
+                if can_paste == 'pastebin':
+                    # build a simple menu with a pastebin option
+                    menu = gtk.Menu()
+                    menuitem = gtk.MenuItem("Send log to pastebin")
+                    menu.append(menuitem)
+                    menuitem.connect("activate", self.pastebin_handler, (model, iter))
+                    menuitem.show()
+                    menu.show()
+                    menu.popup(None, None, None, event.button, event.time)
+
+    def pastebin_handler(self, widget, data):
+        """
+        Send the log data to pastebin, then add the new paste url to the
+        clipboard.
+        """
+        (model, iter) = data
+        paste_url = do_pastebin(model.get(iter, model.COL_MESSAGE)[0])
+
+        # @todo Provide visual feedback to the user that it is done and that
+        # it worked.
+        print paste_url
+
+        clipboard = gtk.clipboard_get()
+        clipboard.set_text(paste_url)
+        clipboard.store()

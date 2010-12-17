@@ -226,6 +226,10 @@ def main(server, eventHandler):
 
             logger.error("Unknown event: %s", event)
 
+        except EnvironmentError as ioerror:
+            # ignore interrupted io
+            if ioerror.args[0] == 4:
+                pass
         except KeyboardInterrupt:
             if shutdown == 2:
                 print("\nThird Keyboard Interrupt, exit.\n")

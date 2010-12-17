@@ -14,4 +14,4 @@ class ProgressBar(gtk.Dialog):
 
     def update(self, x, y):
         self.progress.set_fraction(float(x)/float(y))
-        self.progress.set_text("%d/%d (%2d %%)" % (x, y, x*100/y))
+        self.progress.set_text("%2d %%" % (x*100/y))

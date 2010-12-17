@@ -24,18 +24,33 @@ import xmlrpclib
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView, RunningBuild
 from bb.ui.crumbs.progress import ProgressBar
 
+import Queue
+
+
 def event_handle_idle_func (eventHandler, build, pbar):
 
     # Consume as many messages as we can in the time available to us
-    event = eventHandler.getEvent()
-    while event:
-        build.handle_event (event, pbar)
-        event = eventHandler.getEvent()
+    try:
+        while 1:
+            event = eventHandler.get(False)
+            build.handle_event (event, pbar)
+    except Queue.Empty:
+        pass
 
     return True
 
 def scroll_tv_cb (model, path, iter, view):
     view.scroll_to_cell (path)
+
+
+# @todo hook these into the GUI so the user has feedback...
+def running_build_failed_cb (running_build):
+    pass
+
+
+def running_build_succeeded_cb (running_build):
+    pass
+
 
 class MainWindow (gtk.Window):
     def __init__ (self):
@@ -49,6 +64,7 @@ class MainWindow (gtk.Window):
         self.set_default_size(640, 480)
         scrolled_window.add (self.cur_build_tv)
 
+
 def main (server, eventHandler):
     gobject.threads_init()
     gtk.gdk.threads_init()
@@ -61,9 +77,11 @@ def main (server, eventHandler):
     running_build = RunningBuild ()
     window.cur_build_tv.set_model (running_build.model)
     running_build.model.connect("row-inserted", scroll_tv_cb, window.cur_build_tv)
+    running_build.connect ("build-succeeded", running_build_succeeded_cb)
+    running_build.connect ("build-failed", running_build_failed_cb)
+
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
-        print(cmdline)
         if not cmdline:
             return 1
         ret = server.runCommand(cmdline)
@@ -76,10 +94,18 @@ def main (server, eventHandler):
 
     # Use a timeout function for probing the event queue to find out if we
     # have a message waiting for us.
-    gobject.timeout_add (200,
+    gobject.timeout_add (100,
                          event_handle_idle_func,
                          eventHandler,
                          running_build,
                          pbar)
 
-    gtk.main()
+    try:
+        gtk.main()
+    except EnvironmentError as ioerror:
+        # ignore interrupted io
+        if ioerror.args[0] == 4:
+            pass
+    finally:
+        server.runCommand(["stateStop"])
+
