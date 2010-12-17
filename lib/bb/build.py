@@ -25,28 +25,20 @@
 #
 #Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
+import logging
 import os
 import sys
-import logging
 import bb
 import bb.msg
 import bb.utils
 import bb.process
-from contextlib import nested
-from bb import data, event, mkdirhier, utils
+from bb import data, event, utils
 
 bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
 
 NULL = open('/dev/null', 'a')
 
-
-# When we execute a python function we'd like certain things
-# in all namespaces, hence we add them to __builtins__
-# If we do not do this and use the exec globals, they will
-# not be available to subfunctions.
-__builtins__['bb'] = bb
-__builtins__['os'] = os
 
 class FuncFailed(Exception):
     def __init__(self, name, logfile = None):
