@@ -134,7 +134,7 @@ def exec_func(func, d, dirs = None, logfile = NULL):
     cleandirs = flags.get('cleandirs')
     if cleandirs:
         for cdir in data.expand(cleandirs, d).split():
-            os.system("rm -rf %s" % cdir)
+            bb.utils.remove(cdir, True)
 
     if dirs is None:
         dirs = flags.get('dirs')
