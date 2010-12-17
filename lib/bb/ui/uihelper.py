@@ -17,6 +17,8 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import bb.build
+
 class BBUIHelper:
     def __init__(self):
         self.needUpdate = False
@@ -34,16 +36,6 @@ class BBUIHelper:
             del self.running_tasks[event.pid]
             self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
             self.needUpdate = True
-
-        # Add runqueue event handling
-        #if isinstance(event, bb.runqueue.runQueueTaskCompleted):
-        #    a = 1
-        #if isinstance(event, bb.runqueue.runQueueTaskStarted):
-        #    a = 1
-        #if isinstance(event, bb.runqueue.runQueueTaskFailed):
-        #    a = 1
-        #if isinstance(event, bb.runqueue.runQueueExitWait):
-        #    a = 1
 
     def getTasks(self):
         self.needUpdate = False
