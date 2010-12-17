@@ -355,7 +355,7 @@ def better_exec(code, context, text, realfile = "<code>"):
 
         tbextract = traceback.extract_tb(tb)
         tbformat = "\n".join(traceback.format_list(tbextract))
-        logger.error("The stack trace of python calls that resulted in thie exception/failure was:")
+        logger.error("The stack trace of python calls that resulted in this exception/failure was:")
         for line in tbformat.split('\n'):
             logger.error(line)
 
