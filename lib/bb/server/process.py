@@ -43,8 +43,10 @@ class ServerCommunicator():
         while True:
             # don't let the user ctrl-c while we're waiting for a response
             try:
-                result = self.connection.recv()
-                return result
+                if self.connection.poll(.5):
+                    return self.connection.recv()
+                else:
+                    return None
             except KeyboardInterrupt:
                 pass
 
