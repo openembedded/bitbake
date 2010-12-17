@@ -336,8 +336,8 @@ class RunQueueData:
         for task in xrange(numTasks):
             if task_done[task] is False or deps_left[task] != 0:
                 problem_tasks.append(task)
-                logger.debug(2, "Task %s (%s) is not buildable\n", task, self.get_user_idstring(task))
-                logger.debug(2, "(Complete marker was %s and the remaining dependency count was %s)\n\n", task_done[task], deps_left[task])
+                logger.debug(2, "Task %s (%s) is not buildable", task, self.get_user_idstring(task))
+                logger.debug(2, "(Complete marker was %s and the remaining dependency count was %s)\n", task_done[task], deps_left[task])
 
         if problem_tasks:
             message = "Unbuildable tasks were found.\n"
