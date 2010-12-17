@@ -572,13 +572,13 @@ def prune_suffix(var, suffixes, d):
             return var.replace(suffix, "")
     return var
 
-def mkdirhier(dir):
+def mkdirhier(directory):
     """Create a directory like 'mkdir -p', but does not complain if
     directory already exists like os.makedirs
     """
 
     try:
-        os.makedirs(dir)
+        os.makedirs(directory)
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise e
