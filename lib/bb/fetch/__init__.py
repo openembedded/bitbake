@@ -150,7 +150,7 @@ def fetcher_init(d):
     Called to initialize the fetchers once the configuration data is known.
     Calls before this must not hit the cache.
     """
-    pd = persist_data.PersistData(d)
+    pd = persist_data.persist(d)
     # When to drop SCM head revisions controlled by user policy
     srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
     if srcrev_policy == "cache":
@@ -158,10 +158,10 @@ def fetcher_init(d):
     elif srcrev_policy == "clear":
         logger.debug(1, "Clearing SRCREV cache due to cache policy of: %s", srcrev_policy)
         try:
-            bb.fetch.saved_headrevs = pd.getKeyValues("BB_URI_HEADREVS")
+            bb.fetch.saved_headrevs = pd['BB_URI_HEADREVS'].items()
         except:
             pass
-        pd.delDomain("BB_URI_HEADREVS")
+        del pd['BB_URI_HEADREVS']
     else:
         raise FetchError("Invalid SRCREV cache policy of: %s" % srcrev_policy)
 
@@ -169,18 +169,14 @@ def fetcher_init(d):
         if hasattr(m, "init"):
             m.init(d)
 
-    # Make sure our domains exist
-    pd.addDomain("BB_URI_HEADREVS")
-    pd.addDomain("BB_URI_LOCALCOUNT")
-
 def fetcher_compare_revisions(d):
     """
     Compare the revisions in the persistant cache with current values and
     return true/false on whether they've changed.
     """
 
-    pd = persist_data.PersistData(d)
-    data = pd.getKeyValues("BB_URI_HEADREVS")
+    pd = persist_data.persist(d)
+    data = pd['BB_URI_HEADREVS'].items()
     data2 = bb.fetch.saved_headrevs
 
     changed = False
@@ -707,14 +703,14 @@ class Fetch(object):
         if not hasattr(self, "_latest_revision"):
             raise ParameterError
 
-        pd = persist_data.PersistData(d)
+        pd = persist_data.persist(d)
+        revs = pd['BB_URI_HEADREVS']
         key = self.generate_revision_key(url, ud, d)
-        rev = pd.getValue("BB_URI_HEADREVS", key)
+        rev = revs[key]
         if rev != None:
             return str(rev)
 
-        rev = self._latest_revision(url, ud, d)
-        pd.setValue("BB_URI_HEADREVS", key, rev)
+        revs[key] = rev = self._latest_revision(url, ud, d)
         return rev
 
     def sortable_revision(self, url, ud, d):
@@ -724,17 +720,18 @@ class Fetch(object):
         if hasattr(self, "_sortable_revision"):
             return self._sortable_revision(url, ud, d)
 
-        pd = persist_data.PersistData(d)
+        pd = persist_data.persist(d)
+        localcounts = pd['BB_URI_LOCALCOUNT']
         key = self.generate_revision_key(url, ud, d)
 
         latest_rev = self._build_revision(url, ud, d)
-        last_rev = pd.getValue("BB_URI_LOCALCOUNT", key + "_rev")
+        last_rev = localcounts[key + '_rev']
         uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
         count = None
         if uselocalcount:
             count = Fetch.localcount_internal_helper(ud, d)
         if count is None:
-            count = pd.getValue("BB_URI_LOCALCOUNT", key + "_count")
+            count = localcounts[key + '_count']
 
         if last_rev == latest_rev:
             return str(count + "+" + latest_rev)
@@ -750,8 +747,8 @@ class Fetch(object):
         else:
             count = str(int(count) + 1)
 
-        pd.setValue("BB_URI_LOCALCOUNT", key + "_rev", latest_rev)
-        pd.setValue("BB_URI_LOCALCOUNT", key + "_count", count)
+        localcounts[key + '_rev'] = latest_rev
+        localcounts[key + '_count'] = count
 
         return str(count + "+" + latest_rev)
 
