@@ -72,8 +72,6 @@ class BBCooker:
 
         self.configuration.data = bb.data.init()
 
-        self.parseCommandLine()
-
         bb.data.inheritFromOS(self.configuration.data)
 
         self.parseConfigurationFiles(self.configuration.file)
@@ -84,6 +82,8 @@ class BBCooker:
         bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, True)
         if bbpkgs and len(self.configuration.pkgs_to_build) == 0:
             self.configuration.pkgs_to_build.extend(bbpkgs.split())
+
+        self.parseCommandLine()
 
         #
         # Special updated configuration we use for firing events
