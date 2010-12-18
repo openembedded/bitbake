@@ -30,7 +30,7 @@ from multiprocessing import Process, Event
 from bb.cooker import BBCooker
 
 logger = logging.getLogger('BitBake')
-NULL = open('/dev/null', 'a')
+NULL = open('/dev/null', 'r+')
 
 class ServerCommunicator():
     def __init__(self, connection):
