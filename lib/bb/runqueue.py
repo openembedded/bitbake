@@ -1056,11 +1056,13 @@ class RunQueueExecute:
         sys.stderr.flush()
         try:
             pipein, pipeout = os.pipe()
+            pipein = os.fdopen(pipein, 'rb', 4096)
+            pipeout = os.fdopen(pipeout, 'wb', 0)
             pid = os.fork()
         except OSError as e:
             bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
         if pid == 0:
-            os.close(pipein)
+            pipein.close()
             # Save out the PID so that the event can include it the
             # events
             bb.event.worker_pid = os.getpid()
@@ -1576,17 +1578,17 @@ class runQueuePipe():
     Abstraction for a pipe between a worker thread and the server
     """
     def __init__(self, pipein, pipeout, d):
-        self.fd = pipein
-        os.close(pipeout)
-        fcntl.fcntl(self.fd, fcntl.F_SETFL, fcntl.fcntl(self.fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+        self.input = pipein
+        pipeout.close()
+        fcntl.fcntl(self.input, fcntl.F_SETFL, fcntl.fcntl(self.input, fcntl.F_GETFL) | os.O_NONBLOCK)
         self.queue = ""
         self.d = d
 
     def read(self):
         start = len(self.queue)
         try:
-            self.queue = self.queue + os.read(self.fd, 1024)
-        except OSError:
+            self.queue = self.queue + self.input.read(1024)
+        except (OSError, IOError):
             pass
         end = len(self.queue)
         index = self.queue.find("</event>")
@@ -1601,4 +1603,4 @@ class runQueuePipe():
             continue
         if len(self.queue) > 0:
             print("Warning, worker left partial message")
-        os.close(self.fd)
+        self.input.close()
