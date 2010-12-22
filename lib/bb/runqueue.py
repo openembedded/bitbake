@@ -1051,7 +1051,7 @@ class RunQueueExecute:
         self.rq.state = runQueueComplete
         return
 
-    def fork_off_task(self, fn, task, taskname):
+    def fork_off_task(self, fn, task, taskname, quieterrors=False):
         sys.stdout.flush()
         sys.stderr.flush()
         try:
@@ -1083,7 +1083,8 @@ class RunQueueExecute:
                 the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
                 bb.build.exec_task(fn, taskname, the_data)
             except Exception as exc:
-                logger.critical(str(exc))
+                if not quieterrors:
+                    logger.critical(str(exc))
                 os._exit(1)
             os._exit(0)
         return pid, pipein, pipeout
@@ -1514,6 +1515,9 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         self.rq.state = runQueueRunInit
         return True
+
+    def fork_off_task(self, fn, task, taskname):
+        return RunQueueExecute.fork_off_task(self, fn, task, taskname, quieterrors=True)
 
 class TaskFailure(Exception):
     """
