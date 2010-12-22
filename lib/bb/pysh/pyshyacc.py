@@ -7,6 +7,7 @@
 
 """PLY grammar file.
 """
+import os.path
 import sys
 
 import pyshlex
