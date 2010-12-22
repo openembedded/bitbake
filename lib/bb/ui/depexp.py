@@ -82,7 +82,9 @@ class DepExplorer(gtk.Window):
 
         # Create the data models
         self.pkg_model = gtk.ListStore(gobject.TYPE_STRING)
+        self.pkg_model.set_sort_column_id(COL_PKG_NAME, gtk.SORT_ASCENDING)
         self.depends_model = gtk.ListStore(gobject.TYPE_INT, gobject.TYPE_STRING, gobject.TYPE_STRING)
+        self.depends_model.set_sort_column_id(COL_DEP_PACKAGE, gtk.SORT_ASCENDING)
 
         pane = gtk.HPaned()
         pane.set_position(250)
@@ -97,7 +99,6 @@ class DepExplorer(gtk.Window):
         self.pkg_treeview.get_selection().connect("changed", self.on_cursor_changed)
         column = gtk.TreeViewColumn("Package", gtk.CellRendererText(), text=COL_PKG_NAME)
         self.pkg_treeview.append_column(column)
-        column.set_sort_column_id(COL_PKG_NAME)
         pane.add1(scrolled)
         scrolled.add(self.pkg_treeview)
 
