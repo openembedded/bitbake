@@ -300,7 +300,7 @@ class RunQueueData:
         Calculate a number representing the "weight" of each task. Heavier weighted tasks
         have more dependencies and hence should be executed sooner for maximum speed.
 
-        This function also sanity checks the task list finding tasks that its not
+        This function also sanity checks the task list finding tasks that are not
         possible to execute due to circular dependencies.
         """
 
