@@ -178,7 +178,7 @@ logformatter = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
 def exec_func_python(func, d, runfile, logfile, cwd=None):
     """Execute a python BB 'function'"""
 
-    bbfile = d.getVar('file', True)
+    bbfile = d.getVar('FILE', True)
     olddir = os.getcwd()
     code = _functionfmt.format(function=func, body=d.getVar(func, True))
     with open(runfile, 'w') as script:
