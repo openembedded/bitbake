@@ -62,8 +62,8 @@ class SQLTable(collections.MutableMapping):
                 raise
 
     def __getitem__(self, key):
-        data = self.cursor.execute("SELECT * from %s where key=?;" %
-                                   self.table, [key])
+        data = self._execute("SELECT * from %s where key=?;" %
+                             self.table, [key])
         for row in data:
             return row[1]
 
@@ -71,7 +71,7 @@ class SQLTable(collections.MutableMapping):
         self._execute("DELETE from %s where key=?;" % self.table, [key])
 
     def __setitem__(self, key, value):
-        data = self.cursor.execute("SELECT * from %s where key=?;" %
+        data = self._execute("SELECT * from %s where key=?;" %
                                    self.table, [key])
         exists = len(list(data))
         if exists:
@@ -85,22 +85,22 @@ class SQLTable(collections.MutableMapping):
         return key in set(self)
 
     def __len__(self):
-        data = self.cursor.execute("SELECT COUNT(key) FROM %s;" % self.table)
+        data = self._execute("SELECT COUNT(key) FROM %s;" % self.table)
         for row in data:
             return row[0]
 
     def __iter__(self):
-        data = self.cursor.execute("SELECT key FROM %s;" % self.table)
+        data = self._execute("SELECT key FROM %s;" % self.table)
         for row in data:
             yield row[0]
 
     def iteritems(self):
-        data = self.cursor.execute("SELECT * FROM %s;" % self.table)
+        data = self._execute("SELECT * FROM %s;" % self.table)
         for row in data:
             yield row[0], row[1]
 
     def itervalues(self):
-        data = self.cursor.execute("SELECT value FROM %s;" % self.table)
+        data = self._execute("SELECT value FROM %s;" % self.table)
         for row in data:
             yield row[0]
 
