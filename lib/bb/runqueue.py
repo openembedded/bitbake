@@ -88,7 +88,7 @@ class RunQueueScheduler(object):
         self.prio_map = []
         self.prio_map.extend(range(numTasks))
 
-    def next_buildable_tasks(self):
+    def next_buildable_task(self):
         """
         Return the id of the first task we find that is buildable
         """
@@ -97,14 +97,14 @@ class RunQueueScheduler(object):
             if self.rq.runq_running[taskid] == 1:
                 continue
             if self.rq.runq_buildable[taskid] == 1:
-                yield taskid
+                return taskid
 
     def next(self):
         """
         Return the id of the task we should build next
         """
         if self.rq.stats.active < self.rq.number_tasks:
-            return next(self.next_buildable_tasks(), None)
+            return self.next_buildable_task()
 
 class RunQueueSchedulerSpeed(RunQueueScheduler):
     """
