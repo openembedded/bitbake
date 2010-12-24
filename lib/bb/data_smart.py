@@ -28,7 +28,7 @@ BitBake build tools.
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import copy, re, sys
+import copy, re
 from collections import MutableMapping
 import logging
 import bb
@@ -43,14 +43,15 @@ __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
 
-class DataDict(dict):
+class DataContext(dict):
     def __init__(self, metadata, **kwargs):
         self.metadata = metadata
         dict.__init__(self, **kwargs)
+        self['d'] = metadata
 
     def __missing__(self, key):
         value = self.metadata.getVar(key, True)
-        if value is None:
+        if value is None or self.metadata.getVarFlag(key, 'func'):
             raise KeyError(key)
         else:
             return value
@@ -80,7 +81,7 @@ class DataSmart(MutableMapping):
         def python_sub(match):
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), varname or "<expansion>", "eval")
-            value = utils.better_eval(codeobj, DataDict(self, d=self))
+            value = utils.better_eval(codeobj, DataContext(self))
             return str(value)
 
         if not isinstance(s, basestring): # sanity check
