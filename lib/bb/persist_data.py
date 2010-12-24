@@ -54,7 +54,7 @@ class SQLTable(collections.MutableMapping):
         """Execute a query, waiting to acquire a lock if necessary"""
         while True:
             try:
-                self.cursor.execute(*query)
+                return self.cursor.execute(*query)
                 break
             except sqlite3.OperationalError as exc:
                 if 'database is locked' in str(exc):
