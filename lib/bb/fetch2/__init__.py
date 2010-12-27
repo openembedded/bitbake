@@ -353,7 +353,8 @@ def localpaths(d):
 
     return local
 
-srcrev_internal_call = False
+def get_autorev(d):
+    return "AUTOINC"
 
 def get_srcrev(d):
     """
@@ -363,18 +364,6 @@ def get_srcrev(d):
     In the multi SCM case, we build a value based on SRCREV_FORMAT which must
     have been set.
     """
-
-    #
-    # Ugly code alert. localpath in the fetchers will try to evaluate SRCREV which
-    # could translate into a call to here. If it does, we need to catch this
-    # and provide some way so it knows get_srcrev is active instead of being
-    # some number etc. hence the srcrev_internal_call tracking and the magic
-    # "SRCREVINACTION" return value.
-    #
-    # Neater solutions welcome!
-    #
-    if bb.fetch2.srcrev_internal_call:
-        return "SRCREVINACTION"
 
     scms = []
 
@@ -543,6 +532,8 @@ class FetchData(object):
                 self.method = m
                 if hasattr(m,"urldata_init"):
                     m.urldata_init(self, d)
+                if m.supports_srcrev():
+                    self.revision = Fetch.srcrev_internal_helper(self, d);
                 return
         raise NoMethodError("Missing implementation for url %s" % url)
 
@@ -567,11 +558,7 @@ class FetchData(object):
                             local = ""
                 self.localpath = local
             if not local:
-                try:
-                    bb.fetch2.srcrev_internal_call = True
-                    self.localpath = self.method.localpath(self.url, self, d)
-                finally:
-                    bb.fetch2.srcrev_internal_call = False
+                self.localpath = self.method.localpath(self.url, self, d)
                 # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
                 # Horrible...
                 bb.data.delVar("ISHOULDNEVEREXIST", d)
@@ -677,8 +664,8 @@ class Fetch(object):
         """
         Return:
             a) a source revision if specified
-            b) True if auto srcrev is in action
-            c) False otherwise
+            b) latest revision if SREREV="AUTOINC"
+            c) None if not specified
         """
 
         if 'rev' in ud.parm:
@@ -699,10 +686,9 @@ class Fetch(object):
             rev = data.getVar("SRCREV", d, 1)
         if rev == "INVALID":
             raise InvalidSRCREV("Please set SRCREV to a valid value")
-        if not rev:
-            return False
-        if rev is "SRCREVINACTION":
-            return True
+        if rev == "AUTOINC":
+            rev = ud.method.latest_revision(ud.url, ud, d)
+
         return rev
 
     srcrev_internal_helper = staticmethod(srcrev_internal_helper)

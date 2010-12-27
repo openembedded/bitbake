@@ -73,15 +73,9 @@ class Svn(Fetch):
             if "DATE" in pv:
                 ud.revision = ""
             else:
-                rev = Fetch.srcrev_internal_helper(ud, d)
-                if rev is True:
-                    ud.revision = self.latest_revision(url, ud, d)
+                # use the initizlied revision
+                if ud.revision:
                     ud.date = ""
-                elif rev:
-                    ud.revision = rev
-                    ud.date = ""
-                else:
-                    ud.revision = ""
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 

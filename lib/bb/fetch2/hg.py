@@ -64,14 +64,8 @@ class Hg(Fetch):
     def localpath(self, url, ud, d):
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
-        else:
-            tag = Fetch.srcrev_internal_helper(ud, d)
-            if tag is True:
-                ud.revision = self.latest_revision(url, ud, d)
-            elif tag:
-                ud.revision = tag
-            else:
-                ud.revision = self.latest_revision(url, ud, d)
+        elif not ud.revision:
+            ud.revision = self.latest_revision(url, ud, d)
 
         ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
 

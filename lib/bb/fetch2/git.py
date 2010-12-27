@@ -62,13 +62,7 @@ class Git(Fetch):
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
     def localpath(self, url, ud, d):
-
-        tag = Fetch.srcrev_internal_helper(ud, d)
-        if tag is True:
-            ud.tag = self.latest_revision(url, ud, d)
-        elif tag:
-            ud.tag = tag
-
+        ud.tag = ud.revision
         if not ud.tag or ud.tag == "master":
             ud.tag = self.latest_revision(url, ud, d)
 

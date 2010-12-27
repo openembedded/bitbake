@@ -43,12 +43,6 @@ class Bzr(Fetch):
         ud.pkgdir = os.path.join(data.expand('${BZRDIR}', d), ud.host, relpath)
 
     def localpath (self, url, ud, d):
-        revision = Fetch.srcrev_internal_helper(ud, d)
-        if revision is True:
-            ud.revision = self.latest_revision(url, ud, d)
-        elif revision:
-            ud.revision = revision
-
         if not ud.revision:
             ud.revision = self.latest_revision(url, ud, d)
 

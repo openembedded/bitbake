@@ -355,6 +355,9 @@ def localpaths(d):
 
 srcrev_internal_call = False
 
+def get_autorev(d):
+    return get_srcrev(d)
+
 def get_srcrev(d):
     """
     Return the version string for the current package
