@@ -354,6 +354,9 @@ def localpaths(d):
     return local
 
 def get_autorev(d):
+    #  only not cache src rev in autorev case
+    if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
+        bb.data.setVar('__BB_DONT_CACHE', '1', d)
     return "AUTOINC"
 
 def get_srcrev(d):
@@ -379,9 +382,6 @@ def get_srcrev(d):
     if len(scms) == 0:
         logger.error("SRCREV was used yet no valid SCM was found in SRC_URI")
         raise ParameterError
-
-    if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
-        bb.data.setVar('__BB_DONT_CACHE', '1', d)
 
     if len(scms) == 1:
         return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d)
