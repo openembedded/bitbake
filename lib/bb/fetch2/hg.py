@@ -43,11 +43,10 @@ class Hg(Fetch):
         """
         return ud.type in ['hg']
 
-    def forcefetch(self, url, ud, d):
-        revTag = ud.parm.get('rev', 'tip')
-        return revTag == "tip"
-
-    def localpath(self, url, ud, d):
+    def urldata_init(self, ud, d):
+        """
+        init hg specific variable within url data
+        """
         if not "module" in ud.parm:
             raise MissingParameterError("hg method needs a 'module' parameter")
 
@@ -58,6 +57,11 @@ class Hg(Fetch):
         ud.pkgdir = os.path.join(data.expand('${HGDIR}', d), ud.host, relpath)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 
+    def forcefetch(self, url, ud, d):
+        revTag = ud.parm.get('rev', 'tip')
+        return revTag == "tip"
+
+    def localpath(self, url, ud, d):
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
         else:
