@@ -42,7 +42,10 @@ class Svn(Fetch):
         """
         return ud.type in ['svn']
 
-    def localpath(self, url, ud, d):
+    def urldata_init(self, ud, d):
+        """
+        init svn specific variable within url data
+        """
         if not "module" in ud.parm:
             raise MissingParameterError("svn method needs a 'module' parameter")
 
@@ -53,6 +56,7 @@ class Svn(Fetch):
         ud.pkgdir = os.path.join(data.expand('${SVNDIR}', d), ud.host, relpath)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 
+    def localpath(self, url, ud, d):
         if 'rev' in ud.parm:
             ud.date = ""
             ud.revision = ud.parm['rev']
