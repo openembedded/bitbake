@@ -34,12 +34,15 @@ class Bzr(Fetch):
     def supports(self, url, ud, d):
         return ud.type in ['bzr']
 
-    def localpath (self, url, ud, d):
-
+    def urldata_init(self, ud, d):
+        """
+        init bzr specific variable within url data
+        """
         # Create paths to bzr checkouts
         relpath = self._strip_leading_slashes(ud.path)
         ud.pkgdir = os.path.join(data.expand('${BZRDIR}', d), ud.host, relpath)
 
+    def localpath (self, url, ud, d):
         revision = Fetch.srcrev_internal_helper(ud, d)
         if revision is True:
             ud.revision = self.latest_revision(url, ud, d)
