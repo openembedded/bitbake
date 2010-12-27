@@ -41,8 +41,11 @@ class Git(Fetch):
         """
         return ud.type in ['git']
 
-    def localpath(self, url, ud, d):
-
+    def urldata_init(self, ud, d):
+        """
+        init git specific variable within url data
+        so that the git method like latest_revision() can work
+        """
         if 'protocol' in ud.parm:
             ud.proto = ud.parm['protocol']
         elif not ud.host:
@@ -55,6 +58,10 @@ class Git(Fetch):
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
         ud.mirrortarball = 'git_%s.tar.gz' % (gitsrcname)
         ud.clonedir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
+
+        ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
+
+    def localpath(self, url, ud, d):
 
         tag = Fetch.srcrev_internal_helper(ud, d)
         if tag is True:
@@ -77,8 +84,6 @@ class Git(Fetch):
             ud.localfile = ud.mirrortarball
         else:
             ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, subdirpath.replace('/', '.'), ud.tag), d)
-
-        ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
         if 'noclone' in ud.parm:
             ud.localfile = None
