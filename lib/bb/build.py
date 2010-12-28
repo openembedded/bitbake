@@ -184,6 +184,7 @@ def exec_func_python(func, d, runfile, logfile, cwd=None):
     bbfile = d.getVar('FILE', True)
     olddir = os.getcwd()
     code = _functionfmt.format(function=func, body=d.getVar(func, True))
+    bb.utils.mkdirhier(os.path.dirname(runfile))
     with open(runfile, 'w') as script:
         script.write(code)
 
