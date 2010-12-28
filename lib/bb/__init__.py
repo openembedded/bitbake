@@ -76,6 +76,10 @@ def plain(*args):
     logger.plain(''.join(args))
 
 def debug(lvl, *args):
+    if isinstance(lvl, basestring):
+        logger.warn("Passed invalid debug level '%s' to bb.debug", lvl)
+        args = (lvl,) + args
+        lvl = 1
     logger.debug(lvl, ''.join(args))
 
 def note(*args):
