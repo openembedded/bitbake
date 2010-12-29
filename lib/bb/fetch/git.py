@@ -118,6 +118,7 @@ class Git(Fetch):
 
         repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
 
+
         coname = '%s' % (ud.tag)
         codir = os.path.join(ud.clonedir, coname)
 
@@ -257,6 +258,49 @@ class Git(Fetch):
             revs[key] = rev
 
         return str(rev)
+
+    def sortable_revision(self, url, ud, d):
+        """
+
+        """
+        pd = bb.persist_data.persist(d)
+        localcounts = pd['BB_URI_LOCALCOUNT']
+        key = self.generate_revision_key(url, ud, d, branch=True)
+        oldkey = self.generate_revision_key(url, ud, d, branch=False)
+
+        latest_rev = self._build_revision(url, ud, d)
+        last_rev = localcounts[key + '_rev']
+        if last_rev is None:
+            last_rev = localcounts[oldkey + '_rev']
+            if last_rev is not None:
+                del localcounts[oldkey + '_rev']
+                localcounts[key + '_rev'] = last_rev
+
+        uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
+        count = None
+        if uselocalcount:
+            count = Fetch.localcount_internal_helper(ud, d)
+        if count is None:
+            count = localcounts[key + '_count']
+        if count is None:
+            count = localcounts[oldkey + '_count']
+            if count is not None:
+                del localcounts[oldkey + '_count']
+                localcounts[key + '_count'] = count
+
+        if last_rev == latest_rev:
+            return str(count + "+" + latest_rev)
+
+        count = self._sortable_buildindex(url, ud, d, latest_rev)
+        if count is not None:
+            count = str(count)
+        else:
+            count = '0'
+
+        localcounts[key + '_rev'] = latest_rev
+        localcounts[key + '_count'] = count
+
+        return str(count + "+" + latest_rev)
 
     def _build_revision(self, url, ud, d):
         return ud.tag
