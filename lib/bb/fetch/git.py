@@ -22,6 +22,7 @@ BitBake 'Fetch' git implementation
 
 import os
 import bb
+import bb.persist_data
 from   bb    import data
 from   bb.fetch import Fetch
 from   bb.fetch import runfetchcmd
@@ -206,11 +207,19 @@ class Git(Fetch):
         output = runfetchcmd("%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (basecmd, tag), d, quiet=True)
         return output.split()[0] != "0"
 
-    def _revision_key(self, url, ud, d):
+    def _revision_key(self, url, ud, d, branch=False):
         """
         Return a unique key for the url
         """
-        return "git:" + ud.host + ud.path.replace('/', '.')
+        key = 'git:' + ud.host + ud.path.replace('/', '.')
+        if branch:
+            return key + ud.branch
+        else:
+            return key
+
+    def generate_revision_key(self, url, ud, d, branch=False):
+        key = self._revision_key(url, ud, d, branch)
+        return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
 
     def _latest_revision(self, url, ud, d):
         """
@@ -227,6 +236,27 @@ class Git(Fetch):
         if not output:
             raise bb.fetch.FetchError("Fetch command %s gave empty output\n" % (cmd))
         return output.split()[0]
+
+    def latest_revision(self, url, ud, d):
+        """
+        Look in the cache for the latest revision, if not present ask the SCM.
+        """
+        persisted = bb.persist_data.persist(d)
+        revs = persisted['BB_URI_HEADREVS']
+
+        key = self.generate_revision_key(url, ud, d, branch=True)
+        rev = revs[key]
+        if rev is None:
+            # Compatibility with old key format, no branch included
+            oldkey = self.generate_revision_key(url, ud, d, branch=False)
+            rev = revs[oldkey]
+            if rev is not None:
+                del revs[oldkey]
+            else:
+                rev = self._latest_revision(url, ud, d)
+            revs[key] = rev
+
+        return str(rev)
 
     def _build_revision(self, url, ud, d):
         return ud.tag
