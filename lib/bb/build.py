@@ -129,8 +129,9 @@ def exec_func(func, d, dirs = None, logfile = NULL):
     """Execute an BB 'function'"""
 
     body = data.getVar(func, d)
-    if body is None:
-        logger.warn("Function %s doesn't exist", func)
+    if not body:
+        if body is None:
+            logger.warn("Function %s doesn't exist", func)
         return
 
     flags = data.getVarFlags(func, d)
