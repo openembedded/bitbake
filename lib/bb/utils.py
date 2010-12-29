@@ -409,6 +409,10 @@ def lockfile(name):
         logger.error("Lockfile destination directory '%s' does not exist", path)
         sys.exit(1)
 
+    if not os.access(path, os.W_OK):
+        bb.msg.error(bb.msg.domain.Util, "Error, lockfile path is not writable!: %s" % path)
+        sys.exit(1)
+
     while True:
         # If we leave the lockfiles lying around there is no problem
         # but we should clean up after ourselves. This gives potential
