@@ -291,11 +291,15 @@ class Git(Fetch):
         if last_rev == latest_rev:
             return str(count + "+" + latest_rev)
 
-        count = self._sortable_buildindex(url, ud, d, latest_rev)
-        if count is not None:
+        buildindex_provided = hasattr(self, "_sortable_buildindex")
+        if buildindex_provided:
+            count = self._sortable_buildindex(url, ud, d, latest_rev)
+        if count is None:
+            count = "0"
+        elif uselocalcount or buildindex_provided:
             count = str(count)
         else:
-            count = '0'
+            count = str(int(count) + 1)
 
         localcounts[key + '_rev'] = latest_rev
         localcounts[key + '_count'] = count
