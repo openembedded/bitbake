@@ -228,10 +228,6 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
         script.write("%s\n" % function)
         os.fchmod(script.fileno(), 0775)
 
-    env = {
-        'PATH': d.getVar('PATH', True),
-        'LC_ALL': 'C',
-    }
     if fakeroot:
         cmd = ['fakeroot', runfile]
     else:
@@ -241,8 +237,7 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
         logfile = LogTee(logger, logfile)
 
     try:
-        bb.process.run(cmd, env=env, cwd=cwd, shell=False, stdin=NULL,
-                       log=logfile)
+        bb.process.run(cmd, cwd=cwd, shell=False, stdin=NULL, log=logfile)
     except bb.process.CmdError:
         raise FuncFailed(function, logfile.name)
 
