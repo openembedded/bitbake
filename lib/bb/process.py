@@ -63,23 +63,26 @@ class Popen(subprocess.Popen):
         subprocess.Popen.__init__(self, *args, **options)
 
 def _logged_communicate(pipe, log, input):
-    bufsize = 512
-    hasoutput = pipe.stdout is not None or pipe.stderr is not None
-    if hasoutput:
-        outdata, errdata = [], []
-        while pipe.poll() is None:
-            if pipe.stdout is not None:
-                data = pipe.stdout.read(bufsize)
-                if data is not None:
-                    outdata.append(data)
-                    log.write(data)
+    if pipe.stdin:
+        if input is not None:
+            pipe.stdin.write(input)
+        pipe.stdin.close()
 
-            if pipe.stderr is not None:
-                data = pipe.stderr.read(bufsize)
-                if data is not None:
-                    errdata.append(data)
-                    log.write(data)
-        return ''.join(outdata), ''.join(errdata)
+    bufsize = 512
+    outdata, errdata = [], []
+    while pipe.poll() is None:
+        if pipe.stdout is not None:
+            data = pipe.stdout.read(bufsize)
+            if data is not None:
+                outdata.append(data)
+                log.write(data)
+
+        if pipe.stderr is not None:
+            data = pipe.stderr.read(bufsize)
+            if data is not None:
+                errdata.append(data)
+                log.write(data)
+    return ''.join(outdata), ''.join(errdata)
 
 def run(cmd, input=None, **options):
     """Convenience function to run a command and return its output, raising an
