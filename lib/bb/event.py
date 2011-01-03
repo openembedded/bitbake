@@ -148,7 +148,7 @@ def register(name, handler):
 
     if handler is not None:
         # handle string containing python code
-        if type(handler).__name__ == "str":
+        if isinstance(handler, basestring):
             tmp = "def tmpHandler(e):\n%s" % handler
             comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._registerCode")
             _handlers[name] = comp
