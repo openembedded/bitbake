@@ -46,10 +46,10 @@ def supports(fn, d):
 
 def include(oldfn, fn, data, error_out):
     """
-
-    error_out If True a ParseError will be reaised if the to be included
+    error_out If True a ParseError will be raised if the to be included
+    config-files could not be included.
     """
-    if oldfn == fn: # prevent infinate recursion
+    if oldfn == fn: # prevent infinite recursion
         return None
 
     import bb
