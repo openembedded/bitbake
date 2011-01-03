@@ -27,6 +27,7 @@ File parsers for the BitBake build tools.
 handlers = []
 
 import os
+import stat
 import logging
 import bb
 import bb.utils
@@ -42,19 +43,19 @@ class SkipPackage(Exception):
 __mtime_cache = {}
 def cached_mtime(f):
     if f not in __mtime_cache:
-        __mtime_cache[f] = os.stat(f)[8]
+        __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
     return __mtime_cache[f]
 
 def cached_mtime_noerror(f):
     if f not in __mtime_cache:
         try:
-            __mtime_cache[f] = os.stat(f)[8]
+            __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
         except OSError:
             return 0
     return __mtime_cache[f]
 
 def update_mtime(f):
-    __mtime_cache[f] = os.stat(f)[8]
+    __mtime_cache[f] = os.stat(f)[stat.ST_MTIME]
     return __mtime_cache[f]
 
 def mark_dependency(d, f):
