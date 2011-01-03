@@ -331,13 +331,9 @@ class Cache(object):
 
         self.checked.add(fn)
 
-        # Pretend we're clean so getVar works
-        self.clean.add(fn)
-
         # File isn't in depends_cache
         if not fn in self.depends_cache:
             logger.debug(2, "Cache: %s is not cached", fn)
-            self.remove(fn)
             return False
 
         mtime = bb.parse.cached_mtime_noerror(fn)
@@ -393,6 +389,7 @@ class Cache(object):
                 self.clean.remove(fn)
             return False
 
+        self.clean.add(fn)
         return True
 
     def remove(self, fn):
