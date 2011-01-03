@@ -121,8 +121,8 @@ def handle(fn, d, include):
     else:
         logger.debug(2, "BB %s: handle(data, include)", fn)
 
-    (root, ext) = os.path.splitext(os.path.basename(fn))
-    base_name = "%s%s" % (root, ext)
+    base_name = os.path.basename(fn)
+    (root, ext) = os.path.splitext(base_name)
     init(d)
 
     if ext == ".bbclass":
