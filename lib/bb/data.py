@@ -198,7 +198,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 
     if unexport:
         o.write('unset %s\n' % varExpanded)
-        return 1
+        return 0
 
     if not val:
         return 0
@@ -217,7 +217,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     # to a shell, we need to escape the quotes in the var
     alter = re.sub('"', '\\"', val.strip())
     o.write('%s="%s"\n' % (varExpanded, alter))
-    return 1
+    return 0
 
 def emit_env(o=sys.__stdout__, d = init(), all=False):
     """Emits all items in the data store in a format such that it can be sourced by a shell."""
