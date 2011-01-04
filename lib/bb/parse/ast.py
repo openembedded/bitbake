@@ -256,11 +256,11 @@ class BBHandlerNode(AstNode):
         bb.data.setVar('__BBHANDLERS', bbhands, data)
 
 class InheritNode(AstNode):
-    def __init__(self, files):
-        self.n = __word__.findall(files)
+    def __init__(self, classes):
+        self.classes = classes
 
     def eval(self, data):
-        bb.parse.BBHandler.inherit(self.n, data)
+        bb.parse.BBHandler.inherit(self.classes, data)
 
 def handleInclude(statements, m, fn, lineno, force):
     statements.append(IncludeNode(m.group(1), fn, lineno, force))
@@ -296,9 +296,8 @@ def handleBBHandlers(statements, m):
     statements.append(BBHandlerNode(m.group(1)))
 
 def handleInherit(statements, m):
-    files = m.group(1)
-    n = __word__.findall(files)
-    statements.append(InheritNode(m.group(1)))
+    classes = m.group(1)
+    statements.append(InheritNode(__word__.findall(classes)))
 
 def finalize(fn, d):
     for lazykey in bb.data.getVar("__lazy_assigned", d) or ():
