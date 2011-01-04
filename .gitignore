@@ -1,4 +1,5 @@
 *.pyc
+*.pyo
 *~
 pyshtables.py
 /doc/manual/html/
