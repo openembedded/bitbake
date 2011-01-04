@@ -222,6 +222,16 @@ class CommandsAsync:
         command.finishAsyncCommand()
     generateDotGraph.needcache = True
 
+    def generateTargetsTree(self, command, params):
+        """
+        Generate a tree of all buildable targets.
+        """
+        klass = params[0]
+
+        command.cooker.generateTargetsTree(klass)
+        command.finishAsyncCommand()
+    generateTargetsTree.needcache = True
+
     def showVersions(self, command, params):
         """
         Show the currently selected versions

@@ -430,6 +430,31 @@ class BBCooker:
             if not regex in matched:
                 collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
+    def checkInheritsClass(self, klass):
+        pkg_list = []
+        for pfn in self.status.pkg_fn:
+            inherits = self.status.inherits.get(pfn, None)
+            if inherits and inherits.count(klass) > 0:
+                pkg_list.append(self.status.pkg_fn[pfn])
+
+        return pkg_list
+
+    def generateTargetsTree(self, klass):
+        """
+        Generate a dependency tree of buildable targets
+        Generate an event with the result
+        """
+        pkgs = ['world']
+        # if inherited_class passed ensure all recipes which inherit the
+        # specified class are included in pkgs
+        if klass:
+            extra_pkgs = self.checkInheritsClass(klass)
+            pkgs = pkgs + extra_pkgs
+
+        # generate a dependency tree for all our packages
+        tree = self.generateDepTreeData(pkgs, 'build')
+        bb.event.fire(bb.event.TargetsTreeGenerated(tree), self.configuration.data)
+
     def buildWorldTargetList(self):
         """
          Build package list for "bitbake world"

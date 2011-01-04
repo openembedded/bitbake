@@ -351,6 +351,15 @@ class DepTreeGenerated(Event):
         Event.__init__(self)
         self._depgraph = depgraph
 
+class TargetsTreeGenerated(Event):
+    """
+    Event when a set of buildable targets has been generated
+    """
+
+    def __init__(self, model):
+        Event.__init__(self)
+        self._model = model
+
 class MsgBase(Event):
     """Base class for messages"""
 
