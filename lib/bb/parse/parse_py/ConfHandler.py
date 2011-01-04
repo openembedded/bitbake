@@ -113,22 +113,22 @@ def feeder(lineno, s, fn, statements):
     m = __config_regexp__.match(s)
     if m:
         groupd = m.groupdict()
-        ast.handleData(statements, groupd)
+        ast.handleData(statements, fn, lineno, groupd)
         return
 
     m = __include_regexp__.match(s)
     if m:
-        ast.handleInclude(statements, m, fn, lineno, False)
+        ast.handleInclude(statements, fn, lineno, m, False)
         return
 
     m = __require_regexp__.match(s)
     if m:
-        ast.handleInclude(statements, m, fn, lineno, True)
+        ast.handleInclude(statements, fn, lineno, m, True)
         return
 
     m = __export_regexp__.match(s)
     if m:
-        ast.handleExport(statements, m)
+        ast.handleExport(statements, fn, lineno, m)
         return
 
     raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));

@@ -172,7 +172,7 @@ def feeder(lineno, s, fn, root, statements):
     if __infunc__:
         if s == '}':
             __body__.append('')
-            ast.handleMethod(statements, __infunc__, lineno, fn, __body__)
+            ast.handleMethod(statements, fn, lineno, __infunc__, __body__)
             __infunc__ = ""
             __body__ = []
         else:
@@ -185,7 +185,7 @@ def feeder(lineno, s, fn, root, statements):
             __body__.append(s)
             return
         else:
-            ast.handlePythonMethod(statements, root, __body__, fn)
+            ast.handlePythonMethod(statements, fn, lineno, root, __body__)
             __body__ = []
             __inpython__ = False
 
@@ -206,7 +206,7 @@ def feeder(lineno, s, fn, root, statements):
     m = __func_start_regexp__.match(s)
     if m:
         __infunc__ = m.group("func") or "__anonymous"
-        ast.handleMethodFlags(statements, __infunc__, m)
+        ast.handleMethodFlags(statements, fn, lineno, __infunc__, m)
         return
 
     m = __def_regexp__.match(s)
@@ -217,22 +217,22 @@ def feeder(lineno, s, fn, root, statements):
 
     m = __export_func_regexp__.match(s)
     if m:
-        ast.handleExportFuncs(statements, m, classes)
+        ast.handleExportFuncs(statements, fn, lineno, m, classes)
         return
 
     m = __addtask_regexp__.match(s)
     if m:
-        ast.handleAddTask(statements, m)
+        ast.handleAddTask(statements, fn, lineno, m)
         return
 
     m = __addhandler_regexp__.match(s)
     if m:
-        ast.handleBBHandlers(statements, m)
+        ast.handleBBHandlers(statements, fn, lineno, m)
         return
 
     m = __inherit_regexp__.match(s)
     if m:
-        ast.handleInherit(statements, m)
+        ast.handleInherit(statements, fn, lineno, m)
         return
 
     return ConfHandler.feeder(lineno, s, fn, statements)

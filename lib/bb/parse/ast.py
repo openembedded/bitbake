@@ -40,13 +40,14 @@ class StatementGroup(list):
             statement.eval(data)
 
 class AstNode(object):
-    pass
+    def __init__(self, filename, lineno):
+        self.filename = filename
+        self.lineno = lineno
 
 class IncludeNode(AstNode):
-    def __init__(self, what_file, fn, lineno, force):
+    def __init__(self, filename, lineno, what_file, force):
+        AstNode.__init__(self, filename, lineno)
         self.what_file = what_file
-        self.from_fn = fn
-        self.from_lineno = lineno
         self.force = force
 
     def eval(self, data):
@@ -54,16 +55,17 @@ class IncludeNode(AstNode):
         Include the file and evaluate the statements
         """
         s = bb.data.expand(self.what_file, data)
-        logger.debug(2, "CONF %s:%s: including %s", self.from_fn, self.from_lineno, s)
+        logger.debug(2, "CONF %s:%s: including %s", self.filename, self.lineno, s)
 
         # TODO: Cache those includes... maybe not here though
         if self.force:
-            bb.parse.ConfHandler.include(self.from_fn, s, data, "include required")
+            bb.parse.ConfHandler.include(self.filename, s, data, "include required")
         else:
-            bb.parse.ConfHandler.include(self.from_fn, s, data, False)
+            bb.parse.ConfHandler.include(self.filename, s, data, False)
 
 class ExportNode(AstNode):
-    def __init__(self, var):
+    def __init__(self, filename, lineno, var):
+        AstNode.__init__(self, filename, lineno)
         self.var = var
 
     def eval(self, data):
@@ -76,7 +78,8 @@ class DataNode(AstNode):
     this need to be re-evaluated... we might be able to do
     that faster with multiple classes.
     """
-    def __init__(self, groupd):
+    def __init__(self, filename, lineno, groupd):
+        AstNode.__init__(self, filename, lineno)
         self.groupd = groupd
 
     def getFunc(self, key, data):
@@ -119,19 +122,18 @@ class DataNode(AstNode):
         else:
             bb.data.setVar(key, val, data)
 
-class MethodNode:
-    def __init__(self, func_name, body, lineno, fn):
+class MethodNode(AstNode):
+    def __init__(self, filename, lineno, func_name, body):
+        AstNode.__init__(self, filename, lineno)
         self.func_name = func_name
         self.body = body
-        self.fn = fn
-        self.lineno = lineno
 
     def eval(self, data):
         if self.func_name == "__anonymous":
-            funcname = ("__anon_%s_%s" % (self.lineno, self.fn.translate(string.maketrans('/.+-', '____'))))
+            funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(string.maketrans('/.+-', '____'))))
             if not funcname in bb.methodpool._parsed_fns:
                 text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
-                bb.methodpool.insert_method(funcname, text, self.fn)
+                bb.methodpool.insert_method(funcname, text, self.filename)
             anonfuncs = bb.data.getVar('__BBANONFUNCS', data) or []
             anonfuncs.append(funcname)
             bb.data.setVar('__BBANONFUNCS', anonfuncs, data)
@@ -140,21 +142,22 @@ class MethodNode:
             bb.data.setVar(self.func_name, '\n'.join(self.body), data)
 
 class PythonMethodNode(AstNode):
-    def __init__(self, root, body, fn):
-        self.root = root
+    def __init__(self, filename, lineno, define, body):
+        AstNode.__init__(self, filename, lineno)
+        self.define = define
         self.body = body
-        self.fn = fn
 
     def eval(self, data):
         # Note we will add root to parsedmethods after having parse
         # 'this' file. This means we will not parse methods from
         # bb classes twice
-        if not bb.methodpool.parsed_module(self.root):
+        if not bb.methodpool.parsed_module(self.define):
             text = '\n'.join(self.body)
-            bb.methodpool.insert_method(self.root, text, self.fn)
+            bb.methodpool.insert_method(self.define, text, self.filename)
 
 class MethodFlagsNode(AstNode):
-    def __init__(self, key, m):
+    def __init__(self, filename, lineno, key, m):
+        AstNode.__init__(self, filename, lineno)
         self.key = key
         self.m = m
 
@@ -174,7 +177,8 @@ class MethodFlagsNode(AstNode):
             bb.data.delVarFlag(self.key, "fakeroot", data)
 
 class ExportFuncsNode(AstNode):
-    def __init__(self, fns, classes):
+    def __init__(self, filename, lineno, fns, classes):
+        AstNode.__init__(self, filename, lineno)
         self.n = fns.split()
         self.classes = classes
 
@@ -213,7 +217,8 @@ class ExportFuncsNode(AstNode):
                 bb.data.setVarFlag(var, 'export_func', '1', data)
 
 class AddTaskNode(AstNode):
-    def __init__(self, func, before, after):
+    def __init__(self, filename, lineno, func, before, after):
+        AstNode.__init__(self, filename, lineno)
         self.func = func
         self.before = before
         self.after = after
@@ -244,7 +249,8 @@ class AddTaskNode(AstNode):
                     bb.data.setVarFlag(entry, "deps", [var] + existing, data)
 
 class BBHandlerNode(AstNode):
-    def __init__(self, fns):
+    def __init__(self, filename, lineno, fns):
+        AstNode.__init__(self, filename, lineno)
         self.hs = fns.split()
 
     def eval(self, data):
@@ -255,48 +261,49 @@ class BBHandlerNode(AstNode):
         bb.data.setVar('__BBHANDLERS', bbhands, data)
 
 class InheritNode(AstNode):
-    def __init__(self, classes):
+    def __init__(self, filename, lineno, classes):
+        AstNode.__init__(self, filename, lineno)
         self.classes = classes
 
     def eval(self, data):
         bb.parse.BBHandler.inherit(self.classes, data)
 
-def handleInclude(statements, m, fn, lineno, force):
-    statements.append(IncludeNode(m.group(1), fn, lineno, force))
+def handleInclude(statements, filename, lineno, m, force):
+    statements.append(IncludeNode(filename, lineno, m.group(1), force))
 
-def handleExport(statements, m):
-    statements.append(ExportNode(m.group(1)))
+def handleExport(statements, filename, lineno, m):
+    statements.append(ExportNode(filename, lineno, m.group(1)))
 
-def handleData(statements, groupd):
-    statements.append(DataNode(groupd))
+def handleData(statements, filename, lineno, groupd):
+    statements.append(DataNode(filename, lineno, groupd))
 
-def handleMethod(statements, func_name, lineno, fn, body):
-    statements.append(MethodNode(func_name, body, lineno, fn))
+def handleMethod(statements, filename, lineno, func_name, body):
+    statements.append(MethodNode(filename, lineno, func_name, body))
 
-def handlePythonMethod(statements, root, body, fn):
-    statements.append(PythonMethodNode(root, body, fn))
+def handlePythonMethod(statements, filename, lineno, root, body):
+    statements.append(PythonMethodNode(filename, lineno, root, body))
 
-def handleMethodFlags(statements, key, m):
-    statements.append(MethodFlagsNode(key, m))
+def handleMethodFlags(statements, filename, lineno, key, m):
+    statements.append(MethodFlagsNode(filename, lineno, key, m))
 
-def handleExportFuncs(statements, m, classes):
-    statements.append(ExportFuncsNode(m.group(1), classes))
+def handleExportFuncs(statements, filename, lineno, m, classes):
+    statements.append(ExportFuncsNode(filename, lineno, m.group(1), classes))
 
-def handleAddTask(statements, m):
+def handleAddTask(statements, filename, lineno, m):
     func = m.group("func")
     before = m.group("before")
     after = m.group("after")
     if func is None:
         return
 
-    statements.append(AddTaskNode(func, before, after))
+    statements.append(AddTaskNode(filename, lineno, func, before, after))
 
-def handleBBHandlers(statements, m):
-    statements.append(BBHandlerNode(m.group(1)))
+def handleBBHandlers(statements, filename, lineno, m):
+    statements.append(BBHandlerNode(filename, lineno, m.group(1)))
 
-def handleInherit(statements, m):
+def handleInherit(statements, filename, lineno, m):
     classes = m.group(1)
-    statements.append(InheritNode(classes.split()))
+    statements.append(InheritNode(filename, lineno, classes.split()))
 
 def finalize(fn, d):
     for lazykey in bb.data.getVar("__lazy_assigned", d) or ():
