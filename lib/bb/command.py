@@ -232,6 +232,17 @@ class CommandsAsync:
         command.finishAsyncCommand()
     generateTargetsTree.needcache = True
 
+    def findConfigFiles(self, command, params):
+        """
+        Find config files which provide appropriate values
+        for the passed configuration variable. i.e. MACHINE
+        """
+        varname = params[0]
+
+        command.cooker.findConfigFiles(varname)
+        command.finishAsyncCommand()
+    findConfigFiles.needcache = True
+
     def showVersions(self, command, params):
         """
         Show the currently selected versions

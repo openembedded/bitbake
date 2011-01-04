@@ -430,8 +430,32 @@ class BBCooker:
             if not regex in matched:
                 collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
+    def findConfigFiles(self, varname):
+        """
+        Find config files which are appropriate values for varname.
+        i.e. MACHINE, DISTRO
+        """
+        possible = []
+        var = varname.lower()
+
+        data = self.configuration.data
+        # iterate configs
+        bbpaths = bb.data.getVar('BBPATH', data, True).split(':')
+        for path in bbpaths:
+            confpath = os.path.join(path, "conf", var)
+            if os.path.exists(confpath):
+                for root, dirs, files in os.walk(confpath):
+                    # get all child files, these are appropriate values
+                    for f in files:
+                        val, sep, end = f.rpartition('.')
+                        if end == 'conf':
+                            possible.append(val)
+
+        bb.event.fire(bb.event.ConfigFilesFound(var, possible), self.configuration.data)
+
     def checkInheritsClass(self, klass):
         pkg_list = []
+
         for pfn in self.status.pkg_fn:
             inherits = self.status.inherits.get(pfn, None)
             if inherits and inherits.count(klass) > 0:

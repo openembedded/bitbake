@@ -360,6 +360,16 @@ class TargetsTreeGenerated(Event):
         Event.__init__(self)
         self._model = model
 
+class ConfigFilesFound(Event):
+    """
+    Event when a list of appropriate config files has been generated
+    """
+
+    def __init__(self, variable, values):
+        Event.__init__(self)
+        self._variable =  variable
+        self._values = values
+
 class MsgBase(Event):
     """Base class for messages"""
 
