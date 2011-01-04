@@ -84,16 +84,12 @@ def _logged_communicate(pipe, log, input):
                 log.write(data)
     return ''.join(outdata), ''.join(errdata)
 
-def run(cmd, input=None, **options):
+def run(cmd, input=None, log=None, **options):
     """Convenience function to run a command and return its output, raising an
     exception when the command fails"""
 
     if isinstance(cmd, basestring) and not "shell" in options:
         options["shell"] = True
-
-    log = options.get('log')
-    if log:
-        del options['log']
 
     try:
         pipe = Popen(cmd, **options)
