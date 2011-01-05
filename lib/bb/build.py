@@ -221,7 +221,7 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
 
     with open(runfile, 'w') as script:
         script.write('#!/bin/sh -e\n')
-        if logger.getEffectiveLevel() <= logging.DEBUG:
+        if logger.isEnabledFor(logging.DEBUG):
             script.write("set -x\n")
         data.emit_env(script, d)
 
@@ -237,7 +237,7 @@ def exec_func_shell(function, d, runfile, logfile, cwd=None, fakeroot=False):
     else:
         cmd = runfile
 
-    if logger.getEffectiveLevel() <= logging.DEBUG:
+    if logger.isEnabledFor(logging.DEBUG):
         logfile = LogTee(logger, logfile)
 
     try:
