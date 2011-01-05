@@ -83,8 +83,9 @@ def print_ui_queue():
     LogRecords to the console."""
     logger = logging.getLogger("BitBake")
     if not _ui_handlers:
+        from bb.msg import BBLogFormatter
         console = logging.StreamHandler(sys.stdout)
-        console.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        console.setFormatter(BBLogFormatter("%(levelname)s: %(message)s"))
         logger.handlers = [console]
         while ui_queue:
             event = ui_queue.pop()
