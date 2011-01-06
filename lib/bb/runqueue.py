@@ -886,7 +886,7 @@ class RunQueue:
             logger.debug(2, "%s.%s is nostamp\n", fn, taskname)
             return False
 
-        if taskname.endswith("_setscene"):
+        if taskname != "do_setscene" and taskname.endswith("_setscene"):
             return True
 
         iscurrent = True
