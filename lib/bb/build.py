@@ -308,25 +308,24 @@ def exec_task(fn, task, d):
     if not d.getVarFlag(task, 'nostamp') and not d.getVarFlag(task, 'selfstamp'):
         make_stamp(task, d)
 
-def extract_stamp(d, fn):
-    """
-    Extracts stamp format which is either a data dictionary (fn unset)
-    or a dataCache entry (fn set).
-    """
-    if fn:
-        return d.stamp[fn]
-    return data.getVar('STAMP', d, 1)
-
 def stamp_internal(task, d, file_name):
     """
     Internal stamp helper function
     Removes any stamp for the given task
     Makes sure the stamp directory exists
     Returns the stamp path+filename
+
+    In the bitbake core, d can be a CacheData and file_name will be set.
+    When called in task context, d will be a data store, file_name will not be set
     """
-    stamp = extract_stamp(d, file_name)
+    if file_name:
+        stamp = d.stamp[file_name]
+    else:
+        stamp = d.getVar('STAMP', True)
+
     if not stamp:
         return
+
     stamp = "%s.%s" % (stamp, task)
     bb.utils.mkdirhier(os.path.dirname(stamp))
     # Remove the file and recreate to force timestamp
