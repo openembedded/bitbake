@@ -42,7 +42,7 @@ class SignatureGenerator(object):
     def set_taskdata(self, hashes, deps):
         return
 
-    def stampfile(self, stampbase, taskname, taskhash):
+    def stampfile(self, stampbase, file_name, taskname):
         return "%s.%s" % (stampbase, taskname)
 
 class SignatureGeneratorBasic(SignatureGenerator):

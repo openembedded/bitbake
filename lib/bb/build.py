@@ -303,7 +303,7 @@ def exec_task(fn, task, d):
     if not localdata.getVarFlag(task, 'nostamp') and not localdata.getVarFlag(task, 'selfstamp'):
         make_stamp(task, localdata)
 
-def stamp_internal(task, d, file_name):
+def stamp_internal(taskname, d, file_name):
     """
     Internal stamp helper function
     Makes sure the stamp directory exists
@@ -316,11 +316,12 @@ def stamp_internal(task, d, file_name):
         stamp = d.stamp[file_name]
     else:
         stamp = d.getVar('STAMP', True)
+        file_name = d.getVar('BB_FILENAME', True)
 
     if not stamp:
         return
 
-    stamp = "%s.%s" % (stamp, task)
+    stamp = bb.parse.siggen.stampfile(stamp, file_name, taskname)
 
     bb.utils.mkdirhier(os.path.dirname(stamp))
 
