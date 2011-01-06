@@ -311,7 +311,6 @@ def exec_task(fn, task, d):
 def stamp_internal(task, d, file_name):
     """
     Internal stamp helper function
-    Removes any stamp for the given task
     Makes sure the stamp directory exists
     Returns the stamp path+filename
 
@@ -327,11 +326,9 @@ def stamp_internal(task, d, file_name):
         return
 
     stamp = "%s.%s" % (stamp, task)
+
     bb.utils.mkdirhier(os.path.dirname(stamp))
-    # Remove the file and recreate to force timestamp
-    # change on broken NFS filesystems
-    if os.access(stamp, os.F_OK):
-        os.remove(stamp)
+
     return stamp
 
 def make_stamp(task, d, file_name = None):
@@ -340,6 +337,10 @@ def make_stamp(task, d, file_name = None):
     (d can be a data dict or dataCache)
     """
     stamp = stamp_internal(task, d, file_name)
+    # Remove the file and recreate to force timestamp
+    # change on broken NFS filesystems
+    if os.access(stamp, os.F_OK):
+        os.remove(stamp)
     if stamp:
         f = open(stamp, "w")
         f.close()
@@ -350,6 +351,11 @@ def del_stamp(task, d, file_name = None):
     (d can be a data dict or dataCache)
     """
     stamp_internal(task, d, file_name)
+    if os.access(stamp, os.F_OK):
+        os.remove(stamp)
+
+def stampfile(taskname, d):
+    return stamp_internal(taskname, d, None)
 
 def add_tasks(tasklist, d):
     task_deps = data.getVar('_task_deps', d)
