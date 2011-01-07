@@ -350,7 +350,7 @@ def del_stamp(task, d, file_name = None):
     Removes a stamp for a given task
     (d can be a data dict or dataCache)
     """
-    stamp_internal(task, d, file_name)
+    stamp = stamp_internal(task, d, file_name)
     if os.access(stamp, os.F_OK):
         os.remove(stamp)
 
