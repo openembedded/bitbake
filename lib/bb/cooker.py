@@ -453,7 +453,10 @@ class BBCooker:
 
         bb.event.fire(bb.event.ConfigFilesFound(var, possible), self.configuration.data)
 
-    def checkInheritsClass(self, klass):
+    def findInheritsClass(self, klass):
+        """
+        Find all recipes which inherit the specified class
+        """
         pkg_list = []
 
         for pfn in self.status.pkg_fn:
@@ -462,6 +465,64 @@ class BBCooker:
                 pkg_list.append(self.status.pkg_fn[pfn])
 
         return pkg_list
+
+    def generateTargetsTreeData(self, pkgs_to_build, task):
+        """
+        Create a tree of pkgs_to_build metadata, returning the data.
+        """
+
+        # Need files parsed
+        self.updateCache()
+
+        # If we are told to do the None task then query the default task
+        if (task == None):
+            task = self.configuration.cmd
+
+        pkgs_to_build = self.checkPackages(pkgs_to_build)
+
+        localdata = data.createCopy(self.configuration.data)
+        bb.data.update_data(localdata)
+        bb.data.expandKeys(localdata)
+        taskdata = bb.taskdata.TaskData(self.configuration.abort)
+
+        runlist = []
+        for k in pkgs_to_build:
+            taskdata.add_provider(localdata, self.status, k)
+            runlist.append([k, "do_%s" % task])
+        taskdata.add_unresolved(localdata, self.status)
+
+        rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
+        rq.rqdata.prepare()
+
+        seen_fnids = []
+        target_tree = {}
+        target_tree["depends"] = {}
+        target_tree["pn"] = {}
+        target_tree["rdepends-pn"] = {}
+
+        for task in xrange(len(rq.rqdata.runq_fnid)):
+            taskname = rq.rqdata.runq_task[task]
+            fnid = rq.rqdata.runq_fnid[task]
+            fn = taskdata.fn_index[fnid]
+            pn = self.status.pkg_fn[fn]
+            version  = "%s:%s-%s" % self.status.pkg_pepvpr[fn]
+            if pn not in target_tree["pn"]:
+                target_tree["pn"][pn] = {}
+                target_tree["pn"][pn]["filename"] = fn
+                target_tree["pn"][pn]["version"] = version
+            if fnid not in seen_fnids:
+                seen_fnids.append(fnid)
+                packages = []
+
+                target_tree["depends"][pn] = []
+                for dep in taskdata.depids[fnid]:
+                    target_tree["depends"][pn].append(taskdata.build_names_index[dep])
+
+                target_tree["rdepends-pn"][pn] = []
+                for rdep in taskdata.rdepids[fnid]:
+                    target_tree["rdepends-pn"][pn].append(taskdata.run_names_index[rdep])
+
+        return target_tree
 
     def generateTargetsTree(self, klass):
         """
@@ -472,11 +533,11 @@ class BBCooker:
         # if inherited_class passed ensure all recipes which inherit the
         # specified class are included in pkgs
         if klass:
-            extra_pkgs = self.checkInheritsClass(klass)
+            extra_pkgs = self.findInheritsClass(klass)
             pkgs = pkgs + extra_pkgs
 
         # generate a dependency tree for all our packages
-        tree = self.generateDepTreeData(pkgs, 'build')
+        tree = self.generateTargetsTreeData(pkgs, 'build')
         bb.event.fire(bb.event.TargetsTreeGenerated(tree), self.configuration.data)
 
     def buildWorldTargetList(self):
