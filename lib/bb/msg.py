@@ -33,17 +33,22 @@ import bb.event
 class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
 
+    DEBUG = logging.DEBUG
     VERBOSE = 19
+    NOTE = logging.INFO
     PLAIN = 21
-    levelnames = {
-        PLAIN  : '',
-        VERBOSE: 'NOTE',
+    ERROR = logging.ERROR
+    WARNING = logging.WARNING
+    CRITICAL = logging.CRITICAL
 
-        logging.DEBUG   : 'DEBUG',
-        logging.INFO    : 'NOTE',
-        logging.WARNING : 'WARNING',
-        logging.ERROR   : 'ERROR',
-        logging.CRITICAL: 'ERROR',
+    levelnames = {
+        DEBUG   : 'DEBUG',
+        PLAIN  : '',
+        NOTE    : 'NOTE',
+        VERBOSE: 'NOTE',
+        WARNING : 'WARNING',
+        ERROR   : 'ERROR',
+        CRITICAL: 'ERROR',
     }
 
     def getLevelName(self, levelno):
