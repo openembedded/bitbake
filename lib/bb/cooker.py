@@ -237,11 +237,10 @@ class BBCooker:
             if data.getVarFlag( e, 'python', envdata ):
                 logger.plain("\npython %s () {\n%s}\n", e, data.getVar(e, envdata, 1))
 
-    def generateDepTreeData(self, pkgs_to_build, task):
+    def prepareTreeData(self, pkgs_to_build, task):
         """
-        Create a dependency tree of pkgs_to_build, returning the data.
+        Prepare a runqueue and taskdata object for iteration over pkgs_to_build
         """
-
         # Need files parsed
         self.updateCache()
 
@@ -264,6 +263,14 @@ class BBCooker:
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
         rq.rqdata.prepare()
+
+        return taskdata, rq
+
+    def generateDepTreeData(self, pkgs_to_build, task):
+        """
+        Create a dependency tree of pkgs_to_build, returning the data.
+        """
+        taskdata, rq = self.prepareTreeData(pkgs_to_build, task)
 
         seen_fnids = []
         depend_tree = {}
@@ -470,29 +477,7 @@ class BBCooker:
         """
         Create a tree of pkgs_to_build metadata, returning the data.
         """
-
-        # Need files parsed
-        self.updateCache()
-
-        # If we are told to do the None task then query the default task
-        if (task == None):
-            task = self.configuration.cmd
-
-        pkgs_to_build = self.checkPackages(pkgs_to_build)
-
-        localdata = data.createCopy(self.configuration.data)
-        bb.data.update_data(localdata)
-        bb.data.expandKeys(localdata)
-        taskdata = bb.taskdata.TaskData(self.configuration.abort)
-
-        runlist = []
-        for k in pkgs_to_build:
-            taskdata.add_provider(localdata, self.status, k)
-            runlist.append([k, "do_%s" % task])
-        taskdata.add_unresolved(localdata, self.status)
-
-        rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
-        rq.rqdata.prepare()
+        taskdata, rq = self.prepareTreeData(pkgs_to_build, task)
 
         seen_fnids = []
         target_tree = {}
