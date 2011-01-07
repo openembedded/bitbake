@@ -473,12 +473,25 @@ def sha256_file(filename):
         s.update(line)
     return s.hexdigest()
 
-def preserved_envvars_list():
+def preserved_envvars_exported():
+    """Variables which are taken from the environment and placed in and exported
+    from the metadata"""
     return [
-        'BBPATH',
-        'BB_PRESERVE_ENV',
-        'BB_ENV_WHITELIST',
-        'BB_ENV_EXTRAWHITE',
+        'BB_TASKHASH',
+        'HOME',
+        'LOGNAME',
+        'PATH',
+        'PWD',
+        'SHELL',
+        'TERM',
+        'USER',
+        'USERNAME',
+    ]
+
+def preserved_envvars_exported_interactive():
+    """Variables which are taken from the environment and placed in and exported
+    from the metadata, for interactive tasks"""
+    return [
         'COLORTERM',
         'DBUS_SESSION_BUS_ADDRESS',
         'DESKTOP_SESSION',
@@ -488,22 +501,24 @@ def preserved_envvars_list():
         'GNOME_KEYRING_SOCKET',
         'GPG_AGENT_INFO',
         'GTK_RC_FILES',
-        'HOME',
-        'LANG',
-        'LOGNAME',
-        'PATH',
-        'PWD',
         'SESSION_MANAGER',
-        'SHELL',
         'SSH_AUTH_SOCK',
-        'TERM',
-        'USER',
-        'USERNAME',
-        '_',
         'XAUTHORITY',
         'XDG_DATA_DIRS',
         'XDG_SESSION_COOKIE',
     ]
+
+def preserved_envvars():
+    """Variables which are taken from the environment and placed in the metadata"""
+    v = [
+        'BBPATH',
+        'BB_PRESERVE_ENV',
+        'BB_ENV_WHITELIST',
+        'BB_ENV_EXTRAWHITE',
+        'LANG',
+        '_',
+    ]
+    return v + preserved_envvars_exported() + preserved_envvars_exported_interactive()
 
 def filter_environment(good_vars):
     """
@@ -525,6 +540,10 @@ def filter_environment(good_vars):
 
     return removed_vars
 
+def create_interactive_env(d):
+    for k in preserved_envvars_exported_interactive():
+        os.setenv(k, bb.data.getVar(k, d, True))
+
 def clean_environment():
     """
     Clean up any spurious environment variables. This will remove any
@@ -534,7 +553,7 @@ def clean_environment():
         if 'BB_ENV_WHITELIST' in os.environ:
             good_vars = os.environ['BB_ENV_WHITELIST'].split()
         else:
-            good_vars = preserved_envvars_list()
+            good_vars = preserved_envvars()
         if 'BB_ENV_EXTRAWHITE' in os.environ:
             good_vars.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
         filter_environment(good_vars)

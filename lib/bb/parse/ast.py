@@ -142,8 +142,9 @@ class MethodNode(AstNode):
             bb.data.setVar(self.func_name, '\n'.join(self.body), data)
 
 class PythonMethodNode(AstNode):
-    def __init__(self, filename, lineno, define, body):
+    def __init__(self, filename, lineno, function, define, body):
         AstNode.__init__(self, filename, lineno)
+        self.function = function
         self.define = define
         self.body = body
 
@@ -151,9 +152,12 @@ class PythonMethodNode(AstNode):
         # Note we will add root to parsedmethods after having parse
         # 'this' file. This means we will not parse methods from
         # bb classes twice
+        text = '\n'.join(self.body)
         if not bb.methodpool.parsed_module(self.define):
-            text = '\n'.join(self.body)
             bb.methodpool.insert_method(self.define, text, self.filename)
+        bb.data.setVarFlag(self.function, "func", 1, data)
+        bb.data.setVarFlag(self.function, "python", 1, data)
+        bb.data.setVar(self.function, text, data)
 
 class MethodFlagsNode(AstNode):
     def __init__(self, filename, lineno, key, m):
@@ -280,8 +284,8 @@ def handleData(statements, filename, lineno, groupd):
 def handleMethod(statements, filename, lineno, func_name, body):
     statements.append(MethodNode(filename, lineno, func_name, body))
 
-def handlePythonMethod(statements, filename, lineno, root, body):
-    statements.append(PythonMethodNode(filename, lineno, root, body))
+def handlePythonMethod(statements, filename, lineno, funcname, root, body):
+    statements.append(PythonMethodNode(filename, lineno, funcname, root, body))
 
 def handleMethodFlags(statements, filename, lineno, key, m):
     statements.append(MethodFlagsNode(filename, lineno, key, m))
@@ -305,7 +309,7 @@ def handleInherit(statements, filename, lineno, m):
     classes = m.group(1)
     statements.append(InheritNode(filename, lineno, classes.split()))
 
-def finalize(fn, d):
+def finalize(fn, d, variant = None):
     for lazykey in bb.data.getVar("__lazy_assigned", d) or ():
         if bb.data.getVar(lazykey, d) is None:
             val = bb.data.getVarFlag(lazykey, "defaultval", d)
@@ -327,6 +331,8 @@ def finalize(fn, d):
 
     tasklist = bb.data.getVar('__BBTASKS', d) or []
     bb.build.add_tasks(tasklist, d)
+
+    bb.parse.siggen.finalise(fn, d, variant)
 
     bb.event.fire(bb.event.RecipeParsed(fn), d)
 
@@ -436,7 +442,7 @@ def multi_finalize(fn, d):
     for variant, variant_d in datastores.iteritems():
         if variant:
             try:
-                finalize(fn, variant_d)
+                finalize(fn, variant_d, variant)
             except bb.parse.SkipPackage:
                 bb.data.setVar("__SKIPPED", True, variant_d)
 

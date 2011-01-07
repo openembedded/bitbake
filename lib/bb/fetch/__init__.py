@@ -223,6 +223,42 @@ def removefile(f):
     except:
         pass
 
+def verify_checksum(u, ud, d):
+    """
+    verify the MD5 and SHA256 checksum for downloaded src
+
+    return value:
+        - True: checksum matched
+        - False: checksum unmatched
+
+    if checksum is missing in recipes file, "BB_STRICT_CHECKSUM" decide the return value.
+    if BB_STRICT_CHECKSUM = "1" then return false as unmatched, otherwise return true as
+    matched
+    """
+
+    if not ud.type in ["http", "https", "ftp", "ftps"]:
+        return
+
+    md5data = bb.utils.md5_file(ud.localpath)
+    sha256data = bb.utils.sha256_file(ud.localpath)
+
+    if (ud.md5_expected == None or ud.sha256_expected == None):
+        logger.warn('Missing SRC_URI checksum for %s, consider adding to the recipe:\n'
+                    'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"',
+                    ud.localpath, ud.md5_name, md5data,
+                    ud.sha256_name, sha256data)
+        if bb.data.getVar("BB_STRICT_CHECKSUM", d, True) == "1":
+            raise FetchError("No checksum specified for %s." % u)
+        return
+
+    if (ud.md5_expected != md5data or ud.sha256_expected != sha256data):
+        logger.error('The checksums for "%s" did not match.\n'
+                     '  MD5: expected "%s", got "%s"\n'
+                     '  SHA256: expected "%s", got "%s"\n',
+                     ud.localpath, ud.md5_expected, md5data,
+                     ud.sha256_expected, sha256data)
+        raise FetchError("%s checksum mismatch." % u)
+
 def go(d, urls = None):
     """
     Fetch all urls
@@ -265,6 +301,7 @@ def go(d, urls = None):
                     raise FetchError("Unable to fetch URL %s from any source." % u)
 
         ud.localpath = localpath
+
         if os.path.exists(ud.md5):
             # Touch the md5 file to show active use of the download
             try:
@@ -273,6 +310,8 @@ def go(d, urls = None):
                 # Errors aren't fatal here
                 pass
         else:
+            # Only check the checksums if we've not seen this item before
+            verify_checksum(u, ud, d)
             Fetch.write_md5sum(u, ud, d)
 
         bb.utils.unlockfile(lf)
@@ -494,6 +533,16 @@ class FetchData(object):
         if not self.pswd and "pswd" in self.parm:
             self.pswd = self.parm["pswd"]
         self.setup = False
+
+        if "name" in self.parm:
+            self.md5_name = "%s.md5sum" % self.parm["name"]
+            self.sha256_name = "%s.sha256sum" % self.parm["name"]
+        else:
+            self.md5_name = "md5sum"
+            self.sha256_name = "sha256sum"
+        self.md5_expected = bb.data.getVarFlag("SRC_URI", self.md5_name, d)
+        self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
+
         for m in methods:
             if m.supports(url, self, d):
                 self.method = m

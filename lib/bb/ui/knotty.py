@@ -195,8 +195,14 @@ def main(server, eventHandler):
                 continue
 
             if isinstance(event, bb.runqueue.runQueueTaskStarted):
-                logger.info("Running task %s of %s (ID: %s, %s)",
-                            event.stats.completed + event.stats.active + event.stats.failed + 1,
+                if event.noexec:
+                    tasktype = 'noexec task'
+                else:
+                    tasktype = 'task'
+                logger.info("Running %s %s of %s (ID: %s, %s)",
+                            tasktype,
+                            event.stats.completed + event.stats.active +
+                                event.stats.failed + 1,
                             event.stats.total, event.taskid, event.taskstring)
                 continue
 

@@ -1,0 +1,12 @@
+#!/usr/bin/env python
+import os
+import sys
+import warnings
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), 'lib'))
+
+import bb.siggen
+
+if len(sys.argv) > 2:
+    bb.siggen.compare_sigfiles(sys.argv[1], sys.argv[2])
+else:
+    bb.siggen.dump_sigfile(sys.argv[1])

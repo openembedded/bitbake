@@ -127,11 +127,7 @@ def fire(event, d):
 
 def worker_fire(event, d):
     data = "<event>" + pickle.dumps(event) + "</event>"
-    try:
-        if os.write(worker_pipe, data) != len (data):
-            print("Error sending event to server (short write)")
-    except OSError:
-        sys.exit(1)
+    worker_pipe.write(data)
 
 def fire_from_worker(event, d):
     if not event.startswith("<event>") or not event.endswith("</event>"):
