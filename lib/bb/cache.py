@@ -75,6 +75,9 @@ recipe_fields = (
     'basetaskhashes',
     'hashfilename',
     'inherits',
+    'summary',
+    'license',
+    'section',
 )
 
 
@@ -166,6 +169,9 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
             rdepends_pkg     = cls.pkgvar('RDEPENDS', packages, metadata),
             rrecommends_pkg  = cls.pkgvar('RRECOMMENDS', packages, metadata),
             inherits         = cls.getvar('__inherit_cache', metadata),
+            summary          = cls.getvar('SUMMARY', metadata),
+            license          = cls.getvar('LICENSE', metadata),
+            section          = cls.getvar('SECTION', metadata),
         )
 
 
@@ -575,6 +581,9 @@ class CacheData(object):
         self.basetaskhash = {}
         self.hashfn = {}
         self.inherits = {}
+        self.summary = {}
+        self.license = {}
+        self.section = {}
 
         # Indirect Cache variables (set elsewhere)
         self.ignored_dependencies = []
@@ -635,3 +644,6 @@ class CacheData(object):
             self.basetaskhash[identifier] = taskhash
 
         self.inherits[fn] = info.inherits
+        self.summary[fn] = info.summary
+        self.license[fn] = info.license
+        self.section[fn] = info.section

@@ -491,10 +491,16 @@ class BBCooker:
             fn = taskdata.fn_index[fnid]
             pn = self.status.pkg_fn[fn]
             version  = "%s:%s-%s" % self.status.pkg_pepvpr[fn]
+            summary = self.status.summary[fn]
+            license = self.status.license[fn]
+            section = self.status.section[fn]
             if pn not in target_tree["pn"]:
                 target_tree["pn"][pn] = {}
                 target_tree["pn"][pn]["filename"] = fn
                 target_tree["pn"][pn]["version"] = version
+                target_tree["pn"][pn]["summary"] = summary
+                target_tree["pn"][pn]["license"] = license
+                target_tree["pn"][pn]["section"] = section
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
                 packages = []
