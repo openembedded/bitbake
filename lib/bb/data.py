@@ -189,7 +189,8 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         return 0
 
     if all:
-        o.write('# %s=%s\n' % (var, oval))
+        commentVal = re.sub('\n', '\n#', str(oval))
+        o.write('# %s=%s\n' % (var, commentVal))
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return 0
@@ -216,6 +217,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
     # if we're going to output this within doublequotes,
     # to a shell, we need to escape the quotes in the var
     alter = re.sub('"', '\\"', val.strip())
+    alter = re.sub('\n', ' \\\n', alter)
     o.write('%s="%s"\n' % (varExpanded, alter))
     return 0
 
