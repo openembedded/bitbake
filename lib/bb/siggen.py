@@ -178,6 +178,17 @@ class SignatureGeneratorBasic(SignatureGenerator):
                     bb.error("The mismatched hashes were %s and %s" % (dataCache.basetaskhash[k], self.basehash[k]))
                 self.dump_sigtask(fn, task, dataCache.stamp[fn], True)
 
+class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
+    name = "basichash"
+
+    def stampfile(self, stampbase, fn, taskname):
+        if taskname != "do_setscene" and taskname.endswith("_setscene"):
+            k = fn + "." + taskname[:-9]
+        else:
+            k = fn + "." + taskname
+        h = self.taskhash[k]
+        return "%s.%s.%s" % (stampbase, taskname, h)
+
 def dump_this_task(outfile, d):
     fn = d.getVar("BB_FILENAME", True)
     task = "do_" + d.getVar("BB_CURRENTTASK", True)
