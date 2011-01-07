@@ -35,12 +35,20 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 
+class BBLogRecord(logging.LogRecord):
+    def __init__(self, name, level, fn, lno, msg, args, exc_info, func, extra):
+        self.taskpid = bb.event.worker_pid
+        logging.LogRecord.__init__(self, name, level, fn, lno, msg, args, exc_info, func)
+
 Logger = logging.getLoggerClass()
 class BBLogger(Logger):
     def __init__(self, name):
         if name.split(".")[0] == "BitBake":
             self.debug = self.bbdebug
         Logger.__init__(self, name)
+
+    def makeRecord(self, name, lvl, fn, lno, msg, args, exc_info, func=None, extra=None):
+        return BBLogRecord(name, lvl, fn, lno, msg, args, exc_info, func, extra)
 
     def bbdebug(self, level, msg, *args, **kwargs):
         return self.log(logging.DEBUG - level - 1, msg, *args, **kwargs)
