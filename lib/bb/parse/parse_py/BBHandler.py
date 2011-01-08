@@ -28,7 +28,7 @@
 from __future__ import absolute_import
 import re, bb, os
 import logging
-import bb.fetch, bb.build, bb.utils
+import bb.build, bb.utils
 from bb import data
 
 from . import ConfHandler
