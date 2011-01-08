@@ -541,6 +541,8 @@ class FetchData(object):
         for m in methods:
             if m.supports(url, self, d):
                 self.method = m
+                if hasattr(m,"urldata_init"):
+                    m.urldata_init(self, d)
                 return
         raise NoMethodError("Missing implementation for url %s" % url)
 
