@@ -19,6 +19,11 @@ if exists("b:current_syntax")
     finish
 endif
 
+syn include @python syntax/python.vim
+if exists("b:current_syntax")
+  unlet b:current_syntax
+endif
+
 " BitBake syntax
 
 " Matching case
@@ -39,8 +44,8 @@ syn match bbArrayBrackets       "[\[\]]" contained
 
 " BitBake strings
 syn match bbContinue            "\\$"
-syn region bbString             matchgroup=bbQuote start=+"+ skip=+\\$+ excludenl end=+"+ contained keepend contains=bbTodo,bbContinue,bbVarDeref,@Spell
-syn region bbString             matchgroup=bbQuote start=+'+ skip=+\\$+ excludenl end=+'+ contained keepend contains=bbTodo,bbContinue,bbVarDeref,@Spell
+syn region bbString             matchgroup=bbQuote start=+"+ skip=+\\$+ excludenl end=+"+ contained keepend contains=bbTodo,bbContinue,bbVarDeref,bbVarPyValue,@Spell
+syn region bbString             matchgroup=bbQuote start=+'+ skip=+\\$+ excludenl end=+'+ contained keepend contains=bbTodo,bbContinue,bbVarDeref,bbVarPyValue,@Spell
 
 " Vars definition
 syn match bbExport            "^export" nextgroup=bbIdentifier skipwhite
@@ -50,7 +55,7 @@ syn match bbVarDeref            "${[a-zA-Z0-9\-_\.\/\+]\+}" contained
 syn match bbVarEq               "\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)" contained nextgroup=bbVarValue
 syn match bbVarDef              "^\(export\s*\)\?\([a-zA-Z0-9\-_\.\/\+]\+\(_[${}a-zA-Z0-9\-_\.\/\+]\+\)\?\)\s*\(:=\|+=\|=+\|\.=\|=\.\|?=\|=\)\@=" contains=bbExportFlag,bbIdentifier,bbVarDeref nextgroup=bbVarEq
 syn match bbVarValue            ".*$" contained contains=bbString,bbVarDeref,bbVarPyValue
-syn match bbVarPyValue          "${@[a-zA-Z0-9\-_\.\(\)]\+}" contained
+syn region bbVarPyValue         start=+${@+ skip=+\\$+ excludenl end=+}+ contained contains=@python
 
 " Vars metadata flags
 syn match bbVarFlagDef          "^\([a-zA-Z0-9\-_\.]\+\)\(\[[a-zA-Z0-9\-_\.]\+\]\)\@=" contains=bbIdentifier nextgroup=bbVarFlagFlag
@@ -78,14 +83,10 @@ if exists("b:current_syntax")
   unlet b:current_syntax
 endif
 syn keyword bbShFakeRootFlag    fakeroot contained
-syn match bbShFuncDef           "^\(fakeroot\s*\)\?\([0-9A-Za-z_}${-]\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbShFakeRootFlag,bbFunction,bbDelimiter nextgroup=bbShFuncRegion skipwhite
+syn match bbShFuncDef           "^\(fakeroot\s*\)\?\([0-9A-Za-z_-]\+\)\(python\)\@<!\(\s*()\s*\)\({\)\@=" contains=bbShFakeRootFlag,bbFunction,bbDelimiter nextgroup=bbShFuncRegion skipwhite
 syn region bbShFuncRegion       matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@shell
 
 " BitBake python metadata
-syn include @python syntax/python.vim
-if exists("b:current_syntax")
-  unlet b:current_syntax
-endif
 syn keyword bbPyFlag            python contained
 syn match bbPyFuncDef           "^\(python\s\+\)\([0-9A-Za-z_-]\+\)\?\(\s*()\s*\)\({\)\@=" contains=bbPyFlag,bbFunction,bbDelimiter nextgroup=bbPyFuncRegion skipwhite 
 syn region bbPyFuncRegion       matchgroup=bbDelimiter start="{\s*$" end="^}\s*$" keepend contained contains=@python
@@ -120,5 +121,3 @@ hi def link bbOEFunctions       Special
 hi def link bbVarPyValue        PreProc
 
 let b:current_syntax = "bb"
-
-
