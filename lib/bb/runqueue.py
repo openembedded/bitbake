@@ -573,11 +573,6 @@ class RunQueueData:
             fn = taskData.fn_index[fnid]
             self.target_pairs.append((fn, target[1]))
 
-            # Remove stamps for targets if force mode active
-            if self.cooker.configuration.force:
-                logger.verbose("Remove stamp %s, %s", target[1], fn)
-                bb.build.del_stamp(target[1], self.dataCache, fn)
-
             if fnid in taskData.failed_fnids:
                 continue
 
@@ -720,6 +715,12 @@ class RunQueueData:
                                            self.runq_task[dep])
                 deps.append(depidentifier)
             self.hash_deps[identifier] = deps
+
+        # Remove stamps for targets if force mode active
+        if self.cooker.configuration.force:
+            for (fn, target) in self.target_pairs:
+                logger.verbose("Remove stamp %s, %s", target, fn)
+                bb.build.del_stamp(target, self.dataCache, fn)
 
         return len(self.runq_fnid)
 
