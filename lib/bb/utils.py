@@ -410,7 +410,7 @@ def lockfile(name):
         sys.exit(1)
 
     if not os.access(path, os.W_OK):
-        bb.msg.error(bb.msg.domain.Util, "Error, lockfile path is not writable!: %s" % path)
+        logger.error("Error, lockfile path is not writable!: %s" % path)
         sys.exit(1)
 
     while True:
