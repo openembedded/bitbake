@@ -22,7 +22,6 @@ BitBake 'Fetch' git implementation
 
 import os
 import bb
-import bb.persist_data
 from   bb    import data
 from   bb.fetch import Fetch
 from   bb.fetch import runfetchcmd
@@ -118,7 +117,6 @@ class Git(Fetch):
 
         repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
 
-
         coname = '%s' % (ud.tag)
         codir = os.path.join(ud.clonedir, coname)
 
@@ -208,19 +206,11 @@ class Git(Fetch):
         output = runfetchcmd("%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (basecmd, tag), d, quiet=True)
         return output.split()[0] != "0"
 
-    def _revision_key(self, url, ud, d, branch=False):
+    def _revision_key(self, url, ud, d):
         """
         Return a unique key for the url
         """
-        key = 'git:' + ud.host + ud.path.replace('/', '.')
-        if branch:
-            return key + ud.branch
-        else:
-            return key
-
-    def generate_revision_key(self, url, ud, d, branch=False):
-        key = self._revision_key(url, ud, d, branch)
-        return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
+        return "git:" + ud.host + ud.path.replace('/', '.') + ud.branch
 
     def _latest_revision(self, url, ud, d):
         """
@@ -237,74 +227,6 @@ class Git(Fetch):
         if not output:
             raise bb.fetch.FetchError("Fetch command %s gave empty output\n" % (cmd))
         return output.split()[0]
-
-    def latest_revision(self, url, ud, d):
-        """
-        Look in the cache for the latest revision, if not present ask the SCM.
-        """
-        persisted = bb.persist_data.persist(d)
-        revs = persisted['BB_URI_HEADREVS']
-
-        key = self.generate_revision_key(url, ud, d, branch=True)
-        rev = revs[key]
-        if rev is None:
-            # Compatibility with old key format, no branch included
-            oldkey = self.generate_revision_key(url, ud, d, branch=False)
-            rev = revs[oldkey]
-            if rev is not None:
-                del revs[oldkey]
-            else:
-                rev = self._latest_revision(url, ud, d)
-            revs[key] = rev
-
-        return str(rev)
-
-    def sortable_revision(self, url, ud, d):
-        """
-
-        """
-        pd = bb.persist_data.persist(d)
-        localcounts = pd['BB_URI_LOCALCOUNT']
-        key = self.generate_revision_key(url, ud, d, branch=True)
-        oldkey = self.generate_revision_key(url, ud, d, branch=False)
-
-        latest_rev = self._build_revision(url, ud, d)
-        last_rev = localcounts[key + '_rev']
-        if last_rev is None:
-            last_rev = localcounts[oldkey + '_rev']
-            if last_rev is not None:
-                del localcounts[oldkey + '_rev']
-                localcounts[key + '_rev'] = last_rev
-
-        uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
-        count = None
-        if uselocalcount:
-            count = Fetch.localcount_internal_helper(ud, d)
-        if count is None:
-            count = localcounts[key + '_count']
-        if count is None:
-            count = localcounts[oldkey + '_count']
-            if count is not None:
-                del localcounts[oldkey + '_count']
-                localcounts[key + '_count'] = count
-
-        if last_rev == latest_rev:
-            return str(count + "+" + latest_rev)
-
-        buildindex_provided = hasattr(self, "_sortable_buildindex")
-        if buildindex_provided:
-            count = self._sortable_buildindex(url, ud, d, latest_rev)
-        if count is None:
-            count = "0"
-        elif uselocalcount or buildindex_provided:
-            count = str(count)
-        else:
-            count = str(int(count) + 1)
-
-        localcounts[key + '_rev'] = latest_rev
-        localcounts[key + '_count'] = count
-
-        return str(count + "+" + latest_rev)
 
     def _build_revision(self, url, ud, d):
         return ud.tag
