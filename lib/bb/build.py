@@ -334,9 +334,8 @@ def make_stamp(task, d, file_name = None):
     stamp = stamp_internal(task, d, file_name)
     # Remove the file and recreate to force timestamp
     # change on broken NFS filesystems
-    if os.access(stamp, os.F_OK):
-        os.remove(stamp)
     if stamp:
+        bb.utils.remove(stamp)
         f = open(stamp, "w")
         f.close()
 
@@ -346,8 +345,7 @@ def del_stamp(task, d, file_name = None):
     (d can be a data dict or dataCache)
     """
     stamp = stamp_internal(task, d, file_name)
-    if os.access(stamp, os.F_OK):
-        os.remove(stamp)
+    bb.utils.remove(stamp)
 
 def stampfile(taskname, d):
     return stamp_internal(taskname, d, None)

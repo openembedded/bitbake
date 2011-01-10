@@ -31,6 +31,7 @@ import logging
 import bb
 from   bb import data
 from   bb import persist_data
+from   bb import utils
 
 logger = logging.getLogger("BitBake.Fetch")
 
@@ -217,12 +218,6 @@ def init(urls, d, setup = True):
 def mirror_from_string(data):
     return [ i.split() for i in (data or "").replace('\\n','\n').split('\n') if i ]
 
-def removefile(f):
-    try:
-        os.remove(f)
-    except:
-        pass
-
 def verify_checksum(u, ud, d):
     """
     verify the MD5 and SHA256 checksum for downloaded src
@@ -293,7 +288,7 @@ def go(d, urls = None):
                 localpath = ud.localpath
             except FetchError:
                 # Remove any incomplete file
-                removefile(ud.localpath)
+                bb.utils.remove(ud.localpath)
                 # Finally, try fetching uri, u, from MIRRORS
                 mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
                 localpath = try_mirrors (d, u, mirrors)
@@ -514,7 +509,7 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
                 import sys
                 (type, value, traceback) = sys.exc_info()
                 logger.debug(2, "Mirror fetch failure: %s", value)
-                removefile(ud.localpath)
+                bb.utils.remove(ud.localpath)
                 continue
     return None
 

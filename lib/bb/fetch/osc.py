@@ -11,6 +11,7 @@ import  sys
 import logging
 import  bb
 from    bb       import data
+from    bb       import utils
 from    bb.fetch import Fetch
 from    bb.fetch import FetchError
 from    bb.fetch import MissingParameterError
@@ -123,8 +124,7 @@ class Osc(Fetch):
         """
 
         config_path = os.path.join(data.expand('${OSCDIR}', d), "oscrc")
-        if (os.path.exists(config_path)):
-            os.remove(config_path)
+        bb.utils.remove(config_path)
 
         f = open(config_path, 'w')
         f.write("[general]\n")

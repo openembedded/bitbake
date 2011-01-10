@@ -582,10 +582,12 @@ def build_environment(d):
 
 def remove(path, recurse=False):
     """Equivalent to rm -f or rm -rf"""
+    if not path:
+        return
     import os, errno, shutil
     try:
         os.unlink(path)
-    except OSError, exc:
+    except OSError as exc:
         if recurse and exc.errno == errno.EISDIR:
             shutil.rmtree(path)
         elif exc.errno != errno.ENOENT:
