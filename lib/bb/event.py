@@ -131,7 +131,7 @@ def worker_fire(event, d):
 
 def fire_from_worker(event, d):
     if not event.startswith("<event>") or not event.endswith("</event>"):
-        print("Error, not an event")
+        print("Error, not an event %s" % event)
         return
     event = pickle.loads(event[7:-8])
     fire_ui_handlers(event, d)
