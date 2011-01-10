@@ -43,6 +43,7 @@ syn region bbString             matchgroup=bbQuote start=+"+ skip=+\\$+ excluden
 syn region bbString             matchgroup=bbQuote start=+'+ skip=+\\$+ excludenl end=+'+ contained keepend contains=bbTodo,bbContinue,bbVarDeref,@Spell
 
 " Vars definition
+syn match bbExport            "^export" nextgroup=bbIdentifier skipwhite
 syn keyword bbExportFlag        export contained nextgroup=bbIdentifier skipwhite
 syn match bbIdentifier          "[a-zA-Z0-9\-_\.\/\+]\+" display contained
 syn match bbVarDeref            "${[a-zA-Z0-9\-_\.\/\+]\+}" contained
@@ -103,6 +104,7 @@ hi def link bbString            String
 hi def link bbDelimiter         Keyword
 hi def link bbArrayBrackets     Statement
 hi def link bbContinue          Special
+hi def link bbExport            Type
 hi def link bbExportFlag        Type
 hi def link bbIdentifier	    Identifier
 hi def link bbVarDeref          PreProc
