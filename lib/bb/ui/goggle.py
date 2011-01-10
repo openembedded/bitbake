@@ -70,6 +70,7 @@ def main (server, eventHandler):
     window = MainWindow ()
     window.show_all ()
     pbar = ProgressBar(window)
+    pbar.connect("delete-event", gtk.main_quit)
 
     # Create the object for the current build
     running_build = RunningBuild ()
