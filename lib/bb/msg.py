@@ -34,9 +34,9 @@ class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
 
     DEBUG = logging.DEBUG
-    VERBOSE = 19
+    VERBOSE = logging.INFO - 1
     NOTE = logging.INFO
-    PLAIN = 21
+    PLAIN = logging.INFO + 1
     ERROR = logging.ERROR
     WARNING = logging.WARNING
     CRITICAL = logging.CRITICAL
