@@ -134,9 +134,9 @@ def uri_replace(uri, uri_find, uri_replace, d):
                 result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
                 if uri_find_decoded.index(i) == 2:
                     if d:
-                        localfn = bb.fetch.localpath(uri, d)
+                        localfn = bb.fetch2.localpath(uri, d)
                         if localfn:
-                            result_decoded[loc] = os.path.join(os.path.dirname(result_decoded[loc]), os.path.basename(bb.fetch.localpath(uri, d)))
+                            result_decoded[loc] = os.path.join(os.path.dirname(result_decoded[loc]), os.path.basename(bb.fetch2.localpath(uri, d)))
             else:
                 return uri
     return encodeurl(result_decoded)
@@ -158,7 +158,7 @@ def fetcher_init(d):
     elif srcrev_policy == "clear":
         logger.debug(1, "Clearing SRCREV cache due to cache policy of: %s", srcrev_policy)
         try:
-            bb.fetch.saved_headrevs = pd['BB_URI_HEADREVS'].items()
+            bb.fetch2.saved_headrevs = pd['BB_URI_HEADREVS'].items()
         except:
             pass
         del pd['BB_URI_HEADREVS']
@@ -177,7 +177,7 @@ def fetcher_compare_revisions(d):
 
     pd = persist_data.persist(d)
     data = pd['BB_URI_HEADREVS'].items()
-    data2 = bb.fetch.saved_headrevs
+    data2 = bb.fetch2.saved_headrevs
 
     changed = False
     for key in data:
@@ -378,7 +378,7 @@ def get_srcrev(d):
     #
     # Neater solutions welcome!
     #
-    if bb.fetch.srcrev_internal_call:
+    if bb.fetch2.srcrev_internal_call:
         return "SRCREVINACTION"
 
     scms = []
@@ -494,7 +494,7 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
         if newuri != uri:
             try:
                 ud = FetchData(newuri, ld)
-            except bb.fetch.NoMethodError:
+            except bb.fetch2.NoMethodError:
                 logger.debug(1, "No method for %s", uri)
                 continue
 
@@ -508,9 +508,9 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
                 else:
                     ud.method.go(newuri, ud, ld)
                     return ud.localpath
-            except (bb.fetch.MissingParameterError,
-                    bb.fetch.FetchError,
-                    bb.fetch.MD5SumError):
+            except (bb.fetch2.MissingParameterError,
+                    bb.fetch2.FetchError,
+                    bb.fetch2.MD5SumError):
                 import sys
                 (type, value, traceback) = sys.exc_info()
                 logger.debug(2, "Mirror fetch failure: %s", value)
@@ -571,10 +571,10 @@ class FetchData(object):
                 self.localpath = local
             if not local:
                 try:
-                    bb.fetch.srcrev_internal_call = True
+                    bb.fetch2.srcrev_internal_call = True
                     self.localpath = self.method.localpath(self.url, self, d)
                 finally:
-                    bb.fetch.srcrev_internal_call = False
+                    bb.fetch2.srcrev_internal_call = False
                 # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
                 # Horrible...
                 bb.data.delVar("ISHOULDNEVEREXIST", d)

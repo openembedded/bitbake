@@ -29,7 +29,7 @@ import os
 import bb
 import bb.utils
 from   bb import data
-from   bb.fetch import Fetch
+from   bb.fetch2 import Fetch
 
 class Local(Fetch):
     def supports(self, url, urldata, d):

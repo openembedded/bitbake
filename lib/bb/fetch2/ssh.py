@@ -38,8 +38,8 @@ IETF secsh internet draft:
 
 import re, os
 from   bb import data
-from   bb.fetch import Fetch
-from   bb.fetch import FetchError
+from   bb.fetch2 import Fetch
+from   bb.fetch2 import FetchError
 
 
 __pattern__ = re.compile(r'''

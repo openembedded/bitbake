@@ -29,10 +29,10 @@ import os
 import logging
 import bb
 from   bb import data
-from   bb.fetch import Fetch
-from   bb.fetch import FetchError
-from   bb.fetch import MissingParameterError
-from   bb.fetch import logger
+from   bb.fetch2 import Fetch
+from   bb.fetch2 import FetchError
+from   bb.fetch2 import MissingParameterError
+from   bb.fetch2 import logger
 
 class Svk(Fetch):
     """Class to fetch a module or modules from svk repositories"""

@@ -30,7 +30,7 @@ import os
 import logging
 import bb
 from   bb import data
-from bb.fetch import Fetch, FetchError, MissingParameterError, logger
+from bb.fetch2 import Fetch, FetchError, MissingParameterError, logger
 
 class Cvs(Fetch):
     """

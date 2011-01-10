@@ -23,9 +23,9 @@ BitBake 'Fetch' git implementation
 import os
 import bb
 from   bb    import data
-from   bb.fetch import Fetch
-from   bb.fetch import runfetchcmd
-from   bb.fetch import logger
+from   bb.fetch2 import Fetch
+from   bb.fetch2 import runfetchcmd
+from   bb.fetch2 import logger
 
 class Git(Fetch):
     """Class to fetch a module or modules from git repositories"""
@@ -225,7 +225,7 @@ class Git(Fetch):
         cmd = "%s ls-remote %s://%s%s%s %s" % (basecmd, ud.proto, username, ud.host, ud.path, ud.branch)
         output = runfetchcmd(cmd, d, True)
         if not output:
-            raise bb.fetch.FetchError("Fetch command %s gave empty output\n" % (cmd))
+            raise bb.fetch2.FetchError("Fetch command %s gave empty output\n" % (cmd))
         return output.split()[0]
 
     def _build_revision(self, url, ud, d):
