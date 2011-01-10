@@ -52,12 +52,14 @@ class SQLTable(collections.MutableMapping):
 
     def _execute(self, *query):
         """Execute a query, waiting to acquire a lock if necessary"""
+        count = 0
         while True:
             try:
                 return self.cursor.execute(*query)
                 break
             except sqlite3.OperationalError as exc:
-                if 'database is locked' in str(exc):
+                if 'database is locked' in str(exc) and count < 500:
+                    count = count + 1
                     continue
                 raise
 
