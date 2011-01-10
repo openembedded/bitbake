@@ -212,7 +212,7 @@ Default BBFILES are the .bb files in the current directory.""")
         while True:
             try:
                 event = event_queue.get(block=False)
-            except Empty:
+            except (Empty, IOError):
                 break
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
