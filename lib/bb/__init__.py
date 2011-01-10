@@ -78,6 +78,9 @@ if "BBDEBUG" in os.environ:
     if level:
         bb.msg.set_debug_level(level)
 
+if os.environ.get("BBFETCH2"):
+    from bb import fetch2 as fetch
+    sys.modules['bb.fetch'] = sys.modules['bb.fetch2']
 
 # Messaging convenience functions
 def plain(*args):
