@@ -1,0 +1,180 @@
+# ex:ts=4:sw=4:sts=4:et
+# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
+"""
+BitBake 'Fetch' implementation for mercurial DRCS (hg).
+
+"""
+
+# Copyright (C) 2003, 2004  Chris Larson
+# Copyright (C) 2004        Marcin Juszkiewicz
+# Copyright (C) 2007        Robert Schuster
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program; if not, write to the Free Software Foundation, Inc.,
+# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Based on functions from the base bb module, Copyright 2003 Holger Schurig
+
+import os
+import sys
+import logging
+import bb
+from bb import data
+from bb.fetch import Fetch
+from bb.fetch import FetchError
+from bb.fetch import MissingParameterError
+from bb.fetch import runfetchcmd
+from bb.fetch import logger
+
+class Hg(Fetch):
+    """Class to fetch from mercurial repositories"""
+    def supports(self, url, ud, d):
+        """
+        Check to see if a given url can be fetched with mercurial.
+        """
+        return ud.type in ['hg']
+
+    def forcefetch(self, url, ud, d):
+        revTag = ud.parm.get('rev', 'tip')
+        return revTag == "tip"
+
+    def localpath(self, url, ud, d):
+        if not "module" in ud.parm:
+            raise MissingParameterError("hg method needs a 'module' parameter")
+
+        ud.module = ud.parm["module"]
+
+        # Create paths to mercurial checkouts
+        relpath = self._strip_leading_slashes(ud.path)
+        ud.pkgdir = os.path.join(data.expand('${HGDIR}', d), ud.host, relpath)
+        ud.moddir = os.path.join(ud.pkgdir, ud.module)
+
+        if 'rev' in ud.parm:
+            ud.revision = ud.parm['rev']
+        else:
+            tag = Fetch.srcrev_internal_helper(ud, d)
+            if tag is True:
+                ud.revision = self.latest_revision(url, ud, d)
+            elif tag:
+                ud.revision = tag
+            else:
+                ud.revision = self.latest_revision(url, ud, d)
+
+        ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
+
+        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
+
+    def _buildhgcommand(self, ud, d, command):
+        """
+        Build up an hg commandline based on ud
+        command is "fetch", "update", "info"
+        """
+
+        basecmd = data.expand('${FETCHCMD_hg}', d)
+
+        proto = ud.parm.get('proto', 'http')
+
+        host = ud.host
+        if proto == "file":
+            host = "/"
+            ud.host = "localhost"
+
+        if not ud.user:
+            hgroot = host + ud.path
+        else:
+            hgroot = ud.user + "@" + host + ud.path
+
+        if command is "info":
+            return "%s identify -i %s://%s/%s" % (basecmd, proto, hgroot, ud.module)
+
+        options = [];
+        if ud.revision:
+            options.append("-r %s" % ud.revision)
+
+        if command is "fetch":
+            cmd = "%s clone %s %s://%s/%s %s" % (basecmd, " ".join(options), proto, hgroot, ud.module, ud.module)
+        elif command is "pull":
+            # do not pass options list; limiting pull to rev causes the local
+            # repo not to contain it and immediately following "update" command
+            # will crash
+            cmd = "%s pull" % (basecmd)
+        elif command is "update":
+            cmd = "%s update -C %s" % (basecmd, " ".join(options))
+        else:
+            raise FetchError("Invalid hg command %s" % command)
+
+        return cmd
+
+    def go(self, loc, ud, d):
+        """Fetch url"""
+
+        logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")
+
+        if os.access(os.path.join(ud.moddir, '.hg'), os.R_OK):
+            updatecmd = self._buildhgcommand(ud, d, "pull")
+            logger.info("Update " + loc)
+            # update sources there
+            os.chdir(ud.moddir)
+            logger.debug(1, "Running %s", updatecmd)
+            runfetchcmd(updatecmd, d)
+
+        else:
+            fetchcmd = self._buildhgcommand(ud, d, "fetch")
+            logger.info("Fetch " + loc)
+            # check out sources there
+            bb.mkdirhier(ud.pkgdir)
+            os.chdir(ud.pkgdir)
+            logger.debug(1, "Running %s", fetchcmd)
+            runfetchcmd(fetchcmd, d)
+
+        # Even when we clone (fetch), we still need to update as hg's clone
+        # won't checkout the specified revision if its on a branch
+        updatecmd = self._buildhgcommand(ud, d, "update")
+        os.chdir(ud.moddir)
+        logger.debug(1, "Running %s", updatecmd)
+        runfetchcmd(updatecmd, d)
+
+        scmdata = ud.parm.get("scmdata", "")
+        if scmdata == "keep":
+            tar_flags = ""
+        else:
+            tar_flags = "--exclude '.hg' --exclude '.hgrags'"
+
+        os.chdir(ud.pkgdir)
+        try:
+            runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d)
+        except:
+            t, v, tb = sys.exc_info()
+            try:
+                os.unlink(ud.localpath)
+            except OSError:
+                pass
+            raise t, v, tb
+
+    def supports_srcrev(self):
+        return True
+
+    def _latest_revision(self, url, ud, d):
+        """
+        Compute tip revision for the url
+        """
+        output = runfetchcmd(self._buildhgcommand(ud, d, "info"), d)
+        return output.strip()
+
+    def _build_revision(self, url, ud, d):
+        return ud.revision
+
+    def _revision_key(self, url, ud, d):
+        """
+        Return a unique key for the url
+        """
+        return "hg:" + ud.moddir
