@@ -380,3 +380,7 @@ class LogHandler(logging.Handler):
 
     def emit(self, record):
         fire(record, None)
+
+    def filter(self, record):
+        record.taskpid = worker_pid
+        return True
