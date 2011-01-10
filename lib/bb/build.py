@@ -30,7 +30,6 @@ import sys
 import logging
 import bb
 import bb.msg
-import bb.utils
 import bb.process
 from contextlib import nested
 from bb import data, event, mkdirhier, utils
