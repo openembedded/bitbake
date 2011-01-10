@@ -1134,14 +1134,16 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
         event.fire(bb.event.StampUpdate(self.rqdata.target_pairs, self.rqdata.dataCache.stamp), self.cfgData)
 
-        for scheduler in self.get_schedulers():
+        schedulers = self.get_schedulers()
+        for scheduler in schedulers:
             if self.scheduler == scheduler.name:
                 self.sched = scheduler(self, self.rqdata)
                 logger.debug(1, "Using runqueue scheduler '%s'", scheduler.name)
                 break
         else:
             bb.fatal("Invalid scheduler '%s'.  Available schedulers: %s" %
-                     (self.scheduler, ", ".join(obj.name for obj in self.schedulers)))
+                     (self.scheduler, ", ".join(obj.name for obj in schedulers)))
+
 
     def get_schedulers(self):
         schedulers = set(obj for obj in globals().values()
