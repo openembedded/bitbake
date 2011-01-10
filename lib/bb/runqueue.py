@@ -937,7 +937,7 @@ class RunQueue:
             retval = self.rqexe.execute()
 
         if self.state is runQueueRunInit:
-            logger.info("Executing runqueue tasks")
+            logger.info("Executing RunQueue Tasks")
             self.rqexe = RunQueueExecuteTasks(self)
             self.state = runQueueRunning
 
@@ -1120,7 +1120,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
         found = True
         while found:
             found = False
-            for task in range(self.stats.total):
+            for task in xrange(self.stats.total):
                 if task in self.rq.scenequeue_covered:
                     continue
                 if len(self.rqdata.runq_revdeps[task]) > 0 and self.rqdata.runq_revdeps[task].issubset(self.rq.scenequeue_covered):
@@ -1306,12 +1306,12 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         # therefore aims to collapse the huge runqueue dependency tree into a smaller one
         # only containing the setscene functions.
 
-        for task in range(self.stats.total):
+        for task in xrange(self.stats.total):
             self.runq_running.append(0)
             self.runq_complete.append(0)
             self.runq_buildable.append(0)
 
-        for task in range(len(self.rqdata.runq_fnid)):
+        for task in xrange(len(self.rqdata.runq_fnid)):
             sq_revdeps.append(copy.copy(self.rqdata.runq_revdeps[task]))
             sq_revdeps_new.append(set())
             if (len(self.rqdata.runq_revdeps[task]) == 0) and task not in self.rqdata.runq_setscene:
@@ -1342,7 +1342,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         process_endpoints(endpoints)
 
-        for task in range(len(self.rqdata.runq_fnid)):
+        for task in xrange(len(self.rqdata.runq_fnid)):
             if task in self.rqdata.runq_setscene:
                 deps = set()
                 for dep in sq_revdeps_new[task]:
@@ -1351,20 +1351,20 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             elif len(sq_revdeps_new[task]) != 0:
                 bb.msg.fatal(bb.msg.domain.RunQueue, "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
 
-        #for task in range(len(sq_revdeps_squash)):
+        #for task in xrange(len(sq_revdeps_squash)):
         #    print "Task %s: %s.%s is %s " % (task, self.taskData.fn_index[self.runq_fnid[self.runq_setscene[task]]], self.runq_task[self.runq_setscene[task]] + "_setscene", sq_revdeps_squash[task])
 
         self.sq_deps = []
         self.sq_revdeps = sq_revdeps_squash
         self.sq_revdeps2 = copy.deepcopy(self.sq_revdeps)
 
-        for task in range(len(self.sq_revdeps)):
+        for task in xrange(len(self.sq_revdeps)):
             self.sq_deps.append(set())
-        for task in range(len(self.sq_revdeps)):
+        for task in xrange(len(self.sq_revdeps)):
             for dep in self.sq_revdeps[task]:
                 self.sq_deps[dep].add(task)
 
-        for task in range(len(self.sq_revdeps)):
+        for task in xrange(len(self.sq_revdeps)):
             if len(self.sq_revdeps[task]) == 0:
                 self.runq_buildable[task] = 1
 
@@ -1375,7 +1375,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             sq_taskname = []
             sq_task = []
             noexec = []
-            for task in range(len(self.sq_revdeps)):
+            for task in xrange(len(self.sq_revdeps)):
                 realtask = self.rqdata.runq_setscene[task]
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
                 taskname = self.rqdata.runq_task[realtask]
@@ -1398,13 +1398,13 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             for v in valid:
                 valid_new.append(sq_task[v])
 
-            for task in range(len(self.sq_revdeps)):
+            for task in xrange(len(self.sq_revdeps)):
                 if task not in valid_new and task not in noexec:
                     logger.debug(2, 'No package found, so skipping setscene task %s',
                                  self.rqdata.get_user_idstring(task))
                     self.task_failoutright(task)
 
-        logger.info('Executing setscene tasks')
+        logger.info('Executing SetScene Tasks')
 
         self.rq.state = runQueueSceneRun
 
@@ -1463,7 +1463,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         task = None
         if self.stats.active < self.number_tasks:
             # Find the next setscene to run
-            for nexttask in range(self.stats.total):
+            for nexttask in xrange(self.stats.total):
                 if self.runq_buildable[nexttask] == 1 and self.runq_running[nexttask] != 1:
                     task = nexttask
                     break
