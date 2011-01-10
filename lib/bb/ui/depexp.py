@@ -218,6 +218,7 @@ def main(server, eventHandler):
     gtk.gdk.threads_enter()
     dep = DepExplorer()
     pbar = ProgressBar(dep)
+    pbar.connect("delete-event", gtk.main_quit)
     gtk.gdk.threads_leave()
 
     progress_total = 0
