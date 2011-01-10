@@ -329,7 +329,7 @@ def checkstatus(d, urls = None):
     for u in urls:
         ud = urldata[u]
         m = ud.method
-        logger.debug("Testing URL %s", u)
+        logger.debug(1, "Testing URL %s", u)
         # First try checking uri, u, from PREMIRRORS
         mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', d, True))
         ret = try_mirrors(d, u, mirrors, True)
