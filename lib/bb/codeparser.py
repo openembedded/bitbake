@@ -138,7 +138,7 @@ class PythonParser():
             except TypeError:
                 logger.debug(2, 'Failed to convert function and argument to source form')
             else:
-                logger.debug(1, "Warning: in call to '%s', argumen t'%s' is"
+                logger.debug(1, "Warning: in call to '%s', argument '%s' is "
                                 "not a literal", funcstr, argstr)
 
         def visit_Call(self, node):
@@ -326,7 +326,7 @@ class ShellParser():
 
                 cmd = word[1]
                 if cmd.startswith("$"):
-                    logger.debug(1, "Warning: execution of non-literal"
+                    logger.debug(1, "Warning: execution of non-literal "
                                     "command '%s'", cmd)
                 elif cmd == "eval":
                     command = " ".join(word for _, word in words[1:])
