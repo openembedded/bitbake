@@ -58,7 +58,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.runtaskdeps = {}
         self.gendeps = {}
         self.lookupcache = {}
-        self.basewhitelist = (data.getVar("BB_HASHBASE_WHITELIST", True) or "").split()
+        self.basewhitelist = set((data.getVar("BB_HASHBASE_WHITELIST", True) or "").split())
         self.taskwhitelist = data.getVar("BB_HASHTASK_WHITELIST", True) or None
 
         if self.taskwhitelist:
@@ -68,17 +68,31 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
     def _build_data(self, fn, d):
 
-        taskdeps, gendeps = bb.data.generate_dependencies(d)
+        tasklist, gendeps = bb.data.generate_dependencies(d)
 
+        taskdeps = {}
         basehash = {}
         lookupcache = {}
 
-        for task in taskdeps:
+        for task in tasklist:
             data = d.getVar(task, False)
             lookupcache[task] = data
-            for dep in sorted(taskdeps[task]):
-                if dep in self.basewhitelist:
-                    continue
+
+            newdeps = gendeps[task]
+            seen = set()
+            while newdeps:
+                nextdeps = newdeps
+                seen |= nextdeps
+                newdeps = set()
+                for dep in nextdeps:
+                    if dep in self.basewhitelist:
+                        continue
+                    newdeps |= gendeps[dep]
+                newdeps -= seen
+
+            alldeps = seen - self.basewhitelist
+
+            for dep in sorted(alldeps):
                 if dep in lookupcache:
                     var = lookupcache[dep]
                 else:
@@ -89,6 +103,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             if data is None:
                 bb.error("Task %s from %s seems to be empty?!" % (task, fn))
             self.basehash[fn + "." + task] = hashlib.md5(data).hexdigest()
+            taskdeps[task] = sorted(alldeps)
 
         self.taskdeps[fn] = taskdeps
         self.gendeps[fn] = gendeps

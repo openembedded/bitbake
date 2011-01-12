@@ -308,12 +308,10 @@ def generate_dependencies(d):
     shelldeps = set(key for key in keys if d.getVarFlag(key, "export") and not d.getVarFlag(key, "unexport"))
 
     deps = {}
-    taskdeps = {}
 
     tasklist = bb.data.getVar('__BBTASKS', d) or []
     for task in tasklist:
         deps[task] = build_dependencies(task, keys, shelldeps, d)
-
         newdeps = deps[task]
         seen = set()
         while newdeps:
@@ -325,9 +323,8 @@ def generate_dependencies(d):
                     deps[dep] = build_dependencies(dep, keys, shelldeps, d)
                 newdeps |=  deps[dep]
             newdeps -= seen
-        taskdeps[task] = seen | newdeps
         #print "For %s: %s" % (task, str(taskdeps[task]))
-    return taskdeps, deps
+    return tasklist, deps
 
 def inherits_class(klass, d):
     val = getVar('__inherit_cache', d) or []
