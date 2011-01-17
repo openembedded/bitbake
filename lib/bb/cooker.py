@@ -661,6 +661,10 @@ class BBCooker:
                     buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
                 failures += len(exc.args)
                 retval = False
+            except SystemExit as exc:
+                self.command.finishAsyncCommand()
+                return False
+
             if not retval:
                 bb.event.fire(bb.event.BuildCompleted(buildname, item, failures), self.configuration.event_data)
                 self.command.finishAsyncCommand()
@@ -698,6 +702,10 @@ class BBCooker:
                     buildlog.error("'%s' failed" % taskdata.fn_index[fnid])
                 failures += len(exc.args)
                 retval = False
+            except SystemExit as exc:
+                self.command.finishAsyncCommand()
+                return False
+
             if not retval:
                 bb.event.fire(bb.event.BuildCompleted(buildname, targets, failures), self.configuration.event_data)
                 self.command.finishAsyncCommand()
