@@ -294,6 +294,8 @@ def download(d, urls = None):
             # Next try fetching from the original uri, u
             try:
                 m.download(u, ud, d)
+                if hasattr(m, "build_mirror_data"):
+                    m.build_mirror_data(u, ud, d)
                 localpath = ud.localpath
             except FetchError:
                 # Remove any incomplete file
@@ -500,6 +502,8 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
                         return found
                 else:
                     ud.method.download(newuri, ud, ld)
+                    if hasattr(ud.method,"build_mirror_data"):
+                        ud.method.build_mirror_data(newuri, ud, ld)
                     return ud.localpath
             except (bb.fetch2.MissingParameterError,
                     bb.fetch2.FetchError,

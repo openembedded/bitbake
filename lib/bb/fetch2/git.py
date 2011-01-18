@@ -116,9 +116,6 @@ class Git(Fetch):
 
         repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
 
-        coname = '%s' % (ud.tag)
-        codir = os.path.join(ud.clonedir, coname)
-
         # If we have no existing clone and no mirror tarball, try and obtain one
         if not os.path.exists(ud.clonedir) and not os.path.exists(repofile):
             try:
@@ -149,7 +146,12 @@ class Git(Fetch):
             runfetchcmd("%s prune-packed" % ud.basecmd, d)
             runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
 
+    def build_mirror_data(self, url, ud, d):
         # Generate a mirror tarball if needed
+        coname = '%s' % (ud.tag)
+        codir = os.path.join(ud.clonedir, coname)
+        repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
+
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
         if mirror_tarballs != "0" or 'fullclone' in ud.parm:
