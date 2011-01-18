@@ -70,18 +70,7 @@ class Git(Fetch):
         if not ud.tag or ud.tag == "master":
             ud.tag = self.latest_revision(url, ud, d)
 
-        subdir = ud.parm.get("subpath", "")
-        if subdir != "":
-            if subdir.endswith("/"):
-                subdir = subdir[:-1]
-            subdirpath = os.path.join(ud.path, subdir);
-        else:
-            subdirpath = ud.path;
-
-        if 'fullclone' in ud.parm:
-            ud.localfile = ud.mirrortarball
-        else:
-            ud.localfile = data.expand('git_%s%s_%s.tar.gz' % (ud.host, subdirpath.replace('/', '.'), ud.tag), d)
+        ud.localfile = ud.mirrortarball
 
         if 'noclone' in ud.parm:
             ud.localfile = None
@@ -93,8 +82,6 @@ class Git(Fetch):
         if 'fullclone' in ud.parm:
             return True
         if 'noclone' in ud.parm:
-            return False
-        if os.path.exists(ud.localpath):
             return False
         if not self._contains_ref(ud.tag, d):
             return True
@@ -120,6 +107,8 @@ class Git(Fetch):
 
         repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
 
+        ud.repochanged = not os.path.exists(repofile)
+
         # If the checkout doesn't exist and the mirror tarball does, extract it
         if not os.path.exists(ud.clonedir) and os.path.exists(repofile):
             bb.mkdirhier(ud.clonedir)
@@ -144,59 +133,17 @@ class Git(Fetch):
             runfetchcmd("%s fetch --tags %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
             runfetchcmd("%s prune-packed" % ud.basecmd, d)
             runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
+            ud.repochanged = True
 
     def build_mirror_data(self, url, ud, d):
         # Generate a mirror tarball if needed
-        coname = '%s' % (ud.tag)
-        codir = os.path.join(ud.clonedir, coname)
         repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
 
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
-        if mirror_tarballs != "0" or 'fullclone' in ud.parm:
+        if (mirror_tarballs != "0" or 'fullclone' in ud.parm) and ud.repochanged:
             logger.info("Creating tarball of git repository")
             runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
-
-        if 'fullclone' in ud.parm:
-            return
-
-        if os.path.exists(codir):
-            bb.utils.prunedir(codir)
-
-        subdir = ud.parm.get("subpath", "")
-        if subdir != "":
-            if subdir.endswith("/"):
-                subdirbase = os.path.basename(subdir[:-1])
-            else:
-                subdirbase = os.path.basename(subdir)
-        else:
-            subdirbase = ""
-
-        if subdir != "":
-            readpathspec = ":%s" % (subdir)
-            codir = os.path.join(codir, "git")
-            coprefix = os.path.join(codir, subdirbase, "")
-        else:
-            readpathspec = ""
-            coprefix = os.path.join(codir, "git", "")
-
-        scmdata = ud.parm.get("scmdata", "")
-        if scmdata == "keep":
-            runfetchcmd("%s clone -n %s %s" % (ud.basecmd, ud.clonedir, coprefix), d)
-            os.chdir(coprefix)
-            runfetchcmd("%s checkout -q -f %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
-        else:
-            bb.mkdirhier(codir)
-            os.chdir(ud.clonedir)
-            runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
-            runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, coprefix), d)
-
-        os.chdir(codir)
-        logger.info("Creating tarball of git checkout")
-        runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.join(".", "*") ), d)
-
-        os.chdir(ud.clonedir)
-        bb.utils.prunedir(codir)
 
     def unpack(self, ud, destdir, d):
         """ unpack the downloaded src to destdir"""
