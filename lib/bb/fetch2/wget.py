@@ -48,7 +48,7 @@ class Wget(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
-    def go(self, uri, ud, d, checkonly = False):
+    def download(self, uri, ud, d, checkonly = False):
         """Fetch urls"""
 
         def fetch_uri(uri, ud, d):
@@ -90,4 +90,4 @@ class Wget(Fetch):
 
 
     def checkstatus(self, uri, ud, d):
-        return self.go(uri, ud, d, True)
+        return self.download(uri, ud, d, True)

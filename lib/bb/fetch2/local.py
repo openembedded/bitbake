@@ -56,7 +56,7 @@ class Local(Fetch):
         # We don't set localfile as for this fetcher the file is already local!
         return newpath
 
-    def go(self, url, urldata, d):
+    def download(self, url, urldata, d):
         """Fetch urls (no-op for Local method)"""
         # no need to fetch local files, we'll deal with them in place.
         return 1

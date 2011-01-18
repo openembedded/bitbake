@@ -74,7 +74,7 @@ class SSH(Fetch):
         lpath = os.path.join(data.getVar('DL_DIR', d, True), host, os.path.basename(path))
         return lpath
 
-    def go(self, url, urldata, d):
+    def download(self, url, urldata, d):
         dldir = data.getVar('DL_DIR', d, 1)
 
         m = __pattern__.match(url)

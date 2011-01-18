@@ -79,7 +79,7 @@ class Bzr(Fetch):
 
         return bzrcmd
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
         """Fetch url"""
 
         if os.access(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir), '.bzr'), os.R_OK):

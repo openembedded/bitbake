@@ -55,7 +55,7 @@ class Repo(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
         """Fetch url"""
 
         if os.access(os.path.join(data.getVar("DL_DIR", d, True), ud.localfile), os.R_OK):

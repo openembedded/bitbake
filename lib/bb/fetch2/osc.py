@@ -79,7 +79,7 @@ class Osc(Fetch):
 
         return osccmd
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
         """
         Fetch url
         """

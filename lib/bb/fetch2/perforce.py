@@ -121,7 +121,7 @@ class Perforce(Fetch):
 
         return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
         """
         Fetch urls
         """

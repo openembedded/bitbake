@@ -112,7 +112,7 @@ class Hg(Fetch):
 
         return cmd
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
         """Fetch url"""
 
         logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")

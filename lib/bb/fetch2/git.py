@@ -106,7 +106,7 @@ class Git(Fetch):
 
         return True
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
         """Fetch url"""
 
         if ud.user:
@@ -242,7 +242,7 @@ class Git(Fetch):
 
         if not os.path.exists(ud.clonedir):
             print("no repo")
-            self.go(None, ud, d)
+            self.download(None, ud, d)
             if not os.path.exists(ud.clonedir):
                 logger.error("GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value", url, ud.clonedir)
                 return None
@@ -250,7 +250,7 @@ class Git(Fetch):
 
         os.chdir(ud.clonedir)
         if not self._contains_ref(rev, d):
-            self.go(None, ud, d)
+            self.download(None, ud, d)
 
         output = runfetchcmd("%s rev-list %s -- 2> /dev/null | wc -l" % (ud.basecmd, rev), d, quiet=True)
         os.chdir(cwd)

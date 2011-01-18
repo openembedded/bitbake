@@ -72,7 +72,7 @@ class Cvs(Fetch):
             return True
         return False
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
 
         method = ud.parm.get('method', 'pserver')
         localdir = ud.parm.get('localdir', ud.module)

@@ -263,7 +263,7 @@ def subprocess_setup():
     # SIGPIPE errors are known issues with gzip/bash
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-def go(d, urls = None):
+def download(d, urls = None):
     """
     Fetch all urls
     init must have previously been called
@@ -293,7 +293,7 @@ def go(d, urls = None):
         if m.forcefetch(u, ud, d) or not localpath:
             # Next try fetching from the original uri, u
             try:
-                m.go(u, ud, d)
+                m.download(u, ud, d)
                 localpath = ud.localpath
             except FetchError:
                 # Remove any incomplete file
@@ -499,7 +499,7 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
                     if found:
                         return found
                 else:
-                    ud.method.go(newuri, ud, ld)
+                    ud.method.download(newuri, ud, ld)
                     return ud.localpath
             except (bb.fetch2.MissingParameterError,
                     bb.fetch2.FetchError,
@@ -626,7 +626,7 @@ class Fetch(object):
         """
         return False
 
-    def go(self, url, urldata, d):
+    def download(self, url, urldata, d):
         """
         Fetch urls
         Assumes localpath was called first

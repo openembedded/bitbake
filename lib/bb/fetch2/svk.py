@@ -57,7 +57,7 @@ class Svk(Fetch):
     def forcefetch(self, url, ud, d):
         return ud.date == "now"
 
-    def go(self, loc, ud, d):
+    def download(self, loc, ud, d):
         """Fetch urls"""
 
         svkroot = ud.host + ud.path
