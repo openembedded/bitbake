@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "134"
+__cache_version__ = "135"
 
 recipe_fields = (
     'pn',
@@ -55,6 +55,7 @@ recipe_fields = (
     'provides',
     'task_deps',
     'stamp',
+    'stamp_extrainfo',
     'broken',
     'not_world',
     'skipped',
@@ -100,6 +101,11 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
     def taskvar(cls, var, tasks, metadata):
         return dict((task, cls.getvar("%s_task-%s" % (var, task), metadata))
                     for task in tasks)
+
+    @classmethod
+    def flaglist(cls, flag, varlist, metadata):
+        return dict((var, metadata.getVarFlag(flag, var, True))
+                    for var in varlist)
 
     @classmethod
     def getvar(cls, var, metadata):
@@ -148,6 +154,7 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
             broken           = cls.getvar('BROKEN', metadata),
             not_world        = cls.getvar('EXCLUDE_FROM_WORLD', metadata),
             stamp            = cls.getvar('STAMP', metadata),
+            stamp_extrainfo  = cls.flaglist('stamp-extra-info', tasks, metadata),
             packages_dynamic = cls.listvar('PACKAGES_DYNAMIC', metadata),
             depends          = cls.depvar('DEPENDS', metadata),
             provides         = cls.depvar('PROVIDES', metadata),
@@ -560,6 +567,7 @@ class CacheData(object):
         self.task_queues = {}
         self.task_deps = {}
         self.stamp = {}
+        self.stamp_extrainfo = {}
         self.preferred = {}
         self.tasks = {}
         self.basetaskhash = {}
@@ -578,6 +586,7 @@ class CacheData(object):
         self.pkg_pepvpr[fn] = (info.pe, info.pv, info.pr)
         self.pkg_dp[fn] = info.defaultpref
         self.stamp[fn] = info.stamp
+        self.stamp_extrainfo[fn] = info.stamp_extrainfo
 
         provides = [info.pn]
         for provide in info.provides:

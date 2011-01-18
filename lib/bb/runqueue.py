@@ -799,7 +799,7 @@ class RunQueue:
                 continue
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
             taskname = self.rqdata.runq_task[task]
-            stampfile = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn], fn, taskname)
+            stampfile = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
             # If the stamp is missing its not current
             if not os.access(stampfile, os.F_OK):
                 del unchecked[task]
@@ -820,7 +820,7 @@ class RunQueue:
                 if task in unchecked:
                     fn = self.taskData.fn_index[self.rqdata.runq_fnid[task]]
                     taskname = self.rqdata.runq_task[task]
-                    stampfile = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn], fn, taskname)
+                    stampfile = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
                     iscurrent = True
 
                     t1 = os.stat(stampfile)[stat.ST_MTIME]
@@ -828,7 +828,7 @@ class RunQueue:
                         if iscurrent:
                             fn2 = self.taskData.fn_index[self.rqdata.runq_fnid[dep]]
                             taskname2 = self.rqdata.runq_task[dep]
-                            stampfile2 = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn2], fn2, taskname2)
+                            stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCache, fn2)
                             if fn == fn2 or (fulldeptree and fn2 not in stampwhitelist):
                                 if dep in notcurrent:
                                     iscurrent = False
@@ -880,7 +880,7 @@ class RunQueue:
         if taskname is None:
             taskname = self.rqdata.runq_task[task]
 
-        stampfile = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn], fn, taskname)
+        stampfile = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
 
         # If the stamp is missing its not current
         if not os.access(stampfile, os.F_OK):
@@ -901,8 +901,8 @@ class RunQueue:
             if iscurrent:
                 fn2 = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[dep]]
                 taskname2 = self.rqdata.runq_task[dep]
-                stampfile2 = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn2], fn2, taskname2)
-                stampfile3 = bb.parse.siggen.stampfile(self.rqdata.dataCache.stamp[fn2], fn2, taskname2 + "_setscene")
+                stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCache, fn2)
+                stampfile3 = bb.build.stampfile(taskname2 + "_setscene", self.rqdata.dataCache, fn2)
                 t2 = get_timestamp(stampfile2)
                 t3 = get_timestamp(stampfile3)
                 if t3 and t3 > t2:

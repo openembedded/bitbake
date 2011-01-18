@@ -312,14 +312,16 @@ def stamp_internal(taskname, d, file_name):
     """
     if file_name:
         stamp = d.stamp[file_name]
+        extrainfo = d.stamp_extrainfo[file_name].get(taskname) or ""
     else:
         stamp = d.getVar('STAMP', True)
         file_name = d.getVar('BB_FILENAME', True)
+        extrainfo = d.getVarFlag(taskname, 'stamp-extra-info', True) or ""
 
     if not stamp:
         return
 
-    stamp = bb.parse.siggen.stampfile(stamp, file_name, taskname)
+    stamp = bb.parse.siggen.stampfile(stamp, file_name, taskname, extrainfo)
 
     bb.utils.mkdirhier(os.path.dirname(stamp))
 
@@ -346,8 +348,12 @@ def del_stamp(task, d, file_name = None):
     stamp = stamp_internal(task, d, file_name)
     bb.utils.remove(stamp)
 
-def stampfile(taskname, d):
-    return stamp_internal(taskname, d, None)
+def stampfile(taskname, d, file_name = None):
+    """
+    Return the stamp for a given task
+    (d can be a data dict or dataCache)
+    """
+    return stamp_internal(taskname, d, file_name)
 
 def add_tasks(tasklist, d):
     task_deps = data.getVar('_task_deps', d)

@@ -43,8 +43,8 @@ class SignatureGenerator(object):
     def set_taskdata(self, hashes, deps):
         return
 
-    def stampfile(self, stampbase, file_name, taskname):
-        return "%s.%s" % (stampbase, taskname)
+    def stampfile(self, stampbase, file_name, taskname, extrainfo):
+        return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
 
 class SignatureGeneratorBasic(SignatureGenerator):
     """
@@ -197,13 +197,13 @@ class SignatureGeneratorBasic(SignatureGenerator):
 class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     name = "basichash"
 
-    def stampfile(self, stampbase, fn, taskname):
+    def stampfile(self, stampbase, fn, taskname, extrainfo):
         if taskname != "do_setscene" and taskname.endswith("_setscene"):
             k = fn + "." + taskname[:-9]
         else:
             k = fn + "." + taskname
         h = self.taskhash[k]
-        return "%s.%s.%s" % (stampbase, taskname, h)
+        return ("%s.%s.%s.%s" % (stampbase, taskname, h, extrainfo)).rstrip('.')
 
 def dump_this_task(outfile, d):
     import bb.parse
