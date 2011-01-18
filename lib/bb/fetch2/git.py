@@ -194,6 +194,31 @@ class Git(Fetch):
         os.chdir(ud.clonedir)
         bb.utils.prunedir(codir)
 
+    def unpack(self, ud, destdir, d):
+        """ unpack the downloaded src to destdir"""
+
+        subdir = ud.parm.get("subpath", "")
+        if subdir != "":
+            readpathspec = ":%s" % (subdir)
+        else:
+            readpathspec = ""
+
+        destdir = os.path.join(destdir, "git/")
+        if os.path.exists(destdir):
+            bb.utils.prunedir(destdir)
+
+        if 'fullclone' in ud.parm:
+            runfetchcmd("git clone -s -n %s %s" % (ud.clonedir, destdir), d)
+            if os.path.exists("%s/.git/refs/remotes/origin" % ud.clonedir):
+                runfetchcmd("cp -af %s/.git/refs/remotes/origin/* %s/.git/refs/remotes/origin/" %(ud.clonedir, destdir), d)
+            if os.path.exists("%s/.git/packed-refs" % ud.clonedir):
+                runfetchcmd("cp -af %s/.git/packed-refs %s/.git/" %(ud.clonedir, destdir), d)
+        else:
+            os.chdir(ud.clonedir)
+            runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
+            runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, destdir), d)
+        return True
+
     def supports_srcrev(self):
         return True
 
