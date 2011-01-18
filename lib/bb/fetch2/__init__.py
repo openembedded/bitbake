@@ -33,6 +33,8 @@ from   bb import data
 from   bb import persist_data
 from   bb import utils
 
+__version__ = "2"
+
 logger = logging.getLogger("BitBake.Fetch")
 
 class MalformedUrl(Exception):
