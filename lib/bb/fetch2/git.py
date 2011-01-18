@@ -116,13 +116,6 @@ class Git(Fetch):
 
         repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
 
-        # If we have no existing clone and no mirror tarball, try and obtain one
-        if not os.path.exists(ud.clonedir) and not os.path.exists(repofile):
-            try:
-                Fetch.try_mirrors(ud.mirrortarball)
-            except:
-                pass
-
         # If the checkout doesn't exist and the mirror tarball does, extract it
         if not os.path.exists(ud.clonedir) and os.path.exists(repofile):
             bb.mkdirhier(ud.clonedir)
