@@ -631,10 +631,9 @@ class Fetch(object):
         """
         raise NoMethodError("Missing implementation for url")
 
-    def unpack(file, data, url = None):
+    def unpack(self, urldata, rootdir, data):
         import subprocess
-        if not url:
-            url = "file://%s" % file
+        file = urldata.localpath
         dots = file.split(".")
         if dots[-1] in ['gz', 'bz2', 'Z']:
             efile = os.path.join(bb.data.getVar('WORKDIR', data, 1),os.path.basename('.'.join(dots[0:-1])))
@@ -657,8 +656,7 @@ class Fetch(object):
             cmd = 'xz -dc %s > %s' % (file, efile)
         elif file.endswith('.zip') or file.endswith('.jar'):
             cmd = 'unzip -q -o'
-            (type, host, path, user, pswd, parm) = bb.decodeurl(url)
-            if 'dos' in parm:
+            if 'dos' in urldata.parm:
                 cmd = '%s -a' % cmd
             cmd = "%s '%s'" % (cmd, file)
         elif os.path.isdir(file):
@@ -669,34 +667,33 @@ class Fetch(object):
                 destdir = destdir.strip('/')
                 if len(destdir) < 1:
                     destdir = "."
-                elif not os.access("%s/%s" % (os.getcwd(), destdir), os.F_OK):
-                    os.makedirs("%s/%s" % (os.getcwd(), destdir))
-            cmd = 'cp -pPR %s %s/%s/' % (file, os.getcwd(), destdir)
+                elif not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
+                    os.makedirs("%s/%s" % (rootdir, destdir))
+            cmd = 'cp -pPR %s %s/%s/' % (file, rootdir, destdir)
         else:
-            (type, host, path, user, pswd, parm) = bb.decodeurl(url)
-            if not 'patch' in parm:
+            if not 'patch' in urldata.parm:
                 # The "destdir" handling was specifically done for FILESPATH
                 # items.  So, only do so for file:// entries.
-                if type == "file" and path.find("/") != -1:
-                    destdir = path.rsplit("/", 1)[0]
+                if urldata.type == "file" and urldata.path.find("/") != -1:
+                    destdir = urldata.path.rsplit("/", 1)[0]
                 else:
                     destdir = "."
-                bb.mkdirhier("%s/%s" % (os.getcwd(), destdir))
-                cmd = 'cp %s %s/%s/' % (file, os.getcwd(), destdir)
+                bb.mkdirhier("%s/%s" % (rootdir, destdir))
+                cmd = 'cp %s %s/%s/' % (file, rootdir, destdir)
 
         if not cmd:
             return True
 
-        dest = os.path.join(os.getcwd(), os.path.basename(file))
+        dest = os.path.join(rootdir, os.path.basename(file))
         if os.path.exists(dest):
             if os.path.samefile(file, dest):
                 return True
 
         # Change to subdir before executing command
         save_cwd = os.getcwd();
-        parm = bb.decodeurl(url)[5]
-        if 'subdir' in parm:
-            newdir = ("%s/%s" % (os.getcwd(), parm['subdir']))
+        os.chdir(rootdir)
+        if 'subdir' in urldata.parm:
+            newdir = ("%s/%s" % (rootdir, urldata.parm['subdir']))
             bb.mkdirhier(newdir)
             os.chdir(newdir)
 
