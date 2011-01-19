@@ -1,5 +1,5 @@
 #
-# BitBake UI Implementation
+# Gtk+ UI pieces for BitBake
 #
 # Copyright (C) 2006-2007 Richard Purdie
 #
