@@ -399,7 +399,7 @@ def fileslocked(files):
     for lock in locks:
         bb.utils.unlockfile(lock)
 
-def lockfile(name):
+def lockfile(name, shared=False):
     """
     Use the file fn as a lock file, return when the lock has been acquired.
     Returns a variable to pass to unlockfile().
@@ -412,6 +412,10 @@ def lockfile(name):
     if not os.access(path, os.W_OK):
         logger.error("Error, lockfile path is not writable!: %s" % path)
         sys.exit(1)
+
+    op = fcntl.LOCK_EX
+    if shared:
+        op = fcntl.LOCK_SH
 
     while True:
         # If we leave the lockfiles lying around there is no problem
@@ -427,7 +431,7 @@ def lockfile(name):
         try:
             lf = open(name, 'a+')
             fileno = lf.fileno()
-            fcntl.flock(fileno, fcntl.LOCK_EX)
+            fcntl.flock(fileno, op)
             statinfo = os.fstat(fileno)
             if os.path.exists(lf.name):
                 statinfo2 = os.stat(lf.name)
