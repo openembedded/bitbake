@@ -445,7 +445,13 @@ def unlockfile(lf):
     """
     Unlock a file locked using lockfile()
     """
-    os.unlink(lf.name)
+    try:
+        # If we had a shared lock, we need to promote to exclusive before 
+        # removing the lockfile. Attempt this, ignore failures.
+        fcntl.flock(lf.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
+        os.unlink(lf.name)
+    except IOError:
+        pass
     fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
     lf.close()
 
