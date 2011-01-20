@@ -267,25 +267,29 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
     # Should use dataCache.preferred here?
     preferred = []
     preferred_vars = []
+    pns = {}
+    for p in eligible:
+        pns[dataCache.pkg_fn[p]] = p
     for p in eligible:
         pn = dataCache.pkg_fn[p]
         provides = dataCache.pn_provides[pn]
         for provide in provides:
-            logger.verbose("checking PREFERRED_PROVIDER_%s", provide)
             prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, cfgData, 1)
-            if prefervar == pn:
+            logger.verbose("checking PREFERRED_PROVIDER_%s (value %s) against %s", provide, prefervar, pns.keys())
+            if prefervar in pns and pns[prefervar] not in preferred:
                 var = "PREFERRED_PROVIDER_%s = %s" % (provide, prefervar)
-                logger.verbose("selecting %s to satisfy runtime %s due to %s", pn, item, var)
+                logger.verbose("selecting %s to satisfy runtime %s due to %s", prefervar, item, var)
                 preferred_vars.append(var)
-                eligible.remove(p)
-                eligible = [p] + eligible
-                preferred.append(p)
+                pref = pns[prefervar]
+                eligible.remove(pref)
+                eligible = [pref] + eligible
+                preferred.append(pref)
                 break
 
     numberPreferred = len(preferred)
 
     if numberPreferred > 1:
-        logger.error("Conflicting PREFERRED_PROVIDER entries were found which resulted in an attempt to select multiple providers (%s) for runtime dependecy %s\nThe entries resulting in this conflict were: %s", preferred, item, preferred_vars)
+        logger.error("Trying to resolve runtime dependency %s resulted in conflicting PREFERRED_PROVIDER entries being found.\nThe providers found were: %s\nThe PREFERRED_PROVIDER entries resulting in this conflict were: %s", item, preferred, preferred_vars)
 
     logger.debug(1, "sorted providers for %s are: %s", item, eligible)
 
