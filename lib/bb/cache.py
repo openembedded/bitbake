@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "135"
+__cache_version__ = "136"
 
 recipe_fields = (
     'pn',
@@ -104,7 +104,7 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
 
     @classmethod
     def flaglist(cls, flag, varlist, metadata):
-        return dict((var, metadata.getVarFlag(flag, var, True))
+        return dict((var, metadata.getVarFlag(var, flag, True))
                     for var in varlist)
 
     @classmethod
