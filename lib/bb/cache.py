@@ -541,9 +541,7 @@ class CacheData(object):
     """
 
     def __init__(self):
-        """
-        Direct cache variables
-        """
+        # Direct cache variables
         self.providers = defaultdict(list)
         self.rproviders = defaultdict(list)
         self.packages = defaultdict(list)
@@ -567,10 +565,7 @@ class CacheData(object):
         self.basetaskhash = {}
         self.hashfn = {}
 
-        """
-        Indirect Cache variables
-        (set elsewhere)
-        """
+        # Indirect Cache variables (set elsewhere)
         self.ignored_dependencies = []
         self.world_target = set()
         self.bbfile_priority = {}
