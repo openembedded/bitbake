@@ -469,6 +469,16 @@ def runfetchcmd(cmd, d, quiet = False):
 
     return output
 
+def check_network_access(d, info = ""):
+    """
+    log remote network access, and error if BB_NO_NETWORK is set
+    """
+    if bb.data.getVar("BB_NO_NETWORK", d, True) == "1":
+        bb.error("BB_NO_NETWORK is set, but the fetcher code attempted network access with the command %s" % info)
+        raise FetchError("BB_NO_NETWORK violation")
+    else:
+        bb.note("Fetcher accessed the network with the command %s" % info)
+
 def try_mirrors(d, uri, mirrors, check = False, force = False):
     """
     Try to use a mirrored version of the sources.
