@@ -74,8 +74,10 @@ class Repo(Fetch):
         bb.mkdirhier(os.path.join(codir, "repo"))
         os.chdir(os.path.join(codir, "repo"))
         if not os.path.exists(os.path.join(codir, "repo", ".repo")):
+            bb.fetch2.check_network_access(d, "repo init -m %s -b %s -u %s://%s%s%s" % (ud.manifest, ud.branch, ud.proto, username, ud.host, ud.path))
             runfetchcmd("repo init -m %s -b %s -u %s://%s%s%s" % (ud.manifest, ud.branch, ud.proto, username, ud.host, ud.path), d)
 
+        bb.fetch2.check_network_access(d, "repo sync %s" % ud.url)
         runfetchcmd("repo sync", d)
         os.chdir(codir)
 

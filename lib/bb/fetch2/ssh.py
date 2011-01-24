@@ -112,6 +112,8 @@ class SSH(Fetch):
             commands.mkarg(ldir)
         )
 
+        bb.fetch2.check_network_access(d, cmd)
+
         (exitstatus, output) = commands.getstatusoutput(cmd)
         if exitstatus != 0:
             print(output)

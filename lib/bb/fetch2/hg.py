@@ -123,6 +123,7 @@ class Hg(Fetch):
             # update sources there
             os.chdir(ud.moddir)
             logger.debug(1, "Running %s", updatecmd)
+            bb.fetch2.check_network_access(d, updatecmd)
             runfetchcmd(updatecmd, d)
 
         else:
@@ -132,6 +133,7 @@ class Hg(Fetch):
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", fetchcmd)
+            bb.fetch2.check_network_access(d, fetchcmd)
             runfetchcmd(fetchcmd, d)
 
         # Even when we clone (fetch), we still need to update as hg's clone
@@ -165,6 +167,7 @@ class Hg(Fetch):
         """
         Compute tip revision for the url
         """
+        bb.fetch2.check_network_access(d, self._buildhgcommand(ud, d, "info"))
         output = runfetchcmd(self._buildhgcommand(ud, d, "info"), d)
         return output.strip()
 

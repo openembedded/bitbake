@@ -124,12 +124,14 @@ class Git(Fetch):
 
         # If the repo still doesn't exist, fallback to cloning it
         if not os.path.exists(ud.clonedir):
+            bb.fetch2.check_network_access(d, "git clone %s%s" % (ud.host, ud.path))
             runfetchcmd("%s clone -n %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.clonedir), d)
 
         os.chdir(ud.clonedir)
         # Update the checkout if needed
         if not self._contains_ref(ud.tag, d) or 'fullclone' in ud.parm:
             # Remove all but the .git directory
+            bb.fetch2.check_network_access(d, "git fetch %s%s" %(ud.host, ud.path))
             runfetchcmd("rm * -Rf", d)
             if 'fullclone' in ud.parm:
                 runfetchcmd("%s fetch --all" % (ud.basecmd), d)
@@ -215,6 +217,7 @@ class Git(Fetch):
         else:
             username = ""
 
+        bb.fetch2.check_network_access(d, "git ls-remote %s%s %s" % (ud.host, ud.path, ud.branch))
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
         cmd = "%s ls-remote %s://%s%s%s %s" % (basecmd, ud.proto, username, ud.host, ud.path, ud.branch)
         output = runfetchcmd(cmd, d, True)

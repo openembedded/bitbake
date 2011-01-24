@@ -69,6 +69,7 @@ class Wget(Fetch):
             fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
             logger.info("fetch " + uri)
             logger.debug(2, "executing " + fetchcmd)
+            bb.fetch2.check_network_access(d, fetchcmd)
             runfetchcmd(fetchcmd, d)
 
             # Sanity check since wget can pretend it succeed when it didn't

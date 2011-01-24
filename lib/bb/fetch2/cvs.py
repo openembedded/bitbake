@@ -131,6 +131,7 @@ class Cvs(Fetch):
         moddir = os.path.join(pkgdir, localdir)
         if os.access(os.path.join(moddir, 'CVS'), os.R_OK):
             logger.info("Update " + loc)
+            bb.fetch2.check_network_access(d, cvsupdatecmd)
             # update sources there
             os.chdir(moddir)
             myret = os.system(cvsupdatecmd)
@@ -140,6 +141,7 @@ class Cvs(Fetch):
             bb.mkdirhier(pkgdir)
             os.chdir(pkgdir)
             logger.debug(1, "Running %s", cvscmd)
+            bb.fetch2.check_network_access(d, cvscmd)
             myret = os.system(cvscmd)
 
         if myret != 0 or not os.access(moddir, os.R_OK):
