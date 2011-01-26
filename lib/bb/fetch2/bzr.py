@@ -120,13 +120,13 @@ class Bzr(Fetch):
     def supports_srcrev(self):
         return True
 
-    def _revision_key(self, url, ud, d):
+    def _revision_key(self, url, ud, d, name):
         """
         Return a unique key for the url
         """
         return "bzr:" + ud.pkgdir
 
-    def _latest_revision(self, url, ud, d):
+    def _latest_revision(self, url, ud, d, name):
         """
         Return the latest upstream revision number
         """

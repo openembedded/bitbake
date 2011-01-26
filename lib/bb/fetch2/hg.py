@@ -163,7 +163,7 @@ class Hg(Fetch):
     def supports_srcrev(self):
         return True
 
-    def _latest_revision(self, url, ud, d):
+    def _latest_revision(self, url, ud, d, name):
         """
         Compute tip revision for the url
         """
@@ -174,7 +174,7 @@ class Hg(Fetch):
     def _build_revision(self, url, ud, d):
         return ud.revision
 
-    def _revision_key(self, url, ud, d):
+    def _revision_key(self, url, ud, d, name):
         """
         Return a unique key for the url
         """

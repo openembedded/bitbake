@@ -57,7 +57,13 @@ class Git(Fetch):
         if 'nocheckout' in ud.parm:
             ud.nocheckout = True
 
-        ud.branch = ud.parm.get("branch", "master")
+        branches = ud.parm.get("branch", "master").split(',')
+        if len(branches) != len(ud.names):
+            raise bb.fetch2.ParameterError("SRC_URI (%) name and branch number mismatch" % ud.url)
+        ud.branches = {}
+        for name in ud.names:
+            branch = branches[ud.names.index(name)]
+            ud.branches[name] = branch
 
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
         ud.mirrortarball = 'git_%s.tar.gz' % (gitsrcname)
@@ -66,25 +72,18 @@ class Git(Fetch):
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
     def localpath(self, url, ud, d):
-        ud.tag = ud.revision
-        if not ud.tag or ud.tag == "master":
-            ud.tag = self.latest_revision(url, ud, d)
+        for name in ud.names:
+            if not ud.revisions[name] or ud.revisions[name] == "master":
+                ud.revisions[name] = self.latest_revision(url, ud, d, name)
 
         ud.localfile = ud.mirrortarball
-
-        if 'noclone' in ud.parm:
-            ud.localfile = None
-            return None
 
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def forcefetch(self, url, ud, d):
-        if 'fullclone' in ud.parm:
-            return True
-        if 'noclone' in ud.parm:
-            return False
-        if not self._contains_ref(ud.tag, d):
-            return True
+        for name in ud.names:
+            if not self._contains_ref(ud.revisions[name], d):
+                return True
         return False
 
     def try_premirror(self, u, ud, d):
@@ -122,18 +121,15 @@ class Git(Fetch):
 
         os.chdir(ud.clonedir)
         # Update the checkout if needed
-        if not self._contains_ref(ud.tag, d) or 'fullclone' in ud.parm:
-            # Remove all but the .git directory
-            bb.fetch2.check_network_access(d, "git fetch %s%s" %(ud.host, ud.path))
-            runfetchcmd("rm * -Rf", d)
-            if 'fullclone' in ud.parm:
-                runfetchcmd("%s fetch --all" % (ud.basecmd), d)
-            else:
-                runfetchcmd("%s fetch %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.branch), d)
-            runfetchcmd("%s fetch --tags %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
-            runfetchcmd("%s prune-packed" % ud.basecmd, d)
-            runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
-            ud.repochanged = True
+        for name in ud.names:
+            if not self._contains_ref(ud.revisions[name], d):
+                # Remove all but the .git directory
+                bb.fetch2.check_network_access(d, "git fetch %s%s" %(ud.host, ud.path))
+                runfetchcmd("%s fetch %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name]), d)
+                runfetchcmd("%s fetch --tags %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
+                runfetchcmd("%s prune-packed" % ud.basecmd, d)
+                runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
+                ud.repochanged = True
 
     def build_mirror_data(self, url, ud, d):
         # Generate a mirror tarball if needed
@@ -141,7 +137,7 @@ class Git(Fetch):
 
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
-        if (mirror_tarballs != "0" or 'fullclone' in ud.parm) and ud.repochanged:
+        if mirror_tarballs != "0" and ud.repochanged:
             logger.info("Creating tarball of git repository")
             runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
 
@@ -165,7 +161,7 @@ class Git(Fetch):
             runfetchcmd("cp -af %s/.git/packed-refs %s/.git/" %(ud.clonedir, destdir), d)
         if not ud.nocheckout:
             os.chdir(destdir)
-            runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
+            runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revisions[ud.names[0]], readpathspec), d)
             runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d)
         return True
 
@@ -177,13 +173,13 @@ class Git(Fetch):
         output = runfetchcmd("%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (basecmd, tag), d, quiet=True)
         return output.split()[0] != "0"
 
-    def _revision_key(self, url, ud, d):
+    def _revision_key(self, url, ud, d, name):
         """
         Return a unique key for the url
         """
-        return "git:" + ud.host + ud.path.replace('/', '.') + ud.branch
+        return "git:" + ud.host + ud.path.replace('/', '.') + ud.branches[name]
 
-    def _latest_revision(self, url, ud, d):
+    def _latest_revision(self, url, ud, d, name):
         """
         Compute the HEAD revision for the url
         """
@@ -192,16 +188,16 @@ class Git(Fetch):
         else:
             username = ""
 
-        bb.fetch2.check_network_access(d, "git ls-remote %s%s %s" % (ud.host, ud.path, ud.branch))
+        bb.fetch2.check_network_access(d, "git ls-remote %s%s %s" % (ud.host, ud.path, ud.branches[name]))
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
-        cmd = "%s ls-remote %s://%s%s%s %s" % (basecmd, ud.proto, username, ud.host, ud.path, ud.branch)
+        cmd = "%s ls-remote %s://%s%s%s %s" % (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name])
         output = runfetchcmd(cmd, d, True)
         if not output:
             raise bb.fetch2.FetchError("Fetch command %s gave empty output\n" % (cmd))
         return output.split()[0]
 
-    def _build_revision(self, url, ud, d):
-        return ud.tag
+    def _build_revision(self, url, ud, d, name):
+        return ud.revisions[name]
 
     def _sortable_buildindex_disabled(self, url, ud, d, rev):
         """

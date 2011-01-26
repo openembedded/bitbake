@@ -394,8 +394,8 @@ def get_srcrev(d):
         logger.error("SRCREV was used yet no valid SCM was found in SRC_URI")
         raise ParameterError
 
-    if len(scms) == 1:
-        return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d)
+    if len(scms) == 1 and len(urldata[scms[0]].names) == 1:
+        return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d, urldata[scms[0]].names[0])
 
     #
     # Mutiple SCMs are in SRC_URI so we resort to SRCREV_FORMAT
@@ -406,9 +406,9 @@ def get_srcrev(d):
         raise ParameterError
 
     for scm in scms:
-        if 'name' in urldata[scm].parm:
-            name = urldata[scm].parm["name"]
-            rev = urldata[scm].method.sortable_revision(scm, urldata[scm], d)
+        ud = urldata[scm]
+        for name in ud.names:
+            rev = ud.method.sortable_revision(scm, ud, d, name)
             format = format.replace(name, rev)
 
     return format
@@ -550,15 +550,28 @@ class FetchData(object):
         self.md5_expected = bb.data.getVarFlag("SRC_URI", self.md5_name, d)
         self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
 
+        self.names = self.parm.get("name",'').split(',')
         for m in methods:
             if m.supports(url, self, d):
                 self.method = m
                 if hasattr(m,"urldata_init"):
                     m.urldata_init(self, d)
                 if m.supports_srcrev():
-                    self.revision = Fetch.srcrev_internal_helper(self, d);
+                    self.setup_srcrevs(d)
                 return
         raise NoMethodError("Missing implementation for url %s" % url)
+
+    def setup_srcrevs(self, d):
+        if not self.method.supports_srcrev():
+            return
+
+        self.revisions = {}
+        for name in self.names:
+            self.revisions[name] = Fetch.srcrev_internal_helper(self, d, name)
+
+        # add compatibility code for non name specified case
+        if len(self.names) == 1:
+            self.revision = self.revisions[self.names[0]]
 
     def setup_localpath(self, d):
         self.setup = True
@@ -757,7 +770,7 @@ class Fetch(object):
         return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
     getSRCDate = staticmethod(getSRCDate)
 
-    def srcrev_internal_helper(ud, d):
+    def srcrev_internal_helper(ud, d, name):
         """
         Return:
             a) a source revision if specified
@@ -772,25 +785,25 @@ class Fetch(object):
             return ud.parm['tag']
 
         rev = None
-        if 'name' in ud.parm:
+        if name != '':
             pn = data.getVar("PN", d, 1)
-            rev = data.getVar("SRCREV_%s_pn-%s" % (ud.parm['name'], pn), d, 1)
+            rev = data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, 1)
             if not rev:
-                rev = data.getVar("SRCREV_pn-%s_%s" % (pn, ud.parm['name']), d, 1)
+                rev = data.getVar("SRCREV_pn-%s_%s" % (pn, name), d, 1)
             if not rev:
-                rev = data.getVar("SRCREV_%s" % (ud.parm['name']), d, 1)
+                rev = data.getVar("SRCREV_%s" % name, d, 1)
         if not rev:
             rev = data.getVar("SRCREV", d, 1)
         if rev == "INVALID":
             raise InvalidSRCREV("Please set SRCREV to a valid value")
         if rev == "AUTOINC":
-            rev = ud.method.latest_revision(ud.url, ud, d)
+            rev = ud.method.latest_revision(ud.url, ud, d, name)
 
         return rev
 
     srcrev_internal_helper = staticmethod(srcrev_internal_helper)
 
-    def localcount_internal_helper(ud, d):
+    def localcount_internal_helper(ud, d, name):
         """
         Return:
             a) a locked localcount if specified
@@ -798,9 +811,9 @@ class Fetch(object):
         """
 
         localcount = None
-        if 'name' in ud.parm:
+        if name != '':
             pn = data.getVar("PN", d, 1)
-            localcount = data.getVar("LOCALCOUNT_" + ud.parm['name'], d, 1)
+            localcount = data.getVar("LOCALCOUNT_" + name, d, 1)
         if not localcount:
             localcount = data.getVar("LOCALCOUNT", d, 1)
         return localcount
@@ -829,7 +842,7 @@ class Fetch(object):
         md5out.close()
     write_md5sum = staticmethod(write_md5sum)
 
-    def latest_revision(self, url, ud, d):
+    def latest_revision(self, url, ud, d, name):
         """
         Look in the cache for the latest revision, if not present ask the SCM.
         """
@@ -838,15 +851,15 @@ class Fetch(object):
 
         pd = persist_data.persist(d)
         revs = pd['BB_URI_HEADREVS']
-        key = self.generate_revision_key(url, ud, d)
+        key = self.generate_revision_key(url, ud, d, name)
         rev = revs[key]
         if rev != None:
             return str(rev)
 
-        revs[key] = rev = self._latest_revision(url, ud, d)
+        revs[key] = rev = self._latest_revision(url, ud, d, name)
         return rev
 
-    def sortable_revision(self, url, ud, d):
+    def sortable_revision(self, url, ud, d, name):
         """
 
         """
@@ -855,9 +868,9 @@ class Fetch(object):
 
         pd = persist_data.persist(d)
         localcounts = pd['BB_URI_LOCALCOUNT']
-        key = self.generate_revision_key(url, ud, d)
+        key = self.generate_revision_key(url, ud, d, name)
 
-        latest_rev = self._build_revision(url, ud, d)
+        latest_rev = self._build_revision(url, ud, d, name)
         last_rev = localcounts[key + '_rev']
         uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
         count = None
@@ -885,8 +898,8 @@ class Fetch(object):
 
         return str(count + "+" + latest_rev)
 
-    def generate_revision_key(self, url, ud, d):
-        key = self._revision_key(url, ud, d)
+    def generate_revision_key(self, url, ud, d, name):
+        key = self._revision_key(url, ud, d, name)
         return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
 
 from . import cvs
