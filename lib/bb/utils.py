@@ -450,7 +450,7 @@ def unlockfile(lf):
         # removing the lockfile. Attempt this, ignore failures.
         fcntl.flock(lf.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
         os.unlink(lf.name)
-    except IOError, OSError:
+    except (IOError, OSError):
         pass
     fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
     lf.close()
