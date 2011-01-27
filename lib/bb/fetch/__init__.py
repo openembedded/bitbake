@@ -699,7 +699,7 @@ class Fetch(object):
             raise InvalidSRCREV("Please set SRCREV to a valid value")
         if not rev:
             return False
-        if rev is "SRCREVINACTION":
+        if rev == "SRCREVINACTION":
             return True
         return rev
 
