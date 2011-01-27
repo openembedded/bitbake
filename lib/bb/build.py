@@ -310,13 +310,17 @@ def stamp_internal(taskname, d, file_name):
     In the bitbake core, d can be a CacheData and file_name will be set.
     When called in task context, d will be a data store, file_name will not be set
     """
+    taskflagname = taskname
+    if taskname.endswith("_setscene") and taskname != "do_setscene":
+        taskflagname = taskname.replace("_setscene", "")
+
     if file_name:
         stamp = d.stamp[file_name]
-        extrainfo = d.stamp_extrainfo[file_name].get(taskname) or ""
+        extrainfo = d.stamp_extrainfo[file_name].get(taskflagname) or ""
     else:
         stamp = d.getVar('STAMP', True)
         file_name = d.getVar('BB_FILENAME', True)
-        extrainfo = d.getVarFlag(taskname, 'stamp-extra-info', True) or ""
+        extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info', True) or ""
 
     if not stamp:
         return
