@@ -1596,7 +1596,7 @@ class runQueuePipe():
     def read(self):
         start = len(self.queue)
         try:
-            self.queue = self.queue + self.input.read(1024)
+            self.queue = self.queue + self.input.read(102400)
         except (OSError, IOError):
             pass
         end = len(self.queue)
