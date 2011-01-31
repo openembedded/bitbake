@@ -437,7 +437,7 @@ def runfetchcmd(cmd, d, quiet = False):
     exportvars = ['PATH', 'GIT_PROXY_COMMAND', 'GIT_PROXY_HOST',
                   'GIT_PROXY_PORT', 'GIT_CONFIG', 'http_proxy', 'ftp_proxy',
                   'https_proxy', 'no_proxy', 'ALL_PROXY', 'all_proxy',
-                  'SSH_AUTH_SOCK', 'SSH_AGENT_PID', 'HOME']
+                  'KRB5CCNAME', 'SSH_AUTH_SOCK', 'SSH_AGENT_PID', 'HOME']
 
     for var in exportvars:
         val = data.getVar(var, d, True)

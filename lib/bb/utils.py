@@ -506,6 +506,7 @@ def preserved_envvars_exported_interactive():
         'GPG_AGENT_INFO',
         'GTK_RC_FILES',
         'SESSION_MANAGER',
+        'KRB5CCNAME',
         'SSH_AUTH_SOCK',
         'XAUTHORITY',
         'XDG_DATA_DIRS',
