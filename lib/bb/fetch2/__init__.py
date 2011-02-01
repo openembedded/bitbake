@@ -864,7 +864,7 @@ class Fetch(object):
         if uselocalcount:
             count = Fetch.localcount_internal_helper(ud, d)
         if count is None:
-            count = localcounts[key + '_count']
+            count = localcounts[key + '_count'] or "0"
 
         if last_rev == latest_rev:
             return str(count + "+" + latest_rev)
