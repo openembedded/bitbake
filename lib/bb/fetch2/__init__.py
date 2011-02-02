@@ -875,7 +875,7 @@ class Fetch(object):
         uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
         count = None
         if uselocalcount:
-            count = Fetch.localcount_internal_helper(ud, d)
+            count = Fetch.localcount_internal_helper(ud, d, name)
         if count is None:
             count = localcounts[key + '_count'] or "0"
 
