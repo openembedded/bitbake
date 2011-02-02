@@ -53,6 +53,10 @@ class Git(Fetch):
         else:
             ud.proto = "rsync"
 
+        ud.nocheckout = False
+        if 'nocheckout' in ud.parm:
+            ud.nocheckout = True
+
         ud.branch = ud.parm.get("branch", "master")
 
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
@@ -207,16 +211,15 @@ class Git(Fetch):
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
 
-        if 'fullclone' in ud.parm:
-            runfetchcmd("git clone -s -n %s %s" % (ud.clonedir, destdir), d)
-            if os.path.exists("%s/.git/refs/remotes/origin" % ud.clonedir):
-                runfetchcmd("cp -af %s/.git/refs/remotes/origin/* %s/.git/refs/remotes/origin/" %(ud.clonedir, destdir), d)
-            if os.path.exists("%s/.git/packed-refs" % ud.clonedir):
-                runfetchcmd("cp -af %s/.git/packed-refs %s/.git/" %(ud.clonedir, destdir), d)
-        else:
-            os.chdir(ud.clonedir)
+        runfetchcmd("git clone -s -n %s %s" % (ud.clonedir, destdir), d)
+        if os.path.exists("%s/.git/refs/remotes/origin" % ud.clonedir):
+            runfetchcmd("cp -af %s/.git/refs/remotes/origin/* %s/.git/refs/remotes/origin/" %(ud.clonedir, destdir), d)
+        if os.path.exists("%s/.git/packed-refs" % ud.clonedir):
+            runfetchcmd("cp -af %s/.git/packed-refs %s/.git/" %(ud.clonedir, destdir), d)
+        if not ud.nocheckout:
+            os.chdir(destdir)
             runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
-            runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, destdir), d)
+            runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d)
         return True
 
     def supports_srcrev(self):
