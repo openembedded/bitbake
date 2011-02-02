@@ -156,6 +156,7 @@ class Git(Fetch):
 
         runfetchcmd("git clone -s -n %s %s" % (ud.clonedir, destdir), d)
         if os.path.exists("%s/.git/refs/remotes/origin" % ud.clonedir):
+            bb.mkdirhier("%s/.git/refs/remotes/origin/" % destdir)
             runfetchcmd("cp -af %s/.git/refs/remotes/origin/* %s/.git/refs/remotes/origin/" %(ud.clonedir, destdir), d)
         if os.path.exists("%s/.git/packed-refs" % ud.clonedir):
             runfetchcmd("cp -af %s/.git/packed-refs %s/.git/" %(ud.clonedir, destdir), d)
