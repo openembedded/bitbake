@@ -3,11 +3,10 @@ import gtk
 class ProgressBar(gtk.Dialog):
     def __init__(self, parent):
 
-        gtk.Dialog.__init__(self)
+        gtk.Dialog.__init__(self, flags=(gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT))
         self.set_title("Parsing metadata, please wait...")
         self.set_default_size(500, 0)
         self.set_transient_for(parent)
-        self.set_destroy_with_parent(True)
         self.progress = gtk.ProgressBar()
         self.vbox.pack_start(self.progress)
         self.show_all()
