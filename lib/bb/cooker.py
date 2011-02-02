@@ -555,10 +555,6 @@ class BBCooker:
             if terminal:
                 self.status.world_target.add(pn)
 
-            # drop reference count now
-            self.status.possible_world = None
-            self.status.all_depends    = None
-
     def interactiveMode( self ):
         """Drop off into a shell"""
         try:
