@@ -574,7 +574,13 @@ class FetchData(object):
             raise NoMethodError("Missing implementation for url %s" % url)
 
         if self.method.supports_srcrev():
-            self.setup_srcrevs(d)
+            self.revisions = {}
+            for name in self.names:
+                self.revisions[name] = Fetch.srcrev_internal_helper(self, d, name)
+
+            # add compatibility code for non name specified case
+            if len(self.names) == 1:
+                self.revision = self.revisions[self.names[0]]
 
         if hasattr(self.method, "urldata_init"):
             self.method.urldata_init(self, d)
@@ -591,18 +597,6 @@ class FetchData(object):
             basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
             self.md5 = basepath + '.md5'
             self.lockfile = basepath + '.lock'
-
-    def setup_srcrevs(self, d):
-        if not self.method.supports_srcrev():
-            return
-
-        self.revisions = {}
-        for name in self.names:
-            self.revisions[name] = Fetch.srcrev_internal_helper(self, d, name)
-
-        # add compatibility code for non name specified case
-        if len(self.names) == 1:
-            self.revision = self.revisions[self.names[0]]
 
     def setup_localpath(self, d):
         if not self.localpath:
