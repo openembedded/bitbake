@@ -263,6 +263,15 @@ def subprocess_setup():
     # SIGPIPE errors are known issues with gzip/bash
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
+def download_update(result, target):
+    if os.path.exists(target):
+        return
+    if not result or not os.path.exists(result):
+        return
+    if target != result:
+        os.symlink(result, target)
+    return
+
 def download(d, urls = None):
     """
     Fetch all urls
@@ -289,6 +298,8 @@ def download(d, urls = None):
         elif os.path.exists(ud.localfile):
             localpath = ud.localfile
 
+        download_update(localpath, ud.localpath)
+
         # Need to re-test forcefetch() which will return true if our copy is too old
         if m.forcefetch(u, ud, d) or not localpath:
             # Next try fetching from the original uri, u
@@ -297,16 +308,19 @@ def download(d, urls = None):
                 if hasattr(m, "build_mirror_data"):
                     m.build_mirror_data(u, ud, d)
                 localpath = ud.localpath
+                download_update(localpath, ud.localpath)
+
             except FetchError:
                 # Remove any incomplete file
                 bb.utils.remove(ud.localpath)
                 # Finally, try fetching uri, u, from MIRRORS
                 mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
                 localpath = try_mirrors (d, u, mirrors)
-                if not localpath or not os.path.exists(localpath):
-                    raise FetchError("Unable to fetch URL %s from any source." % u)
 
-        ud.localpath = localpath
+        if not localpath or not os.path.exists(localpath):
+            raise FetchError("Unable to fetch URL %s from any source." % u)
+
+        download_update(localpath, ud.localpath)
 
         if os.path.exists(ud.md5):
             # Touch the md5 file to show active use of the download
