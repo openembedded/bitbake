@@ -108,12 +108,12 @@ def encodeurl(decoded):
     if not type or not path:
         raise MissingParameterError("Type or path url components missing when encoding %s" % decoded)
     url = '%s://' % type
-    if user:
+    if user and type != "file":
         url += "%s" % user
         if pswd:
             url += ":%s" % pswd
         url += "@"
-    if host:
+    if host and type != "file":
         url += "%s" % host
     url += "%s" % path
     if p:
