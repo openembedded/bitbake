@@ -594,24 +594,10 @@ class FetchData(object):
             self.localpath = self.parm["localpath"]
             self.basename = os.path.basename(self.localpath)
         else:
-            premirrors = bb.data.getVar('PREMIRRORS', d, True)
-            local = ""
-            if premirrors and self.url:
-                aurl = self.url.split(";")[0]
-                mirrors = mirror_from_string(premirrors)
-                for (find, replace) in mirrors:
-                    if replace.startswith("file://"):
-                        path = aurl.split("://")[1]
-                        path = path.split(";")[0]
-                        local = replace.split("://")[1] + os.path.basename(path)
-                        if local == aurl or not os.path.exists(local) or os.path.isdir(local):
-                            local = ""
-                self.localpath = local
-            if not local:
-                self.localpath = self.method.localpath(self.url, self, d)
-                # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
-                # Horrible...
-                bb.data.delVar("ISHOULDNEVEREXIST", d)
+            self.localpath = self.method.localpath(self.url, self, d)
+            # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
+            # Horrible...
+            bb.data.delVar("ISHOULDNEVEREXIST", d)
 
         if self.localpath is not None:
             # Note: These files should always be in DL_DIR whereas localpath may not be.
