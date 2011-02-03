@@ -198,7 +198,7 @@ def fetcher_compare_revisions(d):
 #   3. localpaths
 # localpath can be called at any time
 
-def init(urls, d, setup = True):
+def init(urls, d):
     urldata = {}
 
     fn = bb.data.getVar('FILE', d, 1)
@@ -208,11 +208,6 @@ def init(urls, d, setup = True):
     for url in urls:
         if url not in urldata:
             urldata[url] = FetchData(url, d)
-
-    if setup:
-        for url in urldata:
-            if not urldata[url].setup:
-                urldata[url].setup_localpath(d)
 
     urldata_cache[fn] = urldata
     return urldata
@@ -279,7 +274,10 @@ def download(d, urls = None):
     """
     if not urls:
         urls = d.getVar("SRC_URI", 1).split()
-    urldata = init(urls, d, True)
+    urldata = init(urls, d)
+
+    for u in urls:
+        urldata[u].setup_localpath(d)
 
     for u in urls:
         ud = urldata[u]
@@ -341,13 +339,14 @@ def checkstatus(d, urls = None):
     Check all urls exist upstream
     init must have previously been called
     """
-    urldata = init([], d, True)
+    urldata = init([], d)
 
     if not urls:
         urls = urldata
 
     for u in urls:
         ud = urldata[u]
+        ud.setup_localpath(d)
         m = ud.method
         logger.debug(1, "Testing URL %s", u)
         # First try checking uri, u, from PREMIRRORS
@@ -370,10 +369,11 @@ def localpaths(d):
     Return a list of the local filenames, assuming successful fetch
     """
     local = []
-    urldata = init([], d, True)
+    urldata = init([], d)
 
     for u in urldata:
         ud = urldata[u]
+        ud.setup_localpath(d)
         local.append(ud.localpath)
 
     return local
@@ -394,14 +394,9 @@ def get_srcrev(d):
     """
 
     scms = []
-
-    # Only call setup_localpath on URIs which supports_srcrev()
-    urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d, False)
+    urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d)
     for u in urldata:
-        ud = urldata[u]
-        if ud.method.supports_srcrev():
-            if not ud.setup:
-                ud.setup_localpath(d)
+        if urldata[u].method.supports_srcrev():
             scms.append(u)
 
     if len(scms) == 0:
@@ -434,6 +429,7 @@ def localpath(url, d, cache = True):
     """
     ud = init([url], d)
     if ud[url].method:
+        ud[url].setup_localpath(d)
         return ud[url].localpath
     return url
 
@@ -546,6 +542,8 @@ class FetchData(object):
     """
     def __init__(self, url, d):
         self.localfile = ""
+        self.localpath = None
+        self.lockfile = None
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(data.expand(url, d))
         self.date = Fetch.getSRCDate(self, d)
         self.url = url
@@ -565,15 +563,34 @@ class FetchData(object):
         self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
 
         self.names = self.parm.get("name",'default').split(',')
+
+        self.method = None
         for m in methods:
             if m.supports(url, self, d):
                 self.method = m
-                if hasattr(m,"urldata_init"):
-                    m.urldata_init(self, d)
-                if m.supports_srcrev():
-                    self.setup_srcrevs(d)
-                return
-        raise NoMethodError("Missing implementation for url %s" % url)
+                break                
+
+        if not self.method:
+            raise NoMethodError("Missing implementation for url %s" % url)
+
+        if self.method.supports_srcrev():
+            self.setup_srcrevs(d)
+
+        if hasattr(self.method, "urldata_init"):
+            self.method.urldata_init(self, d)
+
+        if "localpath" in self.parm:
+            # if user sets localpath for file, use it instead.
+            self.localpath = self.parm["localpath"]
+            self.basename = os.path.basename(self.localpath)
+        elif self.localfile:
+            self.localpath = self.method.localpath(self.url, self, d)
+
+        if self.localfile and self.localpath:
+            # Note: These files should always be in DL_DIR whereas localpath may not be.
+            basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
+            self.md5 = basepath + '.md5'
+            self.lockfile = basepath + '.lock'
 
     def setup_srcrevs(self, d):
         if not self.method.supports_srcrev():
@@ -588,19 +605,8 @@ class FetchData(object):
             self.revision = self.revisions[self.names[0]]
 
     def setup_localpath(self, d):
-        self.setup = True
-        if "localpath" in self.parm:
-            # if user sets localpath for file, use it instead.
-            self.localpath = self.parm["localpath"]
-            self.basename = os.path.basename(self.localpath)
-        else:
+        if not self.localpath:
             self.localpath = self.method.localpath(self.url, self, d)
-
-        if self.localpath is not None:
-            # Note: These files should always be in DL_DIR whereas localpath may not be.
-            basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
-            self.md5 = basepath + '.md5'
-            self.lockfile = basepath + '.lock'
 
 
 class Fetch(object):
