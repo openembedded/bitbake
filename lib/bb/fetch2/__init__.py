@@ -37,25 +37,28 @@ __version__ = "2"
 
 logger = logging.getLogger("BitBake.Fetch")
 
-class MalformedUrl(Exception):
+class BBFetchException(Exception):
+   """Class all fetch exceptions inherit from"""
+
+class MalformedUrl(BBFetchException):
     """Exception raised when encountering an invalid url"""
 
-class FetchError(Exception):
+class FetchError(BBFetchException):
     """Exception raised when a download fails"""
 
-class NoMethodError(Exception):
+class NoMethodError(BBFetchException):
     """Exception raised when there is no method to obtain a supplied url or set of urls"""
 
-class MissingParameterError(Exception):
+class MissingParameterError(BBFetchException):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
 
-class ParameterError(Exception):
+class ParameterError(BBFetchException):
     """Exception raised when a url cannot be proccessed due to invalid parameters."""
 
-class MD5SumError(Exception):
+class MD5SumError(BBFetchException):
     """Exception raised when a MD5SUM of a file does not match the expected one"""
 
-class InvalidSRCREV(Exception):
+class InvalidSRCREV(BBFetchException):
     """Exception raised when an invalid SRCREV is encountered"""
 
 def decodeurl(url):
