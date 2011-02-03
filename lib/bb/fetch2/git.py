@@ -121,15 +121,18 @@ class Git(Fetch):
 
         os.chdir(ud.clonedir)
         # Update the checkout if needed
+        needupdate = False
         for name in ud.names:
             if not self._contains_ref(ud.revisions[name], d):
-                # Remove all but the .git directory
-                bb.fetch2.check_network_access(d, "git fetch %s%s" %(ud.host, ud.path))
-                runfetchcmd("%s fetch %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name]), d)
-                runfetchcmd("%s fetch --tags %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
-                runfetchcmd("%s prune-packed" % ud.basecmd, d)
-                runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
-                ud.repochanged = True
+                needupdate = True
+        if needupdate:
+            bb.fetch2.check_network_access(d, "git fetch %s%s" % (ud.host, ud.path))
+            runfetchcmd("%s remote rm origin" % ud.basecmd, d)
+            runfetchcmd("%s remote add origin %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
+            runfetchcmd("%s fetch --all -t" % ud.basecmd, d)
+            runfetchcmd("%s prune-packed" % ud.basecmd, d)
+            runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
+            ud.repochanged = True
 
     def build_mirror_data(self, url, ud, d):
         # Generate a mirror tarball if needed
