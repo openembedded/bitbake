@@ -77,9 +77,6 @@ class Git(Fetch):
 
         ud.localfile = ud.mirrortarball
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def forcefetch(self, url, ud, d):
         for name in ud.names:
             if not self._contains_ref(ud.revisions[name], d):

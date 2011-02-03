@@ -53,9 +53,6 @@ class Svk(Fetch):
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def forcefetch(self, url, ud, d):
         return ud.date == "now"
 

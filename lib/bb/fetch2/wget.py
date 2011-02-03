@@ -45,9 +45,6 @@ class Wget(Fetch):
         ud.basename = os.path.basename(ud.path)
         ud.localfile = data.expand(urllib.unquote(ud.basename), d)
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def download(self, uri, ud, d, checkonly = False):
         """Fetch urls"""
 

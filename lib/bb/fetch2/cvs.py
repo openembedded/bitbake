@@ -65,9 +65,6 @@ class Cvs(Fetch):
 
         ud.localfile = data.expand('%s_%s_%s_%s%s%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.tag, ud.date, norecurse, fullpath), d)
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def forcefetch(self, url, ud, d):
         if (ud.date == "now"):
             return True

@@ -47,9 +47,6 @@ class Bzr(Fetch):
 
         ud.localfile = data.expand('bzr_%s_%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
-    def localpath (self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def _buildbzrcommand(self, ud, d, command):
         """
         Build up an bzr commandline based on ud

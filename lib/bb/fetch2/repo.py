@@ -53,9 +53,6 @@ class Repo(Fetch):
 
         ud.localfile = data.expand("repo_%s%s_%s_%s.tar.gz" % (ud.host, ud.path.replace("/", "."), ud.manifest, ud.branch), d)
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def download(self, loc, ud, d):
         """Fetch url"""
 

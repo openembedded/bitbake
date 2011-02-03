@@ -118,9 +118,6 @@ class Perforce(Fetch):
 
         ud.localfile = data.expand('%s+%s+%s.tar.gz' % (host, base.replace('/', '.'), cset), d)
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
-
     def download(self, loc, ud, d):
         """
         Fetch urls

@@ -621,7 +621,8 @@ class Fetch(object):
         Can also setup variables in urldata for use in go (saving code duplication
         and duplicate code execution)
         """
-        return url
+        return os.path.join(data.getVar("DL_DIR", d, True), urldata.localfile)
+
     def _strip_leading_slashes(self, relpath):
         """
         Remove leading slash as os.path.join can't cope

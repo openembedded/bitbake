@@ -49,9 +49,6 @@ class Osc(Fetch):
 
         ud.localfile = data.expand('%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.path.replace('/', '.'), ud.revision), d)
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def _buildosccommand(self, ud, d, command):
         """
         Build up an ocs commandline based on ud

@@ -68,9 +68,6 @@ class Hg(Fetch):
         revTag = ud.parm.get('rev', 'tip')
         return revTag == "tip"
 
-    def localpath(self, url, ud, d):
-        return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
-
     def _buildhgcommand(self, ud, d, command):
         """
         Build up an hg commandline based on ud
