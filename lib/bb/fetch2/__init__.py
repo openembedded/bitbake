@@ -595,9 +595,6 @@ class FetchData(object):
             self.basename = os.path.basename(self.localpath)
         else:
             self.localpath = self.method.localpath(self.url, self, d)
-            # We have to clear data's internal caches since the cached value of SRCREV is now wrong.
-            # Horrible...
-            bb.data.delVar("ISHOULDNEVEREXIST", d)
 
         if self.localpath is not None:
             # Note: These files should always be in DL_DIR whereas localpath may not be.
