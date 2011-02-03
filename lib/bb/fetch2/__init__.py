@@ -550,7 +550,7 @@ class FetchData(object):
         self.md5_expected = bb.data.getVarFlag("SRC_URI", self.md5_name, d)
         self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
 
-        self.names = self.parm.get("name",'').split(',')
+        self.names = self.parm.get("name",'default').split(',')
         for m in methods:
             if m.supports(url, self, d):
                 self.method = m
