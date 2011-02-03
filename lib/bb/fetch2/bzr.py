@@ -42,12 +42,12 @@ class Bzr(Fetch):
         relpath = self._strip_leading_slashes(ud.path)
         ud.pkgdir = os.path.join(data.expand('${BZRDIR}', d), ud.host, relpath)
 
-    def localpath (self, url, ud, d):
         if not ud.revision:
-            ud.revision = self.latest_revision(url, ud, d)
+            ud.revision = self.latest_revision(ud.url, ud, d)
 
         ud.localfile = data.expand('bzr_%s_%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
+    def localpath (self, url, ud, d):
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def _buildbzrcommand(self, ud, d, command):

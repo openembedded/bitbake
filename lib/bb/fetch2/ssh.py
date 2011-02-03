@@ -68,7 +68,7 @@ class SSH(Fetch):
         return __pattern__.match(url) != None
 
     def localpath(self, url, urldata, d):
-        m = __pattern__.match(url)
+        m = __pattern__.match(urldata.url)
         path = m.group('path')
         host = m.group('host')
         lpath = os.path.join(data.getVar('DL_DIR', d, True), host, os.path.basename(path))

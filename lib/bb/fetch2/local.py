@@ -38,6 +38,10 @@ class Local(Fetch):
         """
         return urldata.type in ['file']
 
+    def urldata_init(self, ud, d):
+        # We don't set localfile as for this fetcher the file is already local!
+        return
+
     def localpath(self, url, urldata, d):
         """
         Return the local filename of a given url assuming a successful fetch.
@@ -53,7 +57,6 @@ class Local(Fetch):
                 filesdir = data.getVar('FILESDIR', d, 1)
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
-        # We don't set localfile as for this fetcher the file is already local!
         return newpath
 
     def download(self, url, urldata, d):

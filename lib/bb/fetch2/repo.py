@@ -37,7 +37,7 @@ class Repo(Fetch):
         """
         return ud.type in ["repo"]
 
-    def localpath(self, url, ud, d):
+    def urldata_init(self, ud, d):
         """
         We don"t care about the git rev of the manifests repository, but
         we do care about the manifest to use.  The default is "default".
@@ -53,6 +53,7 @@ class Repo(Fetch):
 
         ud.localfile = data.expand("repo_%s%s_%s_%s.tar.gz" % (ud.host, ud.path.replace("/", "."), ud.manifest, ud.branch), d)
 
+    def localpath(self, url, ud, d):
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def download(self, loc, ud, d):

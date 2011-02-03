@@ -57,18 +57,18 @@ class Hg(Fetch):
         ud.pkgdir = os.path.join(data.expand('${HGDIR}', d), ud.host, relpath)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 
+        if 'rev' in ud.parm:
+            ud.revision = ud.parm['rev']
+        elif not ud.revision:
+            ud.revision = self.latest_revision(ud.url, ud, d)
+
+        ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
+
     def forcefetch(self, url, ud, d):
         revTag = ud.parm.get('rev', 'tip')
         return revTag == "tip"
 
     def localpath(self, url, ud, d):
-        if 'rev' in ud.parm:
-            ud.revision = ud.parm['rev']
-        elif not ud.revision:
-            ud.revision = self.latest_revision(url, ud, d)
-
-        ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
-
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def _buildhgcommand(self, ud, d, command):

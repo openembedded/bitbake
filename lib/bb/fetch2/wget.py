@@ -40,12 +40,12 @@ class Wget(Fetch):
         """
         return ud.type in ['http', 'https', 'ftp']
 
-    def localpath(self, url, ud, d):
+    def urldata_init(self, ud, d):
 
-        url = encodeurl([ud.type, ud.host, ud.path, ud.user, ud.pswd, {}])
         ud.basename = os.path.basename(ud.path)
         ud.localfile = data.expand(urllib.unquote(ud.basename), d)
 
+    def localpath(self, url, ud, d):
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def download(self, uri, ud, d, checkonly = False):

@@ -26,7 +26,7 @@ class Osc(Fetch):
         """
         return ud.type in ['osc']
 
-    def localpath(self, url, ud, d):
+    def urldata_init(self, ud, d):
         if not "module" in ud.parm:
             raise MissingParameterError("osc method needs a 'module' parameter.")
 
@@ -49,6 +49,7 @@ class Osc(Fetch):
 
         ud.localfile = data.expand('%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.path.replace('/', '.'), ud.revision), d)
 
+    def localpath(self, url, ud, d):
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def _buildosccommand(self, ud, d, command):

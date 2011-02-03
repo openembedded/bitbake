@@ -98,9 +98,8 @@ class Perforce(Fetch):
         return cset.split(' ')[1]
     getcset = staticmethod(getcset)
 
-    def localpath(self, url, ud, d):
-
-        (host, path, user, pswd, parm) = Perforce.doparse(url, d)
+    def urldata_init(self, ud, d):
+        (host, path, user, pswd, parm) = Perforce.doparse(ud.url, d)
 
         # If a label is specified, we use that as our filename
 
@@ -119,6 +118,7 @@ class Perforce(Fetch):
 
         ud.localfile = data.expand('%s+%s+%s.tar.gz' % (host, base.replace('/', '.'), cset), d)
 
+    def localpath(self, url, ud, d):
         return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
 
     def download(self, loc, ud, d):

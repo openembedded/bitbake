@@ -71,13 +71,13 @@ class Git(Fetch):
 
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
-    def localpath(self, url, ud, d):
         for name in ud.names:
             if not ud.revisions[name] or ud.revisions[name] == "master":
                 ud.revisions[name] = self.latest_revision(url, ud, d, name)
 
         ud.localfile = ud.mirrortarball
 
+    def localpath(self, url, ud, d):
         return os.path.join(data.getVar("DL_DIR", d, True), ud.localfile)
 
     def forcefetch(self, url, ud, d):
