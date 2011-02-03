@@ -422,10 +422,9 @@ def get_srcrev(d):
 
     return format
 
-def localpath(url, d, cache = True):
+def localpath(url, d):
     """
-    Called from the parser with cache=False since the cache isn't ready
-    at this point. Also called from classed in OE e.g. patch.bbclass
+    Called from public code, e.g. classes in OE e.g. patch.bbclass
     """
     ud = init([url], d)
     if ud[url].method:
