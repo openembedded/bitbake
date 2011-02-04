@@ -683,12 +683,12 @@ class FetchData(object):
         if "srcdate" in self.parm:
             return self.parm['srcdate']
 
-        pn = data.getVar("PN", d, 1)
+        pn = data.getVar("PN", d, True)
 
         if pn:
-            return data.getVar("SRCDATE_%s" % pn, d, 1) or data.getVar("CVSDATE_%s" % pn, d, 1) or data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
+            return data.getVar("SRCDATE_%s" % pn, d, True) or data.getVar("SRCDATE", d, True) or data.getVar("DATE", d, True)
 
-        return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
+        return data.getVar("SRCDATE", d, True) or data.getVar("DATE", d, True)
 
 class FetchMethod(object):
     """Base class for 'fetch'ing data"""
