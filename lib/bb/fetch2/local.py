@@ -29,9 +29,9 @@ import os
 import bb
 import bb.utils
 from   bb import data
-from   bb.fetch2 import Fetch
+from   bb.fetch2 import FetchMethod
 
-class Local(Fetch):
+class Local(FetchMethod):
     def supports(self, url, urldata, d):
         """
         Check to see if a given url represents a local fetch.

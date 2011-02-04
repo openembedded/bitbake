@@ -587,7 +587,7 @@ class FetchData(object):
         self.localpath = None
         self.lockfile = None
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(data.expand(url, d))
-        self.date = Fetch.getSRCDate(self, d)
+        self.date = FetchMethod.getSRCDate(self, d)
         self.url = url
         if not self.user and "user" in self.parm:
             self.user = self.parm["user"]
@@ -618,7 +618,7 @@ class FetchData(object):
         if self.method.supports_srcrev():
             self.revisions = {}
             for name in self.names:
-                self.revisions[name] = Fetch.srcrev_internal_helper(self, d, name)
+                self.revisions[name] = FetchMethod.srcrev_internal_helper(self, d, name)
 
             # add compatibility code for non name specified case
             if len(self.names) == 1:
@@ -645,7 +645,7 @@ class FetchData(object):
             self.localpath = self.method.localpath(self.url, self, d)
 
 
-class Fetch(object):
+class FetchMethod(object):
     """Base class for 'fetch'ing data"""
 
     def __init__(self, urls = []):
@@ -893,7 +893,7 @@ class Fetch(object):
         uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
         count = None
         if uselocalcount:
-            count = Fetch.localcount_internal_helper(ud, d, name)
+            count = FetchMethod.localcount_internal_helper(ud, d, name)
         if count is None:
             count = localcounts[key + '_count'] or "0"
 

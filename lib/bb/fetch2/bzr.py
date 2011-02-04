@@ -28,9 +28,9 @@ import sys
 import logging
 import bb
 from bb import data
-from bb.fetch2 import Fetch, FetchError, runfetchcmd, logger
+from bb.fetch2 import FetchMethod, FetchError, runfetchcmd, logger
 
-class Bzr(Fetch):
+class Bzr(FetchMethod):
     def supports(self, url, ud, d):
         return ud.type in ['bzr']
 

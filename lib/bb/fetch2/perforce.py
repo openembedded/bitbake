@@ -30,11 +30,11 @@ import os
 import logging
 import bb
 from   bb import data
-from   bb.fetch2 import Fetch
+from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
 
-class Perforce(Fetch):
+class Perforce(FetchMethod):
     def supports(self, url, ud, d):
         return ud.type in ['p4']
 

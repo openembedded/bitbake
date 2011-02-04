@@ -23,11 +23,11 @@ BitBake 'Fetch' git implementation
 import os
 import bb
 from   bb    import data
-from   bb.fetch2 import Fetch
+from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger
 
-class Git(Fetch):
+class Git(FetchMethod):
     """Class to fetch a module or modules from git repositories"""
     def init(self, d):
         #

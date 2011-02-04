@@ -29,13 +29,13 @@ import sys
 import logging
 import bb
 from bb import data
-from bb.fetch2 import Fetch
+from bb.fetch2 import FetchMethod
 from bb.fetch2 import FetchError
 from bb.fetch2 import MissingParameterError
 from bb.fetch2 import runfetchcmd
 from bb.fetch2 import logger
 
-class Hg(Fetch):
+class Hg(FetchMethod):
     """Class to fetch from mercurial repositories"""
     def supports(self, url, ud, d):
         """

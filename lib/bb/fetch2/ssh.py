@@ -38,7 +38,7 @@ IETF secsh internet draft:
 
 import re, os
 from   bb import data
-from   bb.fetch2 import Fetch
+from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 
 
@@ -61,7 +61,7 @@ __pattern__ = re.compile(r'''
  $
 ''', re.VERBOSE)
 
-class SSH(Fetch):
+class SSH(FetchMethod):
     '''Class to fetch a module or modules via Secure Shell'''
 
     def supports(self, url, urldata, d):

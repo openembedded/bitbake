@@ -30,9 +30,9 @@ import os
 import logging
 import bb
 from   bb import data
-from bb.fetch2 import Fetch, FetchError, MissingParameterError, logger
+from bb.fetch2 import FetchMethod, FetchError, MissingParameterError, logger
 
-class Cvs(Fetch):
+class Cvs(FetchMethod):
     """
     Class to fetch a module or modules from cvs repositories
     """

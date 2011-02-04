@@ -11,12 +11,12 @@ import  sys
 import logging
 import  bb
 from    bb       import data
-from    bb.fetch2 import Fetch
+from    bb.fetch2 import FetchMethod
 from    bb.fetch2 import FetchError
 from    bb.fetch2 import MissingParameterError
 from    bb.fetch2 import runfetchcmd
 
-class Osc(Fetch):
+class Osc(FetchMethod):
     """Class to fetch a module or modules from Opensuse build server
        repositories."""
 
@@ -41,7 +41,7 @@ class Osc(Fetch):
             ud.revision = ud.parm['rev']
         else:
             pv = data.getVar("PV", d, 0)
-            rev = Fetch.srcrev_internal_helper(ud, d)
+            rev = FetchMethod.srcrev_internal_helper(ud, d)
             if rev and rev != True:
                 ud.revision = rev
             else:

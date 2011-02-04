@@ -26,10 +26,10 @@ BitBake "Fetch" repo (git) implementation
 import os
 import bb
 from   bb    import data
-from   bb.fetch2 import Fetch
+from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import runfetchcmd
 
-class Repo(Fetch):
+class Repo(FetchMethod):
     """Class to fetch a module or modules from repo (git) repositories"""
     def supports(self, url, ud, d):
         """

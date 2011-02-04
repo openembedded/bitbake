@@ -30,9 +30,9 @@ import logging
 import bb
 import urllib
 from   bb import data
-from   bb.fetch2 import Fetch, FetchError, encodeurl, decodeurl, logger, runfetchcmd
+from   bb.fetch2 import FetchMethod, FetchError, encodeurl, decodeurl, logger, runfetchcmd
 
-class Wget(Fetch):
+class Wget(FetchMethod):
     """Class to fetch urls via 'wget'"""
     def supports(self, url, ud, d):
         """
