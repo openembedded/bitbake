@@ -41,7 +41,7 @@ class Osc(FetchMethod):
             ud.revision = ud.parm['rev']
         else:
             pv = data.getVar("PV", d, 0)
-            rev = FetchMethod.srcrev_internal_helper(ud, d)
+            rev = bb.fetch2.srcrev_internal_helper(ud, d)
             if rev and rev != True:
                 ud.revision = rev
             else:

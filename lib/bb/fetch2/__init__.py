@@ -577,6 +577,36 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
                 continue
     return None
 
+def srcrev_internal_helper(ud, d, name):
+    """
+    Return:
+        a) a source revision if specified
+        b) latest revision if SREREV="AUTOINC"
+        c) None if not specified
+    """
+
+    if 'rev' in ud.parm:
+        return ud.parm['rev']
+
+    if 'tag' in ud.parm:
+        return ud.parm['tag']
+
+    rev = None
+    if name != '':
+        pn = data.getVar("PN", d, 1)
+        rev = data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, 1)
+        if not rev:
+            rev = data.getVar("SRCREV_pn-%s_%s" % (pn, name), d, 1)
+        if not rev:
+            rev = data.getVar("SRCREV_%s" % name, d, 1)
+    if not rev:
+        rev = data.getVar("SRCREV", d, 1)
+    if rev == "INVALID":
+        raise FetchError("Please set SRCREV to a valid value", ud.url)
+    if rev == "AUTOINC":
+        rev = ud.method.latest_revision(ud.url, ud, d, name)
+
+    return rev
 
 class FetchData(object):
     """
@@ -618,7 +648,7 @@ class FetchData(object):
         if self.method.supports_srcrev():
             self.revisions = {}
             for name in self.names:
-                self.revisions[name] = FetchMethod.srcrev_internal_helper(self, d, name)
+                self.revisions[name] = srcrev_internal_helper(self, d, name)
 
             # add compatibility code for non name specified case
             if len(self.names) == 1:
@@ -809,39 +839,6 @@ class FetchMethod(object):
 
         return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
     getSRCDate = staticmethod(getSRCDate)
-
-    def srcrev_internal_helper(ud, d, name):
-        """
-        Return:
-            a) a source revision if specified
-            b) latest revision if SREREV="AUTOINC"
-            c) None if not specified
-        """
-
-        if 'rev' in ud.parm:
-            return ud.parm['rev']
-
-        if 'tag' in ud.parm:
-            return ud.parm['tag']
-
-        rev = None
-        if name != '':
-            pn = data.getVar("PN", d, 1)
-            rev = data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, 1)
-            if not rev:
-                rev = data.getVar("SRCREV_pn-%s_%s" % (pn, name), d, 1)
-            if not rev:
-                rev = data.getVar("SRCREV_%s" % name, d, 1)
-        if not rev:
-            rev = data.getVar("SRCREV", d, 1)
-        if rev == "INVALID":
-            raise FetchError("Please set SRCREV to a valid value", ud.url)
-        if rev == "AUTOINC":
-            rev = ud.method.latest_revision(ud.url, ud, d, name)
-
-        return rev
-
-    srcrev_internal_helper = staticmethod(srcrev_internal_helper)
 
     def localcount_internal_helper(ud, d, name):
         """
