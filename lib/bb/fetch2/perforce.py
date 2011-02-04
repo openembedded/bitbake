@@ -79,7 +79,7 @@ class Perforce(FetchMethod):
         if host:
             p4opt += " -p %s" % (host)
 
-        p4date = data.getVar("P4DATE", d, 1)
+        p4date = data.getVar("P4DATE", d, True)
         if "revision" in parm:
             depot += "#%s" % (parm["revision"])
         elif "label" in parm:
@@ -87,7 +87,7 @@ class Perforce(FetchMethod):
         elif p4date:
             depot += "@%s" % (p4date)
 
-        p4cmd = data.getVar('FETCHCOMMAND_p4', d, 1)
+        p4cmd = data.getVar('FETCHCOMMAND_p4', d, True)
         logger.debug(1, "Running %s%s changes -m 1 %s", p4cmd, p4opt, depot)
         p4file = os.popen("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
         cset = p4file.readline().strip()
@@ -105,7 +105,7 @@ class Perforce(FetchMethod):
 
         if "label" in parm:
             ud.localfile = "%s.tar.gz" % (parm["label"])
-            return os.path.join(data.getVar("DL_DIR", d, 1), ud.localfile)
+            return
 
         base = path
         which = path.find('/...')
@@ -147,13 +147,13 @@ class Perforce(FetchMethod):
         if host:
             p4opt += " -p %s" % (host)
 
-        p4cmd = data.getVar('FETCHCOMMAND', localdata, 1)
+        p4cmd = data.getVar('FETCHCOMMAND', localdata, True)
 
         # create temp directory
         logger.debug(2, "Fetch: creating temporary directory")
         bb.mkdirhier(data.expand('${WORKDIR}', localdata))
         data.setVar('TMPBASE', data.expand('${WORKDIR}/oep4.XXXXXX', localdata), localdata)
-        tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
+        tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, True) or "false")
         tmpfile = tmppipe.readline().strip()
         if not tmpfile:
             raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", loc)

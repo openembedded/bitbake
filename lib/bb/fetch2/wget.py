@@ -50,12 +50,12 @@ class Wget(FetchMethod):
 
         def fetch_uri(uri, ud, d):
             if checkonly:
-                fetchcmd = data.getVar("CHECKCOMMAND", d, 1)
+                fetchcmd = data.getVar("CHECKCOMMAND", d, True)
             elif os.path.exists(ud.localpath):
                 # file exists, but we didnt complete it.. trying again..
-                fetchcmd = data.getVar("RESUMECOMMAND", d, 1)
+                fetchcmd = data.getVar("RESUMECOMMAND", d, True)
             else:
-                fetchcmd = data.getVar("FETCHCOMMAND", d, 1)
+                fetchcmd = data.getVar("FETCHCOMMAND", d, True)
 
             uri = uri.split(";")[0]
             uri_decoded = list(decodeurl(uri))

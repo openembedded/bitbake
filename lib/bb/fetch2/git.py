@@ -101,7 +101,7 @@ class Git(FetchMethod):
         else:
             username = ""
 
-        repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
+        repofile = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
 
         ud.repochanged = not os.path.exists(repofile)
 
@@ -138,7 +138,7 @@ class Git(FetchMethod):
 
     def build_mirror_data(self, url, ud, d):
         # Generate a mirror tarball if needed
-        repofile = os.path.join(data.getVar("DL_DIR", d, 1), ud.mirrortarball)
+        repofile = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
 
         os.chdir(ud.clonedir)
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)

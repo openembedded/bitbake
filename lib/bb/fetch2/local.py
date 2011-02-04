@@ -50,11 +50,11 @@ class Local(FetchMethod):
         path = path.split(";")[0]
         newpath = path
         if path[0] != "/":
-            filespath = data.getVar('FILESPATH', d, 1)
+            filespath = data.getVar('FILESPATH', d, True)
             if filespath:
                 newpath = bb.utils.which(filespath, path)
             if not newpath:
-                filesdir = data.getVar('FILESDIR', d, 1)
+                filesdir = data.getVar('FILESDIR', d, True)
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
         return newpath

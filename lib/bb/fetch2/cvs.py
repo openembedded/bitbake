@@ -115,8 +115,8 @@ class Cvs(FetchMethod):
         data.setVar('CVSROOT', cvsroot, localdata)
         data.setVar('CVSCOOPTS', " ".join(options), localdata)
         data.setVar('CVSMODULE', ud.module, localdata)
-        cvscmd = data.getVar('FETCHCOMMAND', localdata, 1)
-        cvsupdatecmd = data.getVar('UPDATECOMMAND', localdata, 1)
+        cvscmd = data.getVar('FETCHCOMMAND', localdata, True)
+        cvsupdatecmd = data.getVar('UPDATECOMMAND', localdata, True)
 
         if cvs_rsh:
             cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)

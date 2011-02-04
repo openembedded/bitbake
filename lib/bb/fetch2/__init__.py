@@ -201,7 +201,7 @@ def fetcher_init(d):
     """
     pd = persist_data.persist(d)
     # When to drop SCM head revisions controlled by user policy
-    srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
+    srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, True) or "clear"
     if srcrev_policy == "cache":
         logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
     elif srcrev_policy == "clear":
@@ -322,7 +322,7 @@ def get_srcrev(d):
     #
     # Mutiple SCMs are in SRC_URI so we resort to SRCREV_FORMAT
     #
-    format = bb.data.getVar('SRCREV_FORMAT', d, 1)
+    format = bb.data.getVar('SRCREV_FORMAT', d, True)
     if not format:
         raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
 
@@ -410,7 +410,7 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
     uri is the original uri we're trying to download
     mirrors is the list of mirrors we're going to try
     """
-    fpath = os.path.join(data.getVar("DL_DIR", d, 1), os.path.basename(uri))
+    fpath = os.path.join(data.getVar("DL_DIR", d, True), os.path.basename(uri))
     if not check and os.access(fpath, os.R_OK) and not force:
         logger.debug(1, "%s already exists, skipping checkout.", fpath)
         return fpath
@@ -463,12 +463,12 @@ def srcrev_internal_helper(ud, d, name):
 
     rev = None
     if name != '':
-        pn = data.getVar("PN", d, 1)
-        rev = data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, 1)
+        pn = data.getVar("PN", d, True)
+        rev = data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, True)
         if not rev:
-            rev = data.getVar("SRCREV_%s" % name, d, 1)
+            rev = data.getVar("SRCREV_%s" % name, d, True)
     if not rev:
-        rev = data.getVar("SRCREV", d, 1)
+        rev = data.getVar("SRCREV", d, True)
     if rev == "INVALID":
         raise FetchError("Please set SRCREV to a valid value", ud.url)
     if rev == "AUTOINC":
@@ -618,7 +618,7 @@ class FetchMethod(object):
         file = urldata.localpath
         dots = file.split(".")
         if dots[-1] in ['gz', 'bz2', 'Z']:
-            efile = os.path.join(bb.data.getVar('WORKDIR', data, 1),os.path.basename('.'.join(dots[0:-1])))
+            efile = os.path.join(bb.data.getVar('WORKDIR', data, True),os.path.basename('.'.join(dots[0:-1])))
         else:
             efile = file
         cmd = None
@@ -642,7 +642,7 @@ class FetchMethod(object):
                 cmd = '%s -a' % cmd
             cmd = "%s '%s'" % (cmd, file)
         elif os.path.isdir(file):
-            filesdir = os.path.realpath(bb.data.getVar("FILESDIR", data, 1))
+            filesdir = os.path.realpath(bb.data.getVar("FILESDIR", data, True))
             destdir = "."
             if file[0:len(filesdir)] == filesdir:
                 destdir = file[len(filesdir):file.rfind('/')]
@@ -679,7 +679,7 @@ class FetchMethod(object):
             bb.mkdirhier(newdir)
             os.chdir(newdir)
 
-        cmd = "PATH=\"%s\" %s" % (bb.data.getVar('PATH', data, 1), cmd)
+        cmd = "PATH=\"%s\" %s" % (bb.data.getVar('PATH', data, True), cmd)
         bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
         ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
 
@@ -718,10 +718,10 @@ class FetchMethod(object):
 
         localcount = None
         if name != '':
-            pn = data.getVar("PN", d, 1)
-            localcount = data.getVar("LOCALCOUNT_" + name, d, 1)
+            pn = data.getVar("PN", d, True)
+            localcount = data.getVar("LOCALCOUNT_" + name, d, True)
         if not localcount:
-            localcount = data.getVar("LOCALCOUNT", d, 1)
+            localcount = data.getVar("LOCALCOUNT", d, True)
         return localcount
 
     localcount_internal_helper = staticmethod(localcount_internal_helper)
@@ -789,12 +789,12 @@ class FetchMethod(object):
 class Fetch(object):
     def __init__(self, urls, d):
         if len(urls) == 0:
-            urls = d.getVar("SRC_URI", 1).split()
+            urls = d.getVar("SRC_URI", True).split()
         self.urls = urls
         self.d = d
         self.ud = {}
 
-        fn = bb.data.getVar('FILE', d, 1)
+        fn = bb.data.getVar('FILE', d, True)
         if fn in urldata_cache:
             self.ud = urldata_cache[fn]
 
