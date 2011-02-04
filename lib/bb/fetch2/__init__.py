@@ -581,7 +581,7 @@ def srcrev_internal_helper(ud, d, name):
     """
     Return:
         a) a source revision if specified
-        b) latest revision if SREREV="AUTOINC"
+        b) latest revision if SRCREV="AUTOINC"
         c) None if not specified
     """
 
