@@ -60,6 +60,13 @@ class FetchError(BBFetchException):
          self.url = url
          Exception.__init__(self, self.msg)
 
+class UnpackError(BBFetchException):
+    """General fetcher exception when something happens incorrectly when unpacking"""
+    def __init__(self, message, url):
+         self.msg = "Unpack failure for URL: '%s'. %s" % (url, message)
+         self.url = url
+         Exception.__init__(self, self.msg)
+
 class NoMethodError(BBFetchException):
     """Exception raised when there is no method to obtain a supplied url or set of urls"""
     def __init__(self, url):
@@ -231,26 +238,6 @@ def fetcher_compare_revisions(d):
             logger.debug(2, "%s did not change", key)
     return False
 
-# Function call order is usually:
-#   1. init
-#   2. go
-#   3. localpaths
-# localpath can be called at any time
-
-def init(urls, d):
-    urldata = {}
-
-    fn = bb.data.getVar('FILE', d, 1)
-    if fn in urldata_cache:
-        urldata = urldata_cache[fn]
-
-    for url in urls:
-        if url not in urldata:
-            urldata[url] = FetchData(url, d)
-
-    urldata_cache[fn] = urldata
-    return urldata
-
 def mirror_from_string(data):
     return [ i.split() for i in (data or "").replace('\\n','\n').split('\n') if i ]
 
@@ -304,118 +291,6 @@ def download_update(result, target):
         os.symlink(result, target)
     return
 
-def download(d, urls = None):
-    """
-    Fetch all urls
-    init must have previously been called
-    """
-    if not urls:
-        urls = d.getVar("SRC_URI", 1).split()
-    urldata = init(urls, d)
-
-    for u in urls:
-        urldata[u].setup_localpath(d)
-
-    for u in urls:
-        ud = urldata[u]
-        m = ud.method
-        localpath = ""
-
-        if not ud.localfile:
-            continue
-
-        lf = bb.utils.lockfile(ud.lockfile)
-
-        if m.try_premirror(u, ud, d):
-            # First try fetching uri, u, from PREMIRRORS
-            mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', d, True))
-            localpath = try_mirrors(d, u, mirrors, False, m.forcefetch(u, ud, d))
-        elif os.path.exists(ud.localfile):
-            localpath = ud.localfile
-
-        download_update(localpath, ud.localpath)
-
-        # Need to re-test forcefetch() which will return true if our copy is too old
-        if m.forcefetch(u, ud, d) or not localpath:
-            # Next try fetching from the original uri, u
-            try:
-                m.download(u, ud, d)
-                if hasattr(m, "build_mirror_data"):
-                    m.build_mirror_data(u, ud, d)
-                localpath = ud.localpath
-                download_update(localpath, ud.localpath)
-
-            except FetchError:
-                # Remove any incomplete file
-                bb.utils.remove(ud.localpath)
-                # Finally, try fetching uri, u, from MIRRORS
-                mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
-                localpath = try_mirrors (d, u, mirrors)
-
-        if not localpath or not os.path.exists(localpath):
-            raise FetchError("Unable to fetch URL %s from any source." % u, u)
-
-        download_update(localpath, ud.localpath)
-
-        if os.path.exists(ud.donestamp):
-            # Touch the done stamp file to show active use of the download
-            try:
-                os.utime(ud.donestamp, None)
-            except:
-                # Errors aren't fatal here
-                pass
-        else:
-            # Only check the checksums if we've not seen this item before, then create the stamp
-            verify_checksum(u, ud, d)
-            open(ud.donestamp, 'w').close()
-
-
-        bb.utils.unlockfile(lf)
-
-def checkstatus(d, urls = None):
-    """
-    Check all urls exist upstream
-    init must have previously been called
-    """
-    urldata = init([], d)
-
-    if not urls:
-        urls = urldata
-
-    for u in urls:
-        ud = urldata[u]
-        ud.setup_localpath(d)
-        m = ud.method
-        logger.debug(1, "Testing URL %s", u)
-        # First try checking uri, u, from PREMIRRORS
-        mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', d, True))
-        ret = try_mirrors(d, u, mirrors, True)
-        if not ret:
-            # Next try checking from the original uri, u
-            try:
-                ret = m.checkstatus(u, ud, d)
-            except:
-                # Finally, try checking uri, u, from MIRRORS
-                mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
-                ret = try_mirrors (d, u, mirrors, True)
-
-        if not ret:
-            raise FetchError("URL %s doesn't work" % u, u)
-
-def localpaths(d):
-    """
-    Return a list of the local filenames, assuming successful fetch
-    """
-    local = []
-    urldata = init([], d)
-
-    for u in urldata:
-        ud = urldata[u]
-        ud.setup_localpath(d)
-        local.append(ud.localpath)
-
-    return local
-
 def get_autorev(d):
     #  only not cache src rev in autorev case
     if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
@@ -432,7 +307,8 @@ def get_srcrev(d):
     """
 
     scms = []
-    urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d)
+    fetcher = Fetch(bb.data.getVar('SRC_URI', d, True).split(), d)
+    urldata = fetcher.ud
     for u in urldata:
         if urldata[u].method.supports_srcrev():
             scms.append(u)
@@ -459,14 +335,8 @@ def get_srcrev(d):
     return format
 
 def localpath(url, d):
-    """
-    Called from public code, e.g. classes in OE e.g. patch.bbclass
-    """
-    ud = init([url], d)
-    if ud[url].method:
-        ud[url].setup_localpath(d)
-        return ud[url].localpath
-    return url
+    fetcher = bb.fetch2.Fetch([url], d)
+	return fetcher.localpath(url)
 
 def runfetchcmd(cmd, d, quiet = False, cleanup = []):
     """
@@ -796,12 +666,12 @@ class FetchMethod(object):
                 cmd = 'cp %s %s/%s/' % (file, rootdir, destdir)
 
         if not cmd:
-            return True
+            return
 
         dest = os.path.join(rootdir, os.path.basename(file))
         if os.path.exists(dest):
             if os.path.samefile(file, dest):
-                return True
+                return
 
         # Change to subdir before executing command
         save_cwd = os.getcwd();
@@ -817,7 +687,10 @@ class FetchMethod(object):
 
         os.chdir(save_cwd)
 
-        return ret == 0
+        if ret != 0:
+            raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
+
+        return
 
     def try_premirror(self, url, urldata, d):
         """
@@ -914,6 +787,158 @@ class FetchMethod(object):
     def generate_revision_key(self, url, ud, d, name):
         key = self._revision_key(url, ud, d, name)
         return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
+
+class Fetch(object):
+    def __init__(self, urls, d):
+        if len(urls) == 0:
+            urls = d.getVar("SRC_URI", 1).split()
+        self.urls = urls
+        self.d = d
+        self.ud = {}
+
+        fn = bb.data.getVar('FILE', d, 1)
+        if fn in urldata_cache:
+            self.ud = urldata_cache[fn]
+
+        for url in urls:
+            if url not in self.ud:
+                self.ud[url] = FetchData(url, d)
+
+        urldata_cache[fn] = self.ud
+
+    def localpath(self, url):
+        if url not in self.urls:
+            self.ud[url] = FetchData(url, self.d)
+
+        self.ud[url].setup_localpath(self.d)
+        return bb.data.expand(self.ud[url].localpath, self.d)
+
+    def localpaths(self):
+        """
+        Return a list of the local filenames, assuming successful fetch
+        """
+        local = []
+
+        for u in self.urls:
+            ud = self.ud[u]
+            ud.setup_localpath(self.d)
+            local.append(ud.localpath)
+
+        return local
+
+    def download(self, urls = []):
+        """
+        Fetch all urls
+        """
+        if len(urls) == 0:
+            urls = self.urls
+
+        for u in urls:
+            ud = self.ud[u]
+            ud.setup_localpath(self.d)
+            m = ud.method
+            localpath = ""
+
+            if not ud.localfile:
+                continue
+
+            lf = bb.utils.lockfile(ud.lockfile)
+
+            if m.try_premirror(u, ud, self.d):
+                # First try fetching uri, u, from PREMIRRORS
+                mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
+                localpath = try_mirrors(self.d, u, mirrors, False, m.forcefetch(u, ud, self.d))
+            elif os.path.exists(ud.localfile):
+                localpath = ud.localfile
+
+            download_update(localpath, ud.localpath)
+
+            # Need to re-test forcefetch() which will return true if our copy is too old
+            if m.forcefetch(u, ud, self.d) or not localpath:
+                # Next try fetching from the original uri, u
+                try:
+                    m.download(u, ud, self.d)
+                    if hasattr(m, "build_mirror_data"):
+                        m.build_mirror_data(u, ud, self.d)
+                    localpath = ud.localpath
+                    download_update(localpath, ud.localpath)
+
+                except FetchError:
+                    # Remove any incomplete file
+                    bb.utils.remove(ud.localpath)
+                    # Finally, try fetching uri, u, from MIRRORS
+                    mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
+                    localpath = try_mirrors (self.d, u, mirrors)
+
+            if not localpath or not os.path.exists(localpath):
+                raise FetchError("Unable to fetch URL %s from any source." % u, u)
+
+            download_update(localpath, ud.localpath)
+
+            if os.path.exists(ud.donestamp):
+                # Touch the done stamp file to show active use of the download
+                try:
+                    os.utime(ud.donestamp, None)
+                except:
+                    # Errors aren't fatal here
+                    pass
+            else:
+                # Only check the checksums if we've not seen this item before, then create the stamp
+                verify_checksum(u, ud, self.d)
+                open(ud.donestamp, 'w').close()
+
+            bb.utils.unlockfile(lf)
+
+    def checkstatus(self, urls = []):
+        """
+        Check all urls exist upstream
+        """
+
+        if len(urls) == 0:
+            urls = self.urls
+
+        for u in urls:
+            ud = self.ud[u]
+            ud.setup_localpath(self.d)
+            m = ud.method
+            logger.debug(1, "Testing URL %s", u)
+            # First try checking uri, u, from PREMIRRORS
+            mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
+            ret = try_mirrors(self.d, u, mirrors, True)
+            if not ret:
+                # Next try checking from the original uri, u
+                try:
+                    ret = m.checkstatus(u, ud, self.d)
+                except:
+                    # Finally, try checking uri, u, from MIRRORS
+                    mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
+                    ret = try_mirrors (self.d, u, mirrors, True)
+
+            if not ret:
+                raise FetchError("URL %s doesn't work" % u, u)
+
+    def unpack(self, root, urls = []):
+        """
+        Check all urls exist upstream
+        """
+
+        if len(urls) == 0:
+            urls = self.urls
+
+        for u in urls:
+            ud = self.ud[u]
+            ud.setup_localpath(self.d)
+
+            if bb.data.expand(self.localpath, self.d) is None:
+                continue
+
+            if ud.lockfile:
+                lf = bb.utils.lockfile(ud.lockfile)
+
+            ud.method.unpack(ud, root, self.d)
+
+            if ud.lockfile:
+                bb.utils.unlockfile(lf)
 
 from . import cvs
 from . import git
