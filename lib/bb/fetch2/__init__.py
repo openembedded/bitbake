@@ -466,8 +466,6 @@ def srcrev_internal_helper(ud, d, name):
         pn = data.getVar("PN", d, 1)
         rev = data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, 1)
         if not rev:
-            rev = data.getVar("SRCREV_pn-%s_%s" % (pn, name), d, 1)
-        if not rev:
             rev = data.getVar("SRCREV_%s" % name, d, 1)
     if not rev:
         rev = data.getVar("SRCREV", d, 1)
