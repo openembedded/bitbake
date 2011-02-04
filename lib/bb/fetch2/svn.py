@@ -57,26 +57,9 @@ class Svn(FetchMethod):
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 
         if 'rev' in ud.parm:
-            ud.date = ""
             ud.revision = ud.parm['rev']
-        elif 'date' in ud.date:
-            ud.date = ud.parm['date']
-            ud.revision = ""
-        else:
-            #
-            # ***Nasty hack***
-            # If DATE in unexpanded PV, use ud.date (which is set from SRCDATE)
-            # Should warn people to switch to SRCREV here
-            #
-            pv = data.getVar("PV", d, 0)
-            if "DATE" in pv:
-                ud.revision = ""
-            else:
-                # use the initizlied revision
-                if ud.revision:
-                    ud.date = ""
 
-        ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
+        ud.localfile = data.expand('%s_%s_%s_%s_.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
     def _buildsvncommand(self, ud, d, command):
         """
@@ -94,7 +77,6 @@ class Svn(FetchMethod):
 
         svnroot = ud.host + ud.path
 
-        # either use the revision, or SRCDATE in braces,
         options = []
 
         if ud.user:
@@ -110,8 +92,6 @@ class Svn(FetchMethod):
             if ud.revision:
                 options.append("-r %s" % ud.revision)
                 suffix = "@%s" % (ud.revision)
-            elif ud.date:
-                options.append("-r {%s}" % ud.date)
 
             if command is "fetch":
                 svncmd = "%s co %s %s://%s/%s%s %s" % (basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
