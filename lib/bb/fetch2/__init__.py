@@ -617,7 +617,7 @@ class FetchData(object):
         self.localpath = None
         self.lockfile = None
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(data.expand(url, d))
-        self.date = FetchMethod.getSRCDate(self, d)
+        self.date = self.getSRCDate(d)
         self.url = url
         if not self.user and "user" in self.parm:
             self.user = self.parm["user"]
@@ -674,6 +674,21 @@ class FetchData(object):
         if not self.localpath:
             self.localpath = self.method.localpath(self.url, self, d)
 
+    def getSRCDate(self, d):
+        """
+        Return the SRC Date for the component
+
+        d the bb.data module
+        """
+        if "srcdate" in self.parm:
+            return self.parm['srcdate']
+
+        pn = data.getVar("PN", d, 1)
+
+        if pn:
+            return data.getVar("SRCDATE_%s" % pn, d, 1) or data.getVar("CVSDATE_%s" % pn, d, 1) or data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
+
+        return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
 
 class FetchMethod(object):
     """Base class for 'fetch'ing data"""
@@ -822,23 +837,6 @@ class FetchMethod(object):
         """
         logger.info("URL %s could not be checked for status since no method exists.", url)
         return True
-
-    def getSRCDate(urldata, d):
-        """
-        Return the SRC Date for the component
-
-        d the bb.data module
-        """
-        if "srcdate" in urldata.parm:
-            return urldata.parm['srcdate']
-
-        pn = data.getVar("PN", d, 1)
-
-        if pn:
-            return data.getVar("SRCDATE_%s" % pn, d, 1) or data.getVar("CVSDATE_%s" % pn, d, 1) or data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
-
-        return data.getVar("SRCDATE", d, 1) or data.getVar("CVSDATE", d, 1) or data.getVar("DATE", d, 1)
-    getSRCDate = staticmethod(getSRCDate)
 
     def localcount_internal_helper(ud, d, name):
         """
