@@ -28,7 +28,7 @@ class Osc(Fetch):
 
     def urldata_init(self, ud, d):
         if not "module" in ud.parm:
-            raise MissingParameterError("osc method needs a 'module' parameter.")
+            raise MissingParameterError('module', ud.url)
 
         ud.module = ud.parm["module"]
 
@@ -73,7 +73,7 @@ class Osc(Fetch):
         elif command is "update":
             osccmd = "%s %s up %s" % (basecmd, config, " ".join(options))
         else:
-            raise FetchError("Invalid osc command %s" % command)
+            raise FetchError("Invalid osc command %s" % command, ud.url)
 
         return osccmd
 
@@ -104,15 +104,7 @@ class Osc(Fetch):
 
         os.chdir(os.path.join(ud.pkgdir + ud.path))
         # tar them up to a defined filename
-        try:
-            runfetchcmd("tar -czf %s %s" % (ud.localpath, ud.module), d)
-        except:
-            t, v, tb = sys.exc_info()
-            try:
-                os.unlink(ud.localpath)
-            except OSError:
-                pass
-            raise t, v, tb
+        runfetchcmd("tar -czf %s %s" % (ud.localpath, ud.module), d, cleanup = [ud.localpath])
 
     def supports_srcrev(self):
         return False

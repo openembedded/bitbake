@@ -48,7 +48,7 @@ class Hg(Fetch):
         init hg specific variable within url data
         """
         if not "module" in ud.parm:
-            raise MissingParameterError("hg method needs a 'module' parameter")
+            raise MissingParameterError('module', ud.url)
 
         ud.module = ud.parm["module"]
 
@@ -105,7 +105,7 @@ class Hg(Fetch):
         elif command is "update":
             cmd = "%s update -C %s" % (basecmd, " ".join(options))
         else:
-            raise FetchError("Invalid hg command %s" % command)
+            raise FetchError("Invalid hg command %s" % command, ud.url)
 
         return cmd
 
@@ -147,15 +147,7 @@ class Hg(Fetch):
             tar_flags = "--exclude '.hg' --exclude '.hgrags'"
 
         os.chdir(ud.pkgdir)
-        try:
-            runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d)
-        except:
-            t, v, tb = sys.exc_info()
-            try:
-                os.unlink(ud.localpath)
-            except OSError:
-                pass
-            raise t, v, tb
+        runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d, cleanup = [ud.localpath])
 
     def supports_srcrev(self):
         return True

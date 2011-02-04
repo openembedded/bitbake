@@ -47,7 +47,7 @@ class Svn(Fetch):
         init svn specific variable within url data
         """
         if not "module" in ud.parm:
-            raise MissingParameterError("svn method needs a 'module' parameter")
+            raise MissingParameterError('module', ud.url)
 
         ud.module = ud.parm["module"]
 
@@ -118,7 +118,7 @@ class Svn(Fetch):
             elif command is "update":
                 svncmd = "%s update %s" % (basecmd, " ".join(options))
             else:
-                raise FetchError("Invalid svn command %s" % command)
+                raise FetchError("Invalid svn command %s" % command, ud.url)
 
         if svn_rsh:
             svncmd = "svn_RSH=\"%s\" %s" % (svn_rsh, svncmd)
@@ -156,15 +156,7 @@ class Svn(Fetch):
 
         os.chdir(ud.pkgdir)
         # tar them up to a defined filename
-        try:
-            runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d)
-        except:
-            t, v, tb = sys.exc_info()
-            try:
-                os.unlink(ud.localpath)
-            except OSError:
-                pass
-            raise t, v, tb
+        runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d, cleanup = [ud.localpath])
 
     def supports_srcrev(self):
         return True

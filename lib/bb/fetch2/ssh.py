@@ -114,7 +114,5 @@ class SSH(Fetch):
 
         bb.fetch2.check_network_access(d, cmd)
 
-        (exitstatus, output) = commands.getstatusoutput(cmd)
-        if exitstatus != 0:
-            print(output)
-            raise FetchError('Unable to fetch %s' % url)
+        runfetchcmd(cmd, d)
+

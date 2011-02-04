@@ -44,7 +44,7 @@ class Cvs(Fetch):
 
     def urldata_init(self, ud, d):
         if not "module" in ud.parm:
-            raise MissingParameterError("cvs method needs a 'module' parameter")
+            raise MissingParameterError("module", ud.url)
         ud.module = ud.parm["module"]
 
         ud.tag = ud.parm.get('tag', "")
@@ -132,7 +132,7 @@ class Cvs(Fetch):
             bb.fetch2.check_network_access(d, cvsupdatecmd)
             # update sources there
             os.chdir(moddir)
-            myret = os.system(cvsupdatecmd)
+            cmd = cvsupdatecmd
         else:
             logger.info("Fetch " + loc)
             # check out sources there
@@ -140,14 +140,12 @@ class Cvs(Fetch):
             os.chdir(pkgdir)
             logger.debug(1, "Running %s", cvscmd)
             bb.fetch2.check_network_access(d, cvscmd)
-            myret = os.system(cvscmd)
+            cmd = cvscmd
 
-        if myret != 0 or not os.access(moddir, os.R_OK):
-            try:
-                os.rmdir(moddir)
-            except OSError:
-                pass
-            raise FetchError(ud.module)
+        runfetchcmd(cmd, d, cleanup = [moddir])
+
+        if not os.access(moddir, os.R_OK):
+            raise FetchError("Directory %s was not readable despite sucessful fetch?!" % moddir, ud.url)
 
         scmdata = ud.parm.get("scmdata", "")
         if scmdata == "keep":
@@ -158,15 +156,11 @@ class Cvs(Fetch):
         # tar them up to a defined filename
         if 'fullpath' in ud.parm:
             os.chdir(pkgdir)
-            myret = os.system("tar %s -czf %s %s" % (tar_flags, ud.localpath, localdir))
+            cmd = "tar %s -czf %s %s" % (tar_flags, ud.localpath, localdir)
         else:
             os.chdir(moddir)
             os.chdir('..')
-            myret = os.system("tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.basename(moddir)))
+            cmd = "tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.basename(moddir))
 
-        if myret != 0:
-            try:
-                os.unlink(ud.localpath)
-            except OSError:
-                pass
-            raise FetchError(ud.module)
+        runfetchcmd(cmd, d, cleanup = [ud.localpath])
+

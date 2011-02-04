@@ -45,7 +45,7 @@ class Svk(Fetch):
     def urldata_init(self, ud, d):
 
         if not "module" in ud.parm:
-            raise MissingParameterError("svk method needs a 'module' parameter")
+            raise MissingParameterError('module', ud.url)
         else:
             ud.module = ud.parm["module"]
 
@@ -75,29 +75,18 @@ class Svk(Fetch):
         tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
         tmpfile = tmppipe.readline().strip()
         if not tmpfile:
-            logger.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
-            raise FetchError(ud.module)
+            logger.error()
+            raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", loc)
 
         # check out sources there
         os.chdir(tmpfile)
         logger.info("Fetch " + loc)
         logger.debug(1, "Running %s", svkcmd)
-        myret = os.system(svkcmd)
-        if myret != 0:
-            try:
-                os.rmdir(tmpfile)
-            except OSError:
-                pass
-            raise FetchError(ud.module)
+        runfetchcmd(svkcmd, d, cleanup = [tmpfile])
 
         os.chdir(os.path.join(tmpfile, os.path.dirname(ud.module)))
         # tar them up to a defined filename
-        myret = os.system("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)))
-        if myret != 0:
-            try:
-                os.unlink(ud.localpath)
-            except OSError:
-                pass
-            raise FetchError(ud.module)
+        runfetchcmd("tar -czf %s %s" % (ud.localpath, os.path.basename(ud.module)), d, cleanup = [ud.localpath])
+
         # cleanup
         bb.utils.prunedir(tmpfile)

@@ -59,7 +59,7 @@ class Git(Fetch):
 
         branches = ud.parm.get("branch", "master").split(',')
         if len(branches) != len(ud.names):
-            raise bb.fetch2.ParameterError("SRC_URI (%) name and branch number mismatch" % ud.url)
+            raise bb.fetch2.ParameterError("The number of name and branch parameters is not balanced", ud.url)
         ud.branches = {}
         for name in ud.names:
             branch = branches[ud.names.index(name)]
@@ -194,7 +194,7 @@ class Git(Fetch):
         cmd = "%s ls-remote %s://%s%s%s %s" % (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name])
         output = runfetchcmd(cmd, d, True)
         if not output:
-            raise bb.fetch2.FetchError("Fetch command %s gave empty output\n" % (cmd))
+            raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, url)
         return output.split()[0]
 
     def _build_revision(self, url, ud, d, name):

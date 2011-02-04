@@ -38,28 +38,62 @@ __version__ = "2"
 logger = logging.getLogger("BitBake.Fetch")
 
 class BBFetchException(Exception):
-   """Class all fetch exceptions inherit from"""
+    """Class all fetch exceptions inherit from"""
+    def __init__(self, message):
+         self.msg = message
+         Exception.__init__(self, message)
+
+    def __str__(self):
+         return self.msg
 
 class MalformedUrl(BBFetchException):
     """Exception raised when encountering an invalid url"""
+    def __init__(self, url):
+         self.msg = "The URL: '%s' is invalid and cannot be interpreted" % url
+         self.url = url
+         Exception.__init__(self, self.msg)
 
 class FetchError(BBFetchException):
-    """Exception raised when a download fails"""
+    """General fetcher exception when something happens incorrectly"""
+    def __init__(self, message, url = None):
+         self.msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
+         self.url = url
+         Exception.__init__(self, self.msg)
 
 class NoMethodError(BBFetchException):
     """Exception raised when there is no method to obtain a supplied url or set of urls"""
+    def __init__(self, url):
+         self.msg = "Could not find a fetcher which supports the URL: '%s'" % url
+         self.url = url
+         Exception.__init__(self, self.msg)
 
 class MissingParameterError(BBFetchException):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
+    def __init__(self, missing, url):
+         self.msg = "URL: '%s' is missing the required parameter '%s'" % (url, missing)
+         self.url = url
+         self.missing = missing
+         Exception.__init__(self, self.msg)
 
 class ParameterError(BBFetchException):
     """Exception raised when a url cannot be proccessed due to invalid parameters."""
+    def __init__(self, message, url):
+         self.msg = "URL: '%s' has invalid parameters. %s" % (url, message)
+         self.url = url
+         Exception.__init__(self, self.msg)
 
 class MD5SumError(BBFetchException):
-    """Exception raised when a MD5SUM of a file does not match the expected one"""
+    """Exception raised when a MD5 checksum of a file does not match for a downloaded file"""
+    def __init__(self, path, wanted, got, url):
+         self.msg = "File: '%s' has md5 sum %s when %s was expected (from URL: '%s')" % (path, got, wanted, url)
+         self.url = url
+         self.path = path
+         self.wanted = wanted
+         self.got = got
+         Exception.__init__(self, self.msg)
 
-class InvalidSRCREV(BBFetchException):
-    """Exception raised when an invalid SRCREV is encountered"""
+class SHA256SumError(MD5SumError):
+    """Exception raised when a SHA256 checksum of a file does not match for a downloaded file"""
 
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
@@ -108,8 +142,10 @@ def encodeurl(decoded):
 
     (type, host, path, user, pswd, p) = decoded
 
-    if not type or not path:
-        raise MissingParameterError("Type or path url components missing when encoding %s" % decoded)
+    if not path:
+        raise MissingParameterError('path', "encoded from the data %s" % str(decoded))
+    if not type:
+        raise MissingParameterError('type', "encoded from the data %s" % str(decoded))
     url = '%s://' % type
     if user and type != "file":
         url += "%s" % user
@@ -243,16 +279,14 @@ def verify_checksum(u, ud, d):
                     ud.localpath, ud.md5_name, md5data,
                     ud.sha256_name, sha256data)
         if bb.data.getVar("BB_STRICT_CHECKSUM", d, True) == "1":
-            raise FetchError("No checksum specified for %s." % u)
+            raise FetchError("No checksum specified for %s." % u, u)
         return
 
-    if (ud.md5_expected != md5data or ud.sha256_expected != sha256data):
-        logger.error('The checksums for "%s" did not match.\n'
-                     '  MD5: expected "%s", got "%s"\n'
-                     '  SHA256: expected "%s", got "%s"\n',
-                     ud.localpath, ud.md5_expected, md5data,
-                     ud.sha256_expected, sha256data)
-        raise FetchError("%s checksum mismatch." % u)
+    if ud.md5_expected != md5data:
+        raise MD5SumError(ud.localpath, ud.md5_expected, md5data, u)
+
+    if ud.sha256_expected != sha256data:
+        raise SHA256SumError(ud.localpath, ud.sha256_expected, sha256data, u)
 
 def subprocess_setup():
     import signal
@@ -319,7 +353,7 @@ def download(d, urls = None):
                 localpath = try_mirrors (d, u, mirrors)
 
         if not localpath or not os.path.exists(localpath):
-            raise FetchError("Unable to fetch URL %s from any source." % u)
+            raise FetchError("Unable to fetch URL %s from any source." % u, u)
 
         download_update(localpath, ud.localpath)
 
@@ -365,7 +399,7 @@ def checkstatus(d, urls = None):
                 ret = try_mirrors (d, u, mirrors, True)
 
         if not ret:
-            raise FetchError("URL %s doesn't work" % u)
+            raise FetchError("URL %s doesn't work" % u, u)
 
 def localpaths(d):
     """
@@ -403,8 +437,7 @@ def get_srcrev(d):
             scms.append(u)
 
     if len(scms) == 0:
-        logger.error("SRCREV was used yet no valid SCM was found in SRC_URI")
-        raise ParameterError
+        raise FetchError("SRCREV was used yet no valid SCM was found in SRC_URI")
 
     if len(scms) == 1 and len(urldata[scms[0]].names) == 1:
         return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d, urldata[scms[0]].names[0])
@@ -414,8 +447,7 @@ def get_srcrev(d):
     #
     format = bb.data.getVar('SRCREV_FORMAT', d, 1)
     if not format:
-        logger.error("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
-        raise ParameterError
+        raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
 
     for scm in scms:
         ud = urldata[scm]
@@ -435,11 +467,12 @@ def localpath(url, d):
         return ud[url].localpath
     return url
 
-def runfetchcmd(cmd, d, quiet = False):
+def runfetchcmd(cmd, d, quiet = False, cleanup = []):
     """
     Run cmd returning the command output
     Raise an error if interrupted or cmd fails
     Optionally echo command output to stdout
+    Optionally remove the files/directories listed in cleanup upon failure
     """
 
     # Need to export PATH as binary could be in metadata paths
@@ -474,10 +507,17 @@ def runfetchcmd(cmd, d, quiet = False):
     signal = status >> 8
     exitstatus = status & 0xff
 
-    if signal:
-        raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (cmd, signal, output))
-    elif status != 0:
-        raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, status, output))
+    if (signal or status != 0):
+        for f in cleanup:
+            try:
+                bb.utils.remove(f, True)
+            except OSError:
+                pass
+
+        if signal:
+            raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (cmd, signal, output))
+        elif status != 0:
+            raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, status, output))
 
     return output
 
@@ -486,10 +526,9 @@ def check_network_access(d, info = ""):
     log remote network access, and error if BB_NO_NETWORK is set
     """
     if bb.data.getVar("BB_NO_NETWORK", d, True) == "1":
-        bb.error("BB_NO_NETWORK is set, but the fetcher code attempted network access with the command %s" % info)
-        raise FetchError("BB_NO_NETWORK violation")
+        raise FetchError("BB_NO_NETWORK is set, but the fetcher code attempted network access with the command %s" % info)
     else:
-        bb.note("Fetcher accessed the network with the command %s" % info)
+        logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 
 def try_mirrors(d, uri, mirrors, check = False, force = False):
     """
@@ -573,7 +612,7 @@ class FetchData(object):
                 break                
 
         if not self.method:
-            raise NoMethodError("Missing implementation for url %s" % url)
+            raise NoMethodError(url)
 
         if self.method.supports_srcrev():
             self.revisions = {}
@@ -658,7 +697,7 @@ class Fetch(object):
         Fetch urls
         Assumes localpath was called first
         """
-        raise NoMethodError("Missing implementation for url")
+        raise NoMethodError(url)
 
     def unpack(self, urldata, rootdir, data):
         import subprocess
@@ -795,7 +834,7 @@ class Fetch(object):
         if not rev:
             rev = data.getVar("SRCREV", d, 1)
         if rev == "INVALID":
-            raise InvalidSRCREV("Please set SRCREV to a valid value")
+            raise FetchError("Please set SRCREV to a valid value", ud.url)
         if rev == "AUTOINC":
             rev = ud.method.latest_revision(ud.url, ud, d, name)
 
@@ -828,14 +867,15 @@ class Fetch(object):
         if not wanted_sum:
             return True
 
-        return wanted_sum == got_sum
+        if wanted_sum != got_sum:
+            raise MD5SumError(ud.localpath, wanted_sum, got_sum, ud.url)
+
     verify_md5sum = staticmethod(verify_md5sum)
 
     def write_md5sum(url, ud, d):
         md5data = bb.utils.md5_file(ud.localpath)
-        # verify the md5sum
-        if not Fetch.verify_md5sum(ud, md5data):
-            raise MD5SumError(url)
+
+        Fetch.verify_md5sum(ud, md5data)
 
         md5out = file(ud.md5, 'w')
         md5out.write(md5data)
@@ -847,7 +887,7 @@ class Fetch(object):
         Look in the cache for the latest revision, if not present ask the SCM.
         """
         if not hasattr(self, "_latest_revision"):
-            raise ParameterError
+            raise ParameterError("The fetcher for this URL does not support _latest_revision", url)
 
         pd = persist_data.persist(d)
         revs = pd['BB_URI_HEADREVS']

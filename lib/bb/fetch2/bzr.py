@@ -72,7 +72,7 @@ class Bzr(Fetch):
             elif command is "update":
                 bzrcmd = "%s pull %s --overwrite" % (basecmd, " ".join(options))
             else:
-                raise FetchError("Invalid bzr command %s" % command)
+                raise FetchError("Invalid bzr command %s" % command, ud.url)
 
         return bzrcmd
 
@@ -104,15 +104,7 @@ class Bzr(Fetch):
             tar_flags = "--exclude '.bzr' --exclude '.bzrtags'"
 
         # tar them up to a defined filename
-        try:
-            runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.basename(ud.pkgdir)), d)
-        except:
-            t, v, tb = sys.exc_info()
-            try:
-                os.unlink(ud.localpath)
-            except OSError:
-                pass
-            raise t, v, tb
+        runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, os.path.basename(ud.pkgdir)), d, cleanup = [ud.localpath])
 
     def supports_srcrev(self):
         return True

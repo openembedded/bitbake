@@ -156,8 +156,7 @@ class Perforce(Fetch):
         tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, 1) or "false")
         tmpfile = tmppipe.readline().strip()
         if not tmpfile:
-            logger.error("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.")
-            raise FetchError(module)
+            raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", loc)
 
         if "label" in parm:
             depot = "%s@%s" % (depot, parm["label"])
@@ -171,8 +170,7 @@ class Perforce(Fetch):
         p4file = os.popen("%s%s files %s" % (p4cmd, p4opt, depot))
 
         if not p4file:
-            logger.error("Fetch: unable to get the P4 files from %s", depot)
-            raise FetchError(module)
+            raise FetchError("Fetch: unable to get the P4 files from %s" % depot, loc)
 
         count = 0
 
@@ -189,15 +187,9 @@ class Perforce(Fetch):
             count = count + 1
 
         if count == 0:
-            logger.error("Fetch:  No files gathered from the P4 fetch")
-            raise FetchError(module)
+            logger.error()
+            raise FetchError("Fetch: No files gathered from the P4 fetch", loc)
 
-        myret = os.system("tar -czf %s %s" % (ud.localpath, module))
-        if myret != 0:
-            try:
-                os.unlink(ud.localpath)
-            except OSError:
-                pass
-            raise FetchError(module)
+        runfetchcmd("tar -czf %s %s" % (ud.localpath, module), d, cleanup = [ud.localpath])
         # cleanup
         bb.utils.prunedir(tmpfile)
