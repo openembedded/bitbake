@@ -357,17 +357,18 @@ def download(d, urls = None):
 
         download_update(localpath, ud.localpath)
 
-        if os.path.exists(ud.md5):
-            # Touch the md5 file to show active use of the download
+        if os.path.exists(ud.donestamp):
+            # Touch the done stamp file to show active use of the download
             try:
-                os.utime(ud.md5, None)
+                os.utime(ud.donestamp, None)
             except:
                 # Errors aren't fatal here
                 pass
         else:
-            # Only check the checksums if we've not seen this item before
+            # Only check the checksums if we've not seen this item before, then create the stamp
             verify_checksum(u, ud, d)
-            Fetch.write_md5sum(u, ud, d)
+            open(ud.donestamp, 'w').close()
+
 
         bb.utils.unlockfile(lf)
 
@@ -636,7 +637,7 @@ class FetchData(object):
         if self.localfile and self.localpath:
             # Note: These files should always be in DL_DIR whereas localpath may not be.
             basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
-            self.md5 = basepath + '.md5'
+            self.donestamp = basepath + '.done'
             self.lockfile = basepath + '.lock'
 
     def setup_localpath(self, d):
@@ -779,7 +780,7 @@ class Fetch(object):
         """
         if urldata.method.forcefetch(url, urldata, d):
             return True
-        elif os.path.exists(urldata.md5) and os.path.exists(urldata.localfile):
+        elif os.path.exists(urldata.donestamp) and os.path.exists(urldata.localfile):
             return False
         else:
             return True
@@ -858,29 +859,6 @@ class Fetch(object):
         return localcount
 
     localcount_internal_helper = staticmethod(localcount_internal_helper)
-
-    def verify_md5sum(ud, got_sum):
-        """
-        Verify the md5sum we wanted with the one we got
-        """
-        wanted_sum = ud.parm.get('md5sum')
-        if not wanted_sum:
-            return True
-
-        if wanted_sum != got_sum:
-            raise MD5SumError(ud.localpath, wanted_sum, got_sum, ud.url)
-
-    verify_md5sum = staticmethod(verify_md5sum)
-
-    def write_md5sum(url, ud, d):
-        md5data = bb.utils.md5_file(ud.localpath)
-
-        Fetch.verify_md5sum(ud, md5data)
-
-        md5out = file(ud.md5, 'w')
-        md5out.write(md5data)
-        md5out.close()
-    write_md5sum = staticmethod(write_md5sum)
 
     def latest_revision(self, url, ud, d, name):
         """
