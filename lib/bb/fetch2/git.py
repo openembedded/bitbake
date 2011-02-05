@@ -127,6 +127,7 @@ class Git(Fetch):
                 needupdate = True
         if needupdate:
             bb.fetch2.check_network_access(d, "git fetch %s%s" % (ud.host, ud.path))
+            runfetchcmd("%s remote prune origin" % ud.basecmd, d)
             runfetchcmd("%s remote rm origin" % ud.basecmd, d)
             runfetchcmd("%s remote add origin %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
             runfetchcmd("%s fetch --all -t" % ud.basecmd, d)
