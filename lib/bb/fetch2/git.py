@@ -66,7 +66,7 @@ class Git(Fetch):
             ud.branches[name] = branch
 
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
-        ud.mirrortarball = 'git_%s.tar.gz' % (gitsrcname)
+        ud.mirrortarball = 'git2_%s.tar.gz' % (gitsrcname)
         ud.clonedir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
 
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
@@ -116,8 +116,8 @@ class Git(Fetch):
 
         # If the repo still doesn't exist, fallback to cloning it
         if not os.path.exists(ud.clonedir):
-            bb.fetch2.check_network_access(d, "git clone %s%s" % (ud.host, ud.path))
-            runfetchcmd("%s clone -n %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.clonedir), d)
+            bb.fetch2.check_network_access(d, "git clone --bare %s%s" % (ud.host, ud.path))
+            runfetchcmd("%s clone --bare %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.clonedir), d)
 
         os.chdir(ud.clonedir)
         # Update the checkout if needed
@@ -147,7 +147,7 @@ class Git(Fetch):
         mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
         if mirror_tarballs != "0" and ud.repochanged:
             logger.info("Creating tarball of git repository")
-            runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".", ".git", "*") ), d)
+            runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".") ), d)
 
     def unpack(self, ud, destdir, d):
         """ unpack the downloaded src to destdir"""
@@ -163,11 +163,6 @@ class Git(Fetch):
             bb.utils.prunedir(destdir)
 
         runfetchcmd("git clone -s -n %s %s" % (ud.clonedir, destdir), d)
-        if os.path.exists("%s/.git/refs/remotes/origin" % ud.clonedir):
-            bb.mkdirhier("%s/.git/refs/remotes/origin/" % destdir)
-            runfetchcmd("cp -af %s/.git/refs/remotes/origin/* %s/.git/refs/remotes/origin/" %(ud.clonedir, destdir), d)
-        if os.path.exists("%s/.git/packed-refs" % ud.clonedir):
-            runfetchcmd("cp -af %s/.git/packed-refs %s/.git/" %(ud.clonedir, destdir), d)
         if not ud.nocheckout:
             os.chdir(destdir)
             runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revisions[ud.names[0]], readpathspec), d)
