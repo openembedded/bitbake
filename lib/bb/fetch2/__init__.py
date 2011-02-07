@@ -49,55 +49,62 @@ class BBFetchException(Exception):
 class MalformedUrl(BBFetchException):
     """Exception raised when encountering an invalid url"""
     def __init__(self, url):
-         self.msg = "The URL: '%s' is invalid and cannot be interpreted" % url
+         msg = "The URL: '%s' is invalid and cannot be interpreted" % url
          self.url = url
-         Exception.__init__(self, self.msg)
+         BBFetchException.__init__(self, msg)
+         self.args = url
 
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
     def __init__(self, message, url = None):
-         self.msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
+         msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
          self.url = url
-         Exception.__init__(self, self.msg)
+         BBFetchException.__init__(self, msg)
+         self.args = (message, url)
 
 class UnpackError(BBFetchException):
     """General fetcher exception when something happens incorrectly when unpacking"""
     def __init__(self, message, url):
-         self.msg = "Unpack failure for URL: '%s'. %s" % (url, message)
+         msg = "Unpack failure for URL: '%s'. %s" % (url, message)
          self.url = url
-         Exception.__init__(self, self.msg)
+         BBFetchException.__init__(self, msg)
+         self.args = (message, url)
 
 class NoMethodError(BBFetchException):
     """Exception raised when there is no method to obtain a supplied url or set of urls"""
     def __init__(self, url):
-         self.msg = "Could not find a fetcher which supports the URL: '%s'" % url
+         msg = "Could not find a fetcher which supports the URL: '%s'" % url
          self.url = url
-         Exception.__init__(self, self.msg)
+         BBFetchException.__init__(self, msg)
+         self.args = url
 
 class MissingParameterError(BBFetchException):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
     def __init__(self, missing, url):
-         self.msg = "URL: '%s' is missing the required parameter '%s'" % (url, missing)
+         msg = "URL: '%s' is missing the required parameter '%s'" % (url, missing)
          self.url = url
          self.missing = missing
-         Exception.__init__(self, self.msg)
+         BBFetchException.__init__(self, msg)
+         self.args = (missing, url)
 
 class ParameterError(BBFetchException):
     """Exception raised when a url cannot be proccessed due to invalid parameters."""
     def __init__(self, message, url):
-         self.msg = "URL: '%s' has invalid parameters. %s" % (url, message)
+         msg = "URL: '%s' has invalid parameters. %s" % (url, message)
          self.url = url
-         Exception.__init__(self, self.msg)
+         BBFetchException.__init__(self, msg)
+         self.args = (message, url)
 
 class MD5SumError(BBFetchException):
     """Exception raised when a MD5 checksum of a file does not match for a downloaded file"""
     def __init__(self, path, wanted, got, url):
-         self.msg = "File: '%s' has md5 sum %s when %s was expected (from URL: '%s')" % (path, got, wanted, url)
+         msg = "File: '%s' has md5 sum %s when %s was expected (from URL: '%s')" % (path, got, wanted, url)
          self.url = url
          self.path = path
          self.wanted = wanted
          self.got = got
-         Exception.__init__(self, self.msg)
+         BBFetchException.__init__(self, msg)
+         self.args = (path, wanted, got, url)
 
 class SHA256SumError(MD5SumError):
     """Exception raised when a SHA256 checksum of a file does not match for a downloaded file"""
