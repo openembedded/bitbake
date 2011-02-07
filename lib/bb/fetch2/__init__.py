@@ -35,7 +35,7 @@ from   bb import utils
 
 __version__ = "2"
 
-logger = logging.getLogger("BitBake.Fetch")
+logger = logging.getLogger("BitBake.Fetcher")
 
 class BBFetchException(Exception):
     """Class all fetch exceptions inherit from"""
