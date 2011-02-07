@@ -21,6 +21,7 @@ default_cmd = 'show_appends'
 
 def main(args):
     logging.basicConfig(format='%(levelname)s: %(message)s')
+    bb.utils.clean_environment()
 
     cmds = Commands()
     if args:
