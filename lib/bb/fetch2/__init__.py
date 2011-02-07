@@ -168,10 +168,10 @@ def encodeurl(decoded):
 
     return url
 
-def uri_replace(uri, uri_find, uri_replace, d):
-    if not uri or not uri_find or not uri_replace:
+def uri_replace(ud, uri_find, uri_replace, d):
+    if not ud.url or not uri_find or not uri_replace:
         logger.debug(1, "uri_replace: passed an undefined value, not replacing")
-    uri_decoded = list(decodeurl(uri))
+    uri_decoded = list(decodeurl(ud.url))
     uri_find_decoded = list(decodeurl(uri_find))
     uri_replace_decoded = list(decodeurl(uri_replace))
     result_decoded = ['', '', '', '', '', {}]
@@ -182,12 +182,12 @@ def uri_replace(uri, uri_find, uri_replace, d):
             if (re.match(i, uri_decoded[loc])):
                 result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
                 if uri_find_decoded.index(i) == 2:
-                    if d:
-                        localfn = bb.fetch2.localpath(uri, d)
-                        if localfn:
-                            result_decoded[loc] = os.path.join(os.path.dirname(result_decoded[loc]), os.path.basename(bb.fetch2.localpath(uri, d)))
+                    if ud.mirrortarball:
+                        result_decoded[loc] = os.path.join(os.path.dirname(result_decoded[loc]), os.path.basename(ud.mirrortarball))
+                    elif ud.localpath:
+                        result_decoded[loc] = os.path.join(os.path.dirname(result_decoded[loc]), os.path.basename(ud.localpath))
             else:
-                return uri
+                return ud.url
     return encodeurl(result_decoded)
 
 methods = []
@@ -392,7 +392,7 @@ def check_network_access(d, info = ""):
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 
-def try_mirrors(d, uri, mirrors, check = False):
+def try_mirrors(d, ud, mirrors, check = False):
     """
     Try to use a mirrored version of the sources.
     This method will be automatically called before the fetchers go.
@@ -403,8 +403,8 @@ def try_mirrors(d, uri, mirrors, check = False):
     """
     ld = d.createCopy()
     for (find, replace) in mirrors:
-        newuri = uri_replace(uri, find, replace, ld)
-        if newuri == uri:
+        newuri = uri_replace(ud, find, replace, ld)
+        if newuri == ud.url:
             continue
         try:
             ud = FetchData(newuri, ld)
@@ -423,7 +423,7 @@ def try_mirrors(d, uri, mirrors, check = False):
                 return ud.localpath
 
         except bb.fetch2.BBFetchException:
-            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, uri))
+            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, ud.url))
             bb.utils.remove(ud.localpath)
             continue
     return None
@@ -466,6 +466,7 @@ class FetchData(object):
         self.localfile = ""
         self.localpath = None
         self.lockfile = None
+        self.mirrortarball = None
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(data.expand(url, d))
         self.date = self.getSRCDate(d)
         self.url = url
@@ -825,7 +826,11 @@ class Fetch(object):
                 localpath = ud.localpath
             elif m.try_premirror(u, ud, self.d):
                 mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
-                localpath = try_mirrors(self.d, u, mirrors, False)
+                mirrorpath = try_mirrors(self.d, ud, mirrors, False)
+                if mirrorpath and os.path.basename(mirrorpath) == os.path.basename(ud.localpath):
+                    localpath = mirrorpath
+                elif mirrorpath and os.path.exists(mirrorpath) and not mirrorpath.startswith(self.d.getVar("DL_DIR", True)):
+                    os.symlink(mirrorpath, os.path.join(self.d.getVar("DL_DIR", True), os.path.basename(mirrorpath)))
 
             if bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) is None:
                 if not localpath and m.need_update(u, ud, self.d):
@@ -839,7 +844,7 @@ class Fetch(object):
                         # Remove any incomplete file
                         bb.utils.remove(ud.localpath)
                         mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
-                        localpath = try_mirrors (self.d, u, mirrors)
+                        localpath = try_mirrors (self.d, ud, mirrors)
 
             if not localpath or not os.path.exists(localpath):
                 raise FetchError("Unable to fetch URL %s from any source." % u, u)
@@ -877,7 +882,7 @@ class Fetch(object):
             logger.debug(1, "Testing URL %s", u)
             # First try checking uri, u, from PREMIRRORS
             mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
-            ret = try_mirrors(self.d, u, mirrors, True)
+            ret = try_mirrors(self.d, ud, mirrors, True)
             if not ret:
                 # Next try checking from the original uri, u
                 try:
@@ -885,7 +890,7 @@ class Fetch(object):
                 except:
                     # Finally, try checking uri, u, from MIRRORS
                     mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
-                    ret = try_mirrors (self.d, u, mirrors, True)
+                    ret = try_mirrors (self.d, ud, mirrors, True)
 
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)
