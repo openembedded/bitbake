@@ -33,6 +33,7 @@ from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import logger
+from   bb.fetch2 import runfetchcmd
 
 class Perforce(FetchMethod):
     def supports(self, url, ud, d):

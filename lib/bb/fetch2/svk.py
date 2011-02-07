@@ -33,6 +33,7 @@ from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
 from   bb.fetch2 import MissingParameterError
 from   bb.fetch2 import logger
+from   bb.fetch2 import runfetchcmd
 
 class Svk(FetchMethod):
     """Class to fetch a module or modules from svk repositories"""

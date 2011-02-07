@@ -31,6 +31,7 @@ import logging
 import bb
 from   bb import data
 from bb.fetch2 import FetchMethod, FetchError, MissingParameterError, logger
+from bb.fetch2 import runfetchcmd
 
 class Cvs(FetchMethod):
     """
