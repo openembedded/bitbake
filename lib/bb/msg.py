@@ -33,6 +33,8 @@ import bb.event
 class BBLogFormatter(logging.Formatter):
     """Formatter which ensures that our 'plain' messages (logging.INFO + 1) are used as is"""
 
+    DEBUG3 = logging.DEBUG - 2
+    DEBUG2 = logging.DEBUG - 1
     DEBUG = logging.DEBUG
     VERBOSE = logging.INFO - 1
     NOTE = logging.INFO
@@ -42,10 +44,12 @@ class BBLogFormatter(logging.Formatter):
     CRITICAL = logging.CRITICAL
 
     levelnames = {
+        DEBUG3   : 'DEBUG',
+        DEBUG2   : 'DEBUG',
         DEBUG   : 'DEBUG',
-        PLAIN  : '',
-        NOTE    : 'NOTE',
         VERBOSE: 'NOTE',
+        NOTE    : 'NOTE',
+        PLAIN  : '',
         WARNING : 'WARNING',
         ERROR   : 'ERROR',
         CRITICAL: 'ERROR',
@@ -60,7 +64,7 @@ class BBLogFormatter(logging.Formatter):
 
     def format(self, record):
         record.levelname = self.getLevelName(record.levelno)
-        if record.levelno == logging.INFO + 1:
+        if record.levelno == self.PLAIN:
             return record.getMessage()
         else:
             return logging.Formatter.format(self, record)
@@ -123,9 +127,9 @@ def get_debug_level(msgdomain = domain.Default):
 
 def set_verbose(level):
     if level:
-        logger.setLevel(logging.INFO - 1)
+        logger.setLevel(BBLogFormatter.VERBOSE)
     else:
-        logger.setLevel(logging.INFO)
+        logger.setLevel(BBLogFormatter.INFO)
 
 def set_debug_domains(domainargs):
     for (domainarg, iterator) in groupby(domainargs):
