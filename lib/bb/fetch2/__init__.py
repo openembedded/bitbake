@@ -774,7 +774,7 @@ class FetchMethod(object):
         return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
 
 class Fetch(object):
-    def __init__(self, urls, d):
+    def __init__(self, urls, d, cache = True):
         if len(urls) == 0:
             urls = d.getVar("SRC_URI", True).split()
         self.urls = urls
@@ -782,14 +782,15 @@ class Fetch(object):
         self.ud = {}
 
         fn = bb.data.getVar('FILE', d, True)
-        if fn in urldata_cache:
+        if cache and fn in urldata_cache:
             self.ud = urldata_cache[fn]
 
         for url in urls:
             if url not in self.ud:
                 self.ud[url] = FetchData(url, d)
 
-        urldata_cache[fn] = self.ud
+        if cache:
+            urldata_cache[fn] = self.ud
 
     def localpath(self, url):
         if url not in self.urls:
