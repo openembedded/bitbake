@@ -65,8 +65,10 @@ class Cvs(FetchMethod):
 
         ud.localfile = data.expand('%s_%s_%s_%s%s%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.tag, ud.date, norecurse, fullpath), d)
 
-    def forcefetch(self, url, ud, d):
+    def need_update(self, url, ud, d):
         if (ud.date == "now"):
+            return True
+        if not os.path.exists(ud.localpath):
             return True
         return False
 

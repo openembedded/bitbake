@@ -282,15 +282,6 @@ def subprocess_setup():
     # SIGPIPE errors are known issues with gzip/bash
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
-def download_update(result, target):
-    if os.path.exists(target):
-        return
-    if not result or not os.path.exists(result):
-        return
-    if target != result:
-        os.symlink(result, target)
-    return
-
 def get_autorev(d):
     #  only not cache src rev in autorev case
     if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
@@ -401,7 +392,7 @@ def check_network_access(d, info = ""):
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 
-def try_mirrors(d, uri, mirrors, check = False, force = False):
+def try_mirrors(d, uri, mirrors, check = False):
     """
     Try to use a mirrored version of the sources.
     This method will be automatically called before the fetchers go.
@@ -410,41 +401,31 @@ def try_mirrors(d, uri, mirrors, check = False, force = False):
     uri is the original uri we're trying to download
     mirrors is the list of mirrors we're going to try
     """
-    fpath = os.path.join(data.getVar("DL_DIR", d, True), os.path.basename(uri))
-    if not check and os.access(fpath, os.R_OK) and not force:
-        logger.debug(1, "%s already exists, skipping checkout.", fpath)
-        return fpath
-
     ld = d.createCopy()
     for (find, replace) in mirrors:
         newuri = uri_replace(uri, find, replace, ld)
-        if newuri != uri:
-            try:
-                ud = FetchData(newuri, ld)
-            except bb.fetch2.NoMethodError:
-                logger.debug(1, "No method for %s", uri)
-                continue
-
+        if newuri == uri:
+            continue
+        try:
+            ud = FetchData(newuri, ld)
             ud.setup_localpath(ld)
 
-            try:
-                if check:
-                    found = ud.method.checkstatus(newuri, ud, ld)
-                    if found:
-                        return found
-                else:
-                    ud.method.download(newuri, ud, ld)
-                    if hasattr(ud.method,"build_mirror_data"):
-                        ud.method.build_mirror_data(newuri, ud, ld)
+            if check:
+                found = ud.method.checkstatus(newuri, ud, ld)
+                if found:
+                    return found
+            else:
+                if not ud.method.need_update(newuri, ud, ld):
                     return ud.localpath
-            except (bb.fetch2.MissingParameterError,
-                    bb.fetch2.FetchError,
-                    bb.fetch2.MD5SumError):
-                import sys
-                (type, value, traceback) = sys.exc_info()
-                logger.debug(2, "Mirror fetch failure: %s", value)
-                bb.utils.remove(ud.localpath)
-                continue
+                ud.method.download(newuri, ud, ld)
+                if hasattr(ud.method,"build_mirror_data"):
+                    ud.method.build_mirror_data(newuri, ud, ld)
+                return ud.localpath
+
+        except bb.fetch2.BBFetchException:
+            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, uri))
+            bb.utils.remove(ud.localpath)
+            continue
     return None
 
 def srcrev_internal_helper(ud, d, name):
@@ -481,6 +462,7 @@ class FetchData(object):
     A class which represents the fetcher state for a given URI.
     """
     def __init__(self, url, d):
+        # localpath is the location of a downloaded result. If not set, the file is local.
         self.localfile = ""
         self.localpath = None
         self.lockfile = None
@@ -594,11 +576,13 @@ class FetchMethod(object):
 
     urls = property(getUrls, setUrls, None, "Urls property")
 
-    def forcefetch(self, url, urldata, d):
+    def need_update(self, url, ud, d):
         """
         Force a fetch, even if localpath exists?
         """
-        return False
+        if os.path.exists(ud.localpath):
+            return False
+        return True
 
     def supports_srcrev(self):
         """
@@ -694,12 +678,7 @@ class FetchMethod(object):
         """
         Should premirrors be used?
         """
-        if urldata.method.forcefetch(url, urldata, d):
-            return True
-        elif os.path.exists(urldata.donestamp) and os.path.exists(urldata.localfile):
-            return False
-        else:
-            return True
+        return True
 
     def checkstatus(self, url, urldata, d):
         """
@@ -842,36 +821,32 @@ class Fetch(object):
 
             lf = bb.utils.lockfile(ud.lockfile)
 
-            if m.try_premirror(u, ud, self.d):
-                # First try fetching uri, u, from PREMIRRORS
+            if not m.need_update(u, ud, self.d):
+                localpath = ud.localpath
+            elif m.try_premirror(u, ud, self.d):
                 mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
-                localpath = try_mirrors(self.d, u, mirrors, False, m.forcefetch(u, ud, self.d))
-            elif os.path.exists(ud.localfile):
-                localpath = ud.localfile
+                localpath = try_mirrors(self.d, u, mirrors, False)
 
-            download_update(localpath, ud.localpath)
+            if bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) is None:
+                if not localpath and m.need_update(u, ud, self.d):
+                    try:
+                        m.download(u, ud, self.d)
+                        if hasattr(m, "build_mirror_data"):
+                            m.build_mirror_data(u, ud, self.d)
+                        localpath = ud.localpath
 
-            # Need to re-test forcefetch() which will return true if our copy is too old
-            if m.forcefetch(u, ud, self.d) or not localpath:
-                # Next try fetching from the original uri, u
-                try:
-                    m.download(u, ud, self.d)
-                    if hasattr(m, "build_mirror_data"):
-                        m.build_mirror_data(u, ud, self.d)
-                    localpath = ud.localpath
-                    download_update(localpath, ud.localpath)
-
-                except FetchError:
-                    # Remove any incomplete file
-                    bb.utils.remove(ud.localpath)
-                    # Finally, try fetching uri, u, from MIRRORS
-                    mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
-                    localpath = try_mirrors (self.d, u, mirrors)
+                    except BBFetchException:
+                        # Remove any incomplete file
+                        bb.utils.remove(ud.localpath)
+                        mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
+                        localpath = try_mirrors (self.d, u, mirrors)
 
             if not localpath or not os.path.exists(localpath):
                 raise FetchError("Unable to fetch URL %s from any source." % u, u)
 
-            download_update(localpath, ud.localpath)
+            # The local fetcher can return an alternate path so we symlink
+            if os.path.exists(localpath) and not os.path.exists(ud.localpath):
+                os.symlink(localpath, ud.localpath)
 
             if os.path.exists(ud.donestamp):
                 # Touch the done stamp file to show active use of the download

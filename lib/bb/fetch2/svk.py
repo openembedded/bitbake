@@ -53,8 +53,12 @@ class Svk(FetchMethod):
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
-    def forcefetch(self, url, ud, d):
-        return ud.date == "now"
+    def need_update(self, url, ud, d):
+        if ud.date == "now":
+            return True
+        if not os.path.exists(ud.localpath):
+            return True
+        return False
 
     def download(self, loc, ud, d):
         """Fetch urls"""

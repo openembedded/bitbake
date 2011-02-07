@@ -64,9 +64,13 @@ class Hg(FetchMethod):
 
         ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
-    def forcefetch(self, url, ud, d):
+    def need_update(self, url, ud, d):
         revTag = ud.parm.get('rev', 'tip')
-        return revTag == "tip"
+        if revTag == "tip":
+            return True
+        if not os.path.exists(ud.localpath):
+            return True
+        return False
 
     def _buildhgcommand(self, ud, d, command):
         """

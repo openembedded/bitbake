@@ -80,7 +80,7 @@ class Git(FetchMethod):
     def localpath(self, url, ud, d):
         return ud.clonedir
 
-    def forcefetch(self, url, ud, d):
+    def need_update(self, u, ud, d):
         if not os.path.exists(ud.clonedir):
             return True
         os.chdir(ud.clonedir)
@@ -90,13 +90,12 @@ class Git(FetchMethod):
         return False
 
     def try_premirror(self, u, ud, d):
-        if 'noclone' in ud.parm:
-            return False
+        # If we don't do this, updating an existing checkout with only premirrors
+        # is not possible
+        if bb.data.getVar("BB_FETCH_PREMIRRORONLY", d, True) is not None:
+            return True
         if os.path.exists(ud.clonedir):
             return False
-        if os.path.exists(ud.localpath):
-            return False
-
         return True
 
     def download(self, loc, ud, d):
