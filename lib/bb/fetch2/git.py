@@ -81,6 +81,9 @@ class Git(FetchMethod):
         return ud.clonedir
 
     def forcefetch(self, url, ud, d):
+        if not os.path.exists(ud.clonedir):
+            return True
+        os.chdir(ud.clonedir)
         for name in ud.names:
             if not self._contains_ref(ud.revisions[name], d):
                 return True
