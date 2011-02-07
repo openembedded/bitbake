@@ -1,0 +1,153 @@
+#!/usr/bin/env python2.6
+
+import cmd
+import logging
+import os.path
+import sys
+
+bindir = os.path.dirname(__file__)
+topdir = os.path.dirname(bindir)
+sys.path[0:0] = [os.path.join(topdir, 'lib')]
+
+import bb.cache
+import bb.cooker
+import bb.providers
+from bb.cooker import state
+
+
+logger = logging.getLogger('BitBake')
+default_cmd = 'show_appends'
+
+
+def main(args):
+    logging.basicConfig(format='%(levelname)s: %(message)s')
+
+    cmds = Commands()
+    if args:
+        cmds.onecmd(' '.join(args))
+    else:
+        cmds.onecmd(default_cmd)
+    return cmds.returncode
+
+
+class Commands(cmd.Cmd):
+    def __init__(self):
+        cmd.Cmd.__init__(self)
+
+        self.returncode = 0
+        self.config = Config(parse_only=True)
+        self.cooker = bb.cooker.BBCooker(self.config,
+                                         self.register_idle_function)
+        self.config_data = self.cooker.configuration.data
+        bb.providers.logger.setLevel(logging.ERROR)
+        self.prepare_cooker()
+
+    def register_idle_function(self, function, data):
+        pass
+
+    def prepare_cooker(self):
+        sys.stderr.write("Parsing recipes..")
+        logger.setLevel(logging.ERROR)
+
+        try:
+            while self.cooker.state in (state.initial, state.parsing):
+                self.cooker.updateCache()
+        except KeyboardInterrupt:
+            self.cooker.shutdown()
+            self.cooker.updateCache()
+            sys.exit(2)
+
+        logger.setLevel(logging.INFO)
+        sys.stderr.write("done.\n")
+
+        self.cooker_data = self.cooker.status
+        self.cooker_data.appends = self.cooker.appendlist
+
+    def do_show_layers(self, args):
+        logger.info(str(self.config_data.getVar('BBLAYERS', True)))
+
+    def do_show_appends(self, args):
+        if not self.cooker_data.appends:
+            logger.info('No append files found')
+            return
+
+        logger.info('State of append files:')
+
+        for pn in self.cooker_data.pkg_pn:
+            self.show_appends_for_pn(pn)
+
+        self.show_appends_with_no_recipes()
+
+    def show_appends_for_pn(self, pn):
+        filenames = self.cooker_data.pkg_pn[pn]
+
+        best = bb.providers.findBestProvider(pn,
+                                             self.cooker.configuration.data,
+                                             self.cooker_data,
+                                             self.cooker_data.pkg_pn)
+        best_filename = os.path.basename(best[3])
+
+        appended, missing = self.get_appends_for_files(filenames)
+        if appended:
+            for basename, appends in appended:
+                logger.info('%s:', basename)
+                for append in appends:
+                    logger.info('  %s', append)
+
+            if best_filename in missing:
+                logger.warn('%s: missing append for preferred version',
+                            best_filename)
+                self.returncode |= 1
+
+    def get_appends_for_files(self, filenames):
+        appended, notappended = set(), set()
+        for filename in filenames:
+            _, cls = bb.cache.Cache.virtualfn2realfn(filename)
+            if cls:
+                continue
+
+            basename = os.path.basename(filename)
+            appends = self.cooker_data.appends.get(basename)
+            if appends:
+                appended.add((basename, frozenset(appends)))
+            else:
+                notappended.add(basename)
+        return appended, notappended
+
+    def show_appends_with_no_recipes(self):
+        recipes = set(os.path.basename(f)
+                      for f in self.cooker_data.pkg_fn.iterkeys())
+        appended_recipes = self.cooker_data.appends.iterkeys()
+        appends_without_recipes = [self.cooker_data.appends[recipe]
+                                   for recipe in appended_recipes
+                                   if recipe not in recipes]
+        if appends_without_recipes:
+            appendlines = ('  %s' % append
+                           for appends in appends_without_recipes
+                           for append in appends)
+            logger.warn('No recipes available for:\n%s',
+                        '\n'.join(appendlines))
+            self.returncode |= 4
+
+    def do_EOF(self, line):
+        return True
+
+
+class Config(object):
+    def __init__(self, **options):
+        self.pkgs_to_build = []
+        self.debug_domains = []
+        self.extra_assume_provided = []
+        self.file = []
+        self.debug = 0
+        self.__dict__.update(options)
+
+    def __getattr__(self, attribute):
+        try:
+            return super(Config, self).__getattribute__(attribute)
+        except AttributeError:
+            return None
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]) or 0)
