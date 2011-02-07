@@ -75,7 +75,7 @@ class Git(FetchMethod):
             if not ud.revisions[name] or ud.revisions[name] == "master":
                 ud.revisions[name] = self.latest_revision(url, ud, d, name)
 
-        ud.localfile = ud.mirrortarball
+        ud.localfile = ud.clonedir
 
     def localpath(self, url, ud, d):
         return ud.clonedir
