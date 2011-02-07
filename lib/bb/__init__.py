@@ -43,7 +43,7 @@ class BBLogger(Logger):
         Logger.__init__(self, name)
 
     def bbdebug(self, level, msg, *args, **kwargs):
-        return self.log(logging.DEBUG - level - 1, msg, *args, **kwargs)
+        return self.log(logging.DEBUG - level + 1, msg, *args, **kwargs)
 
     def plain(self, msg, *args, **kwargs):
         return self.log(logging.INFO + 1, msg, *args, **kwargs)
