@@ -448,8 +448,11 @@ def try_mirrors(d, origud, mirrors, check = False):
 
         except bb.fetch2.BBFetchException:
             logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
-            if os.path.isfile(ud.localpath):
-                bb.utils.remove(ud.localpath)
+            try:
+                if os.path.isfile(ud.localpath):
+                    bb.utils.remove(ud.localpath)
+            except UnboundLocalError:
+                pass
             continue
     return None
 
