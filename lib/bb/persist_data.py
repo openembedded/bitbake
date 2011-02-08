@@ -56,7 +56,6 @@ class SQLTable(collections.MutableMapping):
         while True:
             try:
                 return self.cursor.execute(*query)
-                break
             except sqlite3.OperationalError as exc:
                 if 'database is locked' in str(exc) and count < 500:
                     count = count + 1
