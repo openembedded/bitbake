@@ -843,19 +843,21 @@ class Fetch(object):
                         os.symlink(mirrorpath, os.path.join(self.d.getVar("DL_DIR", True), os.path.basename(mirrorpath)))
 
                 if bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) is None:
-                    if not localpath and m.need_update(u, ud, self.d):
-                        try:
-                            m.download(u, ud, self.d)
-                            if hasattr(m, "build_mirror_data"):
-                                m.build_mirror_data(u, ud, self.d)
-                            localpath = ud.localpath
+                    bb.data.setVar("BB_NO_NETWORK", "1", self.d)
 
-                        except BBFetchException:
-                            # Remove any incomplete fetch
-                            if os.path.isfile(ud.localpath):
-                                bb.utils.remove(ud.localpath)
-                            mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
-                            localpath = try_mirrors (self.d, ud, mirrors)
+                if not localpath and m.need_update(u, ud, self.d):
+                    try:
+                        m.download(u, ud, self.d)
+                        if hasattr(m, "build_mirror_data"):
+                            m.build_mirror_data(u, ud, self.d)
+                        localpath = ud.localpath
+
+                    except BBFetchException:
+                        # Remove any incomplete fetch
+                        if os.path.isfile(ud.localpath):
+                            bb.utils.remove(ud.localpath)
+                        mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
+                        localpath = try_mirrors (self.d, ud, mirrors)
 
                 if not localpath or not os.path.exists(localpath):
                     raise FetchError("Unable to fetch URL %s from any source." % u, u)
