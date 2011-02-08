@@ -585,14 +585,15 @@ def remove(path, recurse=False):
     """Equivalent to rm -f or rm -rf"""
     if not path:
         return
-    import os, errno, shutil
-    try:
-        os.unlink(path)
-    except OSError as exc:
-        if recurse and exc.errno == errno.EISDIR:
-            shutil.rmtree(path)
-        elif exc.errno != errno.ENOENT:
-            raise
+    import os, errno, shutil, glob
+    for name in glob.glob(path):
+        try:
+            os.unlink(name)
+        except OSError as exc:
+            if recurse and exc.errno == errno.EISDIR:
+                shutil.rmtree(name)
+            elif exc.errno != errno.ENOENT:
+                raise
 
 def prunedir(topdir):
     # Delete everything reachable from the directory named in 'topdir'.
