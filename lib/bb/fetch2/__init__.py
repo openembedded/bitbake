@@ -830,50 +830,52 @@ class Fetch(object):
 
             lf = bb.utils.lockfile(ud.lockfile)
 
-            if not m.need_update(u, ud, self.d):
-                localpath = ud.localpath
-            elif m.try_premirror(u, ud, self.d):
-                mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
-                mirrorpath = try_mirrors(self.d, ud, mirrors, False)
-                if mirrorpath and os.path.basename(mirrorpath) == os.path.basename(ud.localpath):
-                    localpath = mirrorpath
-                elif mirrorpath and os.path.exists(mirrorpath) and not mirrorpath.startswith(self.d.getVar("DL_DIR", True)):
-                    os.symlink(mirrorpath, os.path.join(self.d.getVar("DL_DIR", True), os.path.basename(mirrorpath)))
+            try:
+                if not m.need_update(u, ud, self.d):
+                    localpath = ud.localpath
+                elif m.try_premirror(u, ud, self.d):
+                    mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
+                    mirrorpath = try_mirrors(self.d, ud, mirrors, False)
+                    if mirrorpath and os.path.basename(mirrorpath) == os.path.basename(ud.localpath):
+                        localpath = mirrorpath
+                    elif mirrorpath and os.path.exists(mirrorpath) and not mirrorpath.startswith(self.d.getVar("DL_DIR", True)):
+                        os.symlink(mirrorpath, os.path.join(self.d.getVar("DL_DIR", True), os.path.basename(mirrorpath)))
 
-            if bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) is None:
-                if not localpath and m.need_update(u, ud, self.d):
+                if bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) is None:
+                    if not localpath and m.need_update(u, ud, self.d):
+                        try:
+                            m.download(u, ud, self.d)
+                            if hasattr(m, "build_mirror_data"):
+                                m.build_mirror_data(u, ud, self.d)
+                            localpath = ud.localpath
+
+                        except BBFetchException:
+                            # Remove any incomplete file
+                            bb.utils.remove(ud.localpath)
+                            mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
+                            localpath = try_mirrors (self.d, ud, mirrors)
+
+                if not localpath or not os.path.exists(localpath):
+                    raise FetchError("Unable to fetch URL %s from any source." % u, u)
+
+                # The local fetcher can return an alternate path so we symlink
+                if os.path.exists(localpath) and not os.path.exists(ud.localpath):
+                    os.symlink(localpath, ud.localpath)
+
+                if os.path.exists(ud.donestamp):
+                    # Touch the done stamp file to show active use of the download
                     try:
-                        m.download(u, ud, self.d)
-                        if hasattr(m, "build_mirror_data"):
-                            m.build_mirror_data(u, ud, self.d)
-                        localpath = ud.localpath
+                        os.utime(ud.donestamp, None)
+                    except:
+                        # Errors aren't fatal here
+                        pass
+                else:
+                    # Only check the checksums if we've not seen this item before, then create the stamp
+                    verify_checksum(u, ud, self.d)
+                    open(ud.donestamp, 'w').close()
 
-                    except BBFetchException:
-                        # Remove any incomplete file
-                        bb.utils.remove(ud.localpath)
-                        mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
-                        localpath = try_mirrors (self.d, ud, mirrors)
-
-            if not localpath or not os.path.exists(localpath):
-                raise FetchError("Unable to fetch URL %s from any source." % u, u)
-
-            # The local fetcher can return an alternate path so we symlink
-            if os.path.exists(localpath) and not os.path.exists(ud.localpath):
-                os.symlink(localpath, ud.localpath)
-
-            if os.path.exists(ud.donestamp):
-                # Touch the done stamp file to show active use of the download
-                try:
-                    os.utime(ud.donestamp, None)
-                except:
-                    # Errors aren't fatal here
-                    pass
-            else:
-                # Only check the checksums if we've not seen this item before, then create the stamp
-                verify_checksum(u, ud, self.d)
-                open(ud.donestamp, 'w').close()
-
-            bb.utils.unlockfile(lf)
+            finally:
+                bb.utils.unlockfile(lf)
 
     def checkstatus(self, urls = []):
         """
