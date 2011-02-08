@@ -399,7 +399,7 @@ def check_network_access(d, info = ""):
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 
-def try_mirrors(d, ud, mirrors, check = False):
+def try_mirrors(d, origud, mirrors, check = False):
     """
     Try to use a mirrored version of the sources.
     This method will be automatically called before the fetchers go.
@@ -410,8 +410,8 @@ def try_mirrors(d, ud, mirrors, check = False):
     """
     ld = d.createCopy()
     for (find, replace) in mirrors:
-        newuri = uri_replace(ud, find, replace, ld)
-        if newuri == ud.url:
+        newuri = uri_replace(origud, find, replace, ld)
+        if newuri == origud.url:
             continue
         try:
             ud = FetchData(newuri, ld)
@@ -430,7 +430,7 @@ def try_mirrors(d, ud, mirrors, check = False):
                 return ud.localpath
 
         except bb.fetch2.BBFetchException:
-            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, ud.url))
+            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
             bb.utils.remove(ud.localpath)
             continue
     return None
