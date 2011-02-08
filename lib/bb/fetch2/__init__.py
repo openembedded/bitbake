@@ -421,13 +421,30 @@ def try_mirrors(d, origud, mirrors, check = False):
                 found = ud.method.checkstatus(newuri, ud, ld)
                 if found:
                     return found
-            else:
-                if not ud.method.need_update(newuri, ud, ld):
-                    return ud.localpath
+                continue
+
+            if ud.method.need_update(newuri, ud, ld):
                 ud.method.download(newuri, ud, ld)
                 if hasattr(ud.method,"build_mirror_data"):
                     ud.method.build_mirror_data(newuri, ud, ld)
+
+            if not ud.localpath or not os.path.exists(ud.localpath):
+                continue
+
+            if ud.localpath == origud.localpath:
                 return ud.localpath
+
+            # We may be obtaining a mirror tarball which needs further processing by the real fetcher
+            # If that tarball is a local file:// we need to provide a symlink to it
+            dldir = ld.getVar("DL_DIR", True)
+            if not ud.localpath.startswith(dldir):
+                if os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
+                    os.symlink(ud.localpath, os.path.join(dldir, os.path.basename(ud.localpath)))
+                    return None
+            # Otherwise the result is a local file:// and we symlink to it
+            if not os.path.exists(origud.localpath):
+                 os.symlink(ud.localpath, origud.localpath)
+            return ud.localpath
 
         except bb.fetch2.BBFetchException:
             logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
@@ -836,11 +853,7 @@ class Fetch(object):
                     localpath = ud.localpath
                 elif m.try_premirror(u, ud, self.d):
                     mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
-                    mirrorpath = try_mirrors(self.d, ud, mirrors, False)
-                    if mirrorpath and os.path.basename(mirrorpath) == os.path.basename(ud.localpath):
-                        localpath = mirrorpath
-                    elif mirrorpath and os.path.exists(mirrorpath) and not mirrorpath.startswith(self.d.getVar("DL_DIR", True)):
-                        os.symlink(mirrorpath, os.path.join(self.d.getVar("DL_DIR", True), os.path.basename(mirrorpath)))
+                    localpath = try_mirrors(self.d, ud, mirrors, False)
 
                 if bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) is None:
                     bb.data.setVar("BB_NO_NETWORK", "1", self.d)
@@ -861,10 +874,6 @@ class Fetch(object):
 
                 if not localpath or not os.path.exists(localpath):
                     raise FetchError("Unable to fetch URL %s from any source." % u, u)
-
-                # The local fetcher can return an alternate path so we symlink
-                if os.path.exists(localpath) and not os.path.exists(ud.localpath):
-                    os.symlink(localpath, ud.localpath)
 
                 if os.path.exists(ud.donestamp):
                     # Touch the done stamp file to show active use of the download
