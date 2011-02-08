@@ -47,8 +47,8 @@ class SQLTable(collections.MutableMapping):
         self.cursor = cursor
         self.table = table
 
-        cursor.execute("CREATE TABLE IF NOT EXISTS %s(key TEXT, value TEXT);"
-                       % table)
+        self._execute("CREATE TABLE IF NOT EXISTS %s(key TEXT, value TEXT);"
+                      % table)
 
     def _execute(self, *query):
         """Execute a query, waiting to acquire a lock if necessary"""
