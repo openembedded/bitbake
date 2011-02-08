@@ -30,6 +30,7 @@ except ImportError:
     import pickle
 import logging
 import atexit
+import traceback
 import bb.utils
 
 # This is the pid for which we should generate the event. This is set when
@@ -379,6 +380,9 @@ class LogHandler(logging.Handler):
     """Dispatch logging messages as bitbake events"""
 
     def emit(self, record):
+        if record.exc_info:
+            record.msg += '\n%s' % traceback.format_exception(*record.exc_info)
+            record.exc_info = None
         fire(record, None)
 
     def filter(self, record):
