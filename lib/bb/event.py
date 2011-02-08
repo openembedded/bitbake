@@ -381,8 +381,8 @@ class LogHandler(logging.Handler):
 
     def emit(self, record):
         if record.exc_info:
-            msg = traceback.format_exception(*record.exc_info, limit=5)
-            record.msg += '\n%s' % msg
+            lines = traceback.format_exception(*record.exc_info, limit=5)
+            record.msg += '\n%s' % ''.join(lines)
             record.exc_info = None
         fire(record, None)
 
