@@ -628,6 +628,7 @@ class FetchMethod(object):
 
     def unpack(self, urldata, rootdir, data):
         import subprocess
+        iterate = False
         file = urldata.localpath
         dots = file.split(".")
         if dots[-1] in ['gz', 'bz2', 'Z']:
@@ -635,6 +636,7 @@ class FetchMethod(object):
         else:
             efile = file
         cmd = None
+
         if file.endswith('.tar'):
             cmd = 'tar x --no-same-owner -f %s' % file
         elif file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
@@ -654,35 +656,42 @@ class FetchMethod(object):
             if 'dos' in urldata.parm:
                 cmd = '%s -a' % cmd
             cmd = "%s '%s'" % (cmd, file)
-        elif os.path.isdir(file):
-            filesdir = os.path.realpath(bb.data.getVar("FILESDIR", data, True))
-            destdir = "."
-            if file[0:len(filesdir)] == filesdir:
-                destdir = file[len(filesdir):file.rfind('/')]
-                destdir = destdir.strip('/')
-                if len(destdir) < 1:
-                    destdir = "."
-                elif not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
-                    os.makedirs("%s/%s" % (rootdir, destdir))
-            cmd = 'cp -pPR %s %s/%s/' % (file, rootdir, destdir)
+        elif file.endswith('.src.rpm') or file.endswith('.srpm'):
+            if 'unpack' in urldata.parm:
+                unpack_file = ("%s" % urldata.parm['unpack'])
+                cmd = 'rpm2cpio.sh %s | cpio -i %s' % (file, unpack_file)
+                iterate = True
+                iterate_file = unpack_file
+            else:
+                cmd = 'rpm2cpio.sh %s | cpio -i' % (file)
         else:
-            if not 'patch' in urldata.parm:
-                # The "destdir" handling was specifically done for FILESPATH
-                # items.  So, only do so for file:// entries.
-                if urldata.type == "file" and urldata.path.find("/") != -1:
-                    destdir = urldata.path.rsplit("/", 1)[0]
-                else:
+            # If file == dest, then avoid any copies, as we already put the file into dest!
+            dest = os.path.join(rootdir, os.path.basename(file))
+            if (file != dest) and not (os.path.exists(dest) and os.path.samefile(file, dest)):
+                if os.path.isdir(file):
+                    filesdir = os.path.realpath(bb.data.getVar("FILESDIR", data, True))
                     destdir = "."
-                bb.mkdirhier("%s/%s" % (rootdir, destdir))
-                cmd = 'cp %s %s/%s/' % (file, rootdir, destdir)
+                    if file[0:len(filesdir)] == filesdir:
+                        destdir = file[len(filesdir):file.rfind('/')]
+                        destdir = destdir.strip('/')
+                        if len(destdir) < 1:
+                            destdir = "."
+                        elif not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
+                            os.makedirs("%s/%s" % (rootdir, destdir))
+                    cmd = 'cp -pPR %s %s/%s/' % (file, rootdir, destdir)
+                else:
+                    if not 'patch' in urldata.parm:
+                        # The "destdir" handling was specifically done for FILESPATH
+                        # items.  So, only do so for file:// entries.
+                        if urldata.type == "file" and urldata.path.find("/") != -1:
+                           destdir = urldata.path.rsplit("/", 1)[0]
+                        else:
+                           destdir = "."
+                        bb.mkdirhier("%s/%s" % (rootdir, destdir))
+                        cmd = 'cp %s %s/%s/' % (file, rootdir, destdir)
 
         if not cmd:
             return
-
-        dest = os.path.join(rootdir, os.path.basename(file))
-        if os.path.exists(dest):
-            if os.path.samefile(file, dest):
-                return
 
         # Change to subdir before executing command
         save_cwd = os.getcwd();
@@ -700,6 +709,11 @@ class FetchMethod(object):
 
         if ret != 0:
             raise UnpackError("Unpack command %s failed with return value %s" % (cmd, ret), urldata.url)
+
+        if iterate is True:
+            iterate_urldata = urldata
+            iterate_urldata.localpath = "%s/%s" % (rootdir, iterate_file)
+            self.unpack(urldata, rootdir, data)
 
         return
 
