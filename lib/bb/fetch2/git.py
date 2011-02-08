@@ -72,7 +72,8 @@ class Git(FetchMethod):
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
         for name in ud.names:
-            if not ud.revisions[name] or ud.revisions[name] == "master":
+            # Ensure anything that doesn't look like a sha256 checksum/revision is translated into one
+            if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
                 ud.revisions[name] = self.latest_revision(url, ud, d, name)
 
         ud.localfile = ud.clonedir
