@@ -74,3 +74,7 @@ class Local(FetchMethod):
         if os.path.exists(urldata.localpath):
             return True
         return False
+
+    def clean(self, urldata, d):
+        return
+

@@ -138,6 +138,13 @@ class Svn(FetchMethod):
         # tar them up to a defined filename
         runfetchcmd("tar %s -czf %s %s" % (tar_flags, ud.localpath, ud.module), d, cleanup = [ud.localpath])
 
+    def clean(self, ud, d):
+        """ Clean SVN specific files and dirs """
+
+        bb.utils.remove(ud.localpath)
+        bb.utils.remove(ud.moddir, True)
+        
+
     def supports_srcrev(self):
         return True
 

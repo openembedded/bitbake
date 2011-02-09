@@ -172,6 +172,12 @@ class Git(FetchMethod):
             runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d)
         return True
 
+    def clean(self, ud, d):
+        """ clean the git directory """
+
+        bb.utils.remove(ud.localpath, True)
+        bb.utils.remove(ud.fullmirror)
+
     def supports_srcrev(self):
         return True
 

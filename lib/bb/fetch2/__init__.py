@@ -491,6 +491,7 @@ class FetchData(object):
     """
     def __init__(self, url, d):
         # localpath is the location of a downloaded result. If not set, the file is local.
+        self.donestamp = None
         self.localfile = ""
         self.localpath = None
         self.lockfile = None
@@ -716,6 +717,12 @@ class FetchMethod(object):
             self.unpack(urldata, rootdir, data)
 
         return
+
+    def clean(self, urldata, d):
+       """
+       Clean any existing full or partial download
+       """
+       bb.utils.remove(urldata.localpath)
 
     def try_premirror(self, url, urldata, d):
         """
@@ -954,6 +961,33 @@ class Fetch(object):
                 lf = bb.utils.lockfile(ud.lockfile)
 
             ud.method.unpack(ud, root, self.d)
+
+            if ud.lockfile:
+                bb.utils.unlockfile(lf)
+
+    def clean(self, urls = []):
+        """
+        Clean files that the fetcher gets or places
+        """
+
+        if len(urls) == 0:
+            urls = self.urls
+
+        for url in urls:
+            if url not in self.ud:
+                self.ud[url] = FetchData(url, d)
+            ud = self.ud[url]
+            ud.setup_localpath(self.d)
+
+            if not ud.localfile or self.localpath is None:
+                continue
+
+            if ud.lockfile:
+                lf = bb.utils.lockfile(ud.lockfile)
+
+            ud.method.clean(ud, self.d)
+            if ud.donestamp:
+                bb.utils.remove(ud.donestamp)
 
             if ud.lockfile:
                 bb.utils.unlockfile(lf)
