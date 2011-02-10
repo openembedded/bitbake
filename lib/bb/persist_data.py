@@ -92,18 +92,20 @@ class SQLTable(collections.MutableMapping):
 
     def __iter__(self):
         data = self._execute("SELECT key FROM %s;" % self.table)
-        for row in data:
-            yield row[0]
+        return (row[0] for row in data)
 
-    def iteritems(self):
-        data = self._execute("SELECT * FROM %s;" % self.table)
-        for row in data:
-            yield row[0], row[1]
+    def values(self):
+        return list(self.itervalues())
 
     def itervalues(self):
         data = self._execute("SELECT value FROM %s;" % self.table)
-        for row in data:
-            yield row[0]
+        return (row[0] for row in data)
+
+    def items(self):
+        return list(self.iteritems())
+
+    def iteritems(self):
+        return self._execute("SELECT * FROM %s;" % self.table)
 
 
 class SQLData(object):
