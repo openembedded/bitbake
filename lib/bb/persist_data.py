@@ -39,6 +39,7 @@ if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
 
 
 logger = logging.getLogger("BitBake.PersistData")
+sqlite3.enable_shared_cache(True)
 
 
 class SQLTable(collections.MutableMapping):
@@ -51,16 +52,7 @@ class SQLTable(collections.MutableMapping):
                       % table)
 
     def _execute(self, *query):
-        """Execute a query, waiting to acquire a lock if necessary"""
-        count = 0
-        while True:
-            try:
-                return self.cursor.execute(*query)
-            except sqlite3.OperationalError as exc:
-                if 'database is locked' in str(exc) and count < 500:
-                    count = count + 1
-                    continue
-                raise
+        return self.cursor.execute(*query)
 
     def __getitem__(self, key):
         data = self._execute("SELECT * from %s where key=?;" %
@@ -159,7 +151,7 @@ class PersistData(object):
         del self.data[domain][key]
 
 def connect(database):
-    return sqlite3.connect(database, timeout=5, isolation_level=None)
+    return sqlite3.connect(database, timeout=30, isolation_level=None)
 
 def persist(domain, d):
     """Convenience factory for SQLTable objects based upon metadata"""
