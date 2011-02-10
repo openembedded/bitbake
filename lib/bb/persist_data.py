@@ -55,6 +55,13 @@ class SQLTable(collections.MutableMapping):
     def _execute(self, *query):
         return self.cursor.execute(*query)
 
+    def __enter__(self):
+        self.cursor.__enter__()
+        return self
+
+    def __exit__(self, *excinfo):
+        self.cursor.__exit__(*excinfo)
+
     def __getitem__(self, key):
         data = self._execute("SELECT * from %s where key=?;" %
                              self.table, [key])
