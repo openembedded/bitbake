@@ -67,6 +67,7 @@ class Git(FetchMethod):
 
         gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
         ud.mirrortarball = 'git2_%s.tar.gz' % (gitsrcname)
+        ud.fullmirror = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
         ud.clonedir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
 
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
@@ -75,6 +76,8 @@ class Git(FetchMethod):
             # Ensure anything that doesn't look like a sha256 checksum/revision is translated into one
             if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
                 ud.revisions[name] = self.latest_revision(ud.url, ud, d, name)
+
+        ud.write_tarballs = (data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0"
 
         ud.localfile = ud.clonedir
 
@@ -88,6 +91,8 @@ class Git(FetchMethod):
         for name in ud.names:
             if not self._contains_ref(ud.revisions[name], d):
                 return True
+        if ud.write_tarballs and not os.path.exists(ud.fullmirror):
+            return True
         return False
 
     def try_premirror(self, u, ud, d):
@@ -107,15 +112,13 @@ class Git(FetchMethod):
         else:
             username = ""
 
-        repofile = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
-
-        ud.repochanged = not os.path.exists(repofile)
+        ud.repochanged = not os.path.exists(ud.fullmirror)
 
         # If the checkout doesn't exist and the mirror tarball does, extract it
-        if not os.path.exists(ud.clonedir) and os.path.exists(repofile):
+        if not os.path.exists(ud.clonedir) and os.path.exists(ud.fullmirror):
             bb.mkdirhier(ud.clonedir)
             os.chdir(ud.clonedir)
-            runfetchcmd("tar -xzf %s" % (repofile), d)
+            runfetchcmd("tar -xzf %s" % (ud.fullmirror), d)
 
         # If the repo still doesn't exist, fallback to cloning it
         if not os.path.exists(ud.clonedir):
@@ -144,13 +147,10 @@ class Git(FetchMethod):
 
     def build_mirror_data(self, url, ud, d):
         # Generate a mirror tarball if needed
-        repofile = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
-
-        os.chdir(ud.clonedir)
-        mirror_tarballs = data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True)
-        if mirror_tarballs != "0" and ud.repochanged:
+        if ud.write_tarballs and (ud.repochanged or not os.path.exists(ud.fullmirror)):
+            os.chdir(ud.clonedir)
             logger.info("Creating tarball of git repository")
-            runfetchcmd("tar -czf %s %s" % (repofile, os.path.join(".") ), d)
+            runfetchcmd("tar -czf %s %s" % (ud.fullmirror, os.path.join(".") ), d)
 
     def unpack(self, ud, destdir, d):
         """ unpack the downloaded src to destdir"""
