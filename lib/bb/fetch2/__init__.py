@@ -872,6 +872,8 @@ class Fetch(object):
         if len(urls) == 0:
             urls = self.urls
 
+        network = bb.data.getVar("BB_NO_NETWORK", self.d, True)
+
         for u in urls:
             ud = self.ud[u]
             ud.setup_localpath(self.d)
@@ -884,6 +886,8 @@ class Fetch(object):
             lf = bb.utils.lockfile(ud.lockfile)
 
             try:
+                network = bb.data.getVar("BB_NO_NETWORK", self.d, True)
+ 
                 if not m.need_update(u, ud, self.d):
                     localpath = ud.localpath
                 elif m.try_premirror(u, ud, self.d):
