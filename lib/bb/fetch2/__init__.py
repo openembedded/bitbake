@@ -886,7 +886,7 @@ class Fetch(object):
             lf = bb.utils.lockfile(ud.lockfile)
 
             try:
-                network = bb.data.getVar("BB_NO_NETWORK", self.d, True)
+                bb.data.setVar("BB_NO_NETWORK", network, self.d)
  
                 if not m.need_update(u, ud, self.d):
                     localpath = ud.localpath
