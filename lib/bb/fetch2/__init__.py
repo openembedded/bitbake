@@ -416,7 +416,11 @@ def try_mirrors(d, origud, mirrors, check = False):
     mirrors is the list of mirrors we're going to try
     """
     ld = d.createCopy()
-    for (find, replace) in mirrors:
+    for line in mirrors:
+        try:
+            (find, replace) = line
+        except ValueError:
+            continue
         newuri = uri_replace(origud, find, replace, ld)
         if newuri == origud.url:
             continue
