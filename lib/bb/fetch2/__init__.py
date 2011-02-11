@@ -448,10 +448,11 @@ def try_mirrors(d, origud, mirrors, check = False):
             # We may be obtaining a mirror tarball which needs further processing by the real fetcher
             # If that tarball is a local file:// we need to provide a symlink to it
             dldir = ld.getVar("DL_DIR", True)
-            if not ud.localpath.startswith(dldir):
-                if os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
-                    os.symlink(ud.localpath, os.path.join(dldir, os.path.basename(ud.localpath)))
-                    return None
+            if os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
+                dest = os.path.join(dldir, os.path.basename(ud.localpath))
+                if not os.path.exists(dest):
+                    os.symlink(ud.localpath, dest)
+                return None
             # Otherwise the result is a local file:// and we symlink to it
             if not os.path.exists(origud.localpath):
                  os.symlink(ud.localpath, origud.localpath)
