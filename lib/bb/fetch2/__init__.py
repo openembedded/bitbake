@@ -98,7 +98,7 @@ class ParameterError(BBFetchException):
 class MD5SumError(BBFetchException):
     """Exception raised when a MD5 checksum of a file does not match for a downloaded file"""
     def __init__(self, path, wanted, got, url):
-         msg = "File: '%s' has md5 sum %s when %s was expected (from URL: '%s')" % (path, got, wanted, url)
+         msg = "File: '%s' has md5 checksum %s when %s was expected (from URL: '%s')" % (path, got, wanted, url)
          self.url = url
          self.path = path
          self.wanted = wanted
@@ -108,6 +108,14 @@ class MD5SumError(BBFetchException):
 
 class SHA256SumError(MD5SumError):
     """Exception raised when a SHA256 checksum of a file does not match for a downloaded file"""
+    def __init__(self, path, wanted, got, url):
+         msg = "File: '%s' has sha256 checksum %s when %s was expected (from URL: '%s')" % (path, got, wanted, url)
+         self.url = url
+         self.path = path
+         self.wanted = wanted
+         self.got = got
+         BBFetchException.__init__(self, msg)
+         self.args = (path, wanted, got, url)
 
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
