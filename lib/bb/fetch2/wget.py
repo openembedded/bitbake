@@ -77,7 +77,7 @@ class Wget(FetchMethod):
             # Sanity check since wget can pretend it succeed when it didn't
             # Also, this used to happen if sourceforge sent us to the mirror page
             if not os.path.exists(ud.localpath) and not checkonly:
-                raise FetchError("The fetch command returned success but %s doesn't exist?!" % (uri, ud.localpath), uri)
+                raise FetchError("The fetch command returned success for url %s but %s doesn't exist?!" % (uri, ud.localpath), uri)
 
         localdata = data.createCopy(d)
         data.setVar('OVERRIDES', "wget:" + data.getVar('OVERRIDES', localdata), localdata)
