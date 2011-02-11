@@ -117,6 +117,16 @@ class SHA256SumError(MD5SumError):
          BBFetchException.__init__(self, msg)
          self.args = (path, wanted, got, url)
 
+class NetworkAccess(BBFetchException):
+    """Exception raised when network access is disabled but it is required."""
+    def __init__(self, url, cmd):
+         msg = "Network access disabled through BB_NO_NETWORK but access rquested with command %s (for url %s)" % (cmd, url)
+         self.url = url
+         self.cmd = cmd
+         BBFetchException.__init__(self, msg)
+         self.args = (url, cmd)
+
+
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
     user, password, parameters).
@@ -397,12 +407,12 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
 
     return output
 
-def check_network_access(d, info = ""):
+def check_network_access(d, info = "", url = None):
     """
     log remote network access, and error if BB_NO_NETWORK is set
     """
     if bb.data.getVar("BB_NO_NETWORK", d, True) == "1":
-        raise FetchError("BB_NO_NETWORK is set, but the fetcher code attempted network access with the command %s" % info)
+        raise NetworkAccess(url, info)
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 
@@ -457,6 +467,9 @@ def try_mirrors(d, origud, mirrors, check = False):
             if not os.path.exists(origud.localpath):
                  os.symlink(ud.localpath, origud.localpath)
             return ud.localpath
+
+        except bb.fetch2.NetworkAccess:
+            raise
 
         except bb.fetch2.BBFetchException as e:
             logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
@@ -905,6 +918,9 @@ class Fetch(object):
                         if hasattr(m, "build_mirror_data"):
                             m.build_mirror_data(u, ud, self.d)
                         localpath = ud.localpath
+
+                    except bb.fetch2.NetworkAccess:
+                        raise
 
                     except BBFetchException as e:
                         logger.debug(1, str(e))

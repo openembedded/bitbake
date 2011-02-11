@@ -85,13 +85,13 @@ class Bzr(FetchMethod):
         if os.access(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir), '.bzr'), os.R_OK):
             bzrcmd = self._buildbzrcommand(ud, d, "update")
             logger.debug(1, "BZR Update %s", loc)
-            bb.fetch2.check_network_access(d, bzrcmd)
+            bb.fetch2.check_network_access(d, bzrcmd, ud.url)
             os.chdir(os.path.join (ud.pkgdir, os.path.basename(ud.path)))
             runfetchcmd(bzrcmd, d)
         else:
             bb.utils.remove(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir)), True)
             bzrcmd = self._buildbzrcommand(ud, d, "fetch")
-            bb.fetch2.check_network_access(d, bzrcmd)
+            bb.fetch2.check_network_access(d, bzrcmd, ud.url)
             logger.debug(1, "BZR Checkout %s", loc)
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
@@ -124,7 +124,7 @@ class Bzr(FetchMethod):
         """
         logger.debug(2, "BZR fetcher hitting network for %s", url)
 
-        bb.fetch2.check_network_access(d, self._buildbzrcommand(ud, d, "revno"))
+        bb.fetch2.check_network_access(d, self._buildbzrcommand(ud, d, "revno"), ud.url)
 
         output = runfetchcmd(self._buildbzrcommand(ud, d, "revno"), d, True)
 

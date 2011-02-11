@@ -132,7 +132,7 @@ class Cvs(FetchMethod):
         moddir = os.path.join(pkgdir, localdir)
         if os.access(os.path.join(moddir, 'CVS'), os.R_OK):
             logger.info("Update " + loc)
-            bb.fetch2.check_network_access(d, cvsupdatecmd)
+            bb.fetch2.check_network_access(d, cvsupdatecmd, ud.url)
             # update sources there
             os.chdir(moddir)
             cmd = cvsupdatecmd
@@ -142,7 +142,7 @@ class Cvs(FetchMethod):
             bb.mkdirhier(pkgdir)
             os.chdir(pkgdir)
             logger.debug(1, "Running %s", cvscmd)
-            bb.fetch2.check_network_access(d, cvscmd)
+            bb.fetch2.check_network_access(d, cvscmd, ud.url)
             cmd = cvscmd
 
         runfetchcmd(cmd, d, cleanup = [moddir])

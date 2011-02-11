@@ -116,7 +116,7 @@ class Svn(FetchMethod):
             # update sources there
             os.chdir(ud.moddir)
             logger.debug(1, "Running %s", svnupdatecmd)
-            bb.fetch2.check_network_access(d, svnupdatecmd)
+            bb.fetch2.check_network_access(d, svnupdatecmd, ud.url)
             runfetchcmd(svnupdatecmd, d)
         else:
             svnfetchcmd = self._buildsvncommand(ud, d, "fetch")
@@ -125,7 +125,7 @@ class Svn(FetchMethod):
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", svnfetchcmd)
-            bb.fetch2.check_network_access(d, svnfetchcmd)
+            bb.fetch2.check_network_access(d, svnfetchcmd, ud.url)
             runfetchcmd(svnfetchcmd, d)
 
         scmdata = ud.parm.get("scmdata", "")

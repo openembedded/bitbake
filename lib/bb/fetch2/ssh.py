@@ -114,7 +114,7 @@ class SSH(FetchMethod):
             commands.mkarg(ldir)
         )
 
-        bb.fetch2.check_network_access(d, cmd)
+        bb.fetch2.check_network_access(d, cmd, urldata.url)
 
         runfetchcmd(cmd, d)
 

@@ -132,7 +132,7 @@ class Git(FetchMethod):
             if not self._contains_ref(ud.revisions[name], d):
                 needupdate = True
         if needupdate:
-            bb.fetch2.check_network_access(d, "git fetch %s%s" % (ud.host, ud.path))
+            bb.fetch2.check_network_access(d, "git fetch %s%s" % (ud.host, ud.path), ud.url)
             try: 
                 runfetchcmd("%s remote prune origin" % ud.basecmd, d) 
                 runfetchcmd("%s remote rm origin" % ud.basecmd, d) 

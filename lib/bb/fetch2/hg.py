@@ -124,7 +124,7 @@ class Hg(FetchMethod):
             # update sources there
             os.chdir(ud.moddir)
             logger.debug(1, "Running %s", updatecmd)
-            bb.fetch2.check_network_access(d, updatecmd)
+            bb.fetch2.check_network_access(d, updatecmd, ud.url)
             runfetchcmd(updatecmd, d)
 
         else:
@@ -134,7 +134,7 @@ class Hg(FetchMethod):
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", fetchcmd)
-            bb.fetch2.check_network_access(d, fetchcmd)
+            bb.fetch2.check_network_access(d, fetchcmd, ud.url)
             runfetchcmd(fetchcmd, d)
 
         # Even when we clone (fetch), we still need to update as hg's clone

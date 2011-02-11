@@ -90,7 +90,7 @@ class Osc(FetchMethod):
             # update sources there
             os.chdir(ud.moddir)
             logger.debug(1, "Running %s", oscupdatecmd)
-            bb.fetch2.check_network_access(d, oscupdatecmd)
+            bb.fetch2.check_network_access(d, oscupdatecmd, ud.url)
             runfetchcmd(oscupdatecmd, d)
         else:
             oscfetchcmd = self._buildosccommand(ud, d, "fetch")
@@ -99,7 +99,7 @@ class Osc(FetchMethod):
             bb.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", oscfetchcmd)
-            bb.fetch2.check_network_access(d, oscfetchcmd)
+            bb.fetch2.check_network_access(d, oscfetchcmd, ud.url)
             runfetchcmd(oscfetchcmd, d)
 
         os.chdir(os.path.join(ud.pkgdir + ud.path))
