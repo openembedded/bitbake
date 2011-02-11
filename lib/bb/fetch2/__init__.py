@@ -657,6 +657,13 @@ class FetchMethod(object):
         import subprocess
         iterate = False
         file = urldata.localpath
+
+        try:
+            unpack = bb.utils.to_boolean(urldata.parm.get('unpack'), True)
+        except ValueError, exc:
+            bb.fatal("Invalid value for 'unpack' parameter for %s: %s" %
+                     (file, urldata.parm.get('unpack')))
+
         dots = file.split(".")
         if dots[-1] in ['gz', 'bz2', 'Z']:
             efile = os.path.join(bb.data.getVar('WORKDIR', data, True),os.path.basename('.'.join(dots[0:-1])))
@@ -664,34 +671,41 @@ class FetchMethod(object):
             efile = file
         cmd = None
 
-        if file.endswith('.tar'):
-            cmd = 'tar x --no-same-owner -f %s' % file
-        elif file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
-            cmd = 'tar xz --no-same-owner -f %s' % file
-        elif file.endswith('.tbz') or file.endswith('.tbz2') or file.endswith('.tar.bz2'):
-            cmd = 'bzip2 -dc %s | tar x --no-same-owner -f -' % file
-        elif file.endswith('.gz') or file.endswith('.Z') or file.endswith('.z'):
-            cmd = 'gzip -dc %s > %s' % (file, efile)
-        elif file.endswith('.bz2'):
-            cmd = 'bzip2 -dc %s > %s' % (file, efile)
-        elif file.endswith('.tar.xz'):
-            cmd = 'xz -dc %s | tar x --no-same-owner -f -' % file
-        elif file.endswith('.xz'):
-            cmd = 'xz -dc %s > %s' % (file, efile)
-        elif file.endswith('.zip') or file.endswith('.jar'):
-            cmd = 'unzip -q -o'
-            if 'dos' in urldata.parm:
-                cmd = '%s -a' % cmd
-            cmd = "%s '%s'" % (cmd, file)
-        elif file.endswith('.src.rpm') or file.endswith('.srpm'):
-            if 'unpack' in urldata.parm:
-                unpack_file = ("%s" % urldata.parm['unpack'])
-                cmd = 'rpm2cpio.sh %s | cpio -i %s' % (file, unpack_file)
-                iterate = True
-                iterate_file = unpack_file
-            else:
-                cmd = 'rpm2cpio.sh %s | cpio -i' % (file)
-        else:
+        if unpack:
+            if file.endswith('.tar'):
+                cmd = 'tar x --no-same-owner -f %s' % file
+            elif file.endswith('.tgz') or file.endswith('.tar.gz') or file.endswith('.tar.Z'):
+                cmd = 'tar xz --no-same-owner -f %s' % file
+            elif file.endswith('.tbz') or file.endswith('.tbz2') or file.endswith('.tar.bz2'):
+                cmd = 'bzip2 -dc %s | tar x --no-same-owner -f -' % file
+            elif file.endswith('.gz') or file.endswith('.Z') or file.endswith('.z'):
+                cmd = 'gzip -dc %s > %s' % (file, efile)
+            elif file.endswith('.bz2'):
+                cmd = 'bzip2 -dc %s > %s' % (file, efile)
+            elif file.endswith('.tar.xz'):
+                cmd = 'xz -dc %s | tar x --no-same-owner -f -' % file
+            elif file.endswith('.xz'):
+                cmd = 'xz -dc %s > %s' % (file, efile)
+            elif file.endswith('.zip') or file.endswith('.jar'):
+                try:
+                    dos = bb.utils.to_boolean(urldata.parm.get('dos'), False)
+                except ValueError, exc:
+                    bb.fatal("Invalid value for 'dos' parameter for %s: %s" %
+                             (file, urldata.parm.get('dos')))
+                cmd = 'unzip -q -o'
+                if dos:
+                    cmd = '%s -a' % cmd
+                cmd = "%s '%s'" % (cmd, file)
+            elif file.endswith('.src.rpm') or file.endswith('.srpm'):
+                if 'extract' in urldata.parm:
+                    unpack_file = urldata.parm.get('extract')
+                    cmd = 'rpm2cpio.sh %s | cpio -i %s' % (file, unpack_file)
+                    iterate = True
+                    iterate_file = unpack_file
+                else:
+                    cmd = 'rpm2cpio.sh %s | cpio -i' % (file)
+
+        if not unpack or not cmd:
             # If file == dest, then avoid any copies, as we already put the file into dest!
             dest = os.path.join(rootdir, os.path.basename(file))
             if (file != dest) and not (os.path.exists(dest) and os.path.samefile(file, dest)):
@@ -705,17 +719,17 @@ class FetchMethod(object):
                             destdir = "."
                         elif not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
                             os.makedirs("%s/%s" % (rootdir, destdir))
-                    cmd = 'cp -pPR %s %s/%s/' % (file, rootdir, destdir)
+                    #cmd = 'cp -pPR %s %s/%s/' % (file, rootdir, destdir)
+                    cmd = 'tar -cf - -C "%d" -ps . | tar -xf - -C "%s/%s/"' % (file, rootdir, destdir)
                 else:
-                    if not 'patch' in urldata.parm:
-                        # The "destdir" handling was specifically done for FILESPATH
-                        # items.  So, only do so for file:// entries.
-                        if urldata.type == "file" and urldata.path.find("/") != -1:
-                           destdir = urldata.path.rsplit("/", 1)[0]
-                        else:
-                           destdir = "."
-                        bb.mkdirhier("%s/%s" % (rootdir, destdir))
-                        cmd = 'cp %s %s/%s/' % (file, rootdir, destdir)
+                    # The "destdir" handling was specifically done for FILESPATH
+                    # items.  So, only do so for file:// entries.
+                    if urldata.type == "file" and urldata.path.find("/") != -1:
+                       destdir = urldata.path.rsplit("/", 1)[0]
+                    else:
+                       destdir = "."
+                    bb.mkdirhier("%s/%s" % (rootdir, destdir))
+                    cmd = 'cp %s %s/%s/' % (file, rootdir, destdir)
 
         if not cmd:
             return
@@ -724,7 +738,7 @@ class FetchMethod(object):
         save_cwd = os.getcwd();
         os.chdir(rootdir)
         if 'subdir' in urldata.parm:
-            newdir = ("%s/%s" % (rootdir, urldata.parm['subdir']))
+            newdir = ("%s/%s" % (rootdir, urldata.parm.get('subdir')))
             bb.mkdirhier(newdir)
             os.chdir(newdir)
 

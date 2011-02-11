@@ -831,3 +831,15 @@ def init_logger(logger, verbose, debug, debug_domains):
 
     if debug_domains:
         bb.msg.set_debug_domains(debug_domains)
+
+def to_boolean(string, default=None):
+    if not string:
+        return default
+
+    normalized = string.lower()
+    if normalized in ("y", "yes", "1", "true"):
+        return True
+    elif normalized in ("n", "no", "0", "false"):
+        return False
+    else:
+        raise ValueError("Invalid value for to_boolean: %s" % string)
