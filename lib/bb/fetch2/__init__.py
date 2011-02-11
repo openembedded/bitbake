@@ -458,8 +458,9 @@ def try_mirrors(d, origud, mirrors, check = False):
                  os.symlink(ud.localpath, origud.localpath)
             return ud.localpath
 
-        except bb.fetch2.BBFetchException:
+        except bb.fetch2.BBFetchException as e:
             logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
+            logger.debug(1, str(e))
             try:
                 if os.path.isfile(ud.localpath):
                     bb.utils.remove(ud.localpath)
@@ -899,7 +900,8 @@ class Fetch(object):
                             m.build_mirror_data(u, ud, self.d)
                         localpath = ud.localpath
 
-                    except BBFetchException:
+                    except BBFetchException as e:
+                        logger.debug(1, str(e))
                         # Remove any incomplete fetch
                         if os.path.isfile(ud.localpath):
                             bb.utils.remove(ud.localpath)
