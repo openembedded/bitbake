@@ -891,6 +891,7 @@ class Fetch(object):
                 if not m.need_update(u, ud, self.d):
                     localpath = ud.localpath
                 elif m.try_premirror(u, ud, self.d):
+                    logger.debug(1, "Trying PREMIRRORS")
                     mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
                     localpath = try_mirrors(self.d, ud, mirrors, False)
 
@@ -899,6 +900,7 @@ class Fetch(object):
 
                 if not localpath and m.need_update(u, ud, self.d):
                     try:
+                        logger.debug(1, "Trying Upstream")
                         m.download(u, ud, self.d)
                         if hasattr(m, "build_mirror_data"):
                             m.build_mirror_data(u, ud, self.d)
@@ -909,6 +911,7 @@ class Fetch(object):
                         # Remove any incomplete fetch
                         if os.path.isfile(ud.localpath):
                             bb.utils.remove(ud.localpath)
+                        logger.debug(1, "Trying MIRRORS")
                         mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
                         localpath = try_mirrors (self.d, ud, mirrors)
 
