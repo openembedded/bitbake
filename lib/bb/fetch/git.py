@@ -242,8 +242,7 @@ class Git(Fetch):
         """
         Look in the cache for the latest revision, if not present ask the SCM.
         """
-        persisted = bb.persist_data.persist(d)
-        revs = persisted['BB_URI_HEADREVS']
+        revs = bb.persist_data.persist('BB_URI_HEADREVS', d)
 
         key = self.generate_revision_key(url, ud, d, branch=True)
         rev = revs[key]
@@ -263,8 +262,7 @@ class Git(Fetch):
         """
 
         """
-        pd = bb.persist_data.persist(d)
-        localcounts = pd['BB_URI_LOCALCOUNT']
+        localcounts = bb.persist_data.persist('BB_URI_LOCALCOUNT', d)
         key = self.generate_revision_key(url, ud, d, branch=True)
         oldkey = self.generate_revision_key(url, ud, d, branch=False)
 

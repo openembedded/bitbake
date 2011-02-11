@@ -153,18 +153,18 @@ def fetcher_init(d):
     Called to initialize the fetchers once the configuration data is known.
     Calls before this must not hit the cache.
     """
-    pd = persist_data.persist(d)
     # When to drop SCM head revisions controlled by user policy
     srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
     if srcrev_policy == "cache":
         logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
     elif srcrev_policy == "clear":
         logger.debug(1, "Clearing SRCREV cache due to cache policy of: %s", srcrev_policy)
+        revs = persist_data.persist('BB_URI_HEADREVS', d)
         try:
-            bb.fetch.saved_headrevs = pd['BB_URI_HEADREVS'].items()
+            bb.fetch.saved_headrevs = revs.items()
         except:
             pass
-        del pd['BB_URI_HEADREVS']
+        revs.clear()
     else:
         raise FetchError("Invalid SRCREV cache policy of: %s" % srcrev_policy)
 
@@ -178,8 +178,7 @@ def fetcher_compare_revisions(d):
     return true/false on whether they've changed.
     """
 
-    pd = persist_data.persist(d)
-    data = pd['BB_URI_HEADREVS'].items()
+    data = persist_data.persist('BB_URI_HEADREVS', d).items()
     data2 = bb.fetch.saved_headrevs
 
     changed = False
@@ -756,8 +755,7 @@ class Fetch(object):
         if not hasattr(self, "_latest_revision"):
             raise ParameterError
 
-        pd = persist_data.persist(d)
-        revs = pd['BB_URI_HEADREVS']
+        revs = persist_data.persist('BB_URI_HEADREVS', d)
         key = self.generate_revision_key(url, ud, d)
         rev = revs[key]
         if rev != None:
@@ -773,8 +771,7 @@ class Fetch(object):
         if hasattr(self, "_sortable_revision"):
             return self._sortable_revision(url, ud, d)
 
-        pd = persist_data.persist(d)
-        localcounts = pd['BB_URI_LOCALCOUNT']
+        localcounts = persist_data.persist('BB_URI_LOCALCOUNT', d)
         key = self.generate_revision_key(url, ud, d)
 
         latest_rev = self._build_revision(url, ud, d)

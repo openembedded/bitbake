@@ -107,33 +107,8 @@ class SQLTable(collections.MutableMapping):
     def iteritems(self):
         return self._execute("SELECT * FROM %s;" % self.table)
 
-
-class SQLData(object):
-    """Object representing the persistent data"""
-    def __init__(self, filename):
-        bb.utils.mkdirhier(os.path.dirname(filename))
-
-        self.filename = filename
-        self.connection = sqlite3.connect(filename, timeout=5,
-                                          isolation_level=None)
-        self.cursor = self.connection.cursor()
-        self._tables = {}
-
-    def __getitem__(self, table):
-        if not isinstance(table, basestring):
-            raise TypeError("table argument must be a string, not '%s'" %
-                            type(table))
-
-        if table in self._tables:
-            return self._tables[table]
-        else:
-            tableobj = self._tables[table] = SQLTable(self.cursor, table)
-            return tableobj
-
-    def __delitem__(self, table):
-        if table in self._tables:
-            del self._tables[table]
-        self.cursor.execute("DROP TABLE IF EXISTS %s;" % table)
+    def clear(self):
+        self._execute("DELETE FROM %s;" % self.table)
 
 
 class PersistData(object):
@@ -183,14 +158,18 @@ class PersistData(object):
         """
         del self.data[domain][key]
 
+def connect(database):
+    return sqlite3.connect(database, timeout=5, isolation_level=None)
 
-def persist(d):
-    """Convenience factory for construction of SQLData based upon metadata"""
+def persist(domain, d):
+    """Convenience factory for SQLTable objects based upon metadata"""
     cachedir = (bb.data.getVar("PERSISTENT_DIR", d, True) or
                 bb.data.getVar("CACHE", d, True))
     if not cachedir:
         logger.critical("Please set the 'PERSISTENT_DIR' or 'CACHE' variable")
         sys.exit(1)
 
+    bb.utils.mkdirhier(cachedir)
     cachefile = os.path.join(cachedir, "bb_persist_data.sqlite3")
-    return SQLData(cachefile)
+    connection = connect(cachefile)
+    return SQLTable(connection, domain)
