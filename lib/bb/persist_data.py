@@ -106,8 +106,9 @@ class SQLTable(collections.MutableMapping):
 class PersistData(object):
     """Deprecated representation of the bitbake persistent data store"""
     def __init__(self, d):
-        warnings.warn("Use of PersistData will be deprecated in the future",
-                      category=PendingDeprecationWarning,
+        warnings.warn("Use of PersistData is deprecated.  Please use "
+                      "persist(domain, d) instead.",
+                      category=DeprecationWarning,
                       stacklevel=2)
 
         self.data = persist(d)

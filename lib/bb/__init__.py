@@ -96,7 +96,7 @@ def fatal(*args):
     sys.exit(1)
 
 
-def deprecated(func, name = None, advice = ""):
+def deprecated(func, name=None, advice=""):
     """This is a decorator which can be used to mark functions
     as deprecated. It will result in a warning being emmitted
     when the function is used."""
@@ -110,8 +110,8 @@ def deprecated(func, name = None, advice = ""):
     def newFunc(*args, **kwargs):
         warnings.warn("Call to deprecated function %s%s." % (name,
                                                              advice),
-                      category = PendingDeprecationWarning,
-                      stacklevel = 2)
+                      category=DeprecationWarning,
+                      stacklevel=2)
         return func(*args, **kwargs)
     newFunc.__name__ = func.__name__
     newFunc.__doc__ = func.__doc__
