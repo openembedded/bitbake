@@ -10,9 +10,9 @@ def subprocess_setup():
     signal.signal(signal.SIGPIPE, signal.SIG_DFL)
 
 class CmdError(RuntimeError):
-    def __init__(self, command, message=None):
+    def __init__(self, command, msg=None):
         self.command = command
-        self.message = message
+        self.msg = msg
 
     def __str__(self):
         if not isinstance(self.command, basestring):
@@ -21,8 +21,8 @@ class CmdError(RuntimeError):
             cmd = self.command
 
         msg = "Execution of '%s' failed" % cmd
-        if self.message:
-            msg += ': %s' % self.message
+        if self.msg:
+            msg += ': %s' % self.msg
         return msg
 
 class NotFoundError(CmdError):
