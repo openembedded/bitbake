@@ -827,7 +827,7 @@ class BBCooker:
                 return False
             if retval is True:
                 return True
-            return 0.5
+            return retval
 
         self.server_registration_cb(buildFileIdle, rq)
 
@@ -868,7 +868,7 @@ class BBCooker:
                 return False
             if retval is True:
                 return True
-            return 0.5
+            return retval
 
         self.buildSetVars()
 
