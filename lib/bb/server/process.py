@@ -22,6 +22,7 @@
 
 import logging
 import signal
+import sys
 import time
 import bb
 import bb.event
@@ -65,6 +66,9 @@ class EventAdapter():
 
 
 class ProcessServer(Process):
+    profile_filename = "profile.log"
+    profile_processed_filename = "profile.log.processed"
+
     def __init__(self, command_channel, event_queue, configuration):
         Process.__init__(self)
         self.command_channel = command_channel
@@ -88,6 +92,36 @@ class ProcessServer(Process):
         self._idlefunctions[function] = data
 
     def run(self):
+        if self.configuration.profile:
+            return self.profile_main()
+        else:
+            return self.main()
+
+    def profile_main(self):
+        import cProfile
+        profiler = cProfile.Profile()
+        try:
+            return profiler.runcall(self.main)
+        finally:
+            profiler.dump_stats(self.profile_filename)
+            self.write_profile_stats(self.profile_filename,
+                                     self.profile_processed_filename)
+            sys.__stderr__.write("Raw profiling information saved to %s and "
+                                 "processed statistics to %s\n" %
+                                 (self.profile_filename,
+                                  self.profile_processed_filename))
+
+    def write_profile_stats(self, infn, outfn):
+        import pstats
+        with open(outfn, 'w') as outfile:
+            stats = pstats.Stats(infn, stream=outfile)
+            stats.sort_stats('time')
+            stats.print_stats()
+            stats.print_callers()
+            stats.sort_stats('cumulative')
+            stats.print_stats()
+
+    def main(self):
         # Ignore SIGINT within the server, as all SIGINT handling is done by
         # the UI and communicated to us
         signal.signal(signal.SIGINT, signal.SIG_IGN)
