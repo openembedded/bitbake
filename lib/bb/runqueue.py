@@ -1316,6 +1316,8 @@ class RunQueueExecuteTasks(RunQueueExecute):
             self.build_pipes[pid] = runQueuePipe(pipein, pipeout, self.cfgData)
             self.runq_running[task] = 1
             self.stats.taskActive()
+            if self.stats.active < self.number_tasks:
+                return True
 
         for pipe in self.build_pipes:
             self.build_pipes[pipe].read()
