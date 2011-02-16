@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import re
+import bb.data
 
 logger = logging.getLogger('BitBake.SigGen')
 
@@ -190,6 +191,7 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
         return "%s.%s.%s" % (stampbase, taskname, h)
 
 def dump_this_task(outfile, d):
+    import bb.parse
     fn = d.getVar("BB_FILENAME", True)
     task = "do_" + d.getVar("BB_CURRENTTASK", True)
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile")
