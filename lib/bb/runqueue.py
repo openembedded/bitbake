@@ -48,10 +48,7 @@ class RunQueueStats:
 
     def copy(self):
         obj = self.__class__(self.total)
-        obj.completed = self.completed
-        obj.skipped = self.skipped
-        obj.failed = self.failed
-        obj.active = self.active
+        obj.__dict__.update(self.__dict__)
         return obj
 
     def taskFailed(self):
