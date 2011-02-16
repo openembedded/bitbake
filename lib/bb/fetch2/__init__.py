@@ -900,6 +900,7 @@ class Fetch(object):
             urls = self.urls
 
         network = bb.data.getVar("BB_NO_NETWORK", self.d, True)
+        premirroronly = (bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) == "1")
 
         for u in urls:
             ud = self.ud[u]
@@ -922,7 +923,7 @@ class Fetch(object):
                     mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
                     localpath = try_mirrors(self.d, ud, mirrors, False)
 
-                if bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) is not None:
+                if premirroronly:
                     bb.data.setVar("BB_NO_NETWORK", "1", self.d)
 
                 if not localpath and m.need_update(u, ud, self.d):
