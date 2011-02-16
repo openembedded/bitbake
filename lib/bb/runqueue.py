@@ -46,6 +46,14 @@ class RunQueueStats:
         self.active = 0
         self.total = total
 
+    def copy(self):
+        obj = self.__class__(self.total)
+        obj.completed = self.completed
+        obj.skipped = self.skipped
+        obj.failed = self.failed
+        obj.active = self.active
+        return obj
+
     def taskFailed(self):
         self.active = self.active - 1
         self.failed = self.failed + 1
@@ -1549,7 +1557,7 @@ class runQueueEvent(bb.event.Event):
     def __init__(self, task, stats, rq):
         self.taskid = task
         self.taskstring = rq.rqdata.get_user_idstring(task)
-        self.stats = stats
+        self.stats = stats.copy()
         bb.event.Event.__init__(self)
 
 class runQueueTaskStarted(runQueueEvent):
