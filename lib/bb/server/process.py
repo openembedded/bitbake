@@ -104,17 +104,16 @@ class ProcessServer(Process):
             return profiler.runcall(self.main)
         finally:
             profiler.dump_stats(self.profile_filename)
-            self.write_profile_stats(self.profile_filename,
-                                     self.profile_processed_filename)
+            self.write_profile_stats()
             sys.__stderr__.write("Raw profiling information saved to %s and "
                                  "processed statistics to %s\n" %
                                  (self.profile_filename,
                                   self.profile_processed_filename))
 
-    def write_profile_stats(self, infn, outfn):
+    def write_profile_stats(self):
         import pstats
-        with open(outfn, 'w') as outfile:
-            stats = pstats.Stats(infn, stream=outfile)
+        with open(self.profile_processed_filename, 'w') as outfile:
+            stats = pstats.Stats(self.profile_filename, stream=outfile)
             stats.sort_stats('time')
             stats.print_stats()
             stats.print_callers()
