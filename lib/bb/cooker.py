@@ -510,22 +510,21 @@ class BBCooker:
 
         data = _parse(os.path.join("conf", "bitbake.conf"), data)
 
-        self.configuration.data = data
-
         # Handle any INHERITs and inherit the base class
-        inherits  = ["base"] + (bb.data.getVar('INHERIT', self.configuration.data, True ) or "").split()
+        inherits  = ["base"] + (data.getVar('INHERIT', True) or "").split()
         for inherit in inherits:
-            self.configuration.data = _parse(os.path.join('classes', '%s.bbclass' % inherit), self.configuration.data, True )
+            data = _parse(os.path.join('classes', '%s.bbclass' % inherit), data, True )
 
         # Nomally we only register event handlers at the end of parsing .bb files
         # We register any handlers we've found so far here...
-        for var in bb.data.getVar('__BBHANDLERS', self.configuration.data) or []:
-            bb.event.register(var, bb.data.getVar(var, self.configuration.data))
+        for var in bb.data.getVar('__BBHANDLERS', data) or []:
+            bb.event.register(var, bb.data.getVar(var, data))
 
-        bb.fetch.fetcher_init(self.configuration.data)
-        bb.codeparser.parser_cache_init(self.configuration.data)
+        bb.fetch.fetcher_init(data)
+        bb.codeparser.parser_cache_init(data)
         bb.parse.init_parser(data)
-        bb.event.fire(bb.event.ConfigParsed(), self.configuration.data)
+        bb.event.fire(bb.event.ConfigParsed(), data)
+        self.configuration.data = data
 
     def handleCollections( self, collections ):
         """Handle collections"""
