@@ -90,6 +90,17 @@ class DataContext(dict):
         else:
             return value
 
+class ExpansionError(Exception):
+    def __init__(self, varname, expression, exception):
+        self.expression = expression
+        self.variablename = varname
+        self.exception = exception
+        self.msg = "Failure expanding variable %s, expression was %s which triggered exception %s: %s" % (varname, expression, type(exception).__name__, exception)
+        Exception.__init__(self, self.msg)
+        self.args = (varname, expression, exception)
+    def __str__(self):
+        return self.msg
+
 class DataSmart(MutableMapping):
     def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
         self.dict = {}
@@ -117,9 +128,10 @@ class DataSmart(MutableMapping):
                 s = __expand_python_regexp__.sub(varparse.python_sub, s)
                 if s == olds:
                     break
-            except Exception:
-                logger.exception("Error evaluating '%s'", s)
+            except ExpansionError:
                 raise
+            except Exception as exc:
+                raise ExpansionError(varname, s, exc)
 
         varparse.value = s
 
