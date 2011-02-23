@@ -497,11 +497,13 @@ def srcrev_internal_helper(ud, d, name):
         return ud.parm['tag']
 
     rev = None
+    pn = data.getVar("PN", d, True)
     if name != '':
-        pn = data.getVar("PN", d, True)
         rev = data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, True)
         if not rev:
             rev = data.getVar("SRCREV_%s" % name, d, True)
+    if not rev:
+       rev = data.getVar("SRCREV_pn-%s" % pn, d, True)
     if not rev:
         rev = data.getVar("SRCREV", d, True)
     if rev == "INVALID":
