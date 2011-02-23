@@ -298,6 +298,8 @@ class DataSmart(MutableMapping):
         if local_var:
             if flag in local_var:
                 value = copy.copy(local_var[flag])
+            elif flag == "content" and "defaultval" in local_var:
+                value = copy.copy(local_var["defaultval"])
         if expand and value:
             value = self.expand(value, None)
         return value

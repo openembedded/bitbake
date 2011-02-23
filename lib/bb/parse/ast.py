@@ -115,9 +115,6 @@ class DataNode(AstNode):
         if 'flag' in groupd and groupd['flag'] != None:
             bb.data.setVarFlag(key, groupd['flag'], val, data)
         elif groupd["lazyques"]:
-            assigned = bb.data.getVar("__lazy_assigned", data) or []
-            assigned.append(key)
-            bb.data.setVar("__lazy_assigned", assigned, data)
             bb.data.setVarFlag(key, "defaultval", val, data)
         else:
             bb.data.setVar(key, val, data)
@@ -310,11 +307,6 @@ def handleInherit(statements, filename, lineno, m):
     statements.append(InheritNode(filename, lineno, classes.split()))
 
 def finalize(fn, d, variant = None):
-    for lazykey in bb.data.getVar("__lazy_assigned", d) or ():
-        if bb.data.getVar(lazykey, d) is None:
-            val = bb.data.getVarFlag(lazykey, "defaultval", d)
-            bb.data.setVar(lazykey, val, d)
-
     bb.data.expandKeys(d)
     bb.data.update_data(d)
     code = []
