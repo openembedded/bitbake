@@ -902,6 +902,13 @@ class CookerExit(bb.event.Event):
     def __init__(self):
         bb.event.Event.__init__(self)
 
+class ParsingFailure(Exception):
+    def __init__(self, realexception, recipe):
+        self.realexception = realexception
+        self.recipe = recipe
+        Exception.__init__(self, "Failure when parsing %s" % recipe)
+        self.args = (realexception, recipe)
+
 def parse_file(task):
     filename, appends = task
     try:
@@ -909,6 +916,11 @@ def parse_file(task):
     except Exception, exc:
         exc.recipe = filename
         raise exc
+    # Need to turn BaseExceptions into Exceptions here so we gracefully shutdown
+    # and for example a worker thread doesn't just exit on its own in response to
+    # a SystemExit event for example.
+    except BaseException, exc:
+        raise ParsingFailure(exc, filename)
 
 class CookerParser(object):
     def __init__(self, cooker, filelist, masked):
