@@ -32,6 +32,7 @@ import sre_constants
 import threading
 from cStringIO import StringIO
 from contextlib import closing
+from functools import wraps
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
 
@@ -477,13 +478,6 @@ class BBCooker:
             path, _ = os.path.split(path)
 
     def parseConfigurationFiles(self, files):
-        def _parse(f, data, include=False):
-            try:
-                return bb.parse.handle(f, data, include)
-            except (IOError, bb.parse.ParseError) as exc:
-                parselog.critical("Unable to parse %s: %s" % (f, exc))
-                sys.exit(1)
-
         data = self.configuration.data
         bb.parse.init_parser(data)
         for f in files:
@@ -511,9 +505,9 @@ class BBCooker:
         data = _parse(os.path.join("conf", "bitbake.conf"), data)
 
         # Handle any INHERITs and inherit the base class
-        inherits  = ["base"] + (data.getVar('INHERIT', True) or "").split()
-        for inherit in inherits:
-            data = _parse(os.path.join('classes', '%s.bbclass' % inherit), data, True )
+        bbclasses  = ["base"] + (data.getVar('INHERIT', True) or "").split()
+        for bbclass in bbclasses:
+            data = _inherit(bbclass, data)
 
         # Nomally we only register event handlers at the end of parsing .bb files
         # We register any handlers we've found so far here...
@@ -900,6 +894,26 @@ class CookerExit(bb.event.Event):
 
     def __init__(self):
         bb.event.Event.__init__(self)
+
+def catch_parse_error(func):
+    """Exception handling bits for our parsing"""
+    @wraps(func)
+    def wrapped(fn, *args):
+        try:
+            return func(fn, *args)
+        except (IOError, bb.parse.ParseError) as exc:
+            parselog.critical("Unable to parse %s: %s" % (fn, exc))
+            sys.exit(1)
+    return wrapped
+
+@catch_parse_error
+def _parse(fn, data, include=False):
+    return bb.parse.handle(fn, data, include)
+
+@catch_parse_error
+def _inherit(bbclass, data):
+    bb.parse.BBHandler.inherit([bbclass], data)
+    return data
 
 class ParsingFailure(Exception):
     def __init__(self, realexception, recipe):
