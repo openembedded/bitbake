@@ -1085,16 +1085,21 @@ class RunQueueExecute:
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
             bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
+            ret = 0
             try:
                 the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
                 the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
                 os.environ.update(bb.data.exported_vars(the_data))
-                bb.build.exec_task(fn, taskname, the_data)
             except Exception as exc:
                 if not quieterrors:
                     logger.critical(str(exc))
                 os._exit(1)
-            os._exit(0)
+            try:
+                ret = bb.build.exec_task(fn, taskname, the_data)
+                os._exit(ret)
+            except:
+                os._exit(1)
+
         return pid, pipein, pipeout
 
 class RunQueueExecuteDummy(RunQueueExecute):

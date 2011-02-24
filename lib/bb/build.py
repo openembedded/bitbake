@@ -94,13 +94,11 @@ class TaskFailed(TaskBase):
         self.logfile = logfile
         super(TaskFailed, self).__init__(task, metadata)
 
-class InvalidTask(Exception):
-    def __init__(self, task, metadata):
-        self.task = task
-        self.metadata = metadata
+class TaskInvalid(TaskBase):
 
-    def __str__(self):
-        return "No such task '%s'" % self.task
+    def __init__(self, task, metadata):
+        super(TaskInvalid, self).__init__(task, metadata)
+        self._message = "No such task '%s'" % task
 
 
 class LogTee(object):
@@ -249,14 +247,16 @@ def _task_data(fn, task, d):
     data.expandKeys(localdata)
     return localdata
 
-def exec_task(fn, task, d):
+def _exec_task(fn, task, d):
     """Execute a BB 'task'
 
     Execution of a task involves a bit more setup than executing a function,
     running it with its own local metadata, and with some useful variables set.
     """
     if not data.getVarFlag(task, 'task', d):
-        raise InvalidTask(task, d)
+        event.fire(TaskInvalid(task, d), d)
+        logger.error("No such task: %s" % task)
+        return 1
 
     logger.debug(1, "Executing task %s", task)
 
@@ -288,8 +288,9 @@ def exec_task(fn, task, d):
         for func in (postfuncs or '').split():
             exec_func(func, localdata, logfile=logfile)
     except FuncFailed as exc:
-        event.fire(TaskFailed(exc.name, exc.logfile, localdata), localdata)
-        raise
+        logger.error(str(exc))
+        event.fire(TaskFailed(task, logfn, localdata), localdata)
+        return 1
     finally:
         logfile.close()
         if os.path.exists(logfn) and os.path.getsize(logfn) == 0:
@@ -300,6 +301,19 @@ def exec_task(fn, task, d):
 
     if not localdata.getVarFlag(task, 'nostamp') and not localdata.getVarFlag(task, 'selfstamp'):
         make_stamp(task, localdata)
+
+    return 0
+
+def exec_task(fn, task, d):
+    try: 
+        return _exec_task(fn, task, d)
+    except Exception:
+        from traceback import format_exc
+        logger.error("Build of %s failed" % (task))
+        logger.error(format_exc())
+        failedevent = TaskFailed(task, None, d)
+        event.fire(failedevent, d)
+        return 1
 
 def stamp_internal(taskname, d, file_name):
     """
