@@ -279,7 +279,7 @@ def explode_dep_versions(s):
 
     return r
 
-def join_deps(deps):
+def join_deps(deps, commasep=True):
     """
     Take the result from explode_dep_versions and generate a dependency string
     """
@@ -289,7 +289,10 @@ def join_deps(deps):
             result.append(dep + " (" + deps[dep] + ")")
         else:
             result.append(dep)
-    return ", ".join(result)
+    if commasep:
+        return ", ".join(result)
+    else:
+        return " ".join(result)
 
 def _print_trace(body, line):
     """
