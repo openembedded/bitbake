@@ -216,6 +216,8 @@ def exec_func_shell(function, d, runfile, cwd=None, fakeroot=False):
         data.emit_func(function, script, d)
 
         script.write("set -x\n")
+        if cwd:
+            script.write("cd %s" % cwd)
         script.write("%s\n" % function)
         os.fchmod(script.fileno(), 0775)
 
@@ -230,7 +232,7 @@ def exec_func_shell(function, d, runfile, cwd=None, fakeroot=False):
         logfile = sys.stdout
 
     try:
-        bb.process.run(cmd, cwd=cwd, shell=False, stdin=NULL, log=logfile)
+        bb.process.run(cmd, shell=False, stdin=NULL, log=logfile)
     except bb.process.CmdError:
         logfn = d.getVar('BB_LOGFILE', True)
         raise FuncFailed(function, logfn)
