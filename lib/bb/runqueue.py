@@ -204,9 +204,9 @@ class RunQueueData:
             ret.extend([nam])
         return ret
 
-    def get_user_idstring(self, task):
+    def get_user_idstring(self, task, task_name_suffix = ""):
         fn = self.taskData.fn_index[self.runq_fnid[task]]
-        taskname = self.runq_task[task]
+        taskname = self.runq_task[task] + task_name_suffix
         return "%s, %s" % (fn, taskname)
 
     def get_task_id(self, fnid, taskname):
@@ -1503,7 +1503,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
     def task_fail(self, task, result):
         self.stats.taskFailed()
         index = self.rqdata.runq_setscene[task]
-        bb.event.fire(runQueueTaskFailed(task, self.stats, result, self), self.cfgData)
+        bb.event.fire(sceneQueueTaskFailed(index, self.stats, result, self), self.cfgData)
         self.scenequeue_notcovered.add(task)
         self.scenequeue_updatecounters(task)
 
@@ -1632,6 +1632,14 @@ class runQueueTaskFailed(runQueueEvent):
     def __init__(self, task, stats, exitcode, rq):
         runQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
+
+class sceneQueueTaskFailed(runQueueTaskFailed):
+    """
+    Event notifing a setscene task failed
+    """
+    def __init__(self, task, stats, exitcode, rq):
+        runQueueTaskFailed.__init__(self, task, stats, exitcode, rq)
+        self.taskstring = rq.rqdata.get_user_idstring(task, "_setscene")
 
 class runQueueTaskCompleted(runQueueEvent):
     """
