@@ -94,7 +94,7 @@ class Bzr(Fetch):
             bb.utils.remove(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir)), True)
             bzrcmd = self._buildbzrcommand(ud, d, "fetch")
             logger.debug(1, "BZR Checkout %s", loc)
-            bb.mkdirhier(ud.pkgdir)
+            bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", bzrcmd)
             runfetchcmd(bzrcmd, d)

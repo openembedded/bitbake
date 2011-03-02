@@ -96,7 +96,7 @@ class Osc(FetchMethod):
             oscfetchcmd = self._buildosccommand(ud, d, "fetch")
             logger.info("Fetch " + loc)
             # check out sources there
-            bb.mkdirhier(ud.pkgdir)
+            bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", oscfetchcmd)
             bb.fetch2.check_network_access(d, oscfetchcmd, ud.url)

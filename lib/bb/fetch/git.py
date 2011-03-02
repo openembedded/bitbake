@@ -131,7 +131,7 @@ class Git(Fetch):
 
         # If the checkout doesn't exist and the mirror tarball does, extract it
         if not os.path.exists(ud.clonedir) and os.path.exists(repofile):
-            bb.mkdirhier(ud.clonedir)
+            bb.utils.mkdirhier(ud.clonedir)
             os.chdir(ud.clonedir)
             runfetchcmd("tar -xzf %s" % (repofile), d)
 
@@ -188,7 +188,7 @@ class Git(Fetch):
             os.chdir(coprefix)
             runfetchcmd("%s checkout -q -f %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
         else:
-            bb.mkdirhier(codir)
+            bb.utils.mkdirhier(codir)
             os.chdir(ud.clonedir)
             runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.tag, readpathspec), d)
             runfetchcmd("%s checkout-index -q -f --prefix=%s -a" % (ud.basecmd, coprefix), d)

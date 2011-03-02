@@ -146,7 +146,7 @@ class Svn(Fetch):
             svnfetchcmd = self._buildsvncommand(ud, d, "fetch")
             logger.info("Fetch " + loc)
             # check out sources there
-            bb.mkdirhier(ud.pkgdir)
+            bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", svnfetchcmd)
             runfetchcmd(svnfetchcmd, d)

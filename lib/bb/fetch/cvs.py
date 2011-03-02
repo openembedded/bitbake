@@ -137,7 +137,7 @@ class Cvs(Fetch):
         else:
             logger.info("Fetch " + loc)
             # check out sources there
-            bb.mkdirhier(pkgdir)
+            bb.utils.mkdirhier(pkgdir)
             os.chdir(pkgdir)
             logger.debug(1, "Running %s", cvscmd)
             myret = os.system(cvscmd)

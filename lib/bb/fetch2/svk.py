@@ -75,7 +75,7 @@ class Svk(FetchMethod):
         localdata = data.createCopy(d)
         data.update_data(localdata)
         logger.debug(2, "Fetch: creating temporary directory")
-        bb.mkdirhier(data.expand('${WORKDIR}', localdata))
+        bb.utils.mkdirhier(data.expand('${WORKDIR}', localdata))
         data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
         tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, True) or "false")
         tmpfile = tmppipe.readline().strip()

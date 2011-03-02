@@ -131,7 +131,7 @@ class Hg(Fetch):
             fetchcmd = self._buildhgcommand(ud, d, "fetch")
             logger.info("Fetch " + loc)
             # check out sources there
-            bb.mkdirhier(ud.pkgdir)
+            bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", fetchcmd)
             runfetchcmd(fetchcmd, d)

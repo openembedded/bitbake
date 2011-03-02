@@ -139,7 +139,7 @@ class Cvs(FetchMethod):
         else:
             logger.info("Fetch " + loc)
             # check out sources there
-            bb.mkdirhier(pkgdir)
+            bb.utils.mkdirhier(pkgdir)
             os.chdir(pkgdir)
             logger.debug(1, "Running %s", cvscmd)
             bb.fetch2.check_network_access(d, cvscmd, ud.url)

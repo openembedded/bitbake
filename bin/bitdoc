@@ -497,7 +497,7 @@ def main():
         doc.insert_doc_item(doc_ins)
 
     # let us create the HTML now
-    bb.mkdirhier(output_dir)
+    bb.utils.mkdirhier(output_dir)
     os.chdir(output_dir)
 
     # Let us create the sites now. We do it in the following order

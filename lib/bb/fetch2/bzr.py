@@ -93,7 +93,7 @@ class Bzr(FetchMethod):
             bzrcmd = self._buildbzrcommand(ud, d, "fetch")
             bb.fetch2.check_network_access(d, bzrcmd, ud.url)
             logger.debug(1, "BZR Checkout %s", loc)
-            bb.mkdirhier(ud.pkgdir)
+            bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", bzrcmd)
             runfetchcmd(bzrcmd, d)

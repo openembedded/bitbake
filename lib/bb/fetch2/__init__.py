@@ -730,7 +730,7 @@ class FetchMethod(object):
                        destdir = urldata.path.rsplit("/", 1)[0]
                     else:
                        destdir = "."
-                    bb.mkdirhier("%s/%s" % (rootdir, destdir))
+                    bb.utils.mkdirhier("%s/%s" % (rootdir, destdir))
                     cmd = 'cp %s %s/%s/' % (file, rootdir, destdir)
 
         if not cmd:
@@ -741,7 +741,7 @@ class FetchMethod(object):
         os.chdir(rootdir)
         if 'subdir' in urldata.parm:
             newdir = ("%s/%s" % (rootdir, urldata.parm.get('subdir')))
-            bb.mkdirhier(newdir)
+            bb.utils.mkdirhier(newdir)
             os.chdir(newdir)
 
         cmd = "PATH=\"%s\" %s" % (bb.data.getVar('PATH', data, True), cmd)
