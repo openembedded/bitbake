@@ -56,7 +56,7 @@ setup(name='bitbake',
       packages = ["bb.server", "bb.parse.parse_py", "bb.parse", "bb.fetch",
                   "bb.ui.crumbs", "bb.ui", "bb.pysh", "bb"],
       py_modules = ["codegen"],
-      scripts = ["bin/bitbake"],
+      scripts = ["bin/bitbake", "bin/bitbake-layers", "bin/bitbake-diffsigs"],
       data_files = [("share/bitbake", glob("conf/*") + glob("classes/*")),
                   ("share/doc/bitbake-%s/manual" % __version__, glob("doc/manual/html/*"))],
       cmdclass = {
