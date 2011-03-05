@@ -261,7 +261,9 @@ class BBCooker:
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
         bb.data.expandKeys(localdata)
-        taskdata = bb.taskdata.TaskData(self.configuration.abort)
+        # We set abort to False here to prevent unbuildable targets raising
+        # an exception when we're just generating data
+        taskdata = bb.taskdata.TaskData(False)
 
         runlist = []
         for k in pkgs_to_build:
