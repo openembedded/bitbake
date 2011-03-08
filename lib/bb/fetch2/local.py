@@ -40,6 +40,7 @@ class Local(FetchMethod):
 
     def urldata_init(self, ud, d):
         # We don't set localfile as for this fetcher the file is already local!
+        ud.basename = os.path.basename(ud.url.split("://")[1].split(";")[0])
         return
 
     def localpath(self, url, urldata, d):
@@ -49,6 +50,9 @@ class Local(FetchMethod):
         path = url.split("://")[1]
         path = path.split(";")[0]
         newpath = path
+        dldirfile = os.path.join(data.getVar("DL_DIR", d, True), os.path.basename(path))
+        if os.path.exists(dldirfile):
+            return dldirfile
         if path[0] != "/":
             filespath = data.getVar('FILESPATH', d, True)
             if filespath:
@@ -57,7 +61,16 @@ class Local(FetchMethod):
                 filesdir = data.getVar('FILESDIR', d, True)
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
+        if not os.path.exists(newpath) and path.find("*") == -1:
+            return dldirfile
         return newpath
+
+    def need_update(self, url, ud, d):
+        if url.find("*") == -1:
+            return False
+        if os.path.exists(ud.localpath):
+            return False
+        return True
 
     def download(self, url, urldata, d):
         """Fetch urls (no-op for Local method)"""
