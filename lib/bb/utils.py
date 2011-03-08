@@ -412,7 +412,7 @@ def lockfile(name, shared=False):
 
     if not os.access(dirname, os.W_OK):
         logger.error("Unable to acquire lock '%s', directory is not writable",
-                     dirname)
+                     name)
         sys.exit(1)
 
     op = fcntl.LOCK_EX
