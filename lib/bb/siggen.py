@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import os
 import re
 import bb.data
 
