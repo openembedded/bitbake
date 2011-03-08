@@ -68,9 +68,9 @@ class Osc(FetchMethod):
 
         coroot = self._strip_leading_slashes(ud.path)
 
-        if command is "fetch":
+        if command == "fetch":
             osccmd = "%s %s co %s/%s %s" % (basecmd, config, coroot, ud.module, " ".join(options))
-        elif command is "update":
+        elif command == "update":
             osccmd = "%s %s up %s" % (basecmd, config, " ".join(options))
         else:
             raise FetchError("Invalid osc command %s" % command, ud.url)

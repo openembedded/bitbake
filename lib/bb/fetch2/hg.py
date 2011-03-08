@@ -92,21 +92,21 @@ class Hg(FetchMethod):
         else:
             hgroot = ud.user + "@" + host + ud.path
 
-        if command is "info":
+        if command == "info":
             return "%s identify -i %s://%s/%s" % (basecmd, proto, hgroot, ud.module)
 
         options = [];
         if ud.revision:
             options.append("-r %s" % ud.revision)
 
-        if command is "fetch":
+        if command == "fetch":
             cmd = "%s clone %s %s://%s/%s %s" % (basecmd, " ".join(options), proto, hgroot, ud.module, ud.module)
-        elif command is "pull":
+        elif command == "pull":
             # do not pass options list; limiting pull to rev causes the local
             # repo not to contain it and immediately following "update" command
             # will crash
             cmd = "%s pull" % (basecmd)
-        elif command is "update":
+        elif command == "update":
             cmd = "%s update -C %s" % (basecmd, " ".join(options))
         else:
             raise FetchError("Invalid hg command %s" % command, ud.url)

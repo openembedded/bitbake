@@ -85,7 +85,7 @@ class Svn(FetchMethod):
         if ud.pswd:
             options.append("--password %s" % ud.pswd)
 
-        if command is "info":
+        if command == "info":
             svncmd = "%s info %s %s://%s/%s/" % (basecmd, " ".join(options), proto, svnroot, ud.module)
         else:
             suffix = ""
@@ -93,9 +93,9 @@ class Svn(FetchMethod):
                 options.append("-r %s" % ud.revision)
                 suffix = "@%s" % (ud.revision)
 
-            if command is "fetch":
+            if command == "fetch":
                 svncmd = "%s co %s %s://%s/%s%s %s" % (basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
-            elif command is "update":
+            elif command == "update":
                 svncmd = "%s update %s" % (basecmd, " ".join(options))
             else:
                 raise FetchError("Invalid svn command %s" % command, ud.url)

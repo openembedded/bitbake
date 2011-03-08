@@ -928,7 +928,7 @@ class RunQueue:
 
         if self.state is runQueuePrepare:
             self.rqexe = RunQueueExecuteDummy(self)
-            if self.rqdata.prepare() is 0:
+            if self.rqdata.prepare() == 0:
                 self.state = runQueueComplete
             else:
                 self.state = runQueueSceneInit
@@ -1017,7 +1017,7 @@ class RunQueueExecute:
         collect the process exit codes and close the information pipe.
         """
         result = os.waitpid(-1, os.WNOHANG)
-        if result[0] is 0 and result[1] is 0:
+        if result[0] == 0 and result[1] == 0:
             return None
         task = self.build_pids[result[0]]
         del self.build_pids[result[0]]

@@ -67,15 +67,15 @@ class Bzr(Fetch):
 
         options = []
 
-        if command is "revno":
+        if command == "revno":
             bzrcmd = "%s revno %s %s://%s" % (basecmd, " ".join(options), proto, bzrroot)
         else:
             if ud.revision:
                 options.append("-r %s" % ud.revision)
 
-            if command is "fetch":
+            if command == "fetch":
                 bzrcmd = "%s co %s %s://%s" % (basecmd, " ".join(options), proto, bzrroot)
-            elif command is "update":
+            elif command == "update":
                 bzrcmd = "%s pull %s --overwrite" % (basecmd, " ".join(options))
             else:
                 raise FetchError("Invalid bzr command %s" % command)
