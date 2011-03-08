@@ -21,13 +21,13 @@ def check_indent(codestr):
     """If the code is indented, add a top level piece of code to 'remove' the indentation"""
 
     i = 0
-    while codestr[i] in ["\n", "	", " "]:
+    while codestr[i] in ["\n", "\t", " "]:
         i = i + 1
 
     if i == 0:
         return codestr
 
-    if codestr[i-1] is "	" or codestr[i-1] is " ":
+    if codestr[i-1] == "\t" or codestr[i-1] == " ":
         return "if 1:\n" + codestr
 
     return codestr
