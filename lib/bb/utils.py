@@ -407,13 +407,12 @@ def lockfile(name, shared=False):
     Use the file fn as a lock file, return when the lock has been acquired.
     Returns a variable to pass to unlockfile().
     """
-    path = os.path.dirname(name)
-    if not os.path.isdir(path):
-        logger.error("Lockfile destination directory '%s' does not exist", path)
-        sys.exit(1)
+    dirname = os.path.dirname(name)
+    mkdirhier(dirname)
 
-    if not os.access(path, os.W_OK):
-        logger.error("Error, lockfile path is not writable!: %s" % path)
+    if not os.access(dirname, os.W_OK):
+        logger.error("Unable to acquire lock '%s', directory is not writable",
+                     dirname)
         sys.exit(1)
 
     op = fcntl.LOCK_EX
@@ -449,7 +448,7 @@ def unlockfile(lf):
     Unlock a file locked using lockfile()
     """
     try:
-        # If we had a shared lock, we need to promote to exclusive before 
+        # If we had a shared lock, we need to promote to exclusive before
         # removing the lockfile. Attempt this, ignore failures.
         fcntl.flock(lf.fileno(), fcntl.LOCK_EX|fcntl.LOCK_NB)
         os.unlink(lf.name)
