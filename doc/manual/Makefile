@@ -45,7 +45,7 @@ endif
 	$(call command,xsltproc --stringparam base.dir $@/ $(if $(htmlcssfile),--stringparam html.stylesheet $(htmlcssfile)) $(htmlxsl) $(manual),XSLTPROC $@ $(manual))
 
 $(xmltotypes): $(manual)
-	$(call command,xmlto --extensions -o $(topdir)/$@ $@ $(manual),XMLTO $@ $(manual))
+	$(call command,xmlto --with-dblatex --extensions -o $(topdir)/$@ $@ $(manual),XMLTO $@ $(manual))
 
 clean:
 	rm -rf $(cleanfiles)
