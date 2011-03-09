@@ -66,7 +66,7 @@ class Local(FetchMethod):
         return newpath
 
     def need_update(self, url, ud, d):
-        if url.find("*") == -1:
+        if url.find("*") != -1:
             return False
         if os.path.exists(ud.localpath):
             return False
