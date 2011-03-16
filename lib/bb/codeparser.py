@@ -4,7 +4,7 @@ import logging
 import os.path
 import bb.utils, bb.data
 from itertools import chain
-from pysh import pyshyacc, pyshlex
+from pysh import pyshyacc, pyshlex, sherrors
 
 
 logger = logging.getLogger('BitBake.CodeParser')
@@ -227,7 +227,7 @@ class ShellParser():
         try:
             tokens, _ = pyshyacc.parse(value, eof=True, debug=False)
         except pyshlex.NeedMore:
-            raise ShellSyntaxError("Unexpected EOF")
+            raise sherrors.ShellSyntaxError("Unexpected EOF")
 
         for token in tokens:
             self.process_tokens(token)
