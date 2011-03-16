@@ -191,11 +191,11 @@ class DataSmart(MutableMapping):
                             keep.append((a ,o))
                             continue
 
-                        if op is "_append":
+                        if op == "_append":
                             sval = self.getVar(append, False) or ""
                             sval += a
                             self.setVar(append, sval)
-                        elif op is "_prepend":
+                        elif op == "_prepend":
                             sval = a + (self.getVar(append, False) or "")
                             self.setVar(append, sval)
 
