@@ -219,7 +219,8 @@ def exec_func_shell(function, d, runfile, cwd=None, fakeroot=False):
         if cwd:
             script.write("cd %s\n" % cwd)
         script.write("%s\n" % function)
-        os.fchmod(script.fileno(), 0775)
+
+    os.chmod(runfile, 0775)
 
     if fakeroot:
         cmd = ['fakeroot', runfile]
