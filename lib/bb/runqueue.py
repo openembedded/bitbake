@@ -1058,6 +1058,28 @@ class RunQueueExecute:
         return
 
     def fork_off_task(self, fn, task, taskname, quieterrors=False):
+        # We need to setup the environment BEFORE the fork, since
+        # a fork() or exec*() activates PSEUDO...
+
+        # Capture a copy of the environment as a backup if we overwrite anything...
+        envbackup = os.environ.copy()
+        env = {}
+
+        taskdep = self.rqdata.dataCache.task_deps[fn]
+        if 'fakeroot' in taskdep and taskname in taskdep['fakeroot']:
+            envvars = (self.rqdata.dataCache.fakerootenv[fn] or "").split()
+            for var in envvars:
+                comps = var.split("=")
+                env[comps[0]] = comps[1]
+
+            fakedirs = (self.rqdata.dataCache.fakerootdirs[fn] or "").split()
+            for p in fakedirs:
+                bb.utils.mkdirhier(p)
+            logger.debug(2, "Running %s:%s under fakeroot, state dir is %s" % (fn, taskname, fakedirs))
+            # Setup fakeroot/pseudo environment
+            for e in env:
+                os.putenv(e, env[e])
+
         sys.stdout.flush()
         sys.stderr.flush()
         try:
@@ -1099,6 +1121,13 @@ class RunQueueExecute:
                 os._exit(ret)
             except:
                 os._exit(1)
+        else:
+            # Now restore the environment back to the way we found it...
+            for e in env:
+                os.unsetenv(e)
+            for e in envbackup:
+                if e in env:
+                    os.putenv(e, envbackup[e])
 
         return pid, pipein, pipeout
 

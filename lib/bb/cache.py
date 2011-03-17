@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "137"
+__cache_version__ = "138"
 
 recipe_fields = (
     'pn',
@@ -78,6 +78,8 @@ recipe_fields = (
     'summary',
     'license',
     'section',
+    'fakerootenv',
+    'fakerootdirs',
 )
 
 
@@ -172,6 +174,8 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
             summary          = cls.getvar('SUMMARY', metadata),
             license          = cls.getvar('LICENSE', metadata),
             section          = cls.getvar('SECTION', metadata),
+            fakerootenv      = cls.getvar('FAKEROOTENV', metadata),
+            fakerootdirs     = cls.getvar('FAKEROOTDIRS', metadata),
         )
 
 
@@ -584,6 +588,8 @@ class CacheData(object):
         self.summary = {}
         self.license = {}
         self.section = {}
+        self.fakerootenv = {}
+        self.fakerootdirs = {}
 
         # Indirect Cache variables (set elsewhere)
         self.ignored_dependencies = []
@@ -647,3 +653,5 @@ class CacheData(object):
         self.summary[fn] = info.summary
         self.license[fn] = info.license
         self.section[fn] = info.section
+        self.fakerootenv[fn] = info.fakerootenv
+        self.fakerootdirs[fn] = info.fakerootdirs
