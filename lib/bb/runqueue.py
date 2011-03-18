@@ -1061,24 +1061,21 @@ class RunQueueExecute:
         # We need to setup the environment BEFORE the fork, since
         # a fork() or exec*() activates PSEUDO...
 
-        # Capture a copy of the environment as a backup if we overwrite anything...
-        envbackup = os.environ.copy()
-        env = {}
+        envbackup = {}
 
         taskdep = self.rqdata.dataCache.task_deps[fn]
         if 'fakeroot' in taskdep and taskname in taskdep['fakeroot']:
             envvars = (self.rqdata.dataCache.fakerootenv[fn] or "").split()
-            for var in envvars:
-                comps = var.split("=")
-                env[comps[0]] = comps[1]
+            for key, value in (var.split('=') for var in envvars):
+                envbackup[key] = os.environ.get(key)
+                os.environ[key] = value
 
             fakedirs = (self.rqdata.dataCache.fakerootdirs[fn] or "").split()
             for p in fakedirs:
                 bb.utils.mkdirhier(p)
-            logger.debug(2, "Running %s:%s under fakeroot, state dir is %s" % (fn, taskname, fakedirs))
-            # Setup fakeroot/pseudo environment
-            for e in env:
-                os.putenv(e, env[e])
+
+            logger.debug(2, 'Running %s:%s under fakeroot, fakedirs: %s' %
+                            (fn, taskname, ', '.join(fakedirs)))
 
         sys.stdout.flush()
         sys.stderr.flush()
@@ -1089,6 +1086,7 @@ class RunQueueExecute:
             pid = os.fork()
         except OSError as e:
             bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
+
         if pid == 0:
             pipein.close()
 
@@ -1122,12 +1120,11 @@ class RunQueueExecute:
             except:
                 os._exit(1)
         else:
-            # Now restore the environment back to the way we found it...
-            for e in env:
-                os.unsetenv(e)
-            for e in envbackup:
-                if e in env:
-                    os.putenv(e, envbackup[e])
+            for key, value in envbackup.iteritems():
+                if value is None:
+                    del os.environ[key]
+                else:
+                    os.environ[key] = value
 
         return pid, pipein, pipeout
 
