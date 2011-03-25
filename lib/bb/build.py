@@ -203,7 +203,10 @@ def exec_func_python(func, d, runfile, cwd=None):
         raise FuncFailed(func, None)
     finally:
         if cwd and olddir:
-            os.chdir(olddir)
+            try:
+                os.chdir(olddir)
+            except OSError:
+                pass
 
 def exec_func_shell(function, d, runfile, cwd=None, fakeroot=False):
     """Execute a shell function from the metadata
