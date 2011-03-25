@@ -32,7 +32,7 @@ import bb
 import bb.msg
 import bb.process
 from contextlib import nested
-from bb import data, event, mkdirhier, utils
+from bb import data, event, utils
 
 bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
@@ -161,6 +161,7 @@ def exec_func(func, d, dirs = None):
         lockfiles = None
 
     tempdir = data.getVar('T', d, 1)
+    bb.utils.mkdirhier(tempdir)
     runfile = os.path.join(tempdir, 'run.{0}.{1}'.format(func, os.getpid()))
 
     with bb.utils.fileslocked(lockfiles):
