@@ -1165,6 +1165,25 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     self.rq.scenequeue_covered.add(task)
                     found = True
 
+        # Detect when the real task needs to be run anyway by looking to see
+        # if any of its dependencies within the same package are scheduled
+        # to be run.
+        covered_remove = set()
+        for task in self.rq.scenequeue_covered:
+            task_fnid = self.rqdata.runq_fnid[task]
+            for dep in self.rqdata.runq_depends[task]:
+                if self.rqdata.runq_fnid[dep] == task_fnid:
+                    if dep not in self.rq.scenequeue_covered:
+                        covered_remove.add(task)
+                        break
+
+        for task in covered_remove:
+            fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
+            taskname = self.rqdata.runq_task[task] + '_setscene'
+            bb.build.del_stamp(taskname, self.rqdata.dataCache, fn)
+            logger.debug(1, 'Not skipping task %s because it will have to be run anyway', task)
+            self.rq.scenequeue_covered.remove(task)
+
         logger.debug(1, 'Full skip list %s', self.rq.scenequeue_covered)
 
         for task in self.rq.scenequeue_covered:
