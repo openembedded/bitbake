@@ -152,7 +152,8 @@ def exec_func(func, d, dirs = None):
             adir = None
 
     ispython = flags.get('python')
-    fakeroot = flags.get('fakeroot')
+    if flags.get('fakeroot') and not flags.get('task'):
+        bb.fatal("Function %s specifies fakeroot but isn't a task?!" % func)
 
     lockflag = flags.get('lockfiles')
     if lockflag:
@@ -168,7 +169,7 @@ def exec_func(func, d, dirs = None):
         if ispython:
             exec_func_python(func, d, runfile, cwd=adir)
         else:
-            exec_func_shell(func, d, runfile, cwd=adir, fakeroot=fakeroot)
+            exec_func_shell(func, d, runfile, cwd=adir)
 
 _functionfmt = """
 def {function}(d):
@@ -208,7 +209,7 @@ def exec_func_python(func, d, runfile, cwd=None):
             except OSError:
                 pass
 
-def exec_func_shell(function, d, runfile, cwd=None, fakeroot=False):
+def exec_func_shell(function, d, runfile, cwd=None):
     """Execute a shell function from the metadata
 
     Note on directory behavior.  The 'dirs' varflag should contain a list
@@ -230,10 +231,7 @@ def exec_func_shell(function, d, runfile, cwd=None, fakeroot=False):
 
     os.chmod(runfile, 0775)
 
-    if fakeroot:
-        cmd = ['fakeroot', runfile]
-    else:
-        cmd = runfile
+    cmd = runfile
 
     if logger.isEnabledFor(logging.DEBUG):
         logfile = LogTee(logger, sys.stdout)
