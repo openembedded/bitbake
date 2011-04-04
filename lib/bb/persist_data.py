@@ -68,6 +68,11 @@ class SQLTable(collections.MutableMapping):
         self._execute("DELETE from %s where key=?;" % self.table, [key])
 
     def __setitem__(self, key, value):
+        if not isinstance(key, basestring):
+            raise TypeError('Only string keys are supported')
+        elif not isinstance(value, basestring):
+            raise TypeError('Only string values are supported')
+
         data = self._execute("SELECT * from %s where key=?;" %
                                    self.table, [key])
         exists = len(list(data))
