@@ -38,6 +38,8 @@ import bb.utils
 worker_pid = 0
 worker_pipe = None
 
+logger = logging.getLogger('BitBake.Event')
+
 class Event(object):
     """Base class for events"""
 
@@ -59,18 +61,35 @@ _ui_handler_seq = 0
 bb.utils._context["NotHandled"] = NotHandled
 bb.utils._context["Handled"] = Handled
 
+def execute_handler(name, handler, event, d):
+    event.data = d
+    try:
+        ret = handler(event)
+    except Exception:
+        etype, value, tb = sys.exc_info()
+        logger.error("Execution of event handler '%s' failed" % name,
+                        exc_info=(etype, value, tb.tb_next))
+        raise
+    except SystemExit as exc:
+        if exc.code != 0:
+            logger.error("Execution of event handler '%s' failed" % name)
+        raise
+    finally:
+        del event.data
+
+    if ret is not None:
+        warnings.warn("Using Handled/NotHandled in event handlers is deprecated",
+                        DeprecationWarning, stacklevel = 2)
+
 def fire_class_handlers(event, d):
     if isinstance(event, logging.LogRecord):
         return
 
-    for handler in _handlers.itervalues():
-        event.data = d
-        ret = handler(event)
-        if ret is not None:
-            warnings.warn("Using Handled/NotHandled in event handlers is deprecated",
-                          DeprecationWarning, stacklevel = 2)
-
-        del event.data
+    for name, handler in _handlers.iteritems():
+        try:
+            execute_handler(name, handler, event, d)
+        except BaseException:
+            continue
 
 ui_queue = []
 @atexit.register
@@ -142,11 +161,12 @@ def register(name, handler):
     if handler is not None:
         # handle string containing python code
         if isinstance(handler, basestring):
-            tmp = "def tmpHandler(e):\n%s" % handler
-            comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._registerCode")
+            tmp = "def %s(e):\n%s" % (name, handler)
+            comp = bb.utils.better_compile(tmp, "%s(e)" % name,
+                                           "bb.event._registerCode")
             env = {}
             bb.utils.simple_exec(comp, env)
-            func = bb.utils.better_eval("tmpHandler", env)
+            func = bb.utils.better_eval(name, env)
             _handlers[name] = func
         else:
             _handlers[name] = handler
