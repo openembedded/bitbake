@@ -151,6 +151,7 @@ def fire_from_worker(event, d):
     event = pickle.loads(event[7:-8])
     fire_ui_handlers(event, d)
 
+noop = lambda _: None
 def register(name, handler):
     """Register an Event handler"""
 
@@ -162,10 +163,15 @@ def register(name, handler):
         # handle string containing python code
         if isinstance(handler, basestring):
             tmp = "def %s(e):\n%s" % (name, handler)
-            comp = bb.utils.better_compile(tmp, "%s(e)" % name,
-                                           "bb.event._registerCode")
+            try:
+                code = compile(tmp, "%s(e)" % name, "exec")
+            except SyntaxError:
+                logger.error("Unable to register event handler '%s':\n%s", name,
+                             ''.join(traceback.format_exc(limit=0)))
+                _handlers[name] = noop
+                return
             env = {}
-            bb.utils.simple_exec(comp, env)
+            bb.utils.simple_exec(code, env)
             func = bb.utils.better_eval(name, env)
             _handlers[name] = func
         else:
