@@ -106,6 +106,9 @@ class SQLTable(collections.MutableMapping):
     def clear(self):
         self._execute("DELETE FROM %s;" % self.table)
 
+    def has_key(self, key):
+        return key in self
+
 
 class PersistData(object):
     """Deprecated representation of the bitbake persistent data store"""
