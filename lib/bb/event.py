@@ -63,18 +63,13 @@ def fire_class_handlers(event, d):
     if isinstance(event, logging.LogRecord):
         return
 
-    for handler in _handlers:
-        h = _handlers[handler]
+    for handler in _handlers.itervalues():
         event.data = d
-        if type(h).__name__ == "code":
-            locals = {"e": event}
-            bb.utils.simple_exec(h, locals)
-            ret = bb.utils.better_eval("tmpHandler(e)", locals)
-            if ret is not None:
-                warnings.warn("Using Handled/NotHandled in event handlers is deprecated",
-                              DeprecationWarning, stacklevel = 2)
-        else:
-            h(event)
+        ret = handler(event)
+        if ret is not None:
+            warnings.warn("Using Handled/NotHandled in event handlers is deprecated",
+                          DeprecationWarning, stacklevel = 2)
+
         del event.data
 
 ui_queue = []
@@ -149,7 +144,10 @@ def register(name, handler):
         if isinstance(handler, basestring):
             tmp = "def tmpHandler(e):\n%s" % handler
             comp = bb.utils.better_compile(tmp, "tmpHandler(e)", "bb.event._registerCode")
-            _handlers[name] = comp
+            env = {}
+            bb.utils.simple_exec(comp, env)
+            func = bb.utils.better_eval("tmpHandler", env)
+            _handlers[name] = func
         else:
             _handlers[name] = handler
 
