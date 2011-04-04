@@ -804,12 +804,11 @@ class FetchMethod(object):
 
         revs = bb.persist_data.persist('BB_URI_HEADREVS', d)
         key = self.generate_revision_key(url, ud, d, name)
-        rev = revs[key]
-        if rev != None:
-            return str(rev)
-
-        revs[key] = rev = self._latest_revision(url, ud, d, name)
-        return rev
+        try:
+            return revs[key]
+        except KeyError:
+            revs[key] = rev = self._latest_revision(url, ud, d, name)
+            return rev
 
     def sortable_revision(self, url, ud, d, name):
         """
@@ -822,13 +821,13 @@ class FetchMethod(object):
         key = self.generate_revision_key(url, ud, d, name)
 
         latest_rev = self._build_revision(url, ud, d, name)
-        last_rev = localcounts[key + '_rev']
+        last_rev = localcounts.get(key + '_rev')
         uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
         count = None
         if uselocalcount:
             count = FetchMethod.localcount_internal_helper(ud, d, name)
         if count is None:
-            count = localcounts[key + '_count'] or "0"
+            count = localcounts.get(key + '_count') or "0"
 
         if last_rev == latest_rev:
             return str(count + "+" + latest_rev)

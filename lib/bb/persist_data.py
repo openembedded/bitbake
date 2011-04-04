@@ -60,8 +60,11 @@ class SQLTable(collections.MutableMapping):
                              self.table, [key])
         for row in data:
             return row[1]
+        raise KeyError(key)
 
     def __delitem__(self, key):
+        if key not in self:
+            raise KeyError(key)
         self._execute("DELETE from %s where key=?;" % self.table, [key])
 
     def __setitem__(self, key, value):

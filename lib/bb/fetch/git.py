@@ -245,18 +245,20 @@ class Git(Fetch):
         revs = bb.persist_data.persist('BB_URI_HEADREVS', d)
 
         key = self.generate_revision_key(url, ud, d, branch=True)
-        rev = revs[key]
-        if rev is None:
+
+        try:
+            return revs[key]
+        except KeyError:
             # Compatibility with old key format, no branch included
             oldkey = self.generate_revision_key(url, ud, d, branch=False)
-            rev = revs[oldkey]
-            if rev is not None:
-                del revs[oldkey]
-            else:
+            try:
+                rev = revs[oldkey]
+            except KeyError:
                 rev = self._latest_revision(url, ud, d)
+            else:
+                del revs[oldkey]
             revs[key] = rev
-
-        return str(rev)
+            return rev
 
     def sortable_revision(self, url, ud, d):
         """
