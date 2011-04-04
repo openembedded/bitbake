@@ -604,20 +604,23 @@ class BBCooker:
         if (task == None):
             task = self.configuration.cmd
 
-        (fn, cls) = bb.cache.Cache.virtualfn2realfn(buildfile)
+        fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
+        fn = os.path.abspath(fn)
         buildfile = self.matchFile(fn)
-        fn = bb.cache.Cache.realfn2virtual(buildfile, cls)
 
         self.buildSetVars()
 
         self.status = bb.cache.CacheData()
         infos = bb.cache.Cache.parse(fn, self.get_file_appends(fn), \
                                      self.configuration.data)
-        maininfo = None
-        for vfn, info in infos:
-            self.status.add_from_recipeinfo(vfn, info)
-            if vfn == fn:
-                maininfo = info
+        infos = dict(infos)
+
+        fn = bb.cache.Cache.realfn2virtual(buildfile, cls)
+        try:
+            maininfo = infos[fn]
+        except KeyError:
+            bb.fatal("%s does not exist" % fn)
+        self.status.add_from_recipeinfo(fn, maininfo)
 
         # Tweak some variables
         item = maininfo.pn
