@@ -26,7 +26,8 @@ import logging
 import os.path
 import sys
 import warnings
-import bb.msg, bb.data, bb.utils
+from bb.compat import total_ordering
+from collections import Mapping
 
 try:
     import sqlite3
@@ -43,6 +44,7 @@ if hasattr(sqlite3, 'enable_shared_cache'):
     sqlite3.enable_shared_cache(True)
 
 
+@total_ordering
 class SQLTable(collections.MutableMapping):
     """Object representing a table/domain in the database"""
     def __init__(self, cursor, table):
@@ -101,6 +103,12 @@ class SQLTable(collections.MutableMapping):
     def __iter__(self):
         data = self._execute("SELECT key FROM %s;" % self.table)
         return (row[0] for row in data)
+
+    def __lt__(self, other):
+        if not isinstance(other, Mapping):
+            raise NotImplemented
+
+        return len(self) < len(other)
 
     def values(self):
         return list(self.itervalues())
@@ -175,6 +183,7 @@ def connect(database):
 
 def persist(domain, d):
     """Convenience factory for SQLTable objects based upon metadata"""
+    import bb.data, bb.utils
     cachedir = (bb.data.getVar("PERSISTENT_DIR", d, True) or
                 bb.data.getVar("CACHE", d, True))
     if not cachedir:
