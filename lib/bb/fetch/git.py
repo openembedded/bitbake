@@ -269,9 +269,9 @@ class Git(Fetch):
         oldkey = self.generate_revision_key(url, ud, d, branch=False)
 
         latest_rev = self._build_revision(url, ud, d)
-        last_rev = localcounts[key + '_rev']
+        last_rev = localcounts.get(key + '_rev')
         if last_rev is None:
-            last_rev = localcounts[oldkey + '_rev']
+            last_rev = localcounts.get(oldkey + '_rev')
             if last_rev is not None:
                 del localcounts[oldkey + '_rev']
                 localcounts[key + '_rev'] = last_rev
@@ -281,9 +281,9 @@ class Git(Fetch):
         if uselocalcount:
             count = Fetch.localcount_internal_helper(ud, d)
         if count is None:
-            count = localcounts[key + '_count']
+            count = localcounts.get(key + '_count')
         if count is None:
-            count = localcounts[oldkey + '_count']
+            count = localcounts.get(oldkey + '_count')
             if count is not None:
                 del localcounts[oldkey + '_count']
                 localcounts[key + '_count'] = count
