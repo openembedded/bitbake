@@ -28,6 +28,7 @@
 import os
 import sys
 import logging
+import shlex
 import bb
 import bb.msg
 import bb.process
@@ -152,8 +153,6 @@ def exec_func(func, d, dirs = None):
             adir = None
 
     ispython = flags.get('python')
-    if flags.get('fakeroot') and not flags.get('task'):
-        bb.fatal("Function %s specifies fakeroot but isn't a task?!" % func)
 
     lockflag = flags.get('lockfiles')
     if lockflag:
@@ -232,6 +231,10 @@ def exec_func_shell(function, d, runfile, cwd=None):
     os.chmod(runfile, 0775)
 
     cmd = runfile
+    if d.getVarFlag(function, 'fakeroot'):
+        fakerootcmd = d.getVar('FAKEROOT', True)
+        if fakerootcmd:
+            cmd = [fakerootcmd, runfile]
 
     if logger.isEnabledFor(logging.DEBUG):
         logfile = LogTee(logger, sys.stdout)
