@@ -129,7 +129,10 @@ class RecipeInfo(namedtuple('RecipeInfo', recipe_fields)):
     @classmethod
     def from_metadata(cls, filename, metadata):
         if cls.getvar('__SKIPPED', metadata):
-            return cls.make_optional(skipped=True)
+            return cls.make_optional(skipped=True,
+                                     file_depends=metadata.getVar('__depends', False),
+                                     timestamp=bb.parse.cached_mtime(filename),
+                                     variants=cls.listvar('__VARIANTS', metadata) + [''])
 
         tasks = metadata.getVar('__BBTASKS', False)
 
@@ -480,11 +483,13 @@ class Cache(object):
         return bb.parse.cached_mtime_noerror(cachefile)
 
     def add_info(self, filename, info, cacheData, parsed=None):
-        cacheData.add_from_recipeinfo(filename, info)
+        if not info.skipped:
+            cacheData.add_from_recipeinfo(filename, info)
+
         if not self.has_cache:
             return
 
-        if 'SRCREVINACTION' not in info.pv and not info.nocache:
+        if (info.skipped or 'SRCREVINACTION' not in info.pv) and not info.nocache:
             if parsed:
                 self.cacheclean = False
             self.depends_cache[filename] = info

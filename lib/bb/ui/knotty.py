@@ -149,12 +149,17 @@ def main(server, eventHandler):
                 logger.info(event._message)
                 continue
             if isinstance(event, bb.event.ParseStarted):
+                if event.total == 0:
+                    continue
                 parseprogress = new_progress("Parsing recipes", event.total).start()
                 continue
             if isinstance(event, bb.event.ParseProgress):
                 parseprogress.update(event.current)
                 continue
             if isinstance(event, bb.event.ParseCompleted):
+                if not parseprogress:
+                    continue
+
                 parseprogress.finish()
                 print(("Parsing of %d .bb files complete (%d cached, %d parsed). %d targets, %d skipped, %d masked, %d errors."
                     % ( event.total, event.cached, event.parsed, event.virtuals, event.skipped, event.masked, event.errors)))
