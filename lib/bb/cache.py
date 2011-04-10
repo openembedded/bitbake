@@ -294,6 +294,7 @@ class Cache(object):
 
         logger.debug(1, "Parsing %s (full)", fn)
 
+        cfgData.setVar("__ONLYFINALISE", virtual or "default")
         bb_data = cls.load_bbfile(fn, appends, cfgData)
         return bb_data[virtual]
 

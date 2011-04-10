@@ -369,10 +369,13 @@ def multi_finalize(fn, d):
         logger.debug(2, "Appending .bbappend file %s to %s", append, fn)
         bb.parse.BBHandler.handle(append, d, True)
 
+    onlyfinalise = d.getVar("__ONLYFINALISE", False)
+
     safe_d = d
     d = bb.data.createCopy(safe_d)
     try:
-        finalize(fn, d)
+        if not onlyfinalise or "default" in onlyfinalise:
+            finalize(fn, d)
     except bb.parse.SkipPackage:
         bb.data.setVar("__SKIPPED", True, d)
     datastores = {"": safe_d}
@@ -434,7 +437,8 @@ def multi_finalize(fn, d):
     for variant, variant_d in datastores.iteritems():
         if variant:
             try:
-                finalize(fn, variant_d, variant)
+                if not onlyfinalise or variant in onlyfinalise:
+                    finalize(fn, variant_d, variant)
             except bb.parse.SkipPackage:
                 bb.data.setVar("__SKIPPED", True, variant_d)
 
