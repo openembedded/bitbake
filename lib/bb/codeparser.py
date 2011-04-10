@@ -70,8 +70,22 @@ def parser_cache_save(d):
     if not cachefile:
         return
 
+    lf = bb.utils.lockfile(cachefile + ".lock")
+
+    p = pickle.Unpickler(file(cachefile, "rb"))
+    data, version = p.load()
+
+    if version == PARSERCACHE_VERSION:
+        for h in data[0]:
+            if h not in pythonparsecache:
+                pythonparsecache[h] = data[0][h]
+        for h in data[1]:
+            if h not in pythonparsecache:
+                shellparsecache[h] = data[1][h]
+
     p = pickle.Pickler(file(cachefile, "wb"), -1)
     p.dump([[pythonparsecache, shellparsecache], PARSERCACHE_VERSION])
+    bb.utils.unlockfile(lf)
 
 class PythonParser():
     class ValueVisitor():

@@ -1072,6 +1072,7 @@ class CookerParser(object):
     def start(self):
         def init(cfg):
             parse_file.cfg = cfg
+            multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cooker.configuration.data, ), exitpriority=1)
 
         self.results = self.load_cached()
 
