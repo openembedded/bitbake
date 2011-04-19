@@ -72,15 +72,16 @@ class Git(FetchMethod):
 
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
+        ud.write_tarballs = (data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0"
+
+        ud.localfile = ud.clonedir
+
+def fixuprevisions(self, ud, d):
         for name in ud.names:
             # Ensure anything that doesn't look like a sha256 checksum/revision is translated into one
             if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
                 ud.branches[name] = ud.revisions[name]
                 ud.revisions[name] = self.latest_revision(ud.url, ud, d, name)
-
-        ud.write_tarballs = (data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0"
-
-        ud.localfile = ud.clonedir
 
     def localpath(self, url, ud, d):
         return ud.clonedir

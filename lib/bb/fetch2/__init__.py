@@ -551,6 +551,9 @@ class FetchData(object):
         if not self.method:
             raise NoMethodError(url)
 
+        if hasattr(self.method, "urldata_init"):
+            self.method.urldata_init(self, d)
+
         if self.method.supports_srcrev():
             self.revisions = {}
             for name in self.names:
@@ -560,8 +563,8 @@ class FetchData(object):
             if len(self.names) == 1:
                 self.revision = self.revisions[self.names[0]]
 
-        if hasattr(self.method, "urldata_init"):
-            self.method.urldata_init(self, d)
+        if hasattr(self.method, "fixuprevisions"):
+            self.method.fixuprevisions(self, d)
 
         if "localpath" in self.parm:
             # if user sets localpath for file, use it instead.
