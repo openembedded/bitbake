@@ -45,6 +45,8 @@ class Bzr(FetchMethod):
         relpath = self._strip_leading_slashes(ud.path)
         ud.pkgdir = os.path.join(data.expand('${BZRDIR}', d), ud.host, relpath)
 
+        ud.setup_revisons(d)
+
         if not ud.revision:
             ud.revision = self.latest_revision(ud.url, ud, d)
 

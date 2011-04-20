@@ -76,7 +76,8 @@ class Git(FetchMethod):
 
         ud.localfile = ud.clonedir
 
-def fixuprevisions(self, ud, d):
+        ud.setup_revisons(d)
+
         for name in ud.names:
             # Ensure anything that doesn't look like a sha256 checksum/revision is translated into one
             if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):

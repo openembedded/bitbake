@@ -554,18 +554,6 @@ class FetchData(object):
         if hasattr(self.method, "urldata_init"):
             self.method.urldata_init(self, d)
 
-        if self.method.supports_srcrev():
-            self.revisions = {}
-            for name in self.names:
-                self.revisions[name] = srcrev_internal_helper(self, d, name)
-
-            # add compatibility code for non name specified case
-            if len(self.names) == 1:
-                self.revision = self.revisions[self.names[0]]
-
-        if hasattr(self.method, "fixuprevisions"):
-            self.method.fixuprevisions(self, d)
-
         if "localpath" in self.parm:
             # if user sets localpath for file, use it instead.
             self.localpath = self.parm["localpath"]
@@ -578,6 +566,15 @@ class FetchData(object):
             basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath), d)
             self.donestamp = basepath + '.done'
             self.lockfile = basepath + '.lock'
+
+    def setup_revisons(self, d):
+        self.revisions = {}
+        for name in self.names:
+            self.revisions[name] = srcrev_internal_helper(self, d, name)
+
+        # add compatibility code for non name specified case
+        if len(self.names) == 1:
+            self.revision = self.revisions[self.names[0]]
 
     def setup_localpath(self, d):
         if not self.localpath:

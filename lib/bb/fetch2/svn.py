@@ -56,6 +56,8 @@ class Svn(FetchMethod):
         ud.pkgdir = os.path.join(data.expand('${SVNDIR}', d), ud.host, relpath)
         ud.moddir = os.path.join(ud.pkgdir, ud.module)
 
+        ud.setup_revisons(d)
+
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
 
