@@ -572,6 +572,7 @@ class CacheData(object):
         self.packages = defaultdict(list)
         self.packages_dynamic = defaultdict(list)
         self.possible_world = []
+        self.universe_target = []
         self.pkg_pn = defaultdict(list)
         self.pkg_fn = {}
         self.pkg_pepvpr = {}
@@ -649,6 +650,11 @@ class CacheData(object):
         # calculations
         if not info.broken and not info.not_world:
             self.possible_world.append(fn)
+
+        # create a collection of all targets for sanity checking
+        # tasks, such as upstream versions, license, and tools for
+        # task and image creation.
+        self.universe_target.append(info.pn)
 
         self.hashfn[fn] = info.hashfilename
         for task, taskhash in info.basetaskhashes.iteritems():

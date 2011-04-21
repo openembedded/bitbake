@@ -130,6 +130,8 @@ class BBCooker:
 
             if 'world' in self.configuration.pkgs_to_build:
                 buildlog.error("'world' is not a valid target for --environment.")
+            if 'universe' in self.configuration.pkgs_to_build:
+                buildlog.error("'universe' is not a valid target for --environment.")
             elif len(self.configuration.pkgs_to_build) > 1:
                 buildlog.error("Only one target can be used with the --environment option.")
             elif self.configuration.buildfile and len(self.configuration.pkgs_to_build) > 0:
@@ -908,6 +910,12 @@ class BBCooker:
             self.buildWorldTargetList()
             pkgs_to_build.remove('world')
             for t in self.status.world_target:
+                pkgs_to_build.append(t)
+
+        if 'universe' in pkgs_to_build:
+            parselog.debug(1, "collating packages for \"universe\"")
+            pkgs_to_build.remove('universe')
+            for t in self.status.universe_target:
                 pkgs_to_build.append(t)
 
         return pkgs_to_build
