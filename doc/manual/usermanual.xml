@@ -261,11 +261,11 @@ SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;pat
             </section>
             <section>
                 <title>Recursive DEPENDS</title>
-                <para>These are specified with the 'recdeptask' flag and is used signify the task(s) of each DEPENDS which must have completed before that task can be executed. It applies recursively so also, the DEPENDS of each item in the original DEPENDS must be met and so on.</para>
+                <para>These are specified with the 'recdeptask' flag and is used to signify the task(s) of each DEPENDS which must have completed before that task can be executed. It applies recursively so also, the DEPENDS of each item in the original DEPENDS must be met and so on.</para>
             </section>
             <section>
                 <title>Recursive RDEPENDS</title>
-                <para>These are specified with the 'recrdeptask' flag and is used signify the task(s) of each RDEPENDS which must have completed before that task can be executed. It applies recursively so also, the RDEPENDS of each item in the original RDEPENDS must be met and so on. It also runs all DEPENDS first too.</para>
+                <para>These are specified with the 'recrdeptask' flag and is used to signify the task(s) of each RDEPENDS which must have completed before that task can be executed. It applies recursively so also, the RDEPENDS of each item in the original RDEPENDS must be met and so on. It also runs all DEPENDS first too.</para>
             </section>
             <section>
                 <title>Inter Task</title>
