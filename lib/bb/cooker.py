@@ -33,7 +33,7 @@ import threading
 from cStringIO import StringIO
 from contextlib import closing
 from functools import wraps
-import bb
+import bb, bb.exceptions
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
 
 logger      = logging.getLogger("BitBake")
@@ -1019,8 +1019,7 @@ class ParsingFailure(Exception):
     def __init__(self, realexception, recipe):
         self.realexception = realexception
         self.recipe = recipe
-        Exception.__init__(self, "Failure when parsing %s" % recipe)
-        self.args = (realexception, recipe)
+        Exception.__init__(self, realexception, recipe)
 
 def parse_file(task):
     filename, appends = task
@@ -1116,6 +1115,10 @@ class CookerParser(object):
         except StopIteration:
             self.shutdown()
             return False
+        except ParsingFailure as exc:
+            self.shutdown(clean=False)
+            bb.fatal('Error parsing %s: %s' %
+                     (exc.recipe, bb.exceptions.to_string(exc.realexception)))
         except Exception as exc:
             self.shutdown(clean=False)
             bb.fatal('Error parsing %s: %s' % (exc.recipe, exc))
