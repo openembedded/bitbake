@@ -72,8 +72,11 @@ def parser_cache_save(d):
 
     lf = bb.utils.lockfile(cachefile + ".lock")
 
-    p = pickle.Unpickler(file(cachefile, "rb"))
-    data, version = p.load()
+    try:
+        p = pickle.Unpickler(file(cachefile, "rb"))
+        data, version = p.load()
+    except IOError:
+        data, version = None, None
 
     if version == PARSERCACHE_VERSION:
         for h in data[0]:
