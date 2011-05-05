@@ -1026,7 +1026,9 @@ def parse_file(task):
     try:
         return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg)
     except Exception, exc:
+        tb = sys.exc_info()[2]
         exc.recipe = filename
+        exc.traceback = list(bb.exceptions.extract_traceback(tb, context=3))
         raise exc
     # Need to turn BaseExceptions into Exceptions here so we gracefully shutdown
     # and for example a worker thread doesn't just exit on its own in response to
@@ -1119,9 +1121,14 @@ class CookerParser(object):
             self.shutdown(clean=False)
             bb.fatal('Error parsing %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
-        except Exception as exc:
+        except Exception:
+            import traceback
+            etype, value, tb = sys.exc_info()
+            formatted = bb.exceptions.format_extracted(value.traceback, limit=5)
+            formatted.extend(traceback.format_exception_only(etype, value))
+
             self.shutdown(clean=False)
-            bb.fatal('Error parsing %s: %s' % (exc.recipe, exc))
+            bb.fatal('Error parsing %s:\n%s' % (value.recipe, ''.join(formatted)))
 
         self.current += 1
         self.virtuals += len(result)
