@@ -187,11 +187,11 @@ def exec_func_python(func, d, runfile, cwd=None):
         script.write(code)
 
     if cwd:
-        os.chdir(cwd)
         try:
             olddir = os.getcwd()
         except OSError:
             olddir = None
+        os.chdir(cwd)
 
     try:
         comp = utils.better_compile(code, func, bbfile)
