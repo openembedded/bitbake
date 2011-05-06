@@ -75,7 +75,13 @@ class BBCooker:
 
         bb.data.inheritFromOS(self.configuration.data)
 
-        self.parseConfigurationFiles(self.configuration.file)
+        try:
+            self.parseConfigurationFiles(self.configuration.file)
+        except SyntaxError:
+            sys.exit(1)
+        except Exception:
+            logger.exception("Error parsing configuration files")
+            sys.exit(1)
 
         if not self.configuration.cmd:
             self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data, True) or "build"
