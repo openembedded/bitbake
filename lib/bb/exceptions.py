@@ -53,3 +53,9 @@ def format_exception(etype, value, tb, context=1, limit=None, formatter=None):
     formatted.extend(format_extracted(tb, formatter, limit))
     formatted.extend(traceback.format_exception_only(etype, value))
     return formatted
+
+def to_string(exc):
+    if isinstance(exc, SystemExit):
+        if not isinstance(exc.code, basestring):
+            return 'Exited with "%d"' % exc.code
+    return str(exc)
