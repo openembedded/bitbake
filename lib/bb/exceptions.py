@@ -8,10 +8,13 @@ from collections import namedtuple
 class TracebackEntry(namedtuple.abc):
     """Pickleable representation of a traceback entry"""
     _fields = 'filename lineno function args code_context index'
-    _header = '  File "{0.filename}", line {0.lineno}, in {0.function}{0.args}:\n'
+    _header = '  File "{0.filename}", line {0.lineno}, in {0.function}{0.args}'
 
     def format(self, formatter=None):
-        formatted = [self._header.format(self)]
+        if not self.code_context:
+            return self._header.format(self) + '\n'
+
+        formatted = [self._header.format(self) + ':\n']
 
         for lineindex, line in enumerate(self.code_context):
             if formatter:
