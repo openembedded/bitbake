@@ -1127,7 +1127,10 @@ class CookerParser(object):
             self.shutdown(clean=False)
             bb.fatal('Error parsing %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
-        except Exception:
+        except SyntaxError as exc:
+            logger.error('Unable to parse %s', exc.recipe)
+            sys.exit(1)
+        except Exception as exc:
             import traceback
             etype, value, tb = sys.exc_info()
             formatted = bb.exceptions.format_extracted(value.traceback, limit=5)
