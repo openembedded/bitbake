@@ -234,6 +234,8 @@ class RunningBuild (gobject.GObject):
             pbar.update(self.progress_total, self.progress_total)
 
         elif isinstance(event, bb.event.ParseStarted) and pbar:
+            if event.total == 0:
+                return
             pbar.set_title("Processing recipes")
             self.progress_total = event.total
             pbar.update(0, self.progress_total)

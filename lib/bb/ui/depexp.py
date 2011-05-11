@@ -259,6 +259,8 @@ def main(server, eventHandler):
 
             if isinstance(event, bb.event.ParseStarted):
                 progress_total = event.total
+                if progress_total == 0:
+                    continue
                 gtk.gdk.threads_enter()
                 pbar.set_title("Processing recipes")
                 pbar.update(0, progress_total)

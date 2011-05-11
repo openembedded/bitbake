@@ -103,6 +103,8 @@ class HobHandler(gobject.GObject):
         elif isinstance(event, bb.event.CacheLoadCompleted) and pbar:
             pbar.update(bb.ui.crumbs.hobeventhandler.progress_total, bb.ui.crumbs.hobeventhandler.progress_total)
         elif isinstance(event, bb.event.ParseStarted) and pbar:
+            if event.total == 0:
+                return
             pbar.set_title("Processing recipes")
             bb.ui.crumbs.hobeventhandler.progress_total = event.total
             pbar.update(0, bb.ui.crumbs.hobeventhandler.progress_total)
