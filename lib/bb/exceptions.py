@@ -29,13 +29,30 @@ class TracebackEntry(namedtuple.abc):
     def __str__(self):
         return ''.join(self.format())
 
+def _get_frame_args(frame):
+    """Get the formatted arguments and class (if available) for a frame"""
+    arginfo = inspect.getargvalues(frame)
+    firstarg = arginfo.args[0]
+    if firstarg == 'self':
+        self = arginfo.locals['self']
+        cls = self.__class__.__name__
+
+        arginfo.args.pop(0)
+        del arginfo.locals['self']
+    else:
+        cls = None
+
+    formatted = inspect.formatargvalues(*arginfo)
+    return formatted, cls
 
 def extract_traceback(tb, context=1):
     frames = inspect.getinnerframes(tb, context)
     for frame, filename, lineno, function, code_context, index in frames:
-        args = inspect.formatargvalues(*inspect.getargvalues(frame))
-        yield TracebackEntry(filename, lineno, function, args, code_context, index)
-
+        formatted_args, cls = _get_frame_args(frame)
+        if cls:
+            function = '%s.%s' % (cls, function)
+        yield TracebackEntry(filename, lineno, function, formatted_args,
+                             code_context, index)
 
 def format_extracted(extracted, formatter=None, limit=None):
     if limit:
