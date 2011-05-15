@@ -57,6 +57,11 @@ class Git(FetchMethod):
         if 'nocheckout' in ud.parm:
             ud.nocheckout = True
 
+        # rebaseable means the upstream git repo may rebase in the future,
+        # and current revision may disappear from upstream repo
+        # rebaseable is false by default. set rebaseable=1 in SRC_URI if rebaseable.
+        ud.rebaseable = ud.parm.get("rebaseable","0") == "1"
+
         branches = ud.parm.get("branch", "master").split(',')
         if len(branches) != len(ud.names):
             raise bb.fetch2.ParameterError("The number of name and branch parameters is not balanced", ud.url)
@@ -65,16 +70,9 @@ class Git(FetchMethod):
             branch = branches[ud.names.index(name)]
             ud.branches[name] = branch
 
-        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
-        ud.mirrortarball = 'git2_%s.tar.gz' % (gitsrcname)
-        ud.fullmirror = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
-        ud.clonedir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
-
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
-        ud.write_tarballs = (data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0"
-
-        ud.localfile = ud.clonedir
+        ud.write_tarballs = ((data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0") or ud.rebaseable
 
         ud.setup_revisons(d)
 
@@ -83,6 +81,20 @@ class Git(FetchMethod):
             if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
                 ud.branches[name] = ud.revisions[name]
                 ud.revisions[name] = self.latest_revision(ud.url, ud, d, name)
+
+        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
+        # for rebaseable git repo, it is necessary to keep mirror tar ball
+        # per revision, so that even the revision disappears from the
+        # upstream repo in the future, the mirror will remain intact and still
+        # contains the revision
+        if ud.rebaseable:
+            for name in ud.names:
+                gitsrcname = gitsrcname + '_' + ud.revisions[name]
+        ud.mirrortarball = 'git2_%s.tar.gz' % (gitsrcname)
+        ud.fullmirror = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
+        ud.clonedir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
+
+        ud.localfile = ud.clonedir
 
     def localpath(self, url, ud, d):
         return ud.clonedir
