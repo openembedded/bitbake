@@ -167,8 +167,10 @@ class Git(FetchMethod):
 
         # If the repo still doesn't exist, fallback to cloning it
         if not os.path.exists(ud.clonedir):
-            bb.fetch2.check_network_access(d, "git clone --bare %s%s" % (ud.host, ud.path))
-            runfetchcmd("%s clone --bare %s://%s%s%s %s" % (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.clonedir), d)
+            clone_cmd = "%s clone --bare %s://%s%s%s %s" % \
+                  (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.clonedir)
+            bb.fetch2.check_network_access(d, clone_cmd)
+            runfetchcmd(clone_cmd, d)
 
         os.chdir(ud.clonedir)
         # Update the checkout if needed
@@ -177,7 +179,6 @@ class Git(FetchMethod):
             if not self._contains_ref(ud.revisions[name], d):
                 needupdate = True
         if needupdate:
-            bb.fetch2.check_network_access(d, "git fetch %s%s" % (ud.host, ud.path), ud.url)
             try: 
                 runfetchcmd("%s remote prune origin" % ud.basecmd, d) 
                 runfetchcmd("%s remote rm origin" % ud.basecmd, d) 
@@ -185,7 +186,9 @@ class Git(FetchMethod):
                 logger.debug(1, "No Origin")
             
             runfetchcmd("%s remote add origin %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
-            runfetchcmd("%s fetch --all -t" % ud.basecmd, d)
+            fetch_cmd = "%s fetch --all -t" % ud.basecmd
+            bb.fetch2.check_network_access(d, fetch_cmd, ud.url)
+            runfetchcmd(fetch_cmd, d)
             runfetchcmd("%s prune-packed" % ud.basecmd, d)
             runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
             ud.repochanged = True
@@ -249,9 +252,10 @@ class Git(FetchMethod):
         else:
             username = ""
 
-        bb.fetch2.check_network_access(d, "git ls-remote %s%s %s" % (ud.host, ud.path, ud.branches[name]))
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
-        cmd = "%s ls-remote %s://%s%s%s %s" % (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name])
+        cmd = "%s ls-remote %s://%s%s%s %s" % \
+              (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name])
+        bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
         if not output:
             raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, url)
