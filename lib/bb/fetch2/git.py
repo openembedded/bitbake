@@ -271,10 +271,13 @@ class Git(FetchMethod):
         # Check if we have the rev already
 
         if not os.path.exists(ud.clonedir):
-            print("no repo")
+            logging.debug("GIT repository for %s does not exist in %s.  \
+                          Downloading.", url, ud.clonedir)
             self.download(None, ud, d)
             if not os.path.exists(ud.clonedir):
-                logger.error("GIT repository for %s doesn't exist in %s, cannot get sortable buildnumber, using old value", url, ud.clonedir)
+                logger.error("GIT repository for %s does not exist in %s after \
+                             download. Cannot get sortable buildnumber, using \
+                             old value", url, ud.clonedir)
                 return None
 
 
