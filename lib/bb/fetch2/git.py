@@ -51,7 +51,7 @@ class Git(FetchMethod):
         elif not ud.host:
             ud.proto = 'file'
         else:
-            ud.proto = "rsync"
+            ud.proto = "git"
 
         ud.nocheckout = False
         if 'nocheckout' in ud.parm:
