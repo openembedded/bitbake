@@ -3,6 +3,41 @@
 """
 BitBake 'Fetch' git implementation
 
+git fetcher support the SRC_URI with format of:
+SRC_URI = "git://some.host/somepath;OptionA=xxx;OptionB=xxx;..."
+
+Supported SRC_URI options are:
+
+- branch
+   The git branch to retrieve from. The default is "master"
+
+   this option also support multiple branches fetching, branches
+   are seperated by comma. in multiple branches case, the name option
+   must have the same number of names to match the branches, which is
+   used to specify the SRC_REV for the branch
+   e.g:
+   SRC_URI="git://some.host/somepath;branch=branchX,branchY;name=nameX,nameY"
+   SRCREV_nameX = "xxxxxxxxxxxxxxxxxxxx"
+   SRCREV_nameY = "YYYYYYYYYYYYYYYYYYYY"
+
+- tag
+    The git tag to retrieve. The default is "master"
+
+- protocol
+   The method to use to access the repository. Common options are "git",
+   "http", "file" and "rsync". The default is "git"
+
+- rebaseable
+   rebaseable indicates that the upstream git repo may rebase in the future,
+   and current revision may disappear from upstream repo. This option will
+   reminder fetcher to preserve local cache carefully for future use.
+   The default value is "0", set rebaseable=1 for rebaseable git repo
+
+- nocheckout
+   Don't checkout source code when unpacking. set this option for the recipe
+   who has its own routine to checkout code.
+   The default is "0", set nocheckout=1 if needed.
+
 """
 
 #Copyright (C) 2005 Richard Purdie
@@ -55,9 +90,6 @@ class Git(FetchMethod):
 
         ud.nocheckout = ud.parm.get("nocheckout","0") == "1"
 
-        # rebaseable means the upstream git repo may rebase in the future,
-        # and current revision may disappear from upstream repo
-        # rebaseable is false by default. set rebaseable=1 in SRC_URI if rebaseable.
         ud.rebaseable = ud.parm.get("rebaseable","0") == "1"
 
         branches = ud.parm.get("branch", "master").split(',')
