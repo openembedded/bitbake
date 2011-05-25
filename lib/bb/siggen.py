@@ -47,6 +47,9 @@ class SignatureGenerator(object):
     def stampfile(self, stampbase, file_name, taskname, extrainfo):
         return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
 
+    def dump_sigtask(self, fn, task, stampbase, runtime):
+        return
+
 class SignatureGeneratorBasic(SignatureGenerator):
     """
     """
