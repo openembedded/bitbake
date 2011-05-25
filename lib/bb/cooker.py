@@ -432,9 +432,26 @@ class BBCooker:
         # Calculate priorities for each file
         for p in self.status.pkg_fn:
             self.status.bbfile_priority[p] = calc_bbfile_priority(p)
+ 
+        # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
+        unmatched = set()
+        for _, _, regex, pri in self.status.bbfile_config_priorities:        
+            if not regex in matched:
+                unmatched.add(regex)
+
+        def findmatch(regex):
+            for bbfile in self.appendlist:
+                for append in self.appendlist[bbfile]:
+                    if regex.match(append):
+                        return True
+            return False
+
+        for unmatch in unmatched.copy():
+            if findmatch(unmatch):
+                unmatched.remove(unmatch)
 
         for collection, pattern, regex, _ in self.status.bbfile_config_priorities:
-            if not regex in matched:
+            if regex in unmatched:
                 collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
     def findConfigFiles(self, varname):
