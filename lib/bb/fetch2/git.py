@@ -213,8 +213,11 @@ class Git(FetchMethod):
         runfetchcmd("git clone -s -n %s %s" % (ud.clonedir, destdir), d)
         if not ud.nocheckout:
             os.chdir(destdir)
-            runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revisions[ud.names[0]], readpathspec), d)
-            runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d)
+            if subdir != "":
+                runfetchcmd("%s read-tree %s%s" % (ud.basecmd, ud.revisions[ud.names[0]], readpathspec), d)
+                runfetchcmd("%s checkout-index -q -f -a" % ud.basecmd, d)
+            else:
+                runfetchcmd("%s checkout %s" % (ud.basecmd, ud.revisions[ud.names[0]]), d)
         return True
 
     def clean(self, ud, d):
