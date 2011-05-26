@@ -53,9 +53,7 @@ class Git(FetchMethod):
         else:
             ud.proto = "git"
 
-        ud.nocheckout = False
-        if 'nocheckout' in ud.parm:
-            ud.nocheckout = True
+        ud.nocheckout = ud.parm.get("nocheckout","0") == "1"
 
         # rebaseable means the upstream git repo may rebase in the future,
         # and current revision may disappear from upstream repo
