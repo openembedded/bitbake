@@ -63,9 +63,12 @@ class BBUIEventQueue:
 
     def queue_event(self, event):
         self.eventQueueLock.acquire()
-        self.eventQueue.append(pickle.loads(event))
+        self.eventQueue.append(event)
         self.eventQueueNotify.set()
         self.eventQueueLock.release()
+
+    def send_event(self, event):
+        self.queue_event(pickle.loads(event))
 
     def startCallbackHandler(self):
 
@@ -73,7 +76,7 @@ class BBUIEventQueue:
         self.host, self.port = server.socket.getsockname()
 
         server.register_function( self.system_quit, "event.quit" )
-        server.register_function( self.queue_event, "event.send" )
+        server.register_function( self.send_event, "event.send" )
         server.socket.settimeout(1)
 
         self.EventHandle = self.BBServer.registerEventHandler(self.host, self.port)
