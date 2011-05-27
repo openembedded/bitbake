@@ -666,22 +666,22 @@ class BBCooker:
             bb.data.setVar("BUILDNAME", time.strftime('%Y%m%d%H%M'), self.configuration.data)
         bb.data.setVar("BUILDSTART", time.strftime('%m/%d/%Y %H:%M:%S', time.gmtime()), self.configuration.data)
 
-    def matchFiles(self, buildfile):
+    def matchFiles(self, bf):
         """
         Find the .bb files which match the expression in 'buildfile'.
         """
 
-        bf = os.path.abspath(buildfile)
+        if bf.startswith("/") or bf.startswith("../"):
+            bf = os.path.abspath(bf)
         filelist, masked = self.collect_bbfiles()
         try:
             os.stat(bf)
             return [bf]
         except OSError:
-            regexp = re.compile(buildfile)
+            regexp = re.compile(bf)
             matches = []
             for f in filelist:
                 if regexp.search(f) and os.path.isfile(f):
-                    bf = f
                     matches.append(f)
             return matches
 
@@ -712,8 +712,7 @@ class BBCooker:
             task = self.configuration.cmd
 
         fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
-        fn = os.path.abspath(fn)
-        buildfile = self.matchFile(fn)
+        fn = self.matchFile(fn)
 
         self.buildSetVars()
 
@@ -722,7 +721,7 @@ class BBCooker:
                                      self.configuration.data)
         infos = dict(infos)
 
-        fn = bb.cache.Cache.realfn2virtual(buildfile, cls)
+        fn = bb.cache.Cache.realfn2virtual(fn, cls)
         try:
             maininfo = infos[fn]
         except KeyError:
