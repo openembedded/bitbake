@@ -944,16 +944,21 @@ class BBCooker:
             collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
             bb.event.fire(CookerExit(), self.configuration.event_data)
 
-        newfiles = set()
+        # Can't use set here as order is important
+        newfiles = []
         for f in files:
             if os.path.isdir(f):
                 dirfiles = self.find_bbfiles(f)
-                newfiles.update(dirfiles)
+                for g in dirfiles:
+                    if g not in newfiles:
+                        newfiles.append(g)
             else:
                 globbed = glob.glob(f)
                 if not globbed and os.path.exists(f):
                     globbed = [f]
-                newfiles.update(globbed)
+                for g in globbed:
+                    if g not in newfiles:
+                        newfiles.append(g)
 
         bbmask = bb.data.getVar('BBMASK', self.configuration.data, 1)
 
