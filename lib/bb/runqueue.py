@@ -1414,16 +1414,25 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             sq_taskname = []
             sq_task = []
             noexec = []
+            stamppresent = []
             for task in xrange(len(self.sq_revdeps)):
                 realtask = self.rqdata.runq_setscene[task]
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
                 taskname = self.rqdata.runq_task[realtask]
                 taskdep = self.rqdata.dataCache.task_deps[fn]
+
                 if 'noexec' in taskdep and taskname in taskdep['noexec']:
                     noexec.append(task)
                     self.task_skip(task)
                     bb.build.make_stamp(taskname + "_setscene", self.rqdata.dataCache, fn)
                     continue
+
+                if self.rq.check_stamp_task(realtask, taskname + "_setscene"):
+                    logger.debug(2, 'Setscene stamp current for task %s(%s)', task, self.rqdata.get_user_idstring(realtask))
+                    stamppresent.append(task)
+                    self.task_skip(task)
+                    continue
+
                 sq_fn.append(fn)
                 sq_hashfn.append(self.rqdata.dataCache.hashfn[fn])
                 sq_hash.append(self.rqdata.runq_hash[realtask])
@@ -1433,7 +1442,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.configuration.data }
             valid = bb.utils.better_eval(call, locs)
 
-            valid_new = []
+            valid_new = stamppresent
             for v in valid:
                 valid_new.append(sq_task[v])
 
