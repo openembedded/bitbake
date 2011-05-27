@@ -1120,11 +1120,10 @@ class CookerParser(object):
             self.pool.terminate()
         self.pool.join()
 
-        bb.codeparser.parser_cache_save(self.cfgdata)
-
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
         multiprocessing.util.Finalize(None, sync.join, exitpriority=-100)
+        bb.codeparser.parser_cache_savemerge(self.cooker.configuration.data)
 
     def load_cached(self):
         for filename, appends in self.fromcache:

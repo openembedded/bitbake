@@ -70,7 +70,51 @@ def parser_cache_save(d):
     if not cachefile:
         return
 
-    lf = bb.utils.lockfile(cachefile + ".lock")
+    glf = bb.utils.lockfile(cachefile + ".lock", shared=True)
+
+    i = os.getpid()
+    lf = None
+    while not lf:
+        shellcache = {}
+        pythoncache = {}
+
+        lf = bb.utils.lockfile(cachefile + ".lock." + str(i), retry=False)
+        if not lf or os.path.exists(cachefile + "-" + str(i)):
+            if lf:
+               bb.utils.unlockfile(lf) 
+               lf = None
+            i = i + 1
+            continue
+
+        try:
+            p = pickle.Unpickler(file(cachefile, "rb"))
+            data, version = p.load()
+        except (IOError, EOFError):
+            data, version = None, None
+
+        if version != PARSERCACHE_VERSION:
+            shellcache = shellparsecache
+            pythoncache = pythonparsecache
+        else:
+            for h in pythonparsecache:
+                if h not in data[0]:
+                    pythoncache[h] = pythonparsecache[h]
+            for h in shellparsecache:
+                if h not in data[1]:
+                    shellcache[h] = shellparsecache[h]
+
+        p = pickle.Pickler(file(cachefile + "-" + str(i), "wb"), -1)
+        p.dump([[pythoncache, shellcache], PARSERCACHE_VERSION])
+
+    bb.utils.unlockfile(lf)
+    bb.utils.unlockfile(glf)
+
+def parser_cache_savemerge(d):
+    cachefile = parser_cachefile(d)
+    if not cachefile:
+        return
+
+    glf = bb.utils.lockfile(cachefile + ".lock")
 
     try:
         p = pickle.Unpickler(file(cachefile, "rb"))
@@ -78,17 +122,33 @@ def parser_cache_save(d):
     except (IOError, EOFError):
         data, version = None, None
 
-    if version == PARSERCACHE_VERSION:
-        for h in data[0]:
-            if h not in pythonparsecache:
-                pythonparsecache[h] = data[0][h]
-        for h in data[1]:
-            if h not in pythonparsecache:
-                shellparsecache[h] = data[1][h]
+    if version != PARSERCACHE_VERSION:
+        data = [{}, {}]
+
+    for f in [y for y in os.listdir(os.path.dirname(cachefile)) if y.startswith(os.path.basename(cachefile) + '-')]:
+        f = os.path.join(os.path.dirname(cachefile), f)
+        try:
+            p = pickle.Unpickler(file(f, "rb"))
+            extradata, version = p.load()
+        except (IOError, EOFError):
+            extradata, version = [{}, {}], None
+        
+        if version != PARSERCACHE_VERSION:
+            continue
+
+        for h in extradata[0]:
+            if h not in data[0]:
+                data[0][h] = extradata[0][h]
+        for h in extradata[1]:
+            if h not in data[1]:
+                data[1][h] = extradata[1][h]
+        os.unlink(f)
 
     p = pickle.Pickler(file(cachefile, "wb"), -1)
-    p.dump([[pythonparsecache, shellparsecache], PARSERCACHE_VERSION])
-    bb.utils.unlockfile(lf)
+    p.dump([data, PARSERCACHE_VERSION])
+
+    bb.utils.unlockfile(glf)
+
 
 class PythonParser():
     class ValueVisitor():
