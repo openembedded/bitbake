@@ -172,11 +172,13 @@ class DataSmart(MutableMapping):
             if o not in self._seen_overrides:
                 continue
 
-            vars = self._seen_overrides[o]
+            vars = self._seen_overrides[o].copy()
             for var in vars:
                 name = var[:-l]
                 try:
                     self.setVar(name, self.getVar(var, False))
+                    self.delVar(var)
+                    self._seen_overrides[o].remove(var)
                 except Exception:
                     logger.info("Untracked delVar")
 
