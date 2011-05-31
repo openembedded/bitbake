@@ -84,10 +84,10 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     preferred_ver = None
 
     localdata = data.createCopy(cfgData)
-    bb.data.setVar('OVERRIDES', "pn-%s:%s:%s" % (pn, pn, data.getVar('OVERRIDES', localdata)), localdata)
+    bb.data.setVar('OVERRIDES', "%s:pn-%s:%s" % (data.getVar('OVERRIDES', localdata), pn, pn), localdata)
     bb.data.update_data(localdata)
 
-    preferred_v = bb.data.getVar('PREFERRED_VERSION_%s' % pn, localdata, True)
+    preferred_v = bb.data.getVar('PREFERRED_VERSION', localdata, True)
     if preferred_v:
         m = re.match('(\d+:)*(.*)(_.*)*', preferred_v)
         if m:
