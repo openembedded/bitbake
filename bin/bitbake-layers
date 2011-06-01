@@ -83,6 +83,8 @@ class Commands(cmd.Cmd):
         for pn in self.cooker_data.pkg_pn:
             self.show_appends_for_pn(pn)
 
+        self.show_appends_for_skipped()
+
         self.show_appends_with_no_recipes()
 
     def show_appends_for_pn(self, pn):
@@ -94,17 +96,27 @@ class Commands(cmd.Cmd):
                                              self.cooker_data.pkg_pn)
         best_filename = os.path.basename(best[3])
 
+        self.show_appends_output(filenames, best_filename)
+
+    def show_appends_for_skipped(self):
+        filenames = [os.path.basename(f)
+                    for f in self.cooker.skiplist.iterkeys()]
+        self.show_appends_output(filenames, None, " (skipped)")
+
+    def show_appends_output(self, filenames, best_filename, name_suffix = ''):
         appended, missing = self.get_appends_for_files(filenames)
         if appended:
             for basename, appends in appended:
-                logger.info('%s:', basename)
+                logger.info('%s%s:', basename, name_suffix)
                 for append in appends:
                     logger.info('  %s', append)
 
-            if best_filename in missing:
-                logger.warn('%s: missing append for preferred version',
-                            best_filename)
-                self.returncode |= 1
+            if best_filename:
+                if best_filename in missing:
+                    logger.warn('%s: missing append for preferred version',
+                                best_filename)
+                    self.returncode |= 1
+
 
     def get_appends_for_files(self, filenames):
         appended, notappended = set(), set()
@@ -124,6 +136,8 @@ class Commands(cmd.Cmd):
     def show_appends_with_no_recipes(self):
         recipes = set(os.path.basename(f)
                       for f in self.cooker_data.pkg_fn.iterkeys())
+        recipes |= set(os.path.basename(f)
+                      for f in self.cooker.skiplist.iterkeys())
         appended_recipes = self.cooker_data.appends.iterkeys()
         appends_without_recipes = [self.cooker_data.appends[recipe]
                                    for recipe in appended_recipes
