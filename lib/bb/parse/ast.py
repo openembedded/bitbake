@@ -374,8 +374,7 @@ def multi_finalize(fn, d):
     safe_d = d
     d = bb.data.createCopy(safe_d)
     try:
-        if not onlyfinalise or "default" in onlyfinalise:
-            finalize(fn, d)
+        finalize(fn, d)
     except bb.parse.SkipPackage as e:
         bb.data.setVar("__SKIPPED", e.args[0], d)
     datastores = {"": safe_d}
