@@ -376,8 +376,8 @@ def multi_finalize(fn, d):
     try:
         if not onlyfinalise or "default" in onlyfinalise:
             finalize(fn, d)
-    except bb.parse.SkipPackage:
-        bb.data.setVar("__SKIPPED", True, d)
+    except bb.parse.SkipPackage as e:
+        bb.data.setVar("__SKIPPED", e.args[0], d)
     datastores = {"": safe_d}
 
     versions = (d.getVar("BBVERSIONS", True) or "").split()
@@ -419,8 +419,8 @@ def multi_finalize(fn, d):
             verfunc(pv, d, safe_d)
             try:
                 finalize(fn, d)
-            except bb.parse.SkipPackage:
-                bb.data.setVar("__SKIPPED", True, d)
+            except bb.parse.SkipPackage as e:
+                bb.data.setVar("__SKIPPED", e.args[0], d)
 
         _create_variants(datastores, versions, verfunc)
 
@@ -439,8 +439,8 @@ def multi_finalize(fn, d):
             try:
                 if not onlyfinalise or variant in onlyfinalise:
                     finalize(fn, variant_d, variant)
-            except bb.parse.SkipPackage:
-                bb.data.setVar("__SKIPPED", True, variant_d)
+            except bb.parse.SkipPackage as e:
+                bb.data.setVar("__SKIPPED", e.args[0], variant_d)
 
     if len(datastores) > 1:
         variants = filter(None, datastores.iterkeys())

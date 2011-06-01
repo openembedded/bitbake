@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "139"
+__cache_version__ = "140"
 
 def getCacheFile(path, filename):
     return os.path.join(path, filename)
@@ -96,8 +96,11 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.variants = self.listvar('__VARIANTS', metadata) + ['']
         self.nocache = self.getvar('__BB_DONT_CACHE', metadata)
 
-        if self.getvar('__SKIPPED', metadata):
+        self.skipreason = self.getvar('__SKIPPED', metadata)
+        if self.skipreason:
             self.skipped = True
+            self.provides  = self.depvar('PROVIDES', metadata)
+            self.rprovides = self.depvar('RPROVIDES', metadata)
             return
 
         self.tasks = metadata.getVar('__BBTASKS', False)
@@ -446,7 +449,7 @@ class Cache(object):
         cached, infos = self.load(fn, appends, cfgData)
         for virtualfn, info_array in infos:
             if info_array[0].skipped:
-                logger.debug(1, "Skipping %s", virtualfn)
+                logger.debug(1, "Skipping %s: %s", virtualfn, info_array[0].skipreason)
                 skipped += 1
             else:
                 self.add_info(virtualfn, info_array, cacheData, not cached)

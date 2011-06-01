@@ -55,6 +55,20 @@ class NothingToBuild(Exception):
 class state:
     initial, parsing, running, shutdown, stop = range(5)
 
+
+class SkippedPackage:
+    def __init__(self, info = None, reason = None):
+        self.skipreason = None
+        self.provides = None
+        self.rprovides = None
+
+        if info:
+            self.skipreason = info.skipreason
+            self.provides = info.provides
+            self.rprovides = info.rprovides
+        elif reason:
+            self.skipreason = reason
+
 #============================================================================#
 # BBCooker
 #============================================================================#
@@ -66,6 +80,7 @@ class BBCooker:
     def __init__(self, configuration, server_registration_cb):
         self.status = None
         self.appendlist = {}
+        self.skiplist = {}
 
         self.server_registration_cb = server_registration_cb
 
@@ -1257,6 +1272,7 @@ class CookerParser(object):
         for virtualfn, info_array in result:
             if info_array[0].skipped:
                 self.skipped += 1
+                self.cooker.skiplist[virtualfn] = SkippedPackage(info_array[0])
             self.bb_cache.add_info(virtualfn, info_array, self.cooker.status,
                                         parsed=parsed)
         return True
