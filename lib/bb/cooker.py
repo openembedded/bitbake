@@ -401,6 +401,15 @@ class BBCooker:
         print("}", file=tdepends_file)
         logger.info("Task dependencies saved to 'task-depends.dot'")
 
+    def calc_bbfile_priority( self, filename, matched = None ):
+        for _, _, regex, pri in self.status.bbfile_config_priorities:
+            if regex.match(filename):
+                if matched != None:
+                    if not regex in matched:
+                        matched.add(regex)
+                return pri
+        return 0
+
     def buildDepgraph( self ):
         all_depends = self.status.all_depends
         pn_provides = self.status.pn_provides
@@ -408,15 +417,6 @@ class BBCooker:
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
         bb.data.expandKeys(localdata)
-
-        matched = set()
-        def calc_bbfile_priority(filename):
-            for _, _, regex, pri in self.status.bbfile_config_priorities:
-                if regex.match(filename):
-                    if not regex in matched:
-                        matched.add(regex)
-                    return pri
-            return 0
 
         # Handle PREFERRED_PROVIDERS
         for p in (bb.data.getVar('PREFERRED_PROVIDERS', localdata, 1) or "").split():
@@ -430,8 +430,9 @@ class BBCooker:
             self.status.preferred[providee] = provider
 
         # Calculate priorities for each file
+        matched = set()
         for p in self.status.pkg_fn:
-            self.status.bbfile_priority[p] = calc_bbfile_priority(p)
+            self.status.bbfile_priority[p] = self.calc_bbfile_priority(p, matched)
  
         # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
         unmatched = set()
@@ -936,6 +937,9 @@ class BBCooker:
 
         files = (data.getVar( "BBFILES", self.configuration.data, 1 ) or "").split()
         data.setVar("BBFILES", " ".join(files), self.configuration.data)
+
+        # Sort files by priority
+        files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem) )
 
         if not len(files):
             files = self.get_bbfiles()
