@@ -258,9 +258,10 @@ class DataSmart(MutableMapping):
         # more cookies for the cookie monster
         if '_' in var:
             override = var[var.rfind('_')+1:]
-            if override not in self._seen_overrides:
-                self._seen_overrides[override] = set()
-            self._seen_overrides[override].add( var )
+            if len(override) > 0:
+                if override not in self._seen_overrides:
+                    self._seen_overrides[override] = set()
+                self._seen_overrides[override].add( var )
 
         # setting var
         self.dict[var]["content"] = value
