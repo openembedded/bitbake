@@ -100,7 +100,7 @@ class DataNode(AstNode):
         elif "colon" in groupd and groupd["colon"] != None:
             e = data.createCopy()
             bb.data.update_data(e)
-            val = bb.data.expand(groupd["value"], e)
+            val = bb.data.expand(groupd["value"], e, key + "[:=]")
         elif "append" in groupd and groupd["append"] != None:
             val = "%s %s" % ((self.getFunc(key, data) or ""), groupd["value"])
         elif "prepend" in groupd and groupd["prepend"] != None:
