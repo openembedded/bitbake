@@ -33,7 +33,7 @@ import threading
 from cStringIO import StringIO
 from contextlib import closing
 from functools import wraps
-import bb
+import bb, bb.exceptions
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
 
 logger      = logging.getLogger("BitBake")
@@ -75,7 +75,13 @@ class BBCooker:
 
         bb.data.inheritFromOS(self.configuration.data)
 
-        self.parseConfigurationFiles(self.configuration.file)
+        try:
+            self.parseConfigurationFiles(self.configuration.file)
+        except SyntaxError:
+            sys.exit(1)
+        except Exception:
+            logger.exception("Error parsing configuration files")
+            sys.exit(1)
 
         if not self.configuration.cmd:
             self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data, True) or "build"
@@ -1044,15 +1050,16 @@ class ParsingFailure(Exception):
     def __init__(self, realexception, recipe):
         self.realexception = realexception
         self.recipe = recipe
-        Exception.__init__(self, "Failure when parsing %s" % recipe)
-        self.args = (realexception, recipe)
+        Exception.__init__(self, realexception, recipe)
 
 def parse_file(task):
     filename, appends = task
     try:
         return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg)
     except Exception, exc:
+        tb = sys.exc_info()[2]
         exc.recipe = filename
+        exc.traceback = list(bb.exceptions.extract_traceback(tb, context=3))
         raise exc
     # Need to turn BaseExceptions into Exceptions here so we gracefully shutdown
     # and for example a worker thread doesn't just exit on its own in response to
@@ -1140,9 +1147,21 @@ class CookerParser(object):
         except StopIteration:
             self.shutdown()
             return False
-        except Exception as exc:
+        except ParsingFailure as exc:
             self.shutdown(clean=False)
-            bb.fatal('Error parsing %s: %s' % (exc.recipe, exc))
+            bb.fatal('Unable to parse %s: %s' %
+                     (exc.recipe, bb.exceptions.to_string(exc.realexception)))
+        except bb.parse.ParseError as exc:
+            bb.fatal(str(exc))
+        except SyntaxError as exc:
+            logger.error('Unable to parse %s', exc.recipe)
+            sys.exit(1)
+        except Exception as exc:
+            etype, value, tb = sys.exc_info()
+            logger.error('Unable to parse %s', value.recipe,
+                         exc_info=(etype, value, exc.traceback))
+            self.shutdown(clean=False)
+            sys.exit(1)
 
         self.current += 1
         self.virtuals += len(result)

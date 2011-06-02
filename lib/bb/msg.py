@@ -65,9 +65,15 @@ class BBLogFormatter(logging.Formatter):
     def format(self, record):
         record.levelname = self.getLevelName(record.levelno)
         if record.levelno == self.PLAIN:
-            return record.getMessage()
+            msg = record.getMessage()
         else:
-            return logging.Formatter.format(self, record)
+            msg = logging.Formatter.format(self, record)
+
+        if hasattr(record, 'bb_exc_info'):
+            etype, value, tb = record.bb_exc_info
+            formatted = bb.exceptions.format_exception(etype, value, tb, limit=5)
+            msg += '\n' + ''.join(formatted)
+        return msg
 
 class Loggers(dict):
     def __getitem__(self, key):

@@ -422,8 +422,10 @@ class LogHandler(logging.Handler):
 
     def emit(self, record):
         if record.exc_info:
-            lines = traceback.format_exception(*record.exc_info, limit=5)
-            record.msg += '\n%s' % ''.join(lines)
+            etype, value, tb = record.exc_info
+            if hasattr(tb, 'tb_next'):
+                tb = list(bb.exceptions.extract_traceback(tb, context=3))
+            record.bb_exc_info = (etype, value, tb)
             record.exc_info = None
         fire(record, None)
 
