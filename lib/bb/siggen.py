@@ -82,6 +82,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
             data = d.getVar(task, False)
             lookupcache[task] = data
 
+            if data is None:
+                bb.error("Task %s from %s seems to be empty?!" % (task, fn))
+                data = ''
+
             newdeps = gendeps[task]
             seen = set()
             while newdeps:
@@ -103,9 +107,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                     var = d.getVar(dep, False)
                     lookupcache[dep] = var
                 if var:
-                    data = data + var
-            if data is None:
-                bb.error("Task %s from %s seems to be empty?!" % (task, fn))
+                    data = data + str(var)
             self.basehash[fn + "." + task] = hashlib.md5(data).hexdigest()
             taskdeps[task] = sorted(alldeps)
 
