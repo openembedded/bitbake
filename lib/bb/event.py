@@ -88,7 +88,7 @@ def fire_class_handlers(event, d):
     for name, handler in _handlers.iteritems():
         try:
             execute_handler(name, handler, event, d)
-        except BaseException:
+        except Exception:
             continue
 
 ui_queue = []
