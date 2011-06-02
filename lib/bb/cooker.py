@@ -1032,7 +1032,7 @@ def catch_parse_error(func):
     def wrapped(fn, *args):
         try:
             return func(fn, *args)
-        except (IOError, bb.parse.ParseError) as exc:
+        except (IOError, bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
             parselog.critical("Unable to parse %s: %s" % (fn, exc))
             sys.exit(1)
     return wrapped
@@ -1151,7 +1151,7 @@ class CookerParser(object):
             self.shutdown(clean=False)
             bb.fatal('Unable to parse %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
-        except bb.parse.ParseError as exc:
+        except (bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
             bb.fatal(str(exc))
         except SyntaxError as exc:
             logger.error('Unable to parse %s', exc.recipe)
