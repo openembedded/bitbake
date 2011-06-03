@@ -32,6 +32,9 @@ class TracebackEntry(namedtuple.abc):
 def _get_frame_args(frame):
     """Get the formatted arguments and class (if available) for a frame"""
     arginfo = inspect.getargvalues(frame)
+    if not arginfo.args:
+        return '', None
+
     firstarg = arginfo.args[0]
     if firstarg == 'self':
         self = arginfo.locals['self']
