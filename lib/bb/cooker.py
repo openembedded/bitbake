@@ -770,13 +770,13 @@ class BBCooker:
 
         fn = bb.cache.Cache.realfn2virtual(fn, cls)
         try:
-            maininfo = infos[fn]
+            info_array = infos[fn]
         except KeyError:
             bb.fatal("%s does not exist" % fn)
-        self.status.add_from_recipeinfo(fn, maininfo)
+        self.status.add_from_recipeinfo(fn, info_array)
 
         # Tweak some variables
-        item = maininfo.pn
+        item = info_array[0].pn
         self.status.ignored_dependencies = set()
         self.status.bbfile_priority[fn] = 1
 
@@ -1219,10 +1219,10 @@ class CookerParser(object):
         else:
             self.cached += 1
 
-        for virtualfn, info in result:
-            if info.skipped:
+        for virtualfn, info_array in result:
+            if info_array[0].skipped:
                 self.skipped += 1
-            self.bb_cache.add_info(virtualfn, info, self.cooker.status,
+            self.bb_cache.add_info(virtualfn, info_array, self.cooker.status,
                                         parsed=parsed)
         return True
 
@@ -1230,5 +1230,5 @@ class CookerParser(object):
         infos = self.bb_cache.parse(filename,
                                     self.cooker.get_file_appends(filename),
                                     self.cfgdata, self.cooker.caches_array)
-        for vfn, info in infos:
-            self.cooker.status.add_from_recipeinfo(vfn, info)
+        for vfn, info_array in infos:
+            self.cooker.status.add_from_recipeinfo(vfn, info_array)
