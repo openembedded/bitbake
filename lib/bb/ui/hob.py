@@ -28,6 +28,8 @@ import xmlrpclib
 import logging
 import Queue
 
+extraCaches = ['bb.cache_extra:HobRecipeInfo']
+
 class MainWindow (gtk.Window):
             
     def __init__(self, taskmodel, handler, curr_mach=None, curr_distro=None):

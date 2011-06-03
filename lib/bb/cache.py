@@ -245,7 +245,11 @@ class Cache(object):
     BitBake Cache implementation
     """
 
-    def __init__(self, data):
+    def __init__(self, data, caches_array):
+        # Pass caches_array information into Cache Constructor
+        # It will be used in later for deciding whether we 
+        # need extra cache file dump/load support 
+        self.caches_array = caches_array
         self.cachedir = bb.data.getVar("CACHE", data, True)
         self.clean = set()
         self.checked = set()
@@ -360,7 +364,7 @@ class Cache(object):
         return bb_data[virtual]
 
     @classmethod
-    def parse(cls, filename, appends, configdata):
+    def parse(cls, filename, appends, configdata, caches_array):
         """Parse the specified filename, returning the recipe information"""
         infos = []
         datastores = cls.load_bbfile(filename, appends, configdata)
@@ -393,7 +397,7 @@ class Cache(object):
                 infos.append((virtualfn, self.depends_cache[virtualfn]))
         else:
             logger.debug(1, "Parsing %s", filename)
-            return self.parse(filename, appends, configdata)
+            return self.parse(filename, appends, configdata, self.caches_array)
 
         return cached, infos
 
@@ -623,8 +627,9 @@ class CacheData(object):
     The data structures we compile from the cached data
     """
 
-    def __init__(self):
-        CoreRecipeInfo.init_cacheData(self)        
+    def __init__(self, caches_array):
+        self.caches_array = caches_array
+        CoreRecipeInfo.init_cacheData(self)
         # Direct cache variables
         self.task_queues = {}
         self.preferred = {}

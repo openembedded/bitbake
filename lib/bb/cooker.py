@@ -71,6 +71,41 @@ class BBCooker:
 
         self.configuration = configuration
 
+        self.caches_array = []
+        # Currently, only Image Creator hob ui needs extra cache.
+        # So, we save Extra Cache class name and container file
+        # information into a extraCaches field in hob UI.  
+        # TODO: In future, bin/bitbake should pass information into cooker,
+        # instead of getting information from configuration.ui. Also, some
+        # UI start up issues need to be addressed at the same time.
+        caches_name_array = ['bb.cache:CoreRecipeInfo']
+        if configuration.ui:
+            try:
+                module = __import__('bb.ui', fromlist=[configuration.ui])
+                name_array = (getattr(module, configuration.ui)).extraCaches
+                for recipeInfoName in name_array:
+                    caches_name_array.append(recipeInfoName)
+            except ImportError, exc:
+                # bb.ui.XXX is not defined and imported. It's an error!
+                logger.critical("Unable to import '%s' interface from bb.ui: %s" % (configuration.ui, exc))
+                sys.exit("FATAL: Failed to import '%s' interface." % configuration.ui)
+            except AttributeError:
+                # This is not an error. If the field is not defined in the ui,
+                # this interface might need no extra cache fields, so
+                # just skip this error!
+                logger.debug("UI '%s' does not require extra cache!" % (configuration.ui))
+
+        # At least CoreRecipeInfo will be loaded, so caches_array will never be empty!
+        # This is the entry point, no further check needed!
+        for var in caches_name_array:
+            try:
+                module_name, cache_name = var.split(':')
+                module = __import__(module_name, fromlist=(cache_name,))
+                self.caches_array.append(getattr(module, cache_name)) 
+            except ImportError, exc:
+                logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
+                sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
+
         self.configuration.data = bb.data.init()
 
         bb.data.inheritFromOS(self.configuration.data)
@@ -727,9 +762,10 @@ class BBCooker:
 
         self.buildSetVars()
 
-        self.status = bb.cache.CacheData()
+        self.status = bb.cache.CacheData(self.caches_array)
         infos = bb.cache.Cache.parse(fn, self.get_file_appends(fn), \
-                                     self.configuration.data)
+                                     self.configuration.data,
+                                     self.caches_array)
         infos = dict(infos)
 
         fn = bb.cache.Cache.realfn2virtual(fn, cls)
@@ -879,7 +915,7 @@ class BBCooker:
                 else:
                     collectlog.info("You have disabled Psyco. This decreases performance.")
 
-            self.status = bb.cache.CacheData()
+            self.status = bb.cache.CacheData(self.caches_array)
 
             ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
             self.status.ignored_dependencies = set(ignore.split())
@@ -1063,9 +1099,9 @@ class ParsingFailure(Exception):
         Exception.__init__(self, realexception, recipe)
 
 def parse_file(task):
-    filename, appends = task
+    filename, appends, caches_array = task
     try:
-        return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg)
+        return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg, caches_array)
     except Exception, exc:
         tb = sys.exc_info()[2]
         exc.recipe = filename
@@ -1097,13 +1133,13 @@ class CookerParser(object):
         self.num_processes = int(self.cfgdata.getVar("BB_NUMBER_PARSE_THREADS", True) or
                                  multiprocessing.cpu_count())
 
-        self.bb_cache = bb.cache.Cache(self.cfgdata)
+        self.bb_cache = bb.cache.Cache(self.cfgdata, cooker.caches_array)
         self.fromcache = []
         self.willparse = []
         for filename in self.filelist:
             appends = self.cooker.get_file_appends(filename)
             if not self.bb_cache.cacheValid(filename):
-                self.willparse.append((filename, appends))
+                self.willparse.append((filename, appends, cooker.caches_array))
             else:
                 self.fromcache.append((filename, appends))
         self.toparse = self.total - len(self.fromcache)
@@ -1193,6 +1229,6 @@ class CookerParser(object):
     def reparse(self, filename):
         infos = self.bb_cache.parse(filename,
                                     self.cooker.get_file_appends(filename),
-                                    self.cfgdata)
+                                    self.cfgdata, self.cooker.caches_array)
         for vfn, info in infos:
             self.cooker.status.add_from_recipeinfo(vfn, info)
