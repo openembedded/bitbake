@@ -79,7 +79,7 @@ recipe_fields = (
     'license',
     'section',
     'fakerootenv',
-    'fakerootdirs',
+    'fakerootdirs'
 )
 
 
