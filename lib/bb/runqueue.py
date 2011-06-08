@@ -1163,7 +1163,8 @@ class RunQueueExecute:
                     logger.critical(str(exc))
                 os._exit(1)
             try:
-                ret = bb.build.exec_task(fn, taskname, the_data)
+                if not self.cooker.configuration.dry_run:
+                    ret = bb.build.exec_task(fn, taskname, the_data)
                 os._exit(ret)
             except:
                 os._exit(1)
@@ -1345,12 +1346,6 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 logger.debug(2, "Stamp current task %s (%s)", task,
                                 self.rqdata.get_user_idstring(task))
                 self.task_skip(task)
-                return True
-            elif self.cooker.configuration.dry_run:
-                self.runq_running[task] = 1
-                self.runq_buildable[task] = 1
-                self.stats.taskActive()
-                self.task_complete(task)
                 return True
 
             taskdep = self.rqdata.dataCache.task_deps[fn]
