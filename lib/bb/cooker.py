@@ -1058,11 +1058,61 @@ class BBCooker:
             return self.appendlist[f]
         return []
 
+    def pre_serve(self):
+        # Empty the environment. The environment will be populated as
+        # necessary from the data store.
+        #bb.utils.empty_environment()
+        return
+
+    def post_serve(self):
+        bb.event.fire(CookerExit(), self.configuration.event_data)
+
     def shutdown(self):
         self.state = state.shutdown
 
     def stop(self):
         self.state = state.stop
+
+def server_main(cooker, func, *args):
+    cooker.pre_serve()
+
+    if cooker.configuration.profile:
+        try:
+            import cProfile as profile
+        except:
+            import profile
+        prof = profile.Profile()
+
+        ret = profile.Profile.runcall(prof, func, *args)
+
+        prof.dump_stats("profile.log")
+
+        # Redirect stdout to capture profile information
+        pout = open('profile.log.processed', 'w')
+        so = sys.stdout.fileno()
+        orig_so = os.dup(sys.stdout.fileno())
+        os.dup2(pout.fileno(), so)
+   
+        import pstats
+        p = pstats.Stats('profile.log')
+        p.sort_stats('time')
+        p.print_stats()
+        p.print_callers()
+        p.sort_stats('cumulative')
+        p.print_stats()
+
+        os.dup2(orig_so, so)
+        pout.flush()
+        pout.close()  
+
+        print("Raw profiling information saved to profile.log and processed statistics to profile.log.processed")
+
+    else:
+        ret = func(*args)
+
+    cooker.post_serve()
+
+    return ret
 
 class CookerExit(bb.event.Event):
     """

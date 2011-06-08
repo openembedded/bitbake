@@ -95,33 +95,7 @@ class ProcessServer(Process):
         self._idlefunctions[function] = data
 
     def run(self):
-        if self.configuration.profile:
-            return self.profile_main()
-        else:
-            return self.main()
-
-    def profile_main(self):
-        import cProfile
-        profiler = cProfile.Profile()
-        try:
-            return profiler.runcall(self.main)
-        finally:
-            profiler.dump_stats(self.profile_filename)
-            self.write_profile_stats()
-            sys.__stderr__.write("Raw profiling information saved to %s and "
-                                 "processed statistics to %s\n" %
-                                 (self.profile_filename,
-                                  self.profile_processed_filename))
-
-    def write_profile_stats(self):
-        import pstats
-        with open(self.profile_processed_filename, 'w') as outfile:
-            stats = pstats.Stats(self.profile_filename, stream=outfile)
-            stats.sort_stats('time')
-            stats.print_stats()
-            stats.print_callers()
-            stats.sort_stats('cumulative')
-            stats.print_stats()
+        bb.cooker.server_main(self.cooker, self.main)
 
     def main(self):
         # Ignore SIGINT within the server, as all SIGINT handling is done by
