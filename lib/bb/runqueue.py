@@ -1111,6 +1111,11 @@ class RunQueueExecute:
             try:
                 the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
                 the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
+                for h in self.rqdata.hashes:
+                    the_data.setVar("BBHASH_%s" % h, self.rqdata.hashes[h])
+                for h in self.rqdata.hash_deps:
+                    the_data.setVar("BBHASHDEPS_%s" % h, self.rqdata.hash_deps[h])
+
                 os.environ.update(bb.data.exported_vars(the_data))
             except Exception as exc:
                 if not quieterrors:
