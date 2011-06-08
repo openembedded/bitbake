@@ -111,7 +111,7 @@ def main(server, eventHandler):
                         print("%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task))
 
             if isinstance(event, logging.LogRecord):
-                if event.levelno >= format.CRITICAL:
+                if event.levelno >= format.ERROR:
                     return_value = 1
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to 
