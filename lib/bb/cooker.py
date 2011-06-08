@@ -93,7 +93,7 @@ class BBCooker:
                 # This is not an error. If the field is not defined in the ui,
                 # this interface might need no extra cache fields, so
                 # just skip this error!
-                logger.debug("UI '%s' does not require extra cache!" % (configuration.ui))
+                logger.debug(2, "UI '%s' does not require extra cache!" % (configuration.ui))
 
         # At least CoreRecipeInfo will be loaded, so caches_array will never be empty!
         # This is the entry point, no further check needed!
