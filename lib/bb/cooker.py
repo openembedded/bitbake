@@ -125,8 +125,6 @@ class BBCooker:
         if bbpkgs and len(self.configuration.pkgs_to_build) == 0:
             self.configuration.pkgs_to_build.extend(bbpkgs.split())
 
-        self.parseCommandLine()
-
         #
         # Special updated configuration we use for firing events
         #
