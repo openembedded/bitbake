@@ -19,7 +19,6 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import gobject
-import Queue
 from bb.ui.crumbs.progress import ProgressBar
 
 progress_total = 0
@@ -117,13 +116,10 @@ class HobHandler(gobject.GObject):
 
     def event_handle_idle_func (self, eventHandler, running_build, pbar):
         # Consume as many messages as we can in the time available to us
-        while True:
-            try:
-                event = eventHandler.get(block=False)
-            except Queue.Empty:
-                break
-            else:
-                self.handle_event(event, running_build, pbar)
+        event = eventHandler.getEvent()
+        while event:
+            self.handle_event(event, running_build, pbar)
+            event = eventHandler.getEvent()
         return True
 
     def set_machine(self, machine):
