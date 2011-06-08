@@ -40,7 +40,7 @@ import bb.msg
 from bb import cooker
 from bb import ui
 from bb import server
-from bb.server.process import ProcessServer, ServerCommunicator
+from bb.server.process import ProcessServer, ServerCommunicator, ProcessEventQueue
 
 from Queue import Empty
 from multiprocessing import Queue, Pipe
@@ -192,7 +192,7 @@ Default BBFILES are the .bb files in the current directory.""")
     # and a queue for server -> ui event notifications
     #
     ui_channel, server_channel = Pipe()
-    event_queue = Queue()
+    event_queue = ProcessEventQueue()
 
     server = ProcessServer(server_channel, event_queue, configuration)
     server.start()

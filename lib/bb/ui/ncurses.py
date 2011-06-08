@@ -244,7 +244,9 @@ class NCursesUI:
         exitflag = False
         while not exitflag:
             try:
-                event = eventHandler.get()
+                event = eventHandler.waitEvent(0.25)
+                if not event:
+                    continue
 
                 helper.eventHandler(event)
                 if isinstance(event, bb.build.TaskBase):

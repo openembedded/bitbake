@@ -223,13 +223,7 @@ def main(server, eventHandler):
     progress_total = 0
     while True:
         try:
-            try:
-                # We must get nonblocking here, else we'll never check the
-                # quit signal
-                event = eventHandler.get(False, 0.25)
-            except Queue.Empty:
-                pass
-            
+            event = eventHandler.waitEvent(0.25)
             if gtkthread.quit.isSet():
                 server.runCommand(["stateStop"])
                 break

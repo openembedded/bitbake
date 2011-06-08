@@ -30,7 +30,8 @@ import signal
 import sys
 import time
 from bb.cooker import BBCooker
-from multiprocessing import Event, Process, util
+from Queue import Empty
+from multiprocessing import Event, Process, util, Queue, Pipe, queues
 
 logger = logging.getLogger('BitBake')
 
@@ -193,3 +194,20 @@ class ProcessServer(Process):
     # which can result in a bitbake server hang during the parsing process
     if (2, 6, 0) <= sys.version_info < (2, 6, 3):
         _bootstrap = bootstrap_2_6_6
+
+# Wrap Queue to provide API which isn't server implementation specific
+class ProcessEventQueue(multiprocessing.queues.Queue):
+    def waitEvent(self, timeout):
+        try:
+            return self.get(True, timeout)
+        except Empty:
+            return None
+
+    def getEvent(self):
+        try:
+            return self.get(False)
+        except Empty:
+            return None
+
+
+

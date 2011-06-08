@@ -30,12 +30,10 @@ import Queue
 def event_handle_idle_func (eventHandler, build, pbar):
 
     # Consume as many messages as we can in the time available to us
-    try:
-        while 1:
-            event = eventHandler.get(False)
-            build.handle_event (event, pbar)
-    except Queue.Empty:
-        pass
+    event = eventHandler.getEvent()
+    while event:
+        build.handle_event (event, pbar)
+        event = eventHandler.getEvent()
 
     return True
 
