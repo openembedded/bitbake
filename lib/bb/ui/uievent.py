@@ -76,7 +76,7 @@ class BBUIEventQueue:
         self.host, self.port = server.socket.getsockname()
 
         server.register_function( self.system_quit, "event.quit" )
-        server.register_function( self.send_event, "event.send" )
+        server.register_function( self.send_event, "event.sendpickle" )
         server.socket.settimeout(1)
 
         self.EventHandle = self.BBServer.registerEventHandler(self.host, self.port)
