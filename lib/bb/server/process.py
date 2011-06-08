@@ -29,7 +29,6 @@ import os
 import signal
 import sys
 import time
-from bb.cooker import BBCooker
 from Queue import Empty
 from multiprocessing import Event, Process, util, Queue, Pipe, queues
 
@@ -73,13 +72,11 @@ class ProcessServer(Process):
     profile_filename = "profile.log"
     profile_processed_filename = "profile.log.processed"
 
-    def __init__(self, command_channel, event_queue, configuration):
+    def __init__(self, command_channel, event_queue):
         Process.__init__(self)
         self.command_channel = command_channel
         self.event_queue = event_queue
         self.event = EventAdapter(event_queue)
-        self.configuration = configuration
-        self.cooker = BBCooker(configuration, self.register_idle_function)
         self._idlefunctions = {}
         self.event_handle = bb.event.register_UIHhandler(self)
         self.quit = False
@@ -195,6 +192,35 @@ class ProcessServer(Process):
     if (2, 6, 0) <= sys.version_info < (2, 6, 3):
         _bootstrap = bootstrap_2_6_6
 
+class BitBakeServerConnection():
+    def __init__(self, server):
+        self.server = server
+        self.procserver = server.server
+        self.connection = ServerCommunicator(server.ui_channel)
+        self.events = server.event_queue
+
+    def terminate(self, force = False):
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        self.procserver.stop()
+        if force:
+            self.procserver.join(0.5)
+            if self.procserver.is_alive():
+                self.procserver.terminate()
+                self.procserver.join()
+        else:
+            self.procserver.join()
+        while True:
+            try:
+                event = self.server.event_queue.get(block=False)
+            except (Empty, IOError):
+                break
+            if isinstance(event, logging.LogRecord):
+                logger.handle(event)
+        self.server.ui_channel.close()
+        self.server.event_queue.close()
+        if force:
+            sys.exit(1)
+
 # Wrap Queue to provide API which isn't server implementation specific
 class ProcessEventQueue(multiprocessing.queues.Queue):
     def waitEvent(self, timeout):
@@ -210,4 +236,36 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
             return None
 
 
+class BitBakeServer(object):
+    def initServer(self):
+        # establish communication channels.  We use bidirectional pipes for
+        # ui <--> server command/response pairs
+        # and a queue for server -> ui event notifications
+        #
+        self.ui_channel, self.server_channel = Pipe()
+        self.event_queue = ProcessEventQueue(0)
+
+        self.server = ProcessServer(self.server_channel, self.event_queue)
+
+    def addcooker(self, cooker):
+        self.cooker = cooker
+        self.server.cooker = cooker
+
+    def getServerIdleCB(self):
+        return self.server.register_idle_function
+
+    def saveConnectionDetails(self):
+        return
+
+    def detach(self, cooker_logfile):
+        self.server.start() 
+        return
+
+    def establishConnection(self):
+        self.connection = BitBakeServerConnection(self)
+        signal.signal(signal.SIGTERM, lambda i, s: self.connection.terminate(force=True))
+        return self.connection
+
+    def launchUI(self, uifunc, *args):
+        return bb.cooker.server_main(self.cooker, uifunc, *args)
 

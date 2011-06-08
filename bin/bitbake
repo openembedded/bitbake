@@ -29,7 +29,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)),
 
 import optparse
 import warnings
-import signal
 from traceback import format_exception
 try:
     import bb
@@ -40,10 +39,9 @@ import bb.msg
 from bb import cooker
 from bb import ui
 from bb import server
-from bb.server.process import ProcessServer, ServerCommunicator, ProcessEventQueue
-
-from Queue import Empty
-from multiprocessing import Queue, Pipe
+#from bb.server import none
+from bb.server import process
+#from bb.server import xmlrpc
 
 __version__ = "1.13.0"
 logger = logging.getLogger("BitBake")
@@ -175,6 +173,10 @@ Default BBFILES are the .bb files in the current directory.""")
 
     ui_main = get_ui(configuration)
 
+    # Save a logfile for cooker into the current working directory. When the
+    # server is daemonized this logfile will be truncated.
+    cooker_logfile = os.path.join(os.getcwd(), "cooker.log")
+
     bb.utils.init_logger(bb.msg, configuration.verbose, configuration.debug,
                          configuration.debug_domains)
 
@@ -187,45 +189,32 @@ Default BBFILES are the .bb files in the current directory.""")
     # of the UIs (e.g. for DISPLAY, etc.)
     bb.utils.clean_environment()
 
-    # establish communication channels.  We use bidirectional pipes for
-    # ui <--> server command/response pairs
-    # and a queue for server -> ui event notifications
-    #
-    ui_channel, server_channel = Pipe()
-    event_queue = ProcessEventQueue()
+    #server = bb.server.none.BitBakeServer()    
+    server = bb.server.process.BitBakeServer()
+    #server = bb.server.xmlrpc.BitBakeServer()
 
-    server = ProcessServer(server_channel, event_queue, configuration)
-    server.start()
+    server.initServer()
+    idle = server.getServerIdleCB()
+
+    cooker = bb.cooker.BBCooker(configuration, idle)
+    cooker.parseCommandLine()
+
+    server.addcooker(cooker)
+    server.saveConnectionDetails()
+    server.detach(cooker_logfile)
+
+    # Should no longer need to ever reference cooker
+    del cooker
 
     logger.removeHandler(handler)
 
-    def shutdown(force=False):
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-        server.stop()
-        if force:
-            server.join(0.5)
-            if server.is_alive():
-                server.terminate()
-                server.join()
-        else:
-            server.join()
-        while True:
-            try:
-                event = event_queue.get(block=False)
-            except (Empty, IOError):
-                break
-            if isinstance(event, logging.LogRecord):
-                logger.handle(event)
-        ui_channel.close()
-        event_queue.close()
-        if force:
-            sys.exit(1)
+    # Setup a connection to the server (cooker)
+    server_connection = server.establishConnection()
 
-    signal.signal(signal.SIGTERM, lambda i, s: shutdown(force=True))
     try:
-        return ui_main(ServerCommunicator(ui_channel), event_queue)
+        return server.launchUI(ui_main, server_connection.connection, server_connection.events)
     finally:
-        shutdown()
+        server_connection.terminate()
 
     return 1
 
