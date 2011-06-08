@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+# This script has subcommands which operate against your bitbake layers, either
+# displaying useful information, or acting against them.
+# Currently, it only provides a show_appends command, which shows you what
+# bbappends are in effect, and warns you if you have appends which are not being
+# utilized.
+
 import cmd
 import logging
 import os.path
