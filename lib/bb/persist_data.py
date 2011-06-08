@@ -55,7 +55,16 @@ class SQLTable(collections.MutableMapping):
                       % table)
 
     def _execute(self, *query):
-        return self.cursor.execute(*query)
+        """Execute a query, waiting to acquire a lock if necessary"""
+        count = 0
+        while True:
+            try:
+                return self.cursor.execute(*query)
+            except sqlite3.OperationalError as exc:
+                if 'database is locked' in str(exc) and count < 500:
+                    count = count + 1
+                    continue
+                raise
 
     def __enter__(self):
         self.cursor.__enter__()
