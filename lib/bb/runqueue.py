@@ -1117,6 +1117,10 @@ class RunQueueExecute:
                     the_data.setVar("BBHASHDEPS_%s" % h, self.rqdata.hash_deps[h])
 
                 os.environ.update(bb.data.exported_vars(the_data))
+
+                if quieterrors:
+                    the_data.setVarFlag(taskname, "quieterrors", "1")
+
             except Exception as exc:
                 if not quieterrors:
                     logger.critical(str(exc))
