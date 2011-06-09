@@ -139,9 +139,6 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("-p", "--parse-only", help = "quit after parsing the BB files (developers only)",
                action = "store_true", dest = "parse_only", default = False)
 
-    parser.add_option("-d", "--disable-psyco", help = "disable using the psyco just-in-time compiler (not recommended)",
-               action = "store_true", dest = "disable_psyco", default = False)
-
     parser.add_option("-s", "--show-versions", help = "show current and preferred versions of all packages",
                action = "store_true", dest = "show_versions", default = False)
 

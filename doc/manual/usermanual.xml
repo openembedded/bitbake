@@ -417,8 +417,6 @@ options:
                         than once.
   -n, --dry-run         don't execute, just go through the motions
   -p, --parse-only      quit after parsing the BB files (developers only)
-  -d, --disable-psyco   disable using the psyco just-in-time compiler (not
-                        recommended)
   -s, --show-versions   show current and preferred versions of all packages
   -e, --environment     show the global or per-package environment (this is
                         what used to be bbread)

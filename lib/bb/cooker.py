@@ -900,19 +900,6 @@ class BBCooker:
         if self.state != state.parsing:
             self.parseConfiguration ()
 
-            # Import Psyco if available and not disabled
-            import platform
-            if platform.machine() in ['i386', 'i486', 'i586', 'i686']:
-                if not self.configuration.disable_psyco:
-                    try:
-                        import psyco
-                    except ImportError:
-                        collectlog.info("Psyco JIT Compiler (http://psyco.sf.net) not available. Install it to increase performance.")
-                    else:
-                        psyco.bind( CookerParser.parse_next )
-                else:
-                    collectlog.info("You have disabled Psyco. This decreases performance.")
-
             self.status = bb.cache.CacheData(self.caches_array)
 
             ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
