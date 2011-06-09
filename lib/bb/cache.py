@@ -179,7 +179,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
     def add_cacheData(self, cachedata, fn):
         cachedata.task_deps[fn] = self.task_deps
         cachedata.pkg_fn[fn] = self.pn
-        cachedata.pkg_pn[self].append(fn)
+        cachedata.pkg_pn[self.pn].append(fn)
         cachedata.pkg_pepvpr[fn] = (self.pe, self.pv, self.pr)
         cachedata.pkg_dp[fn] = self.defaultpref
         cachedata.stamp[fn] = self.stamp
