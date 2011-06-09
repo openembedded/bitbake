@@ -308,18 +308,21 @@ def handleInherit(statements, filename, lineno, m):
 
 def finalize(fn, d, variant = None):
     bb.data.expandKeys(d)
-    bb.data.update_data(d)
-    code = []
-    for funcname in bb.data.getVar("__BBANONFUNCS", d) or []:
-        code.append("%s(d)" % funcname)
-    bb.utils.simple_exec("\n".join(code), {"d": d})
-    bb.data.update_data(d)
 
     all_handlers = {}
     for var in bb.data.getVar('__BBHANDLERS', d) or []:
         # try to add the handler
         handler = bb.data.getVar(var, d)
         bb.event.register(var, handler)
+
+    bb.event.fire(bb.event.RecipePreFinalise(fn), d)
+
+    bb.data.update_data(d)
+    code = []
+    for funcname in bb.data.getVar("__BBANONFUNCS", d) or []:
+        code.append("%s(d)" % funcname)
+    bb.utils.simple_exec("\n".join(code), {"d": d})
+    bb.data.update_data(d)
 
     tasklist = bb.data.getVar('__BBTASKS', d) or []
     bb.build.add_tasks(tasklist, d)

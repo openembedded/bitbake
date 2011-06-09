@@ -206,12 +206,16 @@ def getName(e):
 class ConfigParsed(Event):
     """Configuration Parsing Complete"""
 
-class RecipeParsed(Event):
-    """ Recipe Parsing Complete """
-
+class RecipeEvent(Event):
     def __init__(self, fn):
         self.fn = fn
         Event.__init__(self)
+
+class RecipePreFinalise(RecipeEvent):
+    """ Recipe Parsing Complete but not yet finialised"""
+
+class RecipeParsed(RecipeEvent):
+    """ Recipe Parsing Complete """
 
 class StampUpdate(Event):
     """Trigger for any adjustment of the stamp files to happen"""

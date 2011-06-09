@@ -228,6 +228,7 @@ def main(server, eventHandler):
                                   bb.event.StampUpdate,
                                   bb.event.ConfigParsed,
                                   bb.event.RecipeParsed,
+                                  bb.event.RecipePreFinalise,
                                   bb.runqueue.runQueueEvent,
                                   bb.runqueue.runQueueExitWait)):
                 continue
