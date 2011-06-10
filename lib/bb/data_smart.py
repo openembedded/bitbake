@@ -401,18 +401,20 @@ class DataSmart(MutableMapping):
                 yield key
 
     def __iter__(self):
-        seen = set()
-        def _keys(d):
-            if "_data" in d:
-                for key in _keys(d["_data"]):
-                    yield key
-
+        def keylist(d):        
+            klist = set()
             for key in d:
-                if key != "_data":
-                    if not key in seen:
-                        seen.add(key)
-                        yield key
-        return _keys(self.dict)
+                if key == "_data":
+                    continue
+                klist.add(key)
+
+            if "_data" in d:
+                klist |= keylist(d["_data"])
+
+            return klist
+
+        for k in keylist(self.dict):
+             yield k
 
     def __len__(self):
         return len(frozenset(self))
