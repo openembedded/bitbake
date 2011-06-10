@@ -569,7 +569,6 @@ class CacheData(object):
         self.ignored_dependencies = []
         self.world_target = set()
         self.bbfile_priority = {}
-        self.bbfile_config_priorities = []
 
     def add_from_recipeinfo(self, fn, info):
         self.task_deps[fn] = info.task_deps

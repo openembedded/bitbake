@@ -547,6 +547,7 @@ class BBCooker:
 
     def handleCollections( self, collections ):
         """Handle collections"""
+        self.status.bbfile_config_priorities = []
         if collections:
             collection_list = collections.split()
             for c in collection_list:
@@ -617,6 +618,8 @@ class BBCooker:
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache
         self.parseConfiguration()
+        self.status = bb.cache.CacheData()
+        self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
 
         # If we are told to do the None task then query the default task
         if (task == None):
@@ -628,7 +631,6 @@ class BBCooker:
 
         self.buildSetVars()
 
-        self.status = bb.cache.CacheData()
         infos = bb.cache.Cache.parse(fn, self.get_file_appends(fn), \
                                      self.configuration.data)
         infos = dict(infos)
