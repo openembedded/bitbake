@@ -203,7 +203,10 @@ def uri_replace(ud, uri_find, uri_replace, d):
         result_decoded[loc] = uri_decoded[loc]
         if isinstance(i, basestring):
             if (re.match(i, uri_decoded[loc])):
-                result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
+                if not uri_replace_decoded[loc]:
+                    result_decoded[loc] = ""    
+                else:
+                    result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
                 if uri_find_decoded.index(i) == 2:
                     if ud.mirrortarball:
                         result_decoded[loc] = os.path.join(os.path.dirname(result_decoded[loc]), os.path.basename(ud.mirrortarball))
