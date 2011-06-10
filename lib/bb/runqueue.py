@@ -1149,7 +1149,8 @@ class RunQueueExecute:
                 os._exit(1)
             try:
                 if not self.cooker.configuration.dry_run:
-                    ret = bb.build.exec_task(fn, taskname, the_data)
+                    profile = self.cooker.configuration.profile
+                    ret = bb.build.exec_task(fn, taskname, the_data, profile)
                 os._exit(ret)
             except:
                 os._exit(1)
