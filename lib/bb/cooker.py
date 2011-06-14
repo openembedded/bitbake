@@ -175,41 +175,39 @@ class BBCooker:
 
     def parseCommandLine(self):
         # Parse any commandline into actions
+        self.commandlineAction = {'action':None, 'msg':None}
         if self.configuration.show_environment:
-            self.commandlineAction = None
-
             if 'world' in self.configuration.pkgs_to_build:
-                buildlog.error("'world' is not a valid target for --environment.")
-            if 'universe' in self.configuration.pkgs_to_build:
-                buildlog.error("'universe' is not a valid target for --environment.")
+                self.commandlineAction['msg'] = "'world' is not a valid target for --environment."
+            elif 'universe' in self.configuration.pkgs_to_build:
+                self.commandlineAction['msg'] = "'universe' is not a valid target for --environment."
             elif len(self.configuration.pkgs_to_build) > 1:
-                buildlog.error("Only one target can be used with the --environment option.")
+                self.commandlineAction['msg'] = "Only one target can be used with the --environment option."
             elif self.configuration.buildfile and len(self.configuration.pkgs_to_build) > 0:
-                buildlog.error("No target should be used with the --environment and --buildfile options.")
+                self.commandlineAction['msg'] = "No target should be used with the --environment and --buildfile options."
             elif len(self.configuration.pkgs_to_build) > 0:
-                self.commandlineAction = ["showEnvironmentTarget", self.configuration.pkgs_to_build]
+                self.commandlineAction['action'] = ["showEnvironmentTarget", self.configuration.pkgs_to_build]
             else:
-                self.commandlineAction = ["showEnvironment", self.configuration.buildfile]
+                self.commandlineAction['action'] = ["showEnvironment", self.configuration.buildfile]
         elif self.configuration.buildfile is not None:
-            self.commandlineAction = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
+            self.commandlineAction['action'] = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
         elif self.configuration.revisions_changed:
-            self.commandlineAction = ["compareRevisions"]
+            self.commandlineAction['action'] = ["compareRevisions"]
         elif self.configuration.show_versions:
-            self.commandlineAction = ["showVersions"]
+            self.commandlineAction['action'] = ["showVersions"]
         elif self.configuration.parse_only:
-            self.commandlineAction = ["parseFiles"]
+            self.commandlineAction['action'] = ["parseFiles"]
         elif self.configuration.dot_graph:
             if self.configuration.pkgs_to_build:
-                self.commandlineAction = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
+                self.commandlineAction['action'] = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
-                self.commandlineAction = None
-                buildlog.error("Please specify a package name for dependency graph generation.")
+                self.commandlineAction['msg'] = "Please specify a package name for dependency graph generation."
         else:
             if self.configuration.pkgs_to_build:
-                self.commandlineAction = ["buildTargets", self.configuration.pkgs_to_build, self.configuration.cmd]
+                self.commandlineAction['action'] = ["buildTargets", self.configuration.pkgs_to_build, self.configuration.cmd]
             else:
+                #self.commandlineAction['msg'] = "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information."
                 self.commandlineAction = None
-                buildlog.error("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
 
     def runCommands(self, server, data, abort):
         """

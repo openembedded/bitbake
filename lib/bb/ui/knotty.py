@@ -80,8 +80,12 @@ def main(server, eventHandler):
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
         if not cmdline:
+            print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
             return 1
-        ret = server.runCommand(cmdline)
+        elif not cmdline['action']:
+            print(cmdline['msg'])
+            return 1
+        ret = server.runCommand(cmdline['action'])
         if ret != True:
             print("Couldn't get default commandline! %s" % ret)
             return 1

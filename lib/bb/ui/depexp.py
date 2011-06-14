@@ -199,10 +199,13 @@ class gtkthread(threading.Thread):
 def main(server, eventHandler):
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
-        if not cmdline or cmdline[0] != "generateDotGraph":
+        if cmdline and not cmdline['action']:
+            print(cmdline['msg'])
+            return
+        elif not cmdline or (cmdline['action'] and cmdline['action'][0] != "generateDotGraph"):
             print("This UI is only compatible with the -g option")
             return
-        ret = server.runCommand(["generateDepTreeEvent", cmdline[1], cmdline[2]])
+        ret = server.runCommand(["generateDepTreeEvent", cmdline['action'][1], cmdline['action'][2]])
         if ret != True:
             print("Couldn't run command! %s" % ret)
             return
