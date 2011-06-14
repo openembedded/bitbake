@@ -187,7 +187,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         val = getVar(var, d, 1)
     except (KeyboardInterrupt, bb.build.FuncFailed):
         raise
-    except Exception, exc:
+    except Exception as exc:
         o.write('# expansion of %s threw %s: %s\n' % (var, exc.__class__.__name__, str(exc)))
         return 0
 

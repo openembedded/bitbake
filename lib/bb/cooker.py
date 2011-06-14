@@ -100,7 +100,7 @@ class BBCooker:
                 name_array = (getattr(module, configuration.ui)).extraCaches
                 for recipeInfoName in name_array:
                     caches_name_array.append(recipeInfoName)
-            except ImportError, exc:
+            except ImportError as exc:
                 # bb.ui.XXX is not defined and imported. It's an error!
                 logger.critical("Unable to import '%s' interface from bb.ui: %s" % (configuration.ui, exc))
                 sys.exit("FATAL: Failed to import '%s' interface." % configuration.ui)
@@ -117,7 +117,7 @@ class BBCooker:
                 module_name, cache_name = var.split(':')
                 module = __import__(module_name, fromlist=(cache_name,))
                 self.caches_array.append(getattr(module, cache_name)) 
-            except ImportError, exc:
+            except ImportError as exc:
                 logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
                 sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
 
@@ -277,7 +277,7 @@ class BBCooker:
         if fn:
             try:
                 envdata = bb.cache.Cache.loadDataFull(fn, self.get_file_appends(fn), self.configuration.data)
-            except Exception, e:
+            except Exception as e:
                 parselog.exception("Unable to read %s", fn)
                 raise
 
@@ -1155,7 +1155,7 @@ def parse_file(task):
     filename, appends, caches_array = task
     try:
         return True, bb.cache.Cache.parse(filename, appends, parse_file.cfg, caches_array)
-    except Exception, exc:
+    except Exception as exc:
         tb = sys.exc_info()[2]
         exc.recipe = filename
         exc.traceback = list(bb.exceptions.extract_traceback(tb, context=3))
@@ -1163,7 +1163,7 @@ def parse_file(task):
     # Need to turn BaseExceptions into Exceptions here so we gracefully shutdown
     # and for example a worker thread doesn't just exit on its own in response to
     # a SystemExit event for example.
-    except BaseException, exc:
+    except BaseException as exc:
         raise ParsingFailure(exc, filename)
 
 class CookerParser(object):

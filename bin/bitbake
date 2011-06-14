@@ -32,7 +32,7 @@ import warnings
 from traceback import format_exception
 try:
     import bb
-except RuntimeError, exc:
+except RuntimeError as exc:
     sys.exit(str(exc))
 from bb import event
 import bb.msg

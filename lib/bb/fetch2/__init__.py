@@ -663,7 +663,7 @@ class FetchMethod(object):
 
         try:
             unpack = bb.utils.to_boolean(urldata.parm.get('unpack'), True)
-        except ValueError, exc:
+        except ValueError as exc:
             bb.fatal("Invalid value for 'unpack' parameter for %s: %s" %
                      (file, urldata.parm.get('unpack')))
 
@@ -692,7 +692,7 @@ class FetchMethod(object):
             elif file.endswith('.zip') or file.endswith('.jar'):
                 try:
                     dos = bb.utils.to_boolean(urldata.parm.get('dos'), False)
-                except ValueError, exc:
+                except ValueError as exc:
                     bb.fatal("Invalid value for 'dos' parameter for %s: %s" %
                              (file, urldata.parm.get('dos')))
                 cmd = 'unzip -q -o'

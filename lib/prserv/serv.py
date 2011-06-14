@@ -88,7 +88,7 @@ class PRServer(SimpleXMLRPCServer):
             pid = os.fork()
             if pid > 0: 
                 sys.exit(0)
-        except OSError,e:
+        except OSError as e:
             sys.stderr.write("1st fork failed: %d %s\n" % (e.errno, e.strerror))
             sys.exit(1)
 
@@ -101,7 +101,7 @@ class PRServer(SimpleXMLRPCServer):
             pid = os.fork()
             if pid > 0: #parent
                 sys.exit(0)
-        except OSError,e:
+        except OSError as e:
             sys.stderr.write("2nd fork failed: %d %s\n" % (e.errno, e.strerror))
             sys.exit(1)
 
@@ -187,7 +187,7 @@ def stop_daemon():
         while 1:
             os.kill(pid,signal.SIGTERM)
             time.sleep(0.1)
-    except OSError, err:
+    except OSError as err:
         err = str(err)
         if err.find("No such process") > 0:
             if os.path.exists(PRServer.pidfile):

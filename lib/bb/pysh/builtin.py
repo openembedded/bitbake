@@ -151,7 +151,7 @@ def builtin_trap(name, args, interp, env, stdin, stdout, stderr, debugflags):
     for sig in args[1:]:
         try:
             env.traps[sig] = action
-        except Exception, e:
+        except Exception as e:
             stderr.write('trap: %s\n' % str(e))
     return 0
 
@@ -214,7 +214,7 @@ def utility_cat(name, args, interp, env, stdin, stdout, stderr, debugflags):
                     data = f.read()
                 finally:
                     f.close()
-            except IOError, e:
+            except IOError as e:
                 if e.errno != errno.ENOENT:
                     raise
                 status = 1
@@ -433,7 +433,7 @@ def utility_mkdir(name, args, interp, env, stdin, stdout, stderr, debugflags):
         if option.has_p:
             try:
                 os.makedirs(path)
-            except IOError, e:
+            except IOError as e:
                 if e.errno != errno.EEXIST:
                     raise
         else:               
@@ -561,7 +561,7 @@ def utility_sort(name, args, interp, env, stdin, stdout, stderr, debugflags):
                     lines = f.readlines()
                 finally:
                     f.close()
-            except IOError, e:
+            except IOError as e:
                 stderr.write(str(e) + '\n')
                 return 1
         
@@ -679,7 +679,7 @@ def run_command(name, args, interp, env, stdin, stdout,
             p = subprocess.Popen([name] + args, cwd=env['PWD'], env=exec_env, 
                     stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         out, err = p.communicate()
-    except WindowsError, e:
+    except WindowsError as e:
         raise UtilityError(str(e))
 
     if not unixoutput:

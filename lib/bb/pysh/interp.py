@@ -248,7 +248,7 @@ class Redirections:
                     raise NotImplementedError('cannot open absolute path %s' % repr(filename))
             else:
                 f = file(filename, mode+'b')
-        except IOError, e:
+        except IOError as e:
             raise RedirectionError(str(e))
             
         wrapper = None
@@ -368,7 +368,7 @@ def resolve_shebang(path, ignoreshell=False):
         if arg is None:
             return [cmd, win32_to_unix_path(path)]
         return [cmd, arg, win32_to_unix_path(path)]
-    except IOError, e:
+    except IOError as e:
         if  e.errno!=errno.ENOENT and \
             (e.errno!=errno.EPERM and not os.path.isdir(path)): # Opening a directory raises EPERM
             raise
@@ -747,7 +747,7 @@ class Interpreter:
             for cmd in cmds:
                 try:
                     status = self.execute(cmd)
-                except ExitSignal, e:
+                except ExitSignal as e:
                     if sourced:
                         raise
                     status = int(e.args[0])
@@ -758,13 +758,13 @@ class Interpreter:
                 if 'debug-utility' in self._debugflags or 'debug-cmd' in self._debugflags:
                     self.log('returncode ' + str(status)+ '\n')
             return status
-        except CommandNotFound, e:
+        except CommandNotFound as e:
             print >>self._redirs.stderr, str(e)
             self._redirs.stderr.flush()
             # Command not found by non-interactive shell
             # return 127
             raise
-        except RedirectionError, e:
+        except RedirectionError as e:
             # TODO: should be handled depending on the utility status
             print >>self._redirs.stderr, str(e)
             self._redirs.stderr.flush()
@@ -948,7 +948,7 @@ class Interpreter:
                     status = self.execute(func, redirs)
                 finally:
                     redirs.close()
-            except ReturnSignal, e:
+            except ReturnSignal as e:
                 status = int(e.args[0])
                 env['?'] = status
             return status
@@ -1044,7 +1044,7 @@ class Interpreter:
                 
         except ReturnSignal:
             raise
-        except ShellError, e:
+        except ShellError as e:
             if is_special or isinstance(e, (ExitSignal,
                                             ShellSyntaxError, ExpansionError)):
                 raise e

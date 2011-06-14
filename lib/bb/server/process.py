@@ -64,7 +64,7 @@ class EventAdapter():
     def send(self, event):
         try:
             self.queue.put(event)
-        except Exception, err:
+        except Exception as err:
             print("EventAdapter puked: %s" % str(err))
 
 
@@ -168,7 +168,7 @@ class ProcessServer(Process):
                 exitcode = 0
             finally:
                 util._exit_function()
-        except SystemExit, e:
+        except SystemExit as e:
             if not e.args:
                 exitcode = 1
             elif type(e.args[0]) is int:

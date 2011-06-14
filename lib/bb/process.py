@@ -93,7 +93,7 @@ def run(cmd, input=None, log=None, **options):
 
     try:
         pipe = Popen(cmd, **options)
-    except OSError, exc:
+    except OSError as exc:
         if exc.errno == 2:
             raise NotFoundError(cmd)
         else:
