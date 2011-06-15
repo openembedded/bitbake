@@ -89,7 +89,7 @@ def parser_cache_save(d):
         try:
             p = pickle.Unpickler(file(cachefile, "rb"))
             data, version = p.load()
-        except (IOError, EOFError):
+        except (IOError, EOFError, ValueError):
             data, version = None, None
 
         if version != PARSERCACHE_VERSION:
