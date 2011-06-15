@@ -78,7 +78,6 @@ class ProcessServer(Process):
         self.event_queue = event_queue
         self.event = EventAdapter(event_queue)
         self._idlefunctions = {}
-        self.event_handle = bb.event.register_UIHhandler(self)
         self.quit = False
 
         self.keep_running = Event()
@@ -93,6 +92,7 @@ class ProcessServer(Process):
         self._idlefunctions[function] = data
 
     def run(self):
+        self.event_handle = bb.event.register_UIHhandler(self)
         bb.cooker.server_main(self.cooker, self.main)
 
     def main(self):
