@@ -406,6 +406,8 @@ class DataSmart(MutableMapping):
             for key in d:
                 if key == "_data":
                     continue
+                if not d[key]:
+                    continue
                 klist.add(key)
 
             if "_data" in d:
