@@ -178,7 +178,6 @@ class DataSmart(MutableMapping):
                 try:
                     self.setVar(name, self.getVar(var, False))
                     self.delVar(var)
-                    self._seen_overrides[o].remove(var)
                 except Exception:
                     logger.info("Untracked delVar")
 
@@ -301,6 +300,10 @@ class DataSmart(MutableMapping):
     def delVar(self, var):
         self.expand_cache = {}
         self.dict[var] = {}
+        if '_' in var:
+            override = var[var.rfind('_')+1:]
+            if override and override in self._seen_overrides and var in self._seen_overrides[override]:
+                self._seen_overrides[override].remove(var)
 
     def setVarFlag(self, var, flag, flagvalue):
         if not var in self.dict:
