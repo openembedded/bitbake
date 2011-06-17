@@ -307,8 +307,6 @@ def handleInherit(statements, filename, lineno, m):
     statements.append(InheritNode(filename, lineno, classes.split()))
 
 def finalize(fn, d, variant = None):
-    bb.data.expandKeys(d)
-
     all_handlers = {}
     for var in bb.data.getVar('__BBHANDLERS', d) or []:
         # try to add the handler
@@ -317,6 +315,7 @@ def finalize(fn, d, variant = None):
 
     bb.event.fire(bb.event.RecipePreFinalise(fn), d)
 
+    bb.data.expandKeys(d)
     bb.data.update_data(d)
     code = []
     for funcname in bb.data.getVar("__BBANONFUNCS", d) or []:
