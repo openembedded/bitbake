@@ -88,6 +88,9 @@ class Git(FetchMethod):
         else:
             ud.proto = "git"
 
+        if not ud.proto in ('git', 'file', 'ssh', 'http', 'https'):
+            raise bb.fetch2.ParameterError("Invalid protocol type", ud.url)
+
         ud.nocheckout = ud.parm.get("nocheckout","0") == "1"
 
         ud.rebaseable = ud.parm.get("rebaseable","0") == "1"
