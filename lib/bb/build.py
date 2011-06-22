@@ -465,6 +465,7 @@ def add_tasks(tasklist, d):
         getTask('nostamp')
         getTask('fakeroot')
         getTask('noexec')
+        getTask('umask')
         task_deps['parents'][task] = []
         for dep in flags['deps']:
             dep = data.expand(dep, d)

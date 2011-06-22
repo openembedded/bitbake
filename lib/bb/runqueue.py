@@ -1063,8 +1063,16 @@ class RunQueueExecute:
         # a fork() or exec*() activates PSEUDO...
 
         envbackup = {}
+        umask = None
 
         taskdep = self.rqdata.dataCache.task_deps[fn]
+        if 'umask' in taskdep and taskname in taskdep['umask']:
+            # umask might come in as a number or text string..
+            try:
+                 umask = int(taskdep['umask'][taskname],8)
+            except TypeError:
+                 umask = taskdep['umask'][taskname]
+
         if 'fakeroot' in taskdep and taskname in taskdep['fakeroot']:
             envvars = (self.rqdata.dataCache.fakerootenv[fn] or "").split()
             for key, value in (var.split('=') for var in envvars):
@@ -1102,6 +1110,9 @@ class RunQueueExecute:
             # No stdin
             newsi = os.open(os.devnull, os.O_RDWR)
             os.dup2(newsi, sys.stdin.fileno())
+
+            if umask:
+                os.umask(umask)
 
             bb.data.setVar("BB_WORKERCONTEXT", "1", self.cooker.configuration.data)
             bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
