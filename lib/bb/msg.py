@@ -80,7 +80,7 @@ class Loggers(dict):
         if key in self:
             return dict.__getitem__(self, key)
         else:
-            log = logging.getLogger("BitBake.%s" % domain._fields[key])
+            log = logging.getLogger("BitBake.%s" % domain[key])
             dict.__setitem__(self, key, log)
             return log
 
