@@ -80,7 +80,7 @@ class Loggers(dict):
         if key in self:
             return dict.__getitem__(self, key)
         else:
-            log = logging.getLogger("BitBake.%s" % domain[key])
+            log = logging.getLogger("BitBake.%s" % domain._fields[key])
             dict.__setitem__(self, key, log)
             return log
 
@@ -90,16 +90,11 @@ class DebugLevel(dict):
             key = domain.Default
         return get_debug_level(key)
 
-class Enum(set):
-    def __init__(self, *args):
-        super(set, self).__init__(args)
+def _NamedTuple(name, fields):
+    Tuple = collections.namedtuple(name, " ".join(fields))
+    return Tuple(*range(len(fields)))
 
-    def __getattr__(self, name):
-        if name in self:
-            return name
-        raise AttributeError
-
-domain = Enum(
+domain = _NamedTuple("Domain", (
     "Default",
     "Build",
     "Cache",
@@ -112,8 +107,7 @@ domain = Enum(
     "Provider",
     "RunQueue",
     "TaskData",
-    "Util"
-)
+    "Util"))
 logger = logging.getLogger("BitBake")
 loggers = Loggers()
 debug_level = DebugLevel()
