@@ -124,6 +124,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.broken = self.getvar('BROKEN', metadata)
         self.not_world = self.getvar('EXCLUDE_FROM_WORLD', metadata)
         self.stamp = self.getvar('STAMP', metadata)
+        self.stamp_base = self.flaglist('stamp-base', self.tasks, metadata)
         self.stamp_extrainfo = self.flaglist('stamp-extra-info', self.tasks, metadata)
         self.packages_dynamic = self.listvar('PACKAGES_DYNAMIC', metadata)
         self.depends          = self.depvar('DEPENDS', metadata)
@@ -151,6 +152,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.pkg_dp = {}
 
         cachedata.stamp = {}
+        cachedata.stamp_base = {}
         cachedata.stamp_extrainfo = {}
         cachedata.fn_provides = {}
         cachedata.pn_provides = defaultdict(list)
@@ -183,6 +185,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.pkg_pepvpr[fn] = (self.pe, self.pv, self.pr)
         cachedata.pkg_dp[fn] = self.defaultpref
         cachedata.stamp[fn] = self.stamp
+        cachedata.stamp_base[fn] = self.stamp_base
         cachedata.stamp_extrainfo[fn] = self.stamp_extrainfo
 
         provides = [self.pn]
