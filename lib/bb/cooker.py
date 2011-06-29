@@ -705,26 +705,87 @@ class BBCooker:
         """Handle collections"""
         self.status.bbfile_config_priorities = []
         if collections:
+            collection_priorities = {}
+            collection_depends = {}
             collection_list = collections.split()
+            min_prio = 0
             for c in collection_list:
+                # Get collection priority if defined explicitly
+                priority = bb.data.getVar("BBFILE_PRIORITY_%s" % c, self.configuration.data, 1)
+                if priority:
+                    try:
+                        prio = int(priority)
+                    except ValueError:
+                        parselog.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"", c, priority)
+                    if min_prio == 0 or prio < min_prio:
+                        min_prio = prio
+                    collection_priorities[c] = prio
+                else:
+                    collection_priorities[c] = None
+
+                # Check dependencies and store information for priority calculation
+                deps = bb.data.getVar("LAYERDEPENDS_%s" % c, self.configuration.data, 1)
+                if deps:
+                    depnamelist = []
+                    deplist = deps.split()
+                    for dep in deplist:
+                        depsplit = dep.split(':')
+                        if len(depsplit) > 1:
+                            try:
+                                depver = int(depsplit[1])
+                            except ValueError:
+                                parselog.error("invalid version value in LAYERDEPENDS_%s: \"%s\"", c, dep)
+                                continue
+                        else:
+                            depver = None
+                        dep = depsplit[0]
+                        depnamelist.append(dep)
+
+                        if dep in collection_list:
+                            if depver:
+                                layerver = bb.data.getVar("LAYERVERSION_%s" % dep, self.configuration.data, 1)
+                                if layerver:
+                                    try:
+                                        lver = int(layerver)
+                                    except ValueError:
+                                        parselog.error("invalid value for LAYERVERSION_%s: \"%s\"", c, layerver)
+                                        continue
+                                    if lver <> depver:
+                                        parselog.error("Layer dependency %s of layer %s is at version %d, expected %d", dep, c, lver, depver)
+                                else:
+                                    parselog.error("Layer dependency %s of layer %s has no version, expected %d", dep, c, depver)
+                        else:
+                            parselog.error("Layer dependency %s of layer %s not found", dep, c)
+                    collection_depends[c] = depnamelist
+                else:
+                    collection_depends[c] = []
+
+            # Recursively work out collection priorities based on dependencies
+            def calc_layer_priority(collection):
+                if not collection_priorities[collection]:
+                    max_depprio = min_prio
+                    for dep in collection_depends[collection]:
+                        calc_layer_priority(dep)
+                        depprio = collection_priorities[dep]
+                        if depprio > max_depprio:
+                            max_depprio = depprio
+                    max_depprio += 1
+                    parselog.debug(1, "Calculated priority of layer %s as %d", collection, max_depprio)
+                    collection_priorities[collection] = max_depprio
+
+            # Calculate all layer priorities using calc_layer_priority and store in bbfile_config_priorities
+            for c in collection_list:
+                calc_layer_priority(c)
                 regex = bb.data.getVar("BBFILE_PATTERN_%s" % c, self.configuration.data, 1)
                 if regex == None:
                     parselog.error("BBFILE_PATTERN_%s not defined" % c)
-                    continue
-                priority = bb.data.getVar("BBFILE_PRIORITY_%s" % c, self.configuration.data, 1)
-                if priority == None:
-                    parselog.error("BBFILE_PRIORITY_%s not defined" % c)
                     continue
                 try:
                     cre = re.compile(regex)
                 except re.error:
                     parselog.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression", c, regex)
                     continue
-                try:
-                    pri = int(priority)
-                    self.status.bbfile_config_priorities.append((c, regex, cre, pri))
-                except ValueError:
-                    parselog.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"", c, priority)
+                self.status.bbfile_config_priorities.append((c, regex, cre, collection_priorities[c]))
 
     def buildSetVars(self):
         """
