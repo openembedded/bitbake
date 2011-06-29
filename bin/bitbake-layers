@@ -18,6 +18,7 @@ sys.path[0:0] = [os.path.join(topdir, 'lib')]
 import bb.cache
 import bb.cooker
 import bb.providers
+import bb.utils
 from bb.cooker import state
 
 
@@ -82,6 +83,64 @@ class Commands(cmd.Cmd):
                     logger.info('  %s' % of)
         else:
             logger.info('No overlayed recipes found')
+
+    def do_flatten(self, args):
+        arglist = args.split()
+        if len(arglist) != 1:
+            logger.error('syntax: flatten <outputdir>')
+            return
+
+        if os.path.exists(arglist[0]) and os.listdir(arglist[0]):
+            logger.error('Directory %s exists and is non-empty, please clear it out first' % arglist[0])
+            return
+
+        layers = (self.config_data.getVar('BBLAYERS', True) or "").split()
+        for layer in layers:
+            overlayed = []
+            for f in self.cooker.overlayed.iterkeys():
+                for of in self.cooker.overlayed[f]:
+                    if of.startswith(layer):
+                        overlayed.append(of)
+
+            logger.info('Copying files from %s...' % layer )
+            for root, dirs, files in os.walk(layer):
+                for f1 in files:
+                    f1full = os.sep.join([root, f1])
+                    if f1full in overlayed:
+                        logger.info('  Skipping overlayed file %s' % f1full )
+                    else:
+                        ext = os.path.splitext(f1)[1]
+                        if ext != '.bbappend':
+                            fdest = f1full[len(layer):]
+                            fdest = os.path.normpath(os.sep.join([arglist[0],fdest]))
+                            bb.utils.mkdirhier(os.path.dirname(fdest))
+                            if os.path.exists(fdest):
+                                if f1 == 'layer.conf' and root.endswith('/conf'):
+                                    logger.info('  Skipping layer config file %s' % f1full )
+                                    continue
+                                else:
+                                    logger.warn('Overwriting file %s', fdest)
+                            bb.utils.copyfile(f1full, fdest)
+                            if ext == '.bb':
+                                if f1 in self.cooker_data.appends:
+                                    appends = self.cooker_data.appends[f1]
+                                    if appends:
+                                        logger.info('  Applying appends to %s' % fdest )
+                                        for appendname in appends:
+                                            self.apply_append(appendname, fdest)
+
+    def get_append_layer(self, appendname):
+        for layer, _, regex, _ in self.cooker.status.bbfile_config_priorities:
+            if regex.match(appendname):
+                return layer
+        return "?"
+
+    def apply_append(self, appendname, recipename):
+        appendfile = open(appendname, 'r')
+        recipefile = open(recipename, 'a')
+        recipefile.write('\n')
+        recipefile.write('##### bbappended from %s #####\n' % self.get_append_layer(appendname))
+        recipefile.writelines(appendfile.readlines())
 
     def do_show_appends(self, args):
         if not self.cooker_data.appends:
