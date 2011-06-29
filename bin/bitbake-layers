@@ -73,6 +73,16 @@ class Commands(cmd.Cmd):
     def do_show_layers(self, args):
         logger.info(str(self.config_data.getVar('BBLAYERS', True)))
 
+    def do_show_overlayed(self, args):
+        if self.cooker.overlayed:
+            logger.info('Overlayed recipes:')
+            for f in self.cooker.overlayed.iterkeys():
+                logger.info('%s' % f)
+                for of in self.cooker.overlayed[f]:
+                    logger.info('  %s' % of)
+        else:
+            logger.info('No overlayed recipes found')
+
     def do_show_appends(self, args):
         if not self.cooker_data.appends:
             logger.info('No append files found')
