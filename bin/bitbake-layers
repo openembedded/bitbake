@@ -149,7 +149,9 @@ class Commands(cmd.Cmd):
 
         logger.info('State of append files:')
 
-        for pn in self.cooker_data.pkg_pn:
+        pnlist = list(self.cooker_data.pkg_pn.keys())
+        pnlist.sort( key=lambda item: item.pn )
+        for pn in pnlist:
             self.show_appends_for_pn(pn)
 
         self.show_appends_for_skipped()
@@ -188,7 +190,7 @@ class Commands(cmd.Cmd):
 
 
     def get_appends_for_files(self, filenames):
-        appended, notappended = set(), set()
+        appended, notappended = [], []
         for filename in filenames:
             _, cls = bb.cache.Cache.virtualfn2realfn(filename)
             if cls:
@@ -197,9 +199,9 @@ class Commands(cmd.Cmd):
             basename = os.path.basename(filename)
             appends = self.cooker_data.appends.get(basename)
             if appends:
-                appended.add((basename, frozenset(appends)))
+                appended.append((basename, list(appends)))
             else:
-                notappended.add(basename)
+                notappended.append(basename)
         return appended, notappended
 
     def show_appends_with_no_recipes(self):
