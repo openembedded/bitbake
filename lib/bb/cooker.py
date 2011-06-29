@@ -33,6 +33,7 @@ import threading
 from cStringIO import StringIO
 from contextlib import closing
 from functools import wraps
+from collections import defaultdict
 import bb, bb.exceptions
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
 
@@ -1055,6 +1056,18 @@ class BBCooker:
             if not base in self.appendlist:
                self.appendlist[base] = []
             self.appendlist[base].append(f)
+
+        # Find overlayed recipes
+        # bbfiles will be in priority order which makes this easy
+        bbfile_seen = dict()
+        self.overlayed = defaultdict(list)
+        for f in reversed(bbfiles):
+            base = os.path.basename(f)
+            if base not in bbfile_seen:
+                bbfile_seen[base] = f
+            else:
+                topfile = bbfile_seen[base]
+                self.overlayed[topfile].append(f)
 
         return (bbfiles, masked)
 
