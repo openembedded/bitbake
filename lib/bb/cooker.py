@@ -643,14 +643,17 @@ class BBCooker:
         else:
             shell.start( self )
 
-    def _findLayerConf(self):
+    def _findConfigFile(self, configfile):
         path = os.getcwd()
         while path != "/":
-            bblayers = os.path.join(path, "conf", "bblayers.conf")
-            if os.path.exists(bblayers):
-                return bblayers
+            confpath = os.path.join(path, "conf", configfile)
+            if os.path.exists(confpath):
+                return confpath
 
             path, _ = os.path.split(path)
+
+    def _findLayerConf(self):
+        return self._findConfigFile("bblayers.conf")
 
     def parseConfigurationFiles(self, files):
         data = self.configuration.data
