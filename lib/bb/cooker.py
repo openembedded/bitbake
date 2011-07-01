@@ -126,7 +126,8 @@ class BBCooker:
         bb.data.inheritFromOS(self.configuration.data)
 
         try:
-            self.parseConfigurationFiles(self.configuration.file)
+            self.parseConfigurationFiles(self.configuration.prefile,
+                                         self.configuration.postfile)
         except SyntaxError:
             sys.exit(1)
         except Exception:
@@ -650,10 +651,12 @@ class BBCooker:
     def _findLayerConf(self):
         return self._findConfigFile("bblayers.conf")
 
-    def parseConfigurationFiles(self, files):
+    def parseConfigurationFiles(self, prefiles, postfiles):
         data = self.configuration.data
         bb.parse.init_parser(data)
-        for f in files:
+
+        # Parse files for loading *before* bitbake.conf and any includes
+        for f in prefiles:
             data = _parse(f, data)
 
         layerconf = self._findLayerConf()
@@ -676,6 +679,10 @@ class BBCooker:
             raise SystemExit("The BBPATH variable is not set")
 
         data = _parse(os.path.join("conf", "bitbake.conf"), data)
+
+        # Parse files for loading *after* bitbake.conf and any includes
+        for p in postfiles:
+            data = _parse(p, data)
 
         # Handle any INHERITs and inherit the base class
         bbclasses  = ["base"] + (data.getVar('INHERIT', True) or "").split()

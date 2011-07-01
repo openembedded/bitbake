@@ -118,7 +118,10 @@ Default BBFILES are the .bb files in the current directory.""")
                action = "store", dest = "cmd")
 
     parser.add_option("-r", "--read", help = "read the specified file before bitbake.conf",
-               action = "append", dest = "file", default = [])
+               action = "append", dest = "prefile", default = [])
+
+    parser.add_option("-R", "--postread", help = "read the specified file after bitbake.conf",
+                      action = "append", dest = "postfile", default = [])
 
     parser.add_option("-v", "--verbose", help = "output more chit-chat to the terminal",
                action = "store_true", dest = "verbose", default = False)
