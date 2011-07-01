@@ -591,9 +591,9 @@ class BBCooker:
         Generate a dependency tree of buildable targets
         Generate an event with the result
         """
-        # if the caller hasn't specified a pkgs list default to world
+        # if the caller hasn't specified a pkgs list default to universe
         if not len(pkgs):
-            pkgs = ['world']
+            pkgs = ['universe']
         # if inherited_class passed ensure all recipes which inherit the
         # specified class are included in pkgs
         if klass:
