@@ -18,12 +18,16 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import glib
 import gobject
 import gtk
-from bb.ui.crumbs.progress import ProgressBar
-from bb.ui.crumbs.tasklistmodel import TaskListModel
+from bb.ui.crumbs.tasklistmodel import TaskListModel, BuildRep
 from bb.ui.crumbs.hobeventhandler import HobHandler
+from bb.ui.crumbs.configurator import Configurator
+from bb.ui.crumbs.hobprefs import HobPrefs
+from bb.ui.crumbs.layereditor import LayerEditor
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView, RunningBuild
+from bb.ui.crumbs.hig import CrumbsDialog
 import xmlrpclib
 import logging
 import Queue
@@ -32,226 +36,459 @@ extraCaches = ['bb.cache_extra:HobRecipeInfo']
 
 class MainWindow (gtk.Window):
             
-    def __init__(self, taskmodel, handler, curr_mach=None, curr_distro=None):
-        gtk.Window.__init__(self, gtk.WINDOW_TOPLEVEL)
+    def __init__(self, taskmodel, handler, configurator, prefs, layers, mach):
+        gtk.Window.__init__(self)
+        # global state
+        self.curr_mach = mach
+        self.machine_handler_id = None
+        self.image_combo_id = None
+        self.generating = False
+        self.files_to_clean = []
+        self.selected_image = None
+        self.selected_packages = None
+
         self.model = taskmodel
-	self.model.connect("tasklist-populated", self.update_model)
-	self.curr_mach = curr_mach
-	self.curr_distro = curr_distro
+        self.model.connect("tasklist-populated", self.update_model)
+        self.model.connect("image-changed", self.image_changed_string_cb)
+        self.curr_image_path = None
         self.handler = handler
-        self.set_border_width(10)
-        self.connect("delete-event", gtk.main_quit)
-        self.set_title("BitBake Image Creator")
-        self.set_default_size(700, 600)
+        self.configurator = configurator
+        self.prefs = prefs
+        self.layers = layers
+        self.save_path = None
+        self.dirty = False
+
+        self.connect("delete-event", self.destroy_window)
+        self.set_title("Image Creator")
+        self.set_icon_name("applications-development")
+        self.set_default_size(1000, 650)
 
         self.build = RunningBuild()
-        self.build.connect("build-succeeded", self.running_build_succeeded_cb)
         self.build.connect("build-failed", self.running_build_failed_cb)
+        self.build.connect("build-complete", self.handler.build_complete_cb)
+        self.build.connect("build-started", self.build_started_cb)
 
-	createview = self.create_build_gui()
+        self.handler.connect("build-complete", self.build_complete_cb)
+
+        vbox = gtk.VBox(False, 0)
+        vbox.set_border_width(0)
+        vbox.show()
+        self.add(vbox)
+        self.menu = self.create_menu()
+        vbox.pack_start(self.menu, False)
+        createview = self.create_build_gui()
+        self.back = None
+        self.cancel = None
         buildview = self.view_build_gui()
-	self.nb = gtk.Notebook()
-	self.nb.append_page(createview)
-	self.nb.append_page(buildview)
-	self.nb.set_current_page(0)
-	self.nb.set_show_tabs(False)
-        self.add(self.nb)
-        self.generating = False
+        self.nb = gtk.Notebook()
+        self.nb.append_page(createview)
+        self.nb.append_page(buildview)
+        self.nb.set_current_page(0)
+        self.nb.set_show_tabs(False)
+        vbox.pack_start(self.nb, expand=True, fill=True)
+
+    def destroy_window(self, widget, event):
+        self.quit()
+
+    def menu_quit(self, action):
+        self.quit()
+
+    def quit(self):
+        if self.dirty and len(self.model.contents):
+            question = "Would you like to save your customisations?"
+            dialog = CrumbsDialog(self, question, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_buttons(gtk.STOCK_NO, gtk.RESPONSE_NO,
+                               gtk.STOCK_YES, gtk.RESPONSE_YES)
+            resp = dialog.run()
+            if resp == gtk.RESPONSE_YES:
+                if not self.save_path:
+                    self.get_save_path()
+                self.save_recipe_file()
+                rep = self.model.get_build_rep()
+                rep.writeRecipe(self.save_path, self.model)
+
+        gtk.main_quit()
 
     def scroll_tv_cb(self, model, path, it, view):
         view.scroll_to_cell(path)
 
     def running_build_failed_cb(self, running_build):
         # FIXME: handle this
-        return
+        print("Build failed")
 
-    def running_build_succeeded_cb(self, running_build):
-        label = gtk.Label("Build completed, start another build?")
-        dialog = gtk.Dialog("Build complete",
-                            self,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_NO, gtk.RESPONSE_NO,
-                             gtk.STOCK_YES, gtk.RESPONSE_YES))
-        dialog.vbox.pack_start(label)
-        label.show()
-        response = dialog.run()
-        dialog.destroy()
-        if response == gtk.RESPONSE_YES:
-            self.model.reset() # NOTE: really?
-            self.nb.set_current_page(0)
-        return
+    def image_changed_string_cb(self, model, new_image):
+        cnt = 0
+        it = self.model.images.get_iter_first()
+        while it:
+            path = self.model.images.get_path(it)
+            if self.model.images[path][self.model.COL_NAME] == new_image:
+                self.image_combo.set_active(cnt)
+                break
+            it = self.model.images.iter_next(it)
+            cnt = cnt + 1
 
-    def machine_combo_changed_cb(self, combo, handler):
-        mach = combo.get_active_text()
-	if mach != self.curr_mach:
-	    self.curr_mach = mach
-            handler.set_machine(mach)
+    def image_changed_cb(self, combo):
+        model = self.image_combo.get_model()
+        it = self.image_combo.get_active_iter()
+        if it:
+            path = model.get_path(it)
+            # Firstly, deselect the previous image
+            if self.curr_image_path:
+                self.toggle_package(self.curr_image_path, model)
+            # Now select the new image and save its path in case we
+            # change the image later
+            self.curr_image_path = path
+            self.toggle_package(path, model, image=True)
 
-    def update_machines(self, handler, machines):
-	active = 0
-	for machine in machines:
-	    self.machine_combo.append_text(machine)
-	    if machine == self.curr_mach:
-                self.machine_combo.set_active(active)
-	    active = active + 1
-	self.machine_combo.connect("changed", self.machine_combo_changed_cb, handler)
-
-    def update_distros(self, handler, distros):
-        # FIXME: when we add UI for changing distro this will be used
-        return
+    def reload_triggered_cb(self, handler, image, packages):
+        if image:
+            self.selected_image = image
+        if len(packages):
+            self.selected_packages = packages.split()
 
     def data_generated(self, handler):
         self.generating = False
+        self.image_combo.set_model(self.model.images_model())
+        if not self.image_combo_id:
+            self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
+        self.enable_widgets()
 
-    def spin_idle_func(self, pbar):
+    def machine_combo_changed_cb(self, combo, handler):
+        mach = combo.get_active_text()
+        if mach != self.curr_mach:
+            self.curr_mach = mach
+            # Flush this straight to the file as MACHINE is changed
+            # independently of other 'Preferences'
+            self.configurator.setLocalConfVar('MACHINE', mach)
+            self.configurator.writeLocalConf()
+            handler.set_machine(mach)
+            handler.reload_data()
+
+    def update_machines(self, handler, machines):
+        active = 0
+        # disconnect the signal handler before updating the combo model
+        if self.machine_handler_id:
+            self.machine_combo.disconnect(self.machine_handler_id)
+            self.machine_handler_id = None
+
+        model = self.machine_combo.get_model()
+        if model:
+            model.clear()
+
+        for machine in machines:
+            self.machine_combo.append_text(machine)
+            if machine == self.curr_mach:
+                self.machine_combo.set_active(active)
+            active = active + 1
+
+        self.machine_handler_id = self.machine_combo.connect("changed", self.machine_combo_changed_cb, handler)
+
+    def set_busy_cursor(self, busy=True):
+        """
+        Convenience method to set the cursor to a spinner when executing
+        a potentially lengthy process.
+        A busy value of False will set the cursor back to the default
+        left pointer.
+        """
+        if busy:
+            cursor = gtk.gdk.Cursor(gtk.gdk.WATCH)
+        else:
+            # TODO: presumably the default cursor is different on RTL
+            # systems. Can we determine the default cursor? Or at least
+            # the cursor which is set before we change it?
+            cursor = gtk.gdk.Cursor(gtk.gdk.LEFT_PTR)
+        window = self.get_root_window()
+        window.set_cursor(cursor)
+
+    def busy_idle_func(self):
         if self.generating:
-            pbar.pulse()
+            self.progress.set_text("Loading...")
+            self.progress.pulse()
             return True
         else:
-            pbar.hide()
+            if not self.image_combo_id:
+                self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
+            self.progress.set_text("Loaded")
+            self.progress.set_fraction(0.0)
+            self.set_busy_cursor(False)
             return False
 
     def busy(self, handler):
         self.generating = True
-        pbar = ProgressBar(self)
-        pbar.connect("delete-event", gtk.main_quit) # NOTE: questionable...
-        pbar.pulse()
-        gobject.timeout_add (200,
-                             self.spin_idle_func,
-                             pbar)
+        self.set_busy_cursor()
+        if self.image_combo_id:
+            self.image_combo.disconnect(self.image_combo_id)
+            self.image_combo_id = None
+        self.progress.pulse()
+        gobject.timeout_add (200, self.busy_idle_func)
+        self.disable_widgets()
+
+    def enable_widgets(self):
+        self.menu.set_sensitive(True)
+        self.machine_combo.set_sensitive(True)
+        self.image_combo.set_sensitive(True)
+        self.nb.set_sensitive(True)
+        self.contents_tree.set_sensitive(True)
+
+    def disable_widgets(self):
+        self.menu.set_sensitive(False)
+        self.machine_combo.set_sensitive(False)
+        self.image_combo.set_sensitive(False)
+        self.nb.set_sensitive(False)
+        self.contents_tree.set_sensitive(False)
 
     def update_model(self, model):
-	pkgsaz_model = gtk.TreeModelSort(self.model.packages_model())
+        # We want the packages model to be alphabetised and sortable so create
+        # a TreeModelSort to use in the view
+        pkgsaz_model = gtk.TreeModelSort(self.model.packages_model())
         pkgsaz_model.set_sort_column_id(self.model.COL_NAME, gtk.SORT_ASCENDING)
+        # Unset default sort func so that we only toggle between A-Z and
+        # Z-A sorting
+        pkgsaz_model.set_default_sort_func(None)
         self.pkgsaz_tree.set_model(pkgsaz_model)
 
-        # FIXME: need to implement a custom sort function, as otherwise the column
-        # is re-ordered when toggling the inclusion state (COL_INC)
-	pkgsgrp_model = gtk.TreeModelSort(self.model.packages_model())
-	pkgsgrp_model.set_sort_column_id(self.model.COL_GROUP, gtk.SORT_ASCENDING)
-	self.pkgsgrp_tree.set_model(pkgsgrp_model)
+        # We want the contents to be alphabetised so create a TreeModelSort to
+        # use in the view
+        contents_model = gtk.TreeModelSort(self.model.contents_model())
+        contents_model.set_sort_column_id(self.model.COL_NAME, gtk.SORT_ASCENDING)
+        # Unset default sort func so that we only toggle between A-Z and
+        # Z-A sorting
+        contents_model.set_default_sort_func(None)
+        self.contents_tree.set_model(contents_model)
+        self.tasks_tree.set_model(self.model.tasks_model())
 
-        self.contents_tree.set_model(self.model.contents_model())
-	self.images_tree.set_model(self.model.images_model())
-	self.tasks_tree.set_model(self.model.tasks_model())
+        if self.selected_image:
+            if self.image_combo_id:
+                self.image_combo.disconnect(self.image_combo_id)
+                self.image_combo_id = None
+            self.model.set_selected_image(self.selected_image)
+            self.selected_image = None
+            if not self.image_combo_id:
+                self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
+
+        if self.selected_packages:
+            self.model.set_selected_packages(self.selected_packages)
+            self.selected_packages = None
 
     def reset_clicked_cb(self, button):
-        label = gtk.Label("Are you sure you want to reset the image contents?")
-        dialog = gtk.Dialog("Confirm reset", self,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-        dialog.vbox.pack_start(label)
-        label.show()
+        lbl = "<b>Reset your selections?</b>\n\nAny new changes you have made will be lost"
+        dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+        dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+        dialog.add_button("Reset", gtk.RESPONSE_OK)
         response = dialog.run()
         dialog.destroy()
-        if (response == gtk.RESPONSE_ACCEPT):
-            self.model.reset()
+        if response == gtk.RESPONSE_OK:
+            self.reset_build()
         return
+
+    def reset_build(self):
+        self.image_combo.disconnect(self.image_combo_id)
+        self.image_combo_id = None
+        self.image_combo.set_active(-1)
+        self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
+        self.model.reset()
+
+    def layers_cb(self, action):
+        resp = self.layers.run()
+        self.layers.save_current_layers()
+        self.layers.hide()
+
+    def add_layer_cb(self, action):
+        self.layers.find_layer(self)
+
+    def preferences_cb(self, action):
+        resp = self.prefs.run()
+        self.prefs.write_changes()
+        self.prefs.hide()
+
+    def about_cb(self, action):
+        about = gtk.AboutDialog()
+        about.set_name("Image Creator")
+        about.set_copyright("Copyright (C) 2011 Intel Corporation")
+        about.set_authors(["Joshua Lock <josh@linux.intel.com>"])
+        about.set_logo_icon_name("applications-development")
+        about.run()
+        about.destroy()
+
+    def save_recipe_file(self):
+        rep = self.model.get_build_rep()
+        rep.writeRecipe(self.save_path, self.model)
+        self.dirty = False
+
+    def get_save_path(self):
+        chooser = gtk.FileChooserDialog(title=None, parent=self,
+                                        action=gtk.FILE_CHOOSER_ACTION_SAVE,
+                                        buttons=(gtk.STOCK_CANCEL,
+                                                 gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_SAVE,
+                                                 gtk.RESPONSE_OK,))
+        chooser.set_current_name("myimage.bb")
+        response = chooser.run()
+        if response == gtk.RESPONSE_OK:
+            self.save_path = chooser.get_filename()
+        chooser.destroy()
+
+    def save_cb(self, action):
+        if not self.save_path:
+            self.get_save_path()
+        self.save_recipe_file()
+
+    def save_as_cb(self, action):
+        self.get_save_path()
+        self.save_recipe_file()
+
+    def open_cb(self, action):
+        chooser = gtk.FileChooserDialog(title=None, parent=self,
+                                        action=gtk.FILE_CHOOSER_ACTION_OPEN,
+                                        buttons=(gtk.STOCK_CANCEL,
+                                                 gtk.RESPONSE_CANCEL,
+                                                 gtk.STOCK_OPEN,
+                                                 gtk.RESPONSE_OK))
+        response  = chooser.run()
+        rep = BuildRep(None, None, None)
+        if response == gtk.RESPONSE_OK:
+            rep.loadRecipe(chooser.get_filename())
+        chooser.destroy()
+        self.model.load_image_rep(rep)
+        self.dirty = False
 
     def bake_clicked_cb(self, button):
-        if not self.model.targets_contains_image():
-            label = gtk.Label("No image was selected. Just build the selected packages?")
-            dialog = gtk.Dialog("Warning, no image selected",
-                                self,
-                                gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                                (gtk.STOCK_NO, gtk.RESPONSE_NO,
-                                 gtk.STOCK_YES, gtk.RESPONSE_YES))
-            dialog.vbox.pack_start(label)
-            label.show()
+        rep = self.model.get_build_rep()
+        if not rep.base_image:
+            lbl = "<b>Build only packages?</b>\n\nAn image has not been selected, so only the selected packages will be built."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Build", gtk.RESPONSE_YES)
             response = dialog.run()
             dialog.destroy()
-            if not response == gtk.RESPONSE_YES:
+            if response == gtk.RESPONSE_CANCEL:
                 return
-
-        # Note: We could "squash" the targets list to only include things not brought in by an image
-	task_list = self.model.get_targets()
-	if len(task_list):
-	    tasks = " ".join(task_list)
-            # TODO: show a confirmation dialog
-            print("Including these extra tasks in IMAGE_INSTALL: %s" % tasks)
         else:
-            return
+            # TODO: show a confirmation dialog ?
+            if not self.save_path:
+                import tempfile, datetime
+                image_name = "hob-%s-variant-%s.bb" % (rep.base_image, datetime.date.today().isoformat())
+                image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
+                bb.utils.mkdirhier(image_dir)
+                recipepath =  os.path.join(image_dir, image_name)
+            else:
+                recipepath = self.save_path
 
+            rep.writeRecipe(recipepath, self.model)
+            # In the case where we saved the file for the purpose of building
+            # it we should then delete it so that the users workspace doesn't
+            # contain files they haven't explicitly saved there.
+            if not self.save_path:
+                self.files_to_clean.append(recipepath)
+
+            self.handler.queue_image_recipe_path(recipepath)
+
+        self.handler.build_packages(rep.allpkgs.split(" "))
         self.nb.set_current_page(1)
-        self.handler.run_build(task_list)
 
-        return
+    def back_button_clicked_cb(self, button):
+        self.toggle_createview()
 
-    def advanced_expander_cb(self, expander, param):
-        return
+    def toggle_createview(self):
+        self.build.model.clear()
+        self.nb.set_current_page(0)
 
-    def images(self):
-        self.images_tree = gtk.TreeView()
-	self.images_tree.set_headers_visible(True)
-        self.images_tree.set_headers_clickable(False)
-        self.images_tree.set_enable_search(True)
-        self.images_tree.set_search_column(0)
-        self.images_tree.get_selection().set_mode(gtk.SELECTION_NONE)
+    def build_complete_cb(self, running_build):
+        self.back.connect("clicked", self.back_button_clicked_cb)
+        self.back.set_sensitive(True)
+        self.cancel.set_sensitive(False)
+        for f in self.files_to_clean:
+            os.remove(f)
 
-        col = gtk.TreeViewColumn('Package')
-        col1 = gtk.TreeViewColumn('Description')
-        col2 = gtk.TreeViewColumn('License')
-        col3 = gtk.TreeViewColumn('Include')
-	col3.set_resizable(False)
+        lbl = "<b>Build completed</b>\n\nClick 'Edit Image' to start another build or 'View Log' to view the build log."
+        if self.handler.building == "image":
+            deploy = self.handler.get_image_deploy_dir()
+            lbl = lbl + "\n<a href=\"file://%s\" title=\"%s\">Browse folder of built images</a>." % (deploy, deploy)
 
-        self.images_tree.append_column(col)
-        self.images_tree.append_column(col1)
-        self.images_tree.append_column(col2)
-        self.images_tree.append_column(col3)
-
-        cell = gtk.CellRendererText()
-        cell1 = gtk.CellRendererText()
-        cell2 = gtk.CellRendererText()
-        cell3 = gtk.CellRendererToggle()
-        cell3.set_property('activatable', True)
-        cell3.connect("toggled", self.toggle_include_cb, self.images_tree)
-
-        col.pack_start(cell, True)
-        col1.pack_start(cell1, True)
-        col2.pack_start(cell2, True)
-        col3.pack_start(cell3, True)
-
-        col.set_attributes(cell, text=self.model.COL_NAME)
-        col1.set_attributes(cell1, text=self.model.COL_DESC)
-        col2.set_attributes(cell2, text=self.model.COL_LIC)
-        col3.set_attributes(cell3, active=self.model.COL_INC)
-
-        self.images_tree.show()
-
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(self.images_tree)
-
-        return scroll
-
-    def toggle_package(self, path, model):
-        # Convert path to path in original model
-        opath = model.convert_path_to_child_path(path)
-        # current include status
-	inc = self.model[opath][self.model.COL_INC]
-	if inc:
-	    self.model.mark(opath)
-            self.model.sweep_up()
-	    #self.model.remove_package_full(cpath)
-	else:
-	    self.model.include_item(opath)
-        return
-
-    def remove_package_cb(self, cell, path):
-        model = self.model.contents_model()
-        label = gtk.Label("Are you sure you want to remove this item?")
-        dialog = gtk.Dialog("Confirm removal", self,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_CANCEL, gtk.RESPONSE_REJECT,
-                             gtk.STOCK_OK, gtk.RESPONSE_ACCEPT))
-        dialog.vbox.pack_start(label)
-        label.show()
+        dialog = CrumbsDialog(self, lbl)
+        dialog.add_button("View Log", gtk.RESPONSE_CANCEL)
+        dialog.add_button("Edit Image", gtk.RESPONSE_OK)
         response = dialog.run()
         dialog.destroy()
-        if (response == gtk.RESPONSE_ACCEPT):
-            self.toggle_package(path, model)
+        if response == gtk.RESPONSE_OK:
+            self.toggle_createview()
+
+    def build_started_cb(self, running_build):
+        self.back.set_sensitive(False)
+        self.cancel.set_sensitive(True)
+
+    def include_gplv3_cb(self, toggle):
+        excluded = toggle.get_active()
+        self.handler.toggle_gplv3(excluded)
+
+    def change_bb_threads(self, spinner):
+        val = spinner.get_value_as_int()
+        self.handler.set_bbthreads(val)
+
+    def change_make_threads(self, spinner):
+        val = spinner.get_value_as_int()
+        self.handler.set_pmake(val)
+
+    def toggle_toolchain(self, check):
+        enabled = check.get_active()
+        self.handler.toggle_toolchain(enabled)
+
+    def toggle_headers(self, check):
+        enabled = check.get_active()
+        self.handler.toggle_toolchain_headers(enabled)
+
+    def toggle_package_idle_cb(self, opath, image):
+        """
+        As the operations which we're calling on the model can take
+        a significant amount of time (in the order of seconds) during which
+        the GUI is unresponsive as the main loop is blocked perform them in
+        an idle function which at least enables us to set the busy cursor
+        before the UI is blocked giving the appearance of being responsive.
+        """
+        # Whether the item is currently included
+        inc = self.model[opath][self.model.COL_INC]
+        # If the item is already included, mark it for removal then
+        # the sweep_up() method finds affected items and marks them
+        # appropriately
+        if inc:
+            self.model.mark(opath)
+            self.model.sweep_up()
+        # If the item isn't included, mark it for inclusion
+        else:
+            self.model.include_item(item_path=opath,
+                                    binb="User Selected",
+                                    image_contents=image)
+
+        self.set_busy_cursor(False)
+        return False
+
+    def toggle_package(self, path, model, image=False):
+        # Warn user before removing packages
+        inc = model[path][self.model.COL_INC]
+        if inc:
+            pn = model[path][self.model.COL_NAME]
+            revdeps = self.model.find_reverse_depends(pn)
+            if len(revdeps):
+                lbl = "<b>Remove %s?</b>\n\nThis action cannot be undone and all packages which depend on this will be removed\nPackages which depend on %s include %s." % (pn, pn, ", ".join(revdeps).rstrip(","))
+            else:
+                lbl = "<b>Remove %s?</b>\n\nThis action cannot be undone." % pn
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Remove", gtk.RESPONSE_OK)
+            response = dialog.run()
+            dialog.destroy()
+            if response == gtk.RESPONSE_CANCEL:
+                return
+
+        self.set_busy_cursor()
+        # Convert path to path in original model
+        opath = model.convert_path_to_child_path(path)
+        # This is a potentially length call which can block the
+        # main loop, therefore do the work in an idle func to keep
+        # the UI responsive
+        glib.idle_add(self.toggle_package_idle_cb, opath, image)
+
+        self.dirty = True
 
     def toggle_include_cb(self, cell, path, tv):
         model = tv.get_model()
@@ -262,23 +499,36 @@ class MainWindow (gtk.Window):
         sort_model = tv.get_model()
         cpath = sort_model.convert_path_to_child_path(path)
         self.toggle_package(cpath, sort_model.get_model())
-	
+
     def pkgsaz(self):
+        vbox = gtk.VBox(False, 6)
+        vbox.show()
         self.pkgsaz_tree = gtk.TreeView()
         self.pkgsaz_tree.set_headers_visible(True)
         self.pkgsaz_tree.set_headers_clickable(True)
         self.pkgsaz_tree.set_enable_search(True)
         self.pkgsaz_tree.set_search_column(0)
-        self.pkgsaz_tree.get_selection().set_mode(gtk.SELECTION_NONE)
+        self.pkgsaz_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
         col = gtk.TreeViewColumn('Package')
+        col.set_clickable(True)
+        col.set_sort_column_id(self.model.COL_NAME)
+        col.set_min_width(220)
         col1 = gtk.TreeViewColumn('Description')
-	col1.set_resizable(True)
+        col1.set_resizable(True)
+        col1.set_min_width(360)
         col2 = gtk.TreeViewColumn('License')
-	col2.set_resizable(True)
+        col2.set_resizable(True)
+        col2.set_clickable(True)
+        col2.set_sort_column_id(self.model.COL_LIC)
+        col2.set_min_width(170)
         col3 = gtk.TreeViewColumn('Group')
-        col4 = gtk.TreeViewColumn('Include')
-	col4.set_resizable(False)
+        col3.set_clickable(True)
+        col3.set_sort_column_id(self.model.COL_GROUP)
+        col4 = gtk.TreeViewColumn('Included')
+        col4.set_min_width(80)
+        col4.set_max_width(90)
+        col4.set_sort_column_id(self.model.COL_INC)
 
         self.pkgsaz_tree.append_column(col)
         self.pkgsaz_tree.append_column(col1)
@@ -288,9 +538,9 @@ class MainWindow (gtk.Window):
 
         cell = gtk.CellRendererText()
         cell1 = gtk.CellRendererText()
-	cell1.set_property('width-chars', 20)
+        cell1.set_property('width-chars', 20)
         cell2 = gtk.CellRendererText()
-	cell2.set_property('width-chars', 20)
+        cell2.set_property('width-chars', 20)
         cell3 = gtk.CellRendererText()
         cell4 = gtk.CellRendererToggle()
         cell4.set_property('activatable', True)
@@ -300,7 +550,7 @@ class MainWindow (gtk.Window):
         col1.pack_start(cell1, True)
         col2.pack_start(cell2, True)
         col3.pack_start(cell3, True)
-        col4.pack_start(cell4, True)
+        col4.pack_end(cell4, True)
 
         col.set_attributes(cell, text=self.model.COL_NAME)
         col1.set_attributes(cell1, text=self.model.COL_DESC)
@@ -314,75 +564,43 @@ class MainWindow (gtk.Window):
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         scroll.set_shadow_type(gtk.SHADOW_IN)
         scroll.add(self.pkgsaz_tree)
+        vbox.pack_start(scroll, True, True, 0)
 
-        return scroll
+        hb = gtk.HBox(False, 0)
+        hb.show()
+        search = gtk.Entry()
+        search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
+        search.connect("icon-release", self.search_entry_clear_cb)
+        search.show()
+        self.pkgsaz_tree.set_search_entry(search)
+        hb.pack_end(search, False, False, 0)
+        label = gtk.Label("Search packages:")
+        label.show()
+        hb.pack_end(label, False, False, 6)
+        vbox.pack_start(hb, False, False, 0)
 
-    def pkgsgrp(self):
-        self.pkgsgrp_tree = gtk.TreeView()
-        self.pkgsgrp_tree.set_headers_visible(True)
-        self.pkgsgrp_tree.set_headers_clickable(False)
-        self.pkgsgrp_tree.set_enable_search(True)
-        self.pkgsgrp_tree.set_search_column(0)
-        self.pkgsgrp_tree.get_selection().set_mode(gtk.SELECTION_NONE)
+        return vbox
 
-        col = gtk.TreeViewColumn('Package')
-        col1 = gtk.TreeViewColumn('Description')
-	col1.set_resizable(True)
-        col2 = gtk.TreeViewColumn('License')
-	col2.set_resizable(True)
-        col3 = gtk.TreeViewColumn('Group')
-        col4 = gtk.TreeViewColumn('Include')
-	col4.set_resizable(False)
-
-        self.pkgsgrp_tree.append_column(col)
-        self.pkgsgrp_tree.append_column(col1)
-        self.pkgsgrp_tree.append_column(col2)
-        self.pkgsgrp_tree.append_column(col3)
-        self.pkgsgrp_tree.append_column(col4)
-
-        cell = gtk.CellRendererText()
-        cell1 = gtk.CellRendererText()
-	cell1.set_property('width-chars', 20)
-        cell2 = gtk.CellRendererText()
-	cell2.set_property('width-chars', 20)
-        cell3 = gtk.CellRendererText()
-        cell4 = gtk.CellRendererToggle()
-        cell4.set_property("activatable", True)
-        cell4.connect("toggled", self.toggle_pkg_include_cb, self.pkgsgrp_tree)
-
-        col.pack_start(cell, True)
-        col1.pack_start(cell1, True)
-        col2.pack_start(cell2, True)
-        col3.pack_start(cell3, True)
-        col4.pack_start(cell4, True)
-
-        col.set_attributes(cell, text=self.model.COL_NAME)
-        col1.set_attributes(cell1, text=self.model.COL_DESC)
-        col2.set_attributes(cell2, text=self.model.COL_LIC)
-        col3.set_attributes(cell3, text=self.model.COL_GROUP)
-        col4.set_attributes(cell4, active=self.model.COL_INC)
-
-        self.pkgsgrp_tree.show()
-
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(self.pkgsgrp_tree)
-
-        return scroll
+    def search_entry_clear_cb(self, entry, icon_pos, event):
+        entry.set_text("")
 
     def tasks(self):
+        vbox = gtk.VBox(False, 6)
+        vbox.show()
         self.tasks_tree = gtk.TreeView()
         self.tasks_tree.set_headers_visible(True)
         self.tasks_tree.set_headers_clickable(False)
         self.tasks_tree.set_enable_search(True)
         self.tasks_tree.set_search_column(0)
-        self.tasks_tree.get_selection().set_mode(gtk.SELECTION_NONE)
+        self.tasks_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
         col = gtk.TreeViewColumn('Package')
+        col.set_min_width(430)
         col1 = gtk.TreeViewColumn('Description')
+        col1.set_min_width(430)
         col2 = gtk.TreeViewColumn('Include')
-	col2.set_resizable(False)
+        col2.set_min_width(70)
+        col2.set_max_width(80)
 
         self.tasks_tree.append_column(col)
         self.tasks_tree.append_column(col1)
@@ -396,7 +614,7 @@ class MainWindow (gtk.Window):
 
         col.pack_start(cell, True)
         col1.pack_start(cell1, True)
-        col2.pack_start(cell2, True)
+        col2.pack_end(cell2, True)
 
         col.set_attributes(cell, text=self.model.COL_NAME)
         col1.set_attributes(cell1, text=self.model.COL_DESC)
@@ -408,26 +626,37 @@ class MainWindow (gtk.Window):
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         scroll.set_shadow_type(gtk.SHADOW_IN)
         scroll.add(self.tasks_tree)
+        vbox.pack_start(scroll, True, True, 0)
 
-        return scroll
+        hb = gtk.HBox(False, 0)
+        hb.show()
+        search = gtk.Entry()
+        search.show()
+        self.tasks_tree.set_search_entry(search)
+        hb.pack_end(search, False, False, 0)
+        label = gtk.Label("Search collections:")
+        label.show()
+        hb.pack_end(label, False, False, 6)
+        vbox.pack_start(hb, False, False, 0)
+
+        return vbox
 
     def cancel_build(self, button):
-        label = gtk.Label("Do you really want to stop this build?")
-        dialog = gtk.Dialog("Cancel build",
-                            self,
-                            gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT,
-                            (gtk.STOCK_NO, gtk.RESPONSE_NO,
-                             gtk.STOCK_YES, gtk.RESPONSE_YES))
-        dialog.vbox.pack_start(label)
-        label.show()
+        lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this build?"
+        dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+        dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+        dialog.add_button("Stop", gtk.RESPONSE_OK)
+        dialog.add_button("Force Stop", gtk.RESPONSE_YES)
         response = dialog.run()
         dialog.destroy()
-        if response == gtk.RESPONSE_YES:
+        if response == gtk.RESPONSE_OK:
             self.handler.cancel_build()
-        return
+        elif response == gtk.RESPONSE_YES:
+            self.handler.cancel_build(True)
 
     def view_build_gui(self):
-        vbox = gtk.VBox(False, 6)
+        vbox = gtk.VBox(False, 12)
+        vbox.set_border_width(6)
         vbox.show()
         build_tv = RunningBuildTreeView()
         build_tv.show()
@@ -438,20 +667,74 @@ class MainWindow (gtk.Window):
         scrolled_view.add(build_tv)
         scrolled_view.show()
         vbox.pack_start(scrolled_view, expand=True, fill=True)
-        hbox = gtk.HBox(False, 6)
+        hbox = gtk.HBox(False, 12)
         hbox.show()
         vbox.pack_start(hbox, expand=False, fill=False)
-        cancel = gtk.Button(stock=gtk.STOCK_CANCEL)
-        cancel.connect("clicked", self.cancel_build)
-        cancel.show()
-        hbox.pack_end(cancel, expand=False, fill=False)
+        self.back = gtk.Button("Back")
+        self.back.show()
+        self.back.set_sensitive(False)
+        hbox.pack_start(self.back, expand=False, fill=False)
+        self.cancel = gtk.Button("Stop Build")
+        self.cancel.connect("clicked", self.cancel_build)
+        self.cancel.show()
+        hbox.pack_end(self.cancel, expand=False, fill=False)
 
         return vbox
+
+    def create_menu(self):
+        menu_items = '''<ui>
+        <menubar name="MenuBar">
+          <menu action="File">
+            <menuitem action="Save"/>
+            <menuitem action="Save As"/>
+            <menuitem action="Open"/>
+            <separator/>
+            <menuitem action="AddLayer" label="Add Layer"/>
+            <separator/>
+            <menuitem action="Quit"/>
+          </menu>
+          <menu action="Edit">
+            <menuitem action="Layers" label="Layers"/>
+            <menuitem action="Preferences"/>
+          </menu>
+          <menu action="Help">
+            <menuitem action="About"/>
+          </menu>
+        </menubar>
+        </ui>'''
+
+        uimanager = gtk.UIManager()
+        accel = uimanager.get_accel_group()
+        self.add_accel_group(accel)
+
+        actions = gtk.ActionGroup('ImageCreator')
+        self.actions = actions
+        actions.add_actions([('Quit', gtk.STOCK_QUIT, None, None,
+                              None, self.menu_quit,),
+                             ('File', None, '_File'),
+                             ('Save', gtk.STOCK_SAVE, None, None, None, self.save_cb),
+                             ('Save As', gtk.STOCK_SAVE_AS, None, None, None, self.save_as_cb),
+                             ('Open', gtk.STOCK_OPEN, None, None, None, self.open_cb),
+                             ('AddLayer', None, 'Add Layer', None, None, self.add_layer_cb),
+                             ('Edit', None, '_Edit'),
+                             ('Help', None, '_Help'),
+                             ('Layers', None, 'Layers', None, None, self.layers_cb),
+                             ('Preferences', gtk.STOCK_PREFERENCES, None, None, None, self.preferences_cb),
+                             ('About', gtk.STOCK_ABOUT, None, None, None, self.about_cb)])
+        uimanager.insert_action_group(actions, 0)
+        uimanager.add_ui_from_string(menu_items)
+
+        menubar = uimanager.get_widget('/MenuBar')
+        menubar.show_all()
+
+        return menubar
     
     def create_build_gui(self):
-        vbox = gtk.VBox(False, 6)
+        vbox = gtk.VBox(False, 12)
+        vbox.set_border_width(6)
         vbox.show()
-        hbox = gtk.HBox(False, 6)
+        
+        hbox = gtk.HBox(False, 12)
         hbox.show()
         vbox.pack_start(hbox, expand=False, fill=False)
 
@@ -459,90 +742,92 @@ class MainWindow (gtk.Window):
         label.show()
         hbox.pack_start(label, expand=False, fill=False, padding=6)
         self.machine_combo = gtk.combo_box_new_text()
-	self.machine_combo.set_active(0)
         self.machine_combo.show()
         self.machine_combo.set_tooltip_text("Selects the architecture of the target board for which you would like to build an image.")
         hbox.pack_start(self.machine_combo, expand=False, fill=False, padding=6)
+        label = gtk.Label("Base image:")
+        label.show()
+        hbox.pack_start(label, expand=False, fill=False, padding=6)
+        self.image_combo = gtk.ComboBox()
+        self.image_combo.show()
+        self.image_combo.set_tooltip_text("Selects the image on which to base the created image")
+        image_combo_cell = gtk.CellRendererText()
+        self.image_combo.pack_start(image_combo_cell, True)
+        self.image_combo.add_attribute(image_combo_cell, 'text', self.model.COL_NAME)
+        hbox.pack_start(self.image_combo, expand=False, fill=False, padding=6)
+        self.progress = gtk.ProgressBar()
+        self.progress.set_size_request(250, -1)
+        hbox.pack_end(self.progress, expand=False, fill=False, padding=6)
 
         ins = gtk.Notebook()
         vbox.pack_start(ins, expand=True, fill=True)
         ins.set_show_tabs(True)
-        label = gtk.Label("Images")
-        label.show()
-        ins.append_page(self.images(), tab_label=label)
-        label = gtk.Label("Tasks")
-        label.show()
-        ins.append_page(self.tasks(), tab_label=label)
-        label = gtk.Label("Packages (by Group)")
-        label.show()
-        ins.append_page(self.pkgsgrp(), tab_label=label)
-        label = gtk.Label("Packages (by Name)")
+        label = gtk.Label("Packages")
         label.show()
         ins.append_page(self.pkgsaz(), tab_label=label)
+        label = gtk.Label("Package Collections")
+        label.show()
+        ins.append_page(self.tasks(), tab_label=label)
         ins.set_current_page(0)
         ins.show_all()
 
-        hbox = gtk.HBox()
-        hbox.show()
-        vbox.pack_start(hbox, expand=False, fill=False)
         label = gtk.Label("Image contents:")
+        self.model.connect("contents-changed", self.update_package_count_cb, label)
+        label.set_property("xalign", 0.00)
         label.show()
-        hbox.pack_start(label, expand=False, fill=False, padding=6)
+        vbox.pack_start(label, expand=False, fill=False, padding=6)
         con = self.contents()
         con.show()
         vbox.pack_start(con, expand=True, fill=True)
 
-        #advanced = gtk.Expander(label="Advanced")
-        #advanced.connect("notify::expanded", self.advanced_expander_cb)
-        #advanced.show()
-        #vbox.pack_start(advanced, expand=False, fill=False)
-
-        hbox = gtk.HBox()
-        hbox.show()
-        vbox.pack_start(hbox, expand=False, fill=False)
-        bake = gtk.Button("Bake")
-        bake.connect("clicked", self.bake_clicked_cb)
-        bake.show()
-        hbox.pack_end(bake, expand=False, fill=False, padding=6)
+        bbox = gtk.HButtonBox()
+        bbox.set_spacing(12)
+        bbox.set_layout(gtk.BUTTONBOX_END)
+        bbox.show()
+        vbox.pack_start(bbox, expand=False, fill=False)
         reset = gtk.Button("Reset")
         reset.connect("clicked", self.reset_clicked_cb)
         reset.show()
-        hbox.pack_end(reset, expand=False, fill=False, padding=6)
+        bbox.add(reset)
+        bake = gtk.Button("Bake")
+        bake.connect("clicked", self.bake_clicked_cb)
+        bake.show()
+        bbox.add(bake)
 
         return vbox
+
+    def update_package_count_cb(self, model, count, label):
+        lbl = "Image contents (%s packages):" % count
+        label.set_text(lbl)
 
     def contents(self):
         self.contents_tree = gtk.TreeView()
         self.contents_tree.set_headers_visible(True)
-        self.contents_tree.get_selection().set_mode(gtk.SELECTION_NONE)
+        self.contents_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
         # allow searching in the package column
         self.contents_tree.set_search_column(0)
+        self.contents_tree.set_enable_search(True)
 
         col = gtk.TreeViewColumn('Package')
-	col.set_sort_column_id(0)
+        col.set_sort_column_id(0)
+        col.set_min_width(430)
         col1 = gtk.TreeViewColumn('Brought in by')
-	col1.set_resizable(True)
-        col2 = gtk.TreeViewColumn('Remove')
-	col2.set_expand(False)
+        col1.set_resizable(True)
+        col1.set_min_width(430)
 
         self.contents_tree.append_column(col)
         self.contents_tree.append_column(col1)
-        self.contents_tree.append_column(col2)
 
         cell = gtk.CellRendererText()
         cell1 = gtk.CellRendererText()
-	cell1.set_property('width-chars', 20)
-        cell2 = gtk.CellRendererToggle()
-        cell2.connect("toggled", self.remove_package_cb)
+        cell1.set_property('width-chars', 20)
 
         col.pack_start(cell, True)
         col1.pack_start(cell1, True)
-        col2.pack_start(cell2, True)
 
         col.set_attributes(cell, text=self.model.COL_NAME)
         col1.set_attributes(cell1, text=self.model.COL_BINB)
-        col2.set_attributes(cell2, active=self.model.COL_INC)
 
         self.contents_tree.show()
 
@@ -554,26 +839,67 @@ class MainWindow (gtk.Window):
         return scroll
 
 def main (server, eventHandler):
+    import multiprocessing
+    cpu_cnt = multiprocessing.cpu_count()
+
     gobject.threads_init()
 
     taskmodel = TaskListModel()
+    configurator = Configurator()
     handler = HobHandler(taskmodel, server)
     mach = server.runCommand(["getVariable", "MACHINE"])
+    sdk_mach = server.runCommand(["getVariable", "SDKMACHINE"])
+    # If SDKMACHINE not set the default SDK_ARCH is used so we
+    # should represent that in the GUI
+    if not sdk_mach:
+        sdk_mach = server.runCommand(["getVariable", "SDK_ARCH"])
     distro = server.runCommand(["getVariable", "DISTRO"])
+    bbthread = server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
+    if not bbthread:
+        bbthread = cpu_cnt
+        handler.set_bbthreads(cpu_cnt)
+    else:
+        bbthread = int(bbthread)
+    pmake = server.runCommand(["getVariable", "PARALLEL_MAKE"])
+    if not pmake:
+        pmake = cpu_cnt
+        handler.set_pmake(cpu_cnt)
+    else:
+        # The PARALLEL_MAKE variable will be of the format: "-j 3" and we only
+        # want a number for the spinner, so strip everything from the variable
+        # up to and including the space
+        pmake = int(pmake[pmake.find(" ")+1:])
 
-    window = MainWindow(taskmodel, handler, mach, distro)
+    image_types = server.runCommand(["getVariable", "IMAGE_TYPES"])
+
+    pclasses = server.runCommand(["getVariable", "PACKAGE_CLASSES"]).split(" ")
+    # NOTE: we're only supporting one value for PACKAGE_CLASSES being set
+    # this seems OK because we're using the first package format set in
+    # PACKAGE_CLASSES and that's the package manager used for the rootfs
+    pkg, sep, pclass = pclasses[0].rpartition("_")
+
+    prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
+                     pmake, bbthread, image_types)
+    layers = LayerEditor(configurator, None)
+    window = MainWindow(taskmodel, handler, configurator, prefs, layers, mach)
+    prefs.set_parent_window(window)
+    layers.set_parent_window(window)
     window.show_all ()
     handler.connect("machines-updated", window.update_machines)
-    handler.connect("distros-updated", window.update_distros)
+    handler.connect("sdk-machines-updated", prefs.update_sdk_machines)
+    handler.connect("distros-updated", prefs.update_distros)
+    handler.connect("package-formats-found", prefs.update_package_formats)
     handler.connect("generating-data", window.busy)
     handler.connect("data-generated", window.data_generated)
-    pbar = ProgressBar(window)
-    pbar.connect("delete-event", gtk.main_quit)
+    handler.connect("reload-triggered", window.reload_triggered_cb)
+    configurator.connect("layers-loaded", layers.load_current_layers)
+    configurator.connect("layers-changed", handler.reload_data)
+    handler.connect("config-found", configurator.configFound)
 
     try:
         # kick the while thing off
-        handler.current_command = "findConfigFilesDistro"
-        server.runCommand(["findConfigFiles", "DISTRO"])
+        handler.current_command = "findConfigFilePathLocal"
+        server.runCommand(["findConfigFilePath", "local.conf"])
     except xmlrpclib.Fault:
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
@@ -584,7 +910,7 @@ def main (server, eventHandler):
                          handler.event_handle_idle_func,
                          eventHandler,
                          window.build,
-                         pbar)
+                         window.progress)
 
     try:
         gtk.main()

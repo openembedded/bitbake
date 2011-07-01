@@ -47,12 +47,18 @@ class RunningBuildModel (gtk.TreeStore):
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
+          'build-started' : (gobject.SIGNAL_RUN_LAST,
+                               gobject.TYPE_NONE,
+                               ()),
           'build-succeeded' : (gobject.SIGNAL_RUN_LAST,
                                gobject.TYPE_NONE,
                                ()),
           'build-failed' : (gobject.SIGNAL_RUN_LAST,
                             gobject.TYPE_NONE,
-                            ())
+                            ()),
+          'build-complete' : (gobject.SIGNAL_RUN_LAST,
+                              gobject.TYPE_NONE,
+                              ())
           }
     pids_to_task = {}
     tasks_to_iter = {}
@@ -201,6 +207,7 @@ class RunningBuild (gobject.GObject):
 
         elif isinstance(event, bb.event.BuildStarted):
 
+            self.emit("build-started")
             self.model.prepend(None, (None,
                                       None,
                                       None,
@@ -218,6 +225,9 @@ class RunningBuild (gobject.GObject):
                                       Colors.OK,
                                       0))
 
+            # Emit a generic "build-complete" signal for things wishing to
+            # handle when the build is finished
+            self.emit("build-complete")
             # Emit the appropriate signal depending on the number of failures
             if (failures >= 1):
                 self.emit ("build-failed")
