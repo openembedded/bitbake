@@ -39,13 +39,9 @@ import bb.msg
 from bb import cooker
 from bb import ui
 from bb import server
-#from bb.server import none
-from bb.server import process
-#from bb.server import xmlrpc
 
 __version__ = "1.13.2"
 logger = logging.getLogger("BitBake")
-
 
 
 class BBConfiguration(object):
@@ -160,6 +156,9 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("-u", "--ui", help = "userinterface to use",
                action = "store", dest = "ui")
 
+    parser.add_option("-t", "--servertype", help = "Choose which server to use, none, process or xmlrpc",
+               action = "store", dest = "servertype")
+
     parser.add_option("", "--revisions-changed", help = "Set the exit code depending on whether upstream floating revisions have changed or not",
                action = "store_true", dest = "revisions_changed", default = False)
 
@@ -169,6 +168,20 @@ Default BBFILES are the .bb files in the current directory.""")
     configuration.pkgs_to_build.extend(args[1:])
 
     ui_main = get_ui(configuration)
+
+    # Server type could be xmlrpc or none currently, if nothing is specified,
+    # default server would be none
+    if configuration.servertype:
+        server_type = configuration.servertype
+    else:
+        server_type = 'process'
+
+    try:
+        module = __import__("bb.server", fromlist = [server_type])
+        server = getattr(module, server_type)
+    except AttributeError:
+        sys.exit("FATAL: Invalid server type '%s' specified.\n"
+                 "Valid interfaces: xmlrpc, process, none [default]." % servertype)
 
     # Save a logfile for cooker into the current working directory. When the
     # server is daemonized this logfile will be truncated.
@@ -186,9 +199,7 @@ Default BBFILES are the .bb files in the current directory.""")
     # of the UIs (e.g. for DISPLAY, etc.)
     bb.utils.clean_environment()
 
-    #server = bb.server.none.BitBakeServer()    
-    server = bb.server.process.BitBakeServer()
-    #server = bb.server.xmlrpc.BitBakeServer()
+    server = server.BitBakeServer()
 
     server.initServer()
     idle = server.getServerIdleCB()
