@@ -224,11 +224,19 @@ class CommandsAsync:
 
     def generateTargetsTree(self, command, params):
         """
-        Generate a tree of all buildable targets.
+        Generate a tree of buildable targets.
+        If klass is provided ensure all recipes that inherit the class are
+        included in the package list.
+        If pkg_list provided use that list (plus any extras brought in by
+        klass) rather than generating a tree for all packages.
         """
         klass = params[0]
+        if len(params) > 1:
+            pkg_list = params[1]
+        else:
+            pkg_list = []
 
-        command.cooker.generateTargetsTree(klass)
+        command.cooker.generateTargetsTree(klass, pkg_list)
         command.finishAsyncCommand()
     generateTargetsTree.needcache = True
 

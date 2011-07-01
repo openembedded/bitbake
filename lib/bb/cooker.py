@@ -591,12 +591,14 @@ class BBCooker:
 
         return target_tree
 
-    def generateTargetsTree(self, klass):
+    def generateTargetsTree(self, klass=None, pkgs=[]):
         """
         Generate a dependency tree of buildable targets
         Generate an event with the result
         """
-        pkgs = ['world']
+        # if the caller hasn't specified a pkgs list default to world
+        if not len(pkgs):
+            pkgs = ['world']
         # if inherited_class passed ensure all recipes which inherit the
         # specified class are included in pkgs
         if klass:
