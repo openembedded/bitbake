@@ -390,6 +390,16 @@ class TargetsTreeGenerated(Event):
         Event.__init__(self)
         self._model = model
 
+class FilesMatchingFound(Event):
+    """
+    Event when a list of files matching the supplied pattern has
+    been generated
+    """
+    def __init__(self, pattern, matches):
+        Event.__init__(self)
+        self._pattern = pattern
+        self._matches = matches
+
 class ConfigFilesFound(Event):
     """
     Event when a list of appropriate config files has been generated

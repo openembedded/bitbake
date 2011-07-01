@@ -517,6 +517,29 @@ class BBCooker:
         path = self._findConfigFile(configfile)
         bb.event.fire(bb.event.ConfigFilePathFound(path), self.configuration.data)
 
+    def findFilesMatchingInDir(self, filepattern, directory):
+        """
+        Searches for files matching the regex 'pattern' which are children of
+        'directory' in each BBPATH. i.e. to find all rootfs package classes available
+        to BitBake one could call findFilesMatchingInDir(self, 'rootfs_', 'classes')
+        or to find all machine configuration files on could call
+        findFilesMatchingInDir(self, 'conf/machines', 'conf')
+        """
+        import re
+
+        matches = []
+        p = re.compile(re.escape(filepattern))
+        bbpaths = bb.data.getVar('BBPATH', self.configuration.data, True).split(':')
+        for path in bbpaths:
+            dirpath = os.path.join(path, directory)
+            if os.path.exists(dirpath):
+                for root, dirs, files in os.walk(dirpath):
+                    for f in files:
+                        if p.search(f):
+                            matches.append(f)
+
+        bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.configuration.data)
+
     def findConfigFiles(self, varname):
         """
         Find config files which are appropriate values for varname.

@@ -251,6 +251,18 @@ class CommandsAsync:
         command.finishAsyncCommand()
     findConfigFiles.needcache = True
 
+    def findFilesMatchingInDir(self, command, params):
+        """
+        Find implementation files matching the specified pattern
+        in the requested subdirectory of a BBPATH
+        """
+        pattern = params[0]
+        directory = params[1]
+
+        command.cooker.findFilesMatchingInDir(pattern, directory)
+        command.finishAsyncCommand()
+    findFilesMatchingInDir.needcache = True
+
     def findConfigFilePath(self, command, params):
         """
         Find the path of the requested configuration file
