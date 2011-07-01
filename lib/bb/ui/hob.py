@@ -76,7 +76,7 @@ class MainWindow (gtk.Window):
         label.show()
         response = dialog.run()
         dialog.destroy()
-        if not response == gtk.RESPONSE_YES:
+        if response == gtk.RESPONSE_YES:
             self.model.reset() # NOTE: really?
             self.nb.set_current_page(0)
         return
@@ -555,7 +555,6 @@ class MainWindow (gtk.Window):
 
 def main (server, eventHandler):
     gobject.threads_init()
-    gtk.gdk.threads_init()
 
     taskmodel = TaskListModel()
     handler = HobHandler(taskmodel, server)
