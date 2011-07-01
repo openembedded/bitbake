@@ -324,9 +324,11 @@ class BBCooker:
 
         return taskdata, rq
 
-    def generateDepTreeData(self, pkgs_to_build, task):
+    def generateDepTreeData(self, pkgs_to_build, task, more_meta=False):
         """
         Create a dependency tree of pkgs_to_build, returning the data.
+        When more_meta is set to True include summary, license and group
+        information in the returned tree.
         """
         taskdata, rq = self.prepareTreeData(pkgs_to_build, task)
 
@@ -346,10 +348,18 @@ class BBCooker:
             fn = taskdata.fn_index[fnid]
             pn = self.status.pkg_fn[fn]
             version  = "%s:%s-%s" % self.status.pkg_pepvpr[fn]
+            if more_meta:
+                summary = self.status.summary[fn]
+                lic = self.status.license[fn]
+                section = self.status.section[fn]
             if pn not in depend_tree["pn"]:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = fn
                 depend_tree["pn"][pn]["version"] = version
+                if more_meta:
+                    depend_tree["pn"][pn]["summary"] = summary
+                    depend_tree["pn"][pn]["license"] = lic
+                    depend_tree["pn"][pn]["section"] = section
             for dep in rq.rqdata.runq_depends[task]:
                 depfn = taskdata.fn_index[rq.rqdata.runq_fnid[dep]]
                 deppn = self.status.pkg_fn[depfn]
@@ -576,48 +586,6 @@ class BBCooker:
 
         return pkg_list
 
-    def generateTargetsTreeData(self, pkgs_to_build, task):
-        """
-        Create a tree of pkgs_to_build metadata, returning the data.
-        """
-        taskdata, rq = self.prepareTreeData(pkgs_to_build, task)
-
-        seen_fnids = []
-        target_tree = {}
-        target_tree["depends"] = {}
-        target_tree["pn"] = {}
-        target_tree["rdepends-pn"] = {}
-
-        for task in xrange(len(rq.rqdata.runq_fnid)):
-            taskname = rq.rqdata.runq_task[task]
-            fnid = rq.rqdata.runq_fnid[task]
-            fn = taskdata.fn_index[fnid]
-            pn = self.status.pkg_fn[fn]
-            version  = "%s:%s-%s" % self.status.pkg_pepvpr[fn]
-            summary = self.status.summary[fn]
-            license = self.status.license[fn]
-            section = self.status.section[fn]
-            if pn not in target_tree["pn"]:
-                target_tree["pn"][pn] = {}
-                target_tree["pn"][pn]["filename"] = fn
-                target_tree["pn"][pn]["version"] = version
-                target_tree["pn"][pn]["summary"] = summary
-                target_tree["pn"][pn]["license"] = license
-                target_tree["pn"][pn]["section"] = section
-            if fnid not in seen_fnids:
-                seen_fnids.append(fnid)
-                packages = []
-
-                target_tree["depends"][pn] = []
-                for dep in taskdata.depids[fnid]:
-                    target_tree["depends"][pn].append(taskdata.build_names_index[dep])
-
-                target_tree["rdepends-pn"][pn] = []
-                for rdep in taskdata.rdepids[fnid]:
-                    target_tree["rdepends-pn"][pn].append(taskdata.run_names_index[rdep])
-
-        return target_tree
-
     def generateTargetsTree(self, klass=None, pkgs=[]):
         """
         Generate a dependency tree of buildable targets
@@ -633,7 +601,7 @@ class BBCooker:
             pkgs = pkgs + extra_pkgs
 
         # generate a dependency tree for all our packages
-        tree = self.generateTargetsTreeData(pkgs, 'build')
+        tree = self.generateDepTreeData(pkgs, 'build', more_meta=True)
         bb.event.fire(bb.event.TargetsTreeGenerated(tree), self.configuration.data)
 
     def buildWorldTargetList(self):
