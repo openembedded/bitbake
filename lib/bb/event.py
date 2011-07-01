@@ -399,6 +399,14 @@ class ConfigFilesFound(Event):
         self._variable = variable
         self._values = values
 
+class ConfigFilePathFound(Event):
+    """
+    Event when a path for a config file has been found
+    """
+    def __init__(self, path):
+        Event.__init__(self)
+        self._path = path
+
 class MsgBase(Event):
     """Base class for messages"""
 

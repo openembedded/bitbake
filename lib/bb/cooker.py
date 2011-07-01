@@ -513,6 +513,10 @@ class BBCooker:
             if regex in unmatched:
                 collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
+    def findConfigFilePath(self, configfile):
+        path = self._findConfigFile(configfile)
+        bb.event.fire(bb.event.ConfigFilePathFound(path), self.configuration.data)
+
     def findConfigFiles(self, varname):
         """
         Find config files which are appropriate values for varname.

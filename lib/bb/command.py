@@ -251,6 +251,16 @@ class CommandsAsync:
         command.finishAsyncCommand()
     findConfigFiles.needcache = True
 
+    def findConfigFilePath(self, command, params):
+        """
+        Find the path of the requested configuration file
+        """
+        configfile = params[0]
+
+        command.cooker.findConfigFilePath(configfile)
+        command.finishAsyncCommand()
+    findConfigFilePath.needcache = False
+
     def showVersions(self, command, params):
         """
         Show the currently selected versions
