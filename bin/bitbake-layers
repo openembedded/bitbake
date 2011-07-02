@@ -55,7 +55,7 @@ class Commands(cmd.Cmd):
 
     def prepare_cooker(self):
         sys.stderr.write("Parsing recipes..")
-        logger.setLevel(logging.ERROR)
+        logger.setLevel(logging.WARNING)
 
         try:
             while self.cooker.state in (state.initial, state.parsing):
@@ -156,8 +156,6 @@ class Commands(cmd.Cmd):
 
         self.show_appends_for_skipped()
 
-        self.show_appends_with_no_recipes()
-
     def show_appends_for_pn(self, pn):
         filenames = self.cooker_data.pkg_pn[pn]
 
@@ -203,23 +201,6 @@ class Commands(cmd.Cmd):
             else:
                 notappended.append(basename)
         return appended, notappended
-
-    def show_appends_with_no_recipes(self):
-        recipes = set(os.path.basename(f)
-                      for f in self.cooker_data.pkg_fn.iterkeys())
-        recipes |= set(os.path.basename(f)
-                      for f in self.cooker.skiplist.iterkeys())
-        appended_recipes = self.cooker_data.appends.iterkeys()
-        appends_without_recipes = [self.cooker_data.appends[recipe]
-                                   for recipe in appended_recipes
-                                   if recipe not in recipes]
-        if appends_without_recipes:
-            appendlines = ('  %s' % append
-                           for appends in appends_without_recipes
-                           for append in appends)
-            logger.warn('No recipes available for:\n%s',
-                        '\n'.join(appendlines))
-            self.returncode |= 4
 
     def do_EOF(self, line):
         return True

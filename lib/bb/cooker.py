@@ -480,6 +480,27 @@ class BBCooker:
                 return pri
         return 0
 
+    def show_appends_with_no_recipes( self ):
+        recipes = set(os.path.basename(f)
+                      for f in self.status.pkg_fn.iterkeys())
+        recipes |= set(os.path.basename(f)
+                      for f in self.skiplist.iterkeys())
+        appended_recipes = self.appendlist.iterkeys()
+        appends_without_recipes = [self.appendlist[recipe]
+                                   for recipe in appended_recipes
+                                   if recipe not in recipes]
+        if appends_without_recipes:
+            appendlines = ('  %s' % append
+                           for appends in appends_without_recipes
+                           for append in appends)
+            msg = 'No recipes available for:\n%s' % '\n'.join(appendlines)
+            warn_only = data.getVar("BB_DANGLINGAPPENDS_WARNONLY", \
+                 self.configuration.data, False) or "no"
+            if warn_only.lower() in ("1", "yes", "true"):
+                bb.warn(msg)
+            else:
+                bb.fatal(msg)
+
     def buildDepgraph( self ):
         all_depends = self.status.all_depends
         pn_provides = self.status.pn_provides
@@ -1005,6 +1026,7 @@ class BBCooker:
 
         if not self.parser.parse_next():
             collectlog.debug(1, "parsing complete")
+            self.show_appends_with_no_recipes()
             self.buildDepgraph()
             self.state = state.running
             return None
