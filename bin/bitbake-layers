@@ -150,7 +150,7 @@ class Commands(cmd.Cmd):
         logger.info('State of append files:')
 
         pnlist = list(self.cooker_data.pkg_pn.keys())
-        pnlist.sort( key=lambda item: item.pn )
+        pnlist.sort()
         for pn in pnlist:
             self.show_appends_for_pn(pn)
 
