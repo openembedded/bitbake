@@ -267,12 +267,8 @@ class DataSmart(MutableMapping):
         # setting var
         self.dict[var]["content"] = value
 
-    def getVar(self, var, exp):
-        value = self.getVarFlag(var, "content")
-
-        if exp and value:
-            return self.expand(value, var)
-        return value
+    def getVar(self, var, expand=False, noweakdefault=False):
+        return self.getVarFlag(var, "content", expand, noweakdefault)
 
     def renameVar(self, key, newkey):
         """
@@ -310,13 +306,13 @@ class DataSmart(MutableMapping):
             self._makeShadowCopy(var)
         self.dict[var][flag] = flagvalue
 
-    def getVarFlag(self, var, flag, expand=False):
+    def getVarFlag(self, var, flag, expand=False, noweakdefault=False):
         local_var = self._findVar(var)
         value = None
         if local_var:
             if flag in local_var:
                 value = copy.copy(local_var[flag])
-            elif flag == "content" and "defaultval" in local_var:
+            elif flag == "content" and "defaultval" in local_var and not noweakdefault:
                 value = copy.copy(local_var["defaultval"])
         if expand and value:
             value = self.expand(value, None)

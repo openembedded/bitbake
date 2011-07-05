@@ -84,9 +84,9 @@ class DataNode(AstNode):
 
     def getFunc(self, key, data):
         if 'flag' in self.groupd and self.groupd['flag'] != None:
-            return bb.data.getVarFlag(key, self.groupd['flag'], data)
+            return data.getVarFlag(key, self.groupd['flag'], noweakdefault=True)
         else:
-            return bb.data.getVar(key, data)
+            return data.getVar(key, noweakdefault=True)
 
     def eval(self, data):
         groupd = self.groupd
