@@ -211,7 +211,8 @@ class Config(object):
         self.pkgs_to_build = []
         self.debug_domains = []
         self.extra_assume_provided = []
-        self.file = []
+        self.prefile = []
+        self.postfile = []
         self.debug = 0
         self.__dict__.update(options)
 
