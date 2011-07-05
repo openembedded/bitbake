@@ -247,9 +247,7 @@ def main(server, eventHandler):
                 continue
 
             if isinstance(event, bb.event.CacheLoadCompleted):
-                gtk.gdk.threads_enter()
-                pbar.update(progress_total, progress_total)
-                gtk.gdk.threads_leave()
+                pbar.hide()
                 continue
 
             if isinstance(event, bb.event.ParseStarted):
