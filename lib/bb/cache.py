@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "140"
+__cache_version__ = "141"
 
 def getCacheFile(path, filename):
     return os.path.join(path, filename)
@@ -94,6 +94,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.file_depends = metadata.getVar('__depends', False)
         self.timestamp = bb.parse.cached_mtime(filename)
         self.variants = self.listvar('__VARIANTS', metadata) + ['']
+        self.appends = self.listvar('__BBAPPEND', metadata)
         self.nocache = self.getvar('__BB_DONT_CACHE', metadata)
 
         self.skipreason = self.getvar('__SKIPPED', metadata)
@@ -429,7 +430,7 @@ class Cache(object):
         automatically add the information to the cache or to your
         CacheData.  Use the add or add_info method to do so after
         running this, or use loadData instead."""
-        cached = self.cacheValid(filename)
+        cached = self.cacheValid(filename, appends)
         if cached:
             infos = []
             # info_array item is a list of [CoreRecipeInfo, XXXRecipeInfo]
@@ -460,13 +461,13 @@ class Cache(object):
 
         return cached, skipped, virtuals
 
-    def cacheValid(self, fn):
+    def cacheValid(self, fn, appends):
         """
         Is the cache valid for fn?
         Fast version, no timestamps checked.
         """
         if fn not in self.checked:
-            self.cacheValidUpdate(fn)
+            self.cacheValidUpdate(fn, appends)
 
         # Is cache enabled?
         if not self.has_cache:
@@ -475,7 +476,7 @@ class Cache(object):
             return True
         return False
 
-    def cacheValidUpdate(self, fn):
+    def cacheValidUpdate(self, fn, appends):
         """
         Is the cache valid for fn?
         Make thorough (slower) checks including timestamps.
@@ -523,6 +524,12 @@ class Cache(object):
                                     fn, f)
                     self.remove(fn)
                     return False
+
+        if appends != info_array[0].appends:
+            logger.debug(2, "Cache: appends for %s changed", fn)
+            bb.note("%s to %s" % (str(appends), str(info_array[0].appends)))
+            self.remove(fn)
+            return False
 
         invalid = False
         for cls in info_array[0].variants:

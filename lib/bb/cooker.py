@@ -1294,7 +1294,7 @@ class CookerParser(object):
         self.willparse = []
         for filename in self.filelist:
             appends = self.cooker.get_file_appends(filename)
-            if not self.bb_cache.cacheValid(filename):
+            if not self.bb_cache.cacheValid(filename, appends):
                 self.willparse.append((filename, appends, cooker.caches_array))
             else:
                 self.fromcache.append((filename, appends))
