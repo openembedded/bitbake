@@ -83,15 +83,14 @@ class ProcessServer(Process):
         self.keep_running = Event()
         self.keep_running.set()
 
-        for event in bb.event.ui_queue:
-            self.event_queue.put(event)
-
     def register_idle_function(self, function, data):
         """Register a function to be called while the server is idle"""
         assert hasattr(function, '__call__')
         self._idlefunctions[function] = data
 
     def run(self):
+        for event in bb.event.ui_queue:
+            self.event_queue.put(event)
         self.event_handle = bb.event.register_UIHhandler(self)
         bb.cooker.server_main(self.cooker, self.main)
 
