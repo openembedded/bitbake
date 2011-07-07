@@ -50,7 +50,6 @@ class MainWindow (gtk.Window):
         self.model = taskmodel
         self.model.connect("tasklist-populated", self.update_model)
         self.model.connect("image-changed", self.image_changed_string_cb)
-        self.curr_image_path = None
         self.handler = handler
         self.configurator = configurator
         self.prefs = prefs
@@ -133,12 +132,13 @@ class MainWindow (gtk.Window):
         if it:
             path = model.get_path(it)
             # Firstly, deselect the previous image
-            if self.curr_image_path:
-                self.toggle_package(self.curr_image_path, model)
+            userp, _ = self.model.get_selected_packages()
+            self.model.reset()
             # Now select the new image and save its path in case we
             # change the image later
-            self.curr_image_path = path
             self.toggle_package(path, model, image=True)
+            if len(userp):
+                self.model.set_selected_packages(userp)
 
     def reload_triggered_cb(self, handler, image, packages):
         if image:
@@ -463,8 +463,8 @@ class MainWindow (gtk.Window):
         return False
 
     def toggle_package(self, path, model, image=False):
-        # Warn user before removing packages
         inc = model[path][self.model.COL_INC]
+        # Warn user before removing included packages
         if inc:
             pn = model[path][self.model.COL_NAME]
             revdeps = self.model.find_reverse_depends(pn)
