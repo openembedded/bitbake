@@ -99,12 +99,15 @@ class MainWindow (gtk.Window):
             dialog.add_buttons(gtk.STOCK_NO, gtk.RESPONSE_NO,
                                gtk.STOCK_YES, gtk.RESPONSE_YES)
             resp = dialog.run()
+            dialog.destroy()
             if resp == gtk.RESPONSE_YES:
                 if not self.save_path:
                     self.get_save_path()
-                self.save_recipe_file()
-                rep = self.model.get_build_rep()
-                rep.writeRecipe(self.save_path, self.model)
+
+                if self.save_path:
+                    self.save_recipe_file()
+                    rep = self.model.get_build_rep()
+                    rep.writeRecipe(self.save_path, self.model)
 
         gtk.main_quit()
 
@@ -325,17 +328,22 @@ class MainWindow (gtk.Window):
         chooser.set_current_name("myimage.bb")
         response = chooser.run()
         if response == gtk.RESPONSE_OK:
-            self.save_path = chooser.get_filename()
+            save_path = chooser.get_filename()
+        else:
+            save_path = None
         chooser.destroy()
+        self.save_path = save_path
 
     def save_cb(self, action):
         if not self.save_path:
             self.get_save_path()
-        self.save_recipe_file()
+        if self.save_path:
+            self.save_recipe_file()
 
     def save_as_cb(self, action):
         self.get_save_path()
-        self.save_recipe_file()
+        if self.save_path:
+            self.save_recipe_file()
 
     def open_cb(self, action):
         chooser = gtk.FileChooserDialog(title=None, parent=self,
