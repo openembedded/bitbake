@@ -185,6 +185,9 @@ class TaskListModel(gtk.ListStore):
         if model.get_value(it, self.COL_TYPE) != 'package':
             return False
         else:
+            name = model.get_value(it, self.COL_NAME)
+            if name.count('-native') or name.count('cross'):
+                return False
             return True
 
     """
