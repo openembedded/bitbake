@@ -429,12 +429,24 @@ class TaskListModel(gtk.ListStore):
     Empty self.contents by setting the include of each entry to None
     """
     def reset(self):
+        # Deselect images - slightly more complex logic so that we don't
+        # have to iterate all of the contents of the main model, instead
+        # just iterate the images model.
+        if self.selected_image:
+            iit = self.images.get_iter_first()
+            while iit:
+                pit = self.images.convert_iter_to_child_iter(iit)
+                self.set(pit, self.COL_INC, False)
+                iit = self.images.iter_next(iit)
+            self.selected_image = None
+
         it = self.contents.get_iter_first()
         while it:
-            path = self.contents.get_path(it)
-            opath = self.contents.convert_path_to_child_path(path)
-            self[opath][self.COL_INC] = False
-            self[opath][self.COL_BINB] = ""
+            oit = self.contents.convert_iter_to_child_iter(it)
+            self.set(oit,
+                     self.COL_INC, False,
+                     self.COL_BINB, "",
+                     self.COL_IMG, False)
             # As we've just removed the first item...
             it = self.contents.get_iter_first()
 
