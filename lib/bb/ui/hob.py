@@ -282,6 +282,7 @@ class MainWindow (gtk.Window):
         dialog.destroy()
         if response == gtk.RESPONSE_OK:
             self.reset_build()
+            self.search.set_text("")
         return
 
     def reset_build(self):
@@ -576,12 +577,12 @@ class MainWindow (gtk.Window):
 
         hb = gtk.HBox(False, 0)
         hb.show()
-        search = gtk.Entry()
-        search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
-        search.connect("icon-release", self.search_entry_clear_cb)
-        search.show()
-        self.pkgsaz_tree.set_search_entry(search)
-        hb.pack_end(search, False, False, 0)
+        self.search = gtk.Entry()
+        self.search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, "gtk-clear")
+        self.search.connect("icon-release", self.search_entry_clear_cb)
+        self.search.show()
+        self.pkgsaz_tree.set_search_entry(self.search)
+        hb.pack_end(self.search, False, False, 0)
         label = gtk.Label("Search packages:")
         label.show()
         hb.pack_end(label, False, False, 6)
