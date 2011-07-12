@@ -327,24 +327,28 @@ class TaskListModel(gtk.ListStore):
     If the item isn't a package we leave it included.
     """
     def sweep_up(self):
-        model = self.contents
-        removals = []
         it = self.contents.get_iter_first()
-
-	while it:
-            binb = model.get_value(it, self.COL_BINB)
-            itype = model.get_value(it, self.COL_TYPE)
+        while it:
+            binb = self.contents.get_value(it, self.COL_BINB)
+            itype = self.contents.get_value(it, self.COL_TYPE)
+            remove = False
 
             if itype == 'package' and not binb:
-                opath = model.convert_path_to_child_path(model.get_path(it))
-                if not opath in removals:
-                    removals.extend(opath)
+                oit = self.contents.convert_iter_to_child_iter(it)
+                opath = self.get_path(oit)
+                self.mark(opath)
+                remove = True
 
-            it = model.iter_next(it)
-
-	while removals:
-	    path = removals.pop()
-	    self.mark(path)
+            # When we remove a package from the contents model we alter the
+            # model, so continuing to iterate is bad. *Furthermore* it's
+            # likely that the removal has affected an already iterated item
+            # so we should start from the beginning anyway.
+            # Only when we've managed to iterate the entire contents model
+            # without removing any items do we allow the loop to exit.
+            if remove:
+                it = self.contents.get_iter_first()
+            else:
+                it = self.contents.iter_next(it)
 
     """
     Find the name of an item in the image contents which depends on the item
