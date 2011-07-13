@@ -61,8 +61,11 @@ class HobHandler(gobject.GObject):
                                    gobject.TYPE_STRING)),
     }
 
+    (CFG_PATH_LOCAL, CFG_PATH_HOB, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS) = range(8)
+
     def __init__(self, taskmodel, server):
         gobject.GObject.__init__(self)
+
         self.current_command = None
         self.building = None
         self.gplv3_excluded = False
@@ -76,30 +79,37 @@ class HobHandler(gobject.GObject):
 
         self.image_output_types = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]).split(" ")
 
-        self.command_map = {
-            "findConfigFilePathLocal" : ("findConfigFilePath", ["hob.local.conf"], "findConfigFilePathHobLocal"),
-            "findConfigFilePathHobLocal" : ("findConfigFilePath", ["bblayers.conf"], "findConfigFilePathLayers"),
-            "findConfigFilePathLayers" : ("findConfigFiles", ["DISTRO"], "findConfigFilesDistro"),
-            "findConfigFilesDistro" : ("findConfigFiles", ["MACHINE"], "findConfigFilesMachine"),
-            "findConfigFilesMachine" : ("findConfigFiles", ["MACHINE-SDK"], "findConfigFilesSdkMachine"),
-            "findConfigFilesSdkMachine" : ("findFilesMatchingInDir", ["rootfs_", "classes"], "findFilesMatchingPackage"),
-            "findFilesMatchingPackage" : ("generateTargetsTree", ["classes/image.bbclass"], None),
-            "generateTargetsTree"  : (None, [], None),
-            }
-
     def run_next_command(self):
-        # FIXME: this is ugly and I *will* replace it
-        if self.current_command:
-            if not self.generating:
-                self.emit("generating-data")
-                self.generating = True
-            next_cmd = self.command_map[self.current_command]
-            command = next_cmd[0]
-            argument = next_cmd[1]
-            self.current_command = next_cmd[2]
-            args = [command]
-            args.extend(argument)
-            self.server.runCommand(args)
+        if self.current_command and not self.generating:
+            self.emit("generating-data")
+            self.generating = True
+
+        if self.current_command == self.CFG_PATH_LOCAL:
+            self.current_command = self.CFG_PATH_HOB
+            self.server.runCommand(["findConfigFilePath", "hob.local.conf"])
+        elif self.current_command == self.CFG_PATH_HOB:
+            self.current_command = self.CFG_PATH_LAYERS
+            self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
+        elif self.current_command == self.CFG_PATH_LAYERS:
+            self.current_command = self.CFG_FILES_DISTRO
+            self.server.runCommand(["findConfigFiles", "DISTRO"])
+        elif self.current_command == self.CFG_FILES_DISTRO:
+            self.current_command = self.CFG_FILES_MACH
+            self.server.runCommand(["findConfigFiles", "MACHINE"])
+        elif self.current_command == self.CFG_FILES_MACH:
+            self.current_command = self.CFG_FILES_SDK
+            self.server.runCommand(["findConfigFiles", "MACHINE-SDK"])
+        elif self.current_command == self.CFG_FILES_SDK:
+            self.current_command = self.FILES_MATCH_CLASS
+            self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
+        elif self.current_command == self.FILES_MATCH_CLASS:
+            self.current_command = self.GENERATE_TGTS
+            self.server.runCommand(["generateTargetsTree", "classes/image.bbclass"])
+        elif self.current_command == self.GENERATE_TGTS:
+            if self.generating:
+                self.emit("data-generated")
+                self.generating = False
+            self.current_command = None
 
     def handle_event(self, event, running_build, pbar):
         if not event:
@@ -109,8 +119,6 @@ class HobHandler(gobject.GObject):
         if self.building:
             running_build.handle_event(event)
         elif isinstance(event, bb.event.TargetsTreeGenerated):
-            self.emit("data-generated")
-            self.generating = False
             if event._model:
                 self.model.populate(event._model)
         elif isinstance(event, bb.event.ConfigFilesFound):
@@ -188,7 +196,7 @@ class HobHandler(gobject.GObject):
         selected_packages, _ = self.model.get_selected_packages()
         self.emit("reload-triggered", img, " ".join(selected_packages))
         self.server.runCommand(["reparseFiles"])
-        self.current_command = "findConfigFilePathLayers"
+        self.current_command = self.CFG_PATH_LAYERS
         self.run_next_command()
 
     def set_bbthreads(self, threads):

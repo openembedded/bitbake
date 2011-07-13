@@ -929,7 +929,7 @@ def main (server, eventHandler):
 
     try:
         # kick the while thing off
-        handler.current_command = "findConfigFilePathLocal"
+        handler.current_command = handler.CFG_PATH_LOCAL
         server.runCommand(["findConfigFilePath", "local.conf"])
     except xmlrpclib.Fault:
         print("XMLRPC Fault getting commandline:\n %s" % x)
