@@ -546,14 +546,15 @@ class BBCooker:
 
     def findConfigFilePath(self, configfile):
         path = self._findConfigFile(configfile)
-        bb.event.fire(bb.event.ConfigFilePathFound(path), self.configuration.data)
+        if path:
+            bb.event.fire(bb.event.ConfigFilePathFound(path), self.configuration.data)
 
     def findFilesMatchingInDir(self, filepattern, directory):
         """
         Searches for files matching the regex 'pattern' which are children of
         'directory' in each BBPATH. i.e. to find all rootfs package classes available
         to BitBake one could call findFilesMatchingInDir(self, 'rootfs_', 'classes')
-        or to find all machine configuration files on could call
+        or to find all machine configuration files one could call:
         findFilesMatchingInDir(self, 'conf/machines', 'conf')
         """
         import re
@@ -569,7 +570,8 @@ class BBCooker:
                         if p.search(f):
                             matches.append(f)
 
-        bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.configuration.data)
+        if matches:
+            bb.event.fire(bb.event.FilesMatchingFound(filepattern, matches), self.configuration.data)
 
     def findConfigFiles(self, varname):
         """
@@ -592,7 +594,8 @@ class BBCooker:
                         if end == 'conf':
                             possible.append(val)
 
-        bb.event.fire(bb.event.ConfigFilesFound(var, possible), self.configuration.data)
+        if possible:
+            bb.event.fire(bb.event.ConfigFilesFound(var, possible), self.configuration.data)
 
     def findInheritsClass(self, klass):
         """
@@ -667,6 +670,7 @@ class BBCooker:
                 return confpath
 
             path, _ = os.path.split(path)
+        return None
 
     def _findLayerConf(self):
         return self._findConfigFile("bblayers.conf")
