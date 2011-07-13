@@ -300,6 +300,22 @@ def verify_checksum(u, ud, d):
     if ud.sha256_expected != sha256data:
         raise SHA256SumError(ud.localpath, ud.sha256_expected, sha256data, u)
 
+def update_stamp(u, ud, d):
+    """
+        donestamp is file stamp indicating the whole fetching is done
+        this function update the stamp after verifying the checksum
+    """
+    if os.path.exists(ud.donestamp):
+        # Touch the done stamp file to show active use of the download
+        try:
+            os.utime(ud.donestamp, None)
+        except:
+            # Errors aren't fatal here
+            pass
+    else:
+        verify_checksum(u, ud, d)
+        open(ud.donestamp, 'w').close()
+
 def subprocess_setup():
     import signal
     # Python installs a SIGPIPE handler by default. This is usually not what
@@ -932,6 +948,9 @@ class Fetch(object):
                         if hasattr(m, "build_mirror_data"):
                             m.build_mirror_data(u, ud, self.d)
                         localpath = ud.localpath
+                        # early checksum verify, so that if checksum mismatched,
+                        # fetcher still have chance to fetch from mirror
+                        update_stamp(u, ud, self.d)
 
                     except bb.fetch2.NetworkAccess:
                         raise
@@ -948,17 +967,7 @@ class Fetch(object):
                 if not localpath or ((not os.path.exists(localpath)) and localpath.find("*") == -1):
                     raise FetchError("Unable to fetch URL %s from any source." % u, u)
 
-                if os.path.exists(ud.donestamp):
-                    # Touch the done stamp file to show active use of the download
-                    try:
-                        os.utime(ud.donestamp, None)
-                    except:
-                        # Errors aren't fatal here
-                        pass
-                else:
-                    # Only check the checksums if we've not seen this item before, then create the stamp
-                    verify_checksum(u, ud, self.d)
-                    open(ud.donestamp, 'w').close()
+                update_stamp(u, ud, self.d)
 
             finally:
                 bb.utils.unlockfile(lf)
