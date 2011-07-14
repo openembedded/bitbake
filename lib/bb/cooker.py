@@ -130,21 +130,8 @@ class BBCooker:
                 logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
                 sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
 
-        self.configuration.data = bb.data.init()
-
-        bb.data.inheritFromOS(self.configuration.data, self.savedenv)
-
-        try:
-            self.parseConfigurationFiles(self.configuration.prefile,
-                                         self.configuration.postfile)
-        except SyntaxError:
-            sys.exit(1)
-        except Exception:
-            logger.exception("Error parsing configuration files")
-            sys.exit(1)
-
-        if not self.configuration.cmd:
-            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data, True) or "build"
+        self.configuration.data = None
+        self.loadConfigurationData()
 
         bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, True)
         if bbpkgs and len(self.configuration.pkgs_to_build) == 0:
@@ -170,6 +157,23 @@ class BBCooker:
         self.state = state.initial
 
         self.parser = None
+
+    def loadConfigurationData(self):
+        self.configuration.data = bb.data.init()
+
+        bb.data.inheritFromOS(self.configuration.data, self.savedenv)
+
+        try:
+            self.parseConfigurationFiles(self.configuration.prefile,
+                                         self.configuration.postfile)
+        except SyntaxError:
+            sys.exit(1)
+        except Exception:
+            logger.exception("Error parsing configuration files")
+            sys.exit(1)
+
+        if not self.configuration.cmd:
+            self.configuration.cmd = bb.data.getVar("BB_DEFAULT_TASK", self.configuration.data, True) or "build"
 
     def parseConfiguration(self):
 
@@ -563,7 +567,7 @@ class BBCooker:
         bb.data.expandKeys(localdata)
 
         # Handle PREFERRED_PROVIDERS
-        for p in (bb.data.getVar('PREFERRED_PROVIDERS', localdata, 1) or "").split():
+        for p in (bb.data.getVar('PREFERRED_PROVIDERS', localdata, True) or "").split():
             try:
                 (providee, provider) = p.split(':')
             except:
@@ -1058,8 +1062,8 @@ class BBCooker:
 
         self.server_registration_cb(buildTargetsIdle, rq)
 
-    def updateCache(self):
-        if self.state == state.running:
+    def updateCache(self, force=False):
+        if self.state == state.running and not force:
             return
 
         if self.state in (state.shutdown, state.stop):
@@ -1069,6 +1073,8 @@ class BBCooker:
         if self.state != state.parsing:
             self.parseConfiguration ()
 
+            if self.status:
+                del self.status
             self.status = bb.cache.CacheData(self.caches_array)
 
             ignore = bb.data.getVar("ASSUME_PROVIDED", self.configuration.data, 1) or ""
@@ -1142,7 +1148,7 @@ class BBCooker:
 
         collectlog.debug(1, "collecting .bb files")
 
-        files = (data.getVar( "BBFILES", self.configuration.data, 1 ) or "").split()
+        files = (data.getVar( "BBFILES", self.configuration.data, True) or "").split()
         data.setVar("BBFILES", " ".join(files), self.configuration.data)
 
         # Sort files by priority
@@ -1239,6 +1245,10 @@ class BBCooker:
 
     def stop(self):
         self.state = state.stop
+
+    def reparseFiles(self):
+        self.loadConfigurationData()
+        self.updateCache(force=True)
 
 def server_main(cooker, func, *args):
     cooker.pre_serve()
