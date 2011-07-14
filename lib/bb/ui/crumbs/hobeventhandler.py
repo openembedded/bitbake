@@ -61,7 +61,7 @@ class HobHandler(gobject.GObject):
                                    gobject.TYPE_STRING)),
     }
 
-    (CFG_PATH_LOCAL, CFG_PATH_HOB, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS) = range(8)
+    (CFG_PATH_LOCAL, CFG_PATH_HOB, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS, REPARSE_FILES) = range(9)
 
     def __init__(self, taskmodel, server):
         gobject.GObject.__init__(self)
@@ -110,6 +110,9 @@ class HobHandler(gobject.GObject):
                 self.emit("data-generated")
                 self.generating = False
             self.current_command = None
+        elif self.current_command == self.REPARSE_FILES:
+            self.current_command = self.CFG_PATH_LAYERS
+            self.server.runCommand(["reparseFiles"])
 
     def handle_event(self, event, running_build, pbar):
         if not event:
@@ -195,8 +198,7 @@ class HobHandler(gobject.GObject):
         img = self.model.selected_image
         selected_packages, _ = self.model.get_selected_packages()
         self.emit("reload-triggered", img, " ".join(selected_packages))
-        self.server.runCommand(["reparseFiles"])
-        self.current_command = self.CFG_PATH_LAYERS
+        self.current_command = self.REPARSE_FILES
         self.run_next_command()
 
     def set_bbthreads(self, threads):
