@@ -19,6 +19,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import gtk
+import glib
 from bb.ui.crumbs.configurator import Configurator
 
 class HobPrefs(gtk.Dialog):
