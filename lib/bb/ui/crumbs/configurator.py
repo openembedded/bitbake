@@ -244,6 +244,24 @@ class Configurator(gobject.GObject):
         del self.orig_config
         self.orig_config = copy.deepcopy(self.config)
 
+    def insertTempBBPath(self, bbpath, bbfiles):
+        # Create a backup of the local.conf
+        bkup = "%s~" % self.local
+        os.rename(self.local, bkup)
+
+        # read the original conf into a list
+        with open(bkup, 'r') as config:
+            config_lines = config.readlines()
+
+        if bbpath:
+            config_lines.append("BBPATH := \"${BBPATH}:%s\"\n" % bbpath)
+        if bbfiles:
+            config_lines.append("BBFILES := \"${BBFILES} %s\"\n" % bbfiles)
+
+        # Write the updated lines list object to the local.conf
+        with open(self.local, "w") as n:
+            n.write("".join(config_lines))
+
     def writeLayerConf(self):
         # If we've not added/removed new layers don't write
         if not self._isLayerConfDirty():

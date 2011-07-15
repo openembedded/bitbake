@@ -52,16 +52,13 @@ class HobHandler(gobject.GObject):
          "error"               : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_STRING,)),
-         "build-complete"      : (gobject.SIGNAL_RUN_LAST,
-                                  gobject.TYPE_NONE,
-                                  ()),
          "reload-triggered"    : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_STRING,
                                    gobject.TYPE_STRING)),
     }
 
-    (CFG_PATH_LOCAL, CFG_PATH_HOB, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS, REPARSE_FILES) = range(9)
+    (CFG_PATH_LOCAL, CFG_PATH_HOB, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS, REPARSE_FILES, BUILD_IMAGE) = range(10)
 
     def __init__(self, taskmodel, server):
         gobject.GObject.__init__(self)
@@ -111,8 +108,21 @@ class HobHandler(gobject.GObject):
                 self.generating = False
             self.current_command = None
         elif self.current_command == self.REPARSE_FILES:
-            self.current_command = self.CFG_PATH_LAYERS
+            if self.build_queue:
+                self.current_command = self.BUILD_IMAGE
+            else:
+                self.current_command = self.CFG_PATH_LAYERS
             self.server.runCommand(["reparseFiles"])
+        elif self.current_command == self.BUILD_IMAGE:
+            self.building = "image"
+            if self.generating:
+                self.emit("data-generated")
+                self.generating = False
+            bbpath = self.server.runCommand(["getVariable", "BBPATH"])
+            bbfiles = self.server.runCommand(["getVariable", "BBFILES"])
+            self.server.runCommand(["buildTargets", self.build_queue, "build"])
+            self.build_queue = []
+            self.current_command = None
 
     def handle_event(self, event, running_build, pbar):
         if not event:
@@ -208,26 +218,47 @@ class HobHandler(gobject.GObject):
         pmake = "-j %s" % threads
         self.server.runCommand(["setVariable", "BB_NUMBER_THREADS", pmake])
 
-    def run_build(self, tgts):
-        self.building = "image"
+    def build_image(self, image, image_path, configurator):
         targets = []
-        targets.append(tgts)
+        targets.append(image)
         if self.build_toolchain and self.build_toolchain_headers:
-            targets = ["meta-toolchain-sdk"] + targets
+            targets.append("meta-toolchain-sdk")
         elif self.build_toolchain:
-            targets = ["meta-toolchain"] + targets
-        self.server.runCommand(["buildTargets", targets, "build"])
+            targets.append("meta-toolchain")
+        self.build_queue = targets
+
+        bbpath_ok = False
+        bbpath = self.server.runCommand(["getVariable", "BBPATH"])
+        if image_path in bbpath.split(":"):
+            bbpath_ok = True
+
+        bbfiles_ok = False
+        bbfiles = self.server.runCommand(["getVariable", "BBFILES"]).split(" ")
+        for files in bbfiles:
+            import re
+            pattern = "%s/\*.bb" % image_path
+            if re.match(pattern, files):
+                bbfiles_ok = True
+
+        if not bbpath_ok:
+            nbbp = image_path
+        else:
+            nbbp = None
+
+        if not bbfiles_ok:
+            nbbf = "%s/*.bb" % image_path
+        else:
+            nbbf = None
+
+        if not bbfiles_ok or not bbpath_ok:
+            configurator.insertTempBBPath(nbbp, nbbf)
+
+        self.current_command = self.REPARSE_FILES
+        self.run_next_command()
 
     def build_packages(self, pkgs):
         self.building = "packages"
-        if 'meta-toolchain' in self.build_queue:
-            self.build_queue.remove('meta-toolchain')
-            pkgs.extend('meta-toolchain')
         self.server.runCommand(["buildTargets", pkgs, "build"])
-
-    def build_file(self, image):
-        self.building = "image"
-        self.server.runCommand(["buildFile", image, "build"])
 
     def cancel_build(self, force=False):
         if force:

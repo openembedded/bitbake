@@ -65,10 +65,8 @@ class MainWindow (gtk.Window):
 
         self.build = RunningBuild()
         self.build.connect("build-failed", self.running_build_failed_cb)
-        self.build.connect("build-complete", self.handler.build_complete_cb)
         self.build.connect("build-started", self.build_started_cb)
-
-        self.handler.connect("build-complete", self.build_complete_cb)
+        self.build.connect("build-complete", self.build_complete_cb)
 
         vbox = gtk.VBox(False, 0)
         vbox.set_border_width(0)
@@ -373,16 +371,15 @@ class MainWindow (gtk.Window):
             dialog.destroy()
             if response == gtk.RESPONSE_CANCEL:
                 return
-        else:
-            # TODO: show a confirmation dialog ?
-            if not self.save_path:
-                import tempfile, datetime
-                image_name = "hob-%s-variant-%s.bb" % (rep.base_image, datetime.date.today().isoformat())
-                image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
-                bb.utils.mkdirhier(image_dir)
-                recipepath =  os.path.join(image_dir, image_name)
             else:
-                recipepath = self.save_path
+                self.handler.build_packages(rep.allpkgs.split(" "))
+        else:
+            import tempfile, datetime
+            image_name = "hob-%s-variant-%s" % (rep.base_image, datetime.date.today().isoformat())
+            image_file = "%s.bb" % (image_name)
+            image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
+            bb.utils.mkdirhier(image_dir)
+            recipepath =  os.path.join(image_dir, image_file)
 
             rep.writeRecipe(recipepath, self.model)
             # In the case where we saved the file for the purpose of building
@@ -391,9 +388,8 @@ class MainWindow (gtk.Window):
             if not self.save_path:
                 self.files_to_clean.append(recipepath)
 
-            self.handler.queue_image_recipe_path(recipepath)
+            self.handler.build_image(image_name, image_dir, self.configurator)
 
-        self.handler.build_packages(rep.allpkgs.split(" "))
         self.nb.set_current_page(1)
 
     def back_button_clicked_cb(self, button):
