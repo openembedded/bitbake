@@ -650,7 +650,14 @@ class MainWindow (gtk.Window):
         return vbox
 
     def cancel_build(self, button):
-        lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this build?"
+        lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this build?\n"
+        lbl = lbl + "'Force Stop' will stop the build as quickly as"
+        lbl = lbl + " possible but may well leave your build directory in an"
+        lbl = lbl + " unusable state that requires manual steps to fix.\n"
+        lbl = lbl + "'Stop' will stop the build as soon as all in"
+        lbl = lbl + " progress build tasks are finished. However if a"
+        lbl = lbl + " lengthy compilation phase is in progress this may take"
+        lbl = lbl + " some time."
         dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
         dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
         dialog.add_button("Stop", gtk.RESPONSE_OK)
