@@ -228,7 +228,7 @@ class Configurator(gobject.GObject):
                 cnt = cnt + 1
 
             if not replaced:
-                new_config_lines.append("%s = \"%s\"" % (var, changed_values[var]))
+                new_config_lines.append("%s = \"%s\"\n" % (var, changed_values[var]))
 
         # Add the modified variables
         config_lines.extend(new_config_lines)
