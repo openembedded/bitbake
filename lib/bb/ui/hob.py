@@ -57,6 +57,7 @@ class MainWindow (gtk.Window):
         self.layers = layers
         self.save_path = None
         self.dirty = False
+        self.build_succeeded = False
 
         self.connect("delete-event", self.destroy_window)
         self.set_title("Image Creator")
@@ -65,6 +66,7 @@ class MainWindow (gtk.Window):
 
         self.build = RunningBuild()
         self.build.connect("build-failed", self.running_build_failed_cb)
+        self.build.connect("build-succeeded", self.running_build_succeeded_cb)
         self.build.connect("build-started", self.build_started_cb)
         self.build.connect("build-complete", self.build_complete_cb)
 
@@ -113,9 +115,11 @@ class MainWindow (gtk.Window):
     def scroll_tv_cb(self, model, path, it, view):
         view.scroll_to_cell(path)
 
+    def running_build_succeeded_cb(self, running_build):
+        self.build_succeeded = True
+
     def running_build_failed_cb(self, running_build):
-        # FIXME: handle this
-        print("Build failed")
+        self.build_succeeded = False
 
     def image_changed_string_cb(self, model, new_image):
         cnt = 0
@@ -408,7 +412,7 @@ class MainWindow (gtk.Window):
             os.remove(f)
 
         lbl = "<b>Build completed</b>\n\nClick 'Edit Image' to start another build or 'View Log' to view the build log."
-        if self.handler.building == "image":
+        if self.handler.building == "image" and self.build_succeeded:
             deploy = self.handler.get_image_deploy_dir()
             lbl = lbl + "\n<a href=\"file://%s\" title=\"%s\">Browse folder of built images</a>." % (deploy, deploy)
 
