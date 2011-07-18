@@ -411,13 +411,13 @@ class MainWindow (gtk.Window):
         for f in self.files_to_clean:
             os.remove(f)
 
-        lbl = "<b>Build completed</b>\n\nClick 'Edit Image' to start another build or 'View Log' to view the build log."
+        lbl = "<b>Build completed</b>\n\nClick 'Edit Image' to start another build or 'View Messages' to view the messages output during the build."
         if self.handler.building == "image" and self.build_succeeded:
             deploy = self.handler.get_image_deploy_dir()
             lbl = lbl + "\n<a href=\"file://%s\" title=\"%s\">Browse folder of built images</a>." % (deploy, deploy)
 
         dialog = CrumbsDialog(self, lbl)
-        dialog.add_button("View Log", gtk.RESPONSE_CANCEL)
+        dialog.add_button("View Messages", gtk.RESPONSE_CANCEL)
         dialog.add_button("Edit Image", gtk.RESPONSE_OK)
         response = dialog.run()
         dialog.destroy()
