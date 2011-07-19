@@ -46,6 +46,7 @@ class MainWindow (gtk.Window):
         self.files_to_clean = []
         self.selected_image = None
         self.selected_packages = None
+        self.stopping = False
 
         self.model = taskmodel
         self.model.connect("tasklist-populated", self.update_model)
@@ -403,6 +404,7 @@ class MainWindow (gtk.Window):
         self.nb.set_current_page(0)
 
     def build_complete_cb(self, running_build):
+        self.stopping = False
         self.back.connect("clicked", self.back_button_clicked_cb)
         self.back.set_sensitive(True)
         self.cancel.set_sensitive(False)
@@ -651,20 +653,32 @@ class MainWindow (gtk.Window):
         return vbox
 
     def cancel_build(self, button):
-        lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this build?\n"
-        lbl = lbl + "'Force Stop' will stop the build as quickly as"
-        lbl = lbl + " possible but may well leave your build directory in an"
-        lbl = lbl + " unusable state that requires manual steps to fix.\n"
-        lbl = lbl + "'Stop' will stop the build as soon as all in"
-        lbl = lbl + " progress build tasks are finished. However if a"
-        lbl = lbl + " lengthy compilation phase is in progress this may take"
-        lbl = lbl + " some time."
-        dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
-        dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-        dialog.add_button("Stop", gtk.RESPONSE_OK)
-        dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+        if self.stopping:
+            lbl = "<b>Force Stop build?</b>\nYou've already selected Stop once,"
+            lbl = lbl + " would you like to 'Force Stop' the build?\n\n"
+            lbl = lbl + "This will stop the build as quickly as possible but may"
+            lbl = lbl + " well leave your build directory in an  unusable state"
+            lbl = lbl + " that requires manual steps to fix.\n"
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+        else:
+            lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this"
+            lbl = lbl + " build?\n\n'Force Stop' will stop the build as quickly as"
+            lbl = lbl + " possible but may well leave your build directory in an"
+            lbl = lbl + " unusable state that requires manual steps to fix.\n\n"
+            lbl = lbl + "'Stop' will stop the build as soon as all in"
+            lbl = lbl + " progress build tasks are finished. However if a"
+            lbl = lbl + " lengthy compilation phase is in progress this may take"
+            lbl = lbl + " some time."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            dialog.add_button("Stop", gtk.RESPONSE_OK)
+            dialog.add_button("Force Stop", gtk.RESPONSE_YES)
         response = dialog.run()
         dialog.destroy()
+        if response != gtk.RESPONSE_CANCEL:
+            self.stopping = True
         if response == gtk.RESPONSE_OK:
             self.handler.cancel_build()
         elif response == gtk.RESPONSE_YES:
