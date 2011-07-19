@@ -541,7 +541,7 @@ class Cache(object):
 
         # If any one of the variants is not present, mark as invalid for all
         if invalid:
-            for cls in info.variants:
+            for cls in info_array[0].variants:
                 virtualfn = self.realfn2virtual(fn, cls)
                 if virtualfn in self.clean:
                     logger.debug(2, "Cache: Removing %s from cache", virtualfn)
