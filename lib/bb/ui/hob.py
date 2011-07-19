@@ -883,7 +883,7 @@ def main (server, eventHandler):
         # The PARALLEL_MAKE variable will be of the format: "-j 3" and we only
         # want a number for the spinner, so strip everything from the variable
         # up to and including the space
-        pmake = int(pmake[pmake.find(" ")+1:])
+        pmake = int(pmake.lstrip("-j "))
 
     image_types = server.runCommand(["getVariable", "IMAGE_TYPES"])
 
