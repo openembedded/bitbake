@@ -369,20 +369,31 @@ class MainWindow (gtk.Window):
         self.dirty = False
 
     def bake_clicked_cb(self, button):
+        build_image = True
+
         rep = self.model.get_build_rep()
         if not rep.base_image:
-            lbl = "<b>Build only packages?</b>\n\nAn image has not been selected, so only the selected packages will be built."
+            lbl = "<b>Build empty image or only packages?</b>\nA base image"
+            lbl = lbl + " has not been selected.\n\'Empty image' will build"
+            lbl = lbl + " an image with only the selected packages as its"
+            lbl = lbl + " contents.\n'Packages Only' will build only the"
+            lbl = lbl + " selected packages, no image will be created"
             dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
             dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-            dialog.add_button("Build", gtk.RESPONSE_YES)
+            dialog.add_button("Empty Image", gtk.RESPONSE_OK)
+            dialog.add_button("Packages Only", gtk.RESPONSE_YES)
             response = dialog.run()
             dialog.destroy()
             if response == gtk.RESPONSE_CANCEL:
                 return
-            else:
-                self.handler.build_packages(rep.allpkgs.split(" "))
-        else:
+            elif response == gtk.RESPONSE_YES:
+                build_image = False
+            elif response == gtk.RESPONSE_OK:
+                rep.base_image = "empty"
+
+        if build_image:
             import tempfile, datetime
+
             image_name = "hob-%s-variant-%s" % (rep.base_image, datetime.date.today().isoformat())
             image_file = "%s.bb" % (image_name)
             image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
@@ -397,6 +408,8 @@ class MainWindow (gtk.Window):
                 self.files_to_clean.append(recipepath)
 
             self.handler.build_image(image_name, image_dir, self.configurator)
+        else:
+            self.handler.build_packages(rep.allpkgs.split(" "))
 
         self.nb.set_current_page(1)
 
