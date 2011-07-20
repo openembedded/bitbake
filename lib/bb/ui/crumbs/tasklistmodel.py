@@ -495,9 +495,23 @@ class TaskListModel(gtk.ListStore):
             it = self.contents.iter_next(it)
         return userpkgs, allpkgs
 
+    def image_contents_removed(self):
+        it = self.get_iter_first()
+        while it:
+            sel = self.get_value(it, self.COL_INC)
+            img = self.get_value(it, self.COL_IMG)
+            if img and not sel:
+                return True
+            it = self.iter_next(it)
+        return False
+
     def get_build_rep(self):
         userpkgs, allpkgs = self.get_selected_packages()
-        image = self.selected_image
+        # If base image contents have been removed start from an empty rootfs
+        if not self.selected_image or self.image_contents_removed():
+            image = "empty"
+        else:
+            image = self.selected_image
 
         return BuildRep(" ".join(userpkgs), " ".join(allpkgs), image)
 
