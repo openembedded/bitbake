@@ -306,9 +306,16 @@ class TaskListModel(gtk.ListStore):
         # Remove all dependent packages, update binb
         while it:
             path = self.get_path(it)
+            it = self.iter_next(it)
+
             inc = self[path][self.COL_INC]
             deps = self[path][self.COL_DEPS]
             binb = self[path][self.COL_BINB]
+            itype = self[path][self.COL_TYPE]
+
+            # We ignore anything that isn't a package
+            if not itype == "package":
+                continue
 
             # FIXME: need to ensure partial name matching doesn't happen
             if inc and deps.count(name):
@@ -317,8 +324,6 @@ class TaskListModel(gtk.ListStore):
             if inc and binb.count(name):
                 bib = self.find_alt_dependency(name)
                 self[path][self.COL_BINB] = bib
-
-            it = self.iter_next(it)
 
     """
     Remove items from contents if the have an empty COL_BINB (brought in by)
@@ -488,9 +493,17 @@ class TaskListModel(gtk.ListStore):
         it = self.contents.get_iter_first()
 
         while it:
-            if self.contents.get_value(it, self.COL_DEPS).count(pn) != 0:
-                revdeps.append(self.contents.get_value(it, self.COL_NAME))
+            name = self.contents.get_value(it, self.COL_NAME)
+            itype = self.contents.get_value(it, self.COL_TYPE)
+            deps = self.contents.get_value(it, self.COL_DEPS)
+
             it = self.contents.iter_next(it)
+
+            if not itype == 'package':
+                continue
+
+            if deps.count(pn) != 0:
+                revdeps.append(name)
 
         if pn in revdeps:
             revdeps.remove(pn)
