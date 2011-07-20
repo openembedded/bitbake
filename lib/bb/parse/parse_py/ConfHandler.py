@@ -96,7 +96,7 @@ def handle(fn, data, include):
         s = s.rstrip()
         if s[0] == '#': continue    # skip comments
         while s[-1] == '\\':
-            s2 = f.readline()[:-1].strip()
+            s2 = f.readline().strip()
             lineno = lineno + 1
             s = s[:-1] + s2
         feeder(lineno, s, fn, statements)
