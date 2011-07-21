@@ -102,8 +102,7 @@ def print_ui_queue():
         console = logging.StreamHandler(sys.stdout)
         console.setFormatter(BBLogFormatter("%(levelname)s: %(message)s"))
         logger.handlers = [console]
-        while ui_queue:
-            event = ui_queue.pop()
+        for event in ui_queue:
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
 
