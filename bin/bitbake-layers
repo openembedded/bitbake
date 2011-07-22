@@ -48,7 +48,7 @@ class Commands(cmd.Cmd):
                                          self.register_idle_function)
         self.config_data = self.cooker.configuration.data
         bb.providers.logger.setLevel(logging.ERROR)
-        self.prepare_cooker()
+        self.cooker_data = None
 
     def register_idle_function(self, function, data):
         pass
@@ -71,10 +71,16 @@ class Commands(cmd.Cmd):
         self.cooker_data = self.cooker.status
         self.cooker_data.appends = self.cooker.appendlist
 
+    def check_prepare_cooker(self):
+        if not self.cooker_data:
+            self.prepare_cooker()
+
     def do_show_layers(self, args):
+        self.check_prepare_cooker()
         logger.info(str(self.config_data.getVar('BBLAYERS', True)))
 
     def do_show_overlayed(self, args):
+        self.check_prepare_cooker()
         if self.cooker.overlayed:
             logger.info('Overlayed recipes:')
             for f in self.cooker.overlayed.iterkeys():
@@ -94,6 +100,7 @@ class Commands(cmd.Cmd):
             logger.error('Directory %s exists and is non-empty, please clear it out first' % arglist[0])
             return
 
+        self.check_prepare_cooker()
         layers = (self.config_data.getVar('BBLAYERS', True) or "").split()
         for layer in layers:
             overlayed = []
@@ -143,6 +150,7 @@ class Commands(cmd.Cmd):
         recipefile.writelines(appendfile.readlines())
 
     def do_show_appends(self, args):
+        self.check_prepare_cooker()
         if not self.cooker_data.appends:
             logger.info('No append files found')
             return
