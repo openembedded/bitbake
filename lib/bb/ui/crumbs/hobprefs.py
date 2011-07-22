@@ -243,7 +243,12 @@ class HobPrefs(gtk.Dialog):
         pbox.pack_start(hbox, expand=False, fill=False, padding=6)
         label = gtk.Label("BitBake threads:")
         label.show()
-        spin_max = 9 #self.cpu_cnt * 3
+        # NOTE: may be a good idea in future to intelligently cap the maximum
+        # values but we need more data to make an educated decision, for now
+        # set a high maximum as a value for upper bounds is required by the
+        # gtk.Adjustment
+        spin_max = 30 # seems like a high enough arbitrary number
+        #spin_max = self.cpu_cnt * 3
         hbox.pack_start(label, expand=False, fill=False, padding=6)
         bbadj = gtk.Adjustment(value=self.bbthread, lower=1, upper=spin_max, step_incr=1)
         bbspinner = gtk.SpinButton(adjustment=bbadj, climb_rate=1, digits=0)
