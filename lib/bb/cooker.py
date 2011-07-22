@@ -902,6 +902,10 @@ class BBCooker:
         Build the file matching regexp buildfile
         """
 
+        # Too many people use -b because they think it's how you normally
+        # specify a target to be built, so show a warning
+        bb.warn("Buildfile specified, dependencies will not be handled. If this is not what you want, do not use -b / --buildfile.")
+
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache
         self.parseConfiguration()
