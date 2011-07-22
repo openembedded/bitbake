@@ -427,17 +427,19 @@ def multi_finalize(fn, d):
 
     extended = d.getVar("BBCLASSEXTEND", True) or ""
     if extended:
-        # the following is to support bbextends with argument, for e.g. multilib
-        # an example is as follow:
+        # the following is to support bbextends with arguments, for e.g. multilib
+        # an example is as follows:
         #   BBCLASSEXTEND = "multilib:lib32"
         # it will create foo-lib32, inheriting multilib.bbclass and set
-        # CURRENTEXTEND to "lib32"
+        # BBEXTENDCURR to "multilib" and BBEXTENDVARIANT to "lib32"
         extendedmap = {}
+        variantmap = {}
 
         for ext in extended.split():
-            eext = ext.split(':')
+            eext = ext.split(':', 2)
             if len(eext) > 1:
-                extendedmap[eext[1]] = eext[0]
+                extendedmap[ext] = eext[0]
+                variantmap[ext] = eext[1]
             else:
                 extendedmap[ext] = ext
 
@@ -445,7 +447,7 @@ def multi_finalize(fn, d):
         def extendfunc(name, d):
             if name != extendedmap[name]:
                 d.setVar("BBEXTENDCURR", extendedmap[name])
-                d.setVar("BBEXTENDVARIANT", name)
+                d.setVar("BBEXTENDVARIANT", variantmap[name])
             else:
                 d.setVar("PN", "%s-%s" % (pn, name))
             bb.parse.BBHandler.inherit([extendedmap[name]], d)
