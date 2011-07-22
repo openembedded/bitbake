@@ -602,7 +602,7 @@ class MainWindow (gtk.Window):
         self.tasks_tree.set_search_column(0)
         self.tasks_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
-        col = gtk.TreeViewColumn('Package')
+        col = gtk.TreeViewColumn('Package Collection')
         col.set_min_width(430)
         col1 = gtk.TreeViewColumn('Description')
         col1.set_min_width(430)
