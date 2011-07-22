@@ -102,7 +102,7 @@ It expects that BBFILES is defined, which is a space separated list of files to
 be executed.  BBFILES does support wildcards.
 Default BBFILES are the .bb files in the current directory.""")
 
-    parser.add_option("-b", "--buildfile", help = "execute the task against this .bb file, rather than a package from BBFILES.",
+    parser.add_option("-b", "--buildfile", help = "execute the task against this .bb file, rather than a package from BBFILES. Does not handle any dependencies.",
                action = "store", dest = "buildfile", default = None)
 
     parser.add_option("-k", "--continue", help = "continue as much as possible after an error. While the target that failed, and those that depend on it, cannot be remade, the other dependencies of these targets can be processed all the same.",
