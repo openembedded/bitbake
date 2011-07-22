@@ -76,10 +76,18 @@ class Commands(cmd.Cmd):
             self.prepare_cooker()
 
     def do_show_layers(self, args):
+        """show_layers: shows current configured layers"""
         self.check_prepare_cooker()
         logger.info(str(self.config_data.getVar('BBLAYERS', True)))
 
     def do_show_overlayed(self, args):
+        """show_overlayed: list overlayed recipes (where there is a recipe in another
+layer that has a higher layer priority)
+
+syntax: show_overlayed
+
+Highest priority recipes are listed with the recipes they overlay as subitems.
+"""
         self.check_prepare_cooker()
         if self.cooker.overlayed:
             logger.info('Overlayed recipes:')
@@ -91,9 +99,25 @@ class Commands(cmd.Cmd):
             logger.info('No overlayed recipes found')
 
     def do_flatten(self, args):
+        """flatten: flattens layer configuration into a separate output directory.
+
+syntax: flatten <outputdir>
+
+Takes the current layer configuration and builds a "flattened" directory
+containing the contents of all layers, with any overlayed recipes removed
+and bbappends appended to the corresponding recipes. Note that some manual
+cleanup may still be necessary afterwards, in particular:
+
+* where non-recipe files (such as patches) are overwritten (the flatten
+  command will show a warning for these)
+* where anything beyond the normal layer setup has been added to
+  layer.conf (only the lowest priority layer's layer.conf is used)
+* overridden/appended items from bbappends will need to be tidied up
+"""
         arglist = args.split()
         if len(arglist) != 1:
-            logger.error('syntax: flatten <outputdir>')
+            logger.error('Please specify an output directory')
+            self.do_help('flatten')
             return
 
         if os.path.exists(arglist[0]) and os.listdir(arglist[0]):
@@ -150,6 +174,12 @@ class Commands(cmd.Cmd):
         recipefile.writelines(appendfile.readlines())
 
     def do_show_appends(self, args):
+        """show_appends: List bbappend files and recipe files they apply to
+
+syntax: show_appends
+
+Recipes are listed with the bbappends that apply to them as subitems.
+"""
         self.check_prepare_cooker()
         if not self.cooker_data.appends:
             logger.info('No append files found')
