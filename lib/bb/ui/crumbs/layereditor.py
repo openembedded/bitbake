@@ -132,5 +132,6 @@ class LayerEditor(gtk.Dialog):
             # FIXME: verify we've actually got a layer conf?
             if path.endswith(".conf"):
                 name, layerpath = self.configurator.addLayerConf(path)
-                self.newly_added[name] = layerpath
-                self.layer_store.append([name, layerpath, True])
+                if name:
+                    self.newly_added[name] = layerpath
+                    self.layer_store.append([name, layerpath, True])

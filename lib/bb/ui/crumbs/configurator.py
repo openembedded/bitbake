@@ -139,7 +139,9 @@ class Configurator(gobject.GObject):
         name = self._getLayerName(layerpath)
         if name not in self.enabled_layers:
             self.addLayer(name, layerpath)
-        return name, layerpath
+            return name, layerpath
+        else:
+            return None, None
 
     def addLayer(self, name, path):
         self.enabled_layers[name] = path
