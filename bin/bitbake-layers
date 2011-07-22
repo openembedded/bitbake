@@ -240,9 +240,6 @@ Recipes are listed with the bbappends that apply to them as subitems.
                 notappended.append(basename)
         return appended, notappended
 
-    def do_EOF(self, line):
-        return True
-
 
 class Config(object):
     def __init__(self, **options):
