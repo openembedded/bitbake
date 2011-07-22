@@ -371,8 +371,9 @@ class Cache(object):
         fn = virtualfn
         cls = ""
         if virtualfn.startswith('virtual:'):
-            cls = virtualfn.split(':', 2)[1]
-            fn = virtualfn.replace('virtual:' + cls + ':', '')
+            elems = virtualfn.split(':')
+            cls = ":".join(elems[1:-1])
+            fn = elems[-1]
         return (fn, cls)
 
     @staticmethod
