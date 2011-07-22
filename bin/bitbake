@@ -172,8 +172,8 @@ Default BBFILES are the .bb files in the current directory.""")
 
     ui_main = get_ui(configuration)
 
-    # Server type could be xmlrpc or none currently, if nothing is specified,
-    # default server would be none
+    # Server type can be xmlrpc, process or none currently, if nothing is specified,
+    # the default server is process
     if configuration.servertype:
         server_type = configuration.servertype
     else:
@@ -184,7 +184,7 @@ Default BBFILES are the .bb files in the current directory.""")
         server = getattr(module, server_type)
     except AttributeError:
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
-                 "Valid interfaces: xmlrpc, process, none [default]." % servertype)
+                 "Valid interfaces: xmlrpc, process [default], none." % servertype)
 
     # Save a logfile for cooker into the current working directory. When the
     # server is daemonized this logfile will be truncated.
