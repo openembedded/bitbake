@@ -78,7 +78,7 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration, server_registration_cb):
+    def __init__(self, configuration, server_registration_cb, savedenv={}):
         self.status = None
         self.appendlist = {}
         self.skiplist = {}
@@ -86,6 +86,14 @@ class BBCooker:
         self.server_registration_cb = server_registration_cb
 
         self.configuration = configuration
+
+        # Keep a datastore of the initial environment variables and their
+        # values from when BitBake was launched to enable child processes
+        # to use environment variables which have been cleaned from the
+        # BitBake processes env
+        self.savedenv = bb.data.init()
+        for k in savedenv:
+            self.savedenv.setVar(k, savedenv[k])
 
         self.caches_array = []
         # Currently, only Image Creator hob ui needs extra cache.

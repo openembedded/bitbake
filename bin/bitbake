@@ -197,6 +197,9 @@ Default BBFILES are the .bb files in the current directory.""")
     handler = bb.event.LogHandler()
     logger.addHandler(handler)
 
+    # Before we start modifying the environment we should take a pristine
+    # copy for possible later use
+    initialenv = os.environ.copy()
     # Clear away any spurious environment variables. But don't wipe the
     # environment totally. This is necessary to ensure the correct operation
     # of the UIs (e.g. for DISPLAY, etc.)
@@ -207,7 +210,7 @@ Default BBFILES are the .bb files in the current directory.""")
     server.initServer()
     idle = server.getServerIdleCB()
 
-    cooker = bb.cooker.BBCooker(configuration, idle)
+    cooker = bb.cooker.BBCooker(configuration, idle, initialenv)
     cooker.parseCommandLine()
 
     server.addcooker(cooker)
