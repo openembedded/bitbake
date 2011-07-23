@@ -210,7 +210,8 @@ class HobPrefs(gtk.Dialog):
         label.show()
         hbox.pack_start(label, expand=False, fill=False, padding=6)
         self.package_combo = gtk.combo_box_new_text()
-        self.package_combo.set_tooltip_text("Select the package format you would like to use in your image")
+        self.package_combo.set_tooltip_text("""The package format is that used in creation
+ of the root filesystem and also dictates the package manager used in your image""")
         self.package_combo.show()
         hbox.pack_start(self.package_combo, expand=False, fill=False, padding=6)
         # Image output type selector
