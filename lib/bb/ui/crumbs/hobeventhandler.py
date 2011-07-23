@@ -74,6 +74,8 @@ class HobHandler(gobject.GObject):
         self.model = taskmodel
         self.server = server
 
+        self.image_output_types = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]).split(" ")
+
         self.command_map = {
             "findConfigFilePathLocal" : ("findConfigFilePath", ["hob.local.conf"], "findConfigFilePathHobLocal"),
             "findConfigFilePathHobLocal" : ("findConfigFilePath", ["bblayers.conf"], "findConfigFilePathLayers"),
@@ -258,8 +260,23 @@ class HobHandler(gobject.GObject):
             self.building = None
             self.emit("build-complete")
 
-    def set_image_output_type(self, output_type):
-        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", output_type])
+    def set_fstypes(self, fstypes):
+        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", fstypes])
+
+    def add_image_output_type(self, output_type):
+        if output_type not in self.image_output_types:
+            self.image_output_types.append(output_type)
+            fstypes = " ".join(self.image_output_types)
+            self.set_fstypes(fstypes)
+        return fstypes
+
+    def remove_image_output_type(self, output_type):
+        if output_type in self.image_output_types:
+            ind = self.image_output_types.index(output_type)
+            self.image_output_types.pop(ind)
+            fstypes = " ".join(self.image_output_types)
+            self.set_fstypes(fstypes)
+        return fstypes
 
     def get_image_deploy_dir(self):
         return self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"])

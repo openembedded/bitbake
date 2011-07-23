@@ -90,12 +90,14 @@ class Configurator(gobject.GObject):
         pclass = getString('PACKAGE_CLASSES')
         if pclass and pclass != self.config.get('PACKAGE_CLASSES', ''):
             self.config['PACKAGE_CLASSES'] = pclass
+        fstypes = getString('IMAGE_FSTYPES')
+        if fstypes and fstypes != self.config.get('IMAGE_FSTYPES', ''):
+            self.config['IMAGE_FSTYPES'] = fstypes
 
         self.orig_config = copy.deepcopy(self.config)
 
     def setLocalConfVar(self, var, val):
-        if var in self.config:
-            self.config[var] = val
+        self.config[var] = val
 
     def _loadLayerConf(self, path):
         self.bblayers = path

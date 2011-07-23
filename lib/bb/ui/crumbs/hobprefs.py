@@ -30,11 +30,15 @@ class HobPrefs(gtk.Dialog):
         if model:
             model.clear()
 
-    def output_type_changed_cb(self, combo, handler):
-        ot = combo.get_active_text()
-        if ot != self.curr_output_type:
-            self.curr_output_type = ot
-            handler.set_image_output_type(ot)
+    def output_type_toggled_cb(self, check, handler):
+        ot = check.get_label()
+        enabled = check.get_active()
+        if enabled:
+            self.selected_image_types = handler.add_image_output_type(ot)
+        else:
+            self.selected_image_types = handler.remove_image_output_type(ot)
+
+        self.configurator.setLocalConfVar('IMAGE_FSTYPES', "%s" % self.selected_image_types)
 
     def sdk_machine_combo_changed_cb(self, combo, handler):
         sdk_mach = combo.get_active_text()
@@ -144,7 +148,7 @@ class HobPrefs(gtk.Dialog):
             glib.idle_add(self.handler.reload_data)
 
     def __init__(self, configurator, handler, curr_sdk_mach, curr_distro, pclass,
-                 cpu_cnt, pmake, bbthread, image_types):
+                 cpu_cnt, pmake, bbthread, selected_image_types, all_image_types):
         """
         """
         gtk.Dialog.__init__(self, "Preferences", None,
@@ -162,7 +166,6 @@ class HobPrefs(gtk.Dialog):
         self.curr_sdk_mach = curr_sdk_mach
         self.curr_distro = curr_distro
         self.curr_package_format = pclass
-        self.curr_output_type = None
         self.cpu_cnt = cpu_cnt
         self.pmake = pmake
         self.bbthread = bbthread
@@ -170,6 +173,7 @@ class HobPrefs(gtk.Dialog):
         self.distro_handler_id = None
         self.sdk_machine_handler_id = None
         self.package_handler_id = None
+        self.selected_image_types = selected_image_types.split(" ")
 
         left = gtk.SizeGroup(gtk.SIZE_GROUP_HORIZONTAL)
         right = gtk.SizeGroup(gtk.SIZE_GROUP_HORIZONTAL)
@@ -214,19 +218,25 @@ class HobPrefs(gtk.Dialog):
  of the root filesystem and also dictates the package manager used in your image""")
         self.package_combo.show()
         hbox.pack_start(self.package_combo, expand=False, fill=False, padding=6)
-        # Image output type selector
-        label = gtk.Label("Image output type:")
-        label.show()
-        hbox.pack_start(label, expand=False, fill=False, padding=6)
-        output_combo = gtk.combo_box_new_text()
-        if image_types:
-            for it in image_types.split(" "):
-                output_combo.append_text(it)
-            output_combo.connect("changed", self.output_type_changed_cb, handler)
-        else:
-            output_combo.set_sensitive(False)
-        output_combo.show()
-        hbox.pack_start(output_combo)
+        if all_image_types:
+            # Image output type selector
+            label = gtk.Label("Image output types:")
+            label.show()
+            hbox.pack_start(label, expand=False, fill=False, padding=6)
+            chk_cnt = 3
+            for it in all_image_types.split(" "):
+                chk_cnt = chk_cnt + 1
+                if chk_cnt % 6 == 0:
+                    hbox = gtk.HBox(False, 12)
+                    hbox.show()
+                    pbox.pack_start(hbox, expand=False, fill=False, padding=6)
+                chk = gtk.CheckButton(it)
+                if it in self.selected_image_types:
+                    chk.set_active(True)
+                chk.set_tooltip_text("Build an %s image" % it)
+                chk.connect("toggled", self.output_type_toggled_cb, handler)
+                chk.show()
+                hbox.pack_start(chk, expand=False, fill=False, padding=3)
         # BitBake
         label = gtk.Label()
         label.set_markup("<b>BitBake</b>")

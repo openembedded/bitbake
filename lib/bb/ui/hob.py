@@ -900,7 +900,8 @@ def main (server, eventHandler):
         # up to and including the space
         pmake = int(pmake.lstrip("-j "))
 
-    image_types = server.runCommand(["getVariable", "IMAGE_TYPES"])
+    selected_image_types = server.runCommand(["getVariable", "IMAGE_FSTYPES"])
+    all_image_types = server.runCommand(["getVariable", "IMAGE_TYPES"])
 
     pclasses = server.runCommand(["getVariable", "PACKAGE_CLASSES"]).split(" ")
     # NOTE: we're only supporting one value for PACKAGE_CLASSES being set
@@ -909,7 +910,7 @@ def main (server, eventHandler):
     pkg, sep, pclass = pclasses[0].rpartition("_")
 
     prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
-                     pmake, bbthread, image_types)
+                     pmake, bbthread, selected_image_types, all_image_types)
     layers = LayerEditor(configurator, None)
     window = MainWindow(taskmodel, handler, configurator, prefs, layers, mach)
     prefs.set_parent_window(window)
