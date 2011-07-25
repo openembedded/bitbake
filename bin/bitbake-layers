@@ -8,7 +8,7 @@
 
 import cmd
 import logging
-import os.path
+import os
 import sys
 
 bindir = os.path.dirname(__file__)
@@ -41,11 +41,12 @@ def main(args):
 class Commands(cmd.Cmd):
     def __init__(self):
         cmd.Cmd.__init__(self)
-
+        initialenv = os.environ.copy()
         self.returncode = 0
         self.config = Config(parse_only=True)
         self.cooker = bb.cooker.BBCooker(self.config,
-                                         self.register_idle_function)
+                                         self.register_idle_function,
+                                         initialenv)
         self.config_data = self.cooker.configuration.data
         bb.providers.logger.setLevel(logging.ERROR)
         self.cooker_data = None
