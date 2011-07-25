@@ -1205,7 +1205,8 @@ class BBCooker:
             base = os.path.basename(f).replace('.bbappend', '.bb')
             if not base in self.appendlist:
                self.appendlist[base] = []
-            self.appendlist[base].append(f)
+            if f not in self.appendlist[base]:
+                self.appendlist[base].append(f)
 
         # Find overlayed recipes
         # bbfiles will be in priority order which makes this easy
