@@ -159,12 +159,12 @@ def expandKeys(alterdata, readdata = None):
         ekey = todolist[key]
         renameVar(key, ekey, alterdata)
 
-def inheritFromOS(d):
-    """Inherit variables from the environment."""
+def inheritFromOS(d, savedenv):
+    """Inherit variables from the initial environment."""
     exportlist = bb.utils.preserved_envvars_exported()
-    for s in os.environ.keys():
+    for s in savedenv.keys():
         try:
-            setVar(s, os.environ[s], d)
+            setVar(s, getVar(s, savedenv, True), d)
             if s in exportlist:
                 setVarFlag(s, "export", True, d)
         except TypeError:
