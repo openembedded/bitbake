@@ -275,7 +275,7 @@ class TaskListModel(gtk.ListStore):
             it = self.images.iter_next(it)
 
         # Mark all of the additional packages for inclusion
-        packages = rep.packages.split(" ")
+        packages = rep.userpkgs.split(" ")
         it = self.get_iter_first()
         while it:
             path = self.get_path(it)
