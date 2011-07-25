@@ -861,12 +861,11 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
     val = d.getVar(variable, True)
     if not val:
         return falsevalue
-    matches = 0
-    if type(checkvalues).__name__ == "str":
-        checkvalues = [checkvalues]
-    for value in checkvalues:
-        if val.find(value) != -1:
-            matches = matches + 1
-    if matches == len(checkvalues):
+    val = set(val.split())
+    if isinstance(checkvalues, basestring):
+        checkvalues = set(checkvalues.split())
+    else:
+        checkvalues = set(checkvalues)
+    if checkvalues.issubset(val): 
         return truevalue
     return falsevalue
