@@ -387,7 +387,7 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_rdependees_str(item), reasons=self.get_reasons(item)), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item), reasons=self.get_reasons(item)), cfgData)
             raise bb.providers.NoProvider(item)
 
         if self.have_build_target(item):
