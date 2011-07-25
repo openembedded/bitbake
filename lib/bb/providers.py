@@ -124,6 +124,18 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
             itemstr = " (for item %s)" % item
         if preferred_file is None:
             logger.info("preferred version %s of %s not available%s", pv_str, pn, itemstr)
+            available_vers = []
+            for file_set in pkg_pn:
+                for f in file_set:
+                    pe, pv, pr = dataCache.pkg_pepvpr[f]
+                    ver_str = pv
+                    if pe:
+                        ver_str = "%s:%s" % (pe, ver_str)
+                    if not ver_str in available_vers:
+                        available_vers.append(ver_str)
+            if available_vers:
+                available_vers.sort()
+                logger.info("versions of %s available: %s", pn, ' '.join(available_vers))
         else:
             logger.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s%s", preferred_file, pv_str, pn, itemstr)
 
