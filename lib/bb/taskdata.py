@@ -41,7 +41,7 @@ class TaskData:
     """
     BitBake Task Data implementation
     """
-    def __init__(self, abort = True, tryaltconfigs = False):
+    def __init__(self, abort = True, tryaltconfigs = False, skiplist = None):
         self.build_names_index = []
         self.run_names_index = []
         self.fn_index = []
@@ -69,6 +69,8 @@ class TaskData:
 
         self.abort = abort
         self.tryaltconfigs = tryaltconfigs
+
+        self.skiplist = skiplist
 
     def getbuild_id(self, name):
         """
@@ -348,6 +350,22 @@ class TaskData:
                 dependees.append(self.fn_index[fnid])
         return dependees
 
+    def get_reasons(self, item, runtime=False):
+        """
+        Get the reason(s) for an item not being provided, if any
+        """
+        reasons = []
+        if self.skiplist:
+            for fn in self.skiplist:
+                skipitem = self.skiplist[fn]
+                if skipitem.pn == item:
+                    reasons.append("%s was skipped: %s" % (skipitem.pn, skipitem.skipreason))
+                elif runtime and item in skipitem.rprovides:
+                    reasons.append("%s RPROVIDES %s but was skipped: %s" % (skipitem.pn, item, skipitem.skipreason))
+                elif not runtime and item in skipitem.provides:
+                    reasons.append("%s PROVIDES %s but was skipped: %s" % (skipitem.pn, item, skipitem.skipreason))
+        return reasons
+
     def add_provider(self, cfgData, dataCache, item):
         try:
             self.add_provider_internal(cfgData, dataCache, item)
@@ -369,7 +387,7 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_rdependees_str(item)), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_rdependees_str(item), reasons=self.get_reasons(item)), cfgData)
             raise bb.providers.NoProvider(item)
 
         if self.have_build_target(item):
@@ -381,7 +399,7 @@ class TaskData:
         eligible = [p for p in eligible if not self.getfn_id(p) in self.failed_fnids]
 
         if not eligible:
-            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item)), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item), reasons=["No eligible PROVIDERs exist for '%s'" % item]), cfgData)
             raise bb.providers.NoProvider(item)
 
         if len(eligible) > 1 and foundUnique == False:
@@ -418,14 +436,14 @@ class TaskData:
         all_p = bb.providers.getRuntimeProviders(dataCache, item)
 
         if not all_p:
-            bb.event.fire(bb.event.NoProvider(item, runtime=True, dependees=self.get_rdependees_str(item)), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, runtime=True, dependees=self.get_rdependees_str(item), reasons=self.get_reasons(item, True)), cfgData)
             raise bb.providers.NoRProvider(item)
 
         eligible, numberPreferred = bb.providers.filterProvidersRunTime(all_p, item, cfgData, dataCache)
         eligible = [p for p in eligible if not self.getfn_id(p) in self.failed_fnids]
 
         if not eligible:
-            bb.event.fire(bb.event.NoProvider(item, runtime=True, dependees=self.get_rdependees_str(item)), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, runtime=True, dependees=self.get_rdependees_str(item), reasons=["No eligible RPROVIDERs exist for '%s'" % item]), cfgData)
             raise bb.providers.NoRProvider(item)
 
         if len(eligible) > 1 and numberPreferred == 0:

@@ -59,11 +59,13 @@ class state:
 
 class SkippedPackage:
     def __init__(self, info = None, reason = None):
+        self.pn = None
         self.skipreason = None
         self.provides = None
         self.rprovides = None
 
         if info:
+            self.pn = info.pn
             self.skipreason = info.skipreason
             self.provides = info.provides
             self.rprovides = info.rprovides
@@ -322,7 +324,7 @@ class BBCooker:
         bb.data.expandKeys(localdata)
         # We set abort to False here to prevent unbuildable targets raising
         # an exception when we're just generating data
-        taskdata = bb.taskdata.TaskData(False)
+        taskdata = bb.taskdata.TaskData(False, skiplist=self.skiplist)
 
         runlist = []
         for k in pkgs_to_build:
@@ -1053,7 +1055,7 @@ class BBCooker:
         bb.data.update_data(localdata)
         bb.data.expandKeys(localdata)
 
-        taskdata = bb.taskdata.TaskData(self.configuration.abort)
+        taskdata = bb.taskdata.TaskData(self.configuration.abort, skiplist=self.skiplist)
 
         runlist = []
         for k in targets:

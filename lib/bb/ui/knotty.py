@@ -208,6 +208,9 @@ def main(server, eventHandler):
                     logger.error("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)", r, event._item, ", ".join(event._dependees), r)
                 else:
                     logger.error("Nothing %sPROVIDES '%s'", r, event._item)
+                if event._reasons:
+                    for reason in event._reasons:
+                        logger.error("%s", reason)
                 continue
 
             if isinstance(event, bb.runqueue.runQueueTaskStarted):

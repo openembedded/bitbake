@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "141"
+__cache_version__ = "142"
 
 def getCacheFile(path, filename):
     return os.path.join(path, filename)
@@ -99,6 +99,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
 
         self.skipreason = self.getvar('__SKIPPED', metadata)
         if self.skipreason:
+            self.pn = self.getvar('PN', metadata) or bb.parse.BBHandler.vars_from_file(filename,metadata)[0]
             self.skipped = True
             self.provides  = self.depvar('PROVIDES', metadata)
             self.rprovides = self.depvar('RPROVIDES', metadata)

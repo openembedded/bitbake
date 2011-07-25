@@ -287,11 +287,12 @@ class BuildCompleted(BuildBase):
 class NoProvider(Event):
     """No Provider for an Event"""
 
-    def __init__(self, item, runtime=False, dependees=None):
+    def __init__(self, item, runtime=False, dependees=None, reasons=[]):
         Event.__init__(self)
         self._item = item
         self._runtime = runtime
         self._dependees = dependees
+        self._reasons = reasons
 
     def getItem(self):
         return self._item
