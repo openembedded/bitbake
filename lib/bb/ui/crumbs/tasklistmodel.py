@@ -306,11 +306,15 @@ class TaskListModel(gtk.ListStore):
         self[path][self.COL_INC] = False
 
     """
-    recursively called to mark the item at opath and any package which
-    depends on it for removal
+    Recursively called to mark the item at opath and any package which
+    depends on it for removal.
+    NOTE: This method dumbly removes user selected packages and since we don't
+    do significant reverse dependency tracking it's easier and simpler to save
+    the items marked as user selected and re-add them once the removal sweep is
+    complete.
     """
     def mark(self, opath):
-        removals = []
+        usersel = {}
         it = self.get_iter_first()
         name = self[opath][self.COL_NAME]
 
@@ -325,19 +329,34 @@ class TaskListModel(gtk.ListStore):
             deps = self[path][self.COL_DEPS]
             binb = self[path][self.COL_BINB]
             itype = self[path][self.COL_TYPE]
+            iname = self[path][self.COL_NAME]
 
             # We ignore anything that isn't a package
             if not itype == "package":
                 continue
 
+            # If the user added this item and it's not the item we're removing
+            # we should keep it and its dependencies, the easiest way to do so
+            # is to save its name and re-mark it for inclusion once dependency
+            # processing is complete
+            if binb == "User Selected":
+                usersel[iname] = self[path][self.COL_IMG]
+
             # FIXME: need to ensure partial name matching doesn't happen
             if inc and deps.count(name):
                 # found a dependency, remove it
                 self.mark(path)
+
             if inc and binb.count(name):
                 bib = self.find_alt_dependency(name)
                 self[path][self.COL_BINB] = bib
 
+        # Re-add any removed user selected items
+        for u in usersel:
+            npath = self.find_path_for_item(u)
+            self.include_item(item_path=npath,
+                              binb="User Selected",
+                              image_contents=usersel[u])
     """
     Remove items from contents if the have an empty COL_BINB (brought in by)
     caused by all packages they are a dependency of being removed.
