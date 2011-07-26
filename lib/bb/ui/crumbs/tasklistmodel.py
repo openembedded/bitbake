@@ -369,22 +369,21 @@ class TaskListModel(gtk.ListStore):
 
     """
     Find the name of an item in the image contents which depends on the item
-    at contents_path returns either an item name (str) or None
-    NOTE:
-    contents_path must be a path in the self.contents gtk.TreeModel
+    name.
+    Returns either an item name (str) or None
     """
     def find_alt_dependency(self, name):
-        it = self.get_iter_first()
+        it = self.contents.get_iter_first()
         while it:
-            # iterate all items in the model
-            path = self.get_path(it)
-            deps = self[path][self.COL_DEPS]
-            itname = self[path][self.COL_NAME]
-            inc = self[path][self.COL_INC]
+            # iterate all items in the contents model
+            path = self.contents.get_path(it)
+            deps = self.contents[path][self.COL_DEPS]
+            itname = self.contents[path][self.COL_NAME]
+            inc = self.contents[path][self.COL_INC]
             if itname != name and inc and deps.count(name) > 0:
 		# if this item depends on the item, return this items name
 	        return itname
-	    it = self.iter_next(it)
+	    it = self.contents.iter_next(it)
 	return ""
 
     """
