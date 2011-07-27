@@ -93,6 +93,7 @@ class HobPrefs(gtk.Dialog):
             self.curr_package_format = package_format
             self.configurator.setLocalConfVar('PACKAGE_CLASSES', 'package_%s' % package_format)
             handler.set_package_format(package_format)
+            self.reload_required = True
 
     def update_package_formats(self, handler, formats):
         active = 0
