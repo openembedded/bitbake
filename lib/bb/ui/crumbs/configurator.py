@@ -84,9 +84,6 @@ class Configurator(gobject.GObject):
         pmake = getString('PARALLEL_MAKE')
         if pmake and pmake != self.config.get('PARALLEL_MAKE', ''):
             self.config['PARALLEL_MAKE'] = pmake
-        incompat = getString('INCOMPATIBLE_LICENSE')
-        if incompat and incompat != self.config.get('INCOMPATIBLE_LICENSE', ''):
-            self.config['INCOMPATIBLE_LICENSE'] = incompat
         pclass = getString('PACKAGE_CLASSES')
         if pclass and pclass != self.config.get('PACKAGE_CLASSES', ''):
             self.config['PACKAGE_CLASSES'] = pclass
@@ -94,10 +91,24 @@ class Configurator(gobject.GObject):
         if fstypes and fstypes != self.config.get('IMAGE_FSTYPES', ''):
             self.config['IMAGE_FSTYPES'] = fstypes
 
+        # Values which aren't always set in the conf must be explicitly
+        # loaded as empty values for save to work
+        incompat = getString('INCOMPATIBLE_LICENSE')
+        if incompat and incompat != self.config.get('INCOMPATIBLE_LICENSE', ''):
+            self.config['INCOMPATIBLE_LICENSE'] = incompat
+        else:
+            self.config['INCOMPATIBLE_LICENSE'] = ""
+
         self.orig_config = copy.deepcopy(self.config)
 
     def setLocalConfVar(self, var, val):
         self.config[var] = val
+
+    def getLocalConfVar(self, var):
+        if var in self.config:
+            return self.config[var]
+        else:
+            return ""
 
     def _loadLayerConf(self, path):
         self.bblayers = path

@@ -932,8 +932,14 @@ def main (server, eventHandler):
     # PACKAGE_CLASSES and that's the package manager used for the rootfs
     pkg, sep, pclass = pclasses[0].rpartition("_")
 
+    incompatible = server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"])
+    gplv3disabled = False
+    if incompatible and incompatible.lower().find("gplv3"):
+        gplv3disabled = True
+
     prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
-                     pmake, bbthread, selected_image_types, all_image_types)
+                     pmake, bbthread, selected_image_types, all_image_types,
+                     gplv3disabled)
     layers = LayerEditor(configurator, None)
     window = MainWindow(taskmodel, handler, configurator, prefs, layers, mach)
     prefs.set_parent_window(window)

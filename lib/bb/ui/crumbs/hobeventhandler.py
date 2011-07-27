@@ -65,7 +65,6 @@ class HobHandler(gobject.GObject):
 
         self.current_command = None
         self.building = None
-        self.gplv3_excluded = False
         self.build_toolchain = False
         self.build_toolchain_headers = False
         self.generating = False
@@ -269,13 +268,8 @@ class HobHandler(gobject.GObject):
             # leave the workdir in a usable state
             self.server.runCommand(["stateShutdown"])
 
-    def toggle_gplv3(self, excluded):
-        if self.gplv3_excluded != excluded:
-            self.gplv3_excluded = excluded
-            if excluded:
-                self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", "GPLv3"])
-            else:
-                self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", ""])
+    def set_incompatible_license(self, incompatible):
+        self.server.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", incompatible])
 
     def toggle_toolchain(self, enabled):
         if self.build_toolchain != enabled:

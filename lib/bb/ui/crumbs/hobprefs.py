@@ -113,12 +113,20 @@ class HobPrefs(gtk.Dialog):
     
     def include_gplv3_cb(self, toggle):
         excluded = toggle.get_active()
-        self.handler.toggle_gplv3(excluded)
+        orig_incompatible = self.configurator.getLocalConfVar('INCOMPATIBLE_LICENSE')
+        new_incompatible = ""
         if excluded:
-            self.configurator.setLocalConfVar('INCOMPATIBLE_LICENSE', 'GPLv3')
+            if not orig_incompatible:
+                new_incompatible = "GPLv3"
+            elif not orig_incompatible.find('GPLv3'):
+                new_incompatible = "%s GPLv3" % orig_incompatible
         else:
-            self.configurator.setLocalConfVar('INCOMPATIBLE_LICENSE', '')
-        self.reload_required = True
+            new_incompatible = orig_incompatible.replace('GPLv3', '')
+
+        if new_incompatible != orig_incompatible:
+            self.handler.set_incompatible_license(new_incompatible)
+            self.configurator.setLocalConfVar('INCOMPATIBLE_LICENSE', new_incompatible)
+            self.reload_required = True
 
     def change_bb_threads_cb(self, spinner):
         val = spinner.get_value_as_int()
@@ -149,7 +157,8 @@ class HobPrefs(gtk.Dialog):
             glib.idle_add(self.handler.reload_data)
 
     def __init__(self, configurator, handler, curr_sdk_mach, curr_distro, pclass,
-                 cpu_cnt, pmake, bbthread, selected_image_types, all_image_types):
+                 cpu_cnt, pmake, bbthread, selected_image_types, all_image_types,
+                 gplv3disabled):
         """
         """
         gtk.Dialog.__init__(self, "Preferences", None,
@@ -170,11 +179,13 @@ class HobPrefs(gtk.Dialog):
         self.cpu_cnt = cpu_cnt
         self.pmake = pmake
         self.bbthread = bbthread
+        self.selected_image_types = selected_image_types.split(" ")
+        self.gplv3disabled = gplv3disabled
+
         self.reload_required = False
         self.distro_handler_id = None
         self.sdk_machine_handler_id = None
         self.package_handler_id = None
-        self.selected_image_types = selected_image_types.split(" ")
 
         left = gtk.SizeGroup(gtk.SIZE_GROUP_HORIZONTAL)
         right = gtk.SizeGroup(gtk.SIZE_GROUP_HORIZONTAL)
@@ -205,6 +216,7 @@ class HobPrefs(gtk.Dialog):
         check = gtk.CheckButton("Exclude GPLv3 packages")
         check.set_tooltip_text("Check this box to prevent GPLv3 packages from being included in your image")
         check.show()
+        check.set_active(self.gplv3disabled)
         check.connect("toggled", self.include_gplv3_cb)
         hbox.pack_start(check, expand=False, fill=False, padding=6)
         hbox = gtk.HBox(False, 12)
