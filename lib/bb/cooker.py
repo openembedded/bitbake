@@ -452,6 +452,9 @@ class BBCooker:
 
                 rdepends = self.status.rundeps[fn]
                 for package in rdepends:
+                    depend_tree["rdepends-pkg"][package] = []
+                    for rdepend in rdepends[package]:
+                        depend_tree["rdepends-pkg"][package].append(rdepend)
                     packages.append(package)
 
                 for package in packages:
