@@ -122,6 +122,10 @@ class MainWindow (gtk.Window):
         self.build_succeeded = False
 
     def image_changed_string_cb(self, model, new_image):
+        # disconnect the image combo's signal handler
+        if self.image_combo_id:
+            self.image_combo.disconnect(self.image_combo_id)
+            self.image_combo_id = None
         cnt = 0
         it = self.model.images.get_iter_first()
         while it:
@@ -131,6 +135,8 @@ class MainWindow (gtk.Window):
                 break
             it = self.model.images.iter_next(it)
             cnt = cnt + 1
+        # Reconnect the signal handler
+        self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
 
     def image_changed_cb(self, combo):
         model = self.image_combo.get_model()

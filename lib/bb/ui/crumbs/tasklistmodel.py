@@ -281,7 +281,7 @@ class TaskListModel(gtk.ListStore):
             path = self.get_path(it)
             name = self[path][self.COL_NAME]
             if name in packages:
-                self.include_item(path)
+                self.include_item(path, binb="User Selected")
                 packages.remove(name)
             it = self.iter_next(it)
 
