@@ -117,8 +117,6 @@ class HobHandler(gobject.GObject):
             if self.generating:
                 self.emit("data-generated")
                 self.generating = False
-            bbpath = self.server.runCommand(["getVariable", "BBPATH"])
-            bbfiles = self.server.runCommand(["getVariable", "BBFILES"])
             self.server.runCommand(["buildTargets", self.build_queue, "build"])
             self.build_queue = []
             self.current_command = None
@@ -278,22 +276,6 @@ class HobHandler(gobject.GObject):
     def toggle_toolchain_headers(self, enabled):
         if self.build_toolchain_headers != enabled:
             self.build_toolchain_headers = enabled
-
-    def queue_image_recipe_path(self, path):
-        self.build_queue.append(path)
-
-    def build_complete_cb(self, running_build):
-        if len(self.build_queue) > 0:
-            next = self.build_queue.pop(0)
-            if next.endswith('.bb'):
-                self.build_file(next)
-                self.building = 'image'
-                self.build_file(next)
-            else:
-                self.build_packages(next.split(" "))
-        else:
-            self.building = None
-            self.emit("build-complete")
 
     def set_fstypes(self, fstypes):
         self.server.runCommand(["setVariable", "IMAGE_FSTYPES", fstypes])
