@@ -54,11 +54,13 @@ class HobHandler(gobject.GObject):
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_STRING,
                                    gobject.TYPE_STRING,)),
+         "command-failed"      : (gobject.SIGNAL_RUN_LAST,
+                                  gobject.TYPE_NONE,
                                   (gobject.TYPE_STRING,)),
          "reload-triggered"    : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   (gobject.TYPE_STRING,
-                                   gobject.TYPE_STRING)),
+                                   gobject.TYPE_STRING,)),
     }
 
     (CFG_PATH_LOCAL, CFG_PATH_HOB, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS, REPARSE_FILES, BUILD_IMAGE) = range(10)
@@ -172,6 +174,7 @@ class HobHandler(gobject.GObject):
             self.current_phase = None
             self.run_next_command()
         elif isinstance(event, bb.command.CommandFailed):
+            self.emit("command-failed", event.error)
         elif isinstance(event, bb.event.CacheLoadStarted):
             self.current_phase = "cache loading"
             bb.ui.crumbs.hobeventhandler.progress_total = event.total
