@@ -19,6 +19,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import gobject
+import logging
 
 progress_total = 0
 
@@ -49,8 +50,10 @@ class HobHandler(gobject.GObject):
          "data-generated"      : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                   ()),
-         "error"               : (gobject.SIGNAL_RUN_LAST,
+         "fatal-error"         : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
+                                  (gobject.TYPE_STRING,
+                                   gobject.TYPE_STRING,)),
                                   (gobject.TYPE_STRING,)),
          "reload-triggered"    : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
@@ -69,6 +72,7 @@ class HobHandler(gobject.GObject):
         self.build_toolchain_headers = False
         self.generating = False
         self.build_queue = []
+        self.current_phase = None
 
         self.model = taskmodel
         self.server = server
@@ -127,11 +131,14 @@ class HobHandler(gobject.GObject):
 
         # If we're running a build, use the RunningBuild event handler
         if self.building:
+            self.current_phase = "building"
             running_build.handle_event(event)
         elif isinstance(event, bb.event.TargetsTreeGenerated):
+            self.current_phase = "data generation"
             if event._model:
                 self.model.populate(event._model)
         elif isinstance(event, bb.event.ConfigFilesFound):
+            self.current_phase = "configuration lookup"
             var = event._variable
 	    if var == "distro":
 		distros = event._values
@@ -146,9 +153,11 @@ class HobHandler(gobject.GObject):
                 sdk_machines.sort()
                 self.emit("sdk-machines-updated", sdk_machines)
         elif isinstance(event, bb.event.ConfigFilePathFound):
+            self.current_phase = "configuration lookup"
             path = event._path
             self.emit("config-found", path)
         elif isinstance(event, bb.event.FilesMatchingFound):
+            self.current_phase = "configuration lookup"
             # FIXME: hard coding, should at least be a variable shared between
             # here and the caller
             if event._pattern == "rootfs_":
@@ -160,25 +169,35 @@ class HobHandler(gobject.GObject):
                 formats.sort()
                 self.emit("package-formats-found", formats)
         elif isinstance(event, bb.command.CommandCompleted):
+            self.current_phase = None
             self.run_next_command()
         elif isinstance(event, bb.command.CommandFailed):
-            self.emit("error", event.error)
         elif isinstance(event, bb.event.CacheLoadStarted):
+            self.current_phase = "cache loading"
             bb.ui.crumbs.hobeventhandler.progress_total = event.total
             pbar.set_text("Loading cache: %s/%s" % (0, bb.ui.crumbs.hobeventhandler.progress_total))
         elif isinstance(event, bb.event.CacheLoadProgress):
+            self.current_phase = "cache loading"
             pbar.set_text("Loading cache: %s/%s" % (event.current, bb.ui.crumbs.hobeventhandler.progress_total))
         elif isinstance(event, bb.event.CacheLoadCompleted):
+            self.current_phase = None
             pbar.set_text("Loading cache: %s/%s" % (bb.ui.crumbs.hobeventhandler.progress_total, bb.ui.crumbs.hobeventhandler.progress_total))
         elif isinstance(event, bb.event.ParseStarted):
+            self.current_phase = "recipe parsing"
             if event.total == 0:
                 return
             bb.ui.crumbs.hobeventhandler.progress_total = event.total
             pbar.set_text("Processing recipes: %s/%s" % (0, bb.ui.crumbs.hobeventhandler.progress_total))
         elif isinstance(event, bb.event.ParseProgress):
+            self.current_phase = "recipe parsing"
             pbar.set_text("Processing recipes: %s/%s" % (event.current, bb.ui.crumbs.hobeventhandler.progress_total))
         elif isinstance(event, bb.event.ParseCompleted):
+            self.current_phase = None
             pbar.set_fraction(1.0)
+        elif isinstance(event, logging.LogRecord):
+            format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+            if event.levelno >= format.CRITICAL:
+                self.emit("fatal-error", event.getMessage(), self.current_phase)
         return
 
     def event_handle_idle_func (self, eventHandler, running_build, pbar):
