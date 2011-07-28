@@ -99,6 +99,14 @@ class Configurator(gobject.GObject):
         else:
             self.config['INCOMPATIBLE_LICENSE'] = ""
 
+        # Non-standard, namespaces, variables for GUI preferences
+        toolchain = getString('HOB_BUILD_TOOLCHAIN')
+        if toolchain and toolchain != self.config.get('HOB_BUILD_TOOLCHAIN', ''):
+            self.config['HOB_BUILD_TOOLCHAIN'] = toolchain
+        header = getString('HOB_BUILD_TOOLCHAIN_HEADERS')
+        if header and header != self.config.get('HOB_BUILD_TOOLCHAIN_HEADERS', ''):
+            self.config['HOB_BUILD_TOOLCHAIN_HEADERS'] = header
+
         self.orig_config = copy.deepcopy(self.config)
 
     def setLocalConfVar(self, var, val):

@@ -140,11 +140,19 @@ class HobPrefs(gtk.Dialog):
 
     def toggle_toolchain_cb(self, check):
         enabled = check.get_active()
+        toolchain = '0'
+        if enabled:
+            toolchain = '1'
         self.handler.toggle_toolchain(enabled)
+        self.configurator.setLocalConfVar('HOB_BUILD_TOOLCHAIN', toolchain)
 
     def toggle_headers_cb(self, check):
         enabled = check.get_active()
+        headers = '0'
+        if enabled:
+            headers = '1'
         self.handler.toggle_toolchain_headers(enabled)
+        self.configurator.setLocalConfVar('HOB_BUILD_TOOLCHAIN_HEADERS', headers)
 
     def set_parent_window(self, parent):
         self.set_transient_for(parent)
@@ -158,7 +166,7 @@ class HobPrefs(gtk.Dialog):
 
     def __init__(self, configurator, handler, curr_sdk_mach, curr_distro, pclass,
                  cpu_cnt, pmake, bbthread, selected_image_types, all_image_types,
-                 gplv3disabled):
+                 gplv3disabled, build_toolchain, build_toolchain_headers):
         """
         """
         gtk.Dialog.__init__(self, "Preferences", None,
@@ -181,6 +189,8 @@ class HobPrefs(gtk.Dialog):
         self.bbthread = bbthread
         self.selected_image_types = selected_image_types.split(" ")
         self.gplv3disabled = gplv3disabled
+        self.build_toolchain = build_toolchain
+        self.build_toolchain_headers = build_toolchain_headers
 
         self.reload_required = False
         self.distro_handler_id = None
@@ -304,6 +314,7 @@ class HobPrefs(gtk.Dialog):
         pbox.pack_start(hbox, expand=False, fill=False, padding=6)
         toolcheck = gtk.CheckButton("Build external development toolchain with image")
         toolcheck.show()
+        toolcheck.set_active(self.build_toolchain)
         toolcheck.connect("toggled", self.toggle_toolchain_cb)
         hbox.pack_start(toolcheck, expand=False, fill=False, padding=6)
         hbox = gtk.HBox(False, 12)
@@ -318,6 +329,7 @@ class HobPrefs(gtk.Dialog):
         hbox.pack_start(self.sdk_machine_combo, expand=False, fill=False, padding=6)
         headerscheck = gtk.CheckButton("Include development headers with toolchain")
         headerscheck.show()
+        headerscheck.set_active(self.build_toolchain_headers)
         headerscheck.connect("toggled", self.toggle_headers_cb)
         hbox.pack_start(headerscheck, expand=False, fill=False, padding=6)
         self.connect("response", self.prefs_response_cb)

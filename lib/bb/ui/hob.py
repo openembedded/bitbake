@@ -937,9 +937,12 @@ def main (server, eventHandler):
     if incompatible and incompatible.lower().find("gplv3"):
         gplv3disabled = True
 
+    build_toolchain = bool(server.runCommand(["getVariable", "HOB_BUILD_TOOLCHAIN"]))
+    build_headers = bool(server.runCommand(["getVariable", "HOB_BUILD_TOOLCHAIN_HEADERS"]))
+
     prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
                      pmake, bbthread, selected_image_types, all_image_types,
-                     gplv3disabled)
+                     gplv3disabled, build_toolchain, build_headers)
     layers = LayerEditor(configurator, None)
     window = MainWindow(taskmodel, handler, configurator, prefs, layers, mach)
     prefs.set_parent_window(window)
