@@ -110,6 +110,11 @@ class MainWindow (gtk.Window):
                     rep = self.model.get_build_rep()
                     rep.writeRecipe(self.save_path, self.model)
 
+        # Prevent the busy cursor being shown after hob exits if quit is called
+        # whilst the busy cursor is set
+        self.set_busy_cursor(False)
+
+        gtk.main_quit()
         gtk.main_quit()
 
     def scroll_tv_cb(self, model, path, it, view):
