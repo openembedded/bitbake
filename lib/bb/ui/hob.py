@@ -115,6 +115,21 @@ class MainWindow (gtk.Window):
         self.set_busy_cursor(False)
 
         gtk.main_quit()
+
+    """
+    In the case of a fatal error give the user as much information as possible
+    and then exit.
+    """
+    def fatal_error_cb(self, handler, errormsg, phase):
+        lbl = "<b>Error!</b>\nThere was an unrecoverable error during the"
+        lbl = lbl + " <i>%s</i> phase of BitBake. This must be" % phase
+        lbl = lbl + " rectified before the GUI will function. The error"
+        lbl = lbl + " message which which caused this is:\n\n\"%s\"" % errormsg
+        dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+        dialog.add_button("Exit", gtk.RESPONSE_OK)
+        response = dialog.run()
+        dialog.destroy()
+        self.set_busy_cursor(False)
         gtk.main_quit()
 
     def scroll_tv_cb(self, model, path, it, view):
@@ -963,6 +978,7 @@ def main (server, eventHandler):
     configurator.connect("layers-loaded", layers.load_current_layers)
     configurator.connect("layers-changed", handler.reload_data)
     handler.connect("config-found", configurator.configFound)
+    handler.connect("fatal-error", window.fatal_error_cb)
 
     try:
         # kick the while thing off
