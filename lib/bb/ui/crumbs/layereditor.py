@@ -21,6 +21,7 @@
 import gobject
 import gtk
 from bb.ui.crumbs.configurator import Configurator
+from bb.ui.crumbs.hig import CrumbsDialog
 
 class LayerEditor(gtk.Dialog):
     """
@@ -117,6 +118,12 @@ class LayerEditor(gtk.Dialog):
         self.find_layer(self)
 
     def find_layer(self, parent):
+        def conf_error(parent, lbl):
+            dialog = CrumbsDialog(parent, lbl)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            response = dialog.run()
+            dialog.destroy()
+
         dialog = gtk.FileChooserDialog("Add new layer", parent,
                                        gtk.FILE_CHOOSER_ACTION_OPEN,
                                        (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
@@ -128,10 +135,19 @@ class LayerEditor(gtk.Dialog):
         path = dialog.get_filename()
         dialog.destroy()
 
+        lbl = "<b>Error</b>\nUnable to load layer <i>%s</i> because " % path
         if response == gtk.RESPONSE_YES:
             # FIXME: verify we've actually got a layer conf?
-            if path.endswith(".conf"):
+            if path.endswith("layer.conf"):
                 name, layerpath = self.configurator.addLayerConf(path)
-                if name:
+                if name and layerpath:
                     self.newly_added[name] = layerpath
                     self.layer_store.append([name, layerpath, True])
+                    return
+                elif name:
+                    return
+                else:
+                    lbl += "there was a problem parsing the layer.conf."
+            else:
+                lbl += "it is not a layer.conf file."
+            conf_error(parent, lbl)
