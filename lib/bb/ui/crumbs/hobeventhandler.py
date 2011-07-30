@@ -20,6 +20,8 @@
 
 import gobject
 import logging
+import tempfile
+import datetime
 
 progress_total = 0
 
@@ -75,6 +77,7 @@ class HobHandler(gobject.GObject):
         self.generating = False
         self.build_queue = []
         self.current_phase = None
+        self.image_dir = None
 
         self.model = taskmodel
         self.server = server
@@ -237,7 +240,7 @@ class HobHandler(gobject.GObject):
         pmake = "-j %s" % threads
         self.server.runCommand(["setVariable", "BB_NUMBER_THREADS", pmake])
 
-    def build_image(self, image, image_path, configurator):
+    def build_image(self, image, configurator):
         targets = []
         targets.append(image)
         if self.build_toolchain and self.build_toolchain_headers:
@@ -248,24 +251,24 @@ class HobHandler(gobject.GObject):
 
         bbpath_ok = False
         bbpath = self.server.runCommand(["getVariable", "BBPATH"])
-        if image_path in bbpath.split(":"):
+        if self.image_dir in bbpath.split(":"):
             bbpath_ok = True
 
         bbfiles_ok = False
         bbfiles = self.server.runCommand(["getVariable", "BBFILES"]).split(" ")
         for files in bbfiles:
             import re
-            pattern = "%s/\*.bb" % image_path
+            pattern = "%s/\*.bb" % self.image_dir
             if re.match(pattern, files):
                 bbfiles_ok = True
 
         if not bbpath_ok:
-            nbbp = image_path
+            nbbp = self.image_dir
         else:
             nbbp = None
 
         if not bbfiles_ok:
-            nbbf = "%s/*.bb" % image_path
+            nbbf = "%s/*.bb" % self.image_dir
         else:
             nbbf = None
 
@@ -319,3 +322,16 @@ class HobHandler(gobject.GObject):
 
     def get_image_deploy_dir(self):
         return self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"])
+
+    def make_temp_dir(self):
+        self.image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
+        bb.utils.mkdirhier(self.image_dir)
+
+    def remove_temp_dir(self):
+        bb.utils.remove(self.image_dir, True)
+
+    def get_temp_recipe_path(self, name):
+        timestamp = datetime.date.today().isoformat()
+        image_file = "hob-%s-variant-%s.bb" % (name, timestamp)
+        recipepath =  os.path.join(self.image_dir, image_file)
+        return recipepath

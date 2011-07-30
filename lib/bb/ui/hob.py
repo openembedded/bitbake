@@ -114,6 +114,8 @@ class MainWindow (gtk.Window):
         # whilst the busy cursor is set
         self.set_busy_cursor(False)
 
+        self.handler.remove_temp_dir()
+
         gtk.main_quit()
 
     """
@@ -418,13 +420,10 @@ class MainWindow (gtk.Window):
                 rep.base_image = "empty"
 
         if build_image:
-            import tempfile, datetime
-
-            image_name = "hob-%s-variant-%s" % (rep.base_image, datetime.date.today().isoformat())
-            image_file = "%s.bb" % (image_name)
-            image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
-            bb.utils.mkdirhier(image_dir)
-            recipepath =  os.path.join(image_dir, image_file)
+            self.handler.make_temp_dir()
+            recipepath =  self.handler.get_temp_recipe_path(rep.base_image)
+            image_name = recipepath.rstrip(".bb")
+            path, sep, image_name = image_name.rpartition("/")
 
             rep.writeRecipe(recipepath, self.model)
             # In the case where we saved the file for the purpose of building
@@ -433,7 +432,7 @@ class MainWindow (gtk.Window):
             if not self.save_path:
                 self.files_to_clean.append(recipepath)
 
-            self.handler.build_image(image_name, image_dir, self.configurator)
+            self.handler.build_image(image_name, self.configurator)
         else:
             self.handler.build_packages(rep.allpkgs.split(" "))
 
