@@ -334,6 +334,7 @@ class MainWindow (gtk.Window):
 
     def add_layer_cb(self, action):
         self.layers.find_layer(self)
+        self.layers.save_current_layers()
 
     def preferences_cb(self, action):
         resp = self.prefs.run()
