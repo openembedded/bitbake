@@ -63,9 +63,10 @@ class RunningBuild (gobject.GObject):
     pids_to_task = {}
     tasks_to_iter = {}
 
-    def __init__ (self):
+    def __init__ (self, sequential=False):
         gobject.GObject.__init__ (self)
         self.model = RunningBuildModel()
+        self.sequential = sequential
 
     def handle_event (self, event, pbar=None):
         # Handle an event from the event queue, this may result in updating
@@ -105,18 +106,18 @@ class RunningBuild (gobject.GObject):
 
             # if we know which package we belong to, we'll append onto its list.
             # otherwise, we'll jump to the top of the master list
-            if parent:
+            if self.sequential or not parent:
                 tree_add = self.model.append
             else:
                 tree_add = self.model.prepend
             tree_add(parent,
-                              (None,
-                               package,
-                               task,
-                               event.getMessage(),
-                               icon,
-                               color,
-                               0))
+                     (None,
+                      package,
+                      task,
+                      event.getMessage(),
+                      icon,
+                      color,
+                      0))
 
         elif isinstance(event, bb.build.TaskStarted):
             (package, task) = (event._package, event._task)
@@ -130,13 +131,17 @@ class RunningBuild (gobject.GObject):
             if ((package, None) in self.tasks_to_iter):
                 parent = self.tasks_to_iter[(package, None)]
             else:
-                parent = self.model.prepend(None, (None,
-                                                   package,
-                                                   None,
-                                                   "Package: %s" % (package),
-                                                   None,
-                                                   Colors.OK,
-                                                   0))
+                if self.sequential:
+                    add = self.model.append
+                else:
+                    add = self.model.prepend
+                parent = add(None, (None,
+                                    package,
+                                    None,
+                                    "Package: %s" % (package),
+                                    None,
+                                    Colors.OK,
+                                    0))
                 self.tasks_to_iter[(package, None)] = parent
 
             # Because this parent package now has an active child mark it as
