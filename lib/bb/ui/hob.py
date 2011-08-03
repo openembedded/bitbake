@@ -954,7 +954,7 @@ def main (server, eventHandler):
 
     incompatible = server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"])
     gplv3disabled = False
-    if incompatible and incompatible.lower().find("gplv3"):
+    if incompatible and incompatible.lower().find("gplv3") != -1:
         gplv3disabled = True
 
     build_toolchain = bool(server.runCommand(["getVariable", "HOB_BUILD_TOOLCHAIN"]))
