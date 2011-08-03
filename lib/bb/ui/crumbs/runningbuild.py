@@ -239,6 +239,12 @@ class RunningBuild (gobject.GObject):
             else:
                 self.emit ("build-succeeded")
 
+        elif isinstance(event, bb.command.CommandFailed):
+            if event.error.startswith("Exited with"):
+                # If the command fails with an exit code we're done, emit the
+                # generic signal for the UI to notify the user
+                self.emit("build-complete")
+
         elif isinstance(event, bb.event.CacheLoadStarted) and pbar:
             pbar.set_title("Loading cache")
             self.progress_total = event.total
