@@ -158,7 +158,8 @@ class MainWindow (gtk.Window):
             it = self.model.images.iter_next(it)
             cnt = cnt + 1
         # Reconnect the signal handler
-        self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
+        if not self.image_combo_id:
+            self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
 
     def image_changed_cb(self, combo):
         model = self.image_combo.get_model()
@@ -321,11 +322,13 @@ class MainWindow (gtk.Window):
         return
 
     def reset_build(self):
-        self.image_combo.disconnect(self.image_combo_id)
-        self.image_combo_id = None
+        if self.image_combo_id:
+            self.image_combo.disconnect(self.image_combo_id)
+            self.image_combo_id = None
         self.image_combo.set_active(-1)
-        self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
         self.model.reset()
+        if not self.image_combo_id:
+            self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
 
     def layers_cb(self, action):
         resp = self.layers.run()
