@@ -64,7 +64,7 @@ class MainWindow (gtk.Window):
         self.set_icon_name("applications-development")
         self.set_default_size(1000, 650)
 
-        self.build = RunningBuild()
+        self.build = RunningBuild(sequential=True)
         self.build.connect("build-failed", self.running_build_failed_cb)
         self.build.connect("build-succeeded", self.running_build_succeeded_cb)
         self.build.connect("build-started", self.build_started_cb)
