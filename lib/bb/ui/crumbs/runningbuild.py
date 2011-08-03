@@ -277,8 +277,9 @@ class RunningBuildTreeView (gtk.TreeView):
     __gsignals__ = {
         "button_press_event" : "override"
         }
-    def __init__ (self):
+    def __init__ (self, readonly=False):
         gtk.TreeView.__init__ (self)
+        self.readonly = readonly
 
         # The icon that indicates whether we're building or failed.
         renderer = gtk.CellRendererPixbuf ()
@@ -290,7 +291,7 @@ class RunningBuildTreeView (gtk.TreeView):
         self.message_renderer = gtk.CellRendererText ()
         self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=3)
         self.message_column.add_attribute(self.message_renderer, 'background', 5)
-        self.message_renderer.set_property('editable', 5)
+        self.message_renderer.set_property('editable', (not self.readonly))
         self.append_column (self.message_column)
 
     def do_button_press_event(self, event):
