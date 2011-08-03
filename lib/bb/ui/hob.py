@@ -240,7 +240,6 @@ class MainWindow (gtk.Window):
 
     def busy_idle_func(self):
         if self.generating:
-            self.progress.set_text("Loading...")
             self.progress.pulse()
             return True
         else:
@@ -253,12 +252,13 @@ class MainWindow (gtk.Window):
 
     def busy(self, handler):
         self.generating = True
+        self.progress.set_text("Loading...")
         self.set_busy_cursor()
         if self.image_combo_id:
             self.image_combo.disconnect(self.image_combo_id)
             self.image_combo_id = None
         self.progress.pulse()
-        gobject.timeout_add (200, self.busy_idle_func)
+        gobject.timeout_add (100, self.busy_idle_func)
         self.disable_widgets()
 
     def enable_widgets(self):
