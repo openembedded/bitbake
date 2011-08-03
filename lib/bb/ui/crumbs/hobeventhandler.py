@@ -187,7 +187,7 @@ class HobHandler(gobject.GObject):
             pbar.set_text("Loading cache: %s/%s" % (event.current, bb.ui.crumbs.hobeventhandler.progress_total))
         elif isinstance(event, bb.event.CacheLoadCompleted):
             self.current_phase = None
-            pbar.set_text("Loading cache: %s/%s" % (bb.ui.crumbs.hobeventhandler.progress_total, bb.ui.crumbs.hobeventhandler.progress_total))
+            pbar.set_text("Loading...")
         elif isinstance(event, bb.event.ParseStarted):
             self.current_phase = "recipe parsing"
             if event.total == 0:
@@ -200,6 +200,7 @@ class HobHandler(gobject.GObject):
         elif isinstance(event, bb.event.ParseCompleted):
             self.current_phase = None
             pbar.set_fraction(1.0)
+            pbar.set_text("Loading...")
         elif isinstance(event, logging.LogRecord):
             format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
             if event.levelno >= format.CRITICAL:
