@@ -38,7 +38,7 @@ class BuildRep(gobject.GObject):
         with open(pathname, 'r') as f:
             contents = f.readlines()
 
-        pkg_pattern = "^\s*(IMAGE_INSTALL)\s*([+=.?]+)\s*(\"\S*\")"
+        pkg_pattern = "^\s*(IMAGE_INSTALL)\s*([+=.?]+)\s*(\".*?\")"
         img_pattern = "^\s*(require)\s+(\S+.bb)"
 
         for line in contents:
