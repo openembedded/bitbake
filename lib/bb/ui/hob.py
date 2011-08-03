@@ -731,7 +731,7 @@ class MainWindow (gtk.Window):
         vbox = gtk.VBox(False, 12)
         vbox.set_border_width(6)
         vbox.show()
-        build_tv = RunningBuildTreeView()
+        build_tv = RunningBuildTreeView(readonly=True)
         build_tv.show()
         build_tv.set_model(self.build.model)
         self.build.model.connect("row-inserted", self.scroll_tv_cb, build_tv)
