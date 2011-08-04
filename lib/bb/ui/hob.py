@@ -450,6 +450,8 @@ class MainWindow (gtk.Window):
         self.nb.set_current_page(0)
 
     def build_complete_cb(self, running_build):
+        # Have the handler process BB events again
+        self.handler.building = None
         self.stopping = False
         self.back.connect("clicked", self.back_button_clicked_cb)
         self.back.set_sensitive(True)
