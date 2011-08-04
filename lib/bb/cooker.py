@@ -1317,7 +1317,7 @@ def catch_parse_error(func):
     return wrapped
 
 @catch_parse_error
-def _parse(fn, data, include=False):
+def _parse(fn, data, include=True):
     return bb.parse.handle(fn, data, include)
 
 @catch_parse_error
