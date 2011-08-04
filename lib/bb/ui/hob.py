@@ -804,6 +804,14 @@ class MainWindow (gtk.Window):
         menubar.show_all()
 
         return menubar
+
+    def info_button_clicked_cb(self, button):
+        info = "We cannot accurately predict the image contents before they are built so instead a best"
+        info = info + "  attempt at estimating what the image will contain is listed."
+        dialog = CrumbsDialog(self, info, gtk.STOCK_DIALOG_INFO)
+        dialog.add_buttons(gtk.STOCK_CLOSE, gtk.RESPONSE_OK)
+        resp = dialog.run()
+        dialog.destroy()
     
     def create_build_gui(self):
         vbox = gtk.VBox(False, 12)
@@ -847,11 +855,19 @@ class MainWindow (gtk.Window):
         ins.set_current_page(0)
         ins.show_all()
 
-        label = gtk.Label("Image contents:")
+        hbox = gtk.HBox(False, 1)
+        hbox.show()
+        label = gtk.Label("Estimated image contents:")
         self.model.connect("contents-changed", self.update_package_count_cb, label)
         label.set_property("xalign", 0.00)
         label.show()
-        vbox.pack_start(label, expand=False, fill=False, padding=6)
+        hbox.pack_start(label, expand=False, fill=False, padding=6)
+        info = gtk.Button("?")
+        info.set_tooltip_text("What does this mean?")
+        info.show()
+        info.connect("clicked", self.info_button_clicked_cb)
+        hbox.pack_start(info, expand=False, fill=False, padding=6)
+        vbox.pack_start(hbox, expand=False, fill=False, padding=6)
         con = self.contents()
         con.show()
         vbox.pack_start(con, expand=True, fill=True)
@@ -873,7 +889,7 @@ class MainWindow (gtk.Window):
         return vbox
 
     def update_package_count_cb(self, model, count, label):
-        lbl = "Image contents (%s packages):" % count
+        lbl = "Estimated image contents (%s packages):" % count
         label.set_text(lbl)
 
     def contents(self):
