@@ -315,6 +315,7 @@ class TaskListModel(gtk.ListStore):
     """
     def mark(self, opath):
         usersel = {}
+        removed = []
         it = self.get_iter_first()
         name = self[opath][self.COL_NAME]
 
@@ -343,8 +344,9 @@ class TaskListModel(gtk.ListStore):
                 usersel[iname] = self[path][self.COL_IMG]
 
             # FIXME: need to ensure partial name matching doesn't happen
-            if inc and deps.count(name):
+            if inc and deps.count(name) and name not in removed:
                 # found a dependency, remove it
+                removed.append(name)
                 self.mark(path)
 
             if inc and binb.count(name):
