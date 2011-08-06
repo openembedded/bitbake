@@ -183,13 +183,6 @@ class MainWindow (gtk.Window):
 
     def data_generated(self, handler):
         self.generating = False
-        self.image_combo.set_model(self.model.images_model())
-        # Without this the image combo is incorrectly sized on first load of the GUI
-        self.image_combo.set_active(0)
-        self.image_combo.set_active(-1)
-
-        if not self.image_combo_id:
-            self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
         self.enable_widgets()
 
     def machine_combo_changed_cb(self, combo, handler):
@@ -285,6 +278,14 @@ class MainWindow (gtk.Window):
         # Z-A sorting
         pkgsaz_model.set_default_sort_func(None)
         self.pkgsaz_tree.set_model(pkgsaz_model)
+
+        self.image_combo.set_model(self.model.images_model())
+        # Without this the image combo is incorrectly sized on first load of the GUI
+        self.image_combo.set_active(0)
+        self.image_combo.set_active(-1)
+
+        if not self.image_combo_id:
+            self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
 
         # We want the contents to be alphabetised so create a TreeModelSort to
         # use in the view
