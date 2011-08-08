@@ -980,7 +980,9 @@ def main (server, eventHandler):
         gplv3disabled = True
 
     build_toolchain = bool(server.runCommand(["getVariable", "HOB_BUILD_TOOLCHAIN"]))
+    handler.toggle_toolchain(build_toolchain)
     build_headers = bool(server.runCommand(["getVariable", "HOB_BUILD_TOOLCHAIN_HEADERS"]))
+    handler.toggle_toolchain_headers(build_headers)
 
     prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
                      pmake, bbthread, selected_image_types, all_image_types,
