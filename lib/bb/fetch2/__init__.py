@@ -956,7 +956,7 @@ class Fetch(object):
                         raise
 
                     except BBFetchException as e:
-                        logger.debug(1, str(e))
+                        logger.warn(str(e))
                         # Remove any incomplete fetch
                         if os.path.isfile(ud.localpath):
                             bb.utils.remove(ud.localpath)
