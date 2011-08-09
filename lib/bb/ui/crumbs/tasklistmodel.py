@@ -316,9 +316,13 @@ class TaskListModel(gtk.ListStore):
     def mark(self, opath):
         usersel = {}
         removed = []
-        it = self.get_iter_first()
-        name = self[opath][self.COL_NAME]
 
+        it = self.get_iter_first()
+        # The name of the item we're removing, so that we can use it to find
+        # other items which either depend on it, or were brought in by it
+        marked_name = self[opath][self.COL_NAME]
+
+        # Remove the passed item
         self.remove_item_path(opath)
 
         # Remove all dependent packages, update binb
@@ -330,7 +334,7 @@ class TaskListModel(gtk.ListStore):
             deps = self[path][self.COL_DEPS]
             binb = self[path][self.COL_BINB]
             itype = self[path][self.COL_TYPE]
-            iname = self[path][self.COL_NAME]
+            itname = self[path][self.COL_NAME]
 
             # We ignore anything that isn't a package
             if not itype == "package":
@@ -341,16 +345,20 @@ class TaskListModel(gtk.ListStore):
             # is to save its name and re-mark it for inclusion once dependency
             # processing is complete
             if binb == "User Selected":
-                usersel[iname] = self[path][self.COL_IMG]
+                usersel[itname] = self[path][self.COL_IMG]
 
+            # If the iterated item is included and depends on the removed
+            # item it should also be removed.
             # FIXME: need to ensure partial name matching doesn't happen
-            if inc and deps.count(name) and name not in removed:
+            if inc and deps.count(marked_name) and itname not in removed:
                 # found a dependency, remove it
-                removed.append(name)
+                removed.append(itname)
                 self.mark(path)
 
-            if inc and binb.count(name):
-                bib = self.find_alt_dependency(name)
+            # If the iterated item was brought in by the removed (passed) item
+            # try and find an alternative dependee and update the binb column
+            if inc and binb.count(marked_name):
+                bib = self.find_alt_dependency(itname)
                 self[path][self.COL_BINB] = bib
 
         # Re-add any removed user selected items
