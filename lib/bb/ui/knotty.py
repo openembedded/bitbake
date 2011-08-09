@@ -199,6 +199,7 @@ def main(server, eventHandler):
                 logger.info("consider defining a PREFERRED_PROVIDER entry to match %s", event._item)
                 continue
             if isinstance(event, bb.event.NoProvider):
+                return_value = 1
                 if event._runtime:
                     r = "R"
                 else:
