@@ -188,7 +188,8 @@ def main(server, eventHandler):
                 logger.error("Command execution failed: %s", event.error)
                 break
             if isinstance(event, bb.command.CommandExit):
-                return_value = event.exitcode
+                if not return_value:
+                    return_value = event.exitcode
                 continue
             if isinstance(event, bb.cooker.CookerExit):
                 break
