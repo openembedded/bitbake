@@ -172,6 +172,13 @@ class CommandsSync:
         value = params[1]
         bb.data.setVar(varname, value, command.cooker.configuration.data)
 
+    def resetCooker(self, command, params):
+        """
+        Reset the cooker to its initial state, thus forcing a reparse for
+        any async command that has the needcache property set to True
+        """
+        command.cooker.reset()
+
 
 class CommandsAsync:
     """
