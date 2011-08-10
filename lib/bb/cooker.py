@@ -270,6 +270,12 @@ class BBCooker:
         envdata = None
 
         if buildfile:
+            # Parse the configuration here. We need to do it explicitly here since
+            # this showEnvironment() code path doesn't use the cache
+            self.parseConfiguration()
+            self.status = bb.cache.CacheData(self.caches_array)
+            self.handleCollections( bb.data.getVar("BBFILE_COLLECTIONS", self.configuration.data, 1) )
+
             fn = self.matchFile(buildfile)
         elif len(pkgs_to_build) == 1:
             self.updateCache()
