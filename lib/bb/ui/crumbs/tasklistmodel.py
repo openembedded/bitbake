@@ -235,7 +235,8 @@ class TaskListModel(gtk.ListStore):
                         if pn:
                             depends.append(pn)
 
-            self.squish(depends)
+            # uniquify the list of depends
+            depends = self.squish(depends)
             deps = " ".join(depends)
 
             if name.count('task-') > 0:
