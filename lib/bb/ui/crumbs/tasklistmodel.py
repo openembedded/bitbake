@@ -237,6 +237,9 @@ class TaskListModel(gtk.ListStore):
 
             # uniquify the list of depends
             depends = self.squish(depends)
+            # remove circular dependencies
+            if name in depends:
+                depends.remove(name)
             deps = " ".join(depends)
 
             if name.count('task-') > 0:
