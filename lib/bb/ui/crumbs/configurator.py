@@ -207,6 +207,19 @@ class Configurator(gobject.GObject):
 
         return "".join(layer_entry)
 
+    def writeConfFile(self, conffile, contents):
+        """
+        Make a backup copy of conffile and write a new file in its stead with
+        the lines in the contents list.
+        """
+        # Create a backup of the conf file
+        bkup = "%s~" % conffile
+        os.rename(conffile, bkup)
+
+        # Write the contents list object to the conf file
+        with open(conffile, "w") as new:
+            new.write("".join(contents))
+
     def writeLocalConf(self):
         # Dictionary containing only new or modified variables
         changed_values = {}
@@ -218,12 +231,8 @@ class Configurator(gobject.GObject):
         if not len(changed_values):
             return
 
-        # Create a backup of the local.conf
-        bkup = "%s~" % self.local
-        os.rename(self.local, bkup)
-
         # read the original conf into a list
-        with open(bkup, 'r') as config:
+        with open(self.local, 'r') as config:
             config_lines = config.readlines()
 
         new_config_lines = ["\n"]
@@ -259,20 +268,14 @@ class Configurator(gobject.GObject):
         # Add the modified variables
         config_lines.extend(new_config_lines)
 
-        # Write the updated lines list object to the local.conf
-        with open(self.local, "w") as n:
-            n.write("".join(config_lines))
+        self.writeConfFile(self.local, config_lines)
 
         del self.orig_config
         self.orig_config = copy.deepcopy(self.config)
 
     def insertTempBBPath(self, bbpath, bbfiles):
-        # Create a backup of the local.conf
-        bkup = "%s~" % self.local
-        os.rename(self.local, bkup)
-
         # read the original conf into a list
-        with open(bkup, 'r') as config:
+        with open(self.local, 'r') as config:
             config_lines = config.readlines()
 
         if bbpath:
@@ -280,9 +283,7 @@ class Configurator(gobject.GObject):
         if bbfiles:
             config_lines.append("BBFILES := \"${BBFILES} %s\"\n" % bbfiles)
 
-        # Write the updated lines list object to the local.conf
-        with open(self.local, "w") as n:
-            n.write("".join(config_lines))
+        self.writeConfFile(self.local, config_lines)
 
     def writeLayerConf(self):
         # If we've not added/removed new layers don't write
@@ -292,23 +293,14 @@ class Configurator(gobject.GObject):
         # This pattern should find the existing BBLAYERS
         pattern = 'BBLAYERS\s=\s\".*\"'
 
-        # Backup the users bblayers.conf
-        bkup = "%s~" % self.bblayers
-        os.rename(self.bblayers, bkup)
-
         replacement = self._constructLayerEntry()
 
-        with open(bkup, "r") as f:
+        with open(self.bblayers, "r") as f:
             contents = f.read()
             p = re.compile(pattern, re.DOTALL)
             new = p.sub(replacement, contents)
 
-        with open(self.bblayers, "w") as n:
-            n.write(new)
-
-        # At some stage we should remove the backup we've created
-        # though we should probably verify it first
-        #os.remove(bkup)
+        self.writeConfFile(self.bblayers, new)
 
         # set loaded_layers for dirtiness tracking
         self.loaded_layers = copy.deepcopy(self.enabled_layers)
