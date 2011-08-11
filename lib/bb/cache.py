@@ -286,14 +286,14 @@ class Cache(object):
         old_mtimes.append(newest_mtime)
         newest_mtime = max(old_mtimes)
 
-        bNeedUpdate = True
+        cache_ok = True
         if self.caches_array:
             for cache_class in self.caches_array:
                 if type(cache_class) is type and issubclass(cache_class, RecipeInfoCommon):
                     cachefile = getCacheFile(self.cachedir, cache_class.cachefile)
-                    bNeedUpdate = bNeedUpdate and (bb.parse.cached_mtime_noerror(cachefile) >= newest_mtime)
+                    cache_ok = cache_ok and (bb.parse.cached_mtime_noerror(cachefile) >= newest_mtime)
                     cache_class.init_cacheData(self)
-        if bNeedUpdate:
+        if cache_ok:
             self.load_cachefile()
         elif os.path.isfile(self.cachefile):
             logger.info("Out of date cache found, rebuilding...")
