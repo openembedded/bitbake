@@ -120,6 +120,7 @@ class HobHandler(gobject.GObject):
                 self.current_command = self.BUILD_IMAGE
             else:
                 self.current_command = self.CFG_PATH_LAYERS
+            self.server.runCommand(["resetCooker"])
             self.server.runCommand(["reparseFiles"])
         elif self.current_command == self.BUILD_IMAGE:
             self.building = "image"
