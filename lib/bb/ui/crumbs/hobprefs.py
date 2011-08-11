@@ -163,6 +163,7 @@ class HobPrefs(gtk.Dialog):
     def prefs_response_cb(self, dialog, response):
         if self.reload_required:
             glib.idle_add(self.handler.reload_data)
+            self.reload_required = False
 
     def __init__(self, configurator, handler, curr_sdk_mach, curr_distro, pclass,
                  cpu_cnt, pmake, bbthread, selected_image_types, all_image_types,
