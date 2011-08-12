@@ -132,7 +132,7 @@ class TaskListModel(gtk.ListStore):
         if not model.get_value(it, self.COL_INC) or model.get_value(it, self.COL_TYPE) == 'image':
             return False
         name = model.get_value(it, self.COL_NAME)
-        if name.endswith('-native') or name.endswith('-cross'):
+        if name.count('-native') or name.count('-cross'):
             return False
         else:
             return True
