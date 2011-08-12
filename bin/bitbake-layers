@@ -24,7 +24,13 @@ logger = logging.getLogger('BitBake')
 
 
 def main(args):
-    logging.basicConfig(format='%(levelname)s: %(message)s')
+    # Set up logging
+    console = logging.StreamHandler(sys.stdout)
+    format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+    bb.msg.addDefaultlogFilter(console)
+    console.setFormatter(format)
+    logger.addHandler(console)
+
     bb.utils.clean_environment()
 
     cmds = Commands()
@@ -97,7 +103,7 @@ class Commands(cmd.Cmd):
     def do_show_layers(self, args):
         """show current configured layers"""
         self.check_prepare_cooker()
-        logger.info(str(self.config_data.getVar('BBLAYERS', True)))
+        logger.plain(str(self.config_data.getVar('BBLAYERS', True)))
 
     def do_show_overlayed(self, args):
         """list overlayed recipes (where there is a recipe in another layer that has a higher layer priority)
@@ -108,13 +114,13 @@ Highest priority recipes are listed with the recipes they overlay as subitems.
 """
         self.check_prepare_cooker()
         if self.cooker.overlayed:
-            logger.info('Overlayed recipes:')
+            logger.plain('Overlayed recipes:')
             for f in self.cooker.overlayed.iterkeys():
-                logger.info('%s' % f)
+                logger.plain('%s' % f)
                 for of in self.cooker.overlayed[f]:
-                    logger.info('  %s' % of)
+                    logger.plain('  %s' % of)
         else:
-            logger.info('No overlayed recipes found')
+            logger.plain('No overlayed recipes found')
 
     def do_flatten(self, args):
         """flattens layer configuration into a separate output directory.
@@ -151,12 +157,12 @@ cleanup may still be necessary afterwards, in particular:
                     if of.startswith(layer):
                         overlayed.append(of)
 
-            logger.info('Copying files from %s...' % layer )
+            logger.plain('Copying files from %s...' % layer )
             for root, dirs, files in os.walk(layer):
                 for f1 in files:
                     f1full = os.sep.join([root, f1])
                     if f1full in overlayed:
-                        logger.info('  Skipping overlayed file %s' % f1full )
+                        logger.plain('  Skipping overlayed file %s' % f1full )
                     else:
                         ext = os.path.splitext(f1)[1]
                         if ext != '.bbappend':
@@ -165,7 +171,7 @@ cleanup may still be necessary afterwards, in particular:
                             bb.utils.mkdirhier(os.path.dirname(fdest))
                             if os.path.exists(fdest):
                                 if f1 == 'layer.conf' and root.endswith('/conf'):
-                                    logger.info('  Skipping layer config file %s' % f1full )
+                                    logger.plain('  Skipping layer config file %s' % f1full )
                                     continue
                                 else:
                                     logger.warn('Overwriting file %s', fdest)
@@ -174,7 +180,7 @@ cleanup may still be necessary afterwards, in particular:
                                 if f1 in self.cooker_data.appends:
                                     appends = self.cooker_data.appends[f1]
                                     if appends:
-                                        logger.info('  Applying appends to %s' % fdest )
+                                        logger.plain('  Applying appends to %s' % fdest )
                                         for appendname in appends:
                                             self.apply_append(appendname, fdest)
 
@@ -200,10 +206,10 @@ Recipes are listed with the bbappends that apply to them as subitems.
 """
         self.check_prepare_cooker()
         if not self.cooker_data.appends:
-            logger.info('No append files found')
+            logger.plain('No append files found')
             return
 
-        logger.info('State of append files:')
+        logger.plain('State of append files:')
 
         pnlist = list(self.cooker_data.pkg_pn.keys())
         pnlist.sort()
@@ -232,9 +238,9 @@ Recipes are listed with the bbappends that apply to them as subitems.
         appended, missing = self.get_appends_for_files(filenames)
         if appended:
             for basename, appends in appended:
-                logger.info('%s%s:', basename, name_suffix)
+                logger.plain('%s%s:', basename, name_suffix)
                 for append in appends:
-                    logger.info('  %s', append)
+                    logger.plain('  %s', append)
 
             if best_filename:
                 if best_filename in missing:
