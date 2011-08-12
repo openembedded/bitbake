@@ -196,7 +196,7 @@ class TaskListModel(gtk.ListStore):
             return False
         else:
             name = model.get_value(it, self.COL_NAME)
-            if name.count('-native') or name.count('cross'):
+            if name.count('-native') or name.count('-cross'):
                 return False
             return True
 
