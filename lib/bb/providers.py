@@ -287,7 +287,7 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
         provides = dataCache.pn_provides[pn]
         for provide in provides:
             prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, cfgData, 1)
-            logger.verbose("checking PREFERRED_PROVIDER_%s (value %s) against %s", provide, prefervar, pns.keys())
+            logger.debug(1, "checking PREFERRED_PROVIDER_%s (value %s) against %s", provide, prefervar, pns.keys())
             if prefervar in pns and pns[prefervar] not in preferred:
                 var = "PREFERRED_PROVIDER_%s = %s" % (provide, prefervar)
                 logger.verbose("selecting %s to satisfy runtime %s due to %s", prefervar, item, var)
