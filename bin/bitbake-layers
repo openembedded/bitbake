@@ -103,7 +103,20 @@ class Commands(cmd.Cmd):
     def do_show_layers(self, args):
         """show current configured layers"""
         self.check_prepare_cooker()
-        logger.plain(str(self.config_data.getVar('BBLAYERS', True)))
+        logger.plain('')
+        logger.plain("%s  %s  %s" % ("layer".ljust(20), "path".ljust(40), "priority"))
+        logger.plain('=' * 74)
+        layerdirs = str(self.config_data.getVar('BBLAYERS', True)).split()
+        for layerdir in layerdirs:
+            layername = '?'
+            layerpri = 0
+            for layer, _, regex, pri in self.cooker.status.bbfile_config_priorities:
+                if regex.match(os.path.join(layerdir, 'test')):
+                    layername = layer
+                    layerpri = pri
+                    break
+
+            logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(40), layerpri))
 
     def do_show_overlayed(self, args):
         """list overlayed recipes (where there is a recipe in another layer that has a higher layer priority)
