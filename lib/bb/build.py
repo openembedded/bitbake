@@ -236,7 +236,7 @@ def exec_func_shell(function, d, runfile, cwd=None):
         if fakerootcmd:
             cmd = [fakerootcmd, runfile]
 
-    if logger.isEnabledFor(logging.DEBUG):
+    if bb.msg.loggerVerbose[1]:
         logfile = LogTee(logger, sys.stdout)
     else:
         logfile = sys.stdout
@@ -310,6 +310,8 @@ def _exec_task(fn, task, d, quieterr):
     # Ensure python logging goes to the logfile
     handler = logging.StreamHandler(logfile)
     handler.setFormatter(logformatter)
+    # Always enable full debug output into task logfiles
+    handler.setLevel(logging.DEBUG - 2)
     bblogger.addHandler(handler)
 
     localdata.setVar('BB_LOGFILE', logfn)

@@ -56,7 +56,7 @@ logging.setLoggerClass(BBLogger)
 
 logger = logging.getLogger("BitBake")
 logger.addHandler(NullHandler())
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG - 2)
 
 # This has to be imported after the setLoggerClass, as the import of bb.msg
 # can result in construction of the various loggers.

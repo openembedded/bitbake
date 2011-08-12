@@ -830,21 +830,6 @@ def which(path, item, direction = 0):
 
     return ""
 
-def init_logger(logger, verbose, debug, debug_domains):
-    """
-    Set verbosity and debug levels in the logger
-    """
-
-    if debug:
-        bb.msg.set_debug_level(debug)
-    elif verbose:
-        bb.msg.set_verbose(True)
-    else:
-        bb.msg.set_debug_level(0)
-
-    if debug_domains:
-        bb.msg.set_debug_domains(debug_domains)
-
 def to_boolean(string, default=None):
     if not string:
         return default

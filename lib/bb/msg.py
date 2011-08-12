@@ -75,6 +75,25 @@ class BBLogFormatter(logging.Formatter):
             msg += '\n' + ''.join(formatted)
         return msg
 
+class BBLogFilter(object):
+    def __init__(self, handler, level, debug_domains):
+        self.stdlevel = level
+        self.debug_domains = debug_domains
+        loglevel = level
+        for domain in debug_domains:
+            if debug_domains[domain] < loglevel:
+                loglevel = debug_domains[domain]
+        handler.setLevel(loglevel)
+        handler.addFilter(self)
+
+    def filter(self, record):
+        if record.levelno >= self.stdlevel:
+            return True
+        if record.name in self.debug_domains and record.levelno >= self.debug_domains[record.name]:
+            return True
+        return False
+
+
 class Loggers(dict):
     def __getitem__(self, key):
         if key in self:
@@ -83,12 +102,6 @@ class Loggers(dict):
             log = logging.getLogger("BitBake.%s" % domain._fields[key])
             dict.__setitem__(self, key, log)
             return log
-
-class DebugLevel(dict):
-    def __getitem__(self, key):
-        if key == "default":
-            key = domain.Default
-        return get_debug_level(key)
 
 def _NamedTuple(name, fields):
     Tuple = collections.namedtuple(name, " ".join(fields))
@@ -110,43 +123,46 @@ domain = _NamedTuple("Domain", (
     "Util"))
 logger = logging.getLogger("BitBake")
 loggers = Loggers()
-debug_level = DebugLevel()
 
 # Message control functions
 #
 
-def set_debug_level(level):
-    for log in loggers.itervalues():
-        log.setLevel(logging.NOTSET)
+loggerDefaultDebugLevel = 0
+loggerDefaultVerbose = False
+loggerDefaultDomains = []
 
-    if level:
-        logger.setLevel(logging.DEBUG - level + 1)
+def init_msgconfig(verbose, debug, debug_domains = []):
+    """
+    Set default verbosity and debug levels config the logger
+    """
+    bb.msg.loggerDebugLevel = debug
+    bb.msg.loggerVerbose = verbose
+    bb.msg.loggerDefaultDomains = debug_domains
+
+def addDefaultlogFilter(handler):
+
+    debug = loggerDefaultDebugLevel
+    verbose = loggerDefaultVerbose
+    domains = loggerDefaultDomains
+
+    if debug:
+        level = BBLogFormatter.DEBUG - debug + 1
+    elif verbose:
+        level = BBLogFormatter.VERBOSE
     else:
-        logger.setLevel(logging.INFO)
+        level = BBLogFormatter.NOTE
 
-def get_debug_level(msgdomain = domain.Default):
-    if not msgdomain:
-        level = logger.getEffectiveLevel()
-    else:
-        level = loggers[msgdomain].getEffectiveLevel()
-    return max(0, logging.DEBUG - level + 1)
-
-def set_verbose(level):
-    if level:
-        logger.setLevel(BBLogFormatter.VERBOSE)
-    else:
-        logger.setLevel(BBLogFormatter.INFO)
-
-def set_debug_domains(domainargs):
-    for (domainarg, iterator) in groupby(domainargs):
+    debug_domains = {}
+    for (domainarg, iterator) in groupby(domains):
+        dlevel = len(tuple(iterator))
+        debug_domains["BitBake.%s" % domainarg] = logging.DEBUG - dlevel + 1
         for index, msgdomain in enumerate(domain._fields):
             if msgdomain == domainarg:
-                level = len(tuple(iterator))
-                if level:
-                    loggers[index].setLevel(logging.DEBUG - level + 1)
                 break
         else:
             warn(None, "Logging domain %s is not valid, ignoring" % domainarg)
+
+    BBLogFilter(handler, level, debug_domains)
 
 #
 # Message handling functions

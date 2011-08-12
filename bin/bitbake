@@ -190,7 +190,7 @@ Default BBFILES are the .bb files in the current directory.""")
     # server is daemonized this logfile will be truncated.
     cooker_logfile = os.path.join(os.getcwd(), "cooker.log")
 
-    bb.utils.init_logger(bb.msg, configuration.verbose, configuration.debug,
+    bb.msg.init_msgconfig(configuration.verbose, configuration.debug,
                          configuration.debug_domains)
 
     # Ensure logging messages get sent to the UI as events
@@ -228,6 +228,7 @@ Default BBFILES are the .bb files in the current directory.""")
     try:
         return server.launchUI(ui_main, server_connection.connection, server_connection.events)
     finally:
+        bb.event.ui_queue = []
         server_connection.terminate()
 
     return 1

@@ -74,6 +74,7 @@ def main(server, eventHandler):
 
     console = logging.StreamHandler(sys.stdout)
     format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+    bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
 
@@ -120,8 +121,8 @@ def main(server, eventHandler):
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to 
                 # include verbose/debug messages
-                if logger.getEffectiveLevel() > format.VERBOSE:
-                    if event.taskpid != 0 and event.levelno <= format.NOTE:
+                #if logger.getEffectiveLevel() > format.VERBOSE:
+                if event.taskpid != 0 and event.levelno <= format.NOTE:
                         continue
                 logger.handle(event)
                 continue

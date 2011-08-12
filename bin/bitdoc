@@ -430,9 +430,8 @@ Create a set of html pages (documentation) for a bitbake.conf....
                        action = "store_true", dest = "verbose", default = False )
 
     options, args = parser.parse_args( sys.argv )
-
-    if options.debug:
-        bb.msg.set_debug_level(options.debug)
+ 
+    bb.msg.init_msgconfig(options.verbose, options.debug)
 
     return options.config, options.output
 
