@@ -76,16 +76,36 @@ class Commands(cmd.Cmd):
         if not self.cooker_data:
             self.prepare_cooker()
 
+    def default(self, line):
+        """Handle unrecognised commands"""
+        sys.stderr.write("Unrecognised command or option\n")
+        self.do_help('')
+
+    def do_help(self, topic):
+        """display general help or help on a specified command"""
+        if topic:
+            sys.stdout.write('%s: ' % topic)
+            cmd.Cmd.do_help(self,topic)
+        else:
+            sys.stdout.write("usage: bitbake-layers <command> [arguments]\n\n")
+            sys.stdout.write("Available commands:\n")
+            procnames = self.get_names()
+            for procname in procnames:
+                if procname[:3] == 'do_':
+                    sys.stdout.write("  %s\n" % procname[3:])
+                    doc = getattr(self, procname).__doc__
+                    if doc:
+                        sys.stdout.write("    %s\n" % doc.splitlines()[0])
+
     def do_show_layers(self, args):
-        """show_layers: shows current configured layers"""
+        """show current configured layers"""
         self.check_prepare_cooker()
         logger.info(str(self.config_data.getVar('BBLAYERS', True)))
 
     def do_show_overlayed(self, args):
-        """show_overlayed: list overlayed recipes (where there is a recipe in another
-layer that has a higher layer priority)
+        """list overlayed recipes (where there is a recipe in another layer that has a higher layer priority)
 
-syntax: show_overlayed
+usage: show_overlayed
 
 Highest priority recipes are listed with the recipes they overlay as subitems.
 """
@@ -100,9 +120,9 @@ Highest priority recipes are listed with the recipes they overlay as subitems.
             logger.info('No overlayed recipes found')
 
     def do_flatten(self, args):
-        """flatten: flattens layer configuration into a separate output directory.
+        """flattens layer configuration into a separate output directory.
 
-syntax: flatten <outputdir>
+usage: flatten <outputdir>
 
 Takes the current layer configuration and builds a "flattened" directory
 containing the contents of all layers, with any overlayed recipes removed
@@ -175,9 +195,9 @@ cleanup may still be necessary afterwards, in particular:
         recipefile.writelines(appendfile.readlines())
 
     def do_show_appends(self, args):
-        """show_appends: List bbappend files and recipe files they apply to
+        """list bbappend files and recipe files they apply to
 
-syntax: show_appends
+usage: show_appends
 
 Recipes are listed with the bbappends that apply to them as subitems.
 """
