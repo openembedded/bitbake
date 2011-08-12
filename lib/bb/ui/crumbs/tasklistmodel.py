@@ -472,6 +472,11 @@ class TaskListModel(gtk.ListStore):
     Returns the path in the model or None
     """
     def find_path_for_item(self, item_name):
+        # We don't include virtual/* or *-native items in the model so save a
+        # heavy iteration loop by exiting early for these items
+        if item_name.startswith("virtual/") or item_name.count('-native') or item_name.count('-cross'):
+            return None
+
         it = self.get_iter_first()
         path = None
         while it:
