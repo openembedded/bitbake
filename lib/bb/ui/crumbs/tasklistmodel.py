@@ -226,32 +226,30 @@ class TaskListModel(gtk.ListStore):
             lic = event_model["pn"][item]["license"]
             group = event_model["pn"][item]["section"]
             filename = event_model["pn"][item]["filename"]
-            depends = event_model["depends"].get(item, "")
-            rdepends = event_model["rdepends-pn"].get(item, "")
-            if rdepends:
-                for rdep in rdepends:
-                    if event_model["packages"].get(rdep, ""):
-                        pn = event_model["packages"][rdep].get("pn", "")
-                        if pn:
-                            depends.append(pn)
-
-            # uniquify the list of depends
-            depends = self.squish(depends)
-            # remove circular dependencies
-            if name in depends:
-                depends.remove(name)
-            deps = " ".join(depends)
-
             if name.count('task-') > 0:
                 atype = 'task'
             elif name.count('-image-') > 0:
                 atype = 'image'
 
-            self.set(self.append(), self.COL_NAME, name, self.COL_DESC, summary,
-                     self.COL_LIC, lic, self.COL_GROUP, group,
-                     self.COL_DEPS, deps, self.COL_BINB, "",
-                     self.COL_TYPE, atype, self.COL_INC, False,
-                     self.COL_IMG, False, self.COL_PATH, filename)
+            depends = event_model["depends"].get(item, [])
+            rdepends = event_model["rdepends-pn"].get(item, [])
+            if ("%s-dev" % item) in rdepends:
+                rdepends.remove("%s-dev" % item)
+            packages = {}
+            for pkg in event_model["packages"]:
+                if event_model["packages"][pkg]["pn"] == name:
+                    deps = []
+                    deps.extend(depends)
+                    deps.extend(event_model["rdepends-pkg"].get(pkg, []))
+                    deps.extend(rdepends)
+                    packages[pkg] = deps
+
+            for p in packages:
+                self.set(self.append(), self.COL_NAME, p, self.COL_DESC, summary,
+                         self.COL_LIC, lic, self.COL_GROUP, group,
+                         self.COL_DEPS, " ".join(packages[p]), self.COL_BINB, "",
+                         self.COL_TYPE, atype, self.COL_INC, False,
+                         self.COL_IMG, False, self.COL_PATH, filename)
 
 	self.emit("tasklist-populated")
 
