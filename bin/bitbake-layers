@@ -2,9 +2,7 @@
 
 # This script has subcommands which operate against your bitbake layers, either
 # displaying useful information, or acting against them.
-# Currently, it only provides a show_appends command, which shows you what
-# bbappends are in effect, and warns you if you have appends which are not being
-# utilized.
+# See the help output for details on available commands.
 
 import cmd
 import logging
@@ -23,7 +21,6 @@ from bb.cooker import state
 
 
 logger = logging.getLogger('BitBake')
-default_cmd = 'show_appends'
 
 
 def main(args):
@@ -34,7 +31,7 @@ def main(args):
     if args:
         cmds.onecmd(' '.join(args))
     else:
-        cmds.onecmd(default_cmd)
+        cmds.do_help('')
     return cmds.returncode
 
 
