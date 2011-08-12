@@ -94,35 +94,6 @@ class BBLogFilter(object):
         return False
 
 
-class Loggers(dict):
-    def __getitem__(self, key):
-        if key in self:
-            return dict.__getitem__(self, key)
-        else:
-            log = logging.getLogger("BitBake.%s" % domain._fields[key])
-            dict.__setitem__(self, key, log)
-            return log
-
-def _NamedTuple(name, fields):
-    Tuple = collections.namedtuple(name, " ".join(fields))
-    return Tuple(*range(len(fields)))
-
-domain = _NamedTuple("Domain", (
-    "Default",
-    "Build",
-    "Cache",
-    "Collection",
-    "Data",
-    "Depends",
-    "Fetcher",
-    "Parsing",
-    "PersistData",
-    "Provider",
-    "RunQueue",
-    "TaskData",
-    "Util"))
-logger = logging.getLogger("BitBake")
-loggers = Loggers()
 
 # Message control functions
 #
@@ -156,11 +127,6 @@ def addDefaultlogFilter(handler):
     for (domainarg, iterator) in groupby(domains):
         dlevel = len(tuple(iterator))
         debug_domains["BitBake.%s" % domainarg] = logging.DEBUG - dlevel + 1
-        for index, msgdomain in enumerate(domain._fields):
-            if msgdomain == domainarg:
-                break
-        else:
-            warn(None, "Logging domain %s is not valid, ignoring" % domainarg)
 
     BBLogFilter(handler, level, debug_domains)
 
@@ -168,53 +134,10 @@ def addDefaultlogFilter(handler):
 # Message handling functions
 #
 
-def debug(level, msgdomain, msg):
-    warnings.warn("bb.msg.debug is deprecated in favor of the python 'logging' module",
-                  DeprecationWarning, stacklevel=2)
-    level = logging.DEBUG - (level - 1)
-    if not msgdomain:
-        logger.debug(level, msg)
-    else:
-        loggers[msgdomain].debug(level, msg)
-
-def plain(msg):
-    warnings.warn("bb.msg.plain is deprecated in favor of the python 'logging' module",
-                  DeprecationWarning, stacklevel=2)
-    logger.plain(msg)
-
-def note(level, msgdomain, msg):
-    warnings.warn("bb.msg.note is deprecated in favor of the python 'logging' module",
-                  DeprecationWarning, stacklevel=2)
-    if level > 1:
-        if msgdomain:
-            logger.verbose(msg)
-        else:
-            loggers[msgdomain].verbose(msg)
-    else:
-        if msgdomain:
-            logger.info(msg)
-        else:
-            loggers[msgdomain].info(msg)
-
-def warn(msgdomain, msg):
-    warnings.warn("bb.msg.warn is deprecated in favor of the python 'logging' module",
-                  DeprecationWarning, stacklevel=2)
-    if not msgdomain:
-        logger.warn(msg)
-    else:
-        loggers[msgdomain].warn(msg)
-
-def error(msgdomain, msg):
-    warnings.warn("bb.msg.error is deprecated in favor of the python 'logging' module",
-                  DeprecationWarning, stacklevel=2)
-    if not msgdomain:
-        logger.error(msg)
-    else:
-        loggers[msgdomain].error(msg)
-
 def fatal(msgdomain, msg):
-    if not msgdomain:
-        logger.critical(msg)
+    if msgdomain:
+        logger = logging.getLogger("BitBake.%s" % msgdomin)
     else:
-        loggers[msgdomain].critical(msg)
+        logger = logging.getLogger("BitBake")
+    logger.critical(msg)
     sys.exit(1)
