@@ -457,11 +457,8 @@ class TaskListModel(gtk.ListStore):
                 # resultant image, so filter cross and native recipes
                 dep_included = self.contents_includes_name(dep)
                 path = self.find_path_for_item(dep)
-                if not dep_included and not dep.endswith("-native") and not dep.endswith("-cross"):
-                    if path:
-                        self.include_item(path, name, image_contents)
-                    else:
-                        pass
+                if not dep_included and path:
+                    self.include_item(path, name, image_contents)
                 # Set brought in by for any no longer orphan packages
                 elif dep_included and path:
                     if not self[path][self.COL_BINB]:
