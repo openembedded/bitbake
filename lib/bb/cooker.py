@@ -163,7 +163,8 @@ class BBCooker:
     def loadConfigurationData(self):
         self.configuration.data = bb.data.init()
 
-        bb.data.inheritFromOS(self.configuration.data, self.savedenv)
+        filtered_keys = bb.utils.approved_variables()
+        bb.data.inheritFromOS(self.configuration.data, self.savedenv, filtered_keys)
 
         try:
             self.parseConfigurationFiles(self.configuration.prefile,

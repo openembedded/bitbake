@@ -565,18 +565,27 @@ def create_interactive_env(d):
     for k in preserved_envvars_exported_interactive():
         os.setenv(k, bb.data.getVar(k, d, True))
 
+def approved_variables():
+    """
+    Determine and return the list of whitelisted variables which are approved
+    to remain in the envrionment.
+    """
+    approved = []
+    if 'BB_ENV_WHITELIST' in os.environ:
+        approved = os.environ['BB_ENV_WHITELIST'].split()
+    else:
+        approved = preserved_envvars()
+    if 'BB_ENV_EXTRAWHITE' in os.environ:
+        approved.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
+    return approved
+
 def clean_environment():
     """
     Clean up any spurious environment variables. This will remove any
-    variables the user hasn't chose to preserve.
+    variables the user hasn't chosen to preserve.
     """
     if 'BB_PRESERVE_ENV' not in os.environ:
-        if 'BB_ENV_WHITELIST' in os.environ:
-            good_vars = os.environ['BB_ENV_WHITELIST'].split()
-        else:
-            good_vars = preserved_envvars()
-        if 'BB_ENV_EXTRAWHITE' in os.environ:
-            good_vars.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
+        good_vars = approved_variables()
         filter_environment(good_vars)
 
 def empty_environment():
