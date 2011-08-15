@@ -283,7 +283,7 @@ class NCursesUI:
 #                if isinstance(event, bb.build.TaskFailed):
 #                    if event.logfile:
 #                        if data.getVar("BBINCLUDELOGS", d):
-#                            bb.msg.error(bb.msg.domain.Build, "log data follows (%s)" % logfile)
+#                            bb.error("log data follows (%s)" % logfile)
 #                            number_of_lines = data.getVar("BBINCLUDELOGS_LINES", d)
 #                            if number_of_lines:
 #                                os.system('tail -n%s %s' % (number_of_lines, logfile))
@@ -297,7 +297,7 @@ class NCursesUI:
 #                                    print '| %s' % l
 #                                f.close()
 #                        else:
-#                            bb.msg.error(bb.msg.domain.Build, "see log in %s" % logfile)
+#                            bb.error("see log in %s" % logfile)
 
                 if isinstance(event, bb.command.CommandCompleted):
                     # stop so the user can see the result of the build, but

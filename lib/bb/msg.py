@@ -136,7 +136,7 @@ def addDefaultlogFilter(handler):
 
 def fatal(msgdomain, msg):
     if msgdomain:
-        logger = logging.getLogger("BitBake.%s" % msgdomin)
+        logger = logging.getLogger("BitBake.%s" % msgdomain)
     else:
         logger = logging.getLogger("BitBake")
     logger.critical(msg)

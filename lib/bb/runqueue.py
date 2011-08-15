@@ -362,7 +362,7 @@ class RunQueueData:
             message = "\n"
             for msg in msgs:
                 message = message + msg
-            bb.msg.fatal(bb.msg.domain.RunQueue, message)
+            bb.msg.fatal("RunQueue", message)
 
         return weight
 
@@ -470,7 +470,7 @@ class RunQueueData:
                             dep = taskData.fn_index[depdata]
                             taskid = taskData.gettask_id(dep, idependtask, False)
                             if taskid is None:
-                                bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s in %s depends upon nonexistant task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
+                                bb.msg.fatal("RunQueue", "Task %s in %s depends upon nonexistant task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
                             depends.append(taskid)
                             if depdata != fnid:
                                 tdepends_fnid[fnid].add(taskid)
@@ -587,7 +587,7 @@ class RunQueueData:
                 continue
 
             if target[1] not in taskData.tasks_lookup[fnid]:
-                bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s does not exist for target %s" % (target[1], target[0]))
+                bb.msg.fatal("RunQueue", "Task %s does not exist for target %s" % (target[1], target[0]))
 
             listid = taskData.tasks_lookup[fnid][target[1]]
 
@@ -619,9 +619,9 @@ class RunQueueData:
         # Check to make sure we still have tasks to run
         if len(self.runq_fnid) == 0:
             if not taskData.abort:
-                bb.msg.fatal(bb.msg.domain.RunQueue, "All buildable tasks have been run but the build is incomplete (--continue mode). Errors for the tasks that failed will have been printed above.")
+                bb.msg.fatal("RunQueue", "All buildable tasks have been run but the build is incomplete (--continue mode). Errors for the tasks that failed will have been printed above.")
             else:
-                bb.msg.fatal(bb.msg.domain.RunQueue, "No active tasks and not in --continue mode?! Please report this bug.")
+                bb.msg.fatal("RunQueue", "No active tasks and not in --continue mode?! Please report this bug.")
 
         logger.verbose("Pruned %s inactive tasks, %s left", delcount, len(self.runq_fnid))
 
@@ -632,7 +632,7 @@ class RunQueueData:
             origdeps = self.runq_depends[listid]
             for origdep in origdeps:
                 if maps[origdep] == -1:
-                    bb.msg.fatal(bb.msg.domain.RunQueue, "Invalid mapping - Should never happen!")
+                    bb.msg.fatal("RunQueue", "Invalid mapping - Should never happen!")
                 newdeps.append(maps[origdep])
             self.runq_depends[listid] = set(newdeps)
 
@@ -653,7 +653,7 @@ class RunQueueData:
             for dep in revdeps:
                 if dep in self.runq_depends[listid]:
                     #self.dump_data(taskData)
-                    bb.msg.fatal(bb.msg.domain.RunQueue, "Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep], taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
+                    bb.msg.fatal("RunQueue", "Task %s (%s) has circular dependency on %s (%s)" % (taskData.fn_index[self.runq_fnid[dep]], self.runq_task[dep], taskData.fn_index[self.runq_fnid[listid]], self.runq_task[listid]))
 
         logger.verbose("Compute totals (have %s endpoint(s))", len(endpoints))
 
@@ -861,7 +861,7 @@ class RunQueue:
         #print "Not current: %s" % notcurrent
 
         if len(unchecked) > 0:
-            bb.msg.fatal(bb.msg.domain.RunQueue, "check_stamps fatal internal error")
+            bb.msg.fatal("RunQueue", "check_stamps fatal internal error")
         return current
 
     def check_stamp_task(self, task, taskname = None):
@@ -1103,7 +1103,7 @@ class RunQueueExecute:
             pipeout = os.fdopen(pipeout, 'wb', 0)
             pid = os.fork()
         except OSError as e:
-            bb.msg.fatal(bb.msg.domain.RunQueue, "fork failed: %d (%s)" % (e.errno, e.strerror))
+            bb.msg.fatal("RunQueue", "fork failed: %d (%s)" % (e.errno, e.strerror))
 
         if pid == 0:
             pipein.close()
@@ -1441,7 +1441,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     deps.add(self.rqdata.runq_setscene.index(dep))
                 sq_revdeps_squash.append(deps)
             elif len(sq_revdeps_new[task]) != 0:
-                bb.msg.fatal(bb.msg.domain.RunQueue, "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
+                bb.msg.fatal("RunQueue", "Something went badly wrong during scenequeue generation, aborting. Please report this problem.")
 
         #for task in xrange(len(sq_revdeps_squash)):
         #    print "Task %s: %s.%s is %s " % (task, self.taskData.fn_index[self.runq_fnid[self.runq_setscene[task]]], self.runq_task[self.runq_setscene[task]] + "_setscene", sq_revdeps_squash[task])

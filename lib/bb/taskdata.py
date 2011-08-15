@@ -153,7 +153,7 @@ class TaskData:
         fnid = self.getfn_id(fn)
 
         if fnid in self.failed_fnids:
-            bb.msg.fatal(bb.msg.domain.TaskData, "Trying to re-add a failed file? Something is broken...")
+            bb.msg.fatal("TaskData", "Trying to re-add a failed file? Something is broken...")
 
         # Check if we've already seen this fn
         if fnid in self.tasks_fnid:
@@ -175,7 +175,7 @@ class TaskData:
                 for dep in task_deps['depends'][task].split():
                     if dep:
                         if ":" not in dep:
-                            bb.msg.fatal(bb.msg.domain.TaskData, "Error, dependency %s does not contain ':' character\n. Task 'depends' should be specified in the form 'packagename:task'" % (dep, fn))
+                            bb.msg.fatal("TaskData", "Error, dependency %s does not contain ':' character\n. Task 'depends' should be specified in the form 'packagename:task'" % (dep, fn))
                         ids.append(((self.getbuild_id(dep.split(":")[0])), dep.split(":")[1]))
                 self.tasks_idepends[taskid].extend(ids)
 
