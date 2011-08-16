@@ -91,7 +91,8 @@ class RunningBuild (gobject.GObject):
             parent = self.tasks_to_iter[(package, task)]
 
         if(isinstance(event, logging.LogRecord)):
-            if (event.msg.startswith ("Running task")):
+            if (event.levelno < logging.INFO or
+                event.msg.startswith("Running task")):
                 return # don't add these to the list
 
             if event.levelno >= logging.ERROR:
