@@ -254,7 +254,7 @@ class RunningBuild (gobject.GObject):
             pbar.update(event.current, self.progress_total)
         elif isinstance(event, bb.event.CacheLoadCompleted) and pbar:
             pbar.update(self.progress_total, self.progress_total)
-
+            pbar.hide()
         elif isinstance(event, bb.event.ParseStarted) and pbar:
             if event.total == 0:
                 return
