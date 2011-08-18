@@ -174,6 +174,7 @@ class MainWindow (gtk.Window):
             self.toggle_package(path, model, image=True)
             if len(userp):
                 self.model.set_selected_packages(userp)
+            self.selected_image = model[path][self.model.COL_NAME]
 
     def reload_triggered_cb(self, handler, image, packages):
         if image:
@@ -451,7 +452,7 @@ class MainWindow (gtk.Window):
 
             self.handler.build_image(image_name, self.configurator)
         else:
-            self.handler.build_packages(rep.allpkgs.split(" "))
+            self.handler.build_packages(self.model.get_selected_pn())
 
         self.nb.set_current_page(1)
 
