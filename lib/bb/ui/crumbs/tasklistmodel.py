@@ -239,10 +239,11 @@ class TaskListModel(gtk.ListStore):
             elif ('-image-' in name):
                 atype = 'image'
 
+            # Create a combined list of build and runtime dependencies and
+            # then remove any duplicate entries and any entries for -dev
+            # packages
             depends = event_model["depends"].get(item, [])
             rdepends = event_model["rdepends-pn"].get(item, [])
-            if ("%s-dev" % item) in rdepends:
-                rdepends.remove("%s-dev" % item)
             packages = {}
             for pkg in event_model["packages"]:
                 if event_model["packages"][pkg]["pn"] == name:
@@ -250,6 +251,13 @@ class TaskListModel(gtk.ListStore):
                     deps.extend(depends)
                     deps.extend(event_model["rdepends-pkg"].get(pkg, []))
                     deps.extend(rdepends)
+                    deps = self.squish(deps)
+                    # rdepends-pn includes pn-dev
+                    if ("%s-dev" % item) in deps:
+                        deps.remove("%s-dev" % item)
+                    # rdepends-on includes pn
+                    if pkg in deps:
+                        deps.remove(pkg)
                     packages[pkg] = deps
 
             for p in packages:
