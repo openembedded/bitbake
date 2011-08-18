@@ -89,7 +89,7 @@ class TaskListModel(gtk.ListStore):
     providing convenience functions to access gtk.TreeModel subclasses which
     provide filtered views of the data.
     """
-    (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_PATH) = range(10)
+    (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_PATH, COL_PN) = range(11)
 
     __gsignals__ = {
         "tasklist-populated" : (gobject.SIGNAL_RUN_LAST,
@@ -122,6 +122,7 @@ class TaskListModel(gtk.ListStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_BOOLEAN,
                                 gobject.TYPE_BOOLEAN,
+                                gobject.TYPE_STRING,
                                 gobject.TYPE_STRING)
 
     """
@@ -265,7 +266,8 @@ class TaskListModel(gtk.ListStore):
                          self.COL_LIC, lic, self.COL_GROUP, group,
                          self.COL_DEPS, " ".join(packages[p]), self.COL_BINB, "",
                          self.COL_TYPE, atype, self.COL_INC, False,
-                         self.COL_IMG, False, self.COL_PATH, filename)
+                         self.COL_IMG, False, self.COL_PATH, filename,
+                         self.COL_PN, item)
 
 	self.emit("tasklist-populated")
 
@@ -526,6 +528,20 @@ class TaskListModel(gtk.ListStore):
                 userpkgs.append(name)
             it = self.contents.iter_next(it)
         return userpkgs, allpkgs
+
+    """
+    Return a squished (uniquified) list of the PN's of all selected items
+    """
+    def get_selected_pn(self):
+        pns = []
+
+        it = self.contents.get_iter_first()
+        while it:
+            if self.contents.get_value(it, self.COL_BINB):
+                pns.append(self.contents.get_value(it, self.COL_PN))
+            it = self.contents.iter_next(it)
+
+        return self.squish(pns)
 
     def image_contents_removed(self):
         it = self.get_iter_first()
