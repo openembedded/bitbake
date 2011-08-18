@@ -124,6 +124,14 @@ class TaskListModel(gtk.ListStore):
                                 gobject.TYPE_BOOLEAN,
                                 gobject.TYPE_STRING)
 
+    """
+    Helper method to determine whether name is a target pn
+    """
+    def non_target_name(self, name):
+        if ('-native' in name) or ('-cross' in name) or name.startswith('virtual/'):
+            return True
+        return False
+
     def contents_changed_cb(self, tree_model, path, it=None):
         pkg_cnt = self.contents.iter_n_children(None)
         self.emit("contents-changed", pkg_cnt)
@@ -132,7 +140,7 @@ class TaskListModel(gtk.ListStore):
         if not model.get_value(it, self.COL_INC) or model.get_value(it, self.COL_TYPE) == 'image':
             return False
         name = model.get_value(it, self.COL_NAME)
-        if name.count('-native') or name.count('-cross'):
+        if self.non_target_name(name):
             return False
         else:
             return True
@@ -196,7 +204,7 @@ class TaskListModel(gtk.ListStore):
             return False
         else:
             name = model.get_value(it, self.COL_NAME)
-            if name.count('-native') or name.count('-cross'):
+            if self.non_target_name(name):
                 return False
             return True
 
@@ -226,9 +234,9 @@ class TaskListModel(gtk.ListStore):
             lic = event_model["pn"][item]["license"]
             group = event_model["pn"][item]["section"]
             filename = event_model["pn"][item]["filename"]
-            if name.count('task-') > 0:
+            if ('task-' in name):
                 atype = 'task'
-            elif name.count('-image-') > 0:
+            elif ('-image-' in name):
                 atype = 'image'
 
             depends = event_model["depends"].get(item, [])
@@ -352,14 +360,14 @@ class TaskListModel(gtk.ListStore):
             # If the iterated item is included and depends on the removed
             # item it should also be removed.
             # FIXME: need to ensure partial name matching doesn't happen
-            if inc and deps.count(marked_name) and itname not in removed:
+            if inc and marked_name in deps and itname not in removed:
                 # found a dependency, remove it
                 removed.append(itname)
                 self.mark(path)
 
             # If the iterated item was brought in by the removed (passed) item
             # try and find an alternative dependee and update the binb column
-            if inc and binb.count(marked_name):
+            if inc and marked_name in binb:
                 bib = self.find_alt_dependency(itname)
                 self[path][self.COL_BINB] = bib
 
@@ -411,7 +419,7 @@ class TaskListModel(gtk.ListStore):
             deps = self.contents[path][self.COL_DEPS]
             itname = self.contents[path][self.COL_NAME]
             inc = self.contents[path][self.COL_INC]
-            if itname != name and inc and deps.count(name) > 0:
+            if itname != name and inc and name in deps:
 		# if this item depends on the item, return this items name
 	        return itname
 	    it = self.contents.iter_next(it)
@@ -471,7 +479,7 @@ class TaskListModel(gtk.ListStore):
     def find_path_for_item(self, item_name):
         # We don't include virtual/* or *-native items in the model so save a
         # heavy iteration loop by exiting early for these items
-        if item_name.startswith("virtual/") or item_name.count('-native') or item_name.count('-cross'):
+        if self.non_target_name(item_name):
             return None
 
         it = self.get_iter_first()
@@ -561,7 +569,7 @@ class TaskListModel(gtk.ListStore):
             if not itype == 'package':
                 continue
 
-            if deps.count(pn) != 0:
+            if pn not in deps:
                 revdeps.append(name)
 
         if pn in revdeps:
