@@ -405,7 +405,19 @@ class MainWindow (gtk.Window):
         build_image = True
 
         rep = self.model.get_build_rep()
-        if not rep.base_image:
+
+        # If no base image and no user selected packages don't build anything
+        if not self.selected_image and not len(rep.userpkgs):
+            lbl = "<b>No selections made</b>\nYou have not made any selections"
+            lbl = lbl + " so there isn't anything to bake at this time."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog.run()
+            dialog.destroy()
+            return
+        # Else if no base image, ask whether to just build packages or whether
+        # to build a rootfs with the selected packages in
+        elif not self.selected_image:
             lbl = "<b>Build empty image or only packages?</b>\nA base image"
             lbl = lbl + " has not been selected.\n\'Empty image' will build"
             lbl = lbl + " an image with only the selected packages as its"
