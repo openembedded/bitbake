@@ -437,7 +437,22 @@ class MainWindow (gtk.Window):
             elif response == gtk.RESPONSE_OK:
                 rep.base_image = "empty"
 
-        if build_image:
+        # Ensure at least one value is set in IMAGE_FSTYPES.
+        have_selected_fstype = False
+        if (len(self.prefs.selected_image_types) and
+            len(self.prefs.selected_image_types[0])):
+            have_selected_fstype = True
+
+        if build_image and not have_selected_fstype:
+            lbl = "<b>No image output type selected</b>\nThere is no image output"
+            lbl = lbl + " selected for the build. Please set an output image type"
+            lbl = lbl + " in the preferences (Edit -> Preferences)."
+            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog.run()
+            dialog.destroy()
+            return
+        elif build_image:
             self.handler.make_temp_dir()
             recipepath =  self.handler.get_temp_recipe_path(rep.base_image)
             image_name = recipepath.rstrip(".bb")
