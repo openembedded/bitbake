@@ -310,17 +310,17 @@ class HobHandler(gobject.GObject):
     def add_image_output_type(self, output_type):
         if output_type not in self.image_output_types:
             self.image_output_types.append(output_type)
-            fstypes = " ".join(self.image_output_types)
+            fstypes = " ".join(self.image_output_types).lstrip(" ")
             self.set_fstypes(fstypes)
-        return fstypes
+        return self.image_output_types
 
     def remove_image_output_type(self, output_type):
         if output_type in self.image_output_types:
             ind = self.image_output_types.index(output_type)
             self.image_output_types.pop(ind)
-            fstypes = " ".join(self.image_output_types)
+            fstypes = " ".join(self.image_output_types).lstrip(" ")
             self.set_fstypes(fstypes)
-        return fstypes
+        return self.image_output_types
 
     def get_image_deploy_dir(self):
         return self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"])
