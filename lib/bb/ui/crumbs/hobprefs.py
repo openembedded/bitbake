@@ -38,7 +38,7 @@ class HobPrefs(gtk.Dialog):
         else:
             self.selected_image_types = handler.remove_image_output_type(ot)
 
-        self.configurator.setLocalConfVar('IMAGE_FSTYPES', "%s" % self.selected_image_types)
+        self.configurator.setLocalConfVar('IMAGE_FSTYPES', "%s" % " ".join(self.selected_image_types).lstrip(" "))
 
     def sdk_machine_combo_changed_cb(self, combo, handler):
         sdk_mach = combo.get_active_text()
