@@ -88,7 +88,7 @@ class Git(FetchMethod):
         else:
             ud.proto = "git"
 
-        if not ud.proto in ('git', 'file', 'ssh', 'http', 'https'):
+        if not ud.proto in ('git', 'file', 'ssh', 'http', 'https', 'rsync'):
             raise bb.fetch2.ParameterError("Invalid protocol type", ud.url)
 
         ud.nocheckout = ud.parm.get("nocheckout","0") == "1"
