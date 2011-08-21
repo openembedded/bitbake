@@ -39,7 +39,7 @@ class SignatureGenerator(object):
         return
 
     def get_taskhash(self, fn, task, deps, dataCache):
-        return 0
+        return "0"
 
     def set_taskdata(self, hashes, deps):
         return
