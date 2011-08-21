@@ -443,7 +443,7 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen></para>
             </para>
             <para>The variable <varname>GITDIR</varname> will be used as the base directory where the git tree is cloned to.
             </para>
-            <para>The parameters are <emphasis>tag</emphasis>, <emphasis>protocol</emphasis> and <emphasis>scmdata</emphasis>. <emphasis>tag</emphasis> is a Git tag, the default is <quote>master</quote>. <emphasis>protocol</emphasis> is the Git protocol to use and defaults to <quote>rsync</quote>. If <emphasis>scmdata</emphasis> is set to <quote>keep</quote>, the <quote>.git</quote> directory will be available during compile-time.
+            <para>The parameters are <emphasis>tag</emphasis>, <emphasis>protocol</emphasis> and <emphasis>scmdata</emphasis>. <emphasis>tag</emphasis> is a Git tag, the default is <quote>master</quote>. <emphasis>protocol</emphasis> is the Git protocol to use and defaults to <quote>git</quote> if a hostname is set, otherwise its <quote>file</quote>. If <emphasis>scmdata</emphasis> is set to <quote>keep</quote>, the <quote>.git</quote> directory will be available during compile-time.
             </para>
             <para><screen><varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
 <varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
