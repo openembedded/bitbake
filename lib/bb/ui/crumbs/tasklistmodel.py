@@ -577,7 +577,7 @@ class TaskListModel(gtk.ListStore):
             if not itype == 'package':
                 continue
 
-            if pn not in deps:
+            if pn in deps:
                 revdeps.append(name)
 
         if pn in revdeps:
