@@ -469,12 +469,21 @@ class MainWindow (gtk.Window):
         else:
             self.handler.build_packages(self.model.get_selected_pn())
 
+        # Disable parts of the menu which shouldn't be used whilst building
+        self.set_menus_sensitive(False)
         self.nb.set_current_page(1)
+
+    def set_menus_sensitive(self, sensitive):
+        self.add_layers_action.set_sensitive(sensitive)
+        self.layers_action.set_sensitive(sensitive)
+        self.prefs_action.set_sensitive(sensitive)
+        self.open_action.set_sensitive(sensitive)
 
     def back_button_clicked_cb(self, button):
         self.toggle_createview()
 
     def toggle_createview(self):
+        self.set_menus_sensitive(True)
         self.build.model.clear()
         self.nb.set_current_page(0)
 
@@ -816,18 +825,27 @@ class MainWindow (gtk.Window):
 
         actions = gtk.ActionGroup('ImageCreator')
         self.actions = actions
-        actions.add_actions([('Quit', gtk.STOCK_QUIT, None, None,
-                              None, self.menu_quit,),
+        actions.add_actions([('Quit', gtk.STOCK_QUIT, None, None, None, self.menu_quit,),
                              ('File', None, '_File'),
                              ('Save', gtk.STOCK_SAVE, None, None, None, self.save_cb),
                              ('Save As', gtk.STOCK_SAVE_AS, None, None, None, self.save_as_cb),
-                             ('Open', gtk.STOCK_OPEN, None, None, None, self.open_cb),
-                             ('AddLayer', None, 'Add Layer', None, None, self.add_layer_cb),
                              ('Edit', None, '_Edit'),
                              ('Help', None, '_Help'),
-                             ('Layers', None, 'Layers', None, None, self.layers_cb),
-                             ('Preferences', gtk.STOCK_PREFERENCES, None, None, None, self.preferences_cb),
                              ('About', gtk.STOCK_ABOUT, None, None, None, self.about_cb)])
+
+        self.add_layers_action = gtk.Action('AddLayer', 'Add Layer', None, None)
+        self.add_layers_action.connect("activate", self.add_layer_cb)
+        self.actions.add_action(self.add_layers_action)
+        self.layers_action = gtk.Action('Layers', 'Layers', None, None)
+        self.layers_action.connect("activate", self.layers_cb)
+        self.actions.add_action(self.layers_action)
+        self.prefs_action = gtk.Action('Preferences', 'Preferences', None, None)
+        self.prefs_action.connect("activate", self.preferences_cb)
+        self.actions.add_action(self.prefs_action)
+        self.open_action = gtk.Action('Open', 'Open', None, None)
+        self.open_action.connect("activate", self.open_cb)
+        self.actions.add_action(self.open_action)
+
         uimanager.insert_action_group(actions, 0)
         uimanager.add_ui_from_string(menu_items)
 
