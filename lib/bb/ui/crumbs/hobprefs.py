@@ -166,7 +166,7 @@ class HobPrefs(gtk.Dialog):
             self.reload_required = False
 
     def __init__(self, configurator, handler, curr_sdk_mach, curr_distro, pclass,
-                 cpu_cnt, pmake, bbthread, selected_image_types, all_image_types,
+                 pmake, bbthread, selected_image_types, all_image_types,
                  gplv3disabled, build_toolchain, build_toolchain_headers):
         """
         """
@@ -185,7 +185,6 @@ class HobPrefs(gtk.Dialog):
         self.curr_sdk_mach = curr_sdk_mach
         self.curr_distro = curr_distro
         self.curr_package_format = pclass
-        self.cpu_cnt = cpu_cnt
         self.pmake = pmake
         self.bbthread = bbthread
         self.selected_image_types = selected_image_types.split(" ")
@@ -283,7 +282,6 @@ class HobPrefs(gtk.Dialog):
         # set a high maximum as a value for upper bounds is required by the
         # gtk.Adjustment
         spin_max = 30 # seems like a high enough arbitrary number
-        #spin_max = self.cpu_cnt * 3
         hbox.pack_start(label, expand=False, fill=False, padding=6)
         bbadj = gtk.Adjustment(value=self.bbthread, lower=1, upper=spin_max, step_incr=1)
         bbspinner = gtk.SpinButton(adjustment=bbadj, climb_rate=1, digits=0)

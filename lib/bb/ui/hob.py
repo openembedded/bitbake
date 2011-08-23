@@ -962,9 +962,6 @@ class MainWindow (gtk.Window):
         return scroll
 
 def main (server, eventHandler):
-    import multiprocessing
-    cpu_cnt = multiprocessing.cpu_count()
-
     gobject.threads_init()
 
     taskmodel = TaskListModel()
@@ -979,14 +976,12 @@ def main (server, eventHandler):
     distro = server.runCommand(["getVariable", "DISTRO"])
     bbthread = server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
     if not bbthread:
-        bbthread = cpu_cnt
-        handler.set_bbthreads(cpu_cnt)
+        bbthread = 1
     else:
         bbthread = int(bbthread)
     pmake = server.runCommand(["getVariable", "PARALLEL_MAKE"])
     if not pmake:
-        pmake = cpu_cnt
-        handler.set_pmake(cpu_cnt)
+        pmake = 1
     else:
         # The PARALLEL_MAKE variable will be of the format: "-j 3" and we only
         # want a number for the spinner, so strip everything from the variable
@@ -1012,7 +1007,7 @@ def main (server, eventHandler):
     build_headers = bool(server.runCommand(["getVariable", "HOB_BUILD_TOOLCHAIN_HEADERS"]))
     handler.toggle_toolchain_headers(build_headers)
 
-    prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass, cpu_cnt,
+    prefs = HobPrefs(configurator, handler, sdk_mach, distro, pclass,
                      pmake, bbthread, selected_image_types, all_image_types,
                      gplv3disabled, build_toolchain, build_headers)
     layers = LayerEditor(configurator, None)
