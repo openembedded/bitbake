@@ -298,3 +298,11 @@ class Git(FetchMethod):
         buildindex = "%s" % output.split()[0]
         logger.debug(1, "GIT repository for %s in %s is returning %s revisions in rev-list before %s", url, ud.clonedir, buildindex, rev)
         return buildindex
+
+    def checkstatus(self, uri, ud, d):
+        fetchcmd = "%s ls-remote %s" % (ud.basecmd, uri)
+        try:
+            runfetchcmd(fetchcmd, d, quiet=True)
+            return True
+        except FetchError:
+            return False
