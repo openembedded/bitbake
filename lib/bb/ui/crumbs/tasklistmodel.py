@@ -441,8 +441,9 @@ class TaskListModel(gtk.ListStore):
             self[item_path][self.COL_INC] = True
 
         bin = self[item_path][self.COL_BINB].split(', ')
-        bin.append(binb)
-        self[item_path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
+        if not binb in bin:
+            bin.append(binb)
+            self[item_path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
 
         # We want to do some magic with things which are brought in by the
         # base image so tag them as so
