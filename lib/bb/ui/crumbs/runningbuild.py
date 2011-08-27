@@ -306,31 +306,49 @@ class RunningBuildTreeView (gtk.TreeView):
 
         if event.button == 3:
             selection = super(RunningBuildTreeView, self).get_selection()
-            (model, iter) = selection.get_selected()
-            if iter is not None:
-                can_paste = model.get(iter, model.COL_LOG)[0]
+            (model, it) = selection.get_selected()
+            if it is not None:
+                can_paste = model.get(it, model.COL_LOG)[0]
                 if can_paste == 'pastebin':
                     # build a simple menu with a pastebin option
                     menu = gtk.Menu()
+                    menuitem = gtk.MenuItem("Copy")
+                    menu.append(menuitem)
+                    menuitem.connect("activate", self.copy_handler, (model, it))
+                    menuitem.show()
                     menuitem = gtk.MenuItem("Send log to pastebin")
                     menu.append(menuitem)
-                    menuitem.connect("activate", self.pastebin_handler, (model, iter))
+                    menuitem.connect("activate", self.pastebin_handler, (model, it))
                     menuitem.show()
                     menu.show()
                     menu.popup(None, None, None, event.button, event.time)
+
+    def _add_to_clipboard(self, clipping):
+        """
+        Add the contents of clipping to the system clipboard.
+        """
+        clipboard = gtk.clipboard_get()
+        clipboard.set_text(clipping)
+        clipboard.store()
 
     def pastebin_handler(self, widget, data):
         """
         Send the log data to pastebin, then add the new paste url to the
         clipboard.
         """
-        (model, iter) = data
-        paste_url = do_pastebin(model.get(iter, model.COL_MESSAGE)[0])
+        (model, it) = data
+        paste_url = do_pastebin(model.get(it, model.COL_MESSAGE)[0])
 
         # @todo Provide visual feedback to the user that it is done and that
         # it worked.
         print paste_url
 
-        clipboard = gtk.clipboard_get()
-        clipboard.set_text(paste_url)
-        clipboard.store()
+        self._add_to_clipboard(paste_url)
+
+    def clipboard_handler(self, widget, data):
+        """
+        """
+        (model, it) = data
+        message = model.get(it, model.COL_MESSAGE)[0]
+
+        self._add_to_clipboard(message)
