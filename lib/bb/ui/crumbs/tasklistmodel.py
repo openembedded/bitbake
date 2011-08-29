@@ -462,8 +462,9 @@ class TaskListModel(gtk.ListStore):
                     continue
                 if dep_included:
                     bin = self[path][self.COL_BINB].split(', ')
-                    bin.append(name)
-                    self[path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
+                    if not name in bin:
+                        bin.append(name)
+                        self[path][self.COL_BINB] = ', '.join(bin).lstrip(', ')
                 else:
                     self.include_item(path, binb=name, image_contents=image_contents)
 
