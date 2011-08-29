@@ -268,7 +268,12 @@ class DataSmart(MutableMapping):
         self.dict[var]["content"] = value
 
     def getVar(self, var, expand=False, noweakdefault=False):
-        return self.getVarFlag(var, "content", expand, noweakdefault)
+        value = self.getVarFlag(var, "content", False, noweakdefault)
+
+        # Call expand() separately to make use of the expand cache
+        if expand and value:
+            return self.expand(value, var)
+        return value
 
     def renameVar(self, key, newkey):
         """
