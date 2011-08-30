@@ -168,10 +168,11 @@ class Git(FetchMethod):
             os.chdir(ud.clonedir)
             runfetchcmd("tar -xzf %s" % (ud.fullmirror), d)
 
+        repourl = "%s://%s%s%s" % (ud.proto, username, ud.host, ud.path)
+
         # If the repo still doesn't exist, fallback to cloning it
         if not os.path.exists(ud.clonedir):
-            clone_cmd = "%s clone --bare --mirror %s://%s%s%s %s" % \
-                  (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.clonedir)
+            clone_cmd = "%s clone --bare --mirror %s %s" % (ud.basecmd, repourl, ud.clonedir)
             bb.fetch2.check_network_access(d, clone_cmd)
             runfetchcmd(clone_cmd, d)
 
@@ -187,9 +188,9 @@ class Git(FetchMethod):
                 runfetchcmd("%s remote rm origin" % ud.basecmd, d) 
             except bb.fetch2.FetchError:
                 logger.debug(1, "No Origin")
-            
-            runfetchcmd("%s remote add --mirror origin %s://%s%s%s" % (ud.basecmd, ud.proto, username, ud.host, ud.path), d)
-            fetch_cmd = "%s fetch --all -t" % ud.basecmd
+
+            runfetchcmd("%s remote add --mirror=fetch origin %s" % (ud.basecmd, repourl), d)
+            fetch_cmd = "%s fetch --prune %s refs/*:refs/*" % (ud.basecmd, repourl)
             bb.fetch2.check_network_access(d, fetch_cmd, ud.url)
             runfetchcmd(fetch_cmd, d)
             runfetchcmd("%s prune-packed" % ud.basecmd, d)
