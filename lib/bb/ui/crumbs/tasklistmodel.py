@@ -436,9 +436,8 @@ class TaskListModel(gtk.ListStore):
     def include_item(self, item_path, binb="", image_contents=False):
         item_name = self[item_path][self.COL_NAME]
         item_deps = self[item_path][self.COL_DEPS]
-        item_inc = self[item_path][self.COL_INC]
-        if not item_inc:
-            self[item_path][self.COL_INC] = True
+
+        self[item_path][self.COL_INC] = True
 
         item_bin = self[item_path][self.COL_BINB].split(', ')
         if not binb in item_bin:
