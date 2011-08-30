@@ -417,18 +417,10 @@ class TaskListModel(gtk.ListStore):
                 it = self.contents.iter_next(it)
 
     """
-    Check the self.contents gtk.TreeModel for an item
-    where COL_NAME matches item_name
-    Returns True if a match is found, False otherwise
+    Check whether the item at item_path is included or not
     """
-    def contents_includes_name(self, item_name):
-        it = self.contents.get_iter_first()
-        while it:
-            path = self.contents.get_path(it)
-            if self.contents[path][self.COL_NAME] == item_name:
-                return True
-            it = self.contents.iter_next(it)
-        return False
+    def contents_includes_path(self, item_path):
+        return self[item_path][self.COL_INC]
 
     """
     Add this item, and any of its dependencies, to the image contents
@@ -452,13 +444,15 @@ class TaskListModel(gtk.ListStore):
                 self.selected_image = item_name
 
         if item_deps:
-            # add all of the deps and set their binb to this item
+            # Ensure all of the items deps are included and, where appropriate,
+            # add this item to their COL_BINB
             for dep in item_deps.split(" "):
                 # If the contents model doesn't already contain dep, add it
-                dep_included = self.contents_includes_name(dep)
                 dep_path = self.find_path_for_item(dep)
                 if not dep_path:
                     continue
+                dep_included = self.contents_includes_path(dep_path)
+
                 if dep_included and not dep in item_bin:
                     # don't set the COL_BINB to this item if the target is an
                     # item in our own COL_BINB
