@@ -432,7 +432,7 @@ class TaskListModel(gtk.ListStore):
         self[item_path][self.COL_INC] = True
 
         item_bin = self[item_path][self.COL_BINB].split(', ')
-        if not binb in item_bin:
+        if binb and not binb in item_bin:
             item_bin.append(binb)
             self[item_path][self.COL_BINB] = ', '.join(item_bin).lstrip(', ')
 
