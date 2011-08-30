@@ -481,11 +481,9 @@ class TaskListModel(gtk.ListStore):
             return None
 
         it = self.get_iter_first()
-        path = None
         while it:
-            path = self.get_path(it)
-            if (self[path][self.COL_NAME] == item_name):
-                return path
+            if (self.get_value(it, self.COL_NAME) == item_name):
+                return self.get_path(it)
             else:
                 it = self.iter_next(it)
         return None
