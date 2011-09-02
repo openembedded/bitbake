@@ -192,8 +192,8 @@ class MainWindow (gtk.Window):
             self.curr_mach = mach
             # Flush this straight to the file as MACHINE is changed
             # independently of other 'Preferences'
-            self.configurator.setLocalConfVar('MACHINE', mach)
-            self.configurator.writeLocalConf()
+            self.configurator.setConfVar('MACHINE', mach)
+            self.configurator.writeConf()
             handler.set_machine(mach)
             handler.reload_data()
 

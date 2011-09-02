@@ -38,13 +38,13 @@ class HobPrefs(gtk.Dialog):
         else:
             self.selected_image_types = handler.remove_image_output_type(ot)
 
-        self.configurator.setLocalConfVar('IMAGE_FSTYPES', "%s" % " ".join(self.selected_image_types).lstrip(" "))
+        self.configurator.setConfVar('IMAGE_FSTYPES', "%s" % " ".join(self.selected_image_types).lstrip(" "))
 
     def sdk_machine_combo_changed_cb(self, combo, handler):
         sdk_mach = combo.get_active_text()
 	if sdk_mach != self.curr_sdk_mach:
             self.curr_sdk_mach = sdk_mach
-            self.configurator.setLocalConfVar('SDKMACHINE', sdk_mach)
+            self.configurator.setConfVar('SDKMACHINE', sdk_mach)
             handler.set_sdk_machine(sdk_mach)
 
     def update_sdk_machines(self, handler, sdk_machines):
@@ -67,7 +67,7 @@ class HobPrefs(gtk.Dialog):
         distro = combo.get_active_text()
 	if distro != self.curr_distro:
             self.curr_distro = distro
-            self.configurator.setLocalConfVar('DISTRO', distro)
+            self.configurator.setConfVar('DISTRO', distro)
             handler.set_distro(distro)
             self.reload_required = True
 
@@ -91,7 +91,7 @@ class HobPrefs(gtk.Dialog):
         package_format = combo.get_active_text()
         if package_format != self.curr_package_format:
             self.curr_package_format = package_format
-            self.configurator.setLocalConfVar('PACKAGE_CLASSES', 'package_%s' % package_format)
+            self.configurator.setConfVar('PACKAGE_CLASSES', 'package_%s' % package_format)
             handler.set_package_format(package_format)
             self.reload_required = True
 
@@ -113,7 +113,7 @@ class HobPrefs(gtk.Dialog):
     
     def include_gplv3_cb(self, toggle):
         excluded = toggle.get_active()
-        orig_incompatible = self.configurator.getLocalConfVar('INCOMPATIBLE_LICENSE')
+        orig_incompatible = self.configurator.getConfVar('INCOMPATIBLE_LICENSE')
         new_incompatible = ""
         if excluded:
             if not orig_incompatible:
@@ -125,18 +125,18 @@ class HobPrefs(gtk.Dialog):
 
         if new_incompatible != orig_incompatible:
             self.handler.set_incompatible_license(new_incompatible)
-            self.configurator.setLocalConfVar('INCOMPATIBLE_LICENSE', new_incompatible)
+            self.configurator.setConfVar('INCOMPATIBLE_LICENSE', new_incompatible)
             self.reload_required = True
 
     def change_bb_threads_cb(self, spinner):
         val = spinner.get_value_as_int()
         self.handler.set_bbthreads(val)
-        self.configurator.setLocalConfVar('BB_NUMBER_THREADS', val)
+        self.configurator.setConfVar('BB_NUMBER_THREADS', val)
 
     def change_make_threads_cb(self, spinner):
         val = spinner.get_value_as_int()
         self.handler.set_pmake(val)
-        self.configurator.setLocalConfVar('PARALLEL_MAKE', "-j %s" % val)
+        self.configurator.setConfVar('PARALLEL_MAKE', "-j %s" % val)
 
     def toggle_toolchain_cb(self, check):
         enabled = check.get_active()
@@ -144,7 +144,7 @@ class HobPrefs(gtk.Dialog):
         if enabled:
             toolchain = '1'
         self.handler.toggle_toolchain(enabled)
-        self.configurator.setLocalConfVar('HOB_BUILD_TOOLCHAIN', toolchain)
+        self.configurator.setConfVar('HOB_BUILD_TOOLCHAIN', toolchain)
 
     def toggle_headers_cb(self, check):
         enabled = check.get_active()
@@ -152,13 +152,13 @@ class HobPrefs(gtk.Dialog):
         if enabled:
             headers = '1'
         self.handler.toggle_toolchain_headers(enabled)
-        self.configurator.setLocalConfVar('HOB_BUILD_TOOLCHAIN_HEADERS', headers)
+        self.configurator.setConfVar('HOB_BUILD_TOOLCHAIN_HEADERS', headers)
 
     def set_parent_window(self, parent):
         self.set_transient_for(parent)
 
     def write_changes(self):
-        self.configurator.writeLocalConf()
+        self.configurator.writeConf()
 
     def prefs_response_cb(self, dialog, response):
         if self.reload_required:

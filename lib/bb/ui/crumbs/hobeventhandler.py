@@ -65,7 +65,7 @@ class HobHandler(gobject.GObject):
                                    gobject.TYPE_STRING,)),
     }
 
-    (CFG_PATH_LOCAL, CFG_PATH_HOB, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS, REPARSE_FILES, BUILD_IMAGE) = range(10)
+    (CFG_PATH_LOCAL, CFG_PATH_PRE, CFG_PATH_POST, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDK, FILES_MATCH_CLASS, GENERATE_TGTS, REPARSE_FILES, BUILD_IMAGE) = range(11)
 
     def __init__(self, taskmodel, server):
         gobject.GObject.__init__(self)
@@ -90,9 +90,12 @@ class HobHandler(gobject.GObject):
             self.generating = True
 
         if self.current_command == self.CFG_PATH_LOCAL:
-            self.current_command = self.CFG_PATH_HOB
-            self.server.runCommand(["findConfigFilePath", "hob.local.conf"])
-        elif self.current_command == self.CFG_PATH_HOB:
+            self.current_command = self.CFG_PATH_PRE
+            self.server.runCommand(["findConfigFilePath", "hob-pre.conf"])
+        elif self.current_command == self.CFG_PATH_PRE:
+            self.current_command = self.CFG_PATH_POST
+            self.server.runCommand(["findConfigFilePath", "hob-post.conf"])
+        elif self.current_command == self.CFG_PATH_POST:
             self.current_command = self.CFG_PATH_LAYERS
             self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
         elif self.current_command == self.CFG_PATH_LAYERS:

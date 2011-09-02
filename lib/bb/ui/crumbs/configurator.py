@@ -40,12 +40,13 @@ class Configurator(gobject.GObject):
 
     def __init__(self):
         gobject.GObject.__init__(self)
-        self.local = None
         self.bblayers = None
         self.enabled_layers = {}
         self.loaded_layers = {}
         self.config = {}
         self.orig_config = {}
+        self.preconf = None
+        self.postconf = None
 
     # NOTE: cribbed from the cooker...
     def _parse(self, f, data, include=False):
@@ -55,18 +56,16 @@ class Configurator(gobject.GObject):
             parselog.critical("Unable to parse %s: %s" % (f, exc))
             sys.exit(1)
 
-    def _loadLocalConf(self, path):
+    def _loadConf(self, path):
         def getString(var):
             return bb.data.getVar(var, data, True) or ""
-
-        self.local = path
 
         if self.orig_config:
             del self.orig_config
             self.orig_config = {}
 
         data = bb.data.init()
-        data = self._parse(self.local, data)
+        data = self._parse(path, data)
 
         # We only need to care about certain variables
         mach = getString('MACHINE')
@@ -76,6 +75,8 @@ class Configurator(gobject.GObject):
         if sdkmach and sdkmach != self.config.get('SDKMACHINE', ''):
             self.config['SDKMACHINE'] = sdkmach
         distro = getString('DISTRO')
+        if not distro:
+            distro = "defaultsetup"
         if distro and distro != self.config.get('DISTRO', ''):
             self.config['DISTRO'] = distro
         bbnum = getString('BB_NUMBER_THREADS')
@@ -109,10 +110,10 @@ class Configurator(gobject.GObject):
 
         self.orig_config = copy.deepcopy(self.config)
 
-    def setLocalConfVar(self, var, val):
+    def setConfVar(self, var, val):
         self.config[var] = val
 
-    def getLocalConfVar(self, var):
+    def getConfVar(self, var):
         if var in self.config:
             return self.config[var]
         else:
@@ -135,9 +136,17 @@ class Configurator(gobject.GObject):
         self.emit("layers-loaded")
 
     def _addConfigFile(self, path):
+        conffiles = ["local.conf", "hob-pre.conf", "hob-post.conf"]
         pref, sep, filename = path.rpartition("/")
-        if filename == "local.conf" or filename == "hob.local.conf":
-            self._loadLocalConf(path)
+
+        if filename == "hob-pre.conf":
+            self.preconf = path
+
+        if filename == "hob-post.conf":
+            self.postconf = path
+
+        if filename in conffiles:
+            self._loadConf(path)
         elif filename == "bblayers.conf":
             self._loadLayerConf(path)
 
@@ -220,22 +229,8 @@ class Configurator(gobject.GObject):
         with open(conffile, "w") as new:
             new.write("".join(contents))
 
-    def writeLocalConf(self):
-        # Dictionary containing only new or modified variables
-        changed_values = {}
-        for var in self.config:
-            val = self.config[var]
-            if self.orig_config.get(var, None) != val:
-                changed_values[var] = val
-
-        if not len(changed_values):
-            return
-
-        # read the original conf into a list
-        with open(self.local, 'r') as config:
-            config_lines = config.readlines()
-
-        new_config_lines = ["\n"]
+    def updateConf(self, orig_lines, changed_values):
+        new_config_lines = []
         for var in changed_values:
             # Convenience function for re.subn(). If the pattern matches
             # return a string which contains an assignment using the same
@@ -254,10 +249,10 @@ class Configurator(gobject.GObject):
             # Iterate over the local.conf lines and if they are a match
             # for the pattern comment out the line and append a new line
             # with the new VAR op "value" entry
-            for line in config_lines:
+            for line in orig_lines:
                 new_line, replacements = p.subn(replace_val, line)
                 if replacements:
-                    config_lines[cnt] = "#%s" % line
+                    orig_lines[cnt] = "#%s" % line
                     new_config_lines.append(new_line)
                     replaced = True
                 cnt = cnt + 1
@@ -266,16 +261,53 @@ class Configurator(gobject.GObject):
                 new_config_lines.append("%s = \"%s\"\n" % (var, changed_values[var]))
 
         # Add the modified variables
-        config_lines.extend(new_config_lines)
+        orig_lines.extend(new_config_lines)
+        return orig_lines
 
-        self.writeConfFile(self.local, config_lines)
+    def writeConf(self):
+        pre_vars = ["MACHINE", "SDKMACHINE", "DISTRO",
+                    "INCOMPATIBLE_LICENSE"]
+        post_vars = ["BB_NUMBER_THREADS", "PARALLEL_MAKE", "PACKAGE_CLASSES",
+                     "IMAGE_FSTYPES", "HOB_BUILD_TOOLCHAIN",
+                     "HOB_BUILD_TOOLCHAIN_HEADERS"]
+        pre_values = {}
+        post_values = {}
+        changed_values = {}
+        pre_lines = None
+        post_lines = None
+
+        for var in self.config:
+            val = self.config[var]
+            if self.orig_config.get(var, None) != val:
+                changed_values[var] = val
+
+        if not len(changed_values):
+            return
+
+        for var in changed_values:
+            if var in pre_vars:
+                pre_values[var] = changed_values[var]
+            elif var in post_vars:
+                post_values[var] = changed_values[var]
+
+        with open(self.preconf, 'r') as pre:
+            pre_lines = pre.readlines()
+        pre_lines = self.updateConf(pre_lines, pre_values)
+        if len(pre_lines):
+            self.writeConfFile(self.preconf, pre_lines)
+
+        with open(self.postconf, 'r') as post:
+            post_lines = post.readlines()
+        post_lines = self.updateConf(post_lines, post_values)
+        if len(post_lines):
+            self.writeConfFile(self.postconf, post_lines)
 
         del self.orig_config
         self.orig_config = copy.deepcopy(self.config)
 
     def insertTempBBPath(self, bbpath, bbfiles):
         # read the original conf into a list
-        with open(self.local, 'r') as config:
+        with open(self.postconf, 'r') as config:
             config_lines = config.readlines()
 
         if bbpath:
@@ -283,7 +315,7 @@ class Configurator(gobject.GObject):
         if bbfiles:
             config_lines.append("BBFILES := \"${BBFILES} %s\"\n" % bbfiles)
 
-        self.writeConfFile(self.local, config_lines)
+        self.writeConfFile(self.postconf, config_lines)
 
     def writeLayerConf(self):
         # If we've not added/removed new layers don't write
