@@ -544,14 +544,17 @@ class MainWindow (gtk.Window):
         """
         # Whether the item is currently included
         inc = self.model[opath][self.model.COL_INC]
+        # FIXME: due to inpredictability of the removal of packages we are
+        # temporarily disabling this feature
         # If the item is already included, mark it for removal then
         # the sweep_up() method finds affected items and marks them
         # appropriately
-        if inc:
-            self.model.mark(opath)
-            self.model.sweep_up()
-        # If the item isn't included, mark it for inclusion
-        else:
+        # if inc:
+        #     self.model.mark(opath)
+        #     self.model.sweep_up()
+        # # If the item isn't included, mark it for inclusion
+        # else:
+        if not inc:
             self.model.include_item(item_path=opath,
                                     binb="User Selected",
                                     image_contents=image)
@@ -563,19 +566,22 @@ class MainWindow (gtk.Window):
         inc = model[path][self.model.COL_INC]
         # Warn user before removing included packages
         if inc:
-            pn = model[path][self.model.COL_NAME]
-            revdeps = self.model.find_reverse_depends(pn)
-            if len(revdeps):
-                lbl = "<b>Remove %s?</b>\n\nThis action cannot be undone and all packages which depend on this will be removed\nPackages which depend on %s include %s." % (pn, pn, ", ".join(revdeps).rstrip(","))
-            else:
-                lbl = "<b>Remove %s?</b>\n\nThis action cannot be undone." % pn
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
-            dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
-            dialog.add_button("Remove", gtk.RESPONSE_OK)
-            response = dialog.run()
-            dialog.destroy()
-            if response == gtk.RESPONSE_CANCEL:
-                return
+            # FIXME: due to inpredictability of the removal of packages we are
+            # temporarily disabling this feature
+            return
+            # pn = model[path][self.model.COL_NAME]
+            # revdeps = self.model.find_reverse_depends(pn)
+            # if len(revdeps):
+            #     lbl = "<b>Remove %s?</b>\n\nThis action cannot be undone and all packages which depend on this will be removed\nPackages which depend on %s include %s." % (pn, pn, ", ".join(revdeps).rstrip(","))
+            # else:
+            #     lbl = "<b>Remove %s?</b>\n\nThis action cannot be undone." % pn
+            # dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            # dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
+            # dialog.add_button("Remove", gtk.RESPONSE_OK)
+            # response = dialog.run()
+            # dialog.destroy()
+            # if response == gtk.RESPONSE_CANCEL:
+            #     return
 
         self.set_busy_cursor()
         # Convert path to path in original model
