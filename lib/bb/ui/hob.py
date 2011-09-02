@@ -982,6 +982,27 @@ class MainWindow (gtk.Window):
 def main (server, eventHandler):
     gobject.threads_init()
 
+    # NOTE: For now we require that the user run with pre and post files to
+    # read and store configuration set in the GUI.
+    # We hope to adjust this long term as tracked in Yocto Bugzilla #1441
+    # http://bugzilla.pokylinux.org/show_bug.cgi?id=1441
+    reqfiles = 0
+    dep_files = server.runCommand(["getVariable", "__depends"]) or set()
+    dep_files.union(server.runCommand(["getVariable", "__base_depends"]) or set())
+    for f in dep_files:
+        if f[0].endswith("hob-pre.conf"):
+            reqfiles = reqfiles + 1
+        elif f[0].endswith("hob-post.conf"):
+            reqfiles = reqfiles + 1
+        if reqfiles == 2:
+            break
+    if reqfiles < 2:
+        print("""The hob UI requires a pre file named hob-pre.conf and a post
+file named hob-post.conf to store and read its configuration from. Please run
+hob with these files, i.e.\n
+\bitbake -u hob -r conf/hob-pre.conf -R conf/hob-post.conf""")
+        return
+
     taskmodel = TaskListModel()
     configurator = Configurator()
     handler = HobHandler(taskmodel, server)
