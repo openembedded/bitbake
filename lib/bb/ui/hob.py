@@ -992,6 +992,8 @@ def main (server, eventHandler):
     if not sdk_mach:
         sdk_mach = server.runCommand(["getVariable", "SDK_ARCH"])
     distro = server.runCommand(["getVariable", "DISTRO"])
+    if not distro:
+        distro = "defaultsetup"
     bbthread = server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
     if not bbthread:
         bbthread = 1
