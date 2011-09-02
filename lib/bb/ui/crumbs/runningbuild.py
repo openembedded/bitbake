@@ -91,6 +91,12 @@ class RunningBuild (gobject.GObject):
             parent = self.tasks_to_iter[(package, task)]
 
         if(isinstance(event, logging.LogRecord)):
+            # FIXME: this is a hack! More info in Yocto #1433
+            # http://bugzilla.pokylinux.org/show_bug.cgi?id=1433, temporarily
+            # mask the error message as it's not informative for the user.
+            if event.msg.startswith("Execution of event handler 'run_buildstats' failed"):
+                return
+
             if (event.levelno < logging.INFO or
                 event.msg.startswith("Running task")):
                 return # don't add these to the list
