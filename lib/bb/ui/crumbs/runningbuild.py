@@ -68,6 +68,11 @@ class RunningBuild (gobject.GObject):
         self.model = RunningBuildModel()
         self.sequential = sequential
 
+    def reset (self):
+        self.pids_to_task.clear()
+        self.tasks_to_iter.clear()
+        self.model.clear()
+
     def handle_event (self, event, pbar=None):
         # Handle an event from the event queue, this may result in updating
         # the model and thus the UI. Or it may be to tell us that the build

@@ -484,7 +484,7 @@ class MainWindow (gtk.Window):
 
     def toggle_createview(self):
         self.set_menus_sensitive(True)
-        self.build.model.clear()
+        self.build.reset()
         self.nb.set_current_page(0)
 
     def build_complete_cb(self, running_build):
