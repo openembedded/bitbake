@@ -496,6 +496,7 @@ class MainWindow (gtk.Window):
         self.cancel.set_sensitive(False)
         for f in self.files_to_clean:
             os.remove(f)
+        self.files_to_clean = []
 
         lbl = "<b>Build completed</b>\n\nClick 'Edit Image' to start another build or 'View Messages' to view the messages output during the build."
         if self.handler.building == "image" and self.build_succeeded:
