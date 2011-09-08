@@ -77,7 +77,7 @@ class HobHandler(gobject.GObject):
         self.generating = False
         self.build_queue = []
         self.current_phase = None
-        self.image_dir = None
+        self.image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
 
         self.model = taskmodel
         self.server = server
@@ -329,7 +329,6 @@ class HobHandler(gobject.GObject):
         return self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"])
 
     def make_temp_dir(self):
-        self.image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
         bb.utils.mkdirhier(self.image_dir)
 
     def remove_temp_dir(self):
