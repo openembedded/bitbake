@@ -1072,6 +1072,7 @@ class RunQueueExecute:
         # a fork() or exec*() activates PSEUDO...
 
         envbackup = {}
+        fakeenv = {}
         umask = None
 
         taskdep = self.rqdata.dataCache.task_deps[fn]
@@ -1087,6 +1088,7 @@ class RunQueueExecute:
             for key, value in (var.split('=') for var in envvars):
                 envbackup[key] = os.environ.get(key)
                 os.environ[key] = value
+                fakeenv[key] = value
 
             fakedirs = (self.rqdata.dataCache.fakerootdirs[fn] or "").split()
             for p in fakedirs:
@@ -1136,7 +1138,14 @@ class RunQueueExecute:
                 for h in self.rqdata.hash_deps:
                     the_data.setVar("BBHASHDEPS_%s" % h, self.rqdata.hash_deps[h])
 
-                os.environ.update(bb.data.exported_vars(the_data))
+                # exported_vars() returns a generator which *cannot* be passed to os.environ.update() 
+                # successfully. We also need to unset anything from the environment which shouldn't be there 
+                exports = bb.data.exported_vars(the_data)
+                bb.utils.empty_environment()
+                for e, v in exports:
+                    os.environ[e] = v
+                for e in fakeenv:
+                    os.environ[e] = fakeenv[e]
 
                 if quieterrors:
                     the_data.setVarFlag(taskname, "quieterrors", "1")
