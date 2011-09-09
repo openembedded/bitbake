@@ -495,7 +495,11 @@ class MainWindow (gtk.Window):
         self.back.set_sensitive(True)
         self.cancel.set_sensitive(False)
         for f in self.files_to_clean:
-            os.remove(f)
+            try:
+                os.remove(f)
+            except OSError:
+                pass
+            self.files_to_clean.remove(f)
         self.files_to_clean = []
 
         lbl = "<b>Build completed</b>\n\nClick 'Edit Image' to start another build or 'View Messages' to view the messages output during the build."
