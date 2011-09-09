@@ -77,6 +77,8 @@ class HobHandler(gobject.GObject):
         self.generating = False
         self.build_queue = []
         self.current_phase = None
+        self.bbpath_ok = False
+        self.bbfiles_ok = False
         self.image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
 
         self.model = taskmodel
@@ -247,6 +249,8 @@ class HobHandler(gobject.GObject):
 
     def build_image(self, image, configurator):
         targets = []
+        nbbp = None
+        nbbf = None
         targets.append(image)
         if self.build_toolchain and self.build_toolchain_headers:
             targets.append("meta-toolchain-sdk")
@@ -254,31 +258,28 @@ class HobHandler(gobject.GObject):
             targets.append("meta-toolchain")
         self.build_queue = targets
 
-        bbpath_ok = False
-        bbpath = self.server.runCommand(["getVariable", "BBPATH"])
-        if self.image_dir in bbpath.split(":"):
-            bbpath_ok = True
+        if not self.bbpath_ok:
+            bbpath = self.server.runCommand(["getVariable", "BBPATH"])
+            if self.image_dir in bbpath.split(":"):
+                self.bbpath_ok = True
+            else:
+                nbbp = self.image_dir
 
-        bbfiles_ok = False
-        bbfiles = self.server.runCommand(["getVariable", "BBFILES"]).split(" ")
-        for files in bbfiles:
+        if not self.bbfiles_ok:
             import re
             pattern = "%s/\*.bb" % self.image_dir
-            if re.match(pattern, files):
-                bbfiles_ok = True
+            bbfiles = self.server.runCommand(["getVariable", "BBFILES"]).split(" ")
+            for files in bbfiles:
+                if re.match(pattern, files):
+                    self.bbfiles_ok = True
 
-        if not bbpath_ok:
-            nbbp = self.image_dir
-        else:
-            nbbp = None
+            if not self.bbfiles_ok:
+                nbbf = "%s/*.bb" % self.image_dir
 
-        if not bbfiles_ok:
-            nbbf = "%s/*.bb" % self.image_dir
-        else:
-            nbbf = None
-
-        if not bbfiles_ok or not bbpath_ok:
+        if nbbp or nbbf:
             configurator.insertTempBBPath(nbbp, nbbf)
+            self.bbpath_ok = True
+            self.bbfiles_ok = True
 
         self.current_command = self.REPARSE_FILES
         self.run_next_command()
