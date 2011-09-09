@@ -144,6 +144,7 @@ class MainWindow (gtk.Window):
         self.build_succeeded = False
 
     def image_changed_string_cb(self, model, new_image):
+        self.selected_image = new_image
         # disconnect the image combo's signal handler
         if self.image_combo_id:
             self.image_combo.disconnect(self.image_combo_id)
