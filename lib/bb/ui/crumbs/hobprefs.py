@@ -331,4 +331,4 @@ class HobPrefs(gtk.Dialog):
         # headerscheck.set_active(self.build_toolchain_headers)
         # headerscheck.connect("toggled", self.toggle_headers_cb)
         # hbox.pack_start(headerscheck, expand=False, fill=False, padding=6)
-        # self.connect("response", self.prefs_response_cb)
+        self.connect("response", self.prefs_response_cb)
