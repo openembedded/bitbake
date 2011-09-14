@@ -69,10 +69,11 @@ class Wget(FetchMethod):
 
             fetchcmd = fetchcmd.replace("${URI}", uri.split(";")[0])
             fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
-            logger.info("fetch " + uri)
-            logger.debug(2, "executing " + fetchcmd)
+            if not checkonly:
+                logger.info("fetch " + uri)
+                logger.debug(2, "executing " + fetchcmd)
             bb.fetch2.check_network_access(d, fetchcmd)
-            runfetchcmd(fetchcmd, d)
+            runfetchcmd(fetchcmd, d, quiet=checkonly)
 
             # Sanity check since wget can pretend it succeed when it didn't
             # Also, this used to happen if sourceforge sent us to the mirror page
