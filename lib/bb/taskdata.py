@@ -175,7 +175,7 @@ class TaskData:
                 for dep in task_deps['depends'][task].split():
                     if dep:
                         if ":" not in dep:
-                            bb.msg.fatal("TaskData", "Error, dependency %s does not contain ':' character\n. Task 'depends' should be specified in the form 'packagename:task'" % (dep, fn))
+                            bb.msg.fatal("TaskData", "Error for %s, dependency %s does not contain ':' character\n. Task 'depends' should be specified in the form 'packagename:task'" % (fn, dep))
                         ids.append(((self.getbuild_id(dep.split(":")[0])), dep.split(":")[1]))
                 self.tasks_idepends[taskid].extend(ids)
 
