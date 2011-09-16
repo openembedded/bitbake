@@ -239,7 +239,10 @@ class Git(FetchMethod):
 
     def _contains_ref(self, tag, d):
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
-        output = runfetchcmd("%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (basecmd, tag), d, quiet=True)
+        cmd = "%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (basecmd, tag)
+        output = runfetchcmd(cmd, d, quiet=True)
+        if len(output.split()) > 1:
+            raise bb.fetch2.FetchError("The command '%s' gave output with more then 1 line unexpectedly, output: '%s'" % (cmd, output))
         return output.split()[0] != "0"
 
     def _revision_key(self, url, ud, d, name):
