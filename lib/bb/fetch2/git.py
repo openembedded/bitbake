@@ -210,10 +210,12 @@ class Git(FetchMethod):
         subdir = ud.parm.get("subpath", "")
         if subdir != "":
             readpathspec = ":%s" % (subdir)
+            def_destsuffix = "%s/" % os.path.basename(subdir)
         else:
             readpathspec = ""
+            def_destsuffix = "git/"
 
-        destsuffix = ud.parm.get("destsuffix", "git/")
+        destsuffix = ud.parm.get("destsuffix", def_destsuffix)
         destdir = os.path.join(destdir, destsuffix)
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
