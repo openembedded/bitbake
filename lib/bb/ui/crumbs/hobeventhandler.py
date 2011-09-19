@@ -71,7 +71,7 @@ class HobHandler(gobject.GObject):
         gobject.GObject.__init__(self)
 
         self.current_command = None
-        self.building = None
+        self.building = False
         self.build_toolchain = False
         self.build_toolchain_headers = False
         self.generating = False
@@ -128,10 +128,10 @@ class HobHandler(gobject.GObject):
             self.server.runCommand(["resetCooker"])
             self.server.runCommand(["reparseFiles"])
         elif self.current_command == self.BUILD_IMAGE:
-            self.building = "image"
             if self.generating:
                 self.emit("data-generated")
                 self.generating = False
+            self.building = True
             self.server.runCommand(["buildTargets", self.build_queue, "build"])
             self.build_queue = []
             self.current_command = None
@@ -247,11 +247,12 @@ class HobHandler(gobject.GObject):
         pmake = "-j %s" % threads
         self.server.runCommand(["setVariable", "BB_NUMBER_THREADS", pmake])
 
-    def build_image(self, image, configurator):
+    def build_targets(self, tgts, configurator, build_type="image"):
+        self.build_type = build_type
         targets = []
         nbbp = None
         nbbf = None
-        targets.append(image)
+        targets.extend(tgts)
         if self.build_toolchain and self.build_toolchain_headers:
             targets.append("meta-toolchain-sdk")
         elif self.build_toolchain:
@@ -283,10 +284,6 @@ class HobHandler(gobject.GObject):
 
         self.current_command = self.REPARSE_FILES
         self.run_next_command()
-
-    def build_packages(self, pkgs):
-        self.building = "packages"
-        self.server.runCommand(["buildTargets", pkgs, "build"])
 
     def cancel_build(self, force=False):
         if force:

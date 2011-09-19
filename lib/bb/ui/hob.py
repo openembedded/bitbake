@@ -459,6 +459,9 @@ class MainWindow (gtk.Window):
             image_name = recipepath.rstrip(".bb")
             path, sep, image_name = image_name.rpartition("/")
 
+            image = []
+            image.append(image_name)
+
             rep.writeRecipe(recipepath, self.model)
             # In the case where we saved the file for the purpose of building
             # it we should then delete it so that the users workspace doesn't
@@ -466,9 +469,9 @@ class MainWindow (gtk.Window):
             if not self.save_path:
                 self.files_to_clean.append(recipepath)
 
-            self.handler.build_image(image_name, self.configurator)
+            self.handler.build_targets(image, self.configurator)
         else:
-            self.handler.build_packages(self.model.get_selected_pn())
+            self.handler.build_targets(self.model.get_selected_pn(), self.configurator, "packages")
 
         # Disable parts of the menu which shouldn't be used whilst building
         self.set_menus_sensitive(False)
@@ -490,7 +493,7 @@ class MainWindow (gtk.Window):
 
     def build_complete_cb(self, running_build):
         # Have the handler process BB events again
-        self.handler.building = None
+        self.handler.building = False
         self.stopping = False
         self.back.connect("clicked", self.back_button_clicked_cb)
         self.back.set_sensitive(True)
@@ -504,7 +507,7 @@ class MainWindow (gtk.Window):
         self.files_to_clean = []
 
         lbl = "<b>Build completed</b>\n\nClick 'Edit Image' to start another build or 'View Messages' to view the messages output during the build."
-        if self.handler.building == "image" and self.build_succeeded:
+        if self.handler.build_type == "image" and self.build_succeeded:
             deploy = self.handler.get_image_deploy_dir()
             lbl = lbl + "\n<a href=\"file://%s\" title=\"%s\">Browse folder of built images</a>." % (deploy, deploy)
 
