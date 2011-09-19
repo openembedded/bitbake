@@ -280,7 +280,7 @@ class Git(FetchMethod):
         # Check if we have the rev already
 
         if not os.path.exists(ud.clonedir):
-            logger.debug("GIT repository for %s does not exist in %s.  \
+            logger.debug(1, "GIT repository for %s does not exist in %s.  \
                           Downloading.", url, ud.clonedir)
             self.download(None, ud, d)
             if not os.path.exists(ud.clonedir):
