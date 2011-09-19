@@ -322,6 +322,7 @@ class MainWindow (gtk.Window):
         if response == gtk.RESPONSE_OK:
             self.reset_build()
             self.search.set_text("")
+            self.selected_image = None
         return
 
     def reset_build(self):
