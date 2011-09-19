@@ -238,13 +238,18 @@ class BBCooker:
         # Need files parsed
         self.updateCache()
 
+        # Need to ensure data store is expanded
+        localdata = data.createCopy(self.configuration.data)
+        bb.data.update_data(localdata)
+        bb.data.expandKeys(localdata)
+
         pkg_pn = self.status.pkg_pn
         preferred_versions = {}
         latest_versions = {}
 
         # Sort by priority
         for pn in pkg_pn:
-            (last_ver, last_file, pref_ver, pref_file) = bb.providers.findBestProvider(pn, self.configuration.data, self.status)
+            (last_ver, last_file, pref_ver, pref_file) = bb.providers.findBestProvider(pn, localdata, self.status)
             preferred_versions[pn] = (pref_ver, pref_file)
             latest_versions[pn] = (last_ver, last_file)
 
