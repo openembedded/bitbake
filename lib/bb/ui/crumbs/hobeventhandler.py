@@ -79,11 +79,14 @@ class HobHandler(gobject.GObject):
         self.current_phase = None
         self.bbpath_ok = False
         self.bbfiles_ok = False
+        self.build_type = "image"
         self.image_dir = os.path.join(tempfile.gettempdir(), 'hob-images')
 
         self.model = taskmodel
         self.server = server
 
+        deploy_dir = self.server.runCommand(["getVariable", "DEPLOY_DIR"])
+        self.image_out_dir = os.path.join(deploy_dir, "images")
         self.image_output_types = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]).split(" ")
 
     def run_next_command(self):
@@ -324,7 +327,7 @@ class HobHandler(gobject.GObject):
         return self.image_output_types
 
     def get_image_deploy_dir(self):
-        return self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"])
+        return self.img_out_dir
 
     def make_temp_dir(self):
         bb.utils.mkdirhier(self.image_dir)

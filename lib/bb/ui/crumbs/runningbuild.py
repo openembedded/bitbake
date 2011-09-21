@@ -242,14 +242,14 @@ class RunningBuild (gobject.GObject):
                                       Colors.OK,
                                       0))
 
-            # Emit a generic "build-complete" signal for things wishing to
-            # handle when the build is finished
-            self.emit("build-complete")
             # Emit the appropriate signal depending on the number of failures
             if (failures >= 1):
                 self.emit ("build-failed")
             else:
                 self.emit ("build-succeeded")
+            # Emit a generic "build-complete" signal for things wishing to
+            # handle when the build is finished
+            self.emit("build-complete")
 
         elif isinstance(event, bb.command.CommandFailed):
             if event.error.startswith("Exited with"):
