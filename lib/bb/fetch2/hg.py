@@ -166,7 +166,7 @@ class Hg(FetchMethod):
         output = runfetchcmd(self._buildhgcommand(ud, d, "info"), d)
         return output.strip()
 
-    def _build_revision(self, url, ud, d):
+    def _build_revision(self, url, ud, d, name):
         return ud.revision
 
     def _revision_key(self, url, ud, d, name):
