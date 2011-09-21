@@ -325,7 +325,7 @@ class RunningBuildTreeView (gtk.TreeView):
                     menu = gtk.Menu()
                     menuitem = gtk.MenuItem("Copy")
                     menu.append(menuitem)
-                    menuitem.connect("activate", self.copy_handler, (model, it))
+                    menuitem.connect("activate", self.clipboard_handler, (model, it))
                     menuitem.show()
                     menuitem = gtk.MenuItem("Send log to pastebin")
                     menu.append(menuitem)
