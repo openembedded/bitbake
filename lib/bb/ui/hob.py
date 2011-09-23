@@ -304,13 +304,11 @@ class MainWindow (gtk.Window):
                 self.image_combo.disconnect(self.image_combo_id)
                 self.image_combo_id = None
             self.model.set_selected_image(self.selected_image)
-            self.selected_image = None
             if not self.image_combo_id:
                 self.image_combo_id = self.image_combo.connect("changed", self.image_changed_cb)
 
         if self.selected_packages:
             self.model.set_selected_packages(self.selected_packages)
-            self.selected_packages = None
 
     def reset_clicked_cb(self, button):
         lbl = "<b>Reset your selections?</b>\n\nAny new changes you have made will be lost"
