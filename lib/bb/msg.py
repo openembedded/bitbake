@@ -106,8 +106,8 @@ def init_msgconfig(verbose, debug, debug_domains = []):
     """
     Set default verbosity and debug levels config the logger
     """
-    bb.msg.loggerDebugLevel = debug
-    bb.msg.loggerVerbose = verbose
+    bb.msg.loggerDefaultDebugLevel = debug
+    bb.msg.loggerDefaultVerbose = verbose
     bb.msg.loggerDefaultDomains = debug_domains
 
 def addDefaultlogFilter(handler):

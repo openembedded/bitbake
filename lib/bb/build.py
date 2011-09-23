@@ -236,7 +236,7 @@ def exec_func_shell(function, d, runfile, cwd=None):
         if fakerootcmd:
             cmd = [fakerootcmd, runfile]
 
-    if bb.msg.loggerVerbose:
+    if bb.msg.loggerDefaultVerbose:
         logfile = LogTee(logger, sys.stdout)
     else:
         logfile = sys.stdout
