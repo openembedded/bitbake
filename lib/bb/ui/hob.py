@@ -396,8 +396,10 @@ class MainWindow (gtk.Window):
                                                  gtk.RESPONSE_OK))
         response  = chooser.run()
         rep = BuildRep(None, None, None)
+        recipe = chooser.get_filename()
         if response == gtk.RESPONSE_OK:
-            rep.loadRecipe(chooser.get_filename())
+            rep.loadRecipe(recipe)
+            self.save_path = recipe
         chooser.destroy()
         self.model.load_image_rep(rep)
         self.dirty = False
