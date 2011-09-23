@@ -328,7 +328,7 @@ class HobHandler(gobject.GObject):
         return self.image_output_types
 
     def get_image_deploy_dir(self):
-        return self.img_out_dir
+        return self.image_out_dir
 
     def make_temp_dir(self):
         bb.utils.mkdirhier(self.image_dir)
