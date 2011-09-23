@@ -88,6 +88,8 @@ class HobHandler(gobject.GObject):
         deploy_dir = self.server.runCommand(["getVariable", "DEPLOY_DIR"])
         self.image_out_dir = os.path.join(deploy_dir, "images")
         self.image_output_types = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]).split(" ")
+        self.bbpath = self.server.runCommand(["getVariable", "BBPATH"])
+        self.bbfiles = self.server.runCommand(["getVariable", "BBFILES"])
 
     def run_next_command(self):
         if self.current_command and not self.generating:
@@ -263,8 +265,7 @@ class HobHandler(gobject.GObject):
         self.build_queue = targets
 
         if not self.bbpath_ok:
-            bbpath = self.server.runCommand(["getVariable", "BBPATH"])
-            if self.image_dir in bbpath.split(":"):
+            if self.image_dir in self.bbpath.split(":"):
                 self.bbpath_ok = True
             else:
                 nbbp = self.image_dir
@@ -272,8 +273,8 @@ class HobHandler(gobject.GObject):
         if not self.bbfiles_ok:
             import re
             pattern = "%s/\*.bb" % self.image_dir
-            bbfiles = self.server.runCommand(["getVariable", "BBFILES"]).split(" ")
-            for files in bbfiles:
+
+            for files in self.bbfiles.split(" "):
                 if re.match(pattern, files):
                     self.bbfiles_ok = True
 
