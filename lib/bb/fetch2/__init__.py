@@ -562,8 +562,14 @@ class FetchData(object):
         else:
             self.md5_name = "md5sum"
             self.sha256_name = "sha256sum"
-        self.md5_expected = bb.data.getVarFlag("SRC_URI", self.md5_name, d)
-        self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
+        if self.md5_name in self.parm:
+            self.md5_expected = self.parm[self.md5_name]
+        else:
+            self.md5_expected = bb.data.getVarFlag("SRC_URI", self.md5_name, d)
+        if self.sha256_name in self.parm:
+            self.sha256_expected = self.parm[self.sha256_name]
+        else:
+            self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
 
         self.names = self.parm.get("name",'default').split(',')
 
