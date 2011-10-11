@@ -388,7 +388,7 @@ ftp://.*/.*      http://somemirror.org/sources/ \n \
 http://.*/.*     http://somemirror.org/sources/ \n \
 https://.*/.*    http://somemirror.org/sources/ \n"</screen></para>
 
-            <para>Non-local downloaded output is placed into the directory specified by the <varname>DL_DIR</varname>. For non local downloads the code can check checksums for the download to ensure the file has been downloaded correctly. These are specified in the form <varname>SRC_URI[md5sum]</varname> for the md5 checksum and <varname>SRC_URI[sha256sum]</varname> for the sha256 checksum. If <varname>BB_STRICT_CHECKSUM</varname> is set, any download without a checksum will trigger an error message. In cases where multiple files are listed in SRC_URI, the name parameter is used assign names to the urls and these are then specified in the checksums in the form SRC_URI[name.sha256sum].</para>
+            <para>Non-local downloaded output is placed into the directory specified by the <varname>DL_DIR</varname>. For non local archive downloads the code can verify sha256 and md5 checksums for the download to ensure the file has been downloaded correctly. These may be specified either in the form <varname>SRC_URI[md5sum]</varname> for the md5 checksum and <varname>SRC_URI[sha256sum]</varname> for the sha256 checksum or as parameters on the SRC_URI such as SRC_URI="http://example.com/foobar.tar.bz2;md5sum=4a8e0f237e961fd7785d19d07fdb994d". If <varname>BB_STRICT_CHECKSUM</varname> is set, any download without a checksum will trigger an error message. In cases where multiple files are listed in SRC_URI, the name parameter is used assign names to the urls and these are then specified in the checksums in the form SRC_URI[name.sha256sum].</para>
 
         </section>
 
