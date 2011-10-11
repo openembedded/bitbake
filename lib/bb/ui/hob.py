@@ -400,9 +400,9 @@ class MainWindow (gtk.Window):
         if response == gtk.RESPONSE_OK:
             rep.loadRecipe(recipe)
             self.save_path = recipe
+            self.model.load_image_rep(rep)
+            self.dirty = False
         chooser.destroy()
-        self.model.load_image_rep(rep)
-        self.dirty = False
 
     def bake_clicked_cb(self, button):
         build_image = True
