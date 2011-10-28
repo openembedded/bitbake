@@ -227,7 +227,7 @@ class PythonParser():
             elif self.compare_name(self.expands, node.func):
                 if isinstance(node.args[0], ast.Str):
                     self.warn(node.func, node.args[0])
-                    self.var_expands.update(node.args[0].s)
+                    self.var_expands.add(node.args[0].s)
                 elif isinstance(node.args[0], ast.Call) and \
                      self.compare_name(self.getvars, node.args[0].func):
                     pass
