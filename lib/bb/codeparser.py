@@ -152,7 +152,6 @@ def parser_cache_savemerge(d):
 
 class PythonParser():
     getvars = ("d.getVar", "bb.data.getVar", "data.getVar")
-    expands = ("d.expand", "bb.data.expand", "data.expand")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
     def warn(self, func, arg):
@@ -174,15 +173,6 @@ class PythonParser():
         if name in self.getvars:
             if isinstance(node.args[0], ast.Str):
                 self.var_references.add(node.args[0].s)
-            else:
-                self.warn(node.func, node.args[0])
-        elif name in self.expands:
-            if isinstance(node.args[0], ast.Str):
-                self.warn(node.func, node.args[0])
-                self.var_expands.add(node.args[0].s)
-            elif isinstance(node.args[0], ast.Call) and \
-                 self.called_node_name(node.args[0].func) in self.getvars:
-                pass
             else:
                 self.warn(node.func, node.args[0])
         elif name in self.execfuncs:
@@ -210,7 +200,6 @@ class PythonParser():
         self.var_references = set()
         self.var_execs = set()
         self.execs = set()
-        self.var_expands = set()
         self.references = set()
 
         self.unhandled_message = "in call of %s, argument '%s' is not a string literal"
