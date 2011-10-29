@@ -68,7 +68,7 @@ class VariableParse:
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), self.varname or "<expansion>", "eval")
 
-            parser = bb.codeparser.PythonParser()
+            parser = bb.codeparser.PythonParser(self.varname)
             parser.parse_python(code)
             self.references |= parser.references
             self.execs |= parser.execs

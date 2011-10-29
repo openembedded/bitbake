@@ -155,8 +155,7 @@ class PythonParser():
     expands = ("d.expand", "bb.data.expand", "data.expand")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
-    @classmethod
-    def warn(cls, func, arg):
+    def warn(self, func, arg):
         """Warn about calls of bitbake APIs which pass a non-literal
         argument for the variable name, as we're not able to track such
         a reference.
@@ -168,8 +167,7 @@ class PythonParser():
         except TypeError:
             logger.debug(2, 'Failed to convert function and argument to source form')
         else:
-            logger.debug(1, "Warning: in call to '%s', argument '%s' is "
-                            "not a literal", funcstr, argstr)
+            logger.debug(1, self.unhandled_message % (funcstr, argstr))
 
     def visit_Call(self, node):
         name = self.called_node_name(node.func)
@@ -208,12 +206,15 @@ class PythonParser():
             else:
                 break
 
-    def __init__(self):
+    def __init__(self, name):
         self.var_references = set()
         self.var_execs = set()
         self.execs = set()
         self.var_expands = set()
         self.references = set()
+
+        self.unhandled_message = "in call of %s, argument '%s' is not a string literal"
+        self.unhandled_message = "while parsing %s, %s" % (name, self.unhandled_message)
 
     def parse_python(self, node):
         h = hash(str(node))
@@ -238,10 +239,12 @@ class PythonParser():
         pythonparsecache[h]["execs"] = self.execs
 
 class ShellParser():
-    def __init__(self):
+    def __init__(self, name):
         self.funcdefs = set()
         self.allexecs = set()
         self.execs = set()
+        self.unhandled_template = "unable to handle non-literal command '%s'"
+        self.unhandled_template = "while parsing %s, %s" % (name, self.unhandled_template)
 
     def parse_shell(self, value):
         """Parse the supplied shell code in a string, returning the external
@@ -356,8 +359,7 @@ class ShellParser():
 
                 cmd = word[1]
                 if cmd.startswith("$"):
-                    logger.debug(1, "Warning: execution of non-literal "
-                                    "command '%s'", cmd)
+                    logger.debug(1, self.unhandled_template % cmd)
                 elif cmd == "eval":
                     command = " ".join(word for _, word in words[1:])
                     self.parse_shell(command)

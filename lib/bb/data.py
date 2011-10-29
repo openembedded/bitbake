@@ -258,7 +258,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
         emit_var(key, o, d, False) and o.write('\n')
 
     emit_var(func, o, d, False) and o.write('\n')
-    newdeps = bb.codeparser.ShellParser().parse_shell(d.getVar(func, True))
+    newdeps = bb.codeparser.ShellParser(func).parse_shell(d.getVar(func, True))
     seen = set()
     while newdeps:
         deps = newdeps
@@ -267,7 +267,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
         for dep in deps:
             if bb.data.getVarFlag(dep, "func", d):
                emit_var(dep, o, d, False) and o.write('\n')
-               newdeps |=  bb.codeparser.ShellParser().parse_shell(d.getVar(dep, True))
+               newdeps |=  bb.codeparser.ShellParser(dep).parse_shell(d.getVar(dep, True))
         newdeps -= seen
 
 def update_data(d):
@@ -280,12 +280,12 @@ def build_dependencies(key, keys, shelldeps, d):
         if d.getVarFlag(key, "func"):
             if d.getVarFlag(key, "python"):
                 parsedvar = d.expandWithRefs(d.getVar(key, False), key)
-                parser = bb.codeparser.PythonParser()
+                parser = bb.codeparser.PythonParser(key)
                 parser.parse_python(parsedvar.value)
                 deps = deps | parser.references
             else:
                 parsedvar = d.expandWithRefs(d.getVar(key, False), key)
-                parser = bb.codeparser.ShellParser()
+                parser = bb.codeparser.ShellParser(key)
                 parser.parse_shell(parsedvar.value)
                 deps = deps | shelldeps
             deps = deps | parsedvar.references
