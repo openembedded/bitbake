@@ -40,7 +40,7 @@ from bb import cooker
 from bb import ui
 from bb import server
 
-__version__ = "1.13.3"
+__version__ = "1.14.0"
 logger = logging.getLogger("BitBake")
 
 
