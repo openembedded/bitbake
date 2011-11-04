@@ -68,8 +68,14 @@ class VariableParse:
             code = match.group()[3:-1]
             codeobj = compile(code.strip(), self.varname or "<expansion>", "eval")
 
-            parser = bb.codeparser.PythonParser(self.varname)
+            parser = bb.codeparser.PythonParser(self.varname, logger)
             parser.parse_python(code)
+            if self.varname:
+                vardeps = self.d.getVarFlag(self.varname, "vardeps", True)
+                if vardeps is None:
+                    parser.log.flush()
+            else:
+                parser.log.flush()
             self.references |= parser.references
             self.execs |= parser.execs
 

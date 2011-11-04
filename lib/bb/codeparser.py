@@ -150,6 +150,22 @@ def parser_cache_savemerge(d):
     bb.utils.unlockfile(glf)
 
 
+Logger = logging.getLoggerClass()
+class BufferedLogger(Logger):
+    def __init__(self, name, level=0, target=None):
+        Logger.__init__(self, name)
+        self.setLevel(level)
+        self.buffer = []
+        self.target = target
+
+    def handle(self, record):
+        self.buffer.append(record)
+
+    def flush(self):
+        for record in self.buffer:
+            self.target.handle(record)
+        self.buffer = []
+
 class PythonParser():
     getvars = ("d.getVar", "bb.data.getVar", "data.getVar")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
@@ -164,9 +180,9 @@ class PythonParser():
             funcstr = codegen.to_source(func)
             argstr = codegen.to_source(arg)
         except TypeError:
-            logger.debug(2, 'Failed to convert function and argument to source form')
+            self.log.debug(2, 'Failed to convert function and argument to source form')
         else:
-            logger.debug(1, self.unhandled_message % (funcstr, argstr))
+            self.log.debug(1, self.unhandled_message % (funcstr, argstr))
 
     def visit_Call(self, node):
         name = self.called_node_name(node.func)
@@ -196,11 +212,12 @@ class PythonParser():
             else:
                 break
 
-    def __init__(self, name):
+    def __init__(self, name, log):
         self.var_references = set()
         self.var_execs = set()
         self.execs = set()
         self.references = set()
+        self.log = BufferedLogger('BitBake.Data.%s' % name, logging.DEBUG, log)
 
         self.unhandled_message = "in call of %s, argument '%s' is not a string literal"
         self.unhandled_message = "while parsing %s, %s" % (name, self.unhandled_message)
@@ -228,10 +245,11 @@ class PythonParser():
         pythonparsecache[h]["execs"] = self.execs
 
 class ShellParser():
-    def __init__(self, name):
+    def __init__(self, name, log):
         self.funcdefs = set()
         self.allexecs = set()
         self.execs = set()
+        self.log = BufferedLogger('BitBake.Data.%s' % name, logging.DEBUG, log)
         self.unhandled_template = "unable to handle non-literal command '%s'"
         self.unhandled_template = "while parsing %s, %s" % (name, self.unhandled_template)
 
@@ -348,7 +366,7 @@ class ShellParser():
 
                 cmd = word[1]
                 if cmd.startswith("$"):
-                    logger.debug(1, self.unhandled_template % cmd)
+                    self.log.debug(1, self.unhandled_template % cmd)
                 elif cmd == "eval":
                     command = " ".join(word for _, word in words[1:])
                     self.parse_shell(command)
