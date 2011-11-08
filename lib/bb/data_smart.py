@@ -304,6 +304,14 @@ class DataSmart(MutableMapping):
 
         self.delVar(key)
 
+    def appendVar(self, key, value):
+        value = (self.getVar(key, False) or "") + value
+        self.setVar(key, value)
+
+    def prependVar(self, key, value):
+        value = value + (self.getVar(key, False) or "")
+        self.setVar(key, value)
+
     def delVar(self, var):
         self.expand_cache = {}
         self.dict[var] = {}
@@ -338,6 +346,14 @@ class DataSmart(MutableMapping):
 
         if var in self.dict and flag in self.dict[var]:
             del self.dict[var][flag]
+
+    def appendVarFlag(self, key, flag, value):
+        value = (self.getVarFlag(key, flag, False) or "") + value
+        self.setVarFlag(key, flag, value)
+
+    def prependVarFlag(self, key, flag, value):
+        value = value + (self.getVarFlag(key, flag, False) or "")
+        self.setVarFlag(key, flag, value)
 
     def setVarFlags(self, var, flags):
         if not var in self.dict:
