@@ -135,6 +135,13 @@ class BBCooker:
         self.configuration.data = None
         self.loadConfigurationData()
 
+        # Take a lock so only one copy of bitbake can run against a given build
+        # directory at a time
+        lockfile = bb.data.expand("${TOPDIR}/bitbake.lock", self.configuration.data)
+        self.lock = bb.utils.lockfile(lockfile, False, False)
+        if not self.lock:
+            bb.fatal("Only one copy of bitbake should be run against a build directory")
+
         bbpkgs = bb.data.getVar('BBPKGS', self.configuration.data, True)
         if bbpkgs and len(self.configuration.pkgs_to_build) == 0:
             self.configuration.pkgs_to_build.extend(bbpkgs.split())
