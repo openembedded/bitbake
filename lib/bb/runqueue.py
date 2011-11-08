@@ -1096,6 +1096,12 @@ class RunQueueExecute:
 
             logger.debug(2, 'Running %s:%s under fakeroot, fakedirs: %s' %
                             (fn, taskname, ', '.join(fakedirs)))
+        else:
+            envvars = (self.rqdata.dataCache.fakerootnoenv[fn] or "").split()
+            for key, value in (var.split('=') for var in envvars):
+                envbackup[key] = os.environ.get(key)
+                os.environ[key] = value
+                fakeenv[key] = value
 
         sys.stdout.flush()
         sys.stderr.flush()

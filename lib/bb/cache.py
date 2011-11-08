@@ -143,6 +143,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.section          = self.getvar('SECTION', metadata)
         self.fakerootenv      = self.getvar('FAKEROOTENV', metadata)
         self.fakerootdirs     = self.getvar('FAKEROOTDIRS', metadata)
+        self.fakerootnoenv    = self.getvar('FAKEROOTNOENV', metadata)
 
     @classmethod
     def init_cacheData(cls, cachedata):
@@ -178,6 +179,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.license = {}
         cachedata.section = {}
         cachedata.fakerootenv = {}
+        cachedata.fakerootnoenv = {}
         cachedata.fakerootdirs = {}
 
     def add_cacheData(self, cachedata, fn):
@@ -243,6 +245,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.license[fn] = self.license
         cachedata.section[fn] = self.section
         cachedata.fakerootenv[fn] = self.fakerootenv
+        cachedata.fakerootnoenv[fn] = self.fakerootnoenv
         cachedata.fakerootdirs[fn] = self.fakerootdirs
 
 
