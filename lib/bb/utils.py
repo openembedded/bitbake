@@ -443,7 +443,7 @@ def lockfile(name, shared=False, retry=True):
                     return lf
             lf.close()
         except Exception:
-            continue
+            pass
         if not retry:
             return None
 
