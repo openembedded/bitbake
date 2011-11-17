@@ -235,6 +235,16 @@ def compare_sigfiles(a, b):
         removed = sb - sa
         return changed, added, removed
 
+    def clean_basepaths(a):
+        b = {}
+        for x in a:
+            if x.startswith("virtual:"):
+                y = x.rsplit(":", 1)[0] + x.rsplit("/", 1)[1]
+            else:
+                y = x.rsplit("/", 1)[1]
+            b[y] = a[x]
+        return b
+
     if 'basewhitelist' in a_data and a_data['basewhitelist'] != b_data['basewhitelist']:
         print "basewhitelist changed from %s to %s" % (a_data['basewhitelist'], b_data['basewhitelist'])
 
@@ -242,7 +252,7 @@ def compare_sigfiles(a, b):
         print "taskwhitelist changed from %s to %s" % (a_data['taskwhitelist'], b_data['taskwhitelist'])
 
     if a_data['taskdeps'] != b_data['taskdeps']:
-        print "Task dependencies changed from %s to %s" % (sorted(a_data['taskdeps']), sorted(b_data['taskdeps']))
+        print "Task dependencies changed from:\n%s\nto:\n%s" % (sorted(a_data['taskdeps']), sorted(b_data['taskdeps']))
 
     if a_data['basehash'] != b_data['basehash']:
         print "basehash changed from %s to %s" % (a_data['basehash'], b_data['basehash'])
@@ -265,7 +275,9 @@ def compare_sigfiles(a, b):
             print "Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep])
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
-        changed, added, removed = dict_diff(a_data['runtaskhashes'], b_data['runtaskhashes'])
+        a = clean_basepaths(a_data['runtaskhashes'])
+        b = clean_basepaths(b_data['runtaskhashes'])
+        changed, added, removed = dict_diff(a, b)
         if added:
             for dep in added:
                 print "Dependency on task %s was added" % (dep)
@@ -274,7 +286,7 @@ def compare_sigfiles(a, b):
                 print "Dependency on task %s was removed" % (dep)
         if changed:
             for dep in changed:
-                print "Hash for dependent task %s changed from %s to %s" % (dep, a_data['runtaskhashes'][dep], b_data['runtaskhashes'][dep])
+                print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
     elif 'runtaskdeps' in a_data and 'runtaskdeps' in b_data and sorted(a_data['runtaskdeps']) != sorted(b_data['runtaskdeps']):
         print "Tasks this task depends on changed from %s to %s" % (sorted(a_data['runtaskdeps']), sorted(b_data['runtaskdeps']))
 
