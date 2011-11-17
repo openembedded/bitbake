@@ -101,6 +101,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             alldeps = seen - self.basewhitelist
 
             for dep in sorted(alldeps):
+                data = data + dep
                 if dep in lookupcache:
                     var = lookupcache[dep]
                 else:
