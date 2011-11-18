@@ -102,7 +102,7 @@ def handle(fn, data, include):
         feeder(lineno, s, fn, statements)
 
     # DONE WITH PARSING... time to evaluate
-    bb.data.setVar('FILE', fn, data)
+    bb.data.setVar('FILE', abs_fn, data)
     statements.eval(data)
     if oldfile:
         bb.data.setVar('FILE', oldfile, data)

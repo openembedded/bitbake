@@ -148,7 +148,7 @@ def handle(fn, d, include):
 
     # DONE WITH PARSING... time to evaluate
     if ext != ".bbclass":
-        data.setVar('FILE', fn, d)
+        data.setVar('FILE', abs_fn, d)
 
     statements.eval(d)
 
