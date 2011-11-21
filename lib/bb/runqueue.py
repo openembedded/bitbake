@@ -1596,7 +1596,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             taskname = self.rqdata.runq_task[realtask] + "_setscene"
             if self.rq.check_stamp_task(realtask, self.rqdata.runq_task[realtask]):
                 logger.debug(2, 'Stamp for underlying task %s(%s) is current, so skipping setscene variant',
-                             task, self.rqdata.get_user_idstring(task))
+                             task, self.rqdata.get_user_idstring(realtask))
                 self.task_failoutright(task)
                 return True
 
