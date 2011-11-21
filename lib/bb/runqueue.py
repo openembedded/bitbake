@@ -1208,10 +1208,14 @@ class RunQueueExecuteTasks(RunQueueExecute):
             for task in xrange(self.stats.total):
                 if task in self.rq.scenequeue_covered:
                     continue
+                logger.debug(1, 'Considering %s (%s): %s' % (task, self.rqdata.get_user_idstring(task), str(self.rqdata.runq_revdeps[task])))
+
                 if len(self.rqdata.runq_revdeps[task]) > 0 and self.rqdata.runq_revdeps[task].issubset(self.rq.scenequeue_covered):
                     ok = True
                     for revdep in self.rqdata.runq_revdeps[task]:
                         if self.rqdata.runq_fnid[task] != self.rqdata.runq_fnid[revdep]:
+                            logger.debug(1, 'Found "bad" dep %s (%s) for %s (%s)' % (revdep, self.rqdata.get_user_idstring(revdep), task, self.rqdata.get_user_idstring(task)))
+
                             ok = False
                             break
                     if ok:
