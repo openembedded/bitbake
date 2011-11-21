@@ -767,6 +767,7 @@ class RunQueue:
 
         self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, True) or "perfile"
         self.hashvalidate = bb.data.getVar("BB_HASHCHECK_FUNCTION", cfgData, True) or None
+        self.setsceneverify = bb.data.getVar("BB_SETSCENE_VERIFY_FUNCTION", cfgData, True) or None
 
         self.state = runQueuePrepare
 
@@ -1216,23 +1217,20 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     if found:
                         self.rq.scenequeue_covered.add(task)
 
-        # Detect when the real task needs to be run anyway by looking to see
-        # if any of its dependencies within the same package are scheduled
-        # to be run.
+        logger.debug(1, 'Skip list (pre setsceneverify) %s', sorted(self.rq.scenequeue_covered))
+
+        # Allow the metadata to elect for setscene tasks to run anyway
         covered_remove = set()
-        for task in self.rq.scenequeue_covered:
-            task_fnid = self.rqdata.runq_fnid[task]
-            for dep in self.rqdata.runq_depends[task]:
-                if self.rqdata.runq_fnid[dep] == task_fnid:
-                    if dep not in self.rq.scenequeue_covered:
-                        covered_remove.add(task)
-                        break
+        if self.rq.setsceneverify:
+            call = self.rq.setsceneverify + "(covered, tasknames, fnids, fns, d)"
+            locs = { "covered" : self.rq.scenequeue_covered, "tasknames" : self.rqdata.runq_task, "fnids" : self.rqdata.runq_fnid, "fns" : self.rqdata.taskData.fn_index, "d" : self.cooker.configuration.data }
+            covered_remove = bb.utils.better_eval(call, locs)
 
         for task in covered_remove:
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
             taskname = self.rqdata.runq_task[task] + '_setscene'
             bb.build.del_stamp(taskname, self.rqdata.dataCache, fn)
-            logger.debug(1, 'Not skipping task %s because it will have to be run anyway', task)
+            logger.debug(1, 'Not skipping task %s due to setsceneverify', task)
             self.rq.scenequeue_covered.remove(task)
 
         logger.debug(1, 'Full skip list %s', self.rq.scenequeue_covered)
