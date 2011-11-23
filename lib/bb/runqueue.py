@@ -1235,9 +1235,6 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
         logger.debug(1, 'Full skip list %s', self.rq.scenequeue_covered)
 
-        for task in self.rq.scenequeue_covered:
-            self.task_skip(task)
-
         event.fire(bb.event.StampUpdate(self.rqdata.target_pairs, self.rqdata.dataCache.stamp), self.cfgData)
 
         schedulers = self.get_schedulers()
@@ -1331,8 +1328,14 @@ class RunQueueExecuteTasks(RunQueueExecute):
         task = self.sched.next()
         if task is not None:
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
-
             taskname = self.rqdata.runq_task[task]
+
+            if task in self.rq.scenequeue_covered:
+                logger.debug(2, "Setscene covered task %s (%s)", task,
+                                self.rqdata.get_user_idstring(task))
+                self.task_skip(task)
+                return True
+
             if self.rq.check_stamp_task(task, taskname):
                 logger.debug(2, "Stamp current task %s (%s)", task,
                                 self.rqdata.get_user_idstring(task))
