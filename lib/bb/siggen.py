@@ -136,7 +136,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         k = fn + "." + task
         data = dataCache.basetaskhash[k]
         self.runtaskdeps[k] = []
-        for dep in sorted(deps):
+        for dep in sorted(deps, key=clean_basepath):
             # We only manipulate the dependencies for packages not in the whitelist
             if self.twl and not self.twl.search(dataCache.pkg_fn[fn]):
                 # then process the actual dependencies
@@ -218,6 +218,19 @@ def dump_this_task(outfile, d):
     task = "do_" + d.getVar("BB_CURRENTTASK", True)
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile")
 
+def clean_basepath(a):
+    if a.startswith("virtual:"):
+        b = a.rsplit(":", 1)[0] + a.rsplit("/", 1)[1]
+    else:
+        b = a.rsplit("/", 1)[1]
+    return b
+
+def clean_basepaths(a):
+    b = {}
+    for x in a:
+        b[clean_basepath(x)] = a[x]
+    return b
+
 def compare_sigfiles(a, b):
     p1 = pickle.Unpickler(file(a, "rb"))
     a_data = p1.load()
@@ -235,16 +248,6 @@ def compare_sigfiles(a, b):
         added = sa - sb
         removed = sb - sa
         return changed, added, removed
-
-    def clean_basepaths(a):
-        b = {}
-        for x in a:
-            if x.startswith("virtual:"):
-                y = x.rsplit(":", 1)[0] + x.rsplit("/", 1)[1]
-            else:
-                y = x.rsplit("/", 1)[1]
-            b[y] = a[x]
-        return b
 
     if 'basewhitelist' in a_data and a_data['basewhitelist'] != b_data['basewhitelist']:
         print "basewhitelist changed from %s to %s" % (a_data['basewhitelist'], b_data['basewhitelist'])
