@@ -50,9 +50,6 @@ class Local(FetchMethod):
         path = url.split("://")[1]
         path = path.split(";")[0]
         newpath = path
-        dldirfile = os.path.join(data.getVar("DL_DIR", d, True), os.path.basename(path))
-        if os.path.exists(dldirfile):
-            return dldirfile
         if path[0] != "/":
             filespath = data.getVar('FILESPATH', d, True)
             if filespath:
@@ -62,6 +59,7 @@ class Local(FetchMethod):
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
         if not os.path.exists(newpath) and path.find("*") == -1:
+            dldirfile = os.path.join(data.getVar("DL_DIR", d, True), os.path.basename(path))
             return dldirfile
         return newpath
 
