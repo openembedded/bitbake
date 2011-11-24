@@ -69,6 +69,7 @@ def main(server, eventHandler):
     # Get values of variables which control our output
     includelogs = server.runCommand(["getVariable", "BBINCLUDELOGS"])
     loglines = server.runCommand(["getVariable", "BBINCLUDELOGS_LINES"])
+    consolelogfile = server.runCommand(["getVariable", "BB_CONSOLELOG"])
 
     helper = uihelper.BBUIHelper()
 
@@ -77,6 +78,11 @@ def main(server, eventHandler):
     bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
+    if consolelogfile:
+        consolelog = logging.FileHandler(consolelogfile)
+        bb.msg.addDefaultlogFilter(consolelog)
+        consolelog.setFormatter(format)
+        logger.addHandler(consolelog)
 
     try:
         cmdline = server.runCommand(["getCmdLineAction"])
