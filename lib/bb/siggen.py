@@ -72,11 +72,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
     def _build_data(self, fn, d):
 
-        tasklist, gendeps = bb.data.generate_dependencies(d)
+        tasklist, gendeps, lookupcache = bb.data.generate_dependencies(d)
 
         taskdeps = {}
         basehash = {}
-        lookupcache = {}
 
         for task in tasklist:
             data = d.getVar(task, False)

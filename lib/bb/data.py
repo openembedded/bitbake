@@ -275,18 +275,21 @@ def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
     d.finalize()
 
-def build_dependencies(key, keys, shelldeps, d):
+def build_dependencies(key, keys, shelldeps, vardepvals, d):
     deps = set()
     vardeps = d.getVarFlag(key, "vardeps", True)
     try:
-        if d.getVarFlag(key, "func"):
+        value = d.getVar(key, False)
+        if key in vardepvals:
+           value =  d.getVarFlag(key, "vardepvalue", True)
+        elif d.getVarFlag(key, "func"):
             if d.getVarFlag(key, "python"):
-                parsedvar = d.expandWithRefs(d.getVar(key, False), key)
+                parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.PythonParser(key, logger)
                 parser.parse_python(parsedvar.value)
                 deps = deps | parser.references
             else:
-                parsedvar = d.expandWithRefs(d.getVar(key, False), key)
+                parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.ShellParser(key, logger)
                 parser.parse_shell(parsedvar.value)
                 deps = deps | shelldeps
@@ -295,7 +298,7 @@ def build_dependencies(key, keys, shelldeps, d):
             deps = deps | parsedvar.references
             deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
         else:
-            parser = d.expandWithRefs(d.getVar(key, False), key)
+            parser = d.expandWithRefs(value, key)
             deps |= parser.references
             deps = deps | (keys & parser.execs)
         deps |= set((vardeps or "").split())
@@ -303,7 +306,7 @@ def build_dependencies(key, keys, shelldeps, d):
     except:
         bb.note("Error expanding variable %s" % key)
         raise
-    return deps
+    return deps, value
     #bb.note("Variable %s references %s and calls %s" % (key, str(deps), str(execs)))
     #d.setVarFlag(key, "vardeps", deps)
 
@@ -311,12 +314,14 @@ def generate_dependencies(d):
 
     keys = set(key for key in d.keys() if not key.startswith("__"))
     shelldeps = set(key for key in keys if d.getVarFlag(key, "export") and not d.getVarFlag(key, "unexport"))
+    vardepvals = set(key for key in keys if d.getVarFlag(key, "vardepvalue"))
 
     deps = {}
+    values = {}
 
     tasklist = bb.data.getVar('__BBTASKS', d) or []
     for task in tasklist:
-        deps[task] = build_dependencies(task, keys, shelldeps, d)
+        deps[task], values[task] = build_dependencies(task, keys, shelldeps, vardepvals, d)
         newdeps = deps[task]
         seen = set()
         while newdeps:
@@ -325,11 +330,11 @@ def generate_dependencies(d):
             newdeps = set()
             for dep in nextdeps:
                 if dep not in deps:
-                    deps[dep] = build_dependencies(dep, keys, shelldeps, d)
+                    deps[dep], values[dep] = build_dependencies(dep, keys, shelldeps, vardepvals, d)
                 newdeps |=  deps[dep]
             newdeps -= seen
         #print "For %s: %s" % (task, str(taskdeps[task]))
-    return tasklist, deps
+    return tasklist, deps, values
 
 def inherits_class(klass, d):
     val = getVar('__inherit_cache', d) or []
