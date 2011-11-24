@@ -1524,8 +1524,9 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
             for task in xrange(len(self.sq_revdeps)):
                 if task not in valid_new and task not in noexec:
+                    realtask = self.rqdata.runq_setscene[task]
                     logger.debug(2, 'No package found, so skipping setscene task %s',
-                                 self.rqdata.get_user_idstring(task))
+                                 self.rqdata.get_user_idstring(realtask))
                     self.task_failoutright(task)
 
         logger.info('Executing SetScene Tasks')
