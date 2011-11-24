@@ -505,7 +505,6 @@ def preserved_envvars_exported():
         'SHELL',
         'TERM',
         'USER',
-        'USERNAME',
     ]
 
 def preserved_envvars_exported_interactive():
