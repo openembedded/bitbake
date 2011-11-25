@@ -36,8 +36,8 @@ pythonparsecache = {}
 shellparsecache = {}
 
 def parser_cachefile(d):
-    cachedir = (bb.data.getVar("PERSISTENT_DIR", d, True) or
-                bb.data.getVar("CACHE", d, True))
+    cachedir = (d.getVar("PERSISTENT_DIR", True) or
+                d.getVar("CACHE", True))
     if cachedir in [None, '']:
         return None
     bb.utils.mkdirhier(cachedir)

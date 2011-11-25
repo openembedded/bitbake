@@ -68,7 +68,7 @@ class Git(FetchMethod):
         #
         # Only enable _sortable revision if the key is set
         #
-        if bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True):
+        if d.getVar("BB_GIT_CLONE_FOR_SRCREV", True):
             self._sortable_buildindex = self._sortable_buildindex_disabled
     def supports(self, url, ud, d):
         """
@@ -146,7 +146,7 @@ class Git(FetchMethod):
     def try_premirror(self, u, ud, d):
         # If we don't do this, updating an existing checkout with only premirrors
         # is not possible
-        if bb.data.getVar("BB_FETCH_PREMIRRORONLY", d, True) is not None:
+        if d.getVar("BB_FETCH_PREMIRRORONLY", True) is not None:
             return True
         if os.path.exists(ud.clonedir):
             return False

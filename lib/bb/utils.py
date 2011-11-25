@@ -562,7 +562,7 @@ def filter_environment(good_vars):
 
 def create_interactive_env(d):
     for k in preserved_envvars_exported_interactive():
-        os.setenv(k, bb.data.getVar(k, d, True))
+        os.setenv(k, d.getVar(k, True))
 
 def approved_variables():
     """
@@ -601,9 +601,9 @@ def build_environment(d):
     """
     import bb.data
     for var in bb.data.keys(d):
-        export = bb.data.getVarFlag(var, "export", d)
+        export = d.getVarFlag(var, "export")
         if export:
-            os.environ[var] = bb.data.getVar(var, d, True) or ""
+            os.environ[var] = d.getVar(var, True) or ""
 
 def remove(path, recurse=False):
     """Equivalent to rm -f or rm -rf"""

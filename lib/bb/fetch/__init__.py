@@ -154,7 +154,7 @@ def fetcher_init(d):
     Calls before this must not hit the cache.
     """
     # When to drop SCM head revisions controlled by user policy
-    srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, 1) or "clear"
+    srcrev_policy = d.getVar('BB_SRCREV_POLICY', 1) or "clear"
     if srcrev_policy == "cache":
         logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
     elif srcrev_policy == "clear":
@@ -200,7 +200,7 @@ def fetcher_compare_revisions(d):
 def init(urls, d, setup = True):
     urldata = {}
 
-    fn = bb.data.getVar('FILE', d, 1)
+    fn = d.getVar('FILE', 1)
     if fn in urldata_cache:
         urldata = urldata_cache[fn]
 
@@ -243,7 +243,7 @@ def verify_checksum(u, ud, d):
                     'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"',
                     ud.localpath, ud.md5_name, md5data,
                     ud.sha256_name, sha256data)
-        if bb.data.getVar("BB_STRICT_CHECKSUM", d, True) == "1":
+        if d.getVar("BB_STRICT_CHECKSUM", True) == "1":
             raise FetchError("No checksum specified for %s." % u)
         return
 
@@ -276,7 +276,7 @@ def go(d, urls = None):
 
         if m.try_premirror(u, ud, d):
             # First try fetching uri, u, from PREMIRRORS
-            mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', d, True))
+            mirrors = mirror_from_string(d.getVar('PREMIRRORS', True))
             localpath = try_mirrors(d, u, mirrors, False, m.forcefetch(u, ud, d))
         elif os.path.exists(ud.localfile):
             localpath = ud.localfile
@@ -291,7 +291,7 @@ def go(d, urls = None):
                 # Remove any incomplete file
                 bb.utils.remove(ud.localpath)
                 # Finally, try fetching uri, u, from MIRRORS
-                mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
+                mirrors = mirror_from_string(d.getVar('MIRRORS', True))
                 localpath = try_mirrors (d, u, mirrors)
                 if not localpath or not os.path.exists(localpath):
                     raise FetchError("Unable to fetch URL %s from any source." % u)
@@ -327,7 +327,7 @@ def checkstatus(d, urls = None):
         m = ud.method
         logger.debug(1, "Testing URL %s", u)
         # First try checking uri, u, from PREMIRRORS
-        mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', d, True))
+        mirrors = mirror_from_string(d.getVar('PREMIRRORS', True))
         ret = try_mirrors(d, u, mirrors, True)
         if not ret:
             # Next try checking from the original uri, u
@@ -335,7 +335,7 @@ def checkstatus(d, urls = None):
                 ret = m.checkstatus(u, ud, d)
             except:
                 # Finally, try checking uri, u, from MIRRORS
-                mirrors = mirror_from_string(bb.data.getVar('MIRRORS', d, True))
+                mirrors = mirror_from_string(d.getVar('MIRRORS', True))
                 ret = try_mirrors (d, u, mirrors, True)
 
         if not ret:
@@ -383,7 +383,7 @@ def get_srcrev(d):
     scms = []
 
     # Only call setup_localpath on URIs which supports_srcrev()
-    urldata = init(bb.data.getVar('SRC_URI', d, 1).split(), d, False)
+    urldata = init(d.getVar('SRC_URI', 1).split(), d, False)
     for u in urldata:
         ud = urldata[u]
         if ud.method.supports_srcrev():
@@ -395,8 +395,8 @@ def get_srcrev(d):
         logger.error("SRCREV was used yet no valid SCM was found in SRC_URI")
         raise ParameterError
 
-    if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
-        bb.data.setVar('__BB_DONT_CACHE', '1', d)
+    if d.getVar('BB_SRCREV_POLICY', True) != "cache":
+        d.setVar('__BB_DONT_CACHE', '1')
 
     if len(scms) == 1:
         return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d)
@@ -404,7 +404,7 @@ def get_srcrev(d):
     #
     # Mutiple SCMs are in SRC_URI so we resort to SRCREV_FORMAT
     #
-    format = bb.data.getVar('SRCREV_FORMAT', d, 1)
+    format = d.getVar('SRCREV_FORMAT', 1)
     if not format:
         logger.error("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
         raise ParameterError
@@ -539,8 +539,8 @@ class FetchData(object):
         else:
             self.md5_name = "md5sum"
             self.sha256_name = "sha256sum"
-        self.md5_expected = bb.data.getVarFlag("SRC_URI", self.md5_name, d)
-        self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
+        self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
+        self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
 
         for m in methods:
             if m.supports(url, self, d):
@@ -555,7 +555,7 @@ class FetchData(object):
             self.localpath = self.parm["localpath"]
             self.basename = os.path.basename(self.localpath)
         else:
-            premirrors = bb.data.getVar('PREMIRRORS', d, True)
+            premirrors = d.getVar('PREMIRRORS', True)
             local = ""
             if premirrors and self.url:
                 aurl = self.url.split(";")[0]
@@ -775,7 +775,7 @@ class Fetch(object):
 
         latest_rev = self._build_revision(url, ud, d)
         last_rev = localcounts.get(key + '_rev')
-        uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
+        uselocalcount = d.getVar("BB_LOCALCOUNT_OVERRIDE", True) or False
         count = None
         if uselocalcount:
             count = Fetch.localcount_internal_helper(ud, d)
@@ -803,7 +803,7 @@ class Fetch(object):
 
     def generate_revision_key(self, url, ud, d):
         key = self._revision_key(url, ud, d)
-        return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
+        return "%s-%s" % (key, d.getVar("PN", True) or "")
 
 from . import cvs
 from . import git

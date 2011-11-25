@@ -58,7 +58,7 @@ class Configurator(gobject.GObject):
 
     def _loadConf(self, path):
         def getString(var):
-            return bb.data.getVar(var, data, True) or ""
+            return data.getVar(var, True) or ""
 
         if self.orig_config:
             del self.orig_config
@@ -125,7 +125,7 @@ class Configurator(gobject.GObject):
         self.loaded_layers = {}
         data = bb.data.init()
         data = self._parse(self.bblayers, data)
-        layers = (bb.data.getVar('BBLAYERS', data, True) or "").split()
+        layers = (data.getVar('BBLAYERS', True) or "").split()
         for layer in layers:
             # TODO: we may be better off calling the layer by its
             # BBFILE_COLLECTIONS value?

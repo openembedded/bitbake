@@ -16,7 +16,7 @@ def init(d):
     siggens = [obj for obj in globals().itervalues()
                       if type(obj) is type and issubclass(obj, SignatureGenerator)]
 
-    desired = bb.data.getVar("BB_SIGNATURE_HANDLER", d, True) or "noop"
+    desired = d.getVar("BB_SIGNATURE_HANDLER", True) or "noop"
     for sg in siggens:
         if desired == sg.name:
             return sg(d)

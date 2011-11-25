@@ -30,7 +30,6 @@ Commands are queued in a CommandQueue
 
 import bb.event
 import bb.cooker
-import bb.data
 
 async_cmds = {}
 sync_cmds = {}
@@ -162,7 +161,7 @@ class CommandsSync:
         if len(params) > 1:
             expand = params[1]
 
-        return bb.data.getVar(varname, command.cooker.configuration.data, expand)
+        return command.cooker.configuration.data.getVar(varname, expand)
 
     def setVariable(self, command, params):
         """
@@ -170,7 +169,7 @@ class CommandsSync:
         """
         varname = params[0]
         value = params[1]
-        bb.data.setVar(varname, value, command.cooker.configuration.data)
+        command.cooker.configuration.data.setVar(varname, value)
 
     def resetCooker(self, command, params):
         """

@@ -70,9 +70,9 @@ class TaskBase(event.Event):
 
     def __init__(self, t, d ):
         self._task = t
-        self._package = bb.data.getVar("PF", d, 1)
+        self._package = d.getVar("PF", 1)
         event.Event.__init__(self)
-        self._message = "package %s: task %s: %s" % (bb.data.getVar("PF", d, 1), t, bb.event.getName(self)[4:])
+        self._message = "package %s: task %s: %s" % (d.getVar("PF", 1), t, bb.event.getName(self)[4:])
 
     def getTask(self):
         return self._task

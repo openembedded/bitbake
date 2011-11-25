@@ -84,10 +84,10 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
     preferred_ver = None
 
     localdata = data.createCopy(cfgData)
-    bb.data.setVar('OVERRIDES', "%s:pn-%s:%s" % (data.getVar('OVERRIDES', localdata), pn, pn), localdata)
+    localdata.setVar('OVERRIDES', "%s:pn-%s:%s" % (data.getVar('OVERRIDES', localdata), pn, pn))
     bb.data.update_data(localdata)
 
-    preferred_v = bb.data.getVar('PREFERRED_VERSION', localdata, True)
+    preferred_v = localdata.getVar('PREFERRED_VERSION', True)
     if preferred_v:
         m = re.match('(\d+:)*(.*)(_.*)*', preferred_v)
         if m:
@@ -248,7 +248,7 @@ def filterProviders(providers, item, cfgData, dataCache):
 
     eligible = _filterProviders(providers, item, cfgData, dataCache)
 
-    prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % item, cfgData, 1)
+    prefervar = cfgData.getVar('PREFERRED_PROVIDER_%s' % item, 1)
     if prefervar:
         dataCache.preferred[item] = prefervar
 
@@ -286,7 +286,7 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
         pn = dataCache.pkg_fn[p]
         provides = dataCache.pn_provides[pn]
         for provide in provides:
-            prefervar = bb.data.getVar('PREFERRED_PROVIDER_%s' % provide, cfgData, 1)
+            prefervar = cfgData.getVar('PREFERRED_PROVIDER_%s' % provide, 1)
             logger.debug(1, "checking PREFERRED_PROVIDER_%s (value %s) against %s", provide, prefervar, pns.keys())
             if prefervar in pns and pns[prefervar] not in preferred:
                 var = "PREFERRED_PROVIDER_%s = %s" % (provide, prefervar)

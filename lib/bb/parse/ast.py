@@ -54,7 +54,7 @@ class IncludeNode(AstNode):
         """
         Include the file and evaluate the statements
         """
-        s = bb.data.expand(self.what_file, data)
+        s = data.expand(self.what_file)
         logger.debug(2, "CONF %s:%s: including %s", self.filename, self.lineno, s)
 
         # TODO: Cache those includes... maybe not here though
@@ -69,7 +69,7 @@ class ExportNode(AstNode):
         self.var = var
 
     def eval(self, data):
-        bb.data.setVarFlag(self.var, "export", 1, data)
+        data.setVarFlag(self.var, "export", 1)
 
 class DataNode(AstNode):
     """
@@ -92,7 +92,7 @@ class DataNode(AstNode):
         groupd = self.groupd
         key = groupd["var"]
         if "exp" in groupd and groupd["exp"] != None:
-            bb.data.setVarFlag(key, "export", 1, data)
+            data.setVarFlag(key, "export", 1)
         if "ques" in groupd and groupd["ques"] != None:
             val = self.getFunc(key, data)
             if val == None:
@@ -100,7 +100,7 @@ class DataNode(AstNode):
         elif "colon" in groupd and groupd["colon"] != None:
             e = data.createCopy()
             bb.data.update_data(e)
-            val = bb.data.expand(groupd["value"], e, key + "[:=]")
+            val = e.expand(groupd["value"], key + "[:=]")
         elif "append" in groupd and groupd["append"] != None:
             val = "%s %s" % ((self.getFunc(key, data) or ""), groupd["value"])
         elif "prepend" in groupd and groupd["prepend"] != None:
@@ -113,11 +113,11 @@ class DataNode(AstNode):
             val = groupd["value"]
 
         if 'flag' in groupd and groupd['flag'] != None:
-            bb.data.setVarFlag(key, groupd['flag'], val, data)
+            data.setVarFlag(key, groupd['flag'], val)
         elif groupd["lazyques"]:
-            bb.data.setVarFlag(key, "defaultval", val, data)
+            data.setVarFlag(key, "defaultval", val)
         else:
-            bb.data.setVar(key, val, data)
+            data.setVar(key, val)
 
 class MethodNode(AstNode):
     def __init__(self, filename, lineno, func_name, body):
@@ -131,12 +131,12 @@ class MethodNode(AstNode):
             if not funcname in bb.methodpool._parsed_fns:
                 text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
                 bb.methodpool.insert_method(funcname, text, self.filename)
-            anonfuncs = bb.data.getVar('__BBANONFUNCS', data) or []
+            anonfuncs = data.getVar('__BBANONFUNCS') or []
             anonfuncs.append(funcname)
-            bb.data.setVar('__BBANONFUNCS', anonfuncs, data)
+            data.setVar('__BBANONFUNCS', anonfuncs)
         else:
-            bb.data.setVarFlag(self.func_name, "func", 1, data)
-            bb.data.setVar(self.func_name, '\n'.join(self.body), data)
+            data.setVarFlag(self.func_name, "func", 1)
+            data.setVar(self.func_name, '\n'.join(self.body))
 
 class PythonMethodNode(AstNode):
     def __init__(self, filename, lineno, function, define, body):
@@ -152,9 +152,9 @@ class PythonMethodNode(AstNode):
         text = '\n'.join(self.body)
         if not bb.methodpool.parsed_module(self.define):
             bb.methodpool.insert_method(self.define, text, self.filename)
-        bb.data.setVarFlag(self.function, "func", 1, data)
-        bb.data.setVarFlag(self.function, "python", 1, data)
-        bb.data.setVar(self.function, text, data)
+        data.setVarFlag(self.function, "func", 1)
+        data.setVarFlag(self.function, "python", 1)
+        data.setVar(self.function, text)
 
 class MethodFlagsNode(AstNode):
     def __init__(self, filename, lineno, key, m):
@@ -163,19 +163,19 @@ class MethodFlagsNode(AstNode):
         self.m = m
 
     def eval(self, data):
-        if bb.data.getVar(self.key, data):
+        if data.getVar(self.key):
             # clean up old version of this piece of metadata, as its
             # flags could cause problems
-            bb.data.setVarFlag(self.key, 'python', None, data)
-            bb.data.setVarFlag(self.key, 'fakeroot', None, data)
+            data.setVarFlag(self.key, 'python', None)
+            data.setVarFlag(self.key, 'fakeroot', None)
         if self.m.group("py") is not None:
-            bb.data.setVarFlag(self.key, "python", "1", data)
+            data.setVarFlag(self.key, "python", "1")
         else:
-            bb.data.delVarFlag(self.key, "python", data)
+            data.delVarFlag(self.key, "python")
         if self.m.group("fr") is not None:
-            bb.data.setVarFlag(self.key, "fakeroot", "1", data)
+            data.setVarFlag(self.key, "fakeroot", "1")
         else:
-            bb.data.delVarFlag(self.key, "fakeroot", data)
+            data.delVarFlag(self.key, "fakeroot")
 
 class ExportFuncsNode(AstNode):
     def __init__(self, filename, lineno, fns, classes):
@@ -197,25 +197,25 @@ class ExportFuncsNode(AstNode):
                 vars.append([allvars[0], allvars[2]])
 
             for (var, calledvar) in vars:
-                if bb.data.getVar(var, data) and not bb.data.getVarFlag(var, 'export_func', data):
+                if data.getVar(var) and not data.getVarFlag(var, 'export_func'):
                     continue
 
-                if bb.data.getVar(var, data):
-                    bb.data.setVarFlag(var, 'python', None, data)
-                    bb.data.setVarFlag(var, 'func', None, data)
+                if data.getVar(var):
+                    data.setVarFlag(var, 'python', None)
+                    data.setVarFlag(var, 'func', None)
 
                 for flag in [ "func", "python" ]:
-                    if bb.data.getVarFlag(calledvar, flag, data):
-                        bb.data.setVarFlag(var, flag, bb.data.getVarFlag(calledvar, flag, data), data)
+                    if data.getVarFlag(calledvar, flag):
+                        data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag))
                 for flag in [ "dirs" ]:
-                    if bb.data.getVarFlag(var, flag, data):
-                        bb.data.setVarFlag(calledvar, flag, bb.data.getVarFlag(var, flag, data), data)
+                    if data.getVarFlag(var, flag):
+                        data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag))
 
-                if bb.data.getVarFlag(calledvar, "python", data):
-                    bb.data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n", data)
+                if data.getVarFlag(calledvar, "python"):
+                    data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n")
                 else:
-                    bb.data.setVar(var, "\t" + calledvar + "\n", data)
-                bb.data.setVarFlag(var, 'export_func', '1', data)
+                    data.setVar(var, "\t" + calledvar + "\n")
+                data.setVarFlag(var, 'export_func', '1')
 
 class AddTaskNode(AstNode):
     def __init__(self, filename, lineno, func, before, after):
@@ -229,25 +229,25 @@ class AddTaskNode(AstNode):
         if self.func[:3] != "do_":
             var = "do_" + self.func
 
-        bb.data.setVarFlag(var, "task", 1, data)
-        bbtasks = bb.data.getVar('__BBTASKS', data) or []
+        data.setVarFlag(var, "task", 1)
+        bbtasks = data.getVar('__BBTASKS') or []
         if not var in bbtasks:
             bbtasks.append(var)
-        bb.data.setVar('__BBTASKS', bbtasks, data)
+        data.setVar('__BBTASKS', bbtasks)
 
-        existing = bb.data.getVarFlag(var, "deps", data) or []
+        existing = data.getVarFlag(var, "deps") or []
         if self.after is not None:
             # set up deps for function
             for entry in self.after.split():
                 if entry not in existing:
                     existing.append(entry)
-        bb.data.setVarFlag(var, "deps", existing, data)
+        data.setVarFlag(var, "deps", existing)
         if self.before is not None:
             # set up things that depend on this func
             for entry in self.before.split():
-                existing = bb.data.getVarFlag(entry, "deps", data) or []
+                existing = data.getVarFlag(entry, "deps") or []
                 if var not in existing:
-                    bb.data.setVarFlag(entry, "deps", [var] + existing, data)
+                    data.setVarFlag(entry, "deps", [var] + existing)
 
 class BBHandlerNode(AstNode):
     def __init__(self, filename, lineno, fns):
@@ -255,11 +255,11 @@ class BBHandlerNode(AstNode):
         self.hs = fns.split()
 
     def eval(self, data):
-        bbhands = bb.data.getVar('__BBHANDLERS', data) or []
+        bbhands = data.getVar('__BBHANDLERS') or []
         for h in self.hs:
             bbhands.append(h)
-            bb.data.setVarFlag(h, "handler", 1, data)
-        bb.data.setVar('__BBHANDLERS', bbhands, data)
+            data.setVarFlag(h, "handler", 1)
+        data.setVar('__BBHANDLERS', bbhands)
 
 class InheritNode(AstNode):
     def __init__(self, filename, lineno, classes):
@@ -308,9 +308,9 @@ def handleInherit(statements, filename, lineno, m):
 
 def finalize(fn, d, variant = None):
     all_handlers = {}
-    for var in bb.data.getVar('__BBHANDLERS', d) or []:
+    for var in d.getVar('__BBHANDLERS') or []:
         # try to add the handler
-        handler = bb.data.getVar(var, d)
+        handler = d.getVar(var)
         bb.event.register(var, handler)
 
     bb.event.fire(bb.event.RecipePreFinalise(fn), d)
@@ -318,12 +318,12 @@ def finalize(fn, d, variant = None):
     bb.data.expandKeys(d)
     bb.data.update_data(d)
     code = []
-    for funcname in bb.data.getVar("__BBANONFUNCS", d) or []:
+    for funcname in d.getVar("__BBANONFUNCS") or []:
         code.append("%s(d)" % funcname)
     bb.utils.simple_exec("\n".join(code), {"d": d})
     bb.data.update_data(d)
 
-    tasklist = bb.data.getVar('__BBTASKS', d) or []
+    tasklist = d.getVar('__BBTASKS') or []
     bb.build.add_tasks(tasklist, d)
 
     bb.parse.siggen.finalise(fn, d, variant)
@@ -378,7 +378,7 @@ def multi_finalize(fn, d):
     try:
         finalize(fn, d)
     except bb.parse.SkipPackage as e:
-        bb.data.setVar("__SKIPPED", e.args[0], d)
+        d.setVar("__SKIPPED", e.args[0])
     datastores = {"": safe_d}
 
     versions = (d.getVar("BBVERSIONS", True) or "").split()
@@ -421,7 +421,7 @@ def multi_finalize(fn, d):
             try:
                 finalize(fn, d)
             except bb.parse.SkipPackage as e:
-                bb.data.setVar("__SKIPPED", e.args[0], d)
+                d.setVar("__SKIPPED", e.args[0])
 
         _create_variants(datastores, versions, verfunc)
 
@@ -461,7 +461,7 @@ def multi_finalize(fn, d):
                 if not onlyfinalise or variant in onlyfinalise:
                     finalize(fn, variant_d, variant)
             except bb.parse.SkipPackage as e:
-                bb.data.setVar("__SKIPPED", e.args[0], variant_d)
+                variant_d.setVar("__SKIPPED", e.args[0])
 
     if len(datastores) > 1:
         variants = filter(None, datastores.iterkeys())

@@ -188,8 +188,8 @@ class RunQueueData:
         self.targets = targets
         self.rq = rq
 
-        self.stampwhitelist = bb.data.getVar("BB_STAMP_WHITELIST", cfgData, 1) or ""
-        self.multi_provider_whitelist = (bb.data.getVar("MULTI_PROVIDER_WHITELIST", cfgData, 1) or "").split()
+        self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", 1) or ""
+        self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", 1) or "").split()
 
         self.reset()
 
@@ -765,9 +765,9 @@ class RunQueue:
         self.cfgData = cfgData
         self.rqdata = RunQueueData(self, cooker, cfgData, dataCache, taskData, targets)
 
-        self.stamppolicy = bb.data.getVar("BB_STAMP_POLICY", cfgData, True) or "perfile"
-        self.hashvalidate = bb.data.getVar("BB_HASHCHECK_FUNCTION", cfgData, True) or None
-        self.setsceneverify = bb.data.getVar("BB_SETSCENE_VERIFY_FUNCTION", cfgData, True) or None
+        self.stamppolicy = cfgData.getVar("BB_STAMP_POLICY", True) or "perfile"
+        self.hashvalidate = cfgData.getVar("BB_HASHCHECK_FUNCTION", True) or None
+        self.setsceneverify = cfgData.getVar("BB_SETSCENE_VERIFY_FUNCTION", True) or None
 
         self.state = runQueuePrepare
 
@@ -1007,8 +1007,8 @@ class RunQueueExecute:
         self.cfgData = rq.cfgData
         self.rqdata = rq.rqdata
 
-        self.number_tasks = int(bb.data.getVar("BB_NUMBER_THREADS", self.cfgData, 1) or 1)
-        self.scheduler = bb.data.getVar("BB_SCHEDULER", self.cfgData, 1) or "speed"
+        self.number_tasks = int(self.cfgData.getVar("BB_NUMBER_THREADS", 1) or 1)
+        self.scheduler = self.cfgData.getVar("BB_SCHEDULER", 1) or "speed"
 
         self.runq_buildable = []
         self.runq_running = []
@@ -1132,9 +1132,9 @@ class RunQueueExecute:
             if umask:
                 os.umask(umask)
 
-            bb.data.setVar("BB_WORKERCONTEXT", "1", self.cooker.configuration.data)
-            bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self, self.cooker.configuration.data)
-            bb.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn, self.cooker.configuration.data)
+            self.cooker.configuration.data.setVar("BB_WORKERCONTEXT", "1")
+            self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self)
+            self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn)
             bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
             ret = 0
             try:
@@ -1254,7 +1254,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                              if type(obj) is type and
                                 issubclass(obj, RunQueueScheduler))
 
-        user_schedulers = bb.data.getVar("BB_SCHEDULERS", self.cfgData, True)
+        user_schedulers = self.cfgData.getVar("BB_SCHEDULERS", True)
         if user_schedulers:
             for sched in user_schedulers.split():
                 if not "." in sched:
@@ -1704,8 +1704,8 @@ class runQueueTaskCompleted(runQueueEvent):
     """
 
 def check_stamp_fn(fn, taskname, d):
-    rqexe = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", d)
-    fn = bb.data.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", d)
+    rqexe = d.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY")
+    fn = d.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2")
     fnid = rqexe.rqdata.taskData.getfn_id(fn)
     taskid = rqexe.rqdata.get_task_id(fnid, taskname)
     if taskid is not None:

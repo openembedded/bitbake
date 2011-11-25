@@ -34,7 +34,7 @@ class Git(Fetch):
         #
         # Only enable _sortable revision if the key is set
         #
-        if bb.data.getVar("BB_GIT_CLONE_FOR_SRCREV", d, True):
+        if d.getVar("BB_GIT_CLONE_FOR_SRCREV", True):
             self._sortable_buildindex = self._sortable_buildindex_disabled
     def supports(self, url, ud, d):
         """
@@ -220,7 +220,7 @@ class Git(Fetch):
 
     def generate_revision_key(self, url, ud, d, branch=False):
         key = self._revision_key(url, ud, d, branch)
-        return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
+        return "%s-%s" % (key, d.getVar("PN", True) or "")
 
     def _latest_revision(self, url, ud, d):
         """
@@ -276,7 +276,7 @@ class Git(Fetch):
                 del localcounts[oldkey + '_rev']
                 localcounts[key + '_rev'] = last_rev
 
-        uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
+        uselocalcount = d.getVar("BB_LOCALCOUNT_OVERRIDE", True) or False
         count = None
         if uselocalcount:
             count = Fetch.localcount_internal_helper(ud, d)

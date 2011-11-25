@@ -186,7 +186,7 @@ include</literal> directive.</para>
                 <title>Defining Python functions into the global Python namespace</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
                 <para><screen>def get_depends(bb, d):
-    if bb.data.getVar('SOMECONDITION', d, True):
+    if d.getVar('SOMECONDITION', True):
         return "dependencywithcond"
     else:
         return "dependency"

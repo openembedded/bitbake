@@ -266,7 +266,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
         seen |= deps
         newdeps = set()
         for dep in deps:
-            if bb.data.getVarFlag(dep, "func", d):
+            if d.getVarFlag(dep, "func"):
                emit_var(dep, o, d, False) and o.write('\n')
                newdeps |=  bb.codeparser.ShellParser(dep, logger).parse_shell(d.getVar(dep, True))
         newdeps -= seen
@@ -319,7 +319,7 @@ def generate_dependencies(d):
     deps = {}
     values = {}
 
-    tasklist = bb.data.getVar('__BBTASKS', d) or []
+    tasklist = d.getVar('__BBTASKS') or []
     for task in tasklist:
         deps[task], values[task] = build_dependencies(task, keys, shelldeps, vardepvals, d)
         newdeps = deps[task]

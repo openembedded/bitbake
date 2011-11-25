@@ -31,7 +31,6 @@
 import os
 import logging
 from collections import defaultdict
-import bb.data
 import bb.utils
 
 logger = logging.getLogger("BitBake.Cache")
@@ -260,7 +259,7 @@ class Cache(object):
         # It will be used in later for deciding whether we 
         # need extra cache file dump/load support 
         self.caches_array = caches_array
-        self.cachedir = bb.data.getVar("CACHE", data, True)
+        self.cachedir = data.getVar("CACHE", True)
         self.clean = set()
         self.checked = set()
         self.depends_cache = {}
@@ -283,7 +282,7 @@ class Cache(object):
         # If any of configuration.data's dependencies are newer than the
         # cache there isn't even any point in loading it...
         newest_mtime = 0
-        deps = bb.data.getVar("__base_depends", data)
+        deps = data.getVar("__base_depends")
 
         old_mtimes = [old_mtime for _, old_mtime in deps]
         old_mtimes.append(newest_mtime)

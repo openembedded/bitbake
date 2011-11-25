@@ -146,7 +146,7 @@ class DataSmart(MutableMapping):
 
         return varparse
 
-    def expand(self, s, varname):
+    def expand(self, s, varname = None):
         return self.expandWithRefs(s, varname).value
 
 

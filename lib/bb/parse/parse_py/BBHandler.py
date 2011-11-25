@@ -159,7 +159,7 @@ def handle(fn, d, include):
             return ast.multi_finalize(fn, d)
 
     if oldfile:
-        bb.data.setVar("FILE", oldfile, d)
+        d.setVar("FILE", oldfile)
 
     # we have parsed the bb class now
     if ext == ".bbclass" or ext == ".inc":

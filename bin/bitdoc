@@ -462,7 +462,7 @@ def main():
     state_group = 2
 
     for key in bb.data.keys(documentation):
-        data   = bb.data.getVarFlag(key, "doc", documentation)
+        data   = documentation.getVarFlag(key, "doc")
         if not data:
             continue
 

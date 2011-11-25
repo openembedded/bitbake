@@ -28,7 +28,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, re
 import logging
-import bb.data, bb.persist_data, bb.utils
+import bb.persist_data, bb.utils
 from bb import data
 
 __version__ = "2"
@@ -211,7 +211,7 @@ def fetcher_init(d):
     Calls before this must not hit the cache.
     """
     # When to drop SCM head revisions controlled by user policy
-    srcrev_policy = bb.data.getVar('BB_SRCREV_POLICY', d, True) or "clear"
+    srcrev_policy = d.getVar('BB_SRCREV_POLICY', True) or "clear"
     if srcrev_policy == "cache":
         logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
     elif srcrev_policy == "clear":
@@ -271,7 +271,7 @@ def verify_checksum(u, ud, d):
     sha256data = bb.utils.sha256_file(ud.localpath)
 
     # If strict checking enabled and neither sum defined, raise error
-    strict = bb.data.getVar("BB_STRICT_CHECKSUM", d, True) or None
+    strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
     if (strict and ud.md5_expected == None and ud.sha256_expected == None):
         raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
                          'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"', u,
@@ -336,8 +336,8 @@ def subprocess_setup():
 
 def get_autorev(d):
     #  only not cache src rev in autorev case
-    if bb.data.getVar('BB_SRCREV_POLICY', d, True) != "cache":
-        bb.data.setVar('__BB_DONT_CACHE', '1', d)
+    if d.getVar('BB_SRCREV_POLICY', True) != "cache":
+        d.setVar('__BB_DONT_CACHE', '1')
     return "AUTOINC"
 
 def get_srcrev(d):
@@ -350,7 +350,7 @@ def get_srcrev(d):
     """
 
     scms = []
-    fetcher = Fetch(bb.data.getVar('SRC_URI', d, True).split(), d)
+    fetcher = Fetch(d.getVar('SRC_URI', True).split(), d)
     urldata = fetcher.ud
     for u in urldata:
         if urldata[u].method.supports_srcrev():
@@ -365,7 +365,7 @@ def get_srcrev(d):
     #
     # Mutiple SCMs are in SRC_URI so we resort to SRCREV_FORMAT
     #
-    format = bb.data.getVar('SRCREV_FORMAT', d, True)
+    format = d.getVar('SRCREV_FORMAT', True)
     if not format:
         raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
 
@@ -400,7 +400,7 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
                   'GIT_PROXY_IGNORE', 'SOCKS5_USER', 'SOCKS5_PASSWD']
 
     for var in exportvars:
-        val = bb.data.getVar(var, d, True)
+        val = d.getVar(var, True)
         if val:
             cmd = 'export ' + var + '=\"%s\"; %s' % (val, cmd)
 
@@ -440,7 +440,7 @@ def check_network_access(d, info = "", url = None):
     """
     log remote network access, and error if BB_NO_NETWORK is set
     """
-    if bb.data.getVar("BB_NO_NETWORK", d, True) == "1":
+    if d.getVar("BB_NO_NETWORK", True) == "1":
         raise NetworkAccess(url, info)
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
@@ -526,15 +526,15 @@ def srcrev_internal_helper(ud, d, name):
         return ud.parm['tag']
 
     rev = None
-    pn = bb.data.getVar("PN", d, True)
+    pn = d.getVar("PN", True)
     if name != '':
-        rev = bb.data.getVar("SRCREV_%s_pn-%s" % (name, pn), d, True)
+        rev = d.getVar("SRCREV_%s_pn-%s" % (name, pn), True)
         if not rev:
-            rev = bb.data.getVar("SRCREV_%s" % name, d, True)
+            rev = d.getVar("SRCREV_%s" % name, True)
     if not rev:
-       rev = bb.data.getVar("SRCREV_pn-%s" % pn, d, True)
+       rev = d.getVar("SRCREV_pn-%s" % pn, True)
     if not rev:
-        rev = bb.data.getVar("SRCREV", d, True)
+        rev = d.getVar("SRCREV", True)
     if rev == "INVALID":
         raise FetchError("Please set SRCREV to a valid value", ud.url)
     if rev == "AUTOINC":
@@ -572,11 +572,11 @@ class FetchData(object):
         if self.md5_name in self.parm:
             self.md5_expected = self.parm[self.md5_name]
         else:
-            self.md5_expected = bb.data.getVarFlag("SRC_URI", self.md5_name, d)
+            self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
         if self.sha256_name in self.parm:
             self.sha256_expected = self.parm[self.sha256_name]
         else:
-            self.sha256_expected = bb.data.getVarFlag("SRC_URI", self.sha256_name, d)
+            self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
 
         self.names = self.parm.get("name",'default').split(',')
 
@@ -600,7 +600,7 @@ class FetchData(object):
             self.localpath = self.method.localpath(self.url, self, d)
 
         # Note: These files should always be in DL_DIR whereas localpath may not be.
-        basepath = bb.data.expand("${DL_DIR}/%s" % os.path.basename(self.localpath or self.basename), d)
+        basepath = d.expand("${DL_DIR}/%s" % os.path.basename(self.localpath or self.basename))
         self.donestamp = basepath + '.done'
         self.lockfile = basepath + '.lock'
 
@@ -626,12 +626,12 @@ class FetchData(object):
         if "srcdate" in self.parm:
             return self.parm['srcdate']
 
-        pn = bb.data.getVar("PN", d, True)
+        pn = d.getVar("PN", True)
 
         if pn:
-            return bb.data.getVar("SRCDATE_%s" % pn, d, True) or bb.data.getVar("SRCDATE", d, True) or bb.data.getVar("DATE", d, True)
+            return d.getVar("SRCDATE_%s" % pn, True) or d.getVar("SRCDATE", True) or d.getVar("DATE", True)
 
-        return bb.data.getVar("SRCDATE", d, True) or bb.data.getVar("DATE", d, True)
+        return d.getVar("SRCDATE", True) or d.getVar("DATE", True)
 
 class FetchMethod(object):
     """Base class for 'fetch'ing data"""
@@ -703,7 +703,7 @@ class FetchMethod(object):
 
         dots = file.split(".")
         if dots[-1] in ['gz', 'bz2', 'Z']:
-            efile = os.path.join(bb.data.getVar('WORKDIR', data, True),os.path.basename('.'.join(dots[0:-1])))
+            efile = os.path.join(data.getVar('WORKDIR', True),os.path.basename('.'.join(dots[0:-1])))
         else:
             efile = file
         cmd = None
@@ -747,7 +747,7 @@ class FetchMethod(object):
             dest = os.path.join(rootdir, os.path.basename(file))
             if (file != dest) and not (os.path.exists(dest) and os.path.samefile(file, dest)):
                 if os.path.isdir(file):
-                    filesdir = os.path.realpath(bb.data.getVar("FILESDIR", data, True))
+                    filesdir = os.path.realpath(data.getVar("FILESDIR", True))
                     destdir = "."
                     if file[0:len(filesdir)] == filesdir:
                         destdir = file[len(filesdir):file.rfind('/')]
@@ -779,7 +779,7 @@ class FetchMethod(object):
             bb.utils.mkdirhier(newdir)
             os.chdir(newdir)
 
-        cmd = "PATH=\"%s\" %s" % (bb.data.getVar('PATH', data, True), cmd)
+        cmd = "PATH=\"%s\" %s" % (data.getVar('PATH', True), cmd)
         bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
         ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
 
@@ -824,10 +824,10 @@ class FetchMethod(object):
 
         localcount = None
         if name != '':
-            pn = bb.data.getVar("PN", d, True)
-            localcount = bb.data.getVar("LOCALCOUNT_" + name, d, True)
+            pn = d.getVar("PN", True)
+            localcount = d.getVar("LOCALCOUNT_" + name, True)
         if not localcount:
-            localcount = bb.data.getVar("LOCALCOUNT", d, True)
+            localcount = d.getVar("LOCALCOUNT", True)
         return localcount
 
     localcount_internal_helper = staticmethod(localcount_internal_helper)
@@ -859,7 +859,7 @@ class FetchMethod(object):
 
         latest_rev = self._build_revision(url, ud, d, name)
         last_rev = localcounts.get(key + '_rev')
-        uselocalcount = bb.data.getVar("BB_LOCALCOUNT_OVERRIDE", d, True) or False
+        uselocalcount = d.getVar("BB_LOCALCOUNT_OVERRIDE", True) or False
         count = None
         if uselocalcount:
             count = FetchMethod.localcount_internal_helper(ud, d, name)
@@ -887,7 +887,7 @@ class FetchMethod(object):
 
     def generate_revision_key(self, url, ud, d, name):
         key = self._revision_key(url, ud, d, name)
-        return "%s-%s" % (key, bb.data.getVar("PN", d, True) or "")
+        return "%s-%s" % (key, d.getVar("PN", True) or "")
 
 class Fetch(object):
     def __init__(self, urls, d, cache = True):
@@ -897,7 +897,7 @@ class Fetch(object):
         self.d = d
         self.ud = {}
 
-        fn = bb.data.getVar('FILE', d, True)
+        fn = d.getVar('FILE', True)
         if cache and fn in urldata_cache:
             self.ud = urldata_cache[fn]
 
@@ -913,7 +913,7 @@ class Fetch(object):
             self.ud[url] = FetchData(url, self.d)
 
         self.ud[url].setup_localpath(self.d)
-        return bb.data.expand(self.ud[url].localpath, self.d)
+        return self.d.expand(self.ud[url].localpath)
 
     def localpaths(self):
         """
@@ -935,8 +935,8 @@ class Fetch(object):
         if len(urls) == 0:
             urls = self.urls
 
-        network = bb.data.getVar("BB_NO_NETWORK", self.d, True)
-        premirroronly = (bb.data.getVar("BB_FETCH_PREMIRRORONLY", self.d, True) == "1")
+        network = self.d.getVar("BB_NO_NETWORK", True)
+        premirroronly = (self.d.getVar("BB_FETCH_PREMIRRORONLY", True) == "1")
 
         for u in urls:
             ud = self.ud[u]
@@ -947,17 +947,17 @@ class Fetch(object):
             lf = bb.utils.lockfile(ud.lockfile)
 
             try:
-                bb.data.setVar("BB_NO_NETWORK", network, self.d)
+                self.d.setVar("BB_NO_NETWORK", network)
  
                 if not m.need_update(u, ud, self.d):
                     localpath = ud.localpath
                 elif m.try_premirror(u, ud, self.d):
                     logger.debug(1, "Trying PREMIRRORS")
-                    mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
+                    mirrors = mirror_from_string(self.d.getVar('PREMIRRORS', True))
                     localpath = try_mirrors(self.d, ud, mirrors, False)
 
                 if premirroronly:
-                    bb.data.setVar("BB_NO_NETWORK", "1", self.d)
+                    self.d.setVar("BB_NO_NETWORK", "1")
 
                 if not localpath and m.need_update(u, ud, self.d):
                     try:
@@ -979,7 +979,7 @@ class Fetch(object):
                         if os.path.isfile(ud.localpath):
                             bb.utils.remove(ud.localpath)
                         logger.debug(1, "Trying MIRRORS")
-                        mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
+                        mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
                         localpath = try_mirrors (self.d, ud, mirrors)
 
                 if not localpath or ((not os.path.exists(localpath)) and localpath.find("*") == -1):
@@ -1004,7 +1004,7 @@ class Fetch(object):
             m = ud.method
             logger.debug(1, "Testing URL %s", u)
             # First try checking uri, u, from PREMIRRORS
-            mirrors = mirror_from_string(bb.data.getVar('PREMIRRORS', self.d, True))
+            mirrors = mirror_from_string(self.d.getVar('PREMIRRORS', True))
             ret = try_mirrors(self.d, ud, mirrors, True)
             if not ret:
                 # Next try checking from the original uri, u
@@ -1012,7 +1012,7 @@ class Fetch(object):
                     ret = m.checkstatus(u, ud, self.d)
                 except:
                     # Finally, try checking uri, u, from MIRRORS
-                    mirrors = mirror_from_string(bb.data.getVar('MIRRORS', self.d, True))
+                    mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
                     ret = try_mirrors (self.d, ud, mirrors, True)
 
             if not ret:
@@ -1030,7 +1030,7 @@ class Fetch(object):
             ud = self.ud[u]
             ud.setup_localpath(self.d)
 
-            if bb.data.expand(self.localpath, self.d) is None:
+            if self.d.expand(self.localpath) is None:
                 continue
 
             if ud.lockfile:

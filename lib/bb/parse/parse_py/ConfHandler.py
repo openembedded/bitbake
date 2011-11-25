@@ -24,7 +24,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import re, bb.data, os
+import re, os
 import logging
 import bb.utils
 from bb.parse import ParseError, resolve_file, ast, logger
@@ -36,9 +36,9 @@ __require_regexp__ = re.compile( r"require\s+(.+)" )
 __export_regexp__ = re.compile( r"export\s+(.+)" )
 
 def init(data):
-    topdir = bb.data.getVar('TOPDIR', data)
+    topdir = data.getVar('TOPDIR')
     if not topdir:
-        bb.data.setVar('TOPDIR', os.getcwd(), data)
+        data.setVar('TOPDIR', os.getcwd())
 
 
 def supports(fn, d):
@@ -53,12 +53,12 @@ def include(oldfn, fn, data, error_out):
         return None
 
     import bb
-    fn = bb.data.expand(fn, data)
-    oldfn = bb.data.expand(oldfn, data)
+    fn = data.expand(fn)
+    oldfn = data.expand(oldfn)
 
     if not os.path.isabs(fn):
         dname = os.path.dirname(oldfn)
-        bbpath = "%s:%s" % (dname, bb.data.getVar("BBPATH", data, 1))
+        bbpath = "%s:%s" % (dname, data.getVar("BBPATH", 1))
         abs_fn = bb.utils.which(bbpath, fn)
         if abs_fn:
             fn = abs_fn
@@ -77,7 +77,7 @@ def handle(fn, data, include):
     if include == 0:
         oldfile = None
     else:
-        oldfile = bb.data.getVar('FILE', data)
+        oldfile = data.getVar('FILE')
 
     abs_fn = resolve_file(fn, data)
     f = open(abs_fn, 'r')
@@ -102,10 +102,10 @@ def handle(fn, data, include):
         feeder(lineno, s, fn, statements)
 
     # DONE WITH PARSING... time to evaluate
-    bb.data.setVar('FILE', abs_fn, data)
+    data.setVar('FILE', abs_fn)
     statements.eval(data)
     if oldfile:
-        bb.data.setVar('FILE', oldfile, data)
+        data.setVar('FILE', oldfile)
 
     return data
 

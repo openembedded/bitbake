@@ -62,9 +62,9 @@ def update_mtime(f):
 def mark_dependency(d, f):
     if f.startswith('./'):
         f = "%s/%s" % (os.getcwd(), f[2:])
-    deps = bb.data.getVar('__depends', d) or set()
+    deps = d.getVar('__depends') or set()
     deps.update([(f, cached_mtime(f))])
-    bb.data.setVar('__depends', deps, d)
+    d.setVar('__depends', deps)
 
 def supports(fn, data):
     """Returns true if we have a handler for this file, false otherwise"""
@@ -90,7 +90,7 @@ def init_parser(d):
 
 def resolve_file(fn, d):
     if not os.path.isabs(fn):
-        bbpath = bb.data.getVar("BBPATH", d, True)
+        bbpath = d.getVar("BBPATH", True)
         newfn = bb.utils.which(bbpath, fn)
         if not newfn:
             raise IOError("file %s not found in %s" % (fn, bbpath))

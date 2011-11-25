@@ -192,9 +192,9 @@ def connect(database):
 
 def persist(domain, d):
     """Convenience factory for SQLTable objects based upon metadata"""
-    import bb.data, bb.utils
-    cachedir = (bb.data.getVar("PERSISTENT_DIR", d, True) or
-                bb.data.getVar("CACHE", d, True))
+    import bb.utils
+    cachedir = (d.getVar("PERSISTENT_DIR", True) or
+                d.getVar("CACHE", True))
     if not cachedir:
         logger.critical("Please set the 'PERSISTENT_DIR' or 'CACHE' variable")
         sys.exit(1)
