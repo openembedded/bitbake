@@ -159,7 +159,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         k = fn + "." + task
         if runtime == "customfile":
             sigfile = stampbase
-        elif runtime:
+        elif runtime and k in self.taskhash:
             sigfile = stampbase + "." + task + ".sigdata" + "." + self.taskhash[k]
         else:
             sigfile = stampbase + "." + task + ".sigbasedata" + "." + self.basehash[k]
@@ -180,7 +180,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             data['gendeps'][dep] = self.gendeps[fn][dep]
             data['varvals'][dep] = self.lookupcache[fn][dep]
 
-        if runtime:
+        if runtime and k in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[k]
             data['runtaskhashes'] = {}
             for dep in data['runtaskdeps']:
