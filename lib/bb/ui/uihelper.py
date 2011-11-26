@@ -24,6 +24,8 @@ class BBUIHelper:
         self.needUpdate = False
         self.running_tasks = {}
         self.failed_tasks = []
+        self.tasknumber_current = 0
+        self.tasknumber_total = 0
 
     def eventHandler(self, event):
         if isinstance(event, bb.build.TaskStarted):
@@ -40,6 +42,9 @@ class BBUIHelper:
             del self.running_tasks[event.pid]
             self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
             self.needUpdate = True
+        if isinstance(event, bb.runqueue.runQueueTaskStarted):
+            self.tasknumber_current = event.stats.completed + event.stats.active + event.stats.failed + 1
+            self.tasknumber_total = event.stats.total
 
     def getTasks(self):
         self.needUpdate = False
