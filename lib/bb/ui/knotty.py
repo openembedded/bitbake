@@ -3,7 +3,7 @@
 #
 # Handling output to TTYs or files (no TTY)
 #
-# Copyright (C) 2006-2007 Richard Purdie
+# Copyright (C) 2006-2012 Richard Purdie
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -70,7 +70,39 @@ def pluralise(singular, plural, qty):
     else:
         return plural % qty
 
-def main(server, eventHandler):
+class TerminalFilter(object):
+    def __init__(self, main, helper, console, format):
+        self.main = main
+        self.helper = helper
+
+    def clearFooter(self):
+        return
+
+    def updateFooter(self):
+        if not main.shutdown or not self.helper.needUpdate:
+            return
+
+        activetasks = self.helper.running_tasks
+        runningpids = self.helper.running_pids
+
+        if len(runningpids) == 0:
+            return
+
+        tasks = []
+        for t in runningpids:
+            tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
+
+        if main.shutdown:
+            print("Waiting for %s running tasks to finish:" % len(activetasks))
+        else:
+            print("Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total))
+        for tasknum, task in enumerate(tasks):
+            print("%s: %s" % (tasknum, task))
+
+    def finish(self):
+        return
+
+def main(server, eventHandler, tf = TerminalFilter):
 
     # Get values of variables which control our output
     includelogs = server.runCommand(["getVariable", "BBINCLUDELOGS"])
@@ -106,32 +138,29 @@ def main(server, eventHandler):
         print("XMLRPC Fault getting commandline:\n %s" % x)
         return 1
 
-
     parseprogress = None
     cacheprogress = None
-    shutdown = 0
+    main.shutdown = 0
     interrupted = False
     return_value = 0
     errors = 0
     warnings = 0
     taskfailures = []
+
+    termfilter = tf(main, helper, console, format)
+
     while True:
         try:
+            termfilter.updateFooter()
             event = eventHandler.waitEvent(0.25)
             if event is None:
-                if shutdown > 1:
+                if main.shutdown > 1:
                     break
                 continue
             helper.eventHandler(event)
             if isinstance(event, bb.runqueue.runQueueExitWait):
-                if not shutdown:
-                    shutdown = 1
-            if shutdown and helper.needUpdate:
-                activetasks, failedtasks = helper.getTasks()
-                if activetasks:
-                    print("Waiting for %s active tasks to finish:" % len(activetasks))
-                    for tasknum, task in enumerate(activetasks):
-                        print("%s: %s (pid %s)" % (tasknum, activetasks[task]["title"], task))
+                if not main.shutdown:
+                    main.shutdown = 1
 
             if isinstance(event, logging.LogRecord):
                 if event.levelno >= format.ERROR:
@@ -151,6 +180,7 @@ def main(server, eventHandler):
                 return_value = 1
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
+                    termfilter.clearFooter()
                     print("ERROR: Logfile of failure stored in: %s" % logfile)
                     if includelogs and not event.errprinted:
                         print("Log data follows:")
@@ -206,14 +236,14 @@ def main(server, eventHandler):
                 return_value = event.exitcode
                 errors = errors + 1
                 logger.error("Command execution failed: %s", event.error)
-                shutdown = 2
+                main.shutdown = 2
                 continue
             if isinstance(event, bb.command.CommandExit):
                 if not return_value:
                     return_value = event.exitcode
                 continue
             if isinstance(event, (bb.command.CommandCompleted, bb.cooker.CookerExit)):
-                shutdown = 2
+                main.shutdown = 2
                 continue
             if isinstance(event, bb.event.MultipleProviders):
                 logger.info("multiple providers are available for %s%s (%s)", event._is_runtime and "runtime " or "",
@@ -281,18 +311,20 @@ def main(server, eventHandler):
             logger.error("Unknown event: %s", event)
 
         except EnvironmentError as ioerror:
+            termfilter.clearFooter()
             # ignore interrupted io
             if ioerror.args[0] == 4:
                 pass
         except KeyboardInterrupt:
-            if shutdown == 1:
+            termfilter.clearFooter()
+            if main.shutdown == 1:
                 print("\nSecond Keyboard Interrupt, stopping...\n")
                 server.runCommand(["stateStop"])
-            if shutdown == 0:
+            if main.shutdown == 0:
                 interrupted = True
                 print("\nKeyboard Interrupt, closing down...\n")
                 server.runCommand(["stateShutdown"])
-            shutdown = shutdown + 1
+            main.shutdown = main.shutdown + 1
             pass
 
     summary = ""
@@ -314,5 +346,7 @@ def main(server, eventHandler):
         print("Execution was interrupted, returning a non-zero exit code.")
         if return_value == 0:
             return_value = 1
+
+    termfilter.finish()
 
     return return_value
