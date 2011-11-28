@@ -25,12 +25,7 @@ import logging
 import time
 import urllib
 import urllib2
-
-class Colors(object):
-    OK = "#ffffff"
-    RUNNING = "#aaffaa"
-    WARNING ="#f88017"
-    ERROR = "#ffaaaa"
+from bb.ui.crumbs.hobcolor import HobColors
 
 class RunningBuildModel (gtk.TreeStore):
     (COL_LOG, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_COLOR, COL_NUM_ACTIVE) = range(7)
@@ -58,7 +53,10 @@ class RunningBuild (gobject.GObject):
                             ()),
           'build-complete' : (gobject.SIGNAL_RUN_LAST,
                               gobject.TYPE_NONE,
-                              ())
+                              ()),
+          'task-started'   : (gobject.SIGNAL_RUN_LAST,
+                              gobject.TYPE_NONE,
+                              (gobject.TYPE_PYOBJECT,)),
           }
     pids_to_task = {}
     tasks_to_iter = {}
@@ -108,13 +106,13 @@ class RunningBuild (gobject.GObject):
 
             if event.levelno >= logging.ERROR:
                 icon = "dialog-error"
-                color = Colors.ERROR
+                color = HobColors.ERROR
             elif event.levelno >= logging.WARNING:
                 icon = "dialog-warning"
-                color = Colors.WARNING
+                color = HobColors.WARNING
             else:
                 icon = None
-                color = Colors.OK
+                color = HobColors.OK
 
             # if we know which package we belong to, we'll append onto its list.
             # otherwise, we'll jump to the top of the master list
@@ -152,7 +150,7 @@ class RunningBuild (gobject.GObject):
                                     None,
                                     "Package: %s" % (package),
                                     None,
-                                    Colors.OK,
+                                    HobColors.OK,
                                     0))
                 self.tasks_to_iter[(package, None)] = parent
 
@@ -160,7 +158,7 @@ class RunningBuild (gobject.GObject):
             # such.
             # @todo if parent is already in error, don't mark it green
             self.model.set(parent, self.model.COL_ICON, "gtk-execute",
-                           self.model.COL_COLOR, Colors.RUNNING)
+                           self.model.COL_COLOR, HobColors.RUNNING)
 
             # Add an entry in the model for this task
             i = self.model.append (parent, (None,
@@ -168,7 +166,7 @@ class RunningBuild (gobject.GObject):
                                             task,
                                             "Task: %s" % (task),
                                             "gtk-execute",
-                                            Colors.RUNNING,
+                                            HobColors.RUNNING,
                                             0))
 
             # update the parent's active task count
@@ -178,10 +176,6 @@ class RunningBuild (gobject.GObject):
             # Save out the iter so that we can find it when we have a message
             # that we need to attach to a task.
             self.tasks_to_iter[(package, task)] = i
-
-        # If we don't handle these the GUI does not proceed
-        elif isinstance(event, bb.build.TaskInvalid):
-            return
 
         elif isinstance(event, bb.build.TaskBase):
             current = self.tasks_to_iter[(package, task)]
@@ -194,20 +188,20 @@ class RunningBuild (gobject.GObject):
             if isinstance(event, bb.build.TaskFailed):
                 # Mark the task and parent as failed
                 icon = "dialog-error"
-                color = Colors.ERROR
+                color = HobColors.ERROR
 
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
                     with open(logfile) as f:
                         logdata = f.read()
-                        self.model.append(current, ('pastebin', None, None, logdata, 'gtk-error', Colors.OK, 0))
+                        self.model.append(current, ('pastebin', None, None, logdata, 'gtk-error', HobColors.OK, 0))
 
                 for i in (current, parent):
                     self.model.set(i, self.model.COL_ICON, icon,
                                    self.model.COL_COLOR, color)
             else:
                 icon = None
-                color = Colors.OK
+                color = HobColors.OK
 
                 # Mark the task as inactive
                 self.model.set(current, self.model.COL_ICON, icon,
@@ -219,7 +213,7 @@ class RunningBuild (gobject.GObject):
                 if self.model.get(parent, self.model.COL_ICON) != 'dialog-error':
                     self.model.set(parent, self.model.COL_ICON, icon)
                     if num_active == 0:
-                        self.model.set(parent, self.model.COL_COLOR, Colors.OK)
+                        self.model.set(parent, self.model.COL_COLOR, HobColors.OK)
 
             # Clear the iters and the pids since when the task goes away the
             # pid will no longer be used for messages
@@ -234,8 +228,12 @@ class RunningBuild (gobject.GObject):
                                       None,
                                       "Build Started (%s)" % time.strftime('%m/%d/%Y %H:%M:%S'),
                                       None,
-                                      Colors.OK,
+                                      HobColors.OK,
                                       0))
+            if pbar:
+                pbar.update(0, None, bb.event.getName(event))
+                pbar.set_title()
+
         elif isinstance(event, bb.event.BuildCompleted):
             failures = int (event._failures)
             self.model.prepend(None, (None,
@@ -243,7 +241,7 @@ class RunningBuild (gobject.GObject):
                                       None,
                                       "Build Completed (%s)" % time.strftime('%m/%d/%Y %H:%M:%S'),
                                       None,
-                                      Colors.OK,
+                                      HobColors.OK,
                                       0))
 
             # Emit the appropriate signal depending on the number of failures
@@ -254,6 +252,8 @@ class RunningBuild (gobject.GObject):
             # Emit a generic "build-complete" signal for things wishing to
             # handle when the build is finished
             self.emit("build-complete")
+            if pbar:
+                pbar.set_text(event.msg)
 
         elif isinstance(event, bb.command.CommandFailed):
             if event.error.startswith("Exited with"):
@@ -280,6 +280,15 @@ class RunningBuild (gobject.GObject):
             pbar.update(event.current, self.progress_total)
         elif isinstance(event, bb.event.ParseCompleted) and pbar:
             pbar.hide()
+        #using runqueue events as many as possible to update the progress bar
+        elif isinstance(event, (bb.runqueue.runQueueTaskStarted, bb.runqueue.sceneQueueTaskStarted)):
+            message = {}
+            message["eventname"] = bb.event.getName(event)
+            num_of_completed = event.stats.completed + event.stats.failed
+            message["current"] = num_of_completed
+            message["total"] = event.stats.total
+            message["title"] = ""
+            self.emit("task-started", message)
 
         return
 
