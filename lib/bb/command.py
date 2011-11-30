@@ -31,10 +31,6 @@ Commands are queued in a CommandQueue
 import bb.event
 import bb.cooker
 
-async_cmds = {}
-sync_cmds = {}
-
-
 class CommandCompleted(bb.event.Event):
     pass
 
@@ -59,16 +55,6 @@ class Command:
 
         # FIXME Add lock for this
         self.currentAsyncCommand = None
-
-        for attr in CommandsSync.__dict__:
-            command = attr[:].lower()
-            method = getattr(CommandsSync, attr)
-            sync_cmds[command] = (method)
-
-        for attr in CommandsAsync.__dict__:
-            command = attr[:].lower()
-            method = getattr(CommandsAsync, attr)
-            async_cmds[command] = (method)
 
     def runCommand(self, commandline):
         try:
