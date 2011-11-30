@@ -236,13 +236,13 @@ def compare_sigfiles(a, b):
     p2 = pickle.Unpickler(file(b, "rb"))
     b_data = p2.load()
 
-    def dict_diff(a, b):
+    def dict_diff(a, b, whitelist=set()):
         sa = set(a.keys())
         sb = set(b.keys())
         common = sa & sb
         changed = set()
         for i in common:
-            if a[i] != b[i]:
+            if a[i] != b[i] and i not in whitelist:
                 changed.add(i)
         added = sa - sb
         removed = sb - sa
@@ -262,7 +262,7 @@ def compare_sigfiles(a, b):
     if a_data['basehash'] != b_data['basehash']:
         print "basehash changed from %s to %s" % (a_data['basehash'], b_data['basehash'])
 
-    changed, added, removed = dict_diff(a_data['gendeps'], b_data['gendeps'])
+    changed, added, removed = dict_diff(a_data['gendeps'], b_data['gendeps'], a_data['basewhitelist'] & b_data['basewhitelist'])
     if changed:
         for dep in changed:
             print "List of dependencies for variable %s changed from %s to %s" % (dep, a_data['gendeps'][dep], b_data['gendeps'][dep])
