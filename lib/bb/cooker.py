@@ -289,7 +289,9 @@ class BBCooker:
             self.status = bb.cache.CacheData(self.caches_array)
             self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", 1) )
 
-            fn = self.matchFile(buildfile)
+            fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
+            fn = self.matchFile(fn)
+            fn = bb.cache.Cache.realfn2virtual(fn, cls)
         elif len(pkgs_to_build) == 1:
             self.updateCache()
 
