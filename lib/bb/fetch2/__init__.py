@@ -274,9 +274,9 @@ def verify_checksum(u, ud, d):
     strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
     if (strict and ud.md5_expected == None and ud.sha256_expected == None):
         raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
-                         'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"', u,
-                         ud.localpath, ud.md5_name, md5data,
-                         ud.sha256_name, sha256data)
+                         'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
+                         (ud.localpath, ud.md5_name, md5data,
+                         ud.sha256_name, sha256data), u)
 
     # Log missing sums so user can more easily add them
     if ud.md5_expected == None:
