@@ -179,6 +179,10 @@ class RunningBuild (gobject.GObject):
             # that we need to attach to a task.
             self.tasks_to_iter[(package, task)] = i
 
+        # If we don't handle these the GUI does not proceed
+        elif isinstance(event, bb.build.TaskInvalid):
+            return
+
         elif isinstance(event, bb.build.TaskBase):
             current = self.tasks_to_iter[(package, task)]
             parent = self.tasks_to_iter[(package, None)]
