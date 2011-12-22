@@ -115,7 +115,7 @@ class Git(FetchMethod):
                 ud.branches[name] = ud.revisions[name]
                 ud.revisions[name] = self.latest_revision(ud.url, ud, d, name)
 
-        gitsrcname = '%s%s' % (ud.host, ud.path.replace('/', '.'))
+        gitsrcname = '%s%s' % (ud.host.replace(':','.'), ud.path.replace('/', '.'))
         # for rebaseable git repo, it is necessary to keep mirror tar ball
         # per revision, so that even the revision disappears from the
         # upstream repo in the future, the mirror will remain intact and still
