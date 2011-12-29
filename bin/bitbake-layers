@@ -18,6 +18,7 @@ import bb.cooker
 import bb.providers
 import bb.utils
 from bb.cooker import state
+import bb.fetch2
 
 
 logger = logging.getLogger('BitBake')
