@@ -170,6 +170,9 @@ class BBCooker:
     def loadConfigurationData(self):
         self.configuration.data = bb.data.init()
 
+        if not self.server_registration_cb:
+            self.configuration.data.setVar("BB_WORKERCONTEXT", "1")
+
         filtered_keys = bb.utils.approved_variables()
         bb.data.inheritFromOS(self.configuration.data, self.savedenv, filtered_keys)
 
@@ -827,7 +830,8 @@ class BBCooker:
         for var in data.getVar('__BBHANDLERS') or []:
             bb.event.register(var, data.getVar(var))
 
-        bb.fetch.fetcher_init(data)
+        if data.getVar("BB_WORKERCONTEXT", False) is None:
+            bb.fetch.fetcher_init(data)
         bb.codeparser.parser_cache_init(data)
         bb.parse.init_parser(data)
         bb.event.fire(bb.event.ConfigParsed(), data)
