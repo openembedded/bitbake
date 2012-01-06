@@ -242,9 +242,9 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
         return
 
 class BitbakeServerInfo():
-    def __init__(self, server):
-        self.host = server.host
-        self.port = server.port
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
 
 class BitBakeServerConnection():
     def __init__(self, serverinfo):
@@ -278,7 +278,7 @@ class BitBakeServer(object):
         return self.server.register_idle_function
 
     def saveConnectionDetails(self): 
-        self.serverinfo = BitbakeServerInfo(self.server)
+        self.serverinfo = BitbakeServerInfo(self.server.host, self.server.port)
 
     def detach(self, cooker_logfile):
         daemonize.createDaemon(self.server.serve_forever, cooker_logfile)
