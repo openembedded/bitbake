@@ -165,6 +165,9 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("", "--revisions-changed", help = "Set the exit code depending on whether upstream floating revisions have changed or not",
                action = "store_true", dest = "revisions_changed", default = False)
 
+    parser.add_option("", "--server-only", help = "Run bitbake without UI,  the frontend can connect with bitbake server itself",
+               action = "store_true", dest = "server_only", default = False)
+
     options, args = parser.parse_args(sys.argv)
 
     configuration = BBConfiguration(options)
@@ -185,6 +188,9 @@ Default BBFILES are the .bb files in the current directory.""")
     except AttributeError:
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
                  "Valid interfaces: xmlrpc, process [default], none." % servertype)
+
+    if configuration.server_only and configuration.servertype != "xmlrpc":
+        sys.exit("FATAL: If '--server-only' is defined, we must set the servertype as 'xmlrpc'.\n")
 
     # Save a logfile for cooker into the current working directory. When the
     # server is daemonized this logfile will be truncated.
@@ -222,14 +228,17 @@ Default BBFILES are the .bb files in the current directory.""")
 
     logger.removeHandler(handler)
 
-    # Setup a connection to the server (cooker)
-    server_connection = server.establishConnection()
+    if not configuration.server_only:
+        # Setup a connection to the server (cooker)
+        server_connection = server.establishConnection()
 
-    try:
-        return server.launchUI(ui_main, server_connection.connection, server_connection.events)
-    finally:
-        bb.event.ui_queue = []
-        server_connection.terminate()
+        try:
+            return server.launchUI(ui_main, server_connection.connection, server_connection.events)
+        finally:
+            bb.event.ui_queue = []
+            server_connection.terminate()
+    else:
+        print("server address: %s, server port: %s" % (server.serverinfo.host, server.serverinfo.port))
 
     return 1
 
