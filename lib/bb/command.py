@@ -238,6 +238,17 @@ class CommandsAsync:
         command.finishAsyncCommand()
     generateTargetsTree.needcache = True
 
+    def findCoreBaseFiles(self, command, params):
+        """
+        Find certain files in COREBASE directory. i.e. Layers
+        """
+        subdir = params[0]
+        filename = params[1]
+
+        command.cooker.findCoreBaseFiles(subdir, filename)
+        command.finishAsyncCommand()
+    findCoreBaseFiles.needcache = False
+
     def findConfigFiles(self, command, params):
         """
         Find config files which provide appropriate values

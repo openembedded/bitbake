@@ -402,6 +402,14 @@ class FilesMatchingFound(Event):
         self._pattern = pattern
         self._matches = matches
 
+class CoreBaseFilesFound(Event):
+    """
+    Event when a list of appropriate config files has been generated
+    """
+    def __init__(self, paths):
+        Event.__init__(self)
+        self._paths = paths
+
 class ConfigFilesFound(Event):
     """
     Event when a list of appropriate config files has been generated

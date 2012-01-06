@@ -641,6 +641,18 @@ class BBCooker:
             if regex in unmatched:
                 collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
 
+    def findCoreBaseFiles(self, subdir, configfile):
+        corebase = self.configuration.data.getVar('COREBASE', True) or ""
+        paths = []
+        for root, dirs, files in os.walk(corebase + '/' + subdir):
+            for d in dirs:
+                configfilepath = os.path.join(root, d, configfile)
+                if os.path.exists(configfilepath):
+                    paths.append(os.path.join(root, d))
+
+        if paths:
+            bb.event.fire(bb.event.CoreBaseFilesFound(paths), self.configuration.data)
+
     def findConfigFilePath(self, configfile):
         """
         Find the location on disk of configfile and if it exists and was parsed by BitBake
