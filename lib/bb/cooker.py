@@ -34,8 +34,8 @@ from cStringIO import StringIO
 from contextlib import closing
 from functools import wraps
 from collections import defaultdict
-import bb, bb.exceptions
-from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
+import bb, bb.exceptions, bb.command
+from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
