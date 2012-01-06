@@ -157,6 +157,12 @@ class CommandsSync:
         value = params[1]
         command.cooker.configuration.data.setVar(varname, value)
 
+    def initCooker(self, command, params):
+        """
+        Init the cooker to initial state with nothing parsed
+        """
+        command.cooker.initialize()
+
     def resetCooker(self, command, params):
         """
         Reset the cooker to its initial state, thus forcing a reparse for
