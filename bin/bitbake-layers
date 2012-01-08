@@ -8,6 +8,7 @@ import cmd
 import logging
 import os
 import sys
+import fnmatch
 
 bindir = os.path.dirname(__file__)
 topdir = os.path.dirname(bindir)
@@ -152,6 +153,8 @@ cleanup may still be necessary afterwards, in particular:
 * where anything beyond the normal layer setup has been added to
   layer.conf (only the lowest priority number layer's layer.conf is used)
 * overridden/appended items from bbappends will need to be tidied up
+* when the flattened layers do not have the same directory structure (the
+  flatten command should show a warning when this will cause a problem)
 
 Warning: if you flatten several layers where another layer is intended to
 be used "inbetween" them (in layer priority order) such that recipes /
@@ -194,6 +197,8 @@ build results (as the layer priority order has effectively changed).
                     logger.error('Unable to find layer %s in current configuration, please run "%s show_layers" to list configured layers' % (layername, os.path.basename(sys.argv[0])))
                     return
             layers = found_layerdirs
+        else:
+            layernames = []
 
         # Ensure a specified path matches our list of layers
         def layer_path_match(path):
@@ -256,6 +261,39 @@ build results (as the layer priority order has effectively changed).
                             bb.utils.copyfile(appendname, fdest)
                             first_append = fdest
 
+        # Get the regex for the first layer in our list (which is where the conf/layer.conf file will
+        # have come from)
+        first_regex = None
+        layerdir = layers[0]
+        for layername, pattern, regex, _ in self.cooker.status.bbfile_config_priorities:
+            if (not layernames) or layername in layernames:
+                if regex.match(os.path.join(layerdir, 'test')):
+                    first_regex = regex
+                    break
+
+        if first_regex:
+            # Find the BBFILES entries that match (which will have come from this conf/layer.conf file)
+            bbfiles = str(self.config_data.getVar('BBFILES', True)).split()
+            bbfiles_layer = []
+            for item in bbfiles:
+                if first_regex.match(item):
+                    newpath = os.path.join(outputdir, item[len(layerdir)+1:])
+                    bbfiles_layer.append(newpath)
+
+            if bbfiles_layer:
+                # Check that all important layer files match BBFILES
+                for root, dirs, files in os.walk(outputdir):
+                    for f1 in files:
+                        ext = os.path.splitext(f1)[1]
+                        if ext in ['.bb', '.bbappend']:
+                            f1full = os.sep.join([root, f1])
+                            entry_found = False
+                            for item in bbfiles_layer:
+                                if fnmatch.fnmatch(f1full, item):
+                                    entry_found = True
+                                    break
+                            if not entry_found:
+                                logger.warning("File %s does not match the flattened layer's BBFILES setting, you may need to edit conf/layer.conf or move the file elsewhere" % f1full)
 
     def get_append_layer(self, appendname):
         for layer, _, regex, _ in self.cooker.status.bbfile_config_priorities:
