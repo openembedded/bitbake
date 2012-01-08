@@ -307,6 +307,8 @@ build results (as the layer priority order has effectively changed).
         recipefile.write('\n')
         recipefile.write('##### bbappended from %s #####\n' % self.get_append_layer(appendname))
         recipefile.writelines(appendfile.readlines())
+        recipefile.close()
+        appendfile.close()
 
     def do_show_appends(self, args):
         """list bbappend files and recipe files they apply to
