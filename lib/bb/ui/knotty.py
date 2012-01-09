@@ -105,6 +105,8 @@ def main(server, eventHandler):
     cacheprogress = None
     shutdown = 0
     return_value = 0
+    errors = 0
+    warnings = 0
     while True:
         try:
             event = eventHandler.waitEvent(0.25)
@@ -123,13 +125,15 @@ def main(server, eventHandler):
 
             if isinstance(event, logging.LogRecord):
                 if event.levelno >= format.ERROR:
+                    errors = errors + 1
                     return_value = 1
+                if event.levelno >= format.WARNING:
+                    warnings = warnings + 1
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to 
                 # include verbose/debug messages
-                #if logger.getEffectiveLevel() > format.VERBOSE:
                 if event.taskpid != 0 and event.levelno <= format.NOTE:
-                        continue
+                    continue
                 logger.handle(event)
                 continue
 
@@ -208,6 +212,7 @@ def main(server, eventHandler):
                 continue
             if isinstance(event, bb.event.NoProvider):
                 return_value = 1
+                errors = errors + 1
                 if event._runtime:
                     r = "R"
                 else:
@@ -267,4 +272,8 @@ def main(server, eventHandler):
                 server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass
+    if warnings:
+        print("Summary: There were %s WARNING messages shown.\n" % warnings)
+    if return_value:
+        print("Summary: There were %s ERROR messages shown, returning a non-zero exit code.\n" % errors)
     return return_value
