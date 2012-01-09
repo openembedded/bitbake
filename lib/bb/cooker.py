@@ -32,6 +32,7 @@ import sre_constants
 import threading
 from cStringIO import StringIO
 from contextlib import closing
+from concurrent import futures
 from functools import wraps
 from collections import defaultdict
 import bb, bb.exceptions, bb.command
@@ -1462,20 +1463,16 @@ class CookerParser(object):
         self.start()
 
     def start(self):
-        def init(cfg):
-            parse_file.cfg = cfg
-            multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cooker.configuration.data, ), exitpriority=1)
-
         self.results = self.load_cached()
 
         if self.toparse:
             bb.event.fire(bb.event.ParseStarted(self.toparse), self.cfgdata)
 
-            self.pool = multiprocessing.Pool(self.num_processes, init, [self.cfgdata])
-            parsed = self.pool.imap(parse_file, self.willparse)
-            self.pool.close()
-
-            self.results = itertools.chain(self.results, parsed)
+            parse_file.cfg = self.cfgdata
+            multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cfgdata,), exitpriority=1)
+            self.executor = futures.ProcessPoolExecutor(max_workers=self.num_processes)
+            self.futures = dict((self.executor.submit(parse_file, task), task) for task in self.willparse)
+            self.results = itertools.chain(self.results, self.parse_gen())
 
     def shutdown(self, clean=True):
         if not self.toparse:
@@ -1488,8 +1485,9 @@ class CookerParser(object):
                                             self.total)
             bb.event.fire(event, self.cfgdata)
         else:
-            self.pool.terminate()
-        self.pool.join()
+            for future in self.futures:
+                future.cancel()
+        self.executor.shutdown()
 
         sync = threading.Thread(target=self.bb_cache.sync)
         sync.start()
@@ -1500,6 +1498,15 @@ class CookerParser(object):
         for filename, appends in self.fromcache:
             cached, infos = self.bb_cache.load(filename, appends, self.cfgdata)
             yield not cached, infos
+
+    def parse_gen(self):
+        for future in futures.as_completed(self.futures):
+            task = self.futures[future]
+            exc = future.exception()
+            if exc:
+                raise exc
+            else:
+                yield future.result()
 
     def parse_next(self):
         try:
