@@ -27,6 +27,18 @@ import sys
 if sys.version_info < (2, 6, 0):
     raise RuntimeError("Sorry, python 2.6.0 or later is required for this version of bitbake")
 
+
+class BBHandledException(Exception):
+    """
+    The big dilemma for generic bitbake code is what information to give the user
+    when an exception occurs. Any exception inheriting this base exception class
+    has already provided information to the user via some 'fired' message type such as
+    an explicitly fired event using bb.fire, or a bb.error message. If bitbake 
+    encounters an exception derived from this class, no backtrace or other information 
+    will be given to the user, its assumed the earlier event provided the relevant information.
+    """
+    pass
+
 import os
 import logging
 

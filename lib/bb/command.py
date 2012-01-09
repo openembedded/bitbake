@@ -98,9 +98,12 @@ class Command:
             else:
                 self.finishAsyncCommand("Exited with %s" % arg)
             return False
-        except Exception:
+        except Exception as exc:
             import traceback
-            self.finishAsyncCommand(traceback.format_exc())
+            if isinstance(exc, bb.BBHandledException):
+                self.finishAsyncCommand("")
+            else:
+                self.finishAsyncCommand(traceback.format_exc())
             return False
 
     def finishAsyncCommand(self, msg=None, code=None):

@@ -28,10 +28,10 @@ import bb
 
 logger = logging.getLogger("BitBake.Provider")
 
-class NoProvider(Exception):
+class NoProvider(bb.BBHandledException):
     """Exception raised when no provider of a build dependency can be found"""
 
-class NoRProvider(Exception):
+class NoRProvider(bb.BBHandledException):
     """Exception raised when no provider of a runtime dependency can be found"""
 
 
