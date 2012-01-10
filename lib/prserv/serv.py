@@ -21,6 +21,8 @@ class Handler(SimpleXMLRPCRequestHandler):
             raise
         return value
 
+PIDPREFIX = "/tmp/PRServer_%s_%s.pid"
+
 class PRServer(SimpleXMLRPCServer):
     pidfile="/tmp/PRServer.pid"
     def __init__(self, dbfile, logfile, interface, daemon=True):
@@ -34,20 +36,33 @@ class PRServer(SimpleXMLRPCServer):
         self.host, self.port = self.socket.getsockname()
         self.db=prserv.db.PRData(dbfile)
         self.table=self.db["PRMAIN"]
+        self.pidfile=PIDPREFIX % interface
 
         self.register_function(self.getPR, "getPR")
         self.register_function(self.quit, "quit")
         self.register_function(self.ping, "ping")
+        self.register_function(self.export, "export")
+        self.register_function(self.importone, "importone")
         self.register_introspection_functions()
+        
+    def export(self, version=None, pkgarch=None, checksum=None, colinfo=True):
+        try:
+            return self.table.export(version, pkgarch, checksum, colinfo)
+        except sqlite3.Error as exc:
+            logging.error(str(exc))
+            return None
+
+    def importone(self, version, pkgarch, checksum, value):
+        return self.table.importone(version, pkgarch, checksum, value)
 
     def ping(self):
         return not self.quit
- 
-    def getPR(self, version, checksum):
+
+    def getPR(self, version, pkgarch, checksum):
         try:
-            return self.table.getValue(version,checksum)
+            return self.table.getValue(version, pkgarch, checksum)
         except prserv.NotFoundError:
-            logging.error("can not find value for (%s, %s)",version,checksum)
+            logging.error("can not find value for (%s, %s)",version, checksum)
             return None
         except sqlite3.Error as exc:
             logging.error(str(exc))
@@ -69,28 +84,34 @@ class PRServer(SimpleXMLRPCServer):
 
     def start(self):
         if self.daemon is True:
-            logging.info("PRServer: starting daemon...")
+            logging.info("PRServer: try to start daemon...")
             self.daemonize()
         else:
-            logging.info("PRServer: starting...")
+            atexit.register(self.delpid)
+            pid = str(os.getpid()) 
+            pf = file(self.pidfile, 'w+')
+            pf.write("%s\n" % pid)
+            pf.write("%s\n" % self.host)
+            pf.write("%s\n" % self.port)
+            pf.close()
+            logging.info("PRServer: start success! DBfile: %s, IP: %s, PORT: %d" % 
+                     (self.dbfile, self.host, self.port))
             self._serve_forever()
 
     def delpid(self):
-        os.remove(PRServer.pidfile)
+        os.remove(self.pidfile)
 
     def daemonize(self):
         """
         See Advanced Programming in the UNIX, Sec 13.3
         """
-        os.umask(0)
-
         try:
             pid = os.fork()
-            if pid > 0: 
-                sys.exit(0)
+            if pid > 0:
+                #parent return instead of exit to give control 
+                return
         except OSError as e:
-            sys.stderr.write("1st fork failed: %d %s\n" % (e.errno, e.strerror))
-            sys.exit(1)
+            raise Exception("%s [%d]" % (e.strerror, e.errno))
 
         os.setsid()
         """
@@ -102,9 +123,9 @@ class PRServer(SimpleXMLRPCServer):
             if pid > 0: #parent
                 sys.exit(0)
         except OSError as e:
-            sys.stderr.write("2nd fork failed: %d %s\n" % (e.errno, e.strerror))
-            sys.exit(1)
+            raise Exception("%s [%d]" % (e.strerror, e.errno))
 
+        os.umask(0)
         os.chdir("/")
 
         sys.stdout.flush()
@@ -119,13 +140,15 @@ class PRServer(SimpleXMLRPCServer):
         # write pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid()) 
-        pf = file(PRServer.pidfile, 'w+')
+        pf = file(self.pidfile, 'w')
         pf.write("%s\n" % pid)
-        pf.write("%s\n" % self.host)
-        pf.write("%s\n" % self.port)
         pf.close()
 
+        logging.info("PRServer: starting daemon success! DBfile: %s, IP: %s, PORT: %s, PID: %s" % 
+                     (self.dbfile, self.host, self.port, pid))
+
         self._serve_forever()
+        exit(0)
 
 class PRServerConnection():
     def __init__(self, host, port):
@@ -139,16 +162,22 @@ class PRServerConnection():
         socket.setdefaulttimeout(2)
         try:
             self.connection.quit()
-        except:
-            pass
+        except Exception as exc:
+            sys.stderr.write("%s\n" % str(exc))
 
-    def getPR(self, version, checksum):
-        return self.connection.getPR(version, checksum)
+    def getPR(self, version, pkgarch, checksum):
+        return self.connection.getPR(version, pkgarch, checksum)
 
     def ping(self):
         return self.connection.ping()
 
-def start_daemon(options):
+    def export(self,version=None, pkgarch=None, checksum=None, colinfo=True):
+        return self.connection.export(version, pkgarch, checksum, colinfo)
+    
+    def importone(self, version, pkgarch, checksum, value):
+        return self.connection.importone(version, pkgarch, checksum, value)
+
+def start_daemon(dbfile, logfile, interface):
     try:
         pf = file(PRServer.pidfile,'r')
         pid = int(pf.readline().strip())
@@ -159,40 +188,43 @@ def start_daemon(options):
     if pid:
         sys.stderr.write("pidfile %s already exist. Daemon already running?\n"
                             % PRServer.pidfile)
-        sys.exit(1)
+        return 1
 
-    server = PRServer(options.dbfile, interface=(options.host, options.port),
-                      logfile=os.path.abspath(options.logfile))
+    server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), interface)
     server.start()
+    return 0
 
-def stop_daemon():
+def stop_daemon(host, port):
+    pidfile = PIDPREFIX % (host, port)
     try:
-        pf = file(PRServer.pidfile,'r')
+        pf = file(pidfile,'r')
         pid = int(pf.readline().strip())
-        host = pf.readline().strip()
-        port = int(pf.readline().strip())
         pf.close()
     except IOError:
         pid = None
 
     if not pid:
         sys.stderr.write("pidfile %s does not exist. Daemon not running?\n"
-                        % PRServer.pidfile)
-        sys.exit(1)
+                        % pidfile)
+        return 1
 
-    PRServerConnection(host,port).terminate()
+    PRServerConnection(host, port).terminate()
     time.sleep(0.5)
 
     try:
         while 1:
             os.kill(pid,signal.SIGTERM)
             time.sleep(0.1)
-    except OSError as err:
-        err = str(err)
+    except OSError as e:
+        err = str(e)
         if err.find("No such process") > 0:
             if os.path.exists(PRServer.pidfile):
                 os.remove(PRServer.pidfile)
         else:
-            print err
-            sys.exit(1)
+            raise Exception("%s [%d]" % (e.strerror, e.errno))
 
+    return 0
+
+def ping(host, port):
+    print PRServerConnection(host,port).ping()
+    return 0
