@@ -8,6 +8,8 @@ try:
 except ImportError:
     from pysqlite2 import dbapi2 as sqlite3
 
+logger = logging.getLogger("BitBake.PRserv")
+
 sqlversion = sqlite3.sqlite_version_info
 if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
     raise Exception("sqlite3 version 3.3.0 or later is required.")
@@ -55,7 +57,7 @@ class PRTable():
                            (version,pkgarch, checksum,version, pkgarch))
                 self.conn.commit()
             except sqlite3.IntegrityError as exc:
-                logging.error(str(exc))
+                logger.error(str(exc))
 
             data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                                (version, pkgarch, checksum))
@@ -83,7 +85,7 @@ class PRTable():
                                (version, pkgarch, checksum, version, pkgarch))
                 self.conn.commit()
             except sqlite3.IntegrityError as exc:
-                logging.error(str(exc))
+                logger.error(str(exc))
                 self.conn.rollback()
 
             data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
@@ -115,7 +117,7 @@ class PRTable():
                            (version, pkgarch, checksum, value))
                 self.conn.commit()
             except sqlite3.IntegrityError as exc:
-                logging.error(str(exc))
+                logger.error(str(exc))
 
             data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))
@@ -140,7 +142,7 @@ class PRTable():
                                (value,version,pkgarch,checksum,value))
                 self.conn.commit()
             except sqlite3.IntegrityError as exc:
-                logging.error(str(exc))
+                logger.error(str(exc))
 
         data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=? AND value>=?;" % self.table,
                             (version,pkgarch,checksum,value))
@@ -241,5 +243,5 @@ class PRData(object):
     def __delitem__(self, tblname):
         if tblname in self._tables:
             del self._tables[tblname]
-        logging.info("drop table %s" % (tblname))
+        logger.info("drop table %s" % (tblname))
         self.connection.execute("DROP TABLE IF EXISTS %s;" % tblname) 

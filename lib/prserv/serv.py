@@ -1,11 +1,13 @@
 import os,sys,logging
-import signal,time, atexit
+import signal, time, atexit, threading
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import xmlrpclib,sqlite3
 
 import bb.server.xmlrpc
 import prserv
 import prserv.db
+
+logger = logging.getLogger("BitBake.PRserv")
 
 if sys.hexversion < 0x020600F0:
     print("Sorry, python 2.6 or later is required.")
@@ -22,9 +24,9 @@ class Handler(SimpleXMLRPCRequestHandler):
         return value
 
 PIDPREFIX = "/tmp/PRServer_%s_%s.pid"
+singleton = None
 
 class PRServer(SimpleXMLRPCServer):
-    pidfile="/tmp/PRServer.pid"
     def __init__(self, dbfile, logfile, interface, daemon=True):
         ''' constructor '''
         SimpleXMLRPCServer.__init__(self, interface,
@@ -33,10 +35,11 @@ class PRServer(SimpleXMLRPCServer):
         self.dbfile=dbfile
         self.daemon=daemon
         self.logfile=logfile
+        self.working_thread=None
         self.host, self.port = self.socket.getsockname()
         self.db=prserv.db.PRData(dbfile)
         self.table=self.db["PRMAIN"]
-        self.pidfile=PIDPREFIX % interface
+        self.pidfile=PIDPREFIX % (self.host, self.port)
 
         self.register_function(self.getPR, "getPR")
         self.register_function(self.quit, "quit")
@@ -44,12 +47,12 @@ class PRServer(SimpleXMLRPCServer):
         self.register_function(self.export, "export")
         self.register_function(self.importone, "importone")
         self.register_introspection_functions()
-        
+
     def export(self, version=None, pkgarch=None, checksum=None, colinfo=True):
         try:
             return self.table.export(version, pkgarch, checksum, colinfo)
         except sqlite3.Error as exc:
-            logging.error(str(exc))
+            logger.error(str(exc))
             return None
 
     def importone(self, version, pkgarch, checksum, value):
@@ -58,45 +61,47 @@ class PRServer(SimpleXMLRPCServer):
     def ping(self):
         return not self.quit
 
+    def getinfo(self):
+        return (self.host, self.port)
+
     def getPR(self, version, pkgarch, checksum):
         try:
             return self.table.getValue(version, pkgarch, checksum)
         except prserv.NotFoundError:
-            logging.error("can not find value for (%s, %s)",version, checksum)
+            logger.error("can not find value for (%s, %s)",version, checksum)
             return None
         except sqlite3.Error as exc:
-            logging.error(str(exc))
+            logger.error(str(exc))
             return None
 
     def quit(self):
         self.quit=True
         return
 
-    def _serve_forever(self):
+    def work_forever(self,):
         self.quit = False
         self.timeout = 0.5
+        logger.info("PRServer: started! DBfile: %s, IP: %s, PORT: %s, PID: %s" %
+                     (self.dbfile, self.host, self.port, str(os.getpid())))
+
         while not self.quit:
             self.handle_request()
 
-        logging.info("PRServer: stopping...")
+        logger.info("PRServer: stopping...")
         self.server_close()
         return
 
     def start(self):
         if self.daemon is True:
-            logging.info("PRServer: try to start daemon...")
+            logger.info("PRServer: try to start daemon...")
             self.daemonize()
         else:
             atexit.register(self.delpid)
             pid = str(os.getpid()) 
             pf = file(self.pidfile, 'w+')
             pf.write("%s\n" % pid)
-            pf.write("%s\n" % self.host)
-            pf.write("%s\n" % self.port)
             pf.close()
-            logging.info("PRServer: start success! DBfile: %s, IP: %s, PORT: %d" % 
-                     (self.dbfile, self.host, self.port))
-            self._serve_forever()
+            self.work_forever()
 
     def delpid(self):
         os.remove(self.pidfile)
@@ -144,17 +149,40 @@ class PRServer(SimpleXMLRPCServer):
         pf.write("%s\n" % pid)
         pf.close()
 
-        logging.info("PRServer: starting daemon success! DBfile: %s, IP: %s, PORT: %s, PID: %s" % 
-                     (self.dbfile, self.host, self.port, pid))
+        self.work_forever()
+        sys.exit(0)
 
-        self._serve_forever()
-        exit(0)
+class PRServSingleton():
+    def __init__(self, dbfile, logfile, interface):
+        self.dbfile = dbfile
+        self.logfile = logfile
+        self.interface = interface
+        self.host = None
+        self.port = None
+        self.event = threading.Event()
+
+    def _work(self):
+        self.prserv = PRServer(self.dbfile, self.logfile, self.interface, False)
+        self.host, self.port = self.prserv.getinfo()
+        self.event.set()
+        self.prserv.work_forever()
+        del self.prserv.db
+
+    def start(self):
+        self.working_thread = threading.Thread(target=self._work)
+        self.working_thread.start()
+
+    def getinfo(self):
+        self.event.wait()
+        return (self.host, self.port)
 
 class PRServerConnection():
     def __init__(self, host, port):
-        self.connection = bb.server.xmlrpc._create_server(host, port)
+        if is_local_special(host, port):
+            host, port = singleton.getinfo()
         self.host = host
         self.port = port
+        self.connection = bb.server.xmlrpc._create_server(self.host, self.port)
 
     def terminate(self):
         # Don't wait for server indefinitely
@@ -173,13 +201,14 @@ class PRServerConnection():
 
     def export(self,version=None, pkgarch=None, checksum=None, colinfo=True):
         return self.connection.export(version, pkgarch, checksum, colinfo)
-    
+
     def importone(self, version, pkgarch, checksum, value):
         return self.connection.importone(version, pkgarch, checksum, value)
 
-def start_daemon(dbfile, logfile, interface):
+def start_daemon(dbfile, host, port, logfile):
+    pidfile = PIDPREFIX % (host, port)
     try:
-        pf = file(PRServer.pidfile,'r')
+        pf = file(pidfile,'r')
         pid = int(pf.readline().strip())
         pf.close()
     except IOError:
@@ -187,10 +216,10 @@ def start_daemon(dbfile, logfile, interface):
 
     if pid:
         sys.stderr.write("pidfile %s already exist. Daemon already running?\n"
-                            % PRServer.pidfile)
+                            % pidfile)
         return 1
 
-    server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), interface)
+    server = PRServer(os.path.abspath(dbfile), os.path.abspath(logfile), (host,port))
     server.start()
     return 0
 
@@ -206,25 +235,70 @@ def stop_daemon(host, port):
     if not pid:
         sys.stderr.write("pidfile %s does not exist. Daemon not running?\n"
                         % pidfile)
-        return 1
 
-    PRServerConnection(host, port).terminate()
+    try:
+        PRServerConnection(host, port).terminate()
+    except:
+        logger.critical("Stop PRService %s:%d failed" % (host,port))
     time.sleep(0.5)
 
     try:
-        while 1:
+        if pid:
+            if os.path.exists(pidfile):
+                os.remove(pidfile)
             os.kill(pid,signal.SIGTERM)
             time.sleep(0.1)
     except OSError as e:
         err = str(e)
-        if err.find("No such process") > 0:
-            if os.path.exists(PRServer.pidfile):
-                os.remove(PRServer.pidfile)
-        else:
-            raise Exception("%s [%d]" % (e.strerror, e.errno))
+        if err.find("No such process") <= 0:
+            raise e
 
     return 0
+
+def is_local_special(host, port):
+    if host.strip().upper() == 'localhost'.upper() and (not port):
+        return True
+    else:
+        return False
+
+def auto_start(d):
+    global singleton
+    if d.getVar('USE_PR_SERV', True) == '0':
+        return True
+
+    if is_local_special(d.getVar('PRSERV_HOST', True), int(d.getVar('PRSERV_PORT', True))) and not singleton:
+        import bb.utils
+        cachedir = (d.getVar("PERSISTENT_DIR", True) or d.getVar("CACHE", True))
+        if not cachedir:
+            logger.critical("Please set the 'PERSISTENT_DIR' or 'CACHE' variable")
+            sys.exit(1)
+        bb.utils.mkdirhier(cachedir)
+        dbfile = os.path.join(cachedir, "prserv.sqlite3")
+        logfile = os.path.join(cachedir, "prserv.log")
+        singleton = PRServSingleton(os.path.abspath(dbfile), os.path.abspath(logfile), ("localhost",0))
+        singleton.start()
+    if singleton:
+        host, port = singleton.getinfo()
+    else:
+        host = d.getVar('PRSERV_HOST', True)
+        port = int(d.getVar('PRSERV_PORT', True))
+
+    try:
+        return PRServerConnection(host,port).ping()
+    except Exception:
+        logger.critical("PRservice %s:%d not available" % (host, port))
+    return False
+
+def auto_shutdown(d=None):
+    global singleton
+    if singleton:
+        host, port = singleton.getinfo()
+        try:
+            PRServerConnection(host, port).terminate()
+        except:
+            logger.critical("Stop PRService %s:%d failed" % (host,port))
+        singleton = None
 
 def ping(host, port):
-    print PRServerConnection(host,port).ping()
-    return 0
+    conn=PRServerConnection(host, port)
+    return conn.ping()

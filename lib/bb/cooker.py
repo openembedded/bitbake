@@ -36,6 +36,7 @@ from functools import wraps
 from collections import defaultdict
 import bb, bb.exceptions, bb.command
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
+import prserv.serv
 
 logger      = logging.getLogger("BitBake")
 collectlog  = logging.getLogger("BitBake.Collection")
@@ -1311,9 +1312,11 @@ class BBCooker:
         # Empty the environment. The environment will be populated as
         # necessary from the data store.
         #bb.utils.empty_environment()
+        prserv.serv.auto_start(self.configuration.data)
         return
 
     def post_serve(self):
+        prserv.serv.auto_shutdown(self.configuration.data)
         bb.event.fire(CookerExit(), self.configuration.event_data)
 
     def shutdown(self):

@@ -10,7 +10,7 @@ import prserv.serv
 
 __version__="1.0.0"
 
-PRHOST_DEFAULT=''
+PRHOST_DEFAULT='0.0.0.0'
 PRPORT_DEFAULT=8585
 
 def main():
@@ -18,8 +18,8 @@ def main():
         version="Bitbake PR Service Core version %s, %%prog version %s" % (prserv.__version__, __version__),
         usage = "%prog < --start | --stop > [options]")
 
-    parser.add_option("-f", "--file", help="database filename(default: prserv.db)", action="store",
-                      dest="dbfile", type="string", default="prserv.db")
+    parser.add_option("-f", "--file", help="database filename(default: prserv.sqlite3)", action="store",
+                      dest="dbfile", type="string", default="prserv.sqlite3")
     parser.add_option("-l", "--log", help="log filename(default: prserv.log)", action="store",
                       dest="logfile", type="string", default="prserv.log")
     parser.add_option("--loglevel", help="logging level, i.e. CRITICAL, ERROR, WARNING, INFO, DEBUG",
@@ -37,8 +37,7 @@ def main():
     prserv.init_logger(os.path.abspath(options.logfile),options.loglevel)
 
     if options.start:
-        ret=prserv.serv.start_daemon(dbfile=options.dbfile, interface=(options.host, options.port),
-                      logfile=os.path.abspath(options.logfile))
+        ret=prserv.serv.start_daemon(options.dbfile, options.host, options.port,os.path.abspath(options.logfile))
     elif options.stop:
         ret=prserv.serv.stop_daemon(options.host, options.port)
     else:
