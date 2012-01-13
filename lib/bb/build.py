@@ -53,7 +53,7 @@ class FuncFailed(Exception):
         self.logfile = logfile
         self.name = name
         if name:
-            self.msg = "Function '%s' failed" % name
+            self.msg = 'Function failed: %s' % name
         else:
             self.msg = "Function failed"
 

@@ -55,7 +55,10 @@ class MalformedUrl(BBFetchException):
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
     def __init__(self, message, url = None):
-         msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
+         if url:
+            msg = "Fetcher failure for URL: '%s'. %s" % (url, message)
+         else:
+            msg = "Fetcher failure: %s" % message
          self.url = url
          BBFetchException.__init__(self, msg)
          self.args = (message, url)
@@ -302,10 +305,10 @@ def verify_checksum(u, ud, d):
     # it does not match.
     msg = ""
     if md5mismatch and ud.md5_expected:
-        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected (from URL: '%s')" % (ud.localpath, 'md5', md5data, ud.md5_expected, u)
+        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'md5', md5data, ud.md5_expected)
 
     if sha256mismatch and ud.sha256_expected:
-        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected (from URL: '%s')" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected, u)
+        msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected)
 
     if len(msg):
         raise FetchError('Checksum mismatch!%s' % msg, u)
@@ -983,7 +986,7 @@ class Fetch(object):
                         localpath = try_mirrors (self.d, ud, mirrors)
 
                 if not localpath or ((not os.path.exists(localpath)) and localpath.find("*") == -1):
-                    raise FetchError("Unable to fetch URL %s from any source." % u, u)
+                    raise FetchError("Unable to fetch URL from any source.", u)
 
                 update_stamp(u, ud, self.d)
 
