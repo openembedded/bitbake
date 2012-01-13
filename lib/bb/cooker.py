@@ -44,9 +44,9 @@ buildlog    = logging.getLogger("BitBake.Build")
 parselog    = logging.getLogger("BitBake.Parsing")
 providerlog = logging.getLogger("BitBake.Provider")
 
-class MultipleMatches(Exception):
+class NoSpecificMatch(bb.BBHandledException):
     """
-    Exception raised when multiple file matches are found
+    Exception raised when no or multiple file matches are found
     """
 
 class NothingToBuild(Exception):
@@ -979,10 +979,15 @@ class BBCooker:
         """
         matches = self.matchFiles(buildfile)
         if len(matches) != 1:
-            parselog.error("Unable to match %s (%s matches found):" % (buildfile, len(matches)))
-            for f in matches:
-                parselog.error("    %s" % f)
-            raise MultipleMatches
+            if matches:
+                msg = "Unable to match '%s' to a specific recipe file - %s matches found:" % (buildfile, len(matches))
+                if matches:
+                    for f in matches:
+                        msg += "\n    %s" % f
+                parselog.error(msg)
+            else:
+                parselog.error("Unable to find any recipe file matching '%s'" % buildfile)
+            raise NoSpecificMatch
         return matches[0]
 
     def buildFile(self, buildfile, task):
