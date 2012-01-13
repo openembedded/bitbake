@@ -64,6 +64,12 @@ def new_progress(msg, maxval):
     else:
         return NonInteractiveProgress(msg, maxval)
 
+def pluralise(singular, plural, qty):
+    if(qty == 1):
+        return singular % qty
+    else:
+        return plural % qty
+
 def main(server, eventHandler):
 
     # Get values of variables which control our output
@@ -107,6 +113,7 @@ def main(server, eventHandler):
     return_value = 0
     errors = 0
     warnings = 0
+    taskfailures = []
     while True:
         try:
             event = eventHandler.waitEvent(0.25)
@@ -240,6 +247,7 @@ def main(server, eventHandler):
                 continue
 
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
+                taskfailures.append(event.taskstring)
                 logger.error("Task %s (%s) failed with exit code '%s'",
                              event.taskid, event.taskstring, event.exitcode)
                 continue
@@ -272,8 +280,20 @@ def main(server, eventHandler):
                 server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
             pass
+
+    summary = ""
+    if taskfailures:
+        summary += pluralise("\nSummary: %s task failed:",
+                             "\nSummary: %s tasks failed:", len(taskfailures))
+        for failure in taskfailures:
+            summary += "\n  %s" % failure
     if warnings:
-        print("Summary: There were %s WARNING messages shown.\n" % warnings)
+        summary += pluralise("\nSummary: There was %s WARNING message shown.",
+                             "\nSummary: There were %s WARNING messages shown.", warnings)
     if return_value:
-        print("Summary: There were %s ERROR messages shown, returning a non-zero exit code.\n" % errors)
+        summary += pluralise("\nSummary: There was %s ERROR message shown, returning a non-zero exit code.",
+                             "\nSummary: There were %s ERROR messages shown, returning a non-zero exit code.", errors)
+    if summary:
+        print(summary)
+
     return return_value
