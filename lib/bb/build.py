@@ -91,8 +91,9 @@ class TaskSucceeded(TaskBase):
 class TaskFailed(TaskBase):
     """Task execution failed"""
 
-    def __init__(self, task, logfile, metadata):
+    def __init__(self, task, logfile, metadata, errprinted = False):
         self.logfile = logfile
+        self.errprinted = errprinted
         super(TaskFailed, self).__init__(task, metadata)
 
 class TaskInvalid(TaskBase):
@@ -288,6 +289,13 @@ def _exec_task(fn, task, d, quieterr):
     prefuncs = localdata.getVarFlag(task, 'prefuncs', expand=True)
     postfuncs = localdata.getVarFlag(task, 'postfuncs', expand=True)
 
+    class ErrorCheckHandler(logging.Handler):
+        def __init__(self):
+            self.triggered = False
+            logging.Handler.__init__(self, logging.ERROR)
+        def emit(self, record):
+            self.triggered = True
+
     # Handle logfiles
     si = file('/dev/null', 'r')
     try:
@@ -313,6 +321,9 @@ def _exec_task(fn, task, d, quieterr):
     handler.setLevel(logging.DEBUG - 2)
     bblogger.addHandler(handler)
 
+    errchk = ErrorCheckHandler()
+    bblogger.addHandler(errchk)
+
     localdata.setVar('BB_LOGFILE', logfn)
 
     event.fire(TaskStarted(task, localdata), localdata)
@@ -324,8 +335,9 @@ def _exec_task(fn, task, d, quieterr):
             exec_func(func, localdata)
     except FuncFailed as exc:
         if not quieterr:
+            errprinted = errchk.triggered
             logger.error(str(exc))
-            event.fire(TaskFailed(task, logfn, localdata), localdata)
+            event.fire(TaskFailed(task, logfn, localdata, errprinted), localdata)
         return 1
     finally:
         sys.stdout.flush()
@@ -368,7 +380,7 @@ def exec_task(fn, task, d):
         if not quieterr:
             logger.error("Build of %s failed" % (task))
             logger.error(format_exc())
-            failedevent = TaskFailed(task, None, d)
+            failedevent = TaskFailed(task, None, d, True)
             event.fire(failedevent, d)
         return 1
 

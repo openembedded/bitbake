@@ -142,7 +142,7 @@ def main(server, eventHandler):
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
                     print("ERROR: Logfile of failure stored in: %s" % logfile)
-                    if 1 or includelogs:
+                    if includelogs and not event.errprinted:
                         print("Log data follows:")
                         f = open(logfile, "r")
                         lines = []
