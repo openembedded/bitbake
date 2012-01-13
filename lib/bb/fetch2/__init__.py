@@ -965,6 +965,7 @@ class Fetch(object):
                 if premirroronly:
                     self.d.setVar("BB_NO_NETWORK", "1")
 
+                firsterr = None
                 if not localpath and m.need_update(u, ud, self.d):
                     try:
                         logger.debug(1, "Trying Upstream")
@@ -980,7 +981,9 @@ class Fetch(object):
                         raise
 
                     except BBFetchException as e:
-                        logger.warn(str(e))
+                        logger.warn('Failed to fetch URL %s' % u)
+                        logger.debug(1, str(e))
+                        firsterr = e
                         # Remove any incomplete fetch
                         if os.path.isfile(ud.localpath):
                             bb.utils.remove(ud.localpath)
@@ -989,6 +992,8 @@ class Fetch(object):
                         localpath = try_mirrors (self.d, ud, mirrors)
 
                 if not localpath or ((not os.path.exists(localpath)) and localpath.find("*") == -1):
+                    if firsterr:
+                        logger.error(str(firsterr))
                     raise FetchError("Unable to fetch URL from any source.", u)
 
                 update_stamp(u, ud, self.d)
