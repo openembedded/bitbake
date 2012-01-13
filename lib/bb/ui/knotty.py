@@ -127,7 +127,7 @@ def main(server, eventHandler):
                 if event.levelno >= format.ERROR:
                     errors = errors + 1
                     return_value = 1
-                if event.levelno >= format.WARNING:
+                elif event.levelno == format.WARNING:
                     warnings = warnings + 1
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to 
