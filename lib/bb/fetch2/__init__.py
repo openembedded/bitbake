@@ -422,8 +422,11 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
         output += line
 
     status = stdout_handle.close() or 0
-    signal = status >> 8
-    exitstatus = status & 0xff
+    signal = os.WTERMSIG(status)
+    if os.WIFEXITED(status):
+        exitstatus = os.WEXITSTATUS(status)
+    else:
+        exitstatus = 0
 
     if (signal or status != 0):
         for f in cleanup:
@@ -434,8 +437,8 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
 
         if signal:
             raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (cmd, signal, output))
-        elif status != 0:
-            raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, status, output))
+        elif exitstatus:
+            raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, exitstatus, output))
 
     return output
 
