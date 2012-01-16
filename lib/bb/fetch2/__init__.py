@@ -479,7 +479,7 @@ def try_mirrors(d, origud, mirrors, check = False):
                     return found
                 continue
 
-            if ud.method.need_update(newuri, ud, ld):
+            if not os.path.exists(ud.donestamp) or ud.method.need_update(newuri, ud, ld):
                 ud.method.download(newuri, ud, ld)
                 if hasattr(ud.method,"build_mirror_data"):
                     ud.method.build_mirror_data(newuri, ud, ld)
@@ -955,7 +955,7 @@ class Fetch(object):
             try:
                 self.d.setVar("BB_NO_NETWORK", network)
  
-                if not m.need_update(u, ud, self.d):
+                if os.path.exists(ud.donestamp) and not m.need_update(u, ud, self.d):
                     localpath = ud.localpath
                 elif m.try_premirror(u, ud, self.d):
                     logger.debug(1, "Trying PREMIRRORS")
@@ -966,7 +966,7 @@ class Fetch(object):
                     self.d.setVar("BB_NO_NETWORK", "1")
 
                 firsterr = None
-                if not localpath and m.need_update(u, ud, self.d):
+                if not localpath and ((not os.path.exists(ud.donestamp)) or m.need_update(u, ud, self.d)):
                     try:
                         logger.debug(1, "Trying Upstream")
                         m.download(u, ud, self.d)
