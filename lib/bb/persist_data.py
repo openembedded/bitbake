@@ -47,9 +47,10 @@ if hasattr(sqlite3, 'enable_shared_cache'):
 @total_ordering
 class SQLTable(collections.MutableMapping):
     """Object representing a table/domain in the database"""
-    def __init__(self, cursor, table):
-        self.cursor = cursor
+    def __init__(self, cachefile, table):
+        self.cachefile = cachefile
         self.table = table
+        self.cursor = connect(self.cachefile)
 
         self._execute("CREATE TABLE IF NOT EXISTS %s(key TEXT, value TEXT);"
                       % table)
@@ -63,6 +64,8 @@ class SQLTable(collections.MutableMapping):
             except sqlite3.OperationalError as exc:
                 if 'database is locked' in str(exc) and count < 500:
                     count = count + 1
+                    self.cursor.close()
+                    self.cursor = connect(self.cachefile)
                     continue
                 raise
 
@@ -188,7 +191,7 @@ class PersistData(object):
         del self.data[domain][key]
 
 def connect(database):
-    return sqlite3.connect(database, timeout=30, isolation_level=None)
+    return sqlite3.connect(database, timeout=5, isolation_level=None)
 
 def persist(domain, d):
     """Convenience factory for SQLTable objects based upon metadata"""
@@ -201,5 +204,4 @@ def persist(domain, d):
 
     bb.utils.mkdirhier(cachedir)
     cachefile = os.path.join(cachedir, "bb_persist_data.sqlite3")
-    connection = connect(cachefile)
-    return SQLTable(connection, domain)
+    return SQLTable(cachefile, domain)
