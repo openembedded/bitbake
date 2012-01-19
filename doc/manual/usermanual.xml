@@ -204,7 +204,7 @@ include</literal> directive.</para>
             <section>
                 <title>Inheritance</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudimentary form of inheritance.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.oeclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
+                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudimentary form of inheritance.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.bbclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
             </section>
             <section>
                 <title>Tasks</title>
