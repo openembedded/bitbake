@@ -281,21 +281,27 @@ def compare_sigfiles(a, b):
             print "Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep])
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
-        a = clean_basepaths(a_data['runtaskhashes'])
-        b = clean_basepaths(b_data['runtaskhashes'])
-        changed, added, removed = dict_diff(a, b)
-        if added:
-            for dep in added:
-                print "Dependency on task %s was added" % (dep)
-        if removed:
-            for dep in removed:
-                print "Dependency on task %s was removed" % (dep)
-        if changed:
-            for dep in changed:
-                print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
-    elif 'runtaskdeps' in a_data and 'runtaskdeps' in b_data and sorted(a_data['runtaskdeps']) != sorted(b_data['runtaskdeps']):
-        print "Tasks this task depends on changed from %s to %s" % (sorted(a_data['runtaskdeps']), sorted(b_data['runtaskdeps']))
-        print "changed items: %s" % a_data['runtaskdeps'].symmetric_difference(b_data['runtaskdeps'])
+        if len(a_data['runtaskdeps']) != len(b_data['runtaskdeps']):
+            a = clean_basepaths(a_data['runtaskhashes'])
+            b = clean_basepaths(b_data['runtaskhashes'])
+            changed, added, removed = dict_diff(a, b)
+            if added:
+                for dep in added:
+                    print "Dependency on task %s was added" % (dep)
+            if removed:
+                for dep in removed:
+                    print "Dependency on task %s was removed" % (dep)
+            if changed:
+                for dep in changed:
+                    print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
+        else:
+            for i in range(len(a_data['runtaskdeps'])):
+                aent = a_data['runtaskdeps'][i]
+                bent = b_data['runtaskdeps'][i]
+                aname = clean_basepath(aent)
+                bname = clean_basepath(bent)
+                if a_data['runtaskhashes'][aent] != b_data['runtaskhashes'][bent]:
+                    print "Task dependency hash changed from %s to %s (for %s and %s)" % (a_data['runtaskhashes'][aent], b_data['runtaskhashes'][bent], aname, bname)
 
 def dump_sigfile(a):
     p1 = pickle.Unpickler(file(a, "rb"))
