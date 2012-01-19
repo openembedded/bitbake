@@ -959,6 +959,13 @@ class RunQueue:
         if self.state is runQueueCleanUp:
            self.rqexe.finish()
 
+        if self.state is runQueueComplete or self.state is runQueueFailed:
+            if self.rqexe.stats.failed:
+                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed + self.rqexe.stats.failed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
+            else:
+                # Let's avoid the word "failed" if nothing actually did
+                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
+
         if self.state is runQueueFailed:
             if not self.rqdata.taskData.tryaltconfigs:
                 raise bb.runqueue.TaskFailure(self.rqexe.failed_fnids)
@@ -968,11 +975,6 @@ class RunQueue:
 
         if self.state is runQueueComplete:
             # All done
-            if self.rqexe.stats.failed:
-                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
-            else:
-                # Let's avoid the word "failed" if nothing actually did
-                logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and all succeeded.", self.rqexe.stats.completed, self.rqexe.stats.skipped)
             return False
 
         if self.state is runQueueChildProcess:
