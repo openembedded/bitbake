@@ -856,8 +856,8 @@ class BBCooker:
         if data.getVar("BB_WORKERCONTEXT", False) is None:
             bb.fetch.fetcher_init(data)
         bb.codeparser.parser_cache_init(data)
-        bb.parse.init_parser(data)
         bb.event.fire(bb.event.ConfigParsed(), data)
+        bb.parse.init_parser(data)
         self.configuration.data = data
 
     def handleCollections( self, collections ):
