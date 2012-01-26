@@ -1440,18 +1440,20 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             sq_revdeps.append(copy.copy(self.rqdata.runq_revdeps[task]))
             sq_revdeps_new.append(set())
             if (len(self.rqdata.runq_revdeps[task]) == 0) and task not in self.rqdata.runq_setscene:
-                endpoints[task] = None
+                endpoints[task] = set()
 
         for task in self.rqdata.runq_setscene:
             for dep in self.rqdata.runq_depends[task]:
-                    endpoints[dep] = task
+                    if dep not in endpoints:
+                        endpoints[dep] = set()
+                    endpoints[dep].add(task)
 
         def process_endpoints(endpoints):
             newendpoints = {}
             for point, task in endpoints.items():
                 tasks = set()
                 if task:
-                    tasks.add(task)
+                    tasks |= task
                 if sq_revdeps_new[point]:
                     tasks |= sq_revdeps_new[point]
                 sq_revdeps_new[point] = set()
