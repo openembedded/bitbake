@@ -333,7 +333,7 @@ def generate_dependencies(d):
                     deps[dep], values[dep] = build_dependencies(dep, keys, shelldeps, vardepvals, d)
                 newdeps |=  deps[dep]
             newdeps -= seen
-        #print "For %s: %s" % (task, str(taskdeps[task]))
+        #print "For %s: %s" % (task, str(deps[task]))
     return tasklist, deps, values
 
 def inherits_class(klass, d):
