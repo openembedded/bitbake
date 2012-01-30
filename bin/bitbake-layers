@@ -4,6 +4,9 @@
 # displaying useful information, or acting against them.
 # See the help output for details on available commands.
 
+# Copyright (C) 2011 Mentor Graphics Corporation
+# Copyright (C) 2012 Intel Corporation
+
 import cmd
 import logging
 import os
