@@ -165,6 +165,53 @@ Options:
 
         items_listed = self.list_recipes('Overlayed recipes', None, True, show_same_ver_only, show_filenames, True)
 
+        # Check for overlayed .bbclass files
+        classes = defaultdict(list)
+        for layerdir in self.bblayers:
+            classdir = os.path.join(layerdir, 'classes')
+            if os.path.exists(classdir):
+                for classfile in os.listdir(classdir):
+                    if os.path.splitext(classfile)[1] == '.bbclass':
+                        classes[classfile].append(classdir)
+
+        # Locating classes and other files is a bit more complicated than recipes -
+        # layer priority is not a factor; instead BitBake uses the first matching
+        # file in BBPATH, which is manipulated directly by each layer's
+        # conf/layer.conf in turn, thus the order of layers in bblayers.conf is a
+        # factor - however, each layer.conf is free to either prepend or append to
+        # BBPATH (or indeed do crazy stuff with it). Thus the order in BBPATH might
+        # not be exactly the order present in bblayers.conf either.
+        bbpath = str(self.config_data.getVar('BBPATH', True))
+        overlayed_class_found = False
+        for (classfile, classdirs) in classes.items():
+            if len(classdirs) > 1:
+                if not overlayed_class_found:
+                    logger.plain('=== Overlayed classes ===')
+                    overlayed_class_found = True
+
+                mainfile = bb.utils.which(bbpath, os.path.join('classes', classfile))
+                if show_filenames:
+                    logger.plain('%s' % mainfile)
+                else:
+                    # We effectively have to guess the layer here
+                    logger.plain('%s:' % classfile)
+                    mainlayername = '?'
+                    for layerdir in self.bblayers:
+                        classdir = os.path.join(layerdir, 'classes')
+                        if mainfile.startswith(classdir):
+                            mainlayername = self.get_layer_name(layerdir)
+                    logger.plain('  %s' % mainlayername)
+                for classdir in classdirs:
+                    fullpath = os.path.join(classdir, classfile)
+                    if fullpath != mainfile:
+                        if show_filenames:
+                            print('  %s' % fullpath)
+                        else:
+                            print('  %s' % self.get_layer_name(os.path.dirname(classdir)))
+
+        if overlayed_class_found:
+            items_listed = True;
+
         if not items_listed:
             logger.note('No overlayed files found')
 
