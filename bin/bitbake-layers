@@ -12,6 +12,7 @@ import logging
 import os
 import sys
 import fnmatch
+from collections import defaultdict
 
 bindir = os.path.dirname(__file__)
 topdir = os.path.dirname(bindir)
@@ -124,22 +125,115 @@ class Commands(cmd.Cmd):
 
             logger.plain("%s  %s  %d" % (layername.ljust(20), layerdir.ljust(40), layerpri))
 
+
+    def version_str(self, pe, pv, pr = None):
+        verstr = "%s" % pv
+        if pr:
+            verstr = "%s-%s" % (verstr, pr)
+        if pe:
+            verstr = "%s:%s" % (pe, verstr)
+        return verstr
+
+
     def do_show_overlayed(self, args):
-        """list overlayed recipes (where there is a recipe in another layer that has a higher layer priority)
+        """list overlayed recipes (where the same recipe exists in another layer that has a higher layer priority)
 
-usage: show-overlayed
+usage: show-overlayed [-f] [-s]
 
-Highest priority recipes are listed with the recipes they overlay as subitems.
+Lists the names of overlayed recipes and the available versions in each
+layer, with the preferred version first. Note that skipped recipes that
+are overlayed will also be listed, with a " (skipped)" suffix.
+
+Options:
+  -f   instead of the default formatting, list filenames of higher priority
+       recipes with the ones they overlay indented underneath
+  -s   only list overlayed recipes where the version is the same
 """
         self.check_prepare_cooker()
-        if self.cooker.overlayed:
-            logger.plain('Overlayed recipes:')
-            for f in self.cooker.overlayed.iterkeys():
-                logger.plain('%s' % f)
-                for of in self.cooker.overlayed[f]:
-                    logger.plain('  %s' % of)
-        else:
-            logger.plain('No overlayed recipes found')
+
+        show_filenames = False
+        show_same_ver_only = False
+        for arg in args.split():
+            if arg == '-f':
+                show_filenames = True
+            elif arg == '-s':
+                show_same_ver_only = True
+            else:
+                sys.stderr.write("show-overlayed: invalid option %s\n" % arg)
+                self.do_help('')
+                return
+
+        pkg_pn = self.cooker.status.pkg_pn
+        (latest_versions, preferred_versions) = bb.providers.findProviders(self.cooker.configuration.data, self.cooker.status, pkg_pn)
+        allproviders = bb.providers.allProviders(self.cooker.status)
+
+        # Ensure we list skipped recipes
+        # We are largely guessing about PN, PV and the preferred version here,
+        # but we have no choice since skipped recipes are not fully parsed
+        skiplist = self.cooker.skiplist.keys()
+        skiplist.sort( key=lambda fileitem: self.cooker.calc_bbfile_priority(fileitem) )
+        skiplist.reverse()
+        for fn in skiplist:
+            recipe_parts = os.path.splitext(os.path.basename(fn))[0].split('_')
+            p = recipe_parts[0]
+            if len(recipe_parts) > 1:
+                ver = (None, recipe_parts[1], None)
+            else:
+                ver = (None, 'unknown', None)
+            allproviders[p].append((ver, fn))
+            if not p in pkg_pn:
+                pkg_pn[p] = 'dummy'
+                preferred_versions[p] = (ver, fn)
+
+        def print_item(f, pn, ver, layer, ispref):
+            if f in skiplist:
+                skipped = ' (skipped)'
+            else:
+                skipped = ''
+            if show_filenames:
+                if ispref:
+                    logger.plain("%s%s", f, skipped)
+                else:
+                    logger.plain("  %s%s", f, skipped)
+            else:
+                if ispref:
+                    logger.plain("%s:", pn)
+                logger.plain("  %s %s%s", layer.ljust(20), ver, skipped)
+
+        preffiles = []
+        items_listed = False
+        for p in sorted(pkg_pn):
+            if len(allproviders[p]) > 1:
+                pref = preferred_versions[p]
+                preffile = bb.cache.Cache.virtualfn2realfn(pref[1])[0]
+                if preffile not in preffiles:
+                    preflayer = self.get_file_layer(preffile)
+                    multilayer = False
+                    same_ver = True
+                    provs = []
+                    for prov in allproviders[p]:
+                        provfile = bb.cache.Cache.virtualfn2realfn(prov[1])[0]
+                        provlayer = self.get_file_layer(provfile)
+                        provs.append((provfile, provlayer, prov[0]))
+                        if provlayer != preflayer:
+                            multilayer = True
+                        if prov[0] != pref[0]:
+                            same_ver = False
+
+                    if multilayer and (same_ver or not show_same_ver_only):
+                        if not items_listed:
+                            logger.plain('=== Overlayed recipes ===')
+                            items_listed = True
+                        print_item(preffile, p, self.version_str(pref[0][0], pref[0][1]), preflayer, True)
+                        for (provfile, provlayer, provver) in provs:
+                            if provfile != preffile:
+                                print_item(provfile, p, self.version_str(provver[0], provver[1]), provlayer, False)
+                        # Ensure we don't show two entries for BBCLASSEXTENDed recipes
+                        preffiles.append(preffile)
+
+        if not items_listed:
+            logger.note('No overlayed files found')
+
 
     def do_flatten(self, args):
         """flattens layer configuration into a separate output directory.

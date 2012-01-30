@@ -24,6 +24,7 @@
 import re
 import logging
 from bb import data, utils
+from collections import defaultdict
 import bb
 
 logger = logging.getLogger("BitBake.Provider")
@@ -33,6 +34,41 @@ class NoProvider(bb.BBHandledException):
 
 class NoRProvider(bb.BBHandledException):
     """Exception raised when no provider of a runtime dependency can be found"""
+
+
+def findProviders(cfgData, dataCache, pkg_pn = None):
+    """
+    Convenience function to get latest and preferred providers in pkg_pn
+    """
+
+    if not pkg_pn:
+        pkg_pn = dataCache.pkg_pn
+
+    # Need to ensure data store is expanded
+    localdata = data.createCopy(cfgData)
+    bb.data.update_data(localdata)
+    bb.data.expandKeys(localdata)
+
+    preferred_versions = {}
+    latest_versions = {}
+
+    for pn in pkg_pn:
+        (last_ver, last_file, pref_ver, pref_file) = findBestProvider(pn, localdata, dataCache, pkg_pn)
+        preferred_versions[pn] = (pref_ver, pref_file)
+        latest_versions[pn] = (last_ver, last_file)
+
+    return (latest_versions, preferred_versions)
+
+
+def allProviders(dataCache):
+    """
+    Find all providers for each pn
+    """
+    all_providers = defaultdict(list)
+    for (fn, pn) in dataCache.pkg_fn.items():
+        ver = dataCache.pkg_pepvpr[fn]
+        all_providers[pn].append((ver, fn))
+    return all_providers
 
 
 def sortPriorities(pn, dataCache, pkg_pn = None):
