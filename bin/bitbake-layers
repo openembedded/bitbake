@@ -41,6 +41,8 @@ def main(args):
 
     cmds = Commands(initialenv)
     if args:
+        # Allow user to specify e.g. show-layers instead of show_layers
+        args = [args[0].replace('-', '_')] + args[1:]
         cmds.onecmd(' '.join(args))
     else:
         cmds.do_help('')
@@ -93,14 +95,14 @@ class Commands(cmd.Cmd):
         """display general help or help on a specified command"""
         if topic:
             sys.stdout.write('%s: ' % topic)
-            cmd.Cmd.do_help(self,topic)
+            cmd.Cmd.do_help(self, topic.replace('-', '_'))
         else:
             sys.stdout.write("usage: bitbake-layers <command> [arguments]\n\n")
             sys.stdout.write("Available commands:\n")
             procnames = self.get_names()
             for procname in procnames:
                 if procname[:3] == 'do_':
-                    sys.stdout.write("  %s\n" % procname[3:])
+                    sys.stdout.write("  %s\n" % procname[3:].replace('_', '-'))
                     doc = getattr(self, procname).__doc__
                     if doc:
                         sys.stdout.write("    %s\n" % doc.splitlines()[0])
@@ -126,7 +128,7 @@ class Commands(cmd.Cmd):
     def do_show_overlayed(self, args):
         """list overlayed recipes (where there is a recipe in another layer that has a higher layer priority)
 
-usage: show_overlayed
+usage: show-overlayed
 
 Highest priority recipes are listed with the recipes they overlay as subitems.
 """
@@ -197,7 +199,7 @@ build results (as the layer priority order has effectively changed).
 
             for layername in layernames:
                 if not layername in found_layernames:
-                    logger.error('Unable to find layer %s in current configuration, please run "%s show_layers" to list configured layers' % (layername, os.path.basename(sys.argv[0])))
+                    logger.error('Unable to find layer %s in current configuration, please run "%s show-layers" to list configured layers' % (layername, os.path.basename(sys.argv[0])))
                     return
             layers = found_layerdirs
         else:
@@ -316,7 +318,7 @@ build results (as the layer priority order has effectively changed).
     def do_show_appends(self, args):
         """list bbappend files and recipe files they apply to
 
-usage: show_appends
+usage: show-appends
 
 Recipes are listed with the bbappends that apply to them as subitems.
 """
