@@ -60,6 +60,7 @@ class Commands(cmd.Cmd):
         self.config_data = self.cooker.configuration.data
         bb.providers.logger.setLevel(logging.ERROR)
         self.cooker_data = None
+        self.bblayers = (self.config_data.getVar('BBLAYERS', True) or "").split()
 
     def register_idle_function(self, function, data):
         pass
@@ -113,13 +114,11 @@ class Commands(cmd.Cmd):
         logger.plain('')
         logger.plain("%s  %s  %s" % ("layer".ljust(20), "path".ljust(40), "priority"))
         logger.plain('=' * 74)
-        layerdirs = str(self.config_data.getVar('BBLAYERS', True)).split()
-        for layerdir in layerdirs:
-            layername = '?'
+        for layerdir in self.bblayers:
+            layername = self.get_layer_name(layerdir)
             layerpri = 0
             for layer, _, regex, pri in self.cooker.status.bbfile_config_priorities:
                 if regex.match(os.path.join(layerdir, 'test')):
-                    layername = layer
                     layerpri = pri
                     break
 
@@ -184,18 +183,16 @@ build results (as the layer priority order has effectively changed).
             return
 
         self.check_prepare_cooker()
-        layers = (self.config_data.getVar('BBLAYERS', True) or "").split()
+        layers = self.bblayers
         if len(arglist) > 2:
             layernames = arglist[:-1]
             found_layernames = []
             found_layerdirs = []
             for layerdir in layers:
-                for layername, _, regex, _ in self.cooker.status.bbfile_config_priorities:
-                    if layername in layernames:
-                        if regex.match(os.path.join(layerdir, 'test')):
-                            found_layerdirs.append(layerdir)
-                            found_layernames.append(layername)
-                            break
+                layername = self.get_layer_name(layerdir)
+                if layername in layernames:
+                    found_layerdirs.append(layerdir)
+                    found_layernames.append(layername)
 
             for layername in layernames:
                 if not layername in found_layernames:
@@ -271,10 +268,9 @@ build results (as the layer priority order has effectively changed).
         first_regex = None
         layerdir = layers[0]
         for layername, pattern, regex, _ in self.cooker.status.bbfile_config_priorities:
-            if (not layernames) or layername in layernames:
-                if regex.match(os.path.join(layerdir, 'test')):
-                    first_regex = regex
-                    break
+            if regex.match(os.path.join(layerdir, 'test')):
+                first_regex = regex
+                break
 
         if first_regex:
             # Find the BBFILES entries that match (which will have come from this conf/layer.conf file)
@@ -300,17 +296,22 @@ build results (as the layer priority order has effectively changed).
                             if not entry_found:
                                 logger.warning("File %s does not match the flattened layer's BBFILES setting, you may need to edit conf/layer.conf or move the file elsewhere" % f1full)
 
-    def get_append_layer(self, appendname):
+    def get_file_layer(self, filename):
         for layer, _, regex, _ in self.cooker.status.bbfile_config_priorities:
-            if regex.match(appendname):
-                return layer
+            if regex.match(filename):
+                for layerdir in self.bblayers:
+                    if regex.match(os.path.join(layerdir, 'test')):
+                        return self.get_layer_name(layerdir)
         return "?"
+
+    def get_layer_name(self, layerdir):
+        return os.path.basename(layerdir.rstrip(os.sep))
 
     def apply_append(self, appendname, recipename):
         appendfile = open(appendname, 'r')
         recipefile = open(recipename, 'a')
         recipefile.write('\n')
-        recipefile.write('##### bbappended from %s #####\n' % self.get_append_layer(appendname))
+        recipefile.write('##### bbappended from %s #####\n' % self.get_file_layer(appendname))
         recipefile.writelines(appendfile.readlines())
         recipefile.close()
         appendfile.close()
