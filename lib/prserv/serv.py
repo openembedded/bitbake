@@ -268,7 +268,7 @@ def is_local_special(host, port):
 
 def auto_start(d):
     global singleton
-    if d.getVar('USE_PR_SERV', True) == '0':
+    if (not d.getVar('PRSERV_HOST', True)) or (not d.getVar('PRSERV_PORT', True)):
         return True
 
     if is_local_special(d.getVar('PRSERV_HOST', True), int(d.getVar('PRSERV_PORT', True))) and not singleton:
