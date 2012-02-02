@@ -137,9 +137,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.rdepends_pkg     = self.pkgvar('RDEPENDS', self.packages, metadata)
         self.rrecommends_pkg  = self.pkgvar('RRECOMMENDS', self.packages, metadata)
         self.inherits         = self.getvar('__inherit_cache', metadata)
-        self.summary          = self.getvar('SUMMARY', metadata)
-        self.license          = self.getvar('LICENSE', metadata)
-        self.section          = self.getvar('SECTION', metadata)
         self.fakerootenv      = self.getvar('FAKEROOTENV', metadata)
         self.fakerootdirs     = self.getvar('FAKEROOTDIRS', metadata)
         self.fakerootnoenv    = self.getvar('FAKEROOTNOENV', metadata)
@@ -174,9 +171,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
 
         cachedata.basetaskhash = {}
         cachedata.inherits = {}
-        cachedata.summary = {}
-        cachedata.license = {}
-        cachedata.section = {}
         cachedata.fakerootenv = {}
         cachedata.fakerootnoenv = {}
         cachedata.fakerootdirs = {}
@@ -240,9 +234,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
             cachedata.basetaskhash[identifier] = taskhash
 
         cachedata.inherits[fn] = self.inherits
-        cachedata.summary[fn] = self.summary
-        cachedata.license[fn] = self.license
-        cachedata.section[fn] = self.section
         cachedata.fakerootenv[fn] = self.fakerootenv
         cachedata.fakerootnoenv[fn] = self.fakerootnoenv
         cachedata.fakerootdirs[fn] = self.fakerootdirs
