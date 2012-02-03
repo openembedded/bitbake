@@ -51,11 +51,10 @@ class Build(build):
 
 setup(name='bitbake',
       version = __version__,
-      requires = ["ply", "progressbar", "futures"],
+      requires = ["ply", "progressbar"],
       package_dir = {"": "lib"},
       packages = ["bb.server", "bb.parse.parse_py", "bb.parse", "bb.fetch",
-                  "bb.fetch2", "bb.ui.crumbs", "bb.ui", "bb.pysh", "bb",
-                  "prserv", "concurrent", "concurrent.futures"],
+                  "bb.fetch2", "bb.ui.crumbs", "bb.ui", "bb.pysh", "bb", "prserv"],
       py_modules = ["codegen"],
       scripts = ["bin/bitbake", "bin/bitbake-layers", "bin/bitbake-diffsigs", "bin/bitbake-prserv"],
       data_files = [("share/bitbake", glob("conf/*") + glob("classes/*")),
