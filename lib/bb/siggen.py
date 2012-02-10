@@ -261,11 +261,13 @@ def compare_sigfiles(a, b):
 
     if 'basewhitelist' in a_data and a_data['basewhitelist'] != b_data['basewhitelist']:
         print "basewhitelist changed from %s to %s" % (a_data['basewhitelist'], b_data['basewhitelist'])
-        print "changed items: %s" % a_data['basewhitelist'].symmetric_difference(b_data['basewhitelist'])
+        if a_data['basewhitelist'] and b_data['basewhitelist']:
+            print "changed items: %s" % a_data['basewhitelist'].symmetric_difference(b_data['basewhitelist'])
 
     if 'taskwhitelist' in a_data and a_data['taskwhitelist'] != b_data['taskwhitelist']:
         print "taskwhitelist changed from %s to %s" % (a_data['taskwhitelist'], b_data['taskwhitelist'])
-        print "changed items: %s" % a_data['taskwhitelist'].symmetric_difference(b_data['taskwhitelist'])
+        if a_data['taskwhitelist'] and b_data['taskwhitelist']:
+            print "changed items: %s" % a_data['taskwhitelist'].symmetric_difference(b_data['taskwhitelist'])
 
     if a_data['taskdeps'] != b_data['taskdeps']:
         print "Task dependencies changed from:\n%s\nto:\n%s" % (sorted(a_data['taskdeps']), sorted(b_data['taskdeps']))
@@ -277,7 +279,8 @@ def compare_sigfiles(a, b):
     if changed:
         for dep in changed:
             print "List of dependencies for variable %s changed from %s to %s" % (dep, a_data['gendeps'][dep], b_data['gendeps'][dep])
-            print "changed items: %s" % a_data['gendeps'][dep].symmetric_difference(b_data['gendeps'][dep])
+            if a_data['gendeps'][dep] and b_data['gendeps'][dep]:
+                print "changed items: %s" % a_data['gendeps'][dep].symmetric_difference(b_data['gendeps'][dep])
     if added:
         for dep in added:
             print "Dependency on variable %s was added" % (dep)
