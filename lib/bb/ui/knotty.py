@@ -203,6 +203,7 @@ def main(server, eventHandler):
 
             if isinstance(event, bb.command.CommandFailed):
                 return_value = event.exitcode
+                errors = errors + 1
                 logger.error("Command execution failed: %s", event.error)
                 shutdown = 2
                 continue
