@@ -295,4 +295,9 @@ def main(server, eventHandler):
     if summary:
         print(summary)
 
+    if shutdown:
+        print("Execution was interrupted, returning a non-zero exit code.")
+        if return_value == 0:
+            return_value = 1
+
     return return_value
