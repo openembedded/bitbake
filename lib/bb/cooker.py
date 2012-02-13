@@ -1084,6 +1084,7 @@ class BBCooker:
         if (task == None):
             task = self.configuration.cmd
 
+        universe = ('universe' in targets)
         targets = self.checkPackages(targets)
 
         def buildTargetsIdle(server, rq, abort):
@@ -1127,6 +1128,8 @@ class BBCooker:
         taskdata.add_unresolved(localdata, self.status)
 
         rq = bb.runqueue.RunQueue(self, self.configuration.data, self.status, taskdata, runlist)
+        if universe:
+            rq.rqdata.warn_multi_bb = True
 
         self.server_registration_cb(buildTargetsIdle, rq)
 
@@ -1180,6 +1183,7 @@ class BBCooker:
                 pkgs_to_build.append(t)
 
         if 'universe' in pkgs_to_build:
+            parselog.warn("The \"universe\" target is only intended for testing and may produce errors.")
             parselog.debug(1, "collating packages for \"universe\"")
             pkgs_to_build.remove('universe')
             for t in self.status.universe_target:

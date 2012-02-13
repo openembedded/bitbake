@@ -187,6 +187,7 @@ class RunQueueData:
         self.taskData = taskData
         self.targets = targets
         self.rq = rq
+        self.warn_multi_bb = False
 
         self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", 1) or ""
         self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", 1) or "").split()
@@ -674,11 +675,14 @@ class RunQueueData:
                     prov_list[prov] = [fn]
                 elif fn not in prov_list[prov]:
                     prov_list[prov].append(fn)
-        error = False
         for prov in prov_list:
             if len(prov_list[prov]) > 1 and prov not in self.multi_provider_whitelist:
-                error = True
-                logger.error("Multiple .bb files are due to be built which each provide %s (%s).\n This usually means one provides something the other doesn't and should.", prov, " ".join(prov_list[prov]))
+                msg = "Multiple .bb files are due to be built which each provide %s (%s)." % (prov, " ".join(prov_list[prov]))
+                if self.warn_multi_bb:
+                    logger.warn(msg)
+                else:
+                    msg += "\n This usually means one provides something the other doesn't and should."
+                    logger.error(msg)
 
 
         # Create a whitelist usable by the stamp checks
