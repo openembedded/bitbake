@@ -41,7 +41,10 @@ if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
 
 logger = logging.getLogger("BitBake.PersistData")
 if hasattr(sqlite3, 'enable_shared_cache'):
-    sqlite3.enable_shared_cache(True)
+    try:
+        sqlite3.enable_shared_cache(True)
+    except sqlite3.OperationalError:
+        pass
 
 
 @total_ordering
