@@ -1534,7 +1534,7 @@ class CookerParser(object):
             self.result_queue = multiprocessing.Queue()
             self.feeder = Feeder(self.willparse, self.jobs, self.feeder_quit)
             self.feeder.start()
-            for i in range(1, self.num_processes):
+            for i in range(0, self.num_processes):
                 parser = Parser(self.jobs, self.result_queue, self.parser_quit, init)
                 parser.start()
                 self.processes.append(parser)
