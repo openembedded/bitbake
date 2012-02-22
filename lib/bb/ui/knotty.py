@@ -110,6 +110,7 @@ def main(server, eventHandler):
     parseprogress = None
     cacheprogress = None
     shutdown = 0
+    interrupted = False
     return_value = 0
     errors = 0
     warnings = 0
@@ -276,6 +277,7 @@ def main(server, eventHandler):
                 print("\nSecond Keyboard Interrupt, stopping...\n")
                 server.runCommand(["stateStop"])
             if shutdown == 0:
+                interrupted = True
                 print("\nKeyboard Interrupt, closing down...\n")
                 server.runCommand(["stateShutdown"])
             shutdown = shutdown + 1
@@ -296,7 +298,7 @@ def main(server, eventHandler):
     if summary:
         print(summary)
 
-    if shutdown:
+    if interrupted:
         print("Execution was interrupted, returning a non-zero exit code.")
         if return_value == 0:
             return_value = 1
