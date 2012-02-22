@@ -295,27 +295,32 @@ def compare_sigfiles(a, b):
             print "Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep])
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
-        if len(a_data['runtaskdeps']) != len(b_data['runtaskdeps']):
-            a = clean_basepaths(a_data['runtaskhashes'])
-            b = clean_basepaths(b_data['runtaskhashes'])
-            changed, added, removed = dict_diff(a, b)
-            if added:
-                for dep in added:
-                    print "Dependency on task %s was added" % (dep)
-            if removed:
-                for dep in removed:
-                    print "Dependency on task %s was removed" % (dep)
-            if changed:
-                for dep in changed:
-                    print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
-        else:
-            for i in range(len(a_data['runtaskdeps'])):
-                aent = a_data['runtaskdeps'][i]
-                bent = b_data['runtaskdeps'][i]
-                aname = clean_basepath(aent)
-                bname = clean_basepath(bent)
-                if a_data['runtaskhashes'][aent] != b_data['runtaskhashes'][bent]:
-                    print "Task dependency hash changed from %s to %s (for %s and %s)" % (a_data['runtaskhashes'][aent], b_data['runtaskhashes'][bent], aname, bname)
+        a = clean_basepaths(a_data['runtaskhashes'])
+        b = clean_basepaths(b_data['runtaskhashes'])
+        changed, added, removed = dict_diff(a, b)
+        if added:
+            for dep in added:
+	        bdep_found = False
+	        if removed:
+		    for bdep in removed:
+		    	if a[dep] == b[bdep]:
+			   #print "Dependency on task %s was replaced by %s with same hash" % (dep, bdep)
+			   bdep_found = True
+		if not bdep_found:
+                    print "Dependency on task %s was added with hash %s" % (dep, a[dep])
+        if removed:
+            for dep in removed:
+	        adep_found = False
+	        if added:
+		    for adep in added:
+		    	if a[adep] == b[dep]:
+			   #print "Dependency on task %s was replaced by %s with same hash" % (adep, dep)
+			   adep_found = True
+		if not adep_found:
+                   print "Dependency on task %s was removed with hash %s" % (dep, b[dep])
+        if changed:
+            for dep in changed:
+                print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
 
 def dump_sigfile(a):
     p1 = pickle.Unpickler(file(a, "rb"))
