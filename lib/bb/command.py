@@ -179,6 +179,12 @@ class CommandsSync:
         """
         return bb.utils.cpu_count()
 
+    def triggerEvent(self, command, params):
+        """
+        Trigger a certain event
+        """
+        event = params[0]
+        bb.event.fire(eval(event), command.cooker.configuration.data)
 
 class CommandsAsync:
     """
