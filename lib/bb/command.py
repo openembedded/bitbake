@@ -173,6 +173,12 @@ class CommandsSync:
         """
         command.cooker.reset()
 
+    def getCpuCount(self, command, params):
+        """
+        Get the CPU count on the bitbake server
+        """
+        return bb.utils.cpu_count()
+
 
 class CommandsAsync:
     """

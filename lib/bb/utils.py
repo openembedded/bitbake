@@ -25,6 +25,7 @@ import errno
 import logging
 import bb
 import bb.msg
+import multiprocessing
 from commands import getstatusoutput
 from contextlib import contextmanager
 
@@ -862,3 +863,6 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
     if checkvalues.issubset(val): 
         return truevalue
     return falsevalue
+
+def cpu_count():
+    return multiprocessing.cpu_count()
