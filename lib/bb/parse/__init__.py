@@ -37,6 +37,17 @@ logger = logging.getLogger("BitBake.Parsing")
 
 class ParseError(Exception):
     """Exception raised when parsing fails"""
+    def __init__(self, msg, filename, lineno=0):
+        self.msg = msg
+        self.filename = filename
+        self.lineno = lineno
+        Exception.__init__(self, msg, filename, lineno)
+
+    def __str__(self):
+        if self.lineno:
+            return "ParseError at %s:%d: %s" % (self.filename, self.lineno, self.msg)
+        else:
+            return "ParseError in %s: %s" % (self.filename, self.msg)
 
 class SkipPackage(Exception):
     """Exception raised to skip this package"""
@@ -78,7 +89,7 @@ def handle(fn, data, include = 0):
     for h in handlers:
         if h['supports'](fn, data):
             return h['handle'](fn, data, include)
-    raise ParseError("%s is not a BitBake file" % fn)
+    raise ParseError("not a BitBake file", fn)
 
 def init(fn, data):
     for h in handlers:
@@ -111,7 +122,7 @@ def vars_from_file(mypkg, d):
     parts = myfile[0].split('_')
     __pkgsplit_cache__[mypkg] = parts
     if len(parts) > 3:
-        raise ParseError("Unable to generate default variables from the filename: %s (too many underscores)" % mypkg)
+        raise ParseError("Unable to generate default variables from filename (too many underscores)", mypkg)
     exp = 3 - len(parts)
     tmplist = []
     while exp != 0:

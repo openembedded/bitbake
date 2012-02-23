@@ -59,9 +59,9 @@ class IncludeNode(AstNode):
 
         # TODO: Cache those includes... maybe not here though
         if self.force:
-            bb.parse.ConfHandler.include(self.filename, s, data, "include required")
+            bb.parse.ConfHandler.include(self.filename, s, self.lineno, data, "include required")
         else:
-            bb.parse.ConfHandler.include(self.filename, s, data, False)
+            bb.parse.ConfHandler.include(self.filename, s, self.lineno, data, False)
 
 class ExportNode(AstNode):
     def __init__(self, filename, lineno, var):
@@ -267,7 +267,7 @@ class InheritNode(AstNode):
         self.classes = classes
 
     def eval(self, data):
-        bb.parse.BBHandler.inherit(self.classes, data)
+        bb.parse.BBHandler.inherit(self.classes, self.filename, self.lineno, data)
 
 def handleInclude(statements, filename, lineno, m, force):
     statements.append(IncludeNode(filename, lineno, m.group(1), force))
@@ -450,7 +450,7 @@ def multi_finalize(fn, d):
                 d.setVar("BBEXTENDVARIANT", variantmap[name])
             else:
                 d.setVar("PN", "%s-%s" % (pn, name))
-            bb.parse.BBHandler.inherit([extendedmap[name]], d)
+            bb.parse.BBHandler.inherit([extendedmap[name]], fn, 0, d)
 
         safe_d.setVar("BBCLASSEXTEND", extended)
         _create_variants(datastores, extendedmap.keys(), extendfunc)

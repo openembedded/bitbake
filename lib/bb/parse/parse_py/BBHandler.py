@@ -68,10 +68,8 @@ def supports(fn, d):
     """Return True if fn has a supported extension"""
     return os.path.splitext(fn)[-1] in [".bb", ".bbclass", ".inc"]
 
-def inherit(files, d):
+def inherit(files, fn, lineno, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or []
-    fn = ""
-    lineno = 0
     for file in files:
         file = data.expand(file, d)
         if not os.path.isabs(file) and not file.endswith(".bbclass"):
@@ -81,7 +79,7 @@ def inherit(files, d):
             logger.log(logging.DEBUG -1, "BB %s:%d: inheriting %s", fn, lineno, file)
             __inherit_cache.append( file )
             data.setVar('__inherit_cache', __inherit_cache, d)
-            include(fn, file, d, "inherit")
+            include(fn, file, lineno, d, "inherit")
             __inherit_cache = data.getVar('__inherit_cache', d) or []
 
 def get_statements(filename, absolute_filename, base_name):

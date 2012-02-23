@@ -44,10 +44,11 @@ def init(data):
 def supports(fn, d):
     return fn[-5:] == ".conf"
 
-def include(oldfn, fn, data, error_out):
+def include(oldfn, fn, lineno, data, error_out):
     """
-    error_out If True a ParseError will be raised if the to be included
-    config-files could not be included.
+    error_out: A string indicating the verb (e.g. "include", "inherit") to be
+    used in a ParseError that will be raised if the file to be included could
+    not be included. Specify False to avoid raising an error in this case.
     """
     if oldfn == fn: # prevent infinite recursion
         return None
@@ -68,7 +69,7 @@ def include(oldfn, fn, data, error_out):
         ret = handle(fn, data, True)
     except IOError:
         if error_out:
-            raise ParseError("Could not %(error_out)s file %(fn)s" % vars() )
+            raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
         logger.debug(2, "CONF file '%s' not found", fn)
 
 def handle(fn, data, include):
@@ -131,7 +132,7 @@ def feeder(lineno, s, fn, statements):
         ast.handleExport(statements, fn, lineno, m)
         return
 
-    raise ParseError("%s:%d: unparsed line: '%s'" % (fn, lineno, s));
+    raise ParseError("unparsed line: '%s'" % s, fn, lineno);
 
 # Add us to the handlers list
 from bb.parse import handlers
