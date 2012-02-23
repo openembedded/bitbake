@@ -31,6 +31,7 @@ BitBake build tools.
 import copy, re
 from collections import MutableMapping
 import logging
+import hashlib
 import bb, bb.codeparser
 from bb   import utils
 from bb.COW  import COWDictBase
@@ -459,3 +460,23 @@ class DataSmart(MutableMapping):
 
     def __delitem__(self, var):
         self.delVar(var)
+
+    def get_hash(self):
+        data = ""
+        keys = iter(self)
+        for key in keys:
+            if key in ["TIME", "DATE"]:
+                continue
+            if key == "__depends":
+                deps = list(self.getVar(key, False))
+                deps.sort()
+                value = [deps[i][0] for i in range(len(deps))]
+            elif key == "PATH":
+                path = list(set(self.getVar(key, False).split(':')))
+                path.sort()
+                value = " ".join(path)
+            else:
+                value = self.getVar(key, False) or ""
+            data = data + key + ': ' + str(value) + '\n'
+
+        return hashlib.md5(data).hexdigest()
