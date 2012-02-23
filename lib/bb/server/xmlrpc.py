@@ -247,9 +247,9 @@ class BitbakeServerInfo():
         self.port = port
 
 class BitBakeServerConnection():
-    def __init__(self, serverinfo):
+    def __init__(self, serverinfo, clientinfo=("localhost", 0)):
         self.connection = _create_server(serverinfo.host, serverinfo.port)
-        self.events = uievent.BBUIEventQueue(self.connection)
+        self.events = uievent.BBUIEventQueue(self.connection, clientinfo)
         for event in bb.event.ui_queue:
             self.events.queue_event(event)
 
