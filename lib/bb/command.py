@@ -242,14 +242,21 @@ class CommandsAsync:
         included in the package list.
         If pkg_list provided use that list (plus any extras brought in by
         klass) rather than generating a tree for all packages.
+
+        Add a new option "resolve" to indicate if we need to resolve the
+        replacement for "virtual/xxx" like pn.
         """
         klass = params[0]
-        if len(params) > 1:
+        resolve = False
+        if len(params) > 2:
+            pkg_list = params[1]
+            resolve = params[2]
+        elif len(params) > 1:
             pkg_list = params[1]
         else:
             pkg_list = []
 
-        command.cooker.generateTargetsTree(klass, pkg_list)
+        command.cooker.generateTargetsTree(klass, pkg_list, resolve)
         command.finishAsyncCommand()
     generateTargetsTree.needcache = True
 
