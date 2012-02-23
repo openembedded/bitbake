@@ -336,7 +336,7 @@ class Cache(object):
                         current_percent = 100 * current_progress / cachesize
                         if current_percent > previous_percent:
                             previous_percent = current_percent
-                            bb.event.fire(bb.event.CacheLoadProgress(current_progress),
+                            bb.event.fire(bb.event.CacheLoadProgress(current_progress, cachesize),
                                           self.data)
 
                     previous_progress += current_progress

@@ -204,6 +204,27 @@ def getName(e):
     else:
         return e.__name__
 
+class OperationStarted(Event):
+    """An operation has begun"""
+    def __init__(self, msg = "Operation Started"):
+        Event.__init__(self)
+        self.msg = msg
+
+class OperationCompleted(Event):
+    """An operation has completed"""
+    def __init__(self, total, msg = "Operation Completed"):
+        Event.__init__(self)
+        self.total = total
+        self.msg = msg
+
+class OperationProgress(Event):
+    """An operation is in progress"""
+    def __init__(self, current, total, msg = "Operation in Progress"):
+        Event.__init__(self)
+        self.current = current
+        self.total = total
+        self.msg = msg + ": %s/%s" % (current, total);
+
 class ConfigParsed(Event):
     """Configuration Parsing Complete"""
 
@@ -276,14 +297,20 @@ class BuildBase(Event):
 
 
 
-class BuildStarted(BuildBase):
+class BuildStarted(BuildBase, OperationStarted):
     """bbmake build run started"""
+    def __init__(self, n, p, failures = 0):
+        OperationStarted.__init__(self, "Building Started")
+        BuildBase.__init__(self, n, p, failures)
 
-
-class BuildCompleted(BuildBase):
+class BuildCompleted(BuildBase, OperationCompleted):
     """bbmake build run completed"""
-
-
+    def __init__(self, total, n, p, failures = 0):
+        if not failures:
+            OperationCompleted.__init__(self, total, "Building Succeeded")
+        else:
+            OperationCompleted.__init__(self, total, "Building Failed")
+        BuildBase.__init__(self, n, p, failures)
 
 
 class NoProvider(Event):
@@ -329,17 +356,16 @@ class MultipleProviders(Event):
         """
         return self._candidates
 
-class ParseStarted(Event):
+class ParseStarted(OperationStarted):
     """Recipe parsing for the runqueue has begun"""
     def __init__(self, total):
-        Event.__init__(self)
+        OperationStarted.__init__(self, "Recipe parsing Started")
         self.total = total
 
-class ParseCompleted(Event):
+class ParseCompleted(OperationCompleted):
     """Recipe parsing for the runqueue has completed"""
-
     def __init__(self, cached, parsed, skipped, masked, virtuals, errors, total):
-        Event.__init__(self)
+        OperationCompleted.__init__(self, total, "Recipe parsing Completed")
         self.cached = cached
         self.parsed = parsed
         self.skipped = skipped
@@ -347,33 +373,44 @@ class ParseCompleted(Event):
         self.masked = masked
         self.errors = errors
         self.sofar = cached + parsed
-        self.total = total
 
-class ParseProgress(Event):
+class ParseProgress(OperationProgress):
     """Recipe parsing progress"""
+    def __init__(self, current, total):
+        OperationProgress.__init__(self, current, total, "Recipe parsing")
 
-    def __init__(self, current):
-        self.current = current
 
-class CacheLoadStarted(Event):
+class CacheLoadStarted(OperationStarted):
     """Loading of the dependency cache has begun"""
     def __init__(self, total):
-        Event.__init__(self)
+        OperationStarted.__init__(self, "Loading cache Started")
         self.total = total
 
-class CacheLoadProgress(Event):
+class CacheLoadProgress(OperationProgress):
     """Cache loading progress"""
-    def __init__(self, current):
-        Event.__init__(self)
-        self.current = current
+    def __init__(self, current, total):
+        OperationProgress.__init__(self, current, total, "Loading cache")
 
-class CacheLoadCompleted(Event):
+class CacheLoadCompleted(OperationCompleted):
     """Cache loading is complete"""
     def __init__(self, total, num_entries):
-        Event.__init__(self)
-        self.total = total
+        OperationCompleted.__init__(self, total, "Loading cache Completed")
         self.num_entries = num_entries
 
+class TreeDataPreparationStarted(OperationStarted):
+    """Tree data preparation started"""
+    def __init__(self):
+        OperationStarted.__init__(self, "Preparing tree data Started")
+
+class TreeDataPreparationProgress(OperationProgress):
+    """Tree data preparation is in progress"""
+    def __init__(self, current, total):
+        OperationProgress.__init__(self, current, total, "Preparing tree data")
+
+class TreeDataPreparationCompleted(OperationCompleted):
+    """Tree data preparation completed"""
+    def __init__(self, total):
+        OperationCompleted.__init__(self, total, "Preparing tree data Completed")
 
 class DepTreeGenerated(Event):
     """

@@ -263,7 +263,10 @@ def main(server, eventHandler):
                                   bb.event.RecipeParsed,
                                   bb.event.RecipePreFinalise,
                                   bb.runqueue.runQueueEvent,
-                                  bb.runqueue.runQueueExitWait)):
+                                  bb.runqueue.runQueueExitWait,
+                                  bb.event.OperationStarted,
+                                  bb.event.OperationCompleted,
+                                  bb.event.OperationProgress)):
                 continue
 
             logger.error("Unknown event: %s", event)

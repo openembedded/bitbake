@@ -334,6 +334,7 @@ class BBCooker:
         """
         Prepare a runqueue and taskdata object for iteration over pkgs_to_build
         """
+        bb.event.fire(bb.event.TreeDataPreparationStarted(), self.configuration.data)
         # Need files parsed
         self.updateCache()
         # If we are told to do the None task then query the default task
@@ -350,11 +351,14 @@ class BBCooker:
         taskdata = bb.taskdata.TaskData(False, skiplist=self.skiplist)
 
         runlist = []
+        current = 0
         for k in pkgs_to_build:
             taskdata.add_provider(localdata, self.status, k)
             runlist.append([k, "do_%s" % task])
+            current += 1
+            bb.event.fire(bb.event.TreeDataPreparationProgress(current, len(pkgs_to_build)), self.configuration.data)
         taskdata.add_unresolved(localdata, self.status)
-
+        bb.event.fire(bb.event.TreeDataPreparationCompleted(len(pkgs_to_build)), self.configuration.data)
         return runlist, taskdata
 
     def generateTaskDepTreeData(self, pkgs_to_build, task):
@@ -1100,7 +1104,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(buildname, item, failures), self.configuration.event_data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures), self.configuration.event_data)
                 self.command.finishAsyncCommand()
                 return False
             if retval is True:
@@ -1140,7 +1144,7 @@ class BBCooker:
                 return False
 
             if not retval:
-                bb.event.fire(bb.event.BuildCompleted(buildname, targets, failures), self.configuration.data)
+                bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, targets, failures), self.configuration.data)
                 self.command.finishAsyncCommand()
                 return False
             if retval is True:
@@ -1663,7 +1667,7 @@ class CookerParser(object):
         if parsed:
             self.parsed += 1
             if self.parsed % self.progress_chunk == 0:
-                bb.event.fire(bb.event.ParseProgress(self.parsed),
+                bb.event.fire(bb.event.ParseProgress(self.parsed, self.toparse),
                               self.cfgdata)
         else:
             self.cached += 1
