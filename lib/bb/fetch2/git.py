@@ -38,6 +38,12 @@ Supported SRC_URI options are:
    who has its own routine to checkout code.
    The default is "0", set nocheckout=1 if needed.
 
+- bareclone
+   Create a bare clone of the source code and don't checkout the source code
+   when unpacking. Set this option for the recipe who has its own routine to
+   checkout code and tracking branch requirements.
+   The default is "0", set bareclone=1 if needed.
+
 """
 
 #Copyright (C) 2005 Richard Purdie
@@ -95,6 +101,11 @@ class Git(FetchMethod):
 
         ud.rebaseable = ud.parm.get("rebaseable","0") == "1"
 
+        # bareclone implies nocheckout
+        ud.bareclone = ud.parm.get("bareclone","0") == "1"
+        if ud.bareclone:
+            ud.nocheckout = 1
+  
         branches = ud.parm.get("branch", "master").split(',')
         if len(branches) != len(ud.names):
             raise bb.fetch2.ParameterError("The number of name and branch parameters is not balanced", ud.url)
@@ -220,7 +231,11 @@ class Git(FetchMethod):
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
 
-        runfetchcmd("git clone -s -n %s/ %s" % (ud.clonedir, destdir), d)
+        cloneflags = "-s -n"
+        if ud.bareclone:
+            cloneflags += " --mirror"
+
+        runfetchcmd("git clone %s %s/ %s" % (cloneflags, ud.clonedir, destdir), d)
         if not ud.nocheckout:
             os.chdir(destdir)
             if subdir != "":
