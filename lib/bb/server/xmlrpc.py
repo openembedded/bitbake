@@ -163,7 +163,7 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
     # remove this when you're done with debugging
     # allow_reuse_address = True
 
-    def __init__(self, interface = ("localhost", 0)):
+    def __init__(self, interface):
         """
         Constructor
         """
@@ -267,8 +267,8 @@ class BitBakeServerConnection():
             pass
 
 class BitBakeServer(object):
-    def initServer(self):
-        self.server = BitBakeXMLRPCServer()
+    def initServer(self, interface = ("localhost", 0)):
+        self.server = BitBakeXMLRPCServer(interface)
 
     def addcooker(self, cooker):
         self.cooker = cooker
