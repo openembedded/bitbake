@@ -1653,6 +1653,9 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 self.task_skip(task)
                 return True
 
+            startevent = sceneQueueTaskStarted(task, self.stats, self.rq)
+            bb.event.fire(startevent, self.cfgData)
+
             pid, pipein, pipeout = self.fork_off_task(fn, realtask, taskname)
 
             self.build_pids[pid] = task
@@ -1720,6 +1723,14 @@ class runQueueTaskStarted(runQueueEvent):
         runQueueEvent.__init__(self, task, stats, rq)
         self.noexec = noexec
 
+class sceneQueueTaskStarted(runQueueEvent):
+    """
+    Event notifing a setscene task was started
+    """
+    def __init__(self, task, stats, rq, noexec=False):
+        runQueueEvent.__init__(self, task, stats, rq)
+        self.noexec = noexec
+
 class runQueueTaskFailed(runQueueEvent):
     """
     Event notifing a task failed
@@ -1728,12 +1739,13 @@ class runQueueTaskFailed(runQueueEvent):
         runQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
 
-class sceneQueueTaskFailed(runQueueTaskFailed):
+class sceneQueueTaskFailed(runQueueEvent):
     """
     Event notifing a setscene task failed
     """
     def __init__(self, task, stats, exitcode, rq):
-        runQueueTaskFailed.__init__(self, task, stats, exitcode, rq)
+        runQueueEvent.__init__(self, task, stats, rq)
+        self.exitcode = exitcode
         self.taskstring = rq.rqdata.get_user_idstring(task, "_setscene")
 
 class runQueueTaskCompleted(runQueueEvent):
