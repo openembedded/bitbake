@@ -55,6 +55,11 @@ class NothingToBuild(Exception):
     Exception raised when there is nothing to build
     """
 
+class CollectionError(bb.BBHandledException):
+    """
+    Exception raised when layer configuration is incorrect
+    """
+
 class state:
     initial, parsing, running, shutdown, stop = range(5)
 
@@ -893,6 +898,7 @@ class BBCooker:
 
     def handleCollections( self, collections ):
         """Handle collections"""
+        errors = False
         self.status.bbfile_config_priorities = []
         if collections:
             collection_priorities = {}
@@ -907,6 +913,7 @@ class BBCooker:
                         prio = int(priority)
                     except ValueError:
                         parselog.error("invalid value for BBFILE_PRIORITY_%s: \"%s\"", c, priority)
+                        errors = True
                     if min_prio == 0 or prio < min_prio:
                         min_prio = prio
                     collection_priorities[c] = prio
@@ -925,6 +932,7 @@ class BBCooker:
                                 depver = int(depsplit[1])
                             except ValueError:
                                 parselog.error("invalid version value in LAYERDEPENDS_%s: \"%s\"", c, dep)
+                                errors = True
                                 continue
                         else:
                             depver = None
@@ -939,13 +947,17 @@ class BBCooker:
                                         lver = int(layerver)
                                     except ValueError:
                                         parselog.error("invalid value for LAYERVERSION_%s: \"%s\"", c, layerver)
+                                        errors = True
                                         continue
                                     if lver <> depver:
                                         parselog.error("Layer dependency %s of layer %s is at version %d, expected %d", dep, c, lver, depver)
+                                        errors = True
                                 else:
                                     parselog.error("Layer dependency %s of layer %s has no version, expected %d", dep, c, depver)
+                                    errors = True
                         else:
                             parselog.error("Layer dependency %s of layer %s not found", dep, c)
+                            errors = True
                     collection_depends[c] = depnamelist
                 else:
                     collection_depends[c] = []
@@ -969,13 +981,18 @@ class BBCooker:
                 regex = self.configuration.data.getVar("BBFILE_PATTERN_%s" % c, 1)
                 if regex == None:
                     parselog.error("BBFILE_PATTERN_%s not defined" % c)
+                    errors = True
                     continue
                 try:
                     cre = re.compile(regex)
                 except re.error:
                     parselog.error("BBFILE_PATTERN_%s \"%s\" is not a valid regular expression", c, regex)
+                    errors = True
                     continue
                 self.status.bbfile_config_priorities.append((c, regex, cre, collection_priorities[c]))
+        if errors:
+            # We've already printed the actual error(s)
+            raise CollectionError("Errors during parsing layer configuration")
 
     def buildSetVars(self):
         """
