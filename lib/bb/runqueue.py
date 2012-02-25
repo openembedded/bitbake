@@ -1060,6 +1060,13 @@ class RunQueueExecute:
         for pipe in self.build_pipes:
             self.build_pipes[pipe].read()
 
+        if len(self.failed_fnids) != 0:
+            self.rq.state = runQueueFailed
+            return
+
+        self.rq.state = runQueueComplete
+        return
+
     def finish(self):
         self.rq.state = runQueueCleanUp
 
