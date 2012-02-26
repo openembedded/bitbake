@@ -31,6 +31,7 @@ import fcntl
 import logging
 import bb
 from bb import msg, data, event
+from bb import monitordisk
 
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
@@ -775,6 +776,9 @@ class RunQueue:
 
         self.state = runQueuePrepare
 
+        # For disk space monitor
+        self.dm = monitordisk.diskMonitor(cfgData)
+
     def check_stamps(self):
         unchecked = {}
         current = []
@@ -948,6 +952,9 @@ class RunQueue:
                 self.dump_signatures()
             else:
                 self.rqexe = RunQueueExecuteScenequeue(self)
+
+        if self.state in [runQueueSceneRun, runQueueRunning, runQueueCleanUp]:
+            self.dm.check(self)
 
         if self.state is runQueueSceneRun:
             retval = self.rqexe.execute()
