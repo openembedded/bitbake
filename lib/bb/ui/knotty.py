@@ -238,6 +238,10 @@ def main(server, eventHandler):
                         logger.error("%s", reason)
                 continue
 
+            if isinstance(event, bb.runqueue.sceneQueueTaskStarted):
+                logger.info("Running setscene task %d of %d (%s)" % (event.stats.completed + event.stats.active + event.stats.failed + 1, event.stats.total, event.taskstring))
+                continue
+
             if isinstance(event, bb.runqueue.runQueueTaskStarted):
                 if event.noexec:
                     tasktype = 'noexec task'
@@ -253,6 +257,11 @@ def main(server, eventHandler):
             if isinstance(event, bb.runqueue.runQueueTaskFailed):
                 taskfailures.append(event.taskstring)
                 logger.error("Task %s (%s) failed with exit code '%s'",
+                             event.taskid, event.taskstring, event.exitcode)
+                continue
+
+            if isinstance(event, bb.runqueue.sceneQueueTaskFailed):
+                logger.warn("Setscene task %s (%s) failed with exit code '%s' - real task will be run instead",
                              event.taskid, event.taskstring, event.exitcode)
                 continue
 

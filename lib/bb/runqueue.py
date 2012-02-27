@@ -1724,6 +1724,15 @@ class runQueueEvent(bb.event.Event):
         self.stats = stats.copy()
         bb.event.Event.__init__(self)
 
+class sceneQueueEvent(runQueueEvent):
+    """
+    Base sceneQueue event class
+    """
+    def __init__(self, task, stats, rq, noexec=False):
+        runQueueEvent.__init__(self, task, stats, rq)
+        realtask = rq.rqdata.runq_setscene[task]
+        self.taskstring = rq.rqdata.get_user_idstring(realtask, "_setscene")
+
 class runQueueTaskStarted(runQueueEvent):
     """
     Event notifing a task was started
@@ -1732,12 +1741,12 @@ class runQueueTaskStarted(runQueueEvent):
         runQueueEvent.__init__(self, task, stats, rq)
         self.noexec = noexec
 
-class sceneQueueTaskStarted(runQueueEvent):
+class sceneQueueTaskStarted(sceneQueueEvent):
     """
     Event notifing a setscene task was started
     """
     def __init__(self, task, stats, rq, noexec=False):
-        runQueueEvent.__init__(self, task, stats, rq)
+        sceneQueueEvent.__init__(self, task, stats, rq)
         self.noexec = noexec
 
 class runQueueTaskFailed(runQueueEvent):
@@ -1748,14 +1757,13 @@ class runQueueTaskFailed(runQueueEvent):
         runQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
 
-class sceneQueueTaskFailed(runQueueEvent):
+class sceneQueueTaskFailed(sceneQueueEvent):
     """
     Event notifing a setscene task failed
     """
     def __init__(self, task, stats, exitcode, rq):
-        runQueueEvent.__init__(self, task, stats, rq)
+        sceneQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
-        self.taskstring = rq.rqdata.get_user_idstring(task, "_setscene")
 
 class runQueueTaskCompleted(runQueueEvent):
     """

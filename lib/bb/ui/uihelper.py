@@ -32,9 +32,8 @@ class BBUIHelper:
         if isinstance(event, bb.build.TaskSucceeded):
             del self.running_tasks[event.pid]
             self.needUpdate = True
-        if isinstance(event, bb.build.TaskFailed):
+        if isinstance(event, bb.build.TaskFailed) or isinstance(event, bb.build.TaskFailedSilent):
             del self.running_tasks[event.pid]
-            self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
             self.needUpdate = True
 
     def getTasks(self):

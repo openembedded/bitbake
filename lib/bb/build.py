@@ -96,6 +96,12 @@ class TaskFailed(TaskBase):
         self.errprinted = errprinted
         super(TaskFailed, self).__init__(task, metadata)
 
+class TaskFailedSilent(TaskBase):
+    """Task execution failed (silently)"""
+    def __init__(self, task, logfile, metadata):
+        self.logfile = logfile
+        super(TaskFailedSilent, self).__init__(task, metadata)
+
 class TaskInvalid(TaskBase):
 
     def __init__(self, task, metadata):
@@ -334,7 +340,9 @@ def _exec_task(fn, task, d, quieterr):
         for func in (postfuncs or '').split():
             exec_func(func, localdata)
     except FuncFailed as exc:
-        if not quieterr:
+        if quieterr:
+            event.fire(TaskFailedSilent(task, logfn, localdata), localdata)
+        else:
             errprinted = errchk.triggered
             logger.error(str(exc))
             event.fire(TaskFailed(task, logfn, localdata, errprinted), localdata)
