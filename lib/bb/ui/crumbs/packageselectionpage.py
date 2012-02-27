@@ -23,7 +23,7 @@
 import gtk
 import glib
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobViewBar, HobViewTable
+from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook
 from bb.ui.crumbs.hoblistmodel import PackageListModel
 from bb.ui.crumbs.hobpages import HobPage
 
@@ -102,11 +102,7 @@ class PackageSelectionPage (HobPage):
         self.pack_start(self.group_align, expand=True, fill=True)
 
         # set visiable members
-        self.grid = gtk.Table(10, 1, True)
-        self.grid.set_col_spacings(3)
-
-        self.ins = gtk.Notebook()
-        self.ins.set_show_tabs(False)
+        self.ins = HobNotebook()
         self.tables = [] # we need to modify table when the dialog is shown
         # append the tab
         for i in range(len(self.pages)):
@@ -122,16 +118,13 @@ class PackageSelectionPage (HobPage):
             self.ins.append_page(tab, label)
             self.tables.append(tab)
 
-        self.grid.attach(self.ins, 0, 1, 1, 10, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
-        # a black bar associated with the notebook
-        self.topbar = HobViewBar(self.ins) 
-        self.grid.attach(self.topbar, 0, 1, 0, 1, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
+        self.ins.set_entry("Search packages:")
         # set the search entry for each table
         for tab in self.tables:
-            tab.set_search_entry(0, self.topbar.search)
+            tab.set_search_entry(0, self.ins.search)
 
         # add all into the dialog
-        self.box_group_area.add(self.grid)
+        self.box_group_area.pack_start(self.ins, expand=True, fill=True)
 
         button_box = gtk.HBox(False, 6)
         self.box_group_area.pack_start(button_box, expand=False, fill=False)
