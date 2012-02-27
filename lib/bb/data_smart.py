@@ -463,20 +463,12 @@ class DataSmart(MutableMapping):
 
     def get_hash(self):
         data = ""
-        keys = iter(self)
+        config_whitelist = set((self.getVar("BB_HASHCONFIG_WHITELIST", True) or "").split())
+        keys = set(key for key in iter(self) if not key.startswith("__"))
         for key in keys:
-            if key in ["TIME", "DATE"]:
+            if key in config_whitelist:
                 continue
-            if key == "__depends":
-                deps = list(self.getVar(key, False))
-                deps.sort()
-                value = [deps[i][0] for i in range(len(deps))]
-            elif key == "PATH":
-                path = list(set(self.getVar(key, False).split(':')))
-                path.sort()
-                value = " ".join(path)
-            else:
-                value = self.getVar(key, False) or ""
+            value = self.getVar(key, False) or ""
             data = data + key + ': ' + str(value) + '\n'
 
         return hashlib.md5(data).hexdigest()
