@@ -100,6 +100,7 @@ class BBLogFilter(object):
 
 loggerDefaultDebugLevel = 0
 loggerDefaultVerbose = False
+loggerVerboseLogs = False
 loggerDefaultDomains = []
 
 def init_msgconfig(verbose, debug, debug_domains = []):
@@ -108,6 +109,8 @@ def init_msgconfig(verbose, debug, debug_domains = []):
     """
     bb.msg.loggerDefaultDebugLevel = debug
     bb.msg.loggerDefaultVerbose = verbose
+    if verbose:
+        bb.msg.loggerVerboseLogs = True
     bb.msg.loggerDefaultDomains = debug_domains
 
 def addDefaultlogFilter(handler):

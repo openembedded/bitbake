@@ -206,6 +206,10 @@ class BBCooker:
 
     def parseConfiguration(self):
 
+        # Set log file verbosity
+        verboselogs = bb.utils.to_boolean(self.configuration.data.getVar("BB_VERBOSE_LOGS", "0"))
+        if verboselogs:
+            bb.msg.loggerVerboseLogs = True
 
         # Change nice level if we're asked to
         nice = self.configuration.data.getVar("BB_NICE_LEVEL", True)
