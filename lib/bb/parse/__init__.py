@@ -131,4 +131,13 @@ def vars_from_file(mypkg, d):
     parts.extend(tmplist)
     return parts
 
+def get_file_depends(d):
+    '''Return the dependent files'''
+    dep_files = []
+    depends = d.getVar('__depends', True) or set()
+    depends = depends.union(d.getVar('__base_depends', True) or set())
+    for (fn, _) in depends:
+        dep_files.append(os.path.abspath(fn))
+    return " ".join(dep_files)
+
 from bb.parse.parse_py import __version__, ConfHandler, BBHandler

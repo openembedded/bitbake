@@ -893,6 +893,7 @@ class BBCooker:
         bb.codeparser.parser_cache_init(data)
         bb.event.fire(bb.event.ConfigParsed(), data)
         bb.parse.init_parser(data)
+        data.setVar('BBINCLUDED',bb.parse.get_file_depends(data))
         self.configuration.data = data
         self.configuration.data_hash = data.get_hash()
 

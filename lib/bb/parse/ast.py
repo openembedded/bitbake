@@ -328,6 +328,8 @@ def finalize(fn, d, variant = None):
 
     bb.parse.siggen.finalise(fn, d, variant)
 
+    d.setVar('BBINCLUDED', bb.parse.get_file_depends(d))
+
     bb.event.fire(bb.event.RecipeParsed(fn), d)
 
 def _create_variants(datastores, names, function):
