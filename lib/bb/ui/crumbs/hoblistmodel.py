@@ -51,6 +51,7 @@ class PackageListModel(gtk.TreeStore):
         self.pkgs_size = 0
         self.pn_path = {}
         self.pkg_path = {}
+        self.rprov_pkg = {}
         
         gtk.TreeStore.__init__ (self,
                                 gobject.TYPE_STRING,
@@ -71,10 +72,15 @@ class PackageListModel(gtk.TreeStore):
     Returns the path in the model or None
     """
     def find_path_for_item(self, item_name):
+        pkg = item_name
         if item_name not in self.pkg_path.keys():
-            return None
-        else:
-            return self.pkg_path[item_name]
+            if item_name not in self.rprov_pkg.keys():
+                return None
+            pkg = self.rprov_pkg[item_name]
+            if pkg not in self.pkg_path.keys():
+                return None
+
+        return self.pkg_path[pkg]
 
     def find_item_for_path(self, item_path):
         return self[item_path][self.COL_NAME]
@@ -137,6 +143,7 @@ class PackageListModel(gtk.TreeStore):
         self.pkgs_size = 0
         self.pn_path = {}
         self.pkg_path = {}
+        self.rprov_pkg = {}
 
         for pkginfo in pkginfolist:
             pn = pkginfo['PN']
@@ -160,6 +167,8 @@ class PackageListModel(gtk.TreeStore):
             rdep = pkginfo['RDEPENDS_%s' % pkg] if 'RDEPENDS_%s' % pkg in pkginfo.keys() else ""
             rrec = pkginfo['RRECOMMENDS_%s' % pkg] if 'RRECOMMENDS_%s' % pkg in pkginfo.keys() else ""
             rprov = pkginfo['RPROVIDES_%s' % pkg] if 'RPROVIDES_%s' % pkg in pkginfo.keys() else ""
+            for i in rprov.split():
+                self.rprov_pkg[i] = pkg
 
             if 'ALLOW_EMPTY_%s' % pkg in pkginfo.keys():
                 allow_empty = pkginfo['ALLOW_EMPTY_%s' % pkg]
