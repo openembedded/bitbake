@@ -582,6 +582,7 @@ class ImageSelectionDialog (gtk.Dialog):
 
         self.image_folder = image_folder
         self.image_types  = image_types
+        self.image_list = []
         self.image_names = []
 
         # create visual elements on the dialog
@@ -645,13 +646,17 @@ class ImageSelectionDialog (gtk.Dialog):
         dialog.destroy()
 
     def fill_image_store(self):
+        self.image_list = []
         self.image_store.clear()
         imageset = set()
         for root, dirs, files in os.walk(self.image_folder):
+            # ignore the sub directories
+            dirs[:] = []
             for f in files:
                 for image_type in self.image_types:
                     if f.endswith('.' + image_type):
                         imageset.add(f.rsplit('.' + image_type)[0])
+                        self.image_list.append(f)
         
         for image in imageset:
             self.image_store.set(self.image_store.append(), 0, image, 1, False)
@@ -665,9 +670,8 @@ class ImageSelectionDialog (gtk.Dialog):
             while iter:
                 path = self.image_store.get_path(iter)
                 if self.image_store[path][1]:
-                    for root, dirs, files in os.walk(self.image_folder):
-                        for f in files:
-                            if f.startswith(self.image_store[path][0] + '.'):
-                                self.image_names.append(f)
+                    for f in self.image_list:
+                        if f.startswith(self.image_store[path][0] + '.'):
+                            self.image_names.append(f)
                     break            
                 iter = self.image_store.iter_next(iter)
