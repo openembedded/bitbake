@@ -193,6 +193,7 @@ class PackageSelectionPage (HobPage):
 
         self.label.set_text("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
+        self.ins.show_indicator_icon("Included", selected_packages_num)
 
     """
     Helper function to convert the package size to string format.

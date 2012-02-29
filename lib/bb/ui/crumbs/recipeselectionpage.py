@@ -199,6 +199,7 @@ class RecipeSelectionPage (HobPage):
         self.builder.configuration.selected_image = self.recipe_model.get_selected_image()
         _, self.builder.configuration.selected_recipes = self.recipe_model.get_selected_recipes()
         self.label.set_text("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
+        self.ins.show_indicator_icon("Included", len(self.builder.configuration.selected_recipes))
 
     # Callback functions
     def reset_clicked_cb(self, button):
