@@ -947,9 +947,9 @@ class LayerSelectionDialog (CrumbsDialog):
         self.vbox.pack_start(hbox_top, expand=False, fill=False)
 
         if self.split_model:
-            label = self.gen_label_widget("<span weight=\"bold\" font_desc='12'>Select Layers:</span>\n(Available layers under '${COREBASE}/layers/' directory)")
+            label = self.gen_label_widget("<b>Select Layers:</b>\n(Available layers under '${COREBASE}/layers/' directory)")
         else:
-            label = self.gen_label_widget("<span weight=\"bold\" font_desc='12'>Select Layers:</span>")
+            label = self.gen_label_widget("<b>Select Layers:</b>")
         hbox_top.pack_start(label, expand=False, fill=False)
 
         tooltip = "Layer is a collection of bb files and conf files"
@@ -960,20 +960,11 @@ class LayerSelectionDialog (CrumbsDialog):
 
         layer_widget, self.layer_store = self.gen_layer_widget(self.split_model, self.layers, self.all_layers, self, None)
         layer_widget.set_size_request(-1, 180)
-
         self.vbox.pack_start(layer_widget, expand=True, fill=True)
 
-        separator = gtk.HSeparator()
-        self.vbox.pack_start(separator, False, True, 5)
-        separator.show()
-
-        hbox_button = gtk.HBox()
-        self.vbox.pack_end(hbox_button, expand=False, fill=False)
-        hbox_button.show()
-
-        label = self.gen_label_widget("<i>'meta' is Core layer for Yocto images</i>\n"
-        "<span weight=\"bold\">Please do not remove it</span>")
-        hbox_button.pack_start(label, expand=False, fill=False)
+        label = self.gen_label_widget("<b>Note:</b> '<i>meta</i>' is the Core layer for Yocto images please do not remove it.")
+        label.show()
+        self.vbox.pack_end(label, expand=False, fill=False)
 
         self.show_all()
 
