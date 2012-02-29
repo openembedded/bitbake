@@ -505,8 +505,8 @@ class BBCooker:
                     pn_provider = ""
                     targetid = taskdata.getbuild_id(item)
                     if targetid in taskdata.build_targets and taskdata.build_targets[targetid]:
-                        fnid = taskdata.build_targets[targetid][0]
-                        fn_provider = taskdata.fn_index[fnid]
+                        id = taskdata.build_targets[targetid][0]
+                        fn_provider = taskdata.fn_index[id]
                         pn_provider = self.status.pkg_fn[fn_provider]
                     else:
                         pn_provider = item
