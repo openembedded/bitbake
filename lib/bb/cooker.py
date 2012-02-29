@@ -455,7 +455,7 @@ class BBCooker:
                 depend_tree_package[package]["filename"] = fn
                 depend_tree_package[package]["version"] = version
 
-    def generatePkgDepTreeData(self, pkgs_to_build, task, resolve=False):
+    def generatePkgDepTreeData(self, pkgs_to_build, task):
         """
         Create a dependency tree of pkgs_to_build, returning the data.
         """
@@ -501,19 +501,16 @@ class BBCooker:
 
                 depend_tree["depends"][pn] = []
                 for dep in taskdata.depids[fnid]:
-                    if resolve:
-                        item = taskdata.build_names_index[dep]
-                        pn_provider = ""
-                        targetid = taskdata.getbuild_id(item)
-                        if targetid in taskdata.build_targets and taskdata.build_targets[targetid]:
-                            fnid = taskdata.build_targets[targetid][0]
-                            fn_provider = taskdata.fn_index[fnid]
-                            pn_provider = self.status.pkg_fn[fn_provider]
-                        else:
-                            pn_provider = item
-                        depend_tree["depends"][pn].append(pn_provider)
+                    item = taskdata.build_names_index[dep]
+                    pn_provider = ""
+                    targetid = taskdata.getbuild_id(item)
+                    if targetid in taskdata.build_targets and taskdata.build_targets[targetid]:
+                        fnid = taskdata.build_targets[targetid][0]
+                        fn_provider = taskdata.fn_index[fnid]
+                        pn_provider = self.status.pkg_fn[fn_provider]
                     else:
-                        depend_tree["depends"][pn].append(taskdata.build_names_index[dep])
+                        pn_provider = item
+                    depend_tree["depends"][pn].append(pn_provider)
 
                 depend_tree["rdepends-pn"][pn] = []
                 for rdep in taskdata.rdepids[fnid]:
@@ -523,8 +520,7 @@ class BBCooker:
                     depend_tree["rdepends-pkg"][package] = []
                     for rdepend in rdepends[package]:
                         depend_tree["rdepends-pkg"][package].append(rdepend)
-                        if resolve:
-                            self.append_package(taskdata, depend_tree["packages"], rdepend)
+                        self.append_package(taskdata, depend_tree["packages"], rdepend)
                     if not package in packages:
                         packages.append(package)
 
@@ -532,8 +528,7 @@ class BBCooker:
                     depend_tree["rrecs-pkg"][package] = []
                     for rrec in rrecs[package]:
                         depend_tree["rrecs-pkg"][package].append(rrec)
-                        if resolve:
-                            self.append_package(taskdata, depend_tree["packages"], rrec)
+                        self.append_package(taskdata, depend_tree["packages"], rrec)
                     if not package in packages:
                         packages.append(package)
 
@@ -784,7 +779,7 @@ class BBCooker:
 
         return pkg_list
 
-    def generateTargetsTree(self, klass=None, pkgs=[], resolve=False):
+    def generateTargetsTree(self, klass=None, pkgs=[]):
         """
         Generate a dependency tree of buildable targets
         Generate an event with the result
@@ -799,7 +794,7 @@ class BBCooker:
             pkgs = pkgs + extra_pkgs
 
         # generate a dependency tree for all our packages
-        tree = self.generatePkgDepTreeData(pkgs, 'build', resolve)
+        tree = self.generatePkgDepTreeData(pkgs, 'build')
         bb.event.fire(bb.event.TargetsTreeGenerated(tree), self.configuration.data)
 
     def buildWorldTargetList(self):

@@ -148,7 +148,7 @@ class HobHandler(gobject.GObject):
         elif next_command == self.PARSE_BBFILES:
             self.server.runCommand(["parseFiles"])
         elif next_command == self.GENERATE_TGTS:
-            self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", [], True])
+            self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.GENERATE_PACKAGEINFO:
             self.server.runCommand(["triggerEvent", "bb.event.RequestPackageInfo()"])
         elif next_command == self.BUILD_TARGET_RECIPES:
