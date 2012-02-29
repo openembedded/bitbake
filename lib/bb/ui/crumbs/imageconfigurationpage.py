@@ -28,9 +28,6 @@ from bb.ui.crumbs.hobwidget import hic, HobXpmLabelButtonBox
 from bb.ui.crumbs.hoblistmodel import RecipeListModel
 from bb.ui.crumbs.hobpages import HobPage
 
-from bb.ui.crumbs.hig import CrumbsDialog, BinbDialog, \
-                             AdvancedSettingDialog, LayerSelectionDialog
-
 #
 # ImageConfigurationPage
 #
