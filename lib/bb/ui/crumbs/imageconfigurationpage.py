@@ -243,6 +243,7 @@ class ImageConfigurationPage (HobPage):
     def machine_combo_changed_cb(self, machine_combo):
         combo_item = machine_combo.get_active_text()
         if not combo_item or combo_item == self.__dummy_machine__:
+            self.builder.configuration.curr_mach = ""
             self.builder.switch_page(self.builder.MACHINE_SELECTION)
         else:
             self.builder.configuration.curr_mach = combo_item
