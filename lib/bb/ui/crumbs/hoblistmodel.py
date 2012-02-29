@@ -512,27 +512,6 @@ class RecipeListModel(gtk.ListStore):
             it = view_model.iter_next(it)
         return None
 
-    def map_runtime(self, event_model, runtime, rdep_type, name):
-        if rdep_type not in ['pkg', 'pn'] or runtime not in ['rdepends', 'rrecs']:
-            return
-        package_depends = event_model["%s-%s" % (runtime, rdep_type)].get(name, [])
-        pn_depends = []
-        for package_depend in package_depends:
-            if 'task-' not in package_depend and package_depend in event_model["packages"].keys():
-                pn_depends.append(event_model["packages"][package_depend]["pn"])
-            else:
-                pn_depends.append(package_depend)
-        return list(set(pn_depends))
-
-    def subpkg_populate(self, event_model, pkg, desc, lic, group, atype, pn):
-        pn_depends = self.map_runtime(event_model, "rdepends", "pkg", pkg)
-        pn_depends += self.map_runtime(event_model, "rrecs", "pkg", pkg)
-        self.set(self.append(), self.COL_NAME, pkg, self.COL_DESC, desc,
-                 self.COL_LIC, lic, self.COL_GROUP, group,
-                 self.COL_DEPS, " ".join(pn_depends), self.COL_BINB, "",
-                 self.COL_TYPE, atype, self.COL_INC, False,
-                 self.COL_IMG, False, self.COL_INSTALL, "", self.COL_PN, pn)
-
     """
     The populate() function takes as input the data from a
     bb.event.TargetsTreeGenerated event and populates the RecipeList.
@@ -558,38 +537,27 @@ class RecipeListModel(gtk.ListStore):
             group = event_model["pn"][item]["section"]
             install = []
 
+            depends = event_model["depends"].get(item, [])
+            rdepends = event_model["rdepends-pn"].get(item, [])
+            depends = depends + rdepends
+
             if ('task-' in name):
                 if ('lib32-' in name or 'lib64-' in name):
                     atype = 'mltask'
                 else:
                     atype = 'task'
-                for pkg in event_model["pn"][name]["packages"]:
-                    self.subpkg_populate(event_model, pkg, desc, lic, group, atype, name)
-                continue
-
             elif ('-image-' in name):
                 atype = 'image'
-                depends = event_model["depends"].get(item, [])
-                rdepends = self.map_runtime(event_model, 'rdepends', 'pn', name)
-                depends = depends + rdepends
-                install = event_model["rdepends-pn"].get(item, [])
-
+                install = rdepends
             elif ('meta-' in name):
                 atype = 'toolchain'
-
             elif (name == 'dummy-image' or name == 'dummy-toolchain'):
                 atype = 'dummy'
-
             else:
                 if ('lib32-' in name or 'lib64-' in name):
                     atype = 'mlrecipe'
                 else:
                     atype = 'recipe'
-                depends = event_model["depends"].get(item, [])
-                depends += self.map_runtime(event_model, 'rdepends', 'pn', item)
-                for pkg in event_model["pn"][name]["packages"]:
-                    depends += self.map_runtime(event_model, 'rdepends', 'pkg', item)
-                    depends += self.map_runtime(event_model, 'rrecs', 'pkg', item)
 
             self.set(self.append(), self.COL_NAME, item, self.COL_DESC, desc,
                      self.COL_LIC, lic, self.COL_GROUP, group,
