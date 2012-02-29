@@ -468,8 +468,6 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.connect("response", self.response_cb)
 
     def create_visual_elements(self):
-        self.set_size_request(500, 500)
-
         self.nb = gtk.Notebook()
         self.nb.set_show_tabs(True)
         self.nb.append_page(self.create_image_types_page(), gtk.Label("Image types"))
@@ -700,8 +698,6 @@ class DeployImageDialog (CrumbsDialog):
         self.connect("response", self.response_cb)
 
     def create_visual_elements(self):
-        self.set_default_size(500, 250)
-
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
         markup = "<span font_desc='12'>The image to be written into usb drive:</span>"
@@ -947,7 +943,6 @@ class LayerSelectionDialog (CrumbsDialog):
         self.connect("response", self.response_cb)
                 
     def create_visual_elements(self):
-        self.set_default_size(400, 250)
         hbox_top = gtk.HBox()
         self.vbox.pack_start(hbox_top, expand=False, fill=False)
 
@@ -964,6 +959,7 @@ class LayerSelectionDialog (CrumbsDialog):
         hbox_top.pack_end(image, expand=False, fill=False)
 
         layer_widget, self.layer_store = self.gen_layer_widget(self.split_model, self.layers, self.all_layers, self, None)
+        layer_widget.set_size_request(-1, 180)
 
         self.vbox.pack_start(layer_widget, expand=True, fill=True)
 
@@ -1031,6 +1027,7 @@ class ImageSelectionDialog (CrumbsDialog):
 
     def create_visual_elements(self):
         hbox = gtk.HBox(False, 6)
+
         self.vbox.pack_start(hbox, expand=False, fill=False)
 
         entry = gtk.Entry()
