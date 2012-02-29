@@ -94,13 +94,13 @@ class CrumbsMessageDialog(CrumbsDialog):
 #
 # Brought-in-by Dialog
 #
-class BinbDialog(gtk.Dialog):
+class BinbDialog(CrumbsDialog):
     """
     A dialog widget to show "brought in by" info when a recipe/package is clicked.
     """
 
     def __init__(self, title, content, parent=None):
-        super(BinbDialog, self).__init__(title, parent, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, None)
+        super(BinbDialog, self).__init__(title, parent, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, ("Close", gtk.RESPONSE_CLOSE))
 
         self.set_position(gtk.WIN_POS_MOUSE)
         self.set_resizable(False)
