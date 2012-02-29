@@ -198,7 +198,6 @@ class Builder(gtk.Window):
         self.create_visual_elements()
 
         # connect the signals to functions
-        #self.connect("configure-event", self.resize_window_cb)
         self.connect("delete-event", self.destroy_window_cb)
         self.recipe_model.connect ("recipe-selection-changed",  self.recipelist_changed_cb)
         self.package_model.connect("package-selection-changed", self.packagelist_changed_cb)
