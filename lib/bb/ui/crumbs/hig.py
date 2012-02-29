@@ -28,7 +28,7 @@ import re
 import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobViewTable
+from bb.ui.crumbs.hobwidget import hcc, HobViewTable
 from bb.ui.crumbs.progressbar import HobProgressBar
 
 """
@@ -1083,9 +1083,10 @@ class ImageSelectionDialog (gtk.Dialog):
             dirs[:] = []
             for f in files:
                 for image_type in self.image_types:
-                    if f.endswith('.' + image_type):
-                        imageset.add(f.rsplit('.' + image_type)[0])
-                        self.image_list.append(f)
+                    for real_image_type in hcc.SUPPORTED_IMAGE_TYPES[image_type]:
+                        if f.endswith('.' + real_image_type):
+                            imageset.add(f.rsplit('.' + real_image_type)[0])
+                            self.image_list.append(f)
         
         for image in imageset:
             self.image_store.set(self.image_store.append(), 0, image, 1, False)

@@ -758,8 +758,8 @@ class Builder(gtk.Window):
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
                     | gtk.DIALOG_NO_SEPARATOR,
-            buttons = ("Close", gtk.RESPONSE_NO,
-                       "Make usb image", gtk.RESPONSE_YES))
+            buttons = ("Make usb image", gtk.RESPONSE_YES,
+                       "Close", gtk.RESPONSE_NO))
         response = dialog.run()
         dialog.destroy()
 

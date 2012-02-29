@@ -22,6 +22,7 @@
 import gobject
 import logging
 from bb.ui.crumbs.runningbuild import RunningBuild
+from bb.ui.crumbs.hobwidget import hcc
 
 class HobHandler(gobject.GObject):
 
@@ -450,10 +451,8 @@ class HobHandler(gobject.GObject):
         params["incompat_license"] = self.server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or ""
         params["sdk_machine"] = self.server.runCommand(["getVariable", "SDKMACHINE"]) or self.server.runCommand(["getVariable", "SDK_ARCH"]) or ""
 
-        #params["image_types"] = self.server.runCommand(["getVariable", "IMAGE_TYPES"]) or ""
         params["image_fstypes"] = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]) or ""
-        """
-        A workaround
-        """
-        params["image_types"] = "jffs2 sum.jffs2 cramfs ext2 ext2.gz ext2.bz2 ext3 ext3.gz ext2.lzma btrfs live squashfs squashfs-lzma ubi tar tar.gz tar.bz2 tar.xz cpio cpio.gz cpio.xz cpio.lzma"
+
+        # walkaround
+        params["image_types"] = " ".join(hcc.SUPPORTED_IMAGE_TYPES.keys()).lstrip(" ")
         return params
