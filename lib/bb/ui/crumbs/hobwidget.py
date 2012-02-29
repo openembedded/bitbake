@@ -520,16 +520,16 @@ class HobViewTable (gtk.VBox):
     A VBox to contain the table for different recipe views and package view
     """
     __gsignals__ = {
-         "toggled"      : (gobject.SIGNAL_RUN_LAST,
-                           gobject.TYPE_NONE,
-                          (gobject.TYPE_PYOBJECT,
-                           gobject.TYPE_STRING,
-                           gobject.TYPE_INT,
-                           gobject.TYPE_PYOBJECT,)),
-         "changed"      : (gobject.SIGNAL_RUN_LAST,
-                           gobject.TYPE_NONE,
-                          (gobject.TYPE_PYOBJECT,
-                           gobject.TYPE_PYOBJECT,)),
+         "toggled"       : (gobject.SIGNAL_RUN_LAST,
+                            gobject.TYPE_NONE,
+                           (gobject.TYPE_PYOBJECT,
+                            gobject.TYPE_STRING,
+                            gobject.TYPE_INT,
+                            gobject.TYPE_PYOBJECT,)),
+         "row-activated" : (gobject.SIGNAL_RUN_LAST,
+                            gobject.TYPE_NONE,
+                           (gobject.TYPE_PYOBJECT,
+                            gobject.TYPE_PYOBJECT,)),
     }
 
     def __init__(self, columns):
@@ -540,7 +540,8 @@ class HobViewTable (gtk.VBox):
         self.table_tree.set_enable_search(True)
         self.table_tree.set_rules_hint(True)
         self.table_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
-        self.table_tree.get_selection().connect("changed", self.selection_changed_cb, self.table_tree)
+        self.toggle_columns = []
+        self.table_tree.connect("row-activated", self.row_activated_cb)
 
         for i in range(len(columns)):
             col = gtk.TreeViewColumn(columns[i]['col_name'])
@@ -564,6 +565,7 @@ class HobViewTable (gtk.VBox):
                 self.toggle_id = i
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=columns[i]['col_id'])
+                self.toggle_columns.append(columns[i]['col_name'])
             elif columns[i]['col_style'] == 'radio toggle':
                 cell = gtk.CellRendererToggle()
                 cell.set_property('activatable', True)
@@ -572,6 +574,7 @@ class HobViewTable (gtk.VBox):
                 self.toggle_id = i
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=columns[i]['col_id'])
+                self.toggle_columns.append(columns[i]['col_name'])
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
@@ -598,8 +601,9 @@ class HobViewTable (gtk.VBox):
     def toggled_cb(self, cell, path, columnid, tree):
         self.emit("toggled", cell, path, columnid, tree)
 
-    def selection_changed_cb(self, selection, tree):
-        self.emit("changed", selection, tree)
+    def row_activated_cb(self, tree, path, view_column):
+        if not view_column.get_title() in self.toggle_columns:
+            self.emit("row-activated", tree.get_model(), path)
 
 class HobViewBar (gtk.EventBox):
     """

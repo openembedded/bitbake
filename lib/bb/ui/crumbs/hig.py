@@ -89,15 +89,12 @@ class BinbDialog(gtk.Dialog):
         self.set_resizable(False)
         self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.DARK))
 
-        hbox = gtk.HBox(False, 0)
-        self.vbox.pack_start(hbox, expand=False, fill=False, padding=10)
-
         label = gtk.Label(content)
         label.set_alignment(0, 0)
         label.set_line_wrap(True)
         label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.WHITE))
 
-        hbox.pack_start(label, expand=False, fill=False, padding=10)
+        self.vbox.pack_start(label, expand=True, fill=True, padding=10)
         self.vbox.show_all()
 
 #

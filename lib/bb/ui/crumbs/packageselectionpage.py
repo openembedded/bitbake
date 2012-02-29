@@ -116,7 +116,7 @@ class PackageSelectionPage (HobPage):
             tab.set_model(self.package_model.tree_model(filter))
             tab.connect("toggled", self.table_toggled_cb)
             if self.pages[i]['name'] == "Included":
-                tab.connect("changed", self.tree_selection_cb)
+                tab.connect("row-activated", self.tree_row_activated_cb)
 
             reset_button = gtk.Button("Reset")
             reset_button.connect("clicked", self.reset_clicked_cb)
@@ -161,14 +161,8 @@ class PackageSelectionPage (HobPage):
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         button_box.pack_start(self.back_button, expand=False, fill=False)
 
-    def tree_selection_cb(self, table, tree_selection, tree_view):
-        tree_model = tree_view.get_model()
-        path, column = tree_view.get_cursor()
-        if not path or column == tree_view.get_column(2):
-            return
-
-        it = tree_model.get_iter(path)
-        binb = tree_model.get_value(it, PackageListModel.COL_BINB)
+    def tree_row_activated_cb(self, table, tree_model, path):
+        binb = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_BINB)
         if binb:
             self.builder.show_binb_dialog(binb)
 
