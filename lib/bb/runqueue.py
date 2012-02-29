@@ -779,6 +779,8 @@ class RunQueue:
         # For disk space monitor
         self.dm = monitordisk.diskMonitor(cfgData)
 
+        self.rqexe = None
+
     def check_stamps(self):
         unchecked = {}
         current = []
@@ -996,6 +998,9 @@ class RunQueue:
         return retval
 
     def finish_runqueue(self, now = False):
+        if not self.rqexe:
+            return
+
         if now:
             self.rqexe.finish_now()
         else:
