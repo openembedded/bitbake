@@ -84,21 +84,20 @@ class ImageConfigurationPage (HobPage):
         for child in children:
             self.remove(child)
 
-    def _pack_components(self):
+    def _pack_components(self, pack_config_build_button = False):
         self._remove_all_widget()
         self.pack_start(self.config_top_button, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
 
         self.box_group_area.pack_start(self.gtable, expand=True, fill=True)
-        self.box_group_area.pack_end(self.config_build_button, expand=False, fill=False)
+        if pack_config_build_button == True:
+            self.box_group_area.pack_end(self.config_build_button, expand=False, fill=False)
 
     def show_machine(self):
-        self._pack_components()
-        self.set_config_machine_layout()
-        self.show_all()
         self.progress_bar.reset()
-        self.progress_bar.hide()
-        self.config_build_button.hide_all()
+        self._pack_components(pack_config_build_button = False)
+        self.set_config_machine_layout(show_progress_bar = False)
+        self.show_all()
 
     def update_progress_bar(self, title, fraction, status=True):
         self.progress_bar.update(fraction)
@@ -106,18 +105,16 @@ class ImageConfigurationPage (HobPage):
         self.progress_bar.set_rcstyle(status)
 
     def show_info_populating(self):
-        self._pack_components()
-        self.set_config_machine_layout()
+        self._pack_components(pack_config_build_button = False)
+        self.set_config_machine_layout(show_progress_bar = True)
         self.show_all()
-        self.config_build_button.hide_all()
 
     def show_info_populated(self):
-        self._pack_components()
-        self.set_config_machine_layout()
+        self.progress_bar.reset()
+        self._pack_components(pack_config_build_button = True)
+        self.set_config_machine_layout(show_progress_bar = False)
         self.set_config_baseimg_layout()
         self.show_all()
-        self.progress_bar.reset()
-        self.progress_bar.hide()
 
     def create_config_machine(self):
         self.machine_title = gtk.Label()
@@ -154,13 +151,14 @@ class ImageConfigurationPage (HobPage):
         self.progress_bar = HobProgressBar()
         self.machine_separator = gtk.HSeparator()
 
-    def set_config_machine_layout(self):
+    def set_config_machine_layout(self, show_progress_bar = False):
         self.gtable.attach(self.machine_title, 0, 40, 0, 4)
         self.gtable.attach(self.machine_title_desc, 0, 40, 4, 6)
         self.gtable.attach(self.machine_combo, 0, 12, 6, 9)
         self.gtable.attach(self.layer_button, 12, 36, 6, 10)
         self.gtable.attach(self.layer_info_icon, 36, 40, 6, 9)
-        self.gtable.attach(self.progress_bar, 0, 40, 13, 17)
+        if show_progress_bar == True:
+            self.gtable.attach(self.progress_bar, 0, 40, 13, 17)
         self.gtable.attach(self.machine_separator, 0, 40, 12, 13)
 
     def create_config_baseimg(self):
