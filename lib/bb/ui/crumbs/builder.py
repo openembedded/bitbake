@@ -222,7 +222,7 @@ class Builder(gtk.Window):
         self.switch_page(self.MACHINE_SELECTION)
 
     def create_visual_elements(self):
-        self.set_title("HOB -- Image Creator")
+        self.set_title("Hob - Image Creator")
         self.set_icon_name("applications-development")
         self.set_position(gtk.WIN_POS_CENTER_ALWAYS)
         self.set_resizable(True)
@@ -670,7 +670,7 @@ class Builder(gtk.Window):
                                       (gtk.STOCK_OPEN, gtk.RESPONSE_YES,
                                        gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
         filter = gtk.FileFilter()
-        filter.set_name("HOB Files")
+        filter.set_name("Hob Files")
         filter.add_pattern("*.hob")
         dialog.add_filter(filter)
 
