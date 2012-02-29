@@ -188,7 +188,6 @@ class Builder(gtk.Window):
         self.previous_step = None
 
         self.stopping = False
-        self.build_succeeded = True
 
         # recipe model and package model
         self.recipe_model = recipe_model
@@ -520,8 +519,7 @@ class Builder(gtk.Window):
             fraction = 0
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
 
-    def handler_build_succeeded_cb(self, running_build):
-        self.build_succeeded = True
+    def build_succeeded(self):
         if self.current_step == self.FAST_IMAGE_GENERATING:
             fraction = 0.9
         elif self.current_step == self.IMAGE_GENERATING:
@@ -535,9 +533,9 @@ class Builder(gtk.Window):
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 1.0
         self.build_details_page.update_progress_bar("Build Completed: ", fraction)
+        self.stopping = False
 
-    def handler_build_failed_cb(self, running_build):
-        self.build_succeeded = False
+    def build_failed(self):
         if self.current_step == self.FAST_IMAGE_GENERATING:
             fraction = 0.9
         elif self.current_step == self.IMAGE_GENERATING:
@@ -549,6 +547,16 @@ class Builder(gtk.Window):
         self.build_details_page.hide_stop_button()
         self.handler.build_failed_async()
         self.stopping = False
+
+    def handler_build_succeeded_cb(self, running_build):
+        if not self.stopping:
+            self.build_succeeded()
+        else:
+            self.build_failed()
+
+
+    def handler_build_failed_cb(self, running_build):
+        self.build_failed()
 
     def handler_task_started_cb(self, running_build, message): 
         fraction = message["current"] * 1.0/message["total"]
