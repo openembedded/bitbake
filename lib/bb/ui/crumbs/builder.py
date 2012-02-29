@@ -589,9 +589,9 @@ class Builder(gtk.Window):
     def destroy_window_cb(self, widget, event):
         lbl = "<b>Do you really want to exit the Hob image creator?</b>"
         dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-        dialog.add_button(gtk.STOCK_YES, gtk.RESPONSE_YES)
-        dialog.add_button(gtk.STOCK_NO, gtk.RESPONSE_NO)
-        dialog.set_default_response(gtk.RESPONSE_NO)
+        dialog.add_button("Keep using Hob", gtk.RESPONSE_NO)
+        dialog.add_button("Exit Hob", gtk.RESPONSE_YES)
+        dialog.set_default_response(gtk.RESPONSE_YES)
         response = dialog.run()
         dialog.destroy()
         if response == gtk.RESPONSE_YES:
@@ -654,8 +654,8 @@ class Builder(gtk.Window):
                      flags = gtk.DIALOG_MODAL
                          | gtk.DIALOG_DESTROY_WITH_PARENT
                          | gtk.DIALOG_NO_SEPARATOR,
-                     buttons = (gtk.STOCK_OK, gtk.RESPONSE_YES,
-                                gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+                     buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                gtk.STOCK_OK, gtk.RESPONSE_YES))
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             self.configuration.layers = dialog.layers
@@ -666,9 +666,9 @@ class Builder(gtk.Window):
 
     def show_load_template_dialog(self):
         dialog = gtk.FileChooserDialog("Load Template Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE,
-                                      (gtk.STOCK_OPEN, gtk.RESPONSE_YES,
-                                       gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+                                       gtk.FILE_CHOOSER_ACTION_OPEN,
+                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                       gtk.STOCK_OPEN, gtk.RESPONSE_YES))
         filter = gtk.FileFilter()
         filter.set_name("Hob Files")
         filter.add_pattern("*.hob")
@@ -683,8 +683,8 @@ class Builder(gtk.Window):
     def show_save_template_dialog(self):
         dialog = gtk.FileChooserDialog("Save Template Files", self,
                                        gtk.FILE_CHOOSER_ACTION_SAVE,
-                                      (gtk.STOCK_SAVE, gtk.RESPONSE_YES,
-                                       gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                       gtk.STOCK_SAVE, gtk.RESPONSE_YES))
         dialog.set_current_name("hob")
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
@@ -696,9 +696,8 @@ class Builder(gtk.Window):
         dialog = ImageSelectionDialog(self.parameters.image_addr, self.parameters.image_types,
                                       "Open My Images", self,
                                        gtk.FILE_CHOOSER_ACTION_SAVE,
-                                      (gtk.STOCK_OPEN, gtk.RESPONSE_YES,
-                                       gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
-
+                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                       gtk.STOCK_OPEN, gtk.RESPONSE_YES))
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             if not dialog.image_names:
@@ -729,8 +728,8 @@ class Builder(gtk.Window):
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
                     | gtk.DIALOG_NO_SEPARATOR,
-            buttons = ("Save", gtk.RESPONSE_YES,
-                       gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+            buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                       "Save", gtk.RESPONSE_YES))
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             self.configuration = dialog.configuration
@@ -758,8 +757,8 @@ class Builder(gtk.Window):
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
                     | gtk.DIALOG_NO_SEPARATOR,
-            buttons = ("Make usb image", gtk.RESPONSE_YES,
-                       "Close", gtk.RESPONSE_NO))
+            buttons = ("Close", gtk.RESPONSE_NO,
+                       "Make usb image", gtk.RESPONSE_YES))
         response = dialog.run()
         dialog.destroy()
 
@@ -774,8 +773,8 @@ class Builder(gtk.Window):
 
         dialog = gtk.FileChooserDialog("Load Kernel Files", self,
                                        gtk.FILE_CHOOSER_ACTION_SAVE,
-                                      (gtk.STOCK_OPEN, gtk.RESPONSE_YES,
-                                       gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+                                      (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                       gtk.STOCK_OPEN, gtk.RESPONSE_YES))
         filter = gtk.FileFilter()
         filter.set_name("Kernel Files")
         filter.add_pattern("*.bin")
@@ -817,8 +816,8 @@ class Builder(gtk.Window):
             lbl = "<b>Package list may be incomplete!</b>\nDo you want to build selected recipes"
             lbl = lbl + " to get a full list (Yes) or just view the existing packages (No)?"
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_YES, gtk.RESPONSE_YES)
             dialog.add_button(gtk.STOCK_NO, gtk.RESPONSE_NO)
+            dialog.add_button(gtk.STOCK_YES, gtk.RESPONSE_YES)
             dialog.set_default_response(gtk.RESPONSE_YES)
             response = dialog.run()
             dialog.destroy()

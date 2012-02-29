@@ -162,8 +162,8 @@ class AdvancedSettingDialog (CrumbsDialog):
     def entry_widget_select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_OK, gtk.RESPONSE_YES,
-                                        gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
@@ -823,8 +823,8 @@ class LayerSelectionDialog (CrumbsDialog):
     def layer_widget_add_clicked_cb(self, action, layer_store, parent):
         dialog = gtk.FileChooserDialog("Add new layer", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_OK, gtk.RESPONSE_YES,
-                                        gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
         label = gtk.Label("Select the layer you wish to add")
         label.show()
         dialog.set_extra_widget(label)
@@ -1068,8 +1068,8 @@ class ImageSelectionDialog (CrumbsDialog):
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_OK, gtk.RESPONSE_YES,
-                                        gtk.STOCK_CANCEL, gtk.RESPONSE_NO))
+                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
+                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
