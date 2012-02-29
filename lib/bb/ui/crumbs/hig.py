@@ -28,7 +28,7 @@ import re
 import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobWidget
+from bb.ui.crumbs.hobwidget import HobWidget, HobViewTable
 from bb.ui.crumbs.progressbar import HobProgressBar
 
 """
@@ -561,6 +561,21 @@ class LayerSelectionDialog (gtk.Dialog):
 
 class ImageSelectionDialog (gtk.Dialog):
 
+    __columns__ = [{
+            'col_name' : 'Image name',
+            'col_id'   : 0,
+            'col_style': 'text',
+            'col_min'  : 400,
+            'col_max'  : 400
+        }, {
+            'col_name' : 'Select',
+            'col_id'   : 1,
+            'col_style': 'radio toggle',
+            'col_min'  : 160,
+            'col_max'  : 160
+    }]
+
+
     def __init__(self, image_folder, image_types, title, parent, flags, buttons):
         super(ImageSelectionDialog, self).__init__(title, parent, flags, buttons)
         self.connect("response", self.response_cb)
@@ -596,11 +611,25 @@ class ImageSelectionDialog (gtk.Dialog):
         open_button.connect("clicked", self.select_path_cb, self, entry)
         table.attach(open_button, 9, 10, 0, 1)
 
-        imgtv_widget, self.imgsel_tv = HobWidget.gen_imgtv_widget(400, 160)
-        self.vbox.pack_start(imgtv_widget, expand=True, fill=True)
+        self.image_table = HobViewTable(self.__columns__)
+        self.image_table.connect("toggled", self.toggled_cb)
+        self.vbox.pack_start(self.image_table, expand=True, fill=True)
 
         self.show_all()
 
+    def toggled_cb(self, table, cell, path, columnid, tree):
+        model = tree.get_model()
+        if not model:
+            return
+        iter = model.get_iter_first()
+        while iter:
+            rowpath = model.get_path(iter)
+            model[rowpath][columnid] = False
+            iter = model.iter_next(iter)
+
+        model[path][columnid] = True
+
+        
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
@@ -627,7 +656,7 @@ class ImageSelectionDialog (gtk.Dialog):
         for image in imageset:
             self.image_store.set(self.image_store.append(), 0, image, 1, False)
 
-        self.imgsel_tv.set_model(self.image_store)
+        self.image_table.set_model(self.image_store)
 
     def response_cb(self, dialog, response_id):
         self.image_names = []

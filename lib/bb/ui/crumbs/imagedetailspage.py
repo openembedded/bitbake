@@ -23,7 +23,7 @@
 import gobject
 import gtk
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hic, HobWidget
+from bb.ui.crumbs.hobwidget import hic, HobViewTable
 from bb.ui.crumbs.hobpages import HobPage
 
 #
@@ -31,8 +31,28 @@ from bb.ui.crumbs.hobpages import HobPage
 #
 class ImageDetailsPage (HobPage):
 
+    __columns__ = [{
+            'col_name' : 'Image name',
+            'col_id'   : 0,
+            'col_style': 'text',
+            'col_min'  : 500,
+            'col_max'  : 500
+        }, {
+            'col_name' : 'Image size',
+            'col_id'   : 1,
+            'col_style': 'text',
+            'col_min'  : 100,
+            'col_max'  : 100
+        }, {
+            'col_name' : 'Select',
+            'col_id'   : 2,
+            'col_style': 'radio toggle',
+            'col_min'  : 100,
+            'col_max'  : 100
+    }]
+
     class DetailBox (gtk.EventBox):
-        def __init__(self, varlist, vallist, icon = None, button = None, color = HobColors.LIGHT_GRAY):
+        def __init__(self, widget = None, varlist = None, vallist = None, icon = None, button = None, color = HobColors.LIGHT_GRAY):
             gtk.EventBox.__init__(self)
 
             # set color
@@ -44,8 +64,11 @@ class ImageDetailsPage (HobPage):
             self.hbox.set_border_width(15)
             self.add(self.hbox)
 
-            # pack the icon and the text on the left
-            row = len(varlist)
+            if widget != None:
+                row = 1
+            elif varlist != None and vallist != None:
+                # pack the icon and the text on the left
+                row = len(varlist)
             self.table = gtk.Table(row, 20, True)
             self.table.set_size_request(100, -1)
             self.hbox.pack_start(self.table, expand=True, fill=True, padding=15)
@@ -54,8 +77,11 @@ class ImageDetailsPage (HobPage):
             if icon != None:
                 self.table.attach(icon, colid, colid + 2, 0, 1)
                 colid = colid + 2
-            for line in range(0, row):
-                self.table.attach(self.text2label(varlist[line], vallist[line]), colid, 20, line, line + 1)
+            if widget != None:
+                self.table.attach(widget, colid, 20, 0, 1)
+            elif varlist != None and vallist != None:
+                for line in range(0, row):
+                    self.table.attach(self.text2label(varlist[line], vallist[line]), colid, 20, line, line + 1)
 
             # pack the button on the right
             if button != None:
@@ -137,7 +163,7 @@ class ImageDetailsPage (HobPage):
             icon.set_from_pixbuf(pix_buffer)
             varlist = [""]
             vallist = ["Your image is ready"]
-            build_result = self.DetailBox(varlist=varlist, vallist=vallist, icon=icon, button=None, color=color)
+            build_result = self.DetailBox(varlist=varlist, vallist=vallist, icon=icon, color=color)
             self.box_group_area.pack_start(build_result, expand=False, fill=False)
 
         # Name
@@ -145,9 +171,12 @@ class ImageDetailsPage (HobPage):
         for image_name in image_names:
             image_size = self._size_to_string(os.stat(os.path.join(image_addr, image_name)).st_size)
             self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, False)
-        images_widget, treeview = HobWidget.gen_images_widget(600, 200, 100)
-        treeview.set_model(self.image_store)
-        self.box_group_area.pack_start(images_widget, expand=False, fill=False)
+        image_table = HobViewTable(self.__columns__)
+        image_table.set_model(self.image_store)
+        image_table.toggle_default()
+        image_table.connect("toggled", self.toggled_cb)
+        view_files_button = gtk.LinkButton("file://%s" % image_addr, "View files")
+        self.box_group_area.pack_start(self.DetailBox(widget=image_table, button=view_files_button), expand=True, fill=True)
 
         # Machine, Base image and Layers
         layer_num_limit = 15
@@ -175,7 +204,7 @@ class ImageDetailsPage (HobPage):
 
             edit_config_button = gtk.LinkButton("Changes settings for build", "Edit configuration")
             edit_config_button.connect("clicked", self.edit_config_button_clicked_cb)
-            setting_detail = self.DetailBox(varlist=varlist, vallist=vallist, icon=None, button=edit_config_button)
+            setting_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_config_button)
             self.box_group_area.pack_start(setting_detail, expand=False, fill=False)
 
         # Packages included, and Total image size
@@ -188,7 +217,7 @@ class ImageDetailsPage (HobPage):
             edit_packages_button.connect("clicked", self.edit_packages_button_clicked_cb)
         else: # get to this page from "My images"
             edit_packages_button = None
-        package_detail = self.DetailBox(varlist=varlist, vallist=vallist, icon=None, button=edit_packages_button)
+        package_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_packages_button)
         self.box_group_area.pack_start(package_detail, expand=False, fill=False)
         if build_succeeded:
             buttonlist = ["Build new image", "Save as template", "Run image", "Deploy image"]
@@ -198,6 +227,18 @@ class ImageDetailsPage (HobPage):
         self.box_group_area.pack_end(details_bottom_buttons, expand=False, fill=False)
 
         self.show_all()
+
+    def toggled_cb(self, table, cell, path, columnid, tree):
+        model = tree.get_model()
+        if not model:
+            return
+        iter = model.get_iter_first()
+        while iter:
+            rowpath = model.get_path(iter)
+            model[rowpath][columnid] = False
+            iter = model.iter_next(iter)
+
+        model[path][columnid] = True
 
     def create_bottom_buttons(self, buttonlist):
         # Create the buttons at the bottom

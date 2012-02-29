@@ -423,104 +423,6 @@ class HobWidget:
         return hbox, layer_store
 
     @classmethod
-    def _toggle_single_cb(cls, cell, select_path, treeview, toggle_column):
-        model = treeview.get_model()
-        if not model:
-            return
-        iter = model.get_iter_first()
-        while iter:
-            path = model.get_path(iter)
-            model[path][toggle_column] = False
-            iter = model.iter_next(iter)
-
-        model[select_path][toggle_column] = True
-
-    @classmethod
-    def gen_imgtv_widget(cls, col0_width, col1_width):
-        vbox = gtk.VBox(False, 10)
-
-        imgsel_tv = gtk.TreeView()
-        imgsel_tv.set_rules_hint(True)
-        imgsel_tv.set_headers_visible(False)
-        tree_selection = imgsel_tv.get_selection()
-        tree_selection.set_mode(gtk.SELECTION_SINGLE)
-
-        col0= gtk.TreeViewColumn('Image name')
-        cell0 = gtk.CellRendererText()
-        cell0.set_padding(5,2)
-        col0.pack_start(cell0, True)
-        col0.set_attributes(cell0, text=0)
-        col0.set_max_width(col0_width)
-        col0.set_min_width(col0_width)
-        imgsel_tv.append_column(col0)
-
-        col1= gtk.TreeViewColumn('Select')
-        cell1 = gtk.CellRendererToggle()
-        cell1.set_padding(5,2)
-        cell1.connect("toggled", cls._toggle_single_cb, imgsel_tv, 1)
-        col1.pack_start(cell1, True)
-        col1.set_attributes(cell1, active=1)
-        col1.set_max_width(col1_width)
-        col1.set_min_width(col1_width)
-        imgsel_tv.append_column(col1)
-
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(imgsel_tv)
-
-        vbox.pack_start(scroll, expand=True, fill=True)
-
-        return vbox, imgsel_tv
-
-    @classmethod
-    def gen_images_widget(cls, col0_width, col1_width, col2_width):
-        vbox = gtk.VBox(False, 10)
-
-        imgsel_tv = gtk.TreeView()
-        imgsel_tv.set_rules_hint(True)
-        imgsel_tv.set_headers_visible(False)
-        tree_selection = imgsel_tv.get_selection()
-        tree_selection.set_mode(gtk.SELECTION_SINGLE)
-
-        col0= gtk.TreeViewColumn('Image name')
-        cell0 = gtk.CellRendererText()
-        cell0.set_padding(5,2)
-        col0.pack_start(cell0, True)
-        col0.set_attributes(cell0, text=0)
-        col0.set_max_width(col0_width)
-        col0.set_min_width(col0_width)
-        imgsel_tv.append_column(col0)
-
-        col1= gtk.TreeViewColumn('Image size')
-        cell1 = gtk.CellRendererText()
-        cell1.set_padding(5,2)
-        col1.pack_start(cell1, True)
-        col1.set_attributes(cell1, text=1)
-        col1.set_max_width(col1_width)
-        col1.set_min_width(col1_width)
-        imgsel_tv.append_column(col1)
-
-        col2= gtk.TreeViewColumn('Select')
-        cell2 = gtk.CellRendererToggle()
-        cell2.set_padding(5,2)
-        cell2.connect("toggled", cls._toggle_single_cb, imgsel_tv, 2)
-        col2.pack_start(cell2, True)
-        col2.set_attributes(cell2, active=2)
-        col2.set_max_width(col2_width)
-        col2.set_min_width(col2_width)
-        imgsel_tv.append_column(col2)
-
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
-        scroll.add(imgsel_tv)
-
-        vbox.pack_start(scroll, expand=True, fill=True)
-
-        return vbox, imgsel_tv
-
-    @classmethod
     def _on_add_item_clicked(cls, button, model):
         new_item = ["##KEY##", "##VALUE##"]
 
@@ -617,34 +519,59 @@ class HobViewTable (gtk.VBox):
     """
     A VBox to contain the table for different recipe views and package view
     """
-    def __init__(self, columns, reset_clicked_cb=None, toggled_cb=None):
+    __gsignals__ = {
+         "toggled"      : (gobject.SIGNAL_RUN_LAST,
+                           gobject.TYPE_NONE,
+                          (gobject.TYPE_PYOBJECT,
+                           gobject.TYPE_STRING,
+                           gobject.TYPE_INT,
+                           gobject.TYPE_PYOBJECT,)),
+         "changed"      : (gobject.SIGNAL_RUN_LAST,
+                           gobject.TYPE_NONE,
+                          (gobject.TYPE_PYOBJECT,
+                           gobject.TYPE_PYOBJECT,)),
+    }
+
+    def __init__(self, columns):
         gtk.VBox.__init__(self, False, 6)
         self.table_tree = gtk.TreeView()
         self.table_tree.set_headers_visible(True)
         self.table_tree.set_headers_clickable(True)
         self.table_tree.set_enable_search(True)
-        self.table_tree.set_search_column(0)
+        self.table_tree.set_rules_hint(True)
         self.table_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
+        self.table_tree.get_selection().connect("changed", self.selection_changed_cb, self.table_tree)
 
         for i in range(len(columns)):
             col = gtk.TreeViewColumn(columns[i]['col_name'])
             col.set_clickable(True)
             col.set_resizable(True)
             col.set_sort_column_id(columns[i]['col_id'])
-            col.set_min_width(columns[i]['col_min'])
-            col.set_max_width(columns[i]['col_max'])
+            if 'col_min' in columns[i].keys():
+                col.set_min_width(columns[i]['col_min'])
+            if 'col_max' in columns[i].keys():
+                col.set_max_width(columns[i]['col_max'])
             self.table_tree.append_column(col)
 
-            if columns[i]['col_style'] == 'toggle':
-                cell = gtk.CellRendererToggle()
-                cell.set_property('activatable', True)
-                cell.connect("toggled", toggled_cb, self.table_tree)
-                col.pack_end(cell, True)
-                col.set_attributes(cell, active=columns[i]['col_id'])
-            elif columns[i]['col_style'] == 'text':
+            if (not 'col_style' in columns[i].keys()) or columns[i]['col_style'] == 'text':
                 cell = gtk.CellRendererText()
                 col.pack_start(cell, True)
                 col.set_attributes(cell, text=columns[i]['col_id'])
+            elif columns[i]['col_style'] == 'check toggle':
+                cell = gtk.CellRendererToggle()
+                cell.set_property('activatable', True)
+                cell.connect("toggled", self.toggled_cb, i, self.table_tree)
+                self.toggle_id = i
+                col.pack_end(cell, True)
+                col.set_attributes(cell, active=columns[i]['col_id'])
+            elif columns[i]['col_style'] == 'radio toggle':
+                cell = gtk.CellRendererToggle()
+                cell.set_property('activatable', True)
+                cell.set_radio(True)
+                cell.connect("toggled", self.toggled_cb, i, self.table_tree)
+                self.toggle_id = i
+                col.pack_end(cell, True)
+                col.set_attributes(cell, active=columns[i]['col_id'])
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
@@ -652,12 +579,27 @@ class HobViewTable (gtk.VBox):
         scroll.add(self.table_tree)
         self.pack_start(scroll, True, True, 0)
 
-        hbox = gtk.HBox(False, 5)
-        button = gtk.Button("Reset")
-        button.connect('clicked', reset_clicked_cb)
-        hbox.pack_end(button, False, False, 0)
+    def set_model(self, tree_model):
+        self.table_tree.set_model(tree_model)
 
-        self.pack_start(hbox, False, False, 0)
+    def set_search_entry(self, search_column_id, entry):
+        self.table_tree.set_search_column(search_column_id)
+        self.table_tree.set_search_entry(entry)
+
+    def toggle_default(self):
+        model = self.table_tree.get_model()
+        if not model:
+            return
+        iter = model.get_iter_first()
+        if iter:
+            rowpath = model.get_path(iter)
+            model[rowpath][self.toggle_id] = True
+
+    def toggled_cb(self, cell, path, columnid, tree):
+        self.emit("toggled", cell, path, columnid, tree)
+
+    def selection_changed_cb(self, selection, tree):
+        self.emit("changed", selection, tree)
 
 class HobViewBar (gtk.EventBox):
     """

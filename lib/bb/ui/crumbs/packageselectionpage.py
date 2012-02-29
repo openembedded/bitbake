@@ -51,7 +51,7 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
-                       'col_style': 'toggle',
+                       'col_style': 'check toggle',
                        'col_min'  : 50,
                        'col_max'  : 50
                       }]
@@ -79,7 +79,7 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
-                       'col_style': 'toggle',
+                       'col_style': 'check toggle',
                        'col_min'  : 50,
                        'col_max'  : 50
                      }]
@@ -111,9 +111,19 @@ class PackageSelectionPage (HobPage):
         # append the tab
         for i in range(len(self.pages)):
             columns = self.pages[i]['columns']
-            tab = HobViewTable(columns, self.reset_clicked_cb, self.table_toggled_cb)
+            tab = HobViewTable(columns)
             filter = self.pages[i]['filter']
-            tab.table_tree.set_model(self.package_model.tree_model(filter))
+            tab.set_model(self.package_model.tree_model(filter))
+            tab.connect("toggled", self.table_toggled_cb)
+            if self.pages[i]['name'] == "Included":
+                tab.connect("changed", self.tree_selection_cb)
+
+            reset_button = gtk.Button("Reset")
+            reset_button.connect("clicked", self.reset_clicked_cb)
+            hbox = gtk.HBox(False, 5)
+            hbox.pack_end(reset_button, expand=False, fill=False)
+            tab.pack_start(hbox, expand=False, fill=False)
+
             label = gtk.Label(self.pages[i]['name'])
             self.ins.append_page(tab, label)
             self.tables.append(tab)
@@ -124,11 +134,7 @@ class PackageSelectionPage (HobPage):
         self.grid.attach(self.topbar, 0, 1, 0, 1, gtk.FILL | gtk.EXPAND, gtk.FILL | gtk.EXPAND, 1, 1)
         # set the search entry for each table
         for tab in self.tables:
-            tab.table_tree.set_search_entry(self.topbar.search)
-
-        inctab_tree_view = self.tables[len(self.pages)-1].table_tree
-        inctab_tree_selection = inctab_tree_view.get_selection()
-        inctab_tree_selection.connect("changed", self.tree_selection_cb, inctab_tree_view)
+            tab.set_search_entry(0, self.topbar.search)
 
         # add all into the dialog
         self.box_group_area.add(self.grid)
@@ -155,7 +161,7 @@ class PackageSelectionPage (HobPage):
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         button_box.pack_start(self.back_button, expand=False, fill=False)
 
-    def tree_selection_cb(self, tree_selection, tree_view):
+    def tree_selection_cb(self, table, tree_selection, tree_view):
         tree_model = tree_view.get_model()
         path, column = tree_view.get_cursor()
         if not path or column == tree_view.get_column(2):
@@ -218,7 +224,7 @@ class PackageSelectionPage (HobPage):
 
         self.builder.window_sensitive(True)
 
-    def table_toggled_cb(self, cell, view_path, view_tree):
+    def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree):
         # Click to include a package
         self.builder.window_sensitive(False)
         view_model = view_tree.get_model()
