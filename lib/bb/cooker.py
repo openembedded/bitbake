@@ -442,19 +442,6 @@ class BBCooker:
 
         return depend_tree
 
-    def append_package(self, taskdata, depend_tree_package, package):
-        if package not in depend_tree_package:
-            targetid = taskdata.getrun_id(package)
-            if targetid in taskdata.run_targets and taskdata.run_targets[targetid]:
-                fnid = taskdata.run_targets[targetid][0]
-                fn = taskdata.fn_index[fnid]
-                pn = self.status.pkg_fn[fn]
-                version  = "%s:%s-%s" % self.status.pkg_pepvpr[fn]
-                depend_tree_package[package] = {}
-                depend_tree_package[package]["pn"] = pn
-                depend_tree_package[package]["filename"] = fn
-                depend_tree_package[package]["version"] = version
-
     def generatePkgDepTreeData(self, pkgs_to_build, task):
         """
         Create a dependency tree of pkgs_to_build, returning the data.
@@ -470,7 +457,6 @@ class BBCooker:
         depend_tree["depends"] = {}
         depend_tree["pn"] = {}
         depend_tree["rdepends-pn"] = {}
-        depend_tree["packages"] = {}
         depend_tree["rdepends-pkg"] = {}
         depend_tree["rrecs-pkg"] = {}
 
@@ -497,7 +483,6 @@ class BBCooker:
 
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
-                packages = []
 
                 depend_tree["depends"][pn] = []
                 for dep in taskdata.depids[fnid]:
@@ -514,26 +499,16 @@ class BBCooker:
 
                 depend_tree["rdepends-pn"][pn] = []
                 for rdep in taskdata.rdepids[fnid]:
-                    depend_tree["rdepends-pn"][pn].append(taskdata.run_names_index[rdep])
-
-                for package in rdepends:
-                    depend_tree["rdepends-pkg"][package] = []
-                    for rdepend in rdepends[package]:
-                        depend_tree["rdepends-pkg"][package].append(rdepend)
-                        self.append_package(taskdata, depend_tree["packages"], rdepend)
-                    if not package in packages:
-                        packages.append(package)
-
-                for package in rrecs:
-                    depend_tree["rrecs-pkg"][package] = []
-                    for rrec in rrecs[package]:
-                        depend_tree["rrecs-pkg"][package].append(rrec)
-                        self.append_package(taskdata, depend_tree["packages"], rrec)
-                    if not package in packages:
-                        packages.append(package)
-
-                for package in packages:
-                    self.append_package(taskdata, depend_tree["packages"], package)
+                    item = taskdata.run_names_index[rdep]
+                    pn_rprovider = ""
+                    targetid = taskdata.getrun_id(item)
+                    if targetid in taskdata.run_targets and taskdata.run_targets[targetid]:
+                        id = taskdata.run_targets[targetid][0]
+                        fn_rprovider = taskdata.fn_index[id]
+                        pn_rprovider = self.status.pkg_fn[fn_rprovider]
+                    else:
+                        pn_rprovider = item
+                    depend_tree["rdepends-pn"][pn].append(pn_rprovider)
 
         return depend_tree
 
