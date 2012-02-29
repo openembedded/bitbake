@@ -1035,6 +1035,7 @@ class ImageSelectionDialog (CrumbsDialog):
         table.attach(open_button, 9, 10, 0, 1)
 
         self.image_table = HobViewTable(self.__columns__)
+        self.image_table.set_size_request(-1, 300)
         self.image_table.connect("toggled", self.toggled_cb)
         self.vbox.pack_start(self.image_table, expand=True, fill=True)
 
@@ -1052,7 +1053,6 @@ class ImageSelectionDialog (CrumbsDialog):
 
         model[path][columnid] = True
 
-        
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,

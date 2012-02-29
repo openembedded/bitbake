@@ -74,6 +74,7 @@ class ImageDetailsPage (HobPage):
             self.hbox.pack_start(self.table, expand=True, fill=True, padding=15)
 
             colid = 0
+            self.line_widgets = {}
             if icon != None:
                 self.table.attach(icon, colid, colid + 2, 0, 1)
                 colid = colid + 2
@@ -81,20 +82,31 @@ class ImageDetailsPage (HobPage):
                 self.table.attach(widget, colid, 20, 0, 1)
             elif varlist != None and vallist != None:
                 for line in range(0, row):
-                    self.table.attach(self.text2label(varlist[line], vallist[line]), colid, 20, line, line + 1)
+                    self.line_widgets[varlist[line]] = self.text2label(varlist[line], vallist[line])
+                    self.table.attach(self.line_widgets[varlist[line]], colid, 20, line, line + 1)
 
             # pack the button on the right
             if button != None:
                 self.hbox.pack_end(button, expand=False, fill=False)
 
+        def update_line_widgets(self, variable, value):
+            if len(self.line_widgets) == 0:
+                return
+            if not isinstance(self.line_widgets[variable], gtk.Label):
+                return
+            self.line_widgets[variable].set_markup(self.format_line(variable, value))
+
+        def format_line(self, variable, value):
+            markup = "<span weight=\'bold\'>%s</span>" % variable
+            markup += "<span weight=\'normal\' foreground=\'#1c1c1c\' font_desc=\'14px\'>%s</span>" % value
+            return markup
+
         def text2label(self, variable, value):
             # append the name:value to the left box
             # such as "Name: hob-core-minimal-variant-2011-12-15-beagleboard"
-            markup = "<span weight=\'bold\'>%s</span>" % variable
-            markup += "<span weight=\'normal\' foreground=\'#1c1c1c\' font_desc=\'14px\'>%s</span>" % value
             label = gtk.Label()
             label.set_alignment(0.0, 0.5)
-            label.set_markup(markup)
+            label.set_markup(self.format_line(variable, value))
             return label
 
     def __init__(self, builder):
@@ -141,8 +153,6 @@ class ImageDetailsPage (HobPage):
         image_addr = self.builder.parameters.image_addr
         image_names = self.builder.parameters.image_names
         if build_succeeded:
-            image_addr = self.builder.parameters.image_addr
-            image_names = self.builder.parameters.image_names
             machine = self.builder.configuration.curr_mach
             base_image = self.builder.recipe_model.get_selected_image()
             layers = self.builder.configuration.layers
@@ -174,6 +184,7 @@ class ImageDetailsPage (HobPage):
         image_table = HobViewTable(self.__columns__)
         image_table.set_model(self.image_store)
         image_table.toggle_default()
+        image_size = self._size_to_string(os.stat(os.path.join(image_addr, image_names[0])).st_size)
         image_table.connect("toggled", self.toggled_cb)
         view_files_button = gtk.LinkButton("file://%s" % image_addr, "View files")
         self.box_group_area.pack_start(self.DetailBox(widget=image_table, button=view_files_button), expand=True, fill=True)
@@ -217,8 +228,9 @@ class ImageDetailsPage (HobPage):
             edit_packages_button.connect("clicked", self.edit_packages_button_clicked_cb)
         else: # get to this page from "My images"
             edit_packages_button = None
-        package_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_packages_button)
-        self.box_group_area.pack_start(package_detail, expand=False, fill=False)
+        self.package_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_packages_button)
+        self.box_group_area.pack_start(self.package_detail, expand=False, fill=False)
+
         if build_succeeded:
             buttonlist = ["Build new image", "Save as template", "Run image", "Deploy image"]
         else: # get to this page from "My images"
@@ -227,6 +239,9 @@ class ImageDetailsPage (HobPage):
         self.box_group_area.pack_end(details_bottom_buttons, expand=False, fill=False)
 
         self.show_all()
+
+    def refresh_package_detail_box(self, image_size):
+        self.package_detail.update_line_widgets("Total image size: ", image_size)
 
     def toggled_cb(self, table, cell, path, columnid, tree):
         model = tree.get_model()
@@ -239,6 +254,7 @@ class ImageDetailsPage (HobPage):
             iter = model.iter_next(iter)
 
         model[path][columnid] = True
+        self.refresh_package_detail_box(model[path][1])
 
     def create_bottom_buttons(self, buttonlist):
         # Create the buttons at the bottom
