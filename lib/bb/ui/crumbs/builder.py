@@ -223,20 +223,12 @@ class Builder(gtk.Window):
     def create_visual_elements(self):
         self.set_title("Hob - Image Creator")
         self.set_icon_name("applications-development")
-        self.set_position(gtk.WIN_POS_CENTER_ALWAYS)
         self.set_resizable(True)
         window_width = self.get_screen().get_width()
         window_height = self.get_screen().get_height()
         if window_width >= hwc.MAIN_WIN_WIDTH:
             window_width = hwc.MAIN_WIN_WIDTH
             window_height = hwc.MAIN_WIN_HEIGHT
-        else:
-            lbl = "<b>Screen dimension mismatched</b>\nfor better usability and visual effects,"
-            lbl = lbl + " the screen dimension should be 1024x768 or above."
-            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
-            dialog.run()
-            dialog.destroy()
         self.set_size_request(window_width, window_height)
 
         self.vbox = gtk.VBox(False, 0)
