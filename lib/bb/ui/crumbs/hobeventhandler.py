@@ -215,23 +215,26 @@ class HobHandler(gobject.GObject):
         elif isinstance(event, bb.command.CommandCompleted):
             self.current_phase = None
             self.run_next_command()
+        # TODO: Currently there are NoProvider issues when generate
+        # universe tree dependency for non-x86 architecture.
+        # Comment the follow code to enable the build of non-x86
+        # architectures in Hob.
+        #elif isinstance(event, bb.event.NoProvider):
+        #    if event._runtime:
+        #        r = "R"
+        #    else:
+        #        r = ""
+        #    if event._dependees:
+        #        self.error_msg += " Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)" % (r, event._item, ", ".join(event._dependees), r)
+        #    else:
+        #        self.error_msg += " Nothing %sPROVIDES '%s'" % (r, event._item)
+        #    if event._reasons:
+        #        for reason in event._reasons:
+        #            self.error_msg += " %s" % reason
 
-        elif isinstance(event, bb.event.NoProvider):
-            if event._runtime:
-                r = "R"
-            else:
-                r = ""
-            if event._dependees:
-                self.error_msg += " Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)" % (r, event._item, ", ".join(event._dependees), r)
-            else:
-                self.error_msg += " Nothing %sPROVIDES '%s'" % (r, event._item)
-            if event._reasons:
-                for reason in event._reasons:
-                    self.error_msg += " %s" % reason
-
-            self.commands_async = []
-            self.emit("command-failed", self.error_msg)
-            self.error_msg = ""
+        #    self.commands_async = []
+        #    self.emit("command-failed", self.error_msg)
+        #    self.error_msg = ""
 
         elif isinstance(event, bb.command.CommandFailed):
             self.commands_async = []
