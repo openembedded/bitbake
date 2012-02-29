@@ -45,11 +45,24 @@ class CrumbsDialog(gtk.Dialog):
     A GNOME HIG compliant dialog widget.
     Add buttons with gtk.Dialog.add_button or gtk.Dialog.add_buttons
     """
-    def __init__(self, parent=None, label="", icon=gtk.STOCK_INFO):
-        super(CrumbsDialog, self).__init__("", parent, gtk.DIALOG_DESTROY_WITH_PARENT)
-        
-        #self.set_property("has-separator", False) # note: deprecated in 2.22
+    def __init__(self, title="", parent=None, flags=0, buttons=None):
+        super(CrumbsDialog, self).__init__(title, parent, flags, buttons)
 
+        self.set_property("has-separator", False) # note: deprecated in 2.22
+
+        self.set_border_width(6)
+        self.vbox.set_property("spacing", 12)
+        self.action_area.set_property("spacing", 12)
+        self.action_area.set_property("border-width", 6)
+
+class CrumbsMessageDialog(CrumbsDialog):
+    """
+    A GNOME HIG compliant dialog widget.
+    Add buttons with gtk.Dialog.add_button or gtk.Dialog.add_buttons
+    """
+    def __init__(self, parent=None, label="", icon=gtk.STOCK_INFO):
+        super(CrumbsMessageDialog, self).__init__("", parent, gtk.DIALOG_DESTROY_WITH_PARENT)
+        
         self.set_border_width(6)
         self.vbox.set_property("spacing", 12)
         self.action_area.set_property("spacing", 12)
@@ -839,7 +852,7 @@ class LayerSelectionDialog (gtk.Dialog):
             else:
                 layer_store.append([path])
                 return
-            dialog = CrumbsDialog(parent, lbl)
+            dialog = CrumbsMessageDialog(parent, lbl)
             dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
             response = dialog.run()
             dialog.destroy()

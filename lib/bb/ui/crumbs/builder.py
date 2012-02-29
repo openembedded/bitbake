@@ -33,7 +33,7 @@ from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
 from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
 from bb.ui.crumbs.hobwidget import hwc
-from bb.ui.crumbs.hig import CrumbsDialog, BinbDialog, \
+from bb.ui.crumbs.hig import CrumbsMessageDialog, BinbDialog, \
                              AdvancedSettingDialog, LayerSelectionDialog, \
                              DeployImageDialog, ImageSelectionDialog
 
@@ -234,7 +234,7 @@ class Builder(gtk.Window):
         else:
             lbl = "<b>Screen dimension mismatched</b>\nfor better usability and visual effects,"
             lbl = lbl + " the screen dimension should be 1024x768 or above."
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
             dialog.run()
             dialog.destroy()
@@ -441,7 +441,7 @@ class Builder(gtk.Window):
     def handler_command_failed_cb(self, handler, msg):
         lbl = "<b>Error</b>\n"
         lbl = lbl + "%s\n\n" % msg
-        dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
         dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
         response = dialog.run()
         dialog.destroy()
@@ -588,7 +588,7 @@ class Builder(gtk.Window):
 
     def destroy_window_cb(self, widget, event):
         lbl = "<b>Do you really want to exit the Hob image creator?</b>"
-        dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
         dialog.add_button(gtk.STOCK_YES, gtk.RESPONSE_YES)
         dialog.add_button(gtk.STOCK_NO, gtk.RESPONSE_NO)
         dialog.set_default_response(gtk.RESPONSE_NO)
@@ -605,7 +605,7 @@ class Builder(gtk.Window):
         if not all_recipes:
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
             dialog.run()
             dialog.destroy()
@@ -617,7 +617,7 @@ class Builder(gtk.Window):
         if not selected_packages:      
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
             dialog.run()
             dialog.destroy()
@@ -632,7 +632,7 @@ class Builder(gtk.Window):
         if not (selected_packages or selected_image != self.recipe_model.__dummy_image__):
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
             dialog.run()
             dialog.destroy()
@@ -703,7 +703,7 @@ class Builder(gtk.Window):
         if response == gtk.RESPONSE_YES:
             if not dialog.image_names:
                 lbl = "<b>No selections made</b>\nYou have not made any selections"
-                crumbs_dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+                crumbs_dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
                 crumbs_dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
                 crumbs_dialog.run()
                 crumbs_dialog.destroy()
@@ -745,7 +745,7 @@ class Builder(gtk.Window):
     def deploy_image(self, image_name):
         if not image_name:
             lbl = "<b>Please select an image to deploy.</b>"
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
             dialog.run()
             dialog.destroy()
@@ -766,7 +766,7 @@ class Builder(gtk.Window):
     def runqemu_image(self, image_name):
         if not image_name:
             lbl = "<b>Please select an image to launch in QEMU.</b>"
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
             dialog.run()
             dialog.destroy()
@@ -806,7 +806,7 @@ class Builder(gtk.Window):
                 lbl = lbl + "kernel path:" + kernel_path + "\n"
                 lbl = lbl + "source environment path:" + source_env_path + "\n"
                 lbl = lbl + "tmp path: " + tmp_path + "."
-                dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+                dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
                 dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
                 dialog.run()
                 dialog.destroy()
@@ -816,7 +816,7 @@ class Builder(gtk.Window):
         if selected_recipes and ask:
             lbl = "<b>Package list may be incomplete!</b>\nDo you want to build selected recipes"
             lbl = lbl + " to get a full list (Yes) or just view the existing packages (No)?"
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
             dialog.add_button(gtk.STOCK_YES, gtk.RESPONSE_YES)
             dialog.add_button(gtk.STOCK_NO, gtk.RESPONSE_NO)
             dialog.set_default_response(gtk.RESPONSE_YES)
@@ -847,7 +847,7 @@ class Builder(gtk.Window):
             lbl = lbl + "This will stop the build as quickly as possible but may"
             lbl = lbl + " well leave your build directory in an  unusable state"
             lbl = lbl + " that requires manual steps to fix.\n"
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
             dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
             dialog.add_button("Force Stop", gtk.RESPONSE_YES)
         else:
@@ -859,7 +859,7 @@ class Builder(gtk.Window):
             lbl = lbl + " progress build tasks are finished. However if a"
             lbl = lbl + " lengthy compilation phase is in progress this may take"
             lbl = lbl + " some time."
-            dialog = CrumbsDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
             dialog.add_button(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL)
             dialog.add_button("Stop", gtk.RESPONSE_OK)
             dialog.add_button("Force Stop", gtk.RESPONSE_YES)
