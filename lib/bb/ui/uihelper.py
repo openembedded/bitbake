@@ -32,8 +32,13 @@ class BBUIHelper:
         if isinstance(event, bb.build.TaskSucceeded):
             del self.running_tasks[event.pid]
             self.needUpdate = True
-        if isinstance(event, bb.build.TaskFailed) or isinstance(event, bb.build.TaskFailedSilent):
+        if isinstance(event, bb.build.TaskFailedSilent):
             del self.running_tasks[event.pid]
+            # Don't add to the failed tasks list since this is e.g. a setscene task failure
+            self.needUpdate = True
+        if isinstance(event, bb.build.TaskFailed):
+            del self.running_tasks[event.pid]
+            self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
             self.needUpdate = True
 
     def getTasks(self):
