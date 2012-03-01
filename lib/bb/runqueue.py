@@ -1611,8 +1611,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
     def task_fail(self, task, result):
         self.stats.taskFailed()
-        index = self.rqdata.runq_setscene[task]
-        bb.event.fire(sceneQueueTaskFailed(index, self.stats, result, self), self.cfgData)
+        bb.event.fire(sceneQueueTaskFailed(task, self.stats, result, self), self.cfgData)
         self.scenequeue_notcovered.add(task)
         self.scenequeue_updatecounters(task)
 
