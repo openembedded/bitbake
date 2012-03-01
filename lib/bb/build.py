@@ -72,13 +72,16 @@ class TaskBase(event.Event):
         self._task = t
         self._package = d.getVar("PF", 1)
         event.Event.__init__(self)
-        self._message = "package %s: task %s: %s" % (d.getVar("PF", 1), t, bb.event.getName(self)[4:])
+        self._message = "package %s: task %s: %s" % (d.getVar("PF", 1), t, self.getDisplayName())
 
     def getTask(self):
         return self._task
 
     def setTask(self, task):
         self._task = task
+
+    def getDisplayName(self):
+        return bb.event.getName(self)[4:]
 
     task = property(getTask, setTask, None, "task property")
 
@@ -101,6 +104,10 @@ class TaskFailedSilent(TaskBase):
     def __init__(self, task, logfile, metadata):
         self.logfile = logfile
         super(TaskFailedSilent, self).__init__(task, metadata)
+
+    def getDisplayName(self):
+        # Don't need to tell the user it was silent
+        return "Failed"
 
 class TaskInvalid(TaskBase):
 
