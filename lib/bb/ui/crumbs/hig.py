@@ -74,7 +74,11 @@ class CrumbsMessageDialog(CrumbsDialog):
         self.vbox.add(first_row)
 
         self.icon = gtk.Image()
-        self.icon.set_from_stock(icon, gtk.ICON_SIZE_DIALOG)
+        # We have our own Info icon which should be used in preference of the stock icon
+        if icon == gtk.STOCK_INFO or icon == "gtk-dialog-info":
+            self.icon.set_from_file(hic.ICON_INFO_DISPLAY_FILE)
+        else:
+            self.icon.set_from_stock(icon, gtk.ICON_SIZE_DIALOG)
         self.icon.set_property("yalign", 0.00)
         self.icon.show()
         first_row.add(self.icon)
