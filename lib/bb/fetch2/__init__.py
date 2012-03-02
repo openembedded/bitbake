@@ -392,6 +392,9 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
     Optionally remove the files/directories listed in cleanup upon failure
     """
 
+    import bb.process
+    import subprocess
+
     # Need to export PATH as binary could be in metadata paths
     # rather than host provided
     # Also include some other variables.
@@ -409,36 +412,27 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
 
     logger.debug(1, "Running %s", cmd)
 
-    # redirect stderr to stdout
-    stdout_handle = os.popen(cmd + " 2>&1", "r")
-    output = ""
+    success = False
+    error_message = ""
 
-    while True:
-        line = stdout_handle.readline()
-        if not line:
-            break
-        if not quiet:
-            print(line, end=' ')
-        output += line
+    try:
+        (output, errors) = bb.process.run(cmd, shell=True, stderr=subprocess.PIPE)
+        success = True
+    except bb.process.NotFoundError as e:
+        error_message = "Fetch command %s" % (e.command)
+    except bb.process.CmdError as e:
+        error_message = "Fetch command %s could not be run:\n%s" % (e.command, e.msg)
+    except bb.process.ExecutionError as e:
+        error_message = "Fetch command %s failed with exit code %s, output:\n%s" % (e.command, e.exitcode, e.stderr)
 
-    status = stdout_handle.close() or 0
-    signal = os.WTERMSIG(status)
-    if os.WIFEXITED(status):
-        exitstatus = os.WEXITSTATUS(status)
-    else:
-        exitstatus = 0
-
-    if (signal or status != 0):
+    if not success:
         for f in cleanup:
             try:
                 bb.utils.remove(f, True)
             except OSError:
                 pass
 
-        if signal:
-            raise FetchError("Fetch command %s failed with signal %s, output:\n%s" % (cmd, signal, output))
-        elif exitstatus:
-            raise FetchError("Fetch command %s failed with exit code %s, output:\n%s" % (cmd, exitstatus, output))
+        raise FetchError(error_message)
 
     return output
 
