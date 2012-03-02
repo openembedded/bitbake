@@ -24,7 +24,7 @@ import gtk
 import glib
 from bb.ui.crumbs.progressbar import HobProgressBar
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hic, HobXpmLabelButtonBox
+from bb.ui.crumbs.hobwidget import hic, HobXpmLabelButtonBox, HobInfoButton
 from bb.ui.crumbs.hoblistmodel import RecipeListModel
 from bb.ui.crumbs.hobpages import HobPage
 
@@ -137,16 +137,12 @@ class ImageConfigurationPage (HobPage):
             "Layers", "Add support for machines, software, etc")
         self.layer_button.connect("button-release-event", self.layer_button_clicked_cb)
 
-        icon_file = hic.ICON_INFO_DISPLAY_FILE
-        self.layer_info_icon = gtk.Image()
-        pix_buffer = gtk.gdk.pixbuf_new_from_file(icon_file)
-        self.layer_info_icon.set_from_pixbuf(pix_buffer)
         markup = "Layers are a powerful mechanism to extend the Yocto Project "
         markup += "with your own functionality.\n"
-        markup += "For more on layers, check:\n"
+        markup += "For more on layers, check the <a href=\""
         markup += "http://www.yoctoproject.org/docs/current/poky-ref-manual/"
-        markup += "poky-ref-manual.html#usingpoky-changes-layers."
-        self.layer_info_icon.set_tooltip_markup(markup)
+        markup += "poky-ref-manual.html#usingpoky-changes-layers\">reference manual</a>."
+        self.layer_info_icon = HobInfoButton(markup, self.get_parent())
 
         self.progress_bar = HobProgressBar()
         self.machine_separator = gtk.HSeparator()
