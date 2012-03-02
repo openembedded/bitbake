@@ -23,6 +23,7 @@ import gobject
 import os
 import os.path
 from bb.ui.crumbs.hobcolor import HobColors
+from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 
 class hwc:
 
@@ -311,3 +312,51 @@ class HobXpmLabelButtonBox(gtk.EventBox):
         """ Hide items - first time """
         pass
 
+class HobInfoButton(gtk.EventBox):
+    """
+    This class implements a button-like widget per the Hob visual and UX designs
+    which will display a persistent tooltip, with the contents of tip_markup, when
+    clicked.
+
+    tip_markup: the Pango Markup to be displayed in the persistent tooltip
+    """
+    def __init__(self, tip_markup, parent=None):
+        gtk.EventBox.__init__(self)
+        self.image = gtk.Image()
+        self.image.set_from_file(hic.ICON_INFO_DISPLAY_FILE)
+        self.image.show()
+        self.add(self.image)
+
+        self.set_events(gtk.gdk.BUTTON_RELEASE |
+                        gtk.gdk.ENTER_NOTIFY_MASK |
+                        gtk.gdk.LEAVE_NOTIFY_MASK)
+
+        self.ptip = PersistentTooltip(tip_markup)
+
+        if parent:
+            self.ptip.set_parent(parent)
+            self.ptip.set_transient_for(parent)
+            self.ptip.set_destroy_with_parent(True)
+
+        self.connect("button-release-event", self.button_release_cb)
+        self.connect("enter-notify-event", self.mouse_in_cb)
+        self.connect("leave-notify-event", self.mouse_out_cb)
+
+    """
+    When the mouse click is released emulate a button-click and show the associated
+    PersistentTooltip
+    """
+    def button_release_cb(self, widget, event):
+        self.ptip.show()
+
+    """
+    Change to the prelight image when the mouse enters the widget
+    """
+    def mouse_in_cb(self, widget, event):
+        self.image.set_from_file(hic.ICON_INFO_HOVER_FILE)
+
+    """
+    Change to the stock image when the mouse enters the widget
+    """
+    def mouse_out_cb(self, widget, event):
+        self.image.set_from_file(hic.ICON_INFO_DISPLAY_FILE)
