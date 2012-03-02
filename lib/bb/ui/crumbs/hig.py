@@ -28,7 +28,7 @@ import re
 import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hcc, HobViewTable
+from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton
 from bb.ui.crumbs.progressbar import HobProgressBar
 
 """
@@ -130,10 +130,8 @@ class AdvancedSettingDialog (CrumbsDialog):
         spinner.set_value(content)
         hbox.pack_start(spinner, expand=False, fill=False)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
-        image.set_tooltip_text(tooltip)
-        hbox.pack_start(image, expand=False, fill=False)
+        info = HobInfoButton(tooltip, self)
+        hbox.pack_start(info, expand=False, fill=False)
 
         hbox.show_all()
         return hbox, spinner
@@ -150,11 +148,8 @@ class AdvancedSettingDialog (CrumbsDialog):
                 combo.set_active(index)
             index += 1
 
-        image = gtk.Image()
-        image.show()
-        image.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
-        image.set_tooltip_text(tooltip)
-        hbox.pack_start(image, expand=False, fill=False)
+        info = HobInfoButton(tooltip, self)
+        hbox.pack_start(info, expand=False, fill=False)
 
         hbox.show_all()
         return hbox, combo
@@ -189,10 +184,8 @@ class AdvancedSettingDialog (CrumbsDialog):
             open_button.connect("clicked", self.entry_widget_select_path_cb, parent, entry)
             table.attach(open_button, 9, 10, 0, 1)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
-        image.set_tooltip_text(tooltip)
-        hbox.pack_start(image, expand=False, fill=False)
+        info = HobInfoButton(tooltip, self)
+        hbox.pack_start(info, expand=False, fill=False)
 
         hbox.show_all()
         return hbox, entry
@@ -331,10 +324,8 @@ class AdvancedSettingDialog (CrumbsDialog):
         vbox.pack_start(down, False, False, 5)
         tree_selection.connect("changed", self.pkgfmt_widget_tree_selection_changed_cb, up, down)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
-        image.set_tooltip_text(tooltip)
-        pkgfmt_hbox.pack_start(image, expand=False, fill=False)
+        info = HobInfoButton(tooltip, self)
+        pkgfmt_hbox.pack_start(info, expand=False, fill=False)
 
         pkgfmt_hbox.show_all()
 
@@ -419,10 +410,8 @@ class AdvancedSettingDialog (CrumbsDialog):
         button.connect("clicked", self.editable_settings_remove_item_clicked, setting_tree)
         hbox.pack_start(button)
 
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
-        image.set_tooltip_text(tooltip)
-        setting_hbox.pack_start(image, expand=False, fill=False)
+        info = HobInfoButton(tooltip, self)
+        setting_hbox.pack_start(info, expand=False, fill=False)
 
         return setting_hbox, setting_store
 
@@ -489,13 +478,10 @@ class AdvancedSettingDialog (CrumbsDialog):
         advanced_vbox.pack_start(table, expand=False, fill=False)
 
         tooltip = "Select image file system types that will be used."
-        image = gtk.Image()
-        image.show()
-        image.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
-        image.set_tooltip_text(tooltip)
+        info = HobInfoButton(tooltip, self)
         label = self.gen_label_widget("<span weight=\"bold\">Select image types:</span>")
         table.attach(label, 0, 9, 0, 1)
-        table.attach(image, 9, 10, 0, 1)
+        table.attach(info, 9, 10, 0, 1)
 
         i = 1
         j = 1
@@ -953,10 +939,8 @@ class LayerSelectionDialog (CrumbsDialog):
         hbox_top.pack_start(label, expand=False, fill=False)
 
         tooltip = "Layer is a collection of bb files and conf files"
-        image = gtk.Image()
-        image.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_BUTTON)
-        image.set_tooltip_text(tooltip)
-        hbox_top.pack_end(image, expand=False, fill=False)
+        info = HobInfoButton(tooltip, self)
+        hbox_top.pack_end(info, expand=False, fill=False)
 
         layer_widget, self.layer_store = self.gen_layer_widget(self.split_model, self.layers, self.all_layers, self, None)
         layer_widget.set_size_request(-1, 180)
