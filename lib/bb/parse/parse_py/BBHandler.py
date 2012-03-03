@@ -70,8 +70,8 @@ def supports(fn, d):
 
 def inherit(files, fn, lineno, d):
     __inherit_cache = data.getVar('__inherit_cache', d) or []
+    files = d.expand(files).split()
     for file in files:
-        file = data.expand(file, d)
         if not os.path.isabs(file) and not file.endswith(".bbclass"):
             file = os.path.join('classes', '%s.bbclass' % file)
 

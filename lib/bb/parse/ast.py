@@ -304,7 +304,7 @@ def handleBBHandlers(statements, filename, lineno, m):
 
 def handleInherit(statements, filename, lineno, m):
     classes = m.group(1)
-    statements.append(InheritNode(filename, lineno, classes.split()))
+    statements.append(InheritNode(filename, lineno, classes))
 
 def finalize(fn, d, variant = None):
     all_handlers = {}
@@ -452,7 +452,7 @@ def multi_finalize(fn, d):
                 d.setVar("BBEXTENDVARIANT", variantmap[name])
             else:
                 d.setVar("PN", "%s-%s" % (pn, name))
-            bb.parse.BBHandler.inherit([extendedmap[name]], fn, 0, d)
+            bb.parse.BBHandler.inherit(extendedmap[name], fn, 0, d)
 
         safe_d.setVar("BBCLASSEXTEND", extended)
         _create_variants(datastores, extendedmap.keys(), extendfunc)

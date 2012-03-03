@@ -1433,7 +1433,7 @@ def _parse(fn, data, include=True):
 
 @catch_parse_error
 def _inherit(bbclass, data):
-    bb.parse.BBHandler.inherit([bbclass], "configuration INHERITs", 0, data)
+    bb.parse.BBHandler.inherit(bbclass, "configuration INHERITs", 0, data)
     return data
 
 class ParsingFailure(Exception):
