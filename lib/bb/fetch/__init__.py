@@ -154,7 +154,7 @@ def fetcher_init(d):
     Calls before this must not hit the cache.
     """
     # When to drop SCM head revisions controlled by user policy
-    srcrev_policy = d.getVar('BB_SRCREV_POLICY', 1) or "clear"
+    srcrev_policy = d.getVar('BB_SRCREV_POLICY', True) or "clear"
     if srcrev_policy == "cache":
         logger.debug(1, "Keeping SRCREV cache due to cache policy of: %s", srcrev_policy)
     elif srcrev_policy == "clear":
@@ -200,7 +200,7 @@ def fetcher_compare_revisions(d):
 def init(urls, d, setup = True):
     urldata = {}
 
-    fn = d.getVar('FILE', 1)
+    fn = d.getVar('FILE', True)
     if fn in urldata_cache:
         urldata = urldata_cache[fn]
 
@@ -261,7 +261,7 @@ def go(d, urls = None):
     init must have previously been called
     """
     if not urls:
-        urls = d.getVar("SRC_URI", 1).split()
+        urls = d.getVar("SRC_URI", True).split()
     urldata = init(urls, d, True)
 
     for u in urls:
@@ -383,7 +383,7 @@ def get_srcrev(d):
     scms = []
 
     # Only call setup_localpath on URIs which supports_srcrev()
-    urldata = init(d.getVar('SRC_URI', 1).split(), d, False)
+    urldata = init(d.getVar('SRC_URI', True).split(), d, False)
     for u in urldata:
         ud = urldata[u]
         if ud.method.supports_srcrev():
@@ -404,7 +404,7 @@ def get_srcrev(d):
     #
     # Mutiple SCMs are in SRC_URI so we resort to SRCREV_FORMAT
     #
-    format = d.getVar('SRCREV_FORMAT', 1)
+    format = d.getVar('SRCREV_FORMAT', True)
     if not format:
         logger.error("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
         raise ParameterError

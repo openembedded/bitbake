@@ -190,8 +190,8 @@ class RunQueueData:
         self.rq = rq
         self.warn_multi_bb = False
 
-        self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", 1) or ""
-        self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", 1) or "").split()
+        self.stampwhitelist = cfgData.getVar("BB_STAMP_WHITELIST", True) or ""
+        self.multi_provider_whitelist = (cfgData.getVar("MULTI_PROVIDER_WHITELIST", True) or "").split()
 
         self.reset()
 
@@ -1029,8 +1029,8 @@ class RunQueueExecute:
         self.cfgData = rq.cfgData
         self.rqdata = rq.rqdata
 
-        self.number_tasks = int(self.cfgData.getVar("BB_NUMBER_THREADS", 1) or 1)
-        self.scheduler = self.cfgData.getVar("BB_SCHEDULER", 1) or "speed"
+        self.number_tasks = int(self.cfgData.getVar("BB_NUMBER_THREADS", True) or 1)
+        self.scheduler = self.cfgData.getVar("BB_SCHEDULER", True) or "speed"
 
         self.runq_buildable = []
         self.runq_running = []

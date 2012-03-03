@@ -44,7 +44,7 @@ python do_showdata() {
 	# emit the metadata which isnt valid shell
 	for e in bb.data.keys(d):
 		if d.getVarFlag(e, 'python'):
-			sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, d.getVar(e, 1)))
+			sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, d.getVar(e, True)))
 }
 
 addtask listtasks

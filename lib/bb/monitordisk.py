@@ -136,7 +136,7 @@ def getInterval(configuration):
 
     """ Get the disk space interval """
 
-    interval = configuration.getVar("BB_DISKMON_WARNINTERVAL", 1)
+    interval = configuration.getVar("BB_DISKMON_WARNINTERVAL", True)
     if not interval:
         # The default value is 50M and 5K.
         return 50 * 1024 * 1024, 5 * 1024
@@ -170,7 +170,7 @@ class diskMonitor:
 
         self.enableMonitor = False
 
-        BBDirs = configuration.getVar("BB_DISKMON_DIRS", 1) or None
+        BBDirs = configuration.getVar("BB_DISKMON_DIRS", True) or None
         if BBDirs:
             self.devDict = getDiskData(BBDirs, configuration)
             if self.devDict:

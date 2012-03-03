@@ -58,7 +58,7 @@ class VariableParse:
             if self.varname and key:
                 if self.varname == key:
                     raise Exception("variable %s references itself!" % self.varname)
-            var = self.d.getVar(key, 1)
+            var = self.d.getVar(key, True)
             if var is not None:
                 self.references.add(key)
                 return var

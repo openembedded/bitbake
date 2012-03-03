@@ -298,7 +298,7 @@ class BBCooker:
             # this showEnvironment() code path doesn't use the cache
             self.parseConfiguration()
             self.status = bb.cache.CacheData(self.caches_array)
-            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", 1) )
+            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
             fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
             fn = self.matchFile(fn)
@@ -882,7 +882,7 @@ class BBCooker:
             min_prio = 0
             for c in collection_list:
                 # Get collection priority if defined explicitly
-                priority = self.configuration.data.getVar("BBFILE_PRIORITY_%s" % c, 1)
+                priority = self.configuration.data.getVar("BBFILE_PRIORITY_%s" % c, True)
                 if priority:
                     try:
                         prio = int(priority)
@@ -896,7 +896,7 @@ class BBCooker:
                     collection_priorities[c] = None
 
                 # Check dependencies and store information for priority calculation
-                deps = self.configuration.data.getVar("LAYERDEPENDS_%s" % c, 1)
+                deps = self.configuration.data.getVar("LAYERDEPENDS_%s" % c, True)
                 if deps:
                     depnamelist = []
                     deplist = deps.split()
@@ -916,7 +916,7 @@ class BBCooker:
 
                         if dep in collection_list:
                             if depver:
-                                layerver = self.configuration.data.getVar("LAYERVERSION_%s" % dep, 1)
+                                layerver = self.configuration.data.getVar("LAYERVERSION_%s" % dep, True)
                                 if layerver:
                                     try:
                                         lver = int(layerver)
@@ -953,7 +953,7 @@ class BBCooker:
             # Calculate all layer priorities using calc_layer_priority and store in bbfile_config_priorities
             for c in collection_list:
                 calc_layer_priority(c)
-                regex = self.configuration.data.getVar("BBFILE_PATTERN_%s" % c, 1)
+                regex = self.configuration.data.getVar("BBFILE_PATTERN_%s" % c, True)
                 if regex == None:
                     parselog.error("BBFILE_PATTERN_%s not defined" % c)
                     errors = True
@@ -1027,7 +1027,7 @@ class BBCooker:
         # buildFile() doesn't use the cache
         self.parseConfiguration()
         self.status = bb.cache.CacheData(self.caches_array)
-        self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", 1) )
+        self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
         # If we are told to do the None task then query the default task
         if (task == None):
@@ -1181,13 +1181,13 @@ class BBCooker:
                 del self.status
             self.status = bb.cache.CacheData(self.caches_array)
 
-            ignore = self.configuration.data.getVar("ASSUME_PROVIDED", 1) or ""
+            ignore = self.configuration.data.getVar("ASSUME_PROVIDED", True) or ""
             self.status.ignored_dependencies = set(ignore.split())
 
             for dep in self.configuration.extra_assume_provided:
                 self.status.ignored_dependencies.add(dep)
 
-            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", 1) )
+            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
             (filelist, masked) = self.collect_bbfiles()
             self.configuration.data.renameVar("__depends", "__base_depends")
@@ -1282,7 +1282,7 @@ class BBCooker:
                     if g not in newfiles:
                         newfiles.append(g)
 
-        bbmask = self.configuration.data.getVar('BBMASK', 1)
+        bbmask = self.configuration.data.getVar('BBMASK', True)
 
         if bbmask:
             try:

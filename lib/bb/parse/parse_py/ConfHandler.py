@@ -58,7 +58,7 @@ def include(oldfn, fn, lineno, data, error_out):
 
     if not os.path.isabs(fn):
         dname = os.path.dirname(oldfn)
-        bbpath = "%s:%s" % (dname, data.getVar("BBPATH", 1))
+        bbpath = "%s:%s" % (dname, data.getVar("BBPATH", True))
         abs_fn = bb.utils.which(bbpath, fn)
         if abs_fn:
             fn = abs_fn

@@ -284,7 +284,7 @@ def filterProviders(providers, item, cfgData, dataCache):
 
     eligible = _filterProviders(providers, item, cfgData, dataCache)
 
-    prefervar = cfgData.getVar('PREFERRED_PROVIDER_%s' % item, 1)
+    prefervar = cfgData.getVar('PREFERRED_PROVIDER_%s' % item, True)
     if prefervar:
         dataCache.preferred[item] = prefervar
 
@@ -322,7 +322,7 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
         pn = dataCache.pkg_fn[p]
         provides = dataCache.pn_provides[pn]
         for provide in provides:
-            prefervar = cfgData.getVar('PREFERRED_PROVIDER_%s' % provide, 1)
+            prefervar = cfgData.getVar('PREFERRED_PROVIDER_%s' % provide, True)
             logger.debug(1, "checking PREFERRED_PROVIDER_%s (value %s) against %s", provide, prefervar, pns.keys())
             if prefervar in pns and pns[prefervar] not in preferred:
                 var = "PREFERRED_PROVIDER_%s = %s" % (provide, prefervar)
