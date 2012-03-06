@@ -223,7 +223,11 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
             k = fn + "." + taskname[:-9]
         else:
             k = fn + "." + taskname
-        h = self.taskhash[k]
+        if k in self.taskhash:
+            h = self.taskhash[k]
+        else:
+            # If k is not in basehash, then error
+            h = self.basehash[k]
         return ("%s.%s.%s.%s" % (stampbase, taskname, h, extrainfo)).rstrip('.')
 
 def dump_this_task(outfile, d):
