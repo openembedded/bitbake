@@ -838,7 +838,7 @@ class LayerSelectionDialog (CrumbsDialog):
                 layer_store.append([path])
                 return
             dialog = CrumbsMessageDialog(parent, lbl)
-            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_OK)
             response = dialog.run()
             dialog.destroy()
 
