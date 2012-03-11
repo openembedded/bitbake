@@ -98,6 +98,12 @@ def parser_cache_save(d):
     bb.utils.unlockfile(lf)
     bb.utils.unlockfile(glf)
 
+def internSet(items):
+    new = set()
+    for i in items:
+        new.add(intern(i))
+    return new
+
 def parser_cache_savemerge(d):
     cachefile = parser_cachefile(d)
     if not cachefile:
@@ -132,6 +138,21 @@ def parser_cache_savemerge(d):
             if h not in data[1]:
                 data[1][h] = extradata[1][h]
         os.unlink(f)
+
+    # When the dicts are originally created, python calls intern() on the set keys
+    # which significantly improves memory usage. Sadly the pickle/unpickle process 
+    # doesn't call intern() on the keys and results in the same strings being duplicated
+    # in memory. This also means pickle will save the same string multiple times in 
+    # the cache file. By interning the data here, the cache file shrinks dramatically
+    # meaning faster load times and the reloaded cache files also consume much less 
+    # memory. This is worth any performance hit from this loops and the use of the 
+    # intern() data storage.
+    # Python 3.x may behave better in this area
+    for h in data[0]:
+        data[0][h]["refs"] = internSet(data[0][h]["refs"])
+        data[0][h]["execs"] = internSet(data[0][h]["execs"])
+    for h in data[1]:
+        data[1][h]["execs"] = internSet(data[1][h]["execs"])
 
     p = pickle.Pickler(file(cachefile, "wb"), -1)
     p.dump([data, PARSERCACHE_VERSION])
