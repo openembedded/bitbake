@@ -34,6 +34,9 @@ def check_indent(codestr):
 
 pythonparsecache = {}
 shellparsecache = {}
+pythonparsecacheextras = {}
+shellparsecacheextras = {}
+
 
 def parser_cachefile(d):
     cachedir = (d.getVar("PERSISTENT_DIR", True) or
@@ -86,22 +89,8 @@ def parser_cache_save(d):
             i = i + 1
             continue
 
-        try:
-            p = pickle.Unpickler(file(cachefile, "rb"))
-            data, version = p.load()
-        except (IOError, EOFError, ValueError):
-            data, version = None, None
-
-        if version != PARSERCACHE_VERSION:
-            shellcache = shellparsecache
-            pythoncache = pythonparsecache
-        else:
-            for h in pythonparsecache:
-                if h not in data[0]:
-                    pythoncache[h] = pythonparsecache[h]
-            for h in shellparsecache:
-                if h not in data[1]:
-                    shellcache[h] = shellparsecache[h]
+        shellcache = shellparsecacheextras
+        pythoncache = pythonparsecacheextras
 
         p = pickle.Pickler(file(cachefile + "-" + str(i), "wb"), -1)
         p.dump([[pythoncache, shellcache], PARSERCACHE_VERSION])
@@ -230,6 +219,12 @@ class PythonParser():
             self.execs = pythonparsecache[h]["execs"]
             return
 
+        if h in pythonparsecacheextras:
+            self.references = pythonparsecacheextras[h]["refs"]
+            self.execs = pythonparsecacheextras[h]["execs"]
+            return
+
+
         code = compile(check_indent(str(node)), "<string>", "exec",
                        ast.PyCF_ONLY_AST)
 
@@ -240,9 +235,9 @@ class PythonParser():
         self.references.update(self.var_references)
         self.references.update(self.var_execs)
 
-        pythonparsecache[h] = {}
-        pythonparsecache[h]["refs"] = self.references
-        pythonparsecache[h]["execs"] = self.execs
+        pythonparsecacheextras[h] = {}
+        pythonparsecacheextras[h]["refs"] = self.references
+        pythonparsecacheextras[h]["execs"] = self.execs
 
 class ShellParser():
     def __init__(self, name, log):
@@ -264,6 +259,10 @@ class ShellParser():
             self.execs = shellparsecache[h]["execs"]
             return self.execs
 
+        if h in shellparsecacheextras:
+            self.execs = shellparsecacheextras[h]["execs"]
+            return self.execs
+
         try:
             tokens, _ = pyshyacc.parse(value, eof=True, debug=False)
         except pyshlex.NeedMore:
@@ -273,8 +272,8 @@ class ShellParser():
             self.process_tokens(token)
         self.execs = set(cmd for cmd in self.allexecs if cmd not in self.funcdefs)
 
-        shellparsecache[h] = {}
-        shellparsecache[h]["execs"] = self.execs
+        shellparsecacheextras[h] = {}
+        shellparsecacheextras[h]["execs"] = self.execs
 
         return self.execs
 
