@@ -1556,6 +1556,7 @@ class CookerParser(object):
         self.progress_chunk = max(self.toparse / 100, 1)
 
         self.start()
+        self.haveshutdown = False
 
     def start(self):
         self.results = self.load_cached()
@@ -1582,6 +1583,9 @@ class CookerParser(object):
     def shutdown(self, clean=True, force=False):
         if not self.toparse:
             return
+        if self.haveshutdown:
+            return
+        self.haveshutdown = True
 
         if clean:
             event = bb.event.ParseCompleted(self.cached, self.parsed,
