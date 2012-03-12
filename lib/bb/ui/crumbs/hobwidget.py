@@ -619,6 +619,20 @@ class HobNotebook(gtk.VBox):
  
         self.tb.show()
 
+    def show_indicator_icon(self, title, number):
+        for i, child in enumerate(self.tabbar.children):
+            if child["toggled_page"] == -1:
+                continue
+            if child["title"] == title:
+                self.tabbar.show_indicator_icon(i, number)
+
+    def hide_indicator_icon(self, title):
+        for i, child in enumerate(self.tabbar.children):
+            if child["toggled_page"] == -1:
+                continue
+            if child["title"] == title:
+                self.tabbar.hide_indicator_icon(i)
+
     def tab_switched_cb(self, widget, page):
         self.notebook.set_current_page(page)
 

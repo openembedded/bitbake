@@ -37,6 +37,8 @@ class BuildDetailsPage (HobPage):
     def __init__(self, builder):
         super(BuildDetailsPage, self).__init__(builder, "Building ...")
 
+        self.num_of_issues = 0
+
         # create visual elements
         self.create_visual_elements()
 
@@ -79,6 +81,14 @@ class BuildDetailsPage (HobPage):
         self.back_button = gtk.LinkButton("Go back to Image Configuration screen", "<< Back to image configuration")
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_start(self.back_button, expand=False, fill=False)
+
+    def show_issues(self):
+        self.num_of_issues += 1
+        self.notebook.show_indicator_icon("Issues", self.num_of_issues)
+
+    def reset_issues(self):
+        self.num_of_issues = 0
+        self.notebook.hide_indicator_icon("Issues")
 
     def _remove_all_widget(self):
         children = self.vbox.get_children() or []

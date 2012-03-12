@@ -84,6 +84,9 @@ class RunningBuild (gobject.GObject):
           'task-started'   : (gobject.SIGNAL_RUN_LAST,
                               gobject.TYPE_NONE,
                               (gobject.TYPE_PYOBJECT,)),
+          'log-error'      : (gobject.SIGNAL_RUN_LAST,
+                              gobject.TYPE_NONE,
+                              ()),
           }
     pids_to_task = {}
     tasks_to_iter = {}
@@ -134,6 +137,7 @@ class RunningBuild (gobject.GObject):
             if event.levelno >= logging.ERROR:
                 icon = "dialog-error"
                 color = HobColors.ERROR
+                self.emit("log-error")
             elif event.levelno >= logging.WARNING:
                 icon = "dialog-warning"
                 color = HobColors.WARNING
