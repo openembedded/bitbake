@@ -22,8 +22,10 @@
 
 import gtk
 from bb.ui.crumbs.progressbar import HobProgressBar
-from bb.ui.crumbs.hobwidget import hic
+from bb.ui.crumbs.hobwidget import hic, HobNotebook
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView
+from bb.ui.crumbs.runningbuild import BuildConfigurationTreeView
+from bb.ui.crumbs.runningbuild import BuildFailureTreeView
 from bb.ui.crumbs.hobpages import HobPage
 
 #
@@ -49,11 +51,29 @@ class BuildDetailsPage (HobPage):
         self.stop_button.connect("clicked", self.stop_button_clicked_cb)
         self.progress_box.pack_end(self.stop_button, expand=False, fill=False)
 
+        self.notebook = HobNotebook()
+        self.config_tv = BuildConfigurationTreeView()
+        self.config_model = self.builder.handler.build.model.config_model()
+        self.config_tv.set_model(self.config_model)
+        self.scrolled_view_config = gtk.ScrolledWindow ()
+        self.scrolled_view_config.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.scrolled_view_config.add(self.config_tv)
+        self.notebook.append_page(self.scrolled_view_config, gtk.Label("Build Configuration"))
+
+        self.failure_tv = BuildFailureTreeView()
+        self.failure_model = self.builder.handler.build.model.failure_model()
+        self.failure_tv.set_model(self.failure_model)
+        self.scrolled_view_failure = gtk.ScrolledWindow ()
+        self.scrolled_view_failure.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.scrolled_view_failure.add(self.failure_tv)
+        self.notebook.append_page(self.scrolled_view_failure, gtk.Label("Issues"))
+
         self.build_tv = RunningBuildTreeView(readonly=True)
         self.build_tv.set_model(self.builder.handler.build.model)
-        self.scrolled_view = gtk.ScrolledWindow ()
-        self.scrolled_view.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
-        self.scrolled_view.add(self.build_tv)
+        self.scrolled_view_build = gtk.ScrolledWindow ()
+        self.scrolled_view_build.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+        self.scrolled_view_build.add(self.build_tv)
+        self.notebook.append_page(self.scrolled_view_build, gtk.Label("Log"))
 
         self.button_box = gtk.HBox(False, 6)
         self.back_button = gtk.LinkButton("Go back to Image Configuration screen", "<< Back to image configuration")
@@ -86,7 +106,7 @@ class BuildDetailsPage (HobPage):
         self.progress_bar.reset()
         self.vbox.pack_start(self.progress_box, expand=False, fill=False)
 
-        self.vbox.pack_start(self.scrolled_view, expand=True, fill=True)
+        self.vbox.pack_start(self.notebook, expand=True, fill=True)
 
         self.box_group_area.pack_end(self.button_box, expand=False, fill=False)
         self.show_all()

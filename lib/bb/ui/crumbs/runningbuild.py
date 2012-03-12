@@ -25,6 +25,7 @@ import logging
 import time
 import urllib
 import urllib2
+import pango
 from bb.ui.crumbs.hobcolor import HobColors
 
 class RunningBuildModel (gtk.TreeStore):
@@ -39,6 +40,32 @@ class RunningBuildModel (gtk.TreeStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_INT)
+
+    def config_model_filter(self, model, it):
+        msg = model.get(it, self.COL_MESSAGE)[0]
+        if msg == None or type(msg) != str:
+            return False
+        if msg.startswith("\nOE Build Configuration:\n"):
+            return True
+        return False
+
+    def failure_model_filter(self, model, it):
+        color = model.get(it, self.COL_COLOR)[0]
+        if color == None:
+            return False
+        if color == HobColors.ERROR:
+            return True
+        return False
+
+    def config_model(self):
+        model = self.filter_new()
+        model.set_visible_func(self.config_model_filter)
+        return model
+
+    def failure_model(self):
+        model = self.filter_new()
+        model.set_visible_func(self.failure_model_filter)
+        return model
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
@@ -376,3 +403,41 @@ class RunningBuildTreeView (gtk.TreeView):
         message = model.get(it, model.COL_MESSAGE)[0]
 
         self._add_to_clipboard(message)
+
+
+class BuildConfigurationTreeView(gtk.TreeView):
+
+    def __init__ (self):
+        gtk.TreeView.__init__(self)
+        self.set_rules_hint(False)
+        self.set_headers_visible(False)
+        self.set_property("hover-expand", True)
+        self.get_selection().set_mode(gtk.SELECTION_SINGLE)
+
+        # The message of the build.
+        self.message_renderer = gtk.CellRendererText ()
+        self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=RunningBuildModel.COL_MESSAGE, background=RunningBuildModel.COL_COLOR)
+        font = self.get_style().font_desc
+        font.set_size(pango.SCALE * 13)
+        self.message_renderer.set_property('font-desc', font)
+        self.append_column (self.message_column)
+
+
+class BuildFailureTreeView(gtk.TreeView):
+
+    def __init__ (self):
+        gtk.TreeView.__init__(self)
+        self.set_rules_hint(False)
+        self.set_headers_visible(False)
+        self.get_selection().set_mode(gtk.SELECTION_SINGLE)
+
+        # The icon that indicates whether we're building or failed.
+        renderer = gtk.CellRendererPixbuf ()
+        col = gtk.TreeViewColumn ("Status", renderer)
+        col.add_attribute (renderer, "icon-name", RunningBuildModel.COL_ICON)
+        self.append_column (col)
+
+        # The message of the build.
+        self.message_renderer = gtk.CellRendererText ()
+        self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=RunningBuildModel.COL_MESSAGE, background=RunningBuildModel.COL_COLOR)
+        self.append_column (self.message_column)
