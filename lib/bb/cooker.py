@@ -479,7 +479,6 @@ class BBCooker:
                 depend_tree["pn"][pn]["license"] = lic
                 depend_tree["pn"][pn]["section"] = section
                 depend_tree["pn"][pn]["description"] = description
-                depend_tree["pn"][pn]["packages"] = rdepends.keys()
 
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
@@ -509,6 +508,9 @@ class BBCooker:
                     else:
                         pn_rprovider = item
                     depend_tree["rdepends-pn"][pn].append(pn_rprovider)
+
+                depend_tree["rdepends-pkg"].update(rdepends)
+                depend_tree["rrecs-pkg"].update(rrecs)
 
         return depend_tree
 
