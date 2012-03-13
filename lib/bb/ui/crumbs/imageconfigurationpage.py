@@ -33,8 +33,6 @@ from bb.ui.crumbs.hobpages import HobPage
 #
 class ImageConfigurationPage (HobPage):
 
-    __dummy_machine__ = "--select a machine--"
-
     def __init__(self, builder):
         super(ImageConfigurationPage, self).__init__(builder, "Image configuration")
 
@@ -236,22 +234,18 @@ class ImageConfigurationPage (HobPage):
 
     def machine_combo_changed_cb(self, machine_combo):
         combo_item = machine_combo.get_active_text()
-        if not combo_item or combo_item == self.__dummy_machine__:
-            self.builder.configuration.curr_mach = ""
-            self.builder.switch_page(self.builder.MACHINE_SELECTION)
-        else:
-            self.builder.configuration.curr_mach = combo_item
-            # Do reparse recipes
-            self.builder.switch_page(self.builder.RCPPKGINFO_POPULATING)
+        self.builder.configuration.curr_mach = combo_item
+        # Do reparse recipes
+        self.builder.switch_page(self.builder.RCPPKGINFO_POPULATING)
 
     def update_machine_combo(self):
-        all_machines = [self.__dummy_machine__] + self.builder.parameters.all_machines
+        all_machines = self.builder.parameters.all_machines
 
         model = self.machine_combo.get_model()
         model.clear()
         for machine in all_machines:
             self.machine_combo.append_text(machine)
-        self.machine_combo.set_active(0)
+        self.machine_combo.set_active(-1)
 
     def switch_machine_combo(self):
         model = self.machine_combo.get_model()
@@ -261,7 +255,7 @@ class ImageConfigurationPage (HobPage):
                 self.machine_combo.set_active(active)
                 return
             active += 1
-        self.machine_combo.set_active(0)
+        self.machine_combo.set_active(-1)
 
     def image_combo_changed_idle_cb(self, selected_image, selected_recipes, selected_packages):
         self.builder.update_recipe_model(selected_image, selected_recipes)
@@ -302,7 +296,7 @@ class ImageConfigurationPage (HobPage):
         # populate image combo
         filter = {RecipeListModel.COL_TYPE : ['image']}
         image_model = recipe_model.tree_model(filter)
-        active = 0
+        active = -1
         cnt = 0
 
         it = image_model.get_iter_first()

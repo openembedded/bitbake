@@ -422,7 +422,7 @@ class RecipeListModel(gtk.ListStore):
     """
     (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_INSTALL, COL_PN) = range(11)
 
-    __dummy_image__ = "--select a base image--"
+    __dummy_image__ = "Start from scratch"
 
     __gsignals__ = {
         "recipelist-populated" : (gobject.SIGNAL_RUN_LAST,
