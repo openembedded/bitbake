@@ -361,12 +361,6 @@ class Builder(gtk.Window):
         self.handler.set_extra_config(self.configuration.extra_setting)
         self.handler.set_extra_inherit("packageinfo")
 
-    def reset_recipe_model(self):
-        self.recipe_model.reset()
-
-    def reset_package_model(self):
-        self.package_model.reset()
-
     def update_recipe_model(self, selected_image, selected_recipes):
         self.recipe_model.set_selected_image(selected_image)
         self.recipe_model.set_selected_recipes(selected_recipes)

@@ -141,11 +141,6 @@ class RecipeSelectionPage (HobPage):
             tab.connect("toggled", self.table_toggled_cb)
             if self.pages[i]['name'] == "Included":
                 tab.connect("row-activated", self.tree_row_activated_cb)
-            reset_button = gtk.Button("Reset")
-            reset_button.connect("clicked", self.reset_clicked_cb)
-            hbox = gtk.HBox(False, 5)
-            hbox.pack_end(reset_button, expand=False, fill=False)
-            tab.pack_start(hbox, expand=False, fill=False)
 
             label = gtk.Label(self.pages[i]['name'])
             self.ins.append_page(tab, label)
@@ -200,10 +195,6 @@ class RecipeSelectionPage (HobPage):
         _, self.builder.configuration.selected_recipes = self.recipe_model.get_selected_recipes()
         self.label.set_text("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
         self.ins.show_indicator_icon("Included", len(self.builder.configuration.selected_recipes))
-
-    # Callback functions
-    def reset_clicked_cb(self, button):
-        self.builder.reset_recipe_model()
 
     def toggle_item_idle_cb(self, path):
         if not self.recipe_model.path_included(path):

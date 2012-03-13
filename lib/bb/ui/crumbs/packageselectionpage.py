@@ -118,12 +118,6 @@ class PackageSelectionPage (HobPage):
             if self.pages[i]['name'] == "Included":
                 tab.connect("row-activated", self.tree_row_activated_cb)
 
-            reset_button = gtk.Button("Reset")
-            reset_button.connect("clicked", self.reset_clicked_cb)
-            hbox = gtk.HBox(False, 5)
-            hbox.pack_end(reset_button, expand=False, fill=False)
-            tab.pack_start(hbox, expand=False, fill=False)
-
             label = gtk.Label(self.pages[i]['name'])
             self.ins.append_page(tab, label)
             self.tables.append(tab)
@@ -205,11 +199,6 @@ class PackageSelectionPage (HobPage):
         else:
             size_str = str(size) + ' KB'
         return size_str
-
-    # Callback functions
-    def reset_clicked_cb(self, button):
-        self.package_model.reset()
-        self.builder.reset_package_model()
 
     def toggle_item_idle_cb(self, path):
         if not self.package_model.path_included(path):
