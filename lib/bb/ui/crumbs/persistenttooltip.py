@@ -20,6 +20,10 @@
 
 import gobject
 import gtk
+try:
+    import gconf
+except:
+    pass
 
 class PersistentTooltip(gtk.Window):
 	"""
@@ -33,6 +37,21 @@ class PersistentTooltip(gtk.Window):
 	"""
 	def __init__(self, markup):
 		gtk.Window.__init__(self, gtk.WINDOW_POPUP)
+
+		# The placement of the close button on the tip should reflect how the
+		# window manager of the users system places close buttons. Try to read
+		# the metacity gconf key to determine whether the close button is on the
+		# left or the right.
+		# In the case that we can't determine the users configuration we default
+		# to close buttons being on the right.
+		__button_right = True
+		try:
+		    client = gconf.client_get_default()
+		    order = client.get_string("/apps/metacity/general/button_layout")
+		    if order and order.endswith(":"):
+		        __button_right = False
+		except NameError:
+			pass
 
 		# We need to ensure we're only shown once
 		self.shown = False
@@ -65,7 +84,10 @@ class PersistentTooltip(gtk.Window):
 		self.button.set_can_default(True)
 		self.button.grab_focus()
 		self.button.show()
-		hbox.pack_end(self.button, False, False, 0)
+		if __button_right:
+		    hbox.pack_end(self.button, False, False, 0)
+		else:
+		    hbox.pack_start(self.button, False, False, 0)
 
 		self.set_default(self.button)
 
