@@ -45,19 +45,19 @@ class ImageConfigurationPage (HobPage):
         self.toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.toolbar.set_style(gtk.TOOLBAR_BOTH)
 
-        _, template_button = self.append_toolbar_button(self.toolbar,
+        template_button = self.append_toolbar_button(self.toolbar,
             "Template",
             hic.ICON_TEMPLATES_DISPLAY_FILE,
             hic.ICON_TEMPLATES_HOVER_FILE,
             "Load a hob building template saved before",
             self.template_button_clicked_cb)
-        _, my_images_button = self.append_toolbar_button(self.toolbar,
+        my_images_button = self.append_toolbar_button(self.toolbar,
             "My images",
             hic.ICON_IMAGES_DISPLAY_FILE,
             hic.ICON_IMAGES_HOVER_FILE,
             "Open images built out previously for running or deployment",
             self.my_images_button_clicked_cb)
-        _, settings_button = self.append_toolbar_button(self.toolbar,
+        settings_button = self.append_toolbar_button(self.toolbar,
             "Settings",
             hic.ICON_SETTINGS_DISPLAY_FILE,
             hic.ICON_SETTINGS_HOVER_FILE,

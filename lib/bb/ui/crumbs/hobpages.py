@@ -84,4 +84,4 @@ class HobPage (gtk.VBox):
         button = toolbar.append_element(gtk.TOOLBAR_CHILD_RADIOBUTTON, None,
                      buttonname, tip_text, "Private text", icon,
                      cb, None)
-        return toolbar, button
+        return button

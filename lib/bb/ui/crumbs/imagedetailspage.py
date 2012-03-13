@@ -122,7 +122,7 @@ class ImageDetailsPage (HobPage):
         self.toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.toolbar.set_style(gtk.TOOLBAR_BOTH)
 
-        _, my_images_button = self.append_toolbar_button(self.toolbar,
+        my_images_button = self.append_toolbar_button(self.toolbar,
             "My images",
             hic.ICON_IMAGES_DISPLAY_FILE,
             hic.ICON_IMAGES_HOVER_FILE,
