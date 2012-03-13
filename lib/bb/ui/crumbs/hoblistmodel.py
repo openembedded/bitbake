@@ -546,9 +546,7 @@ class RecipeListModel(gtk.ListStore):
             group = event_model["pn"][item]["section"]
             install = []
 
-            depends = event_model["depends"].get(item, [])
-            rdepends = event_model["rdepends-pn"].get(item, [])
-            depends = depends + rdepends
+            depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
 
             if ('task-' in name):
                 if ('lib32-' in name or 'lib64-' in name):
@@ -557,7 +555,7 @@ class RecipeListModel(gtk.ListStore):
                     atype = 'task'
             elif ('-image-' in name):
                 atype = 'image'
-                install = rdepends
+                install = event_model["rdepends-pkg"].get(item, []) + event_model["rrecs-pkg"].get(item, [])
             elif ('meta-' in name):
                 atype = 'toolchain'
             elif (name == 'dummy-image' or name == 'dummy-toolchain'):
