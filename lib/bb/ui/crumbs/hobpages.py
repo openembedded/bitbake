@@ -81,7 +81,5 @@ class HobPage (gtk.VBox):
         pix_buffer = gtk.gdk.pixbuf_new_from_file(icon_display)
         icon.set_from_pixbuf(pix_buffer)
         tip_text = tip
-        button = toolbar.append_element(gtk.TOOLBAR_CHILD_RADIOBUTTON, None,
-                     buttonname, tip_text, "Private text", icon,
-                     cb, None)
+        button = toolbar.append_item(buttonname, tip, None, icon, cb)
         return button
