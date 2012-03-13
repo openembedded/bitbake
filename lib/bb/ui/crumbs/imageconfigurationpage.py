@@ -109,9 +109,17 @@ class ImageConfigurationPage (HobPage):
 
     def show_info_populated(self):
         self.progress_bar.reset()
+        self._pack_components(pack_config_build_button = False)
+        self.set_config_machine_layout(show_progress_bar = False)
+        self.set_config_baseimg_layout()
+        self.show_all()
+
+    def show_baseimg_selected(self):
+        self.progress_bar.reset()
         self._pack_components(pack_config_build_button = True)
         self.set_config_machine_layout(show_progress_bar = False)
         self.set_config_baseimg_layout()
+        self.set_rcppkg_layout()
         self.show_all()
 
     def create_config_machine(self):
@@ -196,9 +204,11 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.image_title_desc, 0, 40, 17, 22)
         self.gtable.attach(self.image_combo, 0, 12, 22, 25)
         self.gtable.attach(self.image_desc, 14, 38, 22, 27)
+        self.gtable.attach(self.image_separator, 0, 40, 35, 36)
+
+    def set_rcppkg_layout(self):
         self.gtable.attach(self.view_recipes_button, 0, 20, 28, 32)
         self.gtable.attach(self.view_packages_button, 20, 40, 28, 32)
-        self.gtable.attach(self.image_separator, 0, 40, 35, 36)
 
     def create_config_build_button(self):
         # Create the "Build packages" and "Just bake" buttons at the bottom
@@ -279,6 +289,8 @@ class ImageConfigurationPage (HobPage):
 
         self.builder.recipe_model.reset()
         self.builder.package_model.reset()
+
+        self.show_baseimg_selected()
 
         glib.idle_add(self.image_combo_changed_idle_cb, selected_image, selected_recipes, selected_packages)
 

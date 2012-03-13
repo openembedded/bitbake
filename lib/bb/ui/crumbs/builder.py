@@ -136,6 +136,7 @@ class Builder(gtk.Window):
      LAYER_CHANGED,
      RCPPKGINFO_POPULATING,
      RCPPKGINFO_POPULATED,
+     BASEIMG_SELECTED,
      RECIPE_SELECTION,
      PACKAGE_GENERATING,
      PACKAGE_GENERATED,
@@ -145,7 +146,7 @@ class Builder(gtk.Window):
      IMAGE_GENERATED,
      MY_IMAGE_OPENED,
      BACK,
-     END_NOOP) = range(14)
+     END_NOOP) = range(15)
 
     (IMAGE_CONFIGURATION,
      RECIPE_DETAILS,
@@ -159,6 +160,7 @@ class Builder(gtk.Window):
         LAYER_CHANGED         : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATING : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATED  : IMAGE_CONFIGURATION,
+        BASEIMG_SELECTED      : IMAGE_CONFIGURATION,
         RECIPE_SELECTION      : RECIPE_DETAILS,
         PACKAGE_GENERATING    : BUILD_DETAILS,
         PACKAGE_GENERATED     : PACKAGE_DETAILS,
@@ -308,6 +310,9 @@ class Builder(gtk.Window):
 
         elif next_step == self.RCPPKGINFO_POPULATED:
             self.image_configuration_page.show_info_populated()
+
+        elif next_step == self.BASEIMG_SELECTED:
+            self.image_configuration_page.show_baseimg_selected()
 
         elif next_step == self.RECIPE_SELECTION:
             pass
@@ -828,7 +833,7 @@ class Builder(gtk.Window):
         self.switch_page(self.MACHINE_SELECTION)
 
     def show_configuration(self):
-        self.switch_page(self.RCPPKGINFO_POPULATED)
+        self.switch_page(self.BASEIMG_SELECTED)
 
     def stop_build(self):
         if self.stopping:
