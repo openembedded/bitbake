@@ -430,12 +430,13 @@ class Builder(gtk.Window):
                 self.switch_page(self.IMAGE_GENERATED)
 
     def handler_command_failed_cb(self, handler, msg):
-        lbl = "<b>Error</b>\n"
-        lbl = lbl + "%s\n\n" % msg
-        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
-        dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
-        response = dialog.run()
-        dialog.destroy()
+        if msg:
+            lbl = "<b>Error</b>\n"
+            lbl = lbl + "%s\n\n" % msg
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog.add_button(gtk.STOCK_OK, gtk.RESPONSE_OK)
+            response = dialog.run()
+            dialog.destroy()
         self.handler.clear_busy()
         self.configuration.curr_mach = None
         self.image_configuration_page.switch_machine_combo()

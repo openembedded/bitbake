@@ -238,9 +238,8 @@ class HobHandler(gobject.GObject):
 
         elif isinstance(event, bb.command.CommandFailed):
             self.commands_async = []
-            if self.error_msg:
-                self.emit("command-failed", self.error_msg)
-                self.error_msg = ""
+            self.emit("command-failed", self.error_msg)
+            self.error_msg = ""
         elif isinstance(event, (bb.event.ParseStarted,
                  bb.event.CacheLoadStarted,
                  bb.event.TreeDataPreparationStarted,
