@@ -443,7 +443,20 @@ class Builder(gtk.Window):
         self.switch_page(self.MACHINE_SELECTION)
 
     def window_sensitive(self, sensitive):
-        self.set_sensitive(sensitive)
+        self.image_configuration_page.machine_combo.set_sensitive(sensitive)
+        self.image_configuration_page.image_combo.set_sensitive(sensitive)
+        self.image_configuration_page.layer_button.set_sensitive(sensitive)
+        self.image_configuration_page.layer_info_icon.set_sensitive(sensitive)
+        self.image_configuration_page.toolbar.set_sensitive(sensitive)
+        self.image_configuration_page.view_recipes_button.set_sensitive(sensitive)
+        self.image_configuration_page.view_packages_button.set_sensitive(sensitive)
+        self.image_configuration_page.config_build_button.set_sensitive(sensitive)
+
+        self.recipe_details_page.set_sensitive(sensitive)
+        self.package_details_page.set_sensitive(sensitive)
+        self.build_details_page.set_sensitive(sensitive)
+        self.image_details_page.set_sensitive(sensitive)
+
         if sensitive:
             self.get_root_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.LEFT_PTR))
         else:
@@ -482,6 +495,10 @@ class Builder(gtk.Window):
         fraction = 0
         if message["eventname"] == "TreeDataPreparationStarted":
             fraction = 0.6 + fraction
+            self.image_configuration_page.stop_button.set_sensitive(False)
+        else:
+            self.image_configuration_page.stop_button.set_sensitive(True)
+
         self.image_configuration_page.update_progress_bar(message["title"], fraction)
 
     def handler_parsing_cb(self, handler, message):
@@ -835,6 +852,9 @@ class Builder(gtk.Window):
 
     def show_configuration(self):
         self.switch_page(self.BASEIMG_SELECTED)
+
+    def stop_parse(self):
+        self.handler.cancel_parse()
 
     def stop_build(self):
         if self.stopping:

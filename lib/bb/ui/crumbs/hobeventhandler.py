@@ -371,6 +371,9 @@ class HobHandler(gobject.GObject):
         self.commands_async = []
         self.building = False
 
+    def cancel_parse(self):
+        self.server.runCommand(["stateStop"])
+
     def cancel_build(self, force=False):
         if force:
             # Force the cooker to stop as quickly as possible

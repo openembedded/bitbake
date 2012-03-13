@@ -150,7 +150,13 @@ class ImageConfigurationPage (HobPage):
         markup += "poky-ref-manual.html#usingpoky-changes-layers\">reference manual</a>."
         self.layer_info_icon = HobInfoButton(markup, self.get_parent())
 
+        self.progress_box = gtk.HBox(False, 6)
         self.progress_bar = HobProgressBar()
+        self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
+        self.stop_button = gtk.LinkButton("Stop the parsing process", "Stop")
+        self.stop_button.connect("clicked", self.stop_button_clicked_cb)
+        self.progress_box.pack_end(self.stop_button, expand=False, fill=False)
+
         self.machine_separator = gtk.HSeparator()
 
     def set_config_machine_layout(self, show_progress_bar = False):
@@ -160,7 +166,7 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.layer_button, 12, 36, 6, 10)
         self.gtable.attach(self.layer_info_icon, 36, 40, 6, 9)
         if show_progress_bar == True:
-            self.gtable.attach(self.progress_bar, 0, 40, 13, 17)
+            self.gtable.attach(self.progress_box, 0, 40, 13, 17)
         self.gtable.attach(self.machine_separator, 0, 40, 12, 13)
 
     def create_config_baseimg(self):
@@ -242,8 +248,14 @@ class ImageConfigurationPage (HobPage):
 
         return button_box
 
+    def stop_button_clicked_cb(self, button):
+        self.builder.stop_parse()
+
     def machine_combo_changed_cb(self, machine_combo):
         combo_item = machine_combo.get_active_text()
+        if not combo_item:
+            return
+
         self.builder.configuration.curr_mach = combo_item
         # Do reparse recipes
         self.builder.switch_page(self.builder.RCPPKGINFO_POPULATING)
