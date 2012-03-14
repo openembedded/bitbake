@@ -216,8 +216,6 @@ class PackageListModel(gtk.TreeStore):
 
         self[item_path][self.COL_INC] = True
 
-        self.selection_change_notification()
-
         it = self.get_iter(item_path)
 
         # If user explicitly selects a recipe, all its providing packages are selected.
@@ -275,8 +273,6 @@ class PackageListModel(gtk.TreeStore):
             return
 
         self[item_path][self.COL_INC] = False
-
-        self.selection_change_notification()
 
         item_name = self[item_path][self.COL_NAME]
         item_rdep = self[item_path][self.COL_RDEP]
@@ -343,6 +339,7 @@ class PackageListModel(gtk.TreeStore):
             else:
                 left.append(pn)
 
+        self.selection_change_notification()
         return left
 
     def get_selected_packages(self):
@@ -604,7 +601,6 @@ class RecipeListModel(gtk.ListStore):
         item_deps = self[item_path][self.COL_DEPS]
 
         self[item_path][self.COL_INC] = True
-        self.selection_change_notification()
 
         item_bin = self[item_path][self.COL_BINB].split(', ')
         if binb and not binb in item_bin:
@@ -641,8 +637,6 @@ class RecipeListModel(gtk.ListStore):
             return
 
         self[item_path][self.COL_INC] = False
-
-        self.selection_change_notification()
 
         item_name = self[item_path][self.COL_NAME]
         item_deps = self[item_path][self.COL_DEPS]
@@ -703,6 +697,7 @@ class RecipeListModel(gtk.ListStore):
                 path = self.pn_path[pn]
                 self.include_item(item_path=path,
                                   binb="User Selected")
+        self.selection_change_notification()
 
     def get_selected_image(self):
         it = self.get_iter_first()
@@ -724,3 +719,4 @@ class RecipeListModel(gtk.ListStore):
         self.include_item(item_path=path,
                           binb="User Selected",
                           image_contents=True)
+        self.selection_change_notification()

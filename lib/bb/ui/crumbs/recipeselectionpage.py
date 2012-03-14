@@ -202,6 +202,7 @@ class RecipeSelectionPage (HobPage):
         else:
             self.recipe_model.exclude_item(item_path=path)
 
+        self.refresh_selection()
         self.builder.window_sensitive(True)
 
     def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree):
