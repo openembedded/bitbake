@@ -200,8 +200,6 @@ class Builder(gtk.Window):
         self.connect("delete-event", self.destroy_window_cb)
         self.recipe_model.connect ("recipe-selection-changed",  self.recipelist_changed_cb)
         self.package_model.connect("package-selection-changed", self.packagelist_changed_cb)
-        self.recipe_model.connect ("recipelist-populated",      self.recipelist_populated_cb)
-        self.package_model.connect("packagelist-populated",     self.packagelist_populated_cb)
         self.handler.connect("config-updated",           self.handler_config_updated_cb)
         self.handler.connect("package-formats-updated",  self.handler_package_formats_updated_cb)
         self.handler.connect("layers-updated",           self.handler_layers_updated_cb)
@@ -413,10 +411,14 @@ class Builder(gtk.Window):
                          self.handler.GENERATE_IMAGE]:
             self.handler.request_package_info_async()
         elif initcmd == self.handler.POPULATE_PACKAGEINFO:
+            if self.current_step == self.RCPPKGINFO_POPULATING:
+                self.switch_page(self.RCPPKGINFO_POPULATED)
+                self.rcppkglist_populated()
+                return
+
+            self.rcppkglist_populated()
             if self.current_step == self.FAST_IMAGE_GENERATING:
                 self.switch_page(self.IMAGE_GENERATING)
-            elif self.current_step == self.RCPPKGINFO_POPULATING:
-                self.switch_page(self.RCPPKGINFO_POPULATED)
             elif self.current_step == self.PACKAGE_GENERATING:
                 self.switch_page(self.PACKAGE_GENERATED)
             elif self.current_step == self.IMAGE_GENERATING:
@@ -448,7 +450,7 @@ class Builder(gtk.Window):
     def handler_data_generated_cb(self, handler):
         self.window_sensitive(True)
 
-    def recipelist_populated_cb(self, recipe_model):
+    def rcppkglist_populated(self):
         selected_image = self.configuration.selected_image
         selected_recipes = self.configuration.selected_recipes[:]
         selected_packages = self.configuration.selected_packages[:]
@@ -458,11 +460,7 @@ class Builder(gtk.Window):
                                             " ".join(selected_packages))
 
         self.image_configuration_page.update_image_combo(self.recipe_model, selected_image)
-
         self.update_recipe_model(selected_image, selected_recipes)
-
-    def packagelist_populated_cb(self, package_model):
-        selected_packages = self.configuration.selected_packages[:]
         self.update_package_model(selected_packages)
 
     def recipelist_changed_cb(self, recipe_model):
@@ -825,7 +823,7 @@ class Builder(gtk.Window):
         self.switch_page(self.RECIPE_SELECTION)
 
     def initiate_new_build(self):
-	self.configuration.curr_mach = ""
+        self.configuration.curr_mach = ""
         self.image_configuration_page.switch_machine_combo()
         self.switch_page(self.MACHINE_SELECTION)
 

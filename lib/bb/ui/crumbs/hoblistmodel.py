@@ -36,9 +36,6 @@ class PackageListModel(gtk.TreeStore):
     (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_BINB, COL_INC) = range(11)
 
     __gsignals__ = {
-        "packagelist-populated" : (gobject.SIGNAL_RUN_LAST,
-                                gobject.TYPE_NONE,
-                                ()),
         "package-selection-changed" : (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                 ()),
@@ -135,8 +132,6 @@ class PackageListModel(gtk.TreeStore):
     """
     The populate() function takes as input the data from a
     bb.event.PackageInfo event and populates the package list.
-    Once the population is done it emits gsignal packagelist-populated
-    to notify any listeners that the model is ready
     """
     def populate(self, pkginfolist):
         self.clear()
@@ -193,8 +188,6 @@ class PackageListModel(gtk.TreeStore):
                      self.COL_RDEP, rdep + ' ' + rrec,
                      self.COL_RPROV, rprov, self.COL_SIZE, size,
                      self.COL_BINB, "", self.COL_INC, False)
-
-        self.emit("packagelist-populated")
 
     """
     Check whether the item at item_path is included or not
@@ -425,9 +418,6 @@ class RecipeListModel(gtk.ListStore):
     __dummy_image__ = "Start from scratch"
 
     __gsignals__ = {
-        "recipelist-populated" : (gobject.SIGNAL_RUN_LAST,
-                                gobject.TYPE_NONE,
-                                ()),
         "recipe-selection-changed" : (gobject.SIGNAL_RUN_LAST,
                                   gobject.TYPE_NONE,
                                  ()),
@@ -524,8 +514,6 @@ class RecipeListModel(gtk.ListStore):
     """
     The populate() function takes as input the data from a
     bb.event.TargetsTreeGenerated event and populates the RecipeList.
-    Once the population is done it emits gsignal recipelist-populated
-    to notify any listeners that the model is ready
     """
     def populate(self, event_model):
         # First clear the model, in case repopulating
@@ -579,8 +567,6 @@ class RecipeListModel(gtk.ListStore):
             path = self.get_path(it)
             self.pn_path[pn] = path
             it = self.iter_next(it)
-
-        self.emit("recipelist-populated")
 
     """
     Update the model, send out the notification.
