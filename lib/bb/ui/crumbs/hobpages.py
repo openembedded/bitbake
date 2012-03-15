@@ -39,7 +39,7 @@ class HobPage (gtk.VBox):
         else:
             self.title = title
 
-        self.box_group_area = gtk.VBox(False, 15)
+        self.box_group_area = gtk.VBox(False, 12)
         self.box_group_area.set_size_request(self.builder_width - 73 - 73, self.builder_height - 88 - 15 - 15)
         self.group_align = gtk.Alignment(xalign = 0, yalign=0.5, xscale=1, yscale=1)
         self.group_align.set_padding(15, 15, 73, 73)

@@ -40,9 +40,9 @@ class BuildDetailsPage (HobPage):
 
     def create_visual_elements(self):
         # create visual elements
-        self.vbox = gtk.VBox(False, 15)
+        self.vbox = gtk.VBox(False, 12)
 
-        self.progress_box = gtk.HBox(False, 5)
+        self.progress_box = gtk.HBox(False, 6)
         self.progress_bar = HobProgressBar()
         self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
         self.stop_button = gtk.LinkButton("Stop the build process", "Stop")
@@ -55,7 +55,7 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
         self.scrolled_view.add(self.build_tv)
 
-        self.button_box = gtk.HBox(False, 5)
+        self.button_box = gtk.HBox(False, 6)
         self.back_button = gtk.LinkButton("Go back to Image Configuration screen", "<< Back to image configuration")
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_start(self.back_button, expand=False, fill=False)

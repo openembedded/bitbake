@@ -127,7 +127,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         return label
 
     def gen_spinner_widget(self, content, lower, upper, tooltip=""):
-        hbox = gtk.HBox(False, 10)
+        hbox = gtk.HBox(False, 12)
         adjust = gtk.Adjustment(value=content, lower=lower, upper=upper, step_incr=1)
         spinner = gtk.SpinButton(adjustment=adjust, climb_rate=1, digits=0)
 
@@ -141,7 +141,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         return hbox, spinner
 
     def gen_combo_widget(self, curr_item, all_item, tooltip=""):
-        hbox = gtk.HBox(False, 10)
+        hbox = gtk.HBox(False, 12)
         combo = gtk.combo_box_new_text()
         hbox.pack_start(combo, expand=False, fill=False)
 
@@ -171,7 +171,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         dialog.destroy()
 
     def gen_entry_widget(self, split_model, content, parent, tooltip=""):
-        hbox = gtk.HBox(False, 10)
+        hbox = gtk.HBox(False, 12)
         entry = gtk.Entry()
         entry.set_text(content)
 
@@ -259,7 +259,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         model.set(it, column, val)
 
     def gen_pkgfmt_widget(self, curr_package_format, all_package_format, tooltip=""):
-        pkgfmt_hbox = gtk.HBox(False, 15)
+        pkgfmt_hbox = gtk.HBox(False, 12)
 
         pkgfmt_store = gtk.ListStore(int, str, gobject.TYPE_BOOLEAN)
         for format in curr_package_format.split():
@@ -358,9 +358,9 @@ class AdvancedSettingDialog (CrumbsDialog):
             model.remove(iter)
 
     def gen_editable_settings(self, setting, tooltip=""):
-        setting_hbox = gtk.HBox(False, 10)
+        setting_hbox = gtk.HBox(False, 12)
 
-        vbox = gtk.VBox(False, 10)
+        vbox = gtk.VBox(False, 12)
         setting_hbox.pack_start(vbox, expand=True, fill=True)
 
         setting_store = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_STRING)
@@ -403,7 +403,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         vbox.pack_start(scroll, expand=True, fill=True)
 
         # some buttons
-        hbox = gtk.HBox(True, 4)
+        hbox = gtk.HBox(True, 6)
         vbox.pack_start(hbox, False, False)
 
         button = gtk.Button(stock=gtk.STOCK_ADD)

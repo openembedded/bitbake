@@ -133,7 +133,7 @@ class PackageSelectionPage (HobPage):
         # add all into the dialog
         self.box_group_area.add(self.grid)
 
-        button_box = gtk.HBox(False, 5)
+        button_box = gtk.HBox(False, 6)
         self.box_group_area.pack_start(button_box, expand=False, fill=False)
 
         self.build_image_button = gtk.Button()

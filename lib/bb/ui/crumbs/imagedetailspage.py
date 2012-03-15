@@ -258,7 +258,7 @@ class ImageDetailsPage (HobPage):
 
     def create_bottom_buttons(self, buttonlist):
         # Create the buttons at the bottom
-        bottom_buttons = gtk.HBox(False, 5)
+        bottom_buttons = gtk.HBox(False, 6)
         created = False
 
         # create button "Deploy image"

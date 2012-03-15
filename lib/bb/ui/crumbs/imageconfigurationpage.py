@@ -218,7 +218,7 @@ class ImageConfigurationPage (HobPage):
 
     def create_config_build_button(self):
         # Create the "Build packages" and "Just bake" buttons at the bottom
-        button_box = gtk.HBox(False, 5)
+        button_box = gtk.HBox(False, 6)
 
         # create button "Just bake"
         just_bake_button = gtk.Button()
