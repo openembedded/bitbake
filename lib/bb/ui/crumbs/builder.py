@@ -55,6 +55,8 @@ class Configuration:
         self.image_overhead_factor = params['image_overhead_factor']
         self.incompat_license = params["incompat_license"]
         self.curr_sdk_machine = params["sdk_machine"]
+        self.conf_version = params["conf_version"]
+        self.lconf_version = params["lconf_version"]
         self.extra_setting = {}
         self.toolchain_build = False
         self.image_fstypes = params["image_fstypes"].split()
@@ -79,6 +81,8 @@ class Configuration:
         # image_overhead_factor is read-only.
         self.incompat_license = template.getVar("INCOMPATIBLE_LICENSE")
         self.curr_sdk_machine = template.getVar("SDKMACHINE")
+        self.conf_version = template.getVar("CONF_VERSION")
+        self.lconf_version = template.getVar("LCONF_VERSION")
         self.extra_setting = eval(template.getVar("EXTRA_SETTING"))
         self.toolchain_build = eval(template.getVar("TOOLCHAIN_BUILD"))
         self.image_fstypes = template.getVar("IMAGE_FSTYPES").split()
@@ -105,6 +109,8 @@ class Configuration:
         template.setVar("IMAGE_EXTRA_SPACE", self.image_extra_size)
         template.setVar("INCOMPATIBLE_LICENSE", self.incompat_license)
         template.setVar("SDKMACHINE", self.curr_sdk_machine)
+        template.setVar("CONF_VERSION", self.conf_version)
+        template.setVar("LCONF_VERSION", self.lconf_version)
         template.setVar("EXTRA_SETTING", self.extra_setting)
         template.setVar("TOOLCHAIN_BUILD", self.toolchain_build)
         template.setVar("IMAGE_FSTYPES", " ".join(self.image_fstypes).lstrip(" "))
