@@ -715,6 +715,7 @@ class RecipeListModel(gtk.ListStore):
     def set_selected_image(self, img):
         if not img:
             return
+        self.reset()
         path = self.find_path_for_item(img)
         self.include_item(item_path=path,
                           binb="User Selected",
