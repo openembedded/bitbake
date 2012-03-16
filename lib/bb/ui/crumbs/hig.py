@@ -453,6 +453,8 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.variables["PACKAGE_FORMAT"] = self.configuration.curr_package_format
         self.variables["INCOMPATIBLE_LICENSE"] = self.configuration.incompat_license
         self.variables["IMAGE_FSTYPES"] = self.configuration.image_fstypes
+        for key in self.configuration.extra_setting.keys():
+            self.variables[key] = self.configuration.extra_setting[key]
         self.md5 = hashlib.md5(str(sorted(self.variables.items()))).hexdigest()
         self.settings_changed = False
 
