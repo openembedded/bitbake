@@ -673,20 +673,17 @@ class HobNotebook(gtk.VBox):
 
     def blank_area_resize_cb(self, widget, request_x, request_y, request_width, request_height):
         self.search.set_size_request(request_width, request_height)
-        widget.modify_bg(gtk.STATE_SELECTED, gtk.gdk.color_parse(HobColors.YELLOW))
 
-    def set_search_entry_editable_cb(self, widget, event):
-        if self.search:
-            self.search.set_editable(True)
-            self.search.set_text("")
-            style = self.search.get_style()
-            style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.BLACK, False, False)
-            self.search.set_style(style)
+    def set_search_entry_editable_cb(self, search, event):
+        search.set_editable(True)
+        search.set_text("")
+        style = self.search.get_style()
+        style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.BLACK, False, False)
+        search.set_style(style)
 
-    def set_search_entry_reset_cb(self, widget, event):
-        if self.search:
-            style = self.search.get_style()
-            style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.GRAY, False, False)
-            self.search.set_style(style)
-            self.search.set_text(self.search_name)
-            self.search.set_editable(False)
+    def set_search_entry_reset_cb(self, search, event):
+        style = search.get_style()
+        style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.GRAY, False, False)
+        search.set_style(style)
+        search.set_text(self.search_name)
+        search.set_editable(False)
