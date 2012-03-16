@@ -192,7 +192,7 @@ def uri_replace(ud, uri_find, uri_replace, d):
                 if uri_find_decoded.index(i) == 2:
                     basename = None
                     if ud.mirrortarball:
-                        basename = os.path.basename(ud.localpath)
+                        basename = os.path.basename(ud.mirrortarball)
                     elif ud.localpath:
                         basename = os.path.basename(ud.localpath)
                     if basename and result_decoded[loc].endswith("/"):
