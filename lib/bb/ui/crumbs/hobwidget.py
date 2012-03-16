@@ -516,7 +516,6 @@ class HobTabBar(gtk.DrawingArea):
         cr.fill()
 
     def draw_indicator(self, cr, i):
-        style = self.get_style()
         tab_x = self.children[i]["x"]
         tab_y = self.children[i]["y"]
         number = self.children[i]["indicator_number"]
@@ -528,7 +527,6 @@ class HobTabBar(gtk.DrawingArea):
         # x position is offset(tab_width*3/4 - icon_width/2) + start_pos(tab_x)
         x = tab_x + self.tab_width * 3/4 - dest_w/2
         y = tab_y + self.tab_height/2 - dest_h/2
-        cr.move_to(tab_x, tab_y)
         r = min(dest_w, dest_h)/2
         color = cr.set_source_color(gtk.gdk.color_parse(HobColors.ORANGE))
         cr.arc(x + r, y + r, r, 0, 2*math.pi)
