@@ -43,7 +43,7 @@ class RunningBuildModel (gtk.TreeStore):
 
     def config_model_filter(self, model, it):
         msg = model.get(it, self.COL_MESSAGE)[0]
-        if msg == None or type(msg) != str:
+        if not msg or type(msg) != str:
             return False
         if msg.startswith("\nOE Build Configuration:\n"):
             return True
@@ -51,7 +51,7 @@ class RunningBuildModel (gtk.TreeStore):
 
     def failure_model_filter(self, model, it):
         color = model.get(it, self.COL_COLOR)[0]
-        if color == None:
+        if not color:
             return False
         if color == HobColors.ERROR:
             return True

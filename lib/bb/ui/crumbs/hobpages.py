@@ -34,7 +34,7 @@ class HobPage (gtk.VBox):
         self.builder = builder
         self.builder_width, self.builder_height = self.builder.size_request()
 
-        if title == None:
+        if not title:
             self.title = "HOB -- Image Creator"
         else:
             self.title = title
@@ -62,7 +62,7 @@ class HobPage (gtk.VBox):
         label.set_markup("<span font_desc=\'14\'>%s</span>" % self.title)
         hbox.pack_start(label, expand=False, fill=False, padding=20)
 
-        if widget != None:
+        if widget:
             # add the widget in the event box
             hbox.pack_end(widget, expand=False, fill=False, padding=padding)
         eventbox.add(hbox)

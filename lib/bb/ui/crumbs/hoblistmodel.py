@@ -713,7 +713,7 @@ class RecipeListModel(gtk.ListStore):
         return None
 
     def set_selected_image(self, img):
-        if img == None:
+        if not img:
             return
         path = self.find_path_for_item(img)
         self.include_item(item_path=path,

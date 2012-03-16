@@ -366,7 +366,7 @@ class HobTabBar(gtk.DrawingArea):
             child["x"] = self.tab_x + i * self.tab_width
             child["y"] = self.tab_y
 
-        if self.blank_rectangle != None:
+        if self.blank_rectangle:
             self.resize_blank_rectangle()
 
     def resize_blank_rectangle(self):
@@ -553,7 +553,7 @@ class HobTabBar(gtk.DrawingArea):
         self.queue_draw()
 
     def set_blank_size(self, x, y, w, h):
-        if self.blank_rectangle == None or self.blank_rectangle.x != x or self.blank_rectangle.width != w:
+        if not self.blank_rectangle or self.blank_rectangle.x != x or self.blank_rectangle.width != w:
             self.emit("blank-area-changed", x, y, w, h)
 
         return gtk.gdk.Rectangle(x, y, w, h)
@@ -640,7 +640,7 @@ class HobNotebook(gtk.VBox):
         if not notebook:
             return
         title = notebook.get_tab_label_text(notebook_child)
-        if title == None:
+        if not title:
             return
         for child in self.tabbar.children:
             if child["title"] == title:

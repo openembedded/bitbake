@@ -64,9 +64,9 @@ class ImageDetailsPage (HobPage):
             self.hbox.set_border_width(15)
             self.add(self.hbox)
 
-            if widget != None:
+            if widget:
                 row = 1
-            elif varlist != None and vallist != None:
+            elif varlist and vallist:
                 # pack the icon and the text on the left
                 row = len(varlist)
             self.table = gtk.Table(row, 20, True)
@@ -75,18 +75,18 @@ class ImageDetailsPage (HobPage):
 
             colid = 0
             self.line_widgets = {}
-            if icon != None:
+            if icon:
                 self.table.attach(icon, colid, colid + 2, 0, 1)
                 colid = colid + 2
-            if widget != None:
+            if widget:
                 self.table.attach(widget, colid, 20, 0, 1)
-            elif varlist != None and vallist != None:
+            elif varlist and vallist:
                 for line in range(0, row):
                     self.line_widgets[varlist[line]] = self.text2label(varlist[line], vallist[line])
                     self.table.attach(self.line_widgets[varlist[line]], colid, 20, line, line + 1)
 
             # pack the button on the right
-            if button != None:
+            if button:
                 self.hbox.pack_end(button, expand=False, fill=False)
 
         def update_line_widgets(self, variable, value):
