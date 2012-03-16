@@ -109,38 +109,38 @@ class HobViewTable (gtk.VBox):
         self.toggle_columns = []
         self.table_tree.connect("row-activated", self.row_activated_cb)
 
-        for i in range(len(columns)):
-            col = gtk.TreeViewColumn(columns[i]['col_name'])
+        for i, column in enumerate(columns):
+            col = gtk.TreeViewColumn(column['col_name'])
             col.set_clickable(True)
             col.set_resizable(True)
-            col.set_sort_column_id(columns[i]['col_id'])
-            if 'col_min' in columns[i].keys():
-                col.set_min_width(columns[i]['col_min'])
-            if 'col_max' in columns[i].keys():
-                col.set_max_width(columns[i]['col_max'])
+            col.set_sort_column_id(column['col_id'])
+            if 'col_min' in column.keys():
+                col.set_min_width(column['col_min'])
+            if 'col_max' in column.keys():
+                col.set_max_width(column['col_max'])
             self.table_tree.append_column(col)
 
-            if (not 'col_style' in columns[i].keys()) or columns[i]['col_style'] == 'text':
+            if (not 'col_style' in column.keys()) or column['col_style'] == 'text':
                 cell = gtk.CellRendererText()
                 col.pack_start(cell, True)
-                col.set_attributes(cell, text=columns[i]['col_id'])
-            elif columns[i]['col_style'] == 'check toggle':
+                col.set_attributes(cell, text=column['col_id'])
+            elif column['col_style'] == 'check toggle':
                 cell = gtk.CellRendererToggle()
                 cell.set_property('activatable', True)
                 cell.connect("toggled", self.toggled_cb, i, self.table_tree)
                 self.toggle_id = i
                 col.pack_end(cell, True)
-                col.set_attributes(cell, active=columns[i]['col_id'])
-                self.toggle_columns.append(columns[i]['col_name'])
-            elif columns[i]['col_style'] == 'radio toggle':
+                col.set_attributes(cell, active=column['col_id'])
+                self.toggle_columns.append(column['col_name'])
+            elif column['col_style'] == 'radio toggle':
                 cell = gtk.CellRendererToggle()
                 cell.set_property('activatable', True)
                 cell.set_radio(True)
                 cell.connect("toggled", self.toggled_cb, i, self.table_tree)
                 self.toggle_id = i
                 col.pack_end(cell, True)
-                col.set_attributes(cell, active=columns[i]['col_id'])
-                self.toggle_columns.append(columns[i]['col_name'])
+                col.set_attributes(cell, active=column['col_id'])
+                self.toggle_columns.append(column['col_name'])
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)

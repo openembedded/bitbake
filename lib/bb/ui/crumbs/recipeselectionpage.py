@@ -127,16 +127,16 @@ class RecipeSelectionPage (HobPage):
         self.ins = HobNotebook()
         self.tables = [] # we need modify table when the dialog is shown
         # append the tabs in order
-        for i in range(len(self.pages)):
-            columns = self.pages[i]['columns']
+        for page in self.pages:
+            columns = page['columns']
             tab = HobViewTable(columns)
-            filter = self.pages[i]['filter']
+            filter = page['filter']
             tab.set_model(self.recipe_model.tree_model(filter))
             tab.connect("toggled", self.table_toggled_cb)
-            if self.pages[i]['name'] == "Included":
+            if page['name'] == "Included":
                 tab.connect("row-activated", self.tree_row_activated_cb)
 
-            label = gtk.Label(self.pages[i]['name'])
+            label = gtk.Label(page['name'])
             self.ins.append_page(tab, label)
             self.tables.append(tab)
 
