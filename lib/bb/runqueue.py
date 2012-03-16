@@ -875,7 +875,7 @@ class RunQueue:
             bb.msg.fatal("RunQueue", "check_stamps fatal internal error")
         return current
 
-    def check_stamp_task(self, task, taskname = None):
+    def check_stamp_task(self, task, taskname = None, recurse = False):
         def get_timestamp(f):
             try:
                 if not os.access(f, os.F_OK):
@@ -930,7 +930,8 @@ class RunQueue:
                     if t1 < t2:
                         logger.debug(2, 'Stampfile %s < %s', stampfile, stampfile2)
                         iscurrent = False
-
+                    if recurse and iscurrent:
+                        iscurrent = self.check_stamp_task(dep, recurse=True)
         return iscurrent
 
     def execute_runqueue(self):
@@ -1648,7 +1649,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
 
             taskname = self.rqdata.runq_task[realtask] + "_setscene"
-            if self.rq.check_stamp_task(realtask, self.rqdata.runq_task[realtask]):
+            if self.rq.check_stamp_task(realtask, self.rqdata.runq_task[realtask], recurse = True):
                 logger.debug(2, 'Stamp for underlying task %s(%s) is current, so skipping setscene variant',
                              task, self.rqdata.get_user_idstring(realtask))
                 self.task_failoutright(task)
