@@ -472,7 +472,7 @@ class RunQueueData:
                             dep = taskData.fn_index[depdata]
                             taskid = taskData.gettask_id(dep, idependtask, False)
                             if taskid is None:
-                                bb.msg.fatal("RunQueue", "Task %s in %s depends upon nonexistant task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
+                                bb.msg.fatal("RunQueue", "Task %s in %s depends upon non-existent task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
                             depends.append(taskid)
                             if depdata != fnid:
                                 tdepends_fnid[fnid].add(taskid)
@@ -1513,7 +1513,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     dep = self.rqdata.taskData.fn_index[depdata]
                     taskid = self.rqdata.get_task_id(self.rqdata.taskData.getfn_id(dep), idependtask.replace("_setscene", ""))
                     if taskid is None:
-                        bb.msg.fatal("RunQueue", "Task %s depends upon nonexistant task %s:%s" % (self.rqdata.taskData.tasks_name[realid], dep, idependtask))
+                        bb.msg.fatal("RunQueue", "Task %s depends upon non-existent task %s:%s" % (self.rqdata.taskData.tasks_name[realid], dep, idependtask))
 
                     sq_revdeps_squash[self.rqdata.runq_setscene.index(task)].add(self.rqdata.runq_setscene.index(taskid))
                     # Have to zero this to avoid circular dependencies
