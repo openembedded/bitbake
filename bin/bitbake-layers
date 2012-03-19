@@ -213,7 +213,7 @@ Options:
             items_listed = True;
 
         if not items_listed:
-            logger.note('No overlayed files found')
+            logger.plain('No overlayed files found.')
 
 
     def do_show_recipes(self, args):
