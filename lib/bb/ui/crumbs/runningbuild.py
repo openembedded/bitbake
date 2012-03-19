@@ -231,8 +231,8 @@ class RunningBuild (gobject.GObject):
                                       HobColors.OK,
                                       0))
             if pbar:
-                pbar.update(0, None, bb.event.getName(event))
-                pbar.set_title()
+                pbar.update(0, self.progress_total)
+                pbar.set_title(bb.event.getName(event))
 
         elif isinstance(event, bb.event.BuildCompleted):
             failures = int (event._failures)
