@@ -65,7 +65,7 @@ class HobHandler(gobject.GObject):
     (CFG_AVAIL_LAYERS, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDKMACH, FILES_MATCH_CLASS, PARSE_CONFIG, PARSE_BBFILES, GENERATE_TGTS, GENERATE_PACKAGEINFO, BUILD_TARGET_RECIPES, BUILD_TARGET_IMAGE, CMD_END) = range(13)
     (LAYERS_REFRESH, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
 
-    def __init__(self, server, server_addr, client_addr, recipe_model, package_model):
+    def __init__(self, server, recipe_model, package_model):
         super(HobHandler, self).__init__()
 
         self.build = RunningBuild(sequential=True)
@@ -84,20 +84,11 @@ class HobHandler(gobject.GObject):
         self.error_msg = ""
         self.initcmd = None
 
-        self.split_model = False
-        if server_addr and client_addr:
-            self.split_model = (server_addr != client_addr)
-            self.reset_server() # reset server if server was found just now
-        self.server_addr = server_addr
-
     def kick(self):
         import xmlrpclib
         try:
             # kick the while thing off
-            if self.split_model:
-                self.commands_async.append(self.CFG_AVAIL_LAYERS)
-            else:
-                self.commands_async.append(self.CFG_PATH_LAYERS)
+            self.commands_async.append(self.CFG_PATH_LAYERS)
             self.commands_async.append(self.CFG_FILES_DISTRO)
             self.commands_async.append(self.CFG_FILES_MACH)
             self.commands_async.append(self.CFG_FILES_SDKMACH)
@@ -383,9 +374,6 @@ class HobHandler(gobject.GObject):
             # leave the workdir in a usable state
             self.server.runCommand(["stateShutdown"])
 
-    def reset_server(self):
-        self.server.runCommand(["resetCooker"])
-
     def reset_build(self):
         self.build.reset()
 
@@ -427,10 +415,7 @@ class HobHandler(gobject.GObject):
             pmake = int(pmake.lstrip("-j "))
         params["pmake"] = pmake
 
-        image_addr = self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
-        if self.server_addr:
-            image_addr = "http://" + self.server_addr + ":" + image_addr
-        params["image_addr"] = image_addr
+        params["image_addr"] = self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
 
         image_extra_size = self.server.runCommand(["getVariable", "IMAGE_ROOTFS_EXTRA_SPACE"])
         if not image_extra_size:

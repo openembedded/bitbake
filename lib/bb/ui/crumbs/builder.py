@@ -260,21 +260,14 @@ class Builder(gtk.Window):
         self.show_all()
         self.nb.set_current_page(0)
 
-    def get_split_model(self):
-        return self.handler.split_model
-
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
         self.configuration.load(self.template)
 
-        if self.get_split_model():
-            if not set(self.configuration.layers) <= set(self.parameters.all_layers):
+        for layer in self.configuration.layers:
+            if not os.path.exists(layer+'/conf/layer.conf'):
                 return False
-        else:
-            for layer in self.configuration.layers:
-                if not os.path.exists(layer+'/conf/layer.conf'):
-                    return False
 
         self.switch_page(self.LAYER_CHANGED)
 
@@ -674,7 +667,6 @@ class Builder(gtk.Window):
         dialog = LayerSelectionDialog(title = "Layer Selection",
                      layers = copy.deepcopy(self.configuration.layers),
                      all_layers = self.parameters.all_layers,
-                     split_model = self.get_split_model(),
                      parent = self,
                      flags = gtk.DIALOG_MODAL
                          | gtk.DIALOG_DESTROY_WITH_PARENT
@@ -748,7 +740,6 @@ class Builder(gtk.Window):
             all_distros = self.parameters.all_distros,
             all_sdk_machines = self.parameters.all_sdk_machines,
             max_threads = self.parameters.max_threads,
-            split_model = self.get_split_model(),
             parent = self,
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT

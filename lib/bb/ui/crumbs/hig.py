@@ -170,23 +170,20 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         dialog.destroy()
 
-    def gen_entry_widget(self, split_model, content, parent, tooltip=""):
+    def gen_entry_widget(self, content, parent, tooltip=""):
         hbox = gtk.HBox(False, 12)
         entry = gtk.Entry()
         entry.set_text(content)
 
-        if split_model:
-            hbox.pack_start(entry, expand=True, fill=True)
-        else:
-            table = gtk.Table(1, 10, True)
-            hbox.pack_start(table, expand=True, fill=True)
-            table.attach(entry, 0, 9, 0, 1)
-            image = gtk.Image()
-            image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_BUTTON)
-            open_button = gtk.Button()
-            open_button.set_image(image)
-            open_button.connect("clicked", self.entry_widget_select_path_cb, parent, entry)
-            table.attach(open_button, 9, 10, 0, 1)
+        table = gtk.Table(1, 10, True)
+        hbox.pack_start(table, expand=True, fill=True)
+        table.attach(entry, 0, 9, 0, 1)
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_OPEN,gtk.ICON_SIZE_BUTTON)
+        open_button = gtk.Button()
+        open_button.set_image(image)
+        open_button.connect("clicked", self.entry_widget_select_path_cb, parent, entry)
+        table.attach(open_button, 9, 10, 0, 1)
 
         info = HobInfoButton(tooltip, self)
         hbox.pack_start(info, expand=False, fill=False)
@@ -421,7 +418,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
-            max_threads, split_model, parent, flags, buttons):
+            max_threads, parent, flags, buttons):
         super(AdvancedSettingDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
@@ -432,7 +429,6 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.all_distros = all_distros
         self.all_sdk_machines = all_sdk_machines
         self.max_threads = max_threads
-        self.split_model = split_model 
 
         # class members for internal use
         self.pkgfmt_store = None
@@ -586,7 +582,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         label = self.gen_label_widget("<span weight=\"bold\">Set Download Directory:</span>")
         tooltip = "Select a folder that caches the upstream project source code"
-        dldir_widget, self.dldir_text = self.gen_entry_widget(self.split_model, self.configuration.dldir, self, tooltip)
+        dldir_widget, self.dldir_text = self.gen_entry_widget(self.configuration.dldir, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(dldir_widget, expand=False, fill=False)
 
@@ -594,7 +590,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE Directory:</span>")
         tooltip = "Select a folder that caches your prebuilt results"
-        sstatedir_widget, self.sstatedir_text = self.gen_entry_widget(self.split_model, self.configuration.sstatedir, self, tooltip)
+        sstatedir_widget, self.sstatedir_text = self.gen_entry_widget(self.configuration.sstatedir, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(sstatedir_widget, expand=False, fill=False)
 
@@ -602,7 +598,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE Mirror:</span>")
         tooltip = "Select the prebuilt mirror that will fasten your build speed"
-        sstatemirror_widget, self.sstatemirror_text = self.gen_entry_widget(self.split_model, self.configuration.sstatemirror, self, tooltip)
+        sstatemirror_widget, self.sstatemirror_text = self.gen_entry_widget(self.configuration.sstatemirror, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(sstatemirror_widget, expand=False, fill=False)
 
@@ -850,7 +846,7 @@ class LayerSelectionDialog (CrumbsDialog):
             layer_store.remove(iter)
 
 
-    def gen_layer_widget(self, split_model, layers, layers_avail, window, tooltip=""):
+    def gen_layer_widget(self, layers, layers_avail, window, tooltip=""):
         hbox = gtk.HBox(False, 6)
 
         layer_tv = gtk.TreeView()
@@ -874,57 +870,36 @@ class LayerSelectionDialog (CrumbsDialog):
         table_layer = gtk.Table(2, 10, False)
         hbox.pack_start(table_layer, expand=True, fill=True)
 
-        if split_model:
-            table_layer.attach(scroll, 0, 10, 0, 2)
+        table_layer.attach(scroll, 0, 10, 0, 1)
 
-            layer_store = gtk.ListStore(gobject.TYPE_STRING, gobject.TYPE_BOOLEAN)
-            for layer in layers:
-                layer_store.set(layer_store.append(), 0, layer, 1, True)
-            for layer in layers_avail:
-                if layer not in layers:
-                    layer_store.set(layer_store.append(), 0, layer, 1, False)
+        layer_store = gtk.ListStore(gobject.TYPE_STRING)
+        for layer in layers:
+            layer_store.set(layer_store.append(), 0, layer)
 
-            col1 = gtk.TreeViewColumn('Included')
-            layer_tv.append_column(col1)
-
-            cell1 = gtk.CellRendererToggle()
-            cell1.connect("toggled", self.layer_widget_toggled_cb, layer_store)
-            col1.pack_start(cell1, True)
-            col1.set_attributes(cell1, active=1)
-
-        else:
-            table_layer.attach(scroll, 0, 10, 0, 1)
-
-            layer_store = gtk.ListStore(gobject.TYPE_STRING)
-            for layer in layers:
-                layer_store.set(layer_store.append(), 0, layer)
-
-            image = gtk.Image()
-            image.set_from_stock(gtk.STOCK_ADD,gtk.ICON_SIZE_MENU)
-            add_button = gtk.Button()
-            add_button.set_image(image)
-            add_button.connect("clicked", self.layer_widget_add_clicked_cb, layer_store, window)
-            table_layer.attach(add_button, 0, 5, 1, 2, gtk.EXPAND | gtk.FILL, 0, 0, 6)
-            image = gtk.Image()
-            image.set_from_stock(gtk.STOCK_REMOVE,gtk.ICON_SIZE_MENU)
-            del_button = gtk.Button()
-            del_button.set_image(image)
-            del_button.connect("clicked", self.layer_widget_del_clicked_cb, tree_selection, layer_store)
-            table_layer.attach(del_button, 5, 10, 1, 2, gtk.EXPAND | gtk.FILL, 0, 0, 6)
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_ADD,gtk.ICON_SIZE_MENU)
+        add_button = gtk.Button()
+        add_button.set_image(image)
+        add_button.connect("clicked", self.layer_widget_add_clicked_cb, layer_store, window)
+        table_layer.attach(add_button, 0, 5, 1, 2, gtk.EXPAND | gtk.FILL, 0, 0, 6)
+        image = gtk.Image()
+        image.set_from_stock(gtk.STOCK_REMOVE,gtk.ICON_SIZE_MENU)
+        del_button = gtk.Button()
+        del_button.set_image(image)
+        del_button.connect("clicked", self.layer_widget_del_clicked_cb, tree_selection, layer_store)
+        table_layer.attach(del_button, 5, 10, 1, 2, gtk.EXPAND | gtk.FILL, 0, 0, 6)
         layer_tv.set_model(layer_store)
 
         hbox.show_all()
 
         return hbox, layer_store
 
-    def __init__(self, title, layers, all_layers, split_model,
-            parent, flags, buttons):
+    def __init__(self, title, layers, all_layers, parent, flags, buttons):
         super(LayerSelectionDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
         self.layers = layers
         self.all_layers = all_layers
-        self.split_model = split_model
         self.layers_changed = False
 
         # class members for internal use
@@ -938,17 +913,14 @@ class LayerSelectionDialog (CrumbsDialog):
         hbox_top = gtk.HBox()
         self.vbox.pack_start(hbox_top, expand=False, fill=False)
 
-        if self.split_model:
-            label = self.gen_label_widget("<b>Select Layers:</b>\n(Available layers under '${COREBASE}/layers/' directory)")
-        else:
-            label = self.gen_label_widget("<b>Select Layers:</b>")
+        label = self.gen_label_widget("<b>Select Layers:</b>")
         hbox_top.pack_start(label, expand=False, fill=False)
 
         tooltip = "Layer is a collection of bb files and conf files"
         info = HobInfoButton(tooltip, self)
         hbox_top.pack_end(info, expand=False, fill=False)
 
-        layer_widget, self.layer_store = self.gen_layer_widget(self.split_model, self.layers, self.all_layers, self, None)
+        layer_widget, self.layer_store = self.gen_layer_widget(self.layers, self.all_layers, self, None)
         layer_widget.set_size_request(-1, 180)
         self.vbox.pack_start(layer_widget, expand=True, fill=True)
 
@@ -963,12 +935,7 @@ class LayerSelectionDialog (CrumbsDialog):
         it = model.get_iter_first()
         layers = []
         while it:
-            if self.split_model:
-                inc = model.get_value(it, 1)
-                if inc:
-                    layers.append(model.get_value(it, 0))
-            else:
-                layers.append(model.get_value(it, 0))
+            layers.append(model.get_value(it, 0))
             it = model.iter_next(it)
 
         self.layers_changed = (self.layers != layers)

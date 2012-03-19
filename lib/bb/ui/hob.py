@@ -47,15 +47,6 @@ def event_handle_idle_func(eventHandler, hobHandler):
     return True
 
 def main (server = None, eventHandler = None):
-    bitbake_server = None
-    client_addr = None
-    server_addr = None
-
-    if not eventHandler:
-        helper = uihelper.BBUIHelper()
-        server, eventHandler, server_addr, client_addr = helper.findServerDetails()
-    bitbake_server = server
-
     gobject.threads_init()
 
     # That indicates whether the Hob and the bitbake server are
@@ -64,7 +55,7 @@ def main (server = None, eventHandler = None):
     recipe_model = RecipeListModel()
     package_model = PackageListModel()
 
-    hobHandler = HobHandler(bitbake_server, server_addr, client_addr, recipe_model, package_model)
+    hobHandler = HobHandler(server, recipe_model, package_model)
     if hobHandler.kick() == False:
         return 1
     builder = Builder(hobHandler, recipe_model, package_model)
