@@ -38,6 +38,11 @@ class PersistentTooltip(gtk.Window):
 	def __init__(self, markup):
 		gtk.Window.__init__(self, gtk.WINDOW_POPUP)
 
+		# Inherit the system theme for a tooltip
+		style = gtk.rc_get_style_by_paths(gtk.settings_get_default(),
+						'gtk-tooltip', 'gtk-tooltip', gobject.TYPE_NONE)
+		self.set_style(style)
+
 		# The placement of the close button on the tip should reflect how the
 		# window manager of the users system places close buttons. Try to read
 		# the metacity gconf key to determine whether the close button is on the
@@ -96,16 +101,27 @@ class PersistentTooltip(gtk.Window):
 		hbox.show()
 		vbox.pack_end(hbox, True, True, 6)
 		self.label = gtk.Label()
+		# We want to match the colours of the normal tooltips, as dictated by
+		# the users gtk+-2.0 theme, wherever possible - on some systems this
+		# requires explicitly setting a fg_color for the label which matches the
+		# tooltip_fg_color
+		settings = gtk.settings_get_default()
+		colours = settings.get_property('gtk-color-scheme').split('\n')
+		# remove any empty lines, there's likely to be a trailing one after
+		# calling split on a dictionary-like string
+		colours = filter(None, colours)
+		for col in colours:
+			item, val = col.split(': ')
+			if item == 'tooltip_fg_color':
+				style = self.label.get_style()
+				style.fg[gtk.STATE_NORMAL] = gtk.gdk.color_parse(val)
+				self.label.set_style(style)
+				break # we only care for the tooltip_fg_color
 		self.label.set_markup(markup)
 		self.label.show()
 		hbox.pack_end(self.label, True, True, 6)
 
 		self.connect("key-press-event", self._catch_esc_cb)
-
-		# Inherit the system theme for a tooltip
-		style = gtk.rc_get_style_by_paths(gtk.settings_get_default(),
-			'gtk-tooltip', 'gtk-tooltip', gobject.TYPE_NONE)
-		self.set_style(style)
 
 		self.add(vbox)
 
