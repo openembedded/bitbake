@@ -60,6 +60,20 @@ def explode_version(s):
         s = s[1:]
     return r
 
+def split_version(s):
+    """Split a version string into its constituent parts (PE, PV, PR)"""
+    s = s.strip(" <>=")
+    e = 0
+    if s.count(':'):
+        e = int(s.split(":")[0])
+        s = s.split(":")[1]
+    r = ""
+    if s.count('-'):
+        r = s.rsplit("-", 1)[1]
+        s = s.rsplit("-", 1)[0]
+    v = s
+    return (e, v, r)
+
 def vercmp_part(a, b):
     va = explode_version(a)
     vb = explode_version(b)
