@@ -521,26 +521,38 @@ class HobTabBar(gtk.DrawingArea):
         cr.fill()
 
     def draw_indicator(self, cr, child):
+        text = ("%d" % child["indicator_number"])
+        layout = self.create_pango_layout(text)
+        layout.set_font_description(self.font)
+        textw, texth = layout.get_pixel_size()
+        # draw the back round area
         tab_x = child["x"]
         tab_y = child["y"]
-        number = child["indicator_number"]
         dest_w = int(32 * self.tab_w_ratio)
         dest_h = int(32 * self.tab_h_ratio)
         if dest_h < self.tab_height:
             dest_w = dest_h
-
         # x position is offset(tab_width*3/4 - icon_width/2) + start_pos(tab_x)
         x = tab_x + self.tab_width * 3/4 - dest_w/2
         y = tab_y + self.tab_height/2 - dest_h/2
+
         r = min(dest_w, dest_h)/2
         color = cr.set_source_color(gtk.gdk.color_parse(HobColors.ORANGE))
-        cr.arc(x + r, y + r, r, 0, 2*math.pi)
-        cr.fill()
-
-        text = ("%d" % number)
-        layout = self.create_pango_layout(text)
-        layout.set_font_description(self.font)
-        textw, texth = layout.get_pixel_size()
+        # check round back area can contain the text or not
+        back_round_can_contain_width = float(2 * r * 0.707)
+        if float(textw) > back_round_can_contain_width:
+            xoff = (textw - int(back_round_can_contain_width)) / 2
+            cr.move_to(x + r - xoff, y + r + r)
+            cr.arc((x + r - xoff), (y + r), r, 0.5*math.pi, 1.5*math.pi)
+            cr.fill() # left half round
+            cr.rectangle((x + r - xoff), y, 2 * xoff, 2 * r)
+            cr.fill() # center rectangle
+            cr.arc((x + r + xoff), (y + r), r, 1.5*math.pi, 0.5*math.pi)
+            cr.fill() # right half round
+        else:
+            cr.arc((x + r), (y + r), r, 0, 2*math.pi)
+            cr.fill()
+        # draw the number text
         x = x + (dest_w/2)-(textw/2)
         y = y + (dest_h/2) - (texth/2)
         cr.move_to(x, y)
