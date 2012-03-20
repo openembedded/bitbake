@@ -622,6 +622,8 @@ class HobNotebook(gtk.VBox):
         self.search.set_style(style)
         self.search.set_text(name)
         self.search.set_editable(False)
+        self.search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, gtk.STOCK_CLEAR)
+        self.search.connect("icon-release", self.set_search_entry_clear_cb)
         self.search.show()
         self.align = gtk.Alignment(xalign=1.0, yalign=0.7)
         self.align.add(self.search)
@@ -682,9 +684,16 @@ class HobNotebook(gtk.VBox):
         style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.BLACK, False, False)
         search.set_style(style)
 
-    def set_search_entry_reset_cb(self, search, event):
-        style = search.get_style()
+    def reset_entry(self, entry):
+        style = entry.get_style()
         style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.GRAY, False, False)
-        search.set_style(style)
-        search.set_text(self.search_name)
-        search.set_editable(False)
+        entry.set_style(style)
+        entry.set_text(self.search_name)
+        entry.set_editable(False)
+
+    def set_search_entry_reset_cb(self, search, event):
+        self.reset_entry(search)
+
+    def set_search_entry_clear_cb(self, search, icon_pos, event):
+        self.reset_entry(search)
+
