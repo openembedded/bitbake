@@ -496,16 +496,19 @@ class HobTabBar(gtk.DrawingArea):
 
         r = height / 10
         if self.tab_pressed == True:
-            for xoff, yoff in [(1, 0), (2, 0)]:
-                cr.set_source_color(gtk.gdk.color_parse(HobColors.PALE_GREEN))
+            for xoff, yoff, c1, c2 in [(1, 0, HobColors.SLIGHT_DARK, HobColors.DARK), (2, 0, HobColors.GRAY, HobColors.LIGHT_GRAY)]:
+                cr.set_source_color(gtk.gdk.color_parse(c1))
+                cr.move_to(x + xoff, y + height + yoff)
+                cr.line_to(x + xoff, r + yoff)
+                cr.arc(x + r + xoff, y + r + yoff, r, math.pi, 1.5*math.pi)
                 cr.move_to(x + r + xoff, y + yoff)
                 cr.line_to(x + width - r + xoff, y + yoff)
-                cr.arc(x + width - r+ xoff, y + r + yoff, r, 1.5*math.pi, 2*math.pi)
+                cr.arc(x + width - r + xoff, y + r + yoff, r, 1.5*math.pi, 2*math.pi)
+                cr.stroke()
+                cr.set_source_color(gtk.gdk.color_parse(c2))
                 cr.move_to(x + width + xoff, r + yoff)
                 cr.line_to(x + width + xoff, y + height + yoff)
                 cr.line_to(x + xoff, y + height + yoff)
-                cr.line_to(x + xoff, r + yoff)
-                cr.arc(x + r + xoff, y + r + yoff, r, math.pi, 1.5*math.pi)
                 cr.stroke()
             x = x + 2
             y = y + 2
