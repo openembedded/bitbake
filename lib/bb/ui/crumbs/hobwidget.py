@@ -344,6 +344,7 @@ class HobTabBar(gtk.DrawingArea):
                    and (child["y"] < y) and (y < child["y"] + self.tab_height):
                    self.current_child = child
                    result = True
+                   self.grab_focus()
                    break
 
             # check the blank area is focus in or not
