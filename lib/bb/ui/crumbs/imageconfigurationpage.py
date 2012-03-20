@@ -46,7 +46,7 @@ class ImageConfigurationPage (HobPage):
         self.toolbar.set_style(gtk.TOOLBAR_BOTH)
 
         template_button = self.append_toolbar_button(self.toolbar,
-            "Template",
+            "Templates",
             hic.ICON_TEMPLATES_DISPLAY_FILE,
             hic.ICON_TEMPLATES_HOVER_FILE,
             "Load a hob building template saved before",
