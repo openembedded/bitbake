@@ -64,7 +64,7 @@ class PersistentTooltip(gtk.Window):
 		# We must be modal to ensure we grab focus when presented from a gtk.Dialog
 		self.set_modal(True)
 
-		self.set_border_width(6)
+		self.set_border_width(0)
 		self.set_position(gtk.WIN_POS_MOUSE)
 		self.set_opacity(0.95)
 
@@ -91,10 +91,14 @@ class PersistentTooltip(gtk.Window):
 
 		self.set_default(self.button)
 
+		hbox = gtk.HBox(True, 6)
+		hbox.set_border_width(6)
+		hbox.show()
+		vbox.pack_end(hbox, True, True, 6)
 		self.label = gtk.Label()
 		self.label.set_markup(markup)
 		self.label.show()
-		vbox.pack_end(self.label, True, True, 6)
+		hbox.pack_end(self.label, True, True, 6)
 
 		self.connect("key-press-event", self._catch_esc_cb)
 
