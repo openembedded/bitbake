@@ -330,12 +330,15 @@ class ImageConfigurationPage (HobPage):
         # append and set active
         while it:
             path = image_model.get_path(it)
+            it = image_model.iter_next(it)
             image_name = image_model[path][recipe_model.COL_NAME]
+            if image_name == self.builder.recipe_model.__dummy_image__:
+                continue
             self.image_combo.append_text(image_name)
             if image_name == selected_image:
                 active = cnt
-            it = image_model.iter_next(it)
             cnt = cnt + 1
+        self.image_combo.append_text(self.builder.recipe_model.__dummy_image__)
         self._image_combo_connect_signal()
 
         self.image_combo.set_active(-1)
