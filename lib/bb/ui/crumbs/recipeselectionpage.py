@@ -109,7 +109,7 @@ class RecipeSelectionPage (HobPage):
     ]
 
     def __init__(self, builder = None):
-        super(RecipeSelectionPage, self).__init__(builder, "Recipe Selection")
+        super(RecipeSelectionPage, self).__init__(builder, "Recipes")
 
         # set invisiable members
         self.recipe_model = self.builder.recipe_model

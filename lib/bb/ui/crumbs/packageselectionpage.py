@@ -87,7 +87,7 @@ class PackageSelectionPage (HobPage):
     ]
 
     def __init__(self, builder):
-        super(PackageSelectionPage, self).__init__(builder, "Package Selection")
+        super(PackageSelectionPage, self).__init__(builder, "Packages")
 
         # set invisiable members
         self.package_model = self.builder.package_model
