@@ -119,7 +119,7 @@ class HobHandler(gobject.GObject):
             self.generating = False
 
     def run_next_command(self, initcmd=None):
-        if initcmd:
+        if initcmd != None:
             self.initcmd = initcmd
 
         if self.commands_async:
@@ -127,7 +127,7 @@ class HobHandler(gobject.GObject):
             next_command = self.commands_async.pop(0)
         else:
             self.clear_busy()
-            if self.initcmd:
+            if self.initcmd != None:
                 self.emit("command-succeeded", self.initcmd)
             return
 
