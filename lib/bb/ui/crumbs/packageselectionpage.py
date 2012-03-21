@@ -34,44 +34,22 @@ class PackageSelectionPage (HobPage):
 
     pages = [
         {
-         'name'    : 'All packages',
-         'filter'  : {},
-         'columns' : [{
-                       'col_name' : 'Name',
-                       'col_id'   : PackageListModel.COL_NAME,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 400
-                      }, {
-                       'col_name' : 'size',
-                       'col_id'   : PackageListModel.COL_SIZE,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 500
-                      }, {
-                       'col_name' : 'Included',
-                       'col_id'   : PackageListModel.COL_INC,
-                       'col_style': 'check toggle',
-                       'col_min'  : 50,
-                       'col_max'  : 50
-                      }]
-        }, {
          'name'    : 'Included',
          'filter'  : { PackageListModel.COL_INC : [True] },
          'columns' : [{
-                       'col_name' : 'Name',
+                       'col_name' : 'Package Name',
                        'col_id'   : PackageListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 300
                       }, {
-                       'col_name' : 'Brought by',
+                       'col_name' : 'Brought in by',
                        'col_id'   : PackageListModel.COL_BINB,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 350
                       }, {
-                       'col_name' : 'size',
+                       'col_name' : 'Size',
                        'col_id'   : PackageListModel.COL_SIZE,
                        'col_style': 'text',
                        'col_min'  : 100,
@@ -83,6 +61,28 @@ class PackageSelectionPage (HobPage):
                        'col_min'  : 50,
                        'col_max'  : 50
                      }]
+        }, {
+         'name'    : 'All packages',
+         'filter'  : {},
+         'columns' : [{
+                       'col_name' : 'Package Name',
+                       'col_id'   : PackageListModel.COL_NAME,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 400
+                      }, {
+                       'col_name' : 'Size',
+                       'col_id'   : PackageListModel.COL_SIZE,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 500
+                      }, {
+                       'col_name' : 'Included',
+                       'col_id'   : PackageListModel.COL_INC,
+                       'col_style': 'check toggle',
+                       'col_min'  : 50,
+                       'col_max'  : 50
+                      }]
         }
     ]
 
