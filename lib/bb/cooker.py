@@ -471,6 +471,7 @@ class BBCooker:
             description = self.status.description[fn]
             rdepends = self.status.rundeps[fn]
             rrecs = self.status.runrecs[fn]
+            inherits = self.status.inherits.get(fn, None)
             if pn not in depend_tree["pn"]:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = fn
@@ -479,6 +480,7 @@ class BBCooker:
                 depend_tree["pn"][pn]["license"] = lic
                 depend_tree["pn"][pn]["section"] = section
                 depend_tree["pn"][pn]["description"] = description
+                depend_tree["pn"][pn]["inherits"] = inherits
 
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
