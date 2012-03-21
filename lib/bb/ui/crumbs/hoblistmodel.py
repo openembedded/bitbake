@@ -528,6 +528,7 @@ class RecipeListModel(gtk.ListStore):
             desc = event_model["pn"][item]["description"]
             lic = event_model["pn"][item]["license"]
             group = event_model["pn"][item]["section"]
+            inherits = event_model["pn"][item]["inherits"]
             install = []
 
             depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
@@ -537,9 +538,10 @@ class RecipeListModel(gtk.ListStore):
                     atype = 'mltask'
                 else:
                     atype = 'task'
-            elif ('-image-' in name):
-                atype = 'image'
-                install = event_model["rdepends-pkg"].get(item, []) + event_model["rrecs-pkg"].get(item, [])
+            elif ('image.bbclass' in " ".join(inherits)):
+                if name != "hob-image":
+                    atype = 'image'
+                    install = event_model["rdepends-pkg"].get(item, []) + event_model["rrecs-pkg"].get(item, [])
             elif ('meta-' in name):
                 atype = 'toolchain'
             elif (name == 'dummy-image' or name == 'dummy-toolchain'):
