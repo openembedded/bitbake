@@ -227,7 +227,7 @@ class Builder(gtk.Window):
         self.switch_page(self.MACHINE_SELECTION)
 
     def create_visual_elements(self):
-        self.set_title("Hob - Image Creator")
+        self.set_title("Hob")
         self.set_icon_name("applications-development")
         self.set_resizable(True)
         window_width = self.get_screen().get_width()
