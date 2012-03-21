@@ -33,10 +33,33 @@ from bb.ui.crumbs.hobpages import HobPage
 class RecipeSelectionPage (HobPage):
     pages = [
         {
-         'name'    : 'Recipe',
+         'name'    : 'Included',
+         'filter'  : { RecipeListModel.COL_INC  : [True],
+                       RecipeListModel.COL_TYPE : ['recipe', 'task'] },
+         'columns' : [{
+                       'col_name' : 'Recipe Name',
+                       'col_id'   : RecipeListModel.COL_NAME,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 400
+                      }, {
+                       'col_name' : 'Brought in by',
+                       'col_id'   : RecipeListModel.COL_BINB,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 500
+                      }, {
+                       'col_name' : 'Included',
+                       'col_id'   : RecipeListModel.COL_INC,
+                       'col_style': 'check toggle',
+                       'col_min'  : 50,
+                       'col_max'  : 50
+                      }]
+        }, {
+         'name'    : 'All recipes',
          'filter'  : { RecipeListModel.COL_TYPE : ['recipe'] },
          'columns' : [{
-                       'col_name' : 'Recipe',
+                       'col_name' : 'Recipe Name',
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
@@ -61,10 +84,10 @@ class RecipeSelectionPage (HobPage):
                        'col_max'  : 50
                       }]
         }, {
-         'name'    : 'Recipe Collection',
+         'name'    : 'Tasks',
          'filter'  : { RecipeListModel.COL_TYPE : ['task'] },
          'columns' : [{
-                       'col_name' : 'Recipe Collection',
+                       'col_name' : 'Task Name',
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
@@ -75,29 +98,6 @@ class RecipeSelectionPage (HobPage):
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400
-                      }, {
-                       'col_name' : 'Included',
-                       'col_id'   : RecipeListModel.COL_INC,
-                       'col_style': 'check toggle',
-                       'col_min'  : 50,
-                       'col_max'  : 50
-                      }]
-        }, {
-         'name'    : 'Included',
-         'filter'  : { RecipeListModel.COL_INC  : [True],
-                       RecipeListModel.COL_TYPE : ['recipe', 'task'] },
-         'columns' : [{
-                       'col_name' : 'Recipe',
-                       'col_id'   : RecipeListModel.COL_NAME,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 400
-                      }, {
-                       'col_name' : 'Brought by',
-                       'col_id'   : RecipeListModel.COL_BINB,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 500
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : RecipeListModel.COL_INC,
