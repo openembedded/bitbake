@@ -200,7 +200,7 @@ class ImageConfigurationPage (HobPage):
         icon_file = hic.ICON_PACKAGES_DISPLAY_FILE
         hover_file = hic.ICON_PACKAGES_HOVER_FILE
         self.view_packages_button = HobXpmLabelButtonBox(icon_file, hover_file,
-            "View Packages", "Add/remove packages")
+            "View Packages", "Add/remove previously built packages to/from your image")
         self.view_packages_button.connect("button-release-event", self.view_packages_button_clicked_cb)
 
         self.image_separator = gtk.HSeparator()
@@ -213,8 +213,8 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.image_separator, 0, 40, 35, 36)
 
     def set_rcppkg_layout(self):
-        self.gtable.attach(self.view_recipes_button, 0, 20, 28, 32)
-        self.gtable.attach(self.view_packages_button, 20, 40, 28, 32)
+        self.gtable.attach(self.view_recipes_button, 0, 18, 28, 32)
+        self.gtable.attach(self.view_packages_button, 18, 40, 28, 32)
 
     def create_config_build_button(self):
         # Create the "Build packages" and "Just bake" buttons at the bottom
