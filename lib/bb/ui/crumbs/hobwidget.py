@@ -200,8 +200,9 @@ class HobAltButton(gtk.Button):
     """
     A gtk.Button subclass which has no relief, and so is more discrete
     """
-    def __init__(self, label=None):
-        gtk.Button.__init__(self, label)
+    def __init__(self, label):
+        gtk.Button.__init__(self, "<span color='%s'><b>%s</b></span>" % (HobColors.PALE_BLUE, gobject.markup_escape_text(label)))
+        self.child.set_use_markup(True)
         self.set_relief(gtk.RELIEF_NONE)
 
 class HobImageButton(gtk.Button):

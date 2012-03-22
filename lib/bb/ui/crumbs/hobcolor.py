@@ -31,6 +31,7 @@ class HobColors:
     BLACK        = "#000000"
     LIGHT_ORANGE = "#f7a787"
     YELLOW       = "#ffff00"
+    PALE_BLUE    = "#53b8ff"
 
     OK = WHITE
     RUNNING = PALE_GREEN
