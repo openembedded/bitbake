@@ -196,6 +196,26 @@ def soften_color(widget, state=gtk.STATE_NORMAL):
     color.blue = color.blue * blend + style.base[state].blue * (1.0 - blend)
     return color.to_string()
 
+class HobButton(gtk.Button):
+    """
+    A gtk.Button subclass which follows the visual design of Hob for primary
+    action buttons
+
+    label: the text to display as the button's label
+    """
+    def __init__(self, label):
+        gtk.Button.__init__(self, "<span size='x-large'><b>%s</b></span>" % gobject.markup_escape_text(label))
+        self.child.set_use_markup(True)
+
+        style = self.get_style()
+        button_color = gtk.gdk.Color(HobColors.ORANGE)
+        self.modify_bg(gtk.STATE_NORMAL, button_color)
+        self.modify_bg(gtk.STATE_PRELIGHT, button_color)
+        self.modify_bg(gtk.STATE_SELECTED, button_color)
+
+        self.set_flags(gtk.CAN_DEFAULT)
+        self.grab_default()
+
 class HobAltButton(gtk.Button):
     """
     A gtk.Button subclass which has no relief, and so is more discrete
