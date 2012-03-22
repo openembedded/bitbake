@@ -53,6 +53,8 @@ class hic:
     ICON_INFO_HOVER_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('info/info_hover.png'))
     ICON_INDI_CONFIRM_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('indicators/confirmation.png'))
     ICON_INDI_ERROR_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/error.png'))
+    ICON_INDI_REMOVE              = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove.png'))
+    ICON_INDI_ADD                 = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add.png'))
 
 class hcc:
 
