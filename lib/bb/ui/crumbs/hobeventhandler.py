@@ -313,6 +313,26 @@ class HobHandler(gobject.GObject):
             value = extra_setting[key]
             self.server.runCommand(["setVariable", key, value])
 
+    def set_http_proxy(self, http_proxy):
+        self.server.runCommand(["setVariable", "http_proxy", http_proxy])
+
+    def set_https_proxy(self, https_proxy):
+        self.server.runCommand(["setVariable", "https_proxy", https_proxy])
+
+    def set_ftp_proxy(self, ftp_proxy):
+        self.server.runCommand(["setVariable", "ftp_proxy", ftp_proxy])
+
+    def set_all_proxy(self, all_proxy):
+        self.server.runCommand(["setVariable", "all_proxy", all_proxy])
+
+    def set_git_proxy(self, host, port):
+        self.server.runCommand(["setVariable", "GIT_PROXY_HOST", host])
+        self.server.runCommand(["setVariable", "GIT_PROXY_PORT", port])
+
+    def set_cvs_proxy(self, host, port):
+        self.server.runCommand(["setVariable", "CVS_PROXY_HOST", host])
+        self.server.runCommand(["setVariable", "CVS_PROXY_PORT", port])
+
     def request_package_info_async(self):
         self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
@@ -446,4 +466,16 @@ class HobHandler(gobject.GObject):
         params["tune_pkgarch"] = self.server.runCommand(["getVariable", "TUNE_PKGARCH"])  or ""
         params["bb_version"] = self.server.runCommand(["getVariable", "BB_MIN_VERSION"]) or ""
         params["tune_arch"] = self.server.runCommand(["getVariable", "TUNE_ARCH"]) or ""
+
+        params["git_proxy_host"] = self.server.runCommand(["getVariable", "GIT_PROXY_HOST"]) or ""
+        params["git_proxy_port"] = self.server.runCommand(["getVariable", "GIT_PROXY_PORT"]) or ""
+
+        params["http_proxy"] = self.server.runCommand(["getVariable", "http_proxy"]) or ""
+        params["ftp_proxy"] = self.server.runCommand(["getVariable", "ftp_proxy"]) or ""
+        params["https_proxy"] = self.server.runCommand(["getVariable", "https_proxy"]) or ""
+        params["all_proxy"] = self.server.runCommand(["getVariable", "all_proxy"]) or ""
+
+        params["cvs_proxy_host"] = self.server.runCommand(["getVariable", "CVS_PROXY_HOST"]) or ""
+        params["cvs_proxy_port"] = self.server.runCommand(["getVariable", "CVS_PROXY_PORT"]) or ""
+
         return params

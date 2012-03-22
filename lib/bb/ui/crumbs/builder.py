@@ -68,6 +68,16 @@ class Configuration:
         self.selected_recipes = []
         self.selected_packages = []
 
+        # proxy settings
+        self.all_proxy = params["all_proxy"]
+        self.http_proxy = params["http_proxy"]
+        self.ftp_proxy = params["ftp_proxy"]
+        self.https_proxy = params["https_proxy"]
+        self.git_proxy_host = params["git_proxy_host"]
+        self.git_proxy_port = params["git_proxy_port"]
+        self.cvs_proxy_host = params["cvs_proxy_host"]
+        self.cvs_proxy_port = params["cvs_proxy_port"]
+
     def load(self, template):
         self.curr_mach = template.getVar("MACHINE")
         self.curr_package_format = " ".join(template.getVar("PACKAGE_CLASSES").split("package_")).strip()
@@ -93,6 +103,15 @@ class Configuration:
         self.selected_image = template.getVar("__SELECTED_IMAGE__")
         self.selected_recipes = template.getVar("DEPENDS").split()
         self.selected_packages = template.getVar("IMAGE_INSTALL").split()
+        # proxy
+        self.all_proxy = template.getVar("all_proxy")
+        self.http_proxy = template.getVar("http_proxy")
+        self.ftp_proxy = template.getVar("ftp_proxy")
+        self.https_proxy = template.getVar("https_proxy")
+        self.git_proxy_host = template.getVar("GIT_PROXY_HOST")
+        self.git_proxy_port = template.getVar("GIT_PROXY_PORT")
+        self.cvs_proxy_host = template.getVar("CVS_PROXY_HOST")
+        self.cvs_proxy_port = template.getVar("CVS_PROXY_PORT")
 
     def save(self, template, filename):
         # bblayers.conf
@@ -120,6 +139,15 @@ class Configuration:
         template.setVar("__SELECTED_IMAGE__", self.selected_image)
         template.setVar("DEPENDS", self.selected_recipes)
         template.setVar("IMAGE_INSTALL", self.selected_packages)
+        # proxy
+        template.setVar("all_proxy", self.all_proxy)
+        template.setVar("http_proxy", self.http_proxy)
+        template.setVar("ftp_proxy", self.ftp_proxy)
+        template.setVar("https_proxy", self.https_proxy)
+        template.setVar("GIT_PROXY_HOST", self.git_proxy_host)
+        template.setVar("GIT_PROXY_PORT", self.git_proxy_port)
+        template.setVar("CVS_PROXY_HOST", self.cvs_proxy_host)
+        template.setVar("CVS_PROXY_PORT", self.cvs_proxy_port)
 
 class Parameters:
     '''Represents other variables like available machines, etc.'''
@@ -146,6 +174,7 @@ class Parameters:
         self.tune_pkgarch = params["tune_pkgarch"]
         self.bb_version = params["bb_version"]
         self.tune_arch = params["tune_arch"]
+        self.enable_proxy = False
 
 class Builder(gtk.Window):
 
@@ -373,6 +402,14 @@ class Builder(gtk.Window):
         self.handler.set_image_fstypes(self.configuration.image_fstypes)
         self.handler.set_extra_config(self.configuration.extra_setting)
         self.handler.set_extra_inherit("packageinfo")
+        # set proxies
+        if self.parameters.enable_proxy:
+            self.handler.set_http_proxy(self.configuration.http_proxy)
+            self.handler.set_https_proxy(self.configuration.https_proxy)
+            self.handler.set_ftp_proxy(self.configuration.ftp_proxy)
+            self.handler.set_all_proxy(self.configuration.all_proxy)
+            self.handler.set_git_proxy(self.configuration.git_proxy_host, self.configuration.git_proxy_port)
+            self.handler.set_cvs_proxy(self.configuration.cvs_proxy_host, self.configuration.cvs_proxy_port)
 
     def update_recipe_model(self, selected_image, selected_recipes):
         self.recipe_model.set_selected_image(selected_image)
@@ -773,6 +810,7 @@ class Builder(gtk.Window):
             all_distros = self.parameters.all_distros,
             all_sdk_machines = self.parameters.all_sdk_machines,
             max_threads = self.parameters.max_threads,
+            enable_proxy = self.parameters.enable_proxy,
             parent = self,
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
@@ -783,6 +821,7 @@ class Builder(gtk.Window):
         HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
+            self.parameters.enable_proxy = dialog.enable_proxy
             self.configuration = dialog.configuration
             # DO reparse recipes
             if dialog.settings_changed:
