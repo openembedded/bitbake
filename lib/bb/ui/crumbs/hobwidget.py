@@ -53,8 +53,10 @@ class hic:
     ICON_INFO_HOVER_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('info/info_hover.png'))
     ICON_INDI_CONFIRM_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('indicators/confirmation.png'))
     ICON_INDI_ERROR_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/error.png'))
-    ICON_INDI_REMOVE              = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove.png'))
-    ICON_INDI_ADD                 = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add.png'))
+    ICON_INDI_REMOVE_FILE         = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove.png'))
+    ICON_INDI_REMOVE_HOVER_FILE   = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove-hover.png'))
+    ICON_INDI_ADD_FILE            = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add.png'))
+    ICON_INDI_ADD_HOVER_FILE      = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add-hover.png'))
 
 class hcc:
 
@@ -173,6 +175,27 @@ class HobViewTable (gtk.VBox):
         if not view_column.get_title() in self.toggle_columns:
             self.emit("row-activated", tree.get_model(), path)
 
+"""
+A method to calculate a softened value for the colour of widget when in the
+provided state.
+
+widget: the widget whose style to use
+state: the state of the widget to use the style for
+
+Returns a string value representing the softened colour
+"""
+def soften_color(widget, state=gtk.STATE_NORMAL):
+    # this colour munging routine is heavily inspired bu gdu_util_get_mix_color()
+    # from gnome-disk-utility:
+    # http://git.gnome.org/browse/gnome-disk-utility/tree/src/gdu-gtk/gdu-gtk.c?h=gnome-3-0
+    blend = 0.7
+    style = widget.get_style()
+    color = style.text[state]
+    color.red = color.red * blend + style.base[state].red * (1.0 - blend)
+    color.green = color.green * blend + style.base[state].green * (1.0 - blend)
+    color.blue = color.blue * blend + style.base[state].blue * (1.0 - blend)
+    return color.to_string()
+
 class HobAltButton(gtk.Button):
     """
     A gtk.Button subclass which has no relief, and so is more discrete
@@ -181,64 +204,46 @@ class HobAltButton(gtk.Button):
         gtk.Button.__init__(self, label)
         self.set_relief(gtk.RELIEF_NONE)
 
-class HobXpmLabelButtonBox(gtk.EventBox):
-    """ label: name of buttonbox
-        description: the simple  description
+class HobImageButton(gtk.Button):
     """
-    def __init__(self, display_file="", hover_file="", label="", description=""):
-        gtk.EventBox.__init__(self)
-        self._base_state_flags = gtk.STATE_NORMAL
-        self.set_events(gtk.gdk.MOTION_NOTIFY | gtk.gdk.BUTTON_PRESS | gtk.gdk.EXPOSE)
+    A gtk.Button with an icon and two rows of text, the second of which is
+    displayed in a blended colour.
 
-        self.connect("expose-event", self.cb)
-        self.connect("enter-notify-event", self.pointer_enter_cb)
-        self.connect("leave-notify-event", self.pointer_leave_cb)
+    primary_text: the main button label
+    secondary_text: optional second line of text
+    icon_path: path to the icon file to display on the button
+    """
+    def __init__(self, primary_text, secondary_text="", icon_path="", hover_icon_path=""):
+        gtk.Button.__init__(self)
+        self.set_relief(gtk.RELIEF_NONE)
 
-        self.icon_hover = gtk.Image()
-        self.icon_hover.set_name("icon_image")
-        if type(hover_file) == str:
-            pixbuf = gtk.gdk.pixbuf_new_from_file(hover_file)
-            self.icon_hover.set_from_pixbuf(pixbuf)
+        self.icon_path = icon_path
+        self.hover_icon_path = hover_icon_path
 
-        self.icon_display = gtk.Image()
-        self.icon_display.set_name("icon_image")
-        if type(display_file) == str:
-            pixbuf = gtk.gdk.pixbuf_new_from_file(display_file)
-            self.icon_display.set_from_pixbuf(pixbuf)
+        hbox = gtk.HBox(False, 3)
+        hbox.show()
+        self.add(hbox)
+        self.icon = gtk.Image()
+        self.icon.set_from_file(self.icon_path)
+        self.icon.set_alignment(0.5, 0.0)
+        self.icon.show()
+        if self.hover_icon_path and len(self.hover_icon_path):
+            self.connect("enter-notify-event", self.set_hover_icon_cb)
+            self.connect("leave-notify-event", self.set_icon_cb)
+        hbox.pack_start(self.icon, False, False, 0)
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        colour = soften_color(label)
+        mark = "%s\n<span fgcolor='%s'><small>%s</small></span>" % (primary_text, colour, secondary_text)
+        label.set_markup(mark)
+        label.show()
+        hbox.pack_start(label, True, True, 0)
 
-        self.tb = gtk.Table(2, 10, True)
-        self.tb.set_row_spacing(1, False)
-        self.tb.set_col_spacing(1, False)
-        self.add(self.tb)
-        self.tb.attach(self.icon_display, 0, 2, 0, 2, 0, 0)
-        self.tb.attach(self.icon_hover, 0, 2, 0, 2, 0, 0)
+    def set_hover_icon_cb(self, widget, event):
+        self.icon.set_from_file(self.hover_icon_path)
 
-        lbl = gtk.Label()
-        lbl.set_alignment(0.0, 0.5)
-        lbl.set_markup("<span foreground=\'#1C1C1C\' font_desc=\'18px\'>%s</span>" % label)
-        self.tb.attach(lbl, 2, 10, 0, 1)
-
-        lbl = gtk.Label()
-        lbl.set_alignment(0.0, 0.5)
-        lbl.set_markup("<span foreground=\'#1C1C1C\' font_desc=\'14px\'>%s</span>" % description)
-        self.tb.attach(lbl, 2, 10, 1, 2)
-
-    def pointer_enter_cb(self, *args):
-        #if not self.is_focus():
-        self.set_state(gtk.STATE_PRELIGHT)
-        self._base_state_flags = gtk.STATE_PRELIGHT
-        self.icon_hover.show()
-        self.icon_display.hide()
-
-    def pointer_leave_cb(self, *args):
-        self.set_state(gtk.STATE_NORMAL)
-        self._base_state_flags = gtk.STATE_NORMAL
-        self.icon_display.show()
-        self.icon_hover.hide()
-
-    def cb(self, w,e):
-        """ Hide items - first time """
-        pass
+    def set_icon_cb(self, widget, event):
+        self.icon.set_from_file(self.icon_path)
 
 class HobInfoButton(gtk.EventBox):
     """

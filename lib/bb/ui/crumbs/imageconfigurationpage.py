@@ -24,7 +24,7 @@ import gtk
 import glib
 from bb.ui.crumbs.progressbar import HobProgressBar
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hic, HobXpmLabelButtonBox, HobInfoButton, HobAltButton
+from bb.ui.crumbs.hobwidget import hic, HobImageButton, HobInfoButton, HobAltButton, HobButton
 from bb.ui.crumbs.hoblistmodel import RecipeListModel
 from bb.ui.crumbs.hobpages import HobPage
 
@@ -139,9 +139,9 @@ class ImageConfigurationPage (HobPage):
 
         icon_file = hic.ICON_LAYERS_DISPLAY_FILE
         hover_file = hic.ICON_LAYERS_HOVER_FILE
-        self.layer_button = HobXpmLabelButtonBox(icon_file, hover_file,
-            "Layers", "Add support for machines, software, etc")
-        self.layer_button.connect("button-release-event", self.layer_button_clicked_cb)
+        self.layer_button = HobImageButton("Layers", "Add support for machines, software, etc.",
+                                icon_file, hover_file)
+        self.layer_button.connect("clicked", self.layer_button_clicked_cb)
 
         markup = "Layers are a powerful mechanism to extend the Yocto Project "
         markup += "with your own functionality.\n"
@@ -163,9 +163,9 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.machine_title, 0, 40, 0, 4)
         self.gtable.attach(self.machine_title_desc, 0, 40, 4, 6)
         self.gtable.attach(self.machine_combo, 0, 12, 6, 9)
-        self.gtable.attach(self.layer_button, 12, 36, 6, 10)
-        self.gtable.attach(self.layer_info_icon, 36, 40, 6, 9)
-        if show_progress_bar == True:
+        self.gtable.attach(self.layer_button, 12, 36, 6, 11)
+        self.gtable.attach(self.layer_info_icon, 36, 40, 6, 10)
+        if show_progress_bar:
             self.gtable.attach(self.progress_box, 0, 40, 13, 17)
         self.gtable.attach(self.machine_separator, 0, 40, 12, 13)
 
@@ -186,22 +186,24 @@ class ImageConfigurationPage (HobPage):
         self.image_combo_id = self.image_combo.connect("changed", self.image_combo_changed_cb)
 
         self.image_desc = gtk.Label()
-        self.image_desc.set_alignment(0, 0)
+        self.image_desc.set_alignment(0, 0.5)
         self.image_desc.set_line_wrap(True)
 
         # button to view recipes
         icon_file = hic.ICON_RCIPE_DISPLAY_FILE
         hover_file = hic.ICON_RCIPE_HOVER_FILE
-        self.view_recipes_button = HobXpmLabelButtonBox(icon_file, hover_file,
-            "View Recipes", "Add/remove recipes and collections")
-        self.view_recipes_button.connect("button-release-event", self.view_recipes_button_clicked_cb)
+        self.view_recipes_button = HobImageButton("View Recipes",
+                                        "Add/remove recipes and collections",
+                                        icon_file, hover_file)
+        self.view_recipes_button.connect("clicked", self.view_recipes_button_clicked_cb)
 
         # button to view packages
         icon_file = hic.ICON_PACKAGES_DISPLAY_FILE
         hover_file = hic.ICON_PACKAGES_HOVER_FILE
-        self.view_packages_button = HobXpmLabelButtonBox(icon_file, hover_file,
-            "View Packages", "Add/remove previously built packages to/from your image")
-        self.view_packages_button.connect("button-release-event", self.view_packages_button_clicked_cb)
+        self.view_packages_button = HobImageButton("View Packages",
+                                        "Add/remove previously built packages to/from your image",
+                                        icon_file, hover_file)
+        self.view_packages_button.connect("clicked", self.view_packages_button_clicked_cb)
 
         self.image_separator = gtk.HSeparator()
 
@@ -213,8 +215,8 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.image_separator, 0, 40, 35, 36)
 
     def set_rcppkg_layout(self):
-        self.gtable.attach(self.view_recipes_button, 0, 18, 28, 32)
-        self.gtable.attach(self.view_packages_button, 18, 40, 28, 32)
+        self.gtable.attach(self.view_recipes_button, 0, 20, 27, 32)
+        self.gtable.attach(self.view_packages_button, 20, 40, 27, 32)
 
     def create_config_build_button(self):
         # Create the "Build packages" and "Just bake" buttons at the bottom
@@ -343,14 +345,14 @@ class ImageConfigurationPage (HobPage):
         self.image_combo.set_active(-1)
         self.image_combo.set_active(active)
 
-    def layer_button_clicked_cb(self, event, data):
+    def layer_button_clicked_cb(self, button):
         # Create a layer selection dialog
         self.builder.show_layer_selection_dialog()
 
-    def view_recipes_button_clicked_cb(self, event, data):
+    def view_recipes_button_clicked_cb(self, button):
         self.builder.show_recipes()
 
-    def view_packages_button_clicked_cb(self, event, data):
+    def view_packages_button_clicked_cb(self, button):
         self.builder.show_packages()
 
     def just_bake_button_clicked_cb(self, button):
