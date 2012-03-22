@@ -38,7 +38,7 @@ class BuildDetailsPage (HobPage):
         super(BuildDetailsPage, self).__init__(builder, "Building ...")
 
         self.num_of_issues = 0
-
+        self.endpath = (0,)
         # create visual elements
         self.create_visual_elements()
 
@@ -76,6 +76,8 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view_build.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_build.add(self.build_tv)
         self.notebook.append_page(self.scrolled_view_build, gtk.Label("Log"))
+
+        self.builder.handler.build.model.connect_after("row-changed", self.scroll_to_present_row, self.scrolled_view_build.get_vadjustment(), self.build_tv)
 
         self.button_box = gtk.HBox(False, 6)
         self.back_button = HobAltButton("Back to image configuration")
@@ -138,3 +140,10 @@ class BuildDetailsPage (HobPage):
 
     def hide_stop_button(self):
         self.stop_button.hide()
+
+    def scroll_to_present_row(self, model, path, iter, v_adj, treeview):
+        if treeview and v_adj:
+            if path[0] > self.endpath[0]: # check the event is a new row append or not
+                self.endpath = path
+                if v_adj.value == (v_adj.upper - v_adj.page_size): # check the gtk.adjustment position is at end boundary or not
+                    treeview.scroll_to_cell(path)
