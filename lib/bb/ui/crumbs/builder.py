@@ -75,7 +75,7 @@ class Configuration:
         self.sstatedir = template.getVar("SSTATE_DIR")
         self.sstatemirror = template.getVar("SSTATE_MIRROR")
         self.pmake = int(template.getVar("PARALLEL_MAKE").split()[1])
-        self.bbthread = int(template.getVar("BB_NUMBER_THREAD"))
+        self.bbthread = int(template.getVar("BB_NUMBER_THREADS"))
         self.image_rootfs_size = int(template.getVar("IMAGE_ROOTFS_SIZE"))
         self.image_extra_size = int(template.getVar("IMAGE_EXTRA_SPACE"))
         # image_overhead_factor is read-only.
@@ -103,7 +103,7 @@ class Configuration:
         template.setVar("SSTATE_DIR", self.sstatedir)
         template.setVar("SSTATE_MIRROR", self.sstatemirror)
         template.setVar("PARALLEL_MAKE", "-j %s" % self.pmake)
-        template.setVar("BB_NUMBER_THREAD", self.bbthread)
+        template.setVar("BB_NUMBER_THREADS", self.bbthread)
         template.setVar("PACKAGE_CLASSES", " ".join(["package_" + i for i in self.curr_package_format.split()]))
         template.setVar("IMAGE_ROOTFS_SIZE", self.image_rootfs_size)
         template.setVar("IMAGE_EXTRA_SPACE", self.image_extra_size)
