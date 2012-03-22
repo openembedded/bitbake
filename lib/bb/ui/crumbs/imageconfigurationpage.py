@@ -343,14 +343,14 @@ class ImageConfigurationPage (HobPage):
         self.image_combo.set_active(-1)
         self.image_combo.set_active(active)
 
-    def layer_button_clicked_cb(self, button):
+    def layer_button_clicked_cb(self, event, data):
         # Create a layer selection dialog
         self.builder.show_layer_selection_dialog()
 
-    def view_recipes_button_clicked_cb(self, button):
+    def view_recipes_button_clicked_cb(self, event, data):
         self.builder.show_recipes()
 
-    def view_packages_button_clicked_cb(self, button):
+    def view_packages_button_clicked_cb(self, event, data):
         self.builder.show_packages()
 
     def just_bake_button_clicked_cb(self, button):
