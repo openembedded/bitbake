@@ -28,7 +28,7 @@ import re
 import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobAltButton
+from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton
 from bb.ui.crumbs.progressbar import HobProgressBar
 
 """
@@ -815,29 +815,34 @@ class LayerSelectionDialog (CrumbsDialog):
         col1.pack_start(cell1, True)
         col1.set_cell_data_func(cell1, self.draw_delete_button_cb, layer_tv)
 
-        add_button = HobAltButton()
+        add_button = gtk.Button()
+        add_button.set_relief(gtk.RELIEF_NONE)
         box = gtk.HBox(False, 6)
         box.show()
         add_button.add(box)
-        im = gtk.Image()
-        im.set_from_file(hic.ICON_INDI_ADD)
-        im.show()
-        box.pack_start(im, expand=False, fill=False, padding=6)
+        add_button.connect("enter-notify-event", self.add_hover_cb)
+        add_button.connect("leave-notify-event", self.add_leave_cb)
+        self.im = gtk.Image()
+        self.im.set_from_file(hic.ICON_INDI_ADD_FILE)
+        self.im.show()
+        box.pack_start(self.im, expand=False, fill=False, padding=6)
         lbl = gtk.Label("Add layer")
         lbl.set_alignment(0.0, 0.5)
         lbl.show()
         box.pack_start(lbl, expand=True, fill=True, padding=6)
         add_button.connect("clicked", self.layer_widget_add_clicked_cb, layer_store, window)
-        add_button.set_can_default(True)
-        add_button.grab_default()
-        add_button.set_can_focus(True)
-        add_button.grab_focus()
         table_layer.attach(add_button, 0, 10, 1, 2, gtk.EXPAND | gtk.FILL, 0, 0, 6)
         layer_tv.set_model(layer_store)
 
         hbox.show_all()
 
         return hbox, layer_store
+
+    def add_hover_cb(self, button, event):
+        self.im.set_from_file(hic.ICON_INDI_ADD_HOVER_FILE)
+
+    def add_leave_cb(self, button, event):
+        self.im.set_from_file(hic.ICON_INDI_ADD_FILE)
 
     def __init__(self, title, layers, all_layers, parent, flags, buttons):
         super(LayerSelectionDialog, self).__init__(title, parent, flags, buttons)
@@ -849,7 +854,7 @@ class LayerSelectionDialog (CrumbsDialog):
 
         # icon for remove button in TreeView
         im = gtk.Image()
-        im.set_from_file(hic.ICON_INDI_REMOVE)
+        im.set_from_file(hic.ICON_INDI_REMOVE_FILE)
         self.rem_icon = im.get_pixbuf()
 
         # class members for internal use
