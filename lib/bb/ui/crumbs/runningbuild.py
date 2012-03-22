@@ -27,6 +27,7 @@ import urllib
 import urllib2
 import pango
 from bb.ui.crumbs.hobcolor import HobColors
+from bb.ui.crumbs.hobwidget import HobWarpCellRendererText
 
 class RunningBuildModel (gtk.TreeStore):
     (COL_LOG, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_COLOR, COL_NUM_ACTIVE) = range(7)
@@ -350,7 +351,7 @@ class RunningBuildTreeView (gtk.TreeView):
         self.append_column (col)
 
         # The message of the build.
-        self.message_renderer = gtk.CellRendererText ()
+        self.message_renderer = HobWarpCellRendererText (col_number=1)
         self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=3)
         self.message_column.add_attribute(self.message_renderer, 'background', 5)
         self.message_renderer.set_property('editable', (not self.readonly))
@@ -419,7 +420,7 @@ class BuildConfigurationTreeView(gtk.TreeView):
         self.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
         # The message of the build.
-        self.message_renderer = gtk.CellRendererText ()
+        self.message_renderer = HobWarpCellRendererText (col_number=0)
         self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=RunningBuildModel.COL_MESSAGE, background=RunningBuildModel.COL_COLOR)
         font = self.get_style().font_desc
         font.set_size(pango.SCALE * 13)
@@ -442,6 +443,6 @@ class BuildFailureTreeView(gtk.TreeView):
         self.append_column (col)
 
         # The message of the build.
-        self.message_renderer = gtk.CellRendererText ()
+        self.message_renderer = HobWarpCellRendererText (col_number=1)
         self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=RunningBuildModel.COL_MESSAGE, background=RunningBuildModel.COL_COLOR)
         self.append_column (self.message_column)

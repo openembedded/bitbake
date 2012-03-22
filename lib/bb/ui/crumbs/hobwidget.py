@@ -732,3 +732,27 @@ class HobNotebook(gtk.VBox):
     def set_search_entry_clear_cb(self, search, icon_pos, event):
         self.reset_entry(search)
 
+class HobWarpCellRendererText(gtk.CellRendererText):
+    def __init__(self, col_number):
+        gtk.CellRendererText.__init__(self)
+        self.set_property("wrap-mode", pango.WRAP_WORD_CHAR)
+        self.set_property("wrap-width", 300) # default value wrap width is 300
+        self.col_n = col_number
+
+    def do_render(self, window, widget, background_area, cell_area, expose_area, flags):
+        if widget:
+            self.props.wrap_width = self.get_resized_wrap_width(widget, widget.get_column(self.col_n))
+        return gtk.CellRendererText.do_render(self, window, widget, background_area, cell_area, expose_area, flags)
+
+    def get_resized_wrap_width(self, treeview, column):
+        otherCols = []
+        for col in treeview.get_columns():
+            if col != column:
+                otherCols.append(col)
+        adjwidth = treeview.allocation.width - sum(c.get_width() for c in otherCols)
+        adjwidth -= treeview.style_get_property("horizontal-separator") * 4
+        if self.props.wrap_width == adjwidth or adjwidth <= 0:
+                adjwidth = self.props.wrap_width
+        return adjwidth
+
+gobject.type_register(HobWarpCellRendererText)
