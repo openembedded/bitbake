@@ -23,7 +23,7 @@
 import gtk
 import glib
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook
+from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook, HobAltButton
 from bb.ui.crumbs.hoblistmodel import PackageListModel
 from bb.ui.crumbs.hobpages import HobPage
 
@@ -144,7 +144,7 @@ class PackageSelectionPage (HobPage):
         self.build_image_button.connect("clicked", self.build_image_clicked_cb)
         button_box.pack_end(self.build_image_button, expand=False, fill=False)
 
-        self.back_button = gtk.LinkButton("Go back to Image Configuration screen", "<< Back to image configuration")
+        self.back_button = HobAltButton("Back to image configuration")
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         button_box.pack_start(self.back_button, expand=False, fill=False)
 

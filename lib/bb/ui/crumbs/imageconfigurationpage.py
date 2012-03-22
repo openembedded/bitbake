@@ -24,7 +24,7 @@ import gtk
 import glib
 from bb.ui.crumbs.progressbar import HobProgressBar
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hic, HobXpmLabelButtonBox, HobInfoButton
+from bb.ui.crumbs.hobwidget import hic, HobXpmLabelButtonBox, HobInfoButton, HobAltButton
 from bb.ui.crumbs.hoblistmodel import RecipeListModel
 from bb.ui.crumbs.hobpages import HobPage
 
@@ -153,7 +153,7 @@ class ImageConfigurationPage (HobPage):
         self.progress_box = gtk.HBox(False, 6)
         self.progress_bar = HobProgressBar()
         self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
-        self.stop_button = gtk.LinkButton("Stop the parsing process", "Stop")
+        self.stop_button = HobAltButton("Stop")
         self.stop_button.connect("clicked", self.stop_button_clicked_cb)
         self.progress_box.pack_end(self.stop_button, expand=False, fill=False)
 
@@ -241,8 +241,7 @@ class ImageConfigurationPage (HobPage):
         button_box.pack_end(label, expand=False, fill=False)
 
         # create button "Build Packages"
-        build_packages_button = gtk.LinkButton("Build packages first based on recipe selection "
-            "for late customization on packages for the target image", "Build Packages")
+        build_packages_button = HobAltButton("Build Packages")
         build_packages_button.connect("clicked", self.build_packages_button_clicked_cb)
         button_box.pack_end(build_packages_button, expand=False, fill=False)
 
@@ -344,14 +343,14 @@ class ImageConfigurationPage (HobPage):
         self.image_combo.set_active(-1)
         self.image_combo.set_active(active)
 
-    def layer_button_clicked_cb(self, event, data):
+    def layer_button_clicked_cb(self, button):
         # Create a layer selection dialog
         self.builder.show_layer_selection_dialog()
 
-    def view_recipes_button_clicked_cb(self, event, data):
+    def view_recipes_button_clicked_cb(self, button):
         self.builder.show_recipes()
 
-    def view_packages_button_clicked_cb(self, event, data):
+    def view_packages_button_clicked_cb(self, button):
         self.builder.show_packages()
 
     def just_bake_button_clicked_cb(self, button):

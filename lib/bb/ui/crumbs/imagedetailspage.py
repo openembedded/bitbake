@@ -23,7 +23,7 @@
 import gobject
 import gtk
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hic, HobViewTable
+from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton
 from bb.ui.crumbs.hobpages import HobPage
 
 #
@@ -213,7 +213,7 @@ class ImageDetailsPage (HobPage):
                     vallist.append(layer)
                 i += 1
 
-            edit_config_button = gtk.LinkButton("Changes settings for build", "Edit configuration")
+            edit_config_button = HobAltButton("Edit configuration")
             edit_config_button.connect("clicked", self.edit_config_button_clicked_cb)
             setting_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_config_button)
             self.box_group_area.pack_start(setting_detail, expand=False, fill=False)
@@ -224,7 +224,7 @@ class ImageDetailsPage (HobPage):
         vallist.append(pkg_num)
         vallist.append(image_size)
         if build_succeeded:
-            edit_packages_button = gtk.LinkButton("Change package selection for customization", "Edit packages")
+            edit_packages_button = HobAltButton("Edit packages")
             edit_packages_button.connect("clicked", self.edit_packages_button_clicked_cb)
         else: # get to this page from "My images"
             edit_packages_button = None
@@ -288,7 +288,7 @@ class ImageDetailsPage (HobPage):
                 bottom_buttons.pack_end(label, expand=False, fill=False)
 
             # create button "Run image"
-            run_button = gtk.LinkButton("Launch and boot the image in the QEMU emulator", "Run image")
+            run_button = HobAltButton("Run image")
             run_button.connect("clicked", self.run_button_clicked_cb)
             bottom_buttons.pack_end(run_button, expand=False, fill=False)
             created = True
@@ -301,7 +301,7 @@ class ImageDetailsPage (HobPage):
                 bottom_buttons.pack_end(label, expand=False, fill=False)
 
             # create button "Save as template"
-            save_button = gtk.LinkButton("Save the hob build template for future use", "Save as template")
+            save_button = HobAltButton("Save as template")
             save_button.connect("clicked", self.save_button_clicked_cb)
             bottom_buttons.pack_end(save_button, expand=False, fill=False)
             create = True
@@ -309,7 +309,7 @@ class ImageDetailsPage (HobPage):
         name = "Build new image"
         if name in buttonlist:
             # create button "Build new image"
-            build_new_button = gtk.LinkButton("Initiate another new build from the beginning", "Build new image")
+            build_new_button = HobAltButton("Build new image")
             build_new_button.connect("clicked", self.build_new_button_clicked_cb)
             bottom_buttons.pack_start(build_new_button, expand=False, fill=False)
 

@@ -22,7 +22,7 @@
 
 import gtk
 from bb.ui.crumbs.progressbar import HobProgressBar
-from bb.ui.crumbs.hobwidget import hic, HobNotebook
+from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView
 from bb.ui.crumbs.runningbuild import BuildConfigurationTreeView
 from bb.ui.crumbs.runningbuild import BuildFailureTreeView
@@ -49,7 +49,7 @@ class BuildDetailsPage (HobPage):
         self.progress_box = gtk.HBox(False, 6)
         self.progress_bar = HobProgressBar()
         self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
-        self.stop_button = gtk.LinkButton("Stop the build process", "Stop")
+        self.stop_button = HobAltButton("Stop")
         self.stop_button.connect("clicked", self.stop_button_clicked_cb)
         self.progress_box.pack_end(self.stop_button, expand=False, fill=False)
 
@@ -78,7 +78,7 @@ class BuildDetailsPage (HobPage):
         self.notebook.append_page(self.scrolled_view_build, gtk.Label("Log"))
 
         self.button_box = gtk.HBox(False, 6)
-        self.back_button = gtk.LinkButton("Go back to Image Configuration screen", "<< Back to image configuration")
+        self.back_button = HobAltButton("Back to image configuration")
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_start(self.back_button, expand=False, fill=False)
 

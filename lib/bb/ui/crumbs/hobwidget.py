@@ -171,11 +171,18 @@ class HobViewTable (gtk.VBox):
         if not view_column.get_title() in self.toggle_columns:
             self.emit("row-activated", tree.get_model(), path)
 
+class HobAltButton(gtk.Button):
+    """
+    A gtk.Button subclass which has no relief, and so is more discrete
+    """
+    def __init__(self, label=None):
+        gtk.Button.__init__(self, label)
+        self.set_relief(gtk.RELIEF_NONE)
+
 class HobXpmLabelButtonBox(gtk.EventBox):
     """ label: name of buttonbox
         description: the simple  description
     """
-
     def __init__(self, display_file="", hover_file="", label="", description=""):
         gtk.EventBox.__init__(self)
         self._base_state_flags = gtk.STATE_NORMAL
