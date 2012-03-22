@@ -886,7 +886,7 @@ class LayerSelectionDialog (CrumbsDialog):
         # Trailing slashes are uncommon in bblayers.conf but confuse os.path.basename
         path.rstrip('/')
         name = os.path.basename(path)
-        if name == "meta":
+        if name == "meta" or name == "meta-hob":
             cell.set_sensitive(False)
             cell.set_property('pixbuf', None)
             cell.set_property('mode', gtk.CELL_RENDERER_MODE_INERT)
@@ -907,6 +907,8 @@ class LayerSelectionDialog (CrumbsDialog):
         name = os.path.basename(path)
         if name == "meta":
             cell.set_property('markup', "<b>Core layer for images: it cannot be removed</b>\n%s" % path)
+        elif name == "meta-hob":
+            cell.set_property('markup', "<b>Core layer for Hob: it cannot be removed</b>\n%s" % path)
         else:
             cell.set_property('text', path)
 
