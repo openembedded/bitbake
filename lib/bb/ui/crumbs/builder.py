@@ -671,8 +671,7 @@ class Builder(gtk.Window):
                      flags = gtk.DIALOG_MODAL
                          | gtk.DIALOG_DESTROY_WITH_PARENT
                          | gtk.DIALOG_NO_SEPARATOR,
-                     buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                gtk.STOCK_OK, gtk.RESPONSE_YES))
+                     buttons = (gtk.STOCK_CLOSE, gtk.RESPONSE_YES))
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             self.configuration.layers = dialog.layers
