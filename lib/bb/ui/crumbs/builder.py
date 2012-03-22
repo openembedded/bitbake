@@ -664,7 +664,7 @@ class Builder(gtk.Window):
         binb_dialog.destroy()
 
     def show_layer_selection_dialog(self):
-        dialog = LayerSelectionDialog(title = "Layer Selection",
+        dialog = LayerSelectionDialog(title = "Layers",
                      layers = copy.deepcopy(self.configuration.layers),
                      all_layers = self.parameters.all_layers,
                      parent = self,
