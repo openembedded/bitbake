@@ -223,19 +223,9 @@ class ImageConfigurationPage (HobPage):
         button_box = gtk.HBox(False, 6)
 
         # create button "Just bake"
-        just_bake_button = gtk.Button()
-        label = gtk.Label()
-        mark = "<span %s>Just bake</span>" % self.span_tag('24px', 'bold')
-        label.set_markup(mark)
-
-        just_bake_button.set_image(label)
+        just_bake_button = HobButton("Just bake")
         just_bake_button.set_size_request(205, 49)
-        just_bake_button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.ORANGE))
-        just_bake_button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(HobColors.ORANGE))
-        just_bake_button.modify_bg(gtk.STATE_SELECTED, gtk.gdk.Color(HobColors.ORANGE))
         just_bake_button.set_tooltip_text("Build image to get your target image")
-        just_bake_button.set_flags(gtk.CAN_DEFAULT)
-        just_bake_button.grab_default()
         just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
         button_box.pack_end(just_bake_button, expand=False, fill=False)
 

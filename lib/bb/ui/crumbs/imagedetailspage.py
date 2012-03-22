@@ -23,7 +23,7 @@
 import gobject
 import gtk
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton
+from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton, HobButton
 from bb.ui.crumbs.hobpages import HobPage
 
 #
@@ -264,15 +264,8 @@ class ImageDetailsPage (HobPage):
         # create button "Deploy image"
         name = "Deploy image"
         if name in buttonlist:
-            deploy_button = gtk.Button()
-            label = gtk.Label()
-            mark = "<span %s>Deploy image</span>" % self.span_tag('24px', 'bold')
-            label.set_markup(mark)
-            deploy_button.set_image(label)
+            deploy_button = HobButton('Deploy image')
             deploy_button.set_size_request(205, 49)
-            deploy_button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.ORANGE))
-            deploy_button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(HobColors.ORANGE))
-            deploy_button.modify_bg(gtk.STATE_SELECTED, gtk.gdk.Color(HobColors.ORANGE))
             deploy_button.set_tooltip_text("Deploy image to get your target board")
             deploy_button.set_flags(gtk.CAN_DEFAULT)
             deploy_button.grab_default()

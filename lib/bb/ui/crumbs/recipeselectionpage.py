@@ -23,7 +23,7 @@
 import gtk
 import glib
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook, HobAltButton
+from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook, HobAltButton, HobButton
 from bb.ui.crumbs.hoblistmodel import RecipeListModel
 from bb.ui.crumbs.hobpages import HobPage
 
@@ -151,15 +151,8 @@ class RecipeSelectionPage (HobPage):
         button_box = gtk.HBox(False, 6)
         self.box_group_area.pack_end(button_box, expand=False, fill=False)
 
-        self.build_packages_button = gtk.Button()
-        label = gtk.Label()
-        mark = "<span %s>Build packages</span>" % self.span_tag('24px', 'bold')
-        label.set_markup(mark)
-        self.build_packages_button.set_image(label)
+        self.build_packages_button = HobButton('Build packages')
         self.build_packages_button.set_size_request(205, 49)
-        self.build_packages_button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.ORANGE))
-        self.build_packages_button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(HobColors.ORANGE))
-        self.build_packages_button.modify_bg(gtk.STATE_SELECTED, gtk.gdk.Color(HobColors.ORANGE))
         self.build_packages_button.set_tooltip_text("Build packages for customization")
         self.build_packages_button.set_flags(gtk.CAN_DEFAULT)
         self.build_packages_button.grab_default()

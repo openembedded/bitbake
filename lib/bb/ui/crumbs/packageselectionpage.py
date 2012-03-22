@@ -23,7 +23,7 @@
 import gtk
 import glib
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook, HobAltButton
+from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook, HobAltButton, HobButton
 from bb.ui.crumbs.hoblistmodel import PackageListModel
 from bb.ui.crumbs.hobpages import HobPage
 
@@ -129,15 +129,8 @@ class PackageSelectionPage (HobPage):
         button_box = gtk.HBox(False, 6)
         self.box_group_area.pack_start(button_box, expand=False, fill=False)
 
-        self.build_image_button = gtk.Button()
-        label = gtk.Label()
-        mark = "<span %s>Build image</span>" % self.span_tag('24px', 'bold')
-        label.set_markup(mark)
-        self.build_image_button.set_image(label)
+        self.build_image_button = HobButton('Build image')
         self.build_image_button.set_size_request(205, 49)
-        self.build_image_button.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.ORANGE))
-        self.build_image_button.modify_bg(gtk.STATE_PRELIGHT, gtk.gdk.Color(HobColors.ORANGE))
-        self.build_image_button.modify_bg(gtk.STATE_SELECTED, gtk.gdk.Color(HobColors.ORANGE))
         self.build_image_button.set_tooltip_text("Build image to get your target image")
         self.build_image_button.set_flags(gtk.CAN_DEFAULT)
         self.build_image_button.grab_default()
