@@ -144,7 +144,7 @@ class PackageSelectionPage (HobPage):
         self.build_image_button.connect("clicked", self.build_image_clicked_cb)
         button_box.pack_end(self.build_image_button, expand=False, fill=False)
 
-        self.back_button = HobAltButton("Back to image configuration")
+        self.back_button = HobAltButton("<< Back to image configuration")
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         button_box.pack_start(self.back_button, expand=False, fill=False)
 
