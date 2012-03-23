@@ -430,8 +430,7 @@ class HobHandler(gobject.GObject):
 
         params["image_fstypes"] = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]) or ""
 
-        # walkaround
-        params["image_types"] = " ".join(hcc.SUPPORTED_IMAGE_TYPES.keys()).lstrip(" ")
+        params["image_types"] = self.server.runCommand(["getVariable", "IMAGE_TYPES"]) or ""
 
         params["conf_version"] = self.server.runCommand(["getVariable", "CONF_VERSION"]) or ""
         params["lconf_version"] = self.server.runCommand(["getVariable", "LCONF_VERSION"]) or ""
