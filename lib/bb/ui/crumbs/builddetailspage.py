@@ -46,12 +46,17 @@ class BuildDetailsPage (HobPage):
         # create visual elements
         self.vbox = gtk.VBox(False, 12)
 
-        self.progress_box = gtk.HBox(False, 6)
+        self.progress_box = gtk.VBox(False, 12)
+        self.task_status = gtk.Label()
+        self.task_status.set_alignment(0.0, 0.5)
+        self.progress_box.pack_start(self.task_status, expand=False, fill=False)
+        self.progress_hbox = gtk.HBox(False, 6)
+        self.progress_box.pack_end(self.progress_hbox, expand=True, fill=True)
         self.progress_bar = HobProgressBar()
-        self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
+        self.progress_hbox.pack_start(self.progress_bar, expand=True, fill=True)
         self.stop_button = HobAltButton("Stop")
         self.stop_button.connect("clicked", self.stop_button_clicked_cb)
-        self.progress_box.pack_end(self.stop_button, expand=False, fill=False)
+        self.progress_hbox.pack_end(self.stop_button, expand=False, fill=False)
 
         self.notebook = HobNotebook()
         self.config_tv = BuildConfigurationTreeView()
@@ -83,6 +88,12 @@ class BuildDetailsPage (HobPage):
         self.back_button = HobAltButton("<< Back to image configuration")
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_start(self.back_button, expand=False, fill=False)
+
+    def update_build_status(self, tsk_msg):
+        self.task_status.set_markup(tsk_msg)
+
+    def reset_build_status(self):
+        self.task_status.set_markup("")
 
     def show_issues(self):
         self.num_of_issues += 1

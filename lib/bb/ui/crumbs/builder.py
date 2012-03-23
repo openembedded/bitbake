@@ -543,6 +543,7 @@ class Builder(gtk.Window):
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 0
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
+        self.build_details_page.reset_build_status()
         self.build_details_page.reset_issues()
 
     def build_succeeded(self):
@@ -610,6 +611,8 @@ class Builder(gtk.Window):
             elif message["eventname"] == "runQueueTaskStarted":
                 fraction = 0.2 + 0.8 * fraction
         self.build_details_page.update_progress_bar(title + ": ", fraction)
+        self.build_details_page.update_build_status(
+            "<span weight=\'bold\'>Running task %s of %s:</span> %s" % (message["current"], message["total"], message["task"]))
 
     def handler_build_failure_cb(self, running_build):
         self.build_details_page.show_issues()

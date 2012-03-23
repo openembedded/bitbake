@@ -70,24 +70,24 @@ class RunningBuildModel (gtk.TreeStore):
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
-          'build-started' : (gobject.SIGNAL_RUN_LAST,
-                               gobject.TYPE_NONE,
+          'build-started'   :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
                                ()),
-          'build-succeeded' : (gobject.SIGNAL_RUN_LAST,
-                               gobject.TYPE_NONE,
+          'build-succeeded' :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
                                ()),
-          'build-failed' : (gobject.SIGNAL_RUN_LAST,
-                            gobject.TYPE_NONE,
-                            ()),
-          'build-complete' : (gobject.SIGNAL_RUN_LAST,
-                              gobject.TYPE_NONE,
-                              ()),
-          'task-started'   : (gobject.SIGNAL_RUN_LAST,
-                              gobject.TYPE_NONE,
-                              (gobject.TYPE_PYOBJECT,)),
-          'log-error'      : (gobject.SIGNAL_RUN_LAST,
-                              gobject.TYPE_NONE,
-                              ()),
+          'build-failed'    :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               ()),
+          'build-complete'  :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               ()),
+          'task-started'    :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               (gobject.TYPE_PYOBJECT,)),
+          'log-error'       :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               ()),
           }
     pids_to_task = {}
     tasks_to_iter = {}
@@ -320,6 +320,7 @@ class RunningBuild (gobject.GObject):
             message["current"] = num_of_completed
             message["total"] = event.stats.total
             message["title"] = ""
+            message["task"] = event.taskstring
             self.emit("task-started", message)
 
         return
