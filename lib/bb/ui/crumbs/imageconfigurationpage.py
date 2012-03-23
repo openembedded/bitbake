@@ -193,7 +193,7 @@ class ImageConfigurationPage (HobPage):
         icon_file = hic.ICON_RCIPE_DISPLAY_FILE
         hover_file = hic.ICON_RCIPE_HOVER_FILE
         self.view_recipes_button = HobImageButton("View Recipes",
-                                        "Add/remove recipes and collections",
+                                        "Add/remove recipes and tasks",
                                         icon_file, hover_file)
         self.view_recipes_button.connect("clicked", self.view_recipes_button_clicked_cb)
 
@@ -201,7 +201,7 @@ class ImageConfigurationPage (HobPage):
         icon_file = hic.ICON_PACKAGES_DISPLAY_FILE
         hover_file = hic.ICON_PACKAGES_HOVER_FILE
         self.view_packages_button = HobImageButton("View Packages",
-                                        "Add/remove previously built packages to/from your image",
+                                        "Add/remove previously built packages",
                                         icon_file, hover_file)
         self.view_packages_button.connect("clicked", self.view_packages_button_clicked_cb)
 
