@@ -27,7 +27,7 @@ import urllib
 import urllib2
 import pango
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import HobWarpCellRendererText
+from bb.ui.crumbs.hobwidget import HobWarpCellRendererText, HobCellRendererPixbuf
 
 class RunningBuildModel (gtk.TreeStore):
     (COL_LOG, COL_PACKAGE, COL_TASK, COL_MESSAGE, COL_ICON, COL_COLOR, COL_NUM_ACTIVE) = range(7)
@@ -67,6 +67,14 @@ class RunningBuildModel (gtk.TreeStore):
         model = self.filter_new()
         model.set_visible_func(self.failure_model_filter)
         return model
+
+    def foreach_cell_func(self, model, path, iter, usr_data=None):
+        if model.get_value(iter, self.COL_ICON) == "task-refresh":
+            model.set(iter, self.COL_ICON, "")
+
+    def close_task_refresh(self):
+        self.foreach(self.foreach_cell_func, None)
+
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
@@ -189,7 +197,7 @@ class RunningBuild (gobject.GObject):
             # Because this parent package now has an active child mark it as
             # such.
             # @todo if parent is already in error, don't mark it green
-            self.model.set(parent, self.model.COL_ICON, "gtk-execute",
+            self.model.set(parent, self.model.COL_ICON, "task-refresh",
                            self.model.COL_COLOR, HobColors.RUNNING)
 
             # Add an entry in the model for this task
@@ -197,7 +205,7 @@ class RunningBuild (gobject.GObject):
                                             package,
                                             task,
                                             "Task: %s" % (task),
-                                            "gtk-execute",
+                                            "task-refresh",
                                             HobColors.RUNNING,
                                             0))
 
@@ -284,6 +292,8 @@ class RunningBuild (gobject.GObject):
             # Emit a generic "build-complete" signal for things wishing to
             # handle when the build is finished
             self.emit("build-complete")
+            # reset the all cell's icon indicator
+            self.model.close_task_refresh()
             if pbar:
                 pbar.set_text(event.msg)
 
@@ -292,6 +302,8 @@ class RunningBuild (gobject.GObject):
                 # If the command fails with an exit code we're done, emit the
                 # generic signal for the UI to notify the user
                 self.emit("build-complete")
+                # reset the all cell's icon indicator
+                self.model.close_task_refresh()
 
         elif isinstance(event, bb.event.CacheLoadStarted) and pbar:
             pbar.set_title("Loading cache")
@@ -346,7 +358,7 @@ class RunningBuildTreeView (gtk.TreeView):
         self.readonly = readonly
 
         # The icon that indicates whether we're building or failed.
-        renderer = gtk.CellRendererPixbuf ()
+        renderer = HobCellRendererPixbuf ()
         col = gtk.TreeViewColumn ("Status", renderer)
         col.add_attribute (renderer, "icon-name", 4)
         self.append_column (col)

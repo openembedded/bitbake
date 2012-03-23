@@ -57,6 +57,7 @@ class hic:
     ICON_INDI_REMOVE_HOVER_FILE   = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove-hover.png'))
     ICON_INDI_ADD_FILE            = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add.png'))
     ICON_INDI_ADD_HOVER_FILE      = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add-hover.png'))
+    ICON_INDI_REFRESH_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('indicators/refresh.png'))
 
 class hcc:
 
@@ -793,3 +794,171 @@ class HobWarpCellRendererText(gtk.CellRendererText):
         return adjwidth
 
 gobject.type_register(HobWarpCellRendererText)
+
+class RefreshRuningController(gobject.GObject):
+    def __init__(self, widget=None, iter=None):
+        gobject.GObject.__init__(self)
+        self.timeout_id = None
+        self.current_angle_pos = 0.0
+        self.step_angle = 0.0
+        self.tree_headers_height = 0
+        self.running_cell_areas = []
+
+    def is_active(self):
+        if self.timeout_id:
+            return True
+        else:
+            return False
+
+    def reset(self):
+        self.force_stop(True)
+        self.current_angle_pos = 0.0
+        self.timeout_id = None
+        self.step_angle = 0.0
+
+    ''' time_iterval: (1~1000)ms, which will be as the basic interval count for timer
+        init_usrdata: the current data which related the progress-bar will be at
+        min_usrdata: the range of min of user data
+        max_usrdata: the range of max of user data
+        step: each step which you want to progress
+        Note: the init_usrdata should in the range of from min to max, and max should > min
+             step should < (max - min)
+    '''
+    def start_run(self, time_iterval, init_usrdata, min_usrdata, max_usrdata, step, tree):
+        if (not time_iterval) or (not max_usrdata):
+            return
+        usr_range = (max_usrdata - min_usrdata) * 1.0
+        self.current_angle_pos = (init_usrdata * 1.0) / usr_range
+        self.step_angle = (step * 1) / usr_range
+        self.timeout_id = gobject.timeout_add(int(time_iterval),
+        self.make_image_on_progressing_cb, tree)
+        self.tree_headers_height = self.get_treeview_headers_height(tree)
+
+    def force_stop(self, after_hide_or_not=False):
+        if self.timeout_id:
+            gobject.source_remove(self.timeout_id)
+            self.timeout_id = None
+        if self.running_cell_areas:
+            self.running_cell_areas = []
+
+    def on_draw_cb(self, pixbuf, cr, x, y, img_width, img_height, do_refresh=True):
+        if pixbuf:
+            r = max(img_width/2, img_height/2)
+            cr.translate(x + r, y + r)
+            if do_refresh:
+                cr.rotate(2 * math.pi * self.current_angle_pos)
+
+            cr.set_source_pixbuf(pixbuf, -img_width/2, -img_height/2)
+            cr.paint()
+
+    def get_treeview_headers_height(self, tree):
+        if tree and (tree.get_property("headers-visible") == True):
+            height = tree.get_allocation().height - tree.get_bin_window().get_size()[1]
+            return height
+
+        return 0
+
+    def make_image_on_progressing_cb(self, tree):
+        self.current_angle_pos += self.step_angle
+        if (self.current_angle_pos >= 1):
+            self.current_angle_pos = self.step_angle
+
+        for rect in self.running_cell_areas:
+            tree.queue_draw_area(rect.x, rect.y + self.tree_headers_height, rect.width, rect.height)
+
+        return True
+
+    def append_running_cell_area(self, cell_area):
+        if cell_area and (cell_area not in self.running_cell_areas):
+            self.running_cell_areas.append(cell_area)
+
+    def remove_running_cell_area(self, cell_area):
+        if cell_area in self.running_cell_areas:
+            self.running_cell_areas.remove(cell_area)
+        if not self.running_cell_areas:
+            self.reset()
+
+gobject.type_register(RefreshRuningController)
+
+class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
+    def __init__(self):
+        gtk.CellRendererPixbuf.__init__(self)
+        self.control = RefreshRuningController()
+        # create default refrensh stock icon
+        self.set_hob_icon_to_stock_icon(hic.ICON_INDI_REFRESH_FILE, "task-refresh")
+
+    def set_hob_icon_to_stock_icon(self, file_path, stock_id=""):
+        try:
+            pixbuf = gtk.gdk.pixbuf_new_from_file(file_path)
+        except Exception, e:
+            return None
+
+        if pixbuf and stock_id and (gtk.icon_factory_lookup_default(stock_id) == None):
+            icon_factory = gtk.IconFactory()
+            icon_factory.add_default()
+            icon_factory.add(stock_id, gtk.IconSet(pixbuf))
+            gtk.stock_add([(stock_id, '_label', 0, 0, '')])
+
+            return icon_factory.lookup(stock_id)
+
+        return None
+
+    def get_pixbuf_from_stock_icon(self, widget, stock_id="", size=gtk.ICON_SIZE_DIALOG):
+        if widget and stock_id and gtk.icon_factory_lookup_default(stock_id):
+            return widget.render_icon(stock_id, size)
+
+        return None
+
+    def set_icon_name_to_id(self, name):
+        if name and type(name) == str:
+            if name.startswith("gtk") or name == "task-refresh":
+                stock_id = name
+            else:
+                stock_id = 'gtk-' + name
+
+        return stock_id
+
+    ''' render cell exactly, "icon-name" is priority
+        if use the 'task-refresh' will make the pix animation
+        if 'pix' will change the pixbuf for it from the pixbuf or image.
+    '''
+    def do_render(self, window, tree, background_area,cell_area, expose_area, flags):
+        if (not self.control) or (not tree):
+            return
+
+        x, y, w, h = self.on_get_size(tree, cell_area)
+        x += cell_area.x
+        y += cell_area.y
+        w -= 2 * self.get_property("xpad")
+        h -= 2 * self.get_property("ypad")
+
+        stock_id = ""
+        if self.props.icon_name:
+            stock_id = self.set_icon_name_to_id(self.props.icon_name)
+        elif self.props.stock_id:
+            stock_id = self.props.stock_id
+        elif self.props.pixbuf:
+            pix = self.props.pixbuf
+        else:
+            return
+
+        if stock_id:
+            pix = self.get_pixbuf_from_stock_icon(tree, stock_id, self.props.stock_size)
+        if stock_id == 'task-refresh':
+            self.control.append_running_cell_area(cell_area)
+            if self.control.is_active():
+                self.control.on_draw_cb(pix, window.cairo_create(), x, y, w, h, True)
+            else:
+                self.control.start_run(200, 0, 0, 1000, 200, tree)
+        else:
+            self.control.remove_running_cell_area(cell_area)
+            self.control.on_draw_cb(pix, window.cairo_create(), x, y, w, h, False)
+
+    def on_get_size(self, widget, cell_area):
+        if self.props.icon_name or self.props.pixbuf or self.props.stock_id:
+            w, h = gtk.icon_size_lookup(self.props.stock_size)
+            return 0, 0, w, h
+
+        return 0, 0, 0, 0
+
+gobject.type_register(HobCellRendererPixbuf)
