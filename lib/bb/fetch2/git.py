@@ -214,6 +214,7 @@ class Git(FetchMethod):
             os.chdir(ud.clonedir)
             logger.info("Creating tarball of git repository")
             runfetchcmd("tar -czf %s %s" % (ud.fullmirror, os.path.join(".") ), d)
+            runfetchcmd("touch %s.done" % (ud.fullmirror), d)
 
     def unpack(self, ud, destdir, d):
         """ unpack the downloaded src to destdir"""
