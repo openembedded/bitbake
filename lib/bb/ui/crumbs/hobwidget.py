@@ -82,6 +82,7 @@ class hcc:
         "cpio"          : ["cpio"],
         "cpio.gz"       : ["cpio.gz"],
         "cpio.xz"       : ["cpio.xz"],
+        "vmdk"          : ["vmdk"],
         "cpio.lzma"     : ["cpio.lzma"],
     }
 
