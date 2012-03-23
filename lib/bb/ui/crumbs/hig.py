@@ -28,7 +28,7 @@ import re
 import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton
+from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
 
 """
@@ -75,10 +75,8 @@ class CrumbsMessageDialog(CrumbsDialog):
 
         self.icon = gtk.Image()
         # We have our own Info icon which should be used in preference of the stock icon
-        if icon == gtk.STOCK_INFO or icon == "gtk-dialog-info":
-            self.icon.set_from_file(hic.ICON_INFO_DISPLAY_FILE)
-        else:
-            self.icon.set_from_stock(icon, gtk.ICON_SIZE_DIALOG)
+        self.icon_chk = HobIconChecker()
+        self.icon.set_from_stock(self.icon_chk.check_stock_icon(icon), gtk.ICON_SIZE_DIALOG)
         self.icon.set_property("yalign", 0.00)
         self.icon.show()
         first_row.add(self.icon)
