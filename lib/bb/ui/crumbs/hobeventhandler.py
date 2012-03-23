@@ -62,8 +62,8 @@ class HobHandler(gobject.GObject):
                                      (gobject.TYPE_PYOBJECT,)),
     }
 
-    (CFG_AVAIL_LAYERS, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDKMACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, GENERATE_PACKAGEINFO, BUILD_TARGET_RECIPES, BUILD_TARGET_IMAGE, CMD_END) = range(12)
-    (LAYERS_REFRESH, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
+    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
+    (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(10)
 
     def __init__(self, server, recipe_model, package_model):
         super(HobHandler, self).__init__()
@@ -84,21 +84,6 @@ class HobHandler(gobject.GObject):
         self.error_msg = ""
         self.initcmd = None
 
-    def kick(self):
-        import xmlrpclib
-        try:
-            # kick the while thing off
-            self.commands_async.append(self.CFG_PATH_LAYERS)
-            self.commands_async.append(self.CFG_FILES_DISTRO)
-            self.commands_async.append(self.CFG_FILES_MACH)
-            self.commands_async.append(self.CFG_FILES_SDKMACH)
-            self.commands_async.append(self.FILES_MATCH_CLASS)
-            self.run_next_command()
-            return True
-        except xmlrpclib.Fault as x:
-            print("XMLRPC Fault getting commandline:\n %s" % x)
-            return False
- 
     def set_busy(self):
         if not self.generating:
             self.emit("generating-data")
@@ -122,30 +107,28 @@ class HobHandler(gobject.GObject):
                 self.emit("command-succeeded", self.initcmd)
             return
 
-        if next_command == self.CFG_AVAIL_LAYERS:
-            self.server.runCommand(["findCoreBaseFiles", "layers", "conf/layer.conf"])
-        elif next_command == self.CFG_PATH_LAYERS:
+        if next_command == self.SUB_PATH_LAYERS:
             self.server.runCommand(["findConfigFilePath", "bblayers.conf"])
-        elif next_command == self.CFG_FILES_DISTRO:
+        elif next_command == self.SUB_FILES_DISTRO:
             self.server.runCommand(["findConfigFiles", "DISTRO"])
-        elif next_command == self.CFG_FILES_MACH:
+        elif next_command == self.SUB_FILES_MACH:
             self.server.runCommand(["findConfigFiles", "MACHINE"])
-        elif next_command == self.CFG_FILES_SDKMACH:
+        elif next_command == self.SUB_FILES_SDKMACH:
             self.server.runCommand(["findConfigFiles", "MACHINE-SDK"])
-        elif next_command == self.FILES_MATCH_CLASS:
+        elif next_command == self.SUB_MATCH_CLASS:
             self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
-        elif next_command == self.PARSE_CONFIG:
+        elif next_command == self.SUB_PARSE_CONFIG:
             self.server.runCommand(["parseConfigurationFiles", "", ""])
-        elif next_command == self.GENERATE_TGTS:
+        elif next_command == self.SUB_GNERATE_TGTS:
             self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
-        elif next_command == self.GENERATE_PACKAGEINFO:
+        elif next_command == self.SUB_GENERATE_PKGINFO:
             self.server.runCommand(["triggerEvent", "bb.event.RequestPackageInfo()"])
-        elif next_command == self.BUILD_TARGET_RECIPES:
+        elif next_command == self.SUB_BUILD_RECIPES:
             self.clear_busy()
             self.building = True
             self.server.runCommand(["buildTargets", self.recipe_queue, "build"])
             self.recipe_queue = []
-        elif next_command == self.BUILD_TARGET_IMAGE:
+        elif next_command == self.SUB_BUILD_IMAGE:
             self.clear_busy()
             self.building = True
             targets = ["hob-image"]
@@ -264,14 +247,10 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["initCooker"])
 
     def refresh_layers(self, bblayers):
-        self.server.runCommand(["initCooker"])
-        self.server.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
-        self.commands_async.append(self.PARSE_CONFIG)
-        self.commands_async.append(self.CFG_FILES_DISTRO)
-        self.commands_async.append(self.CFG_FILES_MACH)
-        self.commands_async.append(self.CFG_FILES_SDKMACH)
-        self.commands_async.append(self.FILES_MATCH_CLASS)
-        self.run_next_command(self.LAYERS_REFRESH)
+        self.init_cooker()
+        self.set_bblayers(bblayers)
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.generate_configuration()
 
     def set_extra_inherit(self, bbclass):
         inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
@@ -330,27 +309,35 @@ class HobHandler(gobject.GObject):
             self.server.runCommand(["setVariable", key, value])
 
     def request_package_info_async(self):
-        self.commands_async.append(self.GENERATE_PACKAGEINFO)
+        self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
 
+    def generate_configuration(self):
+        self.commands_async.append(self.SUB_PATH_LAYERS)
+        self.commands_async.append(self.SUB_FILES_DISTRO)
+        self.commands_async.append(self.SUB_FILES_MACH)
+        self.commands_async.append(self.SUB_FILES_SDKMACH)
+        self.commands_async.append(self.SUB_MATCH_CLASS)
+        self.run_next_command(self.GENERATE_CONFIGURATION)
+
     def generate_recipes(self):
-        self.commands_async.append(self.PARSE_CONFIG)
-        self.commands_async.append(self.GENERATE_TGTS)
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.commands_async.append(self.SUB_GNERATE_TGTS)
         self.run_next_command(self.GENERATE_RECIPES)
                  
     def generate_packages(self, tgts):
         targets = []
         targets.extend(tgts)
         self.recipe_queue = targets
-        self.commands_async.append(self.PARSE_CONFIG)
-        self.commands_async.append(self.BUILD_TARGET_RECIPES)
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
     def generate_image(self, tgts, toolchain_build=False):
         self.package_queue = tgts
         self.toolchain_build = toolchain_build
-        self.commands_async.append(self.PARSE_CONFIG)
-        self.commands_async.append(self.BUILD_TARGET_IMAGE)
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
 
     def build_failed_async(self):

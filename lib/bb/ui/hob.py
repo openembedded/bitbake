@@ -56,9 +56,9 @@ def main (server = None, eventHandler = None):
     package_model = PackageListModel()
 
     hobHandler = HobHandler(server, recipe_model, package_model)
-    if hobHandler.kick() == False:
-        return 1
     builder = Builder(hobHandler, recipe_model, package_model)
+
+    hobHandler.generate_configuration()
 
     # This timeout function regularly probes the event queue to find out if we
     # have any messages waiting for us.

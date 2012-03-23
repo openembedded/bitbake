@@ -409,7 +409,7 @@ class Builder(gtk.Window):
         self.parameters.all_layers = layers
 
     def handler_command_succeeded_cb(self, handler, initcmd):
-        if initcmd == self.handler.LAYERS_REFRESH:
+        if initcmd == self.handler.GENERATE_CONFIGURATION:
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
