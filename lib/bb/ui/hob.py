@@ -58,8 +58,6 @@ def main (server = None, eventHandler = None):
     hobHandler = HobHandler(server, recipe_model, package_model)
     builder = Builder(hobHandler, recipe_model, package_model)
 
-    hobHandler.generate_configuration()
-
     # This timeout function regularly probes the event queue to find out if we
     # have any messages waiting for us.
     gobject.timeout_add(10, event_handle_idle_func, eventHandler, hobHandler)

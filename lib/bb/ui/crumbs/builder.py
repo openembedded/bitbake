@@ -186,11 +186,6 @@ class Builder(gtk.Window):
 
         self.template = None
 
-        # settings
-        params = self.handler.get_parameters()
-        self.configuration = Configuration(params)
-        self.parameters = Parameters(params)
-
         # build step
         self.current_step = None
         self.previous_step = None
@@ -223,6 +218,10 @@ class Builder(gtk.Window):
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
+
+        self.handler.init_cooker()
+        self.handler.set_extra_inherit("image_types")
+        self.handler.parse_config()
 
         self.switch_page(self.MACHINE_SELECTION)
 
@@ -409,7 +408,13 @@ class Builder(gtk.Window):
         self.parameters.all_layers = layers
 
     def handler_command_succeeded_cb(self, handler, initcmd):
-        if initcmd == self.handler.GENERATE_CONFIGURATION:
+        if initcmd == self.handler.PARSE_CONFIG:
+            # settings
+            params = self.handler.get_parameters()
+            self.configuration = Configuration(params)
+            self.parameters = Parameters(params)
+            self.handler.generate_configuration()
+        elif initcmd == self.handler.GENERATE_CONFIGURATION:
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,

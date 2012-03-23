@@ -62,7 +62,7 @@ class HobHandler(gobject.GObject):
                                      (gobject.TYPE_PYOBJECT,)),
     }
 
-    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
+    (PARSE_CONFIG, GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(6)
     (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(10)
 
     def __init__(self, server, recipe_model, package_model):
@@ -245,6 +245,10 @@ class HobHandler(gobject.GObject):
 
     def init_cooker(self):
         self.server.runCommand(["initCooker"])
+
+    def parse_config(self):
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.run_next_command(self.PARSE_CONFIG)
 
     def refresh_layers(self, bblayers):
         self.init_cooker()
