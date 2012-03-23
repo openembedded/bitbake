@@ -62,7 +62,7 @@ class HobHandler(gobject.GObject):
                                      (gobject.TYPE_PYOBJECT,)),
     }
 
-    (CFG_AVAIL_LAYERS, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDKMACH, FILES_MATCH_CLASS, PARSE_CONFIG, PARSE_BBFILES, GENERATE_TGTS, GENERATE_PACKAGEINFO, BUILD_TARGET_RECIPES, BUILD_TARGET_IMAGE, CMD_END) = range(13)
+    (CFG_AVAIL_LAYERS, CFG_PATH_LAYERS, CFG_FILES_DISTRO, CFG_FILES_MACH, CFG_FILES_SDKMACH, FILES_MATCH_CLASS, PARSE_CONFIG, GENERATE_TGTS, GENERATE_PACKAGEINFO, BUILD_TARGET_RECIPES, BUILD_TARGET_IMAGE, CMD_END) = range(12)
     (LAYERS_REFRESH, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
 
     def __init__(self, server, recipe_model, package_model):
@@ -136,8 +136,6 @@ class HobHandler(gobject.GObject):
             self.server.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
         elif next_command == self.PARSE_CONFIG:
             self.server.runCommand(["parseConfigurationFiles", "", ""])
-        elif next_command == self.PARSE_BBFILES:
-            self.server.runCommand(["parseFiles"])
         elif next_command == self.GENERATE_TGTS:
             self.server.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.GENERATE_PACKAGEINFO:
@@ -345,7 +343,6 @@ class HobHandler(gobject.GObject):
         targets.extend(tgts)
         self.recipe_queue = targets
         self.commands_async.append(self.PARSE_CONFIG)
-        self.commands_async.append(self.PARSE_BBFILES)
         self.commands_async.append(self.BUILD_TARGET_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
@@ -353,7 +350,6 @@ class HobHandler(gobject.GObject):
         self.package_queue = tgts
         self.toolchain_build = toolchain_build
         self.commands_async.append(self.PARSE_CONFIG)
-        self.commands_async.append(self.PARSE_BBFILES)
         self.commands_async.append(self.BUILD_TARGET_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
 
