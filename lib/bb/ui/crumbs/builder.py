@@ -135,6 +135,9 @@ class Parameters:
         self.image_names = []
         self.image_addr = params["image_addr"]
         self.image_types = params["image_types"].split()
+        self.runnable_image_types = params["runnable_image_types"].split()
+        self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
+        self.deployable_image_types = params["deployable_image_types"].split()
 
 class Builder(gtk.Window):
 

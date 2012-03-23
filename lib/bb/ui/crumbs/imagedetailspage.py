@@ -183,7 +183,6 @@ class ImageDetailsPage (HobPage):
             self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, False)
         image_table = HobViewTable(self.__columns__)
         image_table.set_model(self.image_store)
-        image_table.toggle_default()
         image_size = self._size_to_string(os.stat(os.path.join(image_addr, image_names[0])).st_size)
         image_table.connect("toggled", self.toggled_cb)
         view_files_button = gtk.LinkButton("file://%s" % image_addr, "View files")
@@ -256,6 +255,29 @@ class ImageDetailsPage (HobPage):
         model[path][columnid] = True
         self.refresh_package_detail_box(model[path][1])
 
+        type_runnable = False
+        mach_runnable = False
+        image_name = model[path][0]
+        for t in self.builder.parameters.runnable_image_types:
+            if image_name.endswith(t):
+                type_runnable = True
+                break
+
+        for t in self.builder.parameters.runnable_machine_patterns:
+            if t in image_name:
+                mach_runnable = True
+                break
+
+        self.run_button.set_sensitive(type_runnable and mach_runnable)
+
+        deployable = False
+        for t in self.builder.parameters.deployable_image_types:
+            if image_name.endswith(t):
+                deployable = True
+                break
+
+        self.deploy_button.set_sensitive(deployable)
+
     def create_bottom_buttons(self, buttonlist):
         # Create the buttons at the bottom
         bottom_buttons = gtk.HBox(False, 6)
@@ -264,13 +286,13 @@ class ImageDetailsPage (HobPage):
         # create button "Deploy image"
         name = "Deploy image"
         if name in buttonlist:
-            deploy_button = HobButton('Deploy image')
-            deploy_button.set_size_request(205, 49)
-            deploy_button.set_tooltip_text("Deploy image to get your target board")
-            deploy_button.set_flags(gtk.CAN_DEFAULT)
-            deploy_button.grab_default()
-            deploy_button.connect("clicked", self.deploy_button_clicked_cb)
-            bottom_buttons.pack_end(deploy_button, expand=False, fill=False)
+            self.deploy_button = HobButton('Deploy image')
+            self.deploy_button.set_size_request(205, 49)
+            self.deploy_button.set_tooltip_text("Deploy image to get your target board")
+            self.deploy_button.set_flags(gtk.CAN_DEFAULT)
+            self.deploy_button.grab_default()
+            self.deploy_button.connect("clicked", self.deploy_button_clicked_cb)
+            bottom_buttons.pack_end(self.deploy_button, expand=False, fill=False)
             created = True
 
         name = "Run image"
@@ -281,9 +303,9 @@ class ImageDetailsPage (HobPage):
                 bottom_buttons.pack_end(label, expand=False, fill=False)
 
             # create button "Run image"
-            run_button = HobAltButton("Run image")
-            run_button.connect("clicked", self.run_button_clicked_cb)
-            bottom_buttons.pack_end(run_button, expand=False, fill=False)
+            self.run_button = HobAltButton("Run image")
+            self.run_button.connect("clicked", self.run_button_clicked_cb)
+            bottom_buttons.pack_end(self.run_button, expand=False, fill=False)
             created = True
 
         name = "Save as template"
