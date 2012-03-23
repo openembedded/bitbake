@@ -118,7 +118,7 @@ class RecipeSelectionPage (HobPage):
         self.create_visual_elements()
 
     def create_visual_elements(self):
-        self.label = gtk.Label("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
+        self.label = gtk.Label()
         self.eventbox = self.add_onto_top_bar(self.label, 73)
         self.pack_start(self.eventbox, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
