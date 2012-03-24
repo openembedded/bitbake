@@ -205,49 +205,62 @@ class HobButton(gtk.Button):
     label: the text to display as the button's label
     """
     def __init__(self, label):
-        gtk.Button.__init__(self, "<span size='x-large'><b>%s</b></span>" % gobject.markup_escape_text(label))
-        self.child.set_use_markup(True)
+        gtk.Button.__init__(self, label)
+        HobButton.style_button(self)
 
-        style = self.get_style()
+    @staticmethod
+    def style_button(button):
+        style = button.get_style()
         button_color = gtk.gdk.Color(HobColors.ORANGE)
-        self.modify_bg(gtk.STATE_NORMAL, button_color)
-        self.modify_bg(gtk.STATE_PRELIGHT, button_color)
-        self.modify_bg(gtk.STATE_SELECTED, button_color)
+        button.modify_bg(gtk.STATE_NORMAL, button_color)
+        button.modify_bg(gtk.STATE_PRELIGHT, button_color)
+        button.modify_bg(gtk.STATE_SELECTED, button_color)
 
-        self.set_flags(gtk.CAN_DEFAULT)
-        self.grab_default()
+        button.set_flags(gtk.CAN_DEFAULT)
+        button.grab_default()
+
+        label = "<span size='x-large'><b>%s</b></span>" % gobject.markup_escape_text(button.get_label())
+        button.set_label(label)
+        button.child.set_use_markup(True)
 
 class HobAltButton(gtk.Button):
     """
     A gtk.Button subclass which has no relief, and so is more discrete
     """
     def __init__(self, label):
-        gtk.Button.__init__(self)
-        self.text = label
-        self.set_text()
-        self.set_relief(gtk.RELIEF_NONE)
-        self.connect("state-changed", self.desensitise_on_state_change_cb)
+        gtk.Button.__init__(self, label)
+        HobAltButton.style_button(self)
 
     """
     A callback for the state-changed event to ensure the text is displayed
     differently when the widget is not sensitive
     """
-    def desensitise_on_state_change_cb(self, widget, state):
-        if widget.get_state() == gtk.STATE_INSENSITIVE:
-            self.set_text(False)
+    @staticmethod
+    def desensitise_on_state_change_cb(button, state):
+        if button.get_state() == gtk.STATE_INSENSITIVE:
+            HobAltButton.set_text(button, False)
         else:
-            self.set_text(True)
+            HobAltButton.set_text(button, True)
 
     """
     Set the button label with an appropriate colour for the current widget state
     """
-    def set_text(self, sensitive=True):
+    @staticmethod
+    def set_text(button, sensitive=True):
         if sensitive:
             colour = HobColors.PALE_BLUE
         else:
             colour = HobColors.LIGHT_GRAY
-        self.set_label("<span color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(self.text)))
-        self.child.set_use_markup(True)
+        button.set_label("<span color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(button.text)))
+        button.child.set_use_markup(True)
+
+    @staticmethod
+    def style_button(button):
+        button.text = button.get_label()
+        button.connect("state-changed", HobAltButton.desensitise_on_state_change_cb)
+        HobAltButton.set_text(button)
+        button.child.set_use_markup(True)
+        button.set_relief(gtk.RELIEF_NONE)
 
 class HobImageButton(gtk.Button):
     """
