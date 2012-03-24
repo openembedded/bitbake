@@ -274,7 +274,8 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "IMAGE_FSTYPES", " ".join(image_fstypes).lstrip(" ")])
 
     def set_distro(self, distro):
-        self.server.runCommand(["setVariable", "DISTRO", distro])
+        if distro != "defaultsetup":
+            self.server.runCommand(["setVariable", "DISTRO", distro])
 
     def set_package_format(self, format):
         package_classes = ""
