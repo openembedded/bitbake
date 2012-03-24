@@ -439,4 +439,5 @@ class HobHandler(gobject.GObject):
         params["runnable_image_types"] = self.server.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or ""
         params["runnable_machine_patterns"] = self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or ""
         params["deployable_image_types"] = self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or ""
+        params["tmpdir"] = self.server.runCommand(["getVariable", "TMPDIR"]) or ""
         return params

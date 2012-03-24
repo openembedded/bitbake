@@ -138,6 +138,7 @@ class Parameters:
         self.runnable_image_types = params["runnable_image_types"].split()
         self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
         self.deployable_image_types = params["deployable_image_types"].split()
+        self.tmpdir = params["tmpdir"]
 
 class Builder(gtk.Window):
 
@@ -813,7 +814,7 @@ class Builder(gtk.Window):
 
         if response == gtk.RESPONSE_YES:
             source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")
-            tmp_path = os.path.join(os.getcwd(), "tmp")
+            tmp_path = self.parameters.tmpdir
             if os.path.exists(image_path) and os.path.exists(kernel_path) \
                and os.path.exists(source_env_path) and os.path.exists(tmp_path):
                 cmdline = "/usr/bin/xterm -e "
