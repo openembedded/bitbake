@@ -73,6 +73,9 @@ class PersistentTooltip(gtk.Window):
         self.set_position(gtk.WIN_POS_MOUSE)
         self.set_opacity(0.95)
 
+        # Ensure a reasonable minimum size
+        self.set_geometry_hints(self, 100, 50)
+
         # Draw our label and close buttons
         hbox = gtk.HBox(False, 0)
         hbox.show()
