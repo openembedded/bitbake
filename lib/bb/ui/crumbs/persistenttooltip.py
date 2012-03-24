@@ -76,9 +76,7 @@ class PersistentTooltip(gtk.Window):
         # Draw our label and close buttons
         hbox = gtk.HBox(False, 0)
         hbox.show()
-        vbox = gtk.VBox(False, 0)
-        vbox.show()
-        vbox.pack_start(hbox, True, True, 0)
+        self.add(hbox)
 
         img = gtk.Image()
         img.set_from_stock(gtk.STOCK_CLOSE, gtk.ICON_SIZE_BUTTON)
@@ -89,18 +87,21 @@ class PersistentTooltip(gtk.Window):
         self.button.set_can_default(True)
         self.button.grab_focus()
         self.button.show()
+        vbox = gtk.VBox(False, 0)
+        vbox.show()
+        vbox.pack_start(self.button, False, False, 0)
         if __button_right:
-            hbox.pack_end(self.button, False, False, 0)
+            hbox.pack_end(vbox, True, True, 0)
         else:
-            hbox.pack_start(self.button, False, False, 0)
+            hbox.pack_start(vbox, True, True, 0)
 
         self.set_default(self.button)
 
-        hbox = gtk.HBox(True, 6)
-        hbox.set_border_width(6)
-        hbox.show()
-        vbox.pack_end(hbox, True, True, 6)
+        bin = gtk.HBox(True, 6)
+        bin.set_border_width(6)
+        bin.show()
         self.label = gtk.Label()
+        self.label.set_line_wrap(True)
         # We want to match the colours of the normal tooltips, as dictated by
         # the users gtk+-2.0 theme, wherever possible - on some systems this
         # requires explicitly setting a fg_color for the label which matches the
@@ -119,11 +120,10 @@ class PersistentTooltip(gtk.Window):
                 break # we only care for the tooltip_fg_color
         self.label.set_markup(markup)
         self.label.show()
-        hbox.pack_end(self.label, True, True, 6)
+        bin.add(self.label)
+        hbox.pack_end(bin, True, True, 6)
 
         self.connect("key-press-event", self._catch_esc_cb)
-
-        self.add(vbox)
 
     """
     Callback when the PersistentTooltip's close button is clicked.
