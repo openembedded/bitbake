@@ -33,9 +33,10 @@ from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
 from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
 from bb.ui.crumbs.hobwidget import hwc
-from bb.ui.crumbs.hig import CrumbsMessageDialog, BinbDialog, \
+from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
                              AdvancedSettingDialog, LayerSelectionDialog, \
-                             DeployImageDialog, ImageSelectionDialog
+                             DeployImageDialog
+from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 
 class Configuration:
     '''Represents the data structure of configuration.'''
@@ -668,9 +669,10 @@ class Builder(gtk.Window):
         self.switch_page(self.FAST_IMAGE_GENERATING)
 
     def show_binb_dialog(self, binb):
-        binb_dialog = BinbDialog("Brought in by:", binb, self)
-        binb_dialog.run()
-        binb_dialog.destroy()
+        markup = "<b>Brought in by:</b>\n%s" % binb
+        ptip = PersistentTooltip(markup)
+
+        ptip.show()
 
     def show_layer_selection_dialog(self):
         dialog = LayerSelectionDialog(title = "Layers",

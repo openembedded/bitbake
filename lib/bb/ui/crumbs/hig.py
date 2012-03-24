@@ -92,29 +92,6 @@ class CrumbsMessageDialog(CrumbsDialog):
         first_row.add(self.label)
 
 #
-# Brought-in-by Dialog
-#
-class BinbDialog(CrumbsDialog):
-    """
-    A dialog widget to show "brought in by" info when a recipe/package is clicked.
-    """
-
-    def __init__(self, title, content, parent=None):
-        super(BinbDialog, self).__init__(title, parent, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT, ("Close", gtk.RESPONSE_CLOSE))
-
-        self.set_position(gtk.WIN_POS_MOUSE)
-        self.set_resizable(False)
-        self.modify_bg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.DARK))
-
-        label = gtk.Label(content)
-        label.set_alignment(0, 0)
-        label.set_line_wrap(True)
-        label.modify_fg(gtk.STATE_NORMAL, gtk.gdk.Color(HobColors.WHITE))
-
-        self.vbox.pack_start(label, expand=True, fill=True, padding=10)
-        self.vbox.show_all()
-
-#
 # AdvancedSettings Dialog
 #
 class AdvancedSettingDialog (CrumbsDialog):
