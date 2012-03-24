@@ -222,9 +222,32 @@ class HobAltButton(gtk.Button):
     A gtk.Button subclass which has no relief, and so is more discrete
     """
     def __init__(self, label):
-        gtk.Button.__init__(self, "<span color='%s'><b>%s</b></span>" % (HobColors.PALE_BLUE, gobject.markup_escape_text(label)))
-        self.child.set_use_markup(True)
+        gtk.Button.__init__(self)
+        self.text = label
+        self.set_text()
         self.set_relief(gtk.RELIEF_NONE)
+        self.connect("state-changed", self.desensitise_on_state_change_cb)
+
+    """
+    A callback for the state-changed event to ensure the text is displayed
+    differently when the widget is not sensitive
+    """
+    def desensitise_on_state_change_cb(self, widget, state):
+        if widget.get_state() == gtk.STATE_INSENSITIVE:
+            self.set_text(False)
+        else:
+            self.set_text(True)
+
+    """
+    Set the button label with an appropriate colour for the current widget state
+    """
+    def set_text(self, sensitive=True):
+        if sensitive:
+            colour = HobColors.PALE_BLUE
+        else:
+            colour = HobColors.LIGHT_GRAY
+        self.set_label("<span color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(self.text)))
+        self.child.set_use_markup(True)
 
 class HobImageButton(gtk.Button):
     """
