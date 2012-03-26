@@ -88,8 +88,16 @@ class ImageConfigurationPage (HobPage):
         self.pack_start(self.group_align, expand=True, fill=True)
 
         self.box_group_area.pack_start(self.gtable, expand=True, fill=True)
-        if pack_config_build_button == True:
+        if pack_config_build_button:
             self.box_group_area.pack_end(self.config_build_button, expand=False, fill=False)
+        else:
+            box = gtk.HBox(False, 6)
+            box.show()
+            subbox = gtk.HBox(False, 0)
+            subbox.set_size_request(205, 49)
+            subbox.show()
+            box.add(subbox)
+            self.box_group_area.pack_end(box, False, False)
 
     def show_machine(self):
         self.progress_bar.reset()
@@ -209,14 +217,14 @@ class ImageConfigurationPage (HobPage):
 
     def set_config_baseimg_layout(self):
         self.gtable.attach(self.image_title, 0, 40, 13, 17)
-        self.gtable.attach(self.image_title_desc, 0, 40, 17, 22)
-        self.gtable.attach(self.image_combo, 0, 12, 22, 25)
-        self.gtable.attach(self.image_desc, 14, 38, 22, 27)
+        self.gtable.attach(self.image_title_desc, 0, 40, 18, 23)
+        self.gtable.attach(self.image_combo, 0, 12, 24, 27)
+        self.gtable.attach(self.image_desc, 14, 38, 24, 29)
         self.gtable.attach(self.image_separator, 0, 40, 35, 36)
 
     def set_rcppkg_layout(self):
-        self.gtable.attach(self.view_recipes_button, 0, 20, 27, 32)
-        self.gtable.attach(self.view_packages_button, 20, 40, 27, 32)
+        self.gtable.attach(self.view_recipes_button, 0, 20, 30, 35)
+        self.gtable.attach(self.view_packages_button, 20, 40, 30, 35)
 
     def create_config_build_button(self):
         # Create the "Build packages" and "Just bake" buttons at the bottom
