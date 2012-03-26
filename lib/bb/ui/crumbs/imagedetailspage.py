@@ -176,14 +176,30 @@ class ImageDetailsPage (HobPage):
             build_result = self.DetailBox(varlist=varlist, vallist=vallist, icon=icon, color=color)
             self.box_group_area.pack_start(build_result, expand=False, fill=False)
 
+        # create the buttons at the bottom first because the buttons are used in apply_button_per_image()
+        if build_succeeded:
+            buttonlist = ["Build new image", "Save as template", "Run image", "Deploy image"]
+        else: # get to this page from "My images"
+            buttonlist = ["Build new image", "Run image", "Deploy image"]
+        details_bottom_buttons = self.create_bottom_buttons(buttonlist)
+
         # Name
         self.image_store.clear()
+        default_toggled = False
+        default_image_size = 0
         for image_name in image_names:
             image_size = self._size_to_string(os.stat(os.path.join(image_addr, image_name)).st_size)
-            self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, False)
+            if not default_toggled:
+                default_toggled = (self.test_type_runnable(image_name) and self.test_mach_runnable(image_name)) \
+                    or self.test_deployable(image_name)
+                self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, default_toggled)
+                if default_toggled:
+                    default_image_size = image_size
+                self.apply_buttons_per_image(image_name)
+            else:
+                self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, False)
         image_table = HobViewTable(self.__columns__)
         image_table.set_model(self.image_store)
-        image_size = self._size_to_string(os.stat(os.path.join(image_addr, image_names[0])).st_size)
         image_table.connect("toggled", self.toggled_cb)
         view_files_button = HobAltButton("View files")
         view_files_button.connect("clicked", self.view_files_clicked_cb, image_addr)
@@ -222,7 +238,7 @@ class ImageDetailsPage (HobPage):
         varlist = ["Packages included: ", "Total image size: "]
         vallist = []
         vallist.append(pkg_num)
-        vallist.append(image_size)
+        vallist.append(default_image_size)
         if build_succeeded:
             edit_packages_button = HobAltButton("Edit packages")
             edit_packages_button.connect("clicked", self.edit_packages_button_clicked_cb)
@@ -231,11 +247,7 @@ class ImageDetailsPage (HobPage):
         self.package_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_packages_button)
         self.box_group_area.pack_start(self.package_detail, expand=False, fill=False)
 
-        if build_succeeded:
-            buttonlist = ["Build new image", "Save as template", "Run image", "Deploy image"]
-        else: # get to this page from "My images"
-            buttonlist = ["Build new image", "Run image", "Deploy image"]
-        details_bottom_buttons = self.create_bottom_buttons(buttonlist)
+        # pack the buttons at the bottom, at this time they are already created.
         self.box_group_area.pack_end(details_bottom_buttons, expand=False, fill=False)
 
         self.show_all()
@@ -245,6 +257,34 @@ class ImageDetailsPage (HobPage):
 
     def refresh_package_detail_box(self, image_size):
         self.package_detail.update_line_widgets("Total image size: ", image_size)
+
+    def test_type_runnable(self, image_name):
+        type_runnable = False
+        for t in self.builder.parameters.runnable_image_types:
+            if image_name.endswith(t):
+                type_runnable = True
+                break
+        return type_runnable
+
+    def test_mach_runnable(self, image_name):
+        mach_runnable = False
+        for t in self.builder.parameters.runnable_machine_patterns:
+            if t in image_name:
+                mach_runnable = True
+                break
+        return mach_runnable
+
+    def test_deployable(self, image_name):
+        deployable = False
+        for t in self.builder.parameters.deployable_image_types:
+            if image_name.endswith(t):
+                deployable = True
+                break
+        return deployable
+
+    def apply_buttons_per_image(self, image_name):
+        self.run_button.set_sensitive(self.test_type_runnable(image_name) and self.test_mach_runnable(image_name))
+        self.deploy_button.set_sensitive(self.test_deployable(image_name))
 
     def toggled_cb(self, table, cell, path, columnid, tree):
         model = tree.get_model()
@@ -259,28 +299,8 @@ class ImageDetailsPage (HobPage):
         model[path][columnid] = True
         self.refresh_package_detail_box(model[path][1])
 
-        type_runnable = False
-        mach_runnable = False
         image_name = model[path][0]
-        for t in self.builder.parameters.runnable_image_types:
-            if image_name.endswith(t):
-                type_runnable = True
-                break
-
-        for t in self.builder.parameters.runnable_machine_patterns:
-            if t in image_name:
-                mach_runnable = True
-                break
-
-        self.run_button.set_sensitive(type_runnable and mach_runnable)
-
-        deployable = False
-        for t in self.builder.parameters.deployable_image_types:
-            if image_name.endswith(t):
-                deployable = True
-                break
-
-        self.deploy_button.set_sensitive(deployable)
+        self.apply_buttons_per_image(image_name)
 
     def create_bottom_buttons(self, buttonlist):
         # Create the buttons at the bottom
