@@ -42,14 +42,6 @@ class RunningBuildModel (gtk.TreeStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_INT)
 
-    def config_model_filter(self, model, it):
-        msg = model.get(it, self.COL_MESSAGE)[0]
-        if not msg or type(msg) != str:
-            return False
-        if msg.startswith("\nOE Build Configuration:\n"):
-            return True
-        return False
-
     def failure_model_filter(self, model, it):
         color = model.get(it, self.COL_COLOR)[0]
         if not color:
@@ -57,11 +49,6 @@ class RunningBuildModel (gtk.TreeStore):
         if color == HobColors.ERROR:
             return True
         return False
-
-    def config_model(self):
-        model = self.filter_new()
-        model.set_visible_func(self.config_model_filter)
-        return model
 
     def failure_model(self):
         model = self.filter_new()
@@ -74,7 +61,6 @@ class RunningBuildModel (gtk.TreeStore):
 
     def close_task_refresh(self):
         self.foreach(self.foreach_cell_func, None)
-
 
 class RunningBuild (gobject.GObject):
     __gsignals__ = {
@@ -421,25 +407,6 @@ class RunningBuildTreeView (gtk.TreeView):
         message = model.get(it, model.COL_MESSAGE)[0]
 
         self._add_to_clipboard(message)
-
-
-class BuildConfigurationTreeView(gtk.TreeView):
-
-    def __init__ (self):
-        gtk.TreeView.__init__(self)
-        self.set_rules_hint(False)
-        self.set_headers_visible(False)
-        self.set_property("hover-expand", True)
-        self.get_selection().set_mode(gtk.SELECTION_SINGLE)
-
-        # The message of the build.
-        self.message_renderer = HobWarpCellRendererText (col_number=0)
-        self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=RunningBuildModel.COL_MESSAGE, background=RunningBuildModel.COL_COLOR)
-        font = self.get_style().font_desc
-        font.set_size(pango.SCALE * 13)
-        self.message_renderer.set_property('font-desc', font)
-        self.append_column (self.message_column)
-
 
 class BuildFailureTreeView(gtk.TreeView):
 

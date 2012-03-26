@@ -440,4 +440,10 @@ class HobHandler(gobject.GObject):
         params["runnable_machine_patterns"] = self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or ""
         params["deployable_image_types"] = self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or ""
         params["tmpdir"] = self.server.runCommand(["getVariable", "TMPDIR"]) or ""
+        params["distro_version"] = self.server.runCommand(["getVariable", "DISTRO_VERSION"]) or ""
+        params["target_os"] = self.server.runCommand(["getVariable", "TARGET_OS"]) or ""
+        params["target_arch"] = self.server.runCommand(["getVariable", "TARGET_ARCH"]) or ""
+        params["tune_pkgarch"] = self.server.runCommand(["getVariable", "TUNE_PKGARCH"])  or ""
+        params["bb_version"] = self.server.runCommand(["getVariable", "BB_MIN_VERSION"]) or ""
+        params["tune_arch"] = self.server.runCommand(["getVariable", "TUNE_ARCH"]) or ""
         return params

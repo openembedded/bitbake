@@ -140,6 +140,12 @@ class Parameters:
         self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
         self.deployable_image_types = params["deployable_image_types"].split()
         self.tmpdir = params["tmpdir"]
+        self.distro_version = params["distro_version"]
+        self.target_os = params["target_os"]
+        self.target_arch = params["target_arch"]
+        self.tune_pkgarch = params["tune_pkgarch"]
+        self.bb_version = params["bb_version"]
+        self.tune_arch = params["tune_arch"]
 
 class Builder(gtk.Window):
 
@@ -546,6 +552,7 @@ class Builder(gtk.Window):
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
         self.build_details_page.reset_build_status()
         self.build_details_page.reset_issues()
+        self.build_details_page.show_configurations(self.configuration, self.parameters)
 
     def build_succeeded(self):
         if self.current_step == self.FAST_IMAGE_GENERATING:
