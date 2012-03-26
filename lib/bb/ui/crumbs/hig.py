@@ -28,7 +28,7 @@ import re
 import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton
+from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton
 from bb.ui.crumbs.progressbar import HobProgressBar
 
 """
@@ -137,9 +137,11 @@ class AdvancedSettingDialog (CrumbsDialog):
 
     def entry_widget_select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
-                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
@@ -307,7 +309,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
-            max_threads, parent, flags, buttons):
+            max_threads, parent, flags, buttons=None):
         super(AdvancedSettingDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
@@ -563,7 +565,7 @@ class DeployImageDialog (CrumbsDialog):
 
     __dummy_usb__ = "--select a usb drive--"
 
-    def __init__(self, title, image_path, parent, flags, buttons):
+    def __init__(self, title, image_path, parent, flags, buttons=None):
         super(DeployImageDialog, self).__init__(title, parent, flags, buttons)
 
         self.image_path = image_path
@@ -713,9 +715,11 @@ class LayerSelectionDialog (CrumbsDialog):
 
     def layer_widget_add_clicked_cb(self, action, layer_store, parent):
         dialog = gtk.FileChooserDialog("Add new layer", parent,
-                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         label = gtk.Label("Select the layer you wish to add")
         label.show()
         dialog.set_extra_widget(label)
@@ -827,7 +831,7 @@ class LayerSelectionDialog (CrumbsDialog):
     def add_leave_cb(self, button, event):
         self.im.set_from_file(hic.ICON_INDI_ADD_FILE)
 
-    def __init__(self, title, layers, all_layers, parent, flags, buttons):
+    def __init__(self, title, layers, all_layers, parent, flags, buttons=None):
         super(LayerSelectionDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
@@ -921,7 +925,7 @@ class ImageSelectionDialog (CrumbsDialog):
     }]
 
 
-    def __init__(self, image_folder, image_types, title, parent, flags, buttons):
+    def __init__(self, image_folder, image_types, title, parent, flags, buttons=None):
         super(ImageSelectionDialog, self).__init__(title, parent, flags, buttons)
         self.connect("response", self.response_cb)
 
@@ -975,9 +979,11 @@ class ImageSelectionDialog (CrumbsDialog):
 
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
-                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
-                                       (gtk.STOCK_CANCEL, gtk.RESPONSE_NO,
-                                        gtk.STOCK_OPEN, gtk.RESPONSE_YES))
+                                       gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Open", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
