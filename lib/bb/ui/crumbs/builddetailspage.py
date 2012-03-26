@@ -47,7 +47,7 @@ class BuildDetailsPage (HobPage):
         self.vbox = gtk.VBox(False, 12)
 
         self.progress_box = gtk.VBox(False, 12)
-        self.task_status = gtk.Label()
+        self.task_status = gtk.Label("\n") # to ensure layout is correct
         self.task_status.set_alignment(0.0, 0.5)
         self.progress_box.pack_start(self.task_status, expand=False, fill=False)
         self.progress_hbox = gtk.HBox(False, 6)
@@ -89,11 +89,14 @@ class BuildDetailsPage (HobPage):
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_start(self.back_button, expand=False, fill=False)
 
-    def update_build_status(self, tsk_msg):
+    def update_build_status(self, current, total, task):
+        recipe_path, recipe_task = task.split(", ")
+        recipe = os.path.basename(recipe_path).rstrip(".bb")
+        tsk_msg = "<b>Running task %s of %s:</b> %s\n<b>Recipe:</b> %s" % (current, total, recipe_task, recipe)
         self.task_status.set_markup(tsk_msg)
 
     def reset_build_status(self):
-        self.task_status.set_markup("")
+        self.task_status.set_markup("\n") # to ensure layout is correct
 
     def show_issues(self):
         self.num_of_issues += 1
