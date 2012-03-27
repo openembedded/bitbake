@@ -171,7 +171,7 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.machine_title, 0, 40, 0, 4)
         self.gtable.attach(self.machine_title_desc, 0, 40, 4, 6)
         self.gtable.attach(self.machine_combo, 0, 12, 6, 9)
-        self.gtable.attach(self.layer_button, 12, 36, 6, 11)
+        self.gtable.attach(self.layer_button, 15, 36, 6, 11)
         self.gtable.attach(self.layer_info_icon, 36, 40, 6, 10)
         if show_progress_bar:
             self.gtable.attach(self.progress_box, 0, 40, 13, 17)
