@@ -185,7 +185,8 @@ class ImageDetailsPage (HobPage):
         image_table.set_model(self.image_store)
         image_size = self._size_to_string(os.stat(os.path.join(image_addr, image_names[0])).st_size)
         image_table.connect("toggled", self.toggled_cb)
-        view_files_button = gtk.LinkButton("file://%s" % image_addr, "View files")
+        view_files_button = HobAltButton("View files")
+        view_files_button.connect("clicked", self.view_files_clicked_cb, image_addr)
         self.box_group_area.pack_start(self.DetailBox(widget=image_table, button=view_files_button), expand=True, fill=True)
 
         # Machine, Base image and Layers
@@ -238,6 +239,9 @@ class ImageDetailsPage (HobPage):
         self.box_group_area.pack_end(details_bottom_buttons, expand=False, fill=False)
 
         self.show_all()
+
+    def view_files_clicked_cb(self, button, image_addr):
+        os.system("xdg-open /%s" % image_addr)
 
     def refresh_package_detail_box(self, image_size):
         self.package_detail.update_line_widgets("Total image size: ", image_size)
