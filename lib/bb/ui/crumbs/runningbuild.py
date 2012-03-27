@@ -56,7 +56,7 @@ class RunningBuildModel (gtk.TreeStore):
         return model
 
     def foreach_cell_func(self, model, path, iter, usr_data=None):
-        if model.get_value(iter, self.COL_ICON) == "task-refresh":
+        if model.get_value(iter, self.COL_ICON) == "gtk-execute":
             model.set(iter, self.COL_ICON, "")
 
     def close_task_refresh(self):
@@ -183,7 +183,7 @@ class RunningBuild (gobject.GObject):
             # Because this parent package now has an active child mark it as
             # such.
             # @todo if parent is already in error, don't mark it green
-            self.model.set(parent, self.model.COL_ICON, "task-refresh",
+            self.model.set(parent, self.model.COL_ICON, "gtk-execute",
                            self.model.COL_COLOR, HobColors.RUNNING)
 
             # Add an entry in the model for this task
@@ -191,7 +191,7 @@ class RunningBuild (gobject.GObject):
                                             package,
                                             task,
                                             "Task: %s" % (task),
-                                            "task-refresh",
+                                            "gtk-execute",
                                             HobColors.RUNNING,
                                             0))
 
@@ -339,18 +339,26 @@ class RunningBuildTreeView (gtk.TreeView):
     __gsignals__ = {
         "button_press_event" : "override"
         }
-    def __init__ (self, readonly=False):
+    def __init__ (self, readonly=False, hob=False):
         gtk.TreeView.__init__ (self)
         self.readonly = readonly
 
         # The icon that indicates whether we're building or failed.
-        renderer = HobCellRendererPixbuf ()
+        # add 'hob' flag because there has not only hob to share this code
+        if hob:
+            renderer = HobCellRendererPixbuf ()
+        else:
+            renderer = gtk.CellRendererPixbuf()
         col = gtk.TreeViewColumn ("Status", renderer)
         col.add_attribute (renderer, "icon-name", 4)
         self.append_column (col)
 
         # The message of the build.
-        self.message_renderer = HobWarpCellRendererText (col_number=1)
+        # add 'hob' flag because there has not only hob to share this code
+        if hob:
+            self.message_renderer = HobWarpCellRendererText (col_number=1)
+        else:
+            self.message_renderer = gtk.CellRendererText ()
         self.message_column = gtk.TreeViewColumn ("Message", self.message_renderer, text=3)
         self.message_column.add_attribute(self.message_renderer, 'background', 5)
         self.message_renderer.set_property('editable', (not self.readonly))

@@ -150,7 +150,7 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view_failure.add(self.failure_tv)
         self.notebook.append_page(self.scrolled_view_failure, gtk.Label("Issues"))
 
-        self.build_tv = RunningBuildTreeView(readonly=True)
+        self.build_tv = RunningBuildTreeView(readonly=True, hob=True)
         self.build_tv.set_model(self.builder.handler.build.model)
         self.scrolled_view_build = gtk.ScrolledWindow ()
         self.scrolled_view_build.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)

@@ -824,6 +824,7 @@ class HobIconChecker(hic):
             ('hic-ok',          'gtk-ok',           'ok')                   : self.ICON_INDI_TICK_FILE,
             ('hic-dialog-error', 'gtk-dialog-error', 'dialog-error')        : self.ICON_INDI_ERROR_FILE,
             ('hic-dialog-warning', 'gtk-dialog-warning', 'dialog-warning')  : self.ICON_INDI_ALERT_FILE,
+            ('hic-task-refresh', 'gtk-execute', 'execute')                  : self.ICON_INDI_REFRESH_FILE,
         }
         valid_stock_id = stock_name
         if stock_name:
@@ -924,9 +925,8 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
     def __init__(self):
         gtk.CellRendererPixbuf.__init__(self)
         self.control = RefreshRuningController()
-        # create default refrensh stock icon
+        # add icon checker for make the gtk-icon transfer to hob-icon
         self.checker = HobIconChecker()
-        self.checker.set_hob_icon_to_stock_icon(hic.ICON_INDI_REFRESH_FILE, "task-refresh")
 
     def get_pixbuf_from_stock_icon(self, widget, stock_id="", size=gtk.ICON_SIZE_DIALOG):
         if widget and stock_id and gtk.icon_factory_lookup_default(stock_id):
@@ -938,7 +938,7 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
         if new_name and type(new_name) == str:
             # check the name is need to transfer to hob icon or not
             name = self.checker.check_stock_icon(new_name)
-            if name.startswith("hic") or name.startswith("gtk") or name == "task-refresh":
+            if name.startswith("hic") or name.startswith("gtk"):
                 stock_id = name
             else:
                 stock_id = 'gtk-' + name
@@ -946,7 +946,7 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
         return stock_id
 
     ''' render cell exactly, "icon-name" is priority
-        if use the 'task-refresh' will make the pix animation
+        if use the 'hic-task-refresh' will make the pix animation
         if 'pix' will change the pixbuf for it from the pixbuf or image.
     '''
     def do_render(self, window, tree, background_area,cell_area, expose_area, flags):
@@ -971,7 +971,7 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
 
         if stock_id:
             pix = self.get_pixbuf_from_stock_icon(tree, stock_id, self.props.stock_size)
-        if stock_id == 'task-refresh':
+        if stock_id == 'hic-task-refresh':
             self.control.append_running_cell_area(cell_area)
             if self.control.is_active():
                 self.control.on_draw_cb(pix, window.cairo_create(), x, y, w, h, True)
