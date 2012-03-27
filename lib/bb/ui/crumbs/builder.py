@@ -734,7 +734,9 @@ class Builder(gtk.Window):
                      flags = gtk.DIALOG_MODAL
                          | gtk.DIALOG_DESTROY_WITH_PARENT
                          | gtk.DIALOG_NO_SEPARATOR)
-        button = dialog.add_button("Close", gtk.RESPONSE_YES)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("OK", gtk.RESPONSE_YES)
         HobButton.style_button(button)
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
