@@ -291,12 +291,13 @@ def _exec_task(fn, task, d, quieterr):
 
     bb.utils.mkdirhier(tempdir)
     loglink = os.path.join(tempdir, 'log.{0}'.format(task))
-    logfn = os.path.join(tempdir, 'log.{0}.{1}'.format(task, os.getpid()))
+    logbase = 'log.{0}.{1}'.format(task, os.getpid())
+    logfn = os.path.join(tempdir, logbase)
     if loglink:
         bb.utils.remove(loglink)
 
         try:
-           os.symlink(logfn, loglink)
+           os.symlink(logbase, loglink)
         except OSError:
            pass
 
