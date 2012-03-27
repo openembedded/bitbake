@@ -281,7 +281,7 @@ class HobImageButton(gtk.Button):
         self.icon_path = icon_path
         self.hover_icon_path = hover_icon_path
 
-        hbox = gtk.HBox(False, 3)
+        hbox = gtk.HBox(False, 6)
         hbox.show()
         self.add(hbox)
         self.icon = gtk.Image()
@@ -298,7 +298,7 @@ class HobImageButton(gtk.Button):
         mark = "%s\n<span fgcolor='%s'><small>%s</small></span>" % (primary_text, colour, secondary_text)
         label.set_markup(mark)
         label.show()
-        hbox.pack_start(label, True, True, 0)
+        hbox.pack_start(label, True, True, 6)
 
     def set_hover_icon_cb(self, widget, event):
         self.icon.set_from_file(self.hover_icon_path)
