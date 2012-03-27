@@ -295,7 +295,7 @@ class HobImageButton(gtk.Button):
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
         colour = soften_color(label)
-        mark = "%s\n<span fgcolor='%s'><small>%s</small></span>" % (primary_text, colour, secondary_text)
+        mark = "<span size='larger'>%s</span>\n<span fgcolor='%s'>%s</span>" % (primary_text, colour, secondary_text)
         label.set_markup(mark)
         label.show()
         hbox.pack_start(label, True, True, 6)
