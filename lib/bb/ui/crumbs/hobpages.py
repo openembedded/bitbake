@@ -35,7 +35,7 @@ class HobPage (gtk.VBox):
         self.builder_width, self.builder_height = self.builder.size_request()
 
         if not title:
-            self.title = "HOB -- Image Creator"
+            self.title = "Hob -- Image Creator"
         else:
             self.title = title
 
