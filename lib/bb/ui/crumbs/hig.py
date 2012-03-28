@@ -399,7 +399,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Packaging Format:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Packaging format:</span>")
         tooltip = "Select package formats that will be used. "
         tooltip += "The first format will be used for final image"
         pkgfmt_widget, self.rootfs_combo, self.check_hbox = self.gen_pkgfmt_widget(self.configuration.curr_package_format, self.all_package_formats, tooltip)
@@ -408,7 +408,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Image Rootfs Size: (MB)</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Image rootfs size: (MB)</span>")
         tooltip = "Sets the size of your target image.\nThis is the basic size of your target image, unless your selected package size exceeds this value, or you set value to \"Image Extra Size\"."
         rootfs_size_widget, self.rootfs_size_spinner = self.gen_spinner_widget(int(self.configuration.image_rootfs_size*1.0/1024), 0, 1024, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -416,7 +416,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Image Extra Size: (MB)</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Image extra size: (MB)</span>")
         tooltip = "Sets the extra free space of your target image.\nDefaultly, system will reserve 30% of your image size as your free space. If your image contains zypper, it will bring in 50MB more space. The maximum free space is 1024MB."
         extra_size_widget, self.extra_size_spinner = self.gen_spinner_widget(int(self.configuration.image_extra_size*1.0/1024), 0, 1024, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -432,7 +432,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_hbox = gtk.HBox(False, 6)
         advanced_vbox.pack_start(sub_hbox, expand=False, fill=False)
-        self.toolchain_checkbox = gtk.CheckButton("Build Toolchain")
+        self.toolchain_checkbox = gtk.CheckButton("Build toolchain")
         self.toolchain_checkbox.set_tooltip_text("Check this box to build the related toolchain with your image")
         self.toolchain_checkbox.set_active(self.configuration.toolchain_build)
         sub_hbox.pack_start(self.toolchain_checkbox, expand=False, fill=False)
@@ -449,7 +449,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select Distro:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Select distro:</span>")
         tooltip = "This is the Yocto distribution you would like to use"
         distro_widget, self.distro_combo = self.gen_combo_widget(self.configuration.curr_distro, self.all_distros, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -457,7 +457,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">BB_NUMBER_THREADS:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">BB number threads:</span>")
         tooltip = "Sets the number of threads that bitbake tasks can run simultaneously"
         bbthread_widget, self.bb_spinner = self.gen_spinner_widget(self.configuration.bbthread, 1, self.max_threads, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -465,7 +465,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">PARALLEL_MAKE:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Parallel make:</span>")
         tooltip = "Sets the make parallism, as known as 'make -j'"
         pmake_widget, self.pmake_spinner = self.gen_spinner_widget(self.configuration.pmake, 1, self.max_threads, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -473,7 +473,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Set Download Directory:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Set download directory:</span>")
         tooltip = "Select a folder that caches the upstream project source code"
         dldir_widget, self.dldir_text = self.gen_entry_widget(self.configuration.dldir, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -481,7 +481,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE Directory:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE directory:</span>")
         tooltip = "Select a folder that caches your prebuilt results"
         sstatedir_widget, self.sstatedir_text = self.gen_entry_widget(self.configuration.sstatedir, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -489,7 +489,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE Mirror:</span>")
+        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE mirror:</span>")
         tooltip = "Select the prebuilt mirror that will fasten your build speed"
         sstatemirror_widget, self.sstatemirror_text = self.gen_entry_widget(self.configuration.sstatemirror, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -503,7 +503,7 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        self.proxy_checkbox = gtk.CheckButton("Enable Proxy")
+        self.proxy_checkbox = gtk.CheckButton("Enable proxy")
         self.proxy_checkbox.set_tooltip_text("Check this box to setup the proxy you specified")
         self.proxy_checkbox.set_active(self.enable_proxy)
         self.proxy_checkbox.connect("toggled", self.proxy_checkbox_toggled_cb)
