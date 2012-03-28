@@ -83,15 +83,15 @@ class BuildConfigurationTreeView(gtk.TreeView):
 
     def show(self, src_config_info, src_params):
         vars = []
-        vars.append(self.set_vars("BB VERSION:", src_params.bb_version))
-        vars.append(self.set_vars("TARGET_ARCH:", src_params.target_arch))
-        vars.append(self.set_vars("TARGET_OS:", src_params.target_os))
-        vars.append(self.set_vars("MACHINE:", src_config_info.curr_mach))
-        vars.append(self.set_vars("DISTRO:", src_config_info.curr_distro))
-        vars.append(self.set_vars("DISTRO_VERSION:", src_params.distro_version))
-        vars.append(self.set_vars("SDK_MACHINE:", src_config_info.curr_sdk_machine))
-        vars.append(self.set_vars("TUNE_FEATURE:", src_params.tune_pkgarch))
-        vars.append(self.set_vars("LAYERS:", src_config_info.layers))
+        vars.append(self.set_vars("BB version:", src_params.bb_version))
+        vars.append(self.set_vars("Target arch:", src_params.target_arch))
+        vars.append(self.set_vars("Target OS:", src_params.target_os))
+        vars.append(self.set_vars("Machine:", src_config_info.curr_mach))
+        vars.append(self.set_vars("Distro:", src_config_info.curr_distro))
+        vars.append(self.set_vars("Distro version:", src_params.distro_version))
+        vars.append(self.set_vars("SDK machine:", src_config_info.curr_sdk_machine))
+        vars.append(self.set_vars("Tune feature:", src_params.tune_pkgarch))
+        vars.append(self.set_vars("Layers:", src_config_info.layers))
 
         for path in src_config_info.layers:
             import os, os.path
@@ -99,7 +99,7 @@ class BuildConfigurationTreeView(gtk.TreeView):
                 f = os.popen('cd %s; git branch 2>&1 | grep "^* " | tr -d "* "' % path)
                 if f:
                     branch = f.readline().lstrip('\n').rstrip('\n')
-                    vars.append(self.set_vars("BRANCH:", branch))
+                    vars.append(self.set_vars("Branch:", branch))
                     f.close()
                 break
 
@@ -140,7 +140,7 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view_config = gtk.ScrolledWindow ()
         self.scrolled_view_config.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_config.add(self.config_tv)
-        self.notebook.append_page(self.scrolled_view_config, gtk.Label("Build Configuration"))
+        self.notebook.append_page(self.scrolled_view_config, gtk.Label("Build configuration"))
 
         self.failure_tv = BuildFailureTreeView()
         self.failure_model = self.builder.handler.build.model.failure_model()
