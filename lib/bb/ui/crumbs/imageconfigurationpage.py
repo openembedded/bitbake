@@ -360,11 +360,19 @@ class ImageConfigurationPage (HobPage):
         self.builder.build_packages()
 
     def template_button_clicked_cb(self, button):
-        self.builder.show_load_template_dialog()
+        response, path = self.builder.show_load_template_dialog()
+        if not response:
+            return
+        if path:
+            self.builder.load_template(path)
 
     def my_images_button_clicked_cb(self, button):
         self.builder.show_load_my_images_dialog()
 
     def settings_button_clicked_cb(self, button):
         # Create an advanced settings dialog
-        self.builder.show_adv_settings_dialog()
+        response, settings_changed = self.builder.show_adv_settings_dialog()
+        if not response:
+            return
+        if settings_changed:
+            self.builder.reparse_post_adv_settings()

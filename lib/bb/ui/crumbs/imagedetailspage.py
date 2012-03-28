@@ -122,12 +122,24 @@ class ImageDetailsPage (HobPage):
         self.toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.toolbar.set_style(gtk.TOOLBAR_BOTH)
 
+        template_button = self.append_toolbar_button(self.toolbar,
+            "Templates",
+            hic.ICON_TEMPLATES_DISPLAY_FILE,
+            hic.ICON_TEMPLATES_HOVER_FILE,
+            "Load a hob building template saved before",
+            self.template_button_clicked_cb)
         my_images_button = self.append_toolbar_button(self.toolbar,
             "My images",
             hic.ICON_IMAGES_DISPLAY_FILE,
             hic.ICON_IMAGES_HOVER_FILE,
             "Open images built out previously for running or deployment",
             self.my_images_button_clicked_cb)
+        settings_button = self.append_toolbar_button(self.toolbar,
+            "Settings",
+            hic.ICON_SETTINGS_DISPLAY_FILE,
+            hic.ICON_SETTINGS_HOVER_FILE,
+            "Other advanced settings for build",
+            self.settings_button_clicked_cb)
 
         self.details_top_buttons = self.add_onto_top_bar(self.toolbar)
 
@@ -386,5 +398,22 @@ class ImageDetailsPage (HobPage):
     def edit_packages_button_clicked_cb(self, button):
         self.builder.show_packages(ask=False)
 
+    def template_button_clicked_cb(self, button):
+        response, path = self.builder.show_load_template_dialog()
+        if not response:
+            return
+        self.builder.initiate_new_build()
+        if path:
+            self.builder.load_template(path)
+
     def my_images_button_clicked_cb(self, button):
         self.builder.show_load_my_images_dialog()
+
+    def settings_button_clicked_cb(self, button):
+        # Create an advanced settings dialog
+        response, settings_changed = self.builder.show_adv_settings_dialog()
+        if not response:
+            return
+        self.builder.initiate_new_build()
+        if settings_changed:
+            self.builder.reparse_post_adv_settings()

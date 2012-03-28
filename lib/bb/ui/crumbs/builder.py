@@ -757,10 +757,11 @@ class Builder(gtk.Window):
         dialog.add_filter(filter)
 
         response = dialog.run()
+        path = None
         if response == gtk.RESPONSE_YES:
             path = dialog.get_filename()
-            self.load_template(path)
         dialog.destroy()
+        return response == gtk.RESPONSE_YES, path
 
     def show_save_template_dialog(self):
         dialog = gtk.FileChooserDialog("Save Template Files", self,
@@ -820,16 +821,20 @@ class Builder(gtk.Window):
         button = dialog.add_button("Save", gtk.RESPONSE_YES)
         HobButton.style_button(button)
         response = dialog.run()
+        settings_changed = False
         if response == gtk.RESPONSE_YES:
             self.parameters.enable_proxy = dialog.enable_proxy
             self.configuration = dialog.configuration
-            # DO reparse recipes
-            if dialog.settings_changed:
-                if self.configuration.curr_mach == "":
-                    self.switch_page(self.MACHINE_SELECTION)
-                else:
-                    self.switch_page(self.RCPPKGINFO_POPULATING)
+            settings_changed = dialog.settings_changed
         dialog.destroy()
+        return response == gtk.RESPONSE_YES, settings_changed
+
+    def reparse_post_adv_settings(self):
+        # DO reparse recipes
+        if self.configuration.curr_mach == "":
+            self.switch_page(self.MACHINE_SELECTION)
+        else:
+            self.switch_page(self.RCPPKGINFO_POPULATING)
 
     def deploy_image(self, image_name):
         if not image_name:
