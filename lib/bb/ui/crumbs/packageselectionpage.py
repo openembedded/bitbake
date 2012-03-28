@@ -37,7 +37,7 @@ class PackageSelectionPage (HobPage):
          'name'    : 'Included',
          'filter'  : { PackageListModel.COL_INC : [True] },
          'columns' : [{
-                       'col_name' : 'Package Name',
+                       'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
@@ -65,7 +65,7 @@ class PackageSelectionPage (HobPage):
          'name'    : 'All packages',
          'filter'  : {},
          'columns' : [{
-                       'col_name' : 'Package Name',
+                       'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,

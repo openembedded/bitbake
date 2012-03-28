@@ -37,7 +37,7 @@ class RecipeSelectionPage (HobPage):
          'filter'  : { RecipeListModel.COL_INC  : [True],
                        RecipeListModel.COL_TYPE : ['recipe', 'task'] },
          'columns' : [{
-                       'col_name' : 'Recipe Name',
+                       'col_name' : 'Recipe name',
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
@@ -59,7 +59,7 @@ class RecipeSelectionPage (HobPage):
          'name'    : 'All recipes',
          'filter'  : { RecipeListModel.COL_TYPE : ['recipe'] },
          'columns' : [{
-                       'col_name' : 'Recipe Name',
+                       'col_name' : 'Recipe name',
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
@@ -87,7 +87,7 @@ class RecipeSelectionPage (HobPage):
          'name'    : 'Tasks',
          'filter'  : { RecipeListModel.COL_TYPE : ['task'] },
          'columns' : [{
-                       'col_name' : 'Task Name',
+                       'col_name' : 'Task name',
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
