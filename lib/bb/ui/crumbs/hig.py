@@ -952,7 +952,10 @@ class LayerSelectionDialog (CrumbsDialog):
             layers.append(model.get_value(it, 0))
             it = model.iter_next(it)
 
-        self.layers_changed = (self.layers != layers)
+        orig_layers = sorted(self.layers)
+        layers.sort()
+
+        self.layers_changed = (orig_layers != layers)
         self.layers = layers
 
     """
