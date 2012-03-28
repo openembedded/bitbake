@@ -200,7 +200,7 @@ class ImageConfigurationPage (HobPage):
         # button to view recipes
         icon_file = hic.ICON_RCIPE_DISPLAY_FILE
         hover_file = hic.ICON_RCIPE_HOVER_FILE
-        self.view_recipes_button = HobImageButton("View Recipes",
+        self.view_recipes_button = HobImageButton("View recipes",
                                         "Add/remove recipes and tasks",
                                         icon_file, hover_file)
         self.view_recipes_button.connect("clicked", self.view_recipes_button_clicked_cb)
@@ -208,7 +208,7 @@ class ImageConfigurationPage (HobPage):
         # button to view packages
         icon_file = hic.ICON_PACKAGES_DISPLAY_FILE
         hover_file = hic.ICON_PACKAGES_HOVER_FILE
-        self.view_packages_button = HobImageButton("View Packages",
+        self.view_packages_button = HobImageButton("View packages",
                                         "Add/remove previously built packages",
                                         icon_file, hover_file)
         self.view_packages_button.connect("clicked", self.view_packages_button_clicked_cb)
@@ -241,7 +241,7 @@ class ImageConfigurationPage (HobPage):
         button_box.pack_end(label, expand=False, fill=False)
 
         # create button "Build Packages"
-        build_packages_button = HobAltButton("Build Packages")
+        build_packages_button = HobAltButton("Build packages")
         build_packages_button.connect("clicked", self.build_packages_button_clicked_cb)
         button_box.pack_end(build_packages_button, expand=False, fill=False)
 
