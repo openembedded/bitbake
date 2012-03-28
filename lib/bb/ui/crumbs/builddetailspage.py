@@ -213,7 +213,7 @@ class BuildDetailsPage (HobPage):
         self.show_all()
         self.back_button.hide()
 
-    def update_progress_bar(self, title, fraction, status=True):
+    def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
         self.progress_bar.set_title(title)
         self.progress_bar.set_rcstyle(status)

@@ -105,7 +105,7 @@ class ImageConfigurationPage (HobPage):
         self.set_config_machine_layout(show_progress_bar = False)
         self.show_all()
 
-    def update_progress_bar(self, title, fraction, status=True):
+    def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
         self.progress_bar.set_title(title)
         self.progress_bar.set_rcstyle(status)

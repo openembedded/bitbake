@@ -608,13 +608,20 @@ class Builder(gtk.Window):
         self.stopping = False
 
     def build_failed(self):
-        if self.current_step == self.FAST_IMAGE_GENERATING:
-            fraction = 0.9
-        elif self.current_step == self.IMAGE_GENERATING:
-            fraction = 1.0
-        elif self.current_step == self.PACKAGE_GENERATING:
-            fraction = 1.0
-        self.build_details_page.update_progress_bar("Build Failed: ", fraction, False)
+        if self.stopping:
+            status = "stop"
+            message = "Build stopped: "
+            fraction = self.build_details_page.progress_bar.get_fraction()
+        else:
+            if self.current_step == self.FAST_IMAGE_GENERATING:
+                fraction = 0.9
+            elif self.current_step == self.IMAGE_GENERATING:
+                fraction = 1.0
+            elif self.current_step == self.PACKAGE_GENERATING:
+                fraction = 1.0
+            status = "fail"
+            message = "Build failed: "
+        self.build_details_page.update_progress_bar(message, fraction, status)
         self.build_details_page.show_back_button()
         self.build_details_page.hide_stop_button()
         self.handler.build_failed_async()
