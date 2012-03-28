@@ -59,7 +59,7 @@ class HobPage (gtk.VBox):
         hbox = gtk.HBox()
 
         label = gtk.Label()
-        label.set_markup("<span font_desc=\'14\'>%s</span>" % self.title)
+        label.set_markup("<span size='x-large'>%s</span>" % self.title)
         hbox.pack_start(label, expand=False, fill=False, padding=20)
 
         if widget:
@@ -69,8 +69,8 @@ class HobPage (gtk.VBox):
 
         return eventbox
 
-    def span_tag(self, px="12px", weight="normal", forground="#1c1c1c"):
-        span_tag = "weight=\'%s\' foreground=\'%s\' font_desc=\'%s\'" % (weight, forground, px)
+    def span_tag(self, size="medium", weight="normal", forground="#1c1c1c"):
+        span_tag = "weight='%s' foreground='%s' size='%s'" % (weight, forground, size)
         return span_tag
 
     def append_toolbar_button(self, toolbar, buttonname, icon_disp, icon_hovor, tip, cb):

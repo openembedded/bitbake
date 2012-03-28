@@ -254,7 +254,7 @@ class HobAltButton(gtk.Button):
             colour = HobColors.PALE_BLUE
         else:
             colour = HobColors.LIGHT_GRAY
-        button.set_label("<span color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(button.text)))
+        button.set_label("<span size='large' color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(button.text)))
         button.child.set_use_markup(True)
 
     @staticmethod
@@ -281,7 +281,7 @@ class HobImageButton(gtk.Button):
         self.icon_path = icon_path
         self.hover_icon_path = hover_icon_path
 
-        hbox = gtk.HBox(False, 6)
+        hbox = gtk.HBox(False, 10)
         hbox.show()
         self.add(hbox)
         self.icon = gtk.Image()
@@ -295,10 +295,10 @@ class HobImageButton(gtk.Button):
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
         colour = soften_color(label)
-        mark = "<span size='larger'>%s</span>\n<span fgcolor='%s'>%s</span>" % (primary_text, colour, secondary_text)
+        mark = "<span size='x-large'>%s</span>\n<span size='medium' fgcolor='%s' weight='ultralight'>%s</span>" % (primary_text, colour, secondary_text)
         label.set_markup(mark)
         label.show()
-        hbox.pack_start(label, True, True, 6)
+        hbox.pack_start(label, True, True, 0)
 
     def set_hover_icon_cb(self, widget, event):
         self.icon.set_from_file(self.hover_icon_path)
