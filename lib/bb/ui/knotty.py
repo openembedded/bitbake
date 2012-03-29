@@ -88,6 +88,8 @@ class TerminalFilter(object):
         if len(runningpids) == 0:
             return
 
+        self.helper.getTasks()
+
         tasks = []
         for t in runningpids:
             tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
