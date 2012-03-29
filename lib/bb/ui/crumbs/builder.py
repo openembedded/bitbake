@@ -946,7 +946,9 @@ class Builder(gtk.Window):
         self.switch_page(self.RECIPE_SELECTION)
 
     def initiate_new_build(self):
-        self.configuration.curr_mach = ""
+        self.handler.init_cooker()
+        self.handler.set_extra_inherit("image_types")
+        self.handler.parse_config()
         self.image_configuration_page.switch_machine_combo()
         self.switch_page(self.MACHINE_SELECTION)
 
