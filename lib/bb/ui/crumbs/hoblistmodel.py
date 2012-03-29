@@ -471,11 +471,6 @@ class RecipeListModel(gtk.ListStore):
 
         return True
 
-    def sort_func(self, model, iter1, iter2):
-        val1 = model.get_value(iter1, RecipeListModel.COL_NAME)
-        val2 = model.get_value(iter2, RecipeListModel.COL_NAME)
-        return val1 > val2
-
     """
     Create, if required, and return a filtered gtk.TreeModelSort
     containing only the items which are items specified by filter
@@ -485,7 +480,8 @@ class RecipeListModel(gtk.ListStore):
         model.set_visible_func(self.tree_model_filter, filter)
 
         sort = gtk.TreeModelSort(model)
-        sort.set_default_sort_func(self.sort_func)
+        sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)
+        sort.set_default_sort_func(None)
         return sort
 
     def convert_vpath_to_path(self, view_model, view_path):
