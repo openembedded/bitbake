@@ -558,7 +558,10 @@ class HobTabBar(gtk.DrawingArea):
                 off_y = (self.tab_height - fonth) / 2
                 x = child["x"] + off_x
                 y = child["y"] + off_y
-                self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), pangolayout)
+                if not child == self.current_child:
+                    self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), pangolayout, gtk.gdk.Color(HobColors.WHITE))
+                else:
+                    self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), pangolayout)
 
     def draw_toggled_tab(self, cr):
         if not self.current_child:
@@ -616,7 +619,10 @@ class HobTabBar(gtk.DrawingArea):
         y = tab_y + self.tab_height/2 - dest_h/2
 
         r = min(dest_w, dest_h)/2
-        color = cr.set_source_color(gtk.gdk.color_parse(HobColors.ORANGE))
+        if not child == self.current_child:
+            color = cr.set_source_color(gtk.gdk.color_parse(HobColors.DEEP_RED))
+        else:
+            color = cr.set_source_color(gtk.gdk.color_parse(HobColors.GRAY))
         # check round back area can contain the text or not
         back_round_can_contain_width = float(2 * r * 0.707)
         if float(textw) > back_round_can_contain_width:
@@ -635,7 +641,7 @@ class HobTabBar(gtk.DrawingArea):
         x = x + (dest_w/2)-(textw/2)
         y = y + (dest_h/2) - (texth/2)
         cr.move_to(x, y)
-        self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), layout)
+        self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), layout, gtk.gdk.Color(HobColors.WHITE))
 
     def show_indicator_icon(self, child, number):
         child["indicator_show"] = True

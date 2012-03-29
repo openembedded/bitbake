@@ -25,13 +25,11 @@ class HobColors:
     PALE_RED     = "#ffaaaa"
     GRAY         = "#aaaaaa"
     LIGHT_GRAY   = "#dddddd"
-    DEEP_GRAY    = "#7c7c77"
     SLIGHT_DARK  = "#5f5f5f"
     DARK         = "#3c3b37"
     BLACK        = "#000000"
-    LIGHT_ORANGE = "#f7a787"
-    YELLOW       = "#ffff00"
     PALE_BLUE    = "#53b8ff"
+    DEEP_RED     = "#aa3e3e"
 
     OK = WHITE
     RUNNING = PALE_GREEN
