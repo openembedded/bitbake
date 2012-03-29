@@ -243,11 +243,9 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.run_next_command(self.PARSE_CONFIG)
 
-    def refresh_layers(self, bblayers):
-        self.init_cooker()
-        self.set_bblayers(bblayers)
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
-        self.generate_configuration()
+    def parse_generate_configuration(self):
+         self.commands_async.append(self.SUB_PARSE_CONFIG)
+         self.generate_configuration()
 
     def set_extra_inherit(self, bbclass):
         inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""

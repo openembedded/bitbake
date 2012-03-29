@@ -198,7 +198,7 @@ class Parameters:
 class Builder(gtk.Window):
 
     (MACHINE_SELECTION,
-     LAYER_CHANGED,
+     CONFIG_UPDATED,
      RCPPKGINFO_POPULATING,
      RCPPKGINFO_POPULATED,
      BASEIMG_SELECTED,
@@ -222,7 +222,7 @@ class Builder(gtk.Window):
 
     __step2page__ = {
         MACHINE_SELECTION     : IMAGE_CONFIGURATION,
-        LAYER_CHANGED         : IMAGE_CONFIGURATION,
+        CONFIG_UPDATED        : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATING : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATED  : IMAGE_CONFIGURATION,
         BASEIMG_SELECTED      : IMAGE_CONFIGURATION,
@@ -329,7 +329,7 @@ class Builder(gtk.Window):
             if not os.path.exists(layer+'/conf/layer.conf'):
                 return False
 
-        self.switch_page(self.LAYER_CHANGED)
+        self.switch_page(self.CONFIG_UPDATED)
 
         self.template.destroy()
         self.template = None
@@ -357,10 +357,11 @@ class Builder(gtk.Window):
         if next_step == self.MACHINE_SELECTION: # init step
             self.image_configuration_page.show_machine()
 
-        elif next_step == self.LAYER_CHANGED:
+        elif next_step == self.CONFIG_UPDATED:
             # after layers is changd by users
             self.image_configuration_page.show_machine()
-            self.handler.refresh_layers(self.configuration.layers)
+            self.set_user_config()
+            self.handler.parse_generate_configuration()
 
         elif next_step == self.RCPPKGINFO_POPULATING:
             # MACHINE CHANGED action or SETTINGS CHANGED
@@ -775,7 +776,7 @@ class Builder(gtk.Window):
             self.configuration.layers = dialog.layers
             # DO refresh layers
             if dialog.layers_changed:
-                self.switch_page(self.LAYER_CHANGED)
+                self.switch_page(self.CONFIG_UPDATED)
         dialog.destroy()
 
     def show_load_template_dialog(self):
