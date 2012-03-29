@@ -262,7 +262,7 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "SDKMACHINE", sdk_machine])
 
     def set_image_fstypes(self, image_fstypes):
-        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", " ".join(image_fstypes).lstrip(" ")])
+        self.server.runCommand(["setVariable", "IMAGE_FSTYPES", image_fstypes])
 
     def set_distro(self, distro):
         if distro != "defaultsetup":

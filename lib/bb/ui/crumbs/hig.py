@@ -384,7 +384,7 @@ class AdvancedSettingDialog (CrumbsDialog):
             self.image_types_checkbuttons[image_type] = gtk.CheckButton(image_type)
             self.image_types_checkbuttons[image_type].set_tooltip_text("Build an %s image" % image_type)
             table.attach(self.image_types_checkbuttons[image_type], j, j + 4, i, i + 1)
-            if image_type in self.configuration.image_fstypes:
+            if image_type in self.configuration.image_fstypes.split():
                 self.image_types_checkbuttons[image_type].set_active(True)
             i += 1
             if i > rows:
@@ -608,10 +608,11 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.configuration.image_rootfs_size = self.rootfs_size_spinner.get_value_as_int() * 1024
         self.configuration.image_extra_size = self.extra_size_spinner.get_value_as_int() * 1024
 
-        self.configuration.image_fstypes = []
+        self.configuration.image_fstypes = ""
         for image_type in self.image_types:
             if self.image_types_checkbuttons[image_type].get_active():
-                self.configuration.image_fstypes.append(image_type)
+                self.configuration.image_fstypes += (" " + image_type)
+        self.configuration.image_fstypes.strip()
         self.variables["IMAGE_FSTYPES"] = self.configuration.image_fstypes
 
         if self.gplv3_checkbox.get_active():

@@ -93,7 +93,7 @@ class Configuration:
         self.curr_sdk_machine = params["sdk_machine"]
         self.conf_version = params["conf_version"]
         self.lconf_version = params["lconf_version"]
-        self.image_fstypes = params["image_fstypes"].split()
+        self.image_fstypes = params["image_fstypes"]
         # bblayers.conf
         self.layers = params["layer"].split()
 
@@ -115,7 +115,7 @@ class Configuration:
         self.lconf_version = template.getVar("LCONF_VERSION")
         self.extra_setting = eval(template.getVar("EXTRA_SETTING"))
         self.toolchain_build = eval(template.getVar("TOOLCHAIN_BUILD"))
-        self.image_fstypes = template.getVar("IMAGE_FSTYPES").split()
+        self.image_fstypes = template.getVar("IMAGE_FSTYPES")
         # bblayers.conf
         self.layers = template.getVar("BBLAYERS").split()
         # image/recipes/packages
@@ -152,7 +152,7 @@ class Configuration:
         template.setVar("LCONF_VERSION", self.lconf_version)
         template.setVar("EXTRA_SETTING", self.extra_setting)
         template.setVar("TOOLCHAIN_BUILD", self.toolchain_build)
-        template.setVar("IMAGE_FSTYPES", " ".join(self.image_fstypes).lstrip(" "))
+        template.setVar("IMAGE_FSTYPES", self.image_fstypes)
         # image/recipes/packages
         self.selected_image = filename
         template.setVar("__SELECTED_IMAGE__", self.selected_image)
