@@ -78,6 +78,25 @@ class Configuration:
         self.cvs_proxy_host = params["cvs_proxy_host"]
         self.cvs_proxy_port = params["cvs_proxy_port"]
 
+    def update(self, params):
+        self.curr_distro = params["distro"]
+        self.dldir = params["dldir"]
+        self.sstatedir = params["sstatedir"]
+        self.sstatemirror = params["sstatemirror"]
+        self.pmake = params["pmake"]
+        self.bbthread = params["bbthread"]
+        self.curr_package_format = " ".join(params["pclass"].split("package_")).strip()
+        self.image_rootfs_size = params["image_rootfs_size"]
+        self.image_extra_size = params["image_extra_size"]
+        self.image_overhead_factor = params['image_overhead_factor']
+        self.incompat_license = params["incompat_license"]
+        self.curr_sdk_machine = params["sdk_machine"]
+        self.conf_version = params["conf_version"]
+        self.lconf_version = params["lconf_version"]
+        self.image_fstypes = params["image_fstypes"].split()
+        # bblayers.conf
+        self.layers = params["layer"].split()
+
     def load(self, template):
         self.curr_mach = template.getVar("MACHINE")
         self.curr_package_format = " ".join(template.getVar("PACKAGE_CLASSES").split("package_")).strip()
@@ -465,10 +484,14 @@ class Builder(gtk.Window):
             self.parameters = Parameters(params)
             self.handler.generate_configuration()
         elif initcmd == self.handler.GENERATE_CONFIGURATION:
+            params = self.handler.get_parameters()
+            self.configuration.update(params)
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
                          self.handler.GENERATE_IMAGE]:
+            params = self.handler.get_parameters()
+            self.configuration.update(params)
             self.handler.request_package_info_async()
         elif initcmd == self.handler.POPULATE_PACKAGEINFO:
             if self.current_step == self.RCPPKGINFO_POPULATING:
