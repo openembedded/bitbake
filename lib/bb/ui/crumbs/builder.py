@@ -221,6 +221,9 @@ class Builder(gtk.Window):
     def __init__(self, hobHandler, recipe_model, package_model):
         super(Builder, self).__init__()
 
+        self.hob_image = "hob-image"
+        self.hob_toolchain = "hob-toolchain"
+
         # handler
         self.handler = hobHandler
 
@@ -435,8 +438,10 @@ class Builder(gtk.Window):
         self.set_user_config()
         all_packages = self.package_model.get_selected_packages()
         self.handler.reset_build()
-        self.handler.generate_image(all_packages, self.configuration.toolchain_build)
-
+        self.handler.generate_image(all_packages,
+                                    self.hob_image,
+                                    self.hob_toolchain,
+                                    self.configuration.toolchain_build)
 
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):
