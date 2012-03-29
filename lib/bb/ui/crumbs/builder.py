@@ -513,7 +513,7 @@ class Builder(gtk.Window):
             msg = msg.replace("your local.conf", "Settings")
             lbl = "<b>Error</b>\n"
             lbl = lbl + "%s\n\n" % msg
-            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
             button = dialog.add_button("Close", gtk.RESPONSE_OK)
             HobButton.style_button(button)
             response = dialog.run()
