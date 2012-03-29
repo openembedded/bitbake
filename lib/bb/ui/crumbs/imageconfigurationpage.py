@@ -227,11 +227,11 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.view_packages_button, 20, 40, 30, 35)
 
     def create_config_build_button(self):
-        # Create the "Build packages" and "Just bake" buttons at the bottom
+        # Create the "Build packages" and "Build image" buttons at the bottom
         button_box = gtk.HBox(False, 6)
 
-        # create button "Just bake"
-        just_bake_button = HobButton("Just bake")
+        # create button "Build image"
+        just_bake_button = HobButton("Build image")
         just_bake_button.set_size_request(205, 49)
         just_bake_button.set_tooltip_text("Build image to get your target image")
         just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
