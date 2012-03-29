@@ -358,6 +358,9 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
 
+    def build_succeeded_async(self):
+        self.building = False
+
     def build_failed_async(self):
         self.initcmd = None
         self.commands_async = []
