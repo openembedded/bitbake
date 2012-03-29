@@ -21,7 +21,7 @@
 class HobColors:
     WHITE        = "#ffffff"
     PALE_GREEN   = "#aaffaa"
-    ORANGE       = "#ff7c24"
+    ORANGE       = "#eb8e68"
     PALE_RED     = "#ffaaaa"
     GRAY         = "#aaaaaa"
     LIGHT_GRAY   = "#dddddd"
