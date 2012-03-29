@@ -404,6 +404,7 @@ class Builder(gtk.Window):
         self.handler.set_image_fstypes(self.configuration.image_fstypes)
         self.handler.set_extra_config(self.configuration.extra_setting)
         self.handler.set_extra_inherit("packageinfo")
+        self.handler.set_extra_inherit("image_types")
         # set proxies
         if self.parameters.enable_proxy:
             self.handler.set_http_proxy(self.configuration.http_proxy)
