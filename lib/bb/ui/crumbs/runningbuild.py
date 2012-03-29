@@ -425,7 +425,7 @@ class BuildFailureTreeView(gtk.TreeView):
         self.get_selection().set_mode(gtk.SELECTION_SINGLE)
 
         # The icon that indicates whether we're building or failed.
-        renderer = gtk.CellRendererPixbuf ()
+        renderer = HobCellRendererPixbuf ()
         col = gtk.TreeViewColumn ("Status", renderer)
         col.add_attribute (renderer, "icon-name", RunningBuildModel.COL_ICON)
         self.append_column (col)
