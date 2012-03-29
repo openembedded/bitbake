@@ -23,6 +23,8 @@ class BBUIHelper:
     def __init__(self):
         self.needUpdate = False
         self.running_tasks = {}
+        # Running PIDs preserves the order tasks were executed in
+        self.running_pids = []
         self.failed_tasks = []
         self.tasknumber_current = 0
         self.tasknumber_total = 0
@@ -30,16 +32,20 @@ class BBUIHelper:
     def eventHandler(self, event):
         if isinstance(event, bb.build.TaskStarted):
             self.running_tasks[event.pid] = { 'title' : "%s %s" % (event._package, event._task) }
+            self.running_pids.append(event.pid)
             self.needUpdate = True
         if isinstance(event, bb.build.TaskSucceeded):
             del self.running_tasks[event.pid]
+            self.running_pids.remove(event.pid)
             self.needUpdate = True
         if isinstance(event, bb.build.TaskFailedSilent):
             del self.running_tasks[event.pid]
+            self.running_pids.remove(event.pid)
             # Don't add to the failed tasks list since this is e.g. a setscene task failure
             self.needUpdate = True
         if isinstance(event, bb.build.TaskFailed):
             del self.running_tasks[event.pid]
+            self.running_pids.remove(event.pid)
             self.failed_tasks.append( { 'title' : "%s %s" % (event._package, event._task)})
             self.needUpdate = True
         if isinstance(event, bb.runqueue.runQueueTaskStarted):
