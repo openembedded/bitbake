@@ -337,18 +337,29 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.setting_store = None
         self.image_types_checkbuttons = {}
 
-        self.variables = {}
-        self.variables["PACKAGE_FORMAT"] = self.configuration.curr_package_format
-        self.variables["INCOMPATIBLE_LICENSE"] = self.configuration.incompat_license
-        self.variables["IMAGE_FSTYPES"] = self.configuration.image_fstypes
-        for key in self.configuration.extra_setting.keys():
-            self.variables[key] = self.configuration.extra_setting[key]
-        self.md5 = hashlib.md5(str(sorted(self.variables.items()))).hexdigest()
+        self.md5 = self.config_md5()
         self.settings_changed = False
 
         # create visual elements on the dialog
         self.create_visual_elements()
         self.connect("response", self.response_cb)
+
+    def _get_sorted_value(self, var):
+        return " ".join(sorted(str(var).split())) + "\n"
+
+    def config_md5(self):
+        data = ""
+        data += ("PACKAGE_CLASSES: "      + self.configuration.curr_package_format + '\n')
+        data += ("DISTRO: "               + self._get_sorted_value(self.configuration.curr_distro))
+        data += ("IMAGE_ROOTFS_SIZE: "    + self._get_sorted_value(self.configuration.image_rootfs_size))
+        data += ("IMAGE_EXTRA_SIZE: "     + self._get_sorted_value(self.configuration.image_extra_size))
+        data += ("INCOMPATIBLE_LICENSE: " + self._get_sorted_value(self.configuration.incompat_license))
+        data += ("SDK_MACHINE: "          + self._get_sorted_value(self.configuration.curr_sdk_machine))
+        data += ("TOOLCHAIN_BUILD: "      + self._get_sorted_value(self.configuration.toolchain_build))
+        data += ("IMAGE_FSTYPES: "        + self._get_sorted_value(self.configuration.image_fstypes))
+        for key in self.configuration.extra_setting.keys():
+            data += (key + ": " + self._get_sorted_value(self.configuration.extra_setting[key]))
+        return hashlib.md5(data).hexdigest()
 
     def create_visual_elements(self):
         self.nb = gtk.Notebook()
@@ -589,15 +600,12 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.cvs_proxy_text.set_sensitive(self.enable_proxy)
 
     def response_cb(self, dialog, response_id):
-        self.variables = {}
-
         package_format = []
         package_format.append(self.rootfs_combo.get_active_text())
         for child in self.check_hbox:
             if isinstance(child, gtk.CheckButton) and child.get_active():
                 package_format.append(child.get_label())
         self.configuration.curr_package_format = " ".join(package_format)
-        self.variables["PACKAGE_FORMAT"] = self.configuration.curr_package_format
 
         self.configuration.curr_distro = self.distro_combo.get_active_text()
         self.configuration.dldir = self.dldir_text.get_text()
@@ -613,7 +621,6 @@ class AdvancedSettingDialog (CrumbsDialog):
             if self.image_types_checkbuttons[image_type].get_active():
                 self.configuration.image_fstypes += (" " + image_type)
         self.configuration.image_fstypes.strip()
-        self.variables["IMAGE_FSTYPES"] = self.configuration.image_fstypes
 
         if self.gplv3_checkbox.get_active():
             if "GPLv3" not in self.configuration.incompat_license.split():
@@ -623,7 +630,6 @@ class AdvancedSettingDialog (CrumbsDialog):
                 self.configuration.incompat_license = self.configuration.incompat_license.split().remove("GPLv3")
                 self.configuration.incompat_license = " ".join(self.configuration.incompat_license or [])
         self.configuration.incompat_license = self.configuration.incompat_license.strip()
-        self.variables["INCOMPATIBLE_LICENSE"] = self.configuration.incompat_license
 
         self.configuration.toolchain_build = self.toolchain_checkbox.get_active()
 
@@ -633,7 +639,6 @@ class AdvancedSettingDialog (CrumbsDialog):
             key = self.setting_store.get_value(it, 0)
             value = self.setting_store.get_value(it, 1)
             self.configuration.extra_setting[key] = value
-            self.variables[key] = value
             it = self.setting_store.iter_next(it)
 
         self.configuration.all_proxy = self.all_proxy_text.get_text()
@@ -643,7 +648,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         self.configuration.git_proxy_host, self.configuration.git_proxy_port = self.git_proxy_text.get_text().split(':')
         self.configuration.cvs_proxy_host, self.configuration.cvs_proxy_port = self.cvs_proxy_text.get_text().split(':')
 
-        md5 = hashlib.md5(str(sorted(self.variables.items()))).hexdigest()
+        md5 = self.config_md5()
         self.settings_changed = (self.md5 != md5)
 
 #
