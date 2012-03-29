@@ -510,6 +510,7 @@ class Builder(gtk.Window):
 
     def handler_command_failed_cb(self, handler, msg):
         if msg:
+            msg = msg.replace("your local.conf", "Settings")
             lbl = "<b>Error</b>\n"
             lbl = lbl + "%s\n\n" % msg
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
