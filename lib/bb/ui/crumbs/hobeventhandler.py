@@ -30,9 +30,6 @@ class HobHandler(gobject.GObject):
     This object does BitBake event handling for the hob gui.
     """
     __gsignals__ = {
-         "layers-updated"          : (gobject.SIGNAL_RUN_LAST,
-                                      gobject.TYPE_NONE,
-                                     (gobject.TYPE_PYOBJECT,)),
          "package-formats-updated" : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_PYOBJECT,)),
@@ -152,7 +149,7 @@ class HobHandler(gobject.GObject):
             self.package_model.populate(event._pkginfolist)
             self.run_next_command()
 
-        elif(isinstance(event, logging.LogRecord)):
+        elif isinstance(event, logging.LogRecord):
             if event.levelno >= logging.ERROR:
                 self.error_msg += event.msg + '\n'
 
@@ -160,10 +157,6 @@ class HobHandler(gobject.GObject):
             self.current_phase = "data generation"
             if event._model:
                 self.recipe_model.populate(event._model)
-        elif isinstance(event, bb.event.CoreBaseFilesFound):
-            self.current_phase = "configuration lookup"
-            paths = event._paths
-            self.emit('layers-updated', paths)
         elif isinstance(event, bb.event.ConfigFilesFound):
             self.current_phase = "configuration lookup"
             var = event._variable

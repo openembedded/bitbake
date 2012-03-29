@@ -245,7 +245,6 @@ class Builder(gtk.Window):
         self.package_model.connect("package-selection-changed", self.packagelist_changed_cb)
         self.handler.connect("config-updated",           self.handler_config_updated_cb)
         self.handler.connect("package-formats-updated",  self.handler_package_formats_updated_cb)
-        self.handler.connect("layers-updated",           self.handler_layers_updated_cb)
         self.handler.connect("parsing-started",          self.handler_parsing_started_cb)
         self.handler.connect("parsing",                  self.handler_parsing_cb)
         self.handler.connect("parsing-completed",        self.handler_parsing_completed_cb)
@@ -451,9 +450,6 @@ class Builder(gtk.Window):
 
     def handler_package_formats_updated_cb(self, handler, formats):
         self.parameters.all_package_formats = formats
-
-    def handler_layers_updated_cb(self, handler, layers):
-        self.parameters.all_layers = layers
 
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.PARSE_CONFIG:
