@@ -52,7 +52,7 @@ class hic:
     ICON_INFO_DISPLAY_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('info/info_display.png'))
     ICON_INFO_HOVER_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('info/info_hover.png'))
     ICON_INDI_CONFIRM_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('indicators/confirmation.png'))
-    ICON_INDI_ERROR_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/error.png'))
+    ICON_INDI_ERROR_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/denied.png'))
     ICON_INDI_REMOVE_FILE         = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove.png'))
     ICON_INDI_REMOVE_HOVER_FILE   = os.path.join(HOB_ICON_BASE_DIR, ('indicators/remove-hover.png'))
     ICON_INDI_ADD_FILE            = os.path.join(HOB_ICON_BASE_DIR, ('indicators/add.png'))
@@ -933,6 +933,7 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
         self.control = RefreshRuningController()
         # add icon checker for make the gtk-icon transfer to hob-icon
         self.checker = HobIconChecker()
+        self.set_property("stock-size", gtk.ICON_SIZE_DND)
 
     def get_pixbuf_from_stock_icon(self, widget, stock_id="", size=gtk.ICON_SIZE_DIALOG):
         if widget and stock_id and gtk.icon_factory_lookup_default(stock_id):
@@ -990,7 +991,15 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
     def on_get_size(self, widget, cell_area):
         if self.props.icon_name or self.props.pixbuf or self.props.stock_id:
             w, h = gtk.icon_size_lookup(self.props.stock_size)
-            return 0, 0, w, h
+            calc_width = self.get_property("xpad") * 2 + w
+            calc_height = self.get_property("ypad") * 2 + h
+            x_offset = 0
+            y_offset = 0
+            if cell_area and w > 0 and h > 0:
+                x_offset = self.get_property("xalign") * (cell_area.width - calc_width - self.get_property("xpad"))
+                y_offset = self.get_property("yalign") * (cell_area.height - calc_height - self.get_property("ypad"))
+
+            return x_offset, y_offset, w, h
 
         return 0, 0, 0, 0
 
