@@ -1068,6 +1068,7 @@ class RunQueueExecute:
             for k, v in self.build_pids.iteritems():
                 try:
                     os.kill(-k, signal.SIGTERM)
+                    os.waitpid(-1, 0)
                 except:
                     pass
         for pipe in self.build_pipes:
