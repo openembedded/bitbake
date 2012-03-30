@@ -172,6 +172,7 @@ class BuildDetailsPage (HobPage):
 
     def reset_build_status(self):
         self.task_status.set_markup("\n") # to ensure layout is correct
+        self.endpath = (0,)
 
     def show_issues(self):
         self.num_of_issues += 1
@@ -234,7 +235,8 @@ class BuildDetailsPage (HobPage):
         if treeview and v_adj:
             if path[0] > self.endpath[0]: # check the event is a new row append or not
                 self.endpath = path
-                if v_adj.value == (v_adj.upper - v_adj.page_size): # check the gtk.adjustment position is at end boundary or not
+                # check the gtk.adjustment position is at end boundary or not
+                if (v_adj.upper <= v_adj.page_size) or (v_adj.value == v_adj.upper - v_adj.page_size):
                     treeview.scroll_to_cell(path)
 
     def show_configurations(self, configurations, params):
