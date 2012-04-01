@@ -133,6 +133,7 @@ class BuildDetailsPage (HobPage):
         self.progress_hbox.pack_start(self.progress_bar, expand=True, fill=True)
         self.stop_button = HobAltButton("Stop")
         self.stop_button.connect("clicked", self.stop_button_clicked_cb)
+        self.stop_button.set_sensitive(False)
         self.progress_hbox.pack_end(self.stop_button, expand=False, fill=False)
 
         self.notebook = HobNotebook()
@@ -169,6 +170,7 @@ class BuildDetailsPage (HobPage):
         recipe = os.path.basename(recipe_path).rstrip(".bb")
         tsk_msg = "<b>Running task %s of %s:</b> %s\n<b>Recipe:</b> %s" % (current, total, recipe_task, recipe)
         self.task_status.set_markup(tsk_msg)
+        self.stop_button.set_sensitive(True)
 
     def reset_build_status(self):
         self.task_status.set_markup("\n") # to ensure layout is correct
