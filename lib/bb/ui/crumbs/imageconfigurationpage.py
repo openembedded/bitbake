@@ -338,10 +338,16 @@ class ImageConfigurationPage (HobPage):
                 active = cnt
             cnt = cnt + 1
         self.image_combo.append_text(self.builder.recipe_model.__dummy_image__)
-        self._image_combo_connect_signal()
+        if selected_image == self.builder.recipe_model.__dummy_image__:
+            active = cnt
 
         self.image_combo.set_active(-1)
         self.image_combo.set_active(active)
+
+        if active != -1:
+            self.show_baseimg_selected()
+
+        self._image_combo_connect_signal()
 
     def layer_button_clicked_cb(self, button):
         # Create a layer selection dialog
