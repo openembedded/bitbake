@@ -251,7 +251,7 @@ of the event and the content of the <varname>FILE</varname> variable.</para>
             <section>
                 <title>Variants</title>
                 <para>Two BitBake features exist to facilitate the creation of multiple buildable incarnations from a single recipe file.</para>
-                <para>The first is <varname>BBCLASSEXTEND</varname>.  This variable is a space separated list of classes used to "extend" the recipe for each variant.  As an example, setting <screen>BBCLASSEXTEND = "native"</screen> results in a second incarnation of the current recipe being available.  This second incarantion will have the "native" class inherited.</para>
+                <para>The first is <varname>BBCLASSEXTEND</varname>.  This variable is a space separated list of classes used to "extend" the recipe for each variant.  As an example, setting <screen>BBCLASSEXTEND = "native"</screen> results in a second incarnation of the current recipe being available.  This second incarnation will have the "native" class inherited.</para>
                 <para>The second feature is <varname>BBVERSIONS</varname>.  This variable allows a single recipe to build multiple versions of a project from a single recipe file, and allows you to specify conditional metadata (using the <varname>OVERRIDES</varname> mechanism) for a single version, or an optionally named range of versions:</para>
                 <para><screen>BBVERSIONS = "1.0 2.0 git"
 SRC_URI_git = "git://someurl/somepath.git"</screen></para>
