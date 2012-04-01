@@ -256,7 +256,8 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
 
     def set_machine(self, machine):
-        self.server.runCommand(["setVariable", "MACHINE", machine])
+        if machine:
+            self.server.runCommand(["setVariable", "MACHINE", machine])
 
     def set_sdk_machine(self, sdk_machine):
         self.server.runCommand(["setVariable", "SDKMACHINE", sdk_machine])

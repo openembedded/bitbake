@@ -519,7 +519,7 @@ class Builder(gtk.Window):
             response = dialog.run()
             dialog.destroy()
         self.handler.clear_busy()
-        self.configuration.curr_mach = None
+        self.configuration.curr_mach = ""
         self.image_configuration_page.switch_machine_combo()
         self.switch_page(self.MACHINE_SELECTION)
 
@@ -868,7 +868,7 @@ class Builder(gtk.Window):
 
     def reparse_post_adv_settings(self):
         # DO reparse recipes
-        if self.configuration.curr_mach == "":
+        if not self.configuration.curr_mach:
             self.switch_page(self.MACHINE_SELECTION)
         else:
             self.switch_page(self.RCPPKGINFO_POPULATING)
