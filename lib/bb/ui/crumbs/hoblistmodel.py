@@ -563,10 +563,7 @@ class RecipeListModel(gtk.ListStore):
             depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
 
             if ('task-' in name):
-                if ('lib32-' in name or 'lib64-' in name):
-                    atype = 'mltask'
-                else:
-                    atype = 'task'
+                atype = 'task'
             elif ('image.bbclass' in " ".join(inherits)):
                 if name != "hob-image":
                     atype = 'image'
@@ -576,10 +573,7 @@ class RecipeListModel(gtk.ListStore):
             elif (name == 'dummy-image' or name == 'dummy-toolchain'):
                 atype = 'dummy'
             else:
-                if ('lib32-' in name or 'lib64-' in name):
-                    atype = 'mlrecipe'
-                else:
-                    atype = 'recipe'
+                atype = 'recipe'
 
             self.set(self.append(), self.COL_NAME, item, self.COL_DESC, desc,
                      self.COL_LIC, lic, self.COL_GROUP, group,
