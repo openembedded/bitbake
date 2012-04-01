@@ -131,9 +131,8 @@ class HobHandler(gobject.GObject):
             targets = [self.hob_image]
             self.server.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
             self.server.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
-            if self.toolchain_build:
-                pkgs = self.package_queue + [i+'-dev' for i in self.package_queue] + [i+'-dbg' for i in self.package_queue]
-                self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(pkgs)])
+            if self.toolchain_packages:
+                self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages)])
                 targets.append(self.hob_toolchain)
             self.server.runCommand(["buildTargets", targets, "build"])
 
@@ -350,11 +349,11 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, tgts, hob_image, hob_toolchain, toolchain_build=False):
+    def generate_image(self, tgts, hob_image, hob_toolchain, toolchain_packages=[]):
         self.package_queue = tgts
         self.hob_image = hob_image
         self.hob_toolchain = hob_toolchain
-        self.toolchain_build = toolchain_build
+        self.toolchain_packages = toolchain_packages
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)

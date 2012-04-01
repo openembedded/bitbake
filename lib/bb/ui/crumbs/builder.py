@@ -457,12 +457,15 @@ class Builder(gtk.Window):
     def generate_image(self):
         # Build image
         self.set_user_config()
-        all_packages = self.package_model.get_selected_packages()
+        packages = self.package_model.get_selected_packages()
+        toolchain_packages = []
+        if self.configuration.toolchain_build:
+            toolchain_packages = self.package_model.get_selected_packages_toolchain()
         self.handler.reset_build()
-        self.handler.generate_image(all_packages,
+        self.handler.generate_image(packages,
                                     self.hob_image,
                                     self.hob_toolchain,
-                                    self.configuration.toolchain_build)
+                                    toolchain_packages)
 
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):

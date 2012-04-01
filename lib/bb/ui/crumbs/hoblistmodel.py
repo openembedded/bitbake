@@ -357,6 +357,22 @@ class PackageListModel(gtk.TreeStore):
 
         return packagelist
 
+    def get_selected_packages_toolchain(self):
+        packagelist = []
+
+        it = self.get_iter_first()
+        while it:
+            if self.get_value(it, self.COL_INC):
+                child_it = self.iter_children(it)
+                while child_it:
+                    name = self.get_value(child_it, self.COL_NAME)
+                    inc = self.get_value(child_it, self.COL_INC)
+                    if inc or name.endswith("-dev") or name.endswith("-dbg"):
+                        packagelist.append(name)
+                    child_it = self.iter_next(child_it)
+            it = self.iter_next(it)
+
+        return packagelist
     """
     Return the selected package size, unit is KB.
     """
