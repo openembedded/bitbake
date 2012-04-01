@@ -869,7 +869,7 @@ class Builder(gtk.Window):
     def reparse_post_adv_settings(self):
         # DO reparse recipes
         if not self.configuration.curr_mach:
-            self.switch_page(self.MACHINE_SELECTION)
+            self.switch_page(self.CONFIG_UPDATED)
         else:
             self.switch_page(self.RCPPKGINFO_POPULATING)
 
