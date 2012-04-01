@@ -160,6 +160,7 @@ class PackageSelectionPage (HobPage):
         self._expand_all()
 
         self.builder.configuration.selected_packages = self.package_model.get_selected_packages()
+        self.builder.configuration.user_selected_packages = self.package_model.get_user_selected_packages()
         selected_packages_num = len(self.builder.configuration.selected_packages)
         selected_packages_size = float(self.package_model.get_packages_size())
         selected_packages_size_str = self._size_to_string(selected_packages_size)

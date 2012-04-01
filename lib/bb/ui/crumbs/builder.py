@@ -68,6 +68,8 @@ class Configuration:
         self.selected_recipes = []
         self.selected_packages = []
 
+        self.user_selected_packages = []
+
         # proxy settings
         self.all_proxy = params["all_proxy"]
         self.http_proxy = params["http_proxy"]
@@ -157,7 +159,7 @@ class Configuration:
         self.selected_image = filename
         template.setVar("__SELECTED_IMAGE__", self.selected_image)
         template.setVar("DEPENDS", self.selected_recipes)
-        template.setVar("IMAGE_INSTALL", self.selected_packages)
+        template.setVar("IMAGE_INSTALL", self.user_selected_packages)
         # proxy
         template.setVar("all_proxy", self.all_proxy)
         template.setVar("http_proxy", self.http_proxy)

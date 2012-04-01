@@ -342,6 +342,23 @@ class PackageListModel(gtk.TreeStore):
         self.selection_change_notification()
         return left
 
+    def get_user_selected_packages(self):
+        packagelist = []
+
+        it = self.get_iter_first()
+        while it:
+            child_it = self.iter_children(it)
+            while child_it:
+                if self.get_value(child_it, self.COL_INC):
+                    binb = self.get_value(child_it, self.COL_BINB)
+                    if not binb or binb == "User Selected":
+                        name = self.get_value(child_it, self.COL_NAME)
+                        packagelist.append(name)
+                child_it = self.iter_next(child_it)
+            it = self.iter_next(it)
+
+        return packagelist
+
     def get_selected_packages(self):
         packagelist = []
 
