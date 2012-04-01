@@ -382,6 +382,13 @@ class HobHandler(gobject.GObject):
     def reset_build(self):
         self.build.reset()
 
+    def _remove_redundant(self, string):
+        ret = []
+        for i in string.split():
+            if i not in ret:
+                ret.append(i)
+        return " ".join(ret)
+
     def get_parameters(self):
         # retrieve the parameters from bitbake
         params = {}
@@ -445,19 +452,19 @@ class HobHandler(gobject.GObject):
             image_overhead_factor = float(image_overhead_factor)
         params['image_overhead_factor'] = image_overhead_factor
 
-        params["incompat_license"] = self.server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or ""
+        params["incompat_license"] = self._remove_redundant(self.server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or "")
         params["sdk_machine"] = self.server.runCommand(["getVariable", "SDKMACHINE"]) or self.server.runCommand(["getVariable", "SDK_ARCH"]) or ""
 
-        params["image_fstypes"] = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]) or ""
+        params["image_fstypes"] = self._remove_redundant(self.server.runCommand(["getVariable", "IMAGE_FSTYPES"]) or "")
 
-        params["image_types"] = self.server.runCommand(["getVariable", "IMAGE_TYPES"]) or ""
+        params["image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "IMAGE_TYPES"]) or "")
 
         params["conf_version"] = self.server.runCommand(["getVariable", "CONF_VERSION"]) or ""
         params["lconf_version"] = self.server.runCommand(["getVariable", "LCONF_VERSION"]) or ""
 
-        params["runnable_image_types"] = self.server.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or ""
-        params["runnable_machine_patterns"] = self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or ""
-        params["deployable_image_types"] = self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or ""
+        params["runnable_image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or "")
+        params["runnable_machine_patterns"] = self._remove_redundant(self.server.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or "")
+        params["deployable_image_types"] = self._remove_redundant(self.server.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or "")
         params["tmpdir"] = self.server.runCommand(["getVariable", "TMPDIR"]) or ""
         params["distro_version"] = self.server.runCommand(["getVariable", "DISTRO_VERSION"]) or ""
         params["target_os"] = self.server.runCommand(["getVariable", "TARGET_OS"]) or ""
