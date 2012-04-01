@@ -403,7 +403,6 @@ class ImageDetailsPage (HobPage):
         response, path = self.builder.show_load_template_dialog()
         if not response:
             return
-        self.builder.initiate_new_build()
         if path:
             self.builder.load_template(path)
 
@@ -415,6 +414,5 @@ class ImageDetailsPage (HobPage):
         response, settings_changed = self.builder.show_adv_settings_dialog()
         if not response:
             return
-        self.builder.initiate_new_build()
         if settings_changed:
             self.builder.reparse_post_adv_settings()
