@@ -60,7 +60,7 @@ class Configuration:
         self.lconf_version = params["lconf_version"]
         self.extra_setting = {}
         self.toolchain_build = False
-        self.image_fstypes = params["image_fstypes"].split()
+        self.image_fstypes = params["image_fstypes"]
         # bblayers.conf
         self.layers = params["layer"].split()
         # image/recipes/packages
