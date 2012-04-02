@@ -436,7 +436,7 @@ class HobHandler(gobject.GObject):
                 pmake = int(pmake.lstrip("-j "))
             except:
                 pmake = num_threads
-        params["pmake"] = pmake
+        params["pmake"] = "-j %s" % pmake
 
         params["image_addr"] = self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
 

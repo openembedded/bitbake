@@ -48,7 +48,7 @@ class Configuration:
         self.dldir = params["dldir"]
         self.sstatedir = params["sstatedir"]
         self.sstatemirror = params["sstatemirror"]
-        self.pmake = params["pmake"]
+        self.pmake = int(params["pmake"].split()[1])
         self.bbthread = params["bbthread"]
         self.curr_package_format = " ".join(params["pclass"].split("package_")).strip()
         self.image_rootfs_size = params["image_rootfs_size"]
@@ -85,7 +85,7 @@ class Configuration:
         self.dldir = params["dldir"]
         self.sstatedir = params["sstatedir"]
         self.sstatemirror = params["sstatemirror"]
-        self.pmake = params["pmake"]
+        self.pmake = int(params["pmake"].split()[1])
         self.bbthread = params["bbthread"]
         self.curr_package_format = " ".join(params["pclass"].split("package_")).strip()
         self.image_rootfs_size = params["image_rootfs_size"]
