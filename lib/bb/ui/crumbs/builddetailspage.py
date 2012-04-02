@@ -216,6 +216,9 @@ class BuildDetailsPage (HobPage):
         self.show_all()
         self.back_button.hide()
 
+        self.reset_build_status()
+        self.reset_issues()
+
     def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
         self.progress_bar.set_title(title)

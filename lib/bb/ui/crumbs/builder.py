@@ -619,8 +619,6 @@ class Builder(gtk.Window):
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 0
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
-        self.build_details_page.reset_build_status()
-        self.build_details_page.reset_issues()
         self.build_details_page.show_configurations(self.configuration, self.parameters)
 
     def build_succeeded(self):
