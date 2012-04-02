@@ -60,6 +60,7 @@ class hic:
     ICON_INDI_REFRESH_FILE        = os.path.join(HOB_ICON_BASE_DIR, ('indicators/refresh.png'))
     ICON_INDI_ALERT_FILE          = os.path.join(HOB_ICON_BASE_DIR, ('indicators/alert.png'))
     ICON_INDI_TICK_FILE           = os.path.join(HOB_ICON_BASE_DIR, ('indicators/tick.png'))
+    ICON_INDI_INFO_FILE           = os.path.join(HOB_ICON_BASE_DIR, ('indicators/info.png'))
 
 class hcc:
 
@@ -826,7 +827,7 @@ class HobIconChecker(hic):
     """
     def check_stock_icon(self, stock_name=""):
         HOB_CHECK_STOCK_NAME = {
-            ('hic-dialog-info', 'gtk-dialog-info', 'dialog-info')           : self.ICON_INFO_DISPLAY_FILE,
+            ('hic-dialog-info', 'gtk-dialog-info', 'dialog-info')           : self.ICON_INDI_INFO_FILE,
             ('hic-ok',          'gtk-ok',           'ok')                   : self.ICON_INDI_TICK_FILE,
             ('hic-dialog-error', 'gtk-dialog-error', 'dialog-error')        : self.ICON_INDI_ERROR_FILE,
             ('hic-dialog-warning', 'gtk-dialog-warning', 'dialog-warning')  : self.ICON_INDI_ALERT_FILE,
