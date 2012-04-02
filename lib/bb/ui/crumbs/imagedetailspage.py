@@ -327,7 +327,6 @@ class ImageDetailsPage (HobPage):
             self.deploy_button.set_size_request(205, 49)
             self.deploy_button.set_tooltip_text("Deploy image to get your target board")
             self.deploy_button.set_flags(gtk.CAN_DEFAULT)
-            self.deploy_button.grab_default()
             self.deploy_button.connect("clicked", self.deploy_button_clicked_cb)
             bottom_buttons.pack_end(self.deploy_button, expand=False, fill=False)
             created = True
