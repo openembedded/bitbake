@@ -22,6 +22,7 @@
 
 import gtk
 import gobject
+from bb.ui.crumbs.hobpages import HobPage
 
 #
 # PackageListModel
@@ -175,10 +176,8 @@ class PackageListModel(gtk.TreeStore):
             if pkgsize == "0" and not allow_empty:
                 continue
 
-            if len(pkgsize) > 3:
-                size = '%.1f' % (int(pkgsize)*1.0/1024) + ' MB'
-            else:
-                size = pkgsize + ' KB'
+            # pkgsize is in KB
+            size = HobPage._size_to_string(HobPage._string_to_size(pkgsize + ' KB'))
 
             it = self.append(pniter)
             self.pkg_path[pkg] = self.get_path(it)
@@ -391,7 +390,7 @@ class PackageListModel(gtk.TreeStore):
 
         return packagelist
     """
-    Return the selected package size, unit is KB.
+    Return the selected package size, unit is B.
     """
     def get_packages_size(self):
         packages_size = 0
@@ -404,16 +403,11 @@ class PackageListModel(gtk.TreeStore):
                     if not str_size:
                         continue
 
-                    unit = str_size.split()
-                    if unit[1] == 'MB':
-                        size = float(unit[0])*1024
-                    else:
-                        size = float(unit[0])
-                    packages_size += size
+                    packages_size += HobPage._string_to_size(str_size)
 
                 child_it = self.iter_next(child_it)
             it = self.iter_next(it)
-        return "%f" % packages_size
+        return packages_size
 
     """
     Empty self.contents by setting the include of each entry to None

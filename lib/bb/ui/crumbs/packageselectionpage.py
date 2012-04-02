@@ -162,30 +162,19 @@ class PackageSelectionPage (HobPage):
         self.builder.configuration.selected_packages = self.package_model.get_selected_packages()
         self.builder.configuration.user_selected_packages = self.package_model.get_user_selected_packages()
         selected_packages_num = len(self.builder.configuration.selected_packages)
-        selected_packages_size = float(self.package_model.get_packages_size())
-        selected_packages_size_str = self._size_to_string(selected_packages_size)
+        selected_packages_size = self.package_model.get_packages_size()
+        selected_packages_size_str = HobPage._size_to_string(selected_packages_size)
 
         image_overhead_factor = self.builder.configuration.image_overhead_factor
-        image_rootfs_size = self.builder.configuration.image_rootfs_size
-        image_extra_size = self.builder.configuration.image_extra_size
+        image_rootfs_size = self.builder.configuration.image_rootfs_size * 1024 # image_rootfs_size is KB
+        image_extra_size = self.builder.configuration.image_extra_size * 1024 # image_extra_size is KB
         base_size = image_overhead_factor * selected_packages_size
         image_total_size = max(base_size, image_rootfs_size) + image_extra_size
-        image_total_size_str = self._size_to_string(image_total_size)
+        image_total_size_str = HobPage._size_to_string(image_total_size)
 
         self.label.set_text("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
         self.ins.show_indicator_icon("Included", selected_packages_num)
-
-    """
-    Helper function to convert the package size to string format.
-    The unit of size is KB
-    """
-    def _size_to_string(self, size):
-        if len(str(int(size))) > 3:
-            size_str = '%.1f' % (size*1.0/1024) + ' MB'
-        else:
-            size_str = str(size) + ' KB'
-        return size_str
 
     def toggle_item_idle_cb(self, path):
         if not self.package_model.path_included(path):

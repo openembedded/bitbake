@@ -151,15 +151,6 @@ class ImageDetailsPage (HobPage):
         for child in children:
             self.box_group_area.remove(child)
 
-    def _size_to_string(self, size):
-        if len(str(int(size))) > 6:
-            size_str = '%.1f' % (size*1.0/(1024*1024)) + ' MB'
-        elif len(str(int(size))) > 3:
-            size_str = '%.1f' % (size*1.0/1024) + ' KB'
-        else:
-            size_str = str(size) + ' B'
-        return size_str
-
     def show_page(self, step):
         build_succeeded = (step == self.builder.IMAGE_GENERATED)
         image_addr = self.builder.parameters.image_addr
@@ -200,7 +191,7 @@ class ImageDetailsPage (HobPage):
         default_toggled = False
         default_image_size = 0
         for image_name in image_names:
-            image_size = self._size_to_string(os.stat(os.path.join(image_addr, image_name)).st_size)
+            image_size = HobPage._size_to_string(os.stat(os.path.join(image_addr, image_name)).st_size)
             if not default_toggled:
                 default_toggled = (self.test_type_runnable(image_name) and self.test_mach_runnable(image_name)) \
                     or self.test_deployable(image_name)
