@@ -408,15 +408,22 @@ class HobHandler(gobject.GObject):
             num_threads = 1
             max_threads = 65536
         else:
-            num_threads = int(num_threads)
-            max_threads = 16 * num_threads
+            try:
+                num_threads = int(num_threads)
+                max_threads = 16 * num_threads
+            except:
+                num_threads = 1
+                max_threads = 65536
         params["max_threads"] = max_threads
 
         bbthread = self.server.runCommand(["getVariable", "BB_NUMBER_THREADS"])
         if not bbthread:
             bbthread = num_threads
         else:
-            bbthread = int(bbthread)
+            try:
+                bbthread = int(bbthread)
+            except:
+                bbthread = num_threads
         params["bbthread"] = bbthread
 
         pmake = self.server.runCommand(["getVariable", "PARALLEL_MAKE"])
@@ -425,7 +432,10 @@ class HobHandler(gobject.GObject):
         elif isinstance(pmake, int):
             pass
         else:
-            pmake = int(pmake.lstrip("-j "))
+            try:
+                pmake = int(pmake.lstrip("-j "))
+            except:
+                pmake = num_threads
         params["pmake"] = pmake
 
         params["image_addr"] = self.server.runCommand(["getVariable", "DEPLOY_DIR_IMAGE"]) or ""
@@ -434,21 +444,30 @@ class HobHandler(gobject.GObject):
         if not image_extra_size:
             image_extra_size = 0
         else:
-            image_extra_size = int(image_extra_size)
+            try:
+                image_extra_size = int(image_extra_size)
+            except:
+                image_extra_size = 0
         params["image_extra_size"] = image_extra_size
 
         image_rootfs_size = self.server.runCommand(["getVariable", "IMAGE_ROOTFS_SIZE"])
         if not image_rootfs_size:
             image_rootfs_size = 0
         else:
-            image_rootfs_size = int(image_rootfs_size)
+            try:
+                image_rootfs_size = int(image_rootfs_size)
+            except:
+                image_rootfs_size = 0
         params["image_rootfs_size"] = image_rootfs_size
 
         image_overhead_factor = self.server.runCommand(["getVariable", "IMAGE_OVERHEAD_FACTOR"])
         if not image_overhead_factor:
             image_overhead_factor = 1
         else:
-            image_overhead_factor = float(image_overhead_factor)
+            try:
+                image_overhead_factor = float(image_overhead_factor)
+            except:
+                image_overhead_factor = 1
         params['image_overhead_factor'] = image_overhead_factor
 
         params["incompat_license"] = self._remove_redundant(self.server.runCommand(["getVariable", "INCOMPATIBLE_LICENSE"]) or "")
