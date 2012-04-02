@@ -106,10 +106,22 @@ class Configuration:
         self.dldir = template.getVar("DL_DIR")
         self.sstatedir = template.getVar("SSTATE_DIR")
         self.sstatemirror = template.getVar("SSTATE_MIRROR")
-        self.pmake = int(template.getVar("PARALLEL_MAKE").split()[1])
-        self.bbthread = int(template.getVar("BB_NUMBER_THREADS"))
-        self.image_rootfs_size = int(template.getVar("IMAGE_ROOTFS_SIZE"))
-        self.image_extra_size = int(template.getVar("IMAGE_EXTRA_SPACE"))
+        try:
+            self.pmake = int(template.getVar("PARALLEL_MAKE").split()[1])
+        except:
+            pass
+        try:
+            self.bbthread = int(template.getVar("BB_NUMBER_THREADS"))
+        except:
+            pass
+        try:
+            self.image_rootfs_size = int(template.getVar("IMAGE_ROOTFS_SIZE"))
+        except:
+            pass
+        try:
+            self.image_extra_size = int(template.getVar("IMAGE_EXTRA_SPACE"))
+        except:
+            pass
         # image_overhead_factor is read-only.
         self.incompat_license = template.getVar("INCOMPATIBLE_LICENSE")
         self.curr_sdk_machine = template.getVar("SDKMACHINE")
