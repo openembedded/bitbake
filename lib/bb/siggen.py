@@ -98,6 +98,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 bb.error("Task %s from %s seems to be empty?!" % (task, fn))
                 data = ''
 
+            gendeps[task] -= self.basewhitelist
             newdeps = gendeps[task]
             seen = set()
             while newdeps:
@@ -107,12 +108,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 for dep in nextdeps:
                     if dep in self.basewhitelist:
                         continue
+                    gendeps[dep] -= self.basewhitelist
                     newdeps |= gendeps[dep]
                 newdeps -= seen
 
-            alldeps = seen - self.basewhitelist
-
-            for dep in sorted(alldeps):
+            alldeps = sorted(seen)
+            for dep in alldeps:
                 data = data + dep
                 if dep in lookupcache:
                     var = lookupcache[dep]
@@ -126,7 +127,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 if var:
                     data = data + str(var)
             self.basehash[fn + "." + task] = hashlib.md5(data).hexdigest()
-            taskdeps[task] = sorted(alldeps)
+            taskdeps[task] = alldeps
 
         self.taskdeps[fn] = taskdeps
         self.gendeps[fn] = gendeps
