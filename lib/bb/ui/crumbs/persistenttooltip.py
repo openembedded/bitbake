@@ -87,7 +87,7 @@ class PersistentTooltip(gtk.Window):
         self.button = gtk.Button()
         self.button.set_image(img)
         self.button.connect("clicked", self._dismiss_cb)
-        self.button.set_can_default(True)
+        self.button.set_flags(gtk.CAN_DEFAULT)
         self.button.grab_focus()
         self.button.show()
         vbox = gtk.VBox(False, 0)
