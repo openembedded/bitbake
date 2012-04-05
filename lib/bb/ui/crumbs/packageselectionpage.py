@@ -45,7 +45,7 @@ class PackageSelectionPage (HobPage):
                       }, {
                        'col_name' : 'Brought in by',
                        'col_id'   : PackageListModel.COL_BINB,
-                       'col_style': 'text',
+                       'col_style': 'binb',
                        'col_min'  : 100,
                        'col_max'  : 350
                       }, {

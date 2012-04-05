@@ -150,12 +150,25 @@ class HobViewTable (gtk.VBox):
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=column['col_id'])
                 self.toggle_columns.append(column['col_name'])
+            elif column['col_style'] == 'binb':
+                cell = gtk.CellRendererText()
+                col.pack_start(cell, True)
+                col.set_cell_data_func(cell, self.display_binb_cb, column['col_id'])
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         scroll.set_shadow_type(gtk.SHADOW_IN)
         scroll.add(self.table_tree)
         self.pack_start(scroll, True, True, 0)
+
+    def display_binb_cb(self, col, cell, model, it, col_id):
+        binb =  model.get_value(it, col_id)
+        # Just display the first item
+        if binb:
+            bin = binb.split(', ')
+            cell.set_property('text', bin[0])
+
+        return True
 
     def set_model(self, tree_model):
         self.table_tree.set_model(tree_model)
