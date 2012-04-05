@@ -136,10 +136,13 @@ def getInterval(configuration):
 
     """ Get the disk space interval """
 
+    # The default value is 50M and 5K.
+    spaceDefault = 50 * 1024 * 1024
+    inodeDefault = 5 * 1024
+
     interval = configuration.getVar("BB_DISKMON_WARNINTERVAL", True)
     if not interval:
-        # The default value is 50M and 5K.
-        return 50 * 1024 * 1024, 5 * 1024
+        return spaceDefault, inodeDefault
     else:
         # The disk space or inode interval is optional, but it should
         # have a correct value once it is specified
@@ -151,12 +154,16 @@ def getInterval(configuration):
                 if not intervalSpace:
                     printErr("Invalid disk space interval value in BB_DISKMON_WARNINTERVAL: %s" % intervalRe.group(1))
                     return None, None
+            else:
+                intervalSpace = spaceDefault
             intervalInode = intervalRe.group(2)
             if intervalInode:
                 intervalInode = convertGMK(intervalInode)
                 if not intervalInode:
                     printErr("Invalid disk inode interval value in BB_DISKMON_WARNINTERVAL: %s" % intervalRe.group(2))
                     return None, None
+            else:
+                intervalInode = inodeDefault
             return intervalSpace, intervalInode
         else:
             printErr("Invalid interval value in BB_DISKMON_WARNINTERVAL: %s" % interval)
