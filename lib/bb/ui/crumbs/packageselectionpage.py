@@ -117,7 +117,7 @@ class PackageSelectionPage (HobPage):
             tab.set_model(self.package_model.tree_model(filter))
             tab.connect("toggled", self.table_toggled_cb)
             if page['name'] == "Included":
-                tab.connect("row-activated", self.tree_row_activated_cb)
+                tab.connect("button-release-event", self.button_click_cb)
 
             label = gtk.Label(page['name'])
             self.ins.append_page(tab, label)
@@ -146,10 +146,13 @@ class PackageSelectionPage (HobPage):
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         button_box.pack_start(self.back_button, expand=False, fill=False)
 
-    def tree_row_activated_cb(self, table, tree_model, path):
-        binb = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_BINB)
-        if binb:
-            self.builder.show_binb_dialog(binb)
+    def button_click_cb(self, widget, event):
+        path, col = widget.table_tree.get_cursor()
+        tree_model = widget.table_tree.get_model()
+        if path: # else activation is likely a removal
+            binb = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_BINB)
+            if binb:
+                self.builder.show_binb_dialog(binb)
 
     def build_image_clicked_cb(self, button):
         self.builder.build_image()
