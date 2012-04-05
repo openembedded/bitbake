@@ -49,6 +49,12 @@ class RecipeSelectionPage (HobPage):
                        'col_min'  : 100,
                        'col_max'  : 500
                       }, {
+                       'col_name' : 'Group',
+                       'col_id'   : RecipeListModel.COL_GROUP,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 300
+                      }, {
                        'col_name' : 'Included',
                        'col_id'   : RecipeListModel.COL_INC,
                        'col_style': 'check toggle',
