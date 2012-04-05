@@ -241,7 +241,7 @@ class HobAltButton(gtk.Button):
     """
     @staticmethod
     def desensitise_on_state_change_cb(button, state):
-        if button.get_state() == gtk.STATE_INSENSITIVE:
+        if not button.get_property("sensitive"):
             HobAltButton.set_text(button, False)
         else:
             HobAltButton.set_text(button, True)
