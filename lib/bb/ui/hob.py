@@ -22,15 +22,18 @@
 
 import sys
 import os
-requirements = "FATAL: pygtk (version 2.22.0 or later) and pygobject are required to use Hob"
+requirements = "FATAL: Gtk+, PyGtk and PyGobject are required to use Hob"
 try:
     import gobject
     import gtk
     import pygtk
     pygtk.require('2.0') # to be certain we don't have gtk+ 1.x !?!
-    ver = gtk.pygtk_version
-    if ver  < (2, 22, 0):
-        sys.exit("%s (you have pygtk %s.%s.%s)." % (requirements, ver[0], ver[1], ver[2]))
+    gtkver = gtk.gtk_version
+    pygtkver = gtk.pygtk_version
+    if gtkver  < (2, 18, 0) or pygtkver < (2, 16, 0):
+        sys.exit("%s,\nYou have Gtk+ %s and PyGtk %s." % (requirements,
+                ".".join(map(str, gtkver)),
+                ".".join(map(str, pygtkver))))
 except ImportError as exc:
     sys.exit("%s (%s)." % (requirements, str(exc)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
