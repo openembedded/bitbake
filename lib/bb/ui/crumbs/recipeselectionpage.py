@@ -41,25 +41,28 @@ class RecipeSelectionPage (HobPage):
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 400
+                       'col_max'  : 400,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Brought in by',
                        'col_id'   : RecipeListModel.COL_BINB,
                        'col_style': 'binb',
                        'col_min'  : 100,
-                       'col_max'  : 500
+                       'col_max'  : 500,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Group',
                        'col_id'   : RecipeListModel.COL_GROUP,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 300
+                       'col_max'  : 300,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : RecipeListModel.COL_INC,
                        'col_style': 'check toggle',
-                       'col_min'  : 50,
-                       'col_max'  : 50
+                       'col_min'  : 100,
+                       'col_max'  : 100
                       }]
         }, {
          'name'    : 'All recipes',
@@ -69,25 +72,28 @@ class RecipeSelectionPage (HobPage):
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 400
+                       'col_max'  : 400,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'License',
                        'col_id'   : RecipeListModel.COL_LIC,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 400
+                       'col_max'  : 400,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Group',
                        'col_id'   : RecipeListModel.COL_GROUP,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 400
+                       'col_max'  : 400,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : RecipeListModel.COL_INC,
                        'col_style': 'check toggle',
-                       'col_min'  : 50,
-                       'col_max'  : 50
+                       'col_min'  : 100,
+                       'col_max'  : 100
                       }]
         }, {
          'name'    : 'Tasks',
@@ -97,19 +103,21 @@ class RecipeSelectionPage (HobPage):
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 400
+                       'col_max'  : 400,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Description',
                        'col_id'   : RecipeListModel.COL_DESC,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 400
+                       'col_max'  : 400,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : RecipeListModel.COL_INC,
                        'col_style': 'check toggle',
-                       'col_min'  : 50,
-                       'col_max'  : 50
+                       'col_min'  : 100,
+                       'col_max'  : 100
                       }]
         }
     ]

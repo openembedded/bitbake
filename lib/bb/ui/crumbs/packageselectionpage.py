@@ -41,25 +41,28 @@ class PackageSelectionPage (HobPage):
                        'col_id'   : PackageListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 300
+                       'col_max'  : 300,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Brought in by',
                        'col_id'   : PackageListModel.COL_BINB,
                        'col_style': 'binb',
                        'col_min'  : 100,
-                       'col_max'  : 350
+                       'col_max'  : 350,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Size',
                        'col_id'   : PackageListModel.COL_SIZE,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 300
+                       'col_max'  : 300,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
                        'col_style': 'check toggle',
-                       'col_min'  : 50,
-                       'col_max'  : 50
+                       'col_min'  : 100,
+                       'col_max'  : 100
                      }]
         }, {
          'name'    : 'All packages',
@@ -69,19 +72,21 @@ class PackageSelectionPage (HobPage):
                        'col_id'   : PackageListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 400
+                       'col_max'  : 400,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Size',
                        'col_id'   : PackageListModel.COL_SIZE,
                        'col_style': 'text',
                        'col_min'  : 100,
-                       'col_max'  : 500
+                       'col_max'  : 500,
+                       'expand'   : 'True'
                       }, {
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
                        'col_style': 'check toggle',
-                       'col_min'  : 50,
-                       'col_max'  : 50
+                       'col_min'  : 100,
+                       'col_max'  : 100
                       }]
         }
     ]

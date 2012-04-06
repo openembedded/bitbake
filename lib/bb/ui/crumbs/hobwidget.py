@@ -127,6 +127,8 @@ class HobViewTable (gtk.VBox):
                 col.set_min_width(column['col_min'])
             if 'col_max' in column.keys():
                 col.set_max_width(column['col_max'])
+            if 'expand' in column.keys():
+                col.set_expand(True)
             self.table_tree.append_column(col)
 
             if (not 'col_style' in column.keys()) or column['col_style'] == 'text':
