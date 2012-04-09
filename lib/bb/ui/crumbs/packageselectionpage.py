@@ -179,6 +179,8 @@ class PackageSelectionPage (HobPage):
         image_extra_size = self.builder.configuration.image_extra_size * 1024 # image_extra_size is KB
         base_size = image_overhead_factor * selected_packages_size
         image_total_size = max(base_size, image_rootfs_size) + image_extra_size
+        if "zypper" in self.builder.configuration.selected_packages:
+            image_total_size += (51200 * 1024)
         image_total_size_str = HobPage._size_to_string(image_total_size)
 
         self.label.set_text("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
