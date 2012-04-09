@@ -137,7 +137,7 @@ class PackageSelectionPage (HobPage):
 
         self.build_image_button = HobButton('Build image')
         self.build_image_button.set_size_request(205, 49)
-        self.build_image_button.set_tooltip_text("Build image to get your target image")
+        self.build_image_button.set_tooltip_text("Build target image")
         self.build_image_button.set_flags(gtk.CAN_DEFAULT)
         self.build_image_button.grab_default()
         self.build_image_button.connect("clicked", self.build_image_clicked_cb)
