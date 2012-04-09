@@ -167,7 +167,7 @@ class RecipeSelectionPage (HobPage):
 
         self.build_packages_button = HobButton('Build packages')
         self.build_packages_button.set_size_request(205, 49)
-        self.build_packages_button.set_tooltip_text("Build packages for customization")
+        self.build_packages_button.set_tooltip_text("Build selected recipes into packages")
         self.build_packages_button.set_flags(gtk.CAN_DEFAULT)
         self.build_packages_button.grab_default()
         self.build_packages_button.connect("clicked", self.build_packages_clicked_cb)
