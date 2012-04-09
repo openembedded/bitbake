@@ -37,6 +37,10 @@ class ImageConfigurationPage (HobPage):
         super(ImageConfigurationPage, self).__init__(builder, "Image configuration")
 
         self.image_combo_id = None
+        # we use machine_combo_changed_by_manual to identify the machine is changed by code
+        # or by manual. If by manual, all user's recipe selection and package selection are
+        # cleared.
+        self.machine_combo_changed_by_manual = True
         self.create_visual_elements()
 
     def create_visual_elements(self):
@@ -259,6 +263,13 @@ class ImageConfigurationPage (HobPage):
             return
 
         self.builder.configuration.curr_mach = combo_item
+        if self.machine_combo_changed_by_manual:
+            self.builder.configuration.selected_image = None
+            self.builder.configuration.selected_recipes = []
+            self.builder.configuration.selected_packages = []
+        # reset machine_combo_changed_by_manual
+        self.machine_combo_changed_by_manual = True
+
         # Do reparse recipes
         self.builder.populate_recipe_package_info_async()
 
@@ -272,6 +283,7 @@ class ImageConfigurationPage (HobPage):
         self.machine_combo.set_active(-1)
 
     def switch_machine_combo(self):
+        self.machine_combo_changed_by_manual = False
         model = self.machine_combo.get_model()
         active = 0
         while active < len(model):
@@ -280,6 +292,16 @@ class ImageConfigurationPage (HobPage):
                 return
             active += 1
         self.machine_combo.set_active(-1)
+
+    def update_image_desc(self, selected_image):
+        desc = ""
+        if selected_image and selected_image in self.builder.recipe_model.pn_path.keys():
+            image_path = self.builder.recipe_model.pn_path[selected_image]
+            image_iter = self.builder.recipe_model.get_iter(image_path)
+            desc = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_DESC)
+
+        mark = ("<span %s>%s</span>\n") % (self.span_tag('small'), desc)
+        self.image_desc.set_markup(mark)
 
     def image_combo_changed_idle_cb(self, selected_image, selected_recipes, selected_packages):
         self.builder.update_recipe_model(selected_image, selected_recipes)
@@ -299,9 +321,7 @@ class ImageConfigurationPage (HobPage):
         image_path = self.builder.recipe_model.pn_path[selected_image]
         image_iter = self.builder.recipe_model.get_iter(image_path)
         selected_packages = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_INSTALL).split()
-
-        mark = ("<span %s>%s</span>\n") % (self.span_tag('small'), self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_DESC))
-        self.image_desc.set_markup(mark)
+        self.update_image_desc(selected_image)
 
         self.builder.recipe_model.reset()
         self.builder.package_model.reset()
