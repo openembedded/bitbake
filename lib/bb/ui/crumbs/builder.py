@@ -364,6 +364,20 @@ class Builder(gtk.Window):
         self.handler.reset_build()
         self.handler.generate_packages(all_recipes)
 
+    def generate_image_async(self):
+        self.switch_page(self.IMAGE_GENERATING)
+        # Build image
+        self.set_user_config()
+        packages = self.package_model.get_selected_packages()
+        toolchain_packages = []
+        if self.configuration.toolchain_build:
+            toolchain_packages = self.package_model.get_selected_packages_toolchain()
+        self.handler.reset_build()
+        self.handler.generate_image(packages,
+                                    self.hob_image,
+                                    self.hob_toolchain,
+                                    toolchain_packages)
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -429,7 +443,6 @@ class Builder(gtk.Window):
             # after packages are generated, selected_packages need to
             # be updated in package_model per selected_image in recipe_model
             self.build_details_page.show_page(next_step)
-            self.generate_image()
 
         elif next_step == self.IMAGE_GENERATED:
             self.image_details_page.show_page(next_step)
@@ -478,19 +491,6 @@ class Builder(gtk.Window):
         left = self.package_model.set_selected_packages(selected_packages)
         self.configuration.selected_packages += left
 
-    def generate_image(self):
-        # Build image
-        self.set_user_config()
-        packages = self.package_model.get_selected_packages()
-        toolchain_packages = []
-        if self.configuration.toolchain_build:
-            toolchain_packages = self.package_model.get_selected_packages_toolchain()
-        self.handler.reset_build()
-        self.handler.generate_image(packages,
-                                    self.hob_image,
-                                    self.hob_toolchain,
-                                    toolchain_packages)
-
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):
         if which == "distro":
@@ -529,7 +529,7 @@ class Builder(gtk.Window):
 
             self.rcppkglist_populated()
             if self.current_step == self.FAST_IMAGE_GENERATING:
-                self.switch_page(self.IMAGE_GENERATING)
+                self.generate_image_async()
             elif self.current_step == self.PACKAGE_GENERATING:
                 self.switch_page(self.PACKAGE_GENERATED)
             elif self.current_step == self.IMAGE_GENERATING:
@@ -761,7 +761,7 @@ class Builder(gtk.Window):
             dialog.run()
             dialog.destroy()
             return
-        self.switch_page(self.IMAGE_GENERATING)
+        self.generate_image_async()
 
     def just_bake(self):
         selected_image = self.recipe_model.get_selected_image()
