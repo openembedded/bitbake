@@ -390,6 +390,9 @@ class Builder(gtk.Window):
     def generate_configuration_async(self):
         self.handler.generate_configuration()
 
+    def cancel_parse_sync(self):
+        self.handler.cancel_parse()
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -1010,9 +1013,6 @@ class Builder(gtk.Window):
 
     def show_configuration(self):
         self.switch_page(self.BASEIMG_SELECTED)
-
-    def stop_parse(self):
-        self.handler.cancel_parse()
 
     def stop_build(self):
         if self.stopping:

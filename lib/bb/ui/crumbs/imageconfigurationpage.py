@@ -251,7 +251,7 @@ class ImageConfigurationPage (HobPage):
         return button_box
 
     def stop_button_clicked_cb(self, button):
-        self.builder.stop_parse()
+        self.builder.cancel_parse_sync()
 
     def machine_combo_changed_cb(self, machine_combo):
         combo_item = machine_combo.get_active_text()
