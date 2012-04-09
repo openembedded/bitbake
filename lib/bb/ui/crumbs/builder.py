@@ -384,6 +384,9 @@ class Builder(gtk.Window):
     def request_package_info_async(self):
         self.handler.request_package_info()
 
+    def cancel_build_sync(self, force=False):
+        self.handler.cancel_build(force)
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -1041,6 +1044,6 @@ class Builder(gtk.Window):
         if response != gtk.RESPONSE_CANCEL:
             self.stopping = True
         if response == gtk.RESPONSE_OK:
-            self.handler.cancel_build()
+            self.cancel_build_sync()
         elif response == gtk.RESPONSE_YES:
-            self.handler.cancel_build(True)
+            self.cancel_build_sync(True)
