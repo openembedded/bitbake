@@ -387,6 +387,9 @@ class Builder(gtk.Window):
     def cancel_build_sync(self, force=False):
         self.handler.cancel_build(force)
 
+    def generate_configuration_async(self):
+        self.handler.generate_configuration()
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -519,7 +522,7 @@ class Builder(gtk.Window):
             params = self.get_parameters_sync()
             self.configuration = Configuration(params)
             self.parameters = Parameters(params)
-            self.handler.generate_configuration()
+            self.generate_configuration_async()
         elif initcmd == self.handler.GENERATE_CONFIGURATION:
             params = self.get_parameters_sync()
             self.configuration.update(params)
