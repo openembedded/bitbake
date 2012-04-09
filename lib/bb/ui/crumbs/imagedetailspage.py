@@ -272,8 +272,7 @@ class ImageDetailsPage (HobPage):
     def test_mach_runnable(self, image_name):
         mach_runnable = False
         for t in self.builder.parameters.runnable_machine_patterns:
-            mach_string = image_name.strip(self.builder.hob_image + '-')
-            if mach_string.startswith(t):
+            if t in image_name:
                 mach_runnable = True
                 break
         return mach_runnable
