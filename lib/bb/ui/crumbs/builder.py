@@ -348,6 +348,22 @@ class Builder(gtk.Window):
         self.set_user_config()
         self.handler.generate_recipes()
 
+    def generate_packages_async(self):
+        self.switch_page(self.PACKAGE_GENERATING)
+        # Build packages
+        _, all_recipes = self.recipe_model.get_selected_recipes()
+        self.set_user_config()
+        self.handler.reset_build()
+        self.handler.generate_packages(all_recipes)
+
+    def fast_generate_image_async(self):
+        self.switch_page(self.FAST_IMAGE_GENERATING)
+        # Build packages
+        _, all_recipes = self.recipe_model.get_selected_recipes()
+        self.set_user_config()
+        self.handler.reset_build()
+        self.handler.generate_packages(all_recipes)
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -405,7 +421,6 @@ class Builder(gtk.Window):
         elif next_step == self.PACKAGE_GENERATING or next_step == self.FAST_IMAGE_GENERATING:
             # both PACKAGE_GENEATING and FAST_IMAGE_GENERATING share the same page
             self.build_details_page.show_page(next_step)
-            self.generate_packages()
 
         elif next_step == self.PACKAGE_GENERATED:
             pass
@@ -462,13 +477,6 @@ class Builder(gtk.Window):
     def update_package_model(self, selected_packages):
         left = self.package_model.set_selected_packages(selected_packages)
         self.configuration.selected_packages += left
-
-    def generate_packages(self):
-        # Build packages
-        _, all_recipes = self.recipe_model.get_selected_recipes()
-        self.set_user_config()
-        self.handler.reset_build()
-        self.handler.generate_packages(all_recipes)
 
     def generate_image(self):
         # Build image
@@ -740,7 +748,7 @@ class Builder(gtk.Window):
             dialog.run()
             dialog.destroy()
             return
-        self.switch_page(self.PACKAGE_GENERATING)
+        self.generate_packages_async()
 
     def build_image(self):
         selected_packages = self.package_model.get_selected_packages()
@@ -770,7 +778,7 @@ class Builder(gtk.Window):
             dialog.destroy()
             return
 
-        self.switch_page(self.FAST_IMAGE_GENERATING)
+        self.fast_generate_image_async()
 
     def show_binb_dialog(self, binb):
         markup = "<b>Brought in by:</b>\n%s" % binb
@@ -980,7 +988,7 @@ class Builder(gtk.Window):
             response = dialog.run()
             dialog.destroy()
             if response == gtk.RESPONSE_YES:
-                self.switch_page(self.PACKAGE_GENERATING)
+                self.generate_packages_async()
             else:
                 self.switch_page(self.PACKAGE_SELECTION)
         else:
