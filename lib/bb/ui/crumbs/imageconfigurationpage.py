@@ -49,19 +49,19 @@ class ImageConfigurationPage (HobPage):
             "Templates",
             hic.ICON_TEMPLATES_DISPLAY_FILE,
             hic.ICON_TEMPLATES_HOVER_FILE,
-            "Load a hob building template saved before",
+            "Load a previously saved template",
             self.template_button_clicked_cb)
         my_images_button = self.append_toolbar_button(self.toolbar,
-            "My images",
+            "Images",
             hic.ICON_IMAGES_DISPLAY_FILE,
             hic.ICON_IMAGES_HOVER_FILE,
-            "Open images built out previously for running or deployment",
+            "Open previously built images",
             self.my_images_button_clicked_cb)
         settings_button = self.append_toolbar_button(self.toolbar,
             "Settings",
             hic.ICON_SETTINGS_DISPLAY_FILE,
             hic.ICON_SETTINGS_HOVER_FILE,
-            "Other advanced settings for build",
+            "View additional build settings",
             self.settings_button_clicked_cb)
 
         self.config_top_button = self.add_onto_top_bar(self.toolbar)
@@ -138,7 +138,7 @@ class ImageConfigurationPage (HobPage):
 
         self.machine_title_desc = gtk.Label()
         self.machine_title_desc.set_alignment(0.0, 0.5)
-        mark = ("<span %s>This is the profile of the target machine for which you"
+        mark = ("<span %s>Your selection is the profile of the target machine for which you"
         " are building the image.\n</span>") % (self.span_tag('medium'))
         self.machine_title_desc.set_markup(mark)
 
@@ -155,8 +155,8 @@ class ImageConfigurationPage (HobPage):
         markup = "Layers are a powerful mechanism to extend the Yocto Project "
         markup += "with your own functionality.\n"
         markup += "For more on layers, check the <a href=\""
-        markup += "http://www.yoctoproject.org/docs/current/poky-ref-manual/"
-        markup += "poky-ref-manual.html#usingpoky-changes-layers\">reference manual</a>."
+        markup += "http://www.yoctoproject.org/docs/current/dev-manual/"
+        markup += "dev-manual.html#understanding-and-using-layers\">reference manual</a>."
         self.layer_info_icon = HobInfoButton(markup, self.get_parent())
 
         self.progress_box = gtk.HBox(False, 6)
@@ -235,7 +235,7 @@ class ImageConfigurationPage (HobPage):
         # create button "Build image"
         just_bake_button = HobButton("Build image")
         just_bake_button.set_size_request(205, 49)
-        just_bake_button.set_tooltip_text("Build image to get your target image")
+        just_bake_button.set_tooltip_text("Build target image")
         just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
         button_box.pack_end(just_bake_button, expand=False, fill=False)
 
@@ -245,6 +245,7 @@ class ImageConfigurationPage (HobPage):
         # create button "Build Packages"
         build_packages_button = HobAltButton("Build packages")
         build_packages_button.connect("clicked", self.build_packages_button_clicked_cb)
+        build_packages_button.set_tooltip_text("Build recipes into packages")
         button_box.pack_end(build_packages_button, expand=False, fill=False)
 
         return button_box
