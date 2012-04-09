@@ -381,6 +381,9 @@ class Builder(gtk.Window):
     def get_parameters_sync(self):
         return self.handler.get_parameters()
 
+    def request_package_info_async(self):
+        self.handler.request_package_info()
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -523,7 +526,7 @@ class Builder(gtk.Window):
                          self.handler.GENERATE_IMAGE]:
             params = self.get_parameters_sync()
             self.configuration.update(params)
-            self.handler.request_package_info_async()
+            self.request_package_info_async()
         elif initcmd == self.handler.POPULATE_PACKAGEINFO:
             if self.current_step == self.RCPPKGINFO_POPULATING:
                 self.switch_page(self.RCPPKGINFO_POPULATED)

@@ -325,7 +325,7 @@ class HobHandler(gobject.GObject):
         self.server.runCommand(["setVariable", "CVS_PROXY_HOST", host])
         self.server.runCommand(["setVariable", "CVS_PROXY_PORT", port])
 
-    def request_package_info_async(self):
+    def request_package_info(self):
         self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
 
