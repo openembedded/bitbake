@@ -146,10 +146,10 @@ class RecipeSelectionPage (HobPage):
             tab = HobViewTable(columns)
             filter = page['filter']
             tab.set_model(self.recipe_model.tree_model(filter))
-            tab.connect("toggled", self.table_toggled_cb)
+            tab.connect("toggled", self.table_toggled_cb, page['name'])
             if page['name'] == "Included":
                 tab.connect("button-release-event", self.button_click_cb)
-
+                tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
             label = gtk.Label(page['name'])
             self.ins.append_page(tab, label)
             self.tables.append(tab)
@@ -197,11 +197,16 @@ class RecipeSelectionPage (HobPage):
         self.label.set_text("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
         self.ins.show_indicator_icon("Included", len(self.builder.configuration.selected_recipes))
 
-    def toggle_item_idle_cb(self, path):
+    def toggle_item_idle_cb(self, path, view_tree, cell, pagename):
         if not self.recipe_model.path_included(path):
             self.recipe_model.include_item(item_path=path, binb="User Selected", image_contents=False)
         else:
-            self.recipe_model.exclude_item(item_path=path)
+            if pagename == "Included":
+                self.pre_fadeout_checkout_include(view_tree)
+                self.recipe_model.exclude_item(item_path=path)
+                self.render_fadeout(view_tree, cell)
+            else:
+                self.recipe_model.exclude_item(item_path=path)
 
         self.refresh_selection()
         if not self.builder.customized:
@@ -211,9 +216,42 @@ class RecipeSelectionPage (HobPage):
 
         self.builder.window_sensitive(True)
 
-    def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree):
+    def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree, pagename):
         # Click to include a recipe
         self.builder.window_sensitive(False)
         view_model = view_tree.get_model()
         path = self.recipe_model.convert_vpath_to_path(view_model, view_path)
-        glib.idle_add(self.toggle_item_idle_cb, path)
+        glib.idle_add(self.toggle_item_idle_cb, path, view_tree, cell, pagename)
+
+    def pre_fadeout_checkout_include(self, tree):
+        #resync the included items to a backup fade include column
+        it = self.recipe_model.get_iter_first()
+        while it:
+            active = self.recipe_model.get_value(it, self.recipe_model.COL_INC)
+            self.recipe_model.set(it, self.recipe_model.COL_FADE_INC, active)
+            it = self.recipe_model.iter_next(it)
+        # Check out a model which base on the column COL_FADE_INC,
+        # it's save the prev state of column COL_INC before do exclude_item
+        filter = { RecipeListModel.COL_FADE_INC  : [True],
+                   RecipeListModel.COL_TYPE      : ['recipe', 'task'] }
+        new_model = self.recipe_model.tree_model(filter, excluded_items_head=True)
+        tree.set_model(new_model)
+
+    def render_fadeout(self, tree, cell):
+        if (not cell) or (not tree):
+            return
+        to_render_cells = []
+        model = tree.get_model()
+        it = model.get_iter_first()
+        while it:
+            path = model.get_path(it)
+            prev_cell_is_active = model.get_value(it, RecipeListModel.COL_FADE_INC)
+            curr_cell_is_active = model.get_value(it, RecipeListModel.COL_INC)
+            if (prev_cell_is_active == True) and (curr_cell_is_active == False):
+                to_render_cells.append(path)
+            it = model.iter_next(it)
+
+        cell.fadeout(tree, 1000, to_render_cells)
+
+    def after_fadeout_checkin_include(self, table, ctrl, cell, tree):
+        tree.set_model(self.recipe_model.tree_model(self.pages[0]['filter']))

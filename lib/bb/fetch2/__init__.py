@@ -476,9 +476,10 @@ def try_mirrors(d, origud, mirrors, check = False):
 
             if not os.path.exists(ud.donestamp) or ud.method.need_update(newuri, ud, ld):
                 ud.method.download(newuri, ud, ld)
-                open(ud.donestamp, 'w').close()
-                if hasattr(ud.method,"build_mirror_data"):
-                    ud.method.build_mirror_data(newuri, ud, ld)
+                if os.path.exists(ud.localpath):
+                    open(ud.donestamp, 'w').close()
+                    if hasattr(ud.method,"build_mirror_data"):
+                        ud.method.build_mirror_data(newuri, ud, ld)
 
             if not ud.localpath or not os.path.exists(ud.localpath):
                 continue
