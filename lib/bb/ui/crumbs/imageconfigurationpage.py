@@ -260,7 +260,7 @@ class ImageConfigurationPage (HobPage):
 
         self.builder.configuration.curr_mach = combo_item
         # Do reparse recipes
-        self.builder.switch_page(self.builder.RCPPKGINFO_POPULATING)
+        self.builder.populate_recipe_package_info_async()
 
     def update_machine_combo(self):
         all_machines = self.builder.parameters.all_machines

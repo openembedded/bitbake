@@ -342,6 +342,12 @@ class Builder(gtk.Window):
         self.set_user_config()
         self.handler.parse_generate_configuration()
 
+    def populate_recipe_package_info_async(self):
+        self.switch_page(self.RCPPKGINFO_POPULATING)
+        # Parse recipes
+        self.set_user_config()
+        self.handler.generate_recipes()
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -383,7 +389,6 @@ class Builder(gtk.Window):
             # MACHINE CHANGED action or SETTINGS CHANGED
             # show the progress bar
             self.image_configuration_page.show_info_populating()
-            self.generate_recipes()
 
         elif next_step == self.RCPPKGINFO_POPULATED:
             self.image_configuration_page.show_info_populated()
@@ -464,11 +469,6 @@ class Builder(gtk.Window):
         self.set_user_config()
         self.handler.reset_build()
         self.handler.generate_packages(all_recipes)
-
-    def generate_recipes(self):
-        # Parse recipes
-        self.set_user_config()
-        self.handler.generate_recipes()
 
     def generate_image(self):
         # Build image
@@ -888,7 +888,7 @@ class Builder(gtk.Window):
         if not self.configuration.curr_mach:
             self.update_config_async()
         else:
-            self.switch_page(self.RCPPKGINFO_POPULATING)
+            self.populate_recipe_package_info_async()
 
     def deploy_image(self, image_name):
         if not image_name:
