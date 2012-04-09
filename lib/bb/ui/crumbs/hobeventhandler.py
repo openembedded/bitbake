@@ -243,8 +243,8 @@ class HobHandler(gobject.GObject):
         self.run_next_command(self.PARSE_CONFIG)
 
     def parse_generate_configuration(self):
-         self.commands_async.append(self.SUB_PARSE_CONFIG)
-         self.generate_configuration()
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.generate_configuration()
 
     def set_extra_inherit(self, bbclass):
         inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
