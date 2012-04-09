@@ -378,6 +378,9 @@ class Builder(gtk.Window):
                                     self.hob_toolchain,
                                     toolchain_packages)
 
+    def get_parameters_sync(self):
+        return self.handler.get_parameters()
+
     def load_template(self, path):
         self.template = TemplateMgr()
         self.template.load(path)
@@ -507,18 +510,18 @@ class Builder(gtk.Window):
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.PARSE_CONFIG:
             # settings
-            params = self.handler.get_parameters()
+            params = self.get_parameters_sync()
             self.configuration = Configuration(params)
             self.parameters = Parameters(params)
             self.handler.generate_configuration()
         elif initcmd == self.handler.GENERATE_CONFIGURATION:
-            params = self.handler.get_parameters()
+            params = self.get_parameters_sync()
             self.configuration.update(params)
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
                          self.handler.GENERATE_IMAGE]:
-            params = self.handler.get_parameters()
+            params = self.get_parameters_sync()
             self.configuration.update(params)
             self.handler.request_package_info_async()
         elif initcmd == self.handler.POPULATE_PACKAGEINFO:
