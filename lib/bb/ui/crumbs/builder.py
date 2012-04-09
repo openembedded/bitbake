@@ -272,6 +272,9 @@ class Builder(gtk.Window):
         self.recipe_model = recipe_model
         self.package_model = package_model
 
+        # Indicate whether user has customized the image
+        self.customized = False
+
         # create visual elements
         self.create_visual_elements()
 

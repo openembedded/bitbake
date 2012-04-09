@@ -95,6 +95,7 @@ class PackageSelectionPage (HobPage):
         super(PackageSelectionPage, self).__init__(builder, "Packages")
 
         # set invisiable members
+        self.recipe_model = self.builder.recipe_model
         self.package_model = self.builder.package_model
 
         # create visual elements
@@ -191,6 +192,11 @@ class PackageSelectionPage (HobPage):
             self.package_model.exclude_item(item_path=path)
 
         self.refresh_selection()
+        if not self.builder.customized:
+            self.builder.customized = True
+            self.builder.configuration.selected_image = self.recipe_model.__dummy_image__
+            self.builder.rcppkglist_populated()
+
         self.builder.window_sensitive(True)
 
     def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree):

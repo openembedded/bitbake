@@ -291,6 +291,8 @@ class ImageConfigurationPage (HobPage):
         if not selected_image:
             return
 
+        self.builder.customized = False
+
         selected_recipes = []
 
         image_path = self.builder.recipe_model.pn_path[selected_image]
