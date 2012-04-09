@@ -545,7 +545,6 @@ class Builder(gtk.Window):
             HobButton.style_button(button)
             response = dialog.run()
             dialog.destroy()
-        self.handler.clear_busy()
         self.configuration.curr_mach = ""
         self.image_configuration_page.switch_machine_combo()
         self.switch_page(self.MACHINE_SELECTION)
