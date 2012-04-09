@@ -380,7 +380,7 @@ class ImageDetailsPage (HobPage):
         self.builder.runqemu_image(image_name)
 
     def build_new_button_clicked_cb(self, button):
-        self.builder.initiate_new_build()
+        self.builder.initiate_new_build_async()
 
     def edit_config_button_clicked_cb(self, button):
         self.builder.show_configuration()

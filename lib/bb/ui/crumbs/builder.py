@@ -297,11 +297,7 @@ class Builder(gtk.Window):
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
 
-        self.handler.init_cooker()
-        self.handler.set_extra_inherit("image_types")
-        self.handler.parse_config()
-
-        self.switch_page(self.MACHINE_SELECTION)
+        self.initiate_new_build_async()
 
     def create_visual_elements(self):
         self.set_title("Hob")
@@ -336,6 +332,12 @@ class Builder(gtk.Window):
 
         self.show_all()
         self.nb.set_current_page(0)
+
+    def initiate_new_build_async(self):
+        self.switch_page(self.MACHINE_SELECTION)
+        self.handler.init_cooker()
+        self.handler.set_extra_inherit("image_types")
+        self.handler.parse_config()
 
     def load_template(self, path):
         self.template = TemplateMgr()
@@ -989,13 +991,6 @@ class Builder(gtk.Window):
 
     def show_recipes(self):
         self.switch_page(self.RECIPE_SELECTION)
-
-    def initiate_new_build(self):
-        self.handler.init_cooker()
-        self.handler.set_extra_inherit("image_types")
-        self.handler.parse_config()
-        self.image_configuration_page.switch_machine_combo()
-        self.switch_page(self.MACHINE_SELECTION)
 
     def show_configuration(self):
         self.switch_page(self.BASEIMG_SELECTED)
