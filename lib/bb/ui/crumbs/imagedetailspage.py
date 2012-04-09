@@ -126,19 +126,19 @@ class ImageDetailsPage (HobPage):
             "Templates",
             hic.ICON_TEMPLATES_DISPLAY_FILE,
             hic.ICON_TEMPLATES_HOVER_FILE,
-            "Load a hob building template saved before",
+            "Load a previously saved template",
             self.template_button_clicked_cb)
         my_images_button = self.append_toolbar_button(self.toolbar,
-            "My images",
+            "Images",
             hic.ICON_IMAGES_DISPLAY_FILE,
             hic.ICON_IMAGES_HOVER_FILE,
-            "Open images built out previously for running or deployment",
+            "Open previously built images",
             self.my_images_button_clicked_cb)
         settings_button = self.append_toolbar_button(self.toolbar,
             "Settings",
             hic.ICON_SETTINGS_DISPLAY_FILE,
             hic.ICON_SETTINGS_HOVER_FILE,
-            "Other advanced settings for build",
+            "View additional build settings",
             self.settings_button_clicked_cb)
 
         self.details_top_buttons = self.add_onto_top_bar(self.toolbar)
@@ -206,6 +206,7 @@ class ImageDetailsPage (HobPage):
         image_table.connect("toggled", self.toggled_cb)
         view_files_button = HobAltButton("View files")
         view_files_button.connect("clicked", self.view_files_clicked_cb, image_addr)
+        view_files_button.set_tooltip_text("Open the directory containing the image files")
         self.box_group_area.pack_start(self.DetailBox(widget=image_table, button=view_files_button), expand=True, fill=True)
 
         # Machine, Base image and Layers
@@ -233,6 +234,7 @@ class ImageDetailsPage (HobPage):
                 i += 1
 
             edit_config_button = HobAltButton("Edit configuration")
+            edit_config_button.set_tooltip_text("Edit machine, base image and recipes")
             edit_config_button.connect("clicked", self.edit_config_button_clicked_cb)
             setting_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_config_button)
             self.box_group_area.pack_start(setting_detail, expand=False, fill=False)
@@ -244,6 +246,7 @@ class ImageDetailsPage (HobPage):
         vallist.append(default_image_size)
         if build_succeeded:
             edit_packages_button = HobAltButton("Edit packages")
+            edit_packages_button.set_tooltip_text("Edit the packages included in your image")
             edit_packages_button.connect("clicked", self.edit_packages_button_clicked_cb)
         else: # get to this page from "My images"
             edit_packages_button = None
@@ -315,7 +318,7 @@ class ImageDetailsPage (HobPage):
         if name in buttonlist:
             self.deploy_button = HobButton('Deploy image')
             self.deploy_button.set_size_request(205, 49)
-            self.deploy_button.set_tooltip_text("Deploy image to get your target board")
+            self.deploy_button.set_tooltip_text("Burn a live image to a USB drive or flash memory")
             self.deploy_button.set_flags(gtk.CAN_DEFAULT)
             self.deploy_button.connect("clicked", self.deploy_button_clicked_cb)
             bottom_buttons.pack_end(self.deploy_button, expand=False, fill=False)
@@ -330,6 +333,7 @@ class ImageDetailsPage (HobPage):
 
             # create button "Run image"
             self.run_button = HobAltButton("Run image")
+            self.run_button.set_tooltip_text("Start up an image with qemu emulator")
             self.run_button.connect("clicked", self.run_button_clicked_cb)
             bottom_buttons.pack_end(self.run_button, expand=False, fill=False)
             created = True
@@ -343,6 +347,7 @@ class ImageDetailsPage (HobPage):
 
             # create button "Save as template"
             save_button = HobAltButton("Save as template")
+            save_button.set_tooltip_text("Save the image configuration for reuse")
             save_button.connect("clicked", self.save_button_clicked_cb)
             bottom_buttons.pack_end(save_button, expand=False, fill=False)
             create = True
@@ -351,6 +356,7 @@ class ImageDetailsPage (HobPage):
         if name in buttonlist:
             # create button "Build new image"
             build_new_button = HobAltButton("Build new image")
+            build_new_button.set_tooltip_text("Create a new image from scratch")
             build_new_button.connect("clicked", self.build_new_button_clicked_cb)
             bottom_buttons.pack_start(build_new_button, expand=False, fill=False)
 
