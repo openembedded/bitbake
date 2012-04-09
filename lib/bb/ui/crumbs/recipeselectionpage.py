@@ -34,6 +34,7 @@ class RecipeSelectionPage (HobPage):
     pages = [
         {
          'name'    : 'Included',
+         'tooltip' : 'The recipes currently included for your image',
          'filter'  : { RecipeListModel.COL_INC  : [True],
                        RecipeListModel.COL_TYPE : ['recipe', 'task'] },
          'columns' : [{
@@ -66,6 +67,7 @@ class RecipeSelectionPage (HobPage):
                       }]
         }, {
          'name'    : 'All recipes',
+         'tooltip' : 'All recipes available in the Yocto Project',
          'filter'  : { RecipeListModel.COL_TYPE : ['recipe'] },
          'columns' : [{
                        'col_name' : 'Recipe name',
@@ -97,6 +99,7 @@ class RecipeSelectionPage (HobPage):
                       }]
         }, {
          'name'    : 'Tasks',
+         'tooltip' : 'All tasks availabel in the Yocto Project',
          'filter'  : { RecipeListModel.COL_TYPE : ['task'] },
          'columns' : [{
                        'col_name' : 'Task name',
@@ -151,12 +154,17 @@ class RecipeSelectionPage (HobPage):
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
             label = gtk.Label(page['name'])
+            label.set_selectable(False)
+            label.set_tooltip_text(page['tooltip'])
             self.ins.append_page(tab, label)
             self.tables.append(tab)
 
         self.ins.set_entry("Search recipes:")
         # set the search entry for each table
         for tab in self.tables:
+            search_tip = "Enter a recipe's or task's name to find it"
+            self.ins.search.set_tooltip_text(search_tip)
+            self.ins.search.props.has_tooltip = True
             tab.set_search_entry(0, self.ins.search)
 
         # add all into the window

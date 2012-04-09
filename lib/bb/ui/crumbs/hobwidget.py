@@ -425,6 +425,7 @@ class HobTabBar(gtk.DrawingArea):
         self.connect("expose-event", self.on_draw)
         self.connect("button-press-event", self.button_pressed_cb)
         self.connect("button-release-event", self.button_released_cb)
+        self.connect("query-tooltip", self.query_tooltip_cb)
         self.show_all()
 
     def button_released_cb(self, widget, event):
@@ -488,7 +489,7 @@ class HobTabBar(gtk.DrawingArea):
             child["g"] = color.green
             child["b"] = color.blue
 
-    def append_tab_child(self, title, page):
+    def append_tab_child(self, title, page, tooltip=""):
         num = len(self.children) + 1
         self.tab_width = self.tab_width * len(self.children) / num
 
@@ -513,8 +514,11 @@ class HobTabBar(gtk.DrawingArea):
             "title"        : title,
             "indicator_show"   : False,
             "indicator_number" : 0,
+            "tooltip_markup"   : tooltip,
         }
         self.children.append(new_one)
+        if tooltip and (not self.props.has_tooltip):
+            self.props.has_tooltip = True
         # set the default current child
         if not self.current_child:
             self.current_child = new_one
@@ -683,6 +687,18 @@ class HobTabBar(gtk.DrawingArea):
 
         return gtk.gdk.Rectangle(x, y, w, h)
 
+    def query_tooltip_cb(self, widget, x, y, keyboardtip, tooltip):
+        if keyboardtip or (not tooltip):
+            return False
+        # check which tab be clicked
+        for child in self.children:
+           if      (child["x"] < x) and (x < child["x"] + self.tab_width) \
+               and (child["y"] < y) and (y < child["y"] + self.tab_height):
+               tooltip.set_markup(child["tooltip_markup"])
+               return True
+
+        return False
+
 class HobNotebook(gtk.VBox):
 
     def __init__(self):
@@ -767,13 +783,15 @@ class HobNotebook(gtk.VBox):
         if not notebook:
             return
         title = notebook.get_tab_label_text(notebook_child)
+        label = notebook.get_tab_label(notebook_child)
+        tooltip_markup = label.get_tooltip_markup()
         if not title:
             return
         for child in self.tabbar.children:
             if child["title"] == title:
                 child["toggled_page"] = page
                 return
-        self.tabbar.append_tab_child(title, page)
+        self.tabbar.append_tab_child(title, page, tooltip_markup)
 
     def page_removed_cb(self, notebook, notebook_child, page, title=""):
         for child in self.tabbar.children:
