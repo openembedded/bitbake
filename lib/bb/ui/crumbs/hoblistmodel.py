@@ -428,6 +428,19 @@ class PackageListModel(gtk.TreeStore):
 
         self.selection_change_notification()
 
+    """
+    Resync the state of included items to a backup column before performing the fadeout visible effect
+    """
+    def resync_fadeout_column(self, model_first_iter=None):
+        it = model_first_iter
+        while it:
+            active = self.get_value(it, self.COL_INC)
+            self.set(it, self.COL_FADE_INC, active)
+            if self.iter_has_child(it):
+                self.resync_fadeout_column(self.iter_children(it))
+
+            it = self.iter_next(it)
+
 #
 # RecipeListModel
 #
@@ -509,12 +522,12 @@ class RecipeListModel(gtk.ListStore):
     Create, if required, and return a filtered gtk.TreeModelSort
     containing only the items which are items specified by filter
     """
-    def tree_model(self, filter, excluded_items_head=False):
+    def tree_model(self, filter, excluded_items_ahead=False):
         model = self.filter_new()
         model.set_visible_func(self.tree_model_filter, filter)
 
         sort = gtk.TreeModelSort(model)
-        if excluded_items_head:
+        if excluded_items_ahead:
             sort.set_default_sort_func(self.exclude_item_sort_func)
         else:
             sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)

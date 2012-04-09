@@ -1072,7 +1072,11 @@ class HobCellRendererToggle(gtk.CellRendererToggle):
         if (not self.ctrl) or (not widget):
             return
         if self.ctrl.is_active():
-            path = widget.get_path_at_pos(cell_area.x + cell_area.width/2, cell_area.y + cell_area.height/2)[0]
+            path = widget.get_path_at_pos(cell_area.x + cell_area.width/2, cell_area.y + cell_area.height/2)
+            # sometimes the parameters of cell_area will be a negative number,such as pull up down the scroll bar
+            # it's over the tree container range, so the path will be bad
+            if not path: return
+            path = path[0]
             if path in self.ctrl.running_cell_areas:
                 cr = window.cairo_create()
                 color = gtk.gdk.Color(HobColors.WHITE)

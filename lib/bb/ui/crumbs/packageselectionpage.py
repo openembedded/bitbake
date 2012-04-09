@@ -116,10 +116,10 @@ class PackageSelectionPage (HobPage):
             tab = HobViewTable(columns)
             filter = page['filter']
             tab.set_model(self.package_model.tree_model(filter))
-            tab.connect("toggled", self.table_toggled_cb)
+            tab.connect("toggled", self.table_toggled_cb, page['name'])
             if page['name'] == "Included":
                 tab.connect("button-release-event", self.button_click_cb)
-
+                tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
             label = gtk.Label(page['name'])
             self.ins.append_page(tab, label)
             self.tables.append(tab)
@@ -187,11 +187,16 @@ class PackageSelectionPage (HobPage):
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
         self.ins.show_indicator_icon("Included", selected_packages_num)
 
-    def toggle_item_idle_cb(self, path):
+    def toggle_item_idle_cb(self, path, view_tree, cell, pagename):
         if not self.package_model.path_included(path):
             self.package_model.include_item(item_path=path, binb="User Selected")
         else:
-            self.package_model.exclude_item(item_path=path)
+            if pagename == "Included":
+                self.pre_fadeout_checkout_include(view_tree)
+                self.package_model.exclude_item(item_path=path)
+                self.render_fadeout(view_tree, cell)
+            else:
+                self.package_model.exclude_item(item_path=path)
 
         self.refresh_selection()
         if not self.builder.customized:
@@ -201,9 +206,36 @@ class PackageSelectionPage (HobPage):
 
         self.builder.window_sensitive(True)
 
-    def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree):
+    def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree, pagename):
         # Click to include a package
         self.builder.window_sensitive(False)
         view_model = view_tree.get_model()
         path = self.package_model.convert_vpath_to_path(view_model, view_path)
-        glib.idle_add(self.toggle_item_idle_cb, path)
+        glib.idle_add(self.toggle_item_idle_cb, path, view_tree, cell, pagename)
+
+    def pre_fadeout_checkout_include(self, tree):
+        self.package_model.resync_fadeout_column(self.package_model.get_iter_first())
+        # Check out a model which base on the column COL_FADE_INC,
+        # it's save the prev state of column COL_INC before do exclude_item
+        filter = { PackageListModel.COL_FADE_INC  : [True]}
+        new_model = self.package_model.tree_model(filter)
+        tree.set_model(new_model)
+        tree.expand_all()
+
+    def get_excluded_rows(self, to_render_cells, model, it):
+        while it:
+            path = model.get_path(it)
+            prev_cell_is_active = model.get_value(it, PackageListModel.COL_FADE_INC)
+            curr_cell_is_active = model.get_value(it, PackageListModel.COL_INC)
+            if (prev_cell_is_active == True) and (curr_cell_is_active == False):
+                to_render_cells.append(path)
+            if model.iter_has_child(it):
+                self.get_excluded_rows(to_render_cells, model, model.iter_children(it))
+            it = model.iter_next(it)
+
+        return to_render_cells
+
+    def render_fadeout(self, tree, cell):
+        if (not cell) or (not tree):
+            return
+        to_render_cells = []

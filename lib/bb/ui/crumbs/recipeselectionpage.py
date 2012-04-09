@@ -234,7 +234,7 @@ class RecipeSelectionPage (HobPage):
         # it's save the prev state of column COL_INC before do exclude_item
         filter = { RecipeListModel.COL_FADE_INC  : [True],
                    RecipeListModel.COL_TYPE      : ['recipe', 'task'] }
-        new_model = self.recipe_model.tree_model(filter, excluded_items_head=True)
+        new_model = self.recipe_model.tree_model(filter, excluded_items_ahead=True)
         tree.set_model(new_model)
 
     def render_fadeout(self, tree, cell):
