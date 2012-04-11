@@ -30,6 +30,7 @@ import shlex
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
+import bb.ui.crumbs.utils
 
 """
 The following are convenience classes for implementing GNOME HIG compliant
@@ -739,9 +740,10 @@ class DeployImageDialog (CrumbsDialog):
         if response_id == gtk.RESPONSE_YES:
             combo_item = self.usb_combo.get_active_text()
             if combo_item and combo_item != self.__dummy_usb__:
-                cmdline = "/usr/bin/xterm -e "
-                cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "; bash\""
-                subprocess.Popen(args=shlex.split(cmdline))
+                cmdline = bb.ui.crumbs.utils.which_terminal()
+                if cmdline:
+                    cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "\""
+                    subprocess.Popen(args=shlex.split(cmdline))
 
     def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)

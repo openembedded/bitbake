@@ -37,6 +37,7 @@ from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
                              AdvancedSettingDialog, LayerSelectionDialog, \
                              DeployImageDialog
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
+import bb.ui.crumbs.utils
 
 class Configuration:
     '''Represents the data structure of configuration.'''
@@ -969,12 +970,13 @@ class Builder(gtk.Window):
         if response == gtk.RESPONSE_YES:
             source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")
             tmp_path = self.parameters.tmpdir
+            cmdline = bb.ui.crumbs.utils.which_terminal()
             if os.path.exists(image_path) and os.path.exists(kernel_path) \
-               and os.path.exists(source_env_path) and os.path.exists(tmp_path):
-                cmdline = "/usr/bin/xterm -e "
-                cmdline += "\" export OE_TMPDIR=" + tmp_path + "; "
+               and os.path.exists(source_env_path) and os.path.exists(tmp_path)
+               and cmdline:
+                cmdline += "\' bash -c \"export OE_TMPDIR=" + tmp_path + "; "
                 cmdline += "source " + source_env_path + " " + os.getcwd() + "; "
-                cmdline += "runqemu " + kernel_path + " " + image_path + "; bash\""
+                cmdline += "runqemu " + kernel_path + " " + image_path + "\"\'"
                 subprocess.Popen(shlex.split(cmdline))
             else:
                 lbl = "<b>Path error</b>\nOne of your paths is wrong,"
@@ -983,6 +985,7 @@ class Builder(gtk.Window):
                 lbl = lbl + "kernel path:" + kernel_path + "\n"
                 lbl = lbl + "source environment path:" + source_env_path + "\n"
                 lbl = lbl + "tmp path: " + tmp_path + "."
+                lbl = lbl + "You may be missing either xterm or vte for terminal services."
                 dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
                 button = dialog.add_button("Close", gtk.RESPONSE_OK)
                 HobButton.style_button(button)
