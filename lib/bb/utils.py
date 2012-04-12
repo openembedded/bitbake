@@ -31,9 +31,6 @@ from contextlib import contextmanager
 
 logger = logging.getLogger("BitBake.Util")
 
-# Version comparison
-separators = ".-"
-
 # Context used in better_exec, eval
 _context = {
     "os": os,
@@ -48,15 +45,18 @@ def explode_version(s):
     while (s != ''):
         if s[0] in string.digits:
             m = numeric_regexp.match(s)
-            r.append(int(m.group(1)))
+            r.append((0, int(m.group(1))))
             s = m.group(2)
             continue
         if s[0] in string.letters:
             m = alpha_regexp.match(s)
-            r.append(m.group(1))
+            r.append((1, m.group(1)))
             s = m.group(2)
             continue
-        r.append(s[0])
+        if s[0] == '~':
+            r.append((-1, s[0]))
+        else:
+            r.append((2, s[0]))
         s = s[1:]
     return r
 
@@ -77,33 +77,25 @@ def split_version(s):
 def vercmp_part(a, b):
     va = explode_version(a)
     vb = explode_version(b)
-    sa = False
-    sb = False
     while True:
         if va == []:
-            ca = None
+            (oa, ca) = (0, None)
         else:
-            ca = va.pop(0)
+            (oa, ca) = va.pop(0)
         if vb == []:
-            cb = None
+            (ob, cb) = (0, None)
         else:
-            cb = vb.pop(0)
-        if ca == None and cb == None:
+            (ob, cb) = vb.pop(0)
+        if (oa, ca) == (0, None) and (ob, cb) == (0, None):
             return 0
-
-        if isinstance(ca, basestring):
-            sa = ca in separators
-        if isinstance(cb, basestring):
-            sb = cb in separators
-        if sa and not sb:
+        if oa < ob:
             return -1
-        if not sa and sb:
+        elif oa > ob:
             return 1
-
-        if ca > cb:
-            return 1
-        if ca < cb:
+        elif ca < cb:
             return -1
+        elif ca > cb:
+            return 1
 
 def vercmp(ta, tb):
     (ea, va, ra) = ta
