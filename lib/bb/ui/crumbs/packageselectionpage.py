@@ -239,3 +239,7 @@ class PackageSelectionPage (HobPage):
         if (not cell) or (not tree):
             return
         to_render_cells = []
+
+    def after_fadeout_checkin_include(self, table, ctrl, cell, tree):
+        tree.set_model(self.recipe_model.tree_model(self.pages[0]['filter']))
+
