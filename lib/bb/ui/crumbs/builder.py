@@ -298,6 +298,9 @@ class Builder(gtk.Window):
         # Indicate whether user has customized the image
         self.customized = False
 
+        # Indicate whether the UI is working
+        self.sensitive = True
+
         # create visual elements
         self.create_visual_elements()
 
@@ -610,6 +613,7 @@ class Builder(gtk.Window):
             self.get_root_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.LEFT_PTR))
         else:
             self.get_root_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+        self.sensitive = sensitive
 
 
     def handler_generating_data_cb(self, handler):
@@ -764,6 +768,8 @@ class Builder(gtk.Window):
         self.build_details_page.show_issues()
 
     def destroy_window_cb(self, widget, event):
+        if not self.sensitive:
+            return True
         lbl = "<b>Do you really want to exit the Hob image creator?</b>"
         dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
