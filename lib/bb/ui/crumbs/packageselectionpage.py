@@ -239,7 +239,11 @@ class PackageSelectionPage (HobPage):
         if (not cell) or (not tree):
             return
         to_render_cells = []
+        view_model = tree.get_model()
+        self.get_excluded_rows(to_render_cells, view_model, view_model.get_iter_first())
+
+        cell.fadeout(tree, 1000, to_render_cells)
 
     def after_fadeout_checkin_include(self, table, ctrl, cell, tree):
-        tree.set_model(self.recipe_model.tree_model(self.pages[0]['filter']))
-
+        tree.set_model(self.package_model.tree_model(self.pages[0]['filter']))
+        tree.expand_all()
