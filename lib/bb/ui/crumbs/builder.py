@@ -210,6 +210,30 @@ class Parameters:
         self.tmpdir = params["tmpdir"]
         self.enable_proxy = False
 
+def hob_conf_filter(fn, data):
+    if fn.endswith("/local.conf"):
+        distro = data.getVar("DISTRO_HOB")
+        if distro:
+            if distro != "defaultsetup":
+                data.setVar("DISTRO", distro)
+            else:
+                data.delVar("DISTRO")
+
+        keys = ["MACHINE_HOB", "SDKMACHINE_HOB", "PACKAGE_CLASSES_HOB", \
+                "BB_NUMBER_THREADS_HOB", "PARALLEL_MAKE_HOB", "DL_DIR_HOB", \
+                "SSTATE_DIR_HOB", "SSTATE_MIRROR_HOB", "INCOMPATIBLE_LICENSE_HOB"]
+        for key in keys:
+            var_hob = data.getVar(key)
+            if var_hob:
+                data.setVar(key.split("_HOB")[0], var_hob)
+        return
+
+    if fn.endswith("/bblayers.conf"):
+        layers = data.getVar("BBLAYERS_HOB")
+        if layers:
+            data.setVar("BBLAYERS", layers)
+        return
+
 class Builder(gtk.Window):
 
     (MACHINE_SELECTION,
@@ -295,6 +319,8 @@ class Builder(gtk.Window):
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
+
+        self.handler.set_config_filter(hob_conf_filter)
 
         self.initiate_new_build_async()
 
