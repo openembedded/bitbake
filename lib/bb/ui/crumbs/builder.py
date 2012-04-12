@@ -972,7 +972,7 @@ class Builder(gtk.Window):
             tmp_path = self.parameters.tmpdir
             cmdline = bb.ui.crumbs.utils.which_terminal()
             if os.path.exists(image_path) and os.path.exists(kernel_path) \
-               and os.path.exists(source_env_path) and os.path.exists(tmp_path)
+               and os.path.exists(source_env_path) and os.path.exists(tmp_path) \
                and cmdline:
                 cmdline += "\' bash -c \"export OE_TMPDIR=" + tmp_path + "; "
                 cmdline += "source " + source_env_path + " " + os.getcwd() + "; "
