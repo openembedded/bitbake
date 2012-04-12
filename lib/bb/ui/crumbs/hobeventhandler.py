@@ -128,12 +128,13 @@ class HobHandler(gobject.GObject):
         elif next_command == self.SUB_BUILD_IMAGE:
             self.clear_busy()
             self.building = True
-            targets = [self.hob_image]
-            self.server.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
-            self.server.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
+            targets = [self.image]
+            if self.package_queue:
+                self.server.runCommand(["setVariable", "LINGUAS_INSTALL", ""])
+                self.server.runCommand(["setVariable", "PACKAGE_INSTALL", " ".join(self.package_queue)])
             if self.toolchain_packages:
                 self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages)])
-                targets.append(self.hob_toolchain)
+                targets.append(self.toolchain)
             self.server.runCommand(["buildTargets", targets, "build"])
 
     def handle_event(self, event):
@@ -352,10 +353,10 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, tgts, hob_image, hob_toolchain, toolchain_packages=[]):
-        self.package_queue = tgts
-        self.hob_image = hob_image
-        self.hob_toolchain = hob_toolchain
+    def generate_image(self, image, toolchain, image_packages=[], toolchain_packages=[]):
+        self.image = image
+        self.toolchain = toolchain
+        self.package_queue = image_packages
         self.toolchain_packages = toolchain_packages
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_IMAGE)

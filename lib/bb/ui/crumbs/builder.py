@@ -395,16 +395,21 @@ class Builder(gtk.Window):
 
     def generate_image_async(self):
         self.switch_page(self.IMAGE_GENERATING)
+        self.handler.reset_build()
         # Build image
         self.set_user_config()
-        packages = self.package_model.get_selected_packages()
         toolchain_packages = []
         if self.configuration.toolchain_build:
             toolchain_packages = self.package_model.get_selected_packages_toolchain()
-        self.handler.reset_build()
-        self.handler.generate_image(packages,
-                                    self.hob_image,
+        if self.configuration.selected_image == self.recipe_model.__dummy_image__:
+            packages = self.package_model.get_selected_packages()
+            image = self.hob_image
+        else:
+            packages = []
+            image = self.configuration.selected_image
+        self.handler.generate_image(image,
                                     self.hob_toolchain,
+                                    packages,
                                     toolchain_packages)
 
     def get_parameters_sync(self):
@@ -690,7 +695,11 @@ class Builder(gtk.Window):
         elif self.current_step == self.IMAGE_GENERATING:
             fraction = 1.0
             self.parameters.image_names = []
-            linkname = 'hob-image-' + self.configuration.curr_mach
+            selected_image = self.recipe_model.get_selected_image()
+            if selected_image == self.recipe_model.__dummy_image__:
+                linkname = 'hob-image-' + self.configuration.curr_mach
+            else:
+                linkname = selected_image + '-' + self.configuration.curr_mach
             for image_type in self.parameters.image_types:
                 linkpath = self.parameters.image_addr + '/' + linkname + '.' + image_type
                 if os.path.exists(linkpath):
