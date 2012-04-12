@@ -445,7 +445,7 @@ class HobIndicator(gtk.DrawingArea):
             x = (w/2)-(textw/2) + 1
             y = (h/2) - (texth/2) + 1
             ctx.move_to(x, y)
-            self.window.draw_layout(self.style.fg_gc[gtk.STATE_NORMAL], int(x), int(y), layout)
+            self.window.draw_layout(self.style.light_gc[gtk.STATE_NORMAL], int(x), int(y), layout)
 
     def set_count(self, count):
         self.count = count
