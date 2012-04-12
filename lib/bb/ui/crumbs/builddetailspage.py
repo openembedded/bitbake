@@ -144,7 +144,7 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view_config = gtk.ScrolledWindow ()
         self.scrolled_view_config.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_config.add(self.config_tv)
-        self.notebook.append_page(self.scrolled_view_config, gtk.Label("Build configuration"))
+        self.notebook.append_page(self.scrolled_view_config, "Build configuration")
 
         self.failure_tv = BuildFailureTreeView()
         self.failure_model = self.builder.handler.build.model.failure_model()
@@ -152,14 +152,14 @@ class BuildDetailsPage (HobPage):
         self.scrolled_view_failure = gtk.ScrolledWindow ()
         self.scrolled_view_failure.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_failure.add(self.failure_tv)
-        self.notebook.append_page(self.scrolled_view_failure, gtk.Label("Issues"))
+        self.notebook.append_page(self.scrolled_view_failure, "Issues")
 
         self.build_tv = RunningBuildTreeView(readonly=True, hob=True)
         self.build_tv.set_model(self.builder.handler.build.model)
         self.scrolled_view_build = gtk.ScrolledWindow ()
         self.scrolled_view_build.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
         self.scrolled_view_build.add(self.build_tv)
-        self.notebook.append_page(self.scrolled_view_build, gtk.Label("Log"))
+        self.notebook.append_page(self.scrolled_view_build, "Log")
 
         self.builder.handler.build.model.connect_after("row-changed", self.scroll_to_present_row, self.scrolled_view_build.get_vadjustment(), self.build_tv)
 

@@ -153,10 +153,7 @@ class RecipeSelectionPage (HobPage):
             if page['name'] == "Included":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            label = gtk.Label(page['name'])
-            label.set_selectable(False)
-            label.set_tooltip_text(page['tooltip'])
-            self.ins.append_page(tab, label)
+            self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
         self.ins.set_entry("Search recipes:")

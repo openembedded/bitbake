@@ -129,8 +129,7 @@ class PackageSelectionPage (HobPage):
             if page['name'] == "Included":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            label = gtk.Label(page['name'])
-            self.ins.append_page(tab, label)
+            self.ins.append_page(tab, page['name'])
             self.tables.append(tab)
 
         self.ins.set_entry("Search packages:")
