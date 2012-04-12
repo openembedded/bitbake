@@ -71,6 +71,8 @@ class Configuration:
 
         self.user_selected_packages = []
 
+        self.default_task = params["default_task"]
+
         # proxy settings
         self.all_proxy = params["all_proxy"]
         self.http_proxy = params["http_proxy"]
@@ -105,6 +107,7 @@ class Configuration:
         self.tune_pkgarch = params["tune_pkgarch"]
         # bblayers.conf
         self.layers = params["layer"].split()
+        self.default_task = params["default_task"]
 
     def load(self, template):
         self.curr_mach = template.getVar("MACHINE")
@@ -383,7 +386,7 @@ class Builder(gtk.Window):
         _, all_recipes = self.recipe_model.get_selected_recipes()
         self.set_user_config()
         self.handler.reset_build()
-        self.handler.generate_packages(all_recipes)
+        self.handler.generate_packages(all_recipes, self.configuration.default_task)
 
     def fast_generate_image_async(self):
         self.switch_page(self.FAST_IMAGE_GENERATING)
@@ -391,7 +394,7 @@ class Builder(gtk.Window):
         _, all_recipes = self.recipe_model.get_selected_recipes()
         self.set_user_config()
         self.handler.reset_build()
-        self.handler.generate_packages(all_recipes)
+        self.handler.generate_packages(all_recipes, self.configuration.default_task)
 
     def generate_image_async(self):
         self.switch_page(self.IMAGE_GENERATING)
@@ -410,7 +413,8 @@ class Builder(gtk.Window):
         self.handler.generate_image(image,
                                     self.hob_toolchain,
                                     packages,
-                                    toolchain_packages)
+                                    toolchain_packages,
+                                    self.configuration.default_task)
 
     def get_parameters_sync(self):
         return self.handler.get_parameters()

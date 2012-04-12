@@ -123,7 +123,7 @@ class HobHandler(gobject.GObject):
         elif next_command == self.SUB_BUILD_RECIPES:
             self.clear_busy()
             self.building = True
-            self.server.runCommand(["buildTargets", self.recipe_queue, "build"])
+            self.server.runCommand(["buildTargets", self.recipe_queue, self.default_task])
             self.recipe_queue = []
         elif next_command == self.SUB_BUILD_IMAGE:
             self.clear_busy()
@@ -135,7 +135,7 @@ class HobHandler(gobject.GObject):
             if self.toolchain_packages:
                 self.server.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages)])
                 targets.append(self.toolchain)
-            self.server.runCommand(["buildTargets", targets, "build"])
+            self.server.runCommand(["buildTargets", targets, self.default_task])
 
     def handle_event(self, event):
         if not event:
@@ -345,19 +345,21 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_GNERATE_TGTS)
         self.run_next_command(self.GENERATE_RECIPES)
                  
-    def generate_packages(self, tgts):
+    def generate_packages(self, tgts, default_task="build"):
         targets = []
         targets.extend(tgts)
         self.recipe_queue = targets
+        self.default_task = default_task
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, image, toolchain, image_packages=[], toolchain_packages=[]):
+    def generate_image(self, image, toolchain, image_packages=[], toolchain_packages=[], default_task="build"):
         self.image = image
         self.toolchain = toolchain
         self.package_queue = image_packages
         self.toolchain_packages = toolchain_packages
+        self.default_task = default_task
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
@@ -494,6 +496,8 @@ class HobHandler(gobject.GObject):
         params["tune_pkgarch"] = self.server.runCommand(["getVariable", "TUNE_PKGARCH"])  or ""
         params["bb_version"] = self.server.runCommand(["getVariable", "BB_MIN_VERSION"]) or ""
         params["tune_arch"] = self.server.runCommand(["getVariable", "TUNE_ARCH"]) or ""
+
+        params["default_task"] = self.server.runCommand(["getVariable", "BB_DEFAULT_TASK"]) or "build"
 
         params["git_proxy_host"] = self.server.runCommand(["getVariable", "GIT_PROXY_HOST"]) or ""
         params["git_proxy_port"] = self.server.runCommand(["getVariable", "GIT_PROXY_PORT"]) or ""
