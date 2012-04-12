@@ -392,7 +392,10 @@ class AdvancedSettingDialog (CrumbsDialog):
         j = 1
         for image_type in self.image_types:
             self.image_types_checkbuttons[image_type] = gtk.CheckButton(image_type)
-            self.image_types_checkbuttons[image_type].set_tooltip_text("Build an %s image" % image_type)
+            article = ""
+            if image_type.startswith(("a", "e", "i", "o", "u")):
+                article = "n"
+            self.image_types_checkbuttons[image_type].set_tooltip_text("Build a%s %s image" % (article, image_type))
             table.attach(self.image_types_checkbuttons[image_type], j, j + 4, i, i + 1)
             if image_type in self.configuration.image_fstypes.split():
                 self.image_types_checkbuttons[image_type].set_active(True)
