@@ -30,7 +30,7 @@ try:
     pygtk.require('2.0') # to be certain we don't have gtk+ 1.x !?!
     gtkver = gtk.gtk_version
     pygtkver = gtk.pygtk_version
-    if gtkver  < (2, 18, 0) or pygtkver < (2, 16, 0):
+    if gtkver  < (2, 20, 0) or pygtkver < (2, 22, 0):
         sys.exit("%s,\nYou have Gtk+ %s and PyGtk %s." % (requirements,
                 ".".join(map(str, gtkver)),
                 ".".join(map(str, pygtkver))))
