@@ -153,7 +153,7 @@ class Configuration:
         self.cvs_proxy_host = template.getVar("CVS_PROXY_HOST")
         self.cvs_proxy_port = template.getVar("CVS_PROXY_PORT")
 
-    def save(self, template, filename):
+    def save(self, template):
         # bblayers.conf
         template.setVar("BBLAYERS", " ".join(self.layers))
         # local.conf
@@ -175,7 +175,6 @@ class Configuration:
         template.setVar("TOOLCHAIN_BUILD", self.toolchain_build)
         template.setVar("IMAGE_FSTYPES", self.image_fstypes)
         # image/recipes/packages
-        self.selected_image = filename
         template.setVar("__SELECTED_IMAGE__", self.selected_image)
         template.setVar("DEPENDS", self.selected_recipes)
         template.setVar("IMAGE_INSTALL", self.user_selected_packages)
@@ -447,7 +446,7 @@ class Builder(gtk.Window):
 
         self.template = TemplateMgr()
         self.template.open(filename, path)
-        self.configuration.save(self.template, filename)
+        self.configuration.save(self.template)
 
         self.template.save()
         self.template.destroy()
@@ -626,10 +625,6 @@ class Builder(gtk.Window):
         selected_image = self.configuration.selected_image
         selected_recipes = self.configuration.selected_recipes[:]
         selected_packages = self.configuration.selected_packages[:]
-
-        self.recipe_model.image_list_append(selected_image,
-                                            " ".join(selected_recipes),
-                                            " ".join(selected_packages))
 
         self.image_configuration_page.update_image_combo(self.recipe_model, selected_image)
         self.image_configuration_page.update_image_desc(selected_image)

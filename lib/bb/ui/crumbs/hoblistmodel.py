@@ -618,22 +618,6 @@ class RecipeListModel(gtk.ListStore):
         return self[item_path][self.COL_INC]
 
     """
-    Append a certain image into the combobox
-    """
-    def image_list_append(self, name, deps, install):
-        # check whether a certain image is there
-        if not name or self.find_path_for_item(name):
-            return
-        it = self.append()
-        self.set(it, self.COL_NAME, name, self.COL_DESC, "",
-                 self.COL_LIC, "", self.COL_GROUP, "",
-                 self.COL_DEPS, deps, self.COL_BINB, "",
-                 self.COL_TYPE, "image", self.COL_INC, False,
-                 self.COL_IMG, False, self.COL_INSTALL, install,
-                 self.COL_PN, name)
-        self.pn_path[name] = self.get_path(it)
-
-    """
     Add this item, and any of its dependencies, to the image contents
     """
     def include_item(self, item_path, binb="", image_contents=False):
