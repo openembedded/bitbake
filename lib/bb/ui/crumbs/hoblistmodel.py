@@ -42,6 +42,8 @@ class PackageListModel(gtk.TreeStore):
                                 ()),
     }
 
+    __toolchain_required_packages__ = ["task-core-standalone-sdk-target", "task-core-standalone-sdk-target-dbg"]
+
     def __init__(self):
 
         self.contents = None
@@ -389,7 +391,7 @@ class PackageListModel(gtk.TreeStore):
                     child_it = self.iter_next(child_it)
             it = self.iter_next(it)
 
-        return packagelist
+        return list(set(packagelist + self.__toolchain_required_packages__));
     """
     Return the selected package size, unit is B.
     """
