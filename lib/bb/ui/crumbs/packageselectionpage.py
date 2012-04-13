@@ -109,8 +109,14 @@ class PackageSelectionPage (HobPage):
         # create visual elements
         self.create_visual_elements()
 
+    def included_clicked_cb(self, button):
+        self.ins.set_current_page(0)
+
     def create_visual_elements(self):
-        self.label = gtk.Label("Packages included: 0\nSelected packages size: 0 MB")
+        self.label = gtk.Button("Packages included: 0\nSelected packages size: 0 MB")
+        self.label.set_can_default(False)
+        self.label.set_relief(gtk.RELIEF_HALF)
+        self.label.connect("clicked", self.included_clicked_cb)
         self.eventbox = self.add_onto_top_bar(self.label, 73)
         self.pack_start(self.eventbox, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
@@ -191,7 +197,7 @@ class PackageSelectionPage (HobPage):
             image_total_size += (51200 * 1024)
         image_total_size_str = HobPage._size_to_string(image_total_size)
 
-        self.label.set_text("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
+        self.label.set_label("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
         self.ins.show_indicator_icon("Included", selected_packages_num)
 

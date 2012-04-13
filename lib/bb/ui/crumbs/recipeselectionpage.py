@@ -134,8 +134,14 @@ class RecipeSelectionPage (HobPage):
         # create visual elements
         self.create_visual_elements()
 
+    def included_clicked_cb(self, button):
+        self.ins.set_current_page(0)
+
     def create_visual_elements(self):
-        self.label = gtk.Label()
+        self.label = gtk.Button('Recipes included: 0')
+        self.label.set_can_default(False)
+        self.label.set_relief(gtk.RELIEF_HALF)
+        self.label.connect("clicked", self.included_clicked_cb)
         self.eventbox = self.add_onto_top_bar(self.label, 73)
         self.pack_start(self.eventbox, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
@@ -199,7 +205,7 @@ class RecipeSelectionPage (HobPage):
     def refresh_selection(self):
         self.builder.configuration.selected_image = self.recipe_model.get_selected_image()
         _, self.builder.configuration.selected_recipes = self.recipe_model.get_selected_recipes()
-        self.label.set_text("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
+        self.label.set_label("Recipes included: %s" % len(self.builder.configuration.selected_recipes))
         self.ins.show_indicator_icon("Included", len(self.builder.configuration.selected_recipes))
 
     def toggle_item_idle_cb(self, path, view_tree, cell, pagename):
