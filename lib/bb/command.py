@@ -179,6 +179,13 @@ class CommandsSync:
         """
         return bb.utils.cpu_count()
 
+    def setConfFilter(self, command, params):
+        """
+        Set the configuration file parsing filter
+        """
+        filterfunc = params[0]
+        bb.parse.parse_py.ConfHandler.confFilters.append(filterfunc)
+
 class CommandsAsync:
     """
     A class of asynchronous commands

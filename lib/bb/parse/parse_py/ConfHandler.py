@@ -71,6 +71,14 @@ def include(oldfn, fn, lineno, data, error_out):
             raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
         logger.debug(2, "CONF file '%s' not found", fn)
 
+# We have an issue where a UI might want to enforce particular settings such as
+# an empty DISTRO variable. If configuration files do something like assigning
+# a weak default, it turns out to be very difficult to filter out these changes,
+# particularly when the weak default might appear half way though parsing a chain 
+# of configuration files. We therefore let the UIs hook into configuration file
+# parsing. This turns out to be a hard problem to solve any other way.
+confFilters = []
+
 def handle(fn, data, include):
     init(data)
 
@@ -106,6 +114,9 @@ def handle(fn, data, include):
     statements.eval(data)
     if oldfile:
         data.setVar('FILE', oldfile)
+
+    for f in confFilters:
+        f(fn, data)
 
     return data
 
