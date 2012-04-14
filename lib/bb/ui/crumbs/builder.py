@@ -60,9 +60,7 @@ class Configuration:
         # bblayers.conf
         self.layers = []
         # image/recipes/packages
-        self.selected_image = None
-        self.selected_recipes = []
-        self.selected_packages = []
+        self.clear_selection()
 
         self.user_selected_packages = []
 
@@ -72,6 +70,11 @@ class Configuration:
         self.all_proxy = self.http_proxy = self.ftp_proxy = self.https_proxy = ""
         self.git_proxy_host = self.git_proxy_port = ""
         self.cvs_proxy_host = self.cvs_proxy_port = ""
+
+    def clear_selection(self):
+        self.selected_image = None
+        self.selected_recipes = []
+        self.selected_packages = []
 
     def update(self, params):
         # settings
@@ -988,10 +991,11 @@ class Builder(gtk.Window):
         return response == gtk.RESPONSE_YES, settings_changed
 
     def reparse_post_adv_settings(self):
-        # DO reparse recipes
         if not self.configuration.curr_mach:
             self.update_config_async()
         else:
+            self.configuration.clear_selection()
+            # DO reparse recipes
             self.populate_recipe_package_info_async()
 
     def deploy_image(self, image_name):

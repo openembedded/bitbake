@@ -264,9 +264,7 @@ class ImageConfigurationPage (HobPage):
 
         self.builder.configuration.curr_mach = combo_item
         if self.machine_combo_changed_by_manual:
-            self.builder.configuration.selected_image = None
-            self.builder.configuration.selected_recipes = []
-            self.builder.configuration.selected_packages = []
+            self.builder.configuration.clear_selection()
         # reset machine_combo_changed_by_manual
         self.machine_combo_changed_by_manual = True
 
