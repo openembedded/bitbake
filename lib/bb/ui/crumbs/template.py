@@ -136,11 +136,27 @@ class TemplateMgr(gobject.GObject):
         self.local_conf = None
         self.image_bb = None
 
+    @classmethod
+    def convert_to_template_pathfilename(cls, filename, path):
+        return "%s/%s%s%s" % (path, "template-", filename, ".hob")
+
+    @classmethod
+    def convert_to_bblayers_pathfilename(cls, filename, path):
+        return "%s/%s%s%s" % (path, "bblayers-", filename, ".conf")
+
+    @classmethod
+    def convert_to_local_pathfilename(cls, filename, path):
+        return "%s/%s%s%s" % (path, "local-", filename, ".conf")
+
+    @classmethod
+    def convert_to_image_pathfilename(cls, filename, path):
+        return "%s/%s%s%s" % (path, "hob-image-", filename, ".bb")
+
     def open(self, filename, path):
-        self.template_hob = HobTemplateFile("%s/%s%s%s" % (path, "template-", filename, ".hob"))
-        self.bblayers_conf = ConfigFile("%s/%s%s%s" % (path, "bblayers-", filename, ".conf"))
-        self.local_conf = ConfigFile("%s/%s%s%s" % (path, "local-", filename, ".conf"))
-        self.image_bb = RecipeFile("%s/%s%s%s" % (path, "hob-image-", filename, ".bb"))
+        self.template_hob = HobTemplateFile(TemplateMgr.convert_to_template_pathfilename(filename, path))
+        self.bblayers_conf = ConfigFile(TemplateMgr.convert_to_bblayers_pathfilename(filename, path))
+        self.local_conf = ConfigFile(TemplateMgr.convert_to_local_pathfilename(filename, path))
+        self.image_bb = RecipeFile(TemplateMgr.convert_to_image_pathfilename(filename, path))
 
     def setVar(self, var, val):
         if var in TemplateMgr.__gLocalVars__:

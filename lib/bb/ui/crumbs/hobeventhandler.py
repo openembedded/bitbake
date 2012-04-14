@@ -495,7 +495,6 @@ class HobHandler(gobject.GObject):
         params["target_arch"] = self.server.runCommand(["getVariable", "TARGET_ARCH"]) or ""
         params["tune_pkgarch"] = self.server.runCommand(["getVariable", "TUNE_PKGARCH"])  or ""
         params["bb_version"] = self.server.runCommand(["getVariable", "BB_MIN_VERSION"]) or ""
-        params["tune_arch"] = self.server.runCommand(["getVariable", "TUNE_ARCH"]) or ""
 
         params["default_task"] = self.server.runCommand(["getVariable", "BB_DEFAULT_TASK"]) or "build"
 

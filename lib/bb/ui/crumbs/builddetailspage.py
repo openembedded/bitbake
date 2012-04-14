@@ -81,16 +81,16 @@ class BuildConfigurationTreeView(gtk.TreeView):
         # renew the tree model after get the configuration messages
         self.set_model(listmodel)
 
-    def show(self, src_config_info):
+    def show(self, src_config_info, src_params):
         vars = []
-        vars.append(self.set_vars("BB version:", src_config_info.bb_version))
-        vars.append(self.set_vars("Target arch:", src_config_info.target_arch))
-        vars.append(self.set_vars("Target OS:", src_config_info.target_os))
+        vars.append(self.set_vars("BB version:", src_params.bb_version))
+        vars.append(self.set_vars("Target arch:", src_params.target_arch))
+        vars.append(self.set_vars("Target OS:", src_params.target_os))
         vars.append(self.set_vars("Machine:", src_config_info.curr_mach))
         vars.append(self.set_vars("Distro:", src_config_info.curr_distro))
-        vars.append(self.set_vars("Distro version:", src_config_info.distro_version))
+        vars.append(self.set_vars("Distro version:", src_params.distro_version))
         vars.append(self.set_vars("SDK machine:", src_config_info.curr_sdk_machine))
-        vars.append(self.set_vars("Tune feature:", src_config_info.tune_pkgarch))
+        vars.append(self.set_vars("Tune features:", src_params.tune_pkgarch))
         vars.append(self.set_vars("Layers:", src_config_info.layers))
 
         for path in src_config_info.layers:
@@ -248,5 +248,5 @@ class BuildDetailsPage (HobPage):
                 if (v_adj.upper <= v_adj.page_size) or (v_adj.value == v_adj.upper - v_adj.page_size):
                     treeview.scroll_to_cell(path)
 
-    def show_configurations(self, configurations):
-        self.config_tv.show(configurations)
+    def show_configurations(self, configurations, params):
+        self.config_tv.show(configurations, params)

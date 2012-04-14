@@ -42,9 +42,39 @@ import bb.ui.crumbs.utils
 class Configuration:
     '''Represents the data structure of configuration.'''
 
-    def __init__(self, params):
-        # Settings
+    def __init__(self):
         self.curr_mach = ""
+        # settings
+        self.curr_distro = ""
+        self.dldir = self.sstatedir = self.sstatemirror = ""
+        self.pmake = self.bbthread = 0
+        self.curr_package_format = ""
+        self.image_rootfs_size = self.image_extra_size = 0
+        self.image_overhead_factor = 1
+        self.incompat_license = ""
+        self.curr_sdk_machine = ""
+        self.conf_version = self.lconf_version = ""
+        self.extra_setting = {}
+        self.toolchain_build = False
+        self.image_fstypes = ""
+        # bblayers.conf
+        self.layers = []
+        # image/recipes/packages
+        self.selected_image = None
+        self.selected_recipes = []
+        self.selected_packages = []
+
+        self.user_selected_packages = []
+
+        self.default_task = "build"
+
+        # proxy settings
+        self.all_proxy = self.http_proxy = self.ftp_proxy = self.https_proxy = ""
+        self.git_proxy_host = self.git_proxy_port = ""
+        self.cvs_proxy_host = self.cvs_proxy_port = ""
+
+    def update(self, params):
+        # settings
         self.curr_distro = params["distro"]
         self.dldir = params["dldir"]
         self.sstatedir = params["sstatedir"]
@@ -59,18 +89,10 @@ class Configuration:
         self.curr_sdk_machine = params["sdk_machine"]
         self.conf_version = params["conf_version"]
         self.lconf_version = params["lconf_version"]
-        self.extra_setting = {}
-        self.toolchain_build = False
         self.image_fstypes = params["image_fstypes"]
+        # self.extra_setting/self.toolchain_build
         # bblayers.conf
         self.layers = params["layer"].split()
-        # image/recipes/packages
-        self.selected_image = None
-        self.selected_recipes = []
-        self.selected_packages = []
-
-        self.user_selected_packages = []
-
         self.default_task = params["default_task"]
 
         # proxy settings
@@ -82,32 +104,6 @@ class Configuration:
         self.git_proxy_port = params["git_proxy_port"]
         self.cvs_proxy_host = params["cvs_proxy_host"]
         self.cvs_proxy_port = params["cvs_proxy_port"]
-
-    def update(self, params):
-        self.curr_distro = params["distro"]
-        self.dldir = params["dldir"]
-        self.sstatedir = params["sstatedir"]
-        self.sstatemirror = params["sstatemirror"]
-        self.pmake = int(params["pmake"].split()[1])
-        self.bbthread = params["bbthread"]
-        self.curr_package_format = " ".join(params["pclass"].split("package_")).strip()
-        self.image_rootfs_size = params["image_rootfs_size"]
-        self.image_extra_size = params["image_extra_size"]
-        self.image_overhead_factor = params['image_overhead_factor']
-        self.incompat_license = params["incompat_license"]
-        self.curr_sdk_machine = params["sdk_machine"]
-        self.conf_version = params["conf_version"]
-        self.lconf_version = params["lconf_version"]
-        self.image_fstypes = params["image_fstypes"]
-        self.tune_arch = params["tune_arch"]
-        self.bb_version = params["bb_version"]
-        self.target_arch = params["target_arch"]
-        self.target_os = params["target_os"]
-        self.distro_version = params["distro_version"]
-        self.tune_pkgarch = params["tune_pkgarch"]
-        # bblayers.conf
-        self.layers = params["layer"].split()
-        self.default_task = params["default_task"]
 
     def load(self, template):
         self.curr_mach = template.getVar("MACHINE")
@@ -156,11 +152,12 @@ class Configuration:
         self.cvs_proxy_host = template.getVar("CVS_PROXY_HOST")
         self.cvs_proxy_port = template.getVar("CVS_PROXY_PORT")
 
-    def save(self, template):
+    def save(self, template, defaults=False):
         # bblayers.conf
         template.setVar("BBLAYERS", " ".join(self.layers))
         # local.conf
-        template.setVar("MACHINE", self.curr_mach)
+        if not defaults:
+            template.setVar("MACHINE", self.curr_mach)
         template.setVar("DISTRO", self.curr_distro)
         template.setVar("DL_DIR", self.dldir)
         template.setVar("SSTATE_DIR", self.sstatedir)
@@ -177,10 +174,11 @@ class Configuration:
         template.setVar("EXTRA_SETTING", self.extra_setting)
         template.setVar("TOOLCHAIN_BUILD", self.toolchain_build)
         template.setVar("IMAGE_FSTYPES", self.image_fstypes)
-        # image/recipes/packages
-        template.setVar("__SELECTED_IMAGE__", self.selected_image)
-        template.setVar("DEPENDS", self.selected_recipes)
-        template.setVar("IMAGE_INSTALL", self.user_selected_packages)
+        if not defaults:
+            # image/recipes/packages
+            template.setVar("__SELECTED_IMAGE__", self.selected_image)
+            template.setVar("DEPENDS", self.selected_recipes)
+            template.setVar("IMAGE_INSTALL", self.user_selected_packages)
         # proxy
         template.setVar("all_proxy", self.all_proxy)
         template.setVar("http_proxy", self.http_proxy)
@@ -194,23 +192,47 @@ class Configuration:
 class Parameters:
     '''Represents other variables like available machines, etc.'''
 
-    def __init__(self, params):
+    def __init__(self):
         # Variables
+        self.max_threads = 65535
+        self.core_base = ""
+        self.image_addr = ""
+        self.image_types = []
+        self.runnable_image_types = []
+        self.runnable_machine_patterns = []
+        self.deployable_image_types = []
+        self.tmpdir = ""
+
         self.all_machines = []
         self.all_package_formats = []
         self.all_distros = []
         self.all_sdk_machines = []
-        self.max_threads = params["max_threads"]
         self.all_layers = []
-        self.core_base = params["core_base"]
         self.image_names = []
+        self.enable_proxy = False
+
+        # for build log to show
+        self.bb_version = ""
+        self.target_arch = ""
+        self.target_os = ""
+        self.distro_version = ""
+        self.tune_pkgarch = ""
+
+    def update(self, params):
+        self.max_threads = params["max_threads"]
+        self.core_base = params["core_base"]
         self.image_addr = params["image_addr"]
         self.image_types = params["image_types"].split()
         self.runnable_image_types = params["runnable_image_types"].split()
         self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
         self.deployable_image_types = params["deployable_image_types"].split()
         self.tmpdir = params["tmpdir"]
-        self.enable_proxy = False
+        # for build log to show
+        self.bb_version = params["bb_version"]
+        self.target_arch = params["target_arch"]
+        self.target_os = params["target_os"]
+        self.distro_version = params["distro_version"]
+        self.tune_pkgarch = params["tune_pkgarch"]
 
 def hob_conf_filter(fn, data):
     if fn.endswith("/local.conf"):
@@ -286,6 +308,10 @@ class Builder(gtk.Window):
         self.handler = hobHandler
 
         self.template = None
+
+        # configuration and parameters
+        self.configuration = Configuration()
+        self.parameters = Parameters()
 
         # build step
         self.current_step = None
@@ -365,9 +391,10 @@ class Builder(gtk.Window):
 
     def initiate_new_build_async(self):
         self.switch_page(self.MACHINE_SELECTION)
-        self.handler.init_cooker()
-        self.handler.set_extra_inherit("image_types")
-        self.handler.parse_config()
+        if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == None:
+            self.handler.init_cooker()
+            self.handler.set_extra_inherit("image_types")
+            self.handler.parse_config()
 
     def update_config_async(self):
         self.switch_page(self.MACHINE_SELECTION)
@@ -432,20 +459,25 @@ class Builder(gtk.Window):
         self.handler.cancel_parse()
 
     def load_template(self, path):
+        if not os.path.isfile(path):
+            return None
+
         self.template = TemplateMgr()
         self.template.load(path)
         self.configuration.load(self.template)
+
+        self.template.destroy()
+        self.template = None
 
         for layer in self.configuration.layers:
             if not os.path.exists(layer+'/conf/layer.conf'):
                 return False
 
+        self.save_defaults() # remember layers and settings
         self.update_config_async()
+        return True
 
-        self.template.destroy()
-        self.template = None
-
-    def save_template(self, path):
+    def save_template(self, path, defaults=False):
         if path.rfind("/") == -1:
             filename = "default"
             path = "."
@@ -455,11 +487,16 @@ class Builder(gtk.Window):
 
         self.template = TemplateMgr()
         self.template.open(filename, path)
-        self.configuration.save(self.template)
+        self.configuration.save(self.template, defaults)
 
         self.template.save()
         self.template.destroy()
         self.template = None
+
+    def save_defaults(self):
+        if not os.path.exists(".hob/"):
+            os.mkdir(".hob/")
+        self.save_template(".hob/default", True)
 
     def switch_page(self, next_step):
         # Main Workflow (Business Logic)
@@ -544,6 +581,11 @@ class Builder(gtk.Window):
         left = self.package_model.set_selected_packages(selected_packages)
         self.configuration.selected_packages += left
 
+    def update_configuration_parameters(self, params):
+        if params:
+            self.configuration.update(params)
+            self.parameters.update(params)
+
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):
         if which == "distro":
@@ -560,19 +602,15 @@ class Builder(gtk.Window):
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.PARSE_CONFIG:
             # settings
-            params = self.get_parameters_sync()
-            self.configuration = Configuration(params)
-            self.parameters = Parameters(params)
+            self.update_configuration_parameters(self.get_parameters_sync())
             self.generate_configuration_async()
         elif initcmd == self.handler.GENERATE_CONFIGURATION:
-            params = self.get_parameters_sync()
-            self.configuration.update(params)
+            self.update_configuration_parameters(self.get_parameters_sync())
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
                          self.handler.GENERATE_IMAGE]:
-            params = self.get_parameters_sync()
-            self.configuration.update(params)
+            self.update_configuration_parameters(self.get_parameters_sync())
             self.request_package_info_async()
         elif initcmd == self.handler.POPULATE_PACKAGEINFO:
             if self.current_step == self.RCPPKGINFO_POPULATING:
@@ -691,7 +729,7 @@ class Builder(gtk.Window):
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 0
         self.build_details_page.update_progress_bar("Build Started: ", fraction)
-        self.build_details_page.show_configurations(self.configuration)
+        self.build_details_page.show_configurations(self.configuration, self.parameters)
 
     def build_succeeded(self):
         if self.current_step == self.FAST_IMAGE_GENERATING:
@@ -857,6 +895,7 @@ class Builder(gtk.Window):
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             self.configuration.layers = dialog.layers
+            self.save_defaults() # remember layers
             # DO refresh layers
             if dialog.layers_changed:
                 self.update_config_async()
@@ -943,6 +982,7 @@ class Builder(gtk.Window):
         if response == gtk.RESPONSE_YES:
             self.parameters.enable_proxy = dialog.enable_proxy
             self.configuration = dialog.configuration
+            self.save_defaults() # remember settings
             settings_changed = dialog.settings_changed
         dialog.destroy()
         return response == gtk.RESPONSE_YES, settings_changed
