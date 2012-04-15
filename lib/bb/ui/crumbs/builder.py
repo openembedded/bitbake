@@ -464,11 +464,15 @@ class Builder(gtk.Window):
             return None
 
         self.template = TemplateMgr()
-        self.template.load(path)
-        self.configuration.load(self.template)
-
-        self.template.destroy()
-        self.template = None
+        try:
+            self.template.load(path)
+            self.configuration.load(self.template)
+        except Exception as e:
+            self.show_error_dialog("Hob Exception - %s" % (str(e)))
+            self.reset()
+        finally:
+            self.template.destroy()
+            self.template = None
 
         for layer in self.configuration.layers:
             if not os.path.exists(layer+'/conf/layer.conf'):
@@ -487,12 +491,17 @@ class Builder(gtk.Window):
             path = path[0:path.rfind("/")]
 
         self.template = TemplateMgr()
-        self.template.open(filename, path)
-        self.configuration.save(self.template, defaults)
+        try:
+            self.template.open(filename, path)
+            self.configuration.save(self.template, defaults)
 
-        self.template.save()
-        self.template.destroy()
-        self.template = None
+            self.template.save()
+        except Exception as e:
+            self.show_error_dialog("Hob Exception - %s" % (str(e)))
+            self.reset()
+        finally:
+            self.template.destroy()
+            self.template = None
 
     def save_defaults(self):
         if not os.path.exists(".hob/"):
@@ -587,6 +596,12 @@ class Builder(gtk.Window):
             self.configuration.update(params)
             self.parameters.update(params)
 
+    def reset(self):
+        self.configuration.curr_mach = ""
+        self.configuration.clear_selection()
+        self.image_configuration_page.switch_machine_combo()
+        self.switch_page(self.MACHINE_SELECTION)
+
     # Callback Functions
     def handler_config_updated_cb(self, handler, which, values):
         if which == "distro":
@@ -619,19 +634,20 @@ class Builder(gtk.Window):
             if self.current_step == self.FAST_IMAGE_GENERATING:
                 self.generate_image_async()
 
+    def show_error_dialog(self, msg):
+        lbl = "<b>Error</b>\n"
+        lbl = lbl + "%s\n\n" % msg
+        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+        button = dialog.add_button("Close", gtk.RESPONSE_OK)
+        HobButton.style_button(button)
+        response = dialog.run()
+        dialog.destroy()
+
     def handler_command_failed_cb(self, handler, msg):
         if msg:
             msg = msg.replace("your local.conf", "Settings")
-            lbl = "<b>Error</b>\n"
-            lbl = lbl + "%s\n\n" % msg
-            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
-            button = dialog.add_button("Close", gtk.RESPONSE_OK)
-            HobButton.style_button(button)
-            response = dialog.run()
-            dialog.destroy()
-        self.configuration.curr_mach = ""
-        self.image_configuration_page.switch_machine_combo()
-        self.switch_page(self.MACHINE_SELECTION)
+            self.show_error_dialog(msg)
+        self.reset()
 
     def window_sensitive(self, sensitive):
         self.image_configuration_page.machine_combo.set_sensitive(sensitive)
