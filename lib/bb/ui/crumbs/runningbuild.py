@@ -82,6 +82,9 @@ class RunningBuild (gobject.GObject):
           'log-error'       :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                ()),
+          'no-provider'     :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               (gobject.TYPE_PYOBJECT,)),
           }
     pids_to_task = {}
     tasks_to_iter = {}
@@ -320,6 +323,20 @@ class RunningBuild (gobject.GObject):
             message["title"] = ""
             message["task"] = event.taskstring
             self.emit("task-started", message)
+        elif isinstance(event, bb.event.NoProvider):
+            msg = ""
+            if event._runtime:
+                r = "R"
+            else:
+                r = ""
+            if event._dependees:
+                msg = "Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)\n" % (r, event._item, ", ".join(event._dependees), r)
+            else:
+                msg = "Nothing %sPROVIDES '%s'\n" % (r, event._item)
+            if event._reasons:
+                for reason in event._reasons:
+                    msg += ("%s\n" % reason)
+            self.emit("no-provider", msg)
 
         return
 

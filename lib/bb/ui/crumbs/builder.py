@@ -349,6 +349,7 @@ class Builder(gtk.Window):
         self.handler.build.connect("build-failed",       self.handler_build_failed_cb)
         self.handler.build.connect("task-started",       self.handler_task_started_cb)
         self.handler.build.connect("log-error",          self.handler_build_failure_cb)
+        self.handler.build.connect("no-provider",        self.handler_no_provider_cb)
         self.handler.connect("generating-data",          self.handler_generating_data_cb)
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
@@ -624,10 +625,6 @@ class Builder(gtk.Window):
             self.rcppkglist_populated()
             if self.current_step == self.FAST_IMAGE_GENERATING:
                 self.generate_image_async()
-            elif self.current_step == self.PACKAGE_GENERATING:
-                self.switch_page(self.PACKAGE_GENERATED)
-            elif self.current_step == self.IMAGE_GENERATING:
-                self.switch_page(self.IMAGE_GENERATED)
 
     def handler_command_failed_cb(self, handler, msg):
         if msg:
@@ -755,6 +752,11 @@ class Builder(gtk.Window):
         self.handler.build_succeeded_async()
         self.stopping = False
 
+        if self.current_step == self.PACKAGE_GENERATING:
+            self.switch_page(self.PACKAGE_GENERATED)
+        elif self.current_step == self.IMAGE_GENERATING:
+            self.switch_page(self.IMAGE_GENERATED)
+
     def build_failed(self):
         if self.stopping:
             status = "stop"
@@ -783,6 +785,14 @@ class Builder(gtk.Window):
 
 
     def handler_build_failed_cb(self, running_build):
+        self.build_failed()
+
+    def handler_no_provider_cb(self, running_build, msg):
+        dialog = CrumbsMessageDialog(self, msg, gtk.STOCK_DIALOG_INFO)
+        button = dialog.add_button("Close", gtk.RESPONSE_OK)
+        HobButton.style_button(button)
+        dialog.run()
+        dialog.destroy()
         self.build_failed()
 
     def handler_task_started_cb(self, running_build, message): 
