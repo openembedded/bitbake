@@ -398,12 +398,12 @@ class Builder(gtk.Window):
         if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == None:
             self.handler.init_cooker()
             self.handler.set_extra_inherit("image_types")
-            self.handler.parse_config()
+            self.handler.generate_configuration()
 
     def update_config_async(self):
         self.switch_page(self.MACHINE_SELECTION)
         self.set_user_config()
-        self.handler.parse_generate_configuration()
+        self.handler.generate_configuration()
 
     def populate_recipe_package_info_async(self):
         self.switch_page(self.RCPPKGINFO_POPULATING)
@@ -455,9 +455,6 @@ class Builder(gtk.Window):
 
     def cancel_build_sync(self, force=False):
         self.handler.cancel_build(force)
-
-    def generate_configuration_async(self):
-        self.handler.generate_configuration()
 
     def cancel_parse_sync(self):
         self.handler.cancel_parse()
@@ -604,11 +601,7 @@ class Builder(gtk.Window):
         self.parameters.all_package_formats = formats
 
     def handler_command_succeeded_cb(self, handler, initcmd):
-        if initcmd == self.handler.PARSE_CONFIG:
-            # settings
-            self.update_configuration_parameters(self.get_parameters_sync())
-            self.generate_configuration_async()
-        elif initcmd == self.handler.GENERATE_CONFIGURATION:
+        if initcmd == self.handler.GENERATE_CONFIGURATION:
             self.update_configuration_parameters(self.get_parameters_sync())
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,

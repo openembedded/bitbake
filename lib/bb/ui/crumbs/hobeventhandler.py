@@ -59,7 +59,7 @@ class HobHandler(gobject.GObject):
                                      (gobject.TYPE_PYOBJECT,)),
     }
 
-    (PARSE_CONFIG, GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(6)
+    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
     (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(10)
 
     def __init__(self, server, recipe_model, package_model):
@@ -219,14 +219,6 @@ class HobHandler(gobject.GObject):
     def init_cooker(self):
         self.server.runCommand(["initCooker"])
 
-    def parse_config(self):
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
-        self.run_next_command(self.PARSE_CONFIG)
-
-    def parse_generate_configuration(self):
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
-        self.generate_configuration()
-
     def set_extra_inherit(self, bbclass):
         inherits = self.server.runCommand(["getVariable", "INHERIT"]) or ""
         inherits = inherits + " " + bbclass
@@ -312,6 +304,7 @@ class HobHandler(gobject.GObject):
         self.run_next_command(self.POPULATE_PACKAGEINFO)
 
     def generate_configuration(self):
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_PATH_LAYERS)
         self.commands_async.append(self.SUB_FILES_DISTRO)
         self.commands_async.append(self.SUB_FILES_MACH)
