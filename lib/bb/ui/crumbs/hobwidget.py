@@ -174,7 +174,8 @@ class HobViewTable (gtk.VBox):
         if binb:
             bin = binb.split(', ')
             cell.set_property('text', bin[0])
-
+        else:
+            cell.set_property('text', "")
         return True
 
     def set_model(self, tree_model):
