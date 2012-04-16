@@ -9,6 +9,7 @@
 
 import cmd
 import logging
+import warnings
 import os
 import sys
 import fnmatch
@@ -28,6 +29,7 @@ import bb.fetch2
 
 logger = logging.getLogger('BitBake')
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def main(args):
     # Set up logging
