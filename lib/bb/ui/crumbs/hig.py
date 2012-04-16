@@ -1107,7 +1107,7 @@ class ImageSelectionDialog (CrumbsDialog):
                 for image_type in self.image_types:
                     for real_image_type in hcc.SUPPORTED_IMAGE_TYPES[image_type]:
                         if f.endswith('.' + real_image_type):
-                            imageset.add(f.rsplit('.' + real_image_type)[0])
+                            imageset.add(f.rsplit('.' + real_image_type)[0].rsplit('.rootfs')[0])
                             self.image_list.append(f)
         
         for image in imageset:

@@ -32,7 +32,7 @@ from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
 from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
-from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton
+from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton, hcc
 from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
                              AdvancedSettingDialog, LayerSelectionDialog, \
                              DeployImageDialog
@@ -752,9 +752,10 @@ class Builder(gtk.Window):
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
             for image_type in self.parameters.image_types:
-                linkpath = self.parameters.image_addr + '/' + linkname + '.' + image_type
-                if os.path.exists(linkpath):
-                    self.parameters.image_names.append(os.readlink(linkpath))
+                for real_image_type in hcc.SUPPORTED_IMAGE_TYPES[image_type]:
+                    linkpath = self.parameters.image_addr + '/' + linkname + '.' + real_image_type
+                    if os.path.exists(linkpath):
+                        self.parameters.image_names.append(os.readlink(linkpath))
         elif self.current_step == self.PACKAGE_GENERATING:
             fraction = 1.0
         self.build_details_page.update_progress_bar("Build Completed: ", fraction)
