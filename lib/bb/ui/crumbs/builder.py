@@ -899,7 +899,7 @@ class Builder(gtk.Window):
 
     def show_binb_dialog(self, binb):
         markup = "<b>Brought in by:</b>\n%s" % binb
-        ptip = PersistentTooltip(markup)
+        ptip = PersistentTooltip(markup, self)
 
         ptip.show()
 

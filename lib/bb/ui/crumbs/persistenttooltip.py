@@ -35,7 +35,7 @@ class PersistentTooltip(gtk.Window):
 
     markup: some Pango text markup to display in the tooltip
     """
-    def __init__(self, markup):
+    def __init__(self, markup, parent_win=None):
         gtk.Window.__init__(self, gtk.WINDOW_POPUP)
 
         # Inherit the system theme for a tooltip
@@ -76,6 +76,10 @@ class PersistentTooltip(gtk.Window):
         # Ensure a reasonable minimum size
         self.set_geometry_hints(self, 100, 50)
 
+        # Set this window as a transient window for parent(main window)
+        if parent_win:
+            self.set_transient_for(parent_win)
+            self.set_destroy_with_parent(True)
         # Draw our label and close buttons
         hbox = gtk.HBox(False, 0)
         hbox.show()
