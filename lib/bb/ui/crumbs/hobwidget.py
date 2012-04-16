@@ -165,7 +165,6 @@ class HobViewTable (gtk.VBox):
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.set_shadow_type(gtk.SHADOW_IN)
         scroll.add(self.table_tree)
         self.pack_start(scroll, True, True, 0)
 
