@@ -462,13 +462,14 @@ class DataSmart(MutableMapping):
         self.delVar(var)
 
     def get_hash(self):
-        data = ""
+        data = {}
         config_whitelist = set((self.getVar("BB_HASHCONFIG_WHITELIST", True) or "").split())
         keys = set(key for key in iter(self) if not key.startswith("__"))
         for key in keys:
             if key in config_whitelist:
                 continue
             value = self.getVar(key, False) or ""
-            data = data + key + ': ' + str(value) + '\n'
+            data.update({key:value})
 
-        return hashlib.md5(data).hexdigest()
+        data_str = str([(k, data[k]) for k in sorted(data.keys())])
+        return hashlib.md5(data_str).hexdigest()
