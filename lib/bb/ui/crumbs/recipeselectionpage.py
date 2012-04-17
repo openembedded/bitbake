@@ -99,7 +99,7 @@ class RecipeSelectionPage (HobPage):
                       }]
         }, {
          'name'    : 'Tasks',
-         'tooltip' : 'All tasks availabel in the Yocto Project',
+         'tooltip' : 'All tasks available in the Yocto Project',
          'filter'  : { RecipeListModel.COL_TYPE : ['task'] },
          'columns' : [{
                        'col_name' : 'Task name',
