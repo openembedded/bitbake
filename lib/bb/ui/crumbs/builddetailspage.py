@@ -238,6 +238,7 @@ class BuildDetailsPage (HobPage):
         self.builder.stop_build()
 
     def hide_stop_button(self):
+        self.stop_button.set_sensitive(False)
         self.stop_button.hide()
 
     def scroll_to_present_row(self, model, path, iter, v_adj, treeview):
