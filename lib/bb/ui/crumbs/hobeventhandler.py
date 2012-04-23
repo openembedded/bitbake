@@ -233,6 +233,9 @@ class HobHandler(gobject.GObject):
         inherits = inherits + " " + bbclass
         self.runCommand(["setVariable", "INHERIT", inherits])
 
+    def enable_sanity(self):
+        self.runCommand(["setVariable", "DISABLE_SANITY_CHECKS", "0"])
+
     def set_bblayers(self, bblayers):
         self.runCommand(["setVariable", "BBLAYERS_HOB", " ".join(bblayers)])
 

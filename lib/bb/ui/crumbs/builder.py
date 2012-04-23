@@ -557,6 +557,8 @@ class Builder(gtk.Window):
         self.handler.init_cooker()
         # set bb layers
         self.handler.set_bblayers(self.configuration.layers)
+        # Re-enable sanity checks
+        self.handler.enable_sanity()
         # set local configuration
         self.handler.set_machine(self.configuration.curr_mach)
         self.handler.set_package_format(self.configuration.curr_package_format)
