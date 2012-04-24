@@ -356,6 +356,15 @@ class AdvancedSettingDialog (CrumbsDialog):
         data += ("SDK_MACHINE: "          + self._get_sorted_value(self.configuration.curr_sdk_machine))
         data += ("TOOLCHAIN_BUILD: "      + self._get_sorted_value(self.configuration.toolchain_build))
         data += ("IMAGE_FSTYPES: "        + self._get_sorted_value(self.configuration.image_fstypes))
+        if self.enable_proxy:
+            data += ("ALL_PROXY: "            + self._get_sorted_value(self.configuration.all_proxy))
+            data += ("HTTP_PROXY: "           + self._get_sorted_value(self.configuration.http_proxy))
+            data += ("HTTPS_PROXY: "          + self._get_sorted_value(self.configuration.https_proxy))
+            data += ("FTP_PROXY: "            + self._get_sorted_value(self.configuration.ftp_proxy))
+            data += ("GIT_PROXY_HOST: "       + self._get_sorted_value(self.configuration.git_proxy_host))
+            data += ("GIT_PROXY_PORT: "       + self._get_sorted_value(self.configuration.git_proxy_port))
+            data += ("CVS_PROXY_HOST: "       + self._get_sorted_value(self.configuration.cvs_proxy_host))
+            data += ("CVS_PROXY_PORT: "       + self._get_sorted_value(self.configuration.cvs_proxy_port))
         for key in self.configuration.extra_setting.keys():
             data += (key + ": " + self._get_sorted_value(self.configuration.extra_setting[key]))
         return hashlib.md5(data).hexdigest()
