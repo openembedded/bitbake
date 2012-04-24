@@ -59,8 +59,8 @@ class HobHandler(gobject.GObject):
                                      (gobject.TYPE_PYOBJECT,)),
     }
 
-    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO) = range(5)
-    (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(10)
+    (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO, SANITY_CHECK) = range(6)
+    (SUB_PATH_LAYERS, SUB_FILES_DISTRO, SUB_FILES_MACH, SUB_FILES_SDKMACH, SUB_MATCH_CLASS, SUB_PARSE_CONFIG, SUB_SANITY_CHECK, SUB_GNERATE_TGTS, SUB_GENERATE_PKGINFO, SUB_BUILD_RECIPES, SUB_BUILD_IMAGE) = range(11)
 
     def __init__(self, server, recipe_model, package_model):
         super(HobHandler, self).__init__()
@@ -129,6 +129,8 @@ class HobHandler(gobject.GObject):
             self.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.SUB_GENERATE_PKGINFO:
             self.runCommand(["triggerEvent", "bb.event.RequestPackageInfo()"])
+        elif next_command == self.SUB_SANITY_CHECK:
+            self.runCommand(["triggerEvent", "bb.event.SanityCheck()"])
         elif next_command == self.SUB_BUILD_RECIPES:
             self.clear_busy()
             self.building = True
@@ -156,6 +158,9 @@ class HobHandler(gobject.GObject):
 
         if isinstance(event, bb.event.PackageInfo):
             self.package_model.populate(event._pkginfolist)
+            self.run_next_command()
+
+        elif isinstance(event, bb.event.SanityCheckPassed):
             self.run_next_command()
 
         elif isinstance(event, logging.LogRecord):
@@ -232,9 +237,6 @@ class HobHandler(gobject.GObject):
         inherits = self.runCommand(["getVariable", "INHERIT"]) or ""
         inherits = inherits + " " + bbclass
         self.runCommand(["setVariable", "INHERIT", inherits])
-
-    def enable_sanity(self):
-        self.runCommand(["setVariable", "DISABLE_SANITY_CHECKS", "0"])
 
     def set_bblayers(self, bblayers):
         self.runCommand(["setVariable", "BBLAYERS_HOB", " ".join(bblayers)])
@@ -314,6 +316,10 @@ class HobHandler(gobject.GObject):
     def request_package_info(self):
         self.commands_async.append(self.SUB_GENERATE_PKGINFO)
         self.run_next_command(self.POPULATE_PACKAGEINFO)
+
+    def trigger_sanity_check(self):
+        self.commands_async.append(self.SUB_SANITY_CHECK)
+        self.run_next_command(self.SANITY_CHECK)
 
     def generate_configuration(self):
         self.commands_async.append(self.SUB_PARSE_CONFIG)

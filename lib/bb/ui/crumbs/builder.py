@@ -405,6 +405,9 @@ class Builder(gtk.Window):
         self.set_user_config()
         self.handler.generate_configuration()
 
+    def sanity_check(self):
+        self.handler.trigger_sanity_check()
+
     def populate_recipe_package_info_async(self):
         self.switch_page(self.RCPPKGINFO_POPULATING)
         # Parse recipes
@@ -557,8 +560,6 @@ class Builder(gtk.Window):
         self.handler.init_cooker()
         # set bb layers
         self.handler.set_bblayers(self.configuration.layers)
-        # Re-enable sanity checks
-        self.handler.enable_sanity()
         # set local configuration
         self.handler.set_machine(self.configuration.curr_mach)
         self.handler.set_package_format(self.configuration.curr_package_format)
@@ -620,6 +621,8 @@ class Builder(gtk.Window):
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.GENERATE_CONFIGURATION:
             self.update_configuration_parameters(self.get_parameters_sync())
+            self.sanity_check()
+        elif initcmd == self.handler.SANITY_CHECK:
             self.image_configuration_page.switch_machine_combo()
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
