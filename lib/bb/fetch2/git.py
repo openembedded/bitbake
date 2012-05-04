@@ -184,7 +184,8 @@ class Git(FetchMethod):
         # If the repo still doesn't exist, fallback to cloning it
         if not os.path.exists(ud.clonedir):
             clone_cmd = "%s clone --bare --mirror %s %s" % (ud.basecmd, repourl, ud.clonedir)
-            bb.fetch2.check_network_access(d, clone_cmd)
+            if ud.proto.lower() != 'file':
+                bb.fetch2.check_network_access(d, clone_cmd)
             runfetchcmd(clone_cmd, d)
 
         os.chdir(ud.clonedir)
@@ -202,7 +203,8 @@ class Git(FetchMethod):
 
             runfetchcmd("%s remote add --mirror=fetch origin %s" % (ud.basecmd, repourl), d)
             fetch_cmd = "%s fetch -f --prune %s refs/*:refs/*" % (ud.basecmd, repourl)
-            bb.fetch2.check_network_access(d, fetch_cmd, ud.url)
+            if ud.proto.lower() != 'file':
+                bb.fetch2.check_network_access(d, fetch_cmd, ud.url)
             runfetchcmd(fetch_cmd, d)
             runfetchcmd("%s prune-packed" % ud.basecmd, d)
             runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
@@ -281,7 +283,8 @@ class Git(FetchMethod):
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
         cmd = "%s ls-remote %s://%s%s%s %s" % \
               (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name])
-        bb.fetch2.check_network_access(d, cmd)
+        if ud.proto.lower() != 'file':
+            bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
         if not output:
             raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, url)
