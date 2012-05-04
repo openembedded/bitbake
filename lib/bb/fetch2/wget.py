@@ -54,12 +54,12 @@ class Wget(FetchMethod):
         """Fetch urls"""
 
         if checkonly:
-            fetchcmd = data.getVar("CHECKCOMMAND_wget", d, True)
+            fetchcmd = data.getVar("CHECKCOMMAND_wget", d, True) or d.expand("/usr/bin/env wget --spider -t 5 --passive-ftp --no-check-certificate -P ${DL_DIR} '${URI}'")
         elif os.path.exists(ud.localpath):
             # file exists, but we didnt complete it.. trying again..
-            fetchcmd = data.getVar("RESUMECOMMAND_wget", d, True)
+            fetchcmd = data.getVar("RESUMECOMMAND_wget", d, True) or d.expand("/usr/bin/env wget -c -t 5 -nv --passive-ftp --no-check-certificate -P ${DL_DIR} '${URI}'")
         else:
-            fetchcmd = data.getVar("FETCHCOMMAND_wget", d, True)
+            fetchcmd = data.getVar("FETCHCOMMAND_wget", d, True) or d.expand("/usr/bin/env wget -t 5 -nv --passive-ftp --no-check-certificate -P ${DL_DIR} '${URI}'")
 
         uri = uri.split(";")[0]
         uri_decoded = list(decodeurl(uri))
@@ -78,7 +78,7 @@ class Wget(FetchMethod):
         # Also, this used to happen if sourceforge sent us to the mirror page
         if not os.path.exists(ud.localpath) and not checkonly:
             raise FetchError("The fetch command returned success for url %s but %s doesn't exist?!" % (uri, ud.localpath), uri)
-       
+
         return True
 
     def checkstatus(self, uri, ud, d):
