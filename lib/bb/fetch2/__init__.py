@@ -706,7 +706,7 @@ class FetchMethod(object):
 
         dots = file.split(".")
         if dots[-1] in ['gz', 'bz2', 'Z']:
-            efile = os.path.join(data.getVar('WORKDIR', True),os.path.basename('.'.join(dots[0:-1])))
+            efile = os.path.join(rootdir, os.path.basename('.'.join(dots[0:-1])))
         else:
             efile = file
         cmd = None
