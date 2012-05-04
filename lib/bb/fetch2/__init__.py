@@ -782,7 +782,9 @@ class FetchMethod(object):
             bb.utils.mkdirhier(newdir)
             os.chdir(newdir)
 
-        cmd = "PATH=\"%s\" %s" % (data.getVar('PATH', True), cmd)
+        path = data.getVar('PATH', True)
+        if path:
+            cmd = "PATH=\"%s\" %s" % (path, cmd)
         bb.note("Unpacking %s to %s/" % (file, os.getcwd()))
         ret = subprocess.call(cmd, preexec_fn=subprocess_setup, shell=True)
 
