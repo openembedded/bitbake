@@ -55,12 +55,12 @@ class Wget(FetchMethod):
 
         def fetch_uri(uri, ud, d):
             if checkonly:
-                fetchcmd = data.getVar("CHECKCOMMAND", d, True)
+                fetchcmd = data.getVar("CHECKCOMMAND_wget", d, True)
             elif os.path.exists(ud.localpath):
                 # file exists, but we didnt complete it.. trying again..
-                fetchcmd = data.getVar("RESUMECOMMAND", d, True)
+                fetchcmd = data.getVar("RESUMECOMMAND_wget", d, True)
             else:
-                fetchcmd = data.getVar("FETCHCOMMAND", d, True)
+                fetchcmd = data.getVar("FETCHCOMMAND_wget", d, True)
 
             uri = uri.split(";")[0]
             uri_decoded = list(decodeurl(uri))
@@ -79,10 +79,6 @@ class Wget(FetchMethod):
             # Also, this used to happen if sourceforge sent us to the mirror page
             if not os.path.exists(ud.localpath) and not checkonly:
                 raise FetchError("The fetch command returned success for url %s but %s doesn't exist?!" % (uri, ud.localpath), uri)
-
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "wget:" + data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
 
         fetch_uri(uri, ud, localdata)
         
