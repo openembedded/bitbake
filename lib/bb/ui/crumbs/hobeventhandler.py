@@ -199,6 +199,8 @@ class HobHandler(gobject.GObject):
             self.clear_busy()
             self.emit("command-failed", self.error_msg)
             self.error_msg = ""
+            if self.building:
+                self.building = False
         elif isinstance(event, (bb.event.ParseStarted,
                  bb.event.CacheLoadStarted,
                  bb.event.TreeDataPreparationStarted,
