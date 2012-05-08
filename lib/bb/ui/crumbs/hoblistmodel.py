@@ -34,7 +34,7 @@ class PackageListModel(gtk.TreeStore):
     providing convenience functions to access gtk.TreeModel subclasses which
     provide filtered views of the data.
     """
-    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_BINB, COL_INC, COL_FADE_INC) = range(12)
+    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_BINB, COL_INC, COL_FADE_INC, COL_FONT) = range(13)
 
     __gsignals__ = {
         "package-selection-changed" : (gobject.SIGNAL_RUN_LAST,
@@ -65,7 +65,8 @@ class PackageListModel(gtk.TreeStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_BOOLEAN,
-                                gobject.TYPE_BOOLEAN)
+                                gobject.TYPE_BOOLEAN,
+                                gobject.TYPE_STRING)
 
 
     """
@@ -189,7 +190,7 @@ class PackageListModel(gtk.TreeStore):
                      self.COL_SEC, section, self.COL_SUM, summary,
                      self.COL_RDEP, rdep + ' ' + rrec,
                      self.COL_RPROV, rprov, self.COL_SIZE, size,
-                     self.COL_BINB, "", self.COL_INC, False)
+                     self.COL_BINB, "", self.COL_INC, False, self.COL_FONT, '10')
 
     """
     Check whether the item at item_path is included or not

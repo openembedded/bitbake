@@ -119,6 +119,7 @@ class HobViewTable (gtk.VBox):
         self.table_tree.set_headers_clickable(True)
         self.table_tree.set_enable_search(True)
         self.table_tree.set_rules_hint(True)
+        self.table_tree.set_enable_tree_lines(True)
         self.table_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
         self.toggle_columns = []
         self.table_tree.connect("row-activated", self.row_activated_cb)
@@ -140,6 +141,8 @@ class HobViewTable (gtk.VBox):
                 cell = gtk.CellRendererText()
                 col.pack_start(cell, True)
                 col.set_attributes(cell, text=column['col_id'])
+                if 'col_t_id' in column.keys():
+                    col.add_attribute(cell, 'font', column['col_t_id'])
             elif column['col_style'] == 'check toggle':
                 cell = HobCellRendererToggle()
                 cell.set_property('activatable', True)
@@ -149,6 +152,8 @@ class HobViewTable (gtk.VBox):
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=column['col_id'])
                 self.toggle_columns.append(column['col_name'])
+                if 'col_group' in column.keys():
+                    col.set_cell_data_func(cell, self.set_group_number_cb)
             elif column['col_style'] == 'radio toggle':
                 cell = gtk.CellRendererToggle()
                 cell.set_property('activatable', True)
@@ -162,6 +167,8 @@ class HobViewTable (gtk.VBox):
                 cell = gtk.CellRendererText()
                 col.pack_start(cell, True)
                 col.set_cell_data_func(cell, self.display_binb_cb, column['col_id'])
+                if 'col_t_id' in column.keys():
+                    col.add_attribute(cell, 'font', column['col_t_id'])
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
@@ -203,6 +210,15 @@ class HobViewTable (gtk.VBox):
 
     def stop_cell_fadeinout_cb(self, ctrl, cell, tree):
         self.emit("cell-fadeinout-stopped", ctrl, cell, tree)
+
+    def set_group_number_cb(self, col, cell, model, iter):
+        if model and (model.iter_parent(iter) == None):
+            cell.cell_attr["number_of_children"] = model.iter_n_children(iter)
+        else:
+            cell.cell_attr["number_of_children"] = 0
+
+    def connect_group_selection(self, cb_func):
+        self.table_tree.get_selection().connect("changed", cb_func)
 
 """
 A method to calculate a softened value for the colour of widget when in the
@@ -1084,11 +1100,17 @@ class HobCellRendererToggle(gtk.CellRendererToggle):
         gtk.CellRendererToggle.__init__(self)
         self.ctrl = HobCellRendererController(is_draw_row=True)
         self.ctrl.running_mode = self.ctrl.MODE_ONE_SHORT
-        self.cell_attr = {"fadeout": False}
+        self.cell_attr = {"fadeout": False, "number_of_children": 0}
 
     def do_render(self, window, widget, background_area, cell_area, expose_area, flags):
         if (not self.ctrl) or (not widget):
             return
+
+        if flags & gtk.CELL_RENDERER_SELECTED:
+            state = gtk.STATE_SELECTED
+        else:
+            state = gtk.STATE_NORMAL
+
         if self.ctrl.is_active():
             path = widget.get_path_at_pos(cell_area.x + cell_area.width/2, cell_area.y + cell_area.height/2)
             # sometimes the parameters of cell_area will be a negative number,such as pull up down the scroll bar
@@ -1097,14 +1119,23 @@ class HobCellRendererToggle(gtk.CellRendererToggle):
             path = path[0]
             if path in self.ctrl.running_cell_areas:
                 cr = window.cairo_create()
-                color = gtk.gdk.Color(HobColors.WHITE)
+                color = widget.get_style().base[state]
 
                 row_x, _, row_width, _ = widget.get_visible_rect()
                 border_y = self.get_property("ypad")
                 self.ctrl.on_draw_fadeinout_cb(cr, color, row_x, cell_area.y - border_y, row_width, \
                                                cell_area.height + border_y * 2, self.cell_attr["fadeout"])
+        # draw number of a group
+        if self.cell_attr["number_of_children"]:
+            text = "%d pkg" % self.cell_attr["number_of_children"]
+            pangolayout = widget.create_pango_layout(text)
+            textw, texth = pangolayout.get_pixel_size()
+            x = cell_area.x + (cell_area.width/2) - (textw/2)
+            y = cell_area.y + (cell_area.height/2) - (texth/2)
 
-        return gtk.CellRendererToggle.do_render(self, window, widget, background_area, cell_area, expose_area, flags)
+            widget.style.paint_layout(window, state, True, cell_area, widget, "checkbox", x, y, pangolayout)
+        else:
+            return gtk.CellRendererToggle.do_render(self, window, widget, background_area, cell_area, expose_area, flags)
 
     '''delay: normally delay time is 1000ms
        cell_list: whilch cells need to be render
