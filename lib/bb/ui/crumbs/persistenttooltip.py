@@ -125,10 +125,16 @@ class PersistentTooltip(gtk.Window):
                 style.fg[gtk.STATE_NORMAL] = gtk.gdk.color_parse(val)
                 self.label.set_style(style)
                 break # we only care for the tooltip_fg_color
+
         self.label.set_markup(markup)
         self.label.show()
         bin.add(self.label)
         hbox.pack_end(bin, True, True, 6)
+
+        # add the original URL display for user reference
+        if 'a href' in markup:
+            hbox.set_tooltip_text(self.get_markup_url(markup))
+        hbox.show()
 
         self.connect("key-press-event", self._catch_esc_cb)
 
@@ -165,3 +171,16 @@ class PersistentTooltip(gtk.Window):
     def hide(self):
         self.shown = False
         gtk.Window.hide(self)
+
+    """
+    Called to get the hyperlink URL from markup text.
+    """
+    def get_markup_url(self, markup):
+        url = "http:"
+        if markup and type(markup) == str:
+            s = markup
+            if 'http:' in s:
+                import re
+                url = re.search('(http:[^,\\ "]+)', s).group(0)
+
+        return url
