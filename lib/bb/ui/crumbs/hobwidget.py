@@ -1057,7 +1057,7 @@ class HobCellRendererPixbuf(gtk.CellRendererPixbuf):
             if self.control.is_active():
                 self.control.on_draw_pixbuf_cb(pix, window.cairo_create(), x, y, w, h, True)
             else:
-                self.control.start_run(200, 0, 0, 1000, 200, tree)
+                self.control.start_run(200, 0, 0, 1000, 150, tree)
         else:
             self.control.remove_running_cell_area(cell_area)
             self.control.on_draw_pixbuf_cb(pix, window.cairo_create(), x, y, w, h, False)
