@@ -1047,6 +1047,21 @@ class Builder(gtk.Window):
         response = dialog.run()
         dialog.destroy()
 
+    def get_kernel_file_name(self, image_path):
+        name_list = []
+        kernel_name = ""
+        if image_path:
+            files = [f for f in os.listdir(image_path) if f[0] <> '.']
+            for check_file in files:
+                if check_file.endswith(".bin"):
+                    name_splits = check_file.split(".")[0]
+                    if self.configuration.curr_mach in name_splits.split("-"):
+                        kernel_name = check_file
+                    if not os.path.islink(os.path.join(image_path, check_file)):
+                        name_list.append(check_file)
+
+        return kernel_name, len(name_list)
+
     def runqemu_image(self, image_name):
         if not image_name:
             lbl = "<b>Please select an image to launch in QEMU.</b>"
@@ -1057,24 +1072,31 @@ class Builder(gtk.Window):
             dialog.destroy()
             return
 
-        dialog = gtk.FileChooserDialog("Load Kernel Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE)
-        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
-        HobAltButton.style_button(button)
-        button = dialog.add_button("Open", gtk.RESPONSE_YES)
-        HobButton.style_button(button)
-        filter = gtk.FileFilter()
-        filter.set_name("Kernel Files")
-        filter.add_pattern("*.bin")
-        dialog.add_filter(filter)
+        kernel_name, kernels_number = self.get_kernel_file_name(self.parameters.image_addr)
+        if not kernel_name or kernels_number > 1:
+            dialog = gtk.FileChooserDialog("Load Kernel Files", self,
+                                           gtk.FILE_CHOOSER_ACTION_SAVE)
+            button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+            HobAltButton.style_button(button)
+            button = dialog.add_button("Open", gtk.RESPONSE_YES)
+            HobButton.style_button(button)
+            filter = gtk.FileFilter()
+            filter.set_name("Kernel Files")
+            filter.add_pattern("*.bin")
+            dialog.add_filter(filter)
 
-        dialog.set_current_folder(self.parameters.image_addr)
+            dialog.set_current_folder(self.parameters.image_addr)
 
-        response = dialog.run()
-        if response == gtk.RESPONSE_YES:
-            kernel_path = dialog.get_filename()
+            response = dialog.run()
+            if response == gtk.RESPONSE_YES:
+                kernel_path = dialog.get_filename()
+                image_path = os.path.join(self.parameters.image_addr, image_name)
+            dialog.destroy()
+
+        elif kernel_name:
+            kernel_path = os.path.join(self.parameters.image_addr, kernel_name)
             image_path = os.path.join(self.parameters.image_addr, image_name)
-        dialog.destroy()
+            response = gtk.RESPONSE_YES
 
         if response == gtk.RESPONSE_YES:
             source_env_path = os.path.join(self.parameters.core_base, "oe-init-build-env")
