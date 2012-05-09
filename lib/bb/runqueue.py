@@ -1046,18 +1046,29 @@ class RunQueueExecute:
         Return none is there are no processes awaiting result collection, otherwise
         collect the process exit codes and close the information pipe.
         """
-        result = os.waitpid(-1, os.WNOHANG)
-        if result[0] == 0 and result[1] == 0:
+        pid, status = os.waitpid(-1, os.WNOHANG)
+        if pid == 0 or os.WIFSTOPPED(status):
             return None
-        task = self.build_pids[result[0]]
-        del self.build_pids[result[0]]
-        self.build_pipes[result[0]].close()
-        del self.build_pipes[result[0]]
-        # self.build_stamps[result[0]] may not exist when use shared work directory.
-        if result[0] in self.build_stamps.keys():
-            del self.build_stamps[result[0]]
-        if result[1] != 0:
-            self.task_fail(task, result[1]>>8)
+
+        if os.WIFEXITED(status):
+            status = os.WEXITSTATUS(status)
+        elif os.WIFSIGNALED(status):
+            # Per shell conventions for $?, when a process exits due to
+            # a signal, we return an exit code of 128 + SIGNUM
+            status = 128 + os.WTERMSIG(status)
+
+        task = self.build_pids[pid]
+        del self.build_pids[pid]
+
+        self.build_pipes[pid].close()
+        del self.build_pipes[pid]
+
+        # self.build_stamps[pid] may not exist when use shared work directory.
+        if pid in self.build_stamps.keys():
+            del self.build_stamps[pid]
+
+        if status != 0:
+            self.task_fail(task, status)
         else:
             self.task_complete(task)
         return True
