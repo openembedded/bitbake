@@ -1064,7 +1064,7 @@ class RunQueueExecute:
         del self.build_pipes[pid]
 
         # self.build_stamps[pid] may not exist when use shared work directory.
-        if pid in self.build_stamps.keys():
+        if pid in self.build_stamps:
             del self.build_stamps[pid]
 
         if status != 0:
