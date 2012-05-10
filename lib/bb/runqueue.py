@@ -1091,8 +1091,6 @@ class RunQueueExecute:
                 os.umask(umask)
 
             self.cooker.configuration.data.setVar("BB_WORKERCONTEXT", "1")
-            self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY", self)
-            self.cooker.configuration.data.setVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2", fn)
             bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
             ret = 0
             try:
@@ -1702,15 +1700,6 @@ class runQueueTaskCompleted(runQueueEvent):
     """
     Event notifing a task completed
     """
-
-def check_stamp_fn(fn, taskname, d):
-    rqexe = d.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY")
-    fn = d.getVar("__RUNQUEUE_DO_NOT_USE_EXTERNALLY2")
-    fnid = rqexe.rqdata.taskData.getfn_id(fn)
-    taskid = rqexe.rqdata.get_task_id(fnid, taskname)
-    if taskid is not None:
-        return rqexe.rq.check_stamp_task(taskid)
-    return None
 
 class runQueuePipe():
     """
