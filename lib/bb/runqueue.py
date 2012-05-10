@@ -875,7 +875,7 @@ class RunQueue:
             bb.msg.fatal("RunQueue", "check_stamps fatal internal error")
         return current
 
-    def check_stamp_task(self, task, taskname = None, recurse = False):
+    def check_stamp_task(self, task, taskname = None, recurse = False, cache = None):
         def get_timestamp(f):
             try:
                 if not os.access(f, os.F_OK):
@@ -911,10 +911,16 @@ class RunQueue:
         if taskname != "do_setscene" and taskname.endswith("_setscene"):
             return True
 
+        if cache is None:
+            cache = {}
+
         iscurrent = True
         t1 = get_timestamp(stampfile)
         for dep in self.rqdata.runq_depends[task]:
             if iscurrent:
+                if dep in cache:
+                    iscurrent = cache[dep]
+                    continue
                 fn2 = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[dep]]
                 taskname2 = self.rqdata.runq_task[dep]
                 stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCache, fn2)
@@ -931,7 +937,9 @@ class RunQueue:
                         logger.debug(2, 'Stampfile %s < %s', stampfile, stampfile2)
                         iscurrent = False
                     if recurse and iscurrent:
-                        iscurrent = self.check_stamp_task(dep, recurse=True)
+                        iscurrent = self.check_stamp_task(dep, recurse=True, cache=cache)
+                        cache[dep] = iscurrent
+        cache[task] = iscurrent
         return iscurrent
 
     def execute_runqueue(self):
@@ -1040,6 +1048,8 @@ class RunQueueExecute:
         self.build_pipes = {}
         self.build_stamps = {}
         self.failed_fnids = []
+
+        self.stampcache = {}
 
     def runqueue_process_waitpid(self):
         """
@@ -1384,7 +1394,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 self.task_skip(task)
                 return True
 
-            if self.rq.check_stamp_task(task, taskname):
+            if self.rq.check_stamp_task(task, taskname, cache=self.stampcache):
                 logger.debug(2, "Stamp current task %s (%s)", task,
                                 self.rqdata.get_user_idstring(task))
                 self.task_skip(task)
@@ -1568,7 +1578,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     bb.build.make_stamp(taskname + "_setscene", self.rqdata.dataCache, fn)
                     continue
 
-                if self.rq.check_stamp_task(realtask, taskname + "_setscene"):
+                if self.rq.check_stamp_task(realtask, taskname + "_setscene", cache=self.stampcache):
                     logger.debug(2, 'Setscene stamp current for task %s(%s)', task, self.rqdata.get_user_idstring(realtask))
                     stamppresent.append(task)
                     self.task_skip(task)
@@ -1661,7 +1671,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
 
             taskname = self.rqdata.runq_task[realtask] + "_setscene"
-            if self.rq.check_stamp_task(realtask, self.rqdata.runq_task[realtask], recurse = True):
+            if self.rq.check_stamp_task(realtask, self.rqdata.runq_task[realtask], recurse = True, cache=self.stampcache):
                 logger.debug(2, 'Stamp for underlying task %s(%s) is current, so skipping setscene variant',
                              task, self.rqdata.get_user_idstring(realtask))
                 self.task_failoutright(task)
@@ -1673,7 +1683,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                         self.task_failoutright(task)
                         return True
 
-            if self.rq.check_stamp_task(realtask, taskname):
+            if self.rq.check_stamp_task(realtask, taskname, cache=self.stampcache):
                 logger.debug(2, 'Setscene stamp current task %s(%s), so skip it and its dependencies',
                              task, self.rqdata.get_user_idstring(realtask))
                 self.task_skip(task)
