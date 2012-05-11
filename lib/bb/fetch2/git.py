@@ -136,8 +136,9 @@ class Git(FetchMethod):
             for name in ud.names:
                 gitsrcname = gitsrcname + '_' + ud.revisions[name]
         ud.mirrortarball = 'git2_%s.tar.gz' % (gitsrcname)
-        ud.fullmirror = os.path.join(data.getVar("DL_DIR", d, True), ud.mirrortarball)
-        ud.clonedir = os.path.join(data.expand('${GITDIR}', d), gitsrcname)
+        ud.fullmirror = os.path.join(d.getVar("DL_DIR", True), ud.mirrortarball)
+        gitdir = d.getVar("GITDIR", True) or (d.getVar("DL_DIR", True) + "/git2/")
+        ud.clonedir = os.path.join(gitdir, gitsrcname)
 
         ud.localfile = ud.clonedir
 
