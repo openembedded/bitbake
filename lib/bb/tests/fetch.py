@@ -19,6 +19,7 @@
 
 import unittest
 import tempfile
+import subprocess
 import os
 import bb
 
@@ -33,6 +34,8 @@ class FetcherTest(unittest.TestCase):
         self.d.setVar("DL_DIR", self.dldir)
         self.unpackdir = os.path.join(self.tempdir, "unpacked")
         os.mkdir(self.unpackdir)
+        persistdir = os.path.join(self.tempdir, "persistdata")
+        self.d.setVar("PERSISTENT_DIR", persistdir)
 
     def tearDown(self):
         bb.utils.prunedir(self.tempdir)
@@ -61,6 +64,24 @@ class FetcherTest(unittest.TestCase):
         fetcher.download()
         self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
 
+    def test_gitfetch(self):
+        def checkrevision(self, fetcher):
+            fetcher.unpack(self.unpackdir)
+            revision = subprocess.check_output("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git").strip()
+            self.assertEqual(revision, "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
+
+        self.d.setVar("BB_GENERATE_MIRROR_TARBALLS", "1")
+        self.d.setVar("SRCREV", "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake"], self.d)
+        fetcher.download()
+        checkrevision(self, fetcher)
+        # Wipe out the dldir clone and the unpacked source, turn off the network and check mirror tarball works
+        bb.utils.prunedir(self.dldir + "/git2/")
+        bb.utils.prunedir(self.unpackdir)
+        self.d.setVar("BB_NO_NETWORK", "1")
+        fetcher = bb.fetch.Fetch(["git://git.openembedded.org/bitbake"], self.d)
+        fetcher.download()
+        checkrevision(self, fetcher)
 
 class URLHandle(unittest.TestCase):
 
