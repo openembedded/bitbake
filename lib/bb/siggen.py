@@ -201,8 +201,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
 
-        p = pickle.Pickler(open(sigfile, "wb"), -1)
-        p.dump(data)
+        with open(sigfile, "wb") as f:
+            p = pickle.Pickler(f, -1)
+            p.dump(data)
+        os.chmod(sigfile, 0664)
 
     def dump_sigs(self, dataCache):
         for fn in self.taskdeps:
