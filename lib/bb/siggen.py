@@ -201,7 +201,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
 
-        p = pickle.Pickler(file(sigfile, "wb"), -1)
+        p = pickle.Pickler(open(sigfile, "wb"), -1)
         p.dump(data)
 
     def dump_sigs(self, dataCache):
@@ -250,9 +250,9 @@ def clean_basepaths(a):
     return b
 
 def compare_sigfiles(a, b):
-    p1 = pickle.Unpickler(file(a, "rb"))
+    p1 = pickle.Unpickler(open(a, "rb"))
     a_data = p1.load()
-    p2 = pickle.Unpickler(file(b, "rb"))
+    p2 = pickle.Unpickler(open(b, "rb"))
     b_data = p2.load()
 
     def dict_diff(a, b, whitelist=set()):
@@ -331,7 +331,7 @@ def compare_sigfiles(a, b):
                 print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
 
 def dump_sigfile(a):
-    p1 = pickle.Unpickler(file(a, "rb"))
+    p1 = pickle.Unpickler(open(a, "rb"))
     a_data = p1.load()
 
     print "basewhitelist: %s" % (a_data['basewhitelist'])
