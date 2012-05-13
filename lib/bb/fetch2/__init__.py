@@ -476,10 +476,8 @@ def try_mirrors(d, origud, mirrors, check = False):
 
             if not os.path.exists(ud.donestamp) or ud.method.need_update(newuri, ud, ld):
                 ud.method.download(newuri, ud, ld)
-                if os.path.exists(ud.localpath):
-                    open(ud.donestamp, 'w').close()
-                    if hasattr(ud.method,"build_mirror_data"):
-                        ud.method.build_mirror_data(newuri, ud, ld)
+                if hasattr(ud.method,"build_mirror_data"):
+                    ud.method.build_mirror_data(newuri, ud, ld)
 
             if not ud.localpath or not os.path.exists(ud.localpath):
                 continue
@@ -491,6 +489,7 @@ def try_mirrors(d, origud, mirrors, check = False):
             # If that tarball is a local file:// we need to provide a symlink to it
             dldir = ld.getVar("DL_DIR", True)
             if os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
+                open(ud.donestamp, 'w').close()
                 dest = os.path.join(dldir, os.path.basename(ud.localpath))
                 if not os.path.exists(dest):
                     os.symlink(ud.localpath, dest)
@@ -498,6 +497,7 @@ def try_mirrors(d, origud, mirrors, check = False):
             # Otherwise the result is a local file:// and we symlink to it
             if not os.path.exists(origud.localpath):
                  os.symlink(ud.localpath, origud.localpath)
+            update_stamp(newuri, origud, ld)
             return ud.localpath
 
         except bb.fetch2.NetworkAccess:
