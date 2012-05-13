@@ -507,8 +507,7 @@ def try_mirrors(d, origud, mirrors, check = False):
             logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
             logger.debug(1, str(e))
             try:
-                if os.path.isfile(ud.localpath):
-                    bb.utils.remove(ud.localpath)
+                ud.method.clean(ud, ld)
             except UnboundLocalError:
                 pass
             continue
@@ -984,8 +983,7 @@ class Fetch(object):
                         logger.debug(1, str(e))
                         firsterr = e
                         # Remove any incomplete fetch
-                        if os.path.isfile(ud.localpath):
-                            bb.utils.remove(ud.localpath)
+                        m.clean(ud, self.d)
                         logger.debug(1, "Trying MIRRORS")
                         mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
                         localpath = try_mirrors (self.d, ud, mirrors)
