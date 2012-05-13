@@ -271,30 +271,28 @@ def verify_checksum(u, ud, d):
     matched
     """
 
-    if not ud.type in ["http", "https", "ftp", "ftps"]:
-        return
-
     md5data = bb.utils.md5_file(ud.localpath)
     sha256data = bb.utils.sha256_file(ud.localpath)
 
-    # If strict checking enabled and neither sum defined, raise error
-    strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
-    if (strict and ud.md5_expected == None and ud.sha256_expected == None):
-        raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
-                         'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
-                         (ud.localpath, ud.md5_name, md5data,
-                         ud.sha256_name, sha256data), u)
+    if ud.type in ["http", "https", "ftp", "ftps"]:
+        # If strict checking enabled and neither sum defined, raise error
+        strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
+        if (strict and ud.md5_expected == None and ud.sha256_expected == None):
+            raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
+                             'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
+                             (ud.localpath, ud.md5_name, md5data,
+                              ud.sha256_name, sha256data), u)
 
-    # Log missing sums so user can more easily add them
-    if ud.md5_expected == None:
-        logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.md5_name, md5data)
+        # Log missing sums so user can more easily add them
+        if ud.md5_expected == None:
+            logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                        'SRC_URI[%s] = "%s"',
+                        ud.localpath, ud.md5_name, md5data)
 
-    if ud.sha256_expected == None:
-        logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
-                    'SRC_URI[%s] = "%s"',
-                    ud.localpath, ud.sha256_name, sha256data)
+        if ud.sha256_expected == None:
+            logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
+                        'SRC_URI[%s] = "%s"',
+                        ud.localpath, ud.sha256_name, sha256data)
 
     md5mismatch = False
     sha256mismatch = False
