@@ -63,6 +63,9 @@ class FetchError(BBFetchException):
          BBFetchException.__init__(self, msg)
          self.args = (message, url)
 
+class ChecksumError(FetchError):
+    """Exception when mismatched checksum encountered"""
+
 class UnpackError(BBFetchException):
     """General fetcher exception when something happens incorrectly when unpacking"""
     def __init__(self, message, url):
@@ -312,7 +315,7 @@ def verify_checksum(u, ud, d):
         msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected)
 
     if len(msg):
-        raise FetchError('Checksum mismatch!%s' % msg, u)
+        raise ChecksumError('Checksum mismatch!%s' % msg, u)
 
 
 def update_stamp(u, ud, d):
@@ -504,8 +507,12 @@ def try_mirrors(d, origud, mirrors, check = False):
             raise
 
         except bb.fetch2.BBFetchException as e:
-            logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
-            logger.debug(1, str(e))
+            if isinstance(e, ChecksumError):
+                logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
+                logger.warn(str(e))
+            else:
+                logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
+                logger.debug(1, str(e))
             try:
                 ud.method.clean(ud, ld)
             except UnboundLocalError:
@@ -979,8 +986,11 @@ class Fetch(object):
                         raise
 
                     except BBFetchException as e:
-                        logger.warn('Failed to fetch URL %s' % u)
-                        logger.debug(1, str(e))
+                        if isinstance(e, ChecksumError):
+                            logger.warn("Checksum error encountered with download (will attempt other sources): %s" % str(e))
+                        else:
+                            logger.warn('Failed to fetch URL %s, attempting MIRRORS if available' % u)
+                            logger.debug(1, str(e))
                         firsterr = e
                         # Remove any incomplete fetch
                         m.clean(ud, self.d)
