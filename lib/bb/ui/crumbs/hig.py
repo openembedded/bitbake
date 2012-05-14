@@ -1073,12 +1073,13 @@ class ImageSelectionDialog (CrumbsDialog):
         self.image_table = HobViewTable(self.__columns__)
         self.image_table.set_size_request(-1, 300)
         self.image_table.connect("toggled", self.toggled_cb)
+        self.image_table.connect_group_selection(self.table_selected_cb)
+        self.image_table.connect("row-activated", self.row_actived_cb)
         self.vbox.pack_start(self.image_table, expand=True, fill=True)
 
         self.show_all()
 
-    def toggled_cb(self, table, cell, path, columnid, tree):
-        model = tree.get_model()
+    def change_image_cb(self, model, path, columnid):
         if not model:
             return
         iter = model.get_iter_first()
@@ -1088,6 +1089,19 @@ class ImageSelectionDialog (CrumbsDialog):
             iter = model.iter_next(iter)
 
         model[path][columnid] = True
+
+    def toggled_cb(self, table, cell, path, columnid, tree):
+        model = tree.get_model()
+        self.change_image_cb(model, path, columnid)
+
+    def table_selected_cb(self, selection):
+        model, paths = selection.get_selected_rows()
+        if paths:
+            self.change_image_cb(model, paths[0], 1)
+
+    def row_actived_cb(self, tab, model, path):
+        self.change_image_cb(model, path, 1)
+        self.emit('response', gtk.RESPONSE_YES)
 
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
