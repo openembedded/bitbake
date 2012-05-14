@@ -201,6 +201,8 @@ class ImageConfigurationPage (HobPage):
 
         self.image_desc = gtk.Label()
         self.image_desc.set_alignment(0.0, 0.5)
+        self.image_desc.set_size_request(400, -1)
+        self.image_desc.set_justify(gtk.JUSTIFY_LEFT)
         self.image_desc.set_line_wrap(True)
 
         # button to view recipes
