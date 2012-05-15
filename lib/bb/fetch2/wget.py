@@ -45,6 +45,9 @@ class Wget(FetchMethod):
         """
         return ud.type in ['http', 'https', 'ftp']
 
+    def recommends_checksum(self, urldata):
+        return True
+
     def urldata_init(self, ud, d):
 
         ud.basename = os.path.basename(ud.path)

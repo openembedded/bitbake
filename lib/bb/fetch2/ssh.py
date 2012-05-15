@@ -69,6 +69,9 @@ class SSH(FetchMethod):
     def supports(self, url, urldata, d):
         return __pattern__.match(url) != None
 
+    def supports_checksum(self, urldata):
+        return False
+
     def localpath(self, url, urldata, d):
         m = __pattern__.match(urldata.url)
         path = m.group('path')

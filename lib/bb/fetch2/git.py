@@ -82,6 +82,9 @@ class Git(FetchMethod):
         """
         return ud.type in ['git']
 
+    def supports_checksum(self, urldata):
+        return False
+
     def urldata_init(self, ud, d):
         """
         init git specific variable within url data

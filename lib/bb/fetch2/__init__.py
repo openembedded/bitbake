@@ -271,10 +271,13 @@ def verify_checksum(u, ud, d):
     matched
     """
 
+    if not ud.method.supports_checksum(ud):
+        return
+
     md5data = bb.utils.md5_file(ud.localpath)
     sha256data = bb.utils.sha256_file(ud.localpath)
 
-    if ud.type in ["http", "https", "ftp", "ftps"]:
+    if ud.method.recommends_checksum(ud):
         # If strict checking enabled and neither sum defined, raise error
         strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
         if (strict and ud.md5_expected == None and ud.sha256_expected == None):
@@ -578,10 +581,14 @@ class FetchData(object):
             self.sha256_name = "sha256sum"
         if self.md5_name in self.parm:
             self.md5_expected = self.parm[self.md5_name]
+        elif self.type not in ["http", "https", "ftp", "ftps"]:
+            self.md5_expected = None
         else:
             self.md5_expected = d.getVarFlag("SRC_URI", self.md5_name)
         if self.sha256_name in self.parm:
             self.sha256_expected = self.parm[self.sha256_name]
+        elif self.type not in ["http", "https", "ftp", "ftps"]:
+            self.sha256_expected = None
         else:
             self.sha256_expected = d.getVarFlag("SRC_URI", self.sha256_name)
 
@@ -659,6 +666,19 @@ class FetchMethod(object):
         and duplicate code execution)
         """
         return os.path.join(data.getVar("DL_DIR", d, True), urldata.localfile)
+
+    def supports_checksum(self, urldata):
+        """
+        Is localpath something that can be represented by a checksum?
+        """
+        return True
+
+    def recommends_checksum(self, urldata):
+        """
+        Is the backend on where checksumming is recommended (should warnings 
+        by displayed if there is no checksum)?
+        """
+        return False
 
     def _strip_leading_slashes(self, relpath):
         """
