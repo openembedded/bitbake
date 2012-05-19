@@ -106,4 +106,4 @@ class TerminalFilter2(object):
             self.termios.tcsetattr(fd, self.termios.TCSADRAIN, self.stdinbackup)
 
 def main(server, eventHandler):
-    bb.ui.knotty.main(server, eventHandler, TerminalFilter2)
+    return bb.ui.knotty.main(server, eventHandler, TerminalFilter2)
