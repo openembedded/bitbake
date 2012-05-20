@@ -56,10 +56,11 @@ class BBConfiguration(object):
 
 
 def get_ui(config):
-    if config.ui:
-        interface = config.ui
-    else:
-        interface = 'knotty'
+    if not config.ui:
+        # modify 'ui' attribute because it is also read by cooker
+        config.ui = os.environ.get('BITBAKE_UI', 'knotty')
+
+    interface = config.ui
 
     try:
         # Dynamically load the UI based on the ui name. Although we

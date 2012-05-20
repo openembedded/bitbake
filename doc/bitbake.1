@@ -103,7 +103,13 @@ Show debug logging for the specified logging domains
 .TP
 .B \-P, \-\-profile
 profile the command and print a report
+
+.SH ENVIRONMENT VARIABLES
+bitbake uses the following environment variables to control its
+operation:
 .TP
+.B BITBAKE_UI
+The bitbake user interface; overridden by the \fB-u\fP commandline option.
 
 .SH AUTHORS
 BitBake was written by 
