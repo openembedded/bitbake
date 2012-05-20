@@ -25,6 +25,7 @@ import gtk
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton, HobButton
 from bb.ui.crumbs.hobpages import HobPage
+import subprocess
 
 #
 # ImageDetailsPage
@@ -297,7 +298,7 @@ class ImageDetailsPage (HobPage):
         self.show_all()
 
     def view_files_clicked_cb(self, button, image_addr):
-        os.system("xdg-open /%s" % image_addr)
+        subprocess.call("xdg-open /%s" % image_addr, shell=True)
 
     def refresh_package_detail_box(self, image_size):
         self.package_detail.update_line_widgets("Total image size: ", image_size)

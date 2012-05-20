@@ -27,6 +27,7 @@ BitBake build tools.
 
 from future_builtins import zip
 import os
+import subprocess
 import logging
 import bb
 from   bb import data
@@ -184,7 +185,7 @@ class Perforce(FetchMethod):
             dest = list[0][len(path)+1:]
             where = dest.find("#")
 
-            os.system("%s%s print -o %s/%s %s" % (p4cmd, p4opt, module, dest[:where], list[0]))
+            subprocess.call("%s%s print -o %s/%s %s" % (p4cmd, p4opt, module, dest[:where], list[0]), shell=True)
             count = count + 1
 
         if count == 0:

@@ -47,7 +47,7 @@
 
 from __future__ import division
 import logging
-import os, sys, curses, itertools, time
+import os, sys, curses, itertools, time, subprocess
 import bb
 import xmlrpclib
 from bb import ui
@@ -286,7 +286,7 @@ class NCursesUI:
 #                            bb.error("log data follows (%s)" % logfile)
 #                            number_of_lines = data.getVar("BBINCLUDELOGS_LINES", d)
 #                            if number_of_lines:
-#                                os.system('tail -n%s %s' % (number_of_lines, logfile))
+#                                subprocess.call('tail -n%s %s' % (number_of_lines, logfile), shell=True)
 #                            else:
 #                                f = open(logfile, "r")
 #                                while True:
