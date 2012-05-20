@@ -671,6 +671,11 @@ class FetchMethod(object):
         """
         Is localpath something that can be represented by a checksum?
         """
+
+        # We cannot compute checksums for directories
+        if os.path.isdir(urldata.localpath) == True:
+            return False
+
         return True
 
     def recommends_checksum(self, urldata):
