@@ -23,6 +23,7 @@
 import gtk
 import pango
 import gobject
+import bb.process
 from bb.ui.crumbs.progressbar import HobProgressBar
 from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton, HobWarpCellRendererText, HobButton
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView
@@ -97,9 +98,9 @@ class BuildConfigurationTreeView(gtk.TreeView):
         for path in src_config_info.layers:
             import os, os.path
             if os.path.exists(path):
-                f = os.popen('cd %s; git branch 2>&1 | grep "^* " | tr -d "* "' % path)
+                f, errors = bb.process.run('cd %s; git branch 2>&1 | grep "^* " | tr -d "* "' % path)
                 if f:
-                    branch = f.readline().lstrip('\n').rstrip('\n')
+                    branch = f.strip('\n')
                     vars.append(self.set_vars("Branch:", branch))
                     f.close()
                 break

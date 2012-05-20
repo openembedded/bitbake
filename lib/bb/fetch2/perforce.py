@@ -91,8 +91,8 @@ class Perforce(FetchMethod):
 
         p4cmd = data.getVar('FETCHCOMMAND_p4', d, True)
         logger.debug(1, "Running %s%s changes -m 1 %s", p4cmd, p4opt, depot)
-        p4file = os.popen("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
-        cset = p4file.readline().strip()
+        p4file, errors = bb.process.run("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
+        cset = p4file.strip()
         logger.debug(1, "READ %s", cset)
         if not cset:
             return -1
@@ -155,8 +155,8 @@ class Perforce(FetchMethod):
         logger.debug(2, "Fetch: creating temporary directory")
         bb.utils.mkdirhier(data.expand('${WORKDIR}', localdata))
         data.setVar('TMPBASE', data.expand('${WORKDIR}/oep4.XXXXXX', localdata), localdata)
-        tmppipe = os.popen(data.getVar('MKTEMPDIRCMD', localdata, True) or "false")
-        tmpfile = tmppipe.readline().strip()
+        tmpfile, errors = bb.process.run(data.getVar('MKTEMPDIRCMD', localdata, True) or "false")
+        tmpfile = tmpfile.strip()
         if not tmpfile:
             raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", loc)
 
@@ -169,7 +169,8 @@ class Perforce(FetchMethod):
         os.chdir(tmpfile)
         logger.info("Fetch " + loc)
         logger.info("%s%s files %s", p4cmd, p4opt, depot)
-        p4file = os.popen("%s%s files %s" % (p4cmd, p4opt, depot))
+        p4file, errors = bb.process.run("%s%s files %s" % (p4cmd, p4opt, depot))
+        p4file = p4file.strip()
 
         if not p4file:
             raise FetchError("Fetch: unable to get the P4 files from %s" % depot, loc)

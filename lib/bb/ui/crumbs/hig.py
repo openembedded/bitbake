@@ -25,12 +25,12 @@ import gobject
 import hashlib
 import os
 import re
-import subprocess
 import shlex
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
 import bb.ui.crumbs.utils
+import bb.process
 
 """
 The following are convenience classes for implementing GNOME HIG compliant
@@ -799,7 +799,8 @@ class DeployImageDialog (CrumbsDialog):
         self.progress_bar.hide()
 
     def popen_read(self, cmd):
-        return os.popen("%s 2>/dev/null" % cmd).read().strip()
+        tmpout, errors = bb.process.run("%s" % cmd)
+        return tmpout.strip()
 
     def find_all_usb_devices(self):
         usb_devs = [ os.readlink(u)
@@ -828,7 +829,7 @@ class DeployImageDialog (CrumbsDialog):
                 cmdline = bb.ui.crumbs.utils.which_terminal()
                 if cmdline:
                     cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "\""
-                    subprocess.Popen(args=shlex.split(cmdline))
+                    bb.process.run(shlex.split(cmdline))
 
     def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
