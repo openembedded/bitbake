@@ -202,7 +202,7 @@ class ImageDetailsPage (HobPage):
 
         # Name
         self.image_store.clear()
-        default_toggled = False
+        default_toggled = ""
         default_image_size = 0
         num_toggled = 0
         i = 0
@@ -212,17 +212,19 @@ class ImageDetailsPage (HobPage):
                 or self.test_deployable(image_name)
 
             if not default_toggled:
-                default_toggled = is_toggled
                 if i == (len(image_names) - 1):
-                    default_toggled = True
-                self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, default_toggled)
-                if default_toggled:
+                    is_toggled = True
+                self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, is_toggled)
+                if is_toggled:
                     default_image_size = image_size
-                    self.create_bottom_buttons(self.buttonlist, image_name)
+                    default_toggled = image_name
+
             else:
                 self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, False)
             i = i + 1
             num_toggled += is_toggled
+
+        self.create_bottom_buttons(self.buttonlist, default_toggled)
 
         if build_succeeded and (num_toggled < 2):
             varlist = ["Name: ", "Directory: "]
