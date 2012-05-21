@@ -32,21 +32,21 @@ from bb.ui.crumbs.hobpages import HobPage
 class ImageDetailsPage (HobPage):
 
     __columns__ = [{
-            'col_name' : 'Selected',
-            'col_id'   : 2,
-            'col_style': 'radio toggle',
-            'col_min'  : 100,
-            'col_max'  : 100
-        },{
             'col_name' : 'Image name',
             'col_id'   : 0,
             'col_style': 'text',
             'col_min'  : 500,
             'col_max'  : 500
-        }, {
+        },{
             'col_name' : 'Image size',
             'col_id'   : 1,
             'col_style': 'text',
+            'col_min'  : 100,
+            'col_max'  : 100
+        },{
+            'col_name' : 'Select',
+            'col_id'   : 2,
+            'col_style': 'radio toggle',
             'col_min'  : 100,
             'col_max'  : 100
         }]
@@ -201,46 +201,42 @@ class ImageDetailsPage (HobPage):
             self.buttonlist = ["Build new image", "Run image", "Deploy image"]
 
         # Name
-        varlist = [""]
-        vallist = ["Listed generated image and package files."]
-        t = ''
         self.image_store.clear()
         default_toggled = False
         default_image_size = 0
+        num_toggled = 0
         i = 0
         for image_name in image_names:
             image_size = HobPage._size_to_string(os.stat(os.path.join(image_addr, image_name)).st_size)
+            is_toggled = (self.test_type_runnable(image_name) and self.test_mach_runnable(image_name)) \
+                or self.test_deployable(image_name)
+
             if not default_toggled:
-                default_toggled = (self.test_type_runnable(image_name) and self.test_mach_runnable(image_name)) \
-                    or self.test_deployable(image_name)
+                default_toggled = is_toggled
                 if i == (len(image_names) - 1):
                     default_toggled = True
                 self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, default_toggled)
                 if default_toggled:
                     default_image_size = image_size
                     self.create_bottom_buttons(self.buttonlist, image_name)
-                    if 'qemu' in image_name:
-                        t = ' (Selected QEMU items to be as runnable image)'
-                    else:
-                        t = ' (Selected Targeted item to be deploy)'
             else:
                 self.image_store.set(self.image_store.append(), 0, image_name, 1, image_size, 2, False)
             i = i + 1
+            num_toggled += is_toggled
 
-        if build_succeeded:
-            varlist = ["Name: ", "Directory: ", ". "]
+        if build_succeeded and (num_toggled < 2):
+            varlist = ["Name: ", "Directory: "]
             vallist = []
             vallist.append(image_name.split('.')[0])
             vallist.append(image_addr)
-            vallist.append(t)
             image_table = None
         else:
+            varlist = None
+            vallist = None
             image_table = HobViewTable(self.__columns__)
             image_table.set_model(self.image_store)
             image_table.connect("row-activated", self.row_activated_cb)
-            if default_image_size and ('qemu' in image_name):
-                t = '\n(Selected QEMU items to be as runnable image, so you need to select prompted kernel to run)'
-            vallist[0] += t
+            image_table.connect_group_selection(self.table_selected_cb)
 
         view_files_button = HobAltButton("View files")
         view_files_button.connect("clicked", self.view_files_clicked_cb, image_addr)
@@ -327,6 +323,41 @@ class ImageDetailsPage (HobPage):
                 deployable = True
                 break
         return deployable
+
+    def table_selected_cb(self, selection):
+        model, paths = selection.get_selected_rows()
+        if (not model) or (not paths):
+            return
+
+        path = paths[0]
+        columnid = 2
+        iter = model.get_iter_first()
+        while iter:
+            rowpath = model.get_path(iter)
+            model[rowpath][columnid] = False
+            iter = model.iter_next(iter)
+
+        model[path][columnid] = True
+        self.refresh_package_detail_box(model[path][1])
+
+        image_name = model[path][0]
+
+        # remove
+        for button_id, button in self.button_ids.items():
+            button.disconnect(button_id)
+        self._remove_all_widget()
+        # repack
+        self.pack_start(self.details_top_buttons, expand=False, fill=False)
+        self.pack_start(self.group_align, expand=True, fill=True)
+        if self.build_result:
+            self.box_group_area.pack_start(self.build_result, expand=False, fill=False)
+        self.box_group_area.pack_start(self.image_detail, expand=True, fill=True)
+        if self.setting_detail:
+            self.box_group_area.pack_start(self.setting_detail, expand=False, fill=False)
+        self.box_group_area.pack_start(self.package_detail, expand=False, fill=False)
+        self.create_bottom_buttons(self.buttonlist, image_name)
+        self.box_group_area.pack_end(self.details_bottom_buttons, expand=False, fill=False)
+        self.show_all()
 
     def row_activated_cb(self, table, model, path):
         if not model:
