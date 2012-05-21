@@ -508,7 +508,7 @@ class Builder(gtk.Window):
         toolchain_packages = []
         if self.configuration.toolchain_build:
             toolchain_packages = self.package_model.get_selected_packages_toolchain()
-        if self.configuration.selected_image == self.recipe_model.__dummy_image__:
+        if self.configuration.selected_image == self.recipe_model.__custom_image__:
             packages = self.package_model.get_selected_packages()
             image = self.hob_image
         else:
@@ -827,7 +827,7 @@ class Builder(gtk.Window):
             fraction = 1.0
             self.parameters.image_names = []
             selected_image = self.recipe_model.get_selected_image()
-            if selected_image == self.recipe_model.__dummy_image__:
+            if selected_image == self.recipe_model.__custom_image__:
                 linkname = 'hob-image-' + self.configuration.curr_mach
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
@@ -965,7 +965,7 @@ class Builder(gtk.Window):
         selected_packages = self.package_model.get_selected_packages() or []
 
         # If no base image and no selected packages don't build anything
-        if not (selected_packages or selected_image != self.recipe_model.__dummy_image__):
+        if not (selected_packages or selected_image != self.recipe_model.__custom_image__):
             lbl = "<b>No selections made</b>\nYou have not made any selections"
             lbl = lbl + " so there isn't anything to bake at this time."
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)

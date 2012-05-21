@@ -222,7 +222,7 @@ class RecipeSelectionPage (HobPage):
         self.refresh_selection()
         if not self.builder.customized:
             self.builder.customized = True
-            self.builder.configuration.selected_image = self.recipe_model.__dummy_image__
+            self.builder.configuration.selected_image = self.recipe_model.__custom_image__
             self.builder.rcppkglist_populated()
 
         self.builder.window_sensitive(True)
