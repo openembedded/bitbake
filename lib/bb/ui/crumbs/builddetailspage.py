@@ -24,10 +24,11 @@ import gtk
 import pango
 import gobject
 from bb.ui.crumbs.progressbar import HobProgressBar
-from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton, HobWarpCellRendererText
+from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton, HobWarpCellRendererText, HobButton
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView
 from bb.ui.crumbs.runningbuild import BuildFailureTreeView
 from bb.ui.crumbs.hobpages import HobPage
+from bb.ui.crumbs.hobcolor import HobColors
 
 class BuildConfigurationTreeView(gtk.TreeView):
     def __init__ (self):
@@ -198,6 +199,87 @@ class BuildDetailsPage (HobPage):
         for child in children:
             self.remove(child)
 
+    def update_failures_sum_display(self):
+        num = 0
+        it = self.failure_model.get_iter_first()
+        while it:
+            color = self.failure_model.get_value(it, self.builder.handler.build.model.COL_COLOR)
+            if color == HobColors.ERROR:
+                num += 1
+            it = self.failure_model.iter_next(it)
+
+        return num
+
+    def add_build_fail_top_bar(self, actions):
+        mainly_action = "Edit %s" % actions
+        if 'image' in actions:
+            next_action   = ""
+        else:
+            next_action   = "Create new image"
+
+        #set to issue page
+        self.notebook.set_page("Issues")
+
+        color = HobColors.ERROR
+        build_fail_top = gtk.EventBox()
+        build_fail_top.set_size_request(-1, 260)
+        build_fail_top.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
+
+        build_fail_tab = gtk.Table(7, 40, True)
+        build_fail_top.add(build_fail_tab)
+
+        icon = gtk.Image()
+        icon_pix_buffer = gtk.gdk.pixbuf_new_from_file(hic.ICON_INDI_ERROR_FILE)
+        icon.set_from_pixbuf(icon_pix_buffer)
+        build_fail_tab.attach(icon, 1, 4, 0, 3)
+
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        label.set_markup("<span size='x-large'>%s</span>" % self.title)
+        build_fail_tab.attach(label, 4, 20, 0, 3)
+
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        num_of_fails = self.update_failures_sum_display()
+        current_fail, recipe_task_status = self.task_status.get_text().split('\n')
+        label.set_markup(" %d tasks failed,  %s, %s" % (num_of_fails, current_fail, recipe_task_status))
+        build_fail_tab.attach(label, 4, 40, 2, 4)
+
+        # create button 'Edit packages'
+        action_button = HobButton(mainly_action)
+        action_button.set_size_request(-1, 49)
+        action_button.connect('clicked', self.failure_main_action_button_clicked_cb, mainly_action)
+        build_fail_tab.attach(action_button, 4, 16, 4, 6)
+
+        if next_action:
+            next_button = HobAltButton(next_action)
+            next_button.set_alignment(0.0, 0.5)
+            next_button.connect('clicked', self.failure_next_action_button_clicked_cb, next_action)
+            build_fail_tab.attach(next_button, 17, 24, 4, 5)
+
+        file_bug_button = HobAltButton('File a bug')
+        file_bug_button.set_alignment(0.0, 0.5)
+        file_bug_button.connect('clicked', self.failure_file_bug_activate_link_cb)
+        build_fail_tab.attach(file_bug_button, 17, 24, 4 + abs(next_action != ""), 6)
+
+        return build_fail_top
+
+    def show_fail_page(self, title, action_names):
+        self._remove_all_widget()
+        self.title = "Hob cannot build your %s" % title
+
+        self.build_fail_bar = self.add_build_fail_top_bar(action_names)
+        self.pack_start(self.build_fail_bar)
+        self.pack_start(self.group_align, expand=True, fill=True)
+
+        self.box_group_area.pack_start(self.vbox, expand=True, fill=True)
+
+        self.vbox.pack_start(self.notebook, expand=True, fill=True)
+
+        self.box_group_area.pack_end(self.button_box, expand=False, fill=False)
+        self.show_all()
+        self.back_button.hide()
+
     def show_page(self, step):
         self._remove_all_widget()
         if step == self.builder.PACKAGE_GENERATING or step == self.builder.FAST_IMAGE_GENERATING:
@@ -251,3 +333,18 @@ class BuildDetailsPage (HobPage):
 
     def show_configurations(self, configurations, params):
         self.config_tv.show(configurations, params)
+
+    def failure_main_action_button_clicked_cb(self, button, action):
+        if "Edit recipes" in action:
+            self.builder.show_recipes()
+        elif "Edit packages" in action:
+            self.builder.show_packages()
+        elif "Edit image configuration" in action:
+            self.builder.show_configuration()
+
+    def failure_next_action_button_clicked_cb(self, button, action):
+        if "Create new image" in action:
+            self.builder.initiate_new_build_async()
+
+    def failure_file_bug_activate_link_cb(self, button):
+        button.child.emit('activate-link', "http://bugzilla.yoctoproject.org")

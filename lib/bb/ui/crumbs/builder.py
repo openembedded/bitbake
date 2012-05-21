@@ -853,12 +853,20 @@ class Builder(gtk.Window):
             message = "Build stopped: "
             fraction = self.build_details_page.progress_bar.get_fraction()
         else:
+            fail_to_next_edit = ""
             if self.current_step == self.FAST_IMAGE_GENERATING:
+                fail_to_next_edit = "image configuration"
                 fraction = 0.9
             elif self.current_step == self.IMAGE_GENERATING:
+                if self.previous_step == self.FAST_IMAGE_GENERATING:
+                    fail_to_next_edit = "image configuration"
+                else:
+                    fail_to_next_edit = "packages"
                 fraction = 1.0
             elif self.current_step == self.PACKAGE_GENERATING:
+                fail_to_next_edit = "recipes"
                 fraction = 1.0
+            self.build_details_page.show_fail_page(fail_to_next_edit.split(' ')[0], fail_to_next_edit)
             status = "fail"
             message = "Build failed: "
         self.build_details_page.update_progress_bar(message, fraction, status)
