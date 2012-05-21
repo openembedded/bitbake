@@ -28,6 +28,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os, re
 import logging
+import urllib
 import bb.persist_data, bb.utils
 from bb import data
 
@@ -147,14 +148,14 @@ def decodeurl(url):
             s1, s2 = s.split('=')
             p[s1] = s2
 
-    return (type, host, path, user, pswd, p)
+    return type, host, urllib.unquote(path), user, pswd, p
 
 def encodeurl(decoded):
     """Encodes a URL from tokens (scheme, network location, path,
     user, password, parameters).
     """
 
-    (type, host, path, user, pswd, p) = decoded
+    type, host, path, user, pswd, p = decoded
 
     if not path:
         raise MissingParameterError('path', "encoded from the data %s" % str(decoded))
@@ -168,7 +169,7 @@ def encodeurl(decoded):
         url += "@"
     if host and type != "file":
         url += "%s" % host
-    url += "%s" % path
+    url += "%s" % urllib.quote(path)
     if p:
         for parm in p:
             url += ";%s=%s" % (parm, p[parm])
