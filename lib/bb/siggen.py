@@ -60,6 +60,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         self.taskhash = {}
         self.taskdeps = {}
         self.runtaskdeps = {}
+        self.file_checksum_values = {}
         self.gendeps = {}
         self.lookupcache = {}
         self.pkgnameextract = re.compile("(?P<fn>.*)\..*")
@@ -152,6 +153,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         k = fn + "." + task
         data = dataCache.basetaskhash[k]
         self.runtaskdeps[k] = []
+        self.file_checksum_values[k] = {}
         recipename = dataCache.pkg_fn[fn]
         for dep in sorted(deps, key=clean_basepath):
             depname = dataCache.pkg_fn[self.pkgnameextract.search(dep).group('fn')]
@@ -161,6 +163,12 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 bb.fatal("%s is not in taskhash, caller isn't calling in dependency order?", dep)
             data = data + self.taskhash[dep]
             self.runtaskdeps[k].append(dep)
+
+        if task in dataCache.file_checksums[fn]:
+            checksums = bb.fetch2.get_file_checksums(dataCache.file_checksums[fn][task], recipename)
+            for (f,cs) in checksums:
+               self.file_checksum_values[k][f] = cs
+               data = data + cs
         h = hashlib.md5(data).hexdigest()
         self.taskhash[k] = h
         #d.setVar("BB_TASKHASH_task-%s" % task, taskhash[task])
@@ -197,6 +205,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         if runtime and k in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[k]
+            data['file_checksum_values'] = self.file_checksum_values[k]
             data['runtaskhashes'] = {}
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
@@ -304,6 +313,18 @@ def compare_sigfiles(a, b):
         for dep in changed:
             print "Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep])
 
+    changed, added, removed = dict_diff(a_data['file_checksum_values'], b_data['file_checksum_values'])
+    if changed:
+        for f in changed:
+            print "Checksum for file %s changed from %s to %s" % (f, a_data['file_checksum_values'][f], b_data['file_checksum_values'][f])
+    if added:
+        for f in added:
+            print "Dependency on checksum of file %s was added" % (f)
+    if removed:
+        for f in removed:
+            print "Dependency on checksum of file %s was removed" % (f)
+
+
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
         a = clean_basepaths(a_data['runtaskhashes'])
         b = clean_basepaths(b_data['runtaskhashes'])
@@ -352,6 +373,9 @@ def dump_sigfile(a):
 
     if 'runtaskdeps' in a_data:
         print "Tasks this task depends on: %s" % (a_data['runtaskdeps'])
+
+    if 'file_checksum_values' in a_data:
+        print "This task depends on the checksums of files: %s" % (a_data['file_checksum_values'])
 
     if 'runtaskhashes' in a_data:
         for dep in a_data['runtaskhashes']:

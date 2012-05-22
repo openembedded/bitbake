@@ -43,7 +43,7 @@ except ImportError:
     logger.info("Importing cPickle failed. "
                 "Falling back to a very slow implementation.")
 
-__cache_version__ = "143"
+__cache_version__ = "144"
 
 def getCacheFile(path, filename, data_hash):
     return os.path.join(path, filename + "." + data_hash)
@@ -76,9 +76,13 @@ class RecipeInfoCommon(object):
                     for task in tasks)
 
     @classmethod
-    def flaglist(cls, flag, varlist, metadata):
-        return dict((var, metadata.getVarFlag(var, flag, True))
+    def flaglist(cls, flag, varlist, metadata, squash=False):
+        out_dict = dict((var, metadata.getVarFlag(var, flag, True))
                     for var in varlist)
+        if squash:
+            return dict((k,v) for (k,v) in out_dict.iteritems() if v)
+        else:
+            return out_dict
 
     @classmethod
     def getvar(cls, var, metadata):
@@ -128,6 +132,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.stamp = self.getvar('STAMP', metadata)
         self.stamp_base = self.flaglist('stamp-base', self.tasks, metadata)
         self.stamp_extrainfo = self.flaglist('stamp-extra-info', self.tasks, metadata)
+        self.file_checksums = self.flaglist('file-checksums', self.tasks, metadata, True)
         self.packages_dynamic = self.listvar('PACKAGES_DYNAMIC', metadata)
         self.depends          = self.depvar('DEPENDS', metadata)
         self.provides         = self.depvar('PROVIDES', metadata)
@@ -154,6 +159,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.stamp = {}
         cachedata.stamp_base = {}
         cachedata.stamp_extrainfo = {}
+        cachedata.file_checksums = {}
         cachedata.fn_provides = {}
         cachedata.pn_provides = defaultdict(list)
         cachedata.all_depends = []
@@ -185,6 +191,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         cachedata.stamp[fn] = self.stamp
         cachedata.stamp_base[fn] = self.stamp_base
         cachedata.stamp_extrainfo[fn] = self.stamp_extrainfo
+        cachedata.file_checksums[fn] = self.file_checksums
 
         provides = [self.pn]
         for provide in self.provides:

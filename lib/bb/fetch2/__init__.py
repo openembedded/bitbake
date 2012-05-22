@@ -8,6 +8,7 @@ BitBake build tools.
 """
 
 # Copyright (C) 2003, 2004  Chris Larson
+# Copyright (C) 2012  Intel Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -30,9 +31,11 @@ import os, re
 import logging
 import urllib
 import bb.persist_data, bb.utils
+import bb.checksum
 from bb import data
 
 __version__ = "2"
+_checksum_cache = bb.checksum.FileChecksumCache()
 
 logger = logging.getLogger("BitBake.Fetcher")
 
@@ -233,9 +236,17 @@ def fetcher_init(d):
     else:
         raise FetchError("Invalid SRCREV cache policy of: %s" % srcrev_policy)
 
+    _checksum_cache.init_cache(d)
+
     for m in methods:
         if hasattr(m, "init"):
             m.init(d)
+
+def fetcher_parse_save(d):
+    _checksum_cache.save_extras(d)
+
+def fetcher_parse_done(d):
+    _checksum_cache.save_merge(d)
 
 def fetcher_compare_revisions(d):
     """
@@ -552,6 +563,80 @@ def srcrev_internal_helper(ud, d, name):
         rev = ud.method.latest_revision(ud.url, ud, d, name)
 
     return rev
+
+
+def get_checksum_file_list(d):
+    """ Get a list of files checksum in SRC_URI
+
+    Returns the all resolved local path of all local file entries in
+    SRC_URI as a space-separated string
+    """
+    fetch = Fetch([], d)
+
+    dl_dir = d.getVar('DL_DIR', True)
+    filelist = []
+    for u in fetch.urls:
+        ud = fetch.ud[u]
+
+        if isinstance(ud.method, local.Local):
+            ud.setup_localpath(d)
+            f = ud.localpath
+            if f.startswith(dl_dir):
+                # The local fetcher's behaviour is to return a path under DL_DIR if it couldn't find the file anywhere else
+                if os.path.exists(f):
+                    bb.warn("Getting checksum for %s SRC_URI entry %s: file not found except in DL_DIR" % (d.getVar('PN', True), os.path.basename(f)))
+                else:
+                    bb.warn("Unable to get checksum for %s SRC_URI entry %s: file could not be found" % (d.getVar('PN', True), os.path.basename(f)))
+                    continue
+            filelist.append(f)
+
+    return " ".join(filelist)
+
+
+def get_file_checksums(filelist, pn):
+    """Get a list of the checksums for a list of local files
+
+    Returns the checksums for a list of local files, caching the results as
+    it proceeds
+
+    """
+
+    def checksum_file(f):
+        try:
+            checksum = _checksum_cache.get_checksum(f)
+        except OSError as e:
+            import traceback
+            bb.warn("Unable to get checksum for %s SRC_URI entry %s: %s" % (pn, os.path.basename(f), e))
+            return None
+        return checksum
+
+    checksums = []
+    for pth in filelist.split():
+        checksum = None
+        if '*' in pth:
+            # Handle globs
+            import glob
+            for f in glob.glob(pth):
+                checksum = checksum_file(f)
+                if checksum:
+                    checksums.append((f, checksum))
+        elif os.path.isdir(pth):
+            # Handle directories
+            for root, dirs, files in os.walk(pth):
+                for name in files:
+                    fullpth = os.path.join(root, name)
+                    checksum = checksum_file(fullpth)
+                    if checksum:
+                        checksums.append((fullpth, checksum))
+        else:
+            checksum = checksum_file(pth)
+
+        if checksum:
+            checksums.append((pth, checksum))
+
+    checksums.sort()
+    return checksums
+
 
 class FetchData(object):
     """

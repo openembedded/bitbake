@@ -1570,6 +1570,7 @@ class CookerParser(object):
             def init():
                 Parser.cfg = self.cfgdata
                 multiprocessing.util.Finalize(None, bb.codeparser.parser_cache_save, args=(self.cfgdata,), exitpriority=1)
+                multiprocessing.util.Finalize(None, bb.fetch.fetcher_parse_save, args=(self.cfgdata,), exitpriority=1)
 
             self.feeder_quit = multiprocessing.Queue(maxsize=1)
             self.parser_quit = multiprocessing.Queue(maxsize=self.num_processes)
@@ -1618,6 +1619,7 @@ class CookerParser(object):
         sync.start()
         multiprocessing.util.Finalize(None, sync.join, exitpriority=-100)
         bb.codeparser.parser_cache_savemerge(self.cooker.configuration.data)
+        bb.fetch.fetcher_parse_done(self.cooker.configuration.data)
 
     def load_cached(self):
         for filename, appends in self.fromcache:
