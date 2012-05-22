@@ -292,8 +292,9 @@ class ImageConfigurationPage (HobPage):
             active += 1
         self.machine_combo.set_active(-1)
 
-    def update_image_desc(self, selected_image):
+    def update_image_desc(self):
         desc = ""
+        selected_image = self.image_combo.get_active_text()
         if selected_image and selected_image in self.builder.recipe_model.pn_path.keys():
             image_path = self.builder.recipe_model.pn_path[selected_image]
             image_iter = self.builder.recipe_model.get_iter(image_path)
@@ -320,7 +321,7 @@ class ImageConfigurationPage (HobPage):
         image_path = self.builder.recipe_model.pn_path[selected_image]
         image_iter = self.builder.recipe_model.get_iter(image_path)
         selected_packages = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_INSTALL).split()
-        self.update_image_desc(selected_image)
+        self.update_image_desc()
 
         self.builder.recipe_model.reset()
         self.builder.package_model.reset()

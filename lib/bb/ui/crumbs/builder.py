@@ -763,7 +763,7 @@ class Builder(gtk.Window):
         selected_packages = self.configuration.selected_packages[:]
 
         self.image_configuration_page.update_image_combo(self.recipe_model, selected_image)
-        self.image_configuration_page.update_image_desc(selected_image)
+        self.image_configuration_page.update_image_desc()
         self.update_recipe_model(selected_image, selected_recipes)
         self.update_package_model(selected_packages)
 
