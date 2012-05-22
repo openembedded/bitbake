@@ -5,10 +5,10 @@ import os.path
 import bb.utils, bb.data
 from itertools import chain
 from pysh import pyshyacc, pyshlex, sherrors
+from bb.cache import MultiProcessCache
 
 
 logger = logging.getLogger('BitBake.CodeParser')
-PARSERCACHE_VERSION = 2
 
 try:
     import cPickle as pickle
@@ -32,133 +32,56 @@ def check_indent(codestr):
 
     return codestr
 
-pythonparsecache = {}
-shellparsecache = {}
-pythonparsecacheextras = {}
-shellparsecacheextras = {}
 
+class CodeParserCache(MultiProcessCache):
+    cache_file_name = "bb_codeparser.dat"
+    CACHE_VERSION = 2
 
-def parser_cachefile(d):
-    cachedir = (d.getVar("PERSISTENT_DIR", True) or
-                d.getVar("CACHE", True))
-    if cachedir in [None, '']:
-        return None
-    bb.utils.mkdirhier(cachedir)
-    cachefile = os.path.join(cachedir, "bb_codeparser.dat")
-    logger.debug(1, "Using cache in '%s' for codeparser cache", cachefile)
-    return cachefile
+    def __init__(self):
+        MultiProcessCache.__init__(self)
+        self.pythoncache = self.cachedata[0]
+        self.shellcache = self.cachedata[1]
+        self.pythoncacheextras = self.cachedata_extras[0]
+        self.shellcacheextras = self.cachedata_extras[1]
+
+    def init_cache(self, d):
+        MultiProcessCache.init_cache(self, d)
+
+        # cachedata gets re-assigned in the parent
+        self.pythoncache = self.cachedata[0]
+        self.shellcache = self.cachedata[1]
+
+    def compress_keys(self, data):
+        # When the dicts are originally created, python calls intern() on the set keys
+        # which significantly improves memory usage. Sadly the pickle/unpickle process
+        # doesn't call intern() on the keys and results in the same strings being duplicated
+        # in memory. This also means pickle will save the same string multiple times in
+        # the cache file. By interning the data here, the cache file shrinks dramatically
+        # meaning faster load times and the reloaded cache files also consume much less
+        # memory. This is worth any performance hit from this loops and the use of the
+        # intern() data storage.
+        # Python 3.x may behave better in this area
+        for h in data[0]:
+            data[0][h]["refs"] = self.internSet(data[0][h]["refs"])
+            data[0][h]["execs"] = self.internSet(data[0][h]["execs"])
+        for h in data[1]:
+            data[1][h]["execs"] = self.internSet(data[1][h]["execs"])
+        return
+
+    def create_cachedata(self):
+        data = [{}, {}]
+        return data
+
+codeparsercache = CodeParserCache()
 
 def parser_cache_init(d):
-    global pythonparsecache
-    global shellparsecache
-
-    cachefile = parser_cachefile(d)
-    if not cachefile:
-        return
-
-    try:
-        p = pickle.Unpickler(file(cachefile, "rb"))
-        data, version = p.load()
-    except:
-        return
-
-    if version != PARSERCACHE_VERSION:
-        return
-
-    pythonparsecache = data[0]
-    shellparsecache = data[1]
+    codeparsercache.init_cache(d)
 
 def parser_cache_save(d):
-    cachefile = parser_cachefile(d)
-    if not cachefile:
-        return
-
-    glf = bb.utils.lockfile(cachefile + ".lock", shared=True)
-
-    i = os.getpid()
-    lf = None
-    while not lf:
-        shellcache = {}
-        pythoncache = {}
-
-        lf = bb.utils.lockfile(cachefile + ".lock." + str(i), retry=False)
-        if not lf or os.path.exists(cachefile + "-" + str(i)):
-            if lf:
-               bb.utils.unlockfile(lf) 
-               lf = None
-            i = i + 1
-            continue
-
-        shellcache = shellparsecacheextras
-        pythoncache = pythonparsecacheextras
-
-        p = pickle.Pickler(file(cachefile + "-" + str(i), "wb"), -1)
-        p.dump([[pythoncache, shellcache], PARSERCACHE_VERSION])
-
-    bb.utils.unlockfile(lf)
-    bb.utils.unlockfile(glf)
-
-def internSet(items):
-    new = set()
-    for i in items:
-        new.add(intern(i))
-    return new
+    codeparsercache.save_extras(d)
 
 def parser_cache_savemerge(d):
-    cachefile = parser_cachefile(d)
-    if not cachefile:
-        return
-
-    glf = bb.utils.lockfile(cachefile + ".lock")
-
-    try:
-        p = pickle.Unpickler(file(cachefile, "rb"))
-        data, version = p.load()
-    except (IOError, EOFError):
-        data, version = None, None
-
-    if version != PARSERCACHE_VERSION:
-        data = [{}, {}]
-
-    for f in [y for y in os.listdir(os.path.dirname(cachefile)) if y.startswith(os.path.basename(cachefile) + '-')]:
-        f = os.path.join(os.path.dirname(cachefile), f)
-        try:
-            p = pickle.Unpickler(file(f, "rb"))
-            extradata, version = p.load()
-        except (IOError, EOFError):
-            extradata, version = [{}, {}], None
-        
-        if version != PARSERCACHE_VERSION:
-            continue
-
-        for h in extradata[0]:
-            if h not in data[0]:
-                data[0][h] = extradata[0][h]
-        for h in extradata[1]:
-            if h not in data[1]:
-                data[1][h] = extradata[1][h]
-        os.unlink(f)
-
-    # When the dicts are originally created, python calls intern() on the set keys
-    # which significantly improves memory usage. Sadly the pickle/unpickle process 
-    # doesn't call intern() on the keys and results in the same strings being duplicated
-    # in memory. This also means pickle will save the same string multiple times in 
-    # the cache file. By interning the data here, the cache file shrinks dramatically
-    # meaning faster load times and the reloaded cache files also consume much less 
-    # memory. This is worth any performance hit from this loops and the use of the 
-    # intern() data storage.
-    # Python 3.x may behave better in this area
-    for h in data[0]:
-        data[0][h]["refs"] = internSet(data[0][h]["refs"])
-        data[0][h]["execs"] = internSet(data[0][h]["execs"])
-    for h in data[1]:
-        data[1][h]["execs"] = internSet(data[1][h]["execs"])
-
-    p = pickle.Pickler(file(cachefile, "wb"), -1)
-    p.dump([data, PARSERCACHE_VERSION])
-
-    bb.utils.unlockfile(glf)
-
+    codeparsercache.save_merge(d)
 
 Logger = logging.getLoggerClass()
 class BufferedLogger(Logger):
@@ -235,14 +158,14 @@ class PythonParser():
     def parse_python(self, node):
         h = hash(str(node))
 
-        if h in pythonparsecache:
-            self.references = pythonparsecache[h]["refs"]
-            self.execs = pythonparsecache[h]["execs"]
+        if h in codeparsercache.pythoncache:
+            self.references = codeparsercache.pythoncache[h]["refs"]
+            self.execs = codeparsercache.pythoncache[h]["execs"]
             return
 
-        if h in pythonparsecacheextras:
-            self.references = pythonparsecacheextras[h]["refs"]
-            self.execs = pythonparsecacheextras[h]["execs"]
+        if h in codeparsercache.pythoncacheextras:
+            self.references = codeparsercache.pythoncacheextras[h]["refs"]
+            self.execs = codeparsercache.pythoncacheextras[h]["execs"]
             return
 
 
@@ -256,9 +179,9 @@ class PythonParser():
         self.references.update(self.var_references)
         self.references.update(self.var_execs)
 
-        pythonparsecacheextras[h] = {}
-        pythonparsecacheextras[h]["refs"] = self.references
-        pythonparsecacheextras[h]["execs"] = self.execs
+        codeparsercache.pythoncacheextras[h] = {}
+        codeparsercache.pythoncacheextras[h]["refs"] = self.references
+        codeparsercache.pythoncacheextras[h]["execs"] = self.execs
 
 class ShellParser():
     def __init__(self, name, log):
@@ -276,12 +199,12 @@ class ShellParser():
 
         h = hash(str(value))
 
-        if h in shellparsecache:
-            self.execs = shellparsecache[h]["execs"]
+        if h in codeparsercache.shellcache:
+            self.execs = codeparsercache.shellcache[h]["execs"]
             return self.execs
 
-        if h in shellparsecacheextras:
-            self.execs = shellparsecacheextras[h]["execs"]
+        if h in codeparsercache.shellcacheextras:
+            self.execs = codeparsercache.shellcacheextras[h]["execs"]
             return self.execs
 
         try:
@@ -293,8 +216,8 @@ class ShellParser():
             self.process_tokens(token)
         self.execs = set(cmd for cmd in self.allexecs if cmd not in self.funcdefs)
 
-        shellparsecacheextras[h] = {}
-        shellparsecacheextras[h]["execs"] = self.execs
+        codeparsercache.shellcacheextras[h] = {}
+        codeparsercache.shellcacheextras[h]["execs"] = self.execs
 
         return self.execs
 
