@@ -304,9 +304,6 @@ class HobHandler(gobject.GObject):
     def set_ftp_proxy(self, ftp_proxy):
         self.runCommand(["setVariable", "ftp_proxy", ftp_proxy])
 
-    def set_all_proxy(self, all_proxy):
-        self.runCommand(["setVariable", "all_proxy", all_proxy])
-
     def set_git_proxy(self, host, port):
         self.runCommand(["setVariable", "GIT_PROXY_HOST", host])
         self.runCommand(["setVariable", "GIT_PROXY_PORT", port])
@@ -496,7 +493,6 @@ class HobHandler(gobject.GObject):
         params["http_proxy"] = self.runCommand(["getVariable", "http_proxy"]) or ""
         params["ftp_proxy"] = self.runCommand(["getVariable", "ftp_proxy"]) or ""
         params["https_proxy"] = self.runCommand(["getVariable", "https_proxy"]) or ""
-        params["all_proxy"] = self.runCommand(["getVariable", "all_proxy"]) or ""
 
         params["cvs_proxy_host"] = self.runCommand(["getVariable", "CVS_PROXY_HOST"]) or ""
         params["cvs_proxy_port"] = self.runCommand(["getVariable", "CVS_PROXY_PORT"]) or ""

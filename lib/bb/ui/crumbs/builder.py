@@ -26,6 +26,7 @@ import copy
 import os
 import subprocess
 import shlex
+import re
 from bb.ui.crumbs.template import TemplateMgr
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
@@ -41,6 +42,44 @@ import bb.ui.crumbs.utils
 
 class Configuration:
     '''Represents the data structure of configuration.'''
+
+    @classmethod
+    def parse_proxy_string(cls, proxy):
+        pattern = "^\s*((http|https|ftp|git|cvs)://)?((\S+):(\S+)@)?(\S+):(\d+)/?"
+        match = re.search(pattern, proxy)
+        if match:
+            return match.group(2), match.group(4), match.group(5), match.group(6), match.group(7)
+        else:
+            return None, None, None, "", ""
+
+    @classmethod
+    def make_host_string(cls, prot, user, passwd, host, default_prot=""):
+        if host == None or host == "":
+            return ""
+
+        passwd = passwd or ""
+
+        if user != None and user != "":
+            if prot == None or prot == "":
+                prot = default_prot
+            return prot + "://" + user + ":" + passwd + "@" + host
+        else:
+            if prot == None or prot == "":
+                return host
+            else:
+                return prot + "://" + host
+
+    @classmethod
+    def make_port_string(cls, port):
+        port = port or ""
+        return port
+
+    @classmethod
+    def make_proxy_string(cls, prot, user, passwd, host, port, default_prot=""):
+        if host == None or host == "" or port == None or port == "":
+            return ""
+
+        return Configuration.make_host_string(prot, user, passwd, host, default_prot) + ":" + Configuration.make_port_string(port)
 
     def __init__(self):
         self.curr_mach = ""
@@ -67,14 +106,42 @@ class Configuration:
         self.default_task = "build"
 
         # proxy settings
-        self.all_proxy = self.http_proxy = self.ftp_proxy = self.https_proxy = ""
-        self.git_proxy_host = self.git_proxy_port = ""
-        self.cvs_proxy_host = self.cvs_proxy_port = ""
+        self.enable_proxy = None
+        self.same_proxy = False
+        self.proxies = {
+            "http"  : [None, None, None, "", ""],  # protocol : [prot, user, passwd, host, port]
+            "https" : [None, None, None, "", ""],
+            "ftp"   : [None, None, None, "", ""],
+            "git"   : [None, None, None, "", ""],
+            "cvs"   : [None, None, None, "", ""],
+        }
 
     def clear_selection(self):
         self.selected_image = None
         self.selected_recipes = []
         self.selected_packages = []
+
+    def split_proxy(self, protocol, proxy):
+        entry = []
+        prot, user, passwd, host, port = Configuration.parse_proxy_string(proxy)
+        entry.append(prot)
+        entry.append(user)
+        entry.append(passwd)
+        entry.append(host)
+        entry.append(port)
+        self.proxies[protocol] = entry
+
+    def combine_proxy(self, protocol):
+        entry = self.proxies[protocol]
+        return Configuration.make_proxy_string(entry[0], entry[1], entry[2], entry[3], entry[4], protocol)
+
+    def combine_host_only(self, protocol):
+        entry = self.proxies[protocol]
+        return Configuration.make_host_string(entry[0], entry[1], entry[2], entry[3], protocol)
+
+    def combine_port_only(self, protocol):
+        entry = self.proxies[protocol]
+        return Configuration.make_port_string(entry[4])
 
     def update(self, params):
         # settings
@@ -99,14 +166,14 @@ class Configuration:
         self.default_task = params["default_task"]
 
         # proxy settings
-        self.all_proxy = params["all_proxy"]
-        self.http_proxy = params["http_proxy"]
-        self.ftp_proxy = params["ftp_proxy"]
-        self.https_proxy = params["https_proxy"]
-        self.git_proxy_host = params["git_proxy_host"]
-        self.git_proxy_port = params["git_proxy_port"]
-        self.cvs_proxy_host = params["cvs_proxy_host"]
-        self.cvs_proxy_port = params["cvs_proxy_port"]
+        self.enable_proxy = params["http_proxy"] != "" or params["https_proxy"] != "" or params["ftp_proxy"] != "" \
+            or params["git_proxy_host"] != "" or params["git_proxy_port"] != ""                                    \
+            or params["cvs_proxy_host"] != "" or params["cvs_proxy_port"] != ""
+        self.split_proxy("http", params["http_proxy"])
+        self.split_proxy("https", params["https_proxy"])
+        self.split_proxy("ftp", params["ftp_proxy"])
+        self.split_proxy("git", params["git_proxy_host"] + ":" + params["git_proxy_port"])
+        self.split_proxy("cvs", params["cvs_proxy_host"] + ":" + params["cvs_proxy_port"])
 
     def load(self, template):
         self.curr_mach = template.getVar("MACHINE")
@@ -146,14 +213,13 @@ class Configuration:
         self.selected_recipes = template.getVar("DEPENDS").split()
         self.selected_packages = template.getVar("IMAGE_INSTALL").split()
         # proxy
-        self.all_proxy = template.getVar("all_proxy")
-        self.http_proxy = template.getVar("http_proxy")
-        self.ftp_proxy = template.getVar("ftp_proxy")
-        self.https_proxy = template.getVar("https_proxy")
-        self.git_proxy_host = template.getVar("GIT_PROXY_HOST")
-        self.git_proxy_port = template.getVar("GIT_PROXY_PORT")
-        self.cvs_proxy_host = template.getVar("CVS_PROXY_HOST")
-        self.cvs_proxy_port = template.getVar("CVS_PROXY_PORT")
+        self.enable_proxy = eval(template.getVar("enable_proxy"))
+        self.same_proxy = eval(template.getVar("use_same_proxy"))
+        self.split_proxy("http", template.getVar("http_proxy"))
+        self.split_proxy("https", template.getVar("https_proxy"))
+        self.split_proxy("ftp", template.getVar("ftp_proxy"))
+        self.split_proxy("git", template.getVar("GIT_PROXY_HOST") + ":" + template.getVar("GIT_PROXY_PORT"))
+        self.split_proxy("cvs", template.getVar("CVS_PROXY_HOST") + ":" + template.getVar("CVS_PROXY_PORT"))
 
     def save(self, template, defaults=False):
         # bblayers.conf
@@ -183,14 +249,15 @@ class Configuration:
             template.setVar("DEPENDS", self.selected_recipes)
             template.setVar("IMAGE_INSTALL", self.user_selected_packages)
         # proxy
-        template.setVar("all_proxy", self.all_proxy)
-        template.setVar("http_proxy", self.http_proxy)
-        template.setVar("ftp_proxy", self.ftp_proxy)
-        template.setVar("https_proxy", self.https_proxy)
-        template.setVar("GIT_PROXY_HOST", self.git_proxy_host)
-        template.setVar("GIT_PROXY_PORT", self.git_proxy_port)
-        template.setVar("CVS_PROXY_HOST", self.cvs_proxy_host)
-        template.setVar("CVS_PROXY_PORT", self.cvs_proxy_port)
+        template.setVar("enable_proxy", self.enable_proxy)
+        template.setVar("use_same_proxy", self.same_proxy)
+        template.setVar("http_proxy", self.combine_proxy("http"))
+        template.setVar("https_proxy", self.combine_proxy("https"))
+        template.setVar("ftp_proxy", self.combine_proxy("ftp"))
+        template.setVar("GIT_PROXY_HOST", self.combine_host_only("git"))
+        template.setVar("GIT_PROXY_PORT", self.combine_port_only("git"))
+        template.setVar("CVS_PROXY_HOST", self.combine_host_only("cvs"))
+        template.setVar("CVS_PROXY_PORT", self.combine_port_only("cvs"))
 
 class Parameters:
     '''Represents other variables like available machines, etc.'''
@@ -212,7 +279,6 @@ class Parameters:
         self.all_sdk_machines = []
         self.all_layers = []
         self.image_names = []
-        self.enable_proxy = False
 
         # for build log to show
         self.bb_version = ""
@@ -578,13 +644,18 @@ class Builder(gtk.Window):
         self.handler.set_extra_inherit("packageinfo")
         self.handler.set_extra_inherit("image_types")
         # set proxies
-        if self.parameters.enable_proxy:
-            self.handler.set_http_proxy(self.configuration.http_proxy)
-            self.handler.set_https_proxy(self.configuration.https_proxy)
-            self.handler.set_ftp_proxy(self.configuration.ftp_proxy)
-            self.handler.set_all_proxy(self.configuration.all_proxy)
-            self.handler.set_git_proxy(self.configuration.git_proxy_host, self.configuration.git_proxy_port)
-            self.handler.set_cvs_proxy(self.configuration.cvs_proxy_host, self.configuration.cvs_proxy_port)
+        if self.configuration.enable_proxy == True:
+            self.handler.set_http_proxy(self.configuration.combine_proxy("http"))
+            self.handler.set_https_proxy(self.configuration.combine_proxy("https"))
+            self.handler.set_ftp_proxy(self.configuration.combine_proxy("ftp"))
+            self.handler.set_git_proxy(self.configuration.combine_host_only("git"), self.configuration.combine_port_only("git"))
+            self.handler.set_cvs_proxy(self.configuration.combine_host_only("cvs"), self.configuration.combine_port_only("cvs"))
+        elif self.configuration.enable_proxy == False:
+            self.handler.set_http_proxy("")
+            self.handler.set_https_proxy("")
+            self.handler.set_ftp_proxy("")
+            self.handler.set_git_proxy("", "")
+            self.handler.set_cvs_proxy("", "")
 
     def update_recipe_model(self, selected_image, selected_recipes):
         self.recipe_model.set_selected_image(selected_image)
@@ -996,7 +1067,6 @@ class Builder(gtk.Window):
             all_distros = self.parameters.all_distros,
             all_sdk_machines = self.parameters.all_sdk_machines,
             max_threads = self.parameters.max_threads,
-            enable_proxy = self.parameters.enable_proxy,
             parent = self,
             flags = gtk.DIALOG_MODAL
                     | gtk.DIALOG_DESTROY_WITH_PARENT
@@ -1008,7 +1078,6 @@ class Builder(gtk.Window):
         response = dialog.run()
         settings_changed = False
         if response == gtk.RESPONSE_YES:
-            self.parameters.enable_proxy = dialog.enable_proxy
             self.configuration = dialog.configuration
             self.save_defaults() # remember settings
             settings_changed = dialog.settings_changed
