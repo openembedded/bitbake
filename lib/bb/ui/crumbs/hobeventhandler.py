@@ -497,4 +497,6 @@ class HobHandler(gobject.GObject):
         params["cvs_proxy_host"] = self.runCommand(["getVariable", "CVS_PROXY_HOST"]) or ""
         params["cvs_proxy_port"] = self.runCommand(["getVariable", "CVS_PROXY_PORT"]) or ""
 
+        params["image_white_pattern"] = self.runCommand(["getVariable", "BBUI_IMAGE_WHITE_PATTERN"]) or ""
+        params["image_black_pattern"] = self.runCommand(["getVariable", "BBUI_IMAGE_BLACK_PATTERN"]) or ""
         return params

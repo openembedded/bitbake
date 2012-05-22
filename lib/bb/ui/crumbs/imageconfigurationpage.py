@@ -22,6 +22,7 @@
 
 import gtk
 import glib
+import re
 from bb.ui.crumbs.progressbar import HobProgressBar
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hic, HobImageButton, HobInfoButton, HobAltButton, HobButton
@@ -345,6 +346,16 @@ class ImageConfigurationPage (HobPage):
         active = -1
         cnt = 0
 
+        white_pattern = []
+        if self.builder.parameters.image_white_pattern:
+            for i in self.builder.parameters.image_white_pattern.split():
+                white_pattern.append(re.compile(i))
+
+        black_pattern = []
+        if self.builder.parameters.image_black_pattern:
+            for i in self.builder.parameters.image_black_pattern.split():
+                black_pattern.append(re.compile(i))
+
         it = image_model.get_iter_first()
         self._image_combo_disconnect_signal()
         model = self.image_combo.get_model()
@@ -356,10 +367,28 @@ class ImageConfigurationPage (HobPage):
             image_name = image_model[path][recipe_model.COL_NAME]
             if image_name == self.builder.recipe_model.__dummy_image__:
                 continue
-            self.image_combo.append_text(image_name)
-            if image_name == selected_image:
-                active = cnt
-            cnt = cnt + 1
+
+            if black_pattern:
+                allow = True
+                for pattern in black_pattern:
+                    if pattern.search(image_name):
+                        allow = False
+                        break
+            elif white_pattern:
+                allow = False
+                for pattern in white_pattern:
+                    if pattern.search(image_name):
+                        allow = True
+                        break
+            else:
+                allow = True
+
+            if allow:
+                self.image_combo.append_text(image_name)
+                if image_name == selected_image:
+                    active = cnt
+                cnt = cnt + 1
+
         self.image_combo.append_text(self.builder.recipe_model.__dummy_image__)
         if selected_image == self.builder.recipe_model.__dummy_image__:
             active = cnt

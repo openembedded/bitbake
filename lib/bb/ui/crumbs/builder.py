@@ -279,6 +279,8 @@ class Parameters:
         self.all_sdk_machines = []
         self.all_layers = []
         self.image_names = []
+        self.image_white_pattern = ""
+        self.image_black_pattern = ""
 
         # for build log to show
         self.bb_version = ""
@@ -296,6 +298,8 @@ class Parameters:
         self.runnable_machine_patterns = params["runnable_machine_patterns"].split()
         self.deployable_image_types = params["deployable_image_types"].split()
         self.tmpdir = params["tmpdir"]
+        self.image_white_pattern = params["image_white_pattern"]
+        self.image_black_pattern = params["image_black_pattern"]
         # for build log to show
         self.bb_version = params["bb_version"]
         self.target_arch = params["target_arch"]
