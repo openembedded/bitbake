@@ -675,6 +675,8 @@ class FetchMethod(object):
         # We cannot compute checksums for directories
         if os.path.isdir(urldata.localpath) == True:
             return False
+        if urldata.localpath.find("*") != -1:
+             return False
 
         return True
 
