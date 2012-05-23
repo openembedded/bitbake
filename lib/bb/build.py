@@ -174,8 +174,19 @@ def exec_func(func, d, dirs = None):
         lockfiles = None
 
     tempdir = data.getVar('T', d, 1)
-    bb.utils.mkdirhier(tempdir)
-    runfile = os.path.join(tempdir, 'run.{0}.{1}'.format(func, os.getpid()))
+
+    # or func allows items to be executed outside of the normal
+    # task set, such as buildhistory
+    task = data.getVar('BB_RUNTASK', d, 1) or func
+    if task == func:
+        taskfunc = task
+    else:
+        taskfunc = "%s.%s" % (task, func)
+
+    runfmt = data.getVar('BB_RUNFMT', d, 1) or "run.{func}.{pid}"
+    runfn = runfmt.format(taskfunc=taskfunc, task=task, func=func, pid=os.getpid())
+    runfile = os.path.join(tempdir, runfn)
+    bb.utils.mkdirhier(os.path.dirname(runfile))
 
     with bb.utils.fileslocked(lockfiles):
         if ispython:
@@ -300,7 +311,8 @@ def _exec_task(fn, task, d, quieterr):
     bb.utils.mkdirhier(tempdir)
 
     # Determine the logfile to generate
-    logbase = 'log.{0}.{1}'.format(task, os.getpid())
+    logfmt = localdata.getVar('BB_LOGFMT', True) or 'log.{task}.{pid}'
+    logbase = logfmt.format(task=task, pid=os.getpid())
 
     # Document the order of the tasks...
     logorder = os.path.join(tempdir, 'log.task_order')
@@ -336,6 +348,7 @@ def _exec_task(fn, task, d, quieterr):
     # Handle logfiles
     si = file('/dev/null', 'r')
     try:
+        bb.utils.mkdirhier(os.path.dirname(logfn))
         logfile = file(logfn, 'w')
     except OSError:
         logger.exception("Opening log file '%s'", logfn)
@@ -362,6 +375,7 @@ def _exec_task(fn, task, d, quieterr):
     bblogger.addHandler(errchk)
 
     localdata.setVar('BB_LOGFILE', logfn)
+    localdata.setVar('BB_RUNTASK', task)
 
     event.fire(TaskStarted(task, localdata), localdata)
     try:
