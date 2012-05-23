@@ -290,8 +290,22 @@ def _exec_task(fn, task, d, quieterr):
         bb.fatal("T variable not set, unable to build")
 
     bb.utils.mkdirhier(tempdir)
-    loglink = os.path.join(tempdir, 'log.{0}'.format(task))
+
+    # Determine the logfile to generate
     logbase = 'log.{0}.{1}'.format(task, os.getpid())
+
+    # Document the order of the tasks...
+    logorder = os.path.join(tempdir, 'log.task_order')
+    try:
+        logorderfile = file(logorder, 'a')
+    except OSError:
+        logger.exception("Opening log file '%s'", logorder)
+        pass
+    logorderfile.write('{0} ({1}): {2}\n'.format(task, os.getpid(), logbase))
+    logorderfile.close()
+
+    # Setup the courtesy link to the logfn
+    loglink = os.path.join(tempdir, 'log.{0}'.format(task))
     logfn = os.path.join(tempdir, logbase)
     if loglink:
         bb.utils.remove(loglink)
