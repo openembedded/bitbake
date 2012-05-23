@@ -221,7 +221,7 @@ def exec_func_python(func, d, runfile, cwd=None):
             except OSError:
                 pass
 
-def exec_func_shell(function, d, runfile, cwd=None):
+def exec_func_shell(func, d, runfile, cwd=None):
     """Execute a shell function from the metadata
 
     Note on directory behavior.  The 'dirs' varflag should contain a list
@@ -234,18 +234,18 @@ def exec_func_shell(function, d, runfile, cwd=None):
 
     with open(runfile, 'w') as script:
         script.write('#!/bin/sh -e\n')
-        data.emit_func(function, script, d)
+        data.emit_func(func, script, d)
 
         if bb.msg.loggerVerboseLogs:
             script.write("set -x\n")
         if cwd:
             script.write("cd %s\n" % cwd)
-        script.write("%s\n" % function)
+        script.write("%s\n" % func)
 
     os.chmod(runfile, 0775)
 
     cmd = runfile
-    if d.getVarFlag(function, 'fakeroot'):
+    if d.getVarFlag(func, 'fakeroot'):
         fakerootcmd = d.getVar('FAKEROOT', True)
         if fakerootcmd:
             cmd = [fakerootcmd, runfile]
@@ -259,7 +259,7 @@ def exec_func_shell(function, d, runfile, cwd=None):
         bb.process.run(cmd, shell=False, stdin=NULL, log=logfile)
     except bb.process.CmdError:
         logfn = d.getVar('BB_LOGFILE', True)
-        raise FuncFailed(function, logfn)
+        raise FuncFailed(func, logfn)
 
 def _task_data(fn, task, d):
     localdata = data.createCopy(d)
