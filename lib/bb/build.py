@@ -206,6 +206,8 @@ def exec_func_python(func, d, runfile, cwd=None):
             olddir = None
         os.chdir(cwd)
 
+    bb.debug(2, "Executing python function %s" % func)
+
     try:
         comp = utils.better_compile(code, func, bbfile)
         utils.better_exec(comp, {"d": d}, code, bbfile)
@@ -215,6 +217,8 @@ def exec_func_python(func, d, runfile, cwd=None):
 
         raise FuncFailed(func, None)
     finally:
+        bb.debug(2, "Python function %s finished" % func)
+
         if cwd and olddir:
             try:
                 os.chdir(olddir)
@@ -255,11 +259,15 @@ def exec_func_shell(func, d, runfile, cwd=None):
     else:
         logfile = sys.stdout
 
+    bb.debug(2, "Executing shell function %s" % func)
+
     try:
         bb.process.run(cmd, shell=False, stdin=NULL, log=logfile)
     except bb.process.CmdError:
         logfn = d.getVar('BB_LOGFILE', True)
         raise FuncFailed(func, logfn)
+
+    bb.debug(2, "Shell function %s finished" % func)
 
 def _task_data(fn, task, d):
     localdata = data.createCopy(d)
