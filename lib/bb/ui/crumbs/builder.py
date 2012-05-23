@@ -424,6 +424,8 @@ class Builder(gtk.Window):
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
+        self.handler.connect("recipe-populated",         self.handler_recipe_populated_cb)
+        self.handler.connect("package-populated",        self.handler_package_populated_cb)
 
         self.handler.set_config_filter(hob_conf_filter)
 
@@ -773,6 +775,12 @@ class Builder(gtk.Window):
     def packagelist_changed_cb(self, package_model):
         self.package_details_page.refresh_selection()
 
+    def handler_recipe_populated_cb(self, handler):
+        self.image_configuration_page.update_progress_bar("Populated recipes", 0.99)
+
+    def handler_package_populated_cb(self, handler):
+        self.image_configuration_page.update_progress_bar("Populated packages", 1.0)
+
     def handler_parsing_started_cb(self, handler, message):
         if self.current_step != self.RCPPKGINFO_POPULATING:
             return
@@ -792,7 +800,7 @@ class Builder(gtk.Window):
 
         fraction = message["current"] * 1.0/message["total"]
         if message["eventname"] == "TreeDataPreparationProgress":
-            fraction = 0.6 + 0.4 * fraction
+            fraction = 0.6 + 0.38 * fraction
         else:
             fraction = 0.6 * fraction
         self.image_configuration_page.update_progress_bar(message["title"], fraction)
@@ -802,7 +810,7 @@ class Builder(gtk.Window):
             return
 
         if message["eventname"] == "TreeDataPreparationCompleted":
-            fraction = 1.0
+            fraction = 0.98
         else:
             fraction = 0.6
         self.image_configuration_page.update_progress_bar(message["title"], fraction)

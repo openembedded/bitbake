@@ -57,6 +57,12 @@ class HobHandler(gobject.GObject):
          "parsing-completed"       : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_PYOBJECT,)),
+         "recipe-populated"        : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     ()),
+         "package-populated"       : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     ()),
     }
 
     (GENERATE_CONFIGURATION, GENERATE_RECIPES, GENERATE_PACKAGES, GENERATE_IMAGE, POPULATE_PACKAGEINFO, SANITY_CHECK) = range(6)
@@ -158,6 +164,7 @@ class HobHandler(gobject.GObject):
 
         if isinstance(event, bb.event.PackageInfo):
             self.package_model.populate(event._pkginfolist)
+            self.emit("package-populated")
             self.run_next_command()
 
         elif isinstance(event, bb.event.SanityCheckPassed):
@@ -171,6 +178,7 @@ class HobHandler(gobject.GObject):
             self.current_phase = "data generation"
             if event._model:
                 self.recipe_model.populate(event._model)
+                self.emit("recipe-populated")
         elif isinstance(event, bb.event.ConfigFilesFound):
             self.current_phase = "configuration lookup"
             var = event._variable
