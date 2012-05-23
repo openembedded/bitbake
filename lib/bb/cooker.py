@@ -1175,7 +1175,7 @@ class BBCooker:
             return
 
         if self.state in (state.shutdown, state.stop):
-            self.parser.shutdown(clean=False)
+            self.parser.shutdown(clean=False, force = True)
             sys.exit(1)
 
         if self.state != state.parsing:
@@ -1609,10 +1609,13 @@ class CookerParser(object):
                 self.parser_quit.put(None)
 
             self.jobs.cancel_join_thread()
-            sys.exit(1)
 
         for process in self.processes:
-            process.join()
+            if force:
+                process.join(.1)
+                process.terminate()
+            else:
+                process.join()
         self.feeder.join()
 
         sync = threading.Thread(target=self.bb_cache.sync)
