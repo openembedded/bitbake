@@ -274,13 +274,10 @@ def verify_checksum(u, ud, d):
     """
     verify the MD5 and SHA256 checksum for downloaded src
 
-    return value:
-        - True: a checksum matched
-        - False: neither checksum matched
+    Raises a FetchError if one or both of the SRC_URI checksums do not match
+    the downloaded file, or if BB_STRICT_CHECKSUM is set and there are no
+    checksums specified.
 
-    if checksum is missing in recipes file, "BB_STRICT_CHECKSUM" decide the return value.
-    if BB_STRICT_CHECKSUM = "1" then return false as unmatched, otherwise return true as
-    matched
     """
 
     if not ud.method.supports_checksum(ud):
