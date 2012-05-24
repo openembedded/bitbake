@@ -69,7 +69,7 @@ def supports(fn, d):
     return os.path.splitext(fn)[-1] in [".bb", ".bbclass", ".inc"]
 
 def inherit(files, fn, lineno, d):
-    __inherit_cache = data.getVar('__inherit_cache', d) or []
+    __inherit_cache = d.getVar('__inherit_cache') or []
     files = d.expand(files).split()
     for file in files:
         if not os.path.isabs(file) and not file.endswith(".bbclass"):
@@ -80,7 +80,7 @@ def inherit(files, fn, lineno, d):
             __inherit_cache.append( file )
             data.setVar('__inherit_cache', __inherit_cache, d)
             include(fn, file, lineno, d, "inherit")
-            __inherit_cache = data.getVar('__inherit_cache', d) or []
+            __inherit_cache = d.getVar('__inherit_cache') or []
 
 def get_statements(filename, absolute_filename, base_name):
     global cached_statements
@@ -126,13 +126,13 @@ def handle(fn, d, include):
     if ext == ".bbclass":
         __classname__ = root
         classes.append(__classname__)
-        __inherit_cache = data.getVar('__inherit_cache', d) or []
+        __inherit_cache = d.getVar('__inherit_cache') or []
         if not fn in __inherit_cache:
             __inherit_cache.append(fn)
             data.setVar('__inherit_cache', __inherit_cache, d)
 
     if include != 0:
-        oldfile = data.getVar('FILE', d)
+        oldfile = d.getVar('FILE')
     else:
         oldfile = None
 
