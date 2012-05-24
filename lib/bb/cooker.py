@@ -985,12 +985,12 @@ class BBCooker:
         """
         Find the .bb files which match the expression in 'buildfile'.
         """
-
         if bf.startswith("/") or bf.startswith("../"):
             bf = os.path.abspath(bf)
         filelist, masked = self.collect_bbfiles()
         try:
             os.stat(bf)
+            bf = os.path.abspath(bf)
             return [bf]
         except OSError:
             regexp = re.compile(bf)
