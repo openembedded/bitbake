@@ -721,6 +721,8 @@ def which(path, item, direction = 0):
     for p in paths:
         next = os.path.join(p, item)
         if os.path.exists(next):
+            if not os.path.isabs(next):
+                next = os.path.abspath(next)
             return next
 
     return ""
