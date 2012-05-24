@@ -411,6 +411,26 @@ class ImageDetailsPage (HobPage):
             self.details_bottom_buttons.pack_end(run_button, expand=False, fill=False)
             created = True
 
+        name = "Save as template"
+        if name in buttonlist:
+            if created == True:
+                # separator
+                label = gtk.Label(" or ")
+                self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
+
+                # create button "Save as template"
+                save_button = HobAltButton("Save as template")
+            else:
+                save_button = HobButton("Save as template")
+                save_button.set_size_request(205, 49)
+                save_button.set_flags(gtk.CAN_DEFAULT)
+                packed = True
+            save_button.set_tooltip_text("Save the image configuration for reuse")
+            button_id = save_button.connect("clicked", self.save_button_clicked_cb)
+            self.button_ids[button_id] = save_button
+            self.details_bottom_buttons.pack_end(save_button, expand=False, fill=False)
+            create = True
+
         if not packed:
             box = gtk.HBox(False, 6)
             box.show()
@@ -419,21 +439,6 @@ class ImageDetailsPage (HobPage):
             subbox.show()
             box.add(subbox)
             self.details_bottom_buttons.pack_end(box, False, False)
-
-        name = "Save as template"
-        if name in buttonlist:
-            if created == True:
-                # separator
-                label = gtk.Label(" or ")
-                self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
-
-            # create button "Save as template"
-            save_button = HobAltButton("Save as template")
-            save_button.set_tooltip_text("Save the image configuration for reuse")
-            button_id = save_button.connect("clicked", self.save_button_clicked_cb)
-            self.button_ids[button_id] = save_button
-            self.details_bottom_buttons.pack_end(save_button, expand=False, fill=False)
-            create = True
 
         name = "Build new image"
         if name in buttonlist:
