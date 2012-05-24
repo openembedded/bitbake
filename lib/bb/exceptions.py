@@ -32,7 +32,14 @@ class TracebackEntry(namedtuple.abc):
 def _get_frame_args(frame):
     """Get the formatted arguments and class (if available) for a frame"""
     arginfo = inspect.getargvalues(frame)
-    if not arginfo.args:
+
+    try:
+        if not arginfo.args:
+            return '', None
+    # There have been reports from the field of python 2.6 which doesn't 
+    # return a namedtuple here but simply a tuple so fallback gracefully if
+    # args isn't present.
+    except AttributeError:
         return '', None
 
     firstarg = arginfo.args[0]
