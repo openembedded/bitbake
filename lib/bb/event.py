@@ -527,3 +527,11 @@ class SanityCheckPassed(Event):
     """
     Event to indicate sanity check is passed
     """
+
+class SanityCheckFailed(Event):
+    """
+    Event to indicate sanity check has failed
+    """
+    def __init__(self, msg):
+        Event.__init__(self)
+        self._msg = msg

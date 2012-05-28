@@ -424,6 +424,7 @@ class Builder(gtk.Window):
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
+        self.handler.connect("sanity-failed",            self.handler_sanity_failed_cb)
         self.handler.connect("recipe-populated",         self.handler_recipe_populated_cb)
         self.handler.connect("package-populated",        self.handler_package_populated_cb)
 
@@ -727,8 +728,12 @@ class Builder(gtk.Window):
 
     def handler_command_failed_cb(self, handler, msg):
         if msg:
-            msg = msg.replace("your local.conf", "Settings")
             self.show_error_dialog(msg)
+        self.reset()
+
+    def handler_sanity_failed_cb(self, handler, msg):
+        msg = msg.replace("your local.conf", "Settings")
+        self.show_error_dialog(msg)
         self.reset()
 
     def window_sensitive(self, sensitive):

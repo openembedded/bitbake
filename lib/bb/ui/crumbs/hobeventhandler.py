@@ -42,6 +42,9 @@ class HobHandler(gobject.GObject):
          "command-failed"          : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_STRING,)),
+         "sanity-failed"           : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     (gobject.TYPE_STRING,)),
          "generating-data"         : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      ()),
@@ -169,6 +172,9 @@ class HobHandler(gobject.GObject):
 
         elif isinstance(event, bb.event.SanityCheckPassed):
             self.run_next_command()
+
+        elif isinstance(event, bb.event.SanityCheckFailed):
+            self.emit("sanity-failed", event._msg)
 
         elif isinstance(event, logging.LogRecord):
             if event.levelno >= logging.ERROR:
