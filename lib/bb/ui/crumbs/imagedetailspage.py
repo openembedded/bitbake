@@ -431,23 +431,20 @@ class ImageDetailsPage (HobPage):
             self.details_bottom_buttons.pack_end(save_button, expand=False, fill=False)
             create = True
 
-        if not packed:
-            box = gtk.HBox(False, 6)
-            box.show()
-            subbox = gtk.HBox(False, 0)
-            subbox.set_size_request(205, 49)
-            subbox.show()
-            box.add(subbox)
-            self.details_bottom_buttons.pack_end(box, False, False)
-
         name = "Build new image"
         if name in buttonlist:
             # create button "Build new image"
-            build_new_button = HobAltButton("Build new image")
+            if packed:
+                build_new_button = HobAltButton("Build new image")
+                self.details_bottom_buttons.pack_start(build_new_button, expand=False, fill=False)
+            else:
+                build_new_button = HobButton("Build new image")
+                build_new_button.set_size_request(205, 49)
+                build_new_button.set_flags(gtk.CAN_DEFAULT)
+                self.details_bottom_buttons.pack_end(build_new_button, expand=False, fill=False)
             build_new_button.set_tooltip_text("Create a new image from scratch")
             button_id = build_new_button.connect("clicked", self.build_new_button_clicked_cb)
             self.button_ids[button_id] = build_new_button
-            self.details_bottom_buttons.pack_start(build_new_button, expand=False, fill=False)
 
     def get_kernel_file_name(self, image_name):
         name_list = []
