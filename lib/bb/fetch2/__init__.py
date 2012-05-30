@@ -112,6 +112,9 @@ class NetworkAccess(BBFetchException):
          BBFetchException.__init__(self, msg)
          self.args = (url, cmd)
 
+class NonLocalMethod(Exception):
+    def __init__(self):
+        Exception.__init__(self)
 
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
@@ -565,17 +568,17 @@ def srcrev_internal_helper(ud, d, name):
 def get_checksum_file_list(d):
     """ Get a list of files checksum in SRC_URI
 
-    Returns the all resolved local path of all local file entries in
+    Returns the resolved local paths of all local file entries in
     SRC_URI as a space-separated string
     """
-    fetch = Fetch([], d)
+    fetch = Fetch([], d, cache = False, localonly = True)
 
     dl_dir = d.getVar('DL_DIR', True)
     filelist = []
     for u in fetch.urls:
         ud = fetch.ud[u]
 
-        if isinstance(ud.method, local.Local):
+        if ud and isinstance(ud.method, local.Local):
             ud.setup_localpath(d)
             f = ud.localpath
             if f.startswith(dl_dir):
@@ -639,7 +642,7 @@ class FetchData(object):
     """
     A class which represents the fetcher state for a given URI.
     """
-    def __init__(self, url, d):
+    def __init__(self, url, d, localonly = False):
         # localpath is the location of a downloaded result. If not set, the file is local.
         self.donestamp = None
         self.localfile = ""
@@ -685,6 +688,9 @@ class FetchData(object):
 
         if not self.method:
             raise NoMethodError(url)
+
+        if localonly and not isinstance(self.method, local.Local):
+            raise NonLocalMethod()
 
         if hasattr(self.method, "urldata_init"):
             self.method.urldata_init(self, d)
@@ -1009,7 +1015,10 @@ class FetchMethod(object):
         return "%s-%s" % (key, d.getVar("PN", True) or "")
 
 class Fetch(object):
-    def __init__(self, urls, d, cache = True):
+    def __init__(self, urls, d, cache = True, localonly = False):
+        if localonly and cache:
+            raise Exception("bb.fetch2.Fetch.__init__: cannot set cache and localonly at same time")
+
         if len(urls) == 0:
             urls = d.getVar("SRC_URI", True).split()
         self.urls = urls
@@ -1022,7 +1031,12 @@ class Fetch(object):
 
         for url in urls:
             if url not in self.ud:
-                self.ud[url] = FetchData(url, d)
+                try:
+                    self.ud[url] = FetchData(url, d, localonly)
+                except NonLocalMethod:
+                    if localonly:
+                        self.ud[url] = None
+                        pass
 
         if cache:
             urldata_cache[fn] = self.ud
