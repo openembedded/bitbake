@@ -279,7 +279,12 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
     deps = set()
     vardeps = d.getVarFlag(key, "vardeps", True)
     try:
-        value = d.getVar(key, False)
+        if key[-1] == ']':
+            vf = key[:-1].split('[')
+            value = d.getVarFlag(vf[0], vf[1], False)
+        else:
+            value = d.getVar(key, False)
+
         if key in vardepvals:
            value =  d.getVarFlag(key, "vardepvalue", True)
         elif d.getVarFlag(key, "func"):
@@ -301,6 +306,19 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
             parser = d.expandWithRefs(value, key)
             deps |= parser.references
             deps = deps | (keys & parser.execs)
+
+        # Add varflags, assuming an exclusion list is set
+        varflagsexcl = d.getVar('BB_SIGNATURE_EXCLUDE_FLAGS', True)
+        if varflagsexcl:
+            varfdeps = []
+            varflags = d.getVarFlags(key)
+            if varflags:
+                for f in varflags:
+                    if f not in varflagsexcl:
+                        varfdeps.append('%s[%s]' % (key, f))
+            if varfdeps:
+                deps |= set(varfdeps)
+
         deps |= set((vardeps or "").split())
         deps -= set((d.getVarFlag(key, "vardepsexclude", True) or "").split())
     except:

@@ -108,6 +108,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 data = data + dep
                 if dep in lookupcache:
                     var = lookupcache[dep]
+                elif dep[-1] == ']':
+                    vf = dep[:-1].split('[')
+                    var = d.getVarFlag(vf[0], vf[1], False)
+                    lookupcache[dep] = var
                 else:
                     var = d.getVar(dep, False)
                     lookupcache[dep] = var
