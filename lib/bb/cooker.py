@@ -1657,8 +1657,12 @@ class CookerParser(object):
             logger.error('Unable to parse %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
             self.shutdown(clean=False)
-        except (bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
+        except bb.parse.ParseError as exc:
             logger.error(str(exc))
+            self.shutdown(clean=False)
+        except bb.data_smart.ExpansionError as exc:
+            _, value, _ = sys.exc_info()
+            logger.error('ExpansionError during parsing %s: %s', value.recipe, str(exc))
             self.shutdown(clean=False)
         except SyntaxError as exc:
             logger.error('Unable to parse %s', exc.recipe)
