@@ -137,6 +137,8 @@ class AdvancedSettingDialog (CrumbsDialog):
     def entry_widget_select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        text = entry.get_text()
+        dialog.set_current_folder(text if len(text) > 0 else os.getcwd())
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
         HobAltButton.style_button(button)
         button = dialog.add_button("Open", gtk.RESPONSE_YES)
@@ -1180,6 +1182,8 @@ class ImageSelectionDialog (CrumbsDialog):
     def select_path_cb(self, action, parent, entry):
         dialog = gtk.FileChooserDialog("", parent,
                                        gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        text = entry.get_text()
+        dialog.set_current_folder(text if len(text) > 0 else os.getcwd())
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
         HobAltButton.style_button(button)
         button = dialog.add_button("Open", gtk.RESPONSE_YES)
