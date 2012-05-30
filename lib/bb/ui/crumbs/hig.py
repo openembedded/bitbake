@@ -831,7 +831,7 @@ class DeployImageDialog (CrumbsDialog):
                 cmdline = bb.ui.crumbs.utils.which_terminal()
                 if cmdline:
                     cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "\""
-                    bb.process.run(shlex.split(cmdline))
+                    bb.process.Popen(shlex.split(cmdline))
 
     def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)

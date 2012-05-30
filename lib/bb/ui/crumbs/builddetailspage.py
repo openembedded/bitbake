@@ -98,11 +98,10 @@ class BuildConfigurationTreeView(gtk.TreeView):
         for path in src_config_info.layers:
             import os, os.path
             if os.path.exists(path):
-                f, errors = bb.process.run('cd %s; git branch 2>&1 | grep "^* " | tr -d "* "' % path)
-                if f:
-                    branch = f.strip('\n')
+                branch = bb.process.run('cd %s; git branch | grep "^* " | tr -d "* "' % path)[0]
+                if branch:
+                    branch = branch.strip('\n')
                     vars.append(self.set_vars("Branch:", branch))
-                    f.close()
                 break
 
         self.set_config_model(vars)
