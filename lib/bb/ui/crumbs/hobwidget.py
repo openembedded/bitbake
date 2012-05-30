@@ -400,50 +400,33 @@ class HobInfoButton(gtk.EventBox):
 class HobIndicator(gtk.DrawingArea):
     def __init__(self, count):
         gtk.DrawingArea.__init__(self)
-
-        # We want to composite the transparent indicator onto the parent
-        # HBox
-        screen = self.get_screen()
-        rgba = screen.get_rgba_colormap()
-        self.set_colormap(rgba)
-        self.set_app_paintable(True)
+        # Set no window for transparent background
+        self.set_has_window(False)
         self.set_size_request(38,38)
         # We need to pass through button clicks
         self.add_events(gtk.gdk.BUTTON_PRESS_MASK | gtk.gdk.BUTTON_RELEASE_MASK)
 
         self.connect('expose-event', self.expose)
-        self.connect_after('realize', self.composite)
 
         self.count = count
         self.color = HobColors.GRAY
 
-    def composite(self, widget):
-        # This property must be set after the widget has been realised
-        self.window.set_composited(True)
-
     def expose(self, widget, event):
-        # Transparent background
-        ctx = widget.window.cairo_create()
-        ctx.set_operator(cairo.OPERATOR_CLEAR)
-        region = gtk.gdk.region_rectangle(event.area)
-
-        ctx.region(region)
-        ctx.fill()
-
         if self.count and self.count > 0:
-            w = self.allocation.width
-            h = self.allocation.height
+            ctx = widget.window.cairo_create()
+
+            x, y, w, h = self.allocation
 
             ctx.set_operator(cairo.OPERATOR_OVER)
             ctx.set_source_color(gtk.gdk.color_parse(self.color))
             ctx.translate(w/2, h/2)
-            ctx.arc(1, 1, min(w,h)/2 - 2, 0, 2*math.pi)
+            ctx.arc(x, y, min(w,h)/2 - 2, 0, 2*math.pi)
             ctx.fill_preserve()
 
             layout = self.create_pango_layout(str(self.count))
             textw, texth = layout.get_pixel_size()
-            x = (w/2)-(textw/2) + 1
-            y = (h/2) - (texth/2) + 1
+            x = (w/2)-(textw/2) + x
+            y = (h/2) - (texth/2) + y
             ctx.move_to(x, y)
             self.window.draw_layout(self.style.light_gc[gtk.STATE_NORMAL], int(x), int(y), layout)
 
@@ -466,24 +449,6 @@ class HobTabLabel(gtk.HBox):
         self.lbl.set_alignment(0.0, 0.5)
         self.lbl.show()
         self.pack_end(self.lbl, True, True, 6)
-        self.connect_after('expose-event', self.expose_event)
-
-    def expose_event(self, widget, event):
-        # Composite the child indicator onto the Box
-        child = self.indicator
-        ctx = widget.window.cairo_create()
-
-        ctx.set_source_pixmap(child.window, child.allocation.x, child.allocation.y)
-
-        region = gtk.gdk.region_rectangle(child.allocation)
-        r = gtk.gdk.region_rectangle(event.area)
-        region.intersect(r)
-        ctx.region(region)
-        ctx.clip()
-
-        ctx.paint()
-
-        return False
 
     def set_count(self, count):
         self.indicator.set_count(count)
