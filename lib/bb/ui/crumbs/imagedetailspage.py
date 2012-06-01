@@ -368,7 +368,7 @@ class ImageDetailsPage (HobPage):
         iter = model.get_iter(path)
         image_name = model[path][0]
         if iter and model[path][2] == 'runnable':
-            kernel_name, kernel_number = self.get_kernel_file_name(image_name)
+            kernel_name, kernel_number = self.builder.parameters.get_kernel_file_name()
             self.builder.runqemu_image(image_name, kernel_name, kernel_number)
 
     def create_bottom_buttons(self, buttonlist, image_name):
@@ -445,23 +445,6 @@ class ImageDetailsPage (HobPage):
             build_new_button.set_tooltip_text("Create a new image from scratch")
             button_id = build_new_button.connect("clicked", self.build_new_button_clicked_cb)
             self.button_ids[button_id] = build_new_button
-
-    def get_kernel_file_name(self, image_name):
-        name_list = []
-        kernel_name = ""
-        if image_name:
-            image_path = os.path.join(self.builder.parameters.image_addr)
-            files = [f for f in os.listdir(image_path) if f[0] <> '.']
-            for check_file in files:
-                if check_file.endswith(".bin"):
-                    if  self.test_mach_runnable(check_file):
-                        selected_machine = self.builder.configuration.curr_mach
-                        if selected_machine in check_file:
-                            kernel_name = check_file
-                    if not os.path.islink(os.path.join(image_path, check_file)):
-                        name_list.append(check_file)
-
-        return kernel_name, len(name_list)
 
     def save_button_clicked_cb(self, button):
         self.builder.show_save_template_dialog()

@@ -1141,9 +1141,10 @@ class Builder(gtk.Window):
         response = dialog.run()
         dialog.destroy()
 
-    def get_kernel_file_name(self, image_path):
+    def get_kernel_file_name(self):
         name_list = []
         kernel_name = ""
+        image_path = self.parameters.image_addr
         if image_path:
             files = [f for f in os.listdir(image_path) if f[0] <> '.']
             for check_file in files:
@@ -1166,7 +1167,7 @@ class Builder(gtk.Window):
             dialog.destroy()
             return
 
-        kernel_name, kernels_number = self.get_kernel_file_name(self.parameters.image_addr)
+        kernel_name, kernels_number = self.get_kernel_file_name()
         if not kernel_name or kernels_number > 1:
             dialog = gtk.FileChooserDialog("Load Kernel Files", self,
                                            gtk.FILE_CHOOSER_ACTION_SAVE)
