@@ -40,6 +40,8 @@ from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 import bb.ui.crumbs.utils
 
+hobVer = 20120530
+
 class Configuration:
     '''Represents the data structure of configuration.'''
 
@@ -222,6 +224,7 @@ class Configuration:
         self.split_proxy("cvs", template.getVar("CVS_PROXY_HOST") + ":" + template.getVar("CVS_PROXY_PORT"))
 
     def save(self, template, defaults=False):
+        template.setVar("VERSION", "%s" % hobVer)
         # bblayers.conf
         template.setVar("BBLAYERS", " ".join(self.layers))
         # local.conf
@@ -468,7 +471,7 @@ class Builder(gtk.Window):
 
     def initiate_new_build_async(self):
         self.switch_page(self.MACHINE_SELECTION)
-        if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == None:
+        if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == False:
             self.handler.init_cooker()
             self.handler.set_extra_inherit("image_types")
             self.handler.generate_configuration()
@@ -537,9 +540,16 @@ class Builder(gtk.Window):
 
     def load_template(self, path):
         if not os.path.isfile(path):
-            return None
+            return False
 
         self.template = TemplateMgr()
+        # check compatibility
+        tempVer = self.template.getVersion(path)
+        if not tempVer or int(tempVer) < hobVer:
+            self.template.destroy()
+            self.template = None
+            return False
+
         try:
             self.template.load(path)
             self.configuration.load(self.template)

@@ -101,7 +101,19 @@ class HobTemplateFile(ConfigFile):
             return self.dictionary[var]
         else:
             return ""
- 
+
+    def getVersion(self):
+        contents = ConfigFile.readFile(self)
+
+        pattern = "^\s*(\S+)\s*=\s*(\".*?\")"
+
+        for line in contents:
+            match = re.search(pattern, line)
+            if match:
+                if match.group(1) == "VERSION":
+                    return match.group(2).strip('"')
+        return None
+
     def load(self):
         contents = ConfigFile.readFile(self)
         self.dictionary.clear()
@@ -173,6 +185,9 @@ class TemplateMgr(gobject.GObject):
         self.bblayers_conf.save()
         self.image_bb.save()
         self.template_hob.save()
+
+    def getVersion(self, path):
+        return HobTemplateFile(path).getVersion()
 
     def load(self, path):
         self.template_hob = HobTemplateFile(path)
