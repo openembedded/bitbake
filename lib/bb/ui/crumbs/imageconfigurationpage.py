@@ -364,7 +364,7 @@ class ImageConfigurationPage (HobPage):
         filter = {RecipeListModel.COL_TYPE : ['image']}
         image_model = recipe_model.tree_model(filter)
         active = 0
-        cnt = 0
+        cnt = 1
 
         white_pattern = []
         if self.builder.parameters.image_white_pattern:
@@ -415,7 +415,6 @@ class ImageConfigurationPage (HobPage):
         if selected_image == self.builder.recipe_model.__custom_image__:
             active = cnt
 
-        self.image_combo.set_active(0)
         self.image_combo.set_active(active)
 
         if active != 0:
