@@ -347,7 +347,7 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_GNERATE_TGTS)
         self.run_next_command(self.GENERATE_RECIPES)
-                 
+
     def generate_packages(self, tgts, default_task="build"):
         targets = []
         targets.extend(tgts)
@@ -492,6 +492,7 @@ class HobHandler(gobject.GObject):
         params["runnable_image_types"] = self._remove_redundant(self.runCommand(["getVariable", "RUNNABLE_IMAGE_TYPES"]) or "")
         params["runnable_machine_patterns"] = self._remove_redundant(self.runCommand(["getVariable", "RUNNABLE_MACHINE_PATTERNS"]) or "")
         params["deployable_image_types"] = self._remove_redundant(self.runCommand(["getVariable", "DEPLOYABLE_IMAGE_TYPES"]) or "")
+        params["kernel_image_type"] = self.runCommand(["getVariable", "KERNEL_IMAGETYPE"]) or ""
         params["tmpdir"] = self.runCommand(["getVariable", "TMPDIR"]) or ""
         params["distro_version"] = self.runCommand(["getVariable", "DISTRO_VERSION"]) or ""
         params["target_os"] = self.runCommand(["getVariable", "TARGET_OS"]) or ""

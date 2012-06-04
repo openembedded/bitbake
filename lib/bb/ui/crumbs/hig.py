@@ -1210,7 +1210,7 @@ class ImageSelectionDialog (CrumbsDialog):
                         if f.endswith('.' + real_image_type):
                             imageset.add(f.rsplit('.' + real_image_type)[0].rsplit('.rootfs')[0])
                             self.image_list.append(f)
-        
+
         for image in imageset:
             self.image_store.set(self.image_store.append(), 0, image, 1, False)
 
