@@ -64,7 +64,7 @@ class CrumbsMessageDialog(CrumbsDialog):
     """
     def __init__(self, parent=None, label="", icon=gtk.STOCK_INFO):
         super(CrumbsMessageDialog, self).__init__("", parent, gtk.DIALOG_DESTROY_WITH_PARENT)
-        
+
         self.set_border_width(6)
         self.vbox.set_property("spacing", 12)
         self.action_area.set_property("spacing", 12)
@@ -208,7 +208,7 @@ class AdvancedSettingDialog (CrumbsDialog):
         hbox.pack_start(port_entry, expand=False, fill=False)
 
         details_button = HobAltButton("Details")
-        details_button.connect("clicked", self.details_cb, parent, protocol) 
+        details_button.connect("clicked", self.details_cb, parent, protocol)
         hbox.pack_start(details_button, expand=False, fill=False)
 
         hbox.show_all()
@@ -1036,7 +1036,7 @@ class LayerSelectionDialog (CrumbsDialog):
         # create visual elements on the dialog
         self.create_visual_elements()
         self.connect("response", self.response_cb)
-                
+
     def create_visual_elements(self):
         layer_widget, self.layer_store = self.gen_layer_widget(self.layers, self.all_layers, self, None)
         layer_widget.set_size_request(450, 250)
@@ -1227,7 +1227,7 @@ class ImageSelectionDialog (CrumbsDialog):
                     for f in self.image_list:
                         if f.startswith(self.image_store[path][0] + '.'):
                             self.image_names.append(f)
-                    break            
+                    break
                 iter = self.image_store.iter_next(iter)
 
 class ProxyDetailsDialog (CrumbsDialog):
