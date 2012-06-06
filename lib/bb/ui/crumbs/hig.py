@@ -827,12 +827,38 @@ class DeployImageDialog (CrumbsDialog):
 
     def response_cb(self, dialog, response_id):
         if response_id == gtk.RESPONSE_YES:
+            lbl = ''
             combo_item = self.usb_combo.get_active_text()
-            if combo_item and combo_item != self.__dummy_usb__:
+            if combo_item and combo_item != self.__dummy_usb__ and self.image_path:
                 cmdline = bb.ui.crumbs.utils.which_terminal()
                 if cmdline:
-                    cmdline += "\"sudo dd if=" + self.image_path + " of=" + combo_item + "\""
-                    bb.process.Popen(shlex.split(cmdline))
+                    tmpname = os.tmpnam()
+                    cmdline += "\"sudo dd if=" + self.image_path + \
+                                " of=" + combo_item + "; echo $? > " + tmpname + "\""
+                    deploy_process = bb.process.Popen(shlex.split(cmdline))
+                    deploy_process.wait()
+
+                    # if file tmpname not exists, that means there is something wrong with xterm
+                    # user can get the error message from xterm so no more warning need.
+                    if os.path.exists(tmpname):
+                        tmpfile = open(tmpname)
+                        if int(tmpfile.readline().strip()) == 0:
+                            lbl = "<b>Deploy image successfully</b>"
+                        else:
+                            lbl = "<b>Deploy image failed</b>\nPlease try again."
+                        tmpfile.close()
+                        os.remove(tmpname)
+            else:
+                if not self.image_path:
+                    lbl = "<b>No selection made</b>\nYou have not selected an image to deploy"
+                else:
+                    lbl = "<b>No selection made</b>\nYou have not selected USB device"
+            if len(lbl):
+                crumbs_dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+                button = crumbs_dialog.add_button("Close", gtk.RESPONSE_OK)
+                HobButton.style_button(button)
+                crumbs_dialog.run()
+                crumbs_dialog.destroy()
 
     def update_progress_bar(self, title, fraction, status=None):
         self.progress_bar.update(fraction)
