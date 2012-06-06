@@ -22,6 +22,7 @@
 # bitbake which will allow more flexibility.
 
 import os
+import bb
 
 def which_terminal():
     term = bb.utils.which(os.environ["PATH"], "xterm")
