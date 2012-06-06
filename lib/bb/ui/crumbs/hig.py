@@ -749,20 +749,27 @@ class DeployImageDialog (CrumbsDialog):
 
     __dummy_usb__ = "--select a usb drive--"
 
-    def __init__(self, title, image_path, parent, flags, buttons=None):
+    def __init__(self, title, image_path, parent, flags, buttons=None, standalone=False):
         super(DeployImageDialog, self).__init__(title, parent, flags, buttons)
 
         self.image_path = image_path
+        self.standalone = standalone
 
         self.create_visual_elements()
         self.connect("response", self.response_cb)
 
     def create_visual_elements(self):
+        self.set_size_request(600, 400)
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
         markup = "<span font_desc='12'>The image to be written into usb drive:</span>"
         label.set_markup(markup)
         self.vbox.pack_start(label, expand=False, fill=False, padding=2)
+
+        table = gtk.Table(2, 10, False)
+        table.set_col_spacings(5)
+        table.set_row_spacings(5)
+        self.vbox.pack_start(table, expand=True, fill=True)
 
         scroll = gtk.ScrolledWindow()
         scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
@@ -771,11 +778,26 @@ class DeployImageDialog (CrumbsDialog):
         tv.set_editable(False)
         tv.set_wrap_mode(gtk.WRAP_WORD)
         tv.set_cursor_visible(False)
-        buf = gtk.TextBuffer()
-        buf.set_text(self.image_path)
-        tv.set_buffer(buf)
+        self.buf = gtk.TextBuffer()
+        self.buf.set_text(self.image_path)
+        tv.set_buffer(self.buf)
         scroll.add(tv)
-        self.vbox.pack_start(scroll, expand=True, fill=True)
+        table.attach(scroll, 0, 10, 0, 1)
+
+        if self.standalone:
+                gobject.signal_new("select_image_clicked", self, gobject.SIGNAL_RUN_FIRST,
+                                   gobject.TYPE_NONE, ())
+                icon = gtk.Image()
+                pix_buffer = gtk.gdk.pixbuf_new_from_file(hic.ICON_IMAGES_DISPLAY_FILE)
+                icon.set_from_pixbuf(pix_buffer)
+                button = gtk.Button("Select Image")
+                button.set_image(icon)
+                button.set_size_request(140, 50)
+                table.attach(button, 9, 10, 1, 2, gtk.FILL, 0, 0, 0)
+                button.connect("clicked", self.select_image_button_clicked_cb)
+
+        separator = gtk.HSeparator()
+        self.vbox.pack_start(separator, expand=False, fill=False, padding=10)
 
         self.usb_desc = gtk.Label()
         self.usb_desc.set_alignment(0.0, 0.5)
@@ -790,7 +812,7 @@ class DeployImageDialog (CrumbsDialog):
         for usb in self.find_all_usb_devices():
             self.usb_combo.append_text("/dev/" + usb)
         self.usb_combo.set_active(0)
-        self.vbox.pack_start(self.usb_combo, expand=True, fill=True)
+        self.vbox.pack_start(self.usb_combo, expand=False, fill=False)
         self.vbox.pack_start(self.usb_desc, expand=False, fill=False, padding=2)
 
         self.progress_bar = HobProgressBar()
@@ -800,6 +822,12 @@ class DeployImageDialog (CrumbsDialog):
 
         self.vbox.show_all()
         self.progress_bar.hide()
+
+    def set_image_text_buffer(self, image_path):
+        self.buf.set_text(image_path)
+
+    def set_image_path(self, image_path):
+        self.image_path = image_path
 
     def popen_read(self, cmd):
         tmpout, errors = bb.process.run("%s" % cmd)
@@ -815,6 +843,9 @@ class DeployImageDialog (CrumbsDialog):
         return "%s %s" % \
             (self.popen_read('cat /sys/class/block/%s/device/vendor' % dev),
             self.popen_read('cat /sys/class/block/%s/device/model' % dev))
+
+    def select_image_button_clicked_cb(self, button):
+            self.emit('select_image_clicked')
 
     def usb_combo_changed_cb(self, usb_combo):
         combo_item = self.usb_combo.get_active_text()
