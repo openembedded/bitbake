@@ -20,6 +20,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import glob
 import gtk
 import gobject
 import hashlib
@@ -806,7 +807,7 @@ class DeployImageDialog (CrumbsDialog):
 
     def find_all_usb_devices(self):
         usb_devs = [ os.readlink(u)
-            for u in self.popen_read('ls /dev/disk/by-id/usb*').split()
+            for u in glob.glob('/dev/disk/by-id/usb*')
             if not re.search(r'part\d+', u) ]
         return [ '%s' % u[u.rfind('/')+1:] for u in usb_devs ]
 
