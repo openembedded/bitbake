@@ -784,6 +784,11 @@ class DeployImageDialog (CrumbsDialog):
         scroll.add(tv)
         table.attach(scroll, 0, 10, 0, 1)
 
+        # There are 2 ways to use DeployImageDialog
+        # One way is that called by HOB when the 'Deploy Image' button is clicked
+        # The other way is that called by a standalone script.
+        # Following block of codes handles the latter way. It adds a 'Select Image' button and
+        # emit a signal when the button is clicked.
         if self.standalone:
                 gobject.signal_new("select_image_clicked", self, gobject.SIGNAL_RUN_FIRST,
                                    gobject.TYPE_NONE, ())
@@ -874,16 +879,16 @@ class DeployImageDialog (CrumbsDialog):
                     if os.path.exists(tmpname):
                         tmpfile = open(tmpname)
                         if int(tmpfile.readline().strip()) == 0:
-                            lbl = "<b>Deploy image successfully</b>"
+                            lbl = "<b>Deploy image successfully.</b>"
                         else:
-                            lbl = "<b>Deploy image failed</b>\nPlease try again."
+                            lbl = "<b>Failed to deploy image.</b>\nPlease check image <b>%s</b> exists and USB device <b>%s</b> is writable." % (self.image_path, combo_item)
                         tmpfile.close()
                         os.remove(tmpname)
             else:
                 if not self.image_path:
-                    lbl = "<b>No selection made</b>\nYou have not selected an image to deploy"
+                    lbl = "<b>No selection made.</b>\nYou have not selected an image to deploy."
                 else:
-                    lbl = "<b>No selection made</b>\nYou have not selected USB device"
+                    lbl = "<b>No selection made.</b>\nYou have not selected a USB device."
             if len(lbl):
                 crumbs_dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
                 button = crumbs_dialog.add_button("Close", gtk.RESPONSE_OK)
