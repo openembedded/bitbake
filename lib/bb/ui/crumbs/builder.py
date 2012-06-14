@@ -758,7 +758,9 @@ class Builder(gtk.Window):
 
     def window_sensitive(self, sensitive):
         self.image_configuration_page.machine_combo.set_sensitive(sensitive)
+        self.image_configuration_page.machine_combo.child.set_sensitive(sensitive)
         self.image_configuration_page.image_combo.set_sensitive(sensitive)
+        self.image_configuration_page.image_combo.child.set_sensitive(sensitive)
         self.image_configuration_page.layer_button.set_sensitive(sensitive)
         self.image_configuration_page.layer_info_icon.set_sensitive(sensitive)
         self.image_configuration_page.toolbar.set_sensitive(sensitive)
