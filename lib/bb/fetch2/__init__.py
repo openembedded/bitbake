@@ -210,8 +210,10 @@ def uri_replace(ud, uri_find, uri_replace, d):
                     if basename and not result_decoded[loc].endswith(basename):
                         result_decoded[loc] = os.path.join(result_decoded[loc], basename)
             else:
-                return ud.url
+                return None
     result = encodeurl(result_decoded)
+    if result == ud.url:
+        return None
     logger.debug(2, "For url %s returning %s" % (ud.url, result))
     return result
 
@@ -477,7 +479,7 @@ def try_mirrors(d, origud, mirrors, check = False):
         except ValueError:
             continue
         newuri = uri_replace(origud, find, replace, ld)
-        if newuri == origud.url:
+        if not newuri:
             continue
         try:
             ud = FetchData(newuri, ld)
