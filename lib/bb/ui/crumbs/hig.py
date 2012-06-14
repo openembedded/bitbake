@@ -27,6 +27,7 @@ import hashlib
 import os
 import re
 import shlex
+import subprocess
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
@@ -871,8 +872,7 @@ class DeployImageDialog (CrumbsDialog):
                     tmpname = os.tmpnam()
                     cmdline += "\"sudo dd if=" + self.image_path + \
                                 " of=" + combo_item + "; echo $? > " + tmpname + "\""
-                    deploy_process = bb.process.Popen(shlex.split(cmdline))
-                    deploy_process.wait()
+                    subprocess.call(shlex.split(cmdline))
 
                     # if file tmpname not exists, that means there is something wrong with xterm
                     # user can get the error message from xterm so no more warning need.
