@@ -33,7 +33,7 @@ from bb.ui.crumbs.hobwidget import HobAltButton, HobButton
 
 # I put all the fs bitbake supported here. Need more test.
 DEPLOYABLE_IMAGE_TYPES = ["jffs2", "cramfs", "ext2", "ext3", "btrfs", "squashfs", "ubi", "vmdk"]
-Title = "USB Image Maker"
+Title = "USB Image Writer"
 
 class DeployWindow(gtk.Window):
     def __init__(self, image_path=''):
@@ -43,13 +43,13 @@ class DeployWindow(gtk.Window):
             valid = True
             if not os.path.exists(image_path):
                 valid = False
-                lbl = "<b>Invalid image file path: %s.</b>\nPress <b>Select Image</b> button to select an image." % image_path
+                lbl = "<b>Invalid image file path: %s.</b>\nPress <b>Select Image</b> to select an image." % image_path
             else:
                 image_path = os.path.abspath(image_path)
                 extend_name = os.path.splitext(image_path)[1][1:]
                 if extend_name not in DEPLOYABLE_IMAGE_TYPES:
                     valid = False
-                    lbl = "<b>Undeployable imge type: %s</b>\nPress <b>Select Image</b> button to select an image." % extend_name
+                    lbl = "<b>Undeployable imge type: %s</b>\nPress <b>Select Image</b> to select an image." % extend_name
 
             if not valid:
                 image_path = ''
@@ -66,8 +66,8 @@ class DeployWindow(gtk.Window):
         HobAltButton.style_button(close_button)
         close_button.connect('clicked', gtk.main_quit)
 
-        make_button = self.deploy_dialog.add_button("Make USB image", gtk.RESPONSE_YES)
-        HobAltButton.style_button(make_button)
+        write_button = self.deploy_dialog.add_button("Write USB image", gtk.RESPONSE_YES)
+        HobAltButton.style_button(write_button)
 
         self.deploy_dialog.connect('select_image_clicked', self.select_image_clicked_cb)
         self.deploy_dialog.connect('destroy', gtk.main_quit)
