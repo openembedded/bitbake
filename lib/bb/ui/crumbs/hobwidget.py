@@ -532,6 +532,12 @@ class HobNotebook(gtk.Notebook):
         if search.get_editable() == True:
             search.set_text("")
 
+    def set_page(self, title):
+        for child in self.pages:
+            if child.lbl.get_label() == title:
+                child.grab_focus()
+                self.set_current_page(self.page_num(child))
+
 class HobWarpCellRendererText(gtk.CellRendererText):
     def __init__(self, col_number):
         gtk.CellRendererText.__init__(self)
