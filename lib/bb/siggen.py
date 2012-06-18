@@ -50,6 +50,10 @@ class SignatureGenerator(object):
     def dump_sigtask(self, fn, task, stampbase, runtime):
         return
 
+    def invalidate_task(self, task, d, fn):
+        bb.build.del_stamp(task, d, fn)
+
+
 class SignatureGeneratorBasic(SignatureGenerator):
     """
     """
@@ -153,6 +157,15 @@ class SignatureGeneratorBasic(SignatureGenerator):
                 return False
         return True
 
+    def read_taint(self, fn, task, stampbase):
+        taint = None
+        try:
+            with open(stampbase + '.' + task + '.taint', 'r') as taintf:
+                taint = taintf.read()
+        except IOError:
+            pass
+        return taint
+
     def get_taskhash(self, fn, task, deps, dataCache):
         k = fn + "." + task
         data = dataCache.basetaskhash[k]
@@ -173,6 +186,11 @@ class SignatureGeneratorBasic(SignatureGenerator):
             for (f,cs) in checksums:
                self.file_checksum_values[k][f] = cs
                data = data + cs
+
+        taint = self.read_taint(fn, task, dataCache.stamp[fn])
+        if taint:
+            data = data + taint
+
         h = hashlib.md5(data).hexdigest()
         self.taskhash[k] = h
         #d.setVar("BB_TASKHASH_task-%s" % task, taskhash[task])
@@ -214,6 +232,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
 
+        taint = self.read_taint(fn, task, stampbase)
+        if taint:
+            data['taint'] = taint
+
         with open(sigfile, "wb") as f:
             p = pickle.Pickler(f, -1)
             p.dump(data)
@@ -244,6 +266,9 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
             # If k is not in basehash, then error
             h = self.basehash[k]
         return ("%s.%s.%s.%s" % (stampbase, taskname, h, extrainfo)).rstrip('.')
+
+    def invalidate_task(self, task, d, fn):
+        bb.build.write_taint(task, d, fn)
 
 def dump_this_task(outfile, d):
     import bb.parse
@@ -357,6 +382,13 @@ def compare_sigfiles(a, b):
             for dep in changed:
                 print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
 
+
+    a_taint = a_data.get('taint', None)
+    b_taint = b_data.get('taint', None)
+    if a_taint != b_taint:
+        print "Taint (by forced/invalidated task) changed from %s to %s" % (a_taint, b_taint)
+
+
 def dump_sigfile(a):
     p1 = pickle.Unpickler(open(a, "rb"))
     a_data = p1.load()
@@ -384,3 +416,6 @@ def dump_sigfile(a):
     if 'runtaskhashes' in a_data:
         for dep in a_data['runtaskhashes']:
             print "Hash for dependent task %s is %s" % (dep, a_data['runtaskhashes'][dep])
+
+    if 'taint' in a_data:
+        print "Tainted (by forced/invalidated task): %s" % a_data['taint']

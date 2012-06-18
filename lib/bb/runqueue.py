@@ -705,6 +705,12 @@ class RunQueueData:
                 continue
             self.runq_setscene.append(task)
 
+        # Invalidate task if force mode active
+        if self.cooker.configuration.force:
+            for (fn, target) in self.target_pairs:
+                logger.verbose("Invalidate task %s, %s", target, fn)
+                bb.parse.siggen.invalidate_task(target, self.dataCache, fn)
+
         # Interate over the task list and call into the siggen code
         dealtwith = set()
         todeal = set(range(len(self.runq_fnid)))
@@ -730,12 +736,6 @@ class RunQueueData:
                                            self.runq_task[dep])
                 deps.append(depidentifier)
             self.hash_deps[identifier] = deps
-
-        # Remove stamps for targets if force mode active
-        if self.cooker.configuration.force:
-            for (fn, target) in self.target_pairs:
-                logger.verbose("Remove stamp %s, %s", target, fn)
-                bb.build.del_stamp(target, self.dataCache, fn)
 
         return len(self.runq_fnid)
 

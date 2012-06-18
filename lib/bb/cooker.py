@@ -1066,10 +1066,10 @@ class BBCooker:
         self.status.rundeps[fn] = []
         self.status.runrecs[fn] = []
 
-        # Remove stamp for target if force mode active
+        # Invalidate task for target if force mode active
         if self.configuration.force:
-            logger.verbose("Remove stamp %s, %s", task, fn)
-            bb.build.del_stamp('do_%s' % task, self.status, fn)
+            logger.verbose("Invalidate task %s, %s", task, fn)
+            bb.parse.siggen.invalidate_task('do_%s' % task, self.status, fn)
 
         # Setup taskdata structure
         taskdata = bb.taskdata.TaskData(self.configuration.abort)

@@ -494,6 +494,24 @@ def del_stamp(task, d, file_name = None):
     stamp = stamp_internal(task, d, file_name)
     bb.utils.remove(stamp)
 
+def write_taint(task, d, file_name = None):
+    """
+    Creates a "taint" file which will force the specified task and its
+    dependents to be re-run the next time by influencing the value of its
+    taskhash.
+    (d can be a data dict or dataCache)
+    """
+    import uuid
+    if file_name:
+        taintfn = d.stamp[file_name] + '.' + task + '.taint'
+    else:
+        taintfn = d.getVar('STAMP', True) + '.' + task + '.taint'
+    bb.utils.mkdirhier(os.path.dirname(taintfn))
+    # The specific content of the taint file is not really important,
+    # we just need it to be random, so a random UUID is used
+    with open(taintfn, 'w') as taintf:
+        taintf.write(str(uuid.uuid4()))
+
 def stampfile(taskname, d, file_name = None):
     """
     Return the stamp for a given task
