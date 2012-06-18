@@ -705,11 +705,27 @@ class RunQueueData:
                 continue
             self.runq_setscene.append(task)
 
+        def invalidate_task(fn, taskname, error_nostamp):
+            taskdep = self.dataCache.task_deps[fn]
+            if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
+                if error_nostamp:
+                    bb.fatal("Task %s is marked nostamp, cannot invalidate this task" % taskname)
+                else:
+                    bb.debug(1, "Task %s is marked nostamp, cannot invalidate this task" % taskname)
+            else:
+                logger.verbose("Invalidate task %s, %s", taskname, fn)
+                bb.parse.siggen.invalidate_task(taskname, self.dataCache, fn)
+
         # Invalidate task if force mode active
         if self.cooker.configuration.force:
             for (fn, target) in self.target_pairs:
-                logger.verbose("Invalidate task %s, %s", target, fn)
-                bb.parse.siggen.invalidate_task(target, self.dataCache, fn)
+                invalidate_task(fn, target, False)
+
+        # Invalidate task if invalidate mode active
+        if self.cooker.configuration.invalidate_stamp:
+            for (fn, target) in self.target_pairs:
+                for st in self.cooker.configuration.invalidate_stamp.split(','):
+                    invalidate_task(fn, "do_%s" % st, True)
 
         # Interate over the task list and call into the siggen code
         dealtwith = set()
