@@ -464,6 +464,30 @@ def check_network_access(d, info = "", url = None):
     else:
         logger.debug(1, "Fetcher accessed the network with the command %s" % info)
 
+def build_mirroruris(origud, mirrors, ld):
+    uris = []
+    uds = []
+
+    def adduri(uri, ud, uris, uds):
+        for line in mirrors:
+            try:
+                (find, replace) = line
+            except ValueError:
+                continue
+            newuri = uri_replace(ud, find, replace, ld)
+            if not newuri or newuri in uris or newuri == origud.url:
+                continue
+            uris.append(newuri)
+            newud = FetchData(newuri, ld)
+            newud.setup_localpath(ld)
+            uds.append(newud)
+
+            adduri(newuri, newud, uris, uds)
+
+    adduri(None, origud, uris, uds)
+
+    return uris, uds
+
 def try_mirror_url(newuri, origud, ud, ld, check = False):
     # Return of None or a value means we're finished
     # False means try another url
@@ -529,18 +553,11 @@ def try_mirrors(d, origud, mirrors, check = False):
     mirrors is the list of mirrors we're going to try
     """
     ld = d.createCopy()
-    for line in mirrors:
-        try:
-            (find, replace) = line
-        except ValueError:
-            continue
-        newuri = uri_replace(origud, find, replace, ld)
-        if not newuri:
-            continue
-        ud = FetchData(newuri, ld)
-        ud.setup_localpath(ld)
 
-        ret = try_mirror_url(newuri, origud, ud, ld, check)
+    uris, uds = build_mirroruris(origud, mirrors, ld)
+
+    for index, uri in enumerate(uris):
+        ret = try_mirror_url(uri, origud, uds[index], ld, check)
         if ret != False:
             return ret
     return None
