@@ -194,7 +194,15 @@ def uri_replace(ud, uri_find, uri_replace, d):
     for loc, i in enumerate(uri_find_decoded):
         result_decoded[loc] = uri_decoded[loc]
         if loc == 5:
-            continue
+            # Handle URL parameters
+            if i:
+                # Any specified URL parameters must match
+                for k in uri_replace_decoded[loc]:
+                    if uri_decoded[loc][k] != uri_replace_decoded[loc][k]:
+                        return None
+            # Overwrite any specified replacement parameters
+            for k in uri_replace_decoded[loc]:
+                result_decoded[loc][k] = uri_replace_decoded[loc][k]
         elif (re.match(i, uri_decoded[loc])):
             if not uri_replace_decoded[loc]:
                 result_decoded[loc] = ""    
