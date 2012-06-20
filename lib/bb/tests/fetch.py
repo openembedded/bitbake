@@ -46,11 +46,18 @@ class FetcherTest(unittest.TestCase):
         ("http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz") 
             : "http://somewhere2.org/somedir3/somefile_1.2.3.tar.gz",
         ("http://www.apache.org/dist/subversion/subversion-1.7.1.tar.bz2", "http://www.apache.org/dist", "http://archive.apache.org/dist")
-            : "http://archive.apache.org/dist/subversion/subversion-1.7.1.tar.bz2"
+            : "http://archive.apache.org/dist/subversion/subversion-1.7.1.tar.bz2",
+        ("http://www.apache.org/dist/subversion/subversion-1.7.1.tar.bz2", "http://.*/.*", "file:///somepath/downloads/")
+            : "file:///somepath/downloads/subversion-1.7.1.tar.bz2"
         #Renaming files doesn't work
         #("http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere.org/somedir1/somefile_1.2.3.tar.gz", "http://somewhere2.org/somedir3/somefile_2.3.4.tar.gz") : "http://somewhere2.org/somedir3/somefile_2.3.4.tar.gz"
         #("file://sstate-xyz.tgz", "file://.*/.*", "file:///somewhere/1234/sstate-cache") : "file:///somewhere/1234/sstate-cache/sstate-xyz.tgz",
     }
+
+    mirrorvar = "http://.*/.* file:///somepath/downloads/ \n" \
+                "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n" \
+                "https://.*/.* file:///someotherpath/downloads/ \n" \
+                "http://.*/.* file:///someotherpath/downloads/ \n"
 
     def setUp(self):
         self.d = bb.data.init()
@@ -124,12 +131,33 @@ class FetcherTest(unittest.TestCase):
         self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
         self.gitfetcher(url1, url2)
 
+    def test_gitfetch_premirror3(self):
+        realurl = "git://git.openembedded.org/bitbake"
+        dummyurl = "git://someserver.org/bitbake"
+        self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
+        subprocess.check_output("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
+        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
+        self.gitfetcher(dummyurl, dummyurl)
+
     def test_urireplace(self):
         for k, v in self.replaceuris.items():
             ud = bb.fetch.FetchData(k[0], self.d)
             ud.setup_localpath(self.d)
             newuris = bb.fetch2.uri_replace(ud, k[1], k[2], self.d)
             self.assertEqual(newuris, v)
+
+    def test_urilist1(self):
+        fetcher = bb.fetch.FetchData("http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
+        mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
+        uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
+        self.assertEqual(uris, ['file:///somepath/downloads/bitbake-1.0.tar.gz', 'file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
+
+    def test_urilist2(self):
+        # Catch https:// -> files:// bug
+        fetcher = bb.fetch.FetchData("https://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
+        mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
+        uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
+        self.assertEqual(uris, ['file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
 
 
 class URLHandle(unittest.TestCase):
