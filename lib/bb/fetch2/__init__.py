@@ -193,24 +193,25 @@ def uri_replace(ud, uri_find, uri_replace, d):
     result_decoded = ['', '', '', '', '', {}]
     for loc, i in enumerate(uri_find_decoded):
         result_decoded[loc] = uri_decoded[loc]
-        if isinstance(i, basestring):
-            if (re.match(i, uri_decoded[loc])):
-                if not uri_replace_decoded[loc]:
-                    result_decoded[loc] = ""    
-                else:
-                    result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
-                if loc == 2:
-                    basename = None
-                    if ud.mirrortarball:
-                        basename = os.path.basename(ud.mirrortarball)
-                    elif ud.localpath:
-                        basename = os.path.basename(ud.localpath)
-                    if basename and result_decoded[loc].endswith("/"):
-                        result_decoded[loc] = os.path.dirname(result_decoded[loc])
-                    if basename and not result_decoded[loc].endswith(basename):
-                        result_decoded[loc] = os.path.join(result_decoded[loc], basename)
+        if loc == 5:
+            continue
+        elif (re.match(i, uri_decoded[loc])):
+            if not uri_replace_decoded[loc]:
+                result_decoded[loc] = ""    
             else:
-                return None
+                result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
+            if loc == 2:
+                basename = None
+                if ud.mirrortarball:
+                    basename = os.path.basename(ud.mirrortarball)
+                elif ud.localpath:
+                    basename = os.path.basename(ud.localpath)
+                if basename and result_decoded[loc].endswith("/"):
+                    result_decoded[loc] = os.path.dirname(result_decoded[loc])
+                if basename and not result_decoded[loc].endswith(basename):
+                    result_decoded[loc] = os.path.join(result_decoded[loc], basename)
+        else:
+            return None
     result = encodeurl(result_decoded)
     if result == ud.url:
         return None
