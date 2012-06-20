@@ -217,7 +217,7 @@ def uri_replace(ud, uri_find, uri_replace, d):
                     basename = os.path.basename(ud.mirrortarball)
                     # Kill parameters, they make no sense for mirror tarballs
                     uri_decoded[5] = {}
-                elif ud.localpath:
+                elif ud.localpath and ud.method.supports_checksum(ud):
                     basename = os.path.basename(ud.localpath)
                 if basename and not result_decoded[loc].endswith(basename):
                     result_decoded[loc] = os.path.join(result_decoded[loc], basename)
