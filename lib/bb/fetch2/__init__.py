@@ -191,8 +191,7 @@ def uri_replace(ud, uri_find, uri_replace, d):
     uri_replace_decoded = list(decodeurl(uri_replace))
     logger.debug(2, "For url %s comparing %s to %s" % (uri_decoded, uri_find_decoded, uri_replace_decoded))
     result_decoded = ['', '', '', '', '', {}]
-    for i in uri_find_decoded:
-        loc = uri_find_decoded.index(i)
+    for loc, i in enumerate(uri_find_decoded):
         result_decoded[loc] = uri_decoded[loc]
         if isinstance(i, basestring):
             if (re.match(i, uri_decoded[loc])):
@@ -200,7 +199,7 @@ def uri_replace(ud, uri_find, uri_replace, d):
                     result_decoded[loc] = ""    
                 else:
                     result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
-                if uri_find_decoded.index(i) == 2:
+                if loc == 2:
                     basename = None
                     if ud.mirrortarball:
                         basename = os.path.basename(ud.mirrortarball)
