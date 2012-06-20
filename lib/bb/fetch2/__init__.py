@@ -207,15 +207,15 @@ def uri_replace(ud, uri_find, uri_replace, d):
             if not uri_replace_decoded[loc]:
                 result_decoded[loc] = ""    
             else:
+                #bb.note("%s %s %s" % (i, uri_replace_decoded[loc], uri_decoded[loc]))
                 result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
             if loc == 2:
+                # Handle path manipulations
                 basename = None
                 if ud.mirrortarball:
                     basename = os.path.basename(ud.mirrortarball)
                 elif ud.localpath:
                     basename = os.path.basename(ud.localpath)
-                if basename and result_decoded[loc].endswith("/"):
-                    result_decoded[loc] = os.path.dirname(result_decoded[loc])
                 if basename and not result_decoded[loc].endswith(basename):
                     result_decoded[loc] = os.path.join(result_decoded[loc], basename)
         else:
