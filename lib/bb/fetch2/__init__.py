@@ -184,7 +184,8 @@ def encodeurl(decoded):
 
 def uri_replace(ud, uri_find, uri_replace, d):
     if not ud.url or not uri_find or not uri_replace:
-        logger.debug(1, "uri_replace: passed an undefined value, not replacing")
+        logger.error("uri_replace: passed an undefined value, not replacing")
+        return None
     uri_decoded = list(decodeurl(ud.url))
     uri_find_decoded = list(decodeurl(uri_find))
     uri_replace_decoded = list(decodeurl(uri_replace))
