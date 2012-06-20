@@ -203,6 +203,12 @@ def uri_replace(ud, uri_find, uri_replace, d):
             # Overwrite any specified replacement parameters
             for k in uri_replace_decoded[loc]:
                 result_decoded[loc][k] = uri_replace_decoded[loc][k]
+        elif loc == 0:
+            # Principle of least surprise. We could end up with https matching against http and 
+            # generating "files://" urls if we use the regexp engine below.
+            if i != uri_decoded[loc]:
+                return None
+            result_decoded[loc] = uri_replace_decoded[loc]
         elif (re.match(i, uri_decoded[loc])):
             if not uri_replace_decoded[loc]:
                 result_decoded[loc] = ""    
