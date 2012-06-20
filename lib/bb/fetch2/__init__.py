@@ -490,7 +490,8 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
         # We may be obtaining a mirror tarball which needs further processing by the real fetcher
         # If that tarball is a local file:// we need to provide a symlink to it
         dldir = ld.getVar("DL_DIR", True)
-        if os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
+        if origud.mirrortarball and os.path.basename(ud.localpath) == os.path.basename(origud.mirrortarball) \
+                and os.path.basename(ud.localpath) != os.path.basename(origud.localpath):
             open(ud.donestamp, 'w').close()
             dest = os.path.join(dldir, os.path.basename(ud.localpath))
             if not os.path.exists(dest):
