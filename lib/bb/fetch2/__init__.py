@@ -486,6 +486,8 @@ def try_mirrors(d, origud, mirrors, check = False):
             ud = FetchData(newuri, ld)
             ud.setup_localpath(ld)
 
+            os.chdir(ld.getVar("DL_DIR", True))
+
             if check:
                 found = ud.method.checkstatus(newuri, ud, ld)
                 if found:
@@ -1094,6 +1096,8 @@ class Fetch(object):
                 if premirroronly:
                     self.d.setVar("BB_NO_NETWORK", "1")
 
+                os.chdir(self.d.getVar("DL_DIR", True))
+
                 firsterr = None
                 if not localpath and ((not os.path.exists(ud.donestamp)) or m.need_update(u, ud, self.d)):
                     try:
@@ -1155,7 +1159,7 @@ class Fetch(object):
                 except:
                     # Finally, try checking uri, u, from MIRRORS
                     mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))
-                    ret = try_mirrors (self.d, ud, mirrors, True)
+                    ret = try_mirrors(self.d, ud, mirrors, True)
 
             if not ret:
                 raise FetchError("URL %s doesn't work" % u, u)
