@@ -212,8 +212,11 @@ def uri_replace(ud, uri_find, uri_replace, d):
             if loc == 2:
                 # Handle path manipulations
                 basename = None
-                if ud.mirrortarball:
+                if uri_decoded[0] != uri_replace_decoded[0] and ud.mirrortarball:
+                    # If the source and destination url types differ, must be a mirrortarball mapping
                     basename = os.path.basename(ud.mirrortarball)
+                    # Kill parameters, they make no sense for mirror tarballs
+                    uri_decoded[5] = {}
                 elif ud.localpath:
                     basename = os.path.basename(ud.localpath)
                 if basename and not result_decoded[loc].endswith(basename):
