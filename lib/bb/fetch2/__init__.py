@@ -1028,7 +1028,7 @@ class Fetch(object):
         self.ud = {}
 
         fn = d.getVar('FILE', True)
-        if cache and fn in urldata_cache:
+        if cache and fn and fn in urldata_cache:
             self.ud = urldata_cache[fn]
 
         for url in urls:
@@ -1040,7 +1040,7 @@ class Fetch(object):
                         self.ud[url] = None
                         pass
 
-        if cache:
+        if fn and cache:
             urldata_cache[fn] = self.ud
 
     def localpath(self, url):
