@@ -182,7 +182,7 @@ def encodeurl(decoded):
 
     return url
 
-def uri_replace(ud, uri_find, uri_replace, d):
+def uri_replace(ud, uri_find, uri_replace, replacements, d):
     if not ud.url or not uri_find or not uri_replace:
         logger.error("uri_replace: passed an undefined value, not replacing")
         return None
@@ -213,6 +213,8 @@ def uri_replace(ud, uri_find, uri_replace, d):
             if not uri_replace_decoded[loc]:
                 result_decoded[loc] = ""    
             else:
+                for k in replacements:
+                    uri_replace_decoded[loc] = uri_replace_decoded[loc].replace(k, replacements[k])
                 #bb.note("%s %s %s" % (i, uri_replace_decoded[loc], uri_decoded[loc]))
                 result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
             if loc == 2:
@@ -485,13 +487,20 @@ def build_mirroruris(origud, mirrors, ld):
     uris = []
     uds = []
 
+    replacements = {}
+    replacements["TYPE"] = origud.type
+    replacements["HOST"] = origud.host
+    replacements["PATH"] = origud.path
+    replacements["BASENAME"] = origud.path.split("/")[-1]
+    replacements["MIRRORNAME"] = origud.host.replace(':','.') + origud.path.replace('/', '.')
+
     def adduri(uri, ud, uris, uds):
         for line in mirrors:
             try:
                 (find, replace) = line
             except ValueError:
                 continue
-            newuri = uri_replace(ud, find, replace, ld)
+            newuri = uri_replace(ud, find, replace, replacements, ld)
             if not newuri or newuri in uris or newuri == origud.url:
                 continue
             try:
