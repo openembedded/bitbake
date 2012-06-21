@@ -423,8 +423,6 @@ def preserved_envvars():
         'BB_PRESERVE_ENV',
         'BB_ENV_WHITELIST',
         'BB_ENV_EXTRAWHITE',
-        'LANG',
-        '_',
     ]
     return v + preserved_envvars_exported() + preserved_envvars_exported_interactive()
 
