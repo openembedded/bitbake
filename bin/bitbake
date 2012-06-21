@@ -118,7 +118,7 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("-c", "--cmd", help = "Specify task to execute. Note that this only executes the specified task for the providee and the packages it depends on, i.e. 'compile' does not implicitly call stage for the dependencies (IOW: use only if you know what you are doing). Depending on the base.bbclass a listtasks tasks is defined and will show available tasks",
                action = "store", dest = "cmd")
 
-    parser.add_option("-C", "--clear-stamp", help = "Invalidate the specified stamp for a task such as 'compile' and run the default task for the specified target(s)",
+    parser.add_option("-C", "--clear-stamp", help = "Invalidate the stamp for the specified cmd such as 'compile' and run the default task for the specified target(s)",
                 action = "store", dest = "invalidate_stamp")
 
     parser.add_option("-r", "--read", help = "read the specified file before bitbake.conf",
