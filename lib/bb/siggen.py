@@ -268,6 +268,7 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
         return ("%s.%s.%s.%s" % (stampbase, taskname, h, extrainfo)).rstrip('.')
 
     def invalidate_task(self, task, d, fn):
+        bb.note("Tainting hash to force rebuild of task %s, %s" % (fn, task))
         bb.build.write_taint(task, d, fn)
 
 def dump_this_task(outfile, d):
