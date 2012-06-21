@@ -534,11 +534,15 @@ class BBCooker:
 
         # Prints a flattened form of package-depends below where subpackages of a package are merged into the main pn
         depends_file = file('pn-depends.dot', 'w' )
+        buildlist_file = file('pn-buildlist', 'w' )
         print("digraph depends {", file=depends_file)
         for pn in depgraph["pn"]:
             fn = depgraph["pn"][pn]["filename"]
             version = depgraph["pn"][pn]["version"]
             print('"%s" [label="%s %s\\n%s"]' % (pn, pn, version, fn), file=depends_file)
+            print("%s" % pn, file=buildlist_file)
+        buildlist_file.close()
+        logger.info("PN build list saved to 'pn-buildlist'")
         for pn in depgraph["depends"]:
             for depend in depgraph["depends"][pn]:
                 print('"%s" -> "%s"' % (pn, depend), file=depends_file)

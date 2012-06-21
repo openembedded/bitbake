@@ -148,7 +148,7 @@ Default BBFILES are the .bb files in the current directory.""")
     parser.add_option("-e", "--environment", help = "show the global or per-package environment (this is what used to be bbread)",
                action = "store_true", dest = "show_environment", default = False)
 
-    parser.add_option("-g", "--graphviz", help = "emit the dependency trees of the specified packages in the dot syntax",
+    parser.add_option("-g", "--graphviz", help = "emit the dependency trees of the specified packages in the dot syntax, and the pn-buildlist to show the build list",
                 action = "store_true", dest = "dot_graph", default = False)
 
     parser.add_option("-I", "--ignore-deps", help = """Assume these dependencies don't exist and are already provided (equivalent to ASSUME_PROVIDED). Useful to make dependency graphs more appealing""",
