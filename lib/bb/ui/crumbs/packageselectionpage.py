@@ -113,15 +113,12 @@ class PackageSelectionPage (HobPage):
         self.ins.set_current_page(0)
 
     def create_visual_elements(self):
-        self.label = gtk.Button("Packages included: 0\nSelected packages size: 0 MB")
-        self.label.set_can_default(False)
-        self.label.set_relief(gtk.RELIEF_HALF)
-        self.label.connect("clicked", self.included_clicked_cb)
+        self.label = gtk.Label("Packages included: 0\nSelected packages size: 0 MB")
         self.eventbox = self.add_onto_top_bar(self.label, 73)
         self.pack_start(self.eventbox, expand=False, fill=False)
         self.pack_start(self.group_align, expand=True, fill=True)
 
-        # set visiable members
+        # set visible members
         self.ins = HobNotebook()
         self.tables = [] # we need to modify table when the dialog is shown
         # append the tab
