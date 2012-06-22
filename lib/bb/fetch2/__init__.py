@@ -494,9 +494,18 @@ def build_mirroruris(origud, mirrors, ld):
             newuri = uri_replace(ud, find, replace, ld)
             if not newuri or newuri in uris or newuri == origud.url:
                 continue
+            try:
+                newud = FetchData(newuri, ld)
+                newud.setup_localpath(ld)
+            except bb.fetch2.BBFetchException as e:
+                logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
+                logger.debug(1, str(e))
+                try:
+                    ud.method.clean(ud, ld)
+                except UnboundLocalError:
+                    pass
+                continue   
             uris.append(newuri)
-            newud = FetchData(newuri, ld)
-            newud.setup_localpath(ld)
             uds.append(newud)
 
             adduri(newuri, newud, uris, uds)
