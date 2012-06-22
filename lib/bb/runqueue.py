@@ -1724,7 +1724,7 @@ class runQueuePipe():
     def __init__(self, pipein, pipeout, d):
         self.input = pipein
         pipeout.close()
-        fcntl.fcntl(self.input, fcntl.F_SETFL, fcntl.fcntl(self.input, fcntl.F_GETFL) | os.O_NONBLOCK)
+        bb.utils.nonblockingfd(self.input)
         self.queue = ""
         self.d = d
 

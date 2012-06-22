@@ -26,6 +26,7 @@ import logging
 import bb
 import bb.msg
 import multiprocessing
+import fcntl
 from commands import getstatusoutput
 from contextlib import contextmanager
 
@@ -754,3 +755,7 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
 
 def cpu_count():
     return multiprocessing.cpu_count()
+
+def nonblockingfd(fd):
+    fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
+
