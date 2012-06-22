@@ -135,7 +135,8 @@ class LogTee(object):
 
     def __repr__(self):
         return '<LogTee {0}>'.format(self.name)
-
+    def flush(self):
+        self.outfile.flush()
 
 def exec_func(func, d, dirs = None):
     """Execute an BB 'function'"""

@@ -1,6 +1,8 @@
 import logging
 import signal
 import subprocess
+import errno
+import select
 
 logger = logging.getLogger('BitBake.Process')
 
@@ -68,20 +70,38 @@ def _logged_communicate(pipe, log, input):
             pipe.stdin.write(input)
         pipe.stdin.close()
 
-    bufsize = 512
     outdata, errdata = [], []
-    while pipe.poll() is None:
-        if pipe.stdout is not None:
-            data = pipe.stdout.read(bufsize)
-            if data is not None:
-                outdata.append(data)
-                log.write(data)
+    rin = []
 
-        if pipe.stderr is not None:
-            data = pipe.stderr.read(bufsize)
-            if data is not None:
-                errdata.append(data)
-                log.write(data)
+    if pipe.stdout is not None:
+        bb.utils.nonblockingfd(pipe.stdout.fileno())
+        rin.append(pipe.stdout)
+    if pipe.stderr is not None:
+        bb.utils.nonblockingfd(pipe.stderr.fileno())
+        rin.append(pipe.stderr)
+
+    try:
+        while pipe.poll() is None:
+            rlist = rin
+            try:
+                r,w,e = select.select (rlist, [], [])
+            except OSError, e:
+                if e.errno != errno.EINTR:
+                    raise
+
+            if pipe.stdout in r:
+                data = pipe.stdout.read()
+                if data is not None:
+                    outdata.append(data)
+                    log.write(data)
+
+            if pipe.stderr in r:
+                data = pipe.stderr.read()
+                if data is not None:
+                    errdata.append(data)
+                    log.write(data)
+    finally:    
+        log.flush()
     return ''.join(outdata), ''.join(errdata)
 
 def run(cmd, input=None, log=None, **options):
