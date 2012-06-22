@@ -492,7 +492,7 @@ def build_mirroruris(origud, mirrors, ld):
     replacements["HOST"] = origud.host
     replacements["PATH"] = origud.path
     replacements["BASENAME"] = origud.path.split("/")[-1]
-    replacements["MIRRORNAME"] = origud.host.replace(':','.') + origud.path.replace('/', '.')
+    replacements["MIRRORNAME"] = origud.host.replace(':','.') + origud.path.replace('/', '.').replace('*', '.')
 
     def adduri(uri, ud, uris, uds):
         for line in mirrors:
