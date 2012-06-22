@@ -543,6 +543,7 @@ def add_tasks(tasklist, d):
                 deptask = data.expand(flags[name], d)
                 task_deps[name][task] = deptask
         getTask('depends')
+        getTask('rdepends')
         getTask('deptask')
         getTask('rdeptask')
         getTask('recrdeptask')

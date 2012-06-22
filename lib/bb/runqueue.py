@@ -476,7 +476,19 @@ class RunQueueData:
                             depends.append(taskid)
                             if depdata != fnid:
                                 tdepends_fnid[fnid].add(taskid)
-
+                irdepends = taskData.tasks_irdepends[task]
+                for (depid, idependtask) in irdepends:
+                    if depid in taskData.run_targets:
+                        # Won't be in run_targets if ASSUME_PROVIDED
+                        depdata = taskData.run_targets[depid][0]
+                        if depdata is not None:
+                            dep = taskData.fn_index[depdata]
+                            taskid = taskData.gettask_id(dep, idependtask, False)
+                            if taskid is None:
+                                bb.msg.fatal("RunQueue", "Task %s in %s rdepends upon non-existent task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
+                            depends.append(taskid)
+                            if depdata != fnid:
+                                tdepends_fnid[fnid].add(taskid)
 
                 # Resolve recursive 'recrdeptask' dependencies (A)
                 #

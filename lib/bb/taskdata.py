@@ -55,6 +55,7 @@ class TaskData:
         self.tasks_name = []
         self.tasks_tdepends = []
         self.tasks_idepends = []
+        self.tasks_irdepends = []
         # Cache to speed up task ID lookups
         self.tasks_lookup = {}
 
@@ -134,6 +135,7 @@ class TaskData:
         self.tasks_fnid.append(fnid)
         self.tasks_tdepends.append([])
         self.tasks_idepends.append([])
+        self.tasks_irdepends.append([])
 
         listid = len(self.tasks_name) - 1
 
@@ -178,6 +180,15 @@ class TaskData:
                             bb.msg.fatal("TaskData", "Error for %s, dependency %s does not contain ':' character\n. Task 'depends' should be specified in the form 'packagename:task'" % (fn, dep))
                         ids.append(((self.getbuild_id(dep.split(":")[0])), dep.split(":")[1]))
                 self.tasks_idepends[taskid].extend(ids)
+            if 'rdepends' in task_deps and task in task_deps['rdepends']:
+                ids = []
+                for dep in task_deps['rdepends'][task].split():
+                    if dep:
+                        if ":" not in dep:
+                            bb.msg.fatal("TaskData", "Error for %s, dependency %s does not contain ':' character\n. Task 'rdepends' should be specified in the form 'packagename:task'" % (fn, dep))
+                        ids.append(((self.getrun_id(dep.split(":")[0])), dep.split(":")[1]))
+                self.tasks_irdepends[taskid].extend(ids)
+
 
         # Work out build dependencies
         if not fnid in self.depids:
@@ -533,6 +544,11 @@ class TaskData:
         dependees = self.get_rdependees(targetid)
         for fnid in dependees:
             self.fail_fnid(fnid, missing_list)
+        for taskid in xrange(len(self.tasks_irdepends)):
+            irdepends = self.tasks_irdepends[taskid]
+            for (idependid, idependtask) in irdepends:
+                if idependid == targetid:
+                    self.fail_fnid(self.tasks_fnid[taskid], missing_list)
 
     def add_unresolved(self, cfgData, dataCache):
         """
