@@ -28,6 +28,7 @@ import os
 import re
 import shlex
 import subprocess
+import tempfile
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
@@ -869,21 +870,16 @@ class DeployImageDialog (CrumbsDialog):
             if combo_item and combo_item != self.__dummy_usb__ and self.image_path:
                 cmdline = bb.ui.crumbs.utils.which_terminal()
                 if cmdline:
-                    tmpname = os.tmpnam()
+                    tmpfile = tempfile.NamedTemporaryFile()
                     cmdline += "\"sudo dd if=" + self.image_path + \
-                                " of=" + combo_item + "; echo $? > " + tmpname + "\""
+                                " of=" + combo_item + "; echo $? > " + tmpfile.name + "\""
                     subprocess.call(shlex.split(cmdline))
 
-                    # if file tmpname not exists, that means there is something wrong with xterm
-                    # user can get the error message from xterm so no more warning need.
-                    if os.path.exists(tmpname):
-                        tmpfile = open(tmpname)
-                        if int(tmpfile.readline().strip()) == 0:
-                            lbl = "<b>Deploy image successfully.</b>"
-                        else:
-                            lbl = "<b>Failed to deploy image.</b>\nPlease check image <b>%s</b> exists and USB device <b>%s</b> is writable." % (self.image_path, combo_item)
-                        tmpfile.close()
-                        os.remove(tmpname)
+                    if int(tmpfile.readline().strip()) == 0:
+                        lbl = "<b>Deploy image successfully.</b>"
+                    else:
+                        lbl = "<b>Failed to deploy image.</b>\nPlease check image <b>%s</b> exists and USB device <b>%s</b> is writable." % (self.image_path, combo_item)
+                    tmpfile.close()
             else:
                 if not self.image_path:
                     lbl = "<b>No selection made.</b>\nYou have not selected an image to deploy."
