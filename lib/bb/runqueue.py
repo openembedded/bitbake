@@ -406,9 +406,8 @@ class RunQueueData:
                 depdata = taskData.build_targets[depid][0]
                 if depdata is None:
                     continue
-                dep = taskData.fn_index[depdata]
                 for taskname in tasknames:
-                    taskid = taskData.gettask_id(dep, taskname, False)
+                    taskid = taskData.gettask_id_fromfnid(depdata, taskname)
                     if taskid is not None:
                         depends.append(taskid)
 
@@ -419,9 +418,8 @@ class RunQueueData:
                 depdata = taskData.run_targets[depid][0]
                 if depdata is None:
                     continue
-                dep = taskData.fn_index[depdata]
                 for taskname in tasknames:
-                    taskid = taskData.gettask_id(dep, taskname, False)
+                    taskid = taskData.gettask_id_fromfnid(depdata, taskname)
                     if taskid is not None:
                         depends.append(taskid)
 
@@ -469,8 +467,7 @@ class RunQueueData:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         depdata = taskData.build_targets[depid][0]
                         if depdata is not None:
-                            dep = taskData.fn_index[depdata]
-                            taskid = taskData.gettask_id(dep, idependtask, False)
+                            taskid = taskData.gettask_id_fromfnid(depdata, idependtask)
                             if taskid is None:
                                 bb.msg.fatal("RunQueue", "Task %s in %s depends upon non-existent task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
                             depends.append(taskid)
@@ -482,8 +479,7 @@ class RunQueueData:
                         # Won't be in run_targets if ASSUME_PROVIDED
                         depdata = taskData.run_targets[depid][0]
                         if depdata is not None:
-                            dep = taskData.fn_index[depdata]
-                            taskid = taskData.gettask_id(dep, idependtask, False)
+                            taskid = taskData.gettask_id_fromfnid(depdata, idependtask)
                             if taskid is None:
                                 bb.msg.fatal("RunQueue", "Task %s in %s rdepends upon non-existent task %s in %s" % (taskData.tasks_name[task], fn, idependtask, dep))
                             depends.append(taskid)

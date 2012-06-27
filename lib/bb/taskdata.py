@@ -116,6 +116,16 @@ class TaskData:
                 ids.append(self.tasks_lookup[fnid][task])
         return ids
 
+    def gettask_id_fromfnid(self, fnid, task):
+        """
+        Return an ID number for the task matching fnid and task.
+        """
+        if fnid in self.tasks_lookup:
+            if task in self.tasks_lookup[fnid]:
+                return self.tasks_lookup[fnid][task]
+
+        return None
+
     def gettask_id(self, fn, task, create = True):
         """
         Return an ID number for the task matching fn and task.
