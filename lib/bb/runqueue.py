@@ -456,8 +456,8 @@ class RunQueueData:
                 # e.g. do_sometask[rdeptask] = "do_someothertask"
                 # (makes sure sometask runs after someothertask of all RDEPENDS)
                 if 'rdeptask' in task_deps and taskData.tasks_name[task] in task_deps['rdeptask']:
-                    taskname = task_deps['rdeptask'][taskData.tasks_name[task]]
-                    add_runtime_dependencies(taskData.rdepids[fnid], [taskname], depends)
+                    tasknames = task_deps['rdeptask'][taskData.tasks_name[task]].split()
+                    add_runtime_dependencies(taskData.rdepids[fnid], tasknames, depends)
 
                 # Resolve inter-task dependencies
                 #
