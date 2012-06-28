@@ -153,7 +153,7 @@ class FetcherTest(unittest.TestCase):
             ud.setup_localpath(self.d)
             mirrors = bb.fetch2.mirror_from_string("%s %s" % (k[1], k[2]))
             newuris, uds = bb.fetch2.build_mirroruris(ud, mirrors, self.d)
-            self.assertEqual(newuris, [v])
+            self.assertEqual([v], newuris)
 
     def test_urilist1(self):
         fetcher = bb.fetch.FetchData("http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
