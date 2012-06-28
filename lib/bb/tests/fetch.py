@@ -142,6 +142,7 @@ class FetcherTest(unittest.TestCase):
         realurl = "git://git.openembedded.org/bitbake"
         dummyurl = "git://someserver.org/bitbake"
         self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
+        os.chdir(self.tempdir)
         subprocess.check_output("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
         self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
         self.gitfetcher(dummyurl, dummyurl)
