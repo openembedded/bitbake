@@ -193,6 +193,11 @@ def uri_replace(ud, uri_find, uri_replace, replacements, d):
     result_decoded = ['', '', '', '', '', {}]
     for loc, i in enumerate(uri_find_decoded):
         result_decoded[loc] = uri_decoded[loc]
+        regexp = i
+        if loc == 0 and regexp and not regexp.endswith("$"):
+            # Leaving the type unanchored can mean "https" matching "file" can become "files"
+            # which is clearly undesirable.
+            regexp += "$"
         if loc == 5:
             # Handle URL parameters
             if i:
@@ -203,20 +208,14 @@ def uri_replace(ud, uri_find, uri_replace, replacements, d):
             # Overwrite any specified replacement parameters
             for k in uri_replace_decoded[loc]:
                 result_decoded[loc][k] = uri_replace_decoded[loc][k]
-        elif loc == 0:
-            # Principle of least surprise. We could end up with https matching against http and 
-            # generating "files://" urls if we use the regexp engine below.
-            if i != uri_decoded[loc]:
-                return None
-            result_decoded[loc] = uri_replace_decoded[loc]
-        elif (re.match(i, uri_decoded[loc])):
+        elif (re.match(regexp, uri_decoded[loc])):
             if not uri_replace_decoded[loc]:
                 result_decoded[loc] = ""    
             else:
                 for k in replacements:
                     uri_replace_decoded[loc] = uri_replace_decoded[loc].replace(k, replacements[k])
-                #bb.note("%s %s %s" % (i, uri_replace_decoded[loc], uri_decoded[loc]))
-                result_decoded[loc] = re.sub(i, uri_replace_decoded[loc], uri_decoded[loc])
+                #bb.note("%s %s %s" % (regexp, uri_replace_decoded[loc], uri_decoded[loc]))
+                result_decoded[loc] = re.sub(regexp, uri_replace_decoded[loc], uri_decoded[loc])
             if loc == 2:
                 # Handle path manipulations
                 basename = None
