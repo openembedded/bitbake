@@ -204,7 +204,6 @@ class Git(FetchMethod):
                 needupdate = True
         if needupdate:
             try: 
-                runfetchcmd("%s remote prune origin" % ud.basecmd, d) 
                 runfetchcmd("%s remote rm origin" % ud.basecmd, d) 
             except bb.fetch2.FetchError:
                 logger.debug(1, "No Origin")
