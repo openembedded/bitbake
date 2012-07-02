@@ -49,6 +49,8 @@ class Svn(FetchMethod):
         if not "module" in ud.parm:
             raise MissingParameterError('module', ud.url)
 
+        ud.basecmd = d.getVar('FETCHCMD_svn', True)
+
         ud.module = ud.parm["module"]
 
         # Create paths to svn checkouts
@@ -69,8 +71,6 @@ class Svn(FetchMethod):
         command is "fetch", "update", "info"
         """
 
-        basecmd = data.expand('${FETCHCMD_svn}', d)
-
         proto = ud.parm.get('proto', 'svn')
 
         svn_rsh = None
@@ -88,7 +88,7 @@ class Svn(FetchMethod):
             options.append("--password %s" % ud.pswd)
 
         if command == "info":
-            svncmd = "%s info %s %s://%s/%s/" % (basecmd, " ".join(options), proto, svnroot, ud.module)
+            svncmd = "%s info %s %s://%s/%s/" % (ud.basecmd, " ".join(options), proto, svnroot, ud.module)
         else:
             suffix = ""
             if ud.revision:
@@ -96,9 +96,9 @@ class Svn(FetchMethod):
                 suffix = "@%s" % (ud.revision)
 
             if command == "fetch":
-                svncmd = "%s co %s %s://%s/%s%s %s" % (basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
+                svncmd = "%s co %s %s://%s/%s%s %s" % (ud.basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
             elif command == "update":
-                svncmd = "%s update %s" % (basecmd, " ".join(options))
+                svncmd = "%s update %s" % (ud.basecmd, " ".join(options))
             else:
                 raise FetchError("Invalid svn command %s" % command, ud.url)
 
@@ -117,6 +117,11 @@ class Svn(FetchMethod):
             logger.info("Update " + loc)
             # update sources there
             os.chdir(ud.moddir)
+            # We need to attempt to run svn upgrade first in case its an older working format
+            try:
+                runfetchcmd(ud.basecmd + " upgrade", d)
+            except FetchError:
+                pass
             logger.debug(1, "Running %s", svnupdatecmd)
             bb.fetch2.check_network_access(d, svnupdatecmd, ud.url)
             runfetchcmd(svnupdatecmd, d)
