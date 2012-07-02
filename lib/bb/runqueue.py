@@ -510,7 +510,7 @@ class RunQueueData:
         # We need to do this separately since we need all of self.runq_depends to be complete before this is processed
         extradeps = {}
         for task in recursivetasks:
-            extradeps[task] = set()
+            extradeps[task] = set(self.runq_depends[task])
             tasknames = recursivetasks[task]
             seendeps = set()
             seenfnid = []
@@ -527,10 +527,15 @@ class RunQueueData:
                             generate_recdeps(n)
             generate_recdeps(task)
 
+        # Remove circular references so that do_a[recrdeptask] = "do_a do_b" can work
+        recursivetaskset = set(recursivetasks.keys())
+        for task in recursivetasks:
+            extradeps[task].difference_update(recursivetaskset)
+
         for task in xrange(len(taskData.tasks_name)):
             # Add in extra dependencies
             if task in extradeps:
-                 self.runq_depends[task].update(extradeps[task])
+                 self.runq_depends[task] = extradeps[task]
             # Remove all self references
             if task in self.runq_depends[task]:
                 logger.debug(2, "Task %s (%s %s) contains self reference! %s", task, taskData.fn_index[taskData.tasks_fnid[task]], taskData.tasks_name[task], self.runq_depends[task])
