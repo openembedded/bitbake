@@ -232,7 +232,7 @@ class ImageDetailsPage (HobPage):
 
         is_runnable = self.create_bottom_buttons(self.buttonlist, self.toggled_image)
 
-        #if self.build_succeeded:
+        # Generated image files info
         varlist = ["Name: ", "FileCreated: ", "Directory: "]
         vallist = []
 
@@ -428,7 +428,7 @@ class ImageDetailsPage (HobPage):
             if fileitem['is_toggled']:
                 if fileitem['action_attr'] == 'run':
                     self.builder.runqemu_image(fileitem['name'], self.sel_kernel)
-                elif image_attr == 'deploy':
+                elif fileitem['action_attr'] == 'deploy':
                     self.builder.deploy_image(fileitem['name'])
 
     def table_selected_cb(self, tbutton, image):
@@ -444,14 +444,6 @@ class ImageDetailsPage (HobPage):
             markup = self.kernel_detail.format_line("Kernel: ", self.sel_kernel)
             label = ((self.kernel_detail.get_children()[0]).get_children()[0]).get_children()[0]
             label.set_markup(markup)
-
-    def row_activated_cb(self, table, model, path):
-        if not model:
-            return
-        iter = model.get_iter(path)
-        image_name = model[path][0]
-        if iter and model[path][2] == True:
-            self.builder.runqemu_image(image_name, self.sel_kernel)
 
     def create_bottom_buttons(self, buttonlist, image_name):
         # Create the buttons at the bottom
@@ -536,7 +528,7 @@ class ImageDetailsPage (HobPage):
 
     def deploy_button_clicked_cb(self, button):
         if self.toggled_image:
-            if self.build_succeeded or self.num_toggled > 1:
+            if self.num_toggled > 1:
                 self.set_sensitive(False)
                 self.show_builded_images_dialog(None, "Deploy image")
                 self.set_sensitive(True)
