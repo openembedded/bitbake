@@ -376,6 +376,7 @@ class RunQueueData:
 
         runq_build = []
         recursivetasks = {}
+        recursivetasksselfref = set()
 
         taskData = self.taskData
 
@@ -494,6 +495,8 @@ class RunQueueData:
                     recursivetasks[task] = tasknames
                     add_build_dependencies(taskData.depids[fnid], tasknames, depends)
                     add_runtime_dependencies(taskData.rdepids[fnid], tasknames, depends)
+                    if taskData.tasks_name[task] in tasknames:
+                        recursivetasksselfref.add(task)
 
             self.runq_fnid.append(taskData.tasks_fnid[task])
             self.runq_task.append(taskData.tasks_name[task])
@@ -528,9 +531,8 @@ class RunQueueData:
             generate_recdeps(task)
 
         # Remove circular references so that do_a[recrdeptask] = "do_a do_b" can work
-        recursivetaskset = set(recursivetasks.keys())
         for task in recursivetasks:
-            extradeps[task].difference_update(recursivetaskset)
+            extradeps[task].difference_update(recursivetasksselfref)
 
         for task in xrange(len(taskData.tasks_name)):
             # Add in extra dependencies
