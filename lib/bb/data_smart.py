@@ -198,7 +198,12 @@ class DataSmart(MutableMapping):
                 for append in appends:
                     keep = []
                     for (a, o) in self.getVarFlag(append, op) or []:
-                        if o and not o in overrides:
+                        match = True
+                        if o:
+                            for o2 in o.split("_"):
+                                if not o2 in overrides:
+                                    match = False
+                        if not match:
                             keep.append((a ,o))
                             continue
 
