@@ -336,7 +336,7 @@ SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;pat
                 <para>The 'depends' flag for tasks is a more generic form of which allows an interdependency on specific tasks rather than specifying the data in DEPENDS.</para>
                 <para><screen>do_patch[depends] = "quilt-native:do_populate_staging"</screen></para>
                 <para>means the do_populate_staging task of the target quilt-native must have completed before the do_patch can execute.</para>
-                <para>The 'rdepends' flag works in a similar way but takes targets in the runtime namespace instead of the build time dependency namespace.
+                <para>The 'rdepends' flag works in a similar way but takes targets in the runtime namespace instead of the build time dependency namespace.</para>
             </section>
         </section>
 
