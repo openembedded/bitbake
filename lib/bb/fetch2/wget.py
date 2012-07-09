@@ -56,13 +56,15 @@ class Wget(FetchMethod):
     def download(self, uri, ud, d, checkonly = False):
         """Fetch urls"""
 
+        basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -t 2 -T 30 -nv --passive-ftp --no-check-certificate"
+
         if checkonly:
-            fetchcmd = data.getVar("CHECKCOMMAND_wget", d, True) or d.expand("/usr/bin/env wget --spider -t 5 --passive-ftp --no-check-certificate -P ${DL_DIR} '${URI}'")
+            fetchcmd = d.getVar("CHECKCOMMAND_wget", True) or d.expand(basecmd + " -c -P ${DL_DIR} '${URI}'")
         elif os.path.exists(ud.localpath):
             # file exists, but we didnt complete it.. trying again..
-            fetchcmd = data.getVar("RESUMECOMMAND_wget", d, True) or d.expand("/usr/bin/env wget -c -t 5 -nv --passive-ftp --no-check-certificate -P ${DL_DIR} '${URI}'")
+            fetchcmd = d.getVar("RESUMECOMMAND_wget", True) or d.expand(basecmd + " --spider -P ${DL_DIR} '${URI}'")
         else:
-            fetchcmd = data.getVar("FETCHCOMMAND_wget", d, True) or d.expand("/usr/bin/env wget -t 5 -nv --passive-ftp --no-check-certificate -P ${DL_DIR} '${URI}'")
+            fetchcmd = d.getVar("FETCHCOMMAND_wget", True) or d.expand(basecmd + " -P ${DL_DIR} '${URI}'")
 
         uri = uri.split(";")[0]
         uri_decoded = list(decodeurl(uri))
