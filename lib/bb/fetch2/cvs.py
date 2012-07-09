@@ -111,15 +111,9 @@ class Cvs(FetchMethod):
         if ud.tag:
             options.append("-r %s" % ud.tag)
 
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "cvs:%s" % data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
-
-        data.setVar('CVSROOT', cvsroot, localdata)
-        data.setVar('CVSCOOPTS', " ".join(options), localdata)
-        data.setVar('CVSMODULE', ud.module, localdata)
-        cvscmd = data.getVar('FETCHCOMMAND', localdata, True)
-        cvsupdatecmd = data.getVar('UPDATECOMMAND', localdata, True)
+        cvsbasecmd = d.getVar("FETCHCMD_cvs", True)
+        cvscmd = cvsbasecmd + "'-d" + cvsroot + "' co " + " ".join(options) + " " + ud.module
+        cvsupdatecmd = cvsbasecmd + "'-d" + cvsroot + "' update -d -P " + " ".join(options)
 
         if cvs_rsh:
             cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)
