@@ -60,7 +60,7 @@ class Bzr(FetchMethod):
 
         basecmd = data.expand('${FETCHCMD_bzr}', d)
 
-        proto =  ud.parm.get('proto', 'http')
+        proto =  ud.parm.get('protocol', 'http')
 
         bzrroot = ud.host + ud.path
 
