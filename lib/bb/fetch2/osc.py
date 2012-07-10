@@ -57,7 +57,7 @@ class Osc(FetchMethod):
 
         basecmd = data.expand('${FETCHCMD_osc}', d)
 
-        proto = ud.parm.get('proto', 'ocs')
+        proto = ud.parm.get('protocol', 'ocs')
 
         options = []
 
