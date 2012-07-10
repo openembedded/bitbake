@@ -82,7 +82,7 @@ class Hg(FetchMethod):
 
         basecmd = data.expand('${FETCHCMD_hg}', d)
 
-        proto = ud.parm.get('proto', 'http')
+        proto = ud.parm.get('protocol', 'http')
 
         host = ud.host
         if proto == "file":
