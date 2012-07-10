@@ -755,6 +755,10 @@ class FetchData(object):
         if localonly and not isinstance(self.method, local.Local):
             raise NonLocalMethod()
 
+        if self.parm.get("proto", None) and "protocol" not in self.parm:
+            logger.warn('Consider updating %s recipe to use "protocol" not "proto" in SRC_URI.', d.getVar('PN', True))
+            self.parm["protocol"] = self.parm.get("proto", None)
+
         if hasattr(self.method, "urldata_init"):
             self.method.urldata_init(self, d)
 
