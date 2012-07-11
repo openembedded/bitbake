@@ -35,6 +35,8 @@ class NoProvider(bb.BBHandledException):
 class NoRProvider(bb.BBHandledException):
     """Exception raised when no provider of a runtime dependency can be found"""
 
+class MultipleRProvider(bb.BBHandledException):
+    """Exception raised when multiple providers of a runtime dependency can be found"""
 
 def findProviders(cfgData, dataCache, pkg_pn = None):
     """

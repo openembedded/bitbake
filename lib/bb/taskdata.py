@@ -482,6 +482,7 @@ class TaskData:
                     providers_list.append(dataCache.pkg_fn[fn])
                 bb.event.fire(bb.event.MultipleProviders(item, providers_list, runtime=True), cfgData)
             self.consider_msgs_cache.append(item)
+            raise bb.providers.MultipleRProvider(item)
 
         # run through the list until we find one that we can build
         for fn in eligible:
@@ -580,7 +581,7 @@ class TaskData:
                 try:
                     self.add_rprovider(cfgData, dataCache, target)
                     added = added + 1
-                except bb.providers.NoRProvider:
+                except (bb.providers.NoRProvider, bb.providers.MultipleRProvider):
                     self.remove_runtarget(self.getrun_id(target))
             logger.debug(1, "Resolved " + str(added) + " extra dependencies")
             if added == 0:
