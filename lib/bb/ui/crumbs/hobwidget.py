@@ -89,6 +89,7 @@ class hcc:
         "cpio.xz"       : ["cpio.xz"],
         "vmdk"          : ["vmdk"],
         "cpio.lzma"     : ["cpio.lzma"],
+        "elf"           : ["elf"],
     }
 
 class HobViewTable (gtk.VBox):
