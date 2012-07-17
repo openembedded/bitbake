@@ -71,7 +71,7 @@ class Svn(FetchMethod):
         command is "fetch", "update", "info"
         """
 
-        proto = ud.parm.get('proto', 'svn')
+        proto = ud.parm.get('protocol', 'svn')
 
         svn_rsh = None
         if proto == "svn+ssh" and "rsh" in ud.parm:
