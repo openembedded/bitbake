@@ -2,6 +2,7 @@ import hashlib
 import logging
 import os
 import re
+import tempfile
 import bb.data
 
 logger = logging.getLogger('BitBake.SigGen')
@@ -236,10 +237,20 @@ class SignatureGeneratorBasic(SignatureGenerator):
         if taint:
             data['taint'] = taint
 
-        with open(sigfile, "wb") as f:
-            p = pickle.Pickler(f, -1)
-            p.dump(data)
-        os.chmod(sigfile, 0664)
+        fd, tmpfile = tempfile.mkstemp(dir=os.path.dirname(sigfile), prefix="sigtask.")
+        try:
+            with os.fdopen(fd, "wb") as stream:
+                p = pickle.dump(data, stream, -1)
+                stream.flush()
+                os.fsync(fd)
+            os.chmod(tmpfile, 0664)
+            os.rename(tmpfile, sigfile)
+        except (OSError, IOError), err:
+            try:
+                os.unlink(tmpfile)
+            except OSError:
+                pass
+            raise err
 
     def dump_sigs(self, dataCache):
         for fn in self.taskdeps:
