@@ -212,9 +212,9 @@ class ExportFuncsNode(AstNode):
                         data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag))
 
                 if data.getVarFlag(calledvar, "python"):
-                    data.setVar(var, "\tbb.build.exec_func('" + calledvar + "', d)\n")
+                    data.setVar(var, "    bb.build.exec_func('" + calledvar + "', d)\n")
                 else:
-                    data.setVar(var, "\t" + calledvar + "\n")
+                    data.setVar(var, "    " + calledvar + "\n")
                 data.setVarFlag(var, 'export_func', '1')
 
 class AddTaskNode(AstNode):
