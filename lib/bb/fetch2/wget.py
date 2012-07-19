@@ -50,13 +50,20 @@ class Wget(FetchMethod):
 
     def urldata_init(self, ud, d):
 
-        ud.basename = os.path.basename(ud.path)
+        if 'downloadfilename' in ud.parm:
+            ud.basename = ud.parm['downloadfilename']
+        else:
+            ud.basename = os.path.basename(ud.path)
+
         ud.localfile = data.expand(urllib.unquote(ud.basename), d)
 
     def download(self, uri, ud, d, checkonly = False):
         """Fetch urls"""
 
         basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -t 2 -T 30 -nv --passive-ftp --no-check-certificate"
+
+        if 'downloadfilename' in ud.parm:
+            basecmd += " -O ${DL_DIR}/" + ud.localfile
 
         if checkonly:
             fetchcmd = d.getVar("CHECKCOMMAND_wget", True) or d.expand(basecmd + " -c -P ${DL_DIR} '${URI}'")
