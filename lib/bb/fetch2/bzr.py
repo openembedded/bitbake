@@ -73,7 +73,7 @@ class Bzr(FetchMethod):
                 options.append("-r %s" % ud.revision)
 
             if command == "fetch":
-                bzrcmd = "%s co %s %s://%s" % (basecmd, " ".join(options), proto, bzrroot)
+                bzrcmd = "%s branch %s %s://%s" % (basecmd, " ".join(options), proto, bzrroot)
             elif command == "update":
                 bzrcmd = "%s pull %s --overwrite" % (basecmd, " ".join(options))
             else:
