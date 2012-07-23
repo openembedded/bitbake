@@ -1205,8 +1205,9 @@ class BBCooker:
 
         if not self.parser.parse_next():
             collectlog.debug(1, "parsing complete")
-            self.show_appends_with_no_recipes()
-            self.buildDepgraph()
+            if not self.parser.error:
+                self.show_appends_with_no_recipes()
+                self.buildDepgraph()
             self.state = state.running
             return None
 
@@ -1601,6 +1602,7 @@ class CookerParser(object):
                                             self.skipped, self.masked,
                                             self.virtuals, self.error,
                                             self.total)
+
             bb.event.fire(event, self.cfgdata)
             self.feeder_quit.put(None)
             for process in self.processes:
@@ -1658,20 +1660,25 @@ class CookerParser(object):
             self.shutdown()
             return False
         except ParsingFailure as exc:
+            self.error += 1
             logger.error('Unable to parse %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
             self.shutdown(clean=False)
         except bb.parse.ParseError as exc:
+            self.error += 1
             logger.error(str(exc))
             self.shutdown(clean=False)
         except bb.data_smart.ExpansionError as exc:
+            self.error += 1
             _, value, _ = sys.exc_info()
             logger.error('ExpansionError during parsing %s: %s', value.recipe, str(exc))
             self.shutdown(clean=False)
         except SyntaxError as exc:
+            self.error += 1
             logger.error('Unable to parse %s', exc.recipe)
             self.shutdown(clean=False)
         except Exception as exc:
+            self.error += 1
             etype, value, tb = sys.exc_info()
             logger.error('Unable to parse %s', value.recipe,
                          exc_info=(etype, value, exc.traceback))
