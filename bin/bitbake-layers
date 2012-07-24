@@ -138,7 +138,7 @@ class Commands(cmd.Cmd):
 
 
     def do_show_overlayed(self, args):
-        """list overlayed recipes (where the same recipe exists in another layer that has a higher layer priority)
+        """list overlayed recipes (where the same recipe exists in another layer)
 
 usage: show-overlayed [-f] [-s]
 
