@@ -1170,6 +1170,8 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
         self.stats = RunQueueStats(len(self.rqdata.runq_fnid))
 
+        self.stampcache = {}
+
         # Mark initial buildable tasks
         for task in xrange(self.stats.total):
             self.runq_running.append(0)
