@@ -60,9 +60,10 @@ class Local(FetchMethod):
                 filesdir = data.getVar('FILESDIR', d, True)
                 if filesdir:
                     newpath = os.path.join(filesdir, path)
-        if not os.path.exists(newpath) and path.find("*") == -1:
-            dldirfile = os.path.join(data.getVar("DL_DIR", d, True), os.path.basename(path))
-            return dldirfile
+            if not os.path.exists(newpath) and path.find("*") == -1:
+                dldirfile = os.path.join(d.getVar("DL_DIR", True), path)
+                bb.utils.mkdirhier(os.path.dirname(dldirfile))
+                return dldirfile
         return newpath
 
     def need_update(self, url, ud, d):
