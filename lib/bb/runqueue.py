@@ -1510,6 +1510,12 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     self.task_skip(task)
                     continue
 
+                if self.rq.check_stamp_task(realtask, taskname, recurse = True, cache=self.stampcache):
+                    logger.debug(2, 'Normal stamp current for task %s(%s)', task, self.rqdata.get_user_idstring(realtask))
+                    stamppresent.append(task)
+                    self.task_skip(task)
+                    continue
+
                 sq_fn.append(fn)
                 sq_hashfn.append(self.rqdata.dataCache.hashfn[fn])
                 sq_hash.append(self.rqdata.runq_hash[realtask])
