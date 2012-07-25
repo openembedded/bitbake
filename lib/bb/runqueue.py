@@ -862,7 +862,7 @@ class RunQueue:
             cache[task] = iscurrent
         return iscurrent
 
-    def execute_runqueue(self):
+    def _execute_runqueue(self):
         """
         Run the tasks in a queue prepared by rqdata.prepare()
         Upon failure, optionally try to recover the build using any alternate providers
@@ -925,6 +925,14 @@ class RunQueue:
 
         # Loop
         return retval
+
+    def execute_runqueue(self):
+        try:
+            return self._execute_runqueue()
+        except:
+            logger.error("An uncaught exception occured in runqueue, please see the failure below:")
+            self.state = runQueueComplete
+            raise
 
     def finish_runqueue(self, now = False):
         if not self.rqexe:
