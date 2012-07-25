@@ -1206,9 +1206,30 @@ class RunQueueExecuteTasks(RunQueueExecute):
         # Allow the metadata to elect for setscene tasks to run anyway
         covered_remove = set()
         if self.rq.setsceneverify:
-            call = self.rq.setsceneverify + "(covered, tasknames, fnids, fns, d)"
-            locs = { "covered" : self.rq.scenequeue_covered, "tasknames" : self.rqdata.runq_task, "fnids" : self.rqdata.runq_fnid, "fns" : self.rqdata.taskData.fn_index, "d" : self.cooker.configuration.data }
-            covered_remove = bb.utils.better_eval(call, locs)
+            invalidtasks = []
+            for task in xrange(len(self.rqdata.runq_task)):
+                fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
+                taskname = self.rqdata.runq_task[task]
+                taskdep = self.rqdata.dataCache.task_deps[fn]
+
+                if 'noexec' in taskdep and taskname in taskdep['noexec']:
+                    continue
+                if self.rq.check_stamp_task(task, taskname + "_setscene", cache=self.stampcache):
+                    logger.debug(2, 'Setscene stamp current for task %s(%s)', task, self.rqdata.get_user_idstring(task))
+                    continue
+                if self.rq.check_stamp_task(task, taskname, recurse = True, cache=self.stampcache):
+                    logger.debug(2, 'Normal stamp current for task %s(%s)', task, self.rqdata.get_user_idstring(task))
+                    continue
+                invalidtasks.append(task)
+
+            call = self.rq.setsceneverify + "(covered, tasknames, fnids, fns, d, invalidtasks=invalidtasks)"
+            call2 = self.rq.setsceneverify + "(covered, tasknames, fnids, fns, d)"
+            locs = { "covered" : self.rq.scenequeue_covered, "tasknames" : self.rqdata.runq_task, "fnids" : self.rqdata.runq_fnid, "fns" : self.rqdata.taskData.fn_index, "d" : self.cooker.configuration.data, "invalidtasks" : invalidtasks }
+            # Backwards compatibility with older versions without invalidtasks
+            try:
+                covered_remove = bb.utils.better_eval(call, locs)
+            except TypeError:
+                covered_remove = bb.utils.better_eval(call2, locs)
 
         for task in covered_remove:
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
