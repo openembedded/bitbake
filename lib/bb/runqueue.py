@@ -835,9 +835,6 @@ class RunQueue:
         t1 = get_timestamp(stampfile)
         for dep in self.rqdata.runq_depends[task]:
             if iscurrent:
-                if dep in cache:
-                    iscurrent = cache[dep]
-                    continue
                 fn2 = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[dep]]
                 taskname2 = self.rqdata.runq_task[dep]
                 stampfile2 = bb.build.stampfile(taskname2, self.rqdata.dataCache, fn2)
@@ -854,9 +851,15 @@ class RunQueue:
                         logger.debug(2, 'Stampfile %s < %s', stampfile, stampfile2)
                         iscurrent = False
                     if recurse and iscurrent:
-                        iscurrent = self.check_stamp_task(dep, recurse=True, cache=cache)
-                        cache[dep] = iscurrent
-        cache[task] = iscurrent
+                        if dep in cache:
+                            iscurrent = cache[dep]
+                            if not iscurrent:
+                                logger.debug(2, 'Stampfile for dependency %s:%s invalid (cached)' % (fn2, taskname2))
+                        else:
+                            iscurrent = self.check_stamp_task(dep, recurse=True, cache=cache)
+                            cache[dep] = iscurrent
+        if recurse:
+            cache[task] = iscurrent
         return iscurrent
 
     def execute_runqueue(self):
