@@ -312,6 +312,14 @@ class BuildCompleted(BuildBase, OperationCompleted):
             OperationCompleted.__init__(self, total, "Building Failed")
         BuildBase.__init__(self, n, p, failures)
 
+class DiskFull(Event):
+    """Disk full case build aborted"""
+    def __init__(self, dev, type, freespace, mountpoint):
+        Event.__init__(self)
+        self._dev = dev
+        self._type = type
+        self._free = freespace
+        self._mountpoint = mountpoint
 
 class NoProvider(Event):
     """No Provider for an Event"""

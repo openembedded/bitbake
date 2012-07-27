@@ -176,6 +176,7 @@ class diskMonitor:
     def __init__(self, configuration):
 
         self.enableMonitor = False
+        self.configuration = configuration
 
         BBDirs = configuration.getVar("BB_DISKMON_DIRS", True) or None
         if BBDirs:
@@ -219,10 +220,12 @@ class diskMonitor:
                         logger.error("No new tasks can be excuted since the disk space monitor action is \"STOPTASKS\"!")
                         self.checked[dev] = True
                         rq.finish_runqueue(False)
+                        bb.event.fire(bb.event.DiskFull(dev, 'disk', freeSpace, self.devDict[dev][1]), self.configuration)
                     elif self.devDict[dev][0] == "ABORT" and not self.checked[dev]:
                         logger.error("Immediately abort since the disk space monitor action is \"ABORT\"!")
                         self.checked[dev] = True
                         rq.finish_runqueue(True)
+                        bb.event.fire(bb.event.DiskFull(dev, 'disk', freeSpace, self.devDict[dev][1]), self.configuration)
 
                 # The free inodes, float point number
                 freeInode = st.f_favail
@@ -237,8 +240,10 @@ class diskMonitor:
                         logger.error("No new tasks can be excuted since the disk space monitor action is \"STOPTASKS\"!")
                         self.checked[dev] = True
                         rq.finish_runqueue(False)
+                        bb.event.fire(bb.event.DiskFull(dev, 'inode', freeSpace, self.devDict[dev][1]), self.configuration)
                     elif self.devDict[dev][0]  == "ABORT" and not self.checked[dev]:
                         logger.error("Immediately abort since the disk space monitor action is \"ABORT\"!")
                         self.checked[dev] = True
                         rq.finish_runqueue(True)
+                        bb.event.fire(bb.event.DiskFull(dev, 'inode', freeSpace, self.devDict[dev][1]), self.configuration)
         return
