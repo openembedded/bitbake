@@ -76,6 +76,9 @@ class RunningBuild (gobject.GObject):
           'build-complete'  :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                ()),
+          'build-aborted'     :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               ()),
           'task-started'    :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                (gobject.TYPE_PYOBJECT,)),
@@ -93,6 +96,7 @@ class RunningBuild (gobject.GObject):
         gobject.GObject.__init__ (self)
         self.model = RunningBuildModel()
         self.sequential = sequential
+        self.buildaborted = False
 
     def reset (self):
         self.pids_to_task.clear()
@@ -274,7 +278,9 @@ class RunningBuild (gobject.GObject):
                                       0))
 
             # Emit the appropriate signal depending on the number of failures
-            if (failures >= 1):
+            if self.buildaborted:
+                self.emit ("build-aborted")
+            elif (failures >= 1):
                 self.emit ("build-failed")
             else:
                 self.emit ("build-succeeded")
@@ -285,6 +291,9 @@ class RunningBuild (gobject.GObject):
             self.model.close_task_refresh()
             if pbar:
                 pbar.set_text(event.msg)
+
+        elif isinstance(event, bb.event.DiskFull):
+            self.buildaborted = True
 
         elif isinstance(event, bb.command.CommandFailed):
             if event.error.startswith("Exited with"):
