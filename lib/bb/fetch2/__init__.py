@@ -70,6 +70,9 @@ class FetchError(BBFetchException):
 class ChecksumError(FetchError):
     """Exception when mismatched checksum encountered"""
 
+class NoChecksumError(FetchError):
+    """Exception when no checksum is specified, but BB_STRICT_CHECKSUM is set"""
+
 class UnpackError(BBFetchException):
     """General fetcher exception when something happens incorrectly when unpacking"""
     def __init__(self, message, url):
@@ -314,7 +317,7 @@ def verify_checksum(u, ud, d):
         # If strict checking enabled and neither sum defined, raise error
         strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
         if (strict and ud.md5_expected == None and ud.sha256_expected == None):
-            raise FetchError('No checksum specified for %s, please add at least one to the recipe:\n'
+            raise NoChecksumError('No checksum specified for %s, please add at least one to the recipe:\n'
                              'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
                              (ud.localpath, ud.md5_name, md5data,
                               ud.sha256_name, sha256data), u)
@@ -568,6 +571,8 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
         if isinstance(e, ChecksumError):
             logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
             logger.warn(str(e))
+        elif isinstance(e, NoChecksumError):
+            raise
         else:
             logger.debug(1, "Mirror fetch failure for url %s (original url: %s)" % (newuri, origud.url))
             logger.debug(1, str(e))
@@ -1179,6 +1184,8 @@ class Fetch(object):
                     except BBFetchException as e:
                         if isinstance(e, ChecksumError):
                             logger.warn("Checksum error encountered with download (will attempt other sources): %s" % str(e))
+                        if isinstance(e, NoChecksumError):
+                            raise
                         else:
                             logger.warn('Failed to fetch URL %s, attempting MIRRORS if available' % u)
                             logger.debug(1, str(e))
@@ -1195,6 +1202,11 @@ class Fetch(object):
                     raise FetchError("Unable to fetch URL from any source.", u)
 
                 update_stamp(u, ud, self.d)
+
+            except BBFetchException as e:
+                if isinstance(e, NoChecksumError):
+                    logger.error("%s" % str(e))
+                raise
 
             finally:
                 bb.utils.unlockfile(lf)
