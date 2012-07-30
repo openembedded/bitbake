@@ -119,6 +119,7 @@ def main(server, eventHandler, tf = TerminalFilter):
     console.setFormatter(format)
     logger.addHandler(console)
     if consolelogfile:
+        bb.utils.mkdirhier(os.path.dirname(consolelogfile))
         consolelog = logging.FileHandler(consolelogfile)
         bb.msg.addDefaultlogFilter(consolelog)
         consolelog.setFormatter(format)
