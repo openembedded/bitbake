@@ -345,11 +345,17 @@ def verify_checksum(u, ud, d):
     # We want to alert the user if a checksum is defined in the recipe but
     # it does not match.
     msg = ""
+    mismatch = False
     if md5mismatch and ud.md5_expected:
         msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'md5', md5data, ud.md5_expected)
+        mismatch = True;
 
     if sha256mismatch and ud.sha256_expected:
         msg = msg + "\nFile: '%s' has %s checksum %s when %s was expected" % (ud.localpath, 'sha256', sha256data, ud.sha256_expected)
+        mismatch = True;
+
+    if mismatch:
+        msg = msg + '\nYour checksums:\nSRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' % (ud.md5_name, md5data, ud.sha256_name, sha256data)
 
     if len(msg):
         raise ChecksumError('Checksum mismatch!%s' % msg, u)
