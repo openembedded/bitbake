@@ -560,7 +560,11 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
             return None
         # Otherwise the result is a local file:// and we symlink to it
         if not os.path.exists(origud.localpath):
-             os.symlink(ud.localpath, origud.localpath)
+            if os.path.islink(origud.localpath):
+                # Broken symbolic link
+                os.unlink(origud.localpath)
+
+            os.symlink(ud.localpath, origud.localpath)
         update_stamp(newuri, origud, ld)
         return ud.localpath
 
