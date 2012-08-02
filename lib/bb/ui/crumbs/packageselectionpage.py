@@ -143,8 +143,8 @@ class PackageSelectionPage (HobPage):
         # add all into the dialog
         self.box_group_area.pack_start(self.ins, expand=True, fill=True)
 
-        button_box = gtk.HBox(False, 6)
-        self.box_group_area.pack_start(button_box, expand=False, fill=False)
+        self.button_box = gtk.HBox(False, 6)
+        self.box_group_area.pack_start(self.button_box, expand=False, fill=False)
 
         self.build_image_button = HobButton('Build image')
         self.build_image_button.set_size_request(205, 49)
@@ -152,11 +152,11 @@ class PackageSelectionPage (HobPage):
         self.build_image_button.set_flags(gtk.CAN_DEFAULT)
         self.build_image_button.grab_default()
         self.build_image_button.connect("clicked", self.build_image_clicked_cb)
-        button_box.pack_end(self.build_image_button, expand=False, fill=False)
+        self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
 
         self.back_button = HobAltButton("<< Back to image configuration")
         self.back_button.connect("clicked", self.back_button_clicked_cb)
-        button_box.pack_start(self.back_button, expand=False, fill=False)
+        self.button_box.pack_start(self.back_button, expand=False, fill=False)
 
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()
@@ -165,6 +165,25 @@ class PackageSelectionPage (HobPage):
             binb = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_BINB)
             if binb:
                 self.builder.show_binb_dialog(binb)
+
+    def view_log_clicked_cb(self, button, log_file):
+        if log_file:
+            os.system("xdg-open /%s" % log_file)
+
+    def show_page(self, log_file):
+        children = self.button_box.get_children() or []
+        for child in children:
+            self.button_box.remove(child)
+        # re-packed the buttons as request, add the 'view log' button if build success
+        self.button_box.pack_start(self.back_button, expand=False, fill=False)
+        self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
+        if log_file:
+            view_log_button = HobAltButton("View log")
+            view_log_button.connect("clicked", self.view_log_clicked_cb, log_file)
+            view_log_button.set_tooltip_text("Open the building log files")
+            self.button_box.pack_end(view_log_button, expand=False, fill=False)
+
+        self.show_all()
 
     def build_image_clicked_cb(self, button):
         self.builder.build_image()

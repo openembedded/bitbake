@@ -27,6 +27,7 @@ import os
 import subprocess
 import shlex
 import re
+import logging
 from bb.ui.crumbs.template import TemplateMgr
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
@@ -395,6 +396,11 @@ class Builder(gtk.Window):
 
         self.template = None
 
+        # logger
+        self.logger = logging.getLogger("BitBake")
+        self.consolelog = None
+        self.current_logfile = None
+
         # configuration and parameters
         self.configuration = Configuration()
         self.parameters = Parameters()
@@ -433,6 +439,7 @@ class Builder(gtk.Window):
         self.handler.build.connect("build-aborted",      self.handler_build_aborted_cb)
         self.handler.build.connect("task-started",       self.handler_task_started_cb)
         self.handler.build.connect("log-error",          self.handler_build_failure_cb)
+        self.handler.build.connect("log",                self.handler_build_log_cb)
         self.handler.build.connect("no-provider",        self.handler_no_provider_cb)
         self.handler.connect("generating-data",          self.handler_generating_data_cb)
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
@@ -501,25 +508,34 @@ class Builder(gtk.Window):
         self.set_user_config()
         self.handler.generate_recipes()
 
-    def generate_packages_async(self):
+    def generate_packages_async(self, log = False):
         self.switch_page(self.PACKAGE_GENERATING)
+        if log:
+            self.current_logfile = self.handler.get_logfile()
+            self.do_log(self.current_logfile)
         # Build packages
         _, all_recipes = self.recipe_model.get_selected_recipes()
         self.set_user_config()
         self.handler.reset_build()
         self.handler.generate_packages(all_recipes, self.configuration.default_task)
 
-    def fast_generate_image_async(self):
+    def fast_generate_image_async(self, log = False):
         self.switch_page(self.FAST_IMAGE_GENERATING)
+        if log:
+            self.current_logfile = self.handler.get_logfile()
+            self.do_log(self.current_logfile)
         # Build packages
         _, all_recipes = self.recipe_model.get_selected_recipes()
         self.set_user_config()
         self.handler.reset_build()
         self.handler.generate_packages(all_recipes, self.configuration.default_task)
 
-    def generate_image_async(self):
+    def generate_image_async(self, cont = False):
         self.switch_page(self.IMAGE_GENERATING)
         self.handler.reset_build()
+        if not cont:
+            self.current_logfile = self.handler.get_logfile()
+            self.do_log(self.current_logfile)
         # Build image
         self.set_user_config()
         toolchain_packages = []
@@ -627,14 +643,14 @@ class Builder(gtk.Window):
             pass
 
         elif next_step == self.PACKAGE_SELECTION:
-            pass
+            self.package_details_page.show_page(self.current_logfile)
 
         elif next_step == self.PACKAGE_GENERATING or next_step == self.FAST_IMAGE_GENERATING:
             # both PACKAGE_GENEATING and FAST_IMAGE_GENERATING share the same page
             self.build_details_page.show_page(next_step)
 
         elif next_step == self.PACKAGE_GENERATED:
-            pass
+            self.package_details_page.show_page(self.current_logfile)
 
         elif next_step == self.IMAGE_GENERATING:
             # after packages are generated, selected_packages need to
@@ -736,7 +752,7 @@ class Builder(gtk.Window):
 
             self.rcppkglist_populated()
             if self.current_step == self.FAST_IMAGE_GENERATING:
-                self.generate_image_async()
+                self.generate_image_async(True)
 
     def show_error_dialog(self, msg):
         lbl = "<b>Error</b>\n"
@@ -963,6 +979,10 @@ class Builder(gtk.Window):
     def handler_build_failure_cb(self, running_build):
         self.build_details_page.show_issues()
 
+    def handler_build_log_cb(self, running_build, func, obj):
+        if hasattr(self.logger, func):
+            getattr(self.logger, func)(obj)
+
     def destroy_window_cb(self, widget, event):
         if not self.sensitive:
             return True
@@ -992,7 +1012,7 @@ class Builder(gtk.Window):
             dialog.run()
             dialog.destroy()
             return
-        self.generate_packages_async()
+        self.generate_packages_async(True)
 
     def build_image(self):
         selected_packages = self.package_model.get_selected_packages()
@@ -1005,7 +1025,7 @@ class Builder(gtk.Window):
             dialog.run()
             dialog.destroy()
             return
-        self.generate_image_async()
+        self.generate_image_async(True)
 
     def just_bake(self):
         selected_image = self.recipe_model.get_selected_image()
@@ -1022,7 +1042,7 @@ class Builder(gtk.Window):
             dialog.destroy()
             return
 
-        self.fast_generate_image_async()
+        self.fast_generate_image_async(True)
 
     def show_binb_dialog(self, binb):
         markup = "<b>Brought in by:</b>\n%s" % binb
@@ -1241,7 +1261,7 @@ class Builder(gtk.Window):
             response = dialog.run()
             dialog.destroy()
             if response == gtk.RESPONSE_YES:
-                self.generate_packages_async()
+                self.generate_packages_async(True)
             else:
                 self.switch_page(self.PACKAGE_SELECTION)
         else:
@@ -1289,3 +1309,15 @@ class Builder(gtk.Window):
             self.cancel_build_sync()
         elif response == gtk.RESPONSE_YES:
             self.cancel_build_sync(True)
+
+    def do_log(self, consolelogfile = None):
+        if consolelogfile:
+            if self.consolelog:
+                self.logger.removeHandler(self.consolelog)
+                self.consolelog = None
+            self.consolelog = logging.FileHandler(consolelogfile)
+            bb.msg.addDefaultlogFilter(self.consolelog)
+            format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+            self.consolelog.setFormatter(format)
+
+            self.logger.addHandler(self.consolelog)

@@ -88,6 +88,9 @@ class RunningBuild (gobject.GObject):
           'no-provider'     :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                (gobject.TYPE_PYOBJECT,)),
+          'log'             :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               (gobject.TYPE_STRING, gobject.TYPE_PYOBJECT,)),
           }
     pids_to_task = {}
     tasks_to_iter = {}
@@ -126,6 +129,8 @@ class RunningBuild (gobject.GObject):
             parent = self.tasks_to_iter[(package, task)]
 
         if(isinstance(event, logging.LogRecord)):
+            if event.taskpid == 0 or event.levelno > logging.INFO:
+                self.emit("log", "handle", event)
             # FIXME: this is a hack! More info in Yocto #1433
             # http://bugzilla.pokylinux.org/show_bug.cgi?id=1433, temporarily
             # mask the error message as it's not informative for the user.
@@ -211,6 +216,7 @@ class RunningBuild (gobject.GObject):
             self.tasks_to_iter[(package, task)] = i
 
         elif isinstance(event, bb.build.TaskBase):
+            self.emit("log", "info", event._message)
             current = self.tasks_to_iter[(package, task)]
             parent = self.tasks_to_iter[(package, None)]
 
@@ -296,6 +302,7 @@ class RunningBuild (gobject.GObject):
             self.buildaborted = True
 
         elif isinstance(event, bb.command.CommandFailed):
+            self.emit("log", "error", "Command execution failed: %s" % (event.error))
             if event.error.startswith("Exited with"):
                 # If the command fails with an exit code we're done, emit the
                 # generic signal for the UI to notify the user
@@ -323,7 +330,24 @@ class RunningBuild (gobject.GObject):
         elif isinstance(event, bb.event.ParseCompleted) and pbar:
             pbar.hide()
         #using runqueue events as many as possible to update the progress bar
+        elif isinstance(event, bb.runqueue.runQueueTaskFailed):
+            self.emit("log", "error", "Task %s (%s) failed with exit code '%s'" % (event.taskid, event.taskstring, event.exitcode))
+        elif isinstance(event, bb.runqueue.sceneQueueTaskFailed):
+            self.emit("log", "warn", "Setscene task %s (%s) failed with exit code '%s' - real task will be run instead" \
+                                     % (event.taskid, event.taskstring, event.exitcode))
         elif isinstance(event, (bb.runqueue.runQueueTaskStarted, bb.runqueue.sceneQueueTaskStarted)):
+            if isinstance(event, bb.runqueue.sceneQueueTaskStarted):
+                self.emit("log", "info", "Running setscene task %d of %d (%s)" % \
+                                         (event.stats.completed + event.stats.active + event.stats.failed + 1,
+                                          event.stats.total, event.taskstring))
+            else:
+                if event.noexec:
+                    tasktype = 'noexec task'
+                else:
+                    tasktype = 'task'
+                self.emit("log", "info", "Running %s %s of %s (ID: %s, %s)" % \
+                                         (tasktype, event.stats.completed + event.stats.active + event.stats.failed + 1,
+                                          event.stats.total, event.taskid, event.taskstring))
             message = {}
             message["eventname"] = bb.event.getName(event)
             num_of_completed = event.stats.completed + event.stats.failed
@@ -332,6 +356,10 @@ class RunningBuild (gobject.GObject):
             message["title"] = ""
             message["task"] = event.taskstring
             self.emit("task-started", message)
+        elif isinstance(event, bb.event.MultipleProviders):
+            self.emit("log", "info", "multiple providers are available for %s%s (%s)" \
+                                     % (event._is_runtime and "runtime " or "", event._item, ", ".join(event._candidates)))
+            self.emit("log", "info", "consider defining a PREFERRED_PROVIDER entry to match %s" % (event._item))
         elif isinstance(event, bb.event.NoProvider):
             msg = ""
             if event._runtime:
@@ -346,6 +374,19 @@ class RunningBuild (gobject.GObject):
                 for reason in event._reasons:
                     msg += ("%s\n" % reason)
             self.emit("no-provider", msg)
+            self.emit("log", msg)
+        else:
+            if not isinstance(event, (bb.event.BuildBase,
+                                      bb.event.StampUpdate,
+                                      bb.event.ConfigParsed,
+                                      bb.event.RecipeParsed,
+                                      bb.event.RecipePreFinalise,
+                                      bb.runqueue.runQueueEvent,
+                                      bb.runqueue.runQueueExitWait,
+                                      bb.event.OperationStarted,
+                                      bb.event.OperationCompleted,
+                                      bb.event.OperationProgress)):
+                self.emit("log", "error", "Unknown event: %s" % (event.error if hasattr(event, 'error') else 'error'))
 
         return
 

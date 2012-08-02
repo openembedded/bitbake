@@ -390,6 +390,9 @@ class HobHandler(gobject.GObject):
     def reset_build(self):
         self.build.reset()
 
+    def get_logfile(self):
+        return self.server.runCommand(["getVariable", "BB_CONSOLELOG"])
+
     def _remove_redundant(self, string):
         ret = []
         for i in string.split():

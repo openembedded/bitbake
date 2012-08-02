@@ -33,7 +33,7 @@ from bb.ui.crumbs.hig import CrumbsDialog
 class ImageDetailsPage (HobPage):
 
     class DetailBox (gtk.EventBox):
-        def __init__(self, widget = None, varlist = None, vallist = None, icon = None, button = None, color = HobColors.LIGHT_GRAY):
+        def __init__(self, widget = None, varlist = None, vallist = None, icon = None, button = None, button2=None, color = HobColors.LIGHT_GRAY):
             gtk.EventBox.__init__(self)
 
             # set color
@@ -72,7 +72,11 @@ class ImageDetailsPage (HobPage):
                     self.table.attach(self.line_widgets[varlist[index]], colid, 20, row, row + 1)
             # pack the button on the right
             if button:
-                self.hbox.pack_end(button, expand=False, fill=False)
+                self.bbox = gtk.VBox()
+                self.bbox.pack_start(button, expand=True, fill=True)
+                if button2:
+                    self.bbox.pack_start(button2, expand=True, fill=True)
+                self.hbox.pack_end(self.bbox, expand=False, fill=False)
 
         def update_line_widgets(self, variable, value):
             if len(self.line_widgets) == 0:
@@ -164,8 +168,10 @@ class ImageDetailsPage (HobPage):
             base_image = self.builder.recipe_model.get_selected_image()
             layers = self.builder.configuration.layers
             pkg_num = "%s" % len(self.builder.package_model.get_selected_packages())
+            log_file = self.builder.current_logfile
         else:
             pkg_num = "N/A"
+            log_file = None
 
         # remove
         for button_id, button in self.button_ids.items():
@@ -243,11 +249,17 @@ class ImageDetailsPage (HobPage):
         view_files_button = HobAltButton("View files")
         view_files_button.connect("clicked", self.view_files_clicked_cb, image_addr)
         view_files_button.set_tooltip_text("Open the directory containing the image files")
-        self.image_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=view_files_button)
+        view_log_button = None
+        if log_file:
+            view_log_button = HobAltButton("View log")
+            view_log_button.connect("clicked", self.view_log_clicked_cb, log_file)
+            view_log_button.set_tooltip_text("Open the building log files")
+        self.image_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=view_files_button, button2=view_log_button)
         self.box_group_area.pack_start(self.image_detail, expand=False, fill=True)
 
         # The default kernel box for the qemu images
         self.sel_kernel = ""
+        self.kernel_detail = None
         if 'qemu' in image_name:
             self.sel_kernel = self.get_kernel_file_name()
 
@@ -315,11 +327,15 @@ class ImageDetailsPage (HobPage):
             self.box_group_area.pack_start(self.details_bottom_buttons, expand=False, fill=False)
 
         self.show_all()
-        if not is_runnable:
+        if self.kernel_detail and (not is_runnable):
             self.kernel_detail.hide()
 
     def view_files_clicked_cb(self, button, image_addr):
         subprocess.call("xdg-open /%s" % image_addr, shell=True)
+
+    def view_log_clicked_cb(self, button, log_file):
+        if log_file:
+            os.system("xdg-open /%s" % log_file)
 
     def refresh_package_detail_box(self, image_size):
         self.package_detail.update_line_widgets("Total image size: ", image_size)
