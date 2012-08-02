@@ -25,7 +25,7 @@ import pango
 import gobject
 import bb.process
 from bb.ui.crumbs.progressbar import HobProgressBar
-from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton, HobWarpCellRendererText, HobButton
+from bb.ui.crumbs.hobwidget import hic, HobNotebook, HobAltButton, HobWarpCellRendererText, HobButton, HobInfoButton
 from bb.ui.crumbs.runningbuild import RunningBuildTreeView
 from bb.ui.crumbs.runningbuild import BuildFailureTreeView
 from bb.ui.crumbs.hobpages import HobPage
@@ -199,68 +199,51 @@ class BuildDetailsPage (HobPage):
         for child in children:
             self.remove(child)
 
-    def update_failures_sum_display(self):
-        num = 0
-        it = self.failure_model.get_iter_first()
-        while it:
-            color = self.failure_model.get_value(it, self.builder.handler.build.model.COL_COLOR)
-            if color == HobColors.ERROR:
-                num += 1
-            it = self.failure_model.iter_next(it)
+    def add_build_fail_top_bar(self, actions, log_file=None):
+        primary_action = "Edit %s" % actions
 
-        return num
-
-    def add_build_fail_top_bar(self, actions):
-        mainly_action = "Edit %s" % actions
-        if 'image' in actions:
-            next_action   = ""
-        else:
-            next_action   = "Create new image"
-
-        #set to issue page
         self.notebook.set_page("Issues")
 
         color = HobColors.ERROR
         build_fail_top = gtk.EventBox()
-        build_fail_top.set_size_request(-1, 260)
+        build_fail_top.set_size_request(-1, 200)
         build_fail_top.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
 
-        build_fail_tab = gtk.Table(7, 40, True)
+        build_fail_tab = gtk.Table(14, 46, True)
         build_fail_top.add(build_fail_tab)
 
         icon = gtk.Image()
         icon_pix_buffer = gtk.gdk.pixbuf_new_from_file(hic.ICON_INDI_ERROR_FILE)
         icon.set_from_pixbuf(icon_pix_buffer)
-        build_fail_tab.attach(icon, 1, 4, 0, 3)
+        build_fail_tab.attach(icon, 1, 4, 0, 6)
 
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
-        label.set_markup("<span size='x-large'>%s</span>" % self.title)
-        build_fail_tab.attach(label, 4, 20, 0, 3)
+        label.set_markup("<span size='x-large'><b>%s</b></span>" % self.title)
+        build_fail_tab.attach(label, 4, 26, 0, 6)
 
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
-        num_of_fails = self.update_failures_sum_display()
-        current_fail, recipe_task_status = self.task_status.get_text().split('\n')
-        label.set_markup(" %d tasks failed,  %s, %s" % (num_of_fails, current_fail, recipe_task_status))
-        build_fail_tab.attach(label, 4, 40, 2, 4)
+        label.set_markup("<span size='medium'>Check the \"Issues\" information for more details</span>")
+        build_fail_tab.attach(label, 4, 40, 4, 9)
 
         # create button 'Edit packages'
-        action_button = HobButton(mainly_action)
-        action_button.set_size_request(-1, 49)
-        action_button.connect('clicked', self.failure_main_action_button_clicked_cb, mainly_action)
-        build_fail_tab.attach(action_button, 4, 16, 4, 6)
+        action_button = HobButton(primary_action)
+        action_button.set_size_request(-1, 40)
+        action_button.connect('clicked', self.failure_primary_action_button_clicked_cb, primary_action)
+        build_fail_tab.attach(action_button, 4, 13, 9, 12)
 
-        if next_action:
-            next_button = HobAltButton(next_action)
-            next_button.set_alignment(0.0, 0.5)
-            next_button.connect('clicked', self.failure_next_action_button_clicked_cb, next_action)
-            build_fail_tab.attach(next_button, 17, 24, 4, 5)
+        if log_file:
+            open_log_button = HobAltButton("Open log")
+            open_log_button.set_relief(gtk.RELIEF_HALF)
+            open_log_button.connect('clicked', self.failure_open_log_button_clicked_cb, log_file)
+            build_fail_tab.attach(open_log_button, 14, 23, 9, 12)
 
+        attach_pos = (24 if log_file else 14)
         file_bug_button = HobAltButton('File a bug')
-        file_bug_button.set_alignment(0.0, 0.5)
-        file_bug_button.connect('clicked', self.failure_file_bug_activate_link_cb)
-        build_fail_tab.attach(file_bug_button, 17, 24, 4 + abs(next_action != ""), 6)
+        file_bug_button.set_relief(gtk.RELIEF_HALF)
+        file_bug_button.connect('clicked', self.failure_activate_file_bug_link_cb)
+        build_fail_tab.attach(file_bug_button, attach_pos, attach_pos + 9, 9, 12)
 
         return build_fail_top
 
@@ -268,10 +251,10 @@ class BuildDetailsPage (HobPage):
         self._remove_all_widget()
         self.title = "Hob cannot build your %s" % title
 
-        self.build_fail_bar = self.add_build_fail_top_bar(action_names)
-        self.pack_start(self.build_fail_bar)
-        self.pack_start(self.group_align, expand=True, fill=True)
+        self.build_fail_bar = self.add_build_fail_top_bar(action_names, self.builder.current_logfile)
 
+        self.pack_start(self.group_align, expand=True, fill=True)
+        self.box_group_area.pack_start(self.build_fail_bar, expand=False, fill=False)
         self.box_group_area.pack_start(self.vbox, expand=True, fill=True)
 
         self.vbox.pack_start(self.notebook, expand=True, fill=True)
@@ -334,7 +317,7 @@ class BuildDetailsPage (HobPage):
     def show_configurations(self, configurations, params):
         self.config_tv.show(configurations, params)
 
-    def failure_main_action_button_clicked_cb(self, button, action):
+    def failure_primary_action_button_clicked_cb(self, button, action):
         if "Edit recipes" in action:
             self.builder.show_recipes()
         elif "Edit packages" in action:
@@ -342,9 +325,9 @@ class BuildDetailsPage (HobPage):
         elif "Edit image configuration" in action:
             self.builder.show_configuration()
 
-    def failure_next_action_button_clicked_cb(self, button, action):
-        if "Create new image" in action:
-            self.builder.initiate_new_build_async()
+    def failure_open_log_button_clicked_cb(self, button, log_file):
+        if log_file:
+            os.system("xdg-open /%s" % log_file)
 
-    def failure_file_bug_activate_link_cb(self, button):
+    def failure_activate_file_bug_link_cb(self, button):
         button.child.emit('activate-link', "http://bugzilla.yoctoproject.org")
