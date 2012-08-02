@@ -158,6 +158,7 @@ class BBCooker:
         #
         self.configuration.event_data = bb.data.createCopy(self.configuration.data)
         bb.data.update_data(self.configuration.event_data)
+        bb.parse.init_parser(self.configuration.event_data)
 
         # TOSTOP must not be set or our children will hang when they output
         fd = sys.stdout.fileno()
