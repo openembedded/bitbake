@@ -927,8 +927,11 @@ class RunQueue:
         return retval
 
     def execute_runqueue(self):
+        # Catch unexpected exceptions and ensure we exit when an error occurs, not loop.
         try:
             return self._execute_runqueue()
+        except bb.runqueue.TaskFailure:
+            raise
         except:
             logger.error("An uncaught exception occured in runqueue, please see the failure below:")
             self.state = runQueueComplete
