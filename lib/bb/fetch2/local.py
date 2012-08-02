@@ -55,13 +55,16 @@ class Local(FetchMethod):
         if path[0] != "/":
             filespath = data.getVar('FILESPATH', d, True)
             if filespath:
+                logger.debug(2, "Searching for %s in paths:    \n%s" % (path, "\n    ".join(filespath.split(":"))))
                 newpath = bb.utils.which(filespath, path)
             if not newpath:
                 filesdir = data.getVar('FILESDIR', d, True)
                 if filesdir:
+                    logger.debug(2, "Searching for %s in path: %s" % (path, filesdir))
                     newpath = os.path.join(filesdir, path)
             if not os.path.exists(newpath) and path.find("*") == -1:
                 dldirfile = os.path.join(d.getVar("DL_DIR", True), path)
+                logger.debug(2, "Defaulting to %s for %s" % (dldirfile, path))
                 bb.utils.mkdirhier(os.path.dirname(dldirfile))
                 return dldirfile
         return newpath
