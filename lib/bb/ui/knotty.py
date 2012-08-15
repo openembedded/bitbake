@@ -27,6 +27,9 @@ import logging
 import progressbar
 import signal
 import bb.msg
+import fcntl
+import struct
+import copy
 from bb.ui import uihelper
 
 logger = logging.getLogger("BitBake")
@@ -84,39 +87,124 @@ def pluralise(singular, plural, qty):
     else:
         return plural % qty
 
+
+class InteractConsoleLogFilter(logging.Filter):
+    def __init__(self, tf, format):
+        self.tf = tf
+        self.format = format
+
+    def filter(self, record):
+        if record.levelno == self.format.NOTE and (record.msg.startswith("Running") or record.msg.startswith("package ")):
+            return False
+        self.tf.clearFooter()
+        return True
+
 class TerminalFilter(object):
+    columns = 80
+
+    def sigwinch_handle(self, signum, frame):
+        self.columns = self.getTerminalColumns()
+        if self._sigwinch_default:
+            self._sigwinch_default(signum, frame)
+
+    def getTerminalColumns(self):
+        def ioctl_GWINSZ(fd):
+            try:
+                cr = struct.unpack('hh', fcntl.ioctl(fd, self.termios.TIOCGWINSZ, '1234'))
+            except:
+                return None
+            return cr
+        cr = ioctl_GWINSZ(sys.stdout.fileno())
+        if not cr:
+            try:
+                fd = os.open(os.ctermid(), os.O_RDONLY)
+                cr = ioctl_GWINSZ(fd)
+                os.close(fd)
+            except:
+                pass
+        if not cr:
+            try:
+                cr = (env['LINES'], env['COLUMNS'])
+            except:
+                cr = (25, 80)
+        return cr[1]
+
     def __init__(self, main, helper, console, format):
         self.main = main
         self.helper = helper
+        self.cuu = None
+        self.stdinbackup = None
+        self.interactive = sys.stdout.isatty()
+        self.footer_present = False
+        self.lastpids = []
+
+        if not self.interactive:
+            return
+
+        import curses
+        import termios
+        self.curses = curses
+        self.termios = termios
+        try:
+            fd = sys.stdin.fileno()
+            self.stdinbackup = termios.tcgetattr(fd)
+            new = copy.deepcopy(self.stdinbackup)
+            new[3] = new[3] & ~termios.ECHO
+            termios.tcsetattr(fd, termios.TCSADRAIN, new)
+            curses.setupterm()
+            self.ed = curses.tigetstr("ed")
+            if self.ed:
+                self.cuu = curses.tigetstr("cuu")
+            try:
+                self._sigwinch_default = signal.getsignal(signal.SIGWINCH)
+                signal.signal(signal.SIGWINCH, self.sigwinch_handle)
+            except:
+                pass
+            self.columns = self.getTerminalColumns()
+        except:
+            self.cuu = None
+        console.addFilter(InteractConsoleLogFilter(self, format))
 
     def clearFooter(self):
-        return
+        if self.footer_present:
+            lines = self.footer_present
+            sys.stdout.write(self.curses.tparm(self.cuu, lines))
+            sys.stdout.write(self.curses.tparm(self.ed))
+        self.footer_present = False
 
     def updateFooter(self):
-        if not main.shutdown or not self.helper.needUpdate:
+        if not self.cuu:
             return
-
         activetasks = self.helper.running_tasks
+        failedtasks = self.helper.failed_tasks
         runningpids = self.helper.running_pids
-
-        if len(runningpids) == 0:
+        if self.footer_present and (self.lastpids == runningpids):
             return
-
-        self.helper.getTasks()
-
+        if self.footer_present:
+            self.clearFooter()
+        if not activetasks:
+            return
         tasks = []
         for t in runningpids:
             tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
 
-        if main.shutdown:
-            print("Waiting for %s running tasks to finish:" % len(activetasks))
+        if self.main.shutdown:
+            content = "Waiting for %s running tasks to finish:" % len(activetasks)
         else:
-            print("Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total))
+            content = "Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
+        print content
+        lines = 1 + int(len(content) / (self.columns + 1))
         for tasknum, task in enumerate(tasks):
-            print("%s: %s" % (tasknum, task))
+            content = "%s: %s" % (tasknum, task)
+            print content
+            lines = lines + 1 + int(len(content) / (self.columns + 1))
+        self.footer_present = lines
+        self.lastpids = runningpids[:]
 
     def finish(self):
-        return
+        if self.stdinbackup:
+            fd = sys.stdin.fileno()
+            self.termios.tcsetattr(fd, self.termios.TCSADRAIN, self.stdinbackup)
 
 def main(server, eventHandler, tf = TerminalFilter):
 
