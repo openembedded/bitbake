@@ -25,6 +25,7 @@ import sys
 import xmlrpclib
 import logging
 import progressbar
+import signal
 import bb.msg
 from bb.ui import uihelper
 
@@ -37,7 +38,20 @@ class BBProgress(progressbar.ProgressBar):
         widgets = [progressbar.Percentage(), ' ', progressbar.Bar(), ' ',
            progressbar.ETA()]
 
+        try:
+            self._resize_default = signal.getsignal(signal.SIGWINCH)
+        except:
+            self._resize_default = None
         progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets)
+
+    def _handle_resize(self, signum, frame):
+        progressbar.ProgressBar._handle_resize(self, signum, frame)
+        if self._resize_default:
+            self._resize_default(signum, frame)
+    def finish(self):
+        progressbar.ProgressBar.finish(self)
+        if self._resize_default:
+            signal.signal(signal.SIGWINCH, self._resize_default)
 
 class NonInteractiveProgress(object):
     fobj = sys.stdout
