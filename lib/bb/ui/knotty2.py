@@ -21,6 +21,10 @@
 from bb.ui import knotty
 import logging
 import sys
+import os
+import fcntl
+import struct
+import copy
 logger = logging.getLogger("BitBake")
 
 class InteractConsoleLogFilter(logging.Filter):
@@ -35,6 +39,35 @@ class InteractConsoleLogFilter(logging.Filter):
         return True
 
 class TerminalFilter2(object):
+    columns = 80
+
+    def sigwinch_handle(self, signum, frame):
+        self.columns = self.getTerminalColumns()
+        if self._sigwinch_default:
+            self._sigwinch_default(signum, frame)
+
+    def getTerminalColumns(self):
+        def ioctl_GWINSZ(fd):
+            try:
+                cr = struct.unpack('hh', fcntl.ioctl(fd, self.termios.TIOCGWINSZ, '1234'))
+            except:
+                return None
+            return cr
+        cr = ioctl_GWINSZ(sys.stdout.fileno())
+        if not cr:
+            try:
+                fd = os.open(os.ctermid(), os.O_RDONLY)
+                cr = ioctl_GWINSZ(fd)
+                os.close(fd)
+            except:
+                pass
+        if not cr:
+            try:
+                cr = (env['LINES'], env['COLUMNS'])
+            except:
+                cr = (25, 80)
+        return cr[1]
+
     def __init__(self, main, helper, console, format):
         self.main = main
         self.helper = helper
@@ -49,7 +82,6 @@ class TerminalFilter2(object):
 
         import curses
         import termios
-        import copy
         self.curses = curses
         self.termios = termios
         try:
@@ -62,6 +94,12 @@ class TerminalFilter2(object):
             self.ed = curses.tigetstr("ed")
             if self.ed:
                 self.cuu = curses.tigetstr("cuu")
+            try:
+                self._sigwinch_default = signal.getsignal(signal.SIGWINCH)
+                signal.signal(signal.SIGWINCH, self.sigwinch_handle)
+            except:
+                pass
+            self.columns = self.getTerminalColumns()
         except:
             self.cuu = None
         console.addFilter(InteractConsoleLogFilter(self, format))
@@ -85,18 +123,20 @@ class TerminalFilter2(object):
             self.clearFooter()
         if not activetasks:
             return
-        lines = 1
         tasks = []
         for t in runningpids:
             tasks.append("%s (pid %s)" % (activetasks[t]["title"], t))
 
         if self.main.shutdown:
-            print("Waiting for %s running tasks to finish:" % len(activetasks))
+            content = "Waiting for %s running tasks to finish:" % len(activetasks)
         else:
-            print("Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total))
+            content = "Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
+        print content
+        lines = 1 + int(len(content) / (self.columns + 1))
         for tasknum, task in enumerate(tasks):
-            print("%s: %s" % (tasknum, task))
-            lines = lines + 1
+            content = "%s: %s" % (tasknum, task)
+            print content
+            lines = lines + 1 + int(len(content) / (self.columns + 1))
         self.footer_present = lines
         self.lastpids = runningpids[:]
 
