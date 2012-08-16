@@ -465,7 +465,7 @@ def stamp_internal(taskname, d, file_name):
     stamp = bb.parse.siggen.stampfile(stamp, file_name, taskname, extrainfo)
 
     stampdir = os.path.dirname(stamp)
-    if bb.parse.cached_mtime_noerror == 0:
+    if bb.parse.cached_mtime_noerror(stampdir) == 0:
         bb.utils.mkdirhier(stampdir)
 
     return stamp
