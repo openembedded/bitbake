@@ -70,7 +70,7 @@ def get_ui(config):
         return getattr(module, interface).main
     except AttributeError:
         sys.exit("FATAL: Invalid user interface '%s' specified.\n"
-                 "Valid interfaces: depexp, goggle, ncurses, hob, knotty [default], knotty2." % interface)
+                 "Valid interfaces: depexp, goggle, ncurses, hob, knotty [default]." % interface)
 
 
 # Display bitbake/OE warnings via the BitBake.Warnings logger, ignoring others"""
