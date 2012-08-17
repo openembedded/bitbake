@@ -72,7 +72,7 @@ class TaskBase(event.Event):
         self._task = t
         self._package = d.getVar("PF", True)
         event.Event.__init__(self)
-        self._message = "package %s: task %s: %s" % (d.getVar("PF", True), t, self.getDisplayName())
+        self._message = "recipe %s: task %s: %s" % (d.getVar("PF", True), t, self.getDisplayName())
 
     def getTask(self):
         return self._task
