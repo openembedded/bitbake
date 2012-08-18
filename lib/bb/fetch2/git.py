@@ -245,7 +245,22 @@ class Git(FetchMethod):
         if ud.bareclone:
             cloneflags += " --mirror"
 
-        runfetchcmd("git clone %s %s/ %s" % (cloneflags, ud.clonedir, destdir), d)
+        # Versions of git prior to 1.7.9.2 have issues where foo.git and foo get confused
+        # and you end up with some horrible union of the two when you attempt to clone it
+        # The least invasive workaround seems to be a symlink to the real directory to
+        # fool git into ignoring any .git version that may also be present.
+        #
+        # The issue is fixed in more recent versions of git so we can drop this hack in future
+        # when that version becomes common enough.
+        clonedir = ud.clonedir
+        if not ud.path.endswith(".git"):
+            indirectiondir = destdir[:-1] + ".indirectionsymlink"
+            if os.path.exists(indirectiondir):
+                os.remove(indirectiondir)
+            os.symlink(ud.clonedir, indirectiondir)
+            clonedir = indirectiondir
+
+        runfetchcmd("git clone %s %s/ %s" % (cloneflags, clonedir, destdir), d)
         if not ud.nocheckout:
             os.chdir(destdir)
             if subdir != "":
