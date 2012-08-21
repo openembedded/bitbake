@@ -86,9 +86,13 @@ class Commands(cmd.Cmd):
         self.cooker_data = self.cooker.status
         self.cooker_data.appends = self.cooker.appendlist
 
-    def check_prepare_cooker(self):
+    def check_prepare_cooker(self, config_only = False):
         if not self.cooker_data:
-            self.prepare_cooker()
+            if config_only:
+                self.cooker.parseConfiguration()
+                self.cooker_data = self.cooker.status
+            else:
+                self.prepare_cooker()
 
     def default(self, line):
         """Handle unrecognised commands"""
@@ -113,8 +117,7 @@ class Commands(cmd.Cmd):
 
     def do_show_layers(self, args):
         """show current configured layers"""
-        self.check_prepare_cooker()
-        logger.plain('')
+        self.check_prepare_cooker(config_only = True)
         logger.plain("%s  %s  %s" % ("layer".ljust(20), "path".ljust(40), "priority"))
         logger.plain('=' * 74)
         for layerdir in self.bblayers:
