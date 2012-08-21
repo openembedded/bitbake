@@ -219,6 +219,12 @@ class BBCooker:
             nice = int(nice) - curnice
             buildlog.verbose("Renice to %s " % os.nice(nice))
 
+        if self.status:
+            del self.status
+        self.status = bb.cache.CacheData(self.caches_array)
+
+        self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
+
     def parseCommandLine(self):
         # Parse any commandline into actions
         self.commandlineAction = {'action':None, 'msg':None}
@@ -298,8 +304,6 @@ class BBCooker:
             # Parse the configuration here. We need to do it explicitly here since
             # this showEnvironment() code path doesn't use the cache
             self.parseConfiguration()
-            self.status = bb.cache.CacheData(self.caches_array)
-            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
             fn, cls = bb.cache.Cache.virtualfn2realfn(buildfile)
             fn = self.matchFile(fn)
@@ -1035,8 +1039,6 @@ class BBCooker:
         # Parse the configuration here. We need to do it explicitly here since
         # buildFile() doesn't use the cache
         self.parseConfiguration()
-        self.status = bb.cache.CacheData(self.caches_array)
-        self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
         # If we are told to do the None task then query the default task
         if (task == None):
@@ -1186,17 +1188,11 @@ class BBCooker:
         if self.state != state.parsing:
             self.parseConfiguration ()
 
-            if self.status:
-                del self.status
-            self.status = bb.cache.CacheData(self.caches_array)
-
             ignore = self.configuration.data.getVar("ASSUME_PROVIDED", True) or ""
             self.status.ignored_dependencies = set(ignore.split())
 
             for dep in self.configuration.extra_assume_provided:
                 self.status.ignored_dependencies.add(dep)
-
-            self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
 
             (filelist, masked) = self.collect_bbfiles()
             self.configuration.data.renameVar("__depends", "__base_depends")
