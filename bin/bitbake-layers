@@ -521,7 +521,7 @@ Recipes are listed with the bbappends that apply to them as subitems.
             logger.plain('No append files found')
             return
 
-        logger.plain('State of append files:')
+        logger.plain('=== Appended recipes ===')
 
         pnlist = list(self.cooker_data.pkg_pn.keys())
         pnlist.sort()
