@@ -47,7 +47,13 @@
 
 from __future__ import division
 import logging
-import os, sys, curses, itertools, time, subprocess
+import os, sys, itertools, time, subprocess
+
+try:
+    import curses
+except ImportError:
+    sys.exit("FATAL: The ncurses ui could not load the required curses python module.")
+
 import bb
 import xmlrpclib
 from bb import ui

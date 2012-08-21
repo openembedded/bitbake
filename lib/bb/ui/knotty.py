@@ -141,7 +141,11 @@ class TerminalFilter(object):
         if not self.interactive:
             return
 
-        import curses
+        try:
+            import curses
+        except ImportError:
+            sys.exit("FATAL: The knotty ui could not load the required curses python module.")
+	
         import termios
         self.curses = curses
         self.termios = termios
