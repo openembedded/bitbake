@@ -135,8 +135,10 @@ class ImageConfigurationPage (HobPage):
         self._pack_components(pack_config_build_button = True)
         self.set_config_machine_layout(show_progress_bar = False)
         self.set_config_baseimg_layout()
-        self.set_rcppkg_layout()
         self.show_all()
+        if self.builder.recipe_model.get_selected_image() == self.builder.recipe_model.__custom_image__:
+            self.just_bake_button.hide()
+            self.or_label.hide()
 
     def create_config_machine(self):
         self.machine_title = gtk.Label()
@@ -207,22 +209,6 @@ class ImageConfigurationPage (HobPage):
         self.image_desc.set_justify(gtk.JUSTIFY_LEFT)
         self.image_desc.set_line_wrap(True)
 
-        # button to view recipes
-        icon_file = hic.ICON_RCIPE_DISPLAY_FILE
-        hover_file = hic.ICON_RCIPE_HOVER_FILE
-        self.view_recipes_button = HobImageButton("View recipes",
-                                        "Add/remove recipes and tasks",
-                                        icon_file, hover_file)
-        self.view_recipes_button.connect("clicked", self.view_recipes_button_clicked_cb)
-
-        # button to view packages
-        icon_file = hic.ICON_PACKAGES_DISPLAY_FILE
-        hover_file = hic.ICON_PACKAGES_HOVER_FILE
-        self.view_packages_button = HobImageButton("View packages",
-                                        "Add/remove previously built packages",
-                                        icon_file, hover_file)
-        self.view_packages_button.connect("clicked", self.view_packages_button_clicked_cb)
-
         self.image_separator = gtk.HSeparator()
 
     def set_config_baseimg_layout(self):
@@ -232,29 +218,27 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.image_desc, 13, 38, 23, 28)
         self.gtable.attach(self.image_separator, 0, 40, 35, 36)
 
-    def set_rcppkg_layout(self):
-        self.gtable.attach(self.view_recipes_button, 0, 20, 28, 33)
-        self.gtable.attach(self.view_packages_button, 20, 40, 28, 33)
-
     def create_config_build_button(self):
         # Create the "Build packages" and "Build image" buttons at the bottom
         button_box = gtk.HBox(False, 6)
 
         # create button "Build image"
-        just_bake_button = HobButton("Build image")
-        just_bake_button.set_size_request(205, 49)
-        just_bake_button.set_tooltip_text("Build target image")
-        just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
-        button_box.pack_end(just_bake_button, expand=False, fill=False)
+        self.just_bake_button = HobButton("Build image")
+        self.just_bake_button.set_size_request(205, 49)
+        self.just_bake_button.set_tooltip_text("Build target image")
+        self.just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
+        button_box.pack_end(self.just_bake_button, expand=False, fill=False)
 
-        label = gtk.Label(" or ")
-        button_box.pack_end(label, expand=False, fill=False)
+        # create separator label
+        self.or_label = gtk.Label(" or ")
+        button_box.pack_end(self.or_label, expand=False, fill=False)
 
-        # create button "Build Packages"
-        build_packages_button = HobAltButton("Build packages")
-        build_packages_button.connect("clicked", self.build_packages_button_clicked_cb)
-        build_packages_button.set_tooltip_text("Build recipes into packages")
-        button_box.pack_end(build_packages_button, expand=False, fill=False)
+        # create button "Edit Image"
+        self.edit_image_button = HobButton("Edit image")
+        self.edit_image_button.set_size_request(205, 49)
+        self.edit_image_button.set_tooltip_text("Edit target image")
+        self.edit_image_button.connect("clicked", self.edit_image_button_clicked_cb)
+        button_box.pack_end(self.edit_image_button, expand=False, fill=False)
 
         return button_box
 
@@ -347,6 +331,10 @@ class ImageConfigurationPage (HobPage):
 
         self.show_baseimg_selected()
 
+        if selected_image == self.builder.recipe_model.__custom_image__:
+            self.just_bake_button.hide()
+            self.or_label.hide()
+
         glib.idle_add(self.image_combo_changed_idle_cb, selected_image, selected_recipes, selected_packages)
 
     def _image_combo_connect_signal(self):
@@ -426,17 +414,11 @@ class ImageConfigurationPage (HobPage):
         # Create a layer selection dialog
         self.builder.show_layer_selection_dialog()
 
-    def view_recipes_button_clicked_cb(self, button):
-        self.builder.show_recipes()
-
-    def view_packages_button_clicked_cb(self, button):
-        self.builder.show_packages()
-
     def just_bake_button_clicked_cb(self, button):
         self.builder.just_bake()
 
-    def build_packages_button_clicked_cb(self, button):
-        self.builder.build_packages()
+    def edit_image_button_clicked_cb(self, button):
+        self.builder.show_recipes()
 
     def template_button_clicked_cb(self, button):
         response, path = self.builder.show_load_template_dialog()

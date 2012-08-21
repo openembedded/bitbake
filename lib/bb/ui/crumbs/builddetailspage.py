@@ -165,7 +165,7 @@ class BuildDetailsPage (HobPage):
         self.builder.handler.build.model.connect_after("row-changed", self.scroll_to_present_row, self.scrolled_view_build.get_vadjustment(), self.build_tv)
 
         self.button_box = gtk.HBox(False, 6)
-        self.back_button = HobAltButton("<< Back to image configuration")
+        self.back_button = HobAltButton('<< Back')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_start(self.back_button, expand=False, fill=False)
 

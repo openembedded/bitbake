@@ -98,9 +98,12 @@ class PackageSelectionPage (HobPage):
                       }]
         }
     ]
+    
+    (INCLUDED,
+     ALL) = range(2)
 
     def __init__(self, builder):
-        super(PackageSelectionPage, self).__init__(builder, "Packages")
+        super(PackageSelectionPage, self).__init__(builder, "Edit packages")
 
         # set invisiable members
         self.recipe_model = self.builder.recipe_model
@@ -110,7 +113,7 @@ class PackageSelectionPage (HobPage):
         self.create_visual_elements()
 
     def included_clicked_cb(self, button):
-        self.ins.set_current_page(0)
+        self.ins.set_current_page(self.INCLUDED)
 
     def create_visual_elements(self):
         self.label = gtk.Label("Packages included: 0\nSelected packages size: 0 MB")
@@ -154,7 +157,7 @@ class PackageSelectionPage (HobPage):
         self.build_image_button.connect("clicked", self.build_image_clicked_cb)
         self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
 
-        self.back_button = HobAltButton("<< Back to image configuration")
+        self.back_button = HobAltButton('<< Back')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_start(self.back_button, expand=False, fill=False)
 
@@ -189,7 +192,10 @@ class PackageSelectionPage (HobPage):
         self.builder.build_image()
 
     def back_button_clicked_cb(self, button):
-        self.builder.show_configuration()
+        if self.builder.current_step ==  self.builder.PACKAGE_GENERATED:
+            self.builder.show_recipes()
+        elif self.builder.previous_step ==  self.builder.IMAGE_GENERATED:
+            self.builder.show_image_details()
 
     def _expand_all(self):
         for tab in self.tables:
@@ -294,3 +300,5 @@ class PackageSelectionPage (HobPage):
             child_path = self.package_model.convert_vpath_to_path(model, paths[0])
             self.package_model.foreach(self.foreach_cell_change_font, child_path)
 
+    def set_packages_curr_tab(self, curr_page):
+        self.ins.set_current_page(curr_page)

@@ -124,18 +124,22 @@ class RecipeSelectionPage (HobPage):
                       }]
         }
     ]
+    
+    (INCLUDED,
+     ALL,
+     TASKS) = range(3)
 
     def __init__(self, builder = None):
-        super(RecipeSelectionPage, self).__init__(builder, "Recipes")
+        super(RecipeSelectionPage, self).__init__(builder, "Edit recipes")
 
-        # set invisiable members
+        # set invisible members
         self.recipe_model = self.builder.recipe_model
 
         # create visual elements
         self.create_visual_elements()
 
     def included_clicked_cb(self, button):
-        self.ins.set_current_page(0)
+        self.ins.set_current_page(self.INCLUDED)
 
     def create_visual_elements(self):
         self.eventbox = self.add_onto_top_bar(None, 73)
@@ -180,7 +184,7 @@ class RecipeSelectionPage (HobPage):
         self.build_packages_button.connect("clicked", self.build_packages_clicked_cb)
         button_box.pack_end(self.build_packages_button, expand=False, fill=False)
 
-        self.back_button = HobAltButton("<< Back to image configuration")
+        self.back_button = HobAltButton('<< Back')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         button_box.pack_start(self.back_button, expand=False, fill=False)
 
@@ -261,3 +265,6 @@ class RecipeSelectionPage (HobPage):
 
     def after_fadeout_checkin_include(self, table, ctrl, cell, tree):
         tree.set_model(self.recipe_model.tree_model(self.pages[0]['filter']))
+
+    def set_recipe_curr_tab(self, curr_page):
+        self.ins.set_current_page(curr_page)

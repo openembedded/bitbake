@@ -41,7 +41,7 @@ from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 import bb.ui.crumbs.utils
 
-hobVer = 20120530
+hobVer = 20120808
 
 class Configuration:
     '''Represents the data structure of configuration.'''
@@ -640,16 +640,28 @@ class Builder(gtk.Window):
             self.image_configuration_page.show_baseimg_selected()
 
         elif next_step == self.RECIPE_SELECTION:
-            pass
+            if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
+                self.recipe_details_page.set_recipe_curr_tab(self.recipe_details_page.ALL)
+            else:
+                self.recipe_details_page.set_recipe_curr_tab(self.recipe_details_page.INCLUDED)
 
         elif next_step == self.PACKAGE_SELECTION:
+            if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
+                self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
+            else:
+                self.package_details_page.set_packages_curr_tab(self.package_details_page.INCLUDED)
             self.package_details_page.show_page(self.current_logfile)
 
+
         elif next_step == self.PACKAGE_GENERATING or next_step == self.FAST_IMAGE_GENERATING:
-            # both PACKAGE_GENEATING and FAST_IMAGE_GENERATING share the same page
+            # both PACKAGE_GENERATING and FAST_IMAGE_GENERATING share the same page
             self.build_details_page.show_page(next_step)
 
         elif next_step == self.PACKAGE_GENERATED:
+            if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
+                self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
+            else:
+                self.package_details_page.set_packages_curr_tab(self.package_details_page.INCLUDED)
             self.package_details_page.show_page(self.current_logfile)
 
         elif next_step == self.IMAGE_GENERATING:
@@ -781,8 +793,6 @@ class Builder(gtk.Window):
         self.image_configuration_page.layer_button.set_sensitive(sensitive)
         self.image_configuration_page.layer_info_icon.set_sensitive(sensitive)
         self.image_configuration_page.toolbar.set_sensitive(sensitive)
-        self.image_configuration_page.view_recipes_button.set_sensitive(sensitive)
-        self.image_configuration_page.view_packages_button.set_sensitive(sensitive)
         self.image_configuration_page.config_build_button.set_sensitive(sensitive)
 
         self.recipe_details_page.set_sensitive(sensitive)
@@ -1269,6 +1279,9 @@ class Builder(gtk.Window):
 
     def show_recipes(self):
         self.switch_page(self.RECIPE_SELECTION)
+
+    def show_image_details(self):
+        self.switch_page(self.IMAGE_GENERATED)
 
     def show_configuration(self):
         self.switch_page(self.BASEIMG_SELECTED)

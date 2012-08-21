@@ -566,9 +566,8 @@ class RecipeListModel(gtk.ListStore):
 
         # dummy image for prompt
         self.set(self.append(), self.COL_NAME, self.__custom_image__,
-                 self.COL_DESC, "Use the 'View recipes' and 'View packages' " \
-                                "options to select what you want to include " \
-                                "in your image.",
+                 self.COL_DESC, "Use 'Edit image' to customize recipes and packages " \
+                                "to be included in your image ",
                  self.COL_LIC, "", self.COL_GROUP, "",
                  self.COL_DEPS, "", self.COL_BINB, "",
                  self.COL_TYPE, "image", self.COL_INC, False,
