@@ -1312,6 +1312,7 @@ class Builder(gtk.Window):
 
     def do_log(self, consolelogfile = None):
         if consolelogfile:
+            bb.utils.mkdirhier(os.path.dirname(consolelogfile))
             if self.consolelog:
                 self.logger.removeHandler(self.consolelog)
                 self.consolelog = None
