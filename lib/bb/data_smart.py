@@ -280,10 +280,10 @@ class DataSmart(MutableMapping):
                 self._seen_overrides[override].add( var )
 
         # setting var
-        self.dict[var]["content"] = value
+        self.dict[var]["_content"] = value
 
     def getVar(self, var, expand=False, noweakdefault=False):
-        value = self.getVarFlag(var, "content", False, noweakdefault)
+        value = self.getVarFlag(var, "_content", False, noweakdefault)
 
         # Call expand() separately to make use of the expand cache
         if expand and value:
@@ -340,7 +340,7 @@ class DataSmart(MutableMapping):
         if local_var:
             if flag in local_var:
                 value = copy.copy(local_var[flag])
-            elif flag == "content" and "defaultval" in local_var and not noweakdefault:
+            elif flag == "_content" and "defaultval" in local_var and not noweakdefault:
                 value = copy.copy(local_var["defaultval"])
         if expand and value:
             value = self.expand(value, None)
@@ -369,7 +369,7 @@ class DataSmart(MutableMapping):
             self._makeShadowCopy(var)
 
         for i in flags:
-            if i == "content":
+            if i == "_content":
                 continue
             self.dict[var][i] = flags[i]
 
@@ -379,7 +379,7 @@ class DataSmart(MutableMapping):
 
         if local_var:
             for i in local_var:
-                if i == "content":
+                if i == "_content":
                     continue
                 flags[i] = local_var[i]
 
@@ -396,10 +396,10 @@ class DataSmart(MutableMapping):
             content = None
 
             # try to save the content
-            if "content" in self.dict[var]:
-                content  = self.dict[var]["content"]
+            if "_content" in self.dict[var]:
+                content  = self.dict[var]["_content"]
                 self.dict[var]            = {}
-                self.dict[var]["content"] = content
+                self.dict[var]["_content"] = content
             else:
                 del self.dict[var]
 
