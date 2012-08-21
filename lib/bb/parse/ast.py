@@ -320,7 +320,7 @@ def finalize(fn, d, variant = None):
     code = []
     for funcname in d.getVar("__BBANONFUNCS") or []:
         code.append("%s(d)" % funcname)
-    bb.utils.simple_exec("\n".join(code), {"d": d})
+    bb.utils.better_exec("\n".join(code), {"d": d})
     bb.data.update_data(d)
 
     tasklist = d.getVar('__BBTASKS') or []

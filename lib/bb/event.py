@@ -175,7 +175,7 @@ def register(name, handler):
                 _handlers[name] = noop
                 return
             env = {}
-            bb.utils.simple_exec(code, env)
+            bb.utils.better_exec(code, env)
             func = bb.utils.better_eval(name, env)
             _handlers[name] = func
         else:

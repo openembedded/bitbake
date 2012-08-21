@@ -218,13 +218,15 @@ def better_compile(text, file, realfile, mode = "exec"):
 
         raise
 
-def better_exec(code, context, text, realfile = "<code>"):
+def better_exec(code, context, text = None, realfile = "<code>", data = None):
     """
     Similiar to better_compile, better_exec will
     print the lines that are responsible for the
     error.
     """
     import bb.parse
+    if not text:
+        text = code
     if not hasattr(code, "co_filename"):
         code = better_compile(code, realfile, realfile)
     try:
