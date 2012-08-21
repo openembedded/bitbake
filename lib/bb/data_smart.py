@@ -379,7 +379,7 @@ class DataSmart(MutableMapping):
 
         if local_var:
             for i in local_var:
-                if i == "_content":
+                if i.startswith("_"):
                     continue
                 flags[i] = local_var[i]
 
