@@ -56,20 +56,6 @@ def insert_method(modulename, code, fn):
         else:
             _parsed_fns[name] = modulename
 
-def check_insert_method(modulename, code, fn):
-    """
-    Add the code if it wasnt added before. The module
-    name will be used for that
-
-    Variables:
-        @modulename a short name e.g. base.bbclass
-        @code The actual python code
-        @fn   The filename from the outer file
-    """
-    if not modulename in _parsed_methods:
-        return insert_method(modulename, code, fn)
-    _parsed_methods[modulename] = 1
-
 def parsed_module(modulename):
     """
     Inform me file xyz was parsed
