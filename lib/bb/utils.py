@@ -218,7 +218,7 @@ def better_compile(text, file, realfile, mode = "exec"):
 
         raise
 
-def better_exec(code, context, text = None, realfile = "<code>", data = None):
+def better_exec(code, context, text = None, realfile = "<code>"):
     """
     Similiar to better_compile, better_exec will
     print the lines that are responsible for the
@@ -256,16 +256,25 @@ def better_exec(code, context, text = None, realfile = "<code>", data = None):
 
         logger.error("The code that was being executed was:")
         _print_trace(textarray, linefailed)
-        logger.error("(file: '%s', lineno: %s, function: %s)", tbextract[0][0], tbextract[0][1], tbextract[0][2])
+        logger.error("[From file: '%s', lineno: %s, function: %s]", tbextract[0][0], tbextract[0][1], tbextract[0][2])
 
         # See if this is a function we constructed and has calls back into other functions in
         # "text". If so, try and improve the context of the error by diving down the trace
         level = 0
         nexttb = tb.tb_next
-        while nexttb is not None:
+        while nexttb is not None and (level+1) < len(tbextract):
             if tbextract[level][0] == tbextract[level+1][0] and tbextract[level+1][2] == tbextract[level][0]:
                 _print_trace(textarray, tbextract[level+1][1])
-                logger.error("(file: '%s', lineno: %s, function: %s)", tbextract[level+1][0], tbextract[level+1][1], tbextract[level+1][2])
+                logger.error("[From file: '%s', lineno: %s, function: %s]", tbextract[level+1][0], tbextract[level+1][1], tbextract[level+1][2])
+            elif "d" in context and tbextract[level+1][2]:
+                d = context["d"]
+                functionname = tbextract[level+1][2]
+                text = d.getVar(functionname, True)
+                if text:
+                    _print_trace(text.split('\n'), tbextract[level+1][1])
+                    logger.error("[From file: '%s', lineno: %s, function: %s]", tbextract[level+1][0], tbextract[level+1][1], tbextract[level+1][2])
+                else:
+                    break
             else:
                  break
             nexttb = tb.tb_next
