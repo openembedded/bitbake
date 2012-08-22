@@ -216,7 +216,8 @@ def better_compile(text, file, realfile, mode = "exec"):
             for line in body:
                 logger.error(line)
 
-        raise
+        e = bb.BBHandledException(e)
+        raise e
 
 def better_exec(code, context, text = None, realfile = "<code>"):
     """
@@ -231,7 +232,7 @@ def better_exec(code, context, text = None, realfile = "<code>"):
         code = better_compile(code, realfile, realfile)
     try:
         exec(code, _context, context)
-    except Exception:
+    except Exception as e:
         (t, value, tb) = sys.exc_info()
 
         if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
@@ -280,7 +281,8 @@ def better_exec(code, context, text = None, realfile = "<code>"):
             nexttb = tb.tb_next
             level = level + 1
 
-        raise
+        e = bb.BBHandledException(e)
+        raise e
 
 def simple_exec(code, context):
     exec(code, _context, context)
