@@ -125,17 +125,18 @@ class MethodNode(AstNode):
         self.body = body
 
     def eval(self, data):
+        text = '\n'.join(self.body)
         if self.func_name == "__anonymous":
             funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(string.maketrans('/.+-', '____'))))
             if not funcname in bb.methodpool._parsed_fns:
-                text = "def %s(d):\n" % (funcname) + '\n'.join(self.body)
+                text = "def %s(d):\n" % (funcname) + text
                 bb.methodpool.insert_method(funcname, text, self.filename)
             anonfuncs = data.getVar('__BBANONFUNCS') or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
         else:
             data.setVarFlag(self.func_name, "func", 1)
-            data.setVar(self.func_name, '\n'.join(self.body))
+            data.setVar(self.func_name, text)
 
 class PythonMethodNode(AstNode):
     def __init__(self, filename, lineno, function, modulename, body):
