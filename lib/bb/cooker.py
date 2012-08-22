@@ -1060,6 +1060,10 @@ class BBCooker:
             info_array = infos[fn]
         except KeyError:
             bb.fatal("%s does not exist" % fn)
+
+        if info_array[0].skipped:
+            bb.fatal("%s was skipped: %s" % (fn, info_array[0].skipreason))
+
         self.status.add_from_recipeinfo(fn, info_array)
 
         # Tweak some variables
