@@ -134,6 +134,7 @@ class MethodNode(AstNode):
             anonfuncs = data.getVar('__BBANONFUNCS') or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
+            data.setVar(funcname, text)
         else:
             data.setVarFlag(self.func_name, "func", 1)
             data.setVar(self.func_name, text)
