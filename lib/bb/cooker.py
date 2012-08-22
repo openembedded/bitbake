@@ -1661,6 +1661,11 @@ class CookerParser(object):
         except StopIteration:
             self.shutdown()
             return False
+        except bb.BBHandledException as exc:
+            self.error += 1
+            logger.error('Failed to parse recipe: %s' % exc.recipe)
+            self.shutdown(clean=False)
+            return False
         except ParsingFailure as exc:
             self.error += 1
             logger.error('Unable to parse %s: %s' %
