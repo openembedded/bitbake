@@ -1206,9 +1206,10 @@ class BBCooker:
 
         if not self.parser.parse_next():
             collectlog.debug(1, "parsing complete")
-            if not self.parser.error:
-                self.show_appends_with_no_recipes()
-                self.buildDepgraph()
+            if self.parser.error:
+                sys.exit(1)
+            self.show_appends_with_no_recipes()
+            self.buildDepgraph()
             self.state = state.running
             return None
 
@@ -1665,25 +1666,30 @@ class CookerParser(object):
             logger.error('Unable to parse %s: %s' %
                      (exc.recipe, bb.exceptions.to_string(exc.realexception)))
             self.shutdown(clean=False)
+            return False
         except bb.parse.ParseError as exc:
             self.error += 1
             logger.error(str(exc))
             self.shutdown(clean=False)
+            return False
         except bb.data_smart.ExpansionError as exc:
             self.error += 1
             _, value, _ = sys.exc_info()
             logger.error('ExpansionError during parsing %s: %s', value.recipe, str(exc))
             self.shutdown(clean=False)
+            return False
         except SyntaxError as exc:
             self.error += 1
             logger.error('Unable to parse %s', exc.recipe)
             self.shutdown(clean=False)
+            return False
         except Exception as exc:
             self.error += 1
             etype, value, tb = sys.exc_info()
             logger.error('Unable to parse %s', value.recipe,
                          exc_info=(etype, value, exc.traceback))
             self.shutdown(clean=False)
+            return False
 
         self.current += 1
         self.virtuals += len(result)
