@@ -161,7 +161,7 @@ def handle(fn, d, include):
 
     # we have parsed the bb class now
     if ext == ".bbclass" or ext == ".inc":
-        bb.methodpool.get_parsed_dict()[base_name] = 1
+        bb.methodpool.set_parsed_module(base_name)
 
     return d
 

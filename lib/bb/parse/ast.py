@@ -31,7 +31,6 @@ import itertools
 from bb import methodpool
 from bb.parse import logger
 
-__parsed_methods__ = bb.methodpool.get_parsed_dict()
 _bbversions_re = re.compile(r"\[(?P<from>[0-9]+)-(?P<to>[0-9]+)\]")
 
 class StatementGroup(list):

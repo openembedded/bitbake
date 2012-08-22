@@ -33,9 +33,7 @@
 from bb.utils import better_compile, better_exec
 from bb       import error
 
-# A dict of modules we have handled
-# it is the number of .bbclasses + x in size
-_parsed_methods = { }
+# A dict of function names we have seen
 _parsed_fns     = { }
 
 def insert_method(modulename, code, fn):
@@ -56,15 +54,18 @@ def insert_method(modulename, code, fn):
         else:
             _parsed_fns[name] = modulename
 
+# A dict of modules the parser has finished with
+_parsed_methods = {}
+
 def parsed_module(modulename):
     """
-    Inform me file xyz was parsed
+    Has module been parsed?
     """
     return modulename in _parsed_methods
 
+def set_parsed_module(modulename):
+    """
+    Set module as parsed
+    """
+    _parsed_methods[modulename] = True
 
-def get_parsed_dict():
-    """
-    shortcut
-    """
-    return _parsed_methods
