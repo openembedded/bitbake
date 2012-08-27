@@ -185,8 +185,8 @@ class SignatureGeneratorBasic(SignatureGenerator):
         if task in dataCache.file_checksums[fn]:
             checksums = bb.fetch2.get_file_checksums(dataCache.file_checksums[fn][task], recipename)
             for (f,cs) in checksums:
-               self.file_checksum_values[k][f] = cs
-               data = data + cs
+                self.file_checksum_values[k][f] = cs
+                data = data + cs
 
         taint = self.read_taint(fn, task, dataCache.stamp[fn])
         if taint:
@@ -372,24 +372,24 @@ def compare_sigfiles(a, b):
         changed, added, removed = dict_diff(a, b)
         if added:
             for dep in added:
-	        bdep_found = False
-	        if removed:
-		    for bdep in removed:
-		    	if a[dep] == b[bdep]:
-			   #print "Dependency on task %s was replaced by %s with same hash" % (dep, bdep)
-			   bdep_found = True
-		if not bdep_found:
+                bdep_found = False
+                if removed:
+                    for bdep in removed:
+                        if a[dep] == b[bdep]:
+                            #print "Dependency on task %s was replaced by %s with same hash" % (dep, bdep)
+                            bdep_found = True
+                if not bdep_found:
                     print "Dependency on task %s was added with hash %s" % (dep, a[dep])
         if removed:
             for dep in removed:
-	        adep_found = False
-	        if added:
-		    for adep in added:
-		    	if a[adep] == b[dep]:
-			   #print "Dependency on task %s was replaced by %s with same hash" % (adep, dep)
-			   adep_found = True
-		if not adep_found:
-                   print "Dependency on task %s was removed with hash %s" % (dep, b[dep])
+                adep_found = False
+                if added:
+                    for adep in added:
+                        if a[adep] == b[dep]:
+                            #print "Dependency on task %s was replaced by %s with same hash" % (adep, dep)
+                            adep_found = True
+                if not adep_found:
+                    print "Dependency on task %s was removed with hash %s" % (dep, b[dep])
         if changed:
             for dep in changed:
                 print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
