@@ -301,7 +301,7 @@ def clean_basepaths(a):
         b[clean_basepath(x)] = a[x]
     return b
 
-def compare_sigfiles(a, b):
+def compare_sigfiles(a, b, recursecb = None):
     output = []
 
     p1 = pickle.Unpickler(open(a, "rb"))
@@ -369,8 +369,8 @@ def compare_sigfiles(a, b):
 
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
-        a = clean_basepaths(a_data['runtaskhashes'])
-        b = clean_basepaths(b_data['runtaskhashes'])
+        a = a_data['runtaskhashes']
+        b = b_data['runtaskhashes']
         changed, added, removed = dict_diff(a, b)
         if added:
             for dep in added:
@@ -381,7 +381,7 @@ def compare_sigfiles(a, b):
                             #output.append("Dependency on task %s was replaced by %s with same hash" % (dep, bdep))
                             bdep_found = True
                 if not bdep_found:
-                    output.append("Dependency on task %s was added with hash %s" % (dep, a[dep]))
+                    output.append("Dependency on task %s was added with hash %s" % (clean_basepath(dep), a[dep]))
         if removed:
             for dep in removed:
                 adep_found = False
@@ -391,11 +391,14 @@ def compare_sigfiles(a, b):
                             #output.append("Dependency on task %s was replaced by %s with same hash" % (adep, dep))
                             adep_found = True
                 if not adep_found:
-                    output.append("Dependency on task %s was removed with hash %s" % (dep, b[dep]))
+                    output.append("Dependency on task %s was removed with hash %s" % (clean_basepath(dep), b[dep]))
         if changed:
             for dep in changed:
-                output.append("Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep]))
-
+                output.append("Hash for dependent task %s changed from %s to %s" % (clean_basepath(dep), a[dep], b[dep]))
+                if callable(recursecb):
+                    recout = recursecb(dep, a[dep], b[dep])
+                    if recout:
+                        output.extend(recout)
 
     a_taint = a_data.get('taint', None)
     b_taint = b_data.get('taint', None)
