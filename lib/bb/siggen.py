@@ -290,7 +290,7 @@ def dump_this_task(outfile, d):
 
 def clean_basepath(a):
     if a.startswith("virtual:"):
-        b = a.rsplit(":", 1)[0] + a.rsplit("/", 1)[1]
+        b = a.rsplit(":", 1)[0] + ":" + a.rsplit("/", 1)[1]
     else:
         b = a.rsplit("/", 1)[1]
     return b
