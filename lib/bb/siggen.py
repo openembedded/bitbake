@@ -302,6 +302,8 @@ def clean_basepaths(a):
     return b
 
 def compare_sigfiles(a, b):
+    output = []
+
     p1 = pickle.Unpickler(open(a, "rb"))
     a_data = p1.load()
     p2 = pickle.Unpickler(open(b, "rb"))
@@ -320,50 +322,50 @@ def compare_sigfiles(a, b):
         return changed, added, removed
 
     if 'basewhitelist' in a_data and a_data['basewhitelist'] != b_data['basewhitelist']:
-        print "basewhitelist changed from %s to %s" % (a_data['basewhitelist'], b_data['basewhitelist'])
+        output.append("basewhitelist changed from %s to %s" % (a_data['basewhitelist'], b_data['basewhitelist']))
         if a_data['basewhitelist'] and b_data['basewhitelist']:
-            print "changed items: %s" % a_data['basewhitelist'].symmetric_difference(b_data['basewhitelist'])
+            output.append("changed items: %s" % a_data['basewhitelist'].symmetric_difference(b_data['basewhitelist']))
 
     if 'taskwhitelist' in a_data and a_data['taskwhitelist'] != b_data['taskwhitelist']:
-        print "taskwhitelist changed from %s to %s" % (a_data['taskwhitelist'], b_data['taskwhitelist'])
+        output.append("taskwhitelist changed from %s to %s" % (a_data['taskwhitelist'], b_data['taskwhitelist']))
         if a_data['taskwhitelist'] and b_data['taskwhitelist']:
-            print "changed items: %s" % a_data['taskwhitelist'].symmetric_difference(b_data['taskwhitelist'])
+            output.append("changed items: %s" % a_data['taskwhitelist'].symmetric_difference(b_data['taskwhitelist']))
 
     if a_data['taskdeps'] != b_data['taskdeps']:
-        print "Task dependencies changed from:\n%s\nto:\n%s" % (sorted(a_data['taskdeps']), sorted(b_data['taskdeps']))
+        output.append("Task dependencies changed from:\n%s\nto:\n%s" % (sorted(a_data['taskdeps']), sorted(b_data['taskdeps'])))
 
     if a_data['basehash'] != b_data['basehash']:
-        print "basehash changed from %s to %s" % (a_data['basehash'], b_data['basehash'])
+        output.append("basehash changed from %s to %s" % (a_data['basehash'], b_data['basehash']))
 
     changed, added, removed = dict_diff(a_data['gendeps'], b_data['gendeps'], a_data['basewhitelist'] & b_data['basewhitelist'])
     if changed:
         for dep in changed:
-            print "List of dependencies for variable %s changed from %s to %s" % (dep, a_data['gendeps'][dep], b_data['gendeps'][dep])
+            output.append("List of dependencies for variable %s changed from %s to %s" % (dep, a_data['gendeps'][dep], b_data['gendeps'][dep]))
             if a_data['gendeps'][dep] and b_data['gendeps'][dep]:
-                print "changed items: %s" % a_data['gendeps'][dep].symmetric_difference(b_data['gendeps'][dep])
+                output.append("changed items: %s" % a_data['gendeps'][dep].symmetric_difference(b_data['gendeps'][dep]))
     if added:
         for dep in added:
-            print "Dependency on variable %s was added" % (dep)
+            output.append("Dependency on variable %s was added" % (dep))
     if removed:
         for dep in removed:
-            print "Dependency on Variable %s was removed" % (dep)
+            output.append("Dependency on Variable %s was removed" % (dep))
 
 
     changed, added, removed = dict_diff(a_data['varvals'], b_data['varvals'])
     if changed:
         for dep in changed:
-            print "Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep])
+            output.append("Variable %s value changed from %s to %s" % (dep, a_data['varvals'][dep], b_data['varvals'][dep]))
 
     changed, added, removed = dict_diff(a_data['file_checksum_values'], b_data['file_checksum_values'])
     if changed:
         for f in changed:
-            print "Checksum for file %s changed from %s to %s" % (f, a_data['file_checksum_values'][f], b_data['file_checksum_values'][f])
+            output.append("Checksum for file %s changed from %s to %s" % (f, a_data['file_checksum_values'][f], b_data['file_checksum_values'][f]))
     if added:
         for f in added:
-            print "Dependency on checksum of file %s was added" % (f)
+            output.append("Dependency on checksum of file %s was added" % (f))
     if removed:
         for f in removed:
-            print "Dependency on checksum of file %s was removed" % (f)
+            output.append("Dependency on checksum of file %s was removed" % (f))
 
 
     if 'runtaskhashes' in a_data and 'runtaskhashes' in b_data:
@@ -376,58 +378,64 @@ def compare_sigfiles(a, b):
                 if removed:
                     for bdep in removed:
                         if a[dep] == b[bdep]:
-                            #print "Dependency on task %s was replaced by %s with same hash" % (dep, bdep)
+                            #output.append("Dependency on task %s was replaced by %s with same hash" % (dep, bdep))
                             bdep_found = True
                 if not bdep_found:
-                    print "Dependency on task %s was added with hash %s" % (dep, a[dep])
+                    output.append("Dependency on task %s was added with hash %s" % (dep, a[dep]))
         if removed:
             for dep in removed:
                 adep_found = False
                 if added:
                     for adep in added:
                         if a[adep] == b[dep]:
-                            #print "Dependency on task %s was replaced by %s with same hash" % (adep, dep)
+                            #output.append("Dependency on task %s was replaced by %s with same hash" % (adep, dep))
                             adep_found = True
                 if not adep_found:
-                    print "Dependency on task %s was removed with hash %s" % (dep, b[dep])
+                    output.append("Dependency on task %s was removed with hash %s" % (dep, b[dep]))
         if changed:
             for dep in changed:
-                print "Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep])
+                output.append("Hash for dependent task %s changed from %s to %s" % (dep, a[dep], b[dep]))
 
 
     a_taint = a_data.get('taint', None)
     b_taint = b_data.get('taint', None)
     if a_taint != b_taint:
-        print "Taint (by forced/invalidated task) changed from %s to %s" % (a_taint, b_taint)
+        output.append("Taint (by forced/invalidated task) changed from %s to %s" % (a_taint, b_taint))
+
+    return output
 
 
 def dump_sigfile(a):
+    output = []
+
     p1 = pickle.Unpickler(open(a, "rb"))
     a_data = p1.load()
 
-    print "basewhitelist: %s" % (a_data['basewhitelist'])
+    output.append("basewhitelist: %s" % (a_data['basewhitelist']))
 
-    print "taskwhitelist: %s" % (a_data['taskwhitelist'])
+    output.append("taskwhitelist: %s" % (a_data['taskwhitelist']))
 
-    print "Task dependencies: %s" % (sorted(a_data['taskdeps']))
+    output.append("Task dependencies: %s" % (sorted(a_data['taskdeps'])))
 
-    print "basehash: %s" % (a_data['basehash'])
+    output.append("basehash: %s" % (a_data['basehash']))
 
     for dep in a_data['gendeps']:
-        print "List of dependencies for variable %s is %s" % (dep, a_data['gendeps'][dep])
+        output.append("List of dependencies for variable %s is %s" % (dep, a_data['gendeps'][dep]))
 
     for dep in a_data['varvals']:
-        print "Variable %s value is %s" % (dep, a_data['varvals'][dep])
+        output.append("Variable %s value is %s" % (dep, a_data['varvals'][dep]))
 
     if 'runtaskdeps' in a_data:
-        print "Tasks this task depends on: %s" % (a_data['runtaskdeps'])
+        output.append("Tasks this task depends on: %s" % (a_data['runtaskdeps']))
 
     if 'file_checksum_values' in a_data:
-        print "This task depends on the checksums of files: %s" % (a_data['file_checksum_values'])
+        output.append("This task depends on the checksums of files: %s" % (a_data['file_checksum_values']))
 
     if 'runtaskhashes' in a_data:
         for dep in a_data['runtaskhashes']:
-            print "Hash for dependent task %s is %s" % (dep, a_data['runtaskhashes'][dep])
+            output.append("Hash for dependent task %s is %s" % (dep, a_data['runtaskhashes'][dep]))
 
     if 'taint' in a_data:
-        print "Tainted (by forced/invalidated task): %s" % a_data['taint']
+        output.append("Tainted (by forced/invalidated task): %s" % a_data['taint'])
+
+    return output
