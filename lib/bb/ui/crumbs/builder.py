@@ -893,8 +893,13 @@ class Builder(gtk.Window):
                 linkname = 'hob-image-' + self.configuration.curr_mach
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
+            image_extension = self.get_image_extension()
             for image_type in self.parameters.image_types:
-                for real_image_type in hcc.SUPPORTED_IMAGE_TYPES[image_type]:
+                if image_type in image_extension:
+                    real_types = image_extension[image_type]
+                else:
+                    real_types = [image_type]
+                for real_image_type in real_types:
                     linkpath = self.parameters.image_addr + '/' + linkname + '.' + real_image_type
                     if os.path.exists(linkpath):
                         self.parameters.image_names.append(os.readlink(linkpath))
@@ -1114,10 +1119,21 @@ class Builder(gtk.Window):
             self.save_template(path)
         dialog.destroy()
 
+    def get_image_extension(self):
+        image_extension = {}
+        for type in self.parameters.image_types:
+            ext = self.handler.runCommand(["getVariable", "IMAGE_EXTENSION_%s" % type])
+            if ext:
+                image_extension[type] = ext.split(' ')
+
+        return image_extension
+
     def show_load_my_images_dialog(self):
+        image_extension = self.get_image_extension()
         dialog = ImageSelectionDialog(self.parameters.image_addr, self.parameters.image_types,
                                       "Open My Images", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE)
+                                       gtk.FILE_CHOOSER_ACTION_SAVE, None,
+                                       image_extension)
         button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
         HobAltButton.style_button(button)
         button = dialog.add_button("Open", gtk.RESPONSE_YES)

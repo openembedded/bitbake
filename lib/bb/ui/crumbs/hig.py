@@ -1172,7 +1172,7 @@ class ImageSelectionDialog (CrumbsDialog):
     }]
 
 
-    def __init__(self, image_folder, image_types, title, parent, flags, buttons=None):
+    def __init__(self, image_folder, image_types, title, parent, flags, buttons=None, image_extension = {}):
         super(ImageSelectionDialog, self).__init__(title, parent, flags, buttons)
         self.connect("response", self.response_cb)
 
@@ -1180,6 +1180,7 @@ class ImageSelectionDialog (CrumbsDialog):
         self.image_types  = image_types
         self.image_list = []
         self.image_names = []
+        self.image_extension = image_extension
 
         # create visual elements on the dialog
         self.create_visual_elements()
@@ -1265,7 +1266,11 @@ class ImageSelectionDialog (CrumbsDialog):
             dirs[:] = []
             for f in files:
                 for image_type in self.image_types:
-                    for real_image_type in hcc.SUPPORTED_IMAGE_TYPES[image_type]:
+                    if image_type in self.image_extension:
+                        real_types = self.image_extension[image_type]
+                    else:
+                        real_types = [image_type]
+                    for real_image_type in real_types:
                         if f.endswith('.' + real_image_type):
                             imageset.add(f.rsplit('.' + real_image_type)[0].rsplit('.rootfs')[0])
                             self.image_list.append(f)
