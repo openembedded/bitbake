@@ -22,7 +22,6 @@
 import gobject
 import logging
 from bb.ui.crumbs.runningbuild import RunningBuild
-from bb.ui.crumbs.hobwidget import hcc
 
 class HobHandler(gobject.GObject):
 

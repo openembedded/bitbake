@@ -63,35 +63,6 @@ class hic:
     ICON_INDI_TICK_FILE           = os.path.join(HOB_ICON_BASE_DIR, ('indicators/tick.png'))
     ICON_INDI_INFO_FILE           = os.path.join(HOB_ICON_BASE_DIR, ('indicators/info.png'))
 
-class hcc:
-
-    SUPPORTED_IMAGE_TYPES = {
-        "jffs2"         : ["jffs2"],
-        "sum.jffs2"     : ["sum.jffs2"],
-        "cramfs"        : ["cramfs"],
-        "ext2"          : ["ext2"],
-        "ext2.gz"       : ["ext2.gz"],
-        "ext2.bz2"      : ["ext2.bz2"],
-        "ext3"          : ["ext3"],
-        "ext3.gz"       : ["ext3.gz"],
-        "ext2.lzma"     : ["ext2.lzma"],
-        "btrfs"         : ["btrfs"],
-        "live"          : ["hddimg", "iso"],
-        "squashfs"      : ["squashfs"],
-        "squashfs-lzma" : ["squashfs-lzma"],
-        "ubi"           : ["ubi"],
-        "tar"           : ["tar"],
-        "tar.gz"        : ["tar.gz"],
-        "tar.bz2"       : ["tar.bz2"],
-        "tar.xz"        : ["tar.xz"],
-        "cpio"          : ["cpio"],
-        "cpio.gz"       : ["cpio.gz"],
-        "cpio.xz"       : ["cpio.xz"],
-        "vmdk"          : ["vmdk"],
-        "cpio.lzma"     : ["cpio.lzma"],
-        "elf"           : ["elf"],
-    }
-
 class HobViewTable (gtk.VBox):
     """
     A VBox to contain the table for different recipe views and package view

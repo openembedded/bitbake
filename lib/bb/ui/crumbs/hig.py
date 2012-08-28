@@ -30,7 +30,7 @@ import shlex
 import subprocess
 import tempfile
 from bb.ui.crumbs.hobcolor import HobColors
-from bb.ui.crumbs.hobwidget import hcc, hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
+from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobInfoButton, HobButton, HobAltButton, HobIconChecker
 from bb.ui.crumbs.progressbar import HobProgressBar
 import bb.ui.crumbs.utils
 import bb.process
