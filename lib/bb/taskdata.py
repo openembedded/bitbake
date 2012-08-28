@@ -176,6 +176,9 @@ class TaskData:
             # Work out task dependencies
             parentids = []
             for dep in task_deps['parents'][task]:
+                if dep not in task_deps['tasks']:
+                    bb.debug(2, "Not adding dependeny of %s on %s since %s does not exist" % (task, dep, dep))
+                    continue
                 parentid = self.gettask_id(fn, dep)
                 parentids.append(parentid)
             taskid = self.gettask_id(fn, task)
