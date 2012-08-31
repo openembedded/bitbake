@@ -192,6 +192,9 @@ class PackageSelectionPage (HobPage):
         self.builder.build_image()
 
     def back_button_clicked_cb(self, button):
+        self.builder.restore_initial_selected_packages()
+        self.refresh_selection()
+
         if self.builder.current_step ==  self.builder.PACKAGE_GENERATED:
             self.builder.show_recipes()
         elif self.builder.previous_step ==  self.builder.IMAGE_GENERATED:

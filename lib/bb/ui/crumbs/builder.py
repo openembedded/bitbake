@@ -123,6 +123,7 @@ class Configuration:
         self.selected_image = None
         self.selected_recipes = []
         self.selected_packages = []
+        self.initial_selected_packages = []
 
     def split_proxy(self, protocol, proxy):
         entry = []
@@ -519,6 +520,12 @@ class Builder(gtk.Window):
         self.handler.reset_build()
         self.handler.generate_packages(all_recipes, self.configuration.default_task)
 
+    def restore_initial_selected_packages(self):
+        self.package_model.set_selected_packages(self.configuration.initial_selected_packages)
+        for package in self.configuration.selected_packages:
+            if package not in self.configuration.initial_selected_packages:
+                self.package_model.exclude_item(self.package_model.find_path_for_item(package))
+
     def fast_generate_image_async(self, log = False):
         self.switch_page(self.FAST_IMAGE_GENERATING)
         if log:
@@ -658,6 +665,7 @@ class Builder(gtk.Window):
             self.build_details_page.show_page(next_step)
 
         elif next_step == self.PACKAGE_GENERATED:
+            self.configuration.initial_selected_packages = self.configuration.selected_packages
             if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
                 self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
             else:
