@@ -229,12 +229,8 @@ class ImageConfigurationPage (HobPage):
         self.just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
         button_box.pack_end(self.just_bake_button, expand=False, fill=False)
 
-        # create separator label
-        self.or_label = gtk.Label(" or ")
-        button_box.pack_end(self.or_label, expand=False, fill=False)
-
         # create button "Edit Image"
-        self.edit_image_button = HobButton("Edit image")
+        self.edit_image_button = HobAltButton("Edit image")
         self.edit_image_button.set_size_request(205, 49)
         self.edit_image_button.set_tooltip_text("Edit target image")
         self.edit_image_button.connect("clicked", self.edit_image_button_clicked_cb)
