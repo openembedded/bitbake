@@ -184,9 +184,9 @@ class RecipeSelectionPage (HobPage):
         self.build_packages_button.connect("clicked", self.build_packages_clicked_cb)
         button_box.pack_end(self.build_packages_button, expand=False, fill=False)
 
-        self.back_button = HobAltButton('<< Back')
+        self.back_button = HobAltButton('Cancel')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
-        button_box.pack_start(self.back_button, expand=False, fill=False)
+        button_box.pack_end(self.back_button, expand=False, fill=False)
 
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()

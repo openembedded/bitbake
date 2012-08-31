@@ -162,9 +162,9 @@ class PackageSelectionPage (HobPage):
         self.build_image_button.connect("clicked", self.build_image_clicked_cb)
         self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
 
-        self.back_button = HobAltButton('<< Back')
+        self.back_button = HobAltButton('Cancel')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
-        self.button_box.pack_start(self.back_button, expand=False, fill=False)
+        self.button_box.pack_end(self.back_button, expand=False, fill=False)
 
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()
@@ -183,14 +183,13 @@ class PackageSelectionPage (HobPage):
         for child in children:
             self.button_box.remove(child)
         # re-packed the buttons as request, add the 'view log' button if build success
-        self.button_box.pack_start(self.back_button, expand=False, fill=False)
         self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
         if log_file:
             view_log_button = HobAltButton("View log")
             view_log_button.connect("clicked", self.view_log_clicked_cb, log_file)
             view_log_button.set_tooltip_text("Open the building log files")
             self.button_box.pack_end(view_log_button, expand=False, fill=False)
-
+        self.button_box.pack_end(self.back_button, expand=False, fill=False)
         self.show_all()
 
     def build_image_clicked_cb(self, button):
