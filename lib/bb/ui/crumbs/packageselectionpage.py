@@ -35,6 +35,7 @@ class PackageSelectionPage (HobPage):
     pages = [
         {
          'name'    : 'Included',
+         'tooltip' : 'The packages currently included for your image',
          'filter'  : { PackageListModel.COL_INC : [True] },
          'columns' : [{
                        'col_name' : 'Package name',
@@ -71,6 +72,7 @@ class PackageSelectionPage (HobPage):
                      }]
         }, {
          'name'    : 'All packages',
+         'tooltip' : 'All packages that have been built',
          'filter'  : {},
          'columns' : [{
                        'col_name' : 'Package name',
@@ -135,12 +137,15 @@ class PackageSelectionPage (HobPage):
             if page['name'] == "Included":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            self.ins.append_page(tab, page['name'])
+            self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
         self.ins.set_entry("Search packages:")
         # set the search entry for each table
         for tab in self.tables:
+            search_tip = "Enter a package name to find it"
+            self.ins.search.set_tooltip_text(search_tip)
+            self.ins.search.props.has_tooltip = True
             tab.set_search_entry(0, self.ins.search)
 
         # add all into the dialog
