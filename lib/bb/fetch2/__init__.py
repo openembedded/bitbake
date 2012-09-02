@@ -938,7 +938,7 @@ class FetchMethod(object):
                 if dos:
                     cmd = '%s -a' % cmd
                 cmd = "%s '%s'" % (cmd, file)
-            elif file.endswith('.src.rpm') or file.endswith('.srpm'):
+            elif file.endswith('.rpm') or file.endswith('.srpm'):
                 if 'extract' in urldata.parm:
                     unpack_file = urldata.parm.get('extract')
                     cmd = 'rpm2cpio.sh %s | cpio -i %s' % (file, unpack_file)
@@ -946,6 +946,8 @@ class FetchMethod(object):
                     iterate_file = unpack_file
                 else:
                     cmd = 'rpm2cpio.sh %s | cpio -i' % (file)
+            elif file.endswith('.deb') or file.endswith('.ipk'):
+                cmd = 'ar -p %s data.tar.gz | zcat | tar --no-same-owner -xpf -' % file
 
         if not unpack or not cmd:
             # If file == dest, then avoid any copies, as we already put the file into dest!
