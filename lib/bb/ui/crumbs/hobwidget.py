@@ -214,7 +214,7 @@ def soften_color(widget, state=gtk.STATE_NORMAL):
     color.blue = color.blue * blend + style.base[state].blue * (1.0 - blend)
     return color.to_string()
 
-class HobButton(gtk.Button):
+class BaseHobButton(gtk.Button):
     """
     A gtk.Button subclass which follows the visual design of Hob for primary
     action buttons
@@ -228,24 +228,33 @@ class HobButton(gtk.Button):
     @staticmethod
     def style_button(button):
         style = button.get_style()
-        button_color = gtk.gdk.Color(HobColors.ORANGE)
-        button.modify_bg(gtk.STATE_NORMAL, button_color)
-        button.modify_bg(gtk.STATE_PRELIGHT, button_color)
-        button.modify_bg(gtk.STATE_SELECTED, button_color)
+        style = gtk.rc_get_style_by_paths(gtk.settings_get_default(), 'gtk-button', 'gtk-button', gobject.TYPE_NONE)
 
         button.set_flags(gtk.CAN_DEFAULT)
         button.grab_default()
 
-        label = "<span size='x-large'><b>%s</b></span>" % gobject.markup_escape_text(button.get_label())
+#        label = "<span size='x-large'><b>%s</b></span>" % gobject.markup_escape_text(button.get_label())
+        label = button.get_label()
         button.set_label(label)
         button.child.set_use_markup(True)
 
-class HobAltButton(gtk.Button):
+class HobButton(BaseHobButton):
+    """
+    A gtk.Button subclass which follows the visual design of Hob for primary
+    action buttons
+
+    label: the text to display as the button's label
+    """
+    def __init__(self, label):
+        BaseHobButton.__init__(self, label)
+        HobButton.style_button(self)
+
+class HobAltButton(BaseHobButton):
     """
     A gtk.Button subclass which has no relief, and so is more discrete
     """
     def __init__(self, label):
-        gtk.Button.__init__(self, label)
+        BaseHobButton.__init__(self, label)
         HobAltButton.style_button(self)
 
     """
@@ -270,14 +279,6 @@ class HobAltButton(gtk.Button):
             colour = HobColors.LIGHT_GRAY
         button.set_label("<span size='large' color='%s'><b>%s</b></span>" % (colour, gobject.markup_escape_text(button.text)))
         button.child.set_use_markup(True)
-
-    @staticmethod
-    def style_button(button):
-        button.text = button.get_label()
-        button.connect("state-changed", HobAltButton.desensitise_on_state_change_cb)
-        HobAltButton.set_text(button)
-        button.child.set_use_markup(True)
-        button.set_relief(gtk.RELIEF_NONE)
 
 class HobImageButton(gtk.Button):
     """
@@ -331,7 +332,8 @@ class HobInfoButton(gtk.EventBox):
     def __init__(self, tip_markup, parent=None):
         gtk.EventBox.__init__(self)
         self.image = gtk.Image()
-        self.image.set_from_file(hic.ICON_INFO_DISPLAY_FILE)
+        self.image.set_from_file(
+        hic.ICON_INFO_DISPLAY_FILE)
         self.image.show()
         self.add(self.image)
 

@@ -485,8 +485,8 @@ class ImageDetailsPage (HobPage):
         if name in buttonlist and self.test_type_runnable(image_name) and self.test_mach_runnable(image_name):
             if created == True:
                 # separator
-                label = gtk.Label(" or ")
-                self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
+                #label = gtk.Label(" or ")
+                #self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
 
                 # create button "Run image"
                 run_button = HobAltButton("Run image")
@@ -507,8 +507,8 @@ class ImageDetailsPage (HobPage):
         if name in buttonlist:
             if created == True:
                 # separator
-                label = gtk.Label(" or ")
-                self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
+                #label = gtk.Label(" or ")
+                #self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
 
                 # create button "Save as template"
                 save_button = HobAltButton("Save as template")
