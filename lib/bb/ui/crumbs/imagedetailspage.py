@@ -183,7 +183,7 @@ class ImageDetailsPage (HobPage):
         self.pack_start(self.group_align, expand=True, fill=True)
 
         self.build_result = None
-        if self.build_succeeded:
+        if self.build_succeeded and self.builder.current_step == self.builder.IMAGE_GENERATING:
             # building is the previous step
             icon = gtk.Image()
             pixmap_path = hic.ICON_INDI_CONFIRM_FILE
