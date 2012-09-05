@@ -389,7 +389,13 @@ class ImageDetailsPage (HobPage):
         label = gtk.Label()
         label.set_use_markup(True)
         label.set_alignment(0.0, 0.5)
-        label.set_markup("<span font_desc='12'>Select the image file you want to %s</span>" % primary_action)
+        label.set_padding(12,0)
+        if primary_action == "Run image":
+            label.set_markup("<span font_desc='12'>Select the image file you want to run:</span>")
+        elif primary_action == "Deploy image":
+            label.set_markup("<span font_desc='12'>Select the image file you want to deploy:</span>")
+        else:
+            label.set_markup("<span font_desc='12'>Select the image file you want to %s</span>" % primary_action)
         dialog.vbox.pack_start(label, expand=False, fill=False)
 
         # filter created images as action attribution (deploy or run)
@@ -418,12 +424,12 @@ class ImageDetailsPage (HobPage):
             sel_btn.set_active(fileitem['is_toggled'])
             sel_btn.connect('toggled', self.table_selected_cb, fileitem)
             if curr_row < 10:
-                table.attach(sel_btn, 2, 5, curr_row, curr_row + 1)
+                table.attach(sel_btn, 0, 4, curr_row, curr_row + 1, xpadding=24)
             else:
-                table.attach(sel_btn, 7, 10, curr_row - 10, curr_row - 9)
+                table.attach(sel_btn, 5, 9, curr_row - 10, curr_row - 9, xpadding=24)
             curr_row += 1
 
-        dialog.vbox.pack_start(table, expand=False, fill=False, padding = 6)
+        dialog.vbox.pack_start(table, expand=False, fill=False, padding=6)
 
         button = dialog.add_button("Cancel", gtk.RESPONSE_CANCEL)
         HobAltButton.style_button(button)
