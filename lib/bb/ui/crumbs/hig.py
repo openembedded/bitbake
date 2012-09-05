@@ -741,6 +741,7 @@ class AdvancedSettingDialog (CrumbsDialog):
             self.configuration.split_proxy("git", self.git_proxy.get_text() + ":" + self.git_proxy_port.get_text())
             self.configuration.split_proxy("cvs", self.cvs_proxy.get_text() + ":" + self.cvs_proxy_port.get_text())
 
+        self.configuration.curr_sdk_machine = self.sdk_machine_combo.get_active_text()
         md5 = self.config_md5()
         self.settings_changed = (self.md5 != md5)
 
