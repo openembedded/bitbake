@@ -33,7 +33,7 @@ from bb.ui.crumbs.hobpages import HobPage
 class RecipeSelectionPage (HobPage):
     pages = [
         {
-         'name'    : 'Included',
+         'name'    : 'Included recipes',
          'tooltip' : 'The recipes currently included for your image',
          'filter'  : { RecipeListModel.COL_INC  : [True],
                        RecipeListModel.COL_TYPE : ['recipe', 'task'] },
@@ -45,18 +45,18 @@ class RecipeSelectionPage (HobPage):
                        'col_max'  : 400,
                        'expand'   : 'True'
                       }, {
-                       'col_name' : 'Brought in by',
-                       'col_id'   : RecipeListModel.COL_BINB,
-                       'col_style': 'binb',
-                       'col_min'  : 100,
-                       'col_max'  : 500,
-                       'expand'   : 'True'
-                      }, {
                        'col_name' : 'Group',
                        'col_id'   : RecipeListModel.COL_GROUP,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 300,
+                       'expand'   : 'True'
+                      }, {
+                       'col_name' : 'Brought in by',
+                       'col_id'   : RecipeListModel.COL_BINB,
+                       'col_style': 'binb',
+                       'col_min'  : 100,
+                       'col_max'  : 500,
                        'expand'   : 'True'
                       }, {
                        'col_name' : 'Included',
@@ -77,15 +77,15 @@ class RecipeSelectionPage (HobPage):
                        'col_max'  : 400,
                        'expand'   : 'True'
                       }, {
-                       'col_name' : 'License',
-                       'col_id'   : RecipeListModel.COL_LIC,
+                       'col_name' : 'Group',
+                       'col_id'   : RecipeListModel.COL_GROUP,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400,
                        'expand'   : 'True'
                       }, {
-                       'col_name' : 'Group',
-                       'col_id'   : RecipeListModel.COL_GROUP,
+                       'col_name' : 'License',
+                       'col_id'   : RecipeListModel.COL_LIC,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400,
@@ -104,13 +104,6 @@ class RecipeSelectionPage (HobPage):
          'columns' : [{
                        'col_name' : 'Task name',
                        'col_id'   : RecipeListModel.COL_NAME,
-                       'col_style': 'text',
-                       'col_min'  : 100,
-                       'col_max'  : 400,
-                       'expand'   : 'True'
-                      }, {
-                       'col_name' : 'Description',
-                       'col_id'   : RecipeListModel.COL_DESC,
                        'col_style': 'text',
                        'col_min'  : 100,
                        'col_max'  : 400,
@@ -156,7 +149,7 @@ class RecipeSelectionPage (HobPage):
             filter = page['filter']
             tab.set_model(self.recipe_model.tree_model(filter))
             tab.connect("toggled", self.table_toggled_cb, page['name'])
-            if page['name'] == "Included":
+            if page['name'] == "Included recipes":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
             self.ins.append_page(tab, page['name'], page['tooltip'])
@@ -205,13 +198,13 @@ class RecipeSelectionPage (HobPage):
     def refresh_selection(self):
         self.builder.configuration.selected_image = self.recipe_model.get_selected_image()
         _, self.builder.configuration.selected_recipes = self.recipe_model.get_selected_recipes()
-        self.ins.show_indicator_icon("Included", len(self.builder.configuration.selected_recipes))
+        self.ins.show_indicator_icon("Included recipes", len(self.builder.configuration.selected_recipes))
 
     def toggle_item_idle_cb(self, path, view_tree, cell, pagename):
         if not self.recipe_model.path_included(path):
             self.recipe_model.include_item(item_path=path, binb="User Selected", image_contents=False)
         else:
-            if pagename == "Included":
+            if pagename == "Included recipes":
                 self.pre_fadeout_checkout_include(view_tree)
                 self.recipe_model.exclude_item(item_path=path)
                 self.render_fadeout(view_tree, cell)

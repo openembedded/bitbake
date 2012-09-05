@@ -521,17 +521,24 @@ class RecipeListModel(gtk.ListStore):
         val2 = model.get_value(iter2, RecipeListModel.COL_INC)
         return ((val1 == True) and (val2 == False))
 
+    def include_item_sort_func(self, model, iter1, iter2):
+        val1 = model.get_value(iter1, RecipeListModel.COL_INC)
+        val2 = model.get_value(iter2, RecipeListModel.COL_INC)
+        return ((val1 == False) and (val2 == True))
+
     """
     Create, if required, and return a filtered gtk.TreeModelSort
     containing only the items which are items specified by filter
     """
-    def tree_model(self, filter, excluded_items_ahead=False):
+    def tree_model(self, filter, excluded_items_ahead=False, included_items_ahead=True):
         model = self.filter_new()
         model.set_visible_func(self.tree_model_filter, filter)
 
         sort = gtk.TreeModelSort(model)
         if excluded_items_ahead:
             sort.set_default_sort_func(self.exclude_item_sort_func)
+        elif included_items_ahead:
+            sort.set_default_sort_func(self.include_item_sort_func)
         else:
             sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)
             sort.set_default_sort_func(None)

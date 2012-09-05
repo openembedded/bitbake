@@ -153,7 +153,12 @@ class HobViewTable (gtk.VBox):
         # Just display the first item
         if binb:
             bin = binb.split(', ')
-            cell.set_property('text', bin[0])
+            total_no = len(bin)
+            if total_no > 1 and bin[0] == "User Selected":
+                present_binb = bin[1] + ' (+' + str(total_no) + ')'
+            else:
+                present_binb = bin[0] + ' (+' + str(total_no) + ')'
+            cell.set_property('text', present_binb)
         else:
             cell.set_property('text', "")
         return True
