@@ -38,8 +38,8 @@ from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
 from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton
 from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
-                             AdvancedSettingDialog, LayerSelectionDialog, \
-                             DeployImageDialog
+                             AdvancedSettingDialog, SimpleSettingsDialog, \
+                             LayerSelectionDialog, DeployImageDialog
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 import bb.ui.crumbs.utils
 
@@ -800,6 +800,7 @@ class Builder(gtk.Window):
         self.image_configuration_page.layer_button.set_sensitive(sensitive)
         self.image_configuration_page.layer_info_icon.set_sensitive(sensitive)
         self.image_configuration_page.toolbar.set_sensitive(sensitive)
+        self.image_configuration_page.view_adv_configuration_button.set_sensitive(sensitive)
         self.image_configuration_page.config_build_button.set_sensitive(sensitive)
 
         self.recipe_details_page.set_sensitive(sensitive)
@@ -1164,7 +1165,32 @@ class Builder(gtk.Window):
         dialog.destroy()
 
     def show_adv_settings_dialog(self):
-        dialog = AdvancedSettingDialog(title = "Settings",
+        dialog = AdvancedSettingDialog(title = "Advanced configuration",
+            configuration = copy.deepcopy(self.configuration),
+            all_image_types = self.parameters.image_types,
+            all_package_formats = self.parameters.all_package_formats,
+            all_distros = self.parameters.all_distros,
+            all_sdk_machines = self.parameters.all_sdk_machines,
+            max_threads = self.parameters.max_threads,
+            parent = self,
+            flags = gtk.DIALOG_MODAL
+                    | gtk.DIALOG_DESTROY_WITH_PARENT
+                    | gtk.DIALOG_NO_SEPARATOR)
+        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button = dialog.add_button("Save", gtk.RESPONSE_YES)
+        HobButton.style_button(button)
+        response = dialog.run()
+        settings_changed = False
+        if response == gtk.RESPONSE_YES:
+            self.configuration = dialog.configuration
+            self.save_defaults() # remember settings
+            settings_changed = dialog.settings_changed
+        dialog.destroy()
+        return response == gtk.RESPONSE_YES, settings_changed
+
+    def show_simple_settings_dialog(self):
+        dialog = SimpleSettingsDialog(title = "Settings",
             configuration = copy.deepcopy(self.configuration),
             all_image_types = self.parameters.image_types,
             all_package_formats = self.parameters.all_package_formats,

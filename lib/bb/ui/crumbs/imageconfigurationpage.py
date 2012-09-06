@@ -204,9 +204,17 @@ class ImageConfigurationPage (HobPage):
 
         self.image_desc = gtk.Label()
         self.image_desc.set_alignment(0.0, 0.5)
-        self.image_desc.set_size_request(360, -1)
+        self.image_desc.set_size_request(256, -1)
         self.image_desc.set_justify(gtk.JUSTIFY_LEFT)
         self.image_desc.set_line_wrap(True)
+
+        # button to view recipes
+        icon_file = hic.ICON_RCIPE_DISPLAY_FILE
+        hover_file = hic.ICON_RCIPE_HOVER_FILE
+        self.view_adv_configuration_button = HobImageButton("Advanced configuration",
+                                                                 "Select image types, package formats, etc",
+                                                                 icon_file, hover_file)        
+        self.view_adv_configuration_button.connect("clicked", self.view_adv_configuration_button_clicked_cb)
 
         self.image_separator = gtk.HSeparator()
 
@@ -214,7 +222,8 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.image_title, 0, 40, 15, 17)
         self.gtable.attach(self.image_title_desc, 0, 40, 18, 22)
         self.gtable.attach(self.image_combo, 0, 12, 23, 26)
-        self.gtable.attach(self.image_desc, 13, 38, 23, 28)
+        self.gtable.attach(self.image_desc, 0, 12, 27, 33)
+        self.gtable.attach(self.view_adv_configuration_button, 14, 36, 23, 28)
         self.gtable.attach(self.image_separator, 0, 40, 35, 36)
 
     def create_config_build_button(self):
@@ -408,6 +417,14 @@ class ImageConfigurationPage (HobPage):
     def layer_button_clicked_cb(self, button):
         # Create a layer selection dialog
         self.builder.show_layer_selection_dialog()
+        
+    def view_adv_configuration_button_clicked_cb(self, button):
+        # Create an advanced settings dialog
+        response, settings_changed = self.builder.show_adv_settings_dialog()
+        if not response:
+            return
+        if settings_changed:
+            self.builder.reparse_post_adv_settings()        
 
     def just_bake_button_clicked_cb(self, button):
         self.builder.just_bake()
@@ -427,7 +444,7 @@ class ImageConfigurationPage (HobPage):
 
     def settings_button_clicked_cb(self, button):
         # Create an advanced settings dialog
-        response, settings_changed = self.builder.show_adv_settings_dialog()
+        response, settings_changed = self.builder.show_simple_settings_dialog()
         if not response:
             return
         if settings_changed:
