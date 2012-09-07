@@ -28,6 +28,7 @@ import subprocess
 import shlex
 import re
 import logging
+import sys
 from bb.ui.crumbs.template import TemplateMgr
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
@@ -458,8 +459,14 @@ class Builder(gtk.Window):
         self.set_title("Hob")
         self.set_icon_name("applications-development")
         self.set_resizable(True)
-        window_width = self.get_screen().get_width()
-        window_height = self.get_screen().get_height()
+
+        try:
+            window_width = self.get_screen().get_width()
+            window_height = self.get_screen().get_height()
+        except AttributeError:
+            print "Please set DISPLAY variable before running Hob."
+            sys.exit(1)
+
         if window_width >= hwc.MAIN_WIN_WIDTH:
             window_width = hwc.MAIN_WIN_WIDTH
             window_height = hwc.MAIN_WIN_HEIGHT
