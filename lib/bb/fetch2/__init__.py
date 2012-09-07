@@ -54,7 +54,7 @@ class MalformedUrl(BBFetchException):
          msg = "The URL: '%s' is invalid and cannot be interpreted" % url
          self.url = url
          BBFetchException.__init__(self, msg)
-         self.args = url
+         self.args = (url,)
 
 class FetchError(BBFetchException):
     """General fetcher exception when something happens incorrectly"""
@@ -87,7 +87,7 @@ class NoMethodError(BBFetchException):
          msg = "Could not find a fetcher which supports the URL: '%s'" % url
          self.url = url
          BBFetchException.__init__(self, msg)
-         self.args = url
+         self.args = (url,)
 
 class MissingParameterError(BBFetchException):
     """Exception raised when a fetch method is missing a critical parameter in the url"""
