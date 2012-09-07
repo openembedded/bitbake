@@ -178,6 +178,9 @@ def encodeurl(decoded):
         url += "@"
     if host and type != "file":
         url += "%s" % host
+    # Standardise path to ensure comparisons work
+    while '//' in path:
+        path = path.replace("//", "/")
     url += "%s" % urllib.quote(path)
     if p:
         for parm in p:
