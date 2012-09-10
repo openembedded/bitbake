@@ -21,6 +21,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import glib
 import gtk
 import copy
 import os
@@ -377,15 +378,6 @@ class Builder(gtk.Window):
         MY_IMAGE_OPENED       : IMAGE_DETAILS,
         END_NOOP              : None,
     }
-
-    @classmethod
-    def interpret_markup(cls, msg):
-        msg = msg.replace('&', '&amp;')
-        msg = msg.replace('<', '&lt;')
-        msg = msg.replace('>', '&gt;')
-        msg = msg.replace('"', '&quot;')
-        msg = msg.replace("'", "&acute;")
-        return msg
 
     def __init__(self, hobHandler, recipe_model, package_model):
         super(Builder, self).__init__()
@@ -783,7 +775,7 @@ class Builder(gtk.Window):
 
     def show_error_dialog(self, msg):
         lbl = "<b>Error</b>\n"
-        lbl = lbl + "%s\n\n" % Builder.interpret_markup(msg)
+        lbl = lbl + "%s\n\n" % glib.markup_escape_text(msg)
         dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
@@ -971,7 +963,7 @@ class Builder(gtk.Window):
         self.build_failed()
 
     def handler_no_provider_cb(self, running_build, msg):
-        dialog = CrumbsMessageDialog(self, Builder.interpret_markup(msg), gtk.STOCK_DIALOG_INFO)
+        dialog = CrumbsMessageDialog(self, glib.markup_escape_text(msg), gtk.STOCK_DIALOG_INFO)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
         dialog.run()
