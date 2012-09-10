@@ -36,7 +36,7 @@ class RecipeSelectionPage (HobPage):
          'name'    : 'Included recipes',
          'tooltip' : 'The recipes currently included for your image',
          'filter'  : { RecipeListModel.COL_INC  : [True],
-                       RecipeListModel.COL_TYPE : ['recipe', 'task'] },
+                       RecipeListModel.COL_TYPE : ['recipe', 'packagegroup'] },
          'columns' : [{
                        'col_name' : 'Recipe name',
                        'col_id'   : RecipeListModel.COL_NAME,
@@ -67,7 +67,7 @@ class RecipeSelectionPage (HobPage):
                       }]
         }, {
          'name'    : 'All recipes',
-         'tooltip' : 'All recipes available in the Yocto Project',
+         'tooltip' : 'All recipes in your configured layers',
          'filter'  : { RecipeListModel.COL_TYPE : ['recipe'] },
          'columns' : [{
                        'col_name' : 'Recipe name',
@@ -98,11 +98,11 @@ class RecipeSelectionPage (HobPage):
                        'col_max'  : 100
                       }]
         }, {
-         'name'    : 'Tasks',
-         'tooltip' : 'All tasks available in the Yocto Project',
-         'filter'  : { RecipeListModel.COL_TYPE : ['task'] },
+         'name'    : 'Package Groups',
+         'tooltip' : 'All package groups in your configured layers',
+         'filter'  : { RecipeListModel.COL_TYPE : ['packagegroup'] },
          'columns' : [{
-                       'col_name' : 'Task name',
+                       'col_name' : 'Package group name',
                        'col_id'   : RecipeListModel.COL_NAME,
                        'col_style': 'text',
                        'col_min'  : 100,
@@ -236,7 +236,7 @@ class RecipeSelectionPage (HobPage):
         # Check out a model which base on the column COL_FADE_INC,
         # it's save the prev state of column COL_INC before do exclude_item
         filter = { RecipeListModel.COL_FADE_INC  : [True],
-                   RecipeListModel.COL_TYPE      : ['recipe', 'task'] }
+                   RecipeListModel.COL_TYPE      : ['recipe', 'packagegroup'] }
         new_model = self.recipe_model.tree_model(filter, excluded_items_ahead=True)
         tree.set_model(new_model)
 

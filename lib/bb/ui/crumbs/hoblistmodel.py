@@ -595,8 +595,8 @@ class RecipeListModel(gtk.ListStore):
 
             depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
 
-            if ('task-' in name):
-                atype = 'task'
+            if ('packagegroup.bbclass' in " ".join(inherits)):
+                atype = 'packagegroup'
             elif ('image.bbclass' in " ".join(inherits)):
                 if name != "hob-image":
                     atype = 'image'
