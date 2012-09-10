@@ -145,6 +145,12 @@ class PackageListModel(gtk.TreeStore):
         self.pkg_path = {}
         self.rprov_pkg = {}
 
+        def getpkgvalue(pkgdict, key, pkgname, defaultval = None):
+            value = pkgdict.get('%s_%s' % (key, pkgname), None)
+            if not value:
+                value = pkgdict.get(key, defaultval)
+            return value
+
         for pkginfo in pkginfolist:
             pn = pkginfo['PN']
             pv = pkginfo['PV']
@@ -157,25 +163,24 @@ class PackageListModel(gtk.TreeStore):
                                  self.COL_INC, False)
                 self.pn_path[pn] = self.get_path(pniter)
 
+            # PKG is always present
             pkg = pkginfo['PKG']
-            pkgv = pkginfo['PKGV']
-            pkgr = pkginfo['PKGR']
-            pkgsize = pkginfo['PKGSIZE_%s' % pkg] if 'PKGSIZE_%s' % pkg in pkginfo.keys() else "0"
-            pkg_rename = pkginfo['PKG_%s' % pkg] if 'PKG_%s' % pkg in pkginfo.keys() else ""
-            section = pkginfo['SECTION_%s' % pkg] if 'SECTION_%s' % pkg in pkginfo.keys() else ""
-            summary = pkginfo['SUMMARY_%s' % pkg] if 'SUMMARY_%s' % pkg in pkginfo.keys() else ""
-            rdep = pkginfo['RDEPENDS_%s' % pkg] if 'RDEPENDS_%s' % pkg in pkginfo.keys() else ""
-            rrec = pkginfo['RRECOMMENDS_%s' % pkg] if 'RRECOMMENDS_%s' % pkg in pkginfo.keys() else ""
-            rprov = pkginfo['RPROVIDES_%s' % pkg] if 'RPROVIDES_%s' % pkg in pkginfo.keys() else ""
+            pkgv = getpkgvalue(pkginfo, 'PKGV', pkg)
+            pkgr = getpkgvalue(pkginfo, 'PKGR', pkg)
+            # PKGSIZE is artificial, will always be overridden with the package name if present
+            pkgsize = pkginfo.get('PKGSIZE_%s' % pkg, "0")
+            # PKG_%s is the renamed version
+            pkg_rename = pkginfo.get('PKG_%s' % pkg, "")
+            # The rest may be overridden or not
+            section = getpkgvalue(pkginfo, 'SECTION', pkg, "")
+            summary = getpkgvalue(pkginfo, 'SUMMARY', pkg, "")
+            rdep = getpkgvalue(pkginfo, 'RDEPENDS', pkg, "")
+            rrec = getpkgvalue(pkginfo, 'RRECOMMENDS', pkg, "")
+            rprov = getpkgvalue(pkginfo, 'RPROVIDES', pkg, "")
             for i in rprov.split():
                 self.rprov_pkg[i] = pkg
 
-            if 'ALLOW_EMPTY_%s' % pkg in pkginfo.keys():
-                allow_empty = pkginfo['ALLOW_EMPTY_%s' % pkg]
-            elif 'ALLOW_EMPTY' in pkginfo.keys():
-                allow_empty = pkginfo['ALLOW_EMPTY']
-            else:
-                allow_empty = ""
+            allow_empty = getpkgvalue(pkginfo, 'ALLOW_EMPTY', pkg, "")
 
             if pkgsize == "0" and not allow_empty:
                 continue
