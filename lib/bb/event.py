@@ -32,6 +32,7 @@ import logging
 import atexit
 import traceback
 import bb.utils
+import bb.compat
 
 # This is the pid for which we should generate the event. This is set when
 # the runqueue forks off.
@@ -53,7 +54,7 @@ Registered        = 10
 AlreadyRegistered = 14
 
 # Internal
-_handlers = {}
+_handlers = bb.compat.OrderedDict()
 _ui_handlers = {}
 _ui_handler_seq = 0
 
