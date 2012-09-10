@@ -138,7 +138,6 @@ class ImageConfigurationPage (HobPage):
         self.show_all()
         if self.builder.recipe_model.get_selected_image() == self.builder.recipe_model.__custom_image__:
             self.just_bake_button.hide()
-            self.or_label.hide()
 
     def create_config_machine(self):
         self.machine_title = gtk.Label()
@@ -329,7 +328,6 @@ class ImageConfigurationPage (HobPage):
 
         if selected_image == self.builder.recipe_model.__custom_image__:
             self.just_bake_button.hide()
-            self.or_label.hide()
 
         glib.idle_add(self.image_combo_changed_idle_cb, selected_image, selected_recipes, selected_packages)
 
