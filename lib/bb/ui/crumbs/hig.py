@@ -1029,14 +1029,8 @@ class LayerSelectionDialog (CrumbsDialog):
         table_layer.attach(scroll, 0, 10, 0, 1)
 
         layer_store = gtk.ListStore(gobject.TYPE_STRING)
-        core_iter = None
         for layer in layers:
-            if layer.endswith("/meta"):
-                core_iter = layer_store.prepend([layer])
-            elif layer.endswith("/meta-hob") and core_iter:
-                layer_store.insert_after(core_iter, [layer])
-            else:
-                layer_store.append([layer])
+            layer_store.append([layer])
 
         col1 = gtk.TreeViewColumn('Enabled')
         layer_tv.append_column(col1)
@@ -1110,10 +1104,7 @@ class LayerSelectionDialog (CrumbsDialog):
             layers.append(model.get_value(it, 0))
             it = model.iter_next(it)
 
-        orig_layers = sorted(self.layers)
-        layers.sort()
-
-        self.layers_changed = (orig_layers != layers)
+        self.layers_changed = (self.layers != layers)
         self.layers = layers
 
     """
