@@ -567,8 +567,8 @@ class AdvancedSettingDialog (CrumbsDialog):
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Set the proxies that will be used during fetching source code</span>")
-        tooltip = "Set the proxies that will be used during fetching source code or set none for direct the Internet connection"
+        label = self.gen_label_widget("<span weight=\"bold\">Set the proxies used when fetching source code</span>")
+        tooltip = "Set the proxies used when fetching source code.  A blank field uses a direct internet connection."
         info = HobInfoButton(tooltip, self)
         hbox = gtk.HBox(False, 12)
         hbox.pack_start(label, expand=True, fill=True)
@@ -576,17 +576,17 @@ class AdvancedSettingDialog (CrumbsDialog):
         sub_vbox.pack_start(hbox, expand=False, fill=False)
 
         self.direct_checkbox = gtk.RadioButton(None, "Direct internet connection")
-        self.direct_checkbox.set_tooltip_text("Check this box to connect the Internet directly without any proxy")
+        self.direct_checkbox.set_tooltip_text("Check this box to use a direct internet connection with no proxy")
         self.direct_checkbox.set_active(not self.configuration.enable_proxy)
         sub_vbox.pack_start(self.direct_checkbox, expand=False, fill=False)
 
         self.proxy_checkbox = gtk.RadioButton(self.direct_checkbox, "Manual proxy configuration")
-        self.proxy_checkbox.set_tooltip_text("Check this box to setup the proxy you specified")
+        self.proxy_checkbox.set_tooltip_text("Check this box to manually set up a specific proxy")
         self.proxy_checkbox.set_active(self.configuration.enable_proxy)
         sub_vbox.pack_start(self.proxy_checkbox, expand=False, fill=False)
 
         self.same_checkbox = gtk.CheckButton("Use the same proxy for all protocols")
-        self.same_checkbox.set_tooltip_text("Use the same proxy as the first proxy i.e. http proxy for all protocols")
+        self.same_checkbox.set_tooltip_text("Check this box to use the HTTP proxy for all five proxies")
         self.same_checkbox.set_active(self.configuration.same_proxy)
         hbox = gtk.HBox(False, 12)
         hbox.pack_start(self.same_checkbox, expand=False, fill=False, padding=24)
