@@ -345,6 +345,7 @@ class ImageConfigurationPage (HobPage):
         # populate image combo
         filter = {RecipeListModel.COL_TYPE : ['image']}
         image_model = recipe_model.tree_model(filter)
+        image_model.set_sort_column_id(recipe_model.COL_NAME, gtk.SORT_ASCENDING)
         active = 0
         cnt = 1
 
