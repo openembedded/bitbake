@@ -157,7 +157,7 @@ class CommandsSync:
         Set the value of variable in configuration.data
         """
         varname = params[0]
-        value = params[1]
+        value = str(params[1])
         command.cooker.configuration.data.setVar(varname, value)
 
     def initCooker(self, command, params):
