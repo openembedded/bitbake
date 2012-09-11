@@ -104,6 +104,18 @@ def print_ui_queue():
         console = logging.StreamHandler(sys.stdout)
         console.setFormatter(BBLogFormatter("%(levelname)s: %(message)s"))
         logger.handlers = [console]
+
+        # First check to see if we have any proper messages
+        msgprint = False
+        for event in ui_queue:
+            if isinstance(event, logging.LogRecord):
+                if event.levelno > logging.DEBUG:
+                    logger.handle(event)
+                    msgprint = True
+        if msgprint:
+            return
+
+        # Nope, so just print all of the messages we have (including debug messages)
         for event in ui_queue:
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
