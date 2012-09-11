@@ -177,7 +177,9 @@ class HobHandler(gobject.GObject):
 
         elif isinstance(event, logging.LogRecord):
             if event.levelno >= logging.ERROR:
-                self.error_msg += event.msg + '\n'
+                formatter = bb.msg.BBLogFormatter()
+                formatter.format(event)
+                self.error_msg += event.message + '\n'
 
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
