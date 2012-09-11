@@ -239,7 +239,7 @@ class ImageDetailsPage (HobPage):
         is_runnable = self.create_bottom_buttons(self.buttonlist, self.toggled_image)
 
         # Generated image files info
-        varlist = ["Name: ", "FileCreated: ", "Directory: "]
+        varlist = ["Name: ", "Files created: ", "Directory: "]
         vallist = []
 
         vallist.append(image_name.split('.')[0])
