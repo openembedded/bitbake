@@ -642,7 +642,8 @@ class BBCooker:
         # Calculate priorities for each file
         matched = set()
         for p in self.status.pkg_fn:
-            self.status.bbfile_priority[p] = self.calc_bbfile_priority(p, matched)
+            realfn, cls = bb.cache.Cache.virtualfn2realfn(p)
+            self.status.bbfile_priority[p] = self.calc_bbfile_priority(realfn, matched)
  
         # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
         unmatched = set()
