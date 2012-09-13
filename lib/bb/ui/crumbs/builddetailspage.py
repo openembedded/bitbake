@@ -230,18 +230,21 @@ class BuildDetailsPage (HobPage):
         # create button 'Edit packages'
         action_button = HobButton(primary_action)
         action_button.set_size_request(-1, 40)
+        action_button.set_tooltip_text("Edit the %s parameters" % actions)
         action_button.connect('clicked', self.failure_primary_action_button_clicked_cb, primary_action)
         build_fail_tab.attach(action_button, 4, 13, 9, 12)
 
         if log_file:
             open_log_button = HobAltButton("Open log")
             open_log_button.set_relief(gtk.RELIEF_HALF)
+            open_log_button.set_tooltip_text("Open the build's log file")
             open_log_button.connect('clicked', self.failure_open_log_button_clicked_cb, log_file)
             build_fail_tab.attach(open_log_button, 14, 23, 9, 12)
 
         attach_pos = (24 if log_file else 14)
         file_bug_button = HobAltButton('File a bug')
         file_bug_button.set_relief(gtk.RELIEF_HALF)
+        file_bug_button.set_tooltip_text("Open the Yocto Project bug tracking website")
         file_bug_button.connect('clicked', self.failure_activate_file_bug_link_cb)
         build_fail_tab.attach(file_bug_button, attach_pos, attach_pos + 9, 9, 12)
 
