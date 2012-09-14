@@ -249,12 +249,12 @@ class ImageDetailsPage (HobPage):
         view_files_button = HobAltButton("View files")
         view_files_button.connect("clicked", self.view_files_clicked_cb, image_addr)
         view_files_button.set_tooltip_text("Open the directory containing the image files")
-        view_log_button = None
+        open_log_button = None
         if log_file:
-            view_log_button = HobAltButton("View log")
-            view_log_button.connect("clicked", self.view_log_clicked_cb, log_file)
-            view_log_button.set_tooltip_text("Open the building log files")
-        self.image_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=view_files_button, button2=view_log_button)
+            open_log_button = HobAltButton("Open log")
+            open_log_button.connect("clicked", self.open_log_clicked_cb, log_file)
+            open_log_button.set_tooltip_text("Open the build's log file")
+        self.image_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=view_files_button, button2=open_log_button)
         self.box_group_area.pack_start(self.image_detail, expand=False, fill=True)
 
         # The default kernel box for the qemu images
@@ -333,7 +333,7 @@ class ImageDetailsPage (HobPage):
     def view_files_clicked_cb(self, button, image_addr):
         subprocess.call("xdg-open /%s" % image_addr, shell=True)
 
-    def view_log_clicked_cb(self, button, log_file):
+    def open_log_clicked_cb(self, button, log_file):
         if log_file:
             os.system("xdg-open /%s" % log_file)
 

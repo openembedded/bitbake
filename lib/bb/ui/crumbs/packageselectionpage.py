@@ -165,7 +165,7 @@ class PackageSelectionPage (HobPage):
             if binb:
                 self.builder.show_binb_dialog(binb)
 
-    def view_log_clicked_cb(self, button, log_file):
+    def open_log_clicked_cb(self, button, log_file):
         if log_file:
             os.system("xdg-open /%s" % log_file)
 
@@ -173,13 +173,13 @@ class PackageSelectionPage (HobPage):
         children = self.button_box.get_children() or []
         for child in children:
             self.button_box.remove(child)
-        # re-packed the buttons as request, add the 'view log' button if build success
+        # re-packed the buttons as request, add the 'open log' button if build success
         self.button_box.pack_end(self.build_image_button, expand=False, fill=False)
         if log_file:
-            view_log_button = HobAltButton("View log")
-            view_log_button.connect("clicked", self.view_log_clicked_cb, log_file)
-            view_log_button.set_tooltip_text("Open the building log files")
-            self.button_box.pack_end(view_log_button, expand=False, fill=False)
+            open_log_button = HobAltButton("Open log")
+            open_log_button.connect("clicked", self.open_log_clicked_cb, log_file)
+            open_log_button.set_tooltip_text("Open the build's log file")
+            self.button_box.pack_end(open_log_button, expand=False, fill=False)
         self.button_box.pack_end(self.back_button, expand=False, fill=False)
         self.show_all()
 
