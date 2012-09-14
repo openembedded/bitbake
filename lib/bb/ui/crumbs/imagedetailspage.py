@@ -587,7 +587,7 @@ class ImageDetailsPage (HobPage):
 
     def settings_button_clicked_cb(self, button):
         # Create an advanced settings dialog
-        response, settings_changed = self.builder.show_adv_settings_dialog()
+        response, settings_changed = self.builder.show_simple_settings_dialog()
         if not response:
             return
         if settings_changed:
