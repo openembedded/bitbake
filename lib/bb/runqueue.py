@@ -692,13 +692,14 @@ class RunQueueData:
             stampfnwhitelist.append(fn)
         self.stampfnwhitelist = stampfnwhitelist
 
-        # Interate over the task list looking for tasks with a 'setscene' function
+        # Iterate over the task list looking for tasks with a 'setscene' function
         self.runq_setscene = []
-        for task in range(len(self.runq_fnid)):
-            setscene = taskData.gettask_id(self.taskData.fn_index[self.runq_fnid[task]], self.runq_task[task] + "_setscene", False)
-            if not setscene:
-                continue
-            self.runq_setscene.append(task)
+        if not self.cooker.configuration.nosetscene:
+            for task in range(len(self.runq_fnid)):
+                setscene = taskData.gettask_id(self.taskData.fn_index[self.runq_fnid[task]], self.runq_task[task] + "_setscene", False)
+                if not setscene:
+                    continue
+                self.runq_setscene.append(task)
 
         def invalidate_task(fn, taskname, error_nostamp):
             taskdep = self.dataCache.task_deps[fn]

@@ -174,6 +174,8 @@ Default BBFILES are the .bb files in the current directory.""")
 
     parser.add_option("-B", "--bind", help = "The name/address for the bitbake server to bind to",
                action = "store", dest = "bind", default = False)
+    parser.add_option("", "--no-setscene", help = "Do not run any setscene tasks, forces builds",
+               action = "store_true", dest = "nosetscene", default = False)
     options, args = parser.parse_args(sys.argv)
 
     configuration = BBConfiguration(options)
