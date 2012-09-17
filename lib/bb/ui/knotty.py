@@ -27,6 +27,7 @@ import logging
 import progressbar
 import signal
 import bb.msg
+import time
 import fcntl
 import struct
 import copy
@@ -216,6 +217,10 @@ def main(server, eventHandler, tf = TerminalFilter):
     includelogs = server.runCommand(["getVariable", "BBINCLUDELOGS"])
     loglines = server.runCommand(["getVariable", "BBINCLUDELOGS_LINES"])
     consolelogfile = server.runCommand(["getVariable", "BB_CONSOLELOG"])
+    if sys.stdin.isatty() and sys.stdout.isatty():
+        log_exec_tty = True
+    else:
+        log_exec_tty = False
 
     helper = uihelper.BBUIHelper()
 
@@ -270,6 +275,20 @@ def main(server, eventHandler, tf = TerminalFilter):
             if isinstance(event, bb.runqueue.runQueueExitWait):
                 if not main.shutdown:
                     main.shutdown = 1
+
+            if isinstance(event, bb.event.LogExecTTY):
+                if log_exec_tty:
+                    tries = event.retries
+                    while tries:
+                        print "Trying to run: %s" % event.prog
+                        if os.system(event.prog) == 0:
+                            break
+                        time.sleep(event.sleep_delay)
+                        tries -= 1
+                    if tries:
+                        continue
+                logger.warn(event.msg)
+                continue
 
             if isinstance(event, logging.LogRecord):
                 if event.levelno >= format.ERROR:

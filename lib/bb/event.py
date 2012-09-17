@@ -510,6 +510,15 @@ class MsgFatal(MsgBase):
 class MsgPlain(MsgBase):
     """General output"""
 
+class LogExecTTY(Event):
+    """Send event containing program to spawn on tty of the logger"""
+    def __init__(self, msg, prog, sleep_delay, retries):
+        Event.__init__(self)
+        self.msg = msg
+        self.prog = prog
+        self.sleep_delay = sleep_delay
+        self.retries = retries
+
 class LogHandler(logging.Handler):
     """Dispatch logging messages as bitbake events"""
 

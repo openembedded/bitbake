@@ -375,6 +375,21 @@ class RunningBuild (gobject.GObject):
                     msg += ("%s\n" % reason)
             self.emit("no-provider", msg)
             self.emit("log", msg)
+        elif isinstance(event, bb.event.LogExecTTY):
+            icon = "dialog-warning"
+            color = HobColors.WARNING
+            if self.sequential or not parent:
+                tree_add = self.model.append
+            else:
+                tree_add = self.model.prepend
+            tree_add(parent,
+                     (None,
+                      package,
+                      task,
+                      event.msg,
+                      icon,
+                      color,
+                      0))
         else:
             if not isinstance(event, (bb.event.BuildBase,
                                       bb.event.StampUpdate,

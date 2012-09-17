@@ -318,6 +318,8 @@ class NCursesUI:
                 if isinstance(event, bb.cooker.CookerExit):
                     exitflag = True
 
+                if isinstance(event, bb.event.LogExecTTY):
+                    mw.appendText('WARN: ' + event.msg + '\n')
                 if helper.needUpdate:
                     activetasks, failedtasks = helper.getTasks()
                     taw.erase()
