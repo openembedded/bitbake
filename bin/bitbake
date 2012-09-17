@@ -43,6 +43,14 @@ from bb import server
 __version__ = "1.15.3"
 logger = logging.getLogger("BitBake")
 
+# Unbuffer stdout to avoid log truncation in the event
+# of an unorderly exit as well as to provide timely
+# updates to log files for use with tail
+try:
+    if sys.stdout.name == '<stdout>':
+        sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
+except:
+    pass
 
 class BBConfiguration(object):
     """
