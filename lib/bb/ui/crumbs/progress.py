@@ -11,6 +11,9 @@ class ProgressBar(gtk.Dialog):
         self.vbox.pack_start(self.progress)
         self.show_all()
 
+    def set_text(self, msg):
+        self.progress.set_text(msg)
+
     def update(self, x, y):
         self.progress.set_fraction(float(x)/float(y))
         self.progress.set_text("%2d %%" % (x*100/y))
