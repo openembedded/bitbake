@@ -238,7 +238,7 @@ class BuildDetailsPage (HobPage):
             open_log_button = HobAltButton("Open log")
             open_log_button.set_relief(gtk.RELIEF_HALF)
             open_log_button.set_tooltip_text("Open the build's log file")
-            open_log_button.connect('clicked', self.failure_open_log_button_clicked_cb, log_file)
+            open_log_button.connect('clicked', self.open_log_button_clicked_cb, log_file)
             build_fail_tab.attach(open_log_button, 14, 23, 9, 12)
 
         attach_pos = (24 if log_file else 14)
@@ -250,11 +250,11 @@ class BuildDetailsPage (HobPage):
 
         return build_fail_top
 
-    def show_fail_page(self, title, action_names):
+    def show_fail_page(self, title):
         self._remove_all_widget()
         self.title = "Hob cannot build your %s" % title
 
-        self.build_fail_bar = self.add_build_fail_top_bar(action_names, self.builder.current_logfile)
+        self.build_fail_bar = self.add_build_fail_top_bar(title, self.builder.current_logfile)
 
         self.pack_start(self.group_align, expand=True, fill=True)
         self.box_group_area.pack_start(self.build_fail_bar, expand=False, fill=False)
@@ -265,6 +265,63 @@ class BuildDetailsPage (HobPage):
         self.box_group_area.pack_end(self.button_box, expand=False, fill=False)
         self.show_all()
         self.back_button.hide()
+
+    def add_build_stop_top_bar(self, action, log_file=None):
+        color = HobColors.LIGHT_GRAY
+        build_stop_top = gtk.EventBox()
+        build_stop_top.set_size_request(-1, 200)
+        build_stop_top.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
+        build_stop_top.set_flags(gtk.CAN_DEFAULT)
+        build_stop_top.grab_default()
+
+        build_stop_tab = gtk.Table(11, 46, True)
+        build_stop_top.add(build_stop_tab)
+
+        icon = gtk.Image()
+        icon_pix_buffer = gtk.gdk.pixbuf_new_from_file(hic.ICON_INFO_HOVER_FILE)
+        icon.set_from_pixbuf(icon_pix_buffer)
+        build_stop_tab.attach(icon, 1, 4, 0, 6)
+
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        label.set_markup("<span size='x-large'><b>%s</b></span>" % self.title)
+        build_stop_tab.attach(label, 4, 26, 0, 6)
+
+        action_button = HobButton("Edit %s" % action)
+        action_button.set_size_request(-1, 40)
+        action_button.set_tooltip_text("Edit the %s parameters" % action)
+        action_button.connect('clicked', self.stop_primary_action_button_clicked_cb, action)
+        build_stop_tab.attach(action_button, 4, 13, 6, 9)
+
+        if log_file:
+            open_log_button = HobAltButton("Open log")
+            open_log_button.set_relief(gtk.RELIEF_HALF)
+            open_log_button.set_tooltip_text("Open the build's log file")
+            open_log_button.connect('clicked', self.open_log_button_clicked_cb, log_file)
+            build_stop_tab.attach(open_log_button, 14, 23, 6, 9)
+
+        attach_pos = (24 if log_file else 14)
+        build_button = HobAltButton("Build new image")
+        build_button.set_size_request(-1, 40)
+        build_button.set_tooltip_text("Create a new image from scratch")
+        build_button.connect('clicked', self.new_image_button_clicked_cb)
+        build_stop_tab.attach(build_button, attach_pos, attach_pos + 9, 6, 9)
+
+        return build_stop_top, action_button
+
+    def show_stop_page(self, action):
+        self._remove_all_widget()
+        self.title = "Build stopped"
+        self.build_stop_bar, action_button = self.add_build_stop_top_bar(action, self.builder.current_logfile)
+
+        self.pack_start(self.group_align, expand=True, fill=True)
+        self.box_group_area.pack_start(self.build_stop_bar, expand=False, fill=False)
+        self.box_group_area.pack_start(self.vbox, expand=True, fill=True)
+
+        self.vbox.pack_start(self.notebook, expand=True, fill=True)
+        self.show_all()
+        self.back_button.hide()
+        return action_button
 
     def show_page(self, step):
         self._remove_all_widget()
@@ -299,6 +356,9 @@ class BuildDetailsPage (HobPage):
     def back_button_clicked_cb(self, button):
         self.builder.show_configuration()
 
+    def new_image_button_clicked_cb(self, button):
+        self.builder.reset()
+
     def show_back_button(self):
         self.back_button.show()
 
@@ -328,7 +388,15 @@ class BuildDetailsPage (HobPage):
         elif "Edit image configuration" in action:
             self.builder.show_configuration()
 
-    def failure_open_log_button_clicked_cb(self, button, log_file):
+    def stop_primary_action_button_clicked_cb(self, button, action):
+        if "recipes" in action:
+            self.builder.show_recipes()
+        elif "packages" in action:
+            self.builder.show_packages()
+        elif "image" in action:
+            self.builder.show_configuration()
+
+    def open_log_button_clicked_cb(self, button, log_file):
         if log_file:
             os.system("xdg-open /%s" % log_file)
 

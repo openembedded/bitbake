@@ -927,6 +927,18 @@ class Builder(gtk.Window):
             status = "stop"
             message = "Build stopped: "
             fraction = self.build_details_page.progress_bar.get_fraction()
+            stop_to_next_edit = ""
+            if self.current_step == self.FAST_IMAGE_GENERATING:
+                stop_to_next_edit = "image configuration"
+            elif self.current_step == self.IMAGE_GENERATING:
+                if self.previous_step == self.FAST_IMAGE_GENERATING:
+                    stop_to_next_edit = "image configuration"
+                else:
+                    stop_to_next_edit = "packages"
+            elif self.current_step == self.PACKAGE_GENERATING:
+                stop_to_next_edit = "recipes"
+            button = self.build_details_page.show_stop_page(stop_to_next_edit.split(' ')[0])
+            self.set_default(button)
         else:
             fail_to_next_edit = ""
             if self.current_step == self.FAST_IMAGE_GENERATING:
@@ -941,7 +953,7 @@ class Builder(gtk.Window):
             elif self.current_step == self.PACKAGE_GENERATING:
                 fail_to_next_edit = "recipes"
                 fraction = 1.0
-            self.build_details_page.show_fail_page(fail_to_next_edit.split(' ')[0], fail_to_next_edit)
+            self.build_details_page.show_fail_page(fail_to_next_edit.split(' ')[0])
             status = "fail"
             message = "Build failed: "
         self.build_details_page.update_progress_bar(message, fraction, status)
@@ -1349,19 +1361,19 @@ class Builder(gtk.Window):
             HobButton.style_button(button)
         else:
             lbl = "<b>Stop build?</b>\n\nAre you sure you want to stop this"
-            lbl = lbl + " build?\n\n'Force Stop' will stop the build as quickly as"
-            lbl = lbl + " possible but may well leave your build directory in an"
-            lbl = lbl + " unusable state that requires manual steps to fix.\n\n"
-            lbl = lbl + "'Stop' will stop the build as soon as all in"
+            lbl = lbl + " build?\n\n'Stop' will stop the build as soon as all in"
             lbl = lbl + " progress build tasks are finished. However if a"
             lbl = lbl + " lengthy compilation phase is in progress this may take"
-            lbl = lbl + " some time."
+            lbl = lbl + " some time.\n\n"
+            lbl = lbl + "'Force Stop' will stop the build as quickly as"
+            lbl = lbl + " possible but may well leave your build directory in an"
+            lbl = lbl + " unusable state that requires manual steps to fix."
             dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
             button = dialog.add_button("Cancel", gtk.RESPONSE_CANCEL)
             HobAltButton.style_button(button)
-            button = dialog.add_button("Stop", gtk.RESPONSE_OK)
+            button = dialog.add_button("Force stop", gtk.RESPONSE_YES)
             HobAltButton.style_button(button)
-            button = dialog.add_button("Force Stop", gtk.RESPONSE_YES)
+            button = dialog.add_button("Stop", gtk.RESPONSE_OK)
             HobButton.style_button(button)
         response = dialog.run()
         dialog.destroy()
