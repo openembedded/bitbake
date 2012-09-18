@@ -48,6 +48,9 @@ class SignatureGenerator(object):
     def stampfile(self, stampbase, file_name, taskname, extrainfo):
         return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
 
+    def stampcleanmask(self, stampbase, file_name, taskname, extrainfo):
+        return ("%s.%s*.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
+
     def dump_sigtask(self, fn, task, stampbase, runtime):
         return
 
@@ -266,18 +269,24 @@ class SignatureGeneratorBasic(SignatureGenerator):
 class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
     name = "basichash"
 
-    def stampfile(self, stampbase, fn, taskname, extrainfo):
+    def stampfile(self, stampbase, fn, taskname, extrainfo, clean=False):
         if taskname != "do_setscene" and taskname.endswith("_setscene"):
             k = fn + "." + taskname[:-9]
         else:
             k = fn + "." + taskname
-        if k in self.taskhash:
+        if clean:
+            h = "*"
+            taskname = taskname + "*"
+        elif k in self.taskhash:
             h = self.taskhash[k]
         else:
             # If k is not in basehash, then error
             h = self.basehash[k]
         return ("%s.%s.%s.%s" % (stampbase, taskname, h, extrainfo)).rstrip('.')
 
+    def stampcleanmask(self, stampbase, fn, taskname, extrainfo):
+        return self.stampfile(stampbase, fn, taskname, extrainfo, clean=True)
+        
     def invalidate_task(self, task, d, fn):
         bb.note("Tainting hash to force rebuild of task %s, %s" % (fn, task))
         bb.build.write_taint(task, d, fn)

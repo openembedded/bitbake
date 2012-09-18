@@ -470,11 +470,40 @@ def stamp_internal(taskname, d, file_name):
 
     return stamp
 
+def stamp_cleanmask_internal(taskname, d, file_name):
+    """
+    Internal stamp helper function to generate stamp cleaning mask
+    Returns the stamp path+filename
+
+    In the bitbake core, d can be a CacheData and file_name will be set.
+    When called in task context, d will be a data store, file_name will not be set
+    """
+    taskflagname = taskname
+    if taskname.endswith("_setscene") and taskname != "do_setscene":
+        taskflagname = taskname.replace("_setscene", "")
+
+    if file_name:
+        stamp = d.stamp_base_clean[file_name].get(taskflagname) or d.stampclean[file_name]
+        extrainfo = d.stamp_extrainfo[file_name].get(taskflagname) or ""
+    else:
+        stamp = d.getVarFlag(taskflagname, 'stamp-base-clean', True) or d.getVar('STAMPCLEAN', True)
+        file_name = d.getVar('BB_FILENAME', True)
+        extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info', True) or ""
+
+    if not stamp:
+        return
+
+    return bb.parse.siggen.stampcleanmask(stamp, file_name, taskname, extrainfo)
+
 def make_stamp(task, d, file_name = None):
     """
     Creates/updates a stamp for a given task
     (d can be a data dict or dataCache)
     """
+    cleanmask = stamp_cleanmask_internal(task, d, file_name)
+    if cleanmask:
+        bb.utils.remove(cleanmask)
+
     stamp = stamp_internal(task, d, file_name)
     # Remove the file and recreate to force timestamp
     # change on broken NFS filesystems
