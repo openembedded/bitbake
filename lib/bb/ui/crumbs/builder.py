@@ -809,9 +809,9 @@ class Builder(gtk.Window):
         self.image_details_page.set_sensitive(sensitive)
 
         if sensitive:
-            self.get_root_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.LEFT_PTR))
+            self.window.set_cursor(None)
         else:
-            self.get_root_window().set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+            self.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
         self.sensitive = sensitive
 
 
