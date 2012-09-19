@@ -156,6 +156,13 @@ class HobHandler(gobject.GObject):
                 targets.append(self.toolchain)
             self.runCommand(["buildTargets", targets, self.default_task])
 
+    def display_error(self):
+        self.clear_busy()
+        self.emit("command-failed", self.error_msg)
+        self.error_msg = ""
+        if self.building:
+            self.building = False
+
     def handle_event(self, event):
         if not event:
             return
@@ -178,8 +185,8 @@ class HobHandler(gobject.GObject):
         elif isinstance(event, logging.LogRecord):
             if event.levelno >= logging.ERROR:
                 formatter = bb.msg.BBLogFormatter()
-                formatter.format(event)
-                self.error_msg += event.message + '\n'
+                msg = formatter.format(event)
+                self.error_msg += msg + '\n'
 
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
@@ -211,11 +218,7 @@ class HobHandler(gobject.GObject):
             self.run_next_command()
         elif isinstance(event, bb.command.CommandFailed):
             self.commands_async = []
-            self.clear_busy()
-            self.emit("command-failed", self.error_msg)
-            self.error_msg = ""
-            if self.building:
-                self.building = False
+            self.display_error()
         elif isinstance(event, (bb.event.ParseStarted,
                  bb.event.CacheLoadStarted,
                  bb.event.TreeDataPreparationStarted,
@@ -244,6 +247,9 @@ class HobHandler(gobject.GObject):
             message["total"] = event.total
             message["title"] = "Parsing recipes: "
             self.emit("parsing-completed", message)
+
+        if self.error_msg and not self.commands_async:
+            self.display_error()
 
         return
 
