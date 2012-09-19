@@ -278,8 +278,8 @@ class BBCooker:
         pkg_pn = self.status.pkg_pn
         (latest_versions, preferred_versions) = bb.providers.findProviders(self.configuration.data, self.status, pkg_pn)
 
-        logger.plain("%-35s %25s %25s", "Package Name", "Latest Version", "Preferred Version")
-        logger.plain("%-35s %25s %25s\n", "============", "==============", "=================")
+        logger.plain("%-35s %25s %25s", "Recipe Name", "Latest Version", "Preferred Version")
+        logger.plain("%-35s %25s %25s\n", "===========", "==============", "=================")
 
         for p in sorted(pkg_pn):
             pref = preferred_versions[p]
