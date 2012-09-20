@@ -195,7 +195,6 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.max_threads = max_threads
 
         # class members for internal use
-        self.distro_combo = None
         self.dldir_text = None
         self.sstatedir_text = None
         self.sstatemirror_text = None
@@ -330,7 +329,6 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.refresh_proxy_components()
 
     def response_cb(self, dialog, response_id):        
-        #self.configuration.curr_distro = self.distro_combo.get_active_text()
         self.configuration.dldir = self.dldir_text.get_text()
         self.configuration.sstatedir = self.sstatedir_text.get_text()
         self.configuration.sstatemirror = self.sstatemirror_text.get_text()
@@ -355,14 +353,6 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
     def create_build_environment_page(self):
         advanced_vbox = gtk.VBox(False, 6)
         advanced_vbox.set_border_width(6)
-
-        sub_vbox = gtk.VBox(False, 6)
-        advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select distro:</span>")
-        tooltip = "Selects the Yocto Project distribution you want"
-        distro_widget, self.distro_combo = self.gen_combo_widget(self.configuration.curr_distro, self.all_distros, tooltip)
-        sub_vbox.pack_start(label, expand=False, fill=False)
-        sub_vbox.pack_start(distro_widget, expand=False, fill=False)
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
