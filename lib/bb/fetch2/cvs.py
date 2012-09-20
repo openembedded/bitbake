@@ -122,7 +122,7 @@ class Cvs(FetchMethod):
         # create module directory
         logger.debug(2, "Fetch: checking for module directory")
         pkg = data.expand('${PN}', d)
-        pkgdir = os.path.join(data.expand('${CVSDIR}', localdata), pkg)
+        pkgdir = os.path.join(data.expand('${CVSDIR}', d), pkg)
         moddir = os.path.join(pkgdir, localdir)
         if os.access(os.path.join(moddir, 'CVS'), os.R_OK):
             logger.info("Update " + loc)
