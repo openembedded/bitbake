@@ -29,7 +29,6 @@ BitBake build tools.
 import os
 import logging
 import bb
-from   bb import data
 from bb.fetch2 import FetchMethod, FetchError, MissingParameterError, logger
 from bb.fetch2 import runfetchcmd
 
@@ -64,7 +63,7 @@ class Cvs(FetchMethod):
         if 'fullpath' in ud.parm:
             fullpath = '_fullpath'
 
-        ud.localfile = data.expand('%s_%s_%s_%s%s%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.tag, ud.date, norecurse, fullpath), d)
+        ud.localfile = bb.data.expand('%s_%s_%s_%s%s%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.tag, ud.date, norecurse, fullpath), d)
 
     def need_update(self, url, ud, d):
         if (ud.date == "now"):
@@ -88,10 +87,10 @@ class Cvs(FetchMethod):
             cvsroot = ud.path
         else:
             cvsroot = ":" + method
-            cvsproxyhost = data.getVar('CVS_PROXY_HOST', d, True)
+            cvsproxyhost = d.getVar('CVS_PROXY_HOST', True)
             if cvsproxyhost:
                 cvsroot += ";proxy=" + cvsproxyhost
-            cvsproxyport = data.getVar('CVS_PROXY_PORT', d, True)
+            cvsproxyport = d.getVar('CVS_PROXY_PORT', True)
             if cvsproxyport:
                 cvsroot += ";proxyport=" + cvsproxyport
             cvsroot += ":" + ud.user
@@ -121,8 +120,8 @@ class Cvs(FetchMethod):
 
         # create module directory
         logger.debug(2, "Fetch: checking for module directory")
-        pkg = data.expand('${PN}', d)
-        pkgdir = os.path.join(data.expand('${CVSDIR}', d), pkg)
+        pkg = d.getVar('PN', True)
+        pkgdir = os.path.join(d.getVar('CVSDIR', True), pkg)
         moddir = os.path.join(pkgdir, localdir)
         if os.access(os.path.join(moddir, 'CVS'), os.R_OK):
             logger.info("Update " + loc)
@@ -163,12 +162,9 @@ class Cvs(FetchMethod):
 
     def clean(self, ud, d):
         """ Clean CVS Files and tarballs """
-        
-        pkg = data.expand('${PN}', d)
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "cvs:%s" % data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
-        pkgdir = os.path.join(data.expand('${CVSDIR}', localdata), pkg)
+
+        pkg = d.getVar('PN', True)
+        pkgdir = os.path.join(d.getVar("CVSDIR", True), pkg)
 
         bb.utils.remove(pkgdir, True)
         bb.utils.remove(ud.localpath)
