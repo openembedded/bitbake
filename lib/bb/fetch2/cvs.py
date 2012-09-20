@@ -111,8 +111,8 @@ class Cvs(FetchMethod):
             options.append("-r %s" % ud.tag)
 
         cvsbasecmd = d.getVar("FETCHCMD_cvs", True)
-        cvscmd = cvsbasecmd + "'-d" + cvsroot + "' co " + " ".join(options) + " " + ud.module
-        cvsupdatecmd = cvsbasecmd + "'-d" + cvsroot + "' update -d -P " + " ".join(options)
+        cvscmd = cvsbasecmd + " '-d" + cvsroot + "' co " + " ".join(options) + " " + ud.module
+        cvsupdatecmd = cvsbasecmd + " '-d" + cvsroot + "' update -d -P " + " ".join(options)
 
         if cvs_rsh:
             cvscmd = "CVS_RSH=\"%s\" %s" % (cvs_rsh, cvscmd)
