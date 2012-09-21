@@ -756,6 +756,8 @@ class Builder(gtk.Window):
 
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.GENERATE_CONFIGURATION:
+            if not self.configuration.curr_mach:
+                self.configuration.curr_mach = self.handler.runCommand(["getVariable", "HOB_MACHINE"]) or ""
             self.update_configuration_parameters(self.get_parameters_sync())
             self.sanity_check()
         elif initcmd == self.handler.SANITY_CHECK:
