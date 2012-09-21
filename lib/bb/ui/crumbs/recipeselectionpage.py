@@ -123,7 +123,7 @@ class RecipeSelectionPage (HobPage):
      TASKS) = range(3)
 
     def __init__(self, builder = None):
-        super(RecipeSelectionPage, self).__init__(builder, "Edit recipes")
+        super(RecipeSelectionPage, self).__init__(builder, "Step 1 of 2: Edit recipes")
 
         # set invisible members
         self.recipe_model = self.builder.recipe_model

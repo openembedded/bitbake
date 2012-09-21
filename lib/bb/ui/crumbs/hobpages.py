@@ -38,6 +38,7 @@ class HobPage (gtk.VBox):
             self.title = "Hob -- Image Creator"
         else:
             self.title = title
+        self.title_label = gtk.Label()
 
         self.box_group_area = gtk.VBox(False, 12)
         self.box_group_area.set_size_request(self.builder_width - 73 - 73, self.builder_height - 88 - 15 - 15)
@@ -46,6 +47,9 @@ class HobPage (gtk.VBox):
         self.group_align.add(self.box_group_area)
         self.box_group_area.set_homogeneous(False)
 
+    def set_title(self, title):
+        self.title = title
+        self.title_label.set_markup("<span size='x-large'>%s</span>" % self.title)
 
     def add_onto_top_bar(self, widget = None, padding = 0):
         # the top button occupies 1/7 of the page height
@@ -58,9 +62,8 @@ class HobPage (gtk.VBox):
 
         hbox = gtk.HBox()
 
-        label = gtk.Label()
-        label.set_markup("<span size='x-large'>%s</span>" % self.title)
-        hbox.pack_start(label, expand=False, fill=False, padding=20)
+        self.title_label.set_markup("<span size='x-large'>%s</span>" % self.title)
+        hbox.pack_start(self.title_label, expand=False, fill=False, padding=20)
 
         if widget:
             # add the widget in the event box

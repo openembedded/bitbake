@@ -653,6 +653,7 @@ class Builder(gtk.Window):
 
         elif next_step == self.PACKAGE_SELECTION:
             self.configuration.initial_selected_packages = self.configuration.selected_packages
+            self.package_details_page.set_title("Edit packages")
             if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
                 self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
             else:
@@ -665,6 +666,7 @@ class Builder(gtk.Window):
             self.build_details_page.show_page(next_step)
 
         elif next_step == self.PACKAGE_GENERATED:
+            self.package_details_page.set_title("Step 2 of 2: Edit packages")
             if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
                 self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
             else:
