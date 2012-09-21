@@ -1025,20 +1025,11 @@ class Builder(gtk.Window):
     def destroy_window_cb(self, widget, event):
         if not self.sensitive:
             return True
-        lbl = "<b>Do you really want to exit the Hob image creator?</b>"
-        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
-        HobAltButton.style_button(button)
-        button = dialog.add_button("Exit Hob", gtk.RESPONSE_YES)
-        HobButton.style_button(button)
-        dialog.set_default_response(gtk.RESPONSE_YES)
-        response = dialog.run()
-        dialog.destroy()
-        if response == gtk.RESPONSE_YES:
-            gtk.main_quit()
-            return False
-        else:
+        elif self.handler.building:
+            self.stop_build()
             return True
+        else:
+            gtk.main_quit()
 
     def build_packages(self):
         _, all_recipes = self.recipe_model.get_selected_recipes()
