@@ -183,10 +183,11 @@ class HobHandler(gobject.GObject):
             self.emit("sanity-failed", event._msg)
 
         elif isinstance(event, logging.LogRecord):
-            if event.levelno >= logging.ERROR:
-                formatter = bb.msg.BBLogFormatter()
-                msg = formatter.format(event)
-                self.error_msg += msg + '\n'
+            if not self.building:
+                if event.levelno >= logging.ERROR:
+                    formatter = bb.msg.BBLogFormatter()
+                    msg = formatter.format(event)
+                    self.error_msg += msg + '\n'
 
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
