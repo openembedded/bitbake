@@ -471,7 +471,13 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
     except bb.process.NotFoundError as e:
         error_message = "Fetch command %s" % (e.command)
     except bb.process.ExecutionError as e:
-        error_message = "Fetch command %s failed with exit code %s, output:\nSTDOUT: %s\nSTDERR: %s" % (e.command, e.exitcode, e.stdout, e.stderr)
+        if e.stdout:
+            output = "output:\n%s\n%s" % (e.stdout, e.stderr)
+        elif e.stderr:
+            output = "output:\n%s" % e.stderr
+        else:
+            output = "no output"
+        error_message = "Fetch command failed with exit code %s, %s" % (e.exitcode, output)
     except bb.process.CmdError as e:
         error_message = "Fetch command %s could not be run:\n%s" % (e.command, e.msg)
     if not success:
