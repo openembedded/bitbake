@@ -466,7 +466,7 @@ class RunQueueData:
                 # (makes sure sometask runs after targetname's someothertask)
                 idepends = taskData.tasks_idepends[task]
                 for (depid, idependtask) in idepends:
-                    if depid in taskData.build_targets:
+                    if depid in taskData.build_targets and not depid in taskData.failed_deps:
                         # Won't be in build_targets if ASSUME_PROVIDED
                         depdata = taskData.build_targets[depid][0]
                         if depdata is not None:
@@ -931,6 +931,8 @@ class RunQueue:
         try:
             return self._execute_runqueue()
         except bb.runqueue.TaskFailure:
+            raise
+        except SystemExit:
             raise
         except:
             logger.error("An uncaught exception occured in runqueue, please see the failure below:")
