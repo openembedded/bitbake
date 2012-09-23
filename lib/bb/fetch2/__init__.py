@@ -358,7 +358,7 @@ def verify_checksum(u, ud, d):
         mismatch = True;
 
     if mismatch:
-        msg = msg + '\nYour checksums:\nSRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' % (ud.md5_name, md5data, ud.sha256_name, sha256data)
+        msg = msg + '\nIf this change is expected (e.g. you have upgraded to a new version without updating the checksums) then you can use these lines within the recipe:\nSRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"\nOtherwise you should retry the download and/or check with upstream to determine if the file has become corrupted or otherwise unexpectedly modified.\n' % (ud.md5_name, md5data, ud.sha256_name, sha256data)
 
     if len(msg):
         raise ChecksumError('Checksum mismatch!%s' % msg, u)
@@ -1204,8 +1204,9 @@ class Fetch(object):
 
                     except BBFetchException as e:
                         if isinstance(e, ChecksumError):
-                            logger.warn("Checksum error encountered with download (will attempt other sources): %s" % str(e))
-                        if isinstance(e, NoChecksumError):
+                            logger.warn("Checksum failure encountered with download of %s - will attempt other sources if available" % u)
+                            logger.debug(1, str(e))
+                        elif isinstance(e, NoChecksumError):
                             raise
                         else:
                             logger.warn('Failed to fetch URL %s, attempting MIRRORS if available' % u)
@@ -1227,6 +1228,8 @@ class Fetch(object):
             except BBFetchException as e:
                 if isinstance(e, NoChecksumError):
                     logger.error("%s" % str(e))
+                elif isinstance(e, ChecksumError):
+                    logger.error("Checksum failure fetching %s" % u)
                 raise
 
             finally:
