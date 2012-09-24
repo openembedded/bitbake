@@ -187,12 +187,12 @@ class PackageSelectionPage (HobPage):
         self.builder.build_image()
 
     def back_button_clicked_cb(self, button):
-        if self.builder.current_step ==  self.builder.PACKAGE_GENERATED:
-            self.builder.show_configuration()
-        elif self.builder.previous_step ==  self.builder.IMAGE_GENERATED:
+        if self.builder.previous_step ==  self.builder.IMAGE_GENERATED:
             self.builder.restore_initial_selected_packages()
             self.refresh_selection()
             self.builder.show_image_details()
+        else:
+            self.builder.show_configuration()
 
     def _expand_all(self):
         for tab in self.tables:
