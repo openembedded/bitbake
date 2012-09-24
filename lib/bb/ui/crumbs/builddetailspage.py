@@ -289,7 +289,12 @@ class BuildDetailsPage (HobPage):
 
         action_button = HobButton("Edit %s" % action)
         action_button.set_size_request(-1, 40)
-        action_button.set_tooltip_text("Edit the %s parameters" % action)
+        if action == "image":
+            action_button.set_tooltip_text("Edit the image parameters")
+        elif action == "recipes":
+            action_button.set_tooltip_text("Edit the included recipes")
+        elif action == "packages":
+            action_button.set_tooltip_text("Edit the included packages")
         action_button.connect('clicked', self.stop_primary_action_button_clicked_cb, action)
         build_stop_tab.attach(action_button, 4, 13, 6, 9)
 
@@ -392,7 +397,7 @@ class BuildDetailsPage (HobPage):
         if "recipes" in action:
             self.builder.show_recipes()
         elif "packages" in action:
-            self.builder.show_packages()
+            self.builder.show_packages(ask=False)
         elif "image" in action:
             self.builder.show_configuration()
 
