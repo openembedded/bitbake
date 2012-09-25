@@ -257,7 +257,7 @@ class Git(FetchMethod):
             indirectiondir = destdir[:-1] + ".indirectionsymlink"
             if os.path.exists(indirectiondir):
                 os.remove(indirectiondir)
-            bb.mkdirhier(os.path.dirname(indirectiondir))
+            bb.utils.mkdirhier(os.path.dirname(indirectiondir))
             os.symlink(ud.clonedir, indirectiondir)
             clonedir = indirectiondir
 
