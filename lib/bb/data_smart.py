@@ -103,7 +103,10 @@ class ExpansionError(Exception):
         self.variablename = varname
         self.exception = exception
         if varname:
-            self.msg = "Failure expanding variable %s, expression was %s which triggered exception %s: %s" % (varname, expression, type(exception).__name__, exception)
+            if expression:
+                self.msg = "Failure expanding variable %s, expression was %s which triggered exception %s: %s" % (varname, expression, type(exception).__name__, exception)
+            else:
+                self.msg = "Failure expanding variable %s: %s: %s" % (varname, type(exception).__name__, exception)
         else:
             self.msg = "Failure expanding expression %s which triggered exception %s: %s" % (expression, type(exception).__name__, exception)
         Exception.__init__(self, self.msg)

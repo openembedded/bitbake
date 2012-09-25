@@ -323,9 +323,8 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
 
         deps |= set((vardeps or "").split())
         deps -= set((d.getVarFlag(key, "vardepsexclude", True) or "").split())
-    except:
-        bb.note("Error expanding variable %s" % key)
-        raise
+    except Exception as e:
+        raise bb.data_smart.ExpansionError(key, None, e)
     return deps, value
     #bb.note("Variable %s references %s and calls %s" % (key, str(deps), str(execs)))
     #d.setVarFlag(key, "vardeps", deps)
