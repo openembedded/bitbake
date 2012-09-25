@@ -939,13 +939,13 @@ class BBCooker:
                                         errors = True
                                         continue
                                     if lver <> depver:
-                                        parselog.error("Layer dependency %s of layer %s is at version %d, expected %d", dep, c, lver, depver)
+                                        parselog.error("Layer '%s' depends on version %d of layer '%s', but version %d is enabled in your configuration", c, depver, dep, lver)
                                         errors = True
                                 else:
-                                    parselog.error("Layer dependency %s of layer %s has no version, expected %d", dep, c, depver)
+                                    parselog.error("Layer '%s' depends on version %d of layer '%s', which exists in your configuration but does not specify a version", c, depver, dep)
                                     errors = True
                         else:
-                            parselog.error("Layer dependency %s of layer %s not found", dep, c)
+                            parselog.error("Layer '%s' depends on layer '%s', but this layer is not enabled in your configuration", c, dep)
                             errors = True
                     collection_depends[c] = depnamelist
                 else:
