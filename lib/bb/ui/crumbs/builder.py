@@ -1474,6 +1474,8 @@ class Builder(gtk.Window):
         if response != gtk.RESPONSE_CANCEL:
             self.stopping = True
         if response == gtk.RESPONSE_OK:
+            self.build_details_page.progress_bar.set_title("Stopping the build...")
+            self.build_details_page.progress_bar.set_rcstyle("stop")
             self.cancel_build_sync()
         elif response == gtk.RESPONSE_YES:
             self.cancel_build_sync(True)
