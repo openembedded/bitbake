@@ -51,6 +51,14 @@ class SettingsUIHelper():
         label.show()
         return label
 
+    def gen_label_info_widget(self, content, tooltip):
+        table = gtk.Table(1, 10, False)
+        label = self.gen_label_widget(content)
+        info = HobInfoButton(tooltip, self)
+        table.attach(label, 0, 1, 0, 1, xoptions=gtk.FILL)
+        table.attach(info, 1, 2, 0, 1, xoptions=gtk.FILL, xpadding=10)
+        return table
+
     def gen_spinner_widget(self, content, lower, upper, tooltip=""):
         hbox = gtk.HBox(False, 12)
         adjust = gtk.Adjustment(value=content, lower=lower, upper=upper, step_incr=1)
@@ -117,11 +125,93 @@ class SettingsUIHelper():
         else:
             hbox.pack_start(entry, expand=True, fill=True)
 
-        info = HobInfoButton(tooltip, self)
-        hbox.pack_start(info, expand=False, fill=False)
+        if tooltip != "":
+            info = HobInfoButton(tooltip, self)
+            hbox.pack_start(info, expand=False, fill=False)
 
         hbox.show_all()
         return hbox, entry
+
+    def gen_mirror_entry_widget(self, content, index, match_content=""):
+        hbox = gtk.HBox(False, 12)
+        entry = gtk.Entry()
+        content = content[:-2]
+        entry.set_text(content)
+        entry_match = gtk.Entry()
+        entry_match.set_text(match_content)
+
+        table = gtk.Table(2, 6, True)
+        hbox.pack_start(table, expand=True, fill=True)
+        label_configuration = gtk.Label("Configuration")
+        label_mirror_url = gtk.Label("Mirror URL")
+        label_match = gtk.Label("Match")
+        label_replace_with = gtk.Label("Replace with")
+
+        combo = gtk.combo_box_new_text()
+        combo.append_text("Standard")
+        combo.append_text("Custom")
+        if match_content == "":
+            combo.set_active(0)
+        else:
+            combo.set_active(1)
+        combo.connect("changed", self.on_combo_changed, index)
+
+        delete_button = HobAltButton("Delete")
+        delete_button.connect("clicked", self.delete_cb, index, entry)
+        if content == "":
+            delete_button.set_sensitive(False)
+
+        entry_match.connect("changed", self.insert_entry_match_cb, index)
+        entry.connect("changed", self.insert_entry_cb, index, delete_button)
+
+        if match_content == "":
+            table.attach(label_configuration, 0, 1, 0, 1)
+            table.attach(label_mirror_url, 1, 2, 0, 1)
+            table.attach(combo, 0, 1, 1, 2)
+            table.attach(entry, 1, 5, 1, 2)
+            table.attach(delete_button, 5, 6, 1, 2)
+        else:
+            table.attach(label_configuration, 0, 1, 0, 1)
+            table.attach(label_match, 1, 2, 0, 1)
+            table.attach(label_replace_with, 2, 3, 0, 1)
+            table.attach(combo, 0, 1, 1, 2)
+            table.attach(entry_match, 1, 2, 1, 2)
+            table.attach(entry, 2, 5, 1, 2)
+            table.attach(delete_button, 5, 6, 1, 2)
+
+        hbox.show_all()
+        return hbox
+
+    def insert_entry_match_cb(self, entry_match, index):
+        self.sstatemirrors_list[index][2] = entry_match.get_text()
+
+    def insert_entry_cb(self, entry, index, button):
+        self.sstatemirrors_list[index][1] = entry.get_text()
+        if entry.get_text() == "":
+            button.set_sensitive(False)
+        else:
+            button.set_sensitive(True)
+
+    def on_combo_changed(self, combo, index):
+        if combo.get_active_text() == "Standard":
+            self.sstatemirrors_list[index][0] = 0
+        else:
+            self.sstatemirrors_list[index][0] = 1
+        self.refresh_shared_state_page()
+
+    def delete_cb(self, button, index, entry):
+        if index == 0 and len(self.sstatemirrors_list)==1:
+            entry.set_text("")
+        else:
+            self.sstatemirrors_list.pop(index)
+            self.refresh_shared_state_page()
+
+    def add_mirror(self, button):
+        tooltip = "Select the pre-built mirror that will speed your build"
+        index = len(self.sstatemirrors_list)
+        sm_list = [0, "", "file://(.*)"]
+        self.sstatemirrors_list.append(sm_list)
+        self.refresh_shared_state_page()
 
 #
 # CrumbsDialog
@@ -197,7 +287,8 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         # class members for internal use
         self.dldir_text = None
         self.sstatedir_text = None
-        self.sstatemirror_text = None
+        self.sstatemirrors_list = []
+        self.sstatemirrors_changed = 0
         self.bb_spinner = None
         self.pmake_spinner = None
         self.rootfs_size_spinner = None
@@ -331,7 +422,14 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
     def response_cb(self, dialog, response_id):        
         self.configuration.dldir = self.dldir_text.get_text()
         self.configuration.sstatedir = self.sstatedir_text.get_text()
-        self.configuration.sstatemirror = self.sstatemirror_text.get_text()
+        self.configuration.sstatemirror = ""
+        for mirror in self.sstatemirrors_list:
+            if mirror[1] != "" or len(self.sstatemirrors_list)==1:
+                if mirror[1].endswith("\\1"):
+                    smirror = mirror[2] + " " + mirror[1] + " \\n "
+                else:
+                    smirror = mirror[2] + " " + mirror[1] + "\\1 \\n "
+                self.configuration.sstatemirror += smirror
         self.configuration.bbthread = self.bb_spinner.get_value_as_int()
         self.configuration.pmake = self.pmake_spinner.get_value_as_int()
                 
@@ -382,23 +480,78 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(dldir_widget, expand=False, fill=False)
 
+        return advanced_vbox
+
+    def create_shared_state_page(self):
+        advanced_vbox = gtk.VBox(False, 6)
+        advanced_vbox.set_border_width(6)
+
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE directory:</span>")
+        content = "<span weight=\"bold\">Shared state directory</span>"
         tooltip = "Select a folder that caches your prebuilt results"
-        sstatedir_widget, self.sstatedir_text = self.gen_entry_widget(self.configuration.sstatedir, self, tooltip)
+        label = self.gen_label_info_widget(content, tooltip)
+        sstatedir_widget, self.sstatedir_text = self.gen_entry_widget(self.configuration.sstatedir, self)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(sstatedir_widget, expand=False, fill=False)
 
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("<span weight=\"bold\">Select SSTATE mirror:</span>")
-        tooltip = "Select the pre-built mirror that will speed your build"
-        sstatemirror_widget, self.sstatemirror_text = self.gen_entry_widget(self.configuration.sstatemirror, self, tooltip)
-        sub_vbox.pack_start(label, expand=False, fill=False)
-        sub_vbox.pack_start(sstatemirror_widget, expand=False, fill=False)
+        content = "<span weight=\"bold\">Shared state mirrors</span>"
+        tooltip = "URLs pointing to pre-built mirrors that will speed your build. "
+        tooltip += "Select the \'Standard\' configuration if the structure of your "
+        tooltip += "mirror replicates the structure of your local shared state directory. "
+        tooltip += "For more information on shared state mirrors, check the <a href=\""
+        tooltip += "http://www.yoctoproject.org/docs/current/poky-ref-manual/"
+        tooltip += "poky-ref-manual.html#shared-state\">Yocto Project Reference Manual</a>."
+        table = self.gen_label_info_widget(content, tooltip)
+        sub_vbox.pack_start(table, expand=False, fill=False)
+
+        searched_string = "file://"
+
+        if self.sstatemirrors_changed == 0:
+            self.sstatemirrors_changed = 1
+            sstatemirrors = self.configuration.sstatemirror
+            while sstatemirrors.find(searched_string) != -1:
+                if sstatemirrors.find(searched_string,1) != -1:
+                    sstatemirror = sstatemirrors[:sstatemirrors.find(searched_string,1)]
+                    sstatemirrors = sstatemirrors[sstatemirrors.find(searched_string,1):]
+                else:
+                    sstatemirror = sstatemirrors
+                    sstatemirrors = sstatemirrors[1:]
+
+                sstatemirror_fields = [x for x in sstatemirror.split(' ') if x.strip()]
+                if sstatemirror_fields[0] == "file://(.*)":
+                    sm_list = [ 0, sstatemirror_fields[1], "file://(.*)"]
+                else:
+                    sm_list = [ 1, sstatemirror_fields[1], sstatemirror_fields[0]]
+                self.sstatemirrors_list.append(sm_list)
+
+        index = 0
+        for mirror in self.sstatemirrors_list:
+            if mirror[0] == 0:
+                sstatemirror_widget = self.gen_mirror_entry_widget(mirror[1], index)
+            else:
+                sstatemirror_widget = self.gen_mirror_entry_widget(mirror[1], index, mirror[2])
+            sub_vbox.pack_start(sstatemirror_widget, expand=False, fill=False)
+            index += 1
+
+        sub_vbox = gtk.VBox(False, 6)
+        advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
+        add_mirror_button = HobAltButton("Add another mirror")
+        add_mirror_button.set_size_request(100, -1)
+        add_mirror_button.connect("clicked", self.add_mirror)
+        sub_vbox.pack_start(add_mirror_button, expand=False, fill=False)
 
         return advanced_vbox
+
+    def refresh_shared_state_page(self):
+        page_num = self.nb.get_current_page()
+        self.nb.remove_page(page_num);
+        self.nb.insert_page(self.create_shared_state_page(), gtk.Label("Shared state"),page_num)
+        self.show_all()
+        self.nb.set_current_page(page_num)
+
 
     def create_proxy_page(self):
         advanced_vbox = gtk.VBox(False, 6)
@@ -461,9 +614,10 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
     def create_visual_elements(self):
         self.nb = gtk.Notebook()
-        self.nb.set_show_tabs(True)        
+        self.nb.set_show_tabs(True)
         self.nb.append_page(self.create_build_environment_page(), gtk.Label("Build environment"))
-        self.nb.append_page(self.create_proxy_page(), gtk.Label("Proxies"))        
+        self.nb.append_page(self.create_shared_state_page(), gtk.Label("Shared state"))
+        self.nb.append_page(self.create_proxy_page(), gtk.Label("Proxies"))
         self.nb.set_current_page(0)
         self.vbox.pack_start(self.nb, expand=True, fill=True)
         self.vbox.pack_end(gtk.HSeparator(), expand=True, fill=True)

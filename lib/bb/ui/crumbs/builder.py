@@ -187,7 +187,7 @@ class Configuration:
         self.curr_distro = template.getVar("DISTRO")
         self.dldir = template.getVar("DL_DIR")
         self.sstatedir = template.getVar("SSTATE_DIR")
-        self.sstatemirror = template.getVar("SSTATE_MIRROR")
+        self.sstatemirror = template.getVar("SSTATE_MIRRORS")
         try:
             self.pmake = int(template.getVar("PARALLEL_MAKE").split()[1])
         except:
@@ -237,7 +237,7 @@ class Configuration:
         template.setVar("DISTRO", self.curr_distro)
         template.setVar("DL_DIR", self.dldir)
         template.setVar("SSTATE_DIR", self.sstatedir)
-        template.setVar("SSTATE_MIRROR", self.sstatemirror)
+        template.setVar("SSTATE_MIRRORS", self.sstatemirror)
         template.setVar("PARALLEL_MAKE", "-j %s" % self.pmake)
         template.setVar("BB_NUMBER_THREADS", self.bbthread)
         template.setVar("PACKAGE_CLASSES", " ".join(["package_" + i for i in self.curr_package_format.split()]))
@@ -326,7 +326,7 @@ def hob_conf_filter(fn, data):
 
         keys = ["MACHINE_HOB", "SDKMACHINE_HOB", "PACKAGE_CLASSES_HOB", \
                 "BB_NUMBER_THREADS_HOB", "PARALLEL_MAKE_HOB", "DL_DIR_HOB", \
-                "SSTATE_DIR_HOB", "SSTATE_MIRROR_HOB", "INCOMPATIBLE_LICENSE_HOB"]
+                "SSTATE_DIR_HOB", "SSTATE_MIRRORS_HOB", "INCOMPATIBLE_LICENSE_HOB"]
         for key in keys:
             var_hob = data.getVar(key)
             if var_hob:
@@ -697,7 +697,7 @@ class Builder(gtk.Window):
         self.handler.set_distro(self.configuration.curr_distro)
         self.handler.set_dl_dir(self.configuration.dldir)
         self.handler.set_sstate_dir(self.configuration.sstatedir)
-        self.handler.set_sstate_mirror(self.configuration.sstatemirror)
+        self.handler.set_sstate_mirrors(self.configuration.sstatemirror)
         self.handler.set_pmake(self.configuration.pmake)
         self.handler.set_bbthreads(self.configuration.bbthread)
         self.handler.set_rootfs_size(self.configuration.image_rootfs_size)

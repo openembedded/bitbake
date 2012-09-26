@@ -297,8 +297,8 @@ class HobHandler(gobject.GObject):
     def set_sstate_dir(self, directory):
         self.runCommand(["setVariable", "SSTATE_DIR_HOB", directory])
 
-    def set_sstate_mirror(self, url):
-        self.runCommand(["setVariable", "SSTATE_MIRROR_HOB", url])
+    def set_sstate_mirrors(self, url):
+        self.runCommand(["setVariable", "SSTATE_MIRRORS_HOB", url])
 
     def set_extra_size(self, image_extra_size):
         self.runCommand(["setVariable", "IMAGE_ROOTFS_EXTRA_SPACE", str(image_extra_size)])
@@ -421,7 +421,7 @@ class HobHandler(gobject.GObject):
         params["distro"] = self.runCommand(["getVariable", "DISTRO"]) or "defaultsetup"
         params["pclass"] = self.runCommand(["getVariable", "PACKAGE_CLASSES"]) or ""
         params["sstatedir"] = self.runCommand(["getVariable", "SSTATE_DIR"]) or ""
-        params["sstatemirror"] = self.runCommand(["getVariable", "SSTATE_MIRROR"]) or ""
+        params["sstatemirror"] = self.runCommand(["getVariable", "SSTATE_MIRRORS"]) or ""
 
         num_threads = self.runCommand(["getCpuCount"])
         if not num_threads:
