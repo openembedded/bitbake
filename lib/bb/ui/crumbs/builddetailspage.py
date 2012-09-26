@@ -99,6 +99,8 @@ class BuildConfigurationTreeView(gtk.TreeView):
             import os, os.path
             if os.path.exists(path):
                 branch = bb.process.run('cd %s; git branch | grep "^* " | tr -d "* "' % path)[0]
+                if branch.startswith("fatal:"):
+                    branch = "(unknown)"
                 if branch:
                     branch = branch.strip('\n')
                     vars.append(self.set_vars("Branch:", branch))
