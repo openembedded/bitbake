@@ -41,10 +41,10 @@ class ImageDetailsPage (HobPage):
             style.bg[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(color, False, False)
             self.set_style(style)
 
-            self.hbox = gtk.HBox()
-            self.hbox.set_border_width(10)
-            self.add(self.hbox)
-
+            self.row = gtk.Table(1, 2, False)
+            self.row.set_border_width(10)
+            self.add(self.row)
+        
             total_rows = 0
             if widget:
                 total_rows = 10
@@ -54,8 +54,8 @@ class ImageDetailsPage (HobPage):
             self.table = gtk.Table(total_rows, 20, True)
             self.table.set_row_spacings(6)
             self.table.set_size_request(100, -1)
-            self.hbox.pack_start(self.table, expand=True, fill=True, padding=15)
-
+            self.row.attach(self.table, 0, 1, 0, 1, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL)
+            
             colid = 0
             rowid = 0
             self.line_widgets = {}
@@ -73,11 +73,80 @@ class ImageDetailsPage (HobPage):
             # pack the button on the right
             if button:
                 self.bbox = gtk.VBox()
-                self.bbox.pack_start(button, expand=True, fill=True)
+                self.bbox.pack_start(button, expand=True, fill=False)
                 if button2:
-                    self.bbox.pack_start(button2, expand=True, fill=True)
-                self.hbox.pack_end(self.bbox, expand=False, fill=False)
+                    self.bbox.pack_start(button2, expand=True, fill=False)
+                self.bbox.set_size_request(150,-1)
+                self.row.attach(self.bbox, 1, 2, 0, 1, xoptions=gtk.FILL, yoptions=gtk.EXPAND)
+                
+        def update_line_widgets(self, variable, value):
+            if len(self.line_widgets) == 0:
+                return
+            if not isinstance(self.line_widgets[variable], gtk.Label):
+                return
+            self.line_widgets[variable].set_markup(self.format_line(variable, value))
 
+        def wrap_line(self, inputs):
+            # wrap the long text of inputs
+            wrap_width_chars = 75
+            outputs = ""
+            tmps = inputs
+            less_chars = len(inputs)
+            while (less_chars - wrap_width_chars) > 0:
+                less_chars -= wrap_width_chars
+                outputs += tmps[:wrap_width_chars] + "\n               "
+                tmps = inputs[less_chars:]
+            outputs += tmps
+            return outputs
+
+        def format_line(self, variable, value):
+            wraped_value = self.wrap_line(value)
+            markup = "<span weight=\'bold\'>%s</span>" % variable
+            markup += "<span weight=\'normal\' foreground=\'#1c1c1c\' font_desc=\'14px\'>%s</span>" % wraped_value
+            return markup
+
+        def text2label(self, variable, value):
+            # append the name:value to the left box
+            # such as "Name: hob-core-minimal-variant-2011-12-15-beagleboard"
+            label = gtk.Label()
+            label.set_alignment(0.0, 0.5)
+            label.set_markup(self.format_line(variable, value))
+            return label
+
+    class BuildDetailBox (gtk.EventBox):
+        def __init__(self, varlist = None, vallist = None, icon = None, color = HobColors.LIGHT_GRAY):
+            gtk.EventBox.__init__(self)
+
+            # set color
+            style = self.get_style().copy()
+            style.bg[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(color, False, False)
+            self.set_style(style)
+
+            self.hbox = gtk.HBox()
+            self.hbox.set_border_width(10)
+            self.add(self.hbox)
+
+            total_rows = 0
+            if varlist and vallist:
+                # pack the icon and the text on the left
+                total_rows += len(varlist)
+            self.table = gtk.Table(total_rows, 20, True)
+            self.table.set_row_spacings(6)
+            self.table.set_size_request(100, -1)
+            self.hbox.pack_start(self.table, expand=True, fill=True, padding=15)
+
+            colid = 0
+            rowid = 0
+            self.line_widgets = {}
+            if icon:
+                self.table.attach(icon, colid, colid + 2, 0, 1)
+                colid = colid + 2
+            if varlist and vallist:
+                for row in range(rowid, total_rows):
+                    index = row - rowid
+                    self.line_widgets[varlist[index]] = self.text2label(varlist[index], vallist[index])
+                    self.table.attach(self.line_widgets[varlist[index]], colid, 20, row, row + 1)
+                
         def update_line_widgets(self, variable, value):
             if len(self.line_widgets) == 0:
                 return
@@ -192,7 +261,7 @@ class ImageDetailsPage (HobPage):
             icon.set_from_pixbuf(pix_buffer)
             varlist = [""]
             vallist = ["Your image is ready"]
-            self.build_result = self.DetailBox(varlist=varlist, vallist=vallist, icon=icon, color=color)
+            self.build_result = self.BuildDetailBox(varlist=varlist, vallist=vallist, icon=icon, color=color)
             self.box_group_area.pack_start(self.build_result, expand=False, fill=False)
 
         # create the buttons at the bottom first because the buttons are used in apply_button_per_image()
@@ -271,7 +340,7 @@ class ImageDetailsPage (HobPage):
             change_kernel_button.connect("clicked", self.change_kernel_cb)
             change_kernel_button.set_tooltip_text("Change qemu kernel file")
             self.kernel_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=change_kernel_button)
-            self.box_group_area.pack_start(self.kernel_detail, expand=False, fill=False)
+            self.box_group_area.pack_start(self.kernel_detail, expand=True, fill=True)
 
         # Machine, Base image and Layers
         layer_num_limit = 15
@@ -316,7 +385,7 @@ class ImageDetailsPage (HobPage):
         else: # get to this page from "My images"
             edit_packages_button = None
         self.package_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_packages_button)
-        self.box_group_area.pack_start(self.package_detail, expand=False, fill=False)
+        self.box_group_area.pack_start(self.package_detail, expand=True, fill=True)
 
         # pack the buttons at the bottom, at this time they are already created.
         if self.build_succeeded:
@@ -478,7 +547,7 @@ class ImageDetailsPage (HobPage):
         name = "Deploy image"
         if name in buttonlist and self.test_deployable(image_name):
             deploy_button = HobButton('Deploy image')
-            deploy_button.set_size_request(205, 49)
+            #deploy_button.set_size_request(205, 49)
             deploy_button.set_tooltip_text("Burn a live image to a USB drive or flash memory")
             deploy_button.set_flags(gtk.CAN_DEFAULT)
             button_id = deploy_button.connect("clicked", self.deploy_button_clicked_cb)
@@ -499,7 +568,7 @@ class ImageDetailsPage (HobPage):
             else:
                 # create button "Run image" as the primary button
                 run_button = HobButton("Run image")
-                run_button.set_size_request(205, 49)
+                #run_button.set_size_request(205, 49)
                 run_button.set_flags(gtk.CAN_DEFAULT)
                 packed = True
             run_button.set_tooltip_text("Start up an image with qemu emulator")
@@ -520,7 +589,7 @@ class ImageDetailsPage (HobPage):
                 save_button = HobAltButton("Save as template")
             else:
                 save_button = HobButton("Save as template")
-                save_button.set_size_request(205, 49)
+                #save_button.set_size_request(205, 49)
                 save_button.set_flags(gtk.CAN_DEFAULT)
                 packed = True
             save_button.set_tooltip_text("Save the image configuration for reuse")
@@ -537,7 +606,7 @@ class ImageDetailsPage (HobPage):
             else:
                 build_new_button = HobButton("Build new image")
                 build_new_button.set_flags(gtk.CAN_DEFAULT)
-            build_new_button.set_size_request(205, 49)
+            #build_new_button.set_size_request(205, 49)
             self.details_bottom_buttons.pack_end(build_new_button, expand=False, fill=False)
             build_new_button.set_tooltip_text("Create a new image from scratch")
             button_id = build_new_button.connect("clicked", self.build_new_button_clicked_cb)

@@ -167,13 +167,12 @@ class ImageConfigurationPage (HobPage):
         markup += "dev-manual.html#understanding-and-using-layers\">reference manual</a>."
         self.layer_info_icon = HobInfoButton(markup, self.get_parent())
 
-        self.progress_box = gtk.HBox(False, 6)
+#        self.progress_box = gtk.HBox(False, 6)
         self.progress_bar = HobProgressBar()
-        self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
+#        self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
         self.stop_button = HobAltButton("Stop")
         self.stop_button.connect("clicked", self.stop_button_clicked_cb)
-        self.progress_box.pack_end(self.stop_button, expand=False, fill=False)
-
+#        self.progress_box.pack_end(stop_button, expand=False, fill=False)
         self.machine_separator = gtk.HSeparator()
 
     def set_config_machine_layout(self, show_progress_bar = False):
@@ -183,7 +182,9 @@ class ImageConfigurationPage (HobPage):
         self.gtable.attach(self.layer_button, 14, 36, 7, 12)
         self.gtable.attach(self.layer_info_icon, 36, 40, 7, 11)
         if show_progress_bar:
-            self.gtable.attach(self.progress_box, 0, 40, 15, 19)
+            #self.gtable.attach(self.progress_box, 0, 40, 15, 18)
+            self.gtable.attach(self.progress_bar, 0, 37, 15, 18)
+            self.gtable.attach(self.stop_button, 37, 40, 15, 18, 0, 0)
         self.gtable.attach(self.machine_separator, 0, 40, 13, 14)
 
     def create_config_baseimg(self):
@@ -232,14 +233,14 @@ class ImageConfigurationPage (HobPage):
 
         # create button "Build image"
         self.just_bake_button = HobButton("Build image")
-        self.just_bake_button.set_size_request(205, 49)
+        #self.just_bake_button.set_size_request(205, 49)
         self.just_bake_button.set_tooltip_text("Build target image")
         self.just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
         button_box.pack_end(self.just_bake_button, expand=False, fill=False)
 
         # create button "Edit Image"
         self.edit_image_button = HobAltButton("Edit image")
-        self.edit_image_button.set_size_request(205, 49)
+        #self.edit_image_button.set_size_request(205, 49)
         self.edit_image_button.set_tooltip_text("Edit target image")
         self.edit_image_button.connect("clicked", self.edit_image_button_clicked_cb)
         button_box.pack_end(self.edit_image_button, expand=False, fill=False)

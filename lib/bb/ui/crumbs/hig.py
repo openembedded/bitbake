@@ -1056,7 +1056,7 @@ class DeployImageDialog (CrumbsDialog):
                 icon.set_from_pixbuf(pix_buffer)
                 button = gtk.Button("Select Image")
                 button.set_image(icon)
-                button.set_size_request(140, 50)
+                #button.set_size_request(140, 50)
                 table.attach(button, 9, 10, 1, 2, gtk.FILL, 0, 0, 0)
                 button.connect("clicked", self.select_image_button_clicked_cb)
 

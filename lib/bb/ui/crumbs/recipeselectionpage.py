@@ -170,7 +170,7 @@ class RecipeSelectionPage (HobPage):
         self.box_group_area.pack_end(button_box, expand=False, fill=False)
 
         self.build_packages_button = HobButton('Build packages')
-        self.build_packages_button.set_size_request(205, 49)
+        #self.build_packages_button.set_size_request(205, 49)
         self.build_packages_button.set_tooltip_text("Build selected recipes into packages")
         self.build_packages_button.set_flags(gtk.CAN_DEFAULT)
         self.build_packages_button.grab_default()

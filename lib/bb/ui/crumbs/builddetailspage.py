@@ -206,7 +206,7 @@ class BuildDetailsPage (HobPage):
 
         color = HobColors.ERROR
         build_fail_top = gtk.EventBox()
-        build_fail_top.set_size_request(-1, 200)
+        #build_fail_top.set_size_request(-1, 200)
         build_fail_top.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
 
         build_fail_tab = gtk.Table(14, 46, True)
@@ -229,7 +229,7 @@ class BuildDetailsPage (HobPage):
 
         # create button 'Edit packages'
         action_button = HobButton(primary_action)
-        action_button.set_size_request(-1, 40)
+        #action_button.set_size_request(-1, 40)
         action_button.set_tooltip_text("Edit the %s parameters" % actions)
         action_button.connect('clicked', self.failure_primary_action_button_clicked_cb, primary_action)
         build_fail_tab.attach(action_button, 4, 13, 9, 12)
@@ -269,7 +269,7 @@ class BuildDetailsPage (HobPage):
     def add_build_stop_top_bar(self, action, log_file=None):
         color = HobColors.LIGHT_GRAY
         build_stop_top = gtk.EventBox()
-        build_stop_top.set_size_request(-1, 200)
+        #build_stop_top.set_size_request(-1, 200)
         build_stop_top.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
         build_stop_top.set_flags(gtk.CAN_DEFAULT)
         build_stop_top.grab_default()
@@ -307,7 +307,7 @@ class BuildDetailsPage (HobPage):
 
         attach_pos = (24 if log_file else 14)
         build_button = HobAltButton("Build new image")
-        build_button.set_size_request(-1, 40)
+        #build_button.set_size_request(-1, 40)
         build_button.set_tooltip_text("Create a new image from scratch")
         build_button.connect('clicked', self.new_image_button_clicked_cb)
         build_stop_tab.attach(build_button, attach_pos, attach_pos + 9, 6, 9)
