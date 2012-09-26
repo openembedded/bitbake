@@ -562,6 +562,7 @@ class SanityCheckFailed(Event):
     """
     Event to indicate sanity check has failed
     """
-    def __init__(self, msg):
+    def __init__(self, msg, network_error=False):
         Event.__init__(self)
         self._msg = msg
+        self._network_error = network_error

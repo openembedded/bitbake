@@ -22,7 +22,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import glib
-import gtk
+import gtk, gobject
 import copy
 import os
 import subprocess
@@ -36,6 +36,7 @@ from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
 from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
+from bb.ui.crumbs.sanitycheckpage import SanityCheckPage
 from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton
 from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
                              AdvancedSettingDialog, SimpleSettingsDialog, \
@@ -266,6 +267,22 @@ class Configuration:
         template.setVar("CVS_PROXY_HOST", self.combine_host_only("cvs"))
         template.setVar("CVS_PROXY_PORT", self.combine_port_only("cvs"))
 
+    def __str__(self):
+        s = "VERSION: '%s', BBLAYERS: '%s', MACHINE: '%s', DISTRO: '%s', DL_DIR: '%s'," % \
+            (hobVer, " ".join(self.layers), self.curr_mach, self.curr_distro, self.dldir )
+        s += "SSTATE_DIR: '%s', SSTATE_MIRROR: '%s', PARALLEL_MAKE: '-j %s', BB_NUMBER_THREADS: '%s', PACKAGE_CLASSES: '%s', " % \
+            (self.sstatedir, self.sstatemirror, self.pmake, self.bbthread, " ".join(["package_" + i for i in self.curr_package_format.split()]))
+        s += "IMAGE_ROOTFS_SIZE: '%s', IMAGE_EXTRA_SPACE: '%s', INCOMPATIBLE_LICENSE: '%s', SDKMACHINE: '%s', CONF_VERSION: '%s', " % \
+            (self.image_rootfs_size, self.image_extra_size, self.incompat_license, self.curr_sdk_machine, self.conf_version)
+        s += "LCONF_VERSION: '%s', EXTRA_SETTING: '%s', TOOLCHAIN_BUILD: '%s', IMAGE_FSTYPES: '%s', __SELECTED_IMAGE__: '%s', " % \
+            (self.lconf_version, self.extra_setting, self.toolchain_build, self.image_fstypes, self.selected_image)
+        s += "DEPENDS: '%s', IMAGE_INSTALL: '%s', enable_proxy: '%s', use_same_proxy: '%s', http_proxy: '%s', " % \
+            (self.selected_recipes, self.user_selected_packages, self.enable_proxy, self.same_proxy, self.combine_proxy("http"))
+        s += "https_proxy: '%s', ftp_proxy: '%s', GIT_PROXY_HOST: '%s', GIT_PROXY_PORT: '%s', CVS_PROXY_HOST: '%s', CVS_PROXY_PORT: '%s'" % \
+            (self.combine_proxy("https"), self.combine_proxy("ftp"),self.combine_host_only("git"), self.combine_port_only("git"),
+             self.combine_host_only("cvs"), self.combine_port_only("cvs"))
+        return s
+
 class Parameters:
     '''Represents other variables like available machines, etc.'''
 
@@ -341,7 +358,8 @@ def hob_conf_filter(fn, data):
 
 class Builder(gtk.Window):
 
-    (MACHINE_SELECTION,
+    (INITIAL_CHECKS,
+     MACHINE_SELECTION,
      RCPPKGINFO_POPULATING,
      RCPPKGINFO_POPULATED,
      BASEIMG_SELECTED,
@@ -354,16 +372,18 @@ class Builder(gtk.Window):
      IMAGE_GENERATED,
      MY_IMAGE_OPENED,
      BACK,
-     END_NOOP) = range(14)
+     END_NOOP) = range(15)
 
-    (IMAGE_CONFIGURATION,
+    (SANITY_CHECK,
+     IMAGE_CONFIGURATION,
      RECIPE_DETAILS,
      BUILD_DETAILS,
      PACKAGE_DETAILS,
      IMAGE_DETAILS,
-     END_TAB) = range(6)
+     END_TAB) = range(7)
 
     __step2page__ = {
+        INITIAL_CHECKS        : SANITY_CHECK,
         MACHINE_SELECTION     : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATING : IMAGE_CONFIGURATION,
         RCPPKGINFO_POPULATED  : IMAGE_CONFIGURATION,
@@ -378,6 +398,8 @@ class Builder(gtk.Window):
         MY_IMAGE_OPENED       : IMAGE_DETAILS,
         END_NOOP              : None,
     }
+
+    SANITY_CHECK_MIN_DISPLAY_TIME = 5
 
     def __init__(self, hobHandler, recipe_model, package_model):
         super(Builder, self).__init__()
@@ -474,9 +496,14 @@ class Builder(gtk.Window):
         self.build_details_page       = BuildDetailsPage(self)
         self.package_details_page     = PackageSelectionPage(self)
         self.image_details_page       = ImageDetailsPage(self)
+        self.sanity_check_page        = SanityCheckPage(self)
+        self.display_sanity_check = False
+        self.sanity_check_post_func = False
+        self.had_network_error = False
 
         self.nb = gtk.Notebook()
         self.nb.set_show_tabs(False)
+        self.nb.insert_page(self.sanity_check_page,        None, self.SANITY_CHECK)
         self.nb.insert_page(self.image_configuration_page, None, self.IMAGE_CONFIGURATION)
         self.nb.insert_page(self.recipe_details_page,      None, self.RECIPE_DETAILS)
         self.nb.insert_page(self.build_details_page,       None, self.BUILD_DETAILS)
@@ -487,17 +514,46 @@ class Builder(gtk.Window):
         self.show_all()
         self.nb.set_current_page(0)
 
+    def sanity_check_timeout(self):
+        # The minimum time for showing the 'sanity check' page has passe
+        # If someone set the 'sanity_check_post_step' meanwhile, execute it now
+        self.display_sanity_check = False
+        if self.sanity_check_post_func:
+          temp = self.sanity_check_post_func
+          self.sanity_check_post_func = None
+          temp()
+        return False
+
+    def show_sanity_check_page(self):
+        # This window must stay on screen for at least 5 seconds, according to the design document
+        self.nb.set_current_page(self.SANITY_CHECK)
+        self.sanity_check_post_step = None
+        self.display_sanity_check = True
+        self.sanity_check_page.start()
+        gobject.timeout_add(self.SANITY_CHECK_MIN_DISPLAY_TIME * 1000, self.sanity_check_timeout)
+
+    def execute_after_sanity_check(self, func):
+        if not self.display_sanity_check:
+          func()
+        else:
+          sanity_check_post_func = func
+
+    def generate_configuration(self):
+        self.show_sanity_check_page()
+        self.handler.generate_configuration()
+
     def initiate_new_build_async(self):
         self.switch_page(self.MACHINE_SELECTION)
         if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == False:
+            self.show_sanity_check_page()
             self.handler.init_cooker()
             self.handler.set_extra_inherit("image_types")
-            self.handler.generate_configuration()
+            self.generate_configuration()
 
     def update_config_async(self):
         self.switch_page(self.MACHINE_SELECTION)
         self.set_user_config()
-        self.handler.generate_configuration()
+        self.generate_configuration()
 
     def sanity_check(self):
         self.handler.trigger_sanity_check()
@@ -754,6 +810,15 @@ class Builder(gtk.Window):
     def handler_package_formats_updated_cb(self, handler, formats):
         self.parameters.all_package_formats = formats
 
+    def switch_to_image_configuration_helper(self):
+        self.sanity_check_page.stop()
+        self.switch_page(self.IMAGE_CONFIGURATION)
+        self.image_configuration_page.switch_machine_combo()
+
+    def show_network_error_dialog_helper(self):
+        self.sanity_check_page.stop()
+        self.show_network_error_dialog()
+
     def handler_command_succeeded_cb(self, handler, initcmd):
         if initcmd == self.handler.GENERATE_CONFIGURATION:
             if not self.configuration.curr_mach:
@@ -761,7 +826,13 @@ class Builder(gtk.Window):
             self.update_configuration_parameters(self.get_parameters_sync())
             self.sanity_check()
         elif initcmd == self.handler.SANITY_CHECK:
-            self.image_configuration_page.switch_machine_combo()
+            if self.had_network_error:
+                self.had_network_error = False
+                self.execute_after_sanity_check(self.show_network_error_dialog_helper)
+            else:
+                # Switch to the 'image configuration' page now, but we might need
+                # to wait for the minimum display time of the sanity check page
+                self.execute_after_sanity_check(self.switch_to_image_configuration_helper)
         elif initcmd in [self.handler.GENERATE_RECIPES,
                          self.handler.GENERATE_PACKAGES,
                          self.handler.GENERATE_IMAGE]:
@@ -786,15 +857,40 @@ class Builder(gtk.Window):
         response = dialog.run()
         dialog.destroy()
 
+    def show_network_error_dialog(self):
+        lbl = "<b>Hob cannot connect to the network</b>\n"
+        msg = "Please check your network connection. If you are using a proxy server, please make sure it is configured correctly."
+        lbl = lbl + "%s\n\n" % glib.markup_escape_text(msg)
+        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+        button = dialog.add_button("Close", gtk.RESPONSE_OK)
+        HobButton.style_button(button)
+        button = dialog.add_button("Proxy settings", gtk.RESPONSE_CANCEL)
+        HobButton.style_button(button)
+        res = dialog.run()
+        dialog.destroy()
+        if res == gtk.RESPONSE_CANCEL:
+            res, settings_changed = self.show_simple_settings_dialog(SimpleSettingsDialog.PROXIES_PAGE_ID)
+            if not res:
+                return
+            if settings_changed:
+                self.reparse_post_adv_settings()
+
     def handler_command_failed_cb(self, handler, msg):
         if msg:
             self.show_error_dialog(msg)
         self.reset()
 
-    def handler_sanity_failed_cb(self, handler, msg):
-        msg = msg.replace("your local.conf", "Settings")
-        self.show_error_dialog(msg)
+    def handler_sanity_failed_cb(self, handler, msg, network_error):
         self.reset()
+        if network_error:
+            # Mark this in an internal field. The "network error" dialog will be
+            # shown later, when a SanityCheckPassed event will be handled
+            # (as sent by sanity.bbclass)
+            self.had_network_error = True
+        else:
+            msg = msg.replace("your local.conf", "Settings")
+            self.show_error_dialog(msg)
+            self.reset()
 
     def window_sensitive(self, sensitive):
         self.image_configuration_page.machine_combo.set_sensitive(sensitive)
@@ -1171,7 +1267,7 @@ class Builder(gtk.Window):
 
         dialog.destroy()
 
-    def show_adv_settings_dialog(self):
+    def show_adv_settings_dialog(self, tab=None):
         dialog = AdvancedSettingDialog(title = "Advanced configuration",
             configuration = copy.deepcopy(self.configuration),
             all_image_types = self.parameters.image_types,
@@ -1196,7 +1292,7 @@ class Builder(gtk.Window):
         dialog.destroy()
         return response == gtk.RESPONSE_YES, settings_changed
 
-    def show_simple_settings_dialog(self):
+    def show_simple_settings_dialog(self, tab=None):
         dialog = SimpleSettingsDialog(title = "Settings",
             configuration = copy.deepcopy(self.configuration),
             all_image_types = self.parameters.image_types,
@@ -1212,6 +1308,8 @@ class Builder(gtk.Window):
         HobAltButton.style_button(button)
         button = dialog.add_button("Save", gtk.RESPONSE_YES)
         HobButton.style_button(button)
+        if tab:
+            dialog.switch_to_page(tab)
         response = dialog.run()
         settings_changed = False
         if response == gtk.RESPONSE_YES:

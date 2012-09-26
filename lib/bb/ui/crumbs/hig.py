@@ -270,6 +270,9 @@ class CrumbsMessageDialog(CrumbsDialog):
 #
 class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
+    (BUILD_ENV_PAGE_ID,
+     PROXIES_PAGE_ID) = range(2)
+
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
             max_threads, parent, flags, buttons=None):
@@ -624,6 +627,8 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
         self.show_all()
 
+    def switch_to_page(self, page_id):
+        self.nb.set_current_page(page_id)
 
 #
 # AdvancedSettings Dialog

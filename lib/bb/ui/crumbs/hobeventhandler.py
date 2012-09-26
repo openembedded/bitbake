@@ -43,7 +43,7 @@ class HobHandler(gobject.GObject):
                                      (gobject.TYPE_STRING,)),
          "sanity-failed"           : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
-                                     (gobject.TYPE_STRING,)),
+                                     (gobject.TYPE_STRING, gobject.TYPE_INT)),
          "generating-data"         : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      ()),
@@ -166,7 +166,6 @@ class HobHandler(gobject.GObject):
     def handle_event(self, event):
         if not event:
             return
-
         if self.building:
             self.current_phase = "building"
             self.build.handle_event(event)
@@ -180,7 +179,7 @@ class HobHandler(gobject.GObject):
             self.run_next_command()
 
         elif isinstance(event, bb.event.SanityCheckFailed):
-            self.emit("sanity-failed", event._msg)
+            self.emit("sanity-failed", event._msg, event._network_error)
 
         elif isinstance(event, logging.LogRecord):
             if not self.building:
