@@ -1283,6 +1283,7 @@ class Builder(gtk.Window):
         HobAltButton.style_button(button)
         button = dialog.add_button("Save", gtk.RESPONSE_YES)
         HobButton.style_button(button)
+        dialog.set_save_button(button)
         response = dialog.run()
         settings_changed = False
         if response == gtk.RESPONSE_YES:
