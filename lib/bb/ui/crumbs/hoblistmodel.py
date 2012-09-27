@@ -672,6 +672,10 @@ class RecipeListModel(gtk.ListStore):
                         self[dep_path][self.COL_BINB] = ', '.join(dep_bin).lstrip(', ')
                 elif not dep_included:
                     self.include_item(dep_path, binb=item_name, image_contents=image_contents)
+        dep_bin = self[item_path][self.COL_BINB].split(', ')
+        if self[item_path][self.COL_NAME] in dep_bin:
+            dep_bin.remove(self[item_path][self.COL_NAME])
+        self[item_path][self.COL_BINB] = ', '.join(dep_bin).lstrip(', ')
 
     def exclude_item(self, item_path):
         if not self.path_included(item_path):
