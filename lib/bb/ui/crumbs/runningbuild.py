@@ -374,7 +374,7 @@ class RunningBuild (gobject.GObject):
                 for reason in event._reasons:
                     msg += ("%s\n" % reason)
             self.emit("no-provider", msg)
-            self.emit("log", msg)
+            self.emit("log", "error", msg)
         elif isinstance(event, bb.event.LogExecTTY):
             icon = "dialog-warning"
             color = HobColors.WARNING
