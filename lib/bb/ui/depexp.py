@@ -220,7 +220,8 @@ def main(server, eventHandler):
 
     gtk.gdk.threads_enter()
     dep = DepExplorer()
-    bardialog = gtk.Dialog(parent=dep)
+    bardialog = gtk.Dialog(parent=dep,
+                           flags=gtk.DIALOG_MODAL|gtk.DIALOG_DESTROY_WITH_PARENT)
     bardialog.set_default_size(400, 50)
     pbar = HobProgressBar()
     bardialog.vbox.pack_start(pbar)
