@@ -183,11 +183,11 @@ class TerminalFilter(object):
         activetasks = self.helper.running_tasks
         failedtasks = self.helper.failed_tasks
         runningpids = self.helper.running_pids
-        if self.footer_present and (self.lastpids == runningpids):
+        if self.footer_present and (self.lastcount == self.helper.tasknumber_current) and (self.lastpids == runningpids):
             return
         if self.footer_present:
             self.clearFooter()
-        if not activetasks:
+        if not self.helper.tasknumber_total or self.helper.tasknumber_current == self.helper.tasknumber_total:
             return
         tasks = []
         for t in runningpids:
@@ -195,6 +195,8 @@ class TerminalFilter(object):
 
         if self.main.shutdown:
             content = "Waiting for %s running tasks to finish:" % len(activetasks)
+        elif not len(activetasks):
+            content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
         else:
             content = "Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
         print content
@@ -205,6 +207,7 @@ class TerminalFilter(object):
             lines = lines + 1 + int(len(content) / (self.columns + 1))
         self.footer_present = lines
         self.lastpids = runningpids[:]
+        self.lastcount = self.helper.tasknumber_current
 
     def finish(self):
         if self.stdinbackup:
