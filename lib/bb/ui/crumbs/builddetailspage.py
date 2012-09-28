@@ -390,7 +390,7 @@ class BuildDetailsPage (HobPage):
             self.builder.show_recipes()
         elif "Edit packages" in action:
             self.builder.show_packages()
-        elif "Edit image configuration" in action:
+        elif "Edit image" in action:
             self.builder.show_configuration()
 
     def stop_primary_action_button_clicked_cb(self, button, action):
