@@ -263,8 +263,6 @@ class BuildDetailsPage (HobPage):
         self.box_group_area.pack_start(self.vbox, expand=True, fill=True)
 
         self.vbox.pack_start(self.notebook, expand=True, fill=True)
-
-        self.box_group_area.pack_end(self.button_box, expand=False, fill=False)
         self.show_all()
         self.back_button.hide()
 
