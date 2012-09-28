@@ -849,9 +849,8 @@ class Builder(gtk.Window):
                 self.generate_image_async(True)
 
     def show_error_dialog(self, msg):
-        lbl = "<b>Error</b>\n"
-        lbl = lbl + "%s\n\n" % glib.markup_escape_text(msg)
-        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+        lbl = "<b>Hob found an error</b>\n"
+        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR, msg)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
         response = dialog.run()
