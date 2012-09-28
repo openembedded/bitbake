@@ -300,7 +300,9 @@ class CrumbsMessageDialog(CrumbsDialog):
 class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
     (BUILD_ENV_PAGE_ID,
-     PROXIES_PAGE_ID) = range(2)
+     SHARED_STATE_PAGE_ID,
+     PROXIES_PAGE_ID,
+     OTHERS_PAGE_ID) = range(4)
 
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
@@ -645,27 +647,9 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.refresh_proxy_components()
         return advanced_vbox
 
-
-    def create_visual_elements(self):
-        self.nb = gtk.Notebook()
-        self.nb.set_show_tabs(True)
-        self.nb.append_page(self.create_build_environment_page(), gtk.Label("Build environment"))
-        self.nb.append_page(self.create_shared_state_page(), gtk.Label("Shared state"))
-        self.nb.append_page(self.create_proxy_page(), gtk.Label("Proxies"))
-        self.nb.set_current_page(0)
-        self.vbox.pack_start(self.nb, expand=True, fill=True)
-        self.vbox.pack_end(gtk.HSeparator(), expand=True, fill=True)
-
-        self.show_all()
-
     def switch_to_page(self, page_id):
         self.nb.set_current_page(page_id)
 
-#
-# AdvancedSettings Dialog
-#
-class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
-    
     def details_cb(self, button, parent, protocol):
         dialog = ProxyDetailsDialog(title = protocol.upper() + " Proxy Details",
             user = self.configuration.proxies[protocol][1],
@@ -835,6 +819,7 @@ class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
         self.nb = gtk.Notebook()
         self.nb.set_show_tabs(True)        
         self.nb.append_page(self.create_build_environment_page(), gtk.Label("Build environment"))
+        self.nb.append_page(self.create_shared_state_page(), gtk.Label("Shared state"))
         self.nb.append_page(self.create_proxy_page(), gtk.Label("Proxies"))        
         self.nb.append_page(self.create_others_page(), gtk.Label("Others"))
         self.nb.set_current_page(0)
