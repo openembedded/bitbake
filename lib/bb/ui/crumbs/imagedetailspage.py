@@ -329,18 +329,18 @@ class ImageDetailsPage (HobPage):
         # The default kernel box for the qemu images
         self.sel_kernel = ""
         self.kernel_detail = None
-        if 'qemu' in image_name:
-            self.sel_kernel = self.get_kernel_file_name()
+        #if 'qemu' in image_name:
+        #    self.sel_kernel = self.get_kernel_file_name()
 
-            varlist = ["Kernel: "]
-            vallist = []
-            vallist.append(self.sel_kernel)
+        #    varlist = ["Kernel: "]
+        #    vallist = []
+        #    vallist.append(self.sel_kernel)
 
-            change_kernel_button = HobAltButton("Change")
-            change_kernel_button.connect("clicked", self.change_kernel_cb)
-            change_kernel_button.set_tooltip_text("Change qemu kernel file")
-            self.kernel_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=change_kernel_button)
-            self.box_group_area.pack_start(self.kernel_detail, expand=True, fill=True)
+        #    change_kernel_button = HobAltButton("Change")
+        #    change_kernel_button.connect("clicked", self.change_kernel_cb)
+        #    change_kernel_button.set_tooltip_text("Change qemu kernel file")
+        #    self.kernel_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=change_kernel_button)
+        #    self.box_group_area.pack_start(self.kernel_detail, expand=True, fill=True)
 
         # Machine, Base image and Layers
         layer_num_limit = 15
