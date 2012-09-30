@@ -147,26 +147,58 @@ def explode_dep_versions(s):
     r = {}
     l = s.replace(",", "").split()
     lastdep = None
+    lastcmp = ""
     lastver = ""
+    incmp = False
     inversion = False
     for i in l:
         if i[0] == '(':
+            incmp = True
+            i = i[1:].strip()
+            if not i:
+                continue
+
+        if incmp:
+            incmp = False
             inversion = True
-            lastver = i[1:] or ""
-            #j = []
-        elif inversion and i.endswith(')'):
-            inversion = False
-            lastver = lastver + " " + (i[:-1] or "")
-            if lastdep in r and r[lastdep] and r[lastdep] != lastver:
-                raise ValueError("Error, item %s appeared in dependency string '%s' multiple times with different values.  explode_dep_versions cannot cope with this." % (lastdep, s))
-            r[lastdep] = lastver
-        elif not inversion:
-            if not (i in r and r[i]):
-                r[i] = None
-            lastdep = i
-            lastver = ""
-        elif inversion:
-            lastver = lastver + " " + i
+            # This list is based on behavior and supported comparisons from deb, opkg and rpm.
+            #
+            # Even though =<, <<, ==, !=, =>, and >> may not be supported, 
+            # we list each possibly valid item. 
+            # The build system is responsible for validation of what it supports.
+            if i.startswith(('<=', '=<', '<<', '==', '!=', '>=', '=>', '>>')):
+                lastcmp = i[0:2]
+                i = i[2:]
+            elif i.startswith(('<', '>', '=')):
+                lastcmp = i[0:1]
+                i = i[1:]
+            else:
+                # This is an unsupported case!
+                lastcmp = (i or "")
+                i = ""
+            i.strip()
+            if not i:
+                continue
+
+        if inversion:
+            if i.endswith(')'):
+                i = i[:-1] or ""
+                inversion = False
+                if lastver and i:
+                    lastver += " "
+            if i:
+                lastver += i
+                if lastdep in r and r[lastdep] and r[lastdep] != lastver:
+                    raise ValueError("Error, item %s appeared in dependency string '%s' multiple times with different values.  explode_dep_versions cannot cope with this." % (lastdep, s))
+                r[lastdep] = lastcmp + " " + lastver
+            continue
+
+        #if not inversion:
+        lastdep = i
+        lastver = ""
+        lastcmp = ""
+        if not (i in r and r[i]):
+            r[lastdep] = None
 
     return r
 
