@@ -157,9 +157,12 @@ def explode_dep_versions(s):
         elif inversion and i.endswith(')'):
             inversion = False
             lastver = lastver + " " + (i[:-1] or "")
+            if lastdep in r and r[lastdep] and r[lastdep] != lastver:
+                raise ValueError("Error, item %s appeared in dependency string '%s' multiple times with different values.  explode_dep_versions cannot cope with this." % (lastdep, s))
             r[lastdep] = lastver
         elif not inversion:
-            r[i] = None
+            if not (i in r and r[i]):
+                r[i] = None
             lastdep = i
             lastver = ""
         elif inversion:
