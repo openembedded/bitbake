@@ -138,7 +138,7 @@ def explode_deps(s):
             #r[-1] += ' ' + ' '.join(j)
     return r
 
-def explode_dep_versions(s):
+def explode_dep_versions2(s):
     """
     Take an RDEPENDS style string of format:
     "DEPEND1 (optional version) DEPEND2 (optional version) ..."
@@ -188,9 +188,9 @@ def explode_dep_versions(s):
                     lastver += " "
             if i:
                 lastver += i
-                if lastdep in r and r[lastdep] and r[lastdep] != lastver:
-                    raise ValueError("Error, item %s appeared in dependency string '%s' multiple times with different values.  explode_dep_versions cannot cope with this." % (lastdep, s))
-                r[lastdep] = lastcmp + " " + lastver
+                if lastdep not in r:
+                    r[lastdep] = []
+                r[lastdep].append(lastcmp + " " + lastver)
             continue
 
         #if not inversion:
@@ -198,8 +198,19 @@ def explode_dep_versions(s):
         lastver = ""
         lastcmp = ""
         if not (i in r and r[i]):
-            r[lastdep] = None
+            r[lastdep] = []
 
+    return r
+
+def explode_dep_versions(s):
+    r = explode_dep_versions2(s)
+    for d in r:
+        if not r[d]:
+            r[d] = None
+            continue
+        if len(r[d]) > 1:
+            bb.warn("explode_dep_versions(): Item %s appeared in dependency string '%s' multiple times with different values.  explode_dep_versions cannot cope with this." % (d, s))
+        r[d] = r[d][0]
     return r
 
 def join_deps(deps, commasep=True):
@@ -209,7 +220,11 @@ def join_deps(deps, commasep=True):
     result = []
     for dep in deps:
         if deps[dep]:
-            result.append(dep + " (" + deps[dep] + ")")
+            if isinstance(deps[dep], list):
+                for v in deps[dep]:
+                    result.append(dep + " (" + v + ")")
+            else:
+                result.append(dep + " (" + deps[dep] + ")")
         else:
             result.append(dep)
     if commasep:
