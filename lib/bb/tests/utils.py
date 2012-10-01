@@ -34,3 +34,18 @@ class VerCmpString(unittest.TestCase):
         result = bb.utils.vercmp_string('1.1', '1_p2')
         self.assertTrue(result < 0)
 
+    def test_explode_dep_versions(self):
+        correctresult = {"foo" : ["= 1.10"]}
+        result = bb.utils.explode_dep_versions2("foo (= 1.10)")
+        self.assertEqual(result, correctresult)
+        result = bb.utils.explode_dep_versions2("foo (=1.10)")
+        self.assertEqual(result, correctresult)
+        result = bb.utils.explode_dep_versions2("foo ( = 1.10)")
+        self.assertEqual(result, correctresult)
+        result = bb.utils.explode_dep_versions2("foo ( =1.10)")
+        self.assertEqual(result, correctresult)
+        result = bb.utils.explode_dep_versions2("foo ( = 1.10 )")
+        self.assertEqual(result, correctresult)
+        result = bb.utils.explode_dep_versions2("foo ( =1.10 )")
+        self.assertEqual(result, correctresult)
+
