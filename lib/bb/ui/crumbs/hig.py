@@ -159,7 +159,7 @@ class SettingsUIHelper():
 
         delete_button = HobAltButton("Delete")
         delete_button.connect("clicked", self.delete_cb, index, entry)
-        if content == "":
+        if content == "" and index == 0  and len(self.sstatemirrors_list) == 1:
             delete_button.set_sensitive(False)
 
         entry_match.connect("changed", self.insert_entry_match_cb, index)
@@ -188,7 +188,7 @@ class SettingsUIHelper():
 
     def insert_entry_cb(self, entry, index, button):
         self.sstatemirrors_list[index][1] = entry.get_text()
-        if entry.get_text() == "":
+        if entry.get_text() == "" and index == 0:
             button.set_sensitive(False)
         else:
             button.set_sensitive(True)
@@ -196,6 +196,7 @@ class SettingsUIHelper():
     def on_combo_changed(self, combo, index):
         if combo.get_active_text() == "Standard":
             self.sstatemirrors_list[index][0] = 0
+            self.sstatemirrors_list[index][2] = "file://(.*)"
         else:
             self.sstatemirrors_list[index][0] = 1
         self.refresh_shared_state_page()
@@ -450,7 +451,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.configuration.sstatedir = self.sstatedir_text.get_text()
         self.configuration.sstatemirror = ""
         for mirror in self.sstatemirrors_list:
-            if mirror[1] != "" or len(self.sstatemirrors_list)==1:
+            if mirror[1] != "":
                 if mirror[1].endswith("\\1"):
                     smirror = mirror[2] + " " + mirror[1] + " \\n "
                 else:
@@ -548,20 +549,24 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         if self.sstatemirrors_changed == 0:
             self.sstatemirrors_changed = 1
             sstatemirrors = self.configuration.sstatemirror
-            while sstatemirrors.find(searched_string) != -1:
-                if sstatemirrors.find(searched_string,1) != -1:
-                    sstatemirror = sstatemirrors[:sstatemirrors.find(searched_string,1)]
-                    sstatemirrors = sstatemirrors[sstatemirrors.find(searched_string,1):]
-                else:
-                    sstatemirror = sstatemirrors
-                    sstatemirrors = sstatemirrors[1:]
-
-                sstatemirror_fields = [x for x in sstatemirror.split(' ') if x.strip()]
-                if sstatemirror_fields[0] == "file://(.*)":
-                    sm_list = [ 0, sstatemirror_fields[1], "file://(.*)"]
-                else:
-                    sm_list = [ 1, sstatemirror_fields[1], sstatemirror_fields[0]]
+            if sstatemirrors == "":
+                sm_list = [ 0, "", "file://(.*)"]
                 self.sstatemirrors_list.append(sm_list)
+            else:
+                while sstatemirrors.find(searched_string) != -1:
+                    if sstatemirrors.find(searched_string,1) != -1:
+                        sstatemirror = sstatemirrors[:sstatemirrors.find(searched_string,1)]
+                        sstatemirrors = sstatemirrors[sstatemirrors.find(searched_string,1):]
+                    else:
+                        sstatemirror = sstatemirrors
+                        sstatemirrors = sstatemirrors[1:]
+
+                    sstatemirror_fields = [x for x in sstatemirror.split(' ') if x.strip()]
+                    if sstatemirror_fields[0] == "file://(.*)":
+                        sm_list = [ 0, sstatemirror_fields[1], "file://(.*)"]
+                    else:
+                        sm_list = [ 1, sstatemirror_fields[1], sstatemirror_fields[0]]
+                    self.sstatemirrors_list.append(sm_list)
 
         index = 0
         for mirror in self.sstatemirrors_list:
