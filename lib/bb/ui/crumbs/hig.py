@@ -508,10 +508,10 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(pmake_widget, expand=False, fill=False)
 
-        advanced_vbox.pack_start(self.gen_label_widget('<span weight="bold">Cache directories and mirror</span>'), expand=False, fill=False)
+        advanced_vbox.pack_start(self.gen_label_widget('<span weight="bold">Downloaded source code</span>'), expand=False, fill=False)
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
-        label = self.gen_label_widget("Download directory")
+        label = self.gen_label_widget("Downloads directory")
         tooltip = "Select a folder that caches the upstream project source code"
         dldir_widget, self.dldir_text = self.gen_entry_widget(self.configuration.dldir, self, tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -860,13 +860,19 @@ class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
 
     def rootfs_combo_changed_cb(self, rootfs_combo, all_package_format, check_hbox):
         combo_item = self.rootfs_combo.get_active_text()
+        modified = False
         for child in check_hbox.get_children():
             if isinstance(child, gtk.CheckButton):
                 check_hbox.remove(child)
+                modified = True
         for format in all_package_format:
             if format != combo_item:
                 check_button = gtk.CheckButton(format)
                 check_hbox.pack_start(check_button, expand=False, fill=False)
+                modified = True
+        if modified:
+            check_hbox.remove(self.pkgfmt_info)
+            check_hbox.pack_start(self.pkgfmt_info, expand=False, fill=False)
         check_hbox.show_all()
 
     def gen_pkgfmt_widget(self, curr_package_format, all_package_format, tooltip_combo="", tooltip_extra=""):
@@ -894,8 +900,8 @@ class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
                 check_button.set_active(is_active)
                 check_hbox.pack_start(check_button, expand=False, fill=False)
 
-        info = HobInfoButton(tooltip_extra, self)
-        check_hbox.pack_start(info, expand=False, fill=False)
+        self.pkgfmt_info = HobInfoButton(tooltip_extra, self)
+        check_hbox.pack_start(self.pkgfmt_info, expand=False, fill=False)
 
         rootfs_combo.connect("changed", self.rootfs_combo_changed_cb, all_package_format, check_hbox)
 
@@ -913,7 +919,7 @@ class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
         self.configuration = configuration
         self.image_types = all_image_types
         self.all_package_formats = all_package_formats
-        self.all_distros = all_distros
+        self.all_distros = all_distros[:]
         self.all_sdk_machines = all_sdk_machines
         self.max_threads = max_threads
 
@@ -996,6 +1002,14 @@ class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
         distro_vbox = gtk.VBox(False, 6)        
         label = self.gen_label_widget("Distro:")
         tooltip = "Selects the Yocto Project distribution you want"
+        try:
+            i = self.all_distros.index( "defaultsetup" )
+        except ValueError:
+            i = -1
+        if i != -1:
+            self.all_distros[ i ] = "Default"
+            if self.configuration.curr_distro == "defaultsetup":
+                self.configuration.curr_distro = "Default"
         distro_widget, self.distro_combo = self.gen_combo_widget(self.configuration.curr_distro, self.all_distros, tooltip)
         distro_vbox.pack_start(label, expand=False, fill=False)
         distro_vbox.pack_start(distro_widget, expand=False, fill=False)
@@ -1096,7 +1110,10 @@ class AdvancedSettingDialog (CrumbsDialog, SettingsUIHelper):
                 package_format.append(child.get_label())
         self.configuration.curr_package_format = " ".join(package_format)
 
-        self.configuration.curr_distro = self.distro_combo.get_active_text()        
+        distro = self.distro_combo.get_active_text()
+        if distro == "Default":
+            distro = "defaultsetup"
+        self.configuration.curr_distro = distro
         self.configuration.image_rootfs_size = self.rootfs_size_spinner.get_value_as_int() * 1024
         self.configuration.image_extra_size = self.extra_size_spinner.get_value_as_int() * 1024
 
