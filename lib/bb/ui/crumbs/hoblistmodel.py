@@ -337,13 +337,13 @@ class PackageListModel(gtk.TreeStore):
     set_selected_packages(), some packages will not be set included.
     Return the un-set packages list.
     """
-    def set_selected_packages(self, packagelist):
+    def set_selected_packages(self, packagelist, user_selected=False):
         left = []
+        binb = 'User Selected' if user_selected else ''
         for pn in packagelist:
             if pn in self.pkg_path.keys():
                 path = self.pkg_path[pn]
-                self.include_item(item_path=path,
-                                  binb="User Selected")
+                self.include_item(item_path=path, binb=binb)
             else:
                 left.append(pn)
 
@@ -359,7 +359,7 @@ class PackageListModel(gtk.TreeStore):
             while child_it:
                 if self.get_value(child_it, self.COL_INC):
                     binb = self.get_value(child_it, self.COL_BINB)
-                    if not binb or binb == "User Selected":
+                    if binb == "User Selected":
                         name = self.get_value(child_it, self.COL_NAME)
                         packagelist.append(name)
                 child_it = self.iter_next(child_it)

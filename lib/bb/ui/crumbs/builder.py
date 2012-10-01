@@ -127,6 +127,7 @@ class Configuration:
         self.selected_recipes = []
         self.selected_packages = []
         self.initial_selected_packages = []
+        self.initial_user_selected_packages = []
 
     def split_proxy(self, protocol, proxy):
         entry = []
@@ -576,6 +577,7 @@ class Builder(gtk.Window):
         self.handler.generate_packages(all_recipes, self.configuration.default_task)
 
     def restore_initial_selected_packages(self):
+        self.package_model.set_selected_packages(self.configuration.initial_user_selected_packages, True)
         self.package_model.set_selected_packages(self.configuration.initial_selected_packages)
         for package in self.configuration.selected_packages:
             if package not in self.configuration.initial_selected_packages:
@@ -709,6 +711,7 @@ class Builder(gtk.Window):
 
         elif next_step == self.PACKAGE_SELECTION:
             self.configuration.initial_selected_packages = self.configuration.selected_packages
+            self.configuration.initial_user_selected_packages = self.configuration.user_selected_packages
             self.package_details_page.set_title("Edit packages")
             if self.recipe_model.get_selected_image() == self.recipe_model.__custom_image__:
                 self.package_details_page.set_packages_curr_tab(self.package_details_page.ALL)
@@ -782,7 +785,10 @@ class Builder(gtk.Window):
         self.recipe_model.set_selected_image(selected_image)
         self.recipe_model.set_selected_recipes(selected_recipes)
 
-    def update_package_model(self, selected_packages):
+    def update_package_model(self, selected_packages, user_selected_packages=None):
+        if user_selected_packages:
+            left = self.package_model.set_selected_packages(user_selected_packages, True)
+            self.configuration.user_selected_packages += left
         left = self.package_model.set_selected_packages(selected_packages)
         self.configuration.selected_packages += left
 
@@ -924,11 +930,12 @@ class Builder(gtk.Window):
         selected_image = self.configuration.selected_image
         selected_recipes = self.configuration.selected_recipes[:]
         selected_packages = self.configuration.selected_packages[:]
+        user_selected_packages = self.configuration.user_selected_packages[:]
 
         self.image_configuration_page.update_image_combo(self.recipe_model, selected_image)
         self.image_configuration_page.update_image_desc()
         self.update_recipe_model(selected_image, selected_recipes)
-        self.update_package_model(selected_packages)
+        self.update_package_model(selected_packages, user_selected_packages)
 
     def recipelist_changed_cb(self, recipe_model):
         self.recipe_details_page.refresh_selection()
