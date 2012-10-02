@@ -280,6 +280,7 @@ class CrumbsMessageDialog(CrumbsDialog):
             self.label_long.show()
             self.textWindow = gtk.ScrolledWindow()
             self.textWindow.set_shadow_type(gtk.SHADOW_IN)
+            self.textWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
             self.msgView = gtk.TextView()
             self.msgView.set_editable(False)
             self.msgView.set_wrap_mode(gtk.WRAP_WORD)
