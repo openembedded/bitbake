@@ -62,6 +62,7 @@ class HobPage (gtk.VBox):
 
         hbox = gtk.HBox()
 
+        self.title_label = gtk.Label()
         self.title_label.set_markup("<span size='x-large'>%s</span>" % self.title)
         hbox.pack_start(self.title_label, expand=False, fill=False, padding=20)
 
