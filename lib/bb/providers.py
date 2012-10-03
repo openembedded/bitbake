@@ -130,7 +130,7 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         m = re.match('(\d+:)*(.*)(_.*)*', preferred_v)
         if m:
             if m.group(1):
-                preferred_e = int(m.group(1)[:-1])
+                preferred_e = m.group(1)[:-1]
             else:
                 preferred_e = None
             preferred_v = m.group(2)
