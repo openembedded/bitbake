@@ -49,6 +49,9 @@ class Wget(FetchMethod):
         return True
 
     def urldata_init(self, ud, d):
+        if 'protocol' in ud.parm:
+            if ud.parm['protocol'] == 'git':
+                raise bb.fetch2.ParameterError("Invalid protocol - if you wish to fetch from a git repository using http, you need to instead use the git:// prefix with protocol=http", ud.url)
 
         if 'downloadfilename' in ud.parm:
             ud.basename = ud.parm['downloadfilename']
