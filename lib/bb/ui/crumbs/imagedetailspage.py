@@ -426,6 +426,8 @@ class ImageDetailsPage (HobPage):
         return mach_runnable
 
     def test_deployable(self, image_name):
+        if self.builder.configuration.curr_mach.startswith("qemu"):
+            return False
         deployable = False
         for t in self.builder.parameters.deployable_image_types:
             if image_name.endswith(t):
