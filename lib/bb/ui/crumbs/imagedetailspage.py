@@ -329,8 +329,8 @@ class ImageDetailsPage (HobPage):
         # The default kernel box for the qemu images
         self.sel_kernel = ""
         self.kernel_detail = None
-        #if 'qemu' in image_name:
-        #    self.sel_kernel = self.get_kernel_file_name()
+        if 'qemu' in image_name:
+            self.sel_kernel = self.get_kernel_file_name()
 
         #    varlist = ["Kernel: "]
         #    vallist = []
