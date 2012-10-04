@@ -101,7 +101,12 @@ class HobHandler(gobject.GObject):
 
     def runCommand(self, commandline):
         try:
-            return self.server.runCommand(commandline)
+            result = self.server.runCommand(commandline)
+            result_str = str(result)
+            if (result_str.startswith("Busy (") or
+                    result_str == "No such command"):
+                raise Exception(result_str)
+            return result
         except Exception as e:
             self.commands_async = []
             self.clear_busy()
