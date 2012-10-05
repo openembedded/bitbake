@@ -105,7 +105,9 @@ class HobHandler(gobject.GObject):
             result_str = str(result)
             if (result_str.startswith("Busy (") or
                     result_str == "No such command"):
-                raise Exception(result_str)
+                raise Exception('%s has failed with output "%s". ' %
+                        (str(commandline), result_str) +
+                        "We recommend that you restart Hob.")
             return result
         except Exception as e:
             self.commands_async = []
