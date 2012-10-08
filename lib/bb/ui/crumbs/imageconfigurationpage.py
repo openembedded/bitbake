@@ -368,6 +368,7 @@ class ImageConfigurationPage (HobPage):
         if self.builder.parameters.image_black_pattern:
             for i in self.builder.parameters.image_black_pattern.split():
                 black_pattern.append(re.compile(i))
+        black_pattern.append(re.compile("hob-image"))
 
         it = image_model.get_iter_first()
         self._image_combo_disconnect_signal()
