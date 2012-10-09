@@ -42,7 +42,7 @@ class PackageListModel(gtk.TreeStore):
                                 ()),
     }
 
-    __toolchain_required_packages__ = ["task-core-standalone-sdk-target", "task-core-standalone-sdk-target-dbg"]
+    __toolchain_required_packages__ = ["packagegroup-core-standalone-sdk-target", "packagegroup-core-standalone-sdk-target-dbg"]
 
     def __init__(self):
 
