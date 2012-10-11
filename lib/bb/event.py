@@ -566,3 +566,19 @@ class SanityCheckFailed(Event):
         Event.__init__(self)
         self._msg = msg
         self._network_error = network_error
+
+class NetworkTest(Event):
+    """
+    Event to start network test
+    """
+
+class NetworkTestPassed(Event):
+    """
+    Event to indicate network test has passed
+    """
+
+class NetworkTestFailed(Event):
+    """
+    Event to indicate network test has failed
+    """
+
