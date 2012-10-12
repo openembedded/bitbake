@@ -432,6 +432,7 @@ class ImageConfigurationPage (HobPage):
         self.builder.just_bake()
 
     def edit_image_button_clicked_cb(self, button):
+        self.builder.configuration.initial_selected_image = self.builder.configuration.selected_image
         self.builder.show_recipes()
 
     def template_button_clicked_cb(self, button):

@@ -126,6 +126,7 @@ class Configuration:
         self.selected_image = None
         self.selected_recipes = []
         self.selected_packages = []
+        self.initial_selected_image = None
         self.initial_selected_packages = []
         self.initial_user_selected_packages = []
 

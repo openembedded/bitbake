@@ -193,6 +193,9 @@ class RecipeSelectionPage (HobPage):
         self.builder.build_packages()
 
     def back_button_clicked_cb(self, button):
+        self.builder.recipe_model.set_selected_image(self.builder.configuration.initial_selected_image)
+        self.builder.image_configuration_page.update_image_combo(self.builder.recipe_model, self.builder.configuration.initial_selected_image)
+        self.builder.image_configuration_page.update_image_desc()
         self.builder.show_configuration()
 
     def refresh_selection(self):
