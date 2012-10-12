@@ -43,6 +43,11 @@ class HobProgressBar (gtk.ProgressBar):
         text += " %.0f%%" % self.percentage
         self.set_text(text)
 
+    def set_stop_title(self, text=None):
+	if not text:
+	    text = ""
+	self.set_text(text)
+
     def reset(self):
         self.set_fraction(0)
         self.set_text("")
