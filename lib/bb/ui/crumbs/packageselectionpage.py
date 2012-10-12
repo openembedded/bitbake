@@ -208,8 +208,8 @@ class PackageSelectionPage (HobPage):
         selected_packages_size_str = HobPage._size_to_string(selected_packages_size)
 
         image_overhead_factor = self.builder.configuration.image_overhead_factor
-        image_rootfs_size = self.builder.configuration.image_rootfs_size * 1024 # image_rootfs_size is KB
-        image_extra_size = self.builder.configuration.image_extra_size * 1024 # image_extra_size is KB
+        image_rootfs_size = self.builder.configuration.image_rootfs_size / 1024 # image_rootfs_size is KB
+        image_extra_size = self.builder.configuration.image_extra_size / 1024 # image_extra_size is KB
         base_size = image_overhead_factor * selected_packages_size
         image_total_size = max(base_size, image_rootfs_size) + image_extra_size
         if "zypper" in self.builder.configuration.selected_packages:
