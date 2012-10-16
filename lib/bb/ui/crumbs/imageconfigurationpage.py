@@ -45,6 +45,7 @@ class ImageConfigurationPage (HobPage):
         # or by manual. If by manual, all user's recipe selection and package selection are
         # cleared.
         self.machine_combo_changed_by_manual = True
+        self.stopping = False
         self.create_visual_elements()
 
     def create_visual_elements(self):
@@ -114,9 +115,10 @@ class ImageConfigurationPage (HobPage):
         self.show_all()
 
     def update_progress_bar(self, title, fraction, status=None):
-        self.progress_bar.update(fraction)
-        self.progress_bar.set_title(title)
-        self.progress_bar.set_rcstyle(status)
+        if self.stopping == False:
+            self.progress_bar.update(fraction)
+            self.progress_bar.set_title(title)
+            self.progress_bar.set_rcstyle(status)
 
     def show_info_populating(self):
         self._pack_components(pack_config_build_button = False)
@@ -248,9 +250,13 @@ class ImageConfigurationPage (HobPage):
         return button_box
 
     def stop_button_clicked_cb(self, button):
+        self.stopping = True
+        self.progress_bar.set_text("Stopping recipe parsing")
+        self.progress_bar.set_rcstyle("stop")
         self.builder.cancel_parse_sync()
 
     def machine_combo_changed_cb(self, machine_combo):
+        self.stopping = False
         combo_item = machine_combo.get_active_text()
         if not combo_item or combo_item == self.__dummy_machine__:
             return
