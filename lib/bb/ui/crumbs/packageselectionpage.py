@@ -52,7 +52,7 @@ class PackageSelectionPage (HobPage):
                        'col_max'  : 300,
                        'expand'   : 'True'
                       }, {
-                       'col_name' : 'Brought in by',
+                       'col_name' : 'Brought in by (+others)',
                        'col_id'   : PackageListModel.COL_BINB,
                        'col_style': 'binb',
                        'col_min'  : 100,

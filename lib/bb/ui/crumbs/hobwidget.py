@@ -155,9 +155,15 @@ class HobViewTable (gtk.VBox):
             bin = binb.split(', ')
             total_no = len(bin)
             if total_no > 1 and bin[0] == "User Selected":
-                present_binb = bin[1] + ' (+' + str(total_no) + ')'
+                if total_no > 2:
+                    present_binb = bin[1] + ' (+' + str(total_no - 1) + ')'
+                else:
+                    present_binb = bin[1]
             else:
-                present_binb = bin[0] + ' (+' + str(total_no) + ')'
+                if total_no > 1:
+                    present_binb = bin[0] + ' (+' + str(total_no - 1) + ')'
+                else:
+                    present_binb = bin[0]
             cell.set_property('text', present_binb)
         else:
             cell.set_property('text', "")
