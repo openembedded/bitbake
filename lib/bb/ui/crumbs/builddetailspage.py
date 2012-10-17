@@ -348,6 +348,7 @@ class BuildDetailsPage (HobPage):
 
         self.box_group_area.pack_end(self.button_box, expand=False, fill=False)
         self.show_all()
+        self.notebook.set_page("Log")
         self.back_button.hide()
 
         self.reset_build_status()
