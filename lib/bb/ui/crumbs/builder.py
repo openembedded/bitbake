@@ -123,7 +123,6 @@ class Configuration:
         }
 
     def clear_selection(self):
-        self.selected_image = None
         self.selected_recipes = []
         self.selected_packages = []
         self.initial_selected_image = None
