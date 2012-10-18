@@ -581,8 +581,6 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(sstatedir_widget, expand=False, fill=False, padding=12)
 
-        sub_vbox = gtk.VBox(False)
-        advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         content = "<span weight=\"bold\">Shared state mirrors</span>"
         tooltip = "URLs pointing to pre-built mirrors that will speed your build. "
         tooltip += "Select the \'Standard\' configuration if the structure of your "
@@ -591,8 +589,14 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         tooltip += "http://www.yoctoproject.org/docs/current/poky-ref-manual/"
         tooltip += "poky-ref-manual.html#shared-state\">Yocto Project Reference Manual</a>."
         table = self.gen_label_info_widget(content, tooltip)
-        sub_vbox.pack_start(table, expand=False, fill=False)
+        advanced_vbox.pack_start(table, expand=False, fill=False)
 
+        sub_vbox = gtk.VBox(False)
+        scroll = gtk.ScrolledWindow()
+        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        scroll.add_with_viewport(sub_vbox)
+        scroll.connect('size-allocate', self.scroll_changed)
+        advanced_vbox.pack_start(scroll, gtk.TRUE, gtk.TRUE, 0)
         searched_string = "file://"
 
         if self.sstatemirrors_changed == 0:
@@ -1004,6 +1008,9 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.handler.disconnect(self.proxy_test_failed_id)
         super(SimpleSettingsDialog, self).destroy()
 
+    def scroll_changed(self, widget, event, data=None):
+        adj = widget.get_vadjustment()
+        adj.set_value(adj.upper - adj.page_size)
 
 #
 # AdvancedSettings Dialog
