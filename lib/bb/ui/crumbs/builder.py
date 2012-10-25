@@ -89,6 +89,7 @@ class Configuration:
 
     def __init__(self):
         self.curr_mach = ""
+        self.selected_image = None
         # settings
         self.curr_distro = ""
         self.dldir = self.sstatedir = self.sstatemirror = ""
