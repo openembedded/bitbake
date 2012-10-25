@@ -963,7 +963,10 @@ class Builder(gtk.Window):
         else:
             self.image_configuration_page.stop_button.set_sensitive(True)
 
-        self.image_configuration_page.update_progress_bar(message["title"], fraction)
+        if message["eventname"] == "TreeDataPreparationProgress":
+            self.image_configuration_page.update_progress_bar("Generating dependency tree", fraction)
+        else:
+            self.image_configuration_page.update_progress_bar(message["title"], fraction)
 
     def handler_parsing_cb(self, handler, message):
         if self.current_step != self.RCPPKGINFO_POPULATING:
@@ -974,7 +977,10 @@ class Builder(gtk.Window):
             fraction = 0.6 + 0.38 * fraction
         else:
             fraction = 0.6 * fraction
-        self.image_configuration_page.update_progress_bar(message["title"], fraction)
+        if message["eventname"] == "TreeDataPreparationProgress":
+            self.image_configuration_page.update_progress_bar("Generating dependency tree", fraction)
+        else: 
+            self.image_configuration_page.update_progress_bar(message["title"], fraction)
 
     def handler_parsing_completed_cb(self, handler, message):
         if self.current_step != self.RCPPKGINFO_POPULATING:
