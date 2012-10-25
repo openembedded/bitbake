@@ -1855,6 +1855,9 @@ class ImageSelectionDialog (CrumbsDialog):
                     break
                 iter = self.image_store.iter_next(iter)
 
+#
+# ProxyDetailsDialog
+#
 class ProxyDetailsDialog (CrumbsDialog):
 
     def __init__(self, title, user, passwd, parent, flags, buttons=None):
@@ -1914,3 +1917,42 @@ class ProxyDetailsDialog (CrumbsDialog):
             else:
                 self.user = None
                 self.passwd = None
+
+
+#
+# OpeningLogDialog
+#
+class OpeningLogDialog (CrumbsDialog):
+
+    def __init__(self, title, parent, flags, buttons=None):
+        super(OpeningLogDialog, self).__init__(title, parent, flags, buttons)
+
+        self.running = False
+        # create visual elements on the dialog
+        self.create_visual_elements()
+
+    def start(self):
+        if not self.running:
+          self.running = True
+          gobject.timeout_add(100, self.pulse)
+
+    def pulse(self):
+        self.progress_bar.pulse()
+        return self.running
+
+    def create_visual_elements(self):
+        hbox = gtk.HBox(False, 12)
+        self.user_label = gtk.Label("The log will open in a text editor")
+        hbox.pack_start(self.user_label, expand=False, fill=False)
+        self.vbox.pack_start(hbox, expand=False, fill=False)
+
+        hbox = gtk.HBox(False, 12)
+        # Progress bar
+        self.progress_bar = HobProgressBar()
+        hbox.pack_start(self.progress_bar)
+        self.start()
+        self.vbox.pack_start(hbox, expand=False, fill=False)
+
+        button = self.add_button("Cancel", gtk.RESPONSE_CANCEL)
+        HobAltButton.style_button(button)
+        self.show_all()

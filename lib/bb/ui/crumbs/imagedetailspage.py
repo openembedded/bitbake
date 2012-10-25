@@ -27,6 +27,9 @@ from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton, HobButton
 from bb.ui.crumbs.hobpages import HobPage
 import subprocess
 from bb.ui.crumbs.hig import CrumbsDialog
+from bb.ui.crumbs.hobthreads import OpeningLogThread
+from bb.ui.crumbs.hig import OpeningLogDialog
+
 #
 # ImageDetailsPage
 #
@@ -404,7 +407,18 @@ class ImageDetailsPage (HobPage):
 
     def open_log_clicked_cb(self, button, log_file):
         if log_file:
-            os.system("xdg-open /%s" % log_file)
+            self.stop = False
+            dialog = OpeningLogDialog(title = "Opening Log",
+                parent = None,
+                flags = gtk.DIALOG_MODAL
+                        | gtk.DIALOG_DESTROY_WITH_PARENT
+                        | gtk.DIALOG_NO_SEPARATOR)
+            #create a thread to open log file
+            background = OpeningLogThread(dialog, log_file, self)
+            background.start()
+            response = dialog.run()
+            self.stop = True
+            background.join()
 
     def refresh_package_detail_box(self, image_size):
         self.package_detail.update_line_widgets("Total image size: ", image_size)
