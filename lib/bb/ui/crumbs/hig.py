@@ -1501,6 +1501,13 @@ class CellRendererPixbufActivatable(gtk.CellRendererPixbuf):
 #
 class LayerSelectionDialog (CrumbsDialog):
 
+    TARGETS = [
+        ("MY_TREE_MODEL_ROW", gtk.TARGET_SAME_WIDGET, 0),
+        ("text/plain", 0, 1),
+        ("TEXT", 0, 2),
+        ("STRING", 0, 3),
+        ]
+
     def gen_label_widget(self, content):
         label = gtk.Label()
         label.set_alignment(0, 0)
@@ -1564,7 +1571,17 @@ class LayerSelectionDialog (CrumbsDialog):
         layer_tv.set_rules_hint(True)
         layer_tv.set_headers_visible(False)
         tree_selection = layer_tv.get_selection()
-        tree_selection.set_mode(gtk.SELECTION_NONE)
+        tree_selection.set_mode(gtk.SELECTION_SINGLE)
+
+        # Allow enable drag and drop of rows including row move
+        layer_tv.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
+            self.TARGETS,
+            gtk.gdk.ACTION_DEFAULT|
+            gtk.gdk.ACTION_MOVE)
+        layer_tv.enable_model_drag_dest(self.TARGETS,
+            gtk.gdk.ACTION_DEFAULT)
+        layer_tv.connect("drag_data_get", self.drag_data_get_cb)
+        layer_tv.connect("drag_data_received", self.drag_data_received_cb)
 
         col0= gtk.TreeViewColumn('Path')
         cell0 = gtk.CellRendererText()
@@ -1618,6 +1635,29 @@ class LayerSelectionDialog (CrumbsDialog):
         hbox.show_all()
 
         return hbox, layer_store
+
+    def drag_data_get_cb(self, treeview, context, selection, target_id, etime):
+        treeselection = treeview.get_selection()
+        model, iter = treeselection.get_selected()
+        data = model.get_value(iter, 0)
+        selection.set(selection.target, 8, data)
+
+    def drag_data_received_cb(self, treeview, context, x, y, selection, info, etime):
+        model = treeview.get_model()
+        data = selection.data
+        drop_info = treeview.get_dest_row_at_pos(x, y)
+        if drop_info:
+            path, position = drop_info
+            iter = model.get_iter(path)
+            if (position == gtk.TREE_VIEW_DROP_BEFORE or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
+                model.insert_before(iter, [data])
+            else:
+                model.insert_after(iter, [data])
+        else:
+            model.append([data])
+        if context.action == gtk.gdk.ACTION_MOVE:
+            context.finish(True, True, etime)
+        return
 
     def add_hover_cb(self, button, event):
         self.im.set_from_file(hic.ICON_INDI_ADD_HOVER_FILE)
