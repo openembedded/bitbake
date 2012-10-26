@@ -381,22 +381,6 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
             data += (key + ": " + self._get_sorted_value(self.configuration.extra_setting[key]))
         return hashlib.md5(data).hexdigest()
 
-    def details_cb(self, button, parent, protocol):
-        dialog = ProxyDetailsDialog(title = protocol.upper() + " Proxy Details",
-            user = self.configuration.proxies[protocol][1],
-            passwd = self.configuration.proxies[protocol][2],
-            parent = parent,
-            flags = gtk.DIALOG_MODAL
-                    | gtk.DIALOG_DESTROY_WITH_PARENT
-                    | gtk.DIALOG_NO_SEPARATOR)
-        dialog.add_button(gtk.STOCK_CLOSE, gtk.RESPONSE_OK)
-        response = dialog.run()
-        if response == gtk.RESPONSE_OK:
-            self.configuration.proxies[protocol][1] = dialog.user
-            self.configuration.proxies[protocol][2] = dialog.passwd
-            self.refresh_proxy_components()
-        dialog.destroy()
-
     def gen_proxy_entry_widget(self, protocol, parent, need_button=True, line=0):
         label = gtk.Label(protocol.upper() + " proxy")
         self.proxy_table.attach(label, 0, 1, line, line+1, xpadding=24)
@@ -826,6 +810,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.nb.set_current_page(page_id)
 
     def details_cb(self, button, parent, protocol):
+        self.save_proxy_data()
         dialog = ProxyDetailsDialog(title = protocol.upper() + " Proxy Details",
             user = self.configuration.proxies[protocol][1],
             passwd = self.configuration.proxies[protocol][2],
