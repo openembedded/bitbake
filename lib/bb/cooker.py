@@ -239,8 +239,10 @@ class BBCooker:
                 self.commandlineAction['msg'] = "No target should be used with the --environment and --buildfile options."
             elif len(self.configuration.pkgs_to_build) > 0:
                 self.commandlineAction['action'] = ["showEnvironmentTarget", self.configuration.pkgs_to_build]
+                self.configuration.data.setVar("BB_CONSOLELOG", None)
             else:
                 self.commandlineAction['action'] = ["showEnvironment", self.configuration.buildfile]
+                self.configuration.data.setVar("BB_CONSOLELOG", None)
         elif self.configuration.buildfile is not None:
             self.commandlineAction['action'] = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
         elif self.configuration.revisions_changed:
