@@ -187,7 +187,7 @@ class TerminalFilter(object):
             return
         if self.footer_present:
             self.clearFooter()
-        if not self.helper.tasknumber_total or self.helper.tasknumber_current == self.helper.tasknumber_total:
+        if (not self.helper.tasknumber_total or self.helper.tasknumber_current == self.helper.tasknumber_total) and not len(activetasks):
             return
         tasks = []
         for t in runningpids:
