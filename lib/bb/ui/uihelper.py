@@ -51,6 +51,7 @@ class BBUIHelper:
         if isinstance(event, bb.runqueue.runQueueTaskStarted) or isinstance(event, bb.runqueue.sceneQueueTaskStarted):
             self.tasknumber_current = event.stats.completed + event.stats.active + event.stats.failed + 1
             self.tasknumber_total = event.stats.total
+            self.needUpdate = True
 
     def getTasks(self):
         self.needUpdate = False
