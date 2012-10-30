@@ -280,8 +280,8 @@ class BitBakeServer(object):
     def saveConnectionDetails(self): 
         self.serverinfo = BitbakeServerInfo(self.server.host, self.server.port)
 
-    def detach(self, cooker_logfile):
-        daemonize.createDaemon(self.server.serve_forever, cooker_logfile)
+    def detach(self):
+        daemonize.createDaemon(self.server.serve_forever)
         del self.cooker
         del self.server
 

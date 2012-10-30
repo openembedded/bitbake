@@ -214,10 +214,6 @@ Default BBFILES are the .bb files in the current directory.""")
     if configuration.bind and configuration.servertype != "xmlrpc":
         sys.exit("FATAL: If '-B' or '--bind' is defined, we must set the servertype as 'xmlrpc'.\n")
 
-    # Save a logfile for cooker into the current working directory. When the
-    # server is daemonized this logfile will be truncated.
-    cooker_logfile = os.path.join(os.getcwd(), "cooker.log")
-
     bb.msg.init_msgconfig(configuration.verbose, configuration.debug,
                          configuration.debug_domains)
 
@@ -246,7 +242,7 @@ Default BBFILES are the .bb files in the current directory.""")
 
     server.addcooker(cooker)
     server.saveConnectionDetails()
-    server.detach(cooker_logfile)
+    server.detach()
 
     # Should no longer need to ever reference cooker
     del cooker

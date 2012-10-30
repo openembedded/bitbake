@@ -191,8 +191,8 @@ class BitBakeServer(object):
     def saveConnectionDetails(self):
         return
 
-    def detach(self, cooker_logfile):
-        self.logfile = cooker_logfile
+    def detach(self):
+        return
 
     def establishConnection(self):
         self.connection = BitBakeServerConnection(self)
