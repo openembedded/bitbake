@@ -117,7 +117,7 @@ class ImageConfigurationPage (HobPage):
     def update_progress_bar(self, title, fraction, status=None):
         if self.stopping == False:
             self.progress_bar.update(fraction)
-            self.progress_bar.set_title(title)
+            self.progress_bar.set_text(title)
             self.progress_bar.set_rcstyle(status)
 
     def show_info_populating(self):

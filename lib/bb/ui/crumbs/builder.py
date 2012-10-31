@@ -947,10 +947,10 @@ class Builder(gtk.Window):
         self.package_details_page.refresh_selection()
 
     def handler_recipe_populated_cb(self, handler):
-        self.image_configuration_page.update_progress_bar("Populated recipes", 0.99)
+        self.image_configuration_page.update_progress_bar("Populating recipes", 0.99)
 
     def handler_package_populated_cb(self, handler):
-        self.image_configuration_page.update_progress_bar("Populated packages", 1.0)
+        self.image_configuration_page.update_progress_bar("Populating packages", 1.0)
 
     def handler_parsing_started_cb(self, handler, message):
         if self.current_step != self.RCPPKGINFO_POPULATING:
@@ -960,12 +960,9 @@ class Builder(gtk.Window):
         if message["eventname"] == "TreeDataPreparationStarted":
             fraction = 0.6 + fraction
             self.image_configuration_page.stop_button.set_sensitive(False)
-        else:
-            self.image_configuration_page.stop_button.set_sensitive(True)
-
-        if message["eventname"] == "TreeDataPreparationProgress":
             self.image_configuration_page.update_progress_bar("Generating dependency tree", fraction)
         else:
+            self.image_configuration_page.stop_button.set_sensitive(True)
             self.image_configuration_page.update_progress_bar(message["title"], fraction)
 
     def handler_parsing_cb(self, handler, message):
@@ -975,11 +972,9 @@ class Builder(gtk.Window):
         fraction = message["current"] * 1.0/message["total"]
         if message["eventname"] == "TreeDataPreparationProgress":
             fraction = 0.6 + 0.38 * fraction
+            self.image_configuration_page.update_progress_bar("Generating dependency tree", fraction)
         else:
             fraction = 0.6 * fraction
-        if message["eventname"] == "TreeDataPreparationProgress":
-            self.image_configuration_page.update_progress_bar("Generating dependency tree", fraction)
-        else: 
             self.image_configuration_page.update_progress_bar(message["title"], fraction)
 
     def handler_parsing_completed_cb(self, handler, message):
@@ -990,7 +985,7 @@ class Builder(gtk.Window):
             fraction = 0.98
         else:
             fraction = 0.6
-        self.image_configuration_page.update_progress_bar(message["title"], fraction)
+        self.image_configuration_page.update_progress_bar("Generating dependency tree", fraction)
 
     def handler_build_started_cb(self, running_build):
         if self.current_step == self.FAST_IMAGE_GENERATING:

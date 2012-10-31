@@ -243,7 +243,7 @@ class HobHandler(gobject.GObject):
             message["eventname"] = bb.event.getName(event)
             message["current"] = 0
             message["total"] = None
-            message["title"] = "Parsing recipes: "
+            message["title"] = "Parsing recipes"
             self.emit("parsing-started", message)
         elif isinstance(event, (bb.event.ParseProgress,
                 bb.event.CacheLoadProgress,
@@ -252,7 +252,7 @@ class HobHandler(gobject.GObject):
             message["eventname"] = bb.event.getName(event)
             message["current"] = event.current
             message["total"] = event.total
-            message["title"] = "Parsing recipes: "
+            message["title"] = "Parsing recipes"
             self.emit("parsing", message)
         elif isinstance(event, (bb.event.ParseCompleted,
                 bb.event.CacheLoadCompleted,
@@ -261,7 +261,7 @@ class HobHandler(gobject.GObject):
             message["eventname"] = bb.event.getName(event)
             message["current"] = event.total
             message["total"] = event.total
-            message["title"] = "Parsing recipes: "
+            message["title"] = "Parsing recipes"
             self.emit("parsing-completed", message)
         elif isinstance(event, bb.event.NetworkTestFailed):
             self.emit("network-failed")
