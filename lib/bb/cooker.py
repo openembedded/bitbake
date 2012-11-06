@@ -313,6 +313,10 @@ class BBCooker:
         elif len(pkgs_to_build) == 1:
             self.updateCache()
 
+            ignore = self.configuration.data.getVar("ASSUME_PROVIDED", True) or ""
+            if pkgs_to_build[0] in set(ignore.split()):
+                bb.fatal("%s is in ASSUME_PROVIDED" % pkgs_to_build[0])
+
             localdata = data.createCopy(self.configuration.data)
             bb.data.update_data(localdata)
             bb.data.expandKeys(localdata)
