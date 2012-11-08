@@ -420,7 +420,7 @@ class HobHandler(gobject.GObject):
         self.build.reset()
 
     def get_logfile(self):
-        return self.server.runCommand(["getVariable", "BB_CONSOLELOG"])
+        return self.server.runCommand(["getVariable", "BB_CONSOLELOG"])[0]
 
     def _remove_redundant(self, string):
         ret = []
