@@ -46,7 +46,7 @@ class RunningBuildModel (gtk.TreeStore):
         color = model.get(it, self.COL_COLOR)[0]
         if not color:
             return False
-        if color == HobColors.ERROR:
+        if color == HobColors.ERROR or color == HobColors.WARNING:
             return True
         return False
 
@@ -76,13 +76,16 @@ class RunningBuild (gobject.GObject):
           'build-complete'  :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                ()),
-          'build-aborted'     :  (gobject.SIGNAL_RUN_LAST,
+          'build-aborted'   :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                ()),
           'task-started'    :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                (gobject.TYPE_PYOBJECT,)),
           'log-error'       :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               ()),
+          'log-warning'     :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                ()),
           'no-provider'     :  (gobject.SIGNAL_RUN_LAST,
@@ -148,6 +151,7 @@ class RunningBuild (gobject.GObject):
             elif event.levelno >= logging.WARNING:
                 icon = "dialog-warning"
                 color = HobColors.WARNING
+                self.emit("log-warning")
             else:
                 icon = None
                 color = HobColors.OK

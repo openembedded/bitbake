@@ -457,6 +457,7 @@ class Builder(gtk.Window):
         self.handler.build.connect("build-aborted",      self.handler_build_aborted_cb)
         self.handler.build.connect("task-started",       self.handler_task_started_cb)
         self.handler.build.connect("log-error",          self.handler_build_failure_cb)
+        self.handler.build.connect("log-warning",        self.handler_build_failure_cb)
         self.handler.build.connect("log",                self.handler_build_log_cb)
         self.handler.build.connect("no-provider",        self.handler_no_provider_cb)
         self.handler.connect("generating-data",          self.handler_generating_data_cb)
