@@ -23,6 +23,7 @@ Message handling infrastructure for bitbake
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import sys
+import copy
 import logging
 import collections
 from itertools import groupby
@@ -55,6 +56,25 @@ class BBLogFormatter(logging.Formatter):
         CRITICAL: 'ERROR',
     }
 
+    color_enabled = False
+    BASECOLOR, BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(29,38)
+
+    COLORS = {
+        DEBUG3  : CYAN,
+        DEBUG2  : CYAN,
+        DEBUG   : CYAN,
+        VERBOSE : BASECOLOR,
+        NOTE    : BASECOLOR,
+        PLAIN   : BASECOLOR,
+        WARNING : YELLOW,
+        ERROR   : RED,
+        CRITICAL: RED,
+    }
+
+    BLD = '\033[1;%dm'
+    STD = '\033[%dm'
+    RST = '\033[0m'
+
     def getLevelName(self, levelno):
         try:
             return self.levelnames[levelno]
@@ -67,6 +87,8 @@ class BBLogFormatter(logging.Formatter):
         if record.levelno == self.PLAIN:
             msg = record.getMessage()
         else:
+            if self.color_enabled:
+                record = self.colorize(record)
             msg = logging.Formatter.format(self, record)
 
         if hasattr(record, 'bb_exc_info'):
@@ -74,6 +96,27 @@ class BBLogFormatter(logging.Formatter):
             formatted = bb.exceptions.format_exception(etype, value, tb, limit=5)
             msg += '\n' + ''.join(formatted)
         return msg
+
+    def colorize(self, record):
+        color = self.COLORS[record.levelno]
+        if self.color_enabled and color is not None:
+            record = copy.copy(record)
+            record.levelname = "".join([self.BLD % color, record.levelname, self.RST])
+            record.msg = "".join([self.STD % color, record.msg, self.RST])
+        return record
+
+    def enable_color(self):
+        import curses
+        try:
+            win = None
+            win = curses.initscr()
+            if curses.has_colors():
+                self.color_enabled = True
+        except:
+            pass
+        finally:
+            if win is not None:
+                curses.endwin()
 
 class BBLogFilter(object):
     def __init__(self, handler, level, debug_domains):

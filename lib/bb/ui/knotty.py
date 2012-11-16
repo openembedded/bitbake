@@ -238,12 +238,16 @@ def main(server, eventHandler, tf = TerminalFilter):
     helper = uihelper.BBUIHelper()
 
     console = logging.StreamHandler(sys.stdout)
-    format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+    format_str = "%(levelname)s: %(message)s"
+    format = bb.msg.BBLogFormatter(format_str)
+    if interactive:
+        format.enable_color()
     bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
     if consolelogfile:
         bb.utils.mkdirhier(os.path.dirname(consolelogfile))
+        format = bb.msg.BBLogFormatter(format_str)
         consolelog = logging.FileHandler(consolelogfile)
         bb.msg.addDefaultlogFilter(consolelog)
         consolelog.setFormatter(format)
