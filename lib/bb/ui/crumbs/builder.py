@@ -439,6 +439,9 @@ class Builder(gtk.Window):
         # Indicate whether the UI is working
         self.sensitive = True
 
+        # Indicate whether the sanity check ran
+        self.sanity_checked = False
+
         # create visual elements
         self.create_visual_elements()
 
@@ -543,7 +546,8 @@ class Builder(gtk.Window):
           sanity_check_post_func = func
 
     def generate_configuration(self):
-        self.show_sanity_check_page()
+        if not self.sanity_checked:
+            self.show_sanity_check_page()
         self.handler.generate_configuration()
 
     def initiate_new_build_async(self):
@@ -835,7 +839,9 @@ class Builder(gtk.Window):
             if not self.configuration.curr_mach:
                 self.configuration.curr_mach = self.handler.runCommand(["getVariable", "HOB_MACHINE"]) or ""
             self.update_configuration_parameters(self.get_parameters_sync())
-            self.sanity_check()
+            if not self.sanity_checked:
+                self.sanity_check()
+                self.sanity_checked = True
         elif initcmd == self.handler.SANITY_CHECK:
             if self.had_network_error:
                 self.had_network_error = False
