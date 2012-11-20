@@ -88,6 +88,9 @@ class RunningBuild (gobject.GObject):
           'log-warning'     :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                ()),
+          'disk-full'       :  (gobject.SIGNAL_RUN_LAST,
+                                gobject.TYPE_NONE,
+                               ()),
           'no-provider'     :  (gobject.SIGNAL_RUN_LAST,
                                 gobject.TYPE_NONE,
                                (gobject.TYPE_PYOBJECT,)),
@@ -290,6 +293,7 @@ class RunningBuild (gobject.GObject):
             # Emit the appropriate signal depending on the number of failures
             if self.buildaborted:
                 self.emit ("build-aborted")
+                self.buildaborted = False
             elif (failures >= 1):
                 self.emit ("build-failed")
             else:
@@ -304,6 +308,7 @@ class RunningBuild (gobject.GObject):
 
         elif isinstance(event, bb.event.DiskFull):
             self.buildaborted = True
+            self.emit("disk-full")
 
         elif isinstance(event, bb.command.CommandFailed):
             self.emit("log", "error", "Command execution failed: %s" % (event.error))

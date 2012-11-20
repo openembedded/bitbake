@@ -456,6 +456,7 @@ class Builder(gtk.Window):
         self.handler.build.connect("build-failed",       self.handler_build_failed_cb)
         self.handler.build.connect("build-aborted",      self.handler_build_aborted_cb)
         self.handler.build.connect("task-started",       self.handler_task_started_cb)
+        self.handler.build.connect("disk-full",          self.handler_disk_full_cb)
         self.handler.build.connect("log-error",          self.handler_build_failure_cb)
         self.handler.build.connect("log-warning",        self.handler_build_failure_cb)
         self.handler.build.connect("log",                self.handler_build_log_cb)
@@ -1121,6 +1122,9 @@ class Builder(gtk.Window):
                 fraction = 0.2 + 0.8 * fraction
         self.build_details_page.update_progress_bar(title + ": ", fraction)
         self.build_details_page.update_build_status(message["current"], message["total"], message["task"])
+
+    def handler_disk_full_cb(self, running_build):
+        self.disk_full = True
 
     def handler_build_failure_cb(self, running_build):
         self.build_details_page.show_issues()

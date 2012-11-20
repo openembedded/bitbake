@@ -206,8 +206,6 @@ class BuildDetailsPage (HobPage):
     def add_build_fail_top_bar(self, actions, log_file=None):
         primary_action = "Edit %s" % actions
 
-        self.notebook.set_page("Issues")
-
         color = HobColors.ERROR
         build_fail_top = gtk.EventBox()
         #build_fail_top.set_size_request(-1, 200)
@@ -228,7 +226,17 @@ class BuildDetailsPage (HobPage):
 
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
-        label.set_markup("<span size='medium'>Check the \"Issues\" information for more details</span>")
+        # Ensure variable disk_full is defined
+        try:
+            self.builder.disk_full
+        except NameError:
+            self.builder.disk_full = False
+        if self.builder.disk_full:
+            markup = "<span size='medium'>There is no disk space left, so Hob cannot finish building your image. Free up some disk space\n"
+            markup += "and restart the build. Check the \"Issues\" tab for more details</span>"
+            label.set_markup(markup)
+        else:
+            label.set_markup("<span size='medium'>Check the \"Issues\" information for more details</span>")
         build_fail_tab.attach(label, 4, 40, 4, 9)
 
         # create button 'Edit packages'
@@ -236,22 +244,36 @@ class BuildDetailsPage (HobPage):
         #action_button.set_size_request(-1, 40)
         action_button.set_tooltip_text("Edit the %s parameters" % actions)
         action_button.connect('clicked', self.failure_primary_action_button_clicked_cb, primary_action)
-        build_fail_tab.attach(action_button, 4, 13, 9, 12)
 
         if log_file:
             open_log_button = HobAltButton("Open log")
             open_log_button.set_relief(gtk.RELIEF_HALF)
             open_log_button.set_tooltip_text("Open the build's log file")
             open_log_button.connect('clicked', self.open_log_button_clicked_cb, log_file)
-            build_fail_tab.attach(open_log_button, 14, 23, 9, 12)
 
         attach_pos = (24 if log_file else 14)
         file_bug_button = HobAltButton('File a bug')
         file_bug_button.set_relief(gtk.RELIEF_HALF)
         file_bug_button.set_tooltip_text("Open the Yocto Project bug tracking website")
         file_bug_button.connect('clicked', self.failure_activate_file_bug_link_cb)
-        build_fail_tab.attach(file_bug_button, attach_pos, attach_pos + 9, 9, 12)
 
+        if not self.builder.disk_full:
+            build_fail_tab.attach(action_button, 4, 13, 9, 12)
+            if log_file:
+                build_fail_tab.attach(open_log_button, 14, 23, 9, 12)
+            build_fail_tab.attach(file_bug_button, attach_pos, attach_pos + 9, 9, 12)
+
+        else:
+            restart_build = HobButton("Restart the build")
+            restart_build.set_tooltip_text("Restart the build")
+            restart_build.connect('clicked', self.restart_build_button_clicked_cb)
+
+            build_fail_tab.attach(restart_build, 4, 13, 9, 12)
+            build_fail_tab.attach(action_button, 14, 23, 9, 12)
+            if log_file:
+                build_fail_tab.attach(open_log_button, attach_pos, attach_pos + 9, 9, 12)
+
+        self.builder.disk_full = False
         return build_fail_top
 
     def show_fail_page(self, title):
@@ -266,6 +288,7 @@ class BuildDetailsPage (HobPage):
 
         self.vbox.pack_start(self.notebook, expand=True, fill=True)
         self.show_all()
+        self.notebook.set_page("Issues")
         self.back_button.hide()
 
     def add_build_stop_top_bar(self, action, log_file=None):
@@ -395,6 +418,9 @@ class BuildDetailsPage (HobPage):
             self.builder.show_packages()
         elif "Edit image" in action:
             self.builder.show_configuration()
+
+    def restart_build_button_clicked_cb(self, button):
+        self.builder.just_bake()
 
     def stop_primary_action_button_clicked_cb(self, button, action):
         if "recipes" in action:

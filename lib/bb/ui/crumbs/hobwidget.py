@@ -521,7 +521,8 @@ class HobNotebook(gtk.Notebook):
         for child in self.pages:
             if child.lbl.get_label() == title:
                 child.grab_focus()
-                self.set_current_page(self.page_num(child))
+                self.set_current_page(self.pages.index(child))
+                return
 
 class HobWarpCellRendererText(gtk.CellRendererText):
     def __init__(self, col_number):
