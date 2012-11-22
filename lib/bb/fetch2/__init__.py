@@ -963,15 +963,18 @@ class FetchMethod(object):
             dest = os.path.join(rootdir, os.path.basename(file))
             if (file != dest) and not (os.path.exists(dest) and os.path.samefile(file, dest)):
                 if os.path.isdir(file):
-                    filesdir = os.path.realpath(data.getVar("FILESDIR", True))
+                    # If for example we're asked to copy file://foo/bar, we need to unpack the result into foo/bar
+                    basepath = getattr(urldata, "basepath", None)
                     destdir = "."
-                    if file[0:len(filesdir)] == filesdir:
-                        destdir = file[len(filesdir):file.rfind('/')]
+                    if basepath and basepath.endswith("/"):
+                        basepath = basepath.rstrip("/")
+                    elif basepath:
+                        basepath = os.path.dirname(basepath)
+                    if basepath and basepath.find("/") != -1:
+                        destdir = basepath[:basepath.rfind('/')]
                         destdir = destdir.strip('/')
-                        if len(destdir) < 1:
-                            destdir = "."
-                        elif not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
-                            os.makedirs("%s/%s" % (rootdir, destdir))
+                    if destdir != "." and not os.access("%s/%s" % (rootdir, destdir), os.F_OK):
+                        os.makedirs("%s/%s" % (rootdir, destdir))
                     cmd = 'cp -pPR %s %s/%s/' % (file, rootdir, destdir)
                     #cmd = 'tar -cf - -C "%d" -ps . | tar -xf - -C "%s/%s/"' % (file, rootdir, destdir)
                 else:
