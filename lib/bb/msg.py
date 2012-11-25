@@ -106,17 +106,7 @@ class BBLogFormatter(logging.Formatter):
         return record
 
     def enable_color(self):
-        import curses
-        try:
-            win = None
-            win = curses.initscr()
-            if curses.has_colors():
-                self.color_enabled = True
-        except:
-            pass
-        finally:
-            if win is not None:
-                curses.endwin()
+        self.color_enabled = True
 
 class BBLogFilter(object):
     def __init__(self, handler, level, debug_domains):

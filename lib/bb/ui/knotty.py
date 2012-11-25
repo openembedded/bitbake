@@ -157,6 +157,8 @@ class TerminalFilter(object):
             new[3] = new[3] & ~termios.ECHO
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
             curses.setupterm()
+            if curses.tigetnum("colors") > 2:
+                format.enable_color()
             self.ed = curses.tigetstr("ed")
             if self.ed:
                 self.cuu = curses.tigetstr("cuu")
@@ -240,17 +242,15 @@ def main(server, eventHandler, tf = TerminalFilter):
     console = logging.StreamHandler(sys.stdout)
     format_str = "%(levelname)s: %(message)s"
     format = bb.msg.BBLogFormatter(format_str)
-    if interactive:
-        format.enable_color()
     bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
     if consolelogfile:
         bb.utils.mkdirhier(os.path.dirname(consolelogfile))
-        format = bb.msg.BBLogFormatter(format_str)
+        conlogformat = bb.msg.BBLogFormatter(format_str)
         consolelog = logging.FileHandler(consolelogfile)
         bb.msg.addDefaultlogFilter(consolelog)
-        consolelog.setFormatter(format)
+        consolelog.setFormatter(conlogformat)
         logger.addHandler(consolelog)
 
     try:
