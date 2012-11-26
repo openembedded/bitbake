@@ -435,8 +435,11 @@ class HobHandler(gobject.GObject):
         params["core_base"] = self.runCommand(["getVariable", "COREBASE"]) or ""
         hob_layer = params["core_base"] + "/meta-hob"
         params["layer"] = self.runCommand(["getVariable", "BBLAYERS"]) or ""
+        params["layers_non_removable"] = self.runCommand(["getVariable", "BBLAYERS_NON_REMOVABLE"])
         if hob_layer not in params["layer"].split():
             params["layer"] += (" " + hob_layer)
+        if hob_layer not in params["layers_non_removable"].split():
+            params["layers_non_removable"] += (" " + hob_layer)
         params["dldir"] = self.runCommand(["getVariable", "DL_DIR"]) or ""
         params["machine"] = self.runCommand(["getVariable", "MACHINE"]) or ""
         params["distro"] = self.runCommand(["getVariable", "DISTRO"]) or "defaultsetup"

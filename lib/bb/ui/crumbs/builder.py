@@ -172,6 +172,7 @@ class Configuration:
         # self.extra_setting/self.toolchain_build
         # bblayers.conf
         self.layers = params["layer"].split()
+        self.layers_non_removable = params["layers_non_removable"].split()
         self.default_task = params["default_task"]
 
         # proxy settings
@@ -1200,6 +1201,7 @@ class Builder(gtk.Window):
     def show_layer_selection_dialog(self):
         dialog = LayerSelectionDialog(title = "Layers",
                      layers = copy.deepcopy(self.configuration.layers),
+                     layers_non_removable = copy.deepcopy(self.configuration.layers_non_removable),
                      all_layers = self.parameters.all_layers,
                      parent = self,
                      flags = gtk.DIALOG_MODAL

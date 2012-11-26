@@ -1665,11 +1665,12 @@ class LayerSelectionDialog (CrumbsDialog):
     def add_leave_cb(self, button, event):
         self.im.set_from_file(hic.ICON_INDI_ADD_FILE)
 
-    def __init__(self, title, layers, all_layers, parent, flags, buttons=None):
+    def __init__(self, title, layers, layers_non_removable, all_layers, parent, flags, buttons=None):
         super(LayerSelectionDialog, self).__init__(title, parent, flags, buttons)
 
         # class members from other objects
         self.layers = layers
+        self.layers_non_removable = layers_non_removable
         self.all_layers = all_layers
         self.layers_changed = False
 
@@ -1709,10 +1710,7 @@ class LayerSelectionDialog (CrumbsDialog):
     """
     def draw_delete_button_cb(self, col, cell, model, it, tv):
         path =  model.get_value(it, 0)
-        # Trailing slashes are uncommon in bblayers.conf but confuse os.path.basename
-        path.rstrip('/')
-        name = os.path.basename(path)
-        if name == "meta" or name == "meta-hob":
+        if path in self.layers_non_removable:
             cell.set_sensitive(False)
             cell.set_property('pixbuf', None)
             cell.set_property('mode', gtk.CELL_RENDERER_MODE_INERT)
@@ -1730,11 +1728,8 @@ class LayerSelectionDialog (CrumbsDialog):
     """
     def draw_layer_path_cb(self, col, cell, model, it):
         path = model.get_value(it, 0)
-        name = os.path.basename(path)
-        if name == "meta":
-            cell.set_property('markup', "<b>Core layer for images: it cannot be removed</b>\n%s" % path)
-        elif name == "meta-hob":
-            cell.set_property('markup', "<b>Core layer for Hob: it cannot be removed</b>\n%s" % path)
+        if path in self.layers_non_removable:
+            cell.set_property('markup', "<b>It cannot be removed</b>\n%s" % path)
         else:
             cell.set_property('text', path)
 
