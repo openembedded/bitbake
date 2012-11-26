@@ -63,7 +63,7 @@ class Local(FetchMethod):
                 if filesdir:
                     logger.debug(2, "Searching for %s in path: %s" % (path, filesdir))
                     newpath = os.path.join(filesdir, path)
-            if not newpath or not os.path.exists(newpath) and path.find("*") != -1:
+            if (not newpath or not os.path.exists(newpath)) and path.find("*") != -1:
                 # For expressions using '*', best we can do is take the first directory in FILESPATH that exists
                 newpath = bb.utils.which(filespath, ".")
                 logger.debug(2, "Searching for %s in path: %s" % (path, newpath))
