@@ -435,7 +435,7 @@ class HobHandler(gobject.GObject):
         params["core_base"] = self.runCommand(["getVariable", "COREBASE"]) or ""
         hob_layer = params["core_base"] + "/meta-hob"
         params["layer"] = self.runCommand(["getVariable", "BBLAYERS"]) or ""
-        params["layers_non_removable"] = self.runCommand(["getVariable", "BBLAYERS_NON_REMOVABLE"])
+        params["layers_non_removable"] = self.runCommand(["getVariable", "BBLAYERS_NON_REMOVABLE"]) or ""
         if hob_layer not in params["layer"].split():
             params["layer"] += (" " + hob_layer)
         if hob_layer not in params["layers_non_removable"].split():
