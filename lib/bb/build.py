@@ -29,6 +29,7 @@ import os
 import sys
 import logging
 import shlex
+import glob
 import bb
 import bb.msg
 import bb.process
@@ -504,8 +505,12 @@ def make_stamp(task, d, file_name = None):
     """
     cleanmask = stamp_cleanmask_internal(task, d, file_name)
     for mask in cleanmask:
-        bb.utils.remove(mask)
-
+        # Preserve sigdata files in the stamps directory
+        for name in glob.glob(mask):
+            if "sigdata" in name:
+                continue
+            os.unlink(name)
+    
     stamp = stamp_internal(task, d, file_name)
     # Remove the file and recreate to force timestamp
     # change on broken NFS filesystems
