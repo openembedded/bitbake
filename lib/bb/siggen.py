@@ -49,7 +49,7 @@ class SignatureGenerator(object):
         return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
 
     def stampcleanmask(self, stampbase, file_name, taskname, extrainfo):
-        return ("%s.%s*.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
+        return ("%s.%s.%s" % (stampbase, taskname, extrainfo)).rstrip('.')
 
     def dump_sigtask(self, fn, task, stampbase, runtime):
         return
@@ -276,7 +276,6 @@ class SignatureGeneratorBasicHash(SignatureGeneratorBasic):
             k = fn + "." + taskname
         if clean:
             h = "*"
-            taskname = taskname + "*"
         elif k in self.taskhash:
             h = self.taskhash[k]
         else:
