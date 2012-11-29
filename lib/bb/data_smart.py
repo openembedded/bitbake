@@ -474,12 +474,16 @@ class DataSmart(MutableMapping):
 
     def get_hash(self):
         data = {}
-        config_whitelist = set((self.getVar("BB_HASHCONFIG_WHITELIST", True) or "").split())
-        keys = set(key for key in iter(self) if not key.startswith("__"))
+        d = self.createCopy()
+        bb.data.expandKeys(d)
+        bb.data.update_data(d)
+
+        config_whitelist = set((d.getVar("BB_HASHCONFIG_WHITELIST", True) or "").split())
+        keys = set(key for key in iter(d) if not key.startswith("__"))
         for key in keys:
             if key in config_whitelist:
                 continue
-            value = self.getVar(key, False) or ""
+            value = d.getVar(key, False) or ""
             data.update({key:value})
 
         data_str = str([(k, data[k]) for k in sorted(data.keys())])
