@@ -402,7 +402,7 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen></para>
 
         <section>
             <title>CVS fetcher</title>
-            <para>The URN for the CVS fetcher is <emphasis>cvs</emphasis>. This fetcher honors the variables <varname>CVSDIR</varname>, <varname>SRCDATE</varname>, <varname>FETCHCOMMAND_cvs</varname>, <varname>UPDATECOMMAND_cvs</varname>. <varname>DL_DIR</varname> specifies where a temporary checkout is saved. <varname>SRCDATE</varname> specifies which date to use when doing the fetching (the special value of "now" will cause the checkout to be updated on every build). <varname>FETCHCOMMAND</varname> and <varname>UPDATECOMMAND</varname> specify which executables to use for the CVS checkout or update.
+            <para>The URN for the CVS fetcher is <emphasis>cvs</emphasis>. This fetcher honors the variables <varname>CVSDIR</varname>, <varname>SRCDATE</varname>, <varname>FETCHCMD_cvs</varname>, <varname>UPDATECOMMAND_cvs</varname>. <varname>DL_DIR</varname> specifies where a temporary checkout is saved. <varname>SRCDATE</varname> specifies which date to use when doing the fetching (the special value of "now" will cause the checkout to be updated on every build). <varname>FETCHCMD</varname> and <varname>UPDATECOMMAND</varname> specify which executables to use for the CVS checkout or update.
             </para>
             <para>The supported parameters are <varname>module</varname>, <varname>tag</varname>, <varname>date</varname>, <varname>method</varname>, <varname>localdir</varname>, <varname>rsh</varname> and <varname>scmdata</varname>. The <varname>module</varname> specifies which module to check out, the <varname>tag</varname> describes which CVS TAG should be used for the checkout. By default the TAG is empty. A <varname>date</varname> can be specified to override the SRCDATE of the configuration to checkout a specific date.  The special value of "now" will cause the checkout to be updated on every build.<varname>method</varname> is by default <emphasis>pserver</emphasis>. If <emphasis>ext</emphasis> is used the <varname>rsh</varname> parameter will be evaluated and <varname>CVS_RSH</varname> will be set. Finally, <varname>localdir</varname> is used to checkout into a special directory relative to <varname>CVSDIR</varname>.
 
@@ -414,7 +414,7 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen></para>
 
         <section>
             <title>HTTP/FTP fetcher</title>
-            <para>The URNs for the HTTP/FTP fetcher are <emphasis>http</emphasis>, <emphasis>https</emphasis> and <emphasis>ftp</emphasis>. This fetcher honors the variables <varname>FETCHCOMMAND_wget</varname>. <varname>FETCHCOMMAND</varname> contains the command used for fetching. <quote>${URI}</quote> and <quote>${FILES}</quote> will be replaced by the URI and basename of the file to be fetched.
+            <para>The URNs for the HTTP/FTP fetcher are <emphasis>http</emphasis>, <emphasis>https</emphasis> and <emphasis>ftp</emphasis>. This fetcher honors the variables <varname>FETCHCMD_wget</varname>. <varname>FETCHCMD</varname> contains the command used for fetching. <quote>${URI}</quote> and <quote>${FILES}</quote> will be replaced by the URI and basename of the file to be fetched.
             </para>
             <para><screen><varname>SRC_URI</varname> = "http://oe.handhelds.org/not_there.aac"
 <varname>SRC_URI</varname> = "ftp://oe.handhelds.org/not_there_as_well.aac"
@@ -426,7 +426,7 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen></para>
             <title>SVN fetcher</title>
             <para>The URN for the SVN fetcher is <emphasis>svn</emphasis>.
             </para>
-            <para>This fetcher honors the variables <varname>FETCHCOMMAND_svn</varname>, <varname>SVNDIR</varname>, <varname>SRCREV</varname>. <varname>FETCHCOMMAND</varname> contains the subversion command. <varname>SRCREV</varname> specifies which revision to use when doing the fetching.
+            <para>This fetcher honors the variables <varname>FETCHCMD_svn</varname>, <varname>SVNDIR</varname>, <varname>SRCREV</varname>. <varname>FETCHCMD</varname> contains the subversion command. <varname>SRCREV</varname> specifies which revision to use when doing the fetching.
             </para>
             <para>The supported parameters are <varname>proto</varname>, <varname>rev</varname> and <varname>scmdata</varname>. <varname>proto</varname> is the Subversion protocol, <varname>rev</varname> is the Subversion revision. If <varname>scmdata</varname> is set to <quote>keep</quote>, the <quote>.svn</quote> directories will be available during compile-time.
             </para>

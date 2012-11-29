@@ -89,7 +89,7 @@ class Perforce(FetchMethod):
         elif p4date:
             depot += "@%s" % (p4date)
 
-        p4cmd = data.getVar('FETCHCOMMAND_p4', d, True)
+        p4cmd = data.getVar('FETCHCMD_p4', d, True)
         logger.debug(1, "Running %s%s changes -m 1 %s", p4cmd, p4opt, depot)
         p4file, errors = bb.process.run("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
         cset = p4file.strip()
@@ -149,7 +149,7 @@ class Perforce(FetchMethod):
         if host:
             p4opt += " -p %s" % (host)
 
-        p4cmd = data.getVar('FETCHCOMMAND', localdata, True)
+        p4cmd = data.getVar('FETCHCMD', localdata, True)
 
         # create temp directory
         logger.debug(2, "Fetch: creating temporary directory")

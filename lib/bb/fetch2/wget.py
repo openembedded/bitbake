@@ -74,7 +74,7 @@ class Wget(FetchMethod):
             # file exists, but we didnt complete it.. trying again..
             fetchcmd = d.getVar("RESUMECOMMAND_wget", True) or d.expand(basecmd + " -c -P ${DL_DIR} '${URI}'")
         else:
-            fetchcmd = d.getVar("FETCHCOMMAND_wget", True) or d.expand(basecmd + " -P ${DL_DIR} '${URI}'")
+            fetchcmd = d.getVar("FETCHCMD_wget", True) or d.expand(basecmd + " -P ${DL_DIR} '${URI}'")
 
         uri = uri.split(";")[0]
         uri_decoded = list(decodeurl(uri))
