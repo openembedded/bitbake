@@ -227,10 +227,9 @@ class BuildDetailsPage (HobPage):
         label = gtk.Label()
         label.set_alignment(0.0, 0.5)
         # Ensure variable disk_full is defined
-        try:
-            self.builder.disk_full
-        except NameError:
+        if not hasattr(self.builder, 'disk_full'):
             self.builder.disk_full = False
+
         if self.builder.disk_full:
             markup = "<span size='medium'>There is no disk space left, so Hob cannot finish building your image. Free up some disk space\n"
             markup += "and restart the build. Check the \"Issues\" tab for more details</span>"
