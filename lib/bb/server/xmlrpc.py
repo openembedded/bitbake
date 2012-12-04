@@ -281,7 +281,7 @@ class BitBakeServer(object):
         self.serverinfo = BitbakeServerInfo(self.server.host, self.server.port)
 
     def detach(self):
-        daemonize.createDaemon(self.server.serve_forever)
+        daemonize.createDaemon(self.server.serve_forever, "bitbake-cookerdaemon.log")
         del self.cooker
         del self.server
 
