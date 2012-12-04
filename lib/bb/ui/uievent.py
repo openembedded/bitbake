@@ -37,6 +37,17 @@ class BBUIEventQueue:
         self.BBServer = BBServer
         self.clientinfo = clientinfo
 
+        server = UIXMLRPCServer(self.clientinfo)
+        self.host, self.port = server.socket.getsockname()
+
+        server.register_function( self.system_quit, "event.quit" )
+        server.register_function( self.send_event, "event.sendpickle" )
+        server.socket.settimeout(1)
+
+        self.EventHandle = self.BBServer.registerEventHandler(self.host, self.port)
+
+        self.server = server
+
         self.t = threading.Thread()
         self.t.setDaemon(True)
         self.t.run = self.startCallbackHandler
@@ -73,19 +84,9 @@ class BBUIEventQueue:
 
     def startCallbackHandler(self):
 
-        server = UIXMLRPCServer(self.clientinfo)
-        self.host, self.port = server.socket.getsockname()
-
-        server.register_function( self.system_quit, "event.quit" )
-        server.register_function( self.send_event, "event.sendpickle" )
-        server.socket.settimeout(1)
-
-        self.EventHandle = self.BBServer.registerEventHandler(self.host, self.port)
-
-        self.server = server
-        while not server.quit:
-            server.handle_request()
-        server.server_close()
+        while not self.server.quit:
+            self.server.handle_request()
+        self.server.server_close()
 
     def system_quit( self ):
         """
