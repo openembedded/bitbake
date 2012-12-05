@@ -71,11 +71,8 @@ from   bb.fetch2 import logger
 class Git(FetchMethod):
     """Class to fetch a module or modules from git repositories"""
     def init(self, d):
-        #
-        # Only enable _sortable revision if the key is set
-        #
-        if d.getVar("BB_GIT_CLONE_FOR_SRCREV", True):
-            self._sortable_buildindex = self._sortable_buildindex_disabled
+        pass
+
     def supports(self, url, ud, d):
         """
         Check to see if a given url can be fetched with git.
@@ -315,38 +312,6 @@ class Git(FetchMethod):
 
     def _build_revision(self, url, ud, d, name):
         return ud.revisions[name]
-
-    def _sortable_buildindex_disabled(self, url, ud, d, rev):
-        """
-        Return a suitable buildindex for the revision specified. This is done by counting revisions
-        using "git rev-list" which may or may not work in different circumstances.
-        """
-
-        cwd = os.getcwd()
-
-        # Check if we have the rev already
-
-        if not os.path.exists(ud.clonedir):
-            logger.debug(1, "GIT repository for %s does not exist in %s.  \
-                          Downloading.", url, ud.clonedir)
-            self.download(None, ud, d)
-            if not os.path.exists(ud.clonedir):
-                logger.error("GIT repository for %s does not exist in %s after \
-                             download. Cannot get sortable buildnumber, using \
-                             old value", url, ud.clonedir)
-                return None
-
-
-        os.chdir(ud.clonedir)
-        if not self._contains_ref(rev, d):
-            self.download(None, ud, d)
-
-        output = runfetchcmd("%s rev-list %s -- 2> /dev/null | wc -l" % (ud.basecmd, rev), d, quiet=True)
-        os.chdir(cwd)
-
-        buildindex = "%s" % output.split()[0]
-        logger.debug(1, "GIT repository for %s in %s is returning %s revisions in rev-list before %s", url, ud.clonedir, buildindex, rev)
-        return buildindex
 
     def checkstatus(self, uri, ud, d):
         fetchcmd = "%s ls-remote %s" % (ud.basecmd, uri)

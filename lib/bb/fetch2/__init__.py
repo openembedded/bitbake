@@ -422,10 +422,18 @@ def get_srcrev(d):
     if not format:
         raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
 
+    autoinc = False
+    autoinc_templ = 'AUTOINC+'
     for scm in scms:
         ud = urldata[scm]
         for name in ud.names:
             rev = ud.method.sortable_revision(scm, ud, d, name)
+            if rev.startswith(autoinc_templ):
+                if not autoinc:
+                    autoinc = True
+                    format = "%s%s" % (autoinc_templ, format)
+                rev = rev[len(autoinc_templ):]
+
             format = format.replace(name, rev)
 
     return format
@@ -1036,23 +1044,6 @@ class FetchMethod(object):
         logger.info("URL %s could not be checked for status since no method exists.", url)
         return True
 
-    def localcount_internal_helper(ud, d, name):
-        """
-        Return:
-            a) a locked localcount if specified
-            b) None otherwise
-        """
-
-        localcount = None
-        if name != '':
-            pn = d.getVar("PN", True)
-            localcount = d.getVar("LOCALCOUNT_" + name, True)
-        if not localcount:
-            localcount = d.getVar("LOCALCOUNT", True)
-        return localcount
-
-    localcount_internal_helper = staticmethod(localcount_internal_helper)
-
     def latest_revision(self, url, ud, d, name):
         """
         Look in the cache for the latest revision, if not present ask the SCM.
@@ -1075,36 +1066,8 @@ class FetchMethod(object):
         if hasattr(self, "_sortable_revision"):
             return self._sortable_revision(url, ud, d)
 
-        localcounts = bb.persist_data.persist('BB_URI_LOCALCOUNT', d)
-        key = self.generate_revision_key(url, ud, d, name)
-
         latest_rev = self._build_revision(url, ud, d, name)
-        last_rev = localcounts.get(key + '_rev')
-        uselocalcount = d.getVar("BB_LOCALCOUNT_OVERRIDE", True) or False
-        count = None
-        if uselocalcount:
-            count = FetchMethod.localcount_internal_helper(ud, d, name)
-        if count is None:
-            count = localcounts.get(key + '_count') or "0"
-
-        if last_rev == latest_rev:
-            return str(count + "+" + latest_rev)
-
-        buildindex_provided = hasattr(self, "_sortable_buildindex")
-        if buildindex_provided:
-            count = self._sortable_buildindex(url, ud, d, latest_rev)
-
-        if count is None:
-            count = "0"
-        elif uselocalcount or buildindex_provided:
-            count = str(count)
-        else:
-            count = str(int(count) + 1)
-
-        localcounts[key + '_rev'] = latest_rev
-        localcounts[key + '_count'] = count
-
-        return str(count + "+" + latest_rev)
+        return 'AUTOINC+%s' % str(latest_rev)
 
     def generate_revision_key(self, url, ud, d, name):
         key = self._revision_key(url, ud, d, name)
