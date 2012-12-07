@@ -107,15 +107,14 @@ def get_statements(filename, absolute_filename, base_name):
         return statements
 
 def handle(fn, d, include):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__, __inpython__, classes
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
     __body__ = []
     __infunc__ = ""
     __classname__ = ""
     __residue__ = []
-    __inpython__ = False
+
 
     if include == 0:
-        classes = [ None, ]
         logger.debug(2, "BB %s: handle(data)", fn)
     else:
         logger.debug(2, "BB %s: handle(data, include)", fn)
