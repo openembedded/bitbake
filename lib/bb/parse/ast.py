@@ -179,44 +179,35 @@ class MethodFlagsNode(AstNode):
             data.delVarFlag(self.key, "fakeroot")
 
 class ExportFuncsNode(AstNode):
-    def __init__(self, filename, lineno, fns, classes):
+    def __init__(self, filename, lineno, fns, classname):
         AstNode.__init__(self, filename, lineno)
         self.n = fns.split()
-        self.classes = classes
+        self.classname = classname
 
     def eval(self, data):
-        for f in self.n:
-            allvars = []
-            allvars.append(f)
-            allvars.append(self.classes[-1] + "_" + f)
 
-            vars = [[ allvars[0], allvars[1] ]]
-            if len(self.classes) > 1 and self.classes[-2] is not None:
-                allvars.append(self.classes[-2] + "_" + f)
-                vars = []
-                vars.append([allvars[2], allvars[1]])
-                vars.append([allvars[0], allvars[2]])
+        for func in self.n:
+            calledfunc = self.classname + "_" + func
 
-            for (var, calledvar) in vars:
-                if data.getVar(var) and not data.getVarFlag(var, 'export_func'):
-                    continue
+            if data.getVar(func) and not data.getVarFlag(func, 'export_func'):
+                continue
 
-                if data.getVar(var):
-                    data.setVarFlag(var, 'python', None)
-                    data.setVarFlag(var, 'func', None)
+            if data.getVar(func):
+                data.setVarFlag(func, 'python', None)
+                data.setVarFlag(func, 'func', None)
 
-                for flag in [ "func", "python" ]:
-                    if data.getVarFlag(calledvar, flag):
-                        data.setVarFlag(var, flag, data.getVarFlag(calledvar, flag))
-                for flag in [ "dirs" ]:
-                    if data.getVarFlag(var, flag):
-                        data.setVarFlag(calledvar, flag, data.getVarFlag(var, flag))
+            for flag in [ "func", "python" ]:
+                if data.getVarFlag(calledfunc, flag):
+                    data.setVarFlag(func, flag, data.getVarFlag(calledfunc, flag))
+            for flag in [ "dirs" ]:
+                if data.getVarFlag(func, flag):
+                    data.setVarFlag(calledfunc, flag, data.getVarFlag(func, flag))
 
-                if data.getVarFlag(calledvar, "python"):
-                    data.setVar(var, "    bb.build.exec_func('" + calledvar + "', d)\n")
-                else:
-                    data.setVar(var, "    " + calledvar + "\n")
-                data.setVarFlag(var, 'export_func', '1')
+            if data.getVarFlag(calledfunc, "python"):
+                data.setVar(func, "    bb.build.exec_func('" + calledfunc + "', d)\n")
+            else:
+                data.setVar(func, "    " + calledfunc + "\n")
+            data.setVarFlag(func, 'export_func', '1')
 
 class AddTaskNode(AstNode):
     def __init__(self, filename, lineno, func, before, after):
@@ -288,8 +279,8 @@ def handlePythonMethod(statements, filename, lineno, funcname, modulename, body)
 def handleMethodFlags(statements, filename, lineno, key, m):
     statements.append(MethodFlagsNode(filename, lineno, key, m))
 
-def handleExportFuncs(statements, filename, lineno, m, classes):
-    statements.append(ExportFuncsNode(filename, lineno, m.group(1), classes))
+def handleExportFuncs(statements, filename, lineno, m, classname):
+    statements.append(ExportFuncsNode(filename, lineno, m.group(1), classname))
 
 def handleAddTask(statements, filename, lineno, m):
     func = m.group("func")

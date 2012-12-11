@@ -51,7 +51,6 @@ __infunc__ = ""
 __inpython__ = False
 __body__   = []
 __classname__ = ""
-classes = [ None, ]
 
 cached_statements = {}
 
@@ -107,7 +106,7 @@ def get_statements(filename, absolute_filename, base_name):
         return statements
 
 def handle(fn, d, include):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __infunc__, __body__, __residue__, __classname__
     __body__ = []
     __infunc__ = ""
     __classname__ = ""
@@ -125,7 +124,6 @@ def handle(fn, d, include):
 
     if ext == ".bbclass":
         __classname__ = root
-        classes.append(__classname__)
         __inherit_cache = d.getVar('__inherit_cache') or []
         if not fn in __inherit_cache:
             __inherit_cache.append(fn)
@@ -150,11 +148,8 @@ def handle(fn, d, include):
 
     statements.eval(d)
 
-    if ext == ".bbclass":
-        classes.remove(__classname__)
-    else:
-        if include == 0:
-            return ast.multi_finalize(fn, d)
+    if ext != ".bbclass" and include == 0:
+        return ast.multi_finalize(fn, d)
 
     if oldfile:
         d.setVar("FILE", oldfile)
@@ -166,7 +161,7 @@ def handle(fn, d, include):
     return d
 
 def feeder(lineno, s, fn, root, statements):
-    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__, __infunc__, __body__, classes, bb, __residue__
+    global __func_start_regexp__, __inherit_regexp__, __export_func_regexp__, __addtask_regexp__, __addhandler_regexp__, __def_regexp__, __python_func_regexp__, __inpython__, __infunc__, __body__, bb, __residue__, __classname__
     if __infunc__:
         if s == '}':
             __body__.append('')
@@ -225,7 +220,7 @@ def feeder(lineno, s, fn, root, statements):
 
     m = __export_func_regexp__.match(s)
     if m:
-        ast.handleExportFuncs(statements, fn, lineno, m, classes)
+        ast.handleExportFuncs(statements, fn, lineno, m, __classname__)
         return
 
     m = __addtask_regexp__.match(s)
