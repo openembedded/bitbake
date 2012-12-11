@@ -357,6 +357,8 @@ def generate_dependencies(d):
 
 def inherits_class(klass, d):
     val = getVar('__inherit_cache', d) or []
-    if os.path.join('classes', '%s.bbclass' % klass) in val:
-        return True
+    needle = os.path.join('classes', '%s.bbclass' % klass)
+    for v in val:
+        if v.endswith(needle):
+            return True
     return False

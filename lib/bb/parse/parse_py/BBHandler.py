@@ -74,6 +74,13 @@ def inherit(files, fn, lineno, d):
         if not os.path.isabs(file) and not file.endswith(".bbclass"):
             file = os.path.join('classes', '%s.bbclass' % file)
 
+        if not os.path.isabs(file):
+            dname = os.path.dirname(fn)
+            bbpath = "%s:%s" % (dname, d.getVar("BBPATH", True))
+            abs_fn = bb.utils.which(bbpath, file)
+            if abs_fn:
+                file = abs_fn
+
         if not file in __inherit_cache:
             logger.log(logging.DEBUG -1, "BB %s:%d: inheriting %s", fn, lineno, file)
             __inherit_cache.append( file )
