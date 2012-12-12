@@ -1188,6 +1188,25 @@ class BBCooker:
 
         self.server_registration_cb(buildTargetsIdle, rq)
 
+    def generateNewImage(self, image, base_image, package_queue):
+        '''
+        Create a new image with a "require" base_image statement
+        '''
+        image_name = os.path.splitext(image)[0]
+        timestr = time.strftime("-%Y%m%d-%H%M%S")
+        dest = image_name + str(timestr) + ".bb"
+
+        with open(dest, "w") as imagefile:
+            imagefile.write("require " + base_image + "\n")
+            package_install = "PACKAGE_INSTALL_forcevariable = \""
+            for package in package_queue:
+                package_install += str(package) + " "
+            package_install += "\"\n"
+            imagefile.write(package_install)
+
+        self.state = state.initial
+        return timestr
+
     def updateCache(self):
         if self.state == state.running:
             return

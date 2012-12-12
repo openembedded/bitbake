@@ -766,3 +766,9 @@ class RecipeListModel(gtk.ListStore):
                           binb="User Selected",
                           image_contents=True)
         self.selection_change_notification()
+
+    def set_custom_image_version(self, version):
+        self.custom_image_version = version
+
+    def get_custom_image_version(self):
+        return self.custom_image_version

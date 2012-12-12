@@ -166,6 +166,13 @@ class HobHandler(gobject.GObject):
             if self.toolchain_packages:
                 self.runCommand(["setVariable", "TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages)])
                 targets.append(self.toolchain)
+            if targets[0] == "hob-image":
+                hobImage = self.runCommand(["matchFile", "hob-image.bb"])
+                baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
+                version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue])
+                targets[0] += version
+                self.recipe_model.set_custom_image_version(version)
+
             self.runCommand(["buildTargets", targets, self.default_task])
 
     def display_error(self):
@@ -386,8 +393,9 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
 
-    def generate_image(self, image, toolchain, image_packages=[], toolchain_packages=[], default_task="build"):
+    def generate_image(self, image, base_image, toolchain, image_packages=[], toolchain_packages=[], default_task="build"):
         self.image = image
+        self.base_image = base_image
         self.toolchain = toolchain
         self.package_queue = image_packages
         self.toolchain_packages = toolchain_packages

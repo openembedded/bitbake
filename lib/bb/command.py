@@ -200,6 +200,16 @@ class CommandsSync:
         filterfunc = params[0]
         bb.parse.parse_py.ConfHandler.confFilters.append(filterfunc)
 
+    def matchFile(self, command, params):
+        fMatch = params[0]
+        return command.cooker.matchFile(fMatch)
+
+    def generateNewImage(self, command, params):
+        image = params[0]
+        base_image = params[1]
+        package_queue = params[2]
+        return command.cooker.generateNewImage(image, base_image, package_queue)
+
 class CommandsAsync:
     """
     A class of asynchronous commands

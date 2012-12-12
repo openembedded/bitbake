@@ -611,15 +611,18 @@ class Builder(gtk.Window):
         # Build image
         self.set_user_config()
         toolchain_packages = []
+        base_image = None
         if self.configuration.toolchain_build:
             toolchain_packages = self.package_model.get_selected_packages_toolchain()
         if self.configuration.selected_image == self.recipe_model.__custom_image__:
             packages = self.package_model.get_selected_packages()
             image = self.hob_image
+            base_image = self.configuration.initial_selected_image
         else:
             packages = []
             image = self.configuration.selected_image
         self.handler.generate_image(image,
+                                    base_image,
                                     self.hob_toolchain,
                                     packages,
                                     toolchain_packages,
@@ -1017,7 +1020,8 @@ class Builder(gtk.Window):
             self.parameters.image_names = []
             selected_image = self.recipe_model.get_selected_image()
             if selected_image == self.recipe_model.__custom_image__:
-                linkname = 'hob-image-' + self.configuration.curr_mach
+                version = self.recipe_model.get_custom_image_version()
+                linkname = 'hob-image' + version+ "-" + self.configuration.curr_mach
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
             image_extension = self.get_image_extension()
