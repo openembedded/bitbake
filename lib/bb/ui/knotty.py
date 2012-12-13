@@ -146,7 +146,7 @@ class TerminalFilter(object):
             import curses
         except ImportError:
             sys.exit("FATAL: The knotty ui could not load the required curses python module.")
-	
+
         import termios
         self.curses = curses
         self.termios = termios
@@ -329,7 +329,7 @@ def main(server, eventHandler, tf = TerminalFilter):
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
                     termfilter.clearFooter()
-                    print("ERROR: Logfile of failure stored in: %s" % logfile)
+                    bb.error("Logfile of failure stored in: %s" % logfile)
                     if includelogs and not event.errprinted:
                         print("Log data follows:")
                         f = open(logfile, "r")
