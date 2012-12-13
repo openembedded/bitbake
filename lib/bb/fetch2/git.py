@@ -11,8 +11,8 @@ Supported SRC_URI options are:
 - branch
    The git branch to retrieve from. The default is "master"
 
-   this option also support multiple branches fetching, branches
-   are seperated by comma. in multiple branches case, the name option
+   This option also supports multiple branch fetching, with branches
+   separated by commas.  In multiple branches case, the name option
    must have the same number of names to match the branches, which is
    used to specify the SRC_REV for the branch
    e.g:
@@ -25,13 +25,13 @@ Supported SRC_URI options are:
 
 - protocol
    The method to use to access the repository. Common options are "git",
-   "http", "file" and "rsync". The default is "git"
+   "http", "https", "file", "ssh" and "rsync". The default is "git".
 
 - rebaseable
    rebaseable indicates that the upstream git repo may rebase in the future,
    and current revision may disappear from upstream repo. This option will
-   reminder fetcher to preserve local cache carefully for future use.
-   The default value is "0", set rebaseable=1 for rebaseable git repo
+   remind fetcher to preserve local cache carefully for future use.
+   The default value is "0", set rebaseable=1 for rebaseable git repo.
 
 - nocheckout
    Don't checkout source code when unpacking. set this option for the recipe
