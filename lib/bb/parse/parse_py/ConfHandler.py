@@ -98,15 +98,22 @@ def handle(fn, data, include):
     while True:
         lineno = lineno + 1
         s = f.readline()
-        if not s: break
+        if not s:
+            break
         w = s.strip()
-        if not w: continue          # skip empty lines
+        # skip empty lines
+        if not w:
+            continue
         s = s.rstrip()
-        if s[0] == '#': continue    # skip comments
         while s[-1] == '\\':
             s2 = f.readline().strip()
             lineno = lineno + 1
+            if s2 and s[0] == "#" and s2[0] != "#":
+                bb.fatal("There is a confusing multiline, partially commented expression on line %s of file %s (%s).\nPlease clarify whether this is all a comment or should be parsed." % (lineno, fn, s))
             s = s[:-1] + s2
+        # skip comments
+        if s[0] == '#':
+            continue
         feeder(lineno, s, fn, statements)
 
     # DONE WITH PARSING... time to evaluate
