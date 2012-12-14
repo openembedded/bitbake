@@ -69,6 +69,7 @@ class Command:
             except CommandError as exc:
                 return None, exc.args[0]
             except Exception:
+                import traceback
                 return None, traceback.format_exc()
             else:
                 return result, None
