@@ -74,11 +74,6 @@ logger.setLevel(logging.DEBUG - 2)
 # can result in construction of the various loggers.
 import bb.msg
 
-if "BBDEBUG" in os.environ:
-    level = int(os.environ["BBDEBUG"])
-    if level:
-        bb.msg.set_debug_level(level)
-
 from bb import fetch2 as fetch
 sys.modules['bb.fetch'] = sys.modules['bb.fetch2']
 

@@ -214,6 +214,11 @@ Default BBFILES are the .bb files in the current directory.""")
     if configuration.bind and configuration.servertype != "xmlrpc":
         sys.exit("FATAL: If '-B' or '--bind' is defined, we must set the servertype as 'xmlrpc'.\n")
 
+    if "BBDEBUG" in os.environ:
+        level = int(os.environ["BBDEBUG"])
+        if level > configuration.debug:
+            configuration.debug = level
+
     bb.msg.init_msgconfig(configuration.verbose, configuration.debug,
                          configuration.debug_domains)
 
