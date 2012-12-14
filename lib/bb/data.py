@@ -260,6 +260,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
 
     emit_var(func, o, d, False) and o.write('\n')
     newdeps = bb.codeparser.ShellParser(func, logger).parse_shell(d.getVar(func, True))
+    newdeps |= set((d.getVarFlag(func, "vardeps", True) or "").split())
     seen = set()
     while newdeps:
         deps = newdeps
