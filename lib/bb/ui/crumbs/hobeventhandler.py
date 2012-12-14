@@ -168,10 +168,11 @@ class HobHandler(gobject.GObject):
                 targets.append(self.toolchain)
             if targets[0] == "hob-image":
                 hobImage = self.runCommand(["matchFile", "hob-image.bb"])
-                baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
-                version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue])
-                targets[0] += version
-                self.recipe_model.set_custom_image_version(version)
+                if self.base_image != "Create your own image":
+                    baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
+                    version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue])
+                    targets[0] += version
+                    self.recipe_model.set_custom_image_version(version)
 
             self.runCommand(["buildTargets", targets, self.default_task])
 
