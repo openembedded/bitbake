@@ -143,6 +143,8 @@ class DataSmart(MutableMapping):
                     break
             except ExpansionError:
                 raise
+            except bb.parse.SkipPackage:
+                raise
             except Exception as exc:
                 raise ExpansionError(varname, s, exc)
 
