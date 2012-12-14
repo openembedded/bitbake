@@ -148,8 +148,10 @@ class CommandsSync:
         Get any command parsed from the commandline
         """
         cmd_action = command.cooker.commandlineAction
-        if cmd_action['msg']:
-            raise CommandError(msg)
+        if cmd_action is None:
+            return None
+        elif 'msg' in cmd_action and cmd_action['msg']:
+            raise CommandError(cmd_action['msg'])
         else:
             return cmd_action['action']
 
