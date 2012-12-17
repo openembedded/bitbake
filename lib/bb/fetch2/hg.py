@@ -98,7 +98,12 @@ class Hg(FetchMethod):
             return "%s identify -i %s://%s/%s" % (basecmd, proto, hgroot, ud.module)
 
         options = [];
-        if ud.revision:
+
+        # Don't specify revision for the fetch; clone the entire repo.
+        # This avoids an issue if the specified revision is a tag, because
+        # the tag actually exists in the specified revision + 1, so it won't
+        # be available when used in any successive commands.
+        if ud.revision and command != "fetch":
             options.append("-r %s" % ud.revision)
 
         if command == "fetch":
