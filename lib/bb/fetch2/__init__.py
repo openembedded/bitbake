@@ -30,6 +30,7 @@ from __future__ import print_function
 import os, re
 import logging
 import urllib
+import operator
 import bb.persist_data, bb.utils
 import bb.checksum
 from bb import data
@@ -729,7 +730,7 @@ def get_file_checksums(filelist, pn):
         if checksum:
             checksums.append((pth, checksum))
 
-    checksums.sort()
+    checksums.sort(key=operator.itemgetter(1))
     return checksums
 
 
