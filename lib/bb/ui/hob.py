@@ -22,7 +22,7 @@
 
 import sys
 import os
-requirements = "FATAL: Gtk+, PyGtk and PyGobject are required to use Hob"
+requirements = "FATAL: Hob requires Gtk+ 2.20.0 or higher, PyGtk 2.21.0 or higher"
 try:
     import gobject
     import gtk
