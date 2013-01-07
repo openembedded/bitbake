@@ -591,9 +591,10 @@ def add_tasks(tasklist, d):
         getTask('noexec')
         getTask('umask')
         task_deps['parents'][task] = []
-        for dep in flags['deps']:
-            dep = data.expand(dep, d)
-            task_deps['parents'][task].append(dep)
+        if 'deps' in flags:
+            for dep in flags['deps']:
+                dep = data.expand(dep, d)
+                task_deps['parents'][task].append(dep)
 
     # don't assume holding a reference
     data.setVar('_task_deps', task_deps, d)
