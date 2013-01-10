@@ -27,7 +27,7 @@ from bb.ui.crumbs.hobwidget import HobViewTable, HobNotebook, HobAltButton, HobB
 from bb.ui.crumbs.hoblistmodel import PackageListModel
 from bb.ui.crumbs.hobpages import HobPage
 from bb.ui.crumbs.hobthreads import OpeningLogThread
-from bb.ui.crumbs.hig import OpeningLogDialog
+from bb.ui.crumbs.hig.openinglogdialog import OpeningLogDialog
 
 #
 # PackageSelectionPage

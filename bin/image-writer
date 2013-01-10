@@ -28,8 +28,10 @@ import gtk
 import optparse
 import pygtk
 
-from bb.ui.crumbs.hig import DeployImageDialog, ImageSelectionDialog, CrumbsMessageDialog
 from bb.ui.crumbs.hobwidget import HobAltButton, HobButton
+from bb.ui.crumbs.hig.crumbsmessagedialog import CrumbsMessageDialog
+from bb.ui.crumbs.hig.deployimagedialog import DeployImageDialog
+from bb.ui.crumbs.hig.imageselectiondialog import ImageSelectionDialog
 
 # I put all the fs bitbake supported here. Need more test.
 DEPLOYABLE_IMAGE_TYPES = ["jffs2", "cramfs", "ext2", "ext3", "btrfs", "squashfs", "ubi", "vmdk"]

@@ -38,11 +38,14 @@ from bb.ui.crumbs.builddetailspage import BuildDetailsPage
 from bb.ui.crumbs.imagedetailspage import ImageDetailsPage
 from bb.ui.crumbs.sanitycheckpage import SanityCheckPage
 from bb.ui.crumbs.hobwidget import hwc, HobButton, HobAltButton
-from bb.ui.crumbs.hig import CrumbsMessageDialog, ImageSelectionDialog, \
-                             AdvancedSettingDialog, SimpleSettingsDialog, \
-                             LayerSelectionDialog, DeployImageDialog
 from bb.ui.crumbs.persistenttooltip import PersistentTooltip
 import bb.ui.crumbs.utils
+from bb.ui.crumbs.hig.crumbsmessagedialog import CrumbsMessageDialog
+from bb.ui.crumbs.hig.simplesettingsdialog import SimpleSettingsDialog
+from bb.ui.crumbs.hig.advancedsettingsdialog import AdvancedSettingsDialog
+from bb.ui.crumbs.hig.deployimagedialog import DeployImageDialog
+from bb.ui.crumbs.hig.layerselectiondialog import LayerSelectionDialog
+from bb.ui.crumbs.hig.imageselectiondialog import ImageSelectionDialog
 
 hobVer = 20120808
 
@@ -1295,7 +1298,7 @@ class Builder(gtk.Window):
         dialog.destroy()
 
     def show_adv_settings_dialog(self, tab=None):
-        dialog = AdvancedSettingDialog(title = "Advanced configuration",
+        dialog = AdvancedSettingsDialog(title = "Advanced configuration",
             configuration = copy.deepcopy(self.configuration),
             all_image_types = self.parameters.image_types,
             all_package_formats = self.parameters.all_package_formats,

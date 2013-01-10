@@ -31,7 +31,7 @@ from bb.ui.crumbs.runningbuild import BuildFailureTreeView
 from bb.ui.crumbs.hobpages import HobPage
 from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobthreads import OpeningLogThread
-from bb.ui.crumbs.hig import OpeningLogDialog
+from bb.ui.crumbs.hig.openinglogdialog import OpeningLogDialog
 
 class BuildConfigurationTreeView(gtk.TreeView):
     def __init__ (self):

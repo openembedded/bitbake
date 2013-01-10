@@ -26,9 +26,9 @@ from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton, HobButton
 from bb.ui.crumbs.hobpages import HobPage
 import subprocess
-from bb.ui.crumbs.hig import CrumbsDialog
+from bb.ui.crumbs.hig.crumbsdialog import CrumbsDialog
 from bb.ui.crumbs.hobthreads import OpeningLogThread
-from bb.ui.crumbs.hig import OpeningLogDialog
+from bb.ui.crumbs.hig.openinglogdialog import OpeningLogDialog
 
 #
 # ImageDetailsPage
