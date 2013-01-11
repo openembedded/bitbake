@@ -1,0 +1,92 @@
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+    <chapter>
+        <title>File download support</title>
+        <section>
+            <title>Overview</title>
+            <para>BitBake provides support to download files this procedure is called fetching and it handled by the fetch and fetch2 modules. At this point the original fetch code is considered to be replaced by fetch2 and this manual only related to the fetch2 codebase.</para>
+
+            <para>The SRC_URI is normally used to tell BitBake which files to fetch. The next sections will describe the available fetchers and their options. Each fetcher honors a set of variables and per URI parameters separated by a <quote>;</quote> consisting of a key and a value. The semantics of the variables and parameters are defined by the fetcher. BitBake tries to have consistent semantics between the different fetchers.
+            </para>
+
+            <para>The overall fetch process is that first, fetches are attempted from PREMIRRORS. If those don't work, the original SRC_URI is attempted and if that fails, BitBake will fall back to MIRRORS. Cross urls are supported, so its possible to mirror a git repository on an http server as a tarball for example. Some example commonly used mirror definitions are:</para>
+
+            <para><screen><varname>PREMIRRORS</varname> ?= "\
+bzr://.*/.*   http://somemirror.org/sources/ \n \
+cvs://.*/.*   http://somemirror.org/sources/ \n \
+git://.*/.*   http://somemirror.org/sources/ \n \
+hg://.*/.*    http://somemirror.org/sources/ \n \
+osc://.*/.*   http://somemirror.org/sources/ \n \
+p4://.*/.*    http://somemirror.org/sources/ \n \
+svk://.*/.*   http://somemirror.org/sources/ \n \
+svn://.*/.*   http://somemirror.org/sources/ \n"
+
+<varname>MIRRORS</varname> =+ "\
+ftp://.*/.*      http://somemirror.org/sources/ \n \
+http://.*/.*     http://somemirror.org/sources/ \n \
+https://.*/.*    http://somemirror.org/sources/ \n"</screen></para>
+
+            <para>Non-local downloaded output is placed into the directory specified by the <varname>DL_DIR</varname>. For non local archive downloads the code can verify sha256 and md5 checksums for the download to ensure the file has been downloaded correctly. These may be specified either in the form <varname>SRC_URI[md5sum]</varname> for the md5 checksum and <varname>SRC_URI[sha256sum]</varname> for the sha256 checksum or as parameters on the SRC_URI such as SRC_URI="http://example.com/foobar.tar.bz2;md5sum=4a8e0f237e961fd7785d19d07fdb994d". If <varname>BB_STRICT_CHECKSUM</varname> is set, any download without a checksum will trigger an error message. In cases where multiple files are listed in SRC_URI, the name parameter is used assign names to the urls and these are then specified in the checksums in the form SRC_URI[name.sha256sum].</para>
+
+        </section>
+
+        <section>
+            <title>Local file fetcher</title>
+            <para>The URN for the local file fetcher is <emphasis>file</emphasis>. The filename can be either absolute or relative. If the filename is relative, <varname>FILESPATH</varname> and failing that <varname>FILESDIR</varname> will be used to find the appropriate relative file. The metadata usually extend these variables to include variations of the values in <varname>OVERRIDES</varname>. Single files and complete directories can be specified.
+<screen><varname>SRC_URI</varname>= "file://relativefile.patch"
+<varname>SRC_URI</varname>= "file://relativefile.patch;this=ignored"
+<varname>SRC_URI</varname>= "file:///Users/ich/very_important_software"
+</screen>
+            </para>
+        </section>
+
+        <section>
+            <title>CVS fetcher</title>
+            <para>The URN for the CVS fetcher is <emphasis>cvs</emphasis>. This fetcher honors the variables <varname>CVSDIR</varname>, <varname>SRCDATE</varname>, <varname>FETCHCOMMAND_cvs</varname>, <varname>UPDATECOMMAND_cvs</varname>. <varname>DL_DIR</varname> specifies where a temporary checkout is saved. <varname>SRCDATE</varname> specifies which date to use when doing the fetching (the special value of "now" will cause the checkout to be updated on every build). <varname>FETCHCOMMAND</varname> and <varname>UPDATECOMMAND</varname> specify which executables to use for the CVS checkout or update.
+            </para>
+            <para>The supported parameters are <varname>module</varname>, <varname>tag</varname>, <varname>date</varname>, <varname>method</varname>, <varname>localdir</varname>, <varname>rsh</varname> and <varname>scmdata</varname>. The <varname>module</varname> specifies which module to check out, the <varname>tag</varname> describes which CVS TAG should be used for the checkout. By default the TAG is empty. A <varname>date</varname> can be specified to override the SRCDATE of the configuration to checkout a specific date.  The special value of "now" will cause the checkout to be updated on every build.<varname>method</varname> is by default <emphasis>pserver</emphasis>. If <emphasis>ext</emphasis> is used the <varname>rsh</varname> parameter will be evaluated and <varname>CVS_RSH</varname> will be set. Finally, <varname>localdir</varname> is used to checkout into a special directory relative to <varname>CVSDIR</varname>.
+
+<screen><varname>SRC_URI</varname> = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
+<varname>SRC_URI</varname> = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
+</screen>
+            </para>
+        </section>
+
+        <section>
+            <title>HTTP/FTP fetcher</title>
+            <para>The URNs for the HTTP/FTP fetcher are <emphasis>http</emphasis>, <emphasis>https</emphasis> and <emphasis>ftp</emphasis>. This fetcher honors the variables <varname>FETCHCOMMAND_wget</varname>. <varname>FETCHCOMMAND</varname> contains the command used for fetching. <quote>${URI}</quote> and <quote>${FILES}</quote> will be replaced by the URI and basename of the file to be fetched.
+            </para>
+            <para><screen><varname>SRC_URI</varname> = "http://oe.handhelds.org/not_there.aac"
+<varname>SRC_URI</varname> = "ftp://oe.handhelds.org/not_there_as_well.aac"
+<varname>SRC_URI</varname> = "ftp://you@oe.handheld.sorg/home/you/secret.plan"
+</screen></para>
+        </section>
+
+        <section>
+            <title>SVN fetcher</title>
+            <para>The URN for the SVN fetcher is <emphasis>svn</emphasis>.
+            </para>
+            <para>This fetcher honors the variables <varname>FETCHCOMMAND_svn</varname>, <varname>SVNDIR</varname>, <varname>SRCREV</varname>. <varname>FETCHCOMMAND</varname> contains the subversion command. <varname>SRCREV</varname> specifies which revision to use when doing the fetching.
+            </para>
+            <para>The supported parameters are <varname>proto</varname>, <varname>rev</varname> and <varname>scmdata</varname>. <varname>proto</varname> is the Subversion protocol, <varname>rev</varname> is the Subversion revision. If <varname>scmdata</varname> is set to <quote>keep</quote>, the <quote>.svn</quote> directories will be available during compile-time.
+            </para>
+            <para><screen><varname>SRC_URI</varname> = "svn://svn.oe.handhelds.org/svn;module=vip;proto=http;rev=667"
+<varname>SRC_URI</varname> = "svn://svn.oe.handhelds.org/svn/;module=opie;proto=svn+ssh;date=20060126"
+</screen></para>
+        </section>
+
+        <section>
+            <title>GIT fetcher</title>
+            <para>The URN for the GIT Fetcher is <emphasis>git</emphasis>.
+            </para>
+            <para>The variable <varname>GITDIR</varname> will be used as the base directory where the git tree is cloned to.
+            </para>
+            <para>The parameters are <emphasis>tag</emphasis>, <emphasis>protocol</emphasis> and <emphasis>scmdata</emphasis>. <emphasis>tag</emphasis> is a Git tag, the default is <quote>master</quote>. <emphasis>protocol</emphasis> is the Git protocol to use and defaults to <quote>git</quote> if a hostname is set, otherwise its <quote>file</quote>. If <emphasis>scmdata</emphasis> is set to <quote>keep</quote>, the <quote>.git</quote> directory will be available during compile-time.
+            </para>
+            <para><screen><varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
+<varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
+            </screen></para>
+        </section>
+
+    </chapter>

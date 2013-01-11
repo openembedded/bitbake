@@ -1,0 +1,31 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+                      "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<book id='bitbake-user-manual' lang='en'
+        xmlns:xi="http://www.w3.org/2003/XInclude"
+        xmlns="http://docbook.org/ns/docbook"
+        >
+    <bookinfo>
+        <title>BitBake User Manual</title>
+        <authorgroup>
+            <corpauthor>BitBake Team</corpauthor>
+        </authorgroup>
+        <copyright>
+            <year>2004, 2005, 2006, 2011, 2013</year>
+            <holder>Chris Larson</holder>
+            <holder>Phil Blundell</holder>
+            <holder>Richard Purdie</holder>
+        </copyright>
+        <legalnotice>
+            <para>This work is licensed under the Creative Commons Attribution License. To view a copy of this license, visit <ulink url="http://creativecommons.org/licenses/by/3.0/">http://creativecommons.org/licenses/by/3.0/</ulink> or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California 94041, USA.</para>
+        </legalnotice>
+    </bookinfo>
+
+    <xi:include href="user-manual-intro.xml"/>
+
+    <xi:include href="user-manual-metadata.xml"/>
+
+    <xi:include href="user-manual-fetching.xml"/>
+
+    <xi:include href="user-manual-bitbakecommand.xml"/>
+
+</book>
