@@ -404,7 +404,7 @@ class ImageConfigurationPage (HobPage):
         image_model = recipe_model.tree_model(filter)
         image_model.set_sort_column_id(recipe_model.COL_NAME, gtk.SORT_ASCENDING)
         active = 0
-        cnt = 1
+        cnt = 0
 
         white_pattern = []
         if self.builder.parameters.image_white_pattern:
@@ -422,7 +422,10 @@ class ImageConfigurationPage (HobPage):
         model = self.image_combo.get_model()
         model.clear()
         # Set a indicator text to combo store when first open
-        self.image_combo.append_text(self.__dummy_image__)
+        if not selected_image:
+            self.image_combo.append_text(self.__dummy_image__)
+            cnt = cnt + 1
+
         # append and set active
         while it:
             path = image_model.get_path(it)
