@@ -5,17 +5,13 @@
         xmlns="http://docbook.org/ns/docbook"
         >
    <bookinfo>
-   <!--
-   # Talk to Scott & Richard about replacing the figures with either Bitbake or
-   OpenEmbedded graphics.
         <mediaobject>
             <imageobject>
-                <imagedata fileref='figures/dev-title.png'
+                <imagedata fileref='figures/bitbake-title.png'
                     format='SVG'
                     align='left' scalefit='1' width='100%'/>
             </imageobject>
         </mediaobject>
-   -->     
       <title>BitBake User Manual</title>
         
       <authorgroup>
