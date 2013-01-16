@@ -540,7 +540,7 @@ class Builder(gtk.Window):
         if not self.display_sanity_check:
           func()
         else:
-          sanity_check_post_func = func
+          self.sanity_check_post_func = func
 
     def generate_configuration(self):
         if not self.sanity_checked:
