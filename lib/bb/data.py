@@ -158,7 +158,7 @@ def expandKeys(alterdata, readdata = None):
 
     for key in todolist:
         ekey = todolist[key]
-        renameVar(key, ekey, alterdata)
+        alterdata.renameVar(key, ekey)
 
 def inheritFromOS(d, savedenv, permitted):
     """Inherit variables from the initial environment."""
@@ -166,9 +166,9 @@ def inheritFromOS(d, savedenv, permitted):
     for s in savedenv.keys():
         if s in permitted:
             try:
-                setVar(s, getVar(s, savedenv, True), d)
+                d.setVar(s, getVar(s, savedenv, True))
                 if s in exportlist:
-                    setVarFlag(s, "export", True, d)
+                    d.setVarFlag(s, "export", True)
             except TypeError:
                 pass
 
