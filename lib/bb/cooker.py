@@ -338,6 +338,11 @@ class BBCooker:
                 parselog.exception("Unable to read %s", fn)
                 raise
 
+        # Display history
+        with closing(StringIO()) as env:
+            self.configuration.data.inchistory.emit(env)
+            logger.plain(env.getvalue())
+
         # emit variables and shell functions
         data.update_data(envdata)
         with closing(StringIO()) as env:
