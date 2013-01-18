@@ -166,9 +166,9 @@ def inheritFromOS(d, savedenv, permitted):
     for s in savedenv.keys():
         if s in permitted:
             try:
-                d.setVar(s, getVar(s, savedenv, True))
+                d.setVar(s, getVar(s, savedenv, True), op = 'from env')
                 if s in exportlist:
-                    d.setVarFlag(s, "export", True)
+                    d.setVarFlag(s, "export", True, op = 'auto env export')
             except TypeError:
                 pass
 
@@ -194,8 +194,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         return 0
 
     if all:
-        commentVal = re.sub('\n', '\n#', str(oval))
-        o.write('# %s=%s\n' % (var, commentVal))
+        d.varhistory.emit(var, oval, val, o)
 
     if (var.find("-") != -1 or var.find(".") != -1 or var.find('{') != -1 or var.find('}') != -1 or var.find('+') != -1) and not all:
         return 0
@@ -274,7 +273,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
 
 def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
-    d.finalize()
+    d.finalize(parent = True)
 
 def build_dependencies(key, keys, shelldeps, vardepvals, d):
     deps = set()

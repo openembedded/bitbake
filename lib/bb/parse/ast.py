@@ -68,7 +68,7 @@ class ExportNode(AstNode):
         self.var = var
 
     def eval(self, data):
-        data.setVarFlag(self.var, "export", 1)
+        data.setVarFlag(self.var, "export", 1, op = 'exported')
 
 class DataNode(AstNode):
     """
@@ -90,33 +90,53 @@ class DataNode(AstNode):
     def eval(self, data):
         groupd = self.groupd
         key = groupd["var"]
+        loginfo = {
+            'variable': key,
+            'file': self.filename,
+            'line': self.lineno,
+        }
         if "exp" in groupd and groupd["exp"] != None:
-            data.setVarFlag(key, "export", 1)
+            data.setVarFlag(key, "export", 1, op = 'exported', **loginfo)
+
+        op = "set"
         if "ques" in groupd and groupd["ques"] != None:
             val = self.getFunc(key, data)
+            op = "set?"
             if val == None:
                 val = groupd["value"]
         elif "colon" in groupd and groupd["colon"] != None:
             e = data.createCopy()
             bb.data.update_data(e)
+            op = "immediate"
             val = e.expand(groupd["value"], key + "[:=]")
         elif "append" in groupd and groupd["append"] != None:
+            op = "append"
             val = "%s %s" % ((self.getFunc(key, data) or ""), groupd["value"])
         elif "prepend" in groupd and groupd["prepend"] != None:
+            op = "prepend"
             val = "%s %s" % (groupd["value"], (self.getFunc(key, data) or ""))
         elif "postdot" in groupd and groupd["postdot"] != None:
+            op = "postdot"
             val = "%s%s" % ((self.getFunc(key, data) or ""), groupd["value"])
         elif "predot" in groupd and groupd["predot"] != None:
+            op = "predot"
             val = "%s%s" % (groupd["value"], (self.getFunc(key, data) or ""))
         else:
             val = groupd["value"]
 
+        flag = None
         if 'flag' in groupd and groupd['flag'] != None:
-            data.setVarFlag(key, groupd['flag'], val)
+            flag = groupd['flag']
         elif groupd["lazyques"]:
-            data.setVarFlag(key, "defaultval", val)
+            flag = "defaultval"
+
+        loginfo['op'] = op
+        loginfo['detail'] = groupd["value"]
+
+        if flag:
+            data.setVarFlag(key, flag, val, **loginfo)
         else:
-            data.setVar(key, val)
+            data.setVar(key, val, **loginfo)
 
 class MethodNode(AstNode):
     def __init__(self, filename, lineno, func_name, body):
