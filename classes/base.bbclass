@@ -44,7 +44,7 @@ python do_showdata() {
 	# emit the metadata which isnt valid shell
 	for e in bb.data.keys(d):
 		if d.getVarFlag(e, 'python'):
-			sys.__stdout__.write("\npython %s () {\n%s}\n" % (e, d.getVar(e, True)))
+			bb.plain("\npython %s () {\n%s}" % (e, d.getVar(e, True)))
 }
 
 addtask listtasks
@@ -53,7 +53,7 @@ python do_listtasks() {
 	import sys
 	for e in bb.data.keys(d):
 		if d.getVarFlag(e, 'task'):
-			sys.__stdout__.write("%s\n" % e)
+			bb.plain("%s" % e)
 }
 
 addtask build
