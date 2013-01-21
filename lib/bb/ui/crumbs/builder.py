@@ -46,6 +46,7 @@ from bb.ui.crumbs.hig.advancedsettingsdialog import AdvancedSettingsDialog
 from bb.ui.crumbs.hig.deployimagedialog import DeployImageDialog
 from bb.ui.crumbs.hig.layerselectiondialog import LayerSelectionDialog
 from bb.ui.crumbs.hig.imageselectiondialog import ImageSelectionDialog
+from bb.ui.crumbs.hig.parsingwarningsdialog import ParsingWarningsDialog
 
 hobVer = 20120808
 
@@ -446,6 +447,9 @@ class Builder(gtk.Window):
         # Indicate whether the sanity check ran
         self.sanity_checked = False
 
+        # save parsing warnings
+        self.parsing_warnings = []
+
         # create visual elements
         self.create_visual_elements()
 
@@ -472,6 +476,7 @@ class Builder(gtk.Window):
         self.handler.connect("data-generated",           self.handler_data_generated_cb)
         self.handler.connect("command-succeeded",        self.handler_command_succeeded_cb)
         self.handler.connect("command-failed",           self.handler_command_failed_cb)
+        self.handler.connect("parsing-warning",          self.handler_parsing_warning_cb)
         self.handler.connect("sanity-failed",            self.handler_sanity_failed_cb)
         self.handler.connect("recipe-populated",         self.handler_recipe_populated_cb)
         self.handler.connect("package-populated",        self.handler_package_populated_cb)
@@ -880,6 +885,15 @@ class Builder(gtk.Window):
         response = dialog.run()
         dialog.destroy()
 
+    def show_warning_dialog(self):
+        dialog = ParsingWarningsDialog(title = "View warnings",
+                warnings = self.parsing_warnings,
+                parent = None,
+                flags = gtk.DIALOG_DESTROY_WITH_PARENT
+                       | gtk.DIALOG_NO_SEPARATOR)
+        response = dialog.run()
+        dialog.destroy()
+
     def show_network_error_dialog(self):
         lbl = "<b>Hob cannot connect to the network</b>\n"
         msg = "Please check your network connection. If you are using a proxy server, please make sure it is configured correctly."
@@ -902,6 +916,9 @@ class Builder(gtk.Window):
         if msg:
             self.show_error_dialog(msg)
         self.reset()
+
+    def handler_parsing_warning_cb(self, handler, warn_msg):
+        self.parsing_warnings.append(warn_msg)
 
     def handler_sanity_failed_cb(self, handler, msg, network_error):
         self.reset()

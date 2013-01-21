@@ -185,6 +185,7 @@ class PackageSelectionPage (HobPage):
         self.show_all()
 
     def build_image_clicked_cb(self, button):
+        self.builder.parsing_warnings = []
         self.builder.build_image()
 
     def back_button_clicked_cb(self, button):

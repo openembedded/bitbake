@@ -41,6 +41,9 @@ class HobHandler(gobject.GObject):
          "command-failed"          : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_STRING,)),
+         "parsing-warning"         : (gobject.SIGNAL_RUN_LAST,
+                                      gobject.TYPE_NONE,
+                                     (gobject.TYPE_STRING,)),
          "sanity-failed"           : (gobject.SIGNAL_RUN_LAST,
                                       gobject.TYPE_NONE,
                                      (gobject.TYPE_STRING, gobject.TYPE_INT)),
@@ -95,6 +98,7 @@ class HobHandler(gobject.GObject):
         self.server = server
         self.error_msg = ""
         self.initcmd = None
+        self.parsing = False
 
     def set_busy(self):
         if not self.generating:
@@ -207,6 +211,11 @@ class HobHandler(gobject.GObject):
                     formatter = bb.msg.BBLogFormatter()
                     msg = formatter.format(event)
                     self.error_msg += msg + '\n'
+                elif event.levelno >= logging.WARNING and self.parsing == True:
+                    formatter = bb.msg.BBLogFormatter()
+                    msg = formatter.format(event)
+                    warn_msg = msg + '\n'
+                    self.emit("parsing-warning", warn_msg)
 
         elif isinstance(event, bb.event.TargetsTreeGenerated):
             self.current_phase = "data generation"
@@ -249,6 +258,8 @@ class HobHandler(gobject.GObject):
             message["total"] = None
             message["title"] = "Parsing recipes"
             self.emit("parsing-started", message)
+            if isinstance(event, bb.event.ParseStarted):
+                self.parsing = True
         elif isinstance(event, (bb.event.ParseProgress,
                 bb.event.CacheLoadProgress,
                 bb.event.TreeDataPreparationProgress)):
@@ -267,6 +278,8 @@ class HobHandler(gobject.GObject):
             message["total"] = event.total
             message["title"] = "Parsing recipes"
             self.emit("parsing-completed", message)
+            if isinstance(event, bb.event.ParseCompleted):
+                self.parsing = False
         elif isinstance(event, bb.event.NetworkTestFailed):
             self.emit("network-failed")
             self.run_next_command()

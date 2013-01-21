@@ -46,6 +46,7 @@ class ImageConfigurationPage (HobPage):
         # cleared.
         self.machine_combo_changed_by_manual = True
         self.stopping = False
+        self.warning_shift = 0
         self.create_visual_elements()
 
     def create_visual_elements(self):
@@ -141,6 +142,37 @@ class ImageConfigurationPage (HobPage):
         if self.builder.recipe_model.get_selected_image() == self.builder.recipe_model.__custom_image__:
             self.just_bake_button.hide()
 
+    def add_warnings_bar(self):
+        #create the warnings bar shown when recipes parsing generates warnings
+        color = HobColors.KHAKI
+        warnings_bar = gtk.EventBox()
+        warnings_bar.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
+        warnings_bar.set_flags(gtk.CAN_DEFAULT)
+        warnings_bar.grab_default()
+
+        build_stop_tab = gtk.Table(10, 20, True)
+        warnings_bar.add(build_stop_tab)
+
+        icon = gtk.Image()
+        icon_pix_buffer = gtk.gdk.pixbuf_new_from_file(hic.ICON_INDI_ALERT_FILE)
+        icon.set_from_pixbuf(icon_pix_buffer)
+        build_stop_tab.attach(icon, 0, 2, 0, 10)
+
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        warnings_nb = len(self.builder.parsing_warnings)
+        if warnings_nb == 1:
+            label.set_markup("<span size='x-large'><b>1 recipe parsing warning</b></span>")
+        else:
+            label.set_markup("<span size='x-large'><b>%s recipe parsing warnings</b></span>" % warnings_nb)
+        build_stop_tab.attach(label, 2, 12, 0, 10)
+
+        view_warnings_button = HobButton("View warnings")
+        view_warnings_button.connect('clicked', self.view_warnings_button_clicked_cb)
+        build_stop_tab.attach(view_warnings_button, 15, 19, 1, 9)
+
+        return warnings_bar
+
     def create_config_machine(self):
         self.machine_title = gtk.Label()
         self.machine_title.set_alignment(0.0, 0.5)
@@ -187,6 +219,12 @@ class ImageConfigurationPage (HobPage):
             #self.gtable.attach(self.progress_box, 0, 40, 15, 18)
             self.gtable.attach(self.progress_bar, 0, 37, 15, 18)
             self.gtable.attach(self.stop_button, 37, 40, 15, 18, 0, 0)
+        if self.builder.parsing_warnings:
+            self.warnings_bar = self.add_warnings_bar()
+            self.gtable.attach(self.warnings_bar, 0, 40, 14, 18)
+            self.warning_shift = 4
+        else:
+            self.warning_shift = 0
         self.gtable.attach(self.machine_separator, 0, 40, 13, 14)
 
     def create_config_baseimg(self):
@@ -222,12 +260,12 @@ class ImageConfigurationPage (HobPage):
         self.image_separator = gtk.HSeparator()
 
     def set_config_baseimg_layout(self):
-        self.gtable.attach(self.image_title, 0, 40, 15, 17)
-        self.gtable.attach(self.image_title_desc, 0, 40, 18, 22)
-        self.gtable.attach(self.image_combo, 0, 12, 23, 26)
-        self.gtable.attach(self.image_desc, 0, 12, 27, 33)
-        self.gtable.attach(self.view_adv_configuration_button, 14, 36, 23, 28)
-        self.gtable.attach(self.image_separator, 0, 40, 35, 36)
+        self.gtable.attach(self.image_title, 0, 40, 15+self.warning_shift, 17+self.warning_shift)
+        self.gtable.attach(self.image_title_desc, 0, 40, 18+self.warning_shift, 22+self.warning_shift)
+        self.gtable.attach(self.image_combo, 0, 12, 23+self.warning_shift, 26+self.warning_shift)
+        self.gtable.attach(self.image_desc, 0, 12, 27+self.warning_shift, 33+self.warning_shift)
+        self.gtable.attach(self.view_adv_configuration_button, 14, 36, 23+self.warning_shift, 28+self.warning_shift)
+        self.gtable.attach(self.image_separator, 0, 40, 35+self.warning_shift, 36+self.warning_shift)
 
     def create_config_build_button(self):
         # Create the "Build packages" and "Build image" buttons at the bottom
@@ -254,6 +292,9 @@ class ImageConfigurationPage (HobPage):
         self.progress_bar.set_text("Stopping recipe parsing")
         self.progress_bar.set_rcstyle("stop")
         self.builder.cancel_parse_sync()
+
+    def view_warnings_button_clicked_cb(self, button):
+        self.builder.show_warning_dialog()
 
     def machine_combo_changed_cb(self, machine_combo):
         self.stopping = False
@@ -435,6 +476,7 @@ class ImageConfigurationPage (HobPage):
             self.builder.reparse_post_adv_settings()        
 
     def just_bake_button_clicked_cb(self, button):
+        self.builder.parsing_warnings = []
         self.builder.just_bake()
 
     def edit_image_button_clicked_cb(self, button):

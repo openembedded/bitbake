@@ -30,6 +30,7 @@ class HobColors:
     BLACK        = "#000000"
     PALE_BLUE    = "#53b8ff"
     DEEP_RED     = "#aa3e3e"
+    KHAKI        = "#fff68f"
 
     OK = WHITE
     RUNNING = PALE_GREEN
