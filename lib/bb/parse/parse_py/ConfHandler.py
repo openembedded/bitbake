@@ -108,7 +108,7 @@ def handle(fn, data, include):
         while s[-1] == '\\':
             s2 = f.readline().strip()
             lineno = lineno + 1
-            if s2 and s[0] == "#" and s2[0] != "#":
+            if (not s2 or s2 and s2[0] != "#") and s[0] == "#" :
                 bb.fatal("There is a confusing multiline, partially commented expression on line %s of file %s (%s).\nPlease clarify whether this is all a comment or should be parsed." % (lineno, fn, s))
             s = s[:-1] + s2
         # skip comments
