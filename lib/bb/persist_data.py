@@ -125,6 +125,11 @@ class SQLTable(collections.MutableMapping):
 
         return len(self) < len(other)
 
+    def get_by_pattern(self, pattern):
+        data = self._execute("SELECT * FROM %s WHERE key LIKE ?;" %
+                             self.table, [pattern])
+        return [row[1] for row in data]
+
     def values(self):
         return list(self.itervalues())
 
