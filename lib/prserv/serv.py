@@ -268,10 +268,17 @@ def is_local_special(host, port):
 
 def auto_start(d):
     global singleton
-    if (not d.getVar('PRSERV_HOST', True)) or (not d.getVar('PRSERV_PORT', True)):
+
+    host_params = filter(None, (d.getVar('PRSERV_HOST', True) or '').split(':'))
+    if not host_params:
         return True
 
-    if is_local_special(d.getVar('PRSERV_HOST', True), int(d.getVar('PRSERV_PORT', True))) and not singleton:
+    if len(host_params) != 2:
+        logger.critical('\n'.join(['PRSERV_HOST: incorrect format',
+                'Usage: PRSERV_HOST = "<hostname>:<port>"']))
+        return True
+
+    if is_local_special(host_params[0], int(host_params[1])) and not singleton:
         import bb.utils
         cachedir = (d.getVar("PERSISTENT_DIR", True) or d.getVar("CACHE", True))
         if not cachedir:
@@ -285,8 +292,8 @@ def auto_start(d):
     if singleton:
         host, port = singleton.getinfo()
     else:
-        host = d.getVar('PRSERV_HOST', True)
-        port = int(d.getVar('PRSERV_PORT', True))
+        host = host_params[0]
+        port = int(host_params[1])
 
     try:
         return PRServerConnection(host,port).ping()
