@@ -190,20 +190,6 @@ class Configuration:
         self.split_proxy("cvs", params["cvs_proxy_host"] + ":" + params["cvs_proxy_port"])
 
     def load(self, template):
-        self.curr_mach = template.getVar("MACHINE")
-        self.curr_package_format = " ".join(template.getVar("PACKAGE_CLASSES").split("package_")).strip()
-        self.curr_distro = template.getVar("DISTRO")
-        self.dldir = template.getVar("DL_DIR")
-        self.sstatedir = template.getVar("SSTATE_DIR")
-        self.sstatemirror = template.getVar("SSTATE_MIRRORS")
-        try:
-            self.pmake = int(template.getVar("PARALLEL_MAKE").split()[1])
-        except:
-            pass
-        try:
-            self.bbthread = int(template.getVar("BB_NUMBER_THREADS"))
-        except:
-            pass
         try:
             self.image_rootfs_size = int(template.getVar("IMAGE_ROOTFS_SIZE"))
         except:
@@ -215,13 +201,9 @@ class Configuration:
         # image_overhead_factor is read-only.
         self.incompat_license = template.getVar("INCOMPATIBLE_LICENSE")
         self.curr_sdk_machine = template.getVar("SDKMACHINE")
-        self.conf_version = template.getVar("CONF_VERSION")
-        self.lconf_version = template.getVar("LCONF_VERSION")
         self.extra_setting = eval(template.getVar("EXTRA_SETTING"))
         self.toolchain_build = eval(template.getVar("TOOLCHAIN_BUILD"))
         self.image_fstypes = template.getVar("IMAGE_FSTYPES")
-        # bblayers.conf
-        self.layers = template.getVar("BBLAYERS").split()
         # image/recipes/packages
         self.selected_image = template.getVar("__SELECTED_IMAGE__")
         self.selected_recipes = template.getVar("DEPENDS").split()
@@ -561,11 +543,10 @@ class Builder(gtk.Window):
 
     def initiate_new_build_async(self):
         self.switch_page(self.MACHINE_SELECTION)
-        if self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/")) == False:
-            self.show_sanity_check_page()
-            self.handler.init_cooker()
-            self.handler.set_extra_inherit("image_types")
-            self.generate_configuration()
+        self.show_sanity_check_page()
+        self.handler.init_cooker()
+        self.handler.set_extra_inherit("image_types")
+        self.generate_configuration()
 
     def update_config_async(self):
         self.switch_page(self.MACHINE_SELECTION)
