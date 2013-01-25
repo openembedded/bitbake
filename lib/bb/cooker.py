@@ -186,6 +186,12 @@ class BBCooker:
         filtered_keys = bb.utils.approved_variables()
         bb.data.inheritFromOS(self.configuration.data, self.savedenv, filtered_keys)
 
+    def enableDataTracking(self):
+        self.configuration.data.enableTracking()
+
+    def disableDataTracking(self):
+        self.configuration.data.disableTracking()
+
     def loadConfigurationData(self):
         self.initConfigurationData()
 
@@ -200,6 +206,89 @@ class BBCooker:
 
         if not self.configuration.cmd:
             self.configuration.cmd = self.configuration.data.getVar("BB_DEFAULT_TASK", True) or "build"
+
+    def saveConfigurationVar(self, var, val, default_file):
+
+        replaced = False
+        #do not save if nothing changed
+        if str(val) == self.configuration.data.getVar(var):
+            return
+
+        conf_files = self.configuration.data.varhistory.get_variable_files(var)
+
+        #format the value when it is a list
+        if isinstance(val, list):
+            listval = ""
+            for value in val:
+                listval += "%s   " % value
+            val = listval
+
+        topdir = self.configuration.data.getVar("TOPDIR")
+
+        #comment or replace operations made on var
+        for conf_file in conf_files:
+            if topdir in conf_file:
+                with open(conf_file, 'r') as f:
+                    contents = f.readlines()
+                f.close()
+
+                lines = self.configuration.data.varhistory.get_variable_lines(var, conf_file)
+                for line in lines:
+                    total = ""
+                    i = 0
+                    for c in contents:
+                        total += c
+                        i = i + 1
+                        if i==int(line):
+                            end_index = len(total)
+                    index = total.rfind(var, 0, end_index)
+
+                    begin_line = total.count("\n",0,index)
+                    end_line = int(line)
+
+                    #check if the variable was saved before in the same way
+                    #if true it replace the place where the variable was declared
+                    #else it comments it
+                    if contents[begin_line-1]== "#added by bitbake\n":
+                        contents[begin_line] = "%s = \"%s\"\n" % (var, val)
+                        replaced = True
+                    else:
+                        for ii in range(begin_line, end_line):
+                            contents[ii] = "#" + contents[ii]
+
+                total = ""
+                for c in contents:
+                    total += c
+                with open(conf_file, 'w') as f:
+                    f.write(total)
+                f.close()
+
+        if replaced == False:
+            #remove var from history
+            self.configuration.data.varhistory.del_var_history(var)
+
+            #add var to the end of default_file
+            default_file = self._findConfigFile(default_file)
+
+            with open(default_file, 'r') as f:
+                contents = f.readlines()
+            f.close()
+
+            total = ""
+            for c in contents:
+                total += c
+
+            #add the variable on a single line, to be easy to replace the second time
+            total += "#added by bitbake"
+            total += "\n%s = \"%s\"\n" % (var, val)
+
+            with open(default_file, 'w') as f:
+                f.write(total)
+            f.close()
+
+            #add to history
+            loginfo = {"op":set, "file":default_file, "line":total.count("\n")}
+            self.configuration.data.setVar(var, val, **loginfo)
 
     def parseConfiguration(self):
 

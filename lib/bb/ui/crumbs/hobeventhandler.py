@@ -146,7 +146,9 @@ class HobHandler(gobject.GObject):
         elif next_command == self.SUB_MATCH_CLASS:
             self.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
         elif next_command == self.SUB_PARSE_CONFIG:
+            self.runCommand(["enableDataTracking"])
             self.runCommand(["parseConfigurationFiles", "", ""])
+            self.runCommand(["disableDataTracking"])
         elif next_command == self.SUB_GNERATE_TGTS:
             self.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.SUB_GENERATE_PKGINFO:
@@ -450,6 +452,9 @@ class HobHandler(gobject.GObject):
             if i not in ret:
                 ret.append(i)
         return " ".join(ret)
+
+    def set_var_in_file(self, var, val, default_file=None):
+        self.server.runCommand(["setVarFile", var, val, default_file])
 
     def get_parameters(self):
         # retrieve the parameters from bitbake

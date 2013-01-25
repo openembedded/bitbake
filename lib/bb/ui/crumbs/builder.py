@@ -217,26 +217,32 @@ class Configuration:
         self.split_proxy("git", template.getVar("GIT_PROXY_HOST") + ":" + template.getVar("GIT_PROXY_PORT"))
         self.split_proxy("cvs", template.getVar("CVS_PROXY_HOST") + ":" + template.getVar("CVS_PROXY_PORT"))
 
-    def save(self, template, defaults=False):
+    def save(self, handler, template, defaults=False):
         template.setVar("VERSION", "%s" % hobVer)
         # bblayers.conf
-        template.setVar("BBLAYERS", " ".join(self.layers))
+        handler.set_var_in_file("BBLAYERS", self.layers, "bblayers.conf")
         # local.conf
         if not defaults:
-            template.setVar("MACHINE", self.curr_mach)
-        template.setVar("DISTRO", self.curr_distro)
-        template.setVar("DL_DIR", self.dldir)
-        template.setVar("SSTATE_DIR", self.sstatedir)
-        template.setVar("SSTATE_MIRRORS", self.sstatemirror)
-        template.setVar("PARALLEL_MAKE", "-j %s" % self.pmake)
-        template.setVar("BB_NUMBER_THREADS", self.bbthread)
-        template.setVar("PACKAGE_CLASSES", " ".join(["package_" + i for i in self.curr_package_format.split()]))
+            handler.set_var_in_file("MACHINE", self.curr_mach, "local.conf")
+        handler.set_var_in_file("DISTRO", self.curr_distro, "local.conf")
+        handler.set_var_in_file("DL_DIR", self.dldir, "local.conf")
+        handler.set_var_in_file("SSTATE_DIR", self.sstatedir, "local.conf")
+        sstate_mirror_list = self.sstatemirror.split("\\n ")
+        sstate_mirror_list_modified = []
+        for mirror in sstate_mirror_list:
+            if mirror != "":
+                mirror = mirror + "\\n"
+                sstate_mirror_list_modified.append(mirror)
+        handler.set_var_in_file("SSTATE_MIRRORS", sstate_mirror_list_modified, "local.conf")
+        handler.set_var_in_file("PARALLEL_MAKE", "-j %s" % self.pmake, "local.conf")
+        handler.set_var_in_file("BB_NUMBER_THREADS", self.bbthread, "local.conf")
+        handler.set_var_in_file("PACKAGE_CLASSES", " ".join(["package_" + i for i in self.curr_package_format.split()]), "local.conf")
         template.setVar("IMAGE_ROOTFS_SIZE", self.image_rootfs_size)
         template.setVar("IMAGE_EXTRA_SPACE", self.image_extra_size)
         template.setVar("INCOMPATIBLE_LICENSE", self.incompat_license)
         template.setVar("SDKMACHINE", self.curr_sdk_machine)
-        template.setVar("CONF_VERSION", self.conf_version)
-        template.setVar("LCONF_VERSION", self.lconf_version)
+        handler.set_var_in_file("CONF_VERSION", self.conf_version, "local.conf")
+        handler.set_var_in_file("LCONF_VERSION", self.lconf_version, "bblayers.conf")
         template.setVar("EXTRA_SETTING", self.extra_setting)
         template.setVar("TOOLCHAIN_BUILD", self.toolchain_build)
         template.setVar("IMAGE_FSTYPES", self.image_fstypes)
@@ -670,7 +676,7 @@ class Builder(gtk.Window):
         self.template = TemplateMgr()
         try:
             self.template.open(filename, path)
-            self.configuration.save(self.template, defaults)
+            self.configuration.save(self.handler, self.template, defaults)
 
             self.template.save()
         except Exception as e:

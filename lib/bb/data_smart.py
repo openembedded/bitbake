@@ -259,6 +259,27 @@ class VariableHistory(object):
             o.write("#\n# $%s\n#   [no history recorded]\n#\n" % var)
             o.write('#   "%s"\n' % (commentVal))
 
+    def get_variable_files(self, var):
+        """Get the files where operations are made on a variable"""
+        var_history = self.variable(var)
+        files = []
+        for event in var_history:
+            files.append(event['file'])
+        return files
+
+    def get_variable_lines(self, var, f):
+        """Get the line where a operation is made on a variable in file f"""
+        var_history = self.variable(var)
+        lines = []
+        for event in var_history:
+            if f== event['file']:
+                line = event['line']
+                lines.append(line)
+        return lines
+
+    def del_var_history(self, var):
+        if var in self.variables:
+            self.variables[var] = []
 
 class DataSmart(MutableMapping):
     def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
@@ -429,6 +450,7 @@ class DataSmart(MutableMapping):
 
 
     def setVar(self, var, value, **loginfo):
+        #print("var=" + str(var) + "  val=" + str(value))
         if 'op' not in loginfo:
             loginfo['op'] = "set"
         self.expand_cache = {}

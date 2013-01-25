@@ -137,8 +137,6 @@ class RecipeFile(ConfigFile):
 
 class TemplateMgr(gobject.GObject):
 
-    __gLocalVars__ = ["MACHINE", "PACKAGE_CLASSES", "DISTRO", "DL_DIR", "SSTATE_DIR", "SSTATE_MIRRORS", "PARALLEL_MAKE", "BB_NUMBER_THREADS", "CONF_VERSION"]
-    __gBBLayersVars__ = ["BBLAYERS", "LCONF_VERSION"]
     __gRecipeVars__ = ["DEPENDS", "IMAGE_INSTALL"]
 
     def __init__(self):
@@ -153,36 +151,20 @@ class TemplateMgr(gobject.GObject):
         return "%s/%s%s%s" % (path, "template-", filename, ".hob")
 
     @classmethod
-    def convert_to_bblayers_pathfilename(cls, filename, path):
-        return "%s/%s%s%s" % (path, "bblayers-", filename, ".conf")
-
-    @classmethod
-    def convert_to_local_pathfilename(cls, filename, path):
-        return "%s/%s%s%s" % (path, "local-", filename, ".conf")
-
-    @classmethod
     def convert_to_image_pathfilename(cls, filename, path):
         return "%s/%s%s%s" % (path, "hob-image-", filename, ".bb")
 
     def open(self, filename, path):
         self.template_hob = HobTemplateFile(TemplateMgr.convert_to_template_pathfilename(filename, path))
-        self.bblayers_conf = ConfigFile(TemplateMgr.convert_to_bblayers_pathfilename(filename, path))
-        self.local_conf = ConfigFile(TemplateMgr.convert_to_local_pathfilename(filename, path))
         self.image_bb = RecipeFile(TemplateMgr.convert_to_image_pathfilename(filename, path))
 
     def setVar(self, var, val):
-        if var in TemplateMgr.__gLocalVars__:
-            self.local_conf.setVar(var, val)
-        if var in TemplateMgr.__gBBLayersVars__:
-            self.bblayers_conf.setVar(var, val)
         if var in TemplateMgr.__gRecipeVars__:
             self.image_bb.setVar(var, val)
 
         self.template_hob.setVar(var, val)
 
     def save(self):
-        self.local_conf.save()
-        self.bblayers_conf.save()
         self.image_bb.save()
         self.template_hob.save()
 
@@ -200,12 +182,6 @@ class TemplateMgr(gobject.GObject):
         if self.template_hob:
             del self.template_hob
             template_hob = None
-        if self.bblayers_conf:
-            del self.bblayers_conf
-            self.bblayers_conf = None
-        if self.local_conf:
-            del self.local_conf
-            self.local_conf = None
         if self.image_bb:
             del self.image_bb
             self.image_bb = None

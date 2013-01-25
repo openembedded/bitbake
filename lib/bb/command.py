@@ -174,6 +174,18 @@ class CommandsSync:
         value = str(params[1])
         command.cooker.configuration.data.setVar(varname, value)
 
+    def enableDataTracking(self, command, params):
+        """
+        Enable history tracking for variables
+        """
+        command.cooker.enableDataTracking()
+
+    def disableDataTracking(self, command, params):
+        """
+        Disable history tracking for variables
+        """
+        command.cooker.disableDataTracking()
+
     def initCooker(self, command, params):
         """
         Init the cooker to initial state with nothing parsed
@@ -209,6 +221,12 @@ class CommandsSync:
         base_image = params[1]
         package_queue = params[2]
         return command.cooker.generateNewImage(image, base_image, package_queue)
+
+    def setVarFile(self, command, params):
+        var = params[0]
+        val = params[1]
+        default_file = params[2]
+        command.cooker.saveConfigurationVar(var, val, default_file)
 
 class CommandsAsync:
     """
