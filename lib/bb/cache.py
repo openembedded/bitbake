@@ -119,7 +119,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.basetaskhashes = self.taskvar('BB_BASEHASH', self.tasks, metadata)
         self.hashfilename = self.getvar('BB_HASHFILENAME', metadata)
 
-        self.file_depends = metadata.getVar('__depends', False)
         self.task_deps = metadata.getVar('_task_deps', False) or {'tasks': [], 'parents': {}}
 
         self.skipped = False
