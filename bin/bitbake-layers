@@ -26,6 +26,7 @@ import os
 import sys
 import fnmatch
 from collections import defaultdict
+import re
 
 bindir = os.path.dirname(__file__)
 topdir = os.path.dirname(bindir)
@@ -458,7 +459,7 @@ build results (as the layer priority order has effectively changed).
         for layer, _, regex, _ in self.bbhandler.cooker.status.bbfile_config_priorities:
             if regex.match(filename):
                 for layerdir in self.bblayers:
-                    if regex.match(os.path.join(layerdir, 'test')):
+                    if regex.match(os.path.join(layerdir, 'test')) and re.match(layerdir, filename):
                         return self.get_layer_name(layerdir)
         return "?"
 
