@@ -105,8 +105,10 @@ class ParsingWarningsDialog (CrumbsDialog):
     def create_visual_elements(self):
         self.set_size_request(350, 350)
         self.heading_label = gtk.Label()
-        self.heading_label.set_alignment(0.1, 0)
+        self.heading_label.set_alignment(0, 0)
         self.warning_label = gtk.Label()
+        self.warning_label.set_selectable(True)
+        self.warning_label.set_alignment(0, 0)
         self.textWindow = gtk.ScrolledWindow()
 
         table = gtk.Table(1, 10, False)
@@ -155,7 +157,7 @@ class ParsingWarningsDialog (CrumbsDialog):
             self.vbox.pack_start(self.heading_label, expand=False, fill=False)
             self.vbox.pack_start(self.warning_label, expand=False, fill=False)
             self.vbox.pack_start(self.textWindow, expand=False, fill=False)
-            cancel_button = self.add_button("Cancel", gtk.RESPONSE_CANCEL)
+            cancel_button = self.add_button("Close", gtk.RESPONSE_CANCEL)
             HobAltButton.style_button(cancel_button)
 
         self.refresh_components()
