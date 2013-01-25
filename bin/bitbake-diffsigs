@@ -85,8 +85,8 @@ options, args = parser.parse_args(sys.argv)
 if len(args) == 1:
     parser.print_help()
 else:
-    tinfoil = bb.tinfoil.Tinfoil()
     if options.taskmode:
+        tinfoil = bb.tinfoil.Tinfoil()
         if len(args) < 3:
             logger.error("Please specify a recipe and task name")
             sys.exit(1)
