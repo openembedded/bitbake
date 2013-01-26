@@ -29,15 +29,17 @@ from bb.cooker import state
 import bb.fetch2
 
 class Tinfoil:
-    def __init__(self):
+    def __init__(self, output=sys.stdout):
         # Needed to avoid deprecation warnings with python 2.6
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # Set up logging
         self.logger = logging.getLogger('BitBake')
-        console = logging.StreamHandler(sys.stdout)
-        format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+        console = logging.StreamHandler(output)
         bb.msg.addDefaultlogFilter(console)
+        format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+        if output.isatty():
+            format.enable_color()
         console.setFormatter(format)
         self.logger.addHandler(console)
 
