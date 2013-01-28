@@ -126,7 +126,6 @@ class CoreRecipeInfo(RecipeInfoCommon):
         self.pv = self.getvar('PV', metadata)
         self.pr = self.getvar('PR', metadata)
         self.defaultpref = self.intvar('DEFAULT_PREFERENCE', metadata)
-        self.broken = self.getvar('BROKEN', metadata)
         self.not_world = self.getvar('EXCLUDE_FROM_WORLD', metadata)
         self.stamp = self.getvar('STAMP', metadata)
         self.stampclean = self.getvar('STAMPCLEAN', metadata)        
@@ -233,7 +232,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
 
         # Collect files we may need for possible world-dep
         # calculations
-        if not self.broken and not self.not_world:
+        if not self.not_world:
             cachedata.possible_world.append(fn)
 
         # create a collection of all targets for sanity checking
