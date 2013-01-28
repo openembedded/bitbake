@@ -50,6 +50,13 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
      TEST_NETWORK_FAILED,
      TEST_NETWORK_CANCELED) = range(6)
 
+    TARGETS = [
+        ("MY_TREE_MODEL_ROW", gtk.TARGET_SAME_WIDGET, 0),
+        ("text/plain", 0, 1),
+        ("TEXT", 0, 2),
+        ("STRING", 0, 3),
+        ]
+
     def __init__(self, title, configuration, all_image_types,
             all_package_formats, all_distros, all_sdk_machines,
             max_threads, parent, flags, handler, buttons=None):
@@ -84,6 +91,8 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.proxy_settings_changed = False
         self.handler = handler
         self.proxy_test_ran = False
+        self.selected_mirror_row = 0
+        self.new_mirror = False
 
         # create visual elements on the dialog
         self.create_visual_elements()
@@ -219,7 +228,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.configuration.sstatedir = self.sstatedir_text.get_text()
         self.configuration.sstatemirror = ""
         for mirror in self.sstatemirrors_list:
-            if mirror[1] != "":
+            if mirror[1] != "" and mirror[2].startswith("file://"):
                 if mirror[1].endswith("\\1"):
                     smirror = mirror[2] + " " + mirror[1] + " \\n "
                 else:
@@ -287,7 +296,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         label = self.gen_label_info_widget(content, tooltip)
         sstatedir_widget, self.sstatedir_text = self.gen_entry_widget(self.configuration.sstatedir, self)
         sub_vbox.pack_start(label, expand=False, fill=False)
-        sub_vbox.pack_start(sstatedir_widget, expand=False, fill=False, padding=12)
+        sub_vbox.pack_start(sstatedir_widget, expand=False, fill=False, padding=6)
 
         content = "<span weight=\"bold\">Shared state mirrors</span>"
         tooltip = "URLs pointing to pre-built mirrors that will speed your build. "
@@ -297,21 +306,17 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         tooltip += "http://www.yoctoproject.org/docs/current/poky-ref-manual/"
         tooltip += "poky-ref-manual.html#shared-state\">Yocto Project Reference Manual</a>."
         table = self.gen_label_info_widget(content, tooltip)
-        advanced_vbox.pack_start(table, expand=False, fill=False)
+        advanced_vbox.pack_start(table, expand=False, fill=False, padding=6)
 
         sub_vbox = gtk.VBox(False)
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
-        scroll.add_with_viewport(sub_vbox)
-        scroll.connect('size-allocate', self.scroll_changed)
-        advanced_vbox.pack_start(scroll, gtk.TRUE, gtk.TRUE, 0)
+        advanced_vbox.pack_start(sub_vbox, gtk.TRUE, gtk.TRUE, 0)
         searched_string = "file://"
 
         if self.sstatemirrors_changed == 0:
             self.sstatemirrors_changed = 1
             sstatemirrors = self.configuration.sstatemirror
             if sstatemirrors == "":
-                sm_list = [ 0, "", "file://(.*)"]
+                sm_list = ["Standard", "", "file://(.*)"]
                 self.sstatemirrors_list.append(sm_list)
             else:
                 while sstatemirrors.find(searched_string) != -1:
@@ -325,29 +330,205 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
                     sstatemirror_fields = [x for x in sstatemirror.split(' ') if x.strip()]
                     if len(sstatemirror_fields):
                         if sstatemirror_fields[0] == "file://(.*)":
-                            sm_list = [ 0, sstatemirror_fields[1], "file://(.*)"]
+                            sm_list = ["Standard", sstatemirror_fields[1], "file://(.*)"]
                         else:
-                            sm_list = [ 1, sstatemirror_fields[1], sstatemirror_fields[0]]
+                            sm_list = ["Custom", sstatemirror_fields[1], sstatemirror_fields[0]]
                         self.sstatemirrors_list.append(sm_list)
 
-        index = 0
-        for mirror in self.sstatemirrors_list:
-            if mirror[0] == 0:
-                sstatemirror_widget = self.gen_mirror_entry_widget(mirror[1], index)
-            else:
-                sstatemirror_widget = self.gen_mirror_entry_widget(mirror[1], index, mirror[2])
-            sub_vbox.pack_start(sstatemirror_widget, expand=False, fill=False, padding=9)
-            index += 1
+        sstatemirrors_widget, sstatemirrors_store = self.gen_shared_sstate_widget(self.sstatemirrors_list, self)
+        sub_vbox.pack_start(sstatemirrors_widget, expand=True, fill=True)
 
-        table = gtk.Table(1, 1, False)
+        table = gtk.Table(1, 10, False)
         table.set_col_spacings(6)
-        add_mirror_button = HobAltButton("Add another mirror")
+        add_mirror_button = HobAltButton("Add mirror")
         add_mirror_button.connect("clicked", self.add_mirror)
-        add_mirror_button.set_size_request(150,30)
+        add_mirror_button.set_size_request(120,30)
         table.attach(add_mirror_button, 1, 2, 0, 1, xoptions=gtk.SHRINK)
-        advanced_vbox.pack_start(table, expand=False, fill=False, padding=9)
+
+        self.delete_button = HobAltButton("Delete mirror")
+        self.delete_button.connect("clicked", self.delete_cb)
+        self.delete_button.set_size_request(120, 30)
+        table.attach(self.delete_button, 3, 4, 0, 1, xoptions=gtk.SHRINK)
+
+        advanced_vbox.pack_start(table, expand=False, fill=False, padding=6)
 
         return advanced_vbox
+
+    def gen_shared_sstate_widget(self, sstatemirrors_list, window):
+        hbox = gtk.HBox(False)
+
+        sstatemirrors_store = gtk.ListStore(str, str, str)
+        for sstatemirror in sstatemirrors_list:
+            sstatemirrors_store.append(sstatemirror)
+
+        self.sstatemirrors_tv = gtk.TreeView()
+        self.sstatemirrors_tv.set_rules_hint(True)
+        self.sstatemirrors_tv.set_headers_visible(True)
+        tree_selection = self.sstatemirrors_tv.get_selection()
+        tree_selection.set_mode(gtk.SELECTION_SINGLE)
+
+        # Allow enable drag and drop of rows including row move
+        self.sstatemirrors_tv.enable_model_drag_source( gtk.gdk.BUTTON1_MASK,
+            self.TARGETS,
+            gtk.gdk.ACTION_DEFAULT|
+            gtk.gdk.ACTION_MOVE)
+        self.sstatemirrors_tv.enable_model_drag_dest(self.TARGETS,
+            gtk.gdk.ACTION_DEFAULT)
+        self.sstatemirrors_tv.connect("drag_data_get", self.drag_data_get_cb)
+        self.sstatemirrors_tv.connect("drag_data_received", self.drag_data_received_cb)
+
+
+        self.scroll = gtk.ScrolledWindow()
+        self.scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
+        self.scroll.set_shadow_type(gtk.SHADOW_IN)
+        self.scroll.connect('size-allocate', self.scroll_changed)
+        self.scroll.add(self.sstatemirrors_tv)
+
+        #list store for cell renderer
+        m = gtk.ListStore(gobject.TYPE_STRING)
+        m.append(["Standard"])
+        m.append(["Custom"])
+
+        cell0 = gtk.CellRendererCombo()
+        cell0.set_property("model",m)
+        cell0.set_property("text-column", 0)
+        cell0.set_property("editable", True)
+        cell0.set_property("has-entry", False)
+        col0 = gtk.TreeViewColumn("Configuration")
+        col0.pack_start(cell0, False)
+        col0.add_attribute(cell0, "text", 0)
+        col0.set_cell_data_func(cell0, self.configuration_field)
+        self.sstatemirrors_tv.append_column(col0)
+
+        cell0.connect("edited", self.combo_changed, sstatemirrors_store)
+
+        self.cell1 = gtk.CellRendererText()
+        self.cell1.set_padding(5,2)
+        col1 = gtk.TreeViewColumn('Regex', self.cell1)
+        col1.set_cell_data_func(self.cell1, self.regex_field)
+        self.sstatemirrors_tv.append_column(col1)
+
+        self.cell1.connect("edited", self.regex_changed, sstatemirrors_store)
+
+        cell2 = gtk.CellRendererText()
+        cell2.set_padding(5,2)
+        cell2.set_property("editable", True)
+        col2 = gtk.TreeViewColumn('URL', cell2)
+        col2.set_cell_data_func(cell2, self.url_field)
+        self.sstatemirrors_tv.append_column(col2)
+
+        cell2.connect("edited", self.url_changed, sstatemirrors_store)
+
+        self.sstatemirrors_tv.set_model(sstatemirrors_store)
+        self.sstatemirrors_tv.set_cursor(self.selected_mirror_row)
+        hbox.pack_start(self.scroll, expand=True, fill=True)
+        hbox.show_all()
+
+        return hbox, sstatemirrors_store
+
+    def drag_data_get_cb(self, treeview, context, selection, target_id, etime):
+        treeselection = treeview.get_selection()
+        model, iter = treeselection.get_selected()
+        data = model.get_string_from_iter(iter)
+        selection.set(selection.target, 8, data)
+
+    def drag_data_received_cb(self, treeview, context, x, y, selection, info, etime):
+        model = treeview.get_model()
+        data = []
+        tree_iter = model.get_iter_from_string(selection.data)
+        data.append(model.get_value(tree_iter, 0))
+        data.append(model.get_value(tree_iter, 1))
+        data.append(model.get_value(tree_iter, 2))
+
+        drop_info = treeview.get_dest_row_at_pos(x, y)
+        if drop_info:
+            path, position = drop_info
+            iter = model.get_iter(path)
+            if (position == gtk.TREE_VIEW_DROP_BEFORE or position == gtk.TREE_VIEW_DROP_INTO_OR_BEFORE):
+                model.insert_before(iter, data)
+            else:
+                model.insert_after(iter, data)
+        else:
+            model.append(data)
+        if context.action == gtk.gdk.ACTION_MOVE:
+            context.finish(True, True, etime)
+        return
+
+    def delete_cb(self, button):
+        selection = self.sstatemirrors_tv.get_selection()
+        tree_model, tree_iter = selection.get_selected()
+        index = int(tree_model.get_string_from_iter(tree_iter))
+        if index == 0:
+            self.selected_mirror_row = index
+        else:
+            self.selected_mirror_row = index - 1
+        self.sstatemirrors_list.pop(index)
+        self.refresh_shared_state_page()
+        if not self.sstatemirrors_list:
+            self.delete_button.set_sensitive(False)
+
+    def add_mirror(self, button):
+        self.new_mirror = True
+        tooltip = "Select the pre-built mirror that will speed your build"
+        index = len(self.sstatemirrors_list)
+        self.selected_mirror_row = index
+        sm_list = ["Standard", "", "file://(.*)"]
+        self.sstatemirrors_list.append(sm_list)
+        self.refresh_shared_state_page()
+
+    def scroll_changed(self, widget, event, data=None):
+        if self.new_mirror == True:
+            adj = widget.get_vadjustment()
+            adj.set_value(adj.upper - adj.page_size)
+            self.new_mirror = False
+
+    def combo_changed(self, widget, path, text, model):
+        model[path][0] = text
+        selection = self.sstatemirrors_tv.get_selection()
+        tree_model, tree_iter = selection.get_selected()
+        index = int(tree_model.get_string_from_iter(tree_iter))
+        self.sstatemirrors_list[index][0] = text
+
+    def regex_changed(self, cell, path, new_text, user_data):
+        user_data[path][2] = new_text
+        selection = self.sstatemirrors_tv.get_selection()
+        tree_model, tree_iter = selection.get_selected()
+        index = int(tree_model.get_string_from_iter(tree_iter))
+        self.sstatemirrors_list[index][2] = new_text
+        return
+
+    def url_changed(self, cell, path, new_text, user_data):
+        if new_text!="Enter the mirror URL" and new_text!="Match regex and replace it with this URL":
+            user_data[path][1] = new_text
+            selection = self.sstatemirrors_tv.get_selection()
+            tree_model, tree_iter = selection.get_selected()
+            index = int(tree_model.get_string_from_iter(tree_iter))
+            self.sstatemirrors_list[index][1] = new_text
+        return
+
+    def configuration_field(self, column, cell, model, iter):
+        cell.set_property('text', model.get_value(iter, 0))
+        if model.get_value(iter, 0) == "Standard":
+            self.cell1.set_property("sensitive", False)
+            self.cell1.set_property("editable", False)
+        else:
+            self.cell1.set_property("sensitive", True)
+            self.cell1.set_property("editable", True)
+        return
+
+    def regex_field(self, column, cell, model, iter):
+        cell.set_property('text', model.get_value(iter, 2))
+        return
+
+    def url_field(self, column, cell, model, iter):
+        text = model.get_value(iter, 1)
+        if text == "":
+            if model.get_value(iter, 0) == "Standard":
+                text = "Enter the mirror URL"
+            else:
+                text = "Match regex and replace it with this URL"
+        cell.set_property('text', text)
+        return
 
     def refresh_shared_state_page(self):
         page_num = self.nb.get_current_page()
@@ -717,7 +898,3 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.handler.disconnect(self.proxy_test_passed_id)
         self.handler.disconnect(self.proxy_test_failed_id)
         super(SimpleSettingsDialog, self).destroy()
-
-    def scroll_changed(self, widget, event, data=None):
-        adj = widget.get_vadjustment()
-        adj.set_value(adj.upper - adj.page_size)
