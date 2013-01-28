@@ -1416,25 +1416,7 @@ def server_main(cooker, func, *args):
         ret = profile.Profile.runcall(prof, func, *args)
 
         prof.dump_stats("profile.log")
-
-        # Redirect stdout to capture profile information
-        pout = open('profile.log.processed', 'w')
-        so = sys.stdout.fileno()
-        orig_so = os.dup(sys.stdout.fileno())
-        os.dup2(pout.fileno(), so)
-   
-        import pstats
-        p = pstats.Stats('profile.log')
-        p.sort_stats('time')
-        p.print_stats()
-        p.print_callers()
-        p.sort_stats('cumulative')
-        p.print_stats()
-
-        os.dup2(orig_so, so)
-        pout.flush()
-        pout.close()  
-
+        bb.utils.process_profilelog("profile.log")
         print("Raw profiling information saved to profile.log and processed statistics to profile.log.processed")
 
     else:

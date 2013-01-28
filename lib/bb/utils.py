@@ -820,3 +820,23 @@ def cpu_count():
 def nonblockingfd(fd):
     fcntl.fcntl(fd, fcntl.F_SETFL, fcntl.fcntl(fd, fcntl.F_GETFL) | os.O_NONBLOCK)
 
+def process_profilelog(fn):
+    # Redirect stdout to capture profile information
+    pout = open(fn + '.processed', 'w')
+    so = sys.stdout.fileno()
+    orig_so = os.dup(sys.stdout.fileno())
+    os.dup2(pout.fileno(), so)
+   
+    import pstats
+    p = pstats.Stats(fn)
+    p.sort_stats('time')
+    p.print_stats()
+    p.print_callers()
+    p.sort_stats('cumulative')
+    p.print_stats()
+
+    os.dup2(orig_so, so)
+    pout.flush()
+    pout.close()  
+
+
