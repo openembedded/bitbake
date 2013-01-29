@@ -319,40 +319,9 @@ def decodeurl(url):
     user, password, parameters).
     """
 
-    m = re.compile('(?P<type>[^:]*)://((?P<user>.+)@)?(?P<location>[^;]+)(;(?P<parm>.*))?').match(url)
-    if not m:
-        raise MalformedUrl(url)
-
-    type = m.group('type')
-    location = m.group('location')
-    if not location:
-        raise MalformedUrl(url)
-    user = m.group('user')
-    parm = m.group('parm')
-
-    locidx = location.find('/')
-    if locidx != -1 and type.lower() != 'file':
-        host = location[:locidx]
-        path = location[locidx:]
-    else:
-        host = ""
-        path = location
-    if user:
-        m = re.compile('(?P<user>[^:]+)(:?(?P<pswd>.*))').match(user)
-        if m:
-            user = m.group('user')
-            pswd = m.group('pswd')
-    else:
-        user = ''
-        pswd = ''
-
-    p = {}
-    if parm:
-        for s in parm.split(';'):
-            s1, s2 = s.split('=')
-            p[s1] = s2
-
-    return type, host, urllib.unquote(path), user, pswd, p
+    urlo = URI(url)
+    return (urlo.scheme, urlo.hostport, urlo.path,
+            urlo.username, urlo.password, urlo.params)
 
 def encodeurl(decoded):
     """Encodes a URL from tokens (scheme, network location, path,
@@ -361,27 +330,26 @@ def encodeurl(decoded):
 
     type, host, path, user, pswd, p = decoded
 
+    urlo = URI()
+
     if not path:
         raise MissingParameterError('path', "encoded from the data %s" % str(decoded))
     if not type:
         raise MissingParameterError('type', "encoded from the data %s" % str(decoded))
-    url = '%s://' % type
-    if user and type != "file":
-        url += "%s" % user
-        if pswd:
-            url += ":%s" % pswd
-        url += "@"
-    if host and type != "file":
-        url += "%s" % host
-    # Standardise path to ensure comparisons work
-    while '//' in path:
-        path = path.replace("//", "/")
-    url += "%s" % urllib.quote(path)
-    if p:
-        for parm in p:
-            url += ";%s=%s" % (parm, p[parm])
 
-    return url
+    urlo.scheme = type
+    urlo.path = path
+
+    if host:
+        urlo.hostname = host
+    if user:
+        urlo.username = user
+    if pswd:
+        urlo.password = pswd
+    if p:
+        urlo.params = p
+
+    return str(urlo)
 
 def uri_replace(ud, uri_find, uri_replace, replacements, d):
     if not ud.url or not uri_find or not uri_replace:
