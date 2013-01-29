@@ -7,6 +7,9 @@
 	<para>The simplest example commonly used to demonstrate any new
 		programming language or tool is the <link url="http://en.wikipedia.org/wiki/Hello_world_program">Hello World</link>example.
 		This chapter demonstrates, in tutorial form, Hello World within
-		the context of BitBake.
+		the context of BitBake.  This tutorial describes how to create
+		a new Project and the applicable metadata files necessary to
+		allow BitBake to build it.
 	</para>
+	<para>
 </chapter>
