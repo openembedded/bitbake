@@ -32,8 +32,6 @@ import urllib
 from   bb import data
 from   bb.fetch2 import FetchMethod
 from   bb.fetch2 import FetchError
-from   bb.fetch2 import encodeurl
-from   bb.fetch2 import decodeurl
 from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
 
@@ -78,9 +76,6 @@ class Wget(FetchMethod):
             fetchcmd = d.getVar("FETCHCOMMAND_wget", True) or d.expand(basecmd + " -P ${DL_DIR} '${URI}'")
 
         uri = uri.split(";")[0]
-        uri_decoded = list(decodeurl(uri))
-        uri_type = uri_decoded[0]
-        uri_host = uri_decoded[1]
 
         fetchcmd = fetchcmd.replace("${URI}", uri.split(";")[0])
         fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
