@@ -1467,6 +1467,7 @@ from . import svn
 from . import wget
 from . import svk
 from . import ssh
+from . import sftp
 from . import perforce
 from . import bzr
 from . import hg
@@ -1480,6 +1481,7 @@ methods.append(git.Git())
 methods.append(cvs.Cvs())
 methods.append(svk.Svk())
 methods.append(ssh.SSH())
+methods.append(sftp.SFTP())
 methods.append(perforce.Perforce())
 methods.append(bzr.Bzr())
 methods.append(hg.Hg())
