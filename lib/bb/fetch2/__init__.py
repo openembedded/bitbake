@@ -30,6 +30,7 @@ from __future__ import print_function
 import os, re
 import logging
 import urllib
+from urlparse import urlparse
 import operator
 import bb.persist_data, bb.utils
 import bb.checksum
@@ -119,6 +120,199 @@ class NetworkAccess(BBFetchException):
 class NonLocalMethod(Exception):
     def __init__(self):
         Exception.__init__(self)
+
+
+class URI(object):
+    """
+    A class representing a generic URI, with methods for
+    accessing the URI components, and stringifies to the
+    URI.
+
+    It is constructed by calling it with a URI, or setting
+    the attributes manually:
+
+     uri = URI("http://example.com/")
+
+     uri = URI()
+     uri.scheme = 'http'
+     uri.hostname = 'example.com'
+     uri.path = '/'
+
+    It has the following attributes:
+
+      * scheme (read/write)
+      * userinfo (authentication information) (read/write)
+        * username (read/write)
+        * password (read/write)
+
+        Note, password is deprecated as of RFC 3986.
+
+      * hostname (read/write)
+      * port (read/write)
+      * hostport (read only)
+        "hostname:port", if both are set, otherwise just "hostname"
+      * path (read/write)
+      * path_quoted (read/write)
+        A URI quoted version of path
+      * params (dict) (read/write)
+      * relative (bool) (read only)
+        True if this is a "relative URI", (e.g. file:foo.diff)
+
+    It stringifies to the URI itself.
+
+    Some notes about relative URIs: while it's specified that
+    a URI beginning with <scheme>:// should either be directly
+    followed by a hostname or a /, the old URI handling of the
+    fetch2 library did not comform to this. Therefore, this URI
+    class has some kludges to make sure that URIs are parsed in
+    a way comforming to bitbake's current usage. This URI class
+    supports the following:
+
+     file:relative/path.diff (IETF compliant)
+     git:relative/path.git (IETF compliant)
+     git:///absolute/path.git (IETF compliant)
+     file:///absolute/path.diff (IETF compliant)
+
+     file://relative/path.diff (not IETF compliant)
+
+    But it does not support the following:
+
+     file://hostname/absolute/path.diff (would be IETF compliant)
+
+    Note that the last case only applies to a list of
+    "whitelisted" schemes (currently only file://), that requires
+    its URIs to not have a network location.
+    """
+
+    _relative_schemes = ['file', 'git']
+    _netloc_forbidden = ['file']
+
+    def __init__(self, uri=None):
+        self.scheme = ''
+        self.userinfo = ''
+        self.hostname = ''
+        self.port = None
+        self._path = ''
+        self.params = {}
+        self.relative = False
+
+        if not uri:
+            return
+
+        urlp = urlparse(uri)
+        self.scheme = urlp.scheme
+
+        # Convert URI to be relative
+        if urlp.scheme in self._netloc_forbidden:
+            uri = re.sub("(?<=:)//(?!/)", "", uri, 1)
+            urlp = urlparse(uri)
+
+        # Identify if the URI is relative or not
+        if urlp.scheme in self._relative_schemes and \
+           re.compile("^\w+:(?!//)").match(uri):
+            self.relative = True
+
+        if not self.relative:
+            self.hostname = urlp.hostname or ''
+            self.port = urlp.port
+
+            self.userinfo += urlp.username or ''
+
+            if urlp.password:
+                self.userinfo += ':%s' % urlp.password
+
+        # Do support params even for URI schemes that Python's
+        # urlparse doesn't support params for.
+        path = ''
+        param_str = ''
+        if not urlp.params:
+            path, param_str = (list(urlp.path.split(";", 1)) + [None])[:2]
+        else:
+            path = urlp.path
+            param_str = urlp.params
+
+        self.path = urllib.unquote(path)
+
+        if param_str:
+            self.params = self._param_dict(param_str)
+
+    def __str__(self):
+        userinfo = self.userinfo
+        if userinfo:
+            userinfo += '@'
+
+        return "%s:%s%s%s%s%s" % (
+            self.scheme,
+            '' if self.relative else '//',
+            userinfo,
+            self.hostport,
+            self.path_quoted,
+            self._param_str)
+
+    @property
+    def _param_str(self):
+        ret = ''
+        for key, val in self.params.items():
+            ret += ";%s=%s" % (key, val)
+        return ret
+
+    def _param_dict(self, param_str):
+        parm = {}
+
+        for keyval in param_str.split(";"):
+            key, val = keyval.split("=", 1)
+            parm[key] = val
+
+        return parm
+
+    @property
+    def hostport(self):
+        if not self.port:
+            return self.hostname
+        return "%s:%d" % (self.hostname, self.port)
+
+    @property
+    def path_quoted(self):
+        return urllib.quote(self.path)
+
+    @path_quoted.setter
+    def path_quoted(self, path):
+        self.path = urllib.unquote(path)
+
+    @property
+    def path(self):
+        return self._path
+
+    @path.setter
+    def path(self, path):
+        self._path = path
+
+        if re.compile("^/").match(path):
+            self.relative = False
+        else:
+            self.relative = True
+
+    @property
+    def username(self):
+        if self.userinfo:
+            return (self.userinfo.split(":", 1))[0]
+        return ''
+
+    @username.setter
+    def username(self, username):
+        self.userinfo = username
+        if self.password:
+            self.userinfo += ":%s" % self.password
+
+    @property
+    def password(self):
+        if self.userinfo and ":" in self.userinfo:
+            return (self.userinfo.split(":", 1))[1]
+        return ''
+
+    @password.setter
+    def password(self, password):
+        self.userinfo = "%s:%s" % (self.username, password)
 
 def decodeurl(url):
     """Decodes an URL into the tokens (scheme, network location, path,
