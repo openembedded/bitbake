@@ -73,6 +73,11 @@ class SSH(FetchMethod):
         return False
 
     def urldata_init(self, urldata, d):
+        if 'protocol' in urldata.parm and urldata.parm['protocol'] == 'git':
+            raise bb.fetch2.ParameterError(
+                "Invalid protocol - if you wish to fetch from a git " +
+                "repository using ssh, you need to use " +
+                "git:// prefix with protocol=ssh", urldata.url)
         m = __pattern__.match(urldata.url)
         path = m.group('path')
         host = m.group('host')
