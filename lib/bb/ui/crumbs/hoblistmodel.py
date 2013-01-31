@@ -27,14 +27,15 @@ from bb.ui.crumbs.hobpages import HobPage
 #
 # PackageListModel
 #
-class PackageListModel(gtk.TreeStore):
+class PackageListModel(gtk.ListStore):
     """
-    This class defines an gtk.TreeStore subclass which will convert the output
-    of the bb.event.TargetsTreeGenerated event into a gtk.TreeStore whilst also
+    This class defines an gtk.ListStore subclass which will convert the output
+    of the bb.event.TargetsTreeGenerated event into a gtk.ListStore whilst also
     providing convenience functions to access gtk.TreeModel subclasses which
     provide filtered views of the data.
     """
-    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_BINB, COL_INC, COL_FADE_INC, COL_FONT) = range(13)
+
+    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_RCP, COL_BINB, COL_INC, COL_FADE_INC, COL_FONT) = range(14)
 
     __gsignals__ = {
         "package-selection-changed" : (gobject.SIGNAL_RUN_LAST,
@@ -45,15 +46,9 @@ class PackageListModel(gtk.TreeStore):
     __toolchain_required_packages__ = ["packagegroup-core-standalone-sdk-target", "packagegroup-core-standalone-sdk-target-dbg"]
 
     def __init__(self):
-
-        self.contents = None
-        self.images = None
-        self.pkgs_size = 0
-        self.pn_path = {}
-        self.pkg_path = {}
         self.rprov_pkg = {}
-        
-        gtk.TreeStore.__init__ (self,
+        gtk.ListStore.__init__ (self,
+                                gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
@@ -68,21 +63,20 @@ class PackageListModel(gtk.TreeStore):
                                 gobject.TYPE_BOOLEAN,
                                 gobject.TYPE_STRING)
 
-
     """
     Find the model path for the item_name
     Returns the path in the model or None
     """
     def find_path_for_item(self, item_name):
         pkg = item_name
-        if item_name not in self.pkg_path.keys():
+        if item_name not in self.pn_path.keys():
             if item_name not in self.rprov_pkg.keys():
                 return None
             pkg = self.rprov_pkg[item_name]
-            if pkg not in self.pkg_path.keys():
+            if pkg not in self.pn_path.keys():
                 return None
 
-        return self.pkg_path[pkg]
+        return self.pn_path[pkg]
 
     def find_item_for_path(self, item_path):
         return self[item_path][self.COL_NAME]
@@ -106,9 +100,19 @@ class PackageListModel(gtk.TreeStore):
         model.set_visible_func(self.tree_model_filter, filter)
 
         sort = gtk.TreeModelSort(model)
-        sort.set_sort_column_id(PackageListModel.COL_NAME, gtk.SORT_ASCENDING)
+        sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)
         sort.set_default_sort_func(None)
         return sort
+
+    def exclude_item_sort_func(self, model, iter1, iter2):
+        val1 = model.get_value(iter1, RecipeListModel.COL_FADE_INC)
+        val2 = model.get_value(iter2, RecipeListModel.COL_INC)
+        return ((val1 == True) and (val2 == False))
+
+    def include_item_sort_func(self, model, iter1, iter2):
+        val1 = model.get_value(iter1, RecipeListModel.COL_INC)
+        val2 = model.get_value(iter2, RecipeListModel.COL_INC)
+        return ((val1 == False) and (val2 == True))
 
     def convert_vpath_to_path(self, view_model, view_path):
         # view_model is the model sorted
@@ -121,16 +125,13 @@ class PackageListModel(gtk.TreeStore):
         return path
 
     def convert_path_to_vpath(self, view_model, path):
-        name = self.find_item_for_path(path)
         it = view_model.get_iter_first()
         while it:
-            child_it = view_model.iter_children(it)
-            while child_it:
-                view_name = view_model.get_value(child_it, self.COL_NAME)
-                if view_name == name:
-                    view_path = view_model.get_path(child_it)
-                    return view_path
-                child_it = view_model.iter_next(child_it)
+            name = self.find_item_for_path(path)
+            view_name = view_model.get_value(it, RecipeListModel.COL_NAME)
+            if view_name == name:
+                view_path = view_model.get_path(it)
+                return view_path
             it = view_model.iter_next(it)
         return None
 
@@ -139,11 +140,8 @@ class PackageListModel(gtk.TreeStore):
     bb.event.PackageInfo event and populates the package list.
     """
     def populate(self, pkginfolist):
+        # First clear the model, in case repopulating
         self.clear()
-        self.pkgs_size = 0
-        self.pn_path = {}
-        self.pkg_path = {}
-        self.rprov_pkg = {}
 
         def getpkgvalue(pkgdict, key, pkgname, defaultval = None):
             value = pkgdict.get('%s_%s' % (key, pkgname), None)
@@ -155,15 +153,6 @@ class PackageListModel(gtk.TreeStore):
             pn = pkginfo['PN']
             pv = pkginfo['PV']
             pr = pkginfo['PR']
-            if pn in self.pn_path.keys():
-                pniter = self.get_iter(self.pn_path[pn])
-            else:
-                pniter = self.append(None)
-                self.set(pniter, self.COL_NAME, pn + '-' + pv + '-' + pr,
-                                 self.COL_INC, False)
-                self.pn_path[pn] = self.get_path(pniter)
-
-            # PKG is always present
             pkg = pkginfo['PKG']
             pkgv = getpkgvalue(pkginfo, 'PKGV', pkg)
             pkgr = getpkgvalue(pkginfo, 'PKGR', pkg)
@@ -180,6 +169,8 @@ class PackageListModel(gtk.TreeStore):
             for i in rprov.split():
                 self.rprov_pkg[i] = pkg
 
+            recipe = pn + '-' + pv + '-' + pr
+
             allow_empty = getpkgvalue(pkginfo, 'ALLOW_EMPTY', pkg, "")
 
             if pkgsize == "0" and not allow_empty:
@@ -188,20 +179,21 @@ class PackageListModel(gtk.TreeStore):
             # pkgsize is in KB
             size = HobPage._size_to_string(HobPage._string_to_size(pkgsize + ' KB'))
 
-            it = self.append(pniter)
-            self.pkg_path[pkg] = self.get_path(it)
-            self.set(it, self.COL_NAME, pkg, self.COL_VER, pkgv,
+            self.set(self.append(), self.COL_NAME, pkg, self.COL_VER, pkgv,
                      self.COL_REV, pkgr, self.COL_RNM, pkg_rename,
                      self.COL_SEC, section, self.COL_SUM, summary,
                      self.COL_RDEP, rdep + ' ' + rrec,
                      self.COL_RPROV, rprov, self.COL_SIZE, size,
-                     self.COL_BINB, "", self.COL_INC, False, self.COL_FONT, '10')
+                     self.COL_RCP, recipe, self.COL_BINB, "",
+                     self.COL_INC, False, self.COL_FONT, '10')
 
-    """
-    Check whether the item at item_path is included or not
-    """
-    def path_included(self, item_path):
-        return self[item_path][self.COL_INC]
+        self.pn_path = {}
+        it = self.get_iter_first()
+        while it:
+            pn = self.get_value(it, self.COL_NAME)
+            path = self.get_path(it)
+            self.pn_path[pn] = path
+            it = self.iter_next(it)
 
     """
     Update the model, send out the notification.
@@ -210,48 +202,32 @@ class PackageListModel(gtk.TreeStore):
         self.emit("package-selection-changed")
 
     """
-    Mark a certain package as selected.
-    All its dependencies are marked as selected.
-    The recipe provides the package is marked as selected.
-    If user explicitly selects a recipe, all its providing packages are selected
+    Check whether the item at item_path is included or not
+    """
+    def path_included(self, item_path):
+        return self[item_path][self.COL_INC]
+
+    """
+    Add this item, and any of its dependencies, to the image contents
     """
     def include_item(self, item_path, binb=""):
         if self.path_included(item_path):
             return
 
         item_name = self[item_path][self.COL_NAME]
-        item_rdep = self[item_path][self.COL_RDEP]
+        item_deps = self[item_path][self.COL_RDEP]
 
         self[item_path][self.COL_INC] = True
-
-        it = self.get_iter(item_path)
-
-        # If user explicitly selects a recipe, all its providing packages are selected.
-        if not self[item_path][self.COL_VER] and binb == "User Selected":
-            child_it = self.iter_children(it)
-            while child_it:
-                child_path = self.get_path(child_it)
-                child_included = self.path_included(child_path)
-                if not child_included:
-                    self.include_item(child_path, binb="User Selected")
-                child_it = self.iter_next(child_it)
-            return
-
-        # The recipe provides the package is also marked as selected
-        parent_it = self.iter_parent(it)
-        if parent_it:
-            parent_path = self.get_path(parent_it)
-            self[parent_path][self.COL_INC] = True
 
         item_bin = self[item_path][self.COL_BINB].split(', ')
         if binb and not binb in item_bin:
             item_bin.append(binb)
             self[item_path][self.COL_BINB] = ', '.join(item_bin).lstrip(', ')
 
-        if item_rdep:
+        if item_deps:
             # Ensure all of the items deps are included and, where appropriate,
             # add this item to their COL_BINB
-            for dep in item_rdep.split(" "):
+            for dep in item_deps.split(" "):
                 if dep.startswith('('):
                     continue
                 # If the contents model doesn't already contain dep, add it
@@ -270,12 +246,6 @@ class PackageListModel(gtk.TreeStore):
                 elif not dep_included:
                     self.include_item(dep_path, binb=item_name)
 
-    """
-    Mark a certain package as de-selected.
-    All other packages that depends on this package are marked as de-selected.
-    If none of the packages provided by the recipe, the recipe should be marked as de-selected.
-    If user explicitly de-select a recipe, all its providing packages are de-selected.
-    """
     def exclude_item(self, item_path):
         if not self.path_included(item_path):
             return
@@ -283,37 +253,9 @@ class PackageListModel(gtk.TreeStore):
         self[item_path][self.COL_INC] = False
 
         item_name = self[item_path][self.COL_NAME]
-        item_rdep = self[item_path][self.COL_RDEP]
-        it = self.get_iter(item_path)
-
-        # If user explicitly de-select a recipe, all its providing packages are de-selected.
-        if not self[item_path][self.COL_VER]:
-            child_it = self.iter_children(it)
-            while child_it:
-                child_path = self.get_path(child_it)
-                child_included = self[child_path][self.COL_INC]
-                if child_included:
-                    self.exclude_item(child_path)
-                child_it = self.iter_next(child_it)
-            return
-
-        # If none of the packages provided by the recipe, the recipe should be marked as de-selected.
-        parent_it = self.iter_parent(it)
-        peer_iter = self.iter_children(parent_it)
-        enabled = 0
-        while peer_iter:
-            peer_path = self.get_path(peer_iter)
-            if self[peer_path][self.COL_INC]:
-                enabled = 1
-                break
-            peer_iter = self.iter_next(peer_iter)
-        if not enabled:
-            parent_path = self.get_path(parent_it)
-            self[parent_path][self.COL_INC] = False
-
-        # All packages that depends on this package are de-selected.
-        if item_rdep:
-            for dep in item_rdep.split(" "):
+        item_deps = self[item_path][self.COL_RDEP]
+        if item_deps:
+            for dep in item_deps.split(" "):
                 if dep.startswith('('):
                     continue
                 dep_path = self.find_path_for_item(dep)
@@ -333,51 +275,40 @@ class PackageListModel(gtk.TreeStore):
                 self.exclude_item(binb_path)
 
     """
-    Package model may be incomplete, therefore when calling the
-    set_selected_packages(), some packages will not be set included.
-    Return the un-set packages list.
+    Empty self.contents by setting the include of each entry to None
     """
-    def set_selected_packages(self, packagelist, user_selected=False):
-        left = []
-        binb = 'User Selected' if user_selected else ''
-        for pn in packagelist:
-            if pn in self.pkg_path.keys():
-                path = self.pkg_path[pn]
-                self.include_item(item_path=path, binb=binb)
-            else:
-                left.append(pn)
-
-        self.selection_change_notification()
-        return left
-
-    def get_user_selected_packages(self):
-        packagelist = []
-
+    def reset(self):
         it = self.get_iter_first()
         while it:
-            child_it = self.iter_children(it)
-            while child_it:
-                if self.get_value(child_it, self.COL_INC):
-                    binb = self.get_value(child_it, self.COL_BINB)
-                    if binb == "User Selected":
-                        name = self.get_value(child_it, self.COL_NAME)
-                        packagelist.append(name)
-                child_it = self.iter_next(child_it)
+            self.set(it,
+                     self.COL_INC, False,
+                     self.COL_BINB, "")
             it = self.iter_next(it)
 
-        return packagelist
+        self.selection_change_notification()
 
     def get_selected_packages(self):
         packagelist = []
 
         it = self.get_iter_first()
         while it:
-            child_it = self.iter_children(it)
-            while child_it:
-                if self.get_value(child_it, self.COL_INC):
-                    name = self.get_value(child_it, self.COL_NAME)
+            if self.get_value(it, self.COL_INC):
+                name = self.get_value(it, self.COL_NAME)
+                packagelist.append(name)
+            it = self.iter_next(it)
+
+        return packagelist
+
+    def get_user_selected_packages(self):
+        packagelist = []
+
+        it = self.get_iter_first()
+        while it:
+            if self.get_value(it, self.COL_INC):
+                binb = self.get_value(it, self.COL_BINB)
+                if binb == "User Selected":
+                    name = self.get_value(it, self.COL_NAME)
                     packagelist.append(name)
-                child_it = self.iter_next(child_it)
             it = self.iter_next(it)
 
         return packagelist
@@ -388,16 +319,31 @@ class PackageListModel(gtk.TreeStore):
         it = self.get_iter_first()
         while it:
             if self.get_value(it, self.COL_INC):
-                child_it = self.iter_children(it)
-                while child_it:
-                    name = self.get_value(child_it, self.COL_NAME)
-                    inc = self.get_value(child_it, self.COL_INC)
-                    if inc or name.endswith("-dev") or name.endswith("-dbg"):
-                        packagelist.append(name)
-                    child_it = self.iter_next(child_it)
+                name = self.get_value(it, self.COL_NAME)
+                if name.endswith("-dev") or name.endswith("-dbg"):
+                    packagelist.append(name)
             it = self.iter_next(it)
 
         return list(set(packagelist + self.__toolchain_required_packages__));
+
+    """
+    Package model may be incomplete, therefore when calling the
+    set_selected_packages(), some packages will not be set included.
+    Return the un-set packages list.
+    """
+    def set_selected_packages(self, packagelist, user_selected=False):
+        left = []
+        binb = 'User Selected' if user_selected else ''
+        for pn in packagelist:
+            if pn in self.pn_path.keys():
+                path = self.pn_path[pn]
+                self.include_item(item_path=path, binb=binb)
+            else:
+                left.append(pn)
+
+        self.selection_change_notification()
+        return left
+
     """
     Return the selected package size, unit is B.
     """
@@ -405,36 +351,15 @@ class PackageListModel(gtk.TreeStore):
         packages_size = 0
         it = self.get_iter_first()
         while it:
-            child_it = self.iter_children(it)
-            while child_it:
-                if self.get_value(child_it, self.COL_INC):
-                    str_size = self.get_value(child_it, self.COL_SIZE)
-                    if not str_size:
-                        continue
+            if self.get_value(it, self.COL_INC):
+                str_size = self.get_value(it, self.COL_SIZE)
+                if not str_size:
+                    continue
 
-                    packages_size += HobPage._string_to_size(str_size)
+                packages_size += HobPage._string_to_size(str_size)
 
-                child_it = self.iter_next(child_it)
             it = self.iter_next(it)
         return packages_size
-
-    """
-    Empty self.contents by setting the include of each entry to None
-    """
-    def reset(self):
-        self.pkgs_size = 0
-        it = self.get_iter_first()
-        while it:
-            self.set(it, self.COL_INC, False)
-            child_it = self.iter_children(it)
-            while child_it:
-                self.set(child_it,
-                         self.COL_INC, False,
-                         self.COL_BINB, "")
-                child_it = self.iter_next(child_it)
-            it = self.iter_next(it)
-
-        self.selection_change_notification()
 
     """
     Resync the state of included items to a backup column before performing the fadeout visible effect
@@ -444,9 +369,6 @@ class PackageListModel(gtk.TreeStore):
         while it:
             active = self.get_value(it, self.COL_INC)
             self.set(it, self.COL_FADE_INC, active)
-            if self.iter_has_child(it):
-                self.resync_fadeout_column(self.iter_children(it))
-
             it = self.iter_next(it)
 
 #
@@ -533,7 +455,7 @@ class RecipeListModel(gtk.ListStore):
 
     """
     Create, if required, and return a filtered gtk.TreeModelSort
-    containing only the items which are items specified by filter
+    containing only the items specified by filter
     """
     def tree_model(self, filter, excluded_items_ahead=False, included_items_ahead=True):
         model = self.filter_new()

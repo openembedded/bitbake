@@ -52,6 +52,13 @@ class PackageSelectionPage (HobPage):
                        'col_max'  : 300,
                        'expand'   : 'True'
                       }, {
+                       'col_name' : 'Recipe',
+                       'col_id'   : PackageListModel.COL_RCP,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 250,
+                       'expand'   : 'True'
+                      }, {
                        'col_name' : 'Brought in by (+others)',
                        'col_id'   : PackageListModel.COL_BINB,
                        'col_style': 'binb',
@@ -84,6 +91,13 @@ class PackageSelectionPage (HobPage):
                        'col_max'  : 500,
                        'expand'   : 'True'
                       }, {
+                       'col_name' : 'Recipe',
+                       'col_id'   : PackageListModel.COL_RCP,
+                       'col_style': 'text',
+                       'col_min'  : 100,
+                       'col_max'  : 250,
+                       'expand'   : 'True'
+                      }, {
                        'col_name' : 'Included',
                        'col_id'   : PackageListModel.COL_INC,
                        'col_style': 'check toggle',
@@ -99,7 +113,7 @@ class PackageSelectionPage (HobPage):
     def __init__(self, builder):
         super(PackageSelectionPage, self).__init__(builder, "Edit packages")
 
-        # set invisiable members
+        # set invisible members
         self.recipe_model = self.builder.recipe_model
         self.package_model = self.builder.package_model
 
@@ -196,13 +210,7 @@ class PackageSelectionPage (HobPage):
         else:
             self.builder.show_configuration()
 
-    def _expand_all(self):
-        for tab in self.tables:
-            tab.table_tree.expand_all()
-
     def refresh_selection(self):
-        self._expand_all()
-
         self.builder.configuration.selected_packages = self.package_model.get_selected_packages()
         self.builder.configuration.user_selected_packages = self.package_model.get_user_selected_packages()
         selected_packages_num = len(self.builder.configuration.selected_packages)
