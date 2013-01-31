@@ -197,12 +197,6 @@ class ImageDetailsPage (HobPage):
         self.toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.toolbar.set_style(gtk.TOOLBAR_BOTH)
 
-        template_button = self.append_toolbar_button(self.toolbar,
-            "Templates",
-            hic.ICON_TEMPLATES_DISPLAY_FILE,
-            hic.ICON_TEMPLATES_HOVER_FILE,
-            "Load a previously saved template",
-            self.template_button_clicked_cb)
         my_images_button = self.append_toolbar_button(self.toolbar,
             "Images",
             hic.ICON_IMAGES_DISPLAY_FILE,
@@ -265,11 +259,7 @@ class ImageDetailsPage (HobPage):
             self.build_result = self.BuildDetailBox(varlist=varlist, vallist=vallist, icon=icon, color=color)
             self.box_group_area.pack_start(self.build_result, expand=False, fill=False)
 
-        # create the buttons at the bottom first because the buttons are used in apply_button_per_image()
-        if self.build_succeeded:
-            self.buttonlist = ["Build new image", "Save as template", "Run image", "Deploy image"]
-        else: # get to this page from "My images"
-            self.buttonlist = ["Build new image", "Run image", "Deploy image"]
+        self.buttonlist = ["Build new image", "Run image", "Deploy image"]
 
         # Name
         self.image_store = []
@@ -582,26 +572,6 @@ class ImageDetailsPage (HobPage):
             created = True
             is_runnable = True
 
-        name = "Save as template"
-        if name in buttonlist:
-            if created == True:
-                # separator
-                #label = gtk.Label(" or ")
-                #self.details_bottom_buttons.pack_end(label, expand=False, fill=False)
-
-                # create button "Save as template"
-                save_button = HobAltButton("Save as template")
-            else:
-                save_button = HobButton("Save as template")
-                #save_button.set_size_request(205, 49)
-                save_button.set_flags(gtk.CAN_DEFAULT)
-                packed = True
-            save_button.set_tooltip_text("Save the image configuration for reuse")
-            button_id = save_button.connect("clicked", self.save_button_clicked_cb)
-            self.button_ids[button_id] = save_button
-            self.details_bottom_buttons.pack_end(save_button, expand=False, fill=False)
-            create = True
-
         name = "Build new image"
         if name in buttonlist:
             # create button "Build new image"
@@ -617,9 +587,6 @@ class ImageDetailsPage (HobPage):
             self.button_ids[button_id] = build_new_button
 
         return is_runnable
-
-    def save_button_clicked_cb(self, button):
-        self.builder.show_save_template_dialog()
 
     def deploy_button_clicked_cb(self, button):
         if self.toggled_image:
@@ -647,13 +614,6 @@ class ImageDetailsPage (HobPage):
 
     def edit_packages_button_clicked_cb(self, button):
         self.builder.show_packages(ask=False)
-
-    def template_button_clicked_cb(self, button):
-        response, path = self.builder.show_load_template_dialog()
-        if not response:
-            return
-        if path:
-            self.builder.load_template(path)
 
     def my_images_button_clicked_cb(self, button):
         self.builder.show_load_my_images_dialog()

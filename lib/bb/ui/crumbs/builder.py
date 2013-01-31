@@ -1230,39 +1230,6 @@ class Builder(gtk.Window):
                 self.update_config_async()
         dialog.destroy()
 
-    def show_load_template_dialog(self):
-        dialog = gtk.FileChooserDialog("Load Template Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_OPEN)
-        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
-        HobAltButton.style_button(button)
-        button = dialog.add_button("Open", gtk.RESPONSE_YES)
-        HobButton.style_button(button)
-        filter = gtk.FileFilter()
-        filter.set_name("Hob Files")
-        filter.add_pattern("*.hob")
-        dialog.add_filter(filter)
-
-        response = dialog.run()
-        path = None
-        if response == gtk.RESPONSE_YES:
-            path = dialog.get_filename()
-        dialog.destroy()
-        return response == gtk.RESPONSE_YES, path
-
-    def show_save_template_dialog(self):
-        dialog = gtk.FileChooserDialog("Save Template Files", self,
-                                       gtk.FILE_CHOOSER_ACTION_SAVE)
-        button = dialog.add_button("Cancel", gtk.RESPONSE_NO)
-        HobAltButton.style_button(button)
-        button = dialog.add_button("Save", gtk.RESPONSE_YES)
-        HobButton.style_button(button)
-        dialog.set_current_name("hob")
-        response = dialog.run()
-        if response == gtk.RESPONSE_YES:
-            path = dialog.get_filename()
-            self.save_template(path)
-        dialog.destroy()
-
     def get_image_extension(self):
         image_extension = {}
         for type in self.parameters.image_types:

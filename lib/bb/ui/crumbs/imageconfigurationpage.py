@@ -55,12 +55,6 @@ class ImageConfigurationPage (HobPage):
         self.toolbar.set_orientation(gtk.ORIENTATION_HORIZONTAL)
         self.toolbar.set_style(gtk.TOOLBAR_BOTH)
 
-        template_button = self.append_toolbar_button(self.toolbar,
-            "Templates",
-            hic.ICON_TEMPLATES_DISPLAY_FILE,
-            hic.ICON_TEMPLATES_HOVER_FILE,
-            "Load a previously saved template",
-            self.template_button_clicked_cb)
         my_images_button = self.append_toolbar_button(self.toolbar,
             "Images",
             hic.ICON_IMAGES_DISPLAY_FILE,
@@ -493,13 +487,6 @@ class ImageConfigurationPage (HobPage):
     def edit_image_button_clicked_cb(self, button):
         self.builder.configuration.initial_selected_image = self.builder.configuration.selected_image
         self.builder.show_recipes()
-
-    def template_button_clicked_cb(self, button):
-        response, path = self.builder.show_load_template_dialog()
-        if not response:
-            return
-        if path:
-            self.builder.load_template(path)
 
     def my_images_button_clicked_cb(self, button):
         self.builder.show_load_my_images_dialog()
