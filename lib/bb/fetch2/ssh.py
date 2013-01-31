@@ -10,6 +10,12 @@ IETF secsh internet draft:
     Currently does not support the sftp parameters, as this uses scp
     Also does not support the 'fingerprint' connection parameter.
 
+    Please note that '/' is used as host, path separator not ':' as you may 
+    be used to, also '~' can be used to specify user HOME, but again after '/'
+    
+    Example SRC_URI:
+    SRC_URI = "ssh://user@host.example.com/dir/path/file.txt"
+    SRC_URI = "ssh://user@host.example.com/~/file.txt"
 '''
 
 # Copyright (C) 2006  OpenedHand Ltd.
