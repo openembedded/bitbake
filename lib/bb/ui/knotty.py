@@ -453,7 +453,8 @@ def main(server, eventHandler, tf = TerminalFilter):
                                   bb.runqueue.runQueueExitWait,
                                   bb.event.OperationStarted,
                                   bb.event.OperationCompleted,
-                                  bb.event.OperationProgress)):
+                                  bb.event.OperationProgress,
+                                  bb.event.DiskFull)):
                 continue
 
             logger.error("Unknown event: %s", event)
