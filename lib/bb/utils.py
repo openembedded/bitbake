@@ -535,14 +535,17 @@ def remove(path, recurse=False):
     """Equivalent to rm -f or rm -rf"""
     if not path:
         return
-    import os, errno, shutil, glob
+    if recurse:
+        import subprocess
+        # shutil.rmtree(name) would be ideal but its too slow
+        subprocess.call("rm -rf %s" % path, shell=True)
+        return
+    import os, errno, glob
     for name in glob.glob(path):
         try:
             os.unlink(name)
         except OSError as exc:
-            if recurse and exc.errno == errno.EISDIR:
-                shutil.rmtree(name)
-            elif exc.errno != errno.ENOENT:
+            if exc.errno != errno.ENOENT:
                 raise
 
 def prunedir(topdir):
