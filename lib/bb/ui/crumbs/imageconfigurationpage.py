@@ -173,6 +173,11 @@ class ImageConfigurationPage (HobPage):
 
         return warnings_bar
 
+    def disable_warnings_bar(self):
+        if self.builder.parsing_warnings:
+            self.warnings_bar.hide_all()
+            self.builder.parsing_warnings = []
+
     def create_config_machine(self):
         self.machine_title = gtk.Label()
         self.machine_title.set_alignment(0.0, 0.5)
@@ -319,6 +324,7 @@ class ImageConfigurationPage (HobPage):
         self.builder.populate_recipe_package_info_async()
 
     def update_machine_combo(self):
+        self.disable_warnings_bar()
         all_machines = [self.__dummy_machine__] + self.builder.parameters.all_machines
 
         model = self.machine_combo.get_model()
@@ -328,6 +334,7 @@ class ImageConfigurationPage (HobPage):
         self.machine_combo.set_active(0)
 
     def switch_machine_combo(self):
+        self.disable_warnings_bar()
         self.machine_combo_changed_by_manual = False
         model = self.machine_combo.get_model()
         active = 0
