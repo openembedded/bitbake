@@ -4,17 +4,36 @@
   <title>Metadata</title>
   <section>
     <title>Description</title>
-    <itemizedlist>
-      <para>BitBake metadata can be classified into 3 major
-      areas:</para>
+    <para>The BitBake task executor together with various types of
+	    configuration files form the OpenEmbedded Core.
+	    This section provides an overview of the BitBake task executor
+	    and the configuration files by describing what they are used for
+	    and how they interact.
+    </para>
+    <para>BitBake handles the parsing and execution of the data files.
+	    The data itself is of various types: 
+	    <itemizedlist>
+		    <listitem>
+			    <para>
+				    <emphasis>Recipes:</emphasis>
+				    Provides details about particular pieces
+				    of software.
+		    </para>
+	    </listitem>
+	    
+	    <listitem>
+		    <para>
+			<emphasis>Class Data:</emphasis>
+			An abstraction of common build information (e.g. how
+			to build a Linux kernel).
+		</para>
+	</listitem>
       <listitem>
-        <para>Configuration Files</para>
-      </listitem>
-      <listitem>
-        <para>.bb Files</para>
-      </listitem>
-      <listitem>
-        <para>Classes</para>
+        <para>
+        <emphasis>Configuration Data:</emphasis>Defines
+        machine-specific settings, policy decisions, etc.
+        Configuration data acts as the glue to bind everything
+        together.</para>
       </listitem>
     </itemizedlist>
     <para>What follows are a large number of examples of BitBake
@@ -270,7 +289,7 @@ yourself.</para>
       above also work on flags.</para>
       <para>
         <screen>
-        <varname>VARIABLE</varname>[
+        <varname>VARIABLE</varname>[ 
         <varname>SOMEFLAG</varname>] = "value"</screen>
       </para>
       <para>In this example, 
@@ -359,7 +378,7 @@ yourself.</para>
       triggered. A global variable 
       <varname>e</varname>is defined. 
       <varname>e</varname>.data contains an instance of bb.data.
-      With the getName(
+      With the getName( 
       <varname>e</varname>) method one can get the name of the
       triggered event.</para>
       <para>The above event handler prints the name of the event
@@ -402,195 +421,200 @@ yourself.</para>
       into overrides; it's also made available for the metadata to
       use in the form of the 
       <varname>BPV</varname>variable, for use in file:// search
-      paths (
+      paths ( 
       <varname>FILESPATH</varname>).</para>
     </section>
-  </section>
-  <section>
-    <title>Variable interaction: Worked Examples</title>
-    <para>Despite the documentation of the different forms of
-    variable definition above, it can be hard to work out what
-    happens when variable operators are combined. This section
-    documents some common questions people have regarding the way
-    variables interact.</para>
     <section>
-      <title>Override and append ordering</title>
-      <para>There is often confusion about which order overrides
-      and the various append operators take effect.</para>
-      <para>
-        <screen>
-        <varname>OVERRIDES</varname>= "foo" 
-        <varname>A_foo_append</varname>= "X"</screen>
-      </para>
-      <para>In this case, X is unconditionally appended to the
-      variable 
-      <varname>A_foo</varname>. Since foo is an override, A_foo
-      would then replace 
-      <varname>A</varname>.</para>
-      <para>
-        <screen>
-        <varname>OVERRIDES</varname>= "foo" 
-        <varname>A</varname>= "X" 
-        <varname>A_append_foo</varname>= "Y"</screen>
-      </para>
-      <para>In this case, only when foo is in OVERRIDES, Y is
-      appended to the variable 
-      <varname>A</varname>so the value of 
-      <varname>A</varname>would become XY (NB: no spaces are
-      appended).</para>
-      <para>
-        <screen>
-        <varname>OVERRIDES</varname>= "foo" 
-        <varname>A_foo_append</varname>= "X" 
-        <varname>A_foo_append</varname>+= "Y"</screen>
-      </para>
-      <para>This behaves as per the first case above, but the value
-      of 
-      <varname>A</varname>would be "X Y" instead of just
-      "X".</para>
-      <para>
-        <screen>
-        <varname>A</varname>= "1" 
-        <varname>A_append</varname>= "2" 
-        <varname>A_append</varname>= "3" 
-        <varname>A</varname>+= "4" 
-        <varname>A</varname>.= "5"</screen>
-      </para>
-      <para>Would ultimately result in 
-      <varname>A</varname>taking the value "1 4523" since the
-      _append operator executes at the same time as the expansion
-      of other overrides.</para>
+      <title>Variable interaction: Worked Examples</title>
+      <para>Despite the documentation of the different forms of
+      variable definition above, it can be hard to work out what
+      happens when variable operators are combined. This section
+      documents some common questions people have regarding the way
+      variables interact.</para>
+      <section>
+        <title>Override and append ordering</title>
+        <para>There is often confusion about which order overrides
+        and the various append operators take effect.</para>
+        <para>
+          <screen>
+          <varname>OVERRIDES</varname>= "foo" 
+          <varname>A_foo_append</varname>= "X"</screen>
+        </para>
+        <para>In this case, X is unconditionally appended to the
+        variable 
+        <varname>A_foo</varname>. Since foo is an override, A_foo
+        would then replace 
+        <varname>A</varname>.</para>
+        <para>
+          <screen>
+          <varname>OVERRIDES</varname>= "foo" 
+          <varname>A</varname>= "X" 
+          <varname>A_append_foo</varname>= "Y"</screen>
+        </para>
+        <para>In this case, only when foo is in OVERRIDES, Y is
+        appended to the variable 
+        <varname>A</varname>so the value of 
+        <varname>A</varname>would become XY (NB: no spaces are
+        appended).</para>
+        <para>
+          <screen>
+          <varname>OVERRIDES</varname>= "foo" 
+          <varname>A_foo_append</varname>= "X" 
+          <varname>A_foo_append</varname>+= "Y"</screen>
+        </para>
+        <para>This behaves as per the first case above, but the
+        value of 
+        <varname>A</varname>would be "X Y" instead of just
+        "X".</para>
+        <para>
+          <screen>
+          <varname>A</varname>= "1" 
+          <varname>A_append</varname>= "2" 
+          <varname>A_append</varname>= "3" 
+          <varname>A</varname>+= "4" 
+          <varname>A</varname>.= "5"</screen>
+        </para>
+        <para>Would ultimately result in 
+        <varname>A</varname>taking the value "1 4523" since the
+        _append operator executes at the same time as the expansion
+        of other overrides.</para>
+      </section>
+      <section>
+        <title>Key Expansion</title>
+        <para>Key expansion happens at the data store finalisation
+        time just before overrides are expanded.</para>
+        <para>
+          <screen>
+          <varname>A${B}</varname>= "X" 
+          <varname>B</varname>= "2" 
+          <varname>A2</varname>= "Y"</screen>
+        </para>
+        <para>So in this case 
+        <varname>A2</varname>would take the value of "X".</para>
+      </section>
     </section>
     <section>
-      <title>Key Expansion</title>
-      <para>Key expansion happens at the data store finalisation
-      time just before overrides are expanded.</para>
-      <para>
-        <screen>
-        <varname>A${B}</varname>= "X" 
-        <varname>B</varname>= "2" 
-        <varname>A2</varname>= "Y"</screen>
-      </para>
-      <para>So in this case 
-      <varname>A2</varname>would take the value of "X".</para>
-    </section>
-  </section>
-  <section>
-    <title>Dependency handling</title>
-    <para>BitBake handles dependencies at the task level since to
-    allow for efficient operation with multiple processed executing
-    in parallel. A robust method of specifying task dependencies is
-    therefore needed.</para>
-    <section>
-      <title>Dependencies internal to the .bb file</title>
-      <para>Where the dependencies are internal to a given .bb
-      file, the dependencies are handled by the previously detailed
-      addtask directive.</para>
-    </section>
-    <section>
-      <title>Build Dependencies</title>
-      <para>DEPENDS lists build time dependencies. The 'deptask'
-      flag for tasks is used to signify the task of each item
-      listed in DEPENDS which must have completed before that task
-      can be executed.</para>
-      <para>
-        <screen>do_configure[deptask] =
-        "do_populate_staging"</screen>
-      </para>
-      <para>means the do_populate_staging task of each item in
-      DEPENDS must have completed before do_configure can
-      execute.</para>
-    </section>
-    <section>
-      <title>Runtime Dependencies</title>
-      <para>The PACKAGES variable lists runtime packages and each
-      of these can have RDEPENDS and RRECOMMENDS runtime
-      dependencies. The 'rdeptask' flag for tasks is used to
-      signify the task of each item runtime dependency which must
-      have completed before that task can be executed.</para>
-      <para>
-        <screen>do_package_write[rdeptask] = "do_package"</screen>
-      </para>
-      <para>means the do_package task of each item in RDEPENDS must
-      have completed before do_package_write can execute.</para>
-    </section>
-    <section>
-      <title>Recursive Dependencies</title>
-      <para>These are specified with the 'recrdeptask' flag which
-      is used signify the task(s) of dependencies which must have
-      completed before that task can be executed. It works by
-      looking though the build and runtime dependencies of the
-      current recipe as well as any inter-task dependencies the
-      task has, then adding a dependency on the listed task. It
-      will then recurse through the dependencies of those tasks and
-      so on.</para>
-      <para>It may be desireable to recurse not just through the
-      dependencies of those tasks but through the build and runtime
-      dependencies of dependent tasks too. If that is the case, the
-      taskname itself should be referenced in the task list, e.g.
-      do_a[recrdeptask] = "do_a do_b".</para>
-    </section>
-    <section>
-      <title>Inter task</title>
-      <para>The 'depends' flag for tasks is a more generic form of
-      which allows an interdependency on specific tasks rather than
-      specifying the data in DEPENDS.</para>
-      <para>
-        <screen>do_patch[depends] =
-        "quilt-native:do_populate_staging"</screen>
-      </para>
-      <para>means the do_populate_staging task of the target
-      quilt-native must have completed before the do_patch can
-      execute.</para>
-      <para>The 'rdepends' flag works in a similar way but takes
-      targets in the runtime namespace instead of the build time
-      dependency namespace.</para>
-    </section>
-  </section>
-  <section>
-    <title>Parsing</title>
-    <section>
-      <title>Configuration files</title>
-      <para>The first kind of metadata in BitBake is configuration
-      metadata. This metadata is global, and therefore affects 
-      <emphasis>all</emphasis>packages and tasks which are
-      executed.</para>
-      <para>BitBake will first search the current working directory
-      for an optional "conf/bblayers.conf" configuration file. This
-      file is expected to contain a BBLAYERS variable which is a
-      space delimited list of 'layer' directories. For each
-      directory in this list, a "conf/layer.conf" file will be
-      searched for and parsed with the LAYERDIR variable being set
-      to the directory where the layer was found. The idea is these
-      files will setup BBPATH and other variables correctly for a
-      given build directory automatically for the user.</para>
-      <para>BitBake will then expect to find 'conf/bitbake.conf'
-      somewhere in the user specified 
-      <envar>BBPATH</envar>. That configuration file generally has
-      include directives to pull in any other metadata (generally
-      files specific to architecture, machine, 
-      <emphasis>local</emphasis>and so on).</para>
-      <para>Only variable definitions and include directives are
-      allowed in .conf files.</para>
+      <title>Dependency handling</title>
+      <para>BitBake handles dependencies at the task level since to
+      allow for efficient operation with multiple processed
+      executing in parallel. A robust method of specifying task
+      dependencies is therefore needed.</para>
+      <section>
+        <title>Dependencies internal to the .bb file</title>
+        <para>Where the dependencies are internal to a given .bb
+        file, the dependencies are handled by the previously
+        detailed addtask directive.</para>
+      </section>
+      <section>
+        <title>Build Dependencies</title>
+        <para>DEPENDS lists build time dependencies. The 'deptask'
+        flag for tasks is used to signify the task of each item
+        listed in DEPENDS which must have completed before that
+        task can be executed.</para>
+        <para>
+          <screen>do_configure[deptask] =
+          "do_populate_staging"</screen>
+        </para>
+        <para>means the do_populate_staging task of each item in
+        DEPENDS must have completed before do_configure can
+        execute.</para>
+      </section>
+      <section>
+        <title>Runtime Dependencies</title>
+        <para>The PACKAGES variable lists runtime packages and each
+        of these can have RDEPENDS and RRECOMMENDS runtime
+        dependencies. The 'rdeptask' flag for tasks is used to
+        signify the task of each item runtime dependency which must
+        have completed before that task can be executed.</para>
+        <para>
+          <screen>do_package_write[rdeptask] =
+          "do_package"</screen>
+        </para>
+        <para>means the do_package task of each item in RDEPENDS
+        must have completed before do_package_write can
+        execute.</para>
+      </section>
+      <section>
+        <title>Recursive Dependencies</title>
+        <para>These are specified with the 'recrdeptask' flag which
+        is used signify the task(s) of dependencies which must have
+        completed before that task can be executed. It works by
+        looking though the build and runtime dependencies of the
+        current recipe as well as any inter-task dependencies the
+        task has, then adding a dependency on the listed task. It
+        will then recurse through the dependencies of those tasks
+        and so on.</para>
+        <para>It may be desireable to recurse not just through the
+        dependencies of those tasks but through the build and
+        runtime dependencies of dependent tasks too. If that is the
+        case, the taskname itself should be referenced in the task
+        list, e.g. do_a[recrdeptask] = "do_a do_b".</para>
+      </section>
+      <section>
+        <title>Inter task</title>
+        <para>The 'depends' flag for tasks is a more generic form
+        of which allows an interdependency on specific tasks rather
+        than specifying the data in DEPENDS.</para>
+        <para>
+          <screen>do_patch[depends] =
+          "quilt-native:do_populate_staging"</screen>
+        </para>
+        <para>means the do_populate_staging task of the target
+        quilt-native must have completed before the do_patch can
+        execute.</para>
+        <para>The 'rdepends' flag works in a similar way but takes
+        targets in the runtime namespace instead of the build time
+        dependency namespace.</para>
+      </section>
     </section>
     <section>
-      <title>Classes</title>
-      <para>BitBake classes are our rudimentary inheritance
-      mechanism. As briefly mentioned in the metadata introduction,
-      they're parsed when an 
-      <literal>inherit</literal>directive is encountered, and they
-      are located in classes/ relative to the directories in 
-      <envar>BBPATH</envar>.</para>
-    </section>
-    <section>
-      <title>.bb files</title>
-      <para>A BitBake (.bb) file is a logical unit of tasks to be
-      executed. Normally this is a package to be built. Inter-.bb
-      dependencies are obeyed. The files themselves are located via
-      the 
-      <varname>BBFILES</varname>variable, which is set to a space
-      separated list of .bb files, and does handle
-      wildcards.</para>
-    </section>
+      <title>Parsing</title>
+      <section>
+        <title>Configuration files</title>
+        <para>The first kind of metadata in BitBake is
+        configuration metadata. This metadata is global, and
+        therefore affects 
+        <emphasis>all</emphasis>packages and tasks which are
+        executed.</para>
+        <para>BitBake will first search the current working
+        directory for an optional "conf/bblayers.conf"
+        configuration file. This file is expected to contain a
+        BBLAYERS variable which is a space delimited list of
+        'layer' directories. For each directory in this list, a
+        "conf/layer.conf" file will be searched for and parsed with
+        the LAYERDIR variable being set to the directory where the
+        layer was found. The idea is these files will setup BBPATH
+        and other variables correctly for a given build directory
+        automatically for the user.</para>
+        <para>BitBake will then expect to find 'conf/bitbake.conf'
+        somewhere in the user specified 
+        <envar>BBPATH</envar>. That configuration file generally
+        has include directives to pull in any other metadata
+        (generally files specific to architecture, machine, 
+        <emphasis>local</emphasis>and so on).</para>
+        <para>Only variable definitions and include directives are
+        allowed in .conf files.</para>
+      </section>
+      <section>
+        <title>Classes</title>
+        <para>BitBake classes are our rudimentary inheritance
+        mechanism. As briefly mentioned in the metadata
+        introduction, they're parsed when an 
+        <literal>inherit</literal>directive is encountered, and
+        they are located in classes/ relative to the directories in
+        
+        <envar>BBPATH</envar>.</para>
+      </section>
+      <section>
+        <title>.bb files</title>
+        <para>A BitBake (.bb) file is a logical unit of tasks to be
+        executed. Normally this is a package to be built. Inter-.bb
+        dependencies are obeyed. The files themselves are located
+        via the 
+        <varname>BBFILES</varname>variable, which is set to a space
+        separated list of .bb files, and does handle
+        wildcards.</para>
+      </section>
+    </section></para>
   </section>
 </chapter>
