@@ -59,9 +59,9 @@
     
    </bookinfo>
     
-   <xi:include href="user-manual-intro.xml"/>
+    <xi:include href="user-manual-intro.xml"/>
 
-   <xi:include href="user-manual-hello.xml"/>
+    <xi:include href="user-manual-hello.xml"/>
 
     <xi:include href="user-manual-metadata.xml"/>
 
