@@ -170,7 +170,7 @@ class Perforce(FetchMethod):
         logger.info("Fetch " + loc)
         logger.info("%s%s files %s", p4cmd, p4opt, depot)
         p4file, errors = bb.process.run("%s%s files %s" % (p4cmd, p4opt, depot))
-        p4file = p4file.strip()
+        p4file = [f.rstrip() for f in p4file.splitlines()]
 
         if not p4file:
             raise FetchError("Fetch: unable to get the P4 files from %s" % depot, loc)
