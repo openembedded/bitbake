@@ -323,7 +323,7 @@ usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd] [cmd2_opts] ...]
     <emphasis>setup.py build</emphasis>and 
     <emphasis>setup.py install</emphasis>commands to build and
     install BitBake.</para>
-    </sect2>
+    </sect3>
     <section>
     <title>Build and Install BitBake</title>
     <para>To build the BitBake documentation and designate a

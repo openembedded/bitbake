@@ -12,7 +12,6 @@
 		a new Project and the applicable metadata files necessary to
 		allow BitBake to build it.
 	</para>
-	<para>
 		<title>Obtaining BitBake</title>
 		<para>
 			There first thing we need to do is download the BitBake
