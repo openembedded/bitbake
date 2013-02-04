@@ -137,7 +137,7 @@
 					checksum.
 					Based on that checksum, allow
 					accelleration of builds with prebuilt
-					componenets.
+					components.
 				</para>
 			</listitem>
 		</itemizedlist>
@@ -214,7 +214,7 @@
 	</para>
 
 	<title>Classes</title>
-	<para>Class file, denoted by the .bbclass extension contain 
+	<para>Class files, denoted by the .bbclass extension contain 
 		information that is useful to share between metadata files.
 		The BitBake source tree comes with one class metadata file
 		currectly, called base.bbclass and it is found in the /classes
@@ -232,7 +232,236 @@
 	</para>
 
 	<title>Obtaining BitBake</title>
+	<para>There are several ways to obtain BitBake.  These include
+		installing using your Linux distribution's package
+		management system, downloading a snapshot from the BitBake
+		source code repository, or using Git to clone the BitBake
+		source code repository.  The recommended method for daily
+		BitBake use is to download a stable release from the BitBake
+		source code repository.  Using your distribution's version as
+		provided in the package management system is generally not
+		recommended as in most cases, such as with the Ubuntu and
+		Fedora distributions, the version provided is several 
+		releases behind the repository snapshot version and is missing
+		important bug fixes and enhancements.  Similarly, daily use
+		of the latest clone of the Git repository is not recommended
+		as it can be unstable.  However, the Git repository clone will
+		provide the User with the absolute latest version of BitBake.
+	</para>
+	<title>Using Your Distribution's BitBake</title>
 	<para>
+		Although this method is not recommended, you can install BitBake
+		 using your distribution's package management system.
+		 For example, on a Fedora system:
+		 <screen>
+			 As root:
+			 $ yum install bitbake
+		 </screen>
+		 Note that as of early 2013, the version of BitBake provided
+		 in the Fedora repository is version 1.8.18.  This version is
+		 quite old.
+	 </para>
 
-	<title>Exploring the BitBake Source Tree</title>
+	 <title>Downloading a Snapshot from the BitBake Source Tree</title>
+	 <para>
+		 The recommended method for obtaining and using BitBake on a
+		 daily basis is to download the most recent stable snapshot
+		 from the Git source code repository as follows:
+		 <screen>
+			 $ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
+			 $ tar zxpvf bitbake-1.17.0.tar.gz
+		 </screen>
+		 After extraction of the tarball using the tar utility, you will
+		 have a directory entitled <emphasis>bitbake-1.17.0</emphasis>.
+	 </para>
+	 <title>Cloning the BitBake Git Repository</title>
+	 <para>To obtain the latest BitBake source code from the BitBake Git
+		 repository:
+		 <screen>
+			 $ git clone git://git.openembedded.org/bitbake
+		 </screen>
+		 This will clone the BitBake Git repository into a directory
+		 called <emphasis>bitbake</emphasis>.
+		 Alternatively, you can designate a directory after the git
+		 clone command if you'd prefer to call the new directory
+		 something other than <emphasis>bitbake</emphasis>.
+		 For example:
+		 <screen>
+			 $ git clone git://git.openembedded.org/bitbake bbdev
+		 </screen>
+		 This would clone the Git repository into a local directory
+		 called <emphasis>bbdev</emphasis>.
+		 Please note that although this method of obtaining the source
+		 code will provide the absolute latest version, it is under
+		 active development and may not be as stable as a released
+		 snapshot.
+	 </para>
+
+	 <title>Exploring the BitBake Source Tree</title>
+	 <para>
+		 The BitBake source tree contains the following six directories
+		 and seven files:
+		 <screen>
+			 <title>Directories</title>
+			 <itemizedlist>
+				 <listitem>
+					 /conf
+				 </listitem>
+				 <listitem>
+					 /bin
+				 </listitem>
+				 <listitem>
+					 /classes
+				 </listitem>
+				 <listitem>
+					 /contrib
+				 </listitem>
+				 <listitem>
+					 /doc
+				 </listitem>
+				 <listitem>
+					 /lib
+				 </listitem>
+			 </itemizedlist>
+			 <title>Files</title>
+			 <itemizedlist>
+				 <listitem>
+					 AUTHORS
+				 </listitem>
+				 <listitem>
+					 ChangeLog
+				 </listitem>
+				 <listitem>
+					 COPYING
+				 </listitem>
+				 <listitem>
+					 HEADER
+				 </listitem>
+				 <listitem>
+					 MANIFEST.in
+				 </listitem>
+				 <listitem>
+					 TODO
+				 </listitem>
+				 <listitem>
+					 setup.py
+				 </listitem>
+			 </itemizedlist>
+			 For daily use of BitBake, each of these directories
+			 and files do not require explanation or will be
+			 explained within the HelloWorld chapter.  The one
+			 file that warrants explantion here is the <emphasis>
+				 setup.py</emphasis> script.  This script
+			 sets up an initial BitBake environment and builds
+			 the documentation.  If we run this script now with the
+			 --help parameter, we can see that it can be used
+			 to for various purposes:
+			 <screen>
+				 $ python setup.py --help
+				 Common commands: (see '--help-commands' for
+				 more)
+				 setup.py build      will build the package
+				 underneath 'build/'
+				 setup.py install    will install the package
+
+				 Global options:
+				 --verbose (-v)      run verbosely (default)
+				 --quiet (-q)        run quietly (turns 
+				 verbosity off)
+				 --dry-run (-n)      don't actually do anything
+				 --help (-h)         show detailed help message
+				 --no-user-cfg       ignore pydistutils.cfg in
+				 your home directory
+				 --command-packages  list of packages that 
+				 provide distutils commands
+
+				 Information display options (just display 
+				 information, ignore any commands)
+				 --help-commands     list all available commands
+				 --name              print package name
+				 --version (-V)      print package version
+				 --fullname          print <package name>-
+					 <version>
+				 --author            print the author's name
+				 --author-email      print the author's email
+				 address
+				 --maintainer        print the maintainer's name
+				 --maintainer-email  print the maintainer's
+				 email address
+				 --contact           print the maintainer's
+				 name if known, else the author's
+				 --contact-email     print the maintainer's
+				 email address if known, else the author's
+				 --url               print the URL for this
+				 package
+				 --license           print the license of the
+				 package
+				 --licence           alias for --license
+				 --description       print the package 
+				 description
+				 --long-description  print the long package
+				 description
+				 --platforms         print the list of 
+				 platforms
+				 --classifiers       print the list of 
+				 classifiers
+				 --keywords          print the list of keywords
+				 --provides          print the list of 
+				 packages/modules provided
+				 --requires          print the list of 
+				 packages/modules required
+				 --obsoletes         print the list of 
+				 packages/modules made obsolete
+
+                                 usage: setup.py [global_opts] cmd1 
+				 [cmd1_opts] [cmd2 [cmd2_opts] ...]
+				 or: setup.py --help [cmd1 cmd2 ...]
+				 or: setup.py --help-commands
+				 or: setup.py cmd --help
+			 </screen>
+			 At this point all we need to use is the <emphasis>
+				 setup.py build</emphasis> and <emphasis>
+				 setup.py install</emphasis> commands to build
+			 and install BitBake.
+			 <title>Build and Install BitBake</title>
+			 <para>
+				 To build the BitBake documentation and 
+				 designate a specific <emphasis>build</emphasis>
+				 directory to hold the results when using 
+				 BitBake to build packages, issue the
+				 following:
+				 <screen>
+					 $ python setup.py build
+				 </screen>
+				 This will result in the creation of a <emphasis>
+					 /build</emphasis> directory within
+				 the directory from which it is run.  In this
+				 case, we're running it from directly within
+				 the BitBake source tree directory.
+			 </para>
+			 <para>
+				 To install BitBake to your environment, as
+				 the root user:
+				 <screen>
+					 $ python setup.py install
+				 </screen>
+				 and from the source code directory:
+				 <screen>
+					 $export PYTHONPATH=`pwd`/build/lib
+				 </screen>
+			 </para>
+			 <title>Summary</title>
+			 <para>
+				 At this point you should have a general idea
+				 of the concepts that BitBake was built on and
+				 how the source code is organized.  You should
+				 have a working version of BitBake installed
+				 and understand how to setup your environment.
+			 </para>
+			 <para>
+				 In the next chapter, a simple Hello World
+				 example is used to demonstrate the application
+				 of the BitBake concepts.
+			 </para>
+	 </para>
 </chapter>
