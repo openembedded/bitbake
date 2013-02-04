@@ -2,6 +2,7 @@
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <chapter id='hello'>
+	<section>
 	<title>BitBake Hello World</title>
 
 	<para>The simplest example commonly used to demonstrate any new
@@ -11,7 +12,8 @@
 		the context of BitBake.  This tutorial describes how to create
 		a new Project and the applicable metadata files necessary to
 		allow BitBake to build it.
-	</para>
+</para></section>
+<section>
 		<title>Obtaining BitBake</title>
 		<para>
 			There first thing we need to do is download the BitBake
@@ -46,7 +48,8 @@
 			a directory matching the latter directory tree.  Please
 			note that you'll see your username whever "wmat"
 			appears above.
-		</para>
+	</para></section>
+	<section>
 		<title>Setting Up BitBake</title>
 		<para>
 			Now let's setup our BitBake environment.  In this 
@@ -81,6 +84,8 @@
 				yourusername/.vim</emphasis> directory.  If it
 			doesn't	exist, create it, and restart Vim.
 		</para>
+	</section>
+	<section>
 		<title>The Hello World Example</title>
 		<para>
 			The following example leaps directly into how BitBake
@@ -88,6 +93,6 @@
 			happening, however, further information can be found
 			in the Metadata chapter.
 		</para>
-
+	</section>
 
 </chapter>
