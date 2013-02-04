@@ -128,7 +128,7 @@ def getDiskData(BBDirs, configuration):
         if not os.path.exists(path):
             bb.utils.mkdirhier(path)
         mountedDev = getMountedDev(path)
-        devDict[mountedDev] = action, path, minSpace, minInode
+        devDict[mountedDev] = [action, path, minSpace, minInode]
 
     return devDict
 
@@ -231,6 +231,13 @@ class diskMonitor:
                 freeInode = st.f_favail
 
                 if self.devDict[dev][3] and freeInode < self.devDict[dev][3]:
+                    # Some fs formats' (e.g., btrfs) statvfs.f_files (inodes) is
+                    # zero, this is a feature of the fs, we disable the inode
+                    # checking for such a fs.
+                    if st.f_files == 0:
+                        logger.warn("Inode check for %s is unavaliable, remove it from disk monitor" % dev)
+                        self.devDict[dev][3] = None
+                        continue
                     # Always show warning, the self.checked would always be False if the action is WARN
                     if self.preFreeI[dev] == 0 or self.preFreeI[dev] - freeInode > self.inodeInterval and not self.checked[dev]:
                         logger.warn("The free inode of %s is running low (%.3fK left)" % (dev, freeInode / 1024.0))
