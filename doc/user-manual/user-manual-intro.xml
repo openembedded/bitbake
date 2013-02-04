@@ -131,6 +131,8 @@
     much more complex tasks to be completed, such as assembling
     entire embedded Linux distributions. Several concepts must be
     understood to be able to leverage the power of the tool.</para>
+    </section>
+    <section>
     <title>Recipes</title>
     <para>A BitBake Recipe, denoted by the file extension .bb is
     the most basic metadata file. It tells BitBake: 
@@ -152,6 +154,8 @@
     used to describe recipes. However, since the same word is used
     to describe packaged output from a project, it is best to
     maintain a single descriptive term, "recipes".</para>
+    </section>
+    <section>
     <title>Configuration Files</title>
     <para>Configuration Files, denoted by the .conf extension
     define various configuration variables that govern the project
@@ -161,6 +165,8 @@
     options and user configuration options. The main configuration
     file is the sample bitbake.conf file, located within the
     bitbake source tree /conf directory.</para>
+    </section>
+    <section>
     <title>Classes</title>
     <para>Class files, denoted by the .bbclass extension contain
     information that is useful to share between metadata files. The
@@ -174,6 +180,8 @@
     (empty by default) and packaging (empty by default). These
     classes are often overridden or extended by other classes added
     during the project development process.</para>
+    </section>
+    <section>
     <title>Obtaining BitBake</title>
     <para>There are several ways to obtain BitBake. These include
     installing using your Linux distribution's package management
@@ -190,13 +198,17 @@
     clone of the Git repository is not recommended as it can be
     unstable. However, the Git repository clone will provide the
     User with the absolute latest version of BitBake.</para>
-    <title>Using Your Distribution's BitBake</title>
+    </section>
+    <section>
+	    <title>Using Your Distribution's BitBake</title>
     <para>Although this method is not recommended, you can install
     BitBake using your distribution's package management system.
     For example, on a Fedora system: 
     <screen>As root: $ yum install bitbake</screen>Note that as of
     early 2013, the version of BitBake provided in the Fedora
     repository is version 1.8.18. This version is quite old.</para>
+    </section>
+    <section>
     <title>Downloading a Snapshot from the BitBake Source
     Tree</title>
     <para>The recommended method for obtaining and using BitBake on
@@ -208,6 +220,8 @@
     the tarball using the tar utility, you will have a directory
     entitled 
     <emphasis>bitbake-1.17.0</emphasis>.</para>
+    </section>
+	    <section>
     <title>Cloning the BitBake Git Repository</title>
     <para>To obtain the latest BitBake source code from the BitBake
     Git repository: 
@@ -225,6 +239,8 @@
     method of obtaining the source code will provide the absolute
     latest version, it is under active development and may not be
     as stable as a released snapshot.</para>
+    </section>
+    <section>
     <title>Exploring the BitBake Source Tree</title>
     <para>The BitBake source tree contains the following six
     directories and seven files: 
@@ -237,6 +253,8 @@
       <listitem>/doc</listitem>
       <listitem>/lib</listitem>
     </itemizedlist>
+    </section>
+    <section>
     <title>Files</title>
     <itemizedlist>
       <listitem>AUTHORS</listitem>
@@ -255,39 +273,57 @@
     initial BitBake environment and builds the documentation. If we
     run this script now with the --help parameter, we can see that
     it can be used to for various purposes: 
-    <screen>$ python setup.py --help Common commands: (see
-    '--help-commands' for more) setup.py build will build the
-    package underneath 'build/' setup.py install will install the
-    package Global options: --verbose (-v) run verbosely (default)
-    --quiet (-q) run quietly (turns verbosity off) --dry-run (-n)
-    don't actually do anything --help (-h) show detailed help
-    message --no-user-cfg ignore pydistutils.cfg in your home
-    directory --command-packages list of packages that provide
-    distutils commands Information display options (just display
-    information, ignore any commands) --help-commands list all
-    available commands --name print package name --version (-V)
-    print package version --fullname print package name- version
-    --author print the author's name --author-email print the
-    author's email address --maintainer print the maintainer's name
-    --maintainer-email print the maintainer's email address
-    --contact print the maintainer's name if known, else the
-    author's --contact-email print the maintainer's email address
-    if known, else the author's --url print the URL for this
-    package --license print the license of the package --licence
-    alias for --license --description print the package description
-    --long-description print the long package description
-    --platforms print the list of platforms --classifiers print the
-    list of classifiers --keywords print the list of keywords
-    --provides print the list of packages/modules provided
-    --requires print the list of packages/modules required
-    --obsoletes print the list of packages/modules made obsolete
-    usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd2
-    [cmd2_opts] ...] or: setup.py --help [cmd1 cmd2 ...] or:
-    setup.py --help-commands or: setup.py cmd --help</screen>At
-    this point all we need to use is the 
+    <screen>
+$ python setup.py --help 
+Common commands: (see '--help-commands' for more)
+
+setup.py build will build the package underneath 'build/'
+setup.py install will install the package
+
+Global options: 
+  --verbose (-v)     run verbosely (default)
+  --quiet (-q)       run quietly (turns verbosity off) 
+  --dry-run (-n)     don't actually do anything 
+  --help (-h)        show detailed help message 
+  --no-user-cfg      ignore pydistutils.cfg in your home directory
+  --command-packages list of packages that provide distutils commands 
+  
+Information display options (just display information, ignore any commands) 
+
+  --help-commands    list all available commands 
+  --name             print package name
+  --version (-V)     print package version 
+  --fullname         print package name- version
+  --author           print the author's name 
+  --author-email     print the author's email address 
+  --maintainer       print the maintainer's name
+  --maintainer-email print the maintainer's email address
+  --contact          print the maintainer's name if known, else the author's
+  --contact-email    print the maintainer's email address if known, else the
+                     author's
+  --url              print the URL for this package 
+  --license          print the license of the package 
+  --licence          alias for --license 
+  --description      print the package description
+  --long-description print the long package description
+  --platforms print the list of platforms
+  --classifiers print the list of classifiers 
+  --keywords         print the list of keywords
+  --provides         print the list of packages/modules provided
+  --requires         print the list of packages/modules required
+  --obsoletes print the list of packages/modules made obsolete
+
+usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd] [cmd2_opts] ...] 
+  or: setup.py --help [cmd1 cmd2 ...] 
+  or: setup.py --help-commands 
+  or: setup.py cmd --help</screen>
+  
+  At this point all we need to use is the 
     <emphasis>setup.py build</emphasis>and 
     <emphasis>setup.py install</emphasis>commands to build and
     install BitBake.</para>
+    </section>
+    <section>
     <title>Build and Install BitBake</title>
     <para>To build the BitBake documentation and designate a
     specific 
@@ -303,6 +339,8 @@
     <screen>$ python setup.py install</screen>and from the source
     code directory: 
     <screen>$export PYTHONPATH=`pwd`/build/lib</screen></para>
+    </section>
+    <section>
     <title>Summary</title>
     <para>At this point you should have a general idea of the
     concepts that BitBake was built on and how the source code is
