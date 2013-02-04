@@ -243,8 +243,9 @@
     <section>
     <title>Exploring the BitBake Source Tree</title>
     <para>The BitBake source tree contains the following six
-    directories and seven files: 
-    <title>Directories</title>
+	    directories and seven files:</para> </section>
+    <sect2><title>Directories</title>
+    <para>
     <itemizedlist>
       <listitem>/conf</listitem>
       <listitem>/bin</listitem>
@@ -253,8 +254,8 @@
       <listitem>/doc</listitem>
       <listitem>/lib</listitem>
     </itemizedlist>
-    </section>
-    <section>
+    </sect2>
+    <sect3>
     <title>Files</title>
     <itemizedlist>
       <listitem>AUTHORS</listitem>
@@ -322,7 +323,7 @@ usage: setup.py [global_opts] cmd1 [cmd1_opts] [cmd] [cmd2_opts] ...]
     <emphasis>setup.py build</emphasis>and 
     <emphasis>setup.py install</emphasis>commands to build and
     install BitBake.</para>
-    </section>
+    </sect2>
     <section>
     <title>Build and Install BitBake</title>
     <para>To build the BitBake documentation and designate a
