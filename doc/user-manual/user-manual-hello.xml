@@ -2,6 +2,7 @@
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <chapter id='hello'>
+	<title>A BitBake Hello World</title>
 	<section>
 	<title>BitBake Hello World</title>
 
