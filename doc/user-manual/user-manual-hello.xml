@@ -94,6 +94,28 @@
 			happening, however, further information can be found
 			in the Metadata chapter.
 		</para>
+		<para>The overall goal of this exercise is to create a Hello
+			World example utilizing the concepts BitBake uses to
+			build and construct a complete including Tasks,
+			Layers.  This is how modern projects such as
+			OpenEmbedded and the Yocto Project utilize BitBake,
+			therefore it provides an excellent starting point
+			for understanding BitBake.
+		</para>
+		<para>It should be noted that this chapter was inspired by
+			and draws heavily from several sources:
+			<itemizedlist>
+				<listitem>
+					<ulink href="http://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html">Mailing List post - The BitBake equivalent of "Hello, World!"</ulink>
+				</listitem>
+				<listitem>
+					<ulink href="http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/">Hembedded Linux blog post - From Bitbake Hello World to an Image</ulink>
+				</listitem>
+			</itemizedlist>
+		</para>
+		<para>
+
+		</para>
 	</section>
 
 </chapter>
