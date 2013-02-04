@@ -254,9 +254,11 @@
       <listitem>/doc</listitem>
       <listitem>/lib</listitem>
     </itemizedlist>
+    </para>
     </sect2>
     <sect3>
-    <title>Files</title>
+	    <title>Files</title>
+	    <para>
     <itemizedlist>
       <listitem>AUTHORS</listitem>
       <listitem>ChangeLog</listitem>
