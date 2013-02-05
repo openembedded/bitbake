@@ -650,11 +650,14 @@ def srcrev_internal_helper(ud, d, name):
         if not rev:
             rev = d.getVar("SRCREV_%s" % name, True)
     if not rev:
-       rev = d.getVar("SRCREV_pn-%s" % pn, True)
+        rev = d.getVar("SRCREV_pn-%s" % pn, True)
     if not rev:
         rev = d.getVar("SRCREV", True)
     if rev == "INVALID":
-        raise FetchError("Please set SRCREV to a valid value", ud.url)
+        var = "SRCREV_pn-%s" % pn
+        if name != '':
+            var = "SRCREV_%s_pn-%s" % (name, pn)
+        raise FetchError("Please set %s to a valid value" % var, ud.url)
     if rev == "AUTOINC":
         rev = ud.method.latest_revision(ud.url, ud, d, name)
 
