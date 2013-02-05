@@ -185,6 +185,7 @@ class BBCooker:
 
         filtered_keys = bb.utils.approved_variables()
         bb.data.inheritFromOS(self.configuration.data, self.savedenv, filtered_keys)
+        self.configuration.data.setVar("BB_ORIGENV", self.savedenv)
 
     def enableDataTracking(self):
         self.configuration.data.enableTracking()

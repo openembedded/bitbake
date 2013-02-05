@@ -458,27 +458,6 @@ def preserved_envvars_exported():
         'USER',
     ]
 
-def preserved_envvars_exported_interactive():
-    """Variables which are taken from the environment and placed in and exported
-    from the metadata, for interactive tasks"""
-    return [
-        'COLORTERM',
-        'DBUS_SESSION_BUS_ADDRESS',
-        'DESKTOP_SESSION',
-        'DESKTOP_STARTUP_ID',
-        'DISPLAY',
-        'GNOME_KEYRING_PID',
-        'GNOME_KEYRING_SOCKET',
-        'GPG_AGENT_INFO',
-        'GTK_RC_FILES',
-        'SESSION_MANAGER',
-        'KRB5CCNAME',
-        'SSH_AUTH_SOCK',
-        'XAUTHORITY',
-        'XDG_DATA_DIRS',
-        'XDG_SESSION_COOKIE',
-    ]
-
 def preserved_envvars():
     """Variables which are taken from the environment and placed in the metadata"""
     v = [
@@ -487,7 +466,7 @@ def preserved_envvars():
         'BB_ENV_WHITELIST',
         'BB_ENV_EXTRAWHITE',
     ]
-    return v + preserved_envvars_exported() + preserved_envvars_exported_interactive()
+    return v + preserved_envvars_exported()
 
 def filter_environment(good_vars):
     """
@@ -508,10 +487,6 @@ def filter_environment(good_vars):
         logger.debug(1, "Removed the following variables from the environment: %s", ", ".join(removed_vars))
 
     return removed_vars
-
-def create_interactive_env(d):
-    for k in preserved_envvars_exported_interactive():
-        os.setenv(k, d.getVar(k, True))
 
 def approved_variables():
     """
