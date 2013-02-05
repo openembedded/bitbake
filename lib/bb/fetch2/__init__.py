@@ -459,8 +459,13 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
     # Also include some other variables.
     # FIXME: Should really include all export varaiables?
     exportvars = ['PATH', 'GIT_PROXY_COMMAND', 'GIT_PROXY_HOST',
-                  'GIT_PROXY_PORT', 'GIT_CONFIG', 'http_proxy', 'ftp_proxy',
-                  'https_proxy', 'no_proxy', 'ALL_PROXY', 'all_proxy',
+                  'GIT_PROXY_PORT', 'GIT_CONFIG',
+                  'HTTP_PROXY', 'http_proxy',
+                  'HTTPS_PROXY', 'https_proxy',
+                  'FTP_PROXY', 'ftp_proxy',
+                  'FTPS_PROXY', 'ftps_proxy',
+                  'NO_PROXY', 'no_proxy',
+                  'ALL_PROXY', 'all_proxy',
                   'SSH_AUTH_SOCK', 'SSH_AGENT_PID', 'HOME',
                   'GIT_PROXY_IGNORE', 'SOCKS5_USER', 'SOCKS5_PASSWD']
 
