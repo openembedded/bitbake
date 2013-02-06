@@ -97,16 +97,7 @@ class PRServer(SimpleXMLRPCServer):
         return
 
     def start(self):
-        if self.daemon is True:
-            logger.info("PRServer: try to start daemon...")
-            self.daemonize()
-        else:
-            atexit.register(self.delpid)
-            pid = str(os.getpid()) 
-            pf = file(self.pidfile, 'w+')
-            pf.write("%s\n" % pid)
-            pf.close()
-            self.work_forever()
+        self.daemonize()
 
     def delpid(self):
         os.remove(self.pidfile)
@@ -118,6 +109,7 @@ class PRServer(SimpleXMLRPCServer):
         try:
             pid = os.fork()
             if pid > 0:
+                os.waitpid(pid, 0)
                 #parent return instead of exit to give control 
                 return
         except OSError as e:
@@ -131,7 +123,7 @@ class PRServer(SimpleXMLRPCServer):
         try:
             pid = os.fork()
             if pid > 0: #parent
-                sys.exit(0)
+                os._exit(0)
         except OSError as e:
             raise Exception("%s [%d]" % (e.strerror, e.errno))
 
@@ -155,7 +147,7 @@ class PRServer(SimpleXMLRPCServer):
         pf.close()
 
         self.work_forever()
-        sys.exit(0)
+        os._exit(0)
 
 class PRServSingleton():
     def __init__(self, dbfile, logfile, interface):
@@ -164,21 +156,14 @@ class PRServSingleton():
         self.interface = interface
         self.host = None
         self.port = None
-        self.event = threading.Event()
-
-    def _work(self):
-        self.prserv = PRServer(self.dbfile, self.logfile, self.interface, False)
-        self.host, self.port = self.prserv.getinfo()
-        self.event.set()
-        self.prserv.work_forever()
-        del self.prserv.db
 
     def start(self):
-        self.working_thread = threading.Thread(target=self._work)
-        self.working_thread.start()
+        self.prserv = PRServer(self.dbfile, self.logfile, self.interface)
+        self.prserv.start()
+        self.host, self.port = self.prserv.getinfo()
+        del self.prserv.db
 
     def getinfo(self):
-        self.event.wait()
         return (self.host, self.port)
 
 class PRServerConnection():

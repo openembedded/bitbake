@@ -266,5 +266,5 @@ class BitBakeServer(object):
         return self.connection
 
     def launchUI(self, uifunc, *args):
-        return bb.cooker.server_main(self.cooker, uifunc, *args)
+        return uifunc(*args)
 
