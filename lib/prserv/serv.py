@@ -86,7 +86,8 @@ class PRServer(SimpleXMLRPCServer):
     def work_forever(self,):
         self.quit = False
         self.timeout = 0.5
-        logger.info("PRServer: started! DBfile: %s, IP: %s, PORT: %s, PID: %s" %
+
+        logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
                      (self.dbfile, self.host, self.port, str(os.getpid())))
 
         while not self.quit:
@@ -97,7 +98,10 @@ class PRServer(SimpleXMLRPCServer):
         return
 
     def start(self):
-        self.daemonize()
+        pid = self.daemonize()
+        # Ensure both the parent sees this and the child from the work_forever log entry above
+        logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
+                     (self.dbfile, self.host, self.port, str(pid)))
 
     def delpid(self):
         os.remove(self.pidfile)
@@ -111,7 +115,7 @@ class PRServer(SimpleXMLRPCServer):
             if pid > 0:
                 os.waitpid(pid, 0)
                 #parent return instead of exit to give control 
-                return
+                return pid
         except OSError as e:
             raise Exception("%s [%d]" % (e.strerror, e.errno))
 
@@ -139,14 +143,21 @@ class PRServer(SimpleXMLRPCServer):
         os.dup2(so.fileno(),sys.stdout.fileno())
         os.dup2(se.fileno(),sys.stderr.fileno())
 
+        # Ensure logging makes it to the logfile
+        streamhandler = logging.StreamHandler()
+        streamhandler.setLevel(logging.DEBUG)
+        formatter = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+        streamhandler.setFormatter(formatter)
+        logger.addHandler(streamhandler)
+
         # write pidfile
-        atexit.register(self.delpid)
         pid = str(os.getpid()) 
         pf = file(self.pidfile, 'w')
         pf.write("%s\n" % pid)
         pf.close()
 
         self.work_forever()
+        self.delpid
         os._exit(0)
 
 class PRServSingleton():
@@ -179,6 +190,7 @@ class PRServerConnection():
         import socket
         socket.setdefaulttimeout(2)
         try:
+            logger.info("Terminating PRServer...")
             self.connection.quit()
         except Exception as exc:
             sys.stderr.write("%s\n" % str(exc))
