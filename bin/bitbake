@@ -40,7 +40,7 @@ from bb import cooker
 from bb import ui
 from bb import server
 
-__version__ = "1.17.0"
+__version__ = "1.17.1"
 logger = logging.getLogger("BitBake")
 
 # Unbuffer stdout to avoid log truncation in the event
