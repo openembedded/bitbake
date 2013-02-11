@@ -474,17 +474,17 @@ def filter_environment(good_vars):
     are not known and may influence the build in a negative way.
     """
 
-    removed_vars = []
+    removed_vars = {}
     for key in os.environ.keys():
         if key in good_vars:
             continue
 
-        removed_vars.append(key)
+        removed_vars[key] = os.environ[key]
         os.unsetenv(key)
         del os.environ[key]
 
     if len(removed_vars):
-        logger.debug(1, "Removed the following variables from the environment: %s", ", ".join(removed_vars))
+        logger.debug(1, "Removed the following variables from the environment: %s", ", ".join(removed_vars.keys()))
 
     return removed_vars
 
@@ -509,7 +509,9 @@ def clean_environment():
     """
     if 'BB_PRESERVE_ENV' not in os.environ:
         good_vars = approved_variables()
-        filter_environment(good_vars)
+        return filter_environment(good_vars)
+
+    return {}
 
 def empty_environment():
     """

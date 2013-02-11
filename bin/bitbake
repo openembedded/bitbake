@@ -229,10 +229,8 @@ Default BBFILES are the .bb files in the current directory.""")
     # Before we start modifying the environment we should take a pristine
     # copy for possible later use
     initialenv = os.environ.copy()
-    # Clear away any spurious environment variables. But don't wipe the
-    # environment totally. This is necessary to ensure the correct operation
-    # of the UIs (e.g. for DISPLAY, etc.)
-    bb.utils.clean_environment()
+    # Clear away any spurious environment variables while we stoke up the cooker
+    cleanedvars = bb.utils.clean_environment()
 
     server = server.BitBakeServer()
     if configuration.bind:
@@ -257,6 +255,10 @@ Default BBFILES are the .bb files in the current directory.""")
     if not configuration.server_only:
         # Setup a connection to the server (cooker)
         server_connection = server.establishConnection()
+
+        # Restore the environment in case the UI needs it
+        for k in cleanedvars:
+            os.environ[k] = cleanedvars[k]
 
         try:
             return server.launchUI(ui_main, server_connection.connection, server_connection.events)
