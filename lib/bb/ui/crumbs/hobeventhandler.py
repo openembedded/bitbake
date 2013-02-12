@@ -202,6 +202,10 @@ class HobHandler(gobject.GObject):
             self.run_next_command()
 
         elif isinstance(event, bb.event.SanityCheckPassed):
+            reparse = self.runCommand(["getVariable", "BB_INVALIDCONF"]) or None
+            if reparse is True:
+                self.runCommand(["setVariable", "BB_INVALIDCONF", False])
+                self.runCommand(["parseConfigurationFiles", "", ""])
             self.run_next_command()
 
         elif isinstance(event, bb.event.SanityCheckFailed):

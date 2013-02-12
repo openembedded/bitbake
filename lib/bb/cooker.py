@@ -977,10 +977,16 @@ class BBCooker:
             bb.fetch.fetcher_init(data)
         bb.codeparser.parser_cache_init(data)
         bb.event.fire(bb.event.ConfigParsed(), data)
-        bb.parse.init_parser(data)
-        data.setVar('BBINCLUDED',bb.parse.get_file_depends(data))
-        self.configuration.data = data
-        self.configuration.data_hash = data.get_hash()
+
+        if data.getVar("BB_INVALIDCONF") is True:
+            data.setVar("BB_INVALIDCONF", False)
+            self.parseConfigurationFiles(self.configuration.prefile,
+                                         self.configuration.postfile)
+        else:
+            bb.parse.init_parser(data)
+            data.setVar('BBINCLUDED',bb.parse.get_file_depends(data))
+            self.configuration.data = data
+            self.configuration.data_hash = data.get_hash()
 
     def handleCollections( self, collections ):
         """Handle collections"""
