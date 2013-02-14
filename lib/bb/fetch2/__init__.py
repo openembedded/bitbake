@@ -214,6 +214,8 @@ def uri_replace(ud, uri_find, uri_replace, replacements, d):
                         return None
             # Overwrite any specified replacement parameters
             for k in uri_replace_decoded[loc]:
+                for l in replacements:
+                    uri_replace_decoded[loc][k] = uri_replace_decoded[loc][k].replace(l, replacements[l])
                 result_decoded[loc][k] = uri_replace_decoded[loc][k]
         elif (re.match(regexp, uri_decoded[loc])):
             if not uri_replace_decoded[loc]:
