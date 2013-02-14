@@ -100,7 +100,7 @@ class BufferedLogger(Logger):
         self.buffer = []
 
 class PythonParser():
-    getvars = ("d.getVar", "bb.data.getVar", "data.getVar")
+    getvars = ("d.getVar", "bb.data.getVar", "data.getVar", "d.appendVar", "d.prependVar")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
     def warn(self, func, arg):
