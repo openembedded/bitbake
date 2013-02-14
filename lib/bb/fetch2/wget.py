@@ -65,7 +65,8 @@ class Wget(FetchMethod):
 
         basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -t 2 -T 30 -nv --passive-ftp --no-check-certificate"
 
-        if 'downloadfilename' in ud.parm:
+        if not checkonly and 'downloadfilename' in ud.parm:
+            bb.utils.mkdirhier(os.path.dirname(ud.localfile))
             basecmd += " -O ${DL_DIR}/" + ud.localfile
 
         if checkonly:
