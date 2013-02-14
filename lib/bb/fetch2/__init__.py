@@ -756,6 +756,7 @@ class FetchData(object):
         self.lockfile = None
         self.mirrortarball = None
         self.basename = None
+        self.basepath = None
         (self.type, self.host, self.path, self.user, self.pswd, self.parm) = decodeurl(data.expand(url, d))
         self.date = self.getSRCDate(d)
         self.url = url
@@ -812,8 +813,14 @@ class FetchData(object):
         elif self.localfile:
             self.localpath = self.method.localpath(self.url, self, d)
 
-        # Note: These files should always be in DL_DIR whereas localpath may not be.
-        basepath = d.expand("${DL_DIR}/%s" % os.path.basename(self.localpath or self.basename))
+        dldir = d.getVar("DL_DIR", True)
+        # Note: .done and .lock files should always be in DL_DIR whereas localpath may not be.
+        if self.localpath and self.localpath.startswith(dldir):
+            basepath = self.localpath
+        elif self.localpath:
+            basepath = dldir + os.sep + os.path.basename(self.localpath)
+        else:
+            basepath = dldir + os.sep + (self.basepath or self.basename)
         self.donestamp = basepath + '.done'
         self.lockfile = basepath + '.lock'
 
