@@ -35,7 +35,7 @@ def check_indent(codestr):
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
-    CACHE_VERSION = 2
+    CACHE_VERSION = 3
 
     def __init__(self):
         MultiProcessCache.__init__(self)
@@ -101,6 +101,7 @@ class BufferedLogger(Logger):
 
 class PythonParser():
     getvars = ("d.getVar", "bb.data.getVar", "data.getVar", "d.appendVar", "d.prependVar")
+    containsfuncs = ("bb.utils.contains", "base_contains", "oe.utils.contains")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
     def warn(self, func, arg):
@@ -119,7 +120,7 @@ class PythonParser():
 
     def visit_Call(self, node):
         name = self.called_node_name(node.func)
-        if name in self.getvars:
+        if name in self.getvars or name in self.containsfuncs:
             if isinstance(node.args[0], ast.Str):
                 self.var_references.add(node.args[0].s)
             else:
