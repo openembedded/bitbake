@@ -24,6 +24,9 @@ import bb
 
 logger = logging.getLogger('BitBake.TestCodeParser')
 
+# bb.data references bb.parse but can't directly import due to circular dependencies.
+# Hack around it for now :( 
+import bb.parse
 import bb.data
 
 class ReferenceTest(unittest.TestCase):
