@@ -1139,6 +1139,7 @@ class RunQueueExecute:
                 for e in fakeenv:
                     os.environ[e] = fakeenv[e]
                     the_data.setVar(e, fakeenv[e])
+                    the_data.setVarFlag(e, 'export', "1")
 
                 if quieterrors:
                     the_data.setVarFlag(taskname, "quieterrors", "1")
