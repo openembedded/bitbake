@@ -30,6 +30,9 @@ from __future__ import print_function
 import os, re
 import logging
 import urllib
+import urlparse
+if 'git' not in urlparse.uses_netloc:
+    urlparse.uses_netloc.append('git')
 from urlparse import urlparse
 import operator
 import bb.persist_data, bb.utils
