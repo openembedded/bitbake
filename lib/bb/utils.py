@@ -536,9 +536,9 @@ def remove(path, recurse=False):
     if not path:
         return
     if recurse:
-        import subprocess
+        import subprocess, glob
         # shutil.rmtree(name) would be ideal but its too slow
-        subprocess.call("rm -rf %s" % path, shell=True)
+        subprocess.call(['rm', '-rf'] + glob.glob(path))
         return
     import os, errno, glob
     for name in glob.glob(path):
