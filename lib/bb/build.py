@@ -519,9 +519,12 @@ def make_stamp(task, d, file_name = None):
     """
     cleanmask = stamp_cleanmask_internal(task, d, file_name)
     for mask in cleanmask:
-        # Preserve sigdata files in the stamps directory
         for name in glob.glob(mask):
+            # Preserve sigdata files in the stamps directory
             if "sigdata" in name:
+                continue
+            # Preserve taint files in the stamps directory
+            if name.endswith('.taint'):
                 continue
             os.unlink(name)
     
