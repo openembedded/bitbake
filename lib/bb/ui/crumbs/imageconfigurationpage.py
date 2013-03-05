@@ -198,8 +198,7 @@ class ImageConfigurationPage (HobPage):
         markup += "For more on layers, check the <a href=\""
         markup += "http://www.yoctoproject.org/docs/current/dev-manual/"
         markup += "dev-manual.html#understanding-and-using-layers\">reference manual</a>."
-        self.layer_info_icon = HobInfoButton(markup, self.get_parent())
-
+        self.layer_info_icon = HobInfoButton("<b>Layers</b>" + "*" + markup, self.get_parent())
 #        self.progress_box = gtk.HBox(False, 6)
         self.progress_bar = HobProgressBar()
 #        self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
