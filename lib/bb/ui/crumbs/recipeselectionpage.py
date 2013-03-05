@@ -152,6 +152,12 @@ class RecipeSelectionPage (HobPage):
             if page['name'] == "Included recipes":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
+            if page['name'] == "Package Groups":
+                tab.connect("button-release-event", self.button_click_cb)
+                tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
+            if page['name'] == "All recipes":
+                tab.connect("button-release-event", self.button_click_cb)
+                tab.connect("cell-fadeinout-stopped", self.button_click_cb)
             self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
@@ -185,9 +191,19 @@ class RecipeSelectionPage (HobPage):
         path, col = widget.table_tree.get_cursor()
         tree_model = widget.table_tree.get_model()
         if path: # else activation is likely a removal
-            binb = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_BINB)
-            if binb:
-                self.builder.show_binb_dialog(binb)
+            properties = {'summary': '', 'name': '', 'version': '', 'revision': '', 'binb': '', 'group': '', 'license': '', 'homepage': '', 'bugtracker': '', 'description': ''}
+            properties['summary'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_SUMMARY)
+            properties['name'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_NAME)
+            properties['version'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_VERSION)
+            properties['revision'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_REVISION)
+            properties['binb'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_BINB)
+            properties['group'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_GROUP)
+            properties['license'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_LIC)
+            properties['homepage'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_HOMEPAGE)
+            properties['bugtracker'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_BUGTRACKER)
+            properties['description'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_DESC)
+            self.builder.show_recipe_property_dialog(properties)
+
 
     def build_packages_clicked_cb(self, button):
         self.builder.build_packages()
