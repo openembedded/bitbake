@@ -471,6 +471,8 @@ class BBCooker:
         taskdata.add_unresolved(localdata, self.status)
         bb.event.fire(bb.event.TreeDataPreparationCompleted(len(pkgs_to_build)), self.configuration.data)
         return runlist, taskdata
+    
+    ######## WARNING : this function requires cache_extra to be enabled ########
 
     def generateTaskDepTreeData(self, pkgs_to_build, task):
         """
@@ -544,6 +546,7 @@ class BBCooker:
 
         return depend_tree
 
+    ######## WARNING : this function requires cache_extra to be enabled ########
     def generatePkgDepTreeData(self, pkgs_to_build, task):
         """
         Create a dependency tree of pkgs_to_build, returning the data.
@@ -571,8 +574,11 @@ class BBCooker:
             lic = self.status.license[fn]
             section = self.status.section[fn]
             description = self.status.description[fn]
+            homepage = self.status.homepage[fn]
+            bugtracker = self.status.bugtracker[fn]
             rdepends = self.status.rundeps[fn]
             rrecs = self.status.runrecs[fn]
+            prevision = self.status.prevision[fn]
             inherits = self.status.inherits.get(fn, None)
             if pn not in depend_tree["pn"]:
                 depend_tree["pn"][pn] = {}
@@ -583,6 +589,9 @@ class BBCooker:
                 depend_tree["pn"][pn]["section"] = section
                 depend_tree["pn"][pn]["description"] = description
                 depend_tree["pn"][pn]["inherits"] = inherits
+                depend_tree["pn"][pn]["homepage"] = homepage
+                depend_tree["pn"][pn]["bugtracker"] = bugtracker
+                depend_tree["pn"][pn]["revision"] = prevision
 
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)
