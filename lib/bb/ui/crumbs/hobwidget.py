@@ -345,17 +345,12 @@ class HobInfoButton(gtk.EventBox):
         hic.ICON_INFO_DISPLAY_FILE)
         self.image.show()
         self.add(self.image)
+        self.tip_markup = tip_markup
+        self.my_parent = parent
 
         self.set_events(gtk.gdk.BUTTON_RELEASE |
                         gtk.gdk.ENTER_NOTIFY_MASK |
                         gtk.gdk.LEAVE_NOTIFY_MASK)
-
-        self.ptip = PersistentTooltip(tip_markup)
-
-        if parent:
-            self.ptip.set_parent(parent)
-            self.ptip.set_transient_for(parent)
-            self.ptip.set_destroy_with_parent(True)
 
         self.connect("button-release-event", self.button_release_cb)
         self.connect("enter-notify-event", self.mouse_in_cb)
@@ -366,7 +361,18 @@ class HobInfoButton(gtk.EventBox):
     PersistentTooltip
     """
     def button_release_cb(self, widget, event):
-        self.ptip.show()
+        from bb.ui.crumbs.hig.propertydialog import PropertyDialog
+        self.dialog = PropertyDialog(title = '',
+                    parent = self.my_parent,
+                    information = self.tip_markup,
+                    flags = gtk.DIALOG_DESTROY_WITH_PARENT
+                        | gtk.DIALOG_NO_SEPARATOR)
+
+        button = self.dialog.add_button("Close", gtk.RESPONSE_CANCEL)
+        HobAltButton.style_button(button)
+        button.connect("clicked", lambda w: self.dialog.destroy())
+        self.dialog.show_all()
+        self.dialog.run()
 
     """
     Change to the prelight image when the mouse enters the widget
