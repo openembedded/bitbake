@@ -381,7 +381,8 @@ class RecipeListModel(gtk.ListStore):
     providing convenience functions to access gtk.TreeModel subclasses which
     provide filtered views of the data.
     """
-    (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_INSTALL, COL_PN, COL_FADE_INC) = range(12)
+    (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_INSTALL, COL_PN, COL_FADE_INC, COL_SUMMARY, COL_VERSION,
+     COL_REVISION, COL_HOMEPAGE, COL_BUGTRACKER) = range(17)
 
     __custom_image__ = "Create your own image"
 
@@ -406,7 +407,12 @@ class RecipeListModel(gtk.ListStore):
                                 gobject.TYPE_BOOLEAN,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
-                                gobject.TYPE_BOOLEAN)
+                                gobject.TYPE_BOOLEAN,
+                                gobject.TYPE_STRING,
+                                gobject.TYPE_STRING,
+                                gobject.TYPE_STRING,
+                                gobject.TYPE_STRING,
+                                gobject.TYPE_STRING)
 
     """
     Find the model path for the item_name
@@ -505,7 +511,9 @@ class RecipeListModel(gtk.ListStore):
                  self.COL_LIC, "", self.COL_GROUP, "",
                  self.COL_DEPS, "", self.COL_BINB, "",
                  self.COL_TYPE, "image", self.COL_INC, False,
-                 self.COL_IMG, False, self.COL_INSTALL, "", self.COL_PN, self.__custom_image__)
+                 self.COL_IMG, False, self.COL_INSTALL, "", self.COL_PN, self.__custom_image__,
+                 self.COL_SUMMARY, "", self.COL_VERSION, "", self.COL_REVISION, "",
+                 self.COL_HOMEPAGE, "", self.COL_BUGTRACKER, "")
 
         for item in event_model["pn"]:
             name = item
@@ -513,6 +521,11 @@ class RecipeListModel(gtk.ListStore):
             lic = event_model["pn"][item]["license"]
             group = event_model["pn"][item]["section"]
             inherits = event_model["pn"][item]["inherits"]
+            summary = event_model["pn"][item]["summary"]
+            version = event_model["pn"][item]["version"]
+            revision = event_model["pn"][item]["revision"]
+            homepage = event_model["pn"][item]["homepage"]
+            bugtracker = event_model["pn"][item]["bugtracker"]
             install = []
 
             depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
@@ -534,7 +547,9 @@ class RecipeListModel(gtk.ListStore):
                      self.COL_LIC, lic, self.COL_GROUP, group,
                      self.COL_DEPS, " ".join(depends), self.COL_BINB, "",
                      self.COL_TYPE, atype, self.COL_INC, False,
-                     self.COL_IMG, False, self.COL_INSTALL, " ".join(install), self.COL_PN, item)
+                     self.COL_IMG, False, self.COL_INSTALL, " ".join(install), self.COL_PN, item,
+                     self.COL_SUMMARY, summary, self.COL_VERSION, version, self.COL_REVISION, revision,
+                     self.COL_HOMEPAGE, homepage, self.COL_BUGTRACKER, bugtracker)
 
         self.pn_path = {}
         it = self.get_iter_first()
