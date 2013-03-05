@@ -47,6 +47,7 @@ from bb.ui.crumbs.hig.deployimagedialog import DeployImageDialog
 from bb.ui.crumbs.hig.layerselectiondialog import LayerSelectionDialog
 from bb.ui.crumbs.hig.imageselectiondialog import ImageSelectionDialog
 from bb.ui.crumbs.hig.parsingwarningsdialog import ParsingWarningsDialog
+from bb.ui.crumbs.hig.propertydialog import PropertyDialog
 
 hobVer = 20120808
 
@@ -1202,11 +1203,37 @@ class Builder(gtk.Window):
 
         self.fast_generate_image_async(True)
 
-    def show_binb_dialog(self, binb):
-        markup = "<b>Brought in by:</b>\n%s" % binb
-        ptip = PersistentTooltip(markup, self)
+    def show_recipe_property_dialog(self, properties):
+        information = {}
+        dialog = PropertyDialog(title = properties["name"] +' '+ "properties",
+                      parent = self,
+                      information = properties,
+                      flags = gtk.DIALOG_DESTROY_WITH_PARENT
+                          | gtk.DIALOG_NO_SEPARATOR)
 
-        ptip.show()
+        dialog.set_modal(False)
+
+        button = dialog.add_button("Close", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button.connect("clicked", lambda w: dialog.destroy())
+
+        dialog.run()
+
+    def show_packages_property_dialog(self, properties):
+        information = {}
+        dialog = PropertyDialog(title = properties["name"] +' '+ "properties",
+                      parent = self,
+                      information = properties,
+                      flags = gtk.DIALOG_DESTROY_WITH_PARENT
+                          | gtk.DIALOG_NO_SEPARATOR)
+
+        dialog.set_modal(False)
+
+        button = dialog.add_button("Close", gtk.RESPONSE_NO)
+        HobAltButton.style_button(button)
+        button.connect("clicked", lambda w: dialog.destroy())
+
+        dialog.run()
 
     def show_layer_selection_dialog(self):
         dialog = LayerSelectionDialog(title = "Layers",
