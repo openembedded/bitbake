@@ -142,6 +142,9 @@ class PackageSelectionPage (HobPage):
             if page['name'] == "Included packages":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
+            if page['name'] == "All packages":
+                tab.connect("button-release-event", self.button_click_cb)
+                tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
             self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
@@ -175,9 +178,13 @@ class PackageSelectionPage (HobPage):
         path, col = widget.table_tree.get_cursor()
         tree_model = widget.table_tree.get_model()
         if path: # else activation is likely a removal
-            binb = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_BINB)
-            if binb:
-                self.builder.show_binb_dialog(binb)
+            properties = {'binb': '' , 'name': '', 'size':'', 'recipe':''}
+            properties['binb'] = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_BINB)
+            properties['name'] = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_NAME)
+            properties['size'] = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_SIZE)
+            properties['recipe'] = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_RCP)
+
+            self.builder.show_recipe_property_dialog(properties)
 
     def open_log_clicked_cb(self, button, log_file):
         if log_file:
