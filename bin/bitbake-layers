@@ -73,7 +73,7 @@ class Commands(cmd.Cmd):
         else:
             sys.stdout.write("usage: bitbake-layers <command> [arguments]\n\n")
             sys.stdout.write("Available commands:\n")
-            procnames = self.get_names()
+            procnames = list(set(self.get_names()))
             for procname in procnames:
                 if procname[:3] == 'do_':
                     sys.stdout.write("  %s\n" % procname[3:].replace('_', '-'))
