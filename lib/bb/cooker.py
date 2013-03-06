@@ -1563,12 +1563,12 @@ def parse_file((filename, appends, caches_array)):
         tb = sys.exc_info()[2]
         exc.recipe = filename
         exc.traceback = list(bb.exceptions.extract_traceback(tb, context=3))
-        raise
+        return True, exc
     # Need to turn BaseExceptions into Exceptions here so we gracefully shutdown
     # and for example a worker thread doesn't just exit on its own in response to
     # a SystemExit event for example.
     except BaseException as exc:
-        raise ParsingFailure(exc, filename)
+        return True, ParsingFailure(exc, filename)
 
 class CookerParser(object):
     def __init__(self, cooker, filelist, masked):
