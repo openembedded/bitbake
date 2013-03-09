@@ -38,8 +38,8 @@ from bb.COW  import COWDictBase
 
 logger = logging.getLogger("BitBake.Data")
 
-__setvar_keyword__ = ["_append", "_prepend"]
-__setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend)(_(?P<add>.*))?$')
+__setvar_keyword__ = ["_append", "_prepend", "_remove"]
+__setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend|_remove)(_(?P<add>.*))?$')
 __expand_var_regexp__ = re.compile(r"\${[^{}]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
@@ -357,7 +357,8 @@ class DataSmart(MutableMapping):
 
         #
         # First we apply all overrides
-        # Then  we will handle _append and _prepend
+        # Then we will handle _append and _prepend and store the _remove
+        # information for later.
         #
 
         # We only want to report finalization once per variable overridden.
@@ -392,7 +393,7 @@ class DataSmart(MutableMapping):
                 except Exception:
                     logger.info("Untracked delVar")
 
-        # now on to the appends and prepends
+        # now on to the appends and prepends, and stashing the removes
         for op in __setvar_keyword__:
             if op in self._special_values:
                 appends = self._special_values[op] or []
@@ -415,6 +416,10 @@ class DataSmart(MutableMapping):
                         elif op == "_prepend":
                             sval = a + (self.getVar(append, False) or "")
                             self.setVar(append, sval)
+                        elif op == "_remove":
+                            removes = self.getVarFlag(append, "_removeactive", False) or []
+                            removes.append(a)
+                            self.setVarFlag(append, "_removeactive", removes, ignore=True)
 
                     # We save overrides that may be applied at some later stage
                     if keep:
@@ -519,7 +524,7 @@ class DataSmart(MutableMapping):
             self.varhistory.record(**loginfo)
             self.setVar(newkey, val, ignore=True)
 
-        for i in ('_append', '_prepend'):
+        for i in (__setvar_keyword__):
             src = self.getVarFlag(key, i)
             if src is None:
                 continue
@@ -583,6 +588,14 @@ class DataSmart(MutableMapping):
                 value = copy.copy(local_var["defaultval"])
         if expand and value:
             value = self.expand(value, None)
+        if value and flag == "_content" and local_var and "_removeactive" in local_var:
+            for i in local_var["_removeactive"]:
+                if " " + i + " " in value:
+                    value = value.replace(" " + i + " ", " ")
+                if value.startswith(i + " "):
+                    value = value[len(i + " "):]
+                if value.endswith(" " + i):
+                    value = value[:-len(" " + i)]
         return value
 
     def delVarFlag(self, var, flag, **loginfo):
