@@ -307,42 +307,42 @@ class HobHandler(gobject.GObject):
         self.runCommand(["setVariable", "INHERIT", inherits])
 
     def set_bblayers(self, bblayers):
-        self.runCommand(["setVariable", "BBLAYERS_HOB", " ".join(bblayers)])
+        self.runCommand(["setVariable", "BBLAYERS", " ".join(bblayers)])
 
     def set_machine(self, machine):
         if machine:
-            self.runCommand(["setVariable", "MACHINE_HOB", machine])
+            self.runCommand(["setVariable", "MACHINE", machine])
 
     def set_sdk_machine(self, sdk_machine):
-        self.runCommand(["setVariable", "SDKMACHINE_HOB", sdk_machine])
+        self.runCommand(["setVariable", "SDKMACHINE", sdk_machine])
 
     def set_image_fstypes(self, image_fstypes):
         self.runCommand(["setVariable", "IMAGE_FSTYPES", image_fstypes])
 
     def set_distro(self, distro):
-        self.runCommand(["setVariable", "DISTRO_HOB", distro])
+        self.runCommand(["setVariable", "DISTRO", distro])
 
     def set_package_format(self, format):
         package_classes = ""
         for pkgfmt in format.split():
             package_classes += ("package_%s" % pkgfmt + " ")
-        self.runCommand(["setVariable", "PACKAGE_CLASSES_HOB", package_classes])
+        self.runCommand(["setVariable", "PACKAGE_CLASSES", package_classes])
 
     def set_bbthreads(self, threads):
-        self.runCommand(["setVariable", "BB_NUMBER_THREADS_HOB", threads])
+        self.runCommand(["setVariable", "BB_NUMBER_THREADS", threads])
 
     def set_pmake(self, threads):
         pmake = "-j %s" % threads
-        self.runCommand(["setVariable", "PARALLEL_MAKE_HOB", pmake])
+        self.runCommand(["setVariable", "PARALLEL_MAKE", pmake])
 
     def set_dl_dir(self, directory):
-        self.runCommand(["setVariable", "DL_DIR_HOB", directory])
+        self.runCommand(["setVariable", "DL_DIR", directory])
 
     def set_sstate_dir(self, directory):
-        self.runCommand(["setVariable", "SSTATE_DIR_HOB", directory])
+        self.runCommand(["setVariable", "SSTATE_DIR", directory])
 
     def set_sstate_mirrors(self, url):
-        self.runCommand(["setVariable", "SSTATE_MIRRORS_HOB", url])
+        self.runCommand(["setVariable", "SSTATE_MIRRORS", url])
 
     def set_extra_size(self, image_extra_size):
         self.runCommand(["setVariable", "IMAGE_ROOTFS_EXTRA_SPACE", str(image_extra_size)])
@@ -351,15 +351,12 @@ class HobHandler(gobject.GObject):
         self.runCommand(["setVariable", "IMAGE_ROOTFS_SIZE", str(image_rootfs_size)])
 
     def set_incompatible_license(self, incompat_license):
-        self.runCommand(["setVariable", "INCOMPATIBLE_LICENSE_HOB", incompat_license])
+        self.runCommand(["setVariable", "INCOMPATIBLE_LICENSE", incompat_license])
 
     def set_extra_config(self, extra_setting):
         for key in extra_setting.keys():
             value = extra_setting[key]
             self.runCommand(["setVariable", key, value])
-
-    def set_config_filter(self, config_filter):
-        self.runCommand(["setConfFilter", config_filter])
 
     def set_http_proxy(self, http_proxy):
         self.runCommand(["setVariable", "http_proxy", http_proxy])
