@@ -496,10 +496,13 @@ def approved_variables():
     approved = []
     if 'BB_ENV_WHITELIST' in os.environ:
         approved = os.environ['BB_ENV_WHITELIST'].split()
+        approved.extend(['BB_ENV_WHITELIST'])
     else:
         approved = preserved_envvars()
     if 'BB_ENV_EXTRAWHITE' in os.environ:
         approved.extend(os.environ['BB_ENV_EXTRAWHITE'].split())
+        if 'BB_ENV_EXTRAWHITE' not in approved:
+            approved.extend(['BB_ENV_EXTRAWHITE'])
     return approved
 
 def clean_environment():
