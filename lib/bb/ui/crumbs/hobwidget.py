@@ -88,12 +88,12 @@ class HobViewTable (gtk.VBox):
         self.table_tree = gtk.TreeView()
         self.table_tree.set_headers_visible(True)
         self.table_tree.set_headers_clickable(True)
-        self.table_tree.set_enable_search(True)
         self.table_tree.set_rules_hint(True)
         self.table_tree.set_enable_tree_lines(True)
         self.table_tree.get_selection().set_mode(gtk.SELECTION_SINGLE)
         self.toggle_columns = []
         self.table_tree.connect("row-activated", self.row_activated_cb)
+        self.top_bar = None
 
         for i, column in enumerate(columns):
             col = gtk.TreeViewColumn(column['col_name'])
@@ -141,10 +141,41 @@ class HobViewTable (gtk.VBox):
                 if 'col_t_id' in column.keys():
                     col.add_attribute(cell, 'font', column['col_t_id'])
 
-        scroll = gtk.ScrolledWindow()
-        scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
-        scroll.add(self.table_tree)
-        self.pack_start(scroll, True, True, 0)
+        self.scroll = gtk.ScrolledWindow()
+        self.scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+        self.scroll.add(self.table_tree)
+
+        self.pack_end(self.scroll, True, True, 0)
+
+    def add_no_result_bar(self, entry):
+        color = HobColors.KHAKI
+        self.top_bar = gtk.EventBox()
+        self.top_bar.set_size_request(-1, 70)
+        self.top_bar.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse(color))
+        self.top_bar.set_flags(gtk.CAN_DEFAULT)
+        self.top_bar.grab_default()
+
+        no_result_tab = gtk.Table(5, 20, True)
+        self.top_bar.add(no_result_tab)
+
+        label = gtk.Label()
+        label.set_alignment(0.0, 0.5)
+        title = "No results matching your search"
+        label.set_markup("<span size='x-large'><b>%s</b></span>" % title)
+        no_result_tab.attach(label, 1, 14, 1, 4)
+
+        clear_button = HobButton("Clear search")
+        clear_button.connect('clicked', self.set_search_entry_clear_cb, entry)
+        no_result_tab.attach(clear_button, 16, 19, 1, 4)
+
+        self.pack_start(self.top_bar, False, True, 12)
+        self.top_bar.show_all()
+
+    def set_search_entry_clear_cb(self, button, search):
+        if search.get_editable() == True:
+            search.set_text("")
+        search.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
+        search.grab_focus()
 
     def display_binb_cb(self, col, cell, model, it, col_id):
         binb =  model.get_value(it, col_id)
@@ -169,10 +200,6 @@ class HobViewTable (gtk.VBox):
 
     def set_model(self, tree_model):
         self.table_tree.set_model(tree_model)
-
-    def set_search_entry(self, search_column_id, entry):
-        self.table_tree.set_search_column(search_column_id)
-        self.table_tree.set_search_entry(entry)
 
     def toggle_default(self):
         model = self.table_tree.get_model()
@@ -453,7 +480,6 @@ class HobNotebook(gtk.Notebook):
         self.pages = []
 
         self.search = None
-        self.search_name = ""
 
         self.connect("switch-page", self.page_changed_cb)
 
@@ -466,6 +492,9 @@ class HobNotebook(gtk.Notebook):
             else:
                 lbl.set_active(False)
 
+        if self.search:
+            self.reset_entry(self.search, page_num)
+
     def append_page(self, child, tab_label, tab_tooltip=None):
         label = HobTabLabel(tab_label)
         if tab_tooltip:
@@ -474,16 +503,22 @@ class HobNotebook(gtk.Notebook):
         self.pages.append(label)
         gtk.Notebook.append_page(self, child, label)
 
-    def set_entry(self, name="Search:"):
+    def set_entry(self, names, tips):
         self.search = gtk.Entry()
-        self.search_name = name
+        self.search_names = names
+        self.search_tips = tips
         style = self.search.get_style()
         style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.GRAY, False, False)
         self.search.set_style(style)
-        self.search.set_text(name)
+        self.search.set_text(names[0])
+        self.search.set_tooltip_text(self.search_tips[0])
+        self.search.props.has_tooltip = True
+
         self.search.set_editable(False)
         self.search.set_icon_from_stock(gtk.ENTRY_ICON_SECONDARY, gtk.STOCK_CLEAR)
+        self.search.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
         self.search.connect("icon-release", self.set_search_entry_clear_cb)
+        self.search.set_width_chars(30)
         self.search.show()
 
         self.search.connect("focus-in-event", self.set_search_entry_editable_cb)
@@ -507,19 +542,23 @@ class HobNotebook(gtk.Notebook):
         style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.BLACK, False, False)
         search.set_style(style)
 
-    def reset_entry(self, entry):
+    def set_search_entry_reset_cb(self, search, event):
+        page_num = self.get_current_page()
+        self.reset_entry(search, page_num)
+
+    def reset_entry(self, entry, page_num):
         style = entry.get_style()
         style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.GRAY, False, False)
         entry.set_style(style)
-        entry.set_text(self.search_name)
+        entry.set_text(self.search_names[page_num])
+        entry.set_tooltip_text(self.search_tips[page_num])
         entry.set_editable(False)
-
-    def set_search_entry_reset_cb(self, search, event):
-        self.reset_entry(search)
+        entry.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
 
     def set_search_entry_clear_cb(self, search, icon_pos, event):
         if search.get_editable() == True:
             search.set_text("")
+        search.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
 
     def set_page(self, title):
         for child in self.pages:

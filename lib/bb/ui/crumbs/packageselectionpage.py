@@ -34,10 +34,12 @@ class PackageSelectionPage (HobPage):
 
     pages = [
         {
-         'name'    : 'Included packages',
-         'tooltip' : 'The packages currently included for your image',
-         'filter'  : { PackageListModel.COL_INC : [True] },
-         'columns' : [{
+         'name'      : 'Included packages',
+         'tooltip'   : 'The packages currently included for your image',
+         'filter'    : { PackageListModel.COL_INC : [True] },
+         'search'    : 'Search packages by name',
+         'searchtip' : 'Enter a package name to find it',
+         'columns'   : [{
                        'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
                        'col_style': 'text',
@@ -73,10 +75,12 @@ class PackageSelectionPage (HobPage):
                        'col_max'  : 100
                      }]
         }, {
-         'name'    : 'All packages',
-         'tooltip' : 'All packages that have been built',
-         'filter'  : {},
-         'columns' : [{
+         'name'      : 'All packages',
+         'tooltip'   : 'All packages that have been built',
+         'filter'    : {},
+         'search'    : 'Search packages by name',
+         'searchtip' : 'Enter a package name to find it',
+         'columns'   : [{
                        'col_name' : 'Package name',
                        'col_id'   : PackageListModel.COL_NAME,
                        'col_style': 'text',
@@ -132,12 +136,18 @@ class PackageSelectionPage (HobPage):
         # set visible members
         self.ins = HobNotebook()
         self.tables = [] # we need to modify table when the dialog is shown
+
+        search_names = []
+        search_tips = []
         # append the tab
         for page in self.pages:
             columns = page['columns']
             tab = HobViewTable(columns)
+            search_names.append(page['search'])
+            search_tips.append(page['searchtip'])
             filter = page['filter']
-            tab.set_model(self.package_model.tree_model(filter))
+            sort_model = self.package_model.tree_model(filter)
+            tab.set_model(sort_model)
             tab.connect("toggled", self.table_toggled_cb, page['name'])
             if page['name'] == "Included packages":
                 tab.connect("button-release-event", self.button_click_cb)
@@ -148,13 +158,8 @@ class PackageSelectionPage (HobPage):
             self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
-        self.ins.set_entry("Search packages:")
-        # set the search entry for each table
-        for tab in self.tables:
-            search_tip = "Enter a package name to find it"
-            self.ins.search.set_tooltip_text(search_tip)
-            self.ins.search.props.has_tooltip = True
-            tab.set_search_entry(0, self.ins.search)
+        self.ins.set_entry(search_names, search_tips)
+        self.ins.search.connect("changed", self.search_entry_changed)
 
         # add all into the dialog
         self.box_group_area.pack_start(self.ins, expand=True, fill=True)
@@ -173,6 +178,26 @@ class PackageSelectionPage (HobPage):
         self.back_button = HobAltButton('Cancel')
         self.back_button.connect("clicked", self.back_button_clicked_cb)
         self.button_box.pack_end(self.back_button, expand=False, fill=False)
+
+    def search_entry_changed(self, entry):
+        current_tab = self.ins.get_current_page()
+        filter = self.pages[current_tab]['filter']
+        text = entry.get_text()
+        filter[PackageListModel.COL_NAME] = text
+        self.tables[current_tab].set_model(self.package_model.tree_model(filter, search_data=text))
+        if self.package_model.filtered_nb == 0:
+            if not self.ins.get_nth_page(current_tab).top_bar:
+                self.ins.get_nth_page(current_tab).add_no_result_bar(entry)
+            self.ins.get_nth_page(current_tab).top_bar.show()
+            self.ins.get_nth_page(current_tab).scroll.hide()
+        else:
+            if self.ins.get_nth_page(current_tab).top_bar:
+                self.ins.get_nth_page(current_tab).top_bar.hide()
+            self.ins.get_nth_page(current_tab).scroll.show()
+        if entry.get_text() == '':
+            entry.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
+        else:
+            entry.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, True)
 
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()
