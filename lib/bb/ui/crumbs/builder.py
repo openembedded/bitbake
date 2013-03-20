@@ -1025,10 +1025,12 @@ class Builder(gtk.Window):
             fraction = 0.9
         elif self.current_step == self.IMAGE_GENERATING:
             fraction = 1.0
+            version = ""
             self.parameters.image_names = []
             selected_image = self.recipe_model.get_selected_image()
             if selected_image == self.recipe_model.__custom_image__:
-                version = self.recipe_model.get_custom_image_version()
+                if self.configuration.initial_selected_image != selected_image:
+                    version = self.recipe_model.get_custom_image_version()
                 linkname = 'hob-image' + version+ "-" + self.configuration.curr_mach
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
