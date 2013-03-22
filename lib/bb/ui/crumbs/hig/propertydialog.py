@@ -56,7 +56,7 @@ class PropertyDialog(CrumbsDialog):
                 HOB_ICON_BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ("icons/"))
                 ICON_PACKAGES_DISPLAY_FILE    = os.path.join(HOB_ICON_BASE_DIR, ('info/info_display.png'))
 
-                self.table = gtk.Table(2,2,False)
+                self.table = gtk.Table(1,1,False)
                 self.table.set_row_spacings(0)
                 self.table.set_col_spacings(0)
 
@@ -68,21 +68,21 @@ class PropertyDialog(CrumbsDialog):
                 image_info = self.properties.split("*")[0]
                 info = self.properties.split("*")[1]
                 
-                vbox = gtk.VBox(True, spacing=0)        
+                vbox = gtk.VBox(True, spacing=30)        
                 
                 self.label_short = gtk.Label()
                 self.label_short.set_line_wrap(False)
-                self.label_short.set_markup("          " + image_info)
+                self.label_short.set_markup(image_info)
                 self.label_short.set_property("xalign", 0)
 
                 self.info_label = gtk.Label()
                 self.info_label.set_line_wrap(True)
                 self.info_label.set_markup(info)
-                self.info_label.set_property("xalign", 1)
+                self.info_label.set_property("yalign", 0.5)
 
-                self.table.attach(self.image, 0,1,0,1, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL)
-                self.table.attach(self.label_short, 0,1,0,1, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL)
-                self.table.attach(self.info_label, 0,1,1,2, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL)
+                self.table.attach(self.image, 0,1,0,1, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL,xpadding=5,ypadding=5)
+                self.table.attach(self.label_short, 0,1,0,1, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL,xpadding=40,ypadding=5)
+                self.table.attach(self.info_label, 0,1,1,2, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL,xpadding=40,ypadding=10)
         
                 self.vbox.add(self.table)
 

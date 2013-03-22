@@ -305,7 +305,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         tooltip += "For more information on shared state mirrors, check the <a href=\""
         tooltip += "http://www.yoctoproject.org/docs/current/poky-ref-manual/"
         tooltip += "poky-ref-manual.html#shared-state\">Yocto Project Reference Manual</a>."
-        table = self.gen_label_info_widget(content,"Shared state mirrors" + "*" + tooltip)
+        table = self.gen_label_info_widget(content,"<b>Shared state mirrors</b>" + "*" + tooltip)
         advanced_vbox.pack_start(table, expand=False, fill=False, padding=6)
 
         sub_vbox = gtk.VBox(False)
