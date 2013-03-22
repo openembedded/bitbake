@@ -234,7 +234,7 @@ class Git(FetchMethod):
             def_destsuffix = "git/"
 
         destsuffix = ud.parm.get("destsuffix", def_destsuffix)
-        destdir = os.path.join(destdir, destsuffix)
+        destdir = ud.destdir = os.path.join(destdir, destsuffix)
         if os.path.exists(destdir):
             bb.utils.prunedir(destdir)
 

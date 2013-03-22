@@ -1497,6 +1497,7 @@ class Fetch(object):
 
 from . import cvs
 from . import git
+from . import gitsm
 from . import local
 from . import svn
 from . import wget
@@ -1513,6 +1514,7 @@ methods.append(local.Local())
 methods.append(wget.Wget())
 methods.append(svn.Svn())
 methods.append(git.Git())
+methods.append(gitsm.GitSM())
 methods.append(cvs.Cvs())
 methods.append(svk.Svk())
 methods.append(ssh.SSH())
