@@ -103,6 +103,24 @@ Show debug logging for the specified logging domains
 .TP
 .B \-P, \-\-profile
 profile the command and print a report
+.TP
+.B \-uUI, \-\-ui=UI
+User interface to use. Currently, hob, depexp, goggle or ncurses can be specified as UI.
+.TP
+.B \-tSERVERTYPE, \-\-servertype=SERVERTYPE
+Choose which server to use, none, process or xmlrpc.
+.TP
+.B \-\-revisions-changed
+Set the exit code depending on whether upstream floating revisions have changed or not.
+.TP
+.B \-\-server-only
+Run bitbake without UI,  the frontend can connect with bitbake server itself.
+.TP
+.B \-BBIND, \-\-bind=BIND
+The name/address for the bitbake server to bind to.
+.TP
+.B \-\-no\-setscene
+Do not run any setscene tasks, forces builds.
 
 .SH ENVIRONMENT VARIABLES
 bitbake uses the following environment variables to control its
