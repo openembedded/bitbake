@@ -308,6 +308,8 @@ class FetcherTest(unittest.TestCase):
     def tearDown(self):
         bb.utils.prunedir(self.tempdir)
 
+    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
+                     "Unset BB_SKIP_NETTESTS to run network tests")
     def test_fetch(self):
         fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
         fetcher.download()
@@ -320,12 +322,16 @@ class FetcherTest(unittest.TestCase):
         self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.0/")), 9)
         self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.1/")), 9)
 
+    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
+                     "Unset BB_SKIP_NETTESTS to run network tests")
     def test_fetch_mirror(self):
         self.d.setVar("MIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
         fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
         fetcher.download()
         self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
 
+    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
+                     "Unset BB_SKIP_NETTESTS to run network tests")
     def test_fetch_premirror(self):
         self.d.setVar("PREMIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
         fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
@@ -351,21 +357,29 @@ class FetcherTest(unittest.TestCase):
         fetcher.download()
         checkrevision(self, fetcher)
 
+    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
+                     "Unset BB_SKIP_NETTESTS to run network tests")
     def test_gitfetch(self):
         url1 = url2 = "git://git.openembedded.org/bitbake"
         self.gitfetcher(url1, url2)
 
+    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
+                     "Unset BB_SKIP_NETTESTS to run network tests")
     def test_gitfetch_premirror(self):
         url1 = "git://git.openembedded.org/bitbake"
         url2 = "git://someserver.org/bitbake"
         self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
         self.gitfetcher(url1, url2)
 
+    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
+                     "Unset BB_SKIP_NETTESTS to run network tests")
     def test_gitfetch_premirror2(self):
         url1 = url2 = "git://someserver.org/bitbake"
         self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
         self.gitfetcher(url1, url2)
 
+    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
+                     "Unset BB_SKIP_NETTESTS to run network tests")
     def test_gitfetch_premirror3(self):
         realurl = "git://git.openembedded.org/bitbake"
         dummyurl = "git://someserver.org/bitbake"
