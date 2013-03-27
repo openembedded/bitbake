@@ -537,14 +537,18 @@ class HobNotebook(gtk.Notebook):
 
     def set_search_entry_editable_cb(self, search, event):
         search.set_editable(True)
-        search.set_text("")
+        text = search.get_text()
+        if text in self.search_names:
+            search.set_text("")
         style = self.search.get_style()
         style.text[gtk.STATE_NORMAL] = self.get_colormap().alloc_color(HobColors.BLACK, False, False)
         search.set_style(style)
 
     def set_search_entry_reset_cb(self, search, event):
         page_num = self.get_current_page()
-        self.reset_entry(search, page_num)
+        text = search.get_text()
+        if not text:
+            self.reset_entry(search, page_num)
 
     def reset_entry(self, entry, page_num):
         style = entry.get_style()
@@ -559,6 +563,7 @@ class HobNotebook(gtk.Notebook):
         if search.get_editable() == True:
             search.set_text("")
         search.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
+        search.grab_focus()
 
     def set_page(self, title):
         for child in self.pages:
