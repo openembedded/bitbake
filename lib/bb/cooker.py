@@ -576,6 +576,7 @@ class BBCooker:
             description = self.status.description[fn]
             homepage = self.status.homepage[fn]
             bugtracker = self.status.bugtracker[fn]
+            files_info = self.status.files_info[fn]
             rdepends = self.status.rundeps[fn]
             rrecs = self.status.runrecs[fn]
             prevision = self.status.prevision[fn]
@@ -591,6 +592,7 @@ class BBCooker:
                 depend_tree["pn"][pn]["inherits"] = inherits
                 depend_tree["pn"][pn]["homepage"] = homepage
                 depend_tree["pn"][pn]["bugtracker"] = bugtracker
+                depend_tree["pn"][pn]["files_info"] = files_info
                 depend_tree["pn"][pn]["revision"] = prevision
 
             if fnid not in seen_fnids:
