@@ -44,6 +44,7 @@ class HobRecipeInfo(RecipeInfoCommon):
         self.homepage = self.getvar('HOMEPAGE', metadata)
         self.bugtracker = self.getvar('BUGTRACKER', metadata)
         self.prevision = self.getvar('PR', metadata)
+        self.files_info = self.getvar('FILES_INFO', metadata)
 
     @classmethod
     def init_cacheData(cls, cachedata):
@@ -55,6 +56,7 @@ class HobRecipeInfo(RecipeInfoCommon):
         cachedata.homepage = {}
         cachedata.bugtracker = {}
         cachedata.prevision = {}
+        cachedata.files_info = {}
 
     def add_cacheData(self, cachedata, fn):
         cachedata.summary[fn] = self.summary
@@ -64,3 +66,4 @@ class HobRecipeInfo(RecipeInfoCommon):
         cachedata.homepage[fn] = self.homepage
         cachedata.bugtracker[fn] = self.bugtracker
         cachedata.prevision[fn] = self.prevision
+        cachedata.files_info[fn] = self.files_info
