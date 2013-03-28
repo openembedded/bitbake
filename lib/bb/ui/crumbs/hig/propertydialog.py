@@ -41,11 +41,11 @@ class PropertyDialog(CrumbsDialog):
 		
 		super(PropertyDialog, self).__init__(title, parent, flags, buttons)
                 
-                self.properties = information		
+                self.properties = information
 
                 if len(self.properties) == 10:
 		        self.create_recipe_visual_elements()
-                elif len(self.properties) == 4:
+                elif len(self.properties) == 5:
                         self.create_package_visual_elements()
                 else:
                         self.create_information_visual_elements()
@@ -55,6 +55,8 @@ class PropertyDialog(CrumbsDialog):
 
                 HOB_ICON_BASE_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ("icons/"))
                 ICON_PACKAGES_DISPLAY_FILE    = os.path.join(HOB_ICON_BASE_DIR, ('info/info_display.png'))
+
+                self.set_resizable(False)
 
                 self.table = gtk.Table(1,1,False)
                 self.table.set_row_spacings(0)
@@ -86,6 +88,19 @@ class PropertyDialog(CrumbsDialog):
         
                 self.vbox.add(self.table)
 
+        def treeViewTooltip( self, widget, e, tooltips, cell, emptyText="" ):
+                 try:
+                           (path,col,x,y) = widget.get_path_at_pos( int(e.x), int(e.y) )
+                           it = widget.get_model().get_iter(path)
+                           value = widget.get_model().get_value(it,cell)
+                           if value in self.tooltip_items:
+                                tooltips.set_tip(widget, self.tooltip_items[value])
+                                tooltips.enable()
+                           else:
+                                tooltips.set_tip(widget, emptyText)
+                 except:
+                           tooltips.set_tip(widget, emptyText)
+
                 
         def create_package_visual_elements(self):
 
@@ -93,7 +108,18 @@ class PropertyDialog(CrumbsDialog):
                 binb = self.properties['binb']
                 size = self.properties['size']
                 recipe = self.properties['recipe']
+                file_list = self.properties['files_list']
 
+                file_list = file_list.strip("{}'")
+                files_temp = ''
+                paths_temp = ''
+                files_binb = []
+                paths_binb = []
+
+                self.tooltip_items = {}
+
+                self.set_resizable(False)
+                
                 #cleaning out the recipe variable
                 recipe = recipe.split("+")[0]
 
@@ -151,7 +177,69 @@ class PropertyDialog(CrumbsDialog):
                         self.vbox.add(self.label_short)
                         self.vbox.add(self.label_info)
 
+                #################################### FILES BROUGHT BY PACKAGES ###################################
+
+                if file_list != '':
+                
+                        self.textWindow = gtk.ScrolledWindow()
+                        self.textWindow.set_shadow_type(gtk.SHADOW_IN)
+                        self.textWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+                        self.textWindow.set_size_request(100, 170)
+
+                        sstatemirrors_store = gtk.ListStore(str)
+
+                        self.sstatemirrors_tv = gtk.TreeView()
+                        self.sstatemirrors_tv.set_rules_hint(True)
+                        self.sstatemirrors_tv.set_headers_visible(True)
+                        self.textWindow.add(self.sstatemirrors_tv)
+
+                        self.cell1 = gtk.CellRendererText()
+                        col1 = gtk.TreeViewColumn('Package files', self.cell1)
+                        col1.set_cell_data_func(self.cell1, self.regex_field)
+                        self.sstatemirrors_tv.append_column(col1)
+
+                        for items in file_list.split(']]'):
+                            if len(items) > 1:
+                                paths_temp = items.split(":")[0]
+                                paths_binb.append(paths_temp.strip(" ,'"))
+                                files_temp = items.split(":")[1]
+                                files_binb.append(files_temp.strip(" ['"))
+
+                        unsorted_list = []
+                        
+                        for items in range(len(paths_binb)):
+                              if len(files_binb[items]) > 1:
+                                  for aduse in (files_binb[items].split(",")):
+                                        unsorted_list.append(paths_binb[items].split(name)[len(paths_binb[items].split(name))-1] + '/' + aduse.strip(" '"))
+                       
+                         
+                        unsorted_list.sort()
+                        for items in unsorted_list:
+                                temp = items
+                                while len(items) > 35:
+                                        items = items[:len(items)/2] + "" + items[len(items)/2+1:]
+                                if len(items) == 35:
+                                        items = items[:len(items)/2] + "..." + items[len(items)/2+3:]
+                                        self.tooltip_items[items] = temp
+
+                                sstatemirrors_store.append([str(items)])
+                                
+                                
+                        self.sstatemirrors_tv.set_model(sstatemirrors_store)
+
+                        tips = gtk.Tooltips()
+                        tips.set_tip(self.sstatemirrors_tv, "")
+                        self.sstatemirrors_tv.connect("motion-notify-event", self.treeViewTooltip, tips, 0)
+                        self.sstatemirrors_tv.set_events(gtk.gdk.POINTER_MOTION_MASK)
+                        
+                        self.vbox.add(self.textWindow)                                      
+
                 self.vbox.show_all()
+
+
+        def regex_field(self, column, cell, model, iter):
+                cell.set_property('text', model.get_value(iter, 0))
+                return
 
 
 	def create_recipe_visual_elements(self):
@@ -166,6 +254,8 @@ class PropertyDialog(CrumbsDialog):
 		homepage = self.properties['homepage']
 		bugtracker = self.properties['bugtracker']
 		description = self.properties['description']
+
+                self.set_resizable(False)
 		
                 #cleaning out the version variable and also the summary
                 version = version.split(":")[1]
