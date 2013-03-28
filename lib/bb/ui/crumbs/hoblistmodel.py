@@ -35,7 +35,7 @@ class PackageListModel(gtk.ListStore):
     provide filtered views of the data.
     """
 
-    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_RCP, COL_BINB, COL_INC, COL_FADE_INC, COL_FONT) = range(14)
+    (COL_NAME, COL_VER, COL_REV, COL_RNM, COL_SEC, COL_SUM, COL_RDEP, COL_RPROV, COL_SIZE, COL_RCP, COL_BINB, COL_INC, COL_FADE_INC, COL_FONT, COL_FLIST) = range(15)
 
     __gsignals__ = {
         "package-selection-changed" : (gobject.SIGNAL_RUN_LAST,
@@ -61,6 +61,7 @@ class PackageListModel(gtk.ListStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_BOOLEAN,
                                 gobject.TYPE_BOOLEAN,
+                                gobject.TYPE_STRING,
                                 gobject.TYPE_STRING)
 
     """
@@ -199,6 +200,7 @@ class PackageListModel(gtk.ListStore):
             rdep = getpkgvalue(pkginfo, 'RDEPENDS', pkg, "")
             rrec = getpkgvalue(pkginfo, 'RRECOMMENDS', pkg, "")
             rprov = getpkgvalue(pkginfo, 'RPROVIDES', pkg, "")
+            files_list = getpkgvalue(pkginfo, 'FILES_INFO', pkg, "")
             for i in rprov.split():
                 self.rprov_pkg[i] = pkg
 
@@ -218,7 +220,7 @@ class PackageListModel(gtk.ListStore):
                      self.COL_RDEP, rdep + ' ' + rrec,
                      self.COL_RPROV, rprov, self.COL_SIZE, size,
                      self.COL_RCP, recipe, self.COL_BINB, "",
-                     self.COL_INC, False, self.COL_FONT, '10')
+                     self.COL_INC, False, self.COL_FONT, '10', self.COL_FLIST, files_list)
 
         self.pn_path = {}
         it = self.get_iter_first()
