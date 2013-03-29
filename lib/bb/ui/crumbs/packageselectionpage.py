@@ -203,7 +203,7 @@ class PackageSelectionPage (HobPage):
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()
         tree_model = widget.table_tree.get_model()
-        if path: # else activation is likely a removal
+        if path and col.get_title() != 'Included': # else activation is likely a removal
             properties = {'binb': '' , 'name': '', 'size':'', 'recipe':'', 'files_list':''}
             properties['binb'] = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_BINB)
             properties['name'] = tree_model.get_value(tree_model.get_iter(path), PackageListModel.COL_NAME)

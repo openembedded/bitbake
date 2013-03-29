@@ -218,7 +218,7 @@ class RecipeSelectionPage (HobPage):
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()
         tree_model = widget.table_tree.get_model()
-        if path: # else activation is likely a removal
+        if path and col.get_title() != 'Included': # else activation is likely a removal
             properties = {'summary': '', 'name': '', 'version': '', 'revision': '', 'binb': '', 'group': '', 'license': '', 'homepage': '', 'bugtracker': '', 'description': ''}
             properties['summary'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_SUMMARY)
             properties['name'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_NAME)
