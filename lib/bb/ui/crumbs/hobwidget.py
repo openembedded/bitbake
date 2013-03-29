@@ -165,6 +165,7 @@ class HobViewTable (gtk.VBox):
         no_result_tab.attach(label, 1, 14, 1, 4)
 
         clear_button = HobButton("Clear search")
+        clear_button.set_tooltip_text("Clear search query")
         clear_button.connect('clicked', self.set_search_entry_clear_cb, entry)
         no_result_tab.attach(clear_button, 16, 19, 1, 4)
 
