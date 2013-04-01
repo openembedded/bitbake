@@ -481,6 +481,8 @@ class HobNotebook(gtk.Notebook):
         self.pages = []
 
         self.search = None
+        self.search_focus = False
+        self.page_changed = False
 
         self.connect("switch-page", self.page_changed_cb)
 
@@ -494,6 +496,7 @@ class HobNotebook(gtk.Notebook):
                 lbl.set_active(False)
 
         if self.search:
+            self.page_changed = True
             self.reset_entry(self.search, page_num)
 
     def append_page(self, child, tab_label, tab_tooltip=None):
@@ -537,6 +540,7 @@ class HobNotebook(gtk.Notebook):
                 child.set_count(0)
 
     def set_search_entry_editable_cb(self, search, event):
+        self.search_focus = True
         search.set_editable(True)
         text = search.get_text()
         if text in self.search_names:

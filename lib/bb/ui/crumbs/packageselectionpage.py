@@ -181,24 +181,33 @@ class PackageSelectionPage (HobPage):
 
     def search_entry_changed(self, entry):
         text = entry.get_text()
-        if text not in self.ins.search_names:
-            current_tab = self.ins.get_current_page()
-            filter = self.pages[current_tab]['filter']
-            filter[PackageListModel.COL_NAME] = text
-            self.tables[current_tab].set_model(self.package_model.tree_model(filter, search_data=text))
-            if self.package_model.filtered_nb == 0:
-                if not self.ins.get_nth_page(current_tab).top_bar:
-                    self.ins.get_nth_page(current_tab).add_no_result_bar(entry)
-                self.ins.get_nth_page(current_tab).top_bar.show()
-                self.ins.get_nth_page(current_tab).scroll.hide()
-            else:
-                if self.ins.get_nth_page(current_tab).top_bar:
-                    self.ins.get_nth_page(current_tab).top_bar.hide()
-                self.ins.get_nth_page(current_tab).scroll.show()
-            if entry.get_text() == '':
-                entry.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
-            else:
-                entry.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, True)
+        if self.ins.search_focus:
+            self.ins.search_focus = False
+        elif self.ins.page_changed:
+            self.ins.page_change = False
+            self.filter_search(entry)
+        elif text not in self.ins.search_names:
+            self.filter_search(entry)
+
+    def filter_search(self, entry):
+        text = entry.get_text()
+        current_tab = self.ins.get_current_page()
+        filter = self.pages[current_tab]['filter']
+        filter[PackageListModel.COL_NAME] = text
+        self.tables[current_tab].set_model(self.package_model.tree_model(filter, search_data=text))
+        if self.package_model.filtered_nb == 0:
+            if not self.ins.get_nth_page(current_tab).top_bar:
+                self.ins.get_nth_page(current_tab).add_no_result_bar(entry)
+            self.ins.get_nth_page(current_tab).top_bar.show()
+            self.ins.get_nth_page(current_tab).scroll.hide()
+        else:
+            if self.ins.get_nth_page(current_tab).top_bar:
+                self.ins.get_nth_page(current_tab).top_bar.hide()
+            self.ins.get_nth_page(current_tab).scroll.show()
+        if entry.get_text() == '':
+            entry.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, False)
+        else:
+            entry.set_icon_sensitive(gtk.ENTRY_ICON_SECONDARY, True)
 
     def button_click_cb(self, widget, event):
         path, col = widget.table_tree.get_cursor()

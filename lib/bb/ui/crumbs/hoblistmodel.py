@@ -91,7 +91,7 @@ class PackageListModel(gtk.ListStore):
         for key in filter.keys():
             if key == self.COL_NAME:
                 if filter[key] != 'Search packages by name':
-                    if filter[key] not in name:
+                    if name and filter[key] not in name:
                         return False
             else:
                 if model.get_value(it, key) not in filter[key]:
