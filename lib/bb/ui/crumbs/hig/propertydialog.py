@@ -198,7 +198,7 @@ class PropertyDialog(CrumbsDialog):
                         col1.set_cell_data_func(self.cell1, self.regex_field)
                         self.sstatemirrors_tv.append_column(col1)
 
-                        for items in file_list.split(']]'):
+                        for items in file_list.split(']'):
                             if len(items) > 1:
                                 paths_temp = items.split(":")[0]
                                 paths_binb.append(paths_temp.strip(" ,'"))
