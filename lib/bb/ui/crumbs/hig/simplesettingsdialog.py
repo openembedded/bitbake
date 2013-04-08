@@ -161,13 +161,13 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.ftp_proxy_port.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
         self.ftp_proxy_details.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
 
-        self.git_proxy.set_text(self.configuration.combine_host_only("git"))
-        self.git_proxy.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
-        self.git_proxy.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
-        self.git_proxy_port.set_text(self.configuration.combine_port_only("git"))
-        self.git_proxy_port.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
-        self.git_proxy_port.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
-        self.git_proxy_details.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.socks_proxy.set_text(self.configuration.combine_host_only("socks"))
+        self.socks_proxy.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.socks_proxy.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.socks_proxy_port.set_text(self.configuration.combine_port_only("socks"))
+        self.socks_proxy_port.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.socks_proxy_port.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
+        self.socks_proxy_details.set_sensitive(self.configuration.enable_proxy and (not self.configuration.same_proxy))
 
         self.cvs_proxy.set_text(self.configuration.combine_host_only("cvs"))
         self.cvs_proxy.set_editable(self.configuration.enable_proxy and (not self.configuration.same_proxy))
@@ -201,12 +201,12 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         if self.configuration.same_proxy:
             self.configuration.split_proxy("https", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
             self.configuration.split_proxy("ftp", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
-            self.configuration.split_proxy("git", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
+            self.configuration.split_proxy("socks", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
             self.configuration.split_proxy("cvs", self.http_proxy.get_text() + ":" + self.http_proxy_port.get_text())
         else:
             self.configuration.split_proxy("https", self.https_proxy.get_text() + ":" + self.https_proxy_port.get_text())
             self.configuration.split_proxy("ftp", self.ftp_proxy.get_text() + ":" + self.ftp_proxy_port.get_text())
-            self.configuration.split_proxy("git", self.git_proxy.get_text() + ":" + self.git_proxy_port.get_text())
+            self.configuration.split_proxy("socks", self.socks_proxy.get_text() + ":" + self.socks_proxy_port.get_text())
             self.configuration.split_proxy("cvs", self.cvs_proxy.get_text() + ":" + self.cvs_proxy_port.get_text())       
 
     def response_cb(self, dialog, response_id):
@@ -555,13 +555,13 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
             self.handler.set_http_proxy(self.configuration.combine_proxy("http"))
             self.handler.set_https_proxy(self.configuration.combine_proxy("https"))
             self.handler.set_ftp_proxy(self.configuration.combine_proxy("ftp"))
-            self.handler.set_git_proxy(self.configuration.combine_host_only("git"), self.configuration.combine_port_only("git"))
+            self.handler.set_socks_proxy(self.configuration.combine_proxy("socks"))
             self.handler.set_cvs_proxy(self.configuration.combine_host_only("cvs"), self.configuration.combine_port_only("cvs"))
         elif self.configuration.enable_proxy == False:
             self.handler.set_http_proxy("")
             self.handler.set_https_proxy("")
             self.handler.set_ftp_proxy("")
-            self.handler.set_git_proxy("", "")
+            self.handler.set_socks_proxy("")
             self.handler.set_cvs_proxy("", "")
         self.proxy_test_ran = True
         self.proxy_test_running = True
@@ -673,11 +673,11 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.same_proxy_addresses.append(self.ftp_proxy)
         self.same_proxy_ports.append(self.ftp_proxy_port)
 
-        self.git_proxy, self.git_proxy_port, self.git_proxy_details = self.gen_proxy_entry_widget(
-            "git", self, True, 3)
-        proxy_test_focus += [self.git_proxy, self.git_proxy_port]
-        self.same_proxy_addresses.append(self.git_proxy)
-        self.same_proxy_ports.append(self.git_proxy_port)
+        self.socks_proxy, self.socks_proxy_port, self.socks_proxy_details = self.gen_proxy_entry_widget(
+            "socks", self, True, 3)
+        proxy_test_focus += [self.socks_proxy, self.socks_proxy_port]
+        self.same_proxy_addresses.append(self.socks_proxy)
+        self.same_proxy_ports.append(self.socks_proxy_port)
 
         self.cvs_proxy, self.cvs_proxy_port, self.cvs_proxy_details = self.gen_proxy_entry_widget(
             "cvs", self, True, 4)

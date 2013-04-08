@@ -56,7 +56,7 @@ class Configuration:
 
     @classmethod
     def parse_proxy_string(cls, proxy):
-        pattern = "^\s*((http|https|ftp|git|cvs)://)?((\S+):(\S+)@)?([^\s:]+)(:(\d+))?/?"
+        pattern = "^\s*((http|https|ftp|socks|cvs)://)?((\S+):(\S+)@)?([^\s:]+)(:(\d+))?/?"
         match = re.search(pattern, proxy)
         if match:
             return match.group(2), match.group(4), match.group(5), match.group(6), match.group(8)
@@ -124,7 +124,7 @@ class Configuration:
             "http"  : [None, None, None, "", ""],  # protocol : [prot, user, passwd, host, port]
             "https" : [None, None, None, "", ""],
             "ftp"   : [None, None, None, "", ""],
-            "git"   : [None, None, None, "", ""],
+            "socks" : [None, None, None, "", ""],
             "cvs"   : [None, None, None, "", ""],
         }
 
@@ -181,13 +181,13 @@ class Configuration:
         self.default_task = params["default_task"]
 
         # proxy settings
-        self.enable_proxy = params["http_proxy"] != "" or params["https_proxy"] != "" or params["ftp_proxy"] != "" \
-            or params["git_proxy_host"] != "" or params["git_proxy_port"] != ""                                    \
+        self.enable_proxy = params["http_proxy"] != "" or params["https_proxy"] != "" \
+            or params["ftp_proxy"] != "" or params["socks_proxy"] != "" \
             or params["cvs_proxy_host"] != "" or params["cvs_proxy_port"] != ""
         self.split_proxy("http", params["http_proxy"])
         self.split_proxy("https", params["https_proxy"])
         self.split_proxy("ftp", params["ftp_proxy"])
-        self.split_proxy("git", params["git_proxy_host"] + ":" + params["git_proxy_port"])
+        self.split_proxy("socks", params["socks_proxy"])
         self.split_proxy("cvs", params["cvs_proxy_host"] + ":" + params["cvs_proxy_port"])
 
     def load(self, template):
@@ -215,7 +215,7 @@ class Configuration:
         self.split_proxy("http", template.getVar("http_proxy"))
         self.split_proxy("https", template.getVar("https_proxy"))
         self.split_proxy("ftp", template.getVar("ftp_proxy"))
-        self.split_proxy("git", template.getVar("GIT_PROXY_HOST") + ":" + template.getVar("GIT_PROXY_PORT"))
+        self.split_proxy("socks", template.getVar("all_proxy"))
         self.split_proxy("cvs", template.getVar("CVS_PROXY_HOST") + ":" + template.getVar("CVS_PROXY_PORT"))
 
     def save(self, handler, template, defaults=False):
@@ -258,8 +258,7 @@ class Configuration:
         template.setVar("http_proxy", self.combine_proxy("http"))
         template.setVar("https_proxy", self.combine_proxy("https"))
         template.setVar("ftp_proxy", self.combine_proxy("ftp"))
-        template.setVar("GIT_PROXY_HOST", self.combine_host_only("git"))
-        template.setVar("GIT_PROXY_PORT", self.combine_port_only("git"))
+        template.setVar("all_proxy", self.combine_proxy("socks"))
         template.setVar("CVS_PROXY_HOST", self.combine_host_only("cvs"))
         template.setVar("CVS_PROXY_PORT", self.combine_port_only("cvs"))
 
@@ -274,8 +273,8 @@ class Configuration:
             (self.lconf_version, self.extra_setting, self.toolchain_build, self.image_fstypes, self.selected_image)
         s += "DEPENDS: '%s', IMAGE_INSTALL: '%s', enable_proxy: '%s', use_same_proxy: '%s', http_proxy: '%s', " % \
             (self.selected_recipes, self.user_selected_packages, self.enable_proxy, self.same_proxy, self.combine_proxy("http"))
-        s += "https_proxy: '%s', ftp_proxy: '%s', GIT_PROXY_HOST: '%s', GIT_PROXY_PORT: '%s', CVS_PROXY_HOST: '%s', CVS_PROXY_PORT: '%s'" % \
-            (self.combine_proxy("https"), self.combine_proxy("ftp"),self.combine_host_only("git"), self.combine_port_only("git"),
+        s += "https_proxy: '%s', ftp_proxy: '%s', all_proxy: '%s', CVS_PROXY_HOST: '%s', CVS_PROXY_PORT: '%s'" % \
+            (self.combine_proxy("https"), self.combine_proxy("ftp"), self.combine_proxy("socks"),
              self.combine_host_only("cvs"), self.combine_port_only("cvs"))
         return s
 
@@ -755,13 +754,13 @@ class Builder(gtk.Window):
             self.handler.set_http_proxy(self.configuration.combine_proxy("http"))
             self.handler.set_https_proxy(self.configuration.combine_proxy("https"))
             self.handler.set_ftp_proxy(self.configuration.combine_proxy("ftp"))
-            self.handler.set_git_proxy(self.configuration.combine_host_only("git"), self.configuration.combine_port_only("git"))
+            self.handler.set_socks_proxy(self.configuration.combine_proxy("socks"))
             self.handler.set_cvs_proxy(self.configuration.combine_host_only("cvs"), self.configuration.combine_port_only("cvs"))
         elif self.configuration.enable_proxy == False:
             self.handler.set_http_proxy("")
             self.handler.set_https_proxy("")
             self.handler.set_ftp_proxy("")
-            self.handler.set_git_proxy("", "")
+            self.handler.set_socks_proxy("")
             self.handler.set_cvs_proxy("", "")
 
     def set_user_config_extra(self):
