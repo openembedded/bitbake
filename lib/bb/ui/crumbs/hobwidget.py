@@ -142,7 +142,7 @@ class HobViewTable (gtk.VBox):
                     col.add_attribute(cell, 'font', column['col_t_id'])
 
         self.scroll = gtk.ScrolledWindow()
-        self.scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_ALWAYS)
+        self.scroll.set_policy(gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC)
         self.scroll.add(self.table_tree)
 
         self.pack_end(self.scroll, True, True, 0)
