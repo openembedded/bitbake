@@ -83,7 +83,7 @@ class HobViewTable (gtk.VBox):
                             gobject.TYPE_PYOBJECT,)),
     }
 
-    def __init__(self, columns):
+    def __init__(self, columns, name):
         gtk.VBox.__init__(self, False, 6)
         self.table_tree = gtk.TreeView()
         self.table_tree.set_headers_visible(True)
@@ -94,12 +94,18 @@ class HobViewTable (gtk.VBox):
         self.toggle_columns = []
         self.table_tree.connect("row-activated", self.row_activated_cb)
         self.top_bar = None
+        self.tab_name = name
 
         for i, column in enumerate(columns):
-            col = gtk.TreeViewColumn(column['col_name'])
+            col_name = column['col_name']
+            col = gtk.TreeViewColumn(col_name)
             col.set_clickable(True)
             col.set_resizable(True)
-            col.set_sort_column_id(column['col_id'])
+            if self.tab_name.startswith('Included'):
+                if col_name!='Included':
+                    col.set_sort_column_id(column['col_id'])
+            else:
+                col.set_sort_column_id(column['col_id'])
             if 'col_min' in column.keys():
                 col.set_min_width(column['col_min'])
             if 'col_max' in column.keys():
@@ -122,7 +128,7 @@ class HobViewTable (gtk.VBox):
                 self.toggle_id = i
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=column['col_id'])
-                self.toggle_columns.append(column['col_name'])
+                self.toggle_columns.append(col_name)
                 if 'col_group' in column.keys():
                     col.set_cell_data_func(cell, self.set_group_number_cb)
             elif column['col_style'] == 'radio toggle':
@@ -133,7 +139,7 @@ class HobViewTable (gtk.VBox):
                 self.toggle_id = i
                 col.pack_end(cell, True)
                 col.set_attributes(cell, active=column['col_id'])
-                self.toggle_columns.append(column['col_name'])
+                self.toggle_columns.append(col_name)
             elif column['col_style'] == 'binb':
                 cell = gtk.CellRendererText()
                 col.pack_start(cell, True)

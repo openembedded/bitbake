@@ -154,20 +154,21 @@ class RecipeSelectionPage (HobPage):
         # append the tabs in order
         for page in self.pages:
             columns = page['columns']
-            tab = HobViewTable(columns)
+            name = page['name']
+            tab = HobViewTable(columns, name)
             search_names.append(page['search'])
             search_tips.append(page['searchtip'])
             filter = page['filter']
-            sort_model = self.recipe_model.tree_model(filter)
+            sort_model = self.recipe_model.tree_model(filter, initial=True)
             tab.set_model(sort_model)
-            tab.connect("toggled", self.table_toggled_cb, page['name'])
-            if page['name'] == "Included recipes":
+            tab.connect("toggled", self.table_toggled_cb, name)
+            if name == "Included recipes":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            if page['name'] == "Package Groups":
+            if name == "Package Groups":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            if page['name'] == "All recipes":
+            if name == "All recipes":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.button_click_cb)
             self.ins.append_page(tab, page['name'], page['tooltip'])
@@ -240,7 +241,6 @@ class RecipeSelectionPage (HobPage):
             properties['bugtracker'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_BUGTRACKER)
             properties['description'] = tree_model.get_value(tree_model.get_iter(path), RecipeListModel.COL_DESC)
             self.builder.show_recipe_property_dialog(properties)
-
 
     def build_packages_clicked_cb(self, button):
         self.builder.build_packages()

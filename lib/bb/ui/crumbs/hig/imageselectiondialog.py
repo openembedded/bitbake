@@ -84,7 +84,7 @@ class ImageSelectionDialog (CrumbsDialog):
         open_button.connect("clicked", self.select_path_cb, self, entry)
         table.attach(open_button, 9, 10, 0, 1)
 
-        self.image_table = HobViewTable(self.__columns__)
+        self.image_table = HobViewTable(self.__columns__, "Images")
         self.image_table.set_size_request(-1, 300)
         self.image_table.connect("toggled", self.toggled_cb)
         self.image_table.connect_group_selection(self.table_selected_cb)

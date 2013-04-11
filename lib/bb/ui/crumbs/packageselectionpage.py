@@ -142,17 +142,18 @@ class PackageSelectionPage (HobPage):
         # append the tab
         for page in self.pages:
             columns = page['columns']
-            tab = HobViewTable(columns)
+            name = page['name']
+            tab = HobViewTable(columns, name)
             search_names.append(page['search'])
             search_tips.append(page['searchtip'])
             filter = page['filter']
-            sort_model = self.package_model.tree_model(filter)
+            sort_model = self.package_model.tree_model(filter, initial=True)
             tab.set_model(sort_model)
-            tab.connect("toggled", self.table_toggled_cb, page['name'])
-            if page['name'] == "Included packages":
+            tab.connect("toggled", self.table_toggled_cb, name)
+            if name == "Included packages":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            if page['name'] == "All packages":
+            if name == "All packages":
                 tab.connect("button-release-event", self.button_click_cb)
                 tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
             self.ins.append_page(tab, page['name'], page['tooltip'])
