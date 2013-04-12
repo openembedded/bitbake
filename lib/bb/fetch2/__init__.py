@@ -74,6 +74,9 @@ class FetchError(BBFetchException):
 
 class ChecksumError(FetchError):
     """Exception when mismatched checksum encountered"""
+    def __init__(self, message, url = None, checksum = None):
+        self.checksum = checksum
+        FetchError.__init__(self, message, url)
 
 class NoChecksumError(FetchError):
     """Exception when no checksum is specified, but BB_STRICT_CHECKSUM is set"""
@@ -561,7 +564,7 @@ def verify_checksum(u, ud, d):
         msg = msg + '\nIf this change is expected (e.g. you have upgraded to a new version without updating the checksums) then you can use these lines within the recipe:\nSRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"\nOtherwise you should retry the download and/or check with upstream to determine if the file has become corrupted or otherwise unexpectedly modified.\n' % (ud.md5_name, md5data, ud.sha256_name, sha256data)
 
     if len(msg):
-        raise ChecksumError('Checksum mismatch!%s' % msg, u)
+        raise ChecksumError('Checksum mismatch!%s' % msg, u, md5data)
 
 
 def update_stamp(u, ud, d):
@@ -804,6 +807,7 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
         if isinstance(e, ChecksumError):
             logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
             logger.warn(str(e))
+            self.rename_bad_checksum(ud, e.checksum)
         elif isinstance(e, NoChecksumError):
             raise
         else:
@@ -1388,6 +1392,7 @@ class Fetch(object):
                         if isinstance(e, ChecksumError):
                             logger.warn("Checksum failure encountered with download of %s - will attempt other sources if available" % u)
                             logger.debug(1, str(e))
+                            self.rename_bad_checksum(ud, e.checksum)
                         elif isinstance(e, NoChecksumError):
                             raise
                         else:
@@ -1494,6 +1499,18 @@ class Fetch(object):
 
             if ud.lockfile:
                 bb.utils.unlockfile(lf)
+
+    def rename_bad_checksum(self, ud, suffix):
+        """
+        Renames files to have suffix from parameter
+        """
+
+        if ud.localpath is None:
+            return
+
+        new_localpath = "%s_bad-checksum_%s" % (ud.localpath, suffix)
+        bb.warn("Renaming %s to %s" % (ud.localpath, new_localpath))
+        bb.utils.movefile(ud.localpath, new_localpath)
 
 from . import cvs
 from . import git
