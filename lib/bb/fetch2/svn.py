@@ -81,6 +81,8 @@ class Svn(FetchMethod):
 
         options = []
 
+        options.append("--no-auth-cache")
+
         if ud.user:
             options.append("--username %s" % ud.user)
 
