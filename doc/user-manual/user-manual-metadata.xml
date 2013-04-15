@@ -1,10 +1,11 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 <chapter id="user-manual-metadata">
+
   <title>Metadata</title>
   <section>
     <title>Description</title>
-    <para>The BitBake task executor together with various types of
+    <para>The BitBake task executor, together with various types of
 	    configuration files form the OpenEmbedded Core.
 	    This section provides an overview of the BitBake task executor
 	    and the configuration files by describing what they are used for
@@ -835,5 +836,4 @@ yourself.</para>
 		and does handle wildcards.
 	</para>
 	</section>
-
 </chapter>
