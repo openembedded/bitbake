@@ -29,6 +29,7 @@
 	    different user interfaces.
     </para>
   </section>
+  
   <section id="history-and-goals">
     <title>History and Goals</title>
     <para>BitBake was originally a part of the OpenEmbedded project.
@@ -40,7 +41,9 @@
       <listitem>BitBake, a generic task executor</listitem>
       <listitem>OpenEmbedded, a metadata set utilized by BitBake.</listitem>
     </itemizedlist>
-    Today, BitBake is the primary basis of the <ulink url="http://www.openembedded.org/"> OpenEmbedded</ulink>project, which is being used to build and
+    Today, BitBake is the primary basis of the 
+    <ulink url="http://www.openembedded.org/"> OpenEmbedded</ulink>
+    project, which is being used to build and
     maintain a number of projects and embedded Linux distributions such as the
     Angstrom Distribution and the Yocto Project.
     </para>
@@ -132,7 +135,6 @@
 		    </para>
 	    </listitem>
      </itemizedlist>
-     </para>
      <para>BitBake satisfies all the original requirements and many
 	     more with extensions being made to the basic functionality to
 	     reflect the additionl requirements.
@@ -141,6 +143,7 @@
 	     execution of any arbitrary tasks.
      </para>
      </section>
+     
      <section id="Concepts">
 	     <title>Concepts</title>
 	     <para>BitBake is a program written in the Python language.
@@ -159,6 +162,7 @@
 		     the power of the tool.
 	     </para>
     </section>
+    
     <section>
 	    <title>Recipes</title>
 	    <para>A BitBake Recipe, denoted by the file extension .bb is
