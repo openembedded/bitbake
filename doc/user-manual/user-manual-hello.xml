@@ -14,17 +14,16 @@
 			This tutorial describes how to create a new Project 
 			and the applicable metadata files necessary to allow
 			BitBake to build it.
-	</para>
-</section>
+		</para>
+	</section>
 
 <section>
 	<title>Obtaining BitBake</title>
-	<para>The first thing we need to do is download the BitBake source 
-		code.
-		At the time of writing, the current version is 1.17.0:
-		<screen>$ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
-			$ tar zxpvf bitbake-1.17.0.tar.gz
-			$ cd bitbake-1.17.0/
+	<para>Please refer to Chapter 1 Section 1.7 for the various methods to obtain
+	BitBake.
+	Once the source code is on your machine the BitBake directory will appear as
+	follows:
+		<screen>
 			$ ls -al
 			total 100
 			drwxrwxr-x. 9 wmat wmat  4096 Jan 31 13:44 .
@@ -47,33 +46,26 @@
 		</screen>
 		</para>
 		
-		<para>At this point you should have BitBake 1.17.0 extracted to
-			a directory matching the latter directory tree.  
+		<para>At this point you should have BitBake extracted or cloned to
+			a directory and it should match the directory tree above.  
 			Please note that you'll see your username wherever 
 			"wmat" appears above.
 	</para>
 </section>
+
 <section>
 	<title>Setting Up BitBake</title>
 	<para>Now let's setup our BitBake environment.
-		In this example BitBake will run from the Build directory
-		instead of installing it to your system permanently.
-		<screen>$ python setup.py build
-		</screen>
-		This command runs the setup script, setup.py and instructs it
-		to create a directory called build and install the libraries
-		and scripts it requires to run to that directory.
-		To make sure that the Python runtime environment knows where
-		to find these new libraries and scripts, we can add to the
-		PYTHONPATH environment variable as follows:
-		<screen>$ export PYTHONPATH=`pwd`/build/lib
-		</screen>
+		The recommended method to use BitBake is to run it from a
+		directory of your choice.
+		The directory can be within your home directory or in
+		/usr/local, depending on your preference.
 		Let's run BitBake now to make sure it's working.
 		Make sure you're in the BitBake source code directory and issue
 		the following command:
 		<screen>$ ./bin/bitbake --version
-			BitBake Build Tool Core version 1.17.0, bitbake version
-			1.17.0
+			BitBake Build Tool Core version 1.19.0, bitbake version
+			 1.19.0
 		</screen>
 		You're now ready to use BitBake.
 		</para>
@@ -88,6 +80,7 @@
 			If it doesn't exist, create it, and restart Vim.
 		</para>
 	</section>
+	
 	<section>
 		<title>The Hello World Example</title>
 		<para>The following example leaps directly into how BitBake
