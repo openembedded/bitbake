@@ -244,7 +244,7 @@ class diskMonitor:
                     # checking for such a fs.
                     if st.f_files == 0:
                         logger.warn("Inode check for %s is unavaliable, will remove it from disk monitor" % path)
-                        minInode = None
+                        self.devDict[k][2] = None
                         continue
                     # Always show warning, the self.checked would always be False if the action is WARN
                     if self.preFreeI[k] == 0 or self.preFreeI[k] - freeInode > self.inodeInterval and not self.checked[k]:
