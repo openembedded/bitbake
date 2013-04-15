@@ -44,8 +44,9 @@
     </para>
     </section>
 
+<section>
     <section>
-      <title>Basic variable setting</title>
+      <title>Basic Variable Setting</title>
       <para>
         <screen>
         <varname>VARIABLE</varname> = "value"</screen>
@@ -56,7 +57,7 @@
     </section>
     
     <section>
-      <title>Variable expansion</title>
+      <title>Variable Expansion</title>
       <para>BitBake supports variables referencing one another's contents using
 	      a syntax which is similar to shell scripting:
       </para>
@@ -73,7 +74,7 @@
     </section>
     
     <section>
-      <title>Setting a default value (?=)</title>
+      <title>Setting a Default Value (?=)</title>
       <para>
         <screen>
         <varname>A</varname>?= "aval"</screen>
@@ -89,7 +90,7 @@
     </section>
     
     <section>
-      <title>Setting a weak default value (??=)</title>
+      <title>Setting a Weak Default Value (??=)</title>
       <para>
         <screen>
         <varname>A</varname>??= "somevalue" 
@@ -113,7 +114,7 @@
     </section>
     
     <section>
-      <title>Immediate variable expansion (:=)</title>
+      <title>Immediate Variable Expansion (:=)</title>
       <para>:= results in a variable's contents being expanded immediately,
 	      rather than when the variable is actually used.
       </para>
@@ -139,9 +140,11 @@
 	      <literal>cvalappend</literal>.
       </para>
     </section>
-    
+</section>
+
+
     <section>
-      <title>Appending (+=) and prepending (=+)</title>
+      <title>Appending (+=) and Prepending (=+)</title>
       <para>
         <screen>
         <varname>B</varname> = "bval" 
@@ -160,7 +163,7 @@
       </para>
     </section>
     <section>
-	    <title>Appending (.=) and prepending (=.) without spaces</title>
+	    <title>Appending (.=) and Prepending (=.) without spaces</title>
 	    <para>
 		    <screen>
 			    <varname>B</varname> = "bval" 
@@ -168,11 +171,10 @@
 			    <varname>C</varname> = "cval" 
 			    <varname>C</varname>=. "test"
 		    </screen>
-	</para>
-	<para>In this example,
-		<varname>B</varname> 
-		is now
-		<literal>bvaladditionaldata</literal> 
+	    </para>
+	    <para>In this example,
+	    <varname>B</varname>		is now
+		   <literal>bvaladditionaldata</literal> 
 		and 
 		<varname>C</varname> 
 		is 
@@ -201,8 +203,50 @@ yourself.</para>
                 <para>In this example, <varname>FOO</varname> is now <literal>789 123456</literal>.</para>
     </section>
 
+<section>
+	<title>Variable Flags</title>
+	<para>Variables can have associated flags which provide a way of 
+		tagging extra information onto a variable.
+		Several flags are used internally by BitBake but they can be 
+		used externally too if needed.
+		The standard operations mentioned above also work on flags.
+	</para>
+	<para>
+		<screen>
+			<varname>VARIABLE</varname>
+			[
+			<varname>SOMEFLAG</varname>
+			] = "value"
+		</screen>
+	</para>
+	<para>In this example,
+		<varname>VARIABLE</varname> 
+		has a flag, 
+		<varname>SOMEFLAG</varname> 
+		that is set to 
+		<literal>value</literal>.
+	</para>
+	</section>
+	
+<section>
+	<title>Inline Python variable expansion</title>
+	<para>
+		<screen>
+			<varname>DATE</varname> =
+			 "${@time.strftime('%Y%m%d',time.gmtime())}"
+		 </screen>
+	</para>
+	<para>This would result in the
+		<varname>DATE</varname> 
+		variable containing today's date.
+	</para>
+	</section>
+	
+<section>
+     <title>Conditional Syntax (Overrides)</title>
+     
     <section>
-	    <title>Conditional metadata set</title>
+	    <title>Conditional Metadata</title>
 	    <para>OVERRIDES is a 
 		    <quote>:</quote> 
 		    separated variable containing each item you want to satisfy
@@ -238,7 +282,7 @@ yourself.</para>
     </section>
     
     <section>
-	    <title>Conditional appending</title>
+	    <title>Conditional Appending</title>
 	    <para>BitBake also supports appending and prepending to variables 
 		    based on whether something is in OVERRIDES.
 		    Example:
@@ -252,294 +296,15 @@ yourself.</para>
 			    <varname>DEPENDS_append_machine</varname> 
 			    = "libmad"
 		    </screen>
-	</para>
-	<para>In this example, 
-		<varname>DEPENDS</varname> '
-		is set to
+		    </para>
+		    <para>In this example,
+		    <varname>DEPENDS</varname> is set to
 		<literal>glibc ncurses libmad</literal>.
 	</para>
 	</section>
-	
-	<section>
-	<title>Inclusion</title>
-	<para>Next, there is the 
-		<literal>include</literal> directive, that causes BitBake to
-		parse whatever file you specify, and insert it at that
-		location, which is not unlike
-		<command>Make</command>. However, if the path specified on the
-		<literal>include</literal> 
-		line is a relative path, BitBake will locate the first one it
-		can find within 
-		<envar>BBPATH</envar>.
-	</para>
-	</section>
-	
-	<section>
-	<title>Requiring inclusion</title>
-	<para>In contrast to the 
-		<literal>include</literal> 
-		directive, 
-		<literal>require</literal> 
-		will raise a ParseError if the file to be included cannot be
-		found.
-		Otherwise it will behave just like the 
-		<literal>include</literal> 
-		directive.
-	</para>
-	</section>
-	
-	<section>
-	<title>Inline Python variable expansion</title>
-	<para>
-		<screen>
-			<varname>DATE</varname> =
-			 "${@time.strftime('%Y%m%d',time.gmtime())}"
-		 </screen>
-	</para>
-	<para>This would result in the
-		<varname>DATE</varname> 
-		variable containing today's date.
-	</para>
-	</section>
-	
-	<section>
-	<title>Defining executable metadata</title>
-	<para>
-		<emphasis>NOTE:</emphasis> 
-		This is only supported in .bb and .bbclass files.
-	</para>
-	<para>
-		<screen>do_mytask () { echo "Hello, world!" }
-		</screen>
-	</para>
-	<para>This is essentially identical to setting a variable, except that
-		this variable happens to be executable shell code.
-	</para>
-	<para>
-		<screen>python do_printdate () { import time print
-			time.strftime('%Y%m%d', time.gmtime()) }
-		</screen>
-	</para>
-	<para>This is the similar to the previous, but flags it as Python so
-		that BitBake knows it is Python code.
-	</para>
-	</section>
-	
-	<section>
-	<title>Defining Python functions into the global Python namespace
-	</title>
-	<para>
-		<emphasis>NOTE:</emphasis> 
-		This is only supported in .bb and .bbclass files.
-	</para>
-	<para>
-		<emphasis>NOTE:</emphasis>
-		Python functions are in the global namespace so should use
-		unique names.
-	</para>
-	<para>
-		<screen>def get_depends(bb, d): if
-			d.getVar('SOMECONDITION', True): return
-			"dependencywithcond" else: return "dependency" 
-			<varname>SOMECONDITION</varname> = "1" 
-			<varname>DEPENDS</varname> = "${@get_depends(bb,
-			d)}"
-		</screen>
-	</para>
-	<para>This would result in 
-		<varname>DEPENDS</varname> 
-		containing 
-		<literal>dependencywithcond</literal>.
-	</para>
-	</section>
-	
-	<section>
-	<title>Variable flags</title>
-	<para>Variables can have associated flags which provide a way of 
-		tagging extra information onto a variable.
-		Several flags are used internally by BitBake but they can be 
-		used externally too if needed.
-		The standard operations mentioned above also work on flags.
-	</para>
-	<para>
-		<screen>
-			<varname>VARIABLE</varname>
-			[
-			<varname>SOMEFLAG</varname>
-			] = "value"
-		</screen>
-	</para>
-	<para>In this example,
-		<varname>VARIABLE</varname> 
-		has a flag, 
-		<varname>SOMEFLAG</varname> 
-		that is set to 
-		<literal>value</literal>.
-	</para>
-	</section>
-	
-	<section>
-	<title>Inheritance</title>
-	<para>
-		<emphasis>NOTE:</emphasis> This is only supported in .bb 
-		and .bbclass files.
-	</para>
-	<para>The <literal>inherit</literal> directive is a means of specifying
-		what classes of functionality your .bb requires.
-		It is a rudimentary form of inheritance.
-		For example, you can easily abstract out the tasks involved in
-		building a package that uses autoconf and automake, and put 
-		that into a bbclass for your packages to make use of. 
-		A given bbclass is located by searching for 
-		classes/filename.bbclass in 
-		<envar>BBPATH</envar>, 
-		where filename is what you inherited.
-	</para>
-	</section>
-	
-	<section>
-	<title>Tasks</title>
-	<para>
-		<emphasis>NOTE:</emphasis> 
-		This is only supported in .bb and .bbclass files.
-	</para>
-	<para>In BitBake, each step that needs to be run for a given .bb is 
-		known as a task. 
-		There is a command <literal>addtask</literal> to add new 
-		tasks (must be a defined Python executable metadata and must
-		start with  <quote>do_</quote>) and describe intertask
-		dependencies.
-	</para>
-	<para>
-		<screen>python do_printdate () { import time print
-			time.strftime('%Y%m%d', time.gmtime()) } addtask printdate
-			before do_build
-		</screen>
-	</para>
-	<para>This defines the necessary Python function and adds it as a task 
-		which is now a dependency of do_build, the default task.
-		If anyone executes the do_build task, that will result in 
-		do_printdate being run first.
-	</para>
-	</section>
-	
-	<section>
-	<title>Task Flags</title>
-	<para>Tasks support a number of flags which control various 
-		functionality of the task.
-		These are as follows:
-	</para>
-	<para>'dirs' - directories which should be created before the task 
-		runs
-	</para>
-	<para>'cleandirs' - directories which should created before the task 
-		runs but should be empty
-	</para>
-	<para>'noexec' - marks the tasks as being empty and no execution 
-		required.
-		These are used as dependency placeholders or used when added
-		tasks need to be subsequently disabled.
-	</para>
-	<para>'nostamp' - don't generate a stamp file for a task.  
-		This means the task is always executed.
-	</para>
-	<para>'fakeroot' - this task needs to be run in a fakeroot
-		environment, obtained by adding the variables in FAKEROOTENV 
-		to the environment.
-	</para>
-	<para>'umask' - the umask to run the task under.
-	</para>
-	<para>For the 'deptask', 'rdeptask', 'depends', 'rdepends'and 
-		'recrdeptask' flags please see the dependencies section.
-	</para>
-	</section>
-	
-	<section>
-	<title>Events</title>
-	<para>
-		<emphasis>NOTE:</emphasis> 
-		This is only supported in .bb and .bbclass files.
-	</para>
-	<para>BitBake allows installation of event handlers.
-		Events are triggered at certain points during operation, such 
-		as the beginning of operation against a given .bb, the start of
-		a given task, task failure, task success, et cetera.
-		The intent is to make it easy to do things like email 
-		notification on build failure.
-	</para>
-	<para>
-		<screen>addhandler myclass_eventhandler python
-			myclass_eventhandler() { from bb.event import getName from
-			bb import data print("The name of the Event is %s" %
-			getName(e)) print("The file we run for is %s" %
-			data.getVar('FILE', e.data, True)) }
-		</screen>
-	</para>
-	<para>This event handler gets called every time an event is triggered.
-		A global variable 
-		<varname>e</varname> 
-		is defined. 
-		<varname>e</varname>.data
-		contains an instance of bb.data.
-		With the getName(<varname>e</varname>) method one can get the 
-		name of the triggered event.
-	</para>
-	<para>The above event handler prints the name of the event and the 
-		content of the 
-		<varname>FILE</varname> 
-		variable.
-	</para>
-	</section>
-	
-	<section>
-	<title>Variants</title>
-	<para>Two BitBake features exist to facilitate the creation of multiple
-		buildable incarnations from a single recipe file.
-	</para>
-	<para>The first is 
-		<varname>BBCLASSEXTEND</varname>. 
-		This variable is a space separated list of classes used to 
-		"extend" the recipe for each variant.
-		As an example, setting
-		<screen>BBCLASSEXTEND = "native"</screen> 
-		results in a second incarnation of the current recipe being
-		available.
-		This second incarnation will have the "native" class 
-		inherited.
-	</para>
-	<para>The second feature is
-		<varname>BBVERSIONS</varname>. 
-		This variable allows a single recipe to build multiple versions
-		of a project from a single recipe file, and allows you to 
-		specify conditional metadata (using the
-		<varname>OVERRIDES</varname> mechanism) for a single version,
-		or an optionally named range of versions:
-	</para>
-	<para>
-		<screen>BBVERSIONS = "1.0 2.0 git" SRC_URI_git =
-			"git://someurl/somepath.git"
-		</screen>
-	</para>
-	<para>
-		<screen>BBVERSIONS = "1.0.[0-6]:1.0.0+ \ 1.0.[7-9]:1.0.7+" 
-			SRC_URI_append_1.0.7+ =	"file://some_patch_which_the_new_versions_need.patch;patch=1"
-		</screen>
-	</para>
-	<para>Note that the name of the range will default to the original 
-		version of the recipe, so given OE, a recipe file of
-		foo_1.0.0+.bb will default the name of its versions to 
-		1.0.0+. 
-		This is useful, as the range name is not only placed into 
-		overrides; it's also made available for the metadata to use in 
-		the form of the
-		<varname>BPV</varname> 
-		variable, for use in file:// search paths 
-		(<varname>FILESPATH</varname>).
-	</para>
-	</section>
-	
-	<section>
-	<title>Variable interaction: Worked Examples</title>
+
+<section>
+	<title>Variable Interaction: Worked Examples</title>
 	<para>Despite the documentation of the different forms of variable 
 		definition above, it can be hard to work out what happens when 
 		variable operators are combined.
@@ -549,7 +314,7 @@ yourself.</para>
 	</section>
 	
 	<section>
-	<title>Override and append ordering</title>
+	<title>Override and Append Ordering</title>
 	<para>There is often confusion about which order overrides and the 
 		various append operators take effect.
 	</para>
@@ -636,9 +401,327 @@ yourself.</para>
 		would take the value of "X".
 	</para>
 	</section>
+	</section>
+	
+<section>
+<title>Inheritance</title>
+<section>
+	<title>Inheritance</title>
+	<para>
+		<emphasis>NOTE:</emphasis> This is only supported in .bb 
+		and .bbclass files.
+	</para>
+	<para>The <literal>inherit</literal> directive is a means of specifying
+		what classes of functionality your .bb requires.
+		It is a rudimentary form of inheritance.
+		For example, you can easily abstract out the tasks involved in
+		building a package that uses autoconf and automake, and put 
+		that into a bbclass for your packages to make use of. 
+		A given bbclass is located by searching for 
+		classes/filename.bbclass in 
+		<envar>BBPATH</envar>, 
+		where filename is what you inherited.
+	</para>
+	</section>
+
+<section>
+	<title>Inclusion</title>
+	<para>Next, there is the 
+		<literal>include</literal> directive, that causes BitBake to
+		parse whatever file you specify, and insert it at that
+		location, which is not unlike
+		<command>Make</command>. However, if the path specified on the
+		<literal>include</literal> 
+		line is a relative path, BitBake will locate the first one it
+		can find within 
+		<envar>BBPATH</envar>.
+   FIX ME: This section requires improvement.
+	</para>
+	</section>
 	
 	<section>
-	<title>Dependency handling</title>
+	<title>Requiring Inclusion</title>
+	<para>In contrast to the 
+		<literal>include</literal> 
+		directive, 
+		<literal>require</literal> 
+		will raise a ParseError if the file to be included cannot be
+		found.
+		Otherwise it will behave just like the 
+		<literal>include</literal> 
+		directive.
+		FIX ME: This section requires improvement.
+		
+	</para>
+	</section>
+	
+	<section>
+	<title>INHERIT Configuration Directive</title>
+	<para>
+	     This configuration directive causes the named class to be inherited at this point during parsing.
+	     This variable is only valid in configuration files.
+	     </para>
+	     
+	     <para>ADD MORE HERE</para>
+	     
+</section>
+</section>
+
+<section>
+     <title>Functions and Tasks</title>
+	<section>
+	<title>Defining Executable Metadata</title>
+	<para>
+		<emphasis>NOTE:</emphasis> 
+		This is only supported in .bb and .bbclass files.
+	</para>
+	<para>
+		<screen>do_mytask () { echo "Hello, world!" }
+		</screen>
+	</para>
+	<para>This is essentially identical to setting a variable, except that
+		this variable happens to be executable shell code.
+	</para>
+	<para>
+		<screen>python do_printdate () { import time print
+			time.strftime('%Y%m%d', time.gmtime()) }
+		</screen>
+	</para>
+	<para>This is the similar to the previous, but flags it as Python so
+		that BitBake knows it is Python code.
+	</para>
+	</section>
+	
+	<section>
+	<title>Defining Python Functions into the Global Python Namespace
+	</title>
+	<para>
+		<emphasis>NOTE:</emphasis> 
+		This is only supported in .bb and .bbclass files.
+	</para>
+	<para>
+		<emphasis>NOTE:</emphasis>
+		Python functions are in the global namespace so should use
+		unique names.
+	</para>
+	<para>
+		<screen>def get_depends(bb, d): if
+			d.getVar('SOMECONDITION', True): return
+			"dependencywithcond" else: return "dependency" 
+			<varname>SOMECONDITION</varname> = "1" 
+			<varname>DEPENDS</varname> = "${@get_depends(bb,
+			d)}"
+		</screen>
+	</para>
+	<para>This would result in 
+		<varname>DEPENDS</varname> 
+		containing 
+		<literal>dependencywithcond</literal>.
+	</para>
+	</section>
+	
+		<section>
+	<title>Tasks</title>
+	<para>
+		<emphasis>NOTE:</emphasis> 
+		This is only supported in .bb and .bbclass files.
+	</para>
+	<para>In BitBake, each step that needs to be run for a given .bb is 
+		known as a task. 
+		There is a command <literal>addtask</literal> to add new 
+		tasks (must be a defined Python executable metadata and must
+		start with  <quote>do_</quote>) and describe intertask
+		dependencies.
+	</para>
+	<para>
+		<screen>python do_printdate () { import time print
+			time.strftime('%Y%m%d', time.gmtime()) } addtask printdate
+			before do_build
+		</screen>
+	</para>
+	<para>This defines the necessary Python function and adds it as a task 
+		which is now a dependency of do_build, the default task.
+		If anyone executes the do_build task, that will result in 
+		do_printdate being run first.
+	</para>
+	</section>
+	
+	<section>
+	<title>Task Flags</title>
+	<para>Tasks support a number of flags which control various 
+		functionality of the task.
+		These are as follows:
+	</para>
+	<para>'dirs' - directories which should be created before the task 
+		runs
+	</para>
+	<para>'cleandirs' - directories which should created before the task 
+		runs but should be empty
+	</para>
+	<para>'noexec' - marks the tasks as being empty and no execution 
+		required.
+		These are used as dependency placeholders or used when added
+		tasks need to be subsequently disabled.
+	</para>
+	<para>'nostamp' - don't generate a stamp file for a task.  
+		This means the task is always executed.
+	</para>
+	<para>'fakeroot' - this task needs to be run in a fakeroot
+		environment, obtained by adding the variables in FAKEROOTENV 
+		to the environment.
+	</para>
+	<para>'umask' - the umask to run the task under.
+	</para>
+	<para>For the 'deptask', 'rdeptask', 'depends', 'rdepends'and 
+		'recrdeptask' flags please see the dependencies section.
+	</para>
+	</section>
+	
+<section>
+	<title>Parsing</title>
+	<section>
+		<title>Configuration files</title>
+		<para>The first kind of metadata in BitBake is configuration
+			metadata.
+			This metadata is global, and therefore affects
+			<emphasis>all</emphasis> 
+			packages and tasks that are executed.
+		</para>
+		<para>BitBake will first search the current working directory 
+			for an optional "conf/bblayers.conf" configuration 
+			file.
+			This file is expected to contain a BBLAYERS variable 
+			that is a space delimited list of 'layer' directories.
+			For each directory in this list, a "conf/layer.conf" 
+			file will be searched for and parsed with the LAYERDIR 
+			variable being set to the directory where the layer was
+			found.
+			The idea is these files will setup BBPATH and other 
+			variables correctly for a given build directory
+			automatically for the user.
+		</para>
+		<para>BitBake will then expect to find 'conf/bitbake.conf'
+			somewhere in the user specified 
+			<envar>BBPATH</envar>. 
+			That configuration file generally has include 
+			directives to pull in any other metadata  (generally 
+			files specific to architecture, machine,
+			<emphasis>local</emphasis>and so on).
+		</para>
+		<para>Only variable definitions and include directives are
+			allowed in .conf files.
+		</para>
+	</section>
+<section>
+	<title>Classes</title>
+	<para>BitBake classes are our rudimentary inheritance mechanism. 
+		As briefly mentioned in the metadata introduction, they're 
+		parsed when an
+		<literal>inherit</literal> 
+		directive is encountered, and they are located in classes/ 
+		relative to the directories in
+		<envar>BBPATH</envar>.
+	</para>
+	</section>
+<section>
+        <title>.bb files</title>
+	<para>A BitBake (.bb) file is a logical unit of tasks to be executed.
+		Normally this is a package to be built.
+		Inter-.bb dependencies are obeyed.
+		The files themselves are located via the 
+		<varname>BBFILES</varname> 
+		variable, which is set to a space separated list of .bb files,
+		and does handle wildcards.
+	</para>
+	</section>
+    </section>	
+	
+	<section>
+	<title>Events</title>
+	<para>
+		<emphasis>NOTE:</emphasis> 
+		This is only supported in .bb and .bbclass files.
+	</para>
+	<para>BitBake allows installation of event handlers.
+		Events are triggered at certain points during operation, such 
+		as the beginning of operation against a given .bb, the start of
+		a given task, task failure, task success, et cetera.
+		The intent is to make it easy to do things like email 
+		notification on build failure.
+	</para>
+	<para>
+		<screen>addhandler myclass_eventhandler python
+			myclass_eventhandler() { from bb.event import getName from
+			bb import data print("The name of the Event is %s" %
+			getName(e)) print("The file we run for is %s" %
+			data.getVar('FILE', e.data, True)) }
+		</screen>
+	</para>
+	<para>This event handler gets called every time an event is triggered.
+		A global variable 
+		<varname>e</varname> 
+		is defined. 
+		<varname>e</varname>.data
+		contains an instance of bb.data.
+		With the getName(<varname>e</varname>) method one can get the 
+		name of the triggered event.
+	</para>
+	<para>The above event handler prints the name of the event and the 
+		content of the 
+		<varname>FILE</varname> 
+		variable.
+	</para>
+	</section>
+	
+	<section>
+	<title>Variants</title>
+	<para>Two BitBake features exist to facilitate the creation of multiple
+		buildable incarnations from a single recipe file.
+	</para>
+	<para>The first is 
+		<varname>BBCLASSEXTEND</varname>. 
+		This variable is a space separated list of classes used to 
+		"extend" the recipe for each variant.
+		As an example, setting
+		<screen>BBCLASSEXTEND = "native"</screen> 
+		results in a second incarnation of the current recipe being
+		available.
+		This second incarnation will have the "native" class 
+		inherited.
+	</para>
+	<para>The second feature is
+		<varname>BBVERSIONS</varname>. 
+		This variable allows a single recipe to build multiple versions
+		of a project from a single recipe file, and allows you to 
+		specify conditional metadata (using the
+		<varname>OVERRIDES</varname> mechanism) for a single version,
+		or an optionally named range of versions:
+	</para>
+	<para>
+		<screen>BBVERSIONS = "1.0 2.0 git" SRC_URI_git =
+			"git://someurl/somepath.git"
+		</screen>
+	</para>
+	<para>
+		<screen>BBVERSIONS = "1.0.[0-6]:1.0.0+ \ 1.0.[7-9]:1.0.7+" 
+			SRC_URI_append_1.0.7+ =	"file://some_patch_which_the_new_versions_need.patch;patch=1"
+		</screen>
+	</para>
+	<para>Note that the name of the range will default to the original 
+		version of the recipe, so given OE, a recipe file of
+		foo_1.0.0+.bb will default the name of its versions to 
+		1.0.0+. 
+		This is useful, as the range name is not only placed into 
+		overrides; it's also made available for the metadata to use in 
+		the form of the
+		<varname>BPV</varname> 
+		variable, for use in file:// search paths 
+		(<varname>FILESPATH</varname>).
+	</para>
+	</section>
+		
+	<section>
+	<title>Dependencies</title>
 	<para>BitBake handles dependencies at the task level since to allow for
 		efficient operation with multiple processes executing in 
 		parallel, a robust method of specifying task dependencies is
@@ -731,42 +814,6 @@ yourself.</para>
 	</section>
 	
 	<section>
-	<title>Parsing</title>
-	<section>
-		<title>Configuration files</title>
-		<para>The first kind of metadata in BitBake is configuration
-			metadata.
-			This metadata is global, and therefore affects
-			<emphasis>all</emphasis> 
-			packages and tasks that are executed.
-		</para>
-		<para>BitBake will first search the current working directory 
-			for an optional "conf/bblayers.conf" configuration 
-			file.
-			This file is expected to contain a BBLAYERS variable 
-			that is a space delimited list of 'layer' directories.
-			For each directory in this list, a "conf/layer.conf" 
-			file will be searched for and parsed with the LAYERDIR 
-			variable being set to the directory where the layer was
-			found.
-			The idea is these files will setup BBPATH and other 
-			variables correctly for a given build directory
-			automatically for the user.
-		</para>
-		<para>BitBake will then expect to find 'conf/bitbake.conf'
-			somewhere in the user specified 
-			<envar>BBPATH</envar>. 
-			That configuration file generally has include 
-			directives to pull in any other metadata  (generally 
-			files specific to architecture, machine,
-			<emphasis>local</emphasis>and so on).
-		</para>
-		<para>Only variable definitions and include directives are
-			allowed in .conf files.
-		</para>
-	</section>
-	
-	<section>
 	<title>Classes</title>
 	<para>BitBake classes are our rudimentary inheritance mechanism. 
 		As briefly mentioned in the metadata introduction, they're 
@@ -777,8 +824,7 @@ yourself.</para>
 		<envar>BBPATH</envar>.
 	</para>
 	</section>
-	
-	<section>
+<section>
         <title>.bb files</title>
 	<para>A BitBake (.bb) file is a logical unit of tasks to be executed.
 		Normally this is a package to be built.
@@ -789,5 +835,5 @@ yourself.</para>
 		and does handle wildcards.
 	</para>
 	</section>
-    </section>
+
 </chapter>
