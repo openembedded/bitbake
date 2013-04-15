@@ -158,9 +158,9 @@ def expandKeys(alterdata, readdata = None):
 
     for key in todolist:
         ekey = todolist[key]
-        if ekey in keys(alterdata):
+        newval = alterdata.getVar(ekey, 0)
+        if newval:
             val = alterdata.getVar(key, 0)
-            newval = alterdata.getVar(ekey, 0)
             if val is not None and newval is not None:
                 bb.warn("Variable key %s (%s) replaces original key %s (%s)." % (key, val, ekey, newval))
         alterdata.renameVar(key, ekey)
