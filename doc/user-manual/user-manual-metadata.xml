@@ -23,7 +23,7 @@
 	    
 	    <listitem>
 		    <para>
-			<emphasis>Class Data:</emphasis>
+		    			<emphasis>Class Data:</emphasis>
 			An abstraction of common build information (e.g. how
 			to build a Linux kernel).
 		</para>
@@ -40,6 +40,7 @@
     <para>What follows is a large number of examples of BitBake metadata.
 	    Any syntax which is not supported in any of the aforementioned areas
 	    will be documented as such.
+    </para>
     </para>
     </section>
 
