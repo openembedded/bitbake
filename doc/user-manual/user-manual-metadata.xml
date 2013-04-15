@@ -70,6 +70,7 @@
       <varname>B</varname> containing 
       <literal>preavalpost</literal>.</para>
     </section>
+    
     <section>
       <title>Setting a default value (?=)</title>
       <para>
@@ -85,6 +86,7 @@
       immediate, so if there are multiple ?= assignments to a
       single variable, the first of those will be used.</para>
     </section>
+    
     <section>
       <title>Setting a weak default value (??=)</title>
       <para>
@@ -108,6 +110,7 @@
 	      value set with ??=.
       </para>
     </section>
+    
     <section>
       <title>Immediate variable expansion (:=)</title>
       <para>:= results in a variable's contents being expanded immediately,
@@ -135,6 +138,7 @@
 	      <literal>cvalappend</literal>.
       </para>
     </section>
+    
     <section>
       <title>Appending (+=) and prepending (=+)</title>
       <para>
@@ -253,8 +257,9 @@ yourself.</para>
 		is set to
 		<literal>glibc ncurses libmad</literal>.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Inclusion</title>
 	<para>Next, there is the 
 		<literal>include</literal> directive, that causes BitBake to
@@ -266,8 +271,9 @@ yourself.</para>
 		can find within 
 		<envar>BBPATH</envar>.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Requiring inclusion</title>
 	<para>In contrast to the 
 		<literal>include</literal> 
@@ -279,8 +285,9 @@ yourself.</para>
 		<literal>include</literal> 
 		directive.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Inline Python variable expansion</title>
 	<para>
 		<screen>
@@ -292,8 +299,9 @@ yourself.</para>
 		<varname>DATE</varname> 
 		variable containing today's date.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Defining executable metadata</title>
 	<para>
 		<emphasis>NOTE:</emphasis> 
@@ -314,8 +322,9 @@ yourself.</para>
 	<para>This is the similar to the previous, but flags it as Python so
 		that BitBake knows it is Python code.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Defining Python functions into the global Python namespace
 	</title>
 	<para>
@@ -341,8 +350,9 @@ yourself.</para>
 		containing 
 		<literal>dependencywithcond</literal>.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Variable flags</title>
 	<para>Variables can have associated flags which provide a way of 
 		tagging extra information onto a variable.
@@ -365,8 +375,9 @@ yourself.</para>
 		that is set to 
 		<literal>value</literal>.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Inheritance</title>
 	<para>
 		<emphasis>NOTE:</emphasis> This is only supported in .bb 
@@ -383,8 +394,9 @@ yourself.</para>
 		<envar>BBPATH</envar>, 
 		where filename is what you inherited.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Tasks</title>
 	<para>
 		<emphasis>NOTE:</emphasis> 
@@ -408,8 +420,9 @@ yourself.</para>
 		If anyone executes the do_build task, that will result in 
 		do_printdate being run first.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Task Flags</title>
 	<para>Tasks support a number of flags which control various 
 		functionality of the task.
@@ -438,8 +451,9 @@ yourself.</para>
 	<para>For the 'deptask', 'rdeptask', 'depends', 'rdepends'and 
 		'recrdeptask' flags please see the dependencies section.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Events</title>
 	<para>
 		<emphasis>NOTE:</emphasis> 
@@ -474,9 +488,9 @@ yourself.</para>
 		<varname>FILE</varname> 
 		variable.
 	</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Variants</title>
 	<para>Two BitBake features exist to facilitate the creation of multiple
 		buildable incarnations from a single recipe file.
@@ -521,8 +535,9 @@ yourself.</para>
 		variable, for use in file:// search paths 
 		(<varname>FILESPATH</varname>).
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Variable interaction: Worked Examples</title>
 	<para>Despite the documentation of the different forms of variable 
 		definition above, it can be hard to work out what happens when 
@@ -530,7 +545,9 @@ yourself.</para>
 		This section documents some common questions people have 
 		regarding the way variables interact.
 	</para>
-<section>
+	</section>
+	
+	<section>
 	<title>Override and append ordering</title>
 	<para>There is often confusion about which order overrides and the 
 		various append operators take effect.
@@ -596,8 +613,9 @@ yourself.</para>
 		taking the value "1 4523" since the _append operator executes 
 		at the same time as the expansion of other overrides.
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Key Expansion</title>
 	<para>Key expansion happens at the data store finalisation time just
 		before overrides are expanded.
@@ -616,25 +634,26 @@ yourself.</para>
 		<varname>A2</varname> 
 		would take the value of "X".
 	</para>
-</section>
-<section>
+	</section>
+	
+	<section>
 	<title>Dependency handling</title>
 	<para>BitBake handles dependencies at the task level since to allow for
 		efficient operation with multiple processes executing in 
 		parallel, a robust method of specifying task dependencies is
 		needed.
 	</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Dependencies internal to the .bb file</title>
 	<para>Where the dependencies are internal to a given .bb file, the
 		dependencies are handled by the previously detailed addtask
 		directive.
 	</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Build Dependencies</title>
 	<para>DEPENDS lists build time dependencies.
 		The 'deptask' flag for tasks is used to signify the task of 
@@ -650,9 +669,9 @@ yourself.</para>
 	<para>means the do_populate_staging task of each item in DEPENDS must 
 		have completed before do_configure can execute.
 	</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Runtime Dependencies</title>
 	<para>The PACKAGES variable lists runtime packages and each of these 
 		can have RDEPENDS and RRECOMMENDS runtime dependencies.
@@ -668,9 +687,9 @@ yourself.</para>
 	<para>means the do_package task of each item in RDEPENDS must have 
 		completed before do_package_write can execute.
 	</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Recursive Dependencies</title>
 	<para>These are specified with the 'recrdeptask' flag which is used
 		to signify the task(s) of dependencies which must have
@@ -687,9 +706,9 @@ yourself.</para>
 		If that is the case, the taskname itself should be referenced 
 		in the task list, e.g. do_a[recrdeptask] = "do_a do_b".
 	</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Inter task</title>
 	<para>The 'depends' flag for tasks is a more generic form which allows 
 		an interdependency on specific tasks rather than specifying 
@@ -708,11 +727,9 @@ yourself.</para>
 		the runtime namespace instead of the build time dependency 
 		namespace.
 	</para>
-</section>
-
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Parsing</title>
 	<section>
 		<title>Configuration files</title>
@@ -746,9 +763,9 @@ yourself.</para>
 		<para>Only variable definitions and include directives are
 			allowed in .conf files.
 		</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
 	<title>Classes</title>
 	<para>BitBake classes are our rudimentary inheritance mechanism. 
 		As briefly mentioned in the metadata introduction, they're 
@@ -758,9 +775,9 @@ yourself.</para>
 		relative to the directories in
 		<envar>BBPATH</envar>.
 	</para>
-</section>
-
-<section>
+	</section>
+	
+	<section>
         <title>.bb files</title>
 	<para>A BitBake (.bb) file is a logical unit of tasks to be executed.
 		Normally this is a package to be built.
@@ -770,8 +787,8 @@ yourself.</para>
 		variable, which is set to a space separated list of .bb files,
 		and does handle wildcards.
 	</para>
-      </section>
+	</section>
     </section>
     </para>
-  </section>
+  
 </chapter>
