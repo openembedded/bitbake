@@ -141,8 +141,6 @@
 	      <literal>cvalappend</literal>.
       </para>
     </section>
-</section>
-
 
     <section>
       <title>Appending (+=) and Prepending (=+)</title>
@@ -242,7 +240,8 @@ yourself.</para>
 		variable containing today's date.
 	</para>
 	</section>
-	
+</section>
+
 <section>
      <title>Conditional Syntax (Overrides)</title>
      
@@ -577,6 +576,7 @@ yourself.</para>
 		'recrdeptask' flags please see the dependencies section.
 	</para>
 	</section>
+	</section>
 	
 <section>
 	<title>Parsing</title>
@@ -635,7 +635,7 @@ yourself.</para>
 		and does handle wildcards.
 	</para>
 	</section>
-    </section>	
+</section>	
 	
 	<section>
 	<title>Events</title>
@@ -723,6 +723,8 @@ yourself.</para>
 		
 	<section>
 	<title>Dependencies</title>
+	<section>
+	<title>Dependencies</title>
 	<para>BitBake handles dependencies at the task level since to allow for
 		efficient operation with multiple processes executing in 
 		parallel, a robust method of specifying task dependencies is
@@ -731,7 +733,7 @@ yourself.</para>
 	</section>
 	
 	<section>
-	<title>Dependencies internal to the .bb file</title>
+	<title>Dependencies Internal to the .bb File</title>
 	<para>Where the dependencies are internal to a given .bb file, the
 		dependencies are handled by the previously detailed addtask
 		directive.
@@ -794,7 +796,7 @@ yourself.</para>
 	</section>
 	
 	<section>
-	<title>Inter task</title>
+	<title>Inter Task Dependencies</title>
 	<para>The 'depends' flag for tasks is a more generic form which allows 
 		an interdependency on specific tasks rather than specifying 
 		the data in DEPENDS.
@@ -813,29 +815,6 @@ yourself.</para>
 		namespace.
 	</para>
 	</section>
-	
-	<section>
-	<title>Classes</title>
-	<para>BitBake classes are our rudimentary inheritance mechanism. 
-		As briefly mentioned in the metadata introduction, they're 
-		parsed when an
-		<literal>inherit</literal> 
-		directive is encountered, and they are located in classes/ 
-		relative to the directories in
-		<envar>BBPATH</envar>.
-	</para>
-	</section>
-<section>
-        <title>.bb files</title>
-	<para>A BitBake (.bb) file is a logical unit of tasks to be executed.
-		Normally this is a package to be built.
-		Inter-.bb dependencies are obeyed.
-		The files themselves are located via the 
-		<varname>BBFILES</varname> 
-		variable, which is set to a space separated list of .bb files,
-		and does handle wildcards.
-	</para>
-	</section>
-
+</section>
 </section>
 </chapter>
