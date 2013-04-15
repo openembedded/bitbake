@@ -4,18 +4,18 @@
   <title>BitBake User Manual</title>
   <section id="intro">
     <title>Introduction</title>
-    <para>At it's core, BitBake is a tool generic task execution engine
-	    allowing shell and python tasks to be executed efficiently and in
-	    parallel whilst working within complex inter-task dependency
+    <para>At it's core, BitBake is a generic task execution engine
+	    allowing shell and python tasks to be run efficiently and in
+	    parallel while working within complex inter-task dependency
 	    constraints.
-	    One of it's main users, OpenEmbedded, takes this core and uses it
-	    to build embedded Linux software stacks using a task oriented
+	    One of it's main users, OpenEmbedded, takes this core and
+	    builds embedded Linux software stacks using a task oriented
 	    approach.
 	    Conceptually, BitBake is similar to GNU Make in some regards but
-	    also has significant differences.
-	    BitBake executes tasks based upon the metadata provided to it that
+	    has significant differences.
+	    BitBake executes tasks based upon metadata provided to it that
 	    build up tasks.
-	    It also includes a fetcher library for obtaining source code from
+	    It includes a fetcher library for obtaining source code from
 	    various places such as source control systems or websites.
 	    Metadata is stored in recipe (.bb), configuration (.conf), and
 	    class (.bbclass) files and provide to BitBake the instructions
