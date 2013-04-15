@@ -37,10 +37,12 @@
 	</para>
       </listitem>
     </itemizedlist>
-    <para>What follows are a large number of examples of BitBake metadata.
-	    Any syntax which isn't supported in any of the aforementioned areas
+    <para>What follows is a large number of examples of BitBake metadata.
+	    Any syntax which is not supported in any of the aforementioned areas
 	    will be documented as such.
     </para>
+    </section>
+
     <section>
       <title>Basic variable setting</title>
       <para>
@@ -51,6 +53,7 @@
       <varname>VARIABLE</varname> is 
       <literal>value</literal>.</para>
     </section>
+    
     <section>
       <title>Variable expansion</title>
       <para>BitBake supports variables referencing one another's contents using

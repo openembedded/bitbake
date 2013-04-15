@@ -90,9 +90,9 @@
 			Metadata chapter.
 		</para>
 		<para>The overall goal of this exercise is to create a Hello
-			World example utilizing the concepts BitBake uses to
-			build and construct a complete including Tasks,
-			Layers.  
+			World example utilizing concepts used to
+			build and construct a complete example application
+			including Tasks and Layers.  
 			This is how modern projects such as OpenEmbedded and 
 			the Yocto Project utilize BitBake, therefore it 
 			provides an excellent starting point for understanding
@@ -110,7 +110,7 @@
 			</itemizedlist>
 		</para>
 		<para>
-
+		
 		</para>
 	</section>
 
