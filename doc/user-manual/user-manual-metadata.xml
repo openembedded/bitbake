@@ -34,8 +34,8 @@
 		<emphasis>Configuration Data:</emphasis>Defines
 		machine-specific settings, policy decisions, etc.
 		Configuration data acts as the glue to bind everything
-		together.
-	</para>
+		together.		
+			</para>
       </listitem>
     </itemizedlist>
     <para>What follows is a large number of examples of BitBake metadata.
@@ -462,7 +462,8 @@ yourself.</para>
 	     This variable is only valid in configuration files.
 	     </para>
 	     
-	     <para>ADD MORE HERE</para>
+	     <para>ADD MORE HERE
+	     </para>
 	     
 </section>
 </section>
@@ -607,9 +608,21 @@ need to import them.</para>
 
 	
 <section>
-	<title>Parsing</title>
+	<title>Parsing and Execution</title>
 	<section>
 		<title>Configuration files</title>
+		<para>Prior to parsing configuration files, Bitbake looks at certain
+		variables, including:
+		[ADD MORE HERE]		
+		BB-ENV-WHITELIST
+		BB_PRESERVE-ENV
+		BB_ENV_EXTRAWHITE
+		BB_ORIG_ENV
+		PREFERRED_VERSIONS
+		PREFERRED_PROVIDERS
+		LAYERDEPENDS
+		LAYERVERSION
+		</para>
 		<para>The first kind of metadata in BitBake is configuration
 			metadata.
 			This metadata is global, and therefore affects
@@ -638,8 +651,33 @@ need to import them.</para>
 			<emphasis>local</emphasis>and so on).
 		</para>
 		<para>Only variable definitions and include directives are
-			allowed in .conf files.
+			allowed in .conf files.  The following variables include:
+			[add more here]
+			
+			BITBAKE_UI
+			BBDEBUG
+			MULTI_PROVIDER_WHITELIST
+			BB_NUMBER_PARSE_THREADS
+			BBPKGS
+			BB_DEFAULT_TASK
+			TOPDIR
+			BB_VERBOSE_LOGS
+			BB_NICE_LEVEL
+			BBFILE_COLLECTIONS
+			ASSUME_PROVIDED
+			BB_DANGLINGAPPENDS_WARNONLY
+			BBINCLUDED
+			BBFILE_PRIORITY
+			BUILDNAME
+			BBMASK
 		</para>
+		<section>
+		<title>Schedulers</title>
+		<para>
+		[add more here]
+		BB_SCHEDULER
+		BB_SCHEDULERS
+		</para></section>
 	</section>
 	
 <section>
@@ -968,7 +1006,24 @@ bb.event.TargetsTreeGenerated
 <section>
 	   <title>Task Checksums and Setscene</title>
 	
-	   <para></para>
+	   <para>
+	   <emphasis>NOTE:  This section is a work in progress.</emphasis>
+	   [ADD MORE HERE]
+	   
+	   The following needs explanation here:
+	   
+	   Task Signatures
+	   Hash Generation
+	   
+	   STAMP
+	   STAMPCLEAN
+	   BB_STAMP_WHITELIST
+	   BB_STAMP_POLICY
+	   BB_HASHCHECK_FUNCTION
+	   BB_SETSCENE_VERIFY_FUNCTION
+	   BB_SETSCENE_DEPVALID
+	   BB_TASKHASH
+	   </para>
 	
 </section>
 </chapter>
