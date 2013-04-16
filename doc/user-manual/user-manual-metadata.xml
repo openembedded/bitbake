@@ -467,31 +467,6 @@ yourself.</para>
 </section>
 </section>
 
-<section>
-     <title>Functions and Tasks</title>
-	<section>
-	<title>Defining Executable Metadata</title>
-	<para>
-		<emphasis>NOTE:</emphasis> 
-		This is only supported in .bb and .bbclass files.
-	</para>
-	<para>
-		<screen>do_mytask () { echo "Hello, world!" }
-		</screen>
-	</para>
-	<para>This is essentially identical to setting a variable, except that
-		this variable happens to be executable shell code.
-	</para>
-	<para>
-		<screen>python do_printdate () { import time print
-			time.strftime('%Y%m%d', time.gmtime()) }
-		</screen>
-	</para>
-	<para>This is the similar to the previous, but flags it as Python so
-		that BitBake knows it is Python code.
-	</para>
-	</section>
-	
 	<section>
 	<title>Defining Python Functions into the Global Python Namespace
 	</title>
@@ -524,9 +499,7 @@ yourself.</para>
 	
 	<section>
 	<title>Functions</title>
-   	<section>
-	     <para>
-	     NOTE: This is only supported in .bb and .bbclass files.</para>
+   	   <para>NOTE: This is only supported in .bb and .bbclass files.</para>
       <para>As with most languages, functions are the building blocks that
        define operations. 
        Bitbake supports shell and python functions.
@@ -568,8 +541,6 @@ direct python function calls.
 The "bb" and "os" modules are still automatically available and there is no 
 need to import them.</para>
       </para>
-      </section>
-   </section>
 </section>
 
 <section>
@@ -867,12 +838,11 @@ need to import them.</para>
 		namespace.
 	</para>
 	</section>
-	</section>
 	
 	<section>
 	   <title>Task Checksums and Setscene</title>
-	   <section>
+	
 	   <para></para>
-	   </section>
-	   </section>
+	
+</section>
 </chapter>
