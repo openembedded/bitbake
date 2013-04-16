@@ -46,6 +46,7 @@
     </section>
 
 <section>
+<title>Basic Syntax</title>
     <section>
       <title>Basic Variable Setting</title>
       <para>
@@ -458,7 +459,8 @@ yourself.</para>
 	<section>
 	<title>INHERIT Configuration Directive</title>
 	<para>
-	     This configuration directive causes the named class to be inherited at this point during parsing.
+	     This configuration directive causes the named class to be inherited at 
+	     this point during parsing.
 	     This variable is only valid in configuration files.
 	     </para>
 	     
@@ -609,19 +611,101 @@ need to import them.</para>
 	
 <section>
 	<title>Parsing and Execution</title>
+<section>
+<title>Parsing Overview</title>
+<para>
+            BitBake parses configuration files, classes, and 
+            <filename>.bb</filename> files.
+        </para>
+
+        <para>
+            The first thing BitBake does is look for the 
+            <filename>bitbake.conf</filename> file.
+            This file resides in the within the <filename>/conf/</filename>
+             directory.
+            BitBake finds it by examining its
+            <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
+             environment variable and looking for the 
+             <filename>/conf/</filename> directory.
+        </para>
+
+        <para>
+            The <filename>bitbake.conf</filename> file lists other configuration
+            files to include from a <filename>conf/</filename> directory below
+            the directories listed in <filename>BBPATH</filename>.
+            In general, the most important configuration file from a user's
+            perspective is <filename>local.conf</filename>, which contains a
+            user's customized settings for the build environment.
+            Other notable configuration files are the distribution configuration
+            file (set by the <filename>DISTRO</filename>
+            variable) and the machine configuration file (set by the
+            <filename>MACHINE</filename> variable).
+            The <filename>DISTRO</filename> and <filename>MACHINE</filename>
+            BitBake environment variables are both usually set in
+            the <filename>local.conf</filename> file.
+            Valid distribution configuration files are available in the 
+            <filename>/conf/distro/</filename> directory and valid machine
+            configuration files in the <filename>meta/conf/machine/</filename>
+            directory.
+            Within the <filename>/conf/machine/include/</filename> directory are
+            various <filename>tune-*.inc</filename> configuration files that
+            provide common "tuning" settings specific to and shared between
+            particular architectures and machines.
+        </para>
+
+        <para>
+            After parsing of the configuration files, some standard classes are 
+            included.
+            The <filename>base.bbclass</filename> file is always included.
+            Other classes that are specified in the configuration using the
+            <filename>INHERIT</filename> variable are also included.
+            Class files are searched for in a <filename>classes</filename>
+            subdirectory under the paths in <filename>BBPATH</filename> in the 
+            same way as configuration files.
+        </para>
+
+        <para>
+            After classes are included, the variable 
+            <filename>BBFILES</filename> is set, usually in
+            <filename>local.conf</filename>, and defines the list of places to 
+            search for <filename>.bb</filename> files.
+            Adding extra content to <filename>BBFILES</filename> is best 
+            achieved through the use of BitBake layers as described in the
+            Layers section below.
+        </para>
+
+        <para>
+            BitBake parses each <filename>.bb</filename> file in <filename>BBFILES</filename> and
+            stores the values of various variables.
+            In summary, for each <filename>.bb</filename>
+            file the configuration plus the base class of variables are set, followed
+            by the data in the <filename>.bb</filename> file
+            itself, followed by any inherit commands that
+            <filename>.bb</filename> file might contain.
+        </para>
+
+        <para>
+            Because parsing <filename>.bb</filename> files is a time
+            consuming process, a cache is kept to speed up subsequent parsing.
+            This cache is invalid if the timestamp of the <filename>.bb</filename>
+            file itself changes, or if the timestamps of any of the include,
+            configuration files or class files on which the
+            <filename>.bb</filename> file depends change.
+        </para>
+</section>	
 	<section>
-		<title>Configuration files</title>
+			<title>Configuration files</title>
 		<para>Prior to parsing configuration files, Bitbake looks at certain
 		variables, including:
 		[ADD MORE HERE]		
-		BB-ENV-WHITELIST
-		BB_PRESERVE-ENV
-		BB_ENV_EXTRAWHITE
-		BB_ORIG_ENV
-		PREFERRED_VERSIONS
-		PREFERRED_PROVIDERS
-		LAYERDEPENDS
-		LAYERVERSION
+		<itemizedlist>
+		<listitem>BB-ENV-WHITELIST</listitem>
+		<listitem>BB_PRESERVE-ENV</listitem>
+		<listitem>BB_ENV_EXTRAWHITE</listitem>
+		<listitem>BB_ORIG_ENV</listitem>
+		<listitem>PREFERRED_VERSIONS</listitem>
+		<listitem>PREFERRED_PROVIDERS</listitem>
+		</itemizedlist>
 		</para>
 		<para>The first kind of metadata in BitBake is configuration
 			metadata.
@@ -653,30 +737,44 @@ need to import them.</para>
 		<para>Only variable definitions and include directives are
 			allowed in .conf files.  The following variables include:
 			[add more here]
-			
-			BITBAKE_UI
-			BBDEBUG
-			MULTI_PROVIDER_WHITELIST
-			BB_NUMBER_PARSE_THREADS
-			BBPKGS
-			BB_DEFAULT_TASK
-			TOPDIR
-			BB_VERBOSE_LOGS
-			BB_NICE_LEVEL
-			BBFILE_COLLECTIONS
-			ASSUME_PROVIDED
-			BB_DANGLINGAPPENDS_WARNONLY
-			BBINCLUDED
-			BBFILE_PRIORITY
-			BUILDNAME
-			BBMASK
+			<itemizedlist>
+			<listitem>BITBAKE_UI</listitem>
+			<listitem>BBDEBUG</listitem>
+			<listitem>MULTI_PROVIDER_WHITELIST</listitem>
+			<listitem>BB_NUMBER_PARSE_THREADS</listitem>
+			<listitem>BBPKGS</listitem>
+			<listitem>BB_DEFAULT_TASK</listitem>
+			<listitem>TOPDIR</listitem>
+			<listitem>BB_VERBOSE_LOGS</listitem>
+			<listitem>BB_NICE_LEVEL</listitem>
+			<listitem>BBFILE_COLLECTIONS</listitem>
+			<listitem>ASSUME_PROVIDED</listitem>
+			<listitem>BB_DANGLINGAPPENDS_WARNONLY</listitem>
+			<listitem>BBINCLUDED</listitem>
+			<listitem>BBFILE_PRIORITY</listitem>
+			<listitem>BUILDNAME</listitem>
+			<listitem>BBMASK</listitem>
+			</itemizedlist>
 		</para>
+		<section>
+		<title>Layers</title>
+		<para>[add definition and description of layers here]</para>
+		<para>
+		<itemizedlist>
+		<listitem>LAYERDEPENDS</listitem>
+		<listitem>LAYERVERSION</listitem>
+		</itemizedlist>
+		</para>
+		</section>
+		
 		<section>
 		<title>Schedulers</title>
 		<para>
 		[add more here]
-		BB_SCHEDULER
-		BB_SCHEDULERS
+		<itemizedlist>
+		<listitem>BB_SCHEDULER</listitem>
+		<listitem>BB_SCHEDULERS</listitem>
+		</itemizedlist>
 		</para></section>
 	</section>
 	
@@ -743,33 +841,37 @@ need to import them.</para>
 	
 	<para>
 	During a Build, the following common events occur:
-	
-bb.event.ConfigParsed()
-bb.event.ParseStarted()
-bb.event.ParseProgress()
-bb.event.ParseCompleted()
-bb.event.BuildStarted()
-bb.build.TaskStarted()
-bb.build.TaskInvalid()
-bb.build.TaskFailedSilent()
-bb.build.TaskFailed()
-bb.build.TaskSucceeded()
-bb.event.BuildCompleted()
-bb.cooker.CookerExit()
+<itemizedlist>	
+<listitem>bb.event.ConfigParsed()</listitem>
+<listitem>bb.event.ParseStarted()</listitem>
+<listitem>bb.event.ParseProgress()</listitem>
+<listitem>bb.event.ParseCompleted()</listitem>
+<listitem>bb.event.BuildStarted()</listitem>
+<listitem>bb.build.TaskStarted()</listitem>
+<listitem>bb.build.TaskInvalid()</listitem>
+<listitem>bb.build.TaskFailedSilent()</listitem>
+<listitem>bb.build.TaskFailed()</listitem>
+<listitem>bb.build.TaskSucceeded()</listitem>
+<listitem>bb.event.BuildCompleted()</listitem>
+<listitem>bb.cooker.CookerExit()</listitem>
+</itemizedlist>
+
 </para>
 
 <para>
 There are also other events that occur based on specific requests to the server:
 
-bb.event.TreeDataPreparationStarted()
-bb.event.TreeDataPreparationProgress
-bb.event.TreeDataPreparationCompleted
-bb.event.DepTreeGenerated
-bb.event.CoreBaseFilesFound
-bb.event.ConfigFilePathFound
-bb.event.FilesMatchingFound
-bb.event.ConfigFilesFound
-bb.event.TargetsTreeGenerated
+<itemizedlist>
+<listitem>bb.event.TreeDataPreparationStarted()</listitem>
+<listitem>bb.event.TreeDataPreparationProgress</listitem>
+<listitem>bb.event.TreeDataPreparationCompleted</listitem>
+<listitem>bb.event.DepTreeGenerated</listitem>
+<listitem>bb.event.CoreBaseFilesFound</listitem>
+<listitem>bb.event.ConfigFilePathFound</listitem>
+<listitem>bb.event.FilesMatchingFound</listitem>
+<listitem>bb.event.ConfigFilesFound</listitem>
+<listitem>bb.event.TargetsTreeGenerated</listitem>
+</itemizedlist>
 </para>
 	</section>
 	
@@ -1010,20 +1112,30 @@ bb.event.TargetsTreeGenerated
 	   <emphasis>NOTE:  This section is a work in progress.</emphasis>
 	   [ADD MORE HERE]
 	   
-	   The following needs explanation here:
+	   This list is a place holder of content that needs explanation here. Items
+	   should be moved to appropriate sections below as completed.
 	   
-	   Task Signatures
-	   Hash Generation
-	   
-	   STAMP
-	   STAMPCLEAN
-	   BB_STAMP_WHITELIST
-	   BB_STAMP_POLICY
-	   BB_HASHCHECK_FUNCTION
-	   BB_SETSCENE_VERIFY_FUNCTION
-	   BB_SETSCENE_DEPVALID
-	   BB_TASKHASH
+	   <itemizedlist>
+	   <listitem>STAMP</listitem>
+	   <listitem>STAMPCLEAN</listitem>
+	   <listitem>BB_STAMP_WHITELIST</listitem>
+	   <listitem>BB_STAMP_POLICY</listitem>
+	   <listitem>BB_HASHCHECK_FUNCTION</listitem>
+	   <listitem>BB_SETSCENE_VERIFY_FUNCTION</listitem>
+	   <listitem>BB_SETSCENE_DEPVALID</listitem>
+	   <listitem>BB_TASKHASH</listitem>
+	   </itemizedlist>
 	   </para>
-	
+	   
+	   <section>
+	   <title>Task Signatures</title>
+	   <para></para>
+	   </section>
+	   
+	   <section>
+	   <title>Hash Generation</title>
+	   <para></para>
+	   </section>
+
 </section>
 </chapter>
