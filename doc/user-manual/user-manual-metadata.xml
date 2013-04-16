@@ -764,7 +764,7 @@ need to import them.</para>
             working on a single project.
             However, the more modular you organize your Metadata, the easier
             it is to cope with future changes.</para>
-		<para>
+		
 		<para>
             To illustrate how layers are used to keep things modular, consider
             machine customizations.
@@ -1163,5 +1163,4 @@ There are also other events that occur based on specific requests to the server:
 
 </section>
 -->
-</section>
 </chapter>
