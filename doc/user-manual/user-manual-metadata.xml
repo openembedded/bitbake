@@ -846,7 +846,93 @@ need to import them.</para>
 	</para>
 	</section>
 	</section>
+
+<section>
+	   <title>Accessing Variable and the Data Store from Python</title>
 	
+	   <para>
+	   <emphasis>NOTE: This section is in draft.</emphasis>
+	   It is often necessary to manipulate variables within python functions
+	   and the Bitbake data store has an API which allows this.
+	   The operations available are:
+	   
+	   <screen>
+	   d.getVar("X", expand=False)
+	   </screen>
+	   
+	   returns the value of variable "X", expanding the value if specified
+	   
+	   <screen>
+	   d.setVar("X", value)
+	   </screen>
+	   
+	   sets the value of "X" to value
+	   
+	   <screen>
+	   d.appendVar("X", value)
+	   </screen>
+	   
+	   adds value to the end of variable X
+	   
+	   <screen>
+	   d.prependVar("X", value)
+	   </screen>
+	   
+	   adds value to the start of variable X
+	   
+	   <screen>
+	   d.delVar("X")
+	   </screen>
+	   
+	   deletes the variable X from the data store
+	   
+	   <screen>
+	   d.renameVar("X", "Y")
+	   </screen>
+	   
+	   renames variable X to Y
+	   
+	   <screen>	   
+	   d.getVarFlag("X", flag, expand=False)
+	   </screen>
+	   
+	   <screen>
+	   d.setVarFlag("X", flag, value)
+	   </screen>
+	   
+	   <screen>
+	   d.appendVarFlag("X", flag, value)
+	   </screen>
+	   
+	   <screen>
+	   d.prependVarFlag("X", flag, value)
+	   </screen>
+	   
+	   <screen>
+	   d.delVarFlag("X", flag)
+	   </screen>
+	   
+	   <screen>
+	   d.setVarFlags("X", flagsdict)
+	   </screen>
+	   
+	   sets the flags specified in the dict() parameter
+	   
+	   <screen>
+	   d.getVarFlags("X")
+	   </screen>
+	   
+	   returns a dict of the flags for X
+	   
+	   <screen>
+	   d.delVarFlags
+	   </screen>
+	   
+	   deletes all the flags for a variable
+	   </para>
+	
+</section>
+
 <section>
 	   <title>Task Checksums and Setscene</title>
 	
