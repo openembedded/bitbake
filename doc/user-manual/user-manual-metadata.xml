@@ -702,6 +702,37 @@ need to import them.</para>
 		<varname>FILE</varname> 
 		variable.
 	</para>
+	
+	<para>
+	During a Build, the following common events occur:
+	
+bb.event.ConfigParsed()
+bb.event.ParseStarted()
+bb.event.ParseProgress()
+bb.event.ParseCompleted()
+bb.event.BuildStarted()
+bb.build.TaskStarted()
+bb.build.TaskInvalid()
+bb.build.TaskFailedSilent()
+bb.build.TaskFailed()
+bb.build.TaskSucceeded()
+bb.event.BuildCompleted()
+bb.cooker.CookerExit()
+</para>
+
+<para>
+There are also other events that occur based on specific requests to the server:
+
+bb.event.TreeDataPreparationStarted()
+bb.event.TreeDataPreparationProgress
+bb.event.TreeDataPreparationCompleted
+bb.event.DepTreeGenerated
+bb.event.CoreBaseFilesFound
+bb.event.ConfigFilePathFound
+bb.event.FilesMatchingFound
+bb.event.ConfigFilesFound
+bb.event.TargetsTreeGenerated
+</para>
 	</section>
 	
 	<section>
@@ -852,6 +883,7 @@ need to import them.</para>
 	
 	   <para>
 	   <emphasis>NOTE: This section is in draft.</emphasis>
+	   
 	   It is often necessary to manipulate variables within python functions
 	   and the Bitbake data store has an API which allows this.
 	   The operations available are:
