@@ -549,23 +549,28 @@ need to import them.</para>
 		<emphasis>NOTE:</emphasis> 
 		This is only supported in .bb and .bbclass files.
 	</para>
-	<para>In BitBake, each step that needs to be run for a given .bb is 
-		known as a task. 
-		There is a command <literal>addtask</literal> to add new 
-		tasks (must be a defined Python executable metadata and must
-		start with  <quote>do_</quote>) and describe intertask
-		dependencies.
+	<para>A shell or python function executable through exec_func can be promoted
+	to become a task.
+	Tasks are the execution unit Bitbake uses and each step that needs to be run 
+	for a given .bb is known as a task. 
+	There is a addtask command to add new tasks and promote functions which by 
+	convention must start with “do_”.
+	The addtask command is also used to describe intertask dependencies.
 	</para>
 	<para>
-		<screen>python do_printdate () { import time print
-			time.strftime('%Y%m%d', time.gmtime()) } addtask printdate
-			before do_build
+		<screen>
+		python do_printdate () {
+		   import time print
+		   time.strftime('%Y%m%d', time.gmtime())
+	 }
+	 addtask printdate after do_fetch before do_build
 		</screen>
 	</para>
-	<para>This defines the necessary Python function and adds it as a task 
-		which is now a dependency of do_build, the default task.
-		If anyone executes the do_build task, that will result in 
-		do_printdate being run first.
+	<para>The above example defined a python function, then adds it as a task
+	which is now a dependency of do_build, the default task and states it
+	has to happen after do_fetch.
+	If anyone executes the do_build task, that will result in do_printdate
+	being run first.
 	</para>
 	</section>
 	
