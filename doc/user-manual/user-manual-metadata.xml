@@ -697,7 +697,7 @@ need to import them.</para>
 			<title>Configuration files</title>
 		<para>Prior to parsing configuration files, Bitbake looks at certain
 		variables, including:
-		[ADD MORE HERE]		
+				
 		<itemizedlist>
 		<listitem>BB-ENV-WHITELIST</listitem>
 		<listitem>BB_PRESERVE-ENV</listitem>
@@ -795,7 +795,7 @@ need to import them.</para>
 		<section>
 		<title>Schedulers</title>
 		<para>
-		[add more here]
+		There are variables specific to scheduling functionality including:
 		<itemizedlist>
 		<listitem>BB_SCHEDULER</listitem>
 		<listitem>BB_SCHEDULERS</listitem>
@@ -1129,14 +1129,13 @@ There are also other events that occur based on specific requests to the server:
 	   </para>
 	
 </section>
-
+<!--
 <section>
 	   <title>Task Checksums and Setscene</title>
 	
 	   <para>
 	   <emphasis>NOTE:  This section is a work in progress.</emphasis>
-	   [ADD MORE HERE]
-	   
+	   	   
 	   This list is a place holder of content that needs explanation here. Items
 	   should be moved to appropriate sections below as completed.
 	   
@@ -1163,4 +1162,5 @@ There are also other events that occur based on specific requests to the server:
 	   </section>
 
 </section>
+-->
 </chapter>
