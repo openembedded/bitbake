@@ -1093,9 +1093,15 @@ There are also other events that occur based on specific requests to the server:
 	   d.getVarFlag("X", flag, expand=False)
 	   </screen>
 	   
+	   gets given flag from variable X but does not expand it.
+	   
 	   <screen>
 	   d.setVarFlag("X", flag, value)
 	   </screen>
+	   
+	   sets given flag for variable X to value.
+	   Note, setVarFlags will not clear previous flags.
+	   Think of this method as addVarFlags.
 	   
 	   <screen>
 	   d.appendVarFlag("X", flag, value)
