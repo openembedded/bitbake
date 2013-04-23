@@ -12,7 +12,7 @@
 	    and how they interact.
     </para>
     <para>BitBake handles the parsing and execution of the data files.
-	    The data itself is of various types: 
+	    The data itself is of various types:
 	    <itemizedlist>
 		    <listitem>
 			    <para>
@@ -21,7 +21,6 @@
 				    of software.
 		    </para>
 	    </listitem>
-	    
 	    <listitem>
 		    <para>
 		    			<emphasis>Class Data:</emphasis>
@@ -34,7 +33,7 @@
 		<emphasis>Configuration Data:</emphasis>Defines
 		machine-specific settings, policy decisions, etc.
 		Configuration data acts as the glue to bind everything
-		together.		
+		together.
 			</para>
       </listitem>
     </itemizedlist>
@@ -53,11 +52,10 @@
         <screen>
         <varname>VARIABLE</varname> = "value"</screen>
       </para>
-      <para>In this example, 
-      <varname>VARIABLE</varname> is 
+      <para>In this example,
+      <varname>VARIABLE</varname> is
       <literal>value</literal>.</para>
     </section>
-    
     <section>
       <title>Variable Expansion</title>
       <para>BitBake supports variables referencing one another's contents using
@@ -65,79 +63,75 @@
       </para>
       <para>
         <screen>
-        <varname>A</varname> = "aval" 
+        <varname>A</varname> = "aval"
         <varname>B</varname> = "pre${A}post"</screen>
       </para>
-      <para>This results in 
-      <varname>A</varname> containing 
-      <literal>aval</literal> and 
-      <varname>B</varname> containing 
+      <para>This results in
+      <varname>A</varname> containing
+      <literal>aval</literal> and
+      <varname>B</varname> containing
       <literal>preavalpost</literal>.</para>
     </section>
-    
     <section>
       <title>Setting a Default Value (?=)</title>
       <para>
         <screen>
         <varname>A</varname>?= "aval"</screen>
       </para>
-      <para>If 
+      <para>If
       <varname>A</varname> is set before the above is called, it
-      will retain its previous value. If 
-      <varname>A</varname> is unset prior to the above call, 
-      <varname>A</varname> will be set to 
+      will retain its previous value. If
+      <varname>A</varname> is unset prior to the above call,
+      <varname>A</varname> will be set to
       <literal>aval</literal>. Note that this assignment is
       immediate, so if there are multiple ?= assignments to a
       single variable, the first of those will be used.</para>
     </section>
-    
     <section>
       <title>Setting a Weak Default Value (??=)</title>
       <para>
         <screen>
-        <varname>A</varname>??= "somevalue" 
+        <varname>A</varname>??= "somevalue"
         <varname>A</varname>??= "someothervalue"</screen>
       </para>
-      <para>If 
-	      <varname>A</varname> 
+      <para>If
+	      <varname>A</varname>
 	      is set before the above, it will retain that value.
-	      If 
-	      <varname>A</varname> 
-	      is unset prior to the above, 
-	      <varname>A</varname> 
-	      will be set to <literal>someothervalue</literal>. 
+	      If
+	      <varname>A</varname>
+	      is unset prior to the above,
+	      <varname>A</varname>
+	      will be set to <literal>someothervalue</literal>.
 	      This is a lazy/weak assignment in that the assignment does not
 	      occur until the end of the parsing process, so that the last,
-	      rather than the first, ??= assignment to a given variable will 
+	      rather than the first, ??= assignment to a given variable will
 	      be used.
 	      Any other setting of A using = or ?= will however override the
 	      value set with ??=.
       </para>
     </section>
-    
     <section>
       <title>Immediate Variable Expansion (:=)</title>
       <para>:= results in a variable's contents being expanded immediately,
 	      rather than when the variable is actually used.
       </para>
-      
       <para>
         <screen>
-        <varname>T</varname> = "123" 
-        <varname>A</varname>:= "${B} ${A} test ${T}" 
-        <varname>T</varname> = "456" 
-        <varname>B</varname> = "${T} bval" 
-        <varname>C</varname> = "cval" 
+        <varname>T</varname> = "123"
+        <varname>A</varname>:= "${B} ${A} test ${T}"
+        <varname>T</varname> = "456"
+        <varname>B</varname> = "${T} bval"
+        <varname>C</varname> = "cval"
         <varname>C</varname>:= "${C}append"</screen>
       </para>
-      <para>In this example, 
-	      <varname>A</varname> 
+      <para>In this example,
+	      <varname>A</varname>
 	      would contain
 	      <literal>test 123</literal>,
-	      <varname>B</varname> 
+	      <varname>B</varname>
 	      would contain
 	      <literal>456 bval</literal>, and
-	      <varname>C</varname> 
+	      <varname>C</varname>
 	      would be
 	      <literal>cvalappend</literal>.
       </para>
@@ -147,18 +141,18 @@
       <title>Appending (+=) and Prepending (=+)</title>
       <para>
         <screen>
-        <varname>B</varname> = "bval" 
-        <varname>B</varname>+= "additionaldata" 
-        <varname>C</varname> = "cval" 
+        <varname>B</varname> = "bval"
+        <varname>B</varname>+= "additionaldata"
+        <varname>C</varname> = "cval"
         <varname>C</varname>=+ "test"</screen>
       </para>
-      <para>In this example, 
-	      <varname>B</varname> 
+      <para>In this example,
+	      <varname>B</varname>
 	      is now
-	      <literal>bval additionaldata</literal> 
+	      <literal>bval additionaldata</literal>
 	      and
-	      <varname>C</varname> 
-	      is 
+	      <varname>C</varname>
+	      is
 	      <literal>test cval</literal>.
       </para>
     </section>
@@ -166,18 +160,18 @@
 	    <title>Appending (.=) and Prepending (=.) without spaces</title>
 	    <para>
 		    <screen>
-			    <varname>B</varname> = "bval" 
-			    <varname>B</varname>.= "additionaldata" 
-			    <varname>C</varname> = "cval" 
+			    <varname>B</varname> = "bval"
+			    <varname>B</varname>.= "additionaldata"
+			    <varname>C</varname> = "cval"
 			    <varname>C</varname>=. "test"
 		    </screen>
 	    </para>
 	    <para>In this example,
 	    <varname>B</varname>		is now
-		   <literal>bvaladditionaldata</literal> 
-		and 
-		<varname>C</varname> 
-		is 
+		   <literal>bvaladditionaldata</literal>
+		and
+		<varname>C</varname>
+		is
 		<literal>testcval</literal>.
 		In contrast to the above appending and prepending operators,
 		no additional space will be introduced.
@@ -205,9 +199,9 @@ yourself.</para>
 
 <section>
 	<title>Variable Flags</title>
-	<para>Variables can have associated flags which provide a way of 
+	<para>Variables can have associated flags which provide a way of
 		tagging extra information onto a variable.
-		Several flags are used internally by BitBake but they can be 
+		Several flags are used internally by BitBake but they can be
 		used externally too if needed.
 		The standard operations mentioned above also work on flags.
 	</para>
@@ -220,14 +214,13 @@ yourself.</para>
 		</screen>
 	</para>
 	<para>In this example,
-		<varname>VARIABLE</varname> 
-		has a flag, 
-		<varname>SOMEFLAG</varname> 
-		that is set to 
+		<varname>VARIABLE</varname>
+		has a flag,
+		<varname>SOMEFLAG</varname>
+		that is set to
 		<literal>value</literal>.
 	</para>
 	</section>
-	
 <section>
 	<title>Inline Python variable expansion</title>
 	<para>
@@ -237,7 +230,7 @@ yourself.</para>
 		 </screen>
 	</para>
 	<para>This would result in the
-		<varname>DATE</varname> 
+		<varname>DATE</varname>
 		variable containing today's date.
 	</para>
 	</section>
@@ -245,56 +238,54 @@ yourself.</para>
 
 <section>
      <title>Conditional Syntax (Overrides)</title>
-     
     <section>
 	    <title>Conditional Metadata</title>
-	    <para>OVERRIDES is a 
-		    <quote>:</quote> 
+	    <para>OVERRIDES is a
+		    <quote>:</quote>
 		    separated variable containing each item you want to satisfy
 		    conditions.
 		    So, if you have a variable that is conditional on
 		    <quote>arm</quote>, and
-		    <quote>arm</quote> 
-		    is in OVERRIDES, then the 
-		    <quote>arm</quote> 
+		    <quote>arm</quote>
+		    is in OVERRIDES, then the
+		    <quote>arm</quote>
 		    specific version of the variable is used rather than the
 		    non-conditional version.
 		    Example:
 	    </para>
 	    <para>
 		    <screen>
-			    <varname>OVERRIDES</varname> 
-			    = "architecture:os:machine" 
-			    <varname>TEST</varname> 
-			    = "defaultvalue" 
-			    <varname>TEST_os</varname> 
-			    = "osspecificvalue" 
-			    <varname>TEST_condnotinoverrides</varname> 
+			    <varname>OVERRIDES</varname>
+			    = "architecture:os:machine"
+			    <varname>TEST</varname>
+			    = "defaultvalue"
+			    <varname>TEST_os</varname>
+			    = "osspecificvalue"
+			    <varname>TEST_condnotinoverrides</varname>
 			    = "othercondvalue"
 		    </screen>
       </para>
-      <para>In this example, 
-	      <varname>TEST</varname> 
-	      would be <literal>osspecificvalue</literal>, 
+      <para>In this example,
+	      <varname>TEST</varname>
+	      would be <literal>osspecificvalue</literal>,
 	      due to the condition
-	      <quote>os</quote> being in 
+	      <quote>os</quote> being in
 	      <varname>OVERRIDES</varname>.
       </para>
     </section>
-    
     <section>
 	    <title>Conditional Appending</title>
-	    <para>BitBake also supports appending and prepending to variables 
+	    <para>BitBake also supports appending and prepending to variables
 		    based on whether something is in OVERRIDES.
 		    Example:
 	    </para>
 	    <para>
 		    <screen>
-			    <varname>DEPENDS</varname> 
-			    = "glibc ncurses" 
-			    <varname>OVERRIDES</varname> 
-			    = "machine:local" 
-			    <varname>DEPENDS_append_machine</varname> 
+			    <varname>DEPENDS</varname>
+			    = "glibc ncurses"
+			    <varname>OVERRIDES</varname>
+			    = "machine:local"
+			    <varname>DEPENDS_append_machine</varname>
 			    = "libmad"
 		    </screen>
 		    </para>
@@ -306,82 +297,81 @@ yourself.</para>
 
 <section>
 	<title>Variable Interaction: Worked Examples</title>
-	<para>Despite the documentation of the different forms of variable 
-		definition above, it can be hard to work out what happens when 
+	<para>Despite the documentation of the different forms of variable
+		definition above, it can be hard to work out what happens when
 		variable operators are combined.
-		This section documents some common questions people have 
+		This section documents some common questions people have
 		regarding the way variables interact.
 	</para>
 	</section>
-	
 	<section>
 	<title>Override and Append Ordering</title>
-	<para>There is often confusion about which order overrides and the 
+	<para>There is often confusion about which order overrides and the
 		various append operators take effect.
 	</para>
 	<para>
 		<screen>
-			<varname>OVERRIDES</varname> 
-			= "foo" 
-			<varname>A_foo_append</varname> 
+			<varname>OVERRIDES</varname>
+			= "foo"
+			<varname>A_foo_append</varname>
 			= "X"</screen>
 	</para>
-	<para>In this case, X is unconditionally appended to the variable 
-		<varname>A_foo</varname>. 
-		Since foo is an override, A_foo would then replace 
+	<para>In this case, X is unconditionally appended to the variable
+		<varname>A_foo</varname>.
+		Since foo is an override, A_foo would then replace
 		<varname>A</varname>.</para>
 	<para>
 		<screen>
-			<varname>OVERRIDES</varname> 
-			= "foo" 
-			<varname>A</varname> 
-			= "X" 
-			<varname>A_append_foo</varname> 
+			<varname>OVERRIDES</varname>
+			= "foo"
+			<varname>A</varname>
+			= "X"
+			<varname>A_append_foo</varname>
 			= "Y"
 		</screen>
 	</para>
 	<para>In this case, only when foo is in OVERRIDES, Y is appended to the
-		variable 
-		<varname>A</varname> 
-		so the value of 
-		<varname>A</varname> 
+		variable
+		<varname>A</varname>
+		so the value of
+		<varname>A</varname>
 		would become XY (NB: no spaces are appended).
 	</para>
 	<para>
 		<screen>
-			<varname>OVERRIDES</varname> 
-			= "foo" 
-			<varname>A_foo_append</varname> 
-			= "X" 
+			<varname>OVERRIDES</varname>
+			= "foo"
+			<varname>A_foo_append</varname>
+			= "X"
 			<varname>A_foo_append</varname>
 			+= "Y"
 		</screen>
         </para>
 	<para>This behaves as per the first case above, but the value of
-		<varname>A</varname> 
+		<varname>A</varname>
 		would be "X Y" instead of just "X".
 	</para>
 	<para>
 		<screen>
-			<varname>A</varname> 
-			= "1" 
-			<varname>A_append</varname> 
-			= "2" 
-			<varname>A_append</varname> 
-			= "3" 
 			<varname>A</varname>
-			+= "4" 
+			= "1"
+			<varname>A_append</varname>
+			= "2"
+			<varname>A_append</varname>
+			= "3"
+			<varname>A</varname>
+			+= "4"
 			<varname>A</varname>
 			.= "5"
 		</screen>
         </para>
-	<para>Would ultimately result in 
-		<varname>A</varname> 
-		taking the value "1 4523" since the _append operator executes 
+	<para>Would ultimately result in
+		<varname>A</varname>
+		taking the value "1 4523" since the _append operator executes
 		at the same time as the expansion of other overrides.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Key Expansion</title>
 	<para>Key expansion happens at the data store finalisation time just
@@ -389,84 +379,84 @@ yourself.</para>
 	</para>
 	<para>
 		<screen>
-			<varname>A${B}</varname> 
+			<varname>A${B}</varname>
 			= "X"
-			<varname>B</varname> 
-			= "2" 
-			<varname>A2</varname> 
+			<varname>B</varname>
+			= "2"
+			<varname>A2</varname>
 			= "Y"
 		</screen>
 	</para>
-	<para>So in this case 
-		<varname>A2</varname> 
+	<para>So in this case
+		<varname>A2</varname>
 		would take the value of "X".
 	</para>
 	</section>
 	</section>
-	
+
 <section>
 <title>Inheritance</title>
 <section>
 	<title>Inheritance</title>
 	<para>
-		<emphasis>NOTE:</emphasis> This is only supported in .bb 
+		<emphasis>NOTE:</emphasis> This is only supported in .bb
 		and .bbclass files.
 	</para>
 	<para>The <literal>inherit</literal> directive is a means of specifying
 		what classes of functionality your .bb requires.
 		It is a rudimentary form of inheritance.
 		For example, you can easily abstract out the tasks involved in
-		building a package that uses autoconf and automake, and put 
-		that into a bbclass for your packages to make use of. 
-		A given bbclass is located by searching for 
-		classes/filename.bbclass in 
-		<envar>BBPATH</envar>, 
+		building a package that uses autoconf and automake, and put
+		that into a bbclass for your packages to make use of.
+		A given bbclass is located by searching for
+		classes/filename.bbclass in
+		<envar>BBPATH</envar>,
 		where filename is what you inherited.
 	</para>
 	</section>
 
 <section>
 	<title>Inclusion</title>
-	<para>Next, there is the 
+	<para>Next, there is the
 		<literal>include</literal> directive, that causes BitBake to
 		parse whatever file you specify, and insert it at that
 		location, which is not unlike
 		<command>Make</command>. However, if the path specified on the
-		<literal>include</literal> 
+		<literal>include</literal>
 		line is a relative path, BitBake will locate the first one it
-		can find within 
+		can find within
 		<envar>BBPATH</envar>.
    FIX ME: This section requires improvement.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Requiring Inclusion</title>
-	<para>In contrast to the 
-		<literal>include</literal> 
-		directive, 
-		<literal>require</literal> 
+	<para>In contrast to the
+		<literal>include</literal>
+		directive,
+		<literal>require</literal>
 		will raise a ParseError if the file to be included cannot be
 		found.
-		Otherwise it will behave just like the 
-		<literal>include</literal> 
+		Otherwise it will behave just like the
+		<literal>include</literal>
 		directive.
 		FIX ME: This section requires improvement.
-		
+
 	</para>
 	</section>
-	
+
 	<section>
 	<title>INHERIT Configuration Directive</title>
 	<para>
-	     This configuration directive causes the named class to be inherited at 
+	     This configuration directive causes the named class to be inherited at
 	     this point during parsing.
 	     This variable is only valid in configuration files.
 	     </para>
-	     
+
 	     <para>
 	     </para>
-	     
+
 </section>
 </section>
 
@@ -474,7 +464,7 @@ yourself.</para>
 	<title>Defining Python Functions into the Global Python Namespace
 	</title>
 	<para>
-		<emphasis>NOTE:</emphasis> 
+		<emphasis>NOTE:</emphasis>
 		This is only supported in .bb and .bbclass files.
 	</para>
 	<para>
@@ -488,23 +478,23 @@ yourself.</para>
 		   if d.getVar('SOMECONDITION', True):
 		       return	"dependencywithcond"
 		   else:
-		       return "dependency" 
-		SOMECONDITION = "1" 
+		       return "dependency"
+		SOMECONDITION = "1"
 		DEPENDS = "${@get_depends(d)}"
 		</screen>
 	</para>
-	<para>This would result in 
-		<varname>DEPENDS</varname> 
-		containing 
+	<para>This would result in
+		<varname>DEPENDS</varname>
+		containing
 		<literal>dependencywithcond</literal>.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Functions</title>
    	   <para>NOTE: This is only supported in .bb and .bbclass files.</para>
       <para>As with most languages, functions are the building blocks that
-       define operations. 
+       define operations.
        Bitbake supports shell and python functions.
        An example shell function definition is:
        <screen>
@@ -524,7 +514,7 @@ python some_python_function () {
 there is no need to import those module.
 The datastore, "d" is also a global variable and always available to these
  functions automatically.</para>
- 
+
  <para>Bitbake will execute functions of this form using bb.build.exec_func()
 which can also be called from python functions to execute other functions,
  either shell or python based.
@@ -540,8 +530,8 @@ def some_python_function(arg1, arg2):
 The difference is that the second form takes parameters, the datastore
 is not available automatically and must be passed as a parameter and
 these functions are not called with exec_func() but are executed with
-direct python function calls. 
-The "bb" and "os" modules are still automatically available and there is no 
+direct python function calls.
+The "bb" and "os" modules are still automatically available and there is no
 need to import them.</para>
       </para>
 </section>
@@ -549,14 +539,14 @@ need to import them.</para>
 <section>
 	<title>Tasks</title>
 	<para>
-		<emphasis>NOTE:</emphasis> 
+		<emphasis>NOTE:</emphasis>
 		This is only supported in .bb and .bbclass files.
 	</para>
 	<para>A shell or python function executable through exec_func can be promoted
 	to become a task.
-	Tasks are the execution unit Bitbake uses and each step that needs to be run 
-	for a given .bb is known as a task. 
-	There is a addtask command to add new tasks and promote functions which by 
+	Tasks are the execution unit Bitbake uses and each step that needs to be run
+	for a given .bb is known as a task.
+	There is a addtask command to add new tasks and promote functions which by
 	convention must start with “do_”.
 	The addtask command is also used to describe intertask dependencies.
 	</para>
@@ -576,56 +566,56 @@ need to import them.</para>
 	being run first.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Task Flags</title>
-	<para>Tasks support a number of flags which control various 
+	<para>Tasks support a number of flags which control various
 		functionality of the task.
 		These are as follows:
 	</para>
-	<para>'dirs' - directories which should be created before the task 
+	<para>'dirs' - directories which should be created before the task
 		runs
 	</para>
-	<para>'cleandirs' - directories which should created before the task 
+	<para>'cleandirs' - directories which should created before the task
 		runs but should be empty
 	</para>
-	<para>'noexec' - marks the tasks as being empty and no execution 
+	<para>'noexec' - marks the tasks as being empty and no execution
 		required.
 		These are used as dependency placeholders or used when added
 		tasks need to be subsequently disabled.
 	</para>
-	<para>'nostamp' - don't generate a stamp file for a task.  
+	<para>'nostamp' - don't generate a stamp file for a task.
 		This means the task is always executed.
 	</para>
 	<para>'fakeroot' - this task needs to be run in a fakeroot
-		environment, obtained by adding the variables in FAKEROOTENV 
+		environment, obtained by adding the variables in FAKEROOTENV
 		to the environment.
 	</para>
 	<para>'umask' - the umask to run the task under.
 	</para>
-	<para>For the 'deptask', 'rdeptask', 'depends', 'rdepends'and 
+	<para>For the 'deptask', 'rdeptask', 'depends', 'rdepends'and
 		'recrdeptask' flags please see the dependencies section.
 	</para>
 	</section>
 
-	
+
 <section>
 	<title>Parsing and Execution</title>
 <section>
 <title>Parsing Overview</title>
 <para>
-            BitBake parses configuration files, classes, and 
+            BitBake parses configuration files, classes, and
             <filename>.bb</filename> files.
         </para>
 
         <para>
-            The first thing BitBake does is look for the 
+            The first thing BitBake does is look for the
             <filename>bitbake.conf</filename> file.
             This file resides in the within the <filename>/conf/</filename>
              directory.
             BitBake finds it by examining its
             <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
-             environment variable and looking for the 
+             environment variable and looking for the
              <filename>/conf/</filename> directory.
         </para>
 
@@ -643,7 +633,7 @@ need to import them.</para>
             The <filename>DISTRO</filename> and <filename>MACHINE</filename>
             BitBake environment variables are both usually set in
             the <filename>local.conf</filename> file.
-            Valid distribution configuration files are available in the 
+            Valid distribution configuration files are available in the
             <filename>/conf/distro/</filename> directory and valid machine
             configuration files in the <filename>meta/conf/machine/</filename>
             directory.
@@ -654,22 +644,22 @@ need to import them.</para>
         </para>
 
         <para>
-            After parsing of the configuration files, some standard classes are 
+            After parsing of the configuration files, some standard classes are
             included.
             The <filename>base.bbclass</filename> file is always included.
             Other classes that are specified in the configuration using the
             <filename>INHERIT</filename> variable are also included.
             Class files are searched for in a <filename>classes</filename>
-            subdirectory under the paths in <filename>BBPATH</filename> in the 
+            subdirectory under the paths in <filename>BBPATH</filename> in the
             same way as configuration files.
         </para>
 
         <para>
-            After classes are included, the variable 
+            After classes are included, the variable
             <filename>BBFILES</filename> is set, usually in
-            <filename>local.conf</filename>, and defines the list of places to 
+            <filename>local.conf</filename>, and defines the list of places to
             search for <filename>.bb</filename> files.
-            Adding extra content to <filename>BBFILES</filename> is best 
+            Adding extra content to <filename>BBFILES</filename> is best
             achieved through the use of BitBake layers as described in the
             Layers section below.
         </para>
@@ -692,12 +682,12 @@ need to import them.</para>
             configuration files or class files on which the
             <filename>.bb</filename> file depends change.
         </para>
-</section>	
+</section>
 	<section>
 			<title>Configuration files</title>
 		<para>Prior to parsing configuration files, Bitbake looks at certain
 		variables, including:
-				
+
 		<itemizedlist>
 		<listitem>BB-ENV-WHITELIST</listitem>
 		<listitem>BB_PRESERVE-ENV</listitem>
@@ -710,33 +700,33 @@ need to import them.</para>
 		<para>The first kind of metadata in BitBake is configuration
 			metadata.
 			This metadata is global, and therefore affects
-			<emphasis>all</emphasis> 
+			<emphasis>all</emphasis>
 			packages and tasks that are executed.
 		</para>
-		<para>BitBake will first search the current working directory 
-			for an optional "conf/bblayers.conf" configuration 
+		<para>BitBake will first search the current working directory
+			for an optional "conf/bblayers.conf" configuration
 			file.
-			This file is expected to contain a BBLAYERS variable 
+			This file is expected to contain a BBLAYERS variable
 			that is a space delimited list of 'layer' directories.
-			For each directory in this list, a "conf/layer.conf" 
-			file will be searched for and parsed with the LAYERDIR 
+			For each directory in this list, a "conf/layer.conf"
+			file will be searched for and parsed with the LAYERDIR
 			variable being set to the directory where the layer was
 			found.
-			The idea is these files will setup BBPATH and other 
+			The idea is these files will setup BBPATH and other
 			variables correctly for a given build directory
 			automatically for the user.
 		</para>
 		<para>BitBake will then expect to find 'conf/bitbake.conf'
-			somewhere in the user specified 
-			<envar>BBPATH</envar>. 
-			That configuration file generally has include 
-			directives to pull in any other metadata  (generally 
+			somewhere in the user specified
+			<envar>BBPATH</envar>.
+			That configuration file generally has include
+			directives to pull in any other metadata  (generally
 			files specific to architecture, machine,
 			<emphasis>local</emphasis>and so on).
 		</para>
 		<para>Only variable definitions and include directives are
 			allowed in .conf files.  The following variables include:
-			
+
 			<itemizedlist>
 			<listitem>BITBAKE_UI</listitem>
 			<listitem>BBDEBUG</listitem>
@@ -764,7 +754,7 @@ need to import them.</para>
             working on a single project.
             However, the more modular you organize your Metadata, the easier
             it is to cope with future changes.</para>
-		
+
 		<para>
             To illustrate how layers are used to keep things modular, consider
             machine customizations.
@@ -791,7 +781,7 @@ need to import them.</para>
 		</itemizedlist>
 		</para>
 		</section>
-		
+
 		<section>
 		<title>Schedulers</title>
 		<para>
@@ -802,26 +792,26 @@ need to import them.</para>
 		</itemizedlist>
 		</para></section>
 	</section>
-	
+
 <section>
 	<title>Classes</title>
-	<para>BitBake classes are our rudimentary inheritance mechanism. 
-		As briefly mentioned in the metadata introduction, they're 
+	<para>BitBake classes are our rudimentary inheritance mechanism.
+		As briefly mentioned in the metadata introduction, they're
 		parsed when an
-		<literal>inherit</literal> 
-		directive is encountered, and they are located in classes/ 
+		<literal>inherit</literal>
+		directive is encountered, and they are located in classes/
 		relative to the directories in
 		<envar>BBPATH</envar>.
 	</para>
 	</section>
-	
+
 <section>
         <title>.bb files</title>
 	<para>A BitBake (.bb) file is a logical unit of tasks to be executed.
 		Normally this is a package to be built.
 		Inter-.bb dependencies are obeyed.
-		The files themselves are located via the 
-		<varname>BBFILES</varname> 
+		The files themselves are located via the
+		<varname>BBFILES</varname>
 		variable, which is set to a space separated list of .bb files,
 		and does handle wildcards.
 	</para>
@@ -831,14 +821,14 @@ need to import them.</para>
 	<section>
 	<title>Events</title>
 	<para>
-		<emphasis>NOTE:</emphasis> 
+		<emphasis>NOTE:</emphasis>
 		This is only supported in .bb and .bbclass files.
 	</para>
 	<para>BitBake allows installation of event handlers.
-		Events are triggered at certain points during operation, such 
+		Events are triggered at certain points during operation, such
 		as the beginning of operation against a given .bb, the start of
 		a given task, task failure, task success, et cetera.
-		The intent is to make it easy to do things like email 
+		The intent is to make it easy to do things like email
 		notification on build failure.
 	</para>
 	<para>
@@ -850,23 +840,23 @@ need to import them.</para>
 		</screen>
 	</para>
 	<para>This event handler gets called every time an event is triggered.
-		A global variable 
-		<varname>e</varname> 
-		is defined. 
+		A global variable
+		<varname>e</varname>
+		is defined.
 		<varname>e</varname>.data
 		contains an instance of bb.data.
-		With the getName(<varname>e</varname>) method one can get the 
+		With the getName(<varname>e</varname>) method one can get the
 		name of the triggered event.
 	</para>
-	<para>The above event handler prints the name of the event and the 
-		content of the 
-		<varname>FILE</varname> 
+	<para>The above event handler prints the name of the event and the
+		content of the
+		<varname>FILE</varname>
 		variable.
 	</para>
-	
+
 	<para>
 	During a Build, the following common events occur:
-<itemizedlist>	
+<itemizedlist>
 <listitem>bb.event.ConfigParsed()</listitem>
 <listitem>bb.event.ParseStarted()</listitem>
 <listitem>bb.event.ParseProgress()</listitem>
@@ -899,27 +889,27 @@ There are also other events that occur based on specific requests to the server:
 </itemizedlist>
 </para>
 	</section>
-	
+
 	<section>
 	<title>Variants - Class Extension Mechanism</title>
 	<para>Two BitBake features exist to facilitate the creation of multiple
 		buildable incarnations from a single recipe file.
 	</para>
-	<para>The first is 
-		<varname>BBCLASSEXTEND</varname>. 
-		This variable is a space separated list of classes used to 
+	<para>The first is
+		<varname>BBCLASSEXTEND</varname>.
+		This variable is a space separated list of classes used to
 		"extend" the recipe for each variant.
 		As an example, setting
-		<screen>BBCLASSEXTEND = "native"</screen> 
+		<screen>BBCLASSEXTEND = "native"</screen>
 		results in a second incarnation of the current recipe being
 		available.
-		This second incarnation will have the "native" class 
+		This second incarnation will have the "native" class
 		inherited.
 	</para>
 	<para>The second feature is
-		<varname>BBVERSIONS</varname>. 
+		<varname>BBVERSIONS</varname>.
 		This variable allows a single recipe to build multiple versions
-		of a project from a single recipe file, and allows you to 
+		of a project from a single recipe file, and allows you to
 		specify conditional metadata (using the
 		<varname>OVERRIDES</varname> mechanism) for a single version,
 		or an optionally named range of versions:
@@ -930,34 +920,34 @@ There are also other events that occur based on specific requests to the server:
 		</screen>
 	</para>
 	<para>
-		<screen>BBVERSIONS = "1.0.[0-6]:1.0.0+ \ 1.0.[7-9]:1.0.7+" 
+		<screen>BBVERSIONS = "1.0.[0-6]:1.0.0+ \ 1.0.[7-9]:1.0.7+"
 			SRC_URI_append_1.0.7+ =	"file://some_patch_which_the_new_versions_need.patch;patch=1"
 		</screen>
 	</para>
-	<para>Note that the name of the range will default to the original 
+	<para>Note that the name of the range will default to the original
 		version of the recipe, so given OE, a recipe file of
-		foo_1.0.0+.bb will default the name of its versions to 
-		1.0.0+. 
-		This is useful, as the range name is not only placed into 
-		overrides; it's also made available for the metadata to use in 
+		foo_1.0.0+.bb will default the name of its versions to
+		1.0.0+.
+		This is useful, as the range name is not only placed into
+		overrides; it's also made available for the metadata to use in
 		the form of the
-		<varname>BPV</varname> 
-		variable, for use in file:// search paths 
+		<varname>BPV</varname>
+		variable, for use in file:// search paths
 		(<varname>FILESPATH</varname>).
 	</para>
 	</section>
-		
+
 	<section>
 	<title>Dependencies</title>
 	<section>
 	<title>Dependencies</title>
 	<para>BitBake handles dependencies at the task level since to allow for
-		efficient operation with multiple processes executing in 
+		efficient operation with multiple processes executing in
 		parallel, a robust method of specifying task dependencies is
 		needed.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Dependencies Internal to the .bb File</title>
 	<para>Where the dependencies are internal to a given .bb file, the
@@ -965,12 +955,12 @@ There are also other events that occur based on specific requests to the server:
 		directive.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Build Dependencies</title>
 	<para>DEPENDS lists build time dependencies.
-		The 'deptask' flag for tasks is used to signify the task of 
-		each item listed in DEPENDS which must have completed before 
+		The 'deptask' flag for tasks is used to signify the task of
+		each item listed in DEPENDS which must have completed before
 		that task can be executed.
 	</para>
 	<para>
@@ -979,29 +969,29 @@ There are also other events that occur based on specific requests to the server:
 		</screen>
 	</para>
 
-	<para>means the do_populate_staging task of each item in DEPENDS must 
+	<para>means the do_populate_staging task of each item in DEPENDS must
 		have completed before do_configure can execute.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Runtime Dependencies</title>
-	<para>The PACKAGES variable lists runtime packages and each of these 
+	<para>The PACKAGES variable lists runtime packages and each of these
 		can have RDEPENDS and RRECOMMENDS runtime dependencies.
 		The 'rdeptask' flag for tasks is used to signify the task of
 		each item runtime dependency which must have completed before
 		that task can be executed.
 	</para>
 	<para>
-		<screen>do_package_write[rdeptask] = 
+		<screen>do_package_write[rdeptask] =
 			"do_package"
 		</screen>
 	</para>
-	<para>means the do_package task of each item in RDEPENDS must have 
+	<para>means the do_package task of each item in RDEPENDS must have
 		completed before do_package_write can execute.
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Recursive Dependencies</title>
 	<para>These are specified with the 'recrdeptask' flag which is used
@@ -1014,30 +1004,30 @@ There are also other events that occur based on specific requests to the server:
 		and so on.
 	</para>
 	<para>It may be desireable to recurse not just through the dependencies
-		of those tasks but through the build and runtime dependencies 
+		of those tasks but through the build and runtime dependencies
 		of dependent tasks too.
-		If that is the case, the taskname itself should be referenced 
+		If that is the case, the taskname itself should be referenced
 		in the task list, e.g. do_a[recrdeptask] = "do_a do_b".
 	</para>
 	</section>
-	
+
 	<section>
 	<title>Inter Task Dependencies</title>
-	<para>The 'depends' flag for tasks is a more generic form which allows 
-		an interdependency on specific tasks rather than specifying 
+	<para>The 'depends' flag for tasks is a more generic form which allows
+		an interdependency on specific tasks rather than specifying
 		the data in DEPENDS.
 	</para>
 	<para>
-		<screen>do_patch[depends] = 
+		<screen>do_patch[depends] =
 			"quilt-native:do_populate_staging"
 		</screen>
         </para>
-	<para>means the do_populate_staging task of the target 
+	<para>means the do_populate_staging task of the target
 		quilt-native must have completed before the do_patch can
 		execute.
 	</para>
-	<para>The 'rdepends' flag works in a similar way but takes targets in 
-		the runtime namespace instead of the build time dependency 
+	<para>The 'rdepends' flag works in a similar way but takes targets in
+		the runtime namespace instead of the build time dependency
 		namespace.
 	</para>
 	</section>
@@ -1045,106 +1035,106 @@ There are also other events that occur based on specific requests to the server:
 
 <section>
 	   <title>Accessing Variable and the Data Store from Python</title>
-	
+
 	   <para>
 	   <emphasis>NOTE: This section is in draft.</emphasis>
-	   
+
 	   It is often necessary to manipulate variables within python functions
 	   and the Bitbake data store has an API which allows this.
 	   The operations available are:
-	   
+
 	   <screen>
 	   d.getVar("X", expand=False)
 	   </screen>
-	   
+
 	   returns the value of variable "X", expanding the value if specified
-	   
+
 	   <screen>
 	   d.setVar("X", value)
 	   </screen>
-	   
+
 	   sets the value of "X" to value
-	   
+
 	   <screen>
 	   d.appendVar("X", value)
 	   </screen>
-	   
+
 	   adds value to the end of variable X
-	   
+
 	   <screen>
 	   d.prependVar("X", value)
 	   </screen>
-	   
+
 	   adds value to the start of variable X
-	   
+
 	   <screen>
 	   d.delVar("X")
 	   </screen>
-	   
+
 	   deletes the variable X from the data store
-	   
+
 	   <screen>
 	   d.renameVar("X", "Y")
 	   </screen>
-	   
+
 	   renames variable X to Y
-	   
-	   <screen>	   
+
+	   <screen>
 	   d.getVarFlag("X", flag, expand=False)
 	   </screen>
-	   
+
 	   gets given flag from variable X but does not expand it.
-	   
+
 	   <screen>
 	   d.setVarFlag("X", flag, value)
 	   </screen>
-	   
+
 	   sets given flag for variable X to value.
 	   Note, setVarFlags will not clear previous flags.
 	   Think of this method as addVarFlags.
-	   
+
 	   <screen>
 	   d.appendVarFlag("X", flag, value)
 	   </screen>
-	   
+
 	   <screen>
 	   d.prependVarFlag("X", flag, value)
 	   </screen>
-	   
+
 	   <screen>
 	   d.delVarFlag("X", flag)
 	   </screen>
-	   
+
 	   <screen>
 	   d.setVarFlags("X", flagsdict)
 	   </screen>
-	   
+
 	   sets the flags specified in the dict() parameter
-	   
+
 	   <screen>
 	   d.getVarFlags("X")
 	   </screen>
-	   
+
 	   returns a dict of the flags for X
-	   
+
 	   <screen>
 	   d.delVarFlags
 	   </screen>
-	   
+
 	   deletes all the flags for a variable
 	   </para>
-	
+
 </section>
 <!--
 <section>
 	   <title>Task Checksums and Setscene</title>
-	
+
 	   <para>
 	   <emphasis>NOTE:  This section is a work in progress.</emphasis>
-	   	   
+
 	   This list is a place holder of content that needs explanation here. Items
 	   should be moved to appropriate sections below as completed.
-	   
+
 	   <itemizedlist>
 	   <listitem>STAMP</listitem>
 	   <listitem>STAMPCLEAN</listitem>
@@ -1156,12 +1146,12 @@ There are also other events that occur based on specific requests to the server:
 	   <listitem>BB_TASKHASH</listitem>
 	   </itemizedlist>
 	   </para>
-	   
+
 	   <section>
 	   <title>Task Signatures</title>
 	   <para></para>
 	   </section>
-	   
+
 	   <section>
 	   <title>Hash Generation</title>
 	   <para></para>
