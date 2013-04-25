@@ -81,7 +81,7 @@ def main (server, eventHandler):
 
     try:
         cmdline, error = server.runCommand(["getCmdLineAction"])
-        if err:
+        if error:
             print("Error getting bitbake commandline: %s" % error)
             return 1
         elif not cmdline:
