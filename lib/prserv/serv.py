@@ -266,17 +266,20 @@ def is_local_special(host, port):
     else:
         return False
 
+class PRServiceConfigError(Exception):
+    pass
+
 def auto_start(d):
     global singleton
     if (not d.getVar('PRSERV_HOST', True)) or (not d.getVar('PRSERV_PORT', True)):
-        return True
+        return
 
     if is_local_special(d.getVar('PRSERV_HOST', True), int(d.getVar('PRSERV_PORT', True))) and not singleton:
         import bb.utils
         cachedir = (d.getVar("PERSISTENT_DIR", True) or d.getVar("CACHE", True))
         if not cachedir:
             logger.critical("Please set the 'PERSISTENT_DIR' or 'CACHE' variable")
-            sys.exit(1)
+            raise PRServiceConfigError
         bb.utils.mkdirhier(cachedir)
         dbfile = os.path.join(cachedir, "prserv.sqlite3")
         logfile = os.path.join(cachedir, "prserv.log")
@@ -292,7 +295,7 @@ def auto_start(d):
         return PRServerConnection(host,port).ping()
     except Exception:
         logger.critical("PRservice %s:%d not available" % (host, port))
-    return False
+        raise PRServiceConfigError
 
 def auto_shutdown(d=None):
     global singleton
