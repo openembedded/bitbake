@@ -108,6 +108,8 @@ class Configuration:
         self.extra_setting = {}
         self.toolchain_build = False
         self.image_fstypes = ""
+        self.image_size = None
+        self.image_packages = []
         # bblayers.conf
         self.layers = []
         # image/recipes/packages

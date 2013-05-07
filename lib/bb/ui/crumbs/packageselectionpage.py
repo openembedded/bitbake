@@ -270,14 +270,17 @@ class PackageSelectionPage (HobPage):
         selected_packages_size = self.package_model.get_packages_size()
         selected_packages_size_str = HobPage._size_to_string(selected_packages_size)
 
-        image_overhead_factor = self.builder.configuration.image_overhead_factor
-        image_rootfs_size = self.builder.configuration.image_rootfs_size / 1024 # image_rootfs_size is KB
-        image_extra_size = self.builder.configuration.image_extra_size / 1024 # image_extra_size is KB
-        base_size = image_overhead_factor * selected_packages_size
-        image_total_size = max(base_size, image_rootfs_size) + image_extra_size
-        if "zypper" in self.builder.configuration.selected_packages:
-            image_total_size += (51200 * 1024)
-        image_total_size_str = HobPage._size_to_string(image_total_size)
+        if self.builder.configuration.image_packages == self.builder.configuration.selected_packages:
+            image_total_size_str = self.builder.configuration.image_size
+        else:
+            image_overhead_factor = self.builder.configuration.image_overhead_factor
+            image_rootfs_size = self.builder.configuration.image_rootfs_size / 1024 # image_rootfs_size is KB
+            image_extra_size = self.builder.configuration.image_extra_size / 1024 # image_extra_size is KB
+            base_size = image_overhead_factor * selected_packages_size
+            image_total_size = max(base_size, image_rootfs_size) + image_extra_size
+            if "zypper" in self.builder.configuration.selected_packages:
+                image_total_size += (51200 * 1024)
+            image_total_size_str = HobPage._size_to_string(image_total_size)
 
         self.label.set_label("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
@@ -297,6 +300,7 @@ class PackageSelectionPage (HobPage):
         self.refresh_selection()
         if not self.builder.customized:
             self.builder.customized = True
+            self.builder.configuration.initial_selected_image = self.builder.configuration.selected_image
             self.builder.configuration.selected_image = self.recipe_model.__custom_image__
             self.builder.rcppkglist_populated()
 

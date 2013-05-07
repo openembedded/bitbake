@@ -369,6 +369,8 @@ class ImageDetailsPage (HobPage):
         vallist = []
         vallist.append(pkg_num)
         vallist.append(default_image_size)
+        self.builder.configuration.image_size = default_image_size
+        self.builder.configuration.image_packages = self.builder.configuration.selected_packages
         if self.build_succeeded:
             edit_packages_button = HobAltButton("Edit packages")
             edit_packages_button.set_tooltip_text("Edit the packages included in your image")
