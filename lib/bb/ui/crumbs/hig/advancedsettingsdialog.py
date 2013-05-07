@@ -264,7 +264,7 @@ class AdvancedSettingsDialog (CrumbsDialog, SettingsUIHelper):
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         label = self.gen_label_widget("Image basic size (in MB)")
-        tooltip = "Sets the basic size of your target image.\nThis is the basic size of your target image unless your selected package size exceeds this value or you select \'Image Extra Size\'."
+        tooltip = "Defines the size for the generated image. The OpenEmbedded build system determines the final size for the generated image using an algorithm that takes into account the initial disk space used for the generated image, the Image basic size value, and the Additional free space value.\n\nFor more information, check the <a href=\"http://www.yoctoproject.org/docs/current/poky-ref-manual/poky-ref-manual.html#var-IMAGE_ROOTFS_SIZE\">Yocto Project Reference Manual</a>."
         rootfs_size_widget, self.rootfs_size_spinner = self.gen_spinner_widget(int(self.configuration.image_rootfs_size*1.0/1024), 0, 65536,"<b>Image basic size</b>" + "*" + tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(rootfs_size_widget, expand=False, fill=False)
@@ -272,7 +272,7 @@ class AdvancedSettingsDialog (CrumbsDialog, SettingsUIHelper):
         sub_vbox = gtk.VBox(False, 6)
         advanced_vbox.pack_start(sub_vbox, expand=False, fill=False)
         label = self.gen_label_widget("Additional free space (in MB)")
-        tooltip = "Sets the extra free space of your target image.\nBy default, the system reserves 30% of your image size as free space. If your image contains zypper, it brings in 50MB more space. The maximum free space is 64GB."
+        tooltip = "Sets extra free disk space to be added to the generated image. Use this variable when you want to ensure that a specific amount of free disk space is available on a device after an image is installed and running."
         extra_size_widget, self.extra_size_spinner = self.gen_spinner_widget(int(self.configuration.image_extra_size*1.0/1024), 0, 65536,"<b>Additional free space</b>" + "*" + tooltip)
         sub_vbox.pack_start(label, expand=False, fill=False)
         sub_vbox.pack_start(extra_size_widget, expand=False, fill=False)
