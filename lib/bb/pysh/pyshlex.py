@@ -292,7 +292,7 @@ class WordLexer:
         elif sep=='${':
             parsefunc = self._parse_parameter
         else:
-            raise NotImplementedError()
+            raise NotImplementedError(sep)
             
         pos, closed = parsefunc(buf, result, eof)
         return pos, closed
