@@ -152,12 +152,7 @@ class PackageListModel(gtk.ListStore):
         if user_data:
             val1 = model.get_value(iter1, PackageListModel.COL_NAME)
             val2 = model.get_value(iter2, PackageListModel.COL_NAME)
-            if val1.startswith(user_data) and not val2.startswith(user_data):
-                return -1
-            elif not val1.startswith(user_data) and val2.startswith(user_data):
-                return 1
-            else:
-                return 0
+            return self.cmp_vals(val1, val2, user_data)
         else:
             val1 = model.get_value(iter1, PackageListModel.COL_FADE_INC)
             val2 = model.get_value(iter2, PackageListModel.COL_INC)
@@ -167,12 +162,7 @@ class PackageListModel(gtk.ListStore):
         if user_data:
             val1 = model.get_value(iter1, PackageListModel.COL_NAME)
             val2 = model.get_value(iter2, PackageListModel.COL_NAME)
-            if val1.startswith(user_data) and not val2.startswith(user_data):
-                return -1
-            elif not val1.startswith(user_data) and val2.startswith(user_data):
-                return 1
-            else:
-                return 0
+            return self.cmp_vals(val1, val2, user_data)
         else:
             val1 = model.get_value(iter1, PackageListModel.COL_INC)
             val2 = model.get_value(iter2, PackageListModel.COL_INC)
@@ -181,12 +171,15 @@ class PackageListModel(gtk.ListStore):
     def sort_func(self, model, iter1, iter2, user_data):
         val1 = model.get_value(iter1, PackageListModel.COL_NAME)
         val2 = model.get_value(iter2, PackageListModel.COL_NAME)
+        return self.cmp_vals(val1, val2, user_data)
+
+    def cmp_vals(self, val1, val2, user_data):
         if val1.startswith(user_data) and not val2.startswith(user_data):
             return -1
         elif not val1.startswith(user_data) and val2.startswith(user_data):
             return 1
         else:
-            return 0
+            return cmp(val1, val2)
 
     def convert_vpath_to_path(self, view_model, view_path):
         # view_model is the model sorted
@@ -533,12 +526,7 @@ class RecipeListModel(gtk.ListStore):
         if user_data:
             val1 = model.get_value(iter1, RecipeListModel.COL_NAME)
             val2 = model.get_value(iter2, RecipeListModel.COL_NAME)
-            if val1.startswith(user_data) and not val2.startswith(user_data):
-                return -1
-            elif not val1.startswith(user_data) and val2.startswith(user_data):
-                return 1
-            else:
-                return 0
+            return self.cmp_vals(val1, val2, user_data)
         else:
             val1 = model.get_value(iter1, RecipeListModel.COL_FADE_INC)
             val2 = model.get_value(iter2, RecipeListModel.COL_INC)
@@ -548,12 +536,7 @@ class RecipeListModel(gtk.ListStore):
         if user_data:
             val1 = model.get_value(iter1, RecipeListModel.COL_NAME)
             val2 = model.get_value(iter2, RecipeListModel.COL_NAME)
-            if val1.startswith(user_data) and not val2.startswith(user_data):
-                return -1
-            elif not val1.startswith(user_data) and val2.startswith(user_data):
-                return 1
-            else:
-                return 0
+            return self.cmp_vals(val1, val2, user_data)
         else:
             val1 = model.get_value(iter1, RecipeListModel.COL_INC)
             val2 = model.get_value(iter2, RecipeListModel.COL_INC)
@@ -562,12 +545,15 @@ class RecipeListModel(gtk.ListStore):
     def sort_func(self, model, iter1, iter2, user_data):
         val1 = model.get_value(iter1, RecipeListModel.COL_NAME)
         val2 = model.get_value(iter2, RecipeListModel.COL_NAME)
+        return self.cmp_vals(val1, val2, user_data)
+
+    def cmp_vals(self, val1, val2, user_data):
         if val1.startswith(user_data) and not val2.startswith(user_data):
             return -1
         elif not val1.startswith(user_data) and val2.startswith(user_data):
             return 1
         else:
-            return 0
+            return cmp(val1, val2)
 
     """
     Create, if required, and return a filtered gtk.TreeModelSort
