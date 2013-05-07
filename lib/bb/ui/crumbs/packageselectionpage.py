@@ -199,6 +199,7 @@ class PackageSelectionPage (HobPage):
         if self.package_model.filtered_nb == 0:
             if not self.ins.get_nth_page(current_tab).top_bar:
                 self.ins.get_nth_page(current_tab).add_no_result_bar(entry)
+                self.ins.get_nth_page(current_tab).top_bar.set_no_show_all(True)
             self.ins.get_nth_page(current_tab).top_bar.show()
             self.ins.get_nth_page(current_tab).scroll.hide()
         else:
@@ -246,6 +247,13 @@ class PackageSelectionPage (HobPage):
         self.builder.parsing_warnings = []
         self.builder.build_image()
 
+    def refresh_tables(self):
+        self.ins.reset_entry(self.ins.search, 0)
+        for tab in self.tables:
+            index = self.tables.index(tab)
+            filter = self.pages[index]['filter']
+            tab.set_model(self.package_model.tree_model(filter, initial=True))
+
     def back_button_clicked_cb(self, button):
         if self.builder.previous_step ==  self.builder.IMAGE_GENERATED:
             self.builder.restore_initial_selected_packages()
@@ -253,6 +261,7 @@ class PackageSelectionPage (HobPage):
             self.builder.show_image_details()
         else:
             self.builder.show_configuration()
+        self.refresh_tables()
 
     def refresh_selection(self):
         self.builder.configuration.selected_packages = self.package_model.get_selected_packages()

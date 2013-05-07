@@ -214,6 +214,7 @@ class RecipeSelectionPage (HobPage):
         if self.recipe_model.filtered_nb == 0:
             if not self.ins.get_nth_page(current_tab).top_bar:
                 self.ins.get_nth_page(current_tab).add_no_result_bar(entry)
+                self.ins.get_nth_page(current_tab).top_bar.set_no_show_all(True)
             self.ins.get_nth_page(current_tab).top_bar.show()
             self.ins.get_nth_page(current_tab).scroll.hide()
         else:
@@ -243,13 +244,22 @@ class RecipeSelectionPage (HobPage):
             self.builder.show_recipe_property_dialog(properties)
 
     def build_packages_clicked_cb(self, button):
+        self.refresh_tables()
         self.builder.build_packages()
+
+    def refresh_tables(self):
+        self.ins.reset_entry(self.ins.search, 0)
+        for tab in self.tables:
+            index = self.tables.index(tab)
+            filter = self.pages[index]['filter']
+            tab.set_model(self.recipe_model.tree_model(filter, search_data="", initial=True))
 
     def back_button_clicked_cb(self, button):
         self.builder.recipe_model.set_selected_image(self.builder.configuration.initial_selected_image)
         self.builder.image_configuration_page.update_image_combo(self.builder.recipe_model, self.builder.configuration.initial_selected_image)
         self.builder.image_configuration_page.update_image_desc()
         self.builder.show_configuration()
+        self.refresh_tables()
 
     def refresh_selection(self):
         self.builder.configuration.selected_image = self.recipe_model.get_selected_image()
