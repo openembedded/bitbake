@@ -240,11 +240,22 @@ Default BBFILES are the .bb files in the current directory.""")
 
     idle = server.getServerIdleCB()
 
-    cooker = bb.cooker.BBCooker(configuration, idle, initialenv)
-    cooker.parseCommandLine()
+    try:
+        cooker = bb.cooker.BBCooker(configuration, idle, initialenv)
+        cooker.parseCommandLine()
 
-    server.addcooker(cooker)
-    server.saveConnectionDetails()
+        server.addcooker(cooker)
+        server.saveConnectionDetails()
+    except:
+        while True:
+            import queue
+            try:
+                event = server.event_queue.get(block=False)
+            except (queue.Empty, IOError):
+                break
+            if isinstance(event, logging.LogRecord):
+                logger.handle(event)
+        raise
     server.detach()
 
     # Should no longer need to ever reference cooker
