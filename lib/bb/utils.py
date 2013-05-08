@@ -255,18 +255,20 @@ def better_compile(text, file, realfile, mode = "exec"):
     try:
         return compile(text, file, mode)
     except Exception as e:
+        error = []
         # split the text into lines again
         body = text.split('\n')
-        logger.error("Error in compiling python function in %s", realfile)
-        logger.error(str(e))
+        error.append("Error in compiling python function in %s:\n" % realfile)
         if e.lineno:
-            logger.error("The lines leading to this error were:")
-            logger.error("\t%d:%s:'%s'", e.lineno, e.__class__.__name__, body[e.lineno-1])
-            logger.error("\n".join(_print_trace(body, e.lineno)))
+            error.append("The code lines resulting in this error were:")
+            error.extend(_print_trace(body, e.lineno))
         else:
-            logger.error("The function causing this error was:")
+            error.append("The function causing this error was:")
             for line in body:
-                logger.error(line)
+                error.append(line)
+        error.append("%s: %s" % (e.__class__.__name__, str(e)))
+
+        logger.error("\n".join(error))
 
         e = bb.BBHandledException(e)
         raise e
