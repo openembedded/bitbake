@@ -92,9 +92,9 @@ def sortPriorities(pn, dataCache, pkg_pn = None):
             priorities[priority][preference] = []
         priorities[priority][preference].append(f)
     tmp_pn = []
-    for pri in sorted(priorities, lambda a, b: a - b):
+    for pri in sorted(priorities):
         tmp_pref = []
-        for pref in sorted(priorities[pri], lambda a, b: b - a):
+        for pref in sorted(priorities[pri]):
             tmp_pref.extend(priorities[pri][pref])
         tmp_pn = [tmp_pref] + tmp_pn
 
