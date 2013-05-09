@@ -10,5 +10,5 @@ def init_logger(logfile, loglevel):
     FORMAT = '%(asctime)-15s %(message)s'
     logging.basicConfig(level=numeric_level, filename=logfile, format=FORMAT)
 
-class NotFoundError(StandardError):
+class NotFoundError(Exception):
     pass
