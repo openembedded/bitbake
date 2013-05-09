@@ -1052,7 +1052,7 @@ class BBCooker:
                                         parselog.error("invalid value for LAYERVERSION_%s: \"%s\"", c, layerver)
                                         errors = True
                                         continue
-                                    if lver <> depver:
+                                    if lver != depver:
                                         parselog.error("Layer '%s' depends on version %d of layer '%s', but version %d is enabled in your configuration", c, depver, dep, lver)
                                         errors = True
                                 else:
