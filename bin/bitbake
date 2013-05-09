@@ -43,6 +43,10 @@ from bb import server
 __version__ = "1.19.0"
 logger = logging.getLogger("BitBake")
 
+# Python multiprocessing requires /dev/shm
+if not os.access('/dev/shm', os.W_OK | os.X_OK):
+    sys.exit("FATAL: /dev/shm does not exist or is not writable")
+
 # Unbuffer stdout to avoid log truncation in the event
 # of an unorderly exit as well as to provide timely
 # updates to log files for use with tail
