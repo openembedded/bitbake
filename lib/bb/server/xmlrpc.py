@@ -101,7 +101,7 @@ class BBTransport(xmlrpclib.Transport):
             if not response:
                 break
             if self.verbose:
-                print "body:", repr(response)
+                print("body:", repr(response))
             p.feed(response)
 
         file.close()

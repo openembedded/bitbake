@@ -201,11 +201,11 @@ class TerminalFilter(object):
             content = "No currently running tasks (%s of %s)" % (self.helper.tasknumber_current, self.helper.tasknumber_total)
         else:
             content = "Currently %s running tasks (%s of %s):" % (len(activetasks), self.helper.tasknumber_current, self.helper.tasknumber_total)
-        print content
+        print(content)
         lines = 1 + int(len(content) / (self.columns + 1))
         for tasknum, task in enumerate(tasks):
             content = "%s: %s" % (tasknum, task)
-            print content
+            print(content)
             lines = lines + 1 + int(len(content) / (self.columns + 1))
         self.footer_present = lines
         self.lastpids = runningpids[:]
@@ -300,7 +300,7 @@ def main(server, eventHandler, tf = TerminalFilter):
                 if log_exec_tty:
                     tries = event.retries
                     while tries:
-                        print "Trying to run: %s" % event.prog
+                        print("Trying to run: %s" % event.prog)
                         if os.system(event.prog) == 0:
                             break
                         time.sleep(event.sleep_delay)
