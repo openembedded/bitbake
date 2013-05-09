@@ -104,6 +104,7 @@ def get_statements(filename, absolute_filename, base_name):
             if not s: break
             s = s.rstrip()
             feeder(lineno, s, filename, base_name, statements)
+        file.close()
         if __inpython__:
             # add a blank line to close out any python definition
             feeder(IN_PYTHON_EOF, "", filename, base_name, statements)

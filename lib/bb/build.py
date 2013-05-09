@@ -275,7 +275,8 @@ def exec_func_shell(func, d, runfile, cwd=None):
     bb.debug(2, "Executing shell function %s" % func)
 
     try:
-        bb.process.run(cmd, shell=False, stdin=NULL, log=logfile)
+        with open(os.devnull, 'r+') as stdin:
+            bb.process.run(cmd, shell=False, stdin=stdin, log=logfile)
     except bb.process.CmdError:
         logfn = d.getVar('BB_LOGFILE', True)
         raise FuncFailed(func, logfn)
@@ -319,12 +320,11 @@ def _exec_task(fn, task, d, quieterr):
     # Document the order of the tasks...
     logorder = os.path.join(tempdir, 'log.task_order')
     try:
-        logorderfile = file(logorder, 'a')
+        with open(logorder, 'a') as logorderfile:
+            logorderfile.write('{0} ({1}): {2}\n'.format(task, os.getpid(), logbase))
     except OSError:
         logger.exception("Opening log file '%s'", logorder)
         pass
-    logorderfile.write('{0} ({1}): {2}\n'.format(task, os.getpid(), logbase))
-    logorderfile.close()
 
     # Setup the courtesy link to the logfn
     loglink = os.path.join(tempdir, 'log.{0}'.format(task))
@@ -348,10 +348,10 @@ def _exec_task(fn, task, d, quieterr):
             self.triggered = True
 
     # Handle logfiles
-    si = file('/dev/null', 'r')
+    si = open('/dev/null', 'r')
     try:
         bb.utils.mkdirhier(os.path.dirname(logfn))
-        logfile = file(logfn, 'w')
+        logfile = open(logfn, 'w')
     except OSError:
         logger.exception("Opening log file '%s'", logfn)
         pass
@@ -533,8 +533,7 @@ def make_stamp(task, d, file_name = None):
     # change on broken NFS filesystems
     if stamp:
         bb.utils.remove(stamp)
-        f = open(stamp, "w")
-        f.close()
+        open(stamp, "w").close()
 
     # If we're in task context, write out a signature file for each task
     # as it completes

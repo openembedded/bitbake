@@ -102,6 +102,10 @@ def _logged_communicate(pipe, log, input):
                     log.write(data)
     finally:    
         log.flush()
+    if pipe.stdout is not None:
+        pipe.stdout.close()
+    if pipe.stderr is not None:
+        pipe.stderr.close()
     return ''.join(outdata), ''.join(errdata)
 
 def run(cmd, input=None, log=None, **options):

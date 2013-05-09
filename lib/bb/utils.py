@@ -414,6 +414,10 @@ def lockfile(name, shared=False, retry=True):
                     return lf
             lf.close()
         except Exception:
+            try:
+                lf.close()
+            except Exception:
+                pass
             pass
         if not retry:
             return None
@@ -443,8 +447,9 @@ def md5_file(filename):
         import md5
         m = md5.new()
 
-    for line in open(filename):
-        m.update(line)
+    with open(filename, "rb") as f:
+        for line in f:
+            m.update(line)
     return m.hexdigest()
 
 def sha256_file(filename):
@@ -460,8 +465,9 @@ def sha256_file(filename):
         return None
 
     s = hashlib.sha256()
-    for line in open(filename):
-        s.update(line)
+    with open(filename, "rb") as f:
+        for line in f:
+            s.update(line)
     return s.hexdigest()
 
 def preserved_envvars_exported():

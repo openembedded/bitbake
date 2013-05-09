@@ -738,8 +738,9 @@ class MultiProcessCache(object):
         logger.debug(1, "Using cache in '%s'", self.cachefile)
 
         try:
-            p = pickle.Unpickler(file(self.cachefile, "rb"))
-            data, version = p.load()
+            with open(self.cachefile, "rb") as f:
+                p = pickle.Unpickler(f)
+                data, version = p.load()
         except:
             return
 
@@ -779,8 +780,9 @@ class MultiProcessCache(object):
                 i = i + 1
                 continue
 
-            p = pickle.Pickler(file(self.cachefile + "-" + str(i), "wb"), -1)
-            p.dump([self.cachedata_extras, self.__class__.CACHE_VERSION])
+            with open(self.cachefile + "-" + str(i), "wb") as f:
+                p = pickle.Pickler(f, -1)
+                p.dump([self.cachedata_extras, self.__class__.CACHE_VERSION])
 
         bb.utils.unlockfile(lf)
         bb.utils.unlockfile(glf)
@@ -798,8 +800,9 @@ class MultiProcessCache(object):
         glf = bb.utils.lockfile(self.cachefile + ".lock")
 
         try:
-            p = pickle.Unpickler(file(self.cachefile, "rb"))
-            data, version = p.load()
+            with open(self.cachefile, "rb") as f:
+                p = pickle.Unpickler(f)
+                data, version = p.load()
         except (IOError, EOFError):
             data, version = None, None
 
@@ -809,8 +812,9 @@ class MultiProcessCache(object):
         for f in [y for y in os.listdir(os.path.dirname(self.cachefile)) if y.startswith(os.path.basename(self.cachefile) + '-')]:
             f = os.path.join(os.path.dirname(self.cachefile), f)
             try:
-                p = pickle.Unpickler(file(f, "rb"))
-                extradata, version = p.load()
+                with open(f, "rb") as fd:
+                    p = pickle.Unpickler(fd)
+                    extradata, version = p.load()
             except (IOError, EOFError):
                 extradata, version = self.create_cachedata(), None
 
@@ -822,8 +826,9 @@ class MultiProcessCache(object):
 
         self.compress_keys(data)
 
-        p = pickle.Pickler(file(self.cachefile, "wb"), -1)
-        p.dump([data, self.__class__.CACHE_VERSION])
+        with open(self.cachefile, "wb") as f:
+            p = pickle.Pickler(f, -1)
+            p.dump([data, self.__class__.CACHE_VERSION])
 
         bb.utils.unlockfile(glf)
 

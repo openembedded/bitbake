@@ -145,6 +145,8 @@ def handle(fn, data, include):
     if oldfile:
         data.setVar('FILE', oldfile)
 
+    f.close()
+
     for f in confFilters:
         f(fn, data)
 
