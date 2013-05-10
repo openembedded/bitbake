@@ -89,7 +89,6 @@ class BBCooker:
 
     def __init__(self, configuration, server_registration_cb, savedenv={}):
         self.status = None
-        self.appendlist = {}
         self.skiplist = {}
 
         self.server_registration_cb = server_registration_cb
@@ -419,7 +418,7 @@ class BBCooker:
 
         if fn:
             try:
-                envdata = bb.cache.Cache.loadDataFull(fn, self.get_file_appends(fn), self.configuration.data)
+                envdata = bb.cache.Cache.loadDataFull(fn, self.collection.get_file_appends(fn), self.configuration.data)
             except Exception as e:
                 parselog.exception("Unable to read %s", fn)
                 raise
@@ -698,22 +697,13 @@ class BBCooker:
         print("}", file=tdepends_file)
         logger.info("Task dependencies saved to 'task-depends.dot'")
 
-    def calc_bbfile_priority( self, filename, matched = None ):
-        for _, _, regex, pri in self.status.bbfile_config_priorities:
-            if regex.match(filename):
-                if matched != None:
-                    if not regex in matched:
-                        matched.add(regex)
-                return pri
-        return 0
-
     def show_appends_with_no_recipes( self ):
         recipes = set(os.path.basename(f)
                       for f in self.status.pkg_fn.iterkeys())
         recipes |= set(os.path.basename(f)
                       for f in self.skiplist.iterkeys())
-        appended_recipes = self.appendlist.iterkeys()
-        appends_without_recipes = [self.appendlist[recipe]
+        appended_recipes = self.collection.appendlist.iterkeys()
+        appends_without_recipes = [self.collection.appendlist[recipe]
                                    for recipe in appended_recipes
                                    if recipe not in recipes]
         if appends_without_recipes:
@@ -747,32 +737,8 @@ class BBCooker:
                 providerlog.error("conflicting preferences for %s: both %s and %s specified", providee, provider, self.status.preferred[providee])
             self.status.preferred[providee] = provider
 
-        # Calculate priorities for each file
-        matched = set()
-        for p in self.status.pkg_fn:
-            realfn, cls = bb.cache.Cache.virtualfn2realfn(p)
-            self.status.bbfile_priority[p] = self.calc_bbfile_priority(realfn, matched)
  
-        # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
-        unmatched = set()
-        for _, _, regex, pri in self.status.bbfile_config_priorities:        
-            if not regex in matched:
-                unmatched.add(regex)
-
-        def findmatch(regex):
-            for bbfile in self.appendlist:
-                for append in self.appendlist[bbfile]:
-                    if regex.match(append):
-                        return True
-            return False
-
-        for unmatch in unmatched.copy():
-            if findmatch(unmatch):
-                unmatched.remove(unmatch)
-
-        for collection, pattern, regex, _ in self.status.bbfile_config_priorities:
-            if regex in unmatched:
-                collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
+        self.status.bbfile_priority = self.collection.collection_priorities(self.status.pkg_fn)
 
     def findCoreBaseFiles(self, subdir, configfile):
         corebase = self.configuration.data.getVar('COREBASE', True) or ""
@@ -1111,7 +1077,9 @@ class BBCooker:
         """
         if bf.startswith("/") or bf.startswith("../"):
             bf = os.path.abspath(bf)
-        filelist, masked = self.collect_bbfiles()
+
+        self.collection = CookerCollectFiles(self.status.bbfile_config_priorities)
+        filelist, masked = self.collection.collect_bbfiles(self.configuration.data, self.configuration.event_data)
         try:
             os.stat(bf)
             bf = os.path.abspath(bf)
@@ -1165,7 +1133,7 @@ class BBCooker:
         self.buildSetVars()
 
         self.status = bb.cache.CacheData(self.caches_array)
-        infos = bb.cache.Cache.parse(fn, self.get_file_appends(fn), \
+        infos = bb.cache.Cache.parse(fn, self.collection.get_file_appends(fn), \
                                      self.configuration.data,
                                      self.caches_array)
         infos = dict(infos)
@@ -1332,7 +1300,9 @@ class BBCooker:
             for dep in self.configuration.extra_assume_provided:
                 self.status.ignored_dependencies.add(dep)
 
-            (filelist, masked) = self.collect_bbfiles()
+            self.collection = CookerCollectFiles(self.status.bbfile_config_priorities)
+            (filelist, masked) = self.collection.collect_bbfiles(self.configuration.data, self.configuration.event_data)
+
             self.configuration.data.renameVar("__depends", "__base_depends")
 
             self.parser = CookerParser(self, filelist, masked)
@@ -1369,118 +1339,8 @@ class BBCooker:
 
         return pkgs_to_build
 
-    def get_bbfiles( self, path = os.getcwd() ):
-        """Get list of default .bb files by reading out the current directory"""
-        contents = os.listdir(path)
-        bbfiles = []
-        for f in contents:
-            (root, ext) = os.path.splitext(f)
-            if ext == ".bb":
-                bbfiles.append(os.path.abspath(os.path.join(os.getcwd(), f)))
-        return bbfiles
 
-    def find_bbfiles( self, path ):
-        """Find all the .bb and .bbappend files in a directory"""
-        from os.path import join
 
-        found = []
-        for dir, dirs, files in os.walk(path):
-            for ignored in ('SCCS', 'CVS', '.svn'):
-                if ignored in dirs:
-                    dirs.remove(ignored)
-            found += [join(dir, f) for f in files if (f.endswith('.bb') or f.endswith('.bbappend'))]
-
-        return found
-
-    def collect_bbfiles( self ):
-        """Collect all available .bb build files"""
-        masked = 0
-
-        collectlog.debug(1, "collecting .bb files")
-
-        files = (data.getVar( "BBFILES", self.configuration.data, True) or "").split()
-        data.setVar("BBFILES", " ".join(files), self.configuration.data)
-
-        # Sort files by priority
-        files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem) )
-
-        if not len(files):
-            files = self.get_bbfiles()
-
-        if not len(files):
-            collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
-            bb.event.fire(CookerExit(), self.configuration.event_data)
-
-        # Can't use set here as order is important
-        newfiles = []
-        for f in files:
-            if os.path.isdir(f):
-                dirfiles = self.find_bbfiles(f)
-                for g in dirfiles:
-                    if g not in newfiles:
-                        newfiles.append(g)
-            else:
-                globbed = glob.glob(f)
-                if not globbed and os.path.exists(f):
-                    globbed = [f]
-                for g in globbed:
-                    if g not in newfiles:
-                        newfiles.append(g)
-
-        bbmask = self.configuration.data.getVar('BBMASK', True)
-
-        if bbmask:
-            try:
-                bbmask_compiled = re.compile(bbmask)
-            except sre_constants.error:
-                collectlog.critical("BBMASK is not a valid regular expression, ignoring.")
-                return list(newfiles), 0
-
-        bbfiles = []
-        bbappend = []
-        for f in newfiles:
-            if bbmask and bbmask_compiled.search(f):
-                collectlog.debug(1, "skipping masked file %s", f)
-                masked += 1
-                continue
-            if f.endswith('.bb'):
-                bbfiles.append(f)
-            elif f.endswith('.bbappend'):
-                bbappend.append(f)
-            else:
-                collectlog.debug(1, "skipping %s: unknown file extension", f)
-
-        # Build a list of .bbappend files for each .bb file
-        for f in bbappend:
-            base = os.path.basename(f).replace('.bbappend', '.bb')
-            if not base in self.appendlist:
-               self.appendlist[base] = []
-            if f not in self.appendlist[base]:
-                self.appendlist[base].append(f)
-
-        # Find overlayed recipes
-        # bbfiles will be in priority order which makes this easy
-        bbfile_seen = dict()
-        self.overlayed = defaultdict(list)
-        for f in reversed(bbfiles):
-            base = os.path.basename(f)
-            if base not in bbfile_seen:
-                bbfile_seen[base] = f
-            else:
-                topfile = bbfile_seen[base]
-                self.overlayed[topfile].append(f)
-
-        return (bbfiles, masked)
-
-    def get_file_appends(self, fn):
-        """
-        Returns a list of .bbappend files to apply to fn
-        NB: collect_bbfiles() must have been called prior to this
-        """
-        f = os.path.basename(fn)
-        if f in self.appendlist:
-            return self.appendlist[f]
-        return []
 
     def pre_serve(self):
         # Empty the environment. The environment will be populated as
@@ -1543,6 +1403,166 @@ class CookerExit(bb.event.Event):
 
     def __init__(self):
         bb.event.Event.__init__(self)
+
+
+class CookerCollectFiles(object):
+    def __init__(self, priorities):
+        self.appendlist = {}
+        self.bbfile_config_priorities = priorities
+
+    def calc_bbfile_priority( self, filename, matched = None ):
+        for _, _, regex, pri in self.bbfile_config_priorities:
+            if regex.match(filename):
+                if matched != None:
+                    if not regex in matched:
+                        matched.add(regex)
+                return pri
+        return 0
+
+    def get_bbfiles(self, path = os.getcwd()):
+        """Get list of default .bb files by reading out the current directory"""
+        contents = os.listdir(path)
+        bbfiles = []
+        for f in contents:
+            (root, ext) = os.path.splitext(f)
+            if ext == ".bb":
+                bbfiles.append(os.path.abspath(os.path.join(os.getcwd(), f)))
+        return bbfiles
+
+    def find_bbfiles(self, path):
+        """Find all the .bb and .bbappend files in a directory"""
+        from os.path import join
+
+        found = []
+        for dir, dirs, files in os.walk(path):
+            for ignored in ('SCCS', 'CVS', '.svn'):
+                if ignored in dirs:
+                    dirs.remove(ignored)
+            found += [join(dir, f) for f in files if (f.endswith('.bb') or f.endswith('.bbappend'))]
+
+        return found
+
+    def collect_bbfiles(self, config, eventdata):
+        """Collect all available .bb build files"""
+        masked = 0
+
+        collectlog.debug(1, "collecting .bb files")
+
+        files = (config.getVar( "BBFILES", True) or "").split()
+        config.setVar("BBFILES", " ".join(files))
+
+        # Sort files by priority
+        files.sort( key=lambda fileitem: self.calc_bbfile_priority(fileitem) )
+
+        if not len(files):
+            files = self.get_bbfiles()
+
+        if not len(files):
+            collectlog.error("no recipe files to build, check your BBPATH and BBFILES?")
+            bb.event.fire(CookerExit(), eventdata)
+
+        # Can't use set here as order is important
+        newfiles = []
+        for f in files:
+            if os.path.isdir(f):
+                dirfiles = self.find_bbfiles(f)
+                for g in dirfiles:
+                    if g not in newfiles:
+                        newfiles.append(g)
+            else:
+                globbed = glob.glob(f)
+                if not globbed and os.path.exists(f):
+                    globbed = [f]
+                for g in globbed:
+                    if g not in newfiles:
+                        newfiles.append(g)
+
+        bbmask = config.getVar('BBMASK', True)
+
+        if bbmask:
+            try:
+                bbmask_compiled = re.compile(bbmask)
+            except sre_constants.error:
+                collectlog.critical("BBMASK is not a valid regular expression, ignoring.")
+                return list(newfiles), 0
+
+        bbfiles = []
+        bbappend = []
+        for f in newfiles:
+            if bbmask and bbmask_compiled.search(f):
+                collectlog.debug(1, "skipping masked file %s", f)
+                masked += 1
+                continue
+            if f.endswith('.bb'):
+                bbfiles.append(f)
+            elif f.endswith('.bbappend'):
+                bbappend.append(f)
+            else:
+                collectlog.debug(1, "skipping %s: unknown file extension", f)
+
+        # Build a list of .bbappend files for each .bb file
+        for f in bbappend:
+            base = os.path.basename(f).replace('.bbappend', '.bb')
+            if not base in self.appendlist:
+               self.appendlist[base] = []
+            if f not in self.appendlist[base]:
+                self.appendlist[base].append(f)
+
+        # Find overlayed recipes
+        # bbfiles will be in priority order which makes this easy
+        bbfile_seen = dict()
+        self.overlayed = defaultdict(list)
+        for f in reversed(bbfiles):
+            base = os.path.basename(f)
+            if base not in bbfile_seen:
+                bbfile_seen[base] = f
+            else:
+                topfile = bbfile_seen[base]
+                self.overlayed[topfile].append(f)
+
+        return (bbfiles, masked)
+
+    def get_file_appends(self, fn):
+        """
+        Returns a list of .bbappend files to apply to fn
+        """
+        f = os.path.basename(fn)
+        if f in self.appendlist:
+            return self.appendlist[f]
+        return []
+
+    def collection_priorities(self, pkgfns):
+
+        priorities = {}
+
+        # Calculate priorities for each file
+        matched = set()
+        for p in pkgfns:
+            realfn, cls = bb.cache.Cache.virtualfn2realfn(p)
+            priorities[p] = self.calc_bbfile_priority(realfn, matched)
+ 
+        # Don't show the warning if the BBFILE_PATTERN did match .bbappend files
+        unmatched = set()
+        for _, _, regex, pri in self.bbfile_config_priorities:        
+            if not regex in matched:
+                unmatched.add(regex)
+
+        def findmatch(regex):
+            for bbfile in self.appendlist:
+                for append in self.appendlist[bbfile]:
+                    if regex.match(append):
+                        return True
+            return False
+
+        for unmatch in unmatched.copy():
+            if findmatch(unmatch):
+                unmatched.remove(unmatch)
+
+        for collection, pattern, regex, _ in self.bbfile_config_priorities:
+            if regex in unmatched:
+                collectlog.warn("No bb files matched BBFILE_PATTERN_%s '%s'" % (collection, pattern))
+
+        return priorities
 
 def catch_parse_error(func):
     """Exception handling bits for our parsing"""
@@ -1677,7 +1697,7 @@ class CookerParser(object):
         self.fromcache = []
         self.willparse = []
         for filename in self.filelist:
-            appends = self.cooker.get_file_appends(filename)
+            appends = self.cooker.collection.get_file_appends(filename)
             if not self.bb_cache.cacheValid(filename, appends):
                 self.willparse.append((filename, appends, cooker.caches_array))
             else:
@@ -1840,7 +1860,7 @@ class CookerParser(object):
 
     def reparse(self, filename):
         infos = self.bb_cache.parse(filename,
-                                    self.cooker.get_file_appends(filename),
+                                    self.cooker.collection.get_file_appends(filename),
                                     self.cfgdata, self.cooker.caches_array)
         for vfn, info_array in infos:
             self.cooker.status.add_from_recipeinfo(vfn, info_array)

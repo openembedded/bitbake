@@ -957,7 +957,7 @@ class RunQueue:
         for task in range(len(self.rqdata.runq_fnid)):
             if self.rqdata.runq_fnid[task] not in done:
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
-                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
+                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.collection.get_file_appends(fn), self.cooker.configuration.data)
                 done.add(self.rqdata.runq_fnid[task])
 
         bb.parse.siggen.dump_sigs(self.rqdata.dataCache)
@@ -1123,7 +1123,7 @@ class RunQueueExecute:
             bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
             ret = 0
             try:
-                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.get_file_appends(fn), self.cooker.configuration.data)
+                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.collection.get_file_appends(fn), self.cooker.configuration.data)
                 the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
                 for h in self.rqdata.hashes:
                     the_data.setVar("BBHASH_%s" % h, self.rqdata.hashes[h])
