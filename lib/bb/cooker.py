@@ -1394,7 +1394,7 @@ class BBCooker:
 
     def collect_bbfiles( self ):
         """Collect all available .bb build files"""
-        parsed, cached, skipped, masked = 0, 0, 0, 0
+        masked = 0
 
         collectlog.debug(1, "collecting .bb files")
 
