@@ -712,7 +712,7 @@ class BBCooker:
             else:
                 bb.fatal(msg)
 
-    def buildDepgraph( self ):
+    def handlePrefProviders(self):
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
@@ -728,8 +728,6 @@ class BBCooker:
             if providee in self.status.preferred and self.status.preferred[providee] != provider:
                 providerlog.error("conflicting preferences for %s: both %s and %s specified", providee, provider, self.status.preferred[providee])
             self.status.preferred[providee] = provider
-
-         self.status.bbfile_priority = self.collection.collection_priorities(self.status.pkg_fn)
 
     def findCoreBaseFiles(self, subdir, configfile):
         corebase = self.configuration.data.getVar('COREBASE', True) or ""
@@ -1299,7 +1297,8 @@ class BBCooker:
             if self.parser.error:
                 sys.exit(1)
             self.show_appends_with_no_recipes()
-            self.buildDepgraph()
+            self.handlePrefProviders()
+            self.status.bbfile_priority = self.collection.collection_priorities(self.status.pkg_fn)
             self.state = state.running
             return None
 
