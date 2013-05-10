@@ -1419,14 +1419,14 @@ class CookerCollectFiles(object):
                 return pri
         return 0
 
-    def get_bbfiles(self, path = os.getcwd()):
+    def get_bbfiles(self):
         """Get list of default .bb files by reading out the current directory"""
+        path = os.getcwd()
         contents = os.listdir(path)
         bbfiles = []
         for f in contents:
-            (root, ext) = os.path.splitext(f)
-            if ext == ".bb":
-                bbfiles.append(os.path.abspath(os.path.join(os.getcwd(), f)))
+            if f.endswith(".bb"):
+                bbfiles.append(os.path.abspath(os.path.join(path, f)))
         return bbfiles
 
     def find_bbfiles(self, path):
