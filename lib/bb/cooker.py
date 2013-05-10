@@ -359,9 +359,6 @@ class BBCooker:
 
     def showVersions(self):
 
-        # Need files parsed
-        self.updateCache()
-
         pkg_pn = self.status.pkg_pn
         (latest_versions, preferred_versions) = bb.providers.findProviders(self.configuration.data, self.status, pkg_pn)
 
@@ -396,8 +393,6 @@ class BBCooker:
             fn = self.matchFile(fn)
             fn = bb.cache.Cache.realfn2virtual(fn, cls)
         elif len(pkgs_to_build) == 1:
-            self.updateCache()
-
             ignore = self.configuration.data.getVar("ASSUME_PROVIDED", True) or ""
             if pkgs_to_build[0] in set(ignore.split()):
                 bb.fatal("%s is in ASSUME_PROVIDED" % pkgs_to_build[0])
@@ -445,8 +440,7 @@ class BBCooker:
         Prepare a runqueue and taskdata object for iteration over pkgs_to_build
         """
         bb.event.fire(bb.event.TreeDataPreparationStarted(), self.configuration.data)
-        # Need files parsed
-        self.updateCache()
+
         # If we are told to do the None task then query the default task
         if (task == None):
             task = self.configuration.cmd
@@ -1207,9 +1201,6 @@ class BBCooker:
         """
         Attempt to build the targets specified
         """
-
-        # Need files parsed
-        self.updateCache()
 
         # If we are told to do the NULL task then query the default task
         if (task == None):
