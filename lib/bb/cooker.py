@@ -1431,14 +1431,12 @@ class CookerCollectFiles(object):
 
     def find_bbfiles(self, path):
         """Find all the .bb and .bbappend files in a directory"""
-        from os.path import join
-
         found = []
         for dir, dirs, files in os.walk(path):
             for ignored in ('SCCS', 'CVS', '.svn'):
                 if ignored in dirs:
                     dirs.remove(ignored)
-            found += [join(dir, f) for f in files if (f.endswith('.bb') or f.endswith('.bbappend'))]
+            found += [os.path.join(dir, f) for f in files if (f.endswith('.bb') or f.endswith('.bbappend'))]
 
         return found
 
