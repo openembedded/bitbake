@@ -713,8 +713,6 @@ class BBCooker:
                 bb.fatal(msg)
 
     def buildDepgraph( self ):
-        all_depends = self.status.all_depends
-        pn_provides = self.status.pn_provides
 
         localdata = data.createCopy(self.configuration.data)
         bb.data.update_data(localdata)
@@ -731,8 +729,7 @@ class BBCooker:
                 providerlog.error("conflicting preferences for %s: both %s and %s specified", providee, provider, self.status.preferred[providee])
             self.status.preferred[providee] = provider
 
- 
-        self.status.bbfile_priority = self.collection.collection_priorities(self.status.pkg_fn)
+         self.status.bbfile_priority = self.collection.collection_priorities(self.status.pkg_fn)
 
     def findCoreBaseFiles(self, subdir, configfile):
         corebase = self.configuration.data.getVar('COREBASE', True) or ""
@@ -858,14 +855,12 @@ class BBCooker:
         """
          Build package list for "bitbake world"
         """
-        all_depends = self.status.all_depends
-        pn_provides = self.status.pn_provides
         parselog.debug(1, "collating packages for \"world\"")
         for f in self.status.possible_world:
             terminal = True
             pn = self.status.pkg_fn[f]
 
-            for p in pn_provides[pn]:
+            for p in self.status.pn_provides[pn]:
                 if p.startswith('virtual/'):
                     parselog.debug(2, "World build skipping %s due to %s provider starting with virtual/", f, p)
                     terminal = False
