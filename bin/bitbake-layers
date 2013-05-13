@@ -89,7 +89,7 @@ class Commands(cmd.Cmd):
         for layerdir in self.bblayers:
             layername = self.get_layer_name(layerdir)
             layerpri = 0
-            for layer, _, regex, pri in self.bbhandler.cooker.recpiecache.bbfile_config_priorities:
+            for layer, _, regex, pri in self.bbhandler.cooker.recipecache.bbfile_config_priorities:
                 if regex.match(os.path.join(layerdir, 'test')):
                     layerpri = pri
                     break
@@ -225,9 +225,9 @@ Options:
 
 
     def list_recipes(self, title, pnspec, show_overlayed_only, show_same_ver_only, show_filenames, show_multi_provider_only):
-        pkg_pn = self.bbhandler.cooker.recpiecache.pkg_pn
-        (latest_versions, preferred_versions) = bb.providers.findProviders(self.bbhandler.cooker.configuration.data, self.bbhandler.cooker.recpiecache, pkg_pn)
-        allproviders = bb.providers.allProviders(self.bbhandler.cooker.recpiecache)
+        pkg_pn = self.bbhandler.cooker.recipecache.pkg_pn
+        (latest_versions, preferred_versions) = bb.providers.findProviders(self.bbhandler.cooker.configuration.data, self.bbhandler.cooker.recipecache, pkg_pn)
+        allproviders = bb.providers.allProviders(self.bbhandler.cooker.recipecache)
 
         # Ensure we list skipped recipes
         # We are largely guessing about PN, PV and the preferred version here,
@@ -426,7 +426,7 @@ build results (as the layer priority order has effectively changed).
         # have come from)
         first_regex = None
         layerdir = layers[0]
-        for layername, pattern, regex, _ in self.bbhandler.cooker.recpiecache.bbfile_config_priorities:
+        for layername, pattern, regex, _ in self.bbhandler.cooker.recipecache.bbfile_config_priorities:
             if regex.match(os.path.join(layerdir, 'test')):
                 first_regex = regex
                 break
@@ -456,7 +456,7 @@ build results (as the layer priority order has effectively changed).
                                 logger.warning("File %s does not match the flattened layer's BBFILES setting, you may need to edit conf/layer.conf or move the file elsewhere" % f1full)
 
     def get_file_layer(self, filename):
-        for layer, _, regex, _ in self.bbhandler.cooker.recpiecache.bbfile_config_priorities:
+        for layer, _, regex, _ in self.bbhandler.cooker.recipecache.bbfile_config_priorities:
             if regex.match(filename):
                 for layerdir in self.bblayers:
                     if regex.match(os.path.join(layerdir, 'test')) and re.match(layerdir, filename):
@@ -464,7 +464,7 @@ build results (as the layer priority order has effectively changed).
         return "?"
 
     def get_file_layerdir(self, filename):
-        for layer, _, regex, _ in self.bbhandler.cooker.recpiecache.bbfile_config_priorities:
+        for layer, _, regex, _ in self.bbhandler.cooker.recipecache.bbfile_config_priorities:
             if regex.match(filename):
                 for layerdir in self.bblayers:
                     if regex.match(os.path.join(layerdir, 'test')) and re.match(layerdir, filename):

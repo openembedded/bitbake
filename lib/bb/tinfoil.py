@@ -71,13 +71,13 @@ class Tinfoil:
         self.logger.setLevel(logging.INFO)
         sys.stderr.write("done.\n")
 
-        self.cooker_data = self.cooker.recpiecache
+        self.cooker_data = self.cooker.recipecache
 
     def prepare(self, config_only = False):
         if not self.cooker_data:
             if config_only:
                 self.cooker.parseConfiguration()
-                self.cooker_data = self.cooker.recpiecache
+                self.cooker_data = self.cooker.recipecache
             else:
                 self.parseRecipes()
 
