@@ -252,7 +252,10 @@ Default BBFILES are the .bb files in the current directory.""")
         server.saveConnectionDetails()
     except:
         while True:
-            import queue
+            try:
+                import queue
+            except ImportError:
+                import Queue as queue
             try:
                 event = server.event_queue.get(block=False)
             except (queue.Empty, IOError):
