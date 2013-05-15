@@ -275,24 +275,23 @@ class PropertyDialog(CrumbsDialog):
                 binb_items_count = len(binb.split(','))
                 binb_items = binb.split(',')
                                		
-		vbox = gtk.VBox(True,spacing = 0)
-                
+		vbox = gtk.VBox(False,spacing = 0)
+
                 ######################################## SUMMARY LABEL #########################################                	                
                 
                 if summary != '':                
                         self.label_short = gtk.Label()
-                        self.label_short.set_size_request(300,-1)
+                        self.label_short.set_width_chars(37)
                         self.label_short.set_selectable(True)                
                         self.label_short.set_line_wrap(True)
                         self.label_short.set_markup("<b>" + summary + "</b>")
                         self.label_short.set_property("xalign", 0)
                         
-                        self.vbox.pack_start(self.label_short, expand=False, fill=False, padding=0)
+                        self.vbox.add(self.label_short)
                 
                 ########################################## NAME ROW + COL #######################################
                                 
                 self.label_short = gtk.Label()
-                self.label_short.set_size_request(300,-1)
                 self.label_short.set_selectable(True)
                 self.label_short.set_line_wrap(True)
                 self.label_short.set_markup("<span weight=\"bold\">Name: </span>" + name)
@@ -303,7 +302,6 @@ class PropertyDialog(CrumbsDialog):
                 ####################################### VERSION ROW + COL ####################################
                 
                 self.label_short = gtk.Label()
-                self.label_short.set_size_request(300,-1)
                 self.label_short.set_selectable(True)
                 self.label_short.set_line_wrap(True)
                 self.label_short.set_markup("<span weight=\"bold\">Version: </span>" + version)
@@ -314,7 +312,6 @@ class PropertyDialog(CrumbsDialog):
                 ##################################### REVISION ROW + COL #####################################
 
                 self.label_short = gtk.Label()
-                self.label_short.set_size_request(300,-1)
                 self.label_short.set_line_wrap(True)
                 self.label_short.set_selectable(True)
                 self.label_short.set_markup("<span weight=\"bold\">Revision: </span>" + revision)
@@ -325,7 +322,6 @@ class PropertyDialog(CrumbsDialog):
                 ################################## GROUP ROW + COL ############################################
                
                 self.label_short = gtk.Label()
-                self.label_short.set_size_request(300,-1)  
                 self.label_short.set_selectable(True)              
                 self.label_short.set_line_wrap(True)                                
                 self.label_short.set_markup("<span weight=\"bold\">Group: </span>" + group)
@@ -347,7 +343,6 @@ class PropertyDialog(CrumbsDialog):
                         self.label_info.set_property("xalign", 0)
                        
                         self.label_short = gtk.Label()
-                        self.label_short.set_size_request(300,-1)   
                         self.label_short.set_selectable(True)                     
                         self.label_short.set_line_wrap(True)                        
                         self.label_short.set_markup("<b>Homepage: </b>")                      
@@ -369,7 +364,6 @@ class PropertyDialog(CrumbsDialog):
                         self.label_info.set_property("xalign", 0)  
 
                         self.label_short = gtk.Label()
-                        self.label_short.set_size_request(300,-1)    
                         self.label_short.set_selectable(True)                    
                         self.label_short.set_line_wrap(True)
                         self.label_short.set_markup("<b>Bugtracker: </b>")                   
@@ -381,7 +375,6 @@ class PropertyDialog(CrumbsDialog):
                 ################################# LICENSE ROW + COL ############################################
                 
                 self.label_info = gtk.Label()
-                self.label_info.set_size_request(300,-1)
                 self.label_info.set_selectable(True)
                 self.label_info.set_line_wrap(True)
                 self.label_info.set_markup(license)
@@ -404,16 +397,25 @@ class PropertyDialog(CrumbsDialog):
                         self.label_short.set_line_wrap(True)
                         self.label_short.set_markup("<span weight=\"bold\">Brought in by: </span>")
                         self.label_short.set_property("xalign", 0)
-
-                        self.label_info = gtk.Label()
-                        self.label_info.set_size_request(300,-1)
-                        self.label_info.set_selectable(True)
-                        self.label_info.set_markup(binb)
-                        self.label_info.set_property("xalign", 0)
-                        self.label_info.set_line_wrap(True)
-                        
                         self.vbox.add(self.label_short)
-                        self.vbox.add(self.label_info)
+                        self.label_info = gtk.Label()
+                        self.label_info.set_selectable(True)
+                        self.label_info.set_width_chars(36)
+                        if len(binb) > 200:
+                            scrolled_window = gtk.ScrolledWindow()
+                            scrolled_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+                            scrolled_window.set_size_request(100,100)
+                            self.label_info.set_markup(binb)
+                            self.label_info.set_padding(6,6)
+                            self.label_info.set_alignment(0,0)
+                            self.label_info.set_line_wrap(True)
+                            scrolled_window.add_with_viewport(self.label_info)
+                            self.vbox.add(scrolled_window)
+                        else:
+                            self.label_info.set_markup(binb)
+                            self.label_info.set_property("xalign", 0)
+                            self.label_info.set_line_wrap(True) 
+                            self.vbox.add(self.label_info)
 
                 ################################ DESCRIPTION TAG ROW #################################################
                 
@@ -428,11 +430,22 @@ class PropertyDialog(CrumbsDialog):
                 hbox = gtk.HBox(True,spacing = 0)
 
                 self.label_short = gtk.Label()
-                self.label_short.set_size_request(300,-1)
-                self.label_short.set_selectable(True)                
-                self.label_short.set_text(description)
-                self.label_short.set_line_wrap(True)
-                self.label_short.set_property("xalign", 0)
-                self.vbox.add(self.label_short)
+                self.label_short.set_selectable(True)
+                self.label_short.set_width_chars(36)
+                if len(description) > 200:
+                    scrolled_window = gtk.ScrolledWindow()
+                    scrolled_window.set_policy(gtk.POLICY_NEVER,gtk.POLICY_ALWAYS)
+                    scrolled_window.set_size_request(100,100)
+                    self.label_short.set_markup(description)
+                    self.label_short.set_padding(6,6)
+                    self.label_short.set_alignment(0,0)
+                    self.label_short.set_line_wrap(True)
+                    scrolled_window.add_with_viewport(self.label_short)
+                    self.vbox.add(scrolled_window)
+                else:    
+                    self.label_short.set_markup(description)
+                    self.label_short.set_property("xalign", 0)
+                    self.label_short.set_line_wrap(True)
+                    self.vbox.add(self.label_short)
 
                 self.vbox.show_all()
