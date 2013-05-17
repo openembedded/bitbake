@@ -27,6 +27,10 @@ import bb
 import bb.msg
 import multiprocessing
 import fcntl
+import subprocess
+import glob
+import traceback
+import errno
 from commands import getstatusoutput
 from contextlib import contextmanager
 
@@ -276,7 +280,6 @@ def better_compile(text, file, realfile, mode = "exec"):
 def _print_exception(t, value, tb, realfile, text, context):
     error = []
     try:
-        import traceback
         exception = traceback.format_exception_only(t, value)
         error.append('Error executing a python function in %s:\n' % realfile)
 
@@ -565,11 +568,9 @@ def remove(path, recurse=False):
     if not path:
         return
     if recurse:
-        import subprocess, glob
         # shutil.rmtree(name) would be ideal but its too slow
         subprocess.call(['rm', '-rf'] + glob.glob(path))
         return
-    import os, errno, glob
     for name in glob.glob(path):
         try:
             os.unlink(name)

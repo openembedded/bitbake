@@ -28,6 +28,8 @@ BitBake build tools.
 from __future__ import absolute_import
 from __future__ import print_function
 import os, re
+import signal
+import glob
 import logging
 import urllib
 import urlparse
@@ -38,6 +40,8 @@ import operator
 import bb.persist_data, bb.utils
 import bb.checksum
 from bb import data
+import bb.process
+import subprocess
 
 __version__ = "2"
 _checksum_cache = bb.checksum.FileChecksumCache()
@@ -584,7 +588,6 @@ def update_stamp(u, ud, d):
         open(ud.donestamp, 'w').close()
 
 def subprocess_setup():
-    import signal
     # Python installs a SIGPIPE handler by default. This is usually not what
     # non-Python subprocesses expect.
     # SIGPIPE errors are known issues with gzip/bash
@@ -652,9 +655,6 @@ def runfetchcmd(cmd, d, quiet = False, cleanup = []):
     Optionally echo command output to stdout
     Optionally remove the files/directories listed in cleanup upon failure
     """
-
-    import bb.process
-    import subprocess
 
     # Need to export PATH as binary could be in metadata paths
     # rather than host provided
@@ -913,7 +913,6 @@ def get_file_checksums(filelist, pn):
         try:
             checksum = _checksum_cache.get_checksum(f)
         except OSError as e:
-            import traceback
             bb.warn("Unable to get checksum for %s SRC_URI entry %s: %s" % (pn, os.path.basename(f), e))
             return None
         return checksum
@@ -923,7 +922,6 @@ def get_file_checksums(filelist, pn):
         checksum = None
         if '*' in pth:
             # Handle globs
-            import glob
             for f in glob.glob(pth):
                 checksum = checksum_file(f)
                 if checksum:
@@ -1133,7 +1131,6 @@ class FetchMethod(object):
         raise NoMethodError(url)
 
     def unpack(self, urldata, rootdir, data):
-        import subprocess
         iterate = False
         file = urldata.localpath
 
