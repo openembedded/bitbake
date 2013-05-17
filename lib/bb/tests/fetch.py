@@ -251,8 +251,23 @@ class URITest(unittest.TestCase):
             self.assertEqual(uri.params, {})
             self.assertEqual(str(uri), (str(uri).split(";"))[0])
 
+class FetcherTest(unittest.TestCase):
 
-class FetcherUriTest(unittest.TestCase):
+    def setUp(self):
+        self.d = bb.data.init()
+        self.tempdir = tempfile.mkdtemp()
+        self.dldir = os.path.join(self.tempdir, "download")
+        os.mkdir(self.dldir)
+        self.d.setVar("DL_DIR", self.dldir)
+        self.unpackdir = os.path.join(self.tempdir, "unpacked")
+        os.mkdir(self.unpackdir)
+        persistdir = os.path.join(self.tempdir, "persistdata")
+        self.d.setVar("PERSISTENT_DIR", persistdir)
+
+    def tearDown(self):
+        bb.utils.prunedir(self.tempdir)
+
+class MirrorUriTest(FetcherTest):
 
     replaceuris = {
         ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "http://somewhere.org/somedir/") 
@@ -315,102 +330,77 @@ class FetcherUriTest(unittest.TestCase):
         uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
         self.assertEqual(uris, ['file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
 
-class FetcherTest(unittest.TestCase):
+class FetcherNetworkTest(FetcherTest):
 
-    def setUp(self):
-        self.d = bb.data.init()
-        self.tempdir = tempfile.mkdtemp()
-        self.dldir = os.path.join(self.tempdir, "download")
-        os.mkdir(self.dldir)
-        self.d.setVar("DL_DIR", self.dldir)
-        self.unpackdir = os.path.join(self.tempdir, "unpacked")
-        os.mkdir(self.unpackdir)
-        persistdir = os.path.join(self.tempdir, "persistdata")
-        self.d.setVar("PERSISTENT_DIR", persistdir)
-
-    def tearDown(self):
-        bb.utils.prunedir(self.tempdir)
-
-    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
-                     "Unset BB_SKIP_NETTESTS to run network tests")
-    def test_fetch(self):
-        fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
-        fetcher.download()
-        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
-        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.1.tar.gz"), 57892)
-        self.d.setVar("BB_NO_NETWORK", "1")
-        fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
-        fetcher.download()
-        fetcher.unpack(self.unpackdir)
-        self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.0/")), 9)
-        self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.1/")), 9)
-
-    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
-                     "Unset BB_SKIP_NETTESTS to run network tests")
-    def test_fetch_mirror(self):
-        self.d.setVar("MIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
-        fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
-        fetcher.download()
-        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
-
-    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
-                     "Unset BB_SKIP_NETTESTS to run network tests")
-    def test_fetch_premirror(self):
-        self.d.setVar("PREMIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
-        fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
-        fetcher.download()
-        self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
-
-    def gitfetcher(self, url1, url2):
-        def checkrevision(self, fetcher):
+    if os.environ.get("BB_SKIP_NETTESTS") == "yes":
+        print("Unset BB_SKIP_NETTESTS to run network tests")
+    else:
+        def test_fetch(self):
+            fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
+            fetcher.download()
+            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
+            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.1.tar.gz"), 57892)
+            self.d.setVar("BB_NO_NETWORK", "1")
+            fetcher = bb.fetch.Fetch(["http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", "http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.1.tar.gz"], self.d)
+            fetcher.download()
             fetcher.unpack(self.unpackdir)
-            revision = bb.process.run("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git")[0].strip()
-            self.assertEqual(revision, "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
+            self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.0/")), 9)
+            self.assertEqual(len(os.listdir(self.unpackdir + "/bitbake-1.1/")), 9)
 
-        self.d.setVar("BB_GENERATE_MIRROR_TARBALLS", "1")
-        self.d.setVar("SRCREV", "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
-        fetcher = bb.fetch.Fetch([url1], self.d)
-        fetcher.download()
-        checkrevision(self, fetcher)
-        # Wipe out the dldir clone and the unpacked source, turn off the network and check mirror tarball works
-        bb.utils.prunedir(self.dldir + "/git2/")
-        bb.utils.prunedir(self.unpackdir)
-        self.d.setVar("BB_NO_NETWORK", "1")
-        fetcher = bb.fetch.Fetch([url2], self.d)
-        fetcher.download()
-        checkrevision(self, fetcher)
+        def test_fetch_mirror(self):
+            self.d.setVar("MIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
+            fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
+            fetcher.download()
+            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
 
-    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
-                     "Unset BB_SKIP_NETTESTS to run network tests")
-    def test_gitfetch(self):
-        url1 = url2 = "git://git.openembedded.org/bitbake"
-        self.gitfetcher(url1, url2)
+        def test_fetch_premirror(self):
+            self.d.setVar("PREMIRRORS", "http://.*/.* http://downloads.yoctoproject.org/releases/bitbake")
+            fetcher = bb.fetch.Fetch(["http://invalid.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz"], self.d)
+            fetcher.download()
+            self.assertEqual(os.path.getsize(self.dldir + "/bitbake-1.0.tar.gz"), 57749)
 
-    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
-                     "Unset BB_SKIP_NETTESTS to run network tests")
-    def test_gitfetch_premirror(self):
-        url1 = "git://git.openembedded.org/bitbake"
-        url2 = "git://someserver.org/bitbake"
-        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
-        self.gitfetcher(url1, url2)
+        def gitfetcher(self, url1, url2):
+            def checkrevision(self, fetcher):
+                fetcher.unpack(self.unpackdir)
+                revision = bb.process.run("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git")[0].strip()
+                self.assertEqual(revision, "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
 
-    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
-                     "Unset BB_SKIP_NETTESTS to run network tests")
-    def test_gitfetch_premirror2(self):
-        url1 = url2 = "git://someserver.org/bitbake"
-        self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
-        self.gitfetcher(url1, url2)
+            self.d.setVar("BB_GENERATE_MIRROR_TARBALLS", "1")
+            self.d.setVar("SRCREV", "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
+            fetcher = bb.fetch.Fetch([url1], self.d)
+            fetcher.download()
+            checkrevision(self, fetcher)
+            # Wipe out the dldir clone and the unpacked source, turn off the network and check mirror tarball works
+            bb.utils.prunedir(self.dldir + "/git2/")
+            bb.utils.prunedir(self.unpackdir)
+            self.d.setVar("BB_NO_NETWORK", "1")
+            fetcher = bb.fetch.Fetch([url2], self.d)
+            fetcher.download()
+            checkrevision(self, fetcher)
 
-    @unittest.skipIf(os.environ.get("BB_SKIP_NETTESTS") == "yes",
-                     "Unset BB_SKIP_NETTESTS to run network tests")
-    def test_gitfetch_premirror3(self):
-        realurl = "git://git.openembedded.org/bitbake"
-        dummyurl = "git://someserver.org/bitbake"
-        self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
-        os.chdir(self.tempdir)
-        bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
-        self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
-        self.gitfetcher(dummyurl, dummyurl)
+        def test_gitfetch(self):
+            url1 = url2 = "git://git.openembedded.org/bitbake"
+            self.gitfetcher(url1, url2)
+
+        def test_gitfetch_premirror(self):
+            url1 = "git://git.openembedded.org/bitbake"
+            url2 = "git://someserver.org/bitbake"
+            self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
+            self.gitfetcher(url1, url2)
+
+        def test_gitfetch_premirror2(self):
+            url1 = url2 = "git://someserver.org/bitbake"
+            self.d.setVar("PREMIRRORS", "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n")
+            self.gitfetcher(url1, url2)
+
+        def test_gitfetch_premirror3(self):
+            realurl = "git://git.openembedded.org/bitbake"
+            dummyurl = "git://someserver.org/bitbake"
+            self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
+            os.chdir(self.tempdir)
+            bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
+            self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
+            self.gitfetcher(dummyurl, dummyurl)
 
 class URLHandle(unittest.TestCase):
 
