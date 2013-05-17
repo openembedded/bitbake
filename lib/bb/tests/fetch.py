@@ -341,7 +341,7 @@ class FetcherTest(unittest.TestCase):
     def gitfetcher(self, url1, url2):
         def checkrevision(self, fetcher):
             fetcher.unpack(self.unpackdir)
-            revision = subprocess.check_output("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git").strip()
+            revision = bb.process.run("git rev-parse HEAD", shell=True, cwd=self.unpackdir + "/git")[0].strip()
             self.assertEqual(revision, "270a05b0b4ba0959fe0624d2a4885d7b70426da5")
 
         self.d.setVar("BB_GENERATE_MIRROR_TARBALLS", "1")
@@ -385,7 +385,7 @@ class FetcherTest(unittest.TestCase):
         dummyurl = "git://someserver.org/bitbake"
         self.sourcedir = self.unpackdir.replace("unpacked", "sourcemirror.git")
         os.chdir(self.tempdir)
-        subprocess.check_output("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
+        bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
         self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
         self.gitfetcher(dummyurl, dummyurl)
 
