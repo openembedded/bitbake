@@ -252,7 +252,7 @@ class URITest(unittest.TestCase):
             self.assertEqual(str(uri), (str(uri).split(";"))[0])
 
 
-class FetcherTest(unittest.TestCase):
+class FetcherUriTest(unittest.TestCase):
 
     replaceuris = {
         ("git://git.invalid.infradead.org/mtd-utils.git;tag=1234567890123456789012345678901234567890", "git://.*/.*", "http://somewhere.org/somedir/") 
@@ -293,6 +293,29 @@ class FetcherTest(unittest.TestCase):
                 "git://someserver.org/bitbake git://git.openembedded.org/bitbake \n" \
                 "https://.*/.* file:///someotherpath/downloads/ \n" \
                 "http://.*/.* file:///someotherpath/downloads/ \n"
+
+    def test_urireplace(self):
+        for k, v in self.replaceuris.items():
+            ud = bb.fetch.FetchData(k[0], self.d)
+            ud.setup_localpath(self.d)
+            mirrors = bb.fetch2.mirror_from_string("%s %s" % (k[1], k[2]))
+            newuris, uds = bb.fetch2.build_mirroruris(ud, mirrors, self.d)
+            self.assertEqual([v], newuris)
+
+    def test_urilist1(self):
+        fetcher = bb.fetch.FetchData("http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
+        mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
+        uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
+        self.assertEqual(uris, ['file:///somepath/downloads/bitbake-1.0.tar.gz', 'file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
+
+    def test_urilist2(self):
+        # Catch https:// -> files:// bug
+        fetcher = bb.fetch.FetchData("https://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
+        mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
+        uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
+        self.assertEqual(uris, ['file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
+
+class FetcherTest(unittest.TestCase):
 
     def setUp(self):
         self.d = bb.data.init()
@@ -388,28 +411,6 @@ class FetcherTest(unittest.TestCase):
         bb.process.run("git clone %s %s 2> /dev/null" % (realurl, self.sourcedir), shell=True)
         self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
         self.gitfetcher(dummyurl, dummyurl)
-
-    def test_urireplace(self):
-        for k, v in self.replaceuris.items():
-            ud = bb.fetch.FetchData(k[0], self.d)
-            ud.setup_localpath(self.d)
-            mirrors = bb.fetch2.mirror_from_string("%s %s" % (k[1], k[2]))
-            newuris, uds = bb.fetch2.build_mirroruris(ud, mirrors, self.d)
-            self.assertEqual([v], newuris)
-
-    def test_urilist1(self):
-        fetcher = bb.fetch.FetchData("http://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
-        mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
-        uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
-        self.assertEqual(uris, ['file:///somepath/downloads/bitbake-1.0.tar.gz', 'file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
-
-    def test_urilist2(self):
-        # Catch https:// -> files:// bug
-        fetcher = bb.fetch.FetchData("https://downloads.yoctoproject.org/releases/bitbake/bitbake-1.0.tar.gz", self.d)
-        mirrors = bb.fetch2.mirror_from_string(self.mirrorvar)
-        uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
-        self.assertEqual(uris, ['file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
-
 
 class URLHandle(unittest.TestCase):
 
