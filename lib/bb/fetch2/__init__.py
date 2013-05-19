@@ -619,7 +619,10 @@ def get_srcrev(d):
         raise FetchError("SRCREV was used yet no valid SCM was found in SRC_URI")
 
     if len(scms) == 1 and len(urldata[scms[0]].names) == 1:
-        return urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d, urldata[scms[0]].names[0])
+        autoinc, rev = urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d, urldata[scms[0]].names[0])
+        if autoinc:
+            return "AUTOINC+" + rev
+        return rev
 
     #
     # Mutiple SCMs are in SRC_URI so we resort to SRCREV_FORMAT
@@ -628,18 +631,14 @@ def get_srcrev(d):
     if not format:
         raise FetchError("The SRCREV_FORMAT variable must be set when multiple SCMs are used.")
 
-    autoinc = False
-    autoinc_templ = 'AUTOINC+'
+    seenautoinc = False
     for scm in scms:
         ud = urldata[scm]
         for name in ud.names:
-            rev = ud.method.sortable_revision(scm, ud, d, name)
-            if rev.startswith(autoinc_templ):
-                if not autoinc:
-                    autoinc = True
-                    format = "%s%s" % (autoinc_templ, format)
-                rev = rev[len(autoinc_templ):]
-
+            autoinc, rev = ud.method.sortable_revision(scm, ud, d, name)
+            if autoinc and not seenautoinc:
+                rev = "AUTOINC+" + rev
+                seenautoinc
             format = format.replace(name, rev)
 
     return format
@@ -1277,14 +1276,8 @@ class FetchMethod(object):
             return rev
 
     def sortable_revision(self, url, ud, d, name):
-        """
-
-        """
-        if hasattr(self, "_sortable_revision"):
-            return self._sortable_revision(url, ud, d)
-
         latest_rev = self._build_revision(url, ud, d, name)
-        return 'AUTOINC+%s' % str(latest_rev)
+        return True, str(latest_rev)
 
     def generate_revision_key(self, url, ud, d, name):
         key = self._revision_key(url, ud, d, name)

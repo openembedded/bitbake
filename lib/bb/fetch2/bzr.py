@@ -132,12 +132,12 @@ class Bzr(FetchMethod):
 
         return output.strip()
 
-    def _sortable_revision(self, url, ud, d):
+    def sortable_revision(self, url, ud, d, name):
         """
         Return a sortable revision number which in our case is the revision number
         """
 
-        return self._build_revision(url, ud, d)
+        return False, self._build_revision(url, ud, d)
 
     def _build_revision(self, url, ud, d):
         return ud.revision
