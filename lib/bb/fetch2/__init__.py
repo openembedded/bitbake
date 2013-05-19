@@ -620,6 +620,8 @@ def get_srcrev(d):
 
     if len(scms) == 1 and len(urldata[scms[0]].names) == 1:
         autoinc, rev = urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d, urldata[scms[0]].names[0])
+        if len(rev) > 10:
+            rev = rev[:10]
         if autoinc:
             return "AUTOINC+" + rev
         return rev
@@ -636,6 +638,8 @@ def get_srcrev(d):
         ud = urldata[scm]
         for name in ud.names:
             autoinc, rev = ud.method.sortable_revision(scm, ud, d, name)
+            if len(rev) > 10:
+                rev = rev[:10]
             if autoinc and not seenautoinc:
                 rev = "AUTOINC+" + rev
                 seenautoinc
