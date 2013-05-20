@@ -87,11 +87,9 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration, server_registration_cb, savedenv={}):
+    def __init__(self, configuration):
         self.recipecache = None
         self.skiplist = {}
-
-        self.server_registration_cb = server_registration_cb
 
         self.configuration = configuration
 
@@ -100,6 +98,7 @@ class BBCooker:
         # to use environment variables which have been cleaned from the
         # BitBake processes env
         self.savedenv = bb.data.init()
+        savedenv = configuration.params.environment
         for k in savedenv:
             self.savedenv.setVar(k, savedenv[k])
 
@@ -179,7 +178,7 @@ class BBCooker:
         if self.configuration.show_environment:
             self.configuration.data.enableTracking()
 
-        if not self.server_registration_cb:
+        if not self.configuration.server_register_idlecallback:
             self.configuration.data.setVar("BB_WORKERCONTEXT", "1")
 
         filtered_keys = bb.utils.approved_variables()
@@ -1188,7 +1187,7 @@ class BBCooker:
                 return True
             return retval
 
-        self.server_registration_cb(buildFileIdle, rq)
+        self.configuration.server_register_idlecallback(buildFileIdle, rq)
 
     def buildTargets(self, targets, task):
         """
@@ -1246,7 +1245,7 @@ class BBCooker:
         if universe:
             rq.rqdata.warn_multi_bb = True
 
-        self.server_registration_cb(buildTargetsIdle, rq)
+        self.configuration.server_register_idlecallback(buildTargetsIdle, rq)
 
     def generateNewImage(self, image, base_image, package_queue):
         '''

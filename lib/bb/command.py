@@ -78,7 +78,7 @@ class Command:
         if command not in CommandsAsync.__dict__:
             return None, "No such command"
         self.currentAsyncCommand = (command, commandline)
-        self.cooker.server_registration_cb(self.cooker.runCommands, self.cooker)
+        self.cooker.configuration.server_register_idlecallback(self.cooker.runCommands, self.cooker)
         return True, None
 
     def runAsyncCommand(self):
