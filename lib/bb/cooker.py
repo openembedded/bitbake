@@ -1486,7 +1486,10 @@ class BBCooker:
         # Empty the environment. The environment will be populated as
         # necessary from the data store.
         #bb.utils.empty_environment()
-        prserv.serv.auto_start(self.configuration.data)
+        try:
+            prserv.serv.auto_start(self.configuration.data)
+        except prserv.serv.PRServiceConfigError:
+            bb.event.fire(CookerExit(), self.configuration.event_data)
         return
 
     def post_serve(self):
