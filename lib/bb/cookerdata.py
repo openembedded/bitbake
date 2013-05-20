@@ -117,11 +117,20 @@ class CookerConfiguration(object):
         self.postfile = []
         self.debug = 0
         self.cmd = None
+        self.abort = True
+        self.force = False
+        self.ui = None
+        self.profile = False
+        self.nosetscene = False
+        self.invalidate_stamp = False
+        self.dump_signatures = False
+        self.dry_run = False
 
     def setConfigParameters(self, parameters):
         self.params = parameters
-        for key, val in parameters.options.__dict__.items():
-            setattr(self, key, val)
+        for key in self.__dict__.keys():
+            if key in parameters.options.__dict__:
+                setattr(self, key, parameters.options.__dict__[key])
 
     def setServerRegIdleCallback(self, srcb):
         self.server_register_idlecallback = srcb

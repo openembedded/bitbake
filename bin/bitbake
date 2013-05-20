@@ -193,8 +193,8 @@ def main():
 
     # Server type can be xmlrpc, process or none currently, if nothing is specified,
     # the default server is process
-    if configuration.servertype:
-        server_type = configuration.servertype
+    if configParams.servertype:
+        server_type = configParams.servertype
     else:
         server_type = 'process'
 
@@ -205,13 +205,13 @@ def main():
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
                  "Valid interfaces: xmlrpc, process [default], none." % servertype)
 
-    if configuration.server_only:
-        if configuration.servertype != "xmlrpc":
+    if configParams.server_only:
+        if configParams.servertype != "xmlrpc":
             sys.exit("FATAL: If '--server-only' is defined, we must set the servertype as 'xmlrpc'.\n")
-        if not configuration.bind:
+        if not configParams.bind:
             sys.exit("FATAL: The '--server-only' option requires a name/address to bind to with the -B option.\n")
 
-    if configuration.bind and configuration.servertype != "xmlrpc":
+    if configParams.bind and configParams.servertype != "xmlrpc":
         sys.exit("FATAL: If '-B' or '--bind' is defined, we must set the servertype as 'xmlrpc'.\n")
 
     if "BBDEBUG" in os.environ:
@@ -219,7 +219,7 @@ def main():
         if level > configuration.debug:
             configuration.debug = level
 
-    bb.msg.init_msgconfig(configuration.verbose, configuration.debug,
+    bb.msg.init_msgconfig(configParams.verbose, configuration.debug,
                          configuration.debug_domains)
 
     # Ensure logging messages get sent to the UI as events
@@ -230,8 +230,8 @@ def main():
     cleanedvars = bb.utils.clean_environment()
 
     server = server.BitBakeServer()
-    if configuration.bind:
-        server.initServer((configuration.bind, 0))
+    if configParams.bind:
+        server.initServer((configParams.bind, 0))
     else:
         server.initServer()
 
@@ -262,7 +262,7 @@ def main():
 
     logger.removeHandler(handler)
 
-    if not configuration.server_only:
+    if not configParams.server_only:
         # Setup a connection to the server (cooker)
         server_connection = server.establishConnection()
 
