@@ -216,7 +216,7 @@ class TerminalFilter(object):
             fd = sys.stdin.fileno()
             self.termios.tcsetattr(fd, self.termios.TCSADRAIN, self.stdinbackup)
 
-def main(server, eventHandler, tf = TerminalFilter):
+def main(server, eventHandler, params, tf = TerminalFilter):
 
     # Get values of variables which control our output
     includelogs, error = server.runCommand(["getVariable", "BBINCLUDELOGS"])
@@ -245,7 +245,8 @@ def main(server, eventHandler, tf = TerminalFilter):
     bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
-    if consolelogfile:
+
+    if consolelogfile and not params.options.show_environment:
         bb.utils.mkdirhier(os.path.dirname(consolelogfile))
         conlogformat = bb.msg.BBLogFormatter(format_str)
         consolelog = logging.FileHandler(consolelogfile)
@@ -254,14 +255,16 @@ def main(server, eventHandler, tf = TerminalFilter):
         logger.addHandler(consolelog)
 
     try:
-        cmdline, error = server.runCommand(["getCmdLineAction"])
-        if error:
-            logger.error("Unable to get bitbake commandline arguments: %s" % error)
-            return 1
-        elif not cmdline:
+        params.updateFromServer(server)
+        cmdline = params.parseActions()
+        if not cmdline:
             print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
             return 1
-        ret, error = server.runCommand(cmdline)
+        if 'msg' in cmdline and cmdline['msg']:
+            logger.error(cmdline['msg'])
+            return 1
+
+        ret, error = server.runCommand(cmdline['action'])
         if error:
             logger.error("Command '%s' failed: %s" % (cmdline, error))
             return 1

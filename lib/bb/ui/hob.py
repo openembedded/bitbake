@@ -58,7 +58,8 @@ def event_handle_idle_func(eventHandler, hobHandler):
         event = eventHandler.getEvent()
     return True
 
-def main (server = None, eventHandler = None):
+def main (server, eventHandler, params):
+    params.updateFromServer(server)
     gobject.threads_init()
 
     # That indicates whether the Hob and the bitbake server are

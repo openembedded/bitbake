@@ -238,7 +238,6 @@ def main():
     try:
         configuration.setServerRegIdleCallback(server.getServerIdleCB())
         cooker = bb.cooker.BBCooker(configuration)
-        cooker.parseCommandLine()
 
         server.addcooker(cooker)
         server.saveConnectionDetails()
@@ -272,7 +271,7 @@ def main():
             os.environ[k] = cleanedvars[k]
 
         try:
-            return server.launchUI(ui_main, server_connection.connection, server_connection.events)
+            return server.launchUI(ui_main, server_connection.connection, server_connection.events, configParams)
         finally:
             bb.event.ui_queue = []
             server_connection.terminate()

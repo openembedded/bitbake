@@ -63,7 +63,7 @@ class MainWindow (gtk.Window):
         scrolled_window.add (self.cur_build_tv)
 
 
-def main (server, eventHandler):
+def main (server, eventHandler, params):
     gobject.threads_init()
     gtk.gdk.threads_init()
 
@@ -80,13 +80,15 @@ def main (server, eventHandler):
     running_build.connect ("build-failed", running_build_failed_cb)
 
     try:
-        cmdline, error = server.runCommand(["getCmdLineAction"])
-        if error:
-            print("Error getting bitbake commandline: %s" % error)
-            return 1
-        elif not cmdline:
+        params.updateFromServer(server)
+        cmdline = params.parseActions()
+        if not cmdline:
             print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
             return 1
+        if 'msg' in cmdline and cmdline['msg']:
+            logger.error(cmdline['msg'])
+            return 1
+        cmdline = cmdline['action']
         ret, error = server.runCommand(cmdline)
         if error:
             print("Error running command '%s': %s" % (cmdline, error))

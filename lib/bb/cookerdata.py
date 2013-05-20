@@ -50,6 +50,61 @@ class ConfigParameters(object):
     def parseEnvironment(self):
         return os.environ.copy()
 
+    def updateFromServer(self, server):
+        if not self.options.cmd:
+            defaulttask, error = server.runCommand(["getVariable", "BB_DEFAULT_TASK"])
+            if error:
+                raise Exception("Unable to get the value of BB_DEFAULT_TASK from the server: %s" % error)
+            self.options.cmd = defaulttask or "build"
+        _, error = server.runCommand(["setConfig", "cmd", self.options.cmd])
+        if error:
+            raise Exception("Unable to set configuration option 'cmd' on the server: %s" % error)
+
+        if not self.options.pkgs_to_build:
+            bbpkgs, error = server.runCommand(["getVariable", "BBPKGS"])
+            if error:
+                raise Exception("Unable to get the value of BBPKGS from the server: %s" % error)
+            if bbpkgs:
+                self.options.pkgs_to_build.extend(bbpkgs.split())
+
+    def parseActions(self):
+        # Parse any commandline into actions
+        action = {'action':None, 'msg':None}
+        if self.options.show_environment:
+            if 'world' in self.options.pkgs_to_build:
+                action['msg'] = "'world' is not a valid target for --environment."
+            elif 'universe' in self.options.pkgs_to_build:
+                action['msg'] = "'universe' is not a valid target for --environment."
+            elif len(self.options.pkgs_to_build) > 1:
+                action['msg'] = "Only one target can be used with the --environment option."
+            elif self.options.buildfile and len(self.options.pkgs_to_build) > 0:
+                action['msg'] = "No target should be used with the --environment and --buildfile options."
+            elif len(self.options.pkgs_to_build) > 0:
+                action['action'] = ["showEnvironmentTarget", self.options.pkgs_to_build]
+            else:
+                action['action'] = ["showEnvironment", self.options.buildfile]
+        elif self.options.buildfile is not None:
+            action['action'] = ["buildFile", self.options.buildfile, self.options.cmd]
+        elif self.options.revisions_changed:
+            action['action'] = ["compareRevisions"]
+        elif self.options.show_versions:
+            action['action'] = ["showVersions"]
+        elif self.options.parse_only:
+            action['action'] = ["parseFiles"]
+        elif self.options.dot_graph:
+            if self.options.pkgs_to_build:
+                action['action'] = ["generateDotGraph", self.options.pkgs_to_build, self.options.cmd]
+            else:
+                action['msg'] = "Please specify a package name for dependency graph generation."
+        else:
+            if self.options.pkgs_to_build:
+                action['action'] = ["buildTargets", self.options.pkgs_to_build, self.options.cmd]
+            else:
+                #action['msg'] = "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information."
+                action = None
+        self.options.initialaction = action
+        return action
+
 class CookerConfiguration(object):
     """
     Manages build options and configurations for one run
@@ -61,7 +116,7 @@ class CookerConfiguration(object):
         self.prefile = []
         self.postfile = []
         self.debug = 0
-        self.pkgs_to_build = []
+        self.cmd = None
 
     def setConfigParameters(self, parameters):
         self.params = parameters

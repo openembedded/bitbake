@@ -147,10 +147,6 @@ class BBCooker:
         if not self.lock:
             bb.fatal("Only one copy of bitbake should be run against a build directory")
 
-        bbpkgs = self.configuration.data.getVar('BBPKGS', True)
-        if bbpkgs and len(self.configuration.pkgs_to_build) == 0:
-            self.configuration.pkgs_to_build.extend(bbpkgs.split())
-
         #
         # Special updated configuration we use for firing events
         #
@@ -175,7 +171,7 @@ class BBCooker:
 
     def initConfigurationData(self):
         self.configuration.data = bb.data.init()
-        if self.configuration.show_environment:
+        if self.configuration.tracking:
             self.configuration.data.enableTracking()
 
         if not self.configuration.server_register_idlecallback:
@@ -202,9 +198,6 @@ class BBCooker:
         except Exception:
             logger.exception("Error parsing configuration files")
             sys.exit(1)
-
-        if not self.configuration.cmd:
-            self.configuration.cmd = self.configuration.data.getVar("BB_DEFAULT_TASK", True) or "build"
 
     def saveConfigurationVar(self, var, val, default_file):
 
@@ -308,44 +301,6 @@ class BBCooker:
         self.recipecache = bb.cache.CacheData(self.caches_array)
 
         self.handleCollections( self.configuration.data.getVar("BBFILE_COLLECTIONS", True) )
-
-    def parseCommandLine(self):
-        # Parse any commandline into actions
-        self.commandlineAction = {'action':None, 'msg':None}
-        if self.configuration.show_environment:
-            if 'world' in self.configuration.pkgs_to_build:
-                self.commandlineAction['msg'] = "'world' is not a valid target for --environment."
-            elif 'universe' in self.configuration.pkgs_to_build:
-                self.commandlineAction['msg'] = "'universe' is not a valid target for --environment."
-            elif len(self.configuration.pkgs_to_build) > 1:
-                self.commandlineAction['msg'] = "Only one target can be used with the --environment option."
-            elif self.configuration.buildfile and len(self.configuration.pkgs_to_build) > 0:
-                self.commandlineAction['msg'] = "No target should be used with the --environment and --buildfile options."
-            elif len(self.configuration.pkgs_to_build) > 0:
-                self.commandlineAction['action'] = ["showEnvironmentTarget", self.configuration.pkgs_to_build]
-                self.configuration.data.setVar("BB_CONSOLELOG", None)
-            else:
-                self.commandlineAction['action'] = ["showEnvironment", self.configuration.buildfile]
-                self.configuration.data.setVar("BB_CONSOLELOG", None)
-        elif self.configuration.buildfile is not None:
-            self.commandlineAction['action'] = ["buildFile", self.configuration.buildfile, self.configuration.cmd]
-        elif self.configuration.revisions_changed:
-            self.commandlineAction['action'] = ["compareRevisions"]
-        elif self.configuration.show_versions:
-            self.commandlineAction['action'] = ["showVersions"]
-        elif self.configuration.parse_only:
-            self.commandlineAction['action'] = ["parseFiles"]
-        elif self.configuration.dot_graph:
-            if self.configuration.pkgs_to_build:
-                self.commandlineAction['action'] = ["generateDotGraph", self.configuration.pkgs_to_build, self.configuration.cmd]
-            else:
-                self.commandlineAction['msg'] = "Please specify a package name for dependency graph generation."
-        else:
-            if self.configuration.pkgs_to_build:
-                self.commandlineAction['action'] = ["buildTargets", self.configuration.pkgs_to_build, self.configuration.cmd]
-            else:
-                #self.commandlineAction['msg'] = "Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information."
-                self.commandlineAction = None
 
     def runCommands(self, server, data, abort):
         """

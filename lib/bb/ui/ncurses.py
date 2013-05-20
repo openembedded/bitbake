@@ -196,7 +196,7 @@ class NCursesUI:
 #            t.start()
 
     #-------------------------------------------------------------------------#
-    def main(self, stdscr, server, eventHandler):
+    def main(self, stdscr, server, eventHandler, params):
     #-------------------------------------------------------------------------#
         height, width = stdscr.getmaxyx()
 
@@ -236,13 +236,15 @@ class NCursesUI:
         shutdown = 0
 
         try:
-            cmdline, error = server.runCommand(["getCmdLineAction"])
+            params.updateFromServer(server)
+            cmdline = params.parseActions()
             if not cmdline:
                 print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
-                return
-            elif error:
-                print("Error getting bitbake commandline: %s" % error)
-                return
+                return 1
+            if 'msg' in cmdline and cmdline['msg']:
+                logger.error(cmdline['msg'])
+                return 1
+            cmdline = cmdline['action']
             ret, error = server.runCommand(cmdline)
             if error:
                 print("Error running command '%s': %s" % (cmdline, error))

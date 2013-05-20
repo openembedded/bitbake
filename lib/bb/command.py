@@ -143,18 +143,6 @@ class CommandsSync:
         """
         command.cooker.stop()
 
-    def getCmdLineAction(self, command, params):
-        """
-        Get any command parsed from the commandline
-        """
-        cmd_action = command.cooker.commandlineAction
-        if cmd_action is None:
-            return None
-        elif 'msg' in cmd_action and cmd_action['msg']:
-            raise CommandError(cmd_action['msg'])
-        else:
-            return cmd_action['action']
-
     def getVariable(self, command, params):
         """
         Read the value of a variable from configuration.data
@@ -173,6 +161,14 @@ class CommandsSync:
         varname = params[0]
         value = str(params[1])
         command.cooker.configuration.data.setVar(varname, value)
+
+    def setConfig(self, command, params):
+        """
+        Set the value of variable in configuration
+        """
+        varname = params[0]
+        value = str(params[1])
+        setattr(command.cooker.configuration, varname, value)
 
     def enableDataTracking(self, command, params):
         """

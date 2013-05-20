@@ -196,16 +196,18 @@ class gtkthread(threading.Thread):
         gtkthread.quit.set()
 
 
-def main(server, eventHandler):
+def main(server, eventHandler, params):
     try:
-        cmdline, error = server.runCommand(["getCmdLineAction"])
-        if error:
-            print("Error getting bitbake commandline: %s" % error)
-            return 1
-        elif not cmdline:
+        params.updateFromServer(server)
+        cmdline = params.parseActions()
+        if not cmdline:
             print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")
             return 1
-        elif not cmdline or cmdline[0] != "generateDotGraph":
+        if 'msg' in cmdline and cmdline['msg']:
+            logger.error(cmdline['msg'])
+            return 1
+        cmdline = cmdline['action']
+        if not cmdline or cmdline[0] != "generateDotGraph":
             print("This UI is only compatible with the -g option")
             return 1
         ret, error = server.runCommand(["generateDepTreeEvent", cmdline[1], cmdline[2]])
