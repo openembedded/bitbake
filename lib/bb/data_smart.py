@@ -738,5 +738,15 @@ class DataSmart(MutableMapping):
             value = d.getVar(key, False) or ""
             data.update({key:value})
 
+        for key in ["__BBTASKS", "__BBANONFUNCS", "__BBHANDLERS"]:
+            bb_list = d.getVar(key, False) or []
+            bb_list.sort()
+            data.update({key:str(bb_list)})
+
+            if key == "__BBANONFUNCS":
+                for i in bb_list:
+                    value = d.getVar(i, True) or ""
+                    data.update({i:value})
+
         data_str = str([(k, data[k]) for k in sorted(data.keys())])
         return hashlib.md5(data_str).hexdigest()
