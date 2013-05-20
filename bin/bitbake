@@ -250,7 +250,8 @@ Default BBFILES are the .bb files in the current directory.""")
 
         server.addcooker(cooker)
         server.saveConnectionDetails()
-    except:
+    except Exception as e:
+        exc_info = sys.exc_info()
         while True:
             try:
                 import queue
@@ -262,7 +263,7 @@ Default BBFILES are the .bb files in the current directory.""")
                 break
             if isinstance(event, logging.LogRecord):
                 logger.handle(event)
-        raise
+        raise exc_info[1], None, exc_info[2]
     server.detach()
 
     # Should no longer need to ever reference cooker
