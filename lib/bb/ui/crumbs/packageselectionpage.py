@@ -310,11 +310,15 @@ class PackageSelectionPage (HobPage):
         glib.idle_add(self.toggle_item_idle_cb, path, view_tree, cell, pagename)
 
     def pre_fadeout_checkout_include(self, tree):
+        #after the fadeout the table will be sorted as before
+        self.sort_column_id = self.package_model.sort_column_id
+        self.sort_order = self.package_model.sort_order
+
         self.package_model.resync_fadeout_column(self.package_model.get_iter_first())
         # Check out a model which base on the column COL_FADE_INC,
         # it's save the prev state of column COL_INC before do exclude_item
         filter = { PackageListModel.COL_FADE_INC  : [True]}
-        new_model = self.package_model.tree_model(filter)
+        new_model = self.package_model.tree_model(filter, excluded_items_ahead=True)
         tree.set_model(new_model)
         tree.expand_all()
 
@@ -341,6 +345,8 @@ class PackageSelectionPage (HobPage):
         cell.fadeout(tree, 1000, to_render_cells)
 
     def after_fadeout_checkin_include(self, table, ctrl, cell, tree, filter):
+        self.package_model.sort_column_id = self.sort_column_id
+        self.package_model.sort_order = self.sort_order
         tree.set_model(self.package_model.tree_model(filter))
         tree.expand_all()
 

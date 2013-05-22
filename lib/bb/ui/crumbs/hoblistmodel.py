@@ -63,6 +63,7 @@ class PackageListModel(gtk.ListStore):
                                 gobject.TYPE_BOOLEAN,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING)
+        self.sort_column_id, self.sort_order = PackageListModel.COL_NAME, gtk.SORT_ASCENDING
 
     """
     Find the model path for the item_name
@@ -109,11 +110,11 @@ class PackageListModel(gtk.ListStore):
         model.set_visible_func(self.tree_model_filter, filter)
 
         sort = gtk.TreeModelSort(model)
+        sort.connect ('sort-column-changed', self.sort_column_changed_cb)
         if initial:
             sort.set_sort_column_id(PackageListModel.COL_NAME, gtk.SORT_ASCENDING)
             sort.set_default_sort_func(None)
-
-        if excluded_items_ahead:
+        elif excluded_items_ahead:
             sort.set_default_sort_func(self.exclude_item_sort_func, search_data)
         elif included_items_ahead:
             sort.set_default_sort_func(self.include_item_sort_func, search_data)
@@ -121,7 +122,7 @@ class PackageListModel(gtk.ListStore):
             if search_data and search_data!='Search recipes by name' and search_data!='Search package groups by name':
                 sort.set_default_sort_func(self.sort_func, search_data)
             else:
-                sort.set_sort_column_id(PackageListModel.COL_NAME, gtk.SORT_ASCENDING)
+                sort.set_sort_column_id(self.sort_column_id, self.sort_order)
                 sort.set_default_sort_func(None)
 
         sort.set_sort_func(PackageListModel.COL_INC, self.sort_column, PackageListModel.COL_INC)
@@ -129,6 +130,9 @@ class PackageListModel(gtk.ListStore):
         sort.set_sort_func(PackageListModel.COL_BINB, self.sort_binb_column)
         sort.set_sort_func(PackageListModel.COL_RCP, self.sort_column, PackageListModel.COL_RCP)
         return sort
+
+    def sort_column_changed_cb (self, data):
+        self.sort_column_id, self.sort_order = data.get_sort_column_id ()
 
     def sort_column(self, model, row1, row2, col):
         value1 = model.get_value(row1, col)
@@ -501,6 +505,7 @@ class RecipeListModel(gtk.ListStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING)
+        self.sort_column_id, self.sort_order = RecipeListModel.COL_NAME, gtk.SORT_ASCENDING
 
     """
     Find the model path for the item_name
@@ -586,11 +591,11 @@ class RecipeListModel(gtk.ListStore):
         model.set_visible_func(self.tree_model_filter, filter)
 
         sort = gtk.TreeModelSort(model)
+        sort.connect ('sort-column-changed', self.sort_column_changed_cb)
         if initial:
             sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)
             sort.set_default_sort_func(None)
-
-        if excluded_items_ahead:
+        elif excluded_items_ahead:
             sort.set_default_sort_func(self.exclude_item_sort_func, search_data)
         elif included_items_ahead:
             sort.set_default_sort_func(self.include_item_sort_func, search_data)
@@ -598,7 +603,7 @@ class RecipeListModel(gtk.ListStore):
             if search_data and search_data!='Search recipes by name' and search_data!='Search package groups by name':
                 sort.set_default_sort_func(self.sort_func, search_data)
             else:
-                sort.set_sort_column_id(RecipeListModel.COL_NAME, gtk.SORT_ASCENDING)
+                sort.set_sort_column_id(self.sort_column_id, self.sort_order)
                 sort.set_default_sort_func(None)
 
         sort.set_sort_func(RecipeListModel.COL_INC, self.sort_column, RecipeListModel.COL_INC)
@@ -606,6 +611,9 @@ class RecipeListModel(gtk.ListStore):
         sort.set_sort_func(RecipeListModel.COL_BINB, self.sort_binb_column)
         sort.set_sort_func(RecipeListModel.COL_LIC, self.sort_column, RecipeListModel.COL_LIC)
         return sort
+
+    def sort_column_changed_cb (self, data):
+        self.sort_column_id, self.sort_order = data.get_sort_column_id ()
 
     def sort_column(self, model, row1, row2, col):
         value1 = model.get_value(row1, col)

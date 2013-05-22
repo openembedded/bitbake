@@ -287,6 +287,10 @@ class RecipeSelectionPage (HobPage):
         glib.idle_add(self.toggle_item_idle_cb, path, view_tree, cell, pagename)
 
     def pre_fadeout_checkout_include(self, tree, pagename):
+        #after the fadeout the table will be sorted as before
+        self.sort_column_id = self.recipe_model.sort_column_id
+        self.sort_order = self.recipe_model.sort_order
+
         #resync the included items to a backup fade include column
         it = self.recipe_model.get_iter_first()
         while it:
@@ -323,6 +327,8 @@ class RecipeSelectionPage (HobPage):
         cell.fadeout(tree, 1000, to_render_cells)
 
     def after_fadeout_checkin_include(self, table, ctrl, cell, tree, filter):
+        self.recipe_model.sort_column_id = self.sort_column_id
+        self.recipe_model.sort_order = self.sort_order
         tree.set_model(self.recipe_model.tree_model(filter))
 
     def set_recipe_curr_tab(self, curr_page):
