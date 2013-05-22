@@ -233,7 +233,7 @@ Options:
         # We are largely guessing about PN, PV and the preferred version here,
         # but we have no choice since skipped recipes are not fully parsed
         skiplist = self.bbhandler.cooker.skiplist.keys()
-        skiplist.sort( key=lambda fileitem: self.bbhandler.cooker.calc_bbfile_priority(fileitem) )
+        skiplist.sort( key=lambda fileitem: self.bbhandler.cooker.collection.calc_bbfile_priority(fileitem) )
         skiplist.reverse()
         for fn in skiplist:
             recipe_parts = os.path.splitext(os.path.basename(fn))[0].split('_')
