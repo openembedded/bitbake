@@ -25,7 +25,8 @@ import bb.cache
 import bb.cooker
 import bb.providers
 import bb.utils
-from bb.cooker import state
+from bb.cooker import state, BBCooker
+from bb.cookerdata import CookerConfiguration, ConfigParameters
 import bb.fetch2
 
 class Tinfoil:
@@ -43,12 +44,11 @@ class Tinfoil:
         console.setFormatter(format)
         self.logger.addHandler(console)
 
-        initialenv = os.environ.copy()
-        bb.utils.clean_environment()
-        self.config = TinfoilConfig(parse_only=True)
-        self.cooker = bb.cooker.BBCooker(self.config,
-                                            self.register_idle_function,
-                                            initialenv)
+        self.config = CookerConfiguration()
+        configparams = TinfoilConfigParameters(parse_only=True)
+        self.config.setConfigParameters(configparams)
+        self.config.setServerRegIdleCallback(self.register_idle_function)
+        self.cooker = BBCooker(self.config)
         self.config_data = self.cooker.configuration.data
         bb.providers.logger.setLevel(logging.ERROR)
         self.cooker_data = None
@@ -81,20 +81,21 @@ class Tinfoil:
             else:
                 self.parseRecipes()
 
+class TinfoilConfigParameters(ConfigParameters):
 
-class TinfoilConfig(object):
     def __init__(self, **options):
-        self.pkgs_to_build = []
-        self.debug_domains = []
-        self.extra_assume_provided = []
-        self.prefile = []
-        self.postfile = []
-        self.debug = 0
-        self.__dict__.update(options)
+        self.initial_options = options
+        super(TinfoilConfigParameters, self).__init__()
 
-    def __getattr__(self, attribute):
-        try:
-            return super(TinfoilConfig, self).__getattribute__(attribute)
-        except AttributeError:
-            return None
+    def parseCommandLine(self):
+        class DummyOptions:
+            def __init__(self, initial_options):
+                self.show_environment = False
+                self.pkgs_to_build = []
+                self.prefile = []
+                self.postfile = []
+                self.tracking = False
+                for key, val in initial_options.items():
+                    setattr(self, key, val)
 
+        return DummyOptions(self.initial_options), None
