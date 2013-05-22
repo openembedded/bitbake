@@ -147,7 +147,7 @@ def catch_parse_error(func):
     return wrapped
 
 @catch_parse_error
-def _parse(fn, data, include=True):
+def parse_config_file(fn, data, include=True):
     return bb.parse.handle(fn, data, include)
 
 @catch_parse_error
@@ -211,12 +211,12 @@ class CookerDataBuilder(object):
 
         # Parse files for loading *before* bitbake.conf and any includes
         for f in prefiles:
-            data = _parse(f, data)
+            data = parse_config_file(f, data)
 
         layerconf = self._findLayerConf()
         if layerconf:
             parselog.debug(2, "Found bblayers.conf (%s)", layerconf)
-            data = _parse(layerconf, data)
+            data = parse_config_file(layerconf, data)
 
             layers = (data.getVar('BBLAYERS', True) or "").split()
 
@@ -224,7 +224,7 @@ class CookerDataBuilder(object):
             for layer in layers:
                 parselog.debug(2, "Adding layer %s", layer)
                 data.setVar('LAYERDIR', layer)
-                data = _parse(os.path.join(layer, "conf", "layer.conf"), data)
+                data = parse_config_file(os.path.join(layer, "conf", "layer.conf"), data)
                 data.expandVarref('LAYERDIR')
 
             data.delVar('LAYERDIR')
@@ -232,11 +232,11 @@ class CookerDataBuilder(object):
         if not data.getVar("BBPATH", True):
             raise SystemExit("The BBPATH variable is not set")
 
-        data = _parse(os.path.join("conf", "bitbake.conf"), data)
+        data = parse_config_file(os.path.join("conf", "bitbake.conf"), data)
 
         # Parse files for loading *after* bitbake.conf and any includes
         for p in postfiles:
-            data = _parse(p, data)
+            data = parse_config_file(p, data)
 
         # Handle any INHERITs and inherit the base class
         bbclasses  = ["base"] + (data.getVar('INHERIT', True) or "").split()
