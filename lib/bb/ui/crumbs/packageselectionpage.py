@@ -150,12 +150,8 @@ class PackageSelectionPage (HobPage):
             sort_model = self.package_model.tree_model(filter, initial=True)
             tab.set_model(sort_model)
             tab.connect("toggled", self.table_toggled_cb, name)
-            if name == "Included packages":
-                tab.connect("button-release-event", self.button_click_cb)
-                tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
-            if name == "All packages":
-                tab.connect("button-release-event", self.button_click_cb)
-                tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include)
+            tab.connect("button-release-event", self.button_click_cb)
+            tab.connect("cell-fadeinout-stopped", self.after_fadeout_checkin_include, filter)
             self.ins.append_page(tab, page['name'], page['tooltip'])
             self.tables.append(tab)
 
@@ -290,12 +286,9 @@ class PackageSelectionPage (HobPage):
         if not self.package_model.path_included(path):
             self.package_model.include_item(item_path=path, binb="User Selected")
         else:
-            if pagename == "Included packages":
-                self.pre_fadeout_checkout_include(view_tree)
-                self.package_model.exclude_item(item_path=path)
-                self.render_fadeout(view_tree, cell)
-            else:
-                self.package_model.exclude_item(item_path=path)
+            self.pre_fadeout_checkout_include(view_tree)
+            self.package_model.exclude_item(item_path=path)
+            self.render_fadeout(view_tree, cell)
 
         self.refresh_selection()
         if not self.builder.customized:
@@ -305,6 +298,9 @@ class PackageSelectionPage (HobPage):
             self.builder.rcppkglist_populated()
 
         self.builder.window_sensitive(True)
+        view_model = view_tree.get_model()
+        vpath = self.package_model.convert_path_to_vpath(view_model, path)
+        view_tree.set_cursor(vpath)
 
     def table_toggled_cb(self, table, cell, view_path, toggled_columnid, view_tree, pagename):
         # Click to include a package
@@ -344,8 +340,8 @@ class PackageSelectionPage (HobPage):
 
         cell.fadeout(tree, 1000, to_render_cells)
 
-    def after_fadeout_checkin_include(self, table, ctrl, cell, tree):
-        tree.set_model(self.package_model.tree_model(self.pages[0]['filter']))
+    def after_fadeout_checkin_include(self, table, ctrl, cell, tree, filter):
+        tree.set_model(self.package_model.tree_model(filter))
         tree.expand_all()
 
     def set_packages_curr_tab(self, curr_page):
