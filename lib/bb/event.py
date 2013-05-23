@@ -47,9 +47,6 @@ class Event(object):
     def __init__(self):
         self.pid = worker_pid
 
-NotHandled = 0
-Handled    = 1
-
 Registered        = 10
 AlreadyRegistered = 14
 
@@ -57,10 +54,6 @@ AlreadyRegistered = 14
 _handlers = bb.compat.OrderedDict()
 _ui_handlers = {}
 _ui_handler_seq = 0
-
-# For compatibility
-bb.utils._context["NotHandled"] = NotHandled
-bb.utils._context["Handled"] = Handled
 
 def execute_handler(name, handler, event, d):
     event.data = d
@@ -79,10 +72,6 @@ def execute_handler(name, handler, event, d):
         raise
     finally:
         del event.data
-
-    if ret is not None:
-        warnings.warn("Using Handled/NotHandled in event handlers is deprecated",
-                        DeprecationWarning, stacklevel = 2)
 
 def fire_class_handlers(event, d):
     if isinstance(event, logging.LogRecord):
