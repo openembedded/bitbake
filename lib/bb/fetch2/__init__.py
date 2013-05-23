@@ -642,7 +642,7 @@ def get_srcrev(d):
                 rev = rev[:10]
             if autoinc and not seenautoinc:
                 rev = "AUTOINC+" + rev
-                seenautoinc
+                seenautoinc = True
             format = format.replace(name, rev)
 
     return format
