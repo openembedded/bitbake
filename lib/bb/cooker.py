@@ -1455,7 +1455,7 @@ class Parser(multiprocessing.Process):
         self.init = init
         multiprocessing.Process.__init__(self)
         self.context = bb.utils.get_context().copy()
-        self.handlers = bb.event._handlers.copy()
+        self.handlers = bb.event.get_class_handlers().copy()
 
     def run(self):
         if self.init:
@@ -1492,7 +1492,7 @@ class Parser(multiprocessing.Process):
         try:
             # Reset our environment and handlers to the original settings
             bb.utils.set_context(self.context.copy())
-            bb.event._handlers = self.handlers.copy()
+            bb.event.set_class_handlers(self.handlers.copy())
             return True, bb.cache.Cache.parse(filename, appends, self.cfg, caches_array)
         except Exception as exc:
             tb = sys.exc_info()[2]

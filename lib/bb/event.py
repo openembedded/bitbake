@@ -50,8 +50,17 @@ class Event(object):
 Registered        = 10
 AlreadyRegistered = 14
 
+def get_class_handlers():
+    return _handlers
+
+def set_class_handlers(h):
+    _handlers = h
+
+def clean_class_handlers():
+    return bb.compat.OrderedDict()
+
 # Internal
-_handlers = bb.compat.OrderedDict()
+_handlers = clean_class_handlers()
 _ui_handlers = {}
 _ui_handler_seq = 0
 

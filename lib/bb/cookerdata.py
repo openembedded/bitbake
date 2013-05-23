@@ -174,6 +174,7 @@ class CookerDataBuilder(object):
         self.tracking = params.tracking
 
         bb.utils.set_context(bb.utils.clean_context())
+        bb.event.set_class_handlers(bb.event.clean_class_handlers())
         self.data = bb.data.init()
         if self.tracking:
             self.data.enableTracking()
