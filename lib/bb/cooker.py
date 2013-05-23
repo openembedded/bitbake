@@ -1454,6 +1454,7 @@ class Parser(multiprocessing.Process):
         self.quit = quit
         self.init = init
         multiprocessing.Process.__init__(self)
+        self.context = bb.utils._context.copy()
 
     def run(self):
         if self.init:
@@ -1488,6 +1489,7 @@ class Parser(multiprocessing.Process):
 
     def parse(self, filename, appends, caches_array):
         try:
+            bb.utils._context = self.context.copy()
             return True, bb.cache.Cache.parse(filename, appends, self.cfg, caches_array)
         except Exception as exc:
             tb = sys.exc_info()[2]

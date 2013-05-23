@@ -167,10 +167,6 @@ def handle(fn, d, include):
     if oldfile:
         d.setVar("FILE", oldfile)
 
-    # we have parsed the bb class now
-    if ext == ".bbclass" or ext == ".inc":
-        bb.methodpool.set_parsed_module(base_name)
-
     return d
 
 def feeder(lineno, s, fn, root, statements):
