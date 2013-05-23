@@ -173,6 +173,7 @@ class CookerDataBuilder(object):
         self.postfiles = params.postfile
         self.tracking = params.tracking
 
+        bb.utils.set_context(bb.utils.clean_context())
         self.data = bb.data.init()
         if self.tracking:
             self.data.enableTracking()

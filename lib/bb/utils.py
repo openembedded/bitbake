@@ -36,12 +36,22 @@ from contextlib import contextmanager
 
 logger = logging.getLogger("BitBake.Util")
 
+def clean_context():
+    return {
+        "os": os,
+        "bb": bb,
+        "time": time,
+    }
+
+def get_context():
+    return _context
+    
+
+def set_context(ctx):
+    _context = ctx
+
 # Context used in better_exec, eval
-_context = {
-    "os": os,
-    "bb": bb,
-    "time": time,
-}
+_context = clean_context()
 
 def explode_version(s):
     r = []
@@ -343,7 +353,7 @@ def better_exec(code, context, text = None, realfile = "<code>"):
     if not hasattr(code, "co_filename"):
         code = better_compile(code, realfile, realfile)
     try:
-        exec(code, _context, context)
+        exec(code, get_context(), context)
     except Exception as e:
         (t, value, tb) = sys.exc_info()
 
@@ -358,10 +368,10 @@ def better_exec(code, context, text = None, realfile = "<code>"):
         raise e
 
 def simple_exec(code, context):
-    exec(code, _context, context)
+    exec(code, get_context(), context)
 
 def better_eval(source, locals):
-    return eval(source, _context, locals)
+    return eval(source, get_context(), locals)
 
 @contextmanager
 def fileslocked(files):
