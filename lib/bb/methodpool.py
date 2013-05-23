@@ -50,7 +50,7 @@ def insert_method(modulename, code, fn):
         if name in ['None', 'False']:
             continue
         elif name in _parsed_fns and not _parsed_fns[name] == modulename:
-            error("The function %s defined in %s was already declared in %s. BitBake has a global python function namespace so shared functions should be declared in a common include file rather than being duplicated, or if the functions are different, please use different function names." % (name, modulename, _parsed_fns[name]))
+            bb.fatal("The function %s defined in %s was already declared in %s. BitBake has a global python function namespace so shared functions should be declared in a common include file rather than being duplicated, or if the functions are different, please use different function names." % (name, modulename, _parsed_fns[name]))
         else:
             _parsed_fns[name] = modulename
 
