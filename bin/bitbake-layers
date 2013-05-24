@@ -371,8 +371,8 @@ build results (as the layer priority order has effectively changed).
         appended_recipes = []
         for layer in layers:
             overlayed = []
-            for f in self.bbhandler.cooker.overlayed.iterkeys():
-                for of in self.bbhandler.cooker.overlayed[f]:
+            for f in self.bbhandler.cooker.collection.overlayed.iterkeys():
+                for of in self.bbhandler.cooker.collection.overlayed[f]:
                     if of.startswith(layer):
                         overlayed.append(of)
 
@@ -396,8 +396,8 @@ build results (as the layer priority order has effectively changed).
                                     logger.warn('Overwriting file %s', fdest)
                             bb.utils.copyfile(f1full, fdest)
                             if ext == '.bb':
-                                if f1 in self.bbhandler.cooker.appendlist:
-                                    appends = self.bbhandler.cooker.appendlist[f1]
+                                if f1 in self.bbhandler.cooker.collection.appendlist:
+                                    appends = self.bbhandler.cooker.collection.appendlist[f1]
                                     if appends:
                                         logger.plain('  Applying appends to %s' % fdest )
                                         for appendname in appends:
@@ -406,9 +406,9 @@ build results (as the layer priority order has effectively changed).
                                     appended_recipes.append(f1)
 
         # Take care of when some layers are excluded and yet we have included bbappends for those recipes
-        for recipename in self.bbhandler.cooker.appendlist.iterkeys():
+        for recipename in self.bbhandler.cooker.collection.appendlist.iterkeys():
             if recipename not in appended_recipes:
-                appends = self.bbhandler.cooker.appendlist[recipename]
+                appends = self.bbhandler.cooker.collection.appendlist[recipename]
                 first_append = None
                 for appendname in appends:
                     layer = layer_path_match(appendname)
@@ -498,7 +498,7 @@ usage: show-appends
 Recipes are listed with the bbappends that apply to them as subitems.
 """
         self.bbhandler.prepare()
-        if not self.bbhandler.cooker.appendlist:
+        if not self.bbhandler.cooker.collection.appendlist:
             logger.plain('No append files found')
             return
 
@@ -550,7 +550,7 @@ Recipes are listed with the bbappends that apply to them as subitems.
                 continue
 
             basename = os.path.basename(filename)
-            appends = self.bbhandler.cooker.appendlist.get(basename)
+            appends = self.bbhandler.cooker.collection.appendlist.get(basename)
             if appends:
                 appended.append((basename, list(appends)))
             else:
