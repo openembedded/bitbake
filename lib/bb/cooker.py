@@ -129,6 +129,7 @@ class BBCooker:
                 sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
 
         self.configuration.data = None
+        self.initConfigurationData()
         self.loadConfigurationData()
 
         # Take a lock so only one copy of bitbake can run against a given build
@@ -175,7 +176,6 @@ class BBCooker:
         self.configuration.data.disableTracking()
 
     def loadConfigurationData(self):
-        self.initConfigurationData()
         self.databuilder.parseBaseConfiguration()
         self.configuration.data = self.databuilder.data
         self.configuration.data_hash = self.databuilder.data_hash
@@ -1221,6 +1221,7 @@ class BBCooker:
 
     def reset(self):
         self.state = state.initial
+        self.initConfigurationData()
         self.loadConfigurationData()
 
 def server_main(cooker, func, *args):
