@@ -60,7 +60,7 @@ class FuncFailed(Exception):
 
     def __str__(self):
         if self.logfile and os.path.exists(self.logfile):
-            msg = ("%s (see %s for further information)" %
+            msg = ("%s (log file is located at %s)" %
                    (self.msg, self.logfile))
         else:
             msg = self.msg
