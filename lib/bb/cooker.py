@@ -165,7 +165,7 @@ class BBCooker:
         if not self.configuration.server_register_idlecallback:
             worker = True
 
-        self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration.params, worker)
+        self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration, worker)
         self.configuration.data = self.databuilder.data
 
     def enableDataTracking(self):

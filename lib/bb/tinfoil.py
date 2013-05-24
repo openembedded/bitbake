@@ -90,11 +90,6 @@ class TinfoilConfigParameters(ConfigParameters):
     def parseCommandLine(self):
         class DummyOptions:
             def __init__(self, initial_options):
-                self.show_environment = False
-                self.pkgs_to_build = []
-                self.prefile = []
-                self.postfile = []
-                self.tracking = False
                 for key, val in initial_options.items():
                     setattr(self, key, val)
 

@@ -387,7 +387,9 @@ class CommandsAsync:
         """
         prefiles = params[0]
         postfiles = params[1]
-        command.cooker.databuilder.parseConfigurationFiles(prefiles, postfiles)
+        command.cooker.configuration.prefile = prefiles
+        command.cooker.configuration.postfile = postfiles
+        command.cooker.loadConfigurationData()
         command.finishAsyncCommand()
     parseConfigurationFiles.needcache = False
 

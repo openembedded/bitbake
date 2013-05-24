@@ -38,7 +38,7 @@ class ConfigParameters(object):
         self.options.pkgs_to_build = targets or []
 
         self.options.tracking = False
-        if self.options.show_environment:
+        if hasattr(self.options, "show_environment") and self.options.show_environment:
             self.options.tracking = True
 
         for key, val in self.options.__dict__.items():
@@ -125,12 +125,16 @@ class CookerConfiguration(object):
         self.invalidate_stamp = False
         self.dump_signatures = False
         self.dry_run = False
+        self.tracking = False
+
+        self.env = {}
 
     def setConfigParameters(self, parameters):
-        self.params = parameters
         for key in self.__dict__.keys():
             if key in parameters.options.__dict__:
                 setattr(self, key, parameters.options.__dict__[key])
+        self.env = parameters.environment.copy()
+        self.tracking = parameters.tracking
 
     def setServerRegIdleCallback(self, srcb):
         self.server_register_idlecallback = srcb
@@ -167,11 +171,11 @@ def findConfigFile(configfile):
 
 class CookerDataBuilder(object):
 
-    def __init__(self, params, worker = False):
+    def __init__(self, cookercfg, worker = False):
 
-        self.prefiles = params.prefile
-        self.postfiles = params.postfile
-        self.tracking = params.tracking
+        self.prefiles = cookercfg.prefile
+        self.postfiles = cookercfg.postfile
+        self.tracking = cookercfg.tracking
 
         bb.utils.set_context(bb.utils.clean_context())
         bb.event.set_class_handlers(bb.event.clean_class_handlers())
@@ -184,9 +188,8 @@ class CookerDataBuilder(object):
         # to use environment variables which have been cleaned from the
         # BitBake processes env
         self.savedenv = bb.data.init()
-        savedenv = params.environment
-        for k in savedenv:
-            self.savedenv.setVar(k, savedenv[k])
+        for k in cookercfg.env:
+            self.savedenv.setVar(k, cookercfg.env[k])
 
         filtered_keys = bb.utils.approved_variables()
         bb.data.inheritFromOS(self.data, self.savedenv, filtered_keys)
