@@ -190,8 +190,13 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 
         parser.add_option("-B", "--bind", help = "The name/address for the bitbake server to bind to",
                    action = "store", dest = "bind", default = False)
+
         parser.add_option("", "--no-setscene", help = "Do not run any setscene tasks, forces builds",
                    action = "store_true", dest = "nosetscene", default = False)
+
+        parser.add_option("", "--remote-server", help = "Connect to the specified server",
+                   action = "store", dest = "remote_server", default = False)
+
         options, targets = parser.parse_args(sys.argv)
         return options, targets[1:]
 
@@ -260,6 +265,9 @@ def main():
     if configParams.bind and configParams.servertype != "xmlrpc":
         sys.exit("FATAL: If '-B' or '--bind' is defined, we must set the servertype as 'xmlrpc'.\n")
 
+    if configParams.remote_server and configParams.servertype != "xmlrpc":
+        sys.exit("FATAL: If '--remote-server' is defined, we must set the servertype as 'xmlrpc'.\n")
+
     if "BBDEBUG" in os.environ:
         level = int(os.environ["BBDEBUG"])
         if level > configuration.debug:
@@ -281,8 +289,13 @@ def main():
     else:
         configuration.extra_caches = getattr(ui_module, "extraCaches", [])
 
-    # we start a server with a given configuration
-    server = start_server(servermodule, configParams, configuration)
+    if not configParams.remote_server:
+        # we start a server with a given configuration
+        server = start_server(servermodule, configParams, configuration)
+    else:
+        # we start a stub server that is actually a XMLRPClient to
+        server = servermodule.BitBakeXMLRPCClient()
+        server.saveConnectionDetails(configParams.remote_server)
 
     logger.removeHandler(handler)
 
