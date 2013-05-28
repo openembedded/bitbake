@@ -75,6 +75,18 @@ def get_ui(config):
         sys.exit("FATAL: Invalid user interface '%s' specified.\n"
                  "Valid interfaces: depexp, goggle, ncurses, hob, knotty [default]." % interface)
 
+def gather_extra_cache_data():
+    extra = []
+    interfaces = ['depexp', 'goggle', 'ncurses', 'hob', 'knotty']
+    for i in interfaces:
+        try:
+            ui = __import__("bb.ui." + i, fromlist = [i])
+            if hasattr(ui, "extraCaches"):
+                extra = extra + ui.extraCaches
+            del ui
+        except:
+            pass
+    return extra
 
 # Display bitbake/OE warnings via the BitBake.Warnings logger, ignoring others"""
 warnlog = logging.getLogger("BitBake.Warnings")
@@ -237,6 +249,12 @@ def main():
 
     try:
         configuration.setServerRegIdleCallback(server.getServerIdleCB())
+
+        if configParams.server_only:
+            configuration.extra_caches = gather_extra_cache_data()
+        else:
+            configuration.extra_caches = getattr(ui_module, "extraCaches", [])
+
         cooker = bb.cooker.BBCooker(configuration)
 
         server.addcooker(cooker)

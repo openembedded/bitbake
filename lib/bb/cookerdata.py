@@ -119,7 +119,6 @@ class CookerConfiguration(object):
         self.cmd = None
         self.abort = True
         self.force = False
-        self.ui = None
         self.profile = False
         self.nosetscene = False
         self.invalidate_stamp = False

@@ -94,28 +94,8 @@ class BBCooker:
         self.configuration = configuration
 
         self.caches_array = []
-        # Currently, only Image Creator hob ui needs extra cache.
-        # So, we save Extra Cache class name and container file
-        # information into a extraCaches field in hob UI.  
-        # TODO: In future, bin/bitbake should pass information into cooker,
-        # instead of getting information from configuration.ui. Also, some
-        # UI start up issues need to be addressed at the same time.
-        caches_name_array = ['bb.cache:CoreRecipeInfo']
-        if configuration.ui:
-            try:
-                module = __import__('bb.ui', fromlist=[configuration.ui])
-                name_array = (getattr(module, configuration.ui)).extraCaches
-                for recipeInfoName in name_array:
-                    caches_name_array.append(recipeInfoName)
-            except ImportError as exc:
-                # bb.ui.XXX is not defined and imported. It's an error!
-                logger.critical("Unable to import '%s' interface from bb.ui: %s" % (configuration.ui, exc))
-                sys.exit("FATAL: Failed to import '%s' interface." % configuration.ui)
-            except AttributeError:
-                # This is not an error. If the field is not defined in the ui,
-                # this interface might need no extra cache fields, so
-                # just skip this error!
-                logger.debug(2, "UI '%s' does not require extra cache!" % (configuration.ui))
+
+        caches_name_array = ['bb.cache:CoreRecipeInfo'] + configuration.extra_caches
 
         # At least CoreRecipeInfo will be loaded, so caches_array will never be empty!
         # This is the entry point, no further check needed!
