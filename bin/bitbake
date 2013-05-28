@@ -70,7 +70,7 @@ def get_ui(config):
         # suggest a fixed set this allows you to have flexibility in which
         # ones are available.
         module = __import__("bb.ui", fromlist = [interface])
-        return getattr(module, interface).main
+        return getattr(module, interface)
     except AttributeError:
         sys.exit("FATAL: Invalid user interface '%s' specified.\n"
                  "Valid interfaces: depexp, goggle, ncurses, hob, knotty [default]." % interface)
@@ -189,7 +189,7 @@ def main():
     configuration = cookerdata.CookerConfiguration()
     configuration.setConfigParameters(configParams)
 
-    ui_main = get_ui(configuration)
+    ui_module = get_ui(configParams)
 
     # Server type can be xmlrpc or process currently, if nothing is specified,
     # the default server is process
@@ -271,7 +271,7 @@ def main():
             os.environ[k] = cleanedvars[k]
 
         try:
-            return ui_main(server_connection.connection, server_connection.events, configParams)
+            return ui_module.main(server_connection.connection, server_connection.events, configParams)
         finally:
             bb.event.ui_queue = []
             server_connection.terminate()
