@@ -54,82 +54,104 @@ if sys.hexversion < 0x020600F0:
 # Upstream Python bug is #8194 (http://bugs.python.org/issue8194)
 # This bug is relevant for Python 2.7.0 and 2.7.1 but was fixed for
 # Python > 2.7.2
+#
+# To implement a simple form of client control, we use a special transport
+# that adds a HTTP header field ("Bitbake-token") to ensure that a server
+# can communicate with only a client at a given time (the client must use
+# the same token).
 ##
+if (2, 7, 0) <= sys.version_info < (2, 7, 2):
+    class BBTransport(xmlrpclib.Transport):
+        def __init__(self):
+            self.connection_token = None
+            xmlrpclib.Transport.__init__(self)
 
-class BBTransport(xmlrpclib.Transport):
-    def request(self, host, handler, request_body, verbose=0):
-        h = self.make_connection(host)
-        if verbose:
-            h.set_debuglevel(1)
+        def request(self, host, handler, request_body, verbose=0):
+            h = self.make_connection(host)
+            if verbose:
+                h.set_debuglevel(1)
 
-        self.send_request(h, handler, request_body)
-        self.send_host(h, host)
-        self.send_user_agent(h)
-        self.send_content(h, request_body)
+            self.send_request(h, handler, request_body)
+            self.send_host(h, host)
+            self.send_user_agent(h)
+            if self.connection_token:
+                h.putheader("Bitbake-token", self.connection_token)
+            self.send_content(h, request_body)
 
-        errcode, errmsg, headers = h.getreply()
+            errcode, errmsg, headers = h.getreply()
 
-        if errcode != 200:
-            raise ProtocolError(
-                host + handler,
-                errcode, errmsg,
-                headers
-                )
+            if errcode != 200:
+                raise ProtocolError(
+                    host + handler,
+                    errcode, errmsg,
+                    headers
+                    )
 
-        self.verbose = verbose
+            self.verbose = verbose
 
-        try:
-            sock = h._conn.sock
-        except AttributeError:
-            sock = None
+            try:
+                sock = h._conn.sock
+            except AttributeError:
+                sock = None
 
-        return self._parse_response(h.getfile(), sock)
+            return self._parse_response(h.getfile(), sock)
 
-    def make_connection(self, host):
-        import httplib
-        host, extra_headers, x509 = self.get_host_info(host)
-        return httplib.HTTP(host)
+        def make_connection(self, host):
+            import httplib
+            host, extra_headers, x509 = self.get_host_info(host)
+            return httplib.HTTP(host)
 
-    def _parse_response(self, file, sock):
-        p, u = self.getparser()
+        def _parse_response(self, file, sock):
+            p, u = self.getparser()
 
-        while 1:
-            if sock:
-                response = sock.recv(1024)
-            else:
-                response = file.read(1024)
-            if not response:
-                break
-            if self.verbose:
-                print("body:", repr(response))
-            p.feed(response)
+            while 1:
+                if sock:
+                    response = sock.recv(1024)
+                else:
+                    response = file.read(1024)
+                if not response:
+                    break
+                if self.verbose:
+                    print("body:", repr(response))
+                p.feed(response)
 
-        file.close()
-        p.close()
+            file.close()
+            p.close()
 
-        return u.close()
+            return u.close()
+
+        def set_connection_token(self, token):
+            self.connection_token = token
+else:
+    class BBTransport(xmlrpclib.Transport):
+        def __init__(self):
+            self.connection_token = None
+            xmlrpclib.Transport.__init__(self)
+
+        def set_connection_token(self, token):
+            self.connection_token = token
+
+        def send_content(self, h, body):
+            if self.connection_token:
+                h.putheader("Bitbake-token", self.connection_token)
+            xmlrpclib.Transport.send_content(self, h, body)
 
 def _create_server(host, port):
-    # Python 2.7.0 and 2.7.1 have a buggy Transport implementation
-    # For those versions of Python, and only those versions, use our
-    # own copy/paste BBTransport class.
-    if (2, 7, 0) <= sys.version_info < (2, 7, 2):
-        t = BBTransport()
-        s = xmlrpclib.Server("http://%s:%d/" % (host, port), transport=t, allow_none=True)
-    else:
-        s = xmlrpclib.Server("http://%s:%d/" % (host, port), allow_none=True)
-
-    return s
+    t = BBTransport()
+    s = xmlrpclib.Server("http://%s:%d/" % (host, port), transport=t, allow_none=True)
+    return s, t
 
 class BitBakeServerCommands():
+
     def __init__(self, server):
         self.server = server
+        self.has_client = False
 
     def registerEventHandler(self, host, port):
         """
         Register a remote UI Event Handler
         """
-        s = _create_server(host, port)
+        s, t = _create_server(host, port)
 
         return bb.event.register_UIHhandler(s)
 
@@ -248,10 +270,22 @@ class BitbakeServerInfo():
 
 class BitBakeServerConnection():
     def __init__(self, serverinfo, clientinfo=("localhost", 0)):
-        self.connection = _create_server(serverinfo.host, serverinfo.port)
-        self.events = uievent.BBUIEventQueue(self.connection, clientinfo)
+        self.connection, self.transport = _create_server(serverinfo.host, serverinfo.port)
+        self.clientinfo = clientinfo
+        self.serverinfo = serverinfo
+
+    def connect(self):
+        token = self.connection.addClient()
+        if token is None:
+            return None
+        self.transport.set_connection_token(token)
+        self.events = uievent.BBUIEventQueue(self.connection, self.clientinfo)
         for event in bb.event.ui_queue:
             self.events.queue_event(event)
+        return self
+
+    def removeClient(self):
+        self.connection.removeClient()
 
     def terminate(self):
         # Don't wait for server indefinitely
@@ -277,7 +311,7 @@ class BitBakeServer(object):
     def getServerIdleCB(self):
         return self.server.register_idle_function
 
-    def saveConnectionDetails(self): 
+    def saveConnectionDetails(self):
         self.serverinfo = BitbakeServerInfo(self.server.host, self.server.port)
 
     def detach(self):
