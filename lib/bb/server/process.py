@@ -264,7 +264,3 @@ class BitBakeServer(object):
         self.connection = BitBakeServerConnection(self)
         signal.signal(signal.SIGTERM, lambda i, s: self.connection.terminate(force=True))
         return self.connection
-
-    def launchUI(self, uifunc, *args):
-        return uifunc(*args)
-

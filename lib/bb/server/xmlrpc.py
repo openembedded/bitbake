@@ -288,8 +288,3 @@ class BitBakeServer(object):
     def establishConnection(self):
         self.connection = BitBakeServerConnection(self.serverinfo)
         return self.connection
-
-    def launchUI(self, uifunc, *args):
-        return uifunc(*args)
-
-

@@ -271,7 +271,7 @@ def main():
             os.environ[k] = cleanedvars[k]
 
         try:
-            return server.launchUI(ui_main, server_connection.connection, server_connection.events, configParams)
+            return ui_main(server_connection.connection, server_connection.events, configParams)
         finally:
             bb.event.ui_queue = []
             server_connection.terminate()
