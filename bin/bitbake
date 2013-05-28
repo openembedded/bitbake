@@ -195,6 +195,40 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         options, targets = parser.parse_args(sys.argv)
         return options, targets[1:]
 
+
+def start_server(servermodule, configParams, configuration):
+    server = servermodule.BitBakeServer()
+    if configParams.bind:
+        server.initServer((configParams.bind, 0))
+    else:
+        server.initServer()
+
+    try:
+        configuration.setServerRegIdleCallback(server.getServerIdleCB())
+
+        cooker = bb.cooker.BBCooker(configuration)
+
+        server.addcooker(cooker)
+        server.saveConnectionDetails()
+    except Exception as e:
+        exc_info = sys.exc_info()
+        while True:
+            try:
+                import queue
+            except ImportError:
+                import Queue as queue
+            try:
+                event = server.event_queue.get(block=False)
+            except (queue.Empty, IOError):
+                break
+            if isinstance(event, logging.LogRecord):
+                logger.handle(event)
+        raise exc_info[1], None, exc_info[2]
+    server.detach()
+    return server
+
+
+
 def main():
 
     configParams = BitBakeConfigParameters()
@@ -212,7 +246,7 @@ def main():
 
     try:
         module = __import__("bb.server", fromlist = [server_type])
-        server = getattr(module, server_type)
+        servermodule = getattr(module, server_type)
     except AttributeError:
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
                  "Valid interfaces: xmlrpc, process [default]." % servertype)
@@ -241,42 +275,14 @@ def main():
     # Clear away any spurious environment variables while we stoke up the cooker
     cleanedvars = bb.utils.clean_environment()
 
-    server = server.BitBakeServer()
-    if configParams.bind:
-        server.initServer((configParams.bind, 0))
+    # Collect all the caches we need
+    if configParams.server_only:
+        configuration.extra_caches = gather_extra_cache_data()
     else:
-        server.initServer()
+        configuration.extra_caches = getattr(ui_module, "extraCaches", [])
 
-    try:
-        configuration.setServerRegIdleCallback(server.getServerIdleCB())
-
-        if configParams.server_only:
-            configuration.extra_caches = gather_extra_cache_data()
-        else:
-            configuration.extra_caches = getattr(ui_module, "extraCaches", [])
-
-        cooker = bb.cooker.BBCooker(configuration)
-
-        server.addcooker(cooker)
-        server.saveConnectionDetails()
-    except Exception as e:
-        exc_info = sys.exc_info()
-        while True:
-            try:
-                import queue
-            except ImportError:
-                import Queue as queue
-            try:
-                event = server.event_queue.get(block=False)
-            except (queue.Empty, IOError):
-                break
-            if isinstance(event, logging.LogRecord):
-                logger.handle(event)
-        raise exc_info[1], None, exc_info[2]
-    server.detach()
-
-    # Should no longer need to ever reference cooker
-    del cooker
+    # we start a server with a given configuration
+    server = start_server(servermodule, configParams, configuration)
 
     logger.removeHandler(handler)
 
