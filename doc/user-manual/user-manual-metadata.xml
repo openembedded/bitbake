@@ -1194,14 +1194,12 @@ Other events that occur based on specific requests to the server:
 
 	   deletes all the flags for a variable
 	   </para>
-
 </section>
-<!--
+
 <section>
 	   <title>Task Checksums and Setscene</title>
 
 	   <para>
-	   <emphasis>NOTE:  This section is a work in progress.</emphasis>
 
 	   This list is a place holder of content that needs explanation here. Items
 	   should be moved to appropriate sections below as completed.
@@ -1229,5 +1227,5 @@ Other events that occur based on specific requests to the server:
 	   </section>
 
 </section>
--->
+
 </chapter>
