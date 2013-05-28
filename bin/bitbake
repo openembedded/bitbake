@@ -167,7 +167,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-u", "--ui", help = "userinterface to use",
                    action = "store", dest = "ui")
 
-        parser.add_option("-t", "--servertype", help = "Choose which server to use, none, process or xmlrpc",
+        parser.add_option("-t", "--servertype", help = "Choose which server to use, process or xmlrpc",
                    action = "store", dest = "servertype")
 
         parser.add_option("", "--revisions-changed", help = "Set the exit code depending on whether upstream floating revisions have changed or not",
@@ -191,7 +191,7 @@ def main():
 
     ui_main = get_ui(configuration)
 
-    # Server type can be xmlrpc, process or none currently, if nothing is specified,
+    # Server type can be xmlrpc or process currently, if nothing is specified,
     # the default server is process
     if configParams.servertype:
         server_type = configParams.servertype
@@ -203,7 +203,7 @@ def main():
         server = getattr(module, server_type)
     except AttributeError:
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
-                 "Valid interfaces: xmlrpc, process [default], none." % servertype)
+                 "Valid interfaces: xmlrpc, process [default]." % servertype)
 
     if configParams.server_only:
         if configParams.servertype != "xmlrpc":
