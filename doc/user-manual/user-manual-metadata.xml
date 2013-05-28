@@ -426,7 +426,6 @@ yourself.</para>
 		line is a relative path, BitBake will locate the first one it
 		can find within
 		<envar>BBPATH</envar>.
-   FIX ME: This section requires improvement.
 	</para>
 	</section>
 
@@ -441,8 +440,6 @@ yourself.</para>
 		Otherwise it will behave just like the
 		<literal>include</literal>
 		directive.
-		FIX ME: This section requires improvement.
-
 	</para>
 	</section>
 
@@ -948,7 +945,7 @@ need to import them.</para>
 </para>
 
 <para>
-There are also other events that occur based on specific requests to the server:
+Other events that occur based on specific requests to the server:
 
 <itemizedlist>
 <listitem>bb.event.TreeDataPreparationStarted()</listitem>
@@ -1108,7 +1105,7 @@ There are also other events that occur based on specific requests to the server:
 	</section>
 
 <section>
-	   <title>Accessing Variable and the Data Store from Python</title>
+	   <title>Accessing Variables and the Data Store from Python</title>
 
 	   <para>
 	   <emphasis>NOTE: This section is in draft.</emphasis>
