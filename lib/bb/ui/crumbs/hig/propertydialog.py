@@ -87,6 +87,7 @@ class PropertyDialog(CrumbsDialog):
                 self.table.attach(self.info_label, 0,1,1,2, xoptions=gtk.FILL|gtk.EXPAND, yoptions=gtk.FILL,xpadding=40,ypadding=10)
         
                 self.vbox.add(self.table)
+                self.connect('delete-event', lambda w, e: self.destroy() or True) 
 
         def treeViewTooltip( self, widget, e, tooltips, cell, emptyText="" ):
                  try:
