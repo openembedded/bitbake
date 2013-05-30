@@ -957,7 +957,7 @@ class RunQueue:
         for task in range(len(self.rqdata.runq_fnid)):
             if self.rqdata.runq_fnid[task] not in done:
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
-                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.collection.get_file_appends(fn), self.cooker.configuration.data)
+                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.collection.get_file_appends(fn), self.cooker.data)
                 done.add(self.rqdata.runq_fnid[task])
 
         bb.parse.siggen.dump_sigs(self.rqdata.dataCache)
@@ -1119,11 +1119,11 @@ class RunQueueExecute:
             if umask:
                 os.umask(umask)
 
-            self.cooker.configuration.data.setVar("BB_WORKERCONTEXT", "1")
+            self.cooker.data.setVar("BB_WORKERCONTEXT", "1")
             bb.parse.siggen.set_taskdata(self.rqdata.hashes, self.rqdata.hash_deps)
             ret = 0
             try:
-                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.collection.get_file_appends(fn), self.cooker.configuration.data)
+                the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.collection.get_file_appends(fn), self.cooker.data)
                 the_data.setVar('BB_TASKHASH', self.rqdata.runq_hash[task])
                 for h in self.rqdata.hashes:
                     the_data.setVar("BBHASH_%s" % h, self.rqdata.hashes[h])
@@ -1180,7 +1180,7 @@ class RunQueueExecute:
             taskname = self.rqdata.runq_task[depid]
             taskdata[dep] = [pn, taskname, fn]
         call = self.rq.depvalidate + "(task, taskdata, notneeded, d)"
-        locs = { "task" : task, "taskdata" : taskdata, "notneeded" : self.scenequeue_notneeded, "d" : self.cooker.configuration.data }
+        locs = { "task" : task, "taskdata" : taskdata, "notneeded" : self.scenequeue_notneeded, "d" : self.cooker.data }
         valid = bb.utils.better_eval(call, locs)
         return valid
 
@@ -1247,7 +1247,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
             call = self.rq.setsceneverify + "(covered, tasknames, fnids, fns, d, invalidtasks=invalidtasks)"
             call2 = self.rq.setsceneverify + "(covered, tasknames, fnids, fns, d)"
-            locs = { "covered" : self.rq.scenequeue_covered, "tasknames" : self.rqdata.runq_task, "fnids" : self.rqdata.runq_fnid, "fns" : self.rqdata.taskData.fn_index, "d" : self.cooker.configuration.data, "invalidtasks" : invalidtasks }
+            locs = { "covered" : self.rq.scenequeue_covered, "tasknames" : self.rqdata.runq_task, "fnids" : self.rqdata.runq_fnid, "fns" : self.rqdata.taskData.fn_index, "d" : self.cooker.data, "invalidtasks" : invalidtasks }
             # Backwards compatibility with older versions without invalidtasks
             try:
                 covered_remove = bb.utils.better_eval(call, locs)
@@ -1607,7 +1607,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 sq_taskname.append(taskname)
                 sq_task.append(task)
             call = self.rq.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
-            locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.configuration.data }
+            locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.data }
             valid = bb.utils.better_eval(call, locs)
 
             valid_new = stamppresent

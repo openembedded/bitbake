@@ -116,11 +116,11 @@ class Command:
 
     def finishAsyncCommand(self, msg=None, code=None):
         if msg:
-            bb.event.fire(CommandFailed(msg), self.cooker.configuration.event_data)
+            bb.event.fire(CommandFailed(msg), self.cooker.event_data)
         elif code:
-            bb.event.fire(CommandExit(code), self.cooker.configuration.event_data)
+            bb.event.fire(CommandExit(code), self.cooker.event_data)
         else:
-            bb.event.fire(CommandCompleted(), self.cooker.configuration.event_data)
+            bb.event.fire(CommandCompleted(), self.cooker.event_data)
         self.currentAsyncCommand = None
 
 
@@ -145,22 +145,22 @@ class CommandsSync:
 
     def getVariable(self, command, params):
         """
-        Read the value of a variable from configuration.data
+        Read the value of a variable from data
         """
         varname = params[0]
         expand = True
         if len(params) > 1:
             expand = params[1]
 
-        return command.cooker.configuration.data.getVar(varname, expand)
+        return command.cooker.data.getVar(varname, expand)
 
     def setVariable(self, command, params):
         """
-        Set the value of variable in configuration.data
+        Set the value of variable in data
         """
         varname = params[0]
         value = str(params[1])
-        command.cooker.configuration.data.setVar(varname, value)
+        command.cooker.data.setVar(varname, value)
 
     def setConfig(self, command, params):
         """
@@ -375,7 +375,7 @@ class CommandsAsync:
         """
         Parse the .bb files
         """
-        if bb.fetch.fetcher_compare_revisions(command.cooker.configuration.data):
+        if bb.fetch.fetcher_compare_revisions(command.cooker.data):
             command.finishAsyncCommand(code=1)
         else:
             command.finishAsyncCommand()
@@ -398,7 +398,7 @@ class CommandsAsync:
         Trigger a certain event
         """
         event = params[0]
-        bb.event.fire(eval(event), command.cooker.configuration.data)
+        bb.event.fire(eval(event), command.cooker.data)
         command.currentAsyncCommand = None
     triggerEvent.needcache = False
 
