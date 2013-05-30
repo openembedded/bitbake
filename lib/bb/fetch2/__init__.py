@@ -759,6 +759,19 @@ def build_mirroruris(origud, mirrors, ld):
 
     return uris, uds
 
+def rename_bad_checksum(ud, suffix):
+    """
+    Renames files to have suffix from parameter
+    """
+
+    if ud.localpath is None:
+        return
+
+    new_localpath = "%s_bad-checksum_%s" % (ud.localpath, suffix)
+    bb.warn("Renaming %s to %s" % (ud.localpath, new_localpath))
+    bb.utils.movefile(ud.localpath, new_localpath)
+
+
 def try_mirror_url(newuri, origud, ud, ld, check = False):
     # Return of None or a value means we're finished
     # False means try another url
@@ -810,7 +823,7 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
         if isinstance(e, ChecksumError):
             logger.warn("Mirror checksum failure for url %s (original url: %s)\nCleaning and trying again." % (newuri, origud.url))
             logger.warn(str(e))
-            self.rename_bad_checksum(ud, e.checksum)
+            rename_bad_checksum(ud, e.checksum)
         elif isinstance(e, NoChecksumError):
             raise
         else:
@@ -1386,7 +1399,7 @@ class Fetch(object):
                         if isinstance(e, ChecksumError):
                             logger.warn("Checksum failure encountered with download of %s - will attempt other sources if available" % u)
                             logger.debug(1, str(e))
-                            self.rename_bad_checksum(ud, e.checksum)
+                            rename_bad_checksum(ud, e.checksum)
                         elif isinstance(e, NoChecksumError):
                             raise
                         else:
@@ -1493,18 +1506,6 @@ class Fetch(object):
 
             if ud.lockfile:
                 bb.utils.unlockfile(lf)
-
-    def rename_bad_checksum(self, ud, suffix):
-        """
-        Renames files to have suffix from parameter
-        """
-
-        if ud.localpath is None:
-            return
-
-        new_localpath = "%s_bad-checksum_%s" % (ud.localpath, suffix)
-        bb.warn("Renaming %s to %s" % (ud.localpath, new_localpath))
-        bb.utils.movefile(ud.localpath, new_localpath)
 
 from . import cvs
 from . import git
