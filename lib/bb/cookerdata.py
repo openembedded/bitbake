@@ -125,6 +125,7 @@ class CookerConfiguration(object):
         self.dump_signatures = False
         self.dry_run = False
         self.tracking = False
+        self.extra_caches = []
 
         self.env = {}
 
