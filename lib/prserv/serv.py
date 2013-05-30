@@ -183,7 +183,7 @@ class PRServerConnection():
             host, port = singleton.getinfo()
         self.host = host
         self.port = port
-        self.connection = bb.server.xmlrpc._create_server(self.host, self.port)
+        self.connection, self.transport = bb.server.xmlrpc._create_server(self.host, self.port)
 
     def terminate(self):
         # Don't wait for server indefinitely
