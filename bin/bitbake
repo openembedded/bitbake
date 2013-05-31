@@ -204,7 +204,8 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
 def start_server(servermodule, configParams, configuration):
     server = servermodule.BitBakeServer()
     if configParams.bind:
-        server.initServer((configParams.bind, 0))
+        (host, port) = configParams.bind.split(':')
+        server.initServer((host, int(port)))
     else:
         server.initServer()
 
@@ -313,7 +314,7 @@ def main():
             bb.event.ui_queue = []
             server_connection.terminate()
     else:
-        print("server address: %s, server port: %s" % (server.serverinfo.host, server.serverinfo.port))
+        print("server address: %s, server port: %s" % (server.serverImpl.host, server.serverImpl.port))
 
     return 1
 
