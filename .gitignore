@@ -5,3 +5,5 @@ pyshtables.py
 /doc/manual/html/
 /build/
 /bin/bitbakec
+*.swp
+tags
