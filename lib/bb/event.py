@@ -64,6 +64,8 @@ def clean_class_handlers():
 _handlers = clean_class_handlers()
 _ui_handlers = {}
 _ui_handler_seq = 0
+_event_handler_map = {}
+_catchall_handlers = {}
 
 def execute_handler(name, handler, event, d):
     event.data = d
@@ -87,11 +89,14 @@ def fire_class_handlers(event, d):
     if isinstance(event, logging.LogRecord):
         return
 
+    eid = str(event.__class__)[8:-2]
+    evt_hmap = _event_handler_map.get(eid, {})
     for name, handler in _handlers.iteritems():
-        try:
-            execute_handler(name, handler, event, d)
-        except Exception:
-            continue
+        if name in _catchall_handlers or name in evt_hmap:
+            try:
+                execute_handler(name, handler, event, d)
+            except Exception:
+                continue
 
 ui_queue = []
 @atexit.register
@@ -160,7 +165,7 @@ def fire_from_worker(event, d):
     fire_ui_handlers(event, d)
 
 noop = lambda _: None
-def register(name, handler):
+def register(name, handler, mask=[]):
     """Register an Event handler"""
 
     # already registered
@@ -184,6 +189,14 @@ def register(name, handler):
             _handlers[name] = func
         else:
             _handlers[name] = handler
+
+        if not mask:
+            _catchall_handlers[name] = True
+        else:
+            for m in mask:
+                if _event_handler_map.get(m, None) is None:
+                    _event_handler_map[m] = {}
+                _event_handler_map[m][name] = True
 
         return Registered
 

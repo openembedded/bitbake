@@ -320,8 +320,7 @@ def finalize(fn, d, variant = None):
     all_handlers = {}
     for var in d.getVar('__BBHANDLERS') or []:
         # try to add the handler
-        handler = d.getVar(var)
-        bb.event.register(var, handler)
+        bb.event.register(var, d.getVar(var), (d.getVarFlag(var, "eventmask", True) or "").split())
 
     bb.event.fire(bb.event.RecipePreFinalise(fn), d)
 

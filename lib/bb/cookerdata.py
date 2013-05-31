@@ -269,7 +269,7 @@ class CookerDataBuilder(object):
         # Nomally we only register event handlers at the end of parsing .bb files
         # We register any handlers we've found so far here...
         for var in data.getVar('__BBHANDLERS') or []:
-            bb.event.register(var, data.getVar(var))
+            bb.event.register(var, data.getVar(var),  (data.getVarFlag(var, "eventmask", True) or "").split())
 
         if data.getVar("BB_WORKERCONTEXT", False) is None:
             bb.fetch.fetcher_init(data)
