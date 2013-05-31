@@ -227,7 +227,6 @@ class BitBakeXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         self.end_headers()
         self.wfile.write(response)
 
-
 class BitBakeUIEventServer(threading.Thread):
     class EventAdapter():
         """
@@ -273,9 +272,10 @@ class BitBakeUIEventServer(threading.Thread):
             if evt:
                 self.connection.event.sendpickle(pickle.dumps(evt))
 
-class BitBakeXMLRPCEventServerController(SimpleXMLRPCServer):
+class BitBakeXMLRPCEventServerController(SimpleXMLRPCServer, threading.Thread):
     def __init__(self, interface):
         SimpleXMLRPCServer.__init__(self, interface, logRequests=False, allow_none=True)
+        threading.Thread.__init__(self)
         self.register_function(self.registerEventHandler, "registerEventHandler")
         self.register_function(self.unregisterEventHandler, "unregisterEventHandler")
         self.register_function(self.terminateServer, "terminateServer")
@@ -283,6 +283,7 @@ class BitBakeXMLRPCEventServerController(SimpleXMLRPCServer):
         self.quit = False
         self.clients = {}
         self.client_ui_ids = {}
+        self.timeout = 1    # timeout for .handle_request()
 
     def registerEventHandler(self, host, port):
         """
@@ -317,12 +318,13 @@ class BitBakeXMLRPCEventServerController(SimpleXMLRPCServer):
     def runCommand(self, cmd):
         return None
 
-    def serve_forever(self, main_server):
-        self.main_server = main_server
+    def run(self):
+        self.serve_forever()
+
+    def serve_forever(self):
         while not self.quit:
             self.handle_request()
         self.server_close()
-
 
 class XMLRPCProxyServer(BaseImplServer):
     """ not a real working server, but a stub for a proxy server connection
@@ -368,14 +370,10 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
 
     def serve_forever(self):
         # Create and run the event server controller in a separate thread
-        evt_server_ctrl = BitBakeXMLRPCEventServerController((self.host, self.port + 2))
-        self.event_controller_thread = threading.Thread(target = evt_server_ctrl.serve_forever, args = (self,))
+        self.event_controller_thread = BitBakeXMLRPCEventServerController((self.host, self.port + 2))
         self.event_controller_thread.start()
         # Start the actual XMLRPC server
         bb.cooker.server_main(self.cooker, self._serve_forever)
-
-    def removeClient(self):
-        self.commands.removeClient()
 
     def _serve_forever(self):
         """
@@ -453,7 +451,7 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
         except:
             pass
         try:
-            self.connection.terminateServer()
+            self.connection.removeClient()
         except:
             pass
 
