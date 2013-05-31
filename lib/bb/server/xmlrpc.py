@@ -49,6 +49,8 @@ DEBUG = False
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
 import inspect, select
 
+from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
+
 if sys.hexversion < 0x020600F0:
     print("Sorry, python 2.6 or later is required for bitbake's XMLRPC mode")
     sys.exit(1)
@@ -286,7 +288,6 @@ class BitBakeXMLRPCEventServerController(SimpleXMLRPCServer):
         """
         Register a remote UI Event Handler
         """
-        print "registering handler %s:%s" % (host,port) 
         connection = xmlrpclib.ServerProxy("http://%s:%d/" % (host, port), allow_none=True)
         client_hash = "%s:%d" % (host, port)
         if self.clients.has_key(client_hash):
@@ -301,7 +302,6 @@ class BitBakeXMLRPCEventServerController(SimpleXMLRPCServer):
         """
         Unregister a remote UI Event Handler
         """
-        print "unregistering handler %s:%s" % (host,port)
         client_thread = self.clients[client_hash]
         if client_thread:
             bb.event.unregister_UIHhandler(self.clients_ui_ids[client_hash])
@@ -323,7 +323,16 @@ class BitBakeXMLRPCEventServerController(SimpleXMLRPCServer):
             self.handle_request()
         self.server_close()
 
-class BitBakeXMLRPCServer(SimpleXMLRPCServer):
+
+class XMLRPCProxyServer(BaseImplServer):
+    """ not a real working server, but a stub for a proxy server connection
+
+    """
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+
+class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
     # remove this when you're done with debugging
     # allow_reuse_address = True
 
@@ -331,10 +340,10 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
         """
         Constructor
         """
+        BaseImplServer.__init__(self)
         SimpleXMLRPCServer.__init__(self, interface,
                                     requestHandler=BitBakeXMLRPCRequestHandler,
                                     logRequests=False, allow_none=True)
-        self._idlefuns = {}
         self.host, self.port = self.socket.getsockname()
         self.connection_token = None
         #self.register_introspection_functions()
@@ -343,7 +352,7 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
         self.interface = interface
 
     def addcooker(self, cooker):
-        self.cooker = cooker
+        BaseImplServer.addcooker(self, cooker)
         self.commands.cooker = cooker
 
     def autoregister_all_functions(self, context, prefix):
@@ -356,10 +365,6 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
             if name.startswith(prefix):
                 self.register_function(method, name[len(prefix):])
 
-    def register_idle_function(self, function, data):
-        """Register a function to be called while the server is idle"""
-        assert hasattr(function, '__call__')
-        self._idlefuns[function] = data
 
     def serve_forever(self):
         # Create and run the event server controller in a separate thread
@@ -420,16 +425,11 @@ class BitBakeXMLRPCServer(SimpleXMLRPCServer):
     def set_connection_token(self, token):
         self.connection_token = token
 
-class BitbakeServerInfo():
-    def __init__(self, host, port):
-        self.host = host
-        self.port = port
-
-class BitBakeServerConnection():
-    def __init__(self, serverinfo, clientinfo=("localhost", 0)):
-        self.connection, self.transport = _create_server(serverinfo.host, serverinfo.port)
+class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
+    def __init__(self, serverImpl, clientinfo=("localhost", 0)):
+        self.connection, self.transport = _create_server(serverImpl.host, serverImpl.port)
         self.clientinfo = clientinfo
-        self.serverinfo = serverinfo
+        self.serverImpl = serverImpl
 
     def connect(self):
         token = self.connection.addClient()
@@ -457,36 +457,22 @@ class BitBakeServerConnection():
         except:
             pass
 
-class BitBakeServer(object):
+class BitBakeServer(BitBakeBaseServer):
     def initServer(self, interface = ("localhost", 0)):
-        self.server = BitBakeXMLRPCServer(interface)
-
-    def addcooker(self, cooker):
-        self.cooker = cooker
-        self.server.addcooker(cooker)
-
-    def getServerIdleCB(self):
-        return self.server.register_idle_function
-
-    def saveConnectionDetails(self):
-        self.serverinfo = BitbakeServerInfo(self.server.host, self.server.port)
+        self.serverImpl = XMLRPCServer(interface)
 
     def detach(self):
-        daemonize.createDaemon(self.server.serve_forever, "bitbake-cookerdaemon.log")
+        daemonize.createDaemon(self.serverImpl.serve_forever, "bitbake-cookerdaemon.log")
         del self.cooker
-        del self.server
 
     def establishConnection(self):
-        self.connection = BitBakeServerConnection(self.serverinfo)
+        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl)
         return self.connection.connect()
 
     def set_connection_token(self, token):
         self.connection.transport.set_connection_token(token)
 
-    def endSession(self):
-        self.connection.terminate()
-
-class BitBakeXMLRPCClient(object):
+class BitBakeXMLRPCClient(BitBakeBaseServer):
 
     def __init__(self):
         pass
@@ -510,8 +496,8 @@ class BitBakeXMLRPCClient(object):
             s.close()
         except:
             return None
-        self.serverinfo = BitbakeServerInfo(host, port)
-        self.connection = BitBakeServerConnection(self.serverinfo, (ip, 0))
+        self.serverImpl = XMLRPCProxyServer(host, port)
+        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0))
         return self.connection.connect()
 
     def endSession(self):
