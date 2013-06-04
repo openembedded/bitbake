@@ -524,6 +524,15 @@ class Cache(object):
                     self.remove(fn)
                     return False
 
+        if hasattr(info_array[0], 'file_checksums'):
+            for _, fl in info_array[0].file_checksums.items():
+                for f in fl.split():
+                    if not os.path.exists(f):
+                        logger.debug(2, "Cache: %s's file checksum list file %s was removed",
+                                        fn, f)
+                        self.remove(fn)
+                        return False
+
         if appends != info_array[0].appends:
             logger.debug(2, "Cache: appends for %s changed", fn)
             logger.debug(2, "%s to %s" % (str(appends), str(info_array[0].appends)))
