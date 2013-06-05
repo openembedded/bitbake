@@ -56,12 +56,12 @@
 <section>
 	<title>Setting Up BitBake</title>
 	<para>Now let's setup our BitBake environment.
-		The recommended method to use BitBake is to run it from a
+		The recommended method is to run BitBake from a
 		directory of your choice.
 		The directory can be within your home directory or in
 		/usr/local, depending on your preference.
 		Let's run BitBake now to make sure it's working.
-		Make sure you're in the BitBake source code directory and issue
+		From the BitBake source code directory issue
 		the following command:
 		<screen>$ ./bin/bitbake --version
 			BitBake Build Tool Core version 1.19.0, bitbake version
@@ -105,7 +105,7 @@
 					<ulink href="http://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html">Mailing List post - The BitBake equivalent of "Hello, World!"</ulink>
 				</listitem>
 				<listitem>
-					<ulink href="http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/">Hembedded Linux blog post - From Bitbake Hello World to an Image</ulink>
+					<ulink href="http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/">Hambedded Linux blog post - From Bitbake Hello World to an Image</ulink>
 				</listitem>
 			</itemizedlist>
 		</para>
