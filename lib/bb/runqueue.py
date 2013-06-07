@@ -800,15 +800,13 @@ class RunQueue:
 
         self.rqexe = None
         self.worker = None
+        self.workerpipe = None
 
-    def start_worker(self):
-        if self.worker:
-            self.teardown_worker()
-
+    def _start_worker(self):
         logger.debug(1, "Starting bitbake-worker")
-        self.worker = subprocess.Popen(["bitbake-worker", "decafbad"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
-        bb.utils.nonblockingfd(self.worker.stdout)
-        self.workerpipe = runQueuePipe(self.worker.stdout, None, self.cfgData, self)
+        worker = subprocess.Popen(["bitbake-worker", "decafbad"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+        bb.utils.nonblockingfd(worker.stdout)
+        workerpipe = runQueuePipe(worker.stdout, None, self.cfgData, None)
 
         workerdata = {
             "taskdeps" : self.rqdata.dataCache.task_deps,
@@ -825,19 +823,35 @@ class RunQueue:
             "logdefaultdomain" : bb.msg.loggerDefaultDomains,
         }
 
-        self.worker.stdin.write("<cookerconfig>" + pickle.dumps(self.cooker.configuration) + "</cookerconfig>")
-        self.worker.stdin.write("<workerdata>" + pickle.dumps(workerdata) + "</workerdata>")
-        self.worker.stdin.flush()
+        worker.stdin.write("<cookerconfig>" + pickle.dumps(self.cooker.configuration) + "</cookerconfig>")
+        worker.stdin.write("<workerdata>" + pickle.dumps(workerdata) + "</workerdata>")
+        worker.stdin.flush()
+
+        return worker, workerpipe
+
+    def _teardown_worker(self, worker, workerpipe):
+        if not worker:
+            return
+        logger.debug(1, "Teardown for bitbake-worker")
+        worker.stdin.write("<quit></quit>")
+        worker.stdin.flush()
+        while worker.returncode is None:
+            workerpipe.read()
+            worker.poll()
+        while workerpipe.read():
+            continue
+        workerpipe.close()
+
+    def start_worker(self):
+        if self.worker:
+            self.teardown_worker()
+
+        self.worker, self.workerpipe = self._start_worker()
 
     def teardown_worker(self):
-        logger.debug(1, "Teardown for bitbake-worker")
-        self.worker.stdin.write("<quit></quit>")
-        self.worker.stdin.flush()
-        while self.worker.returncode is None:
-            self.workerpipe.read()
-            self.worker.poll()
-        while self.workerpipe.read():
-            continue
+        self._teardown_worker(self.worker, self.workerpipe)
+        self.worker = None
+        self.workerpipe = None
 
     def check_stamp_task(self, task, taskname = None, recurse = False, cache = None):
         def get_timestamp(f):
