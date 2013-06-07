@@ -638,12 +638,12 @@ def get_srcrev(d):
         ud = urldata[scm]
         for name in ud.names:
             autoinc, rev = ud.method.sortable_revision(scm, ud, d, name)
+            seenautoinc = seenautoinc or autoinc
             if len(rev) > 10:
                 rev = rev[:10]
-            if autoinc and not seenautoinc:
-                rev = "AUTOINC+" + rev
-                seenautoinc = True
             format = format.replace(name, rev)
+    if seenautoinc:
+       format = "AUTOINC+" + format
 
     return format
 
