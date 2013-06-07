@@ -24,8 +24,8 @@
 __version__ = "1.19.0"
 
 import sys
-if sys.version_info < (2, 6, 0):
-    raise RuntimeError("Sorry, python 2.6.0 or later is required for this version of bitbake")
+if sys.version_info < (2, 7, 3):
+    raise RuntimeError("Sorry, python 2.7.3 or later is required for this version of bitbake")
 
 
 class BBHandledException(Exception):
