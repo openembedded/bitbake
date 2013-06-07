@@ -724,7 +724,6 @@ class CacheData(object):
         for info in info_array:
             info.add_cacheData(self, fn)
 
-
 class MultiProcessCache(object):
     """
     BitBake multi-process cache implementation
@@ -746,12 +745,17 @@ class MultiProcessCache(object):
         self.cachefile = os.path.join(cachedir, self.__class__.cache_file_name)
         logger.debug(1, "Using cache in '%s'", self.cachefile)
 
+        glf = bb.utils.lockfile(self.cachefile + ".lock")
+
         try:
             with open(self.cachefile, "rb") as f:
                 p = pickle.Unpickler(f)
                 data, version = p.load()
         except:
+            bb.utils.unlockfile(glf)
             return
+
+        bb.utils.unlockfile(glf)
 
         if version != self.__class__.CACHE_VERSION:
             return

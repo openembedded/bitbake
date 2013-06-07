@@ -33,11 +33,12 @@ import atexit
 import traceback
 import bb.utils
 import bb.compat
+import bb.exceptions
 
 # This is the pid for which we should generate the event. This is set when
 # the runqueue forks off.
 worker_pid = 0
-worker_pipe = None
+worker_fire = None
 
 logger = logging.getLogger('BitBake.Event')
 
@@ -150,20 +151,12 @@ def fire(event, d):
     # don't have a datastore so the datastore context isn't a problem.
 
     fire_class_handlers(event, d)
-    if worker_pid != 0:
+    if worker_fire:
         worker_fire(event, d)
     else:
         fire_ui_handlers(event, d)
 
-def worker_fire(event, d):
-    data = "<event>" + pickle.dumps(event) + "</event>"
-    worker_pipe.write(data)
-
 def fire_from_worker(event, d):
-    if not event.startswith("<event>") or not event.endswith("</event>"):
-        print("Error, not an event %s" % event)
-        return
-    event = pickle.loads(event[7:-8])
     fire_ui_handlers(event, d)
 
 noop = lambda _: None

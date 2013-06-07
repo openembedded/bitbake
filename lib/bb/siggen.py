@@ -201,9 +201,10 @@ class SignatureGeneratorBasic(SignatureGenerator):
         #d.setVar("BB_TASKHASH_task-%s" % task, taskhash[task])
         return h
 
-    def set_taskdata(self, hashes, deps):
+    def set_taskdata(self, hashes, deps, checksums):
         self.runtaskdeps = deps
         self.taskhash = hashes
+        self.file_checksum_values = checksums
 
     def dump_sigtask(self, fn, task, stampbase, runtime):
         k = fn + "." + task

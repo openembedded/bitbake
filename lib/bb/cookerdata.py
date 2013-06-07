@@ -25,7 +25,9 @@
 import os, sys
 from functools import wraps
 import logging
+import bb
 from bb import data
+import bb.parse
 
 logger      = logging.getLogger("BitBake")
 parselog    = logging.getLogger("BitBake.Parsing")
@@ -139,6 +141,20 @@ class CookerConfiguration(object):
     def setServerRegIdleCallback(self, srcb):
         self.server_register_idlecallback = srcb
 
+    def __getstate__(self):
+        state = {}
+        for key in self.__dict__.keys():
+            if key == "server_register_idlecallback":
+                state[key] = None
+            else:
+                state[key] = getattr(self, key)
+        return state
+
+    def __setstate__(self,state):
+        for k in state:
+            setattr(self, k, state[k]) 
+
+
 def catch_parse_error(func):
     """Exception handling bits for our parsing"""
     @wraps(func)
@@ -146,6 +162,8 @@ def catch_parse_error(func):
         try:
             return func(fn, *args)
         except (IOError, bb.parse.ParseError, bb.data_smart.ExpansionError) as exc:
+            import traceback
+            parselog.critical( traceback.format_exc())
             parselog.critical("Unable to parse %s: %s" % (fn, exc))
             sys.exit(1)
     return wrapped
