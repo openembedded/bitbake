@@ -1177,7 +1177,7 @@ class BBCooker:
         # necessary from the data store.
         #bb.utils.empty_environment()
         try:
-            prserv.serv.auto_start(self.data)
+            self.prhost = prserv.serv.auto_start(self.data)
         except prserv.serv.PRServiceConfigError:
             bb.event.fire(CookerExit(), self.event_data)
         return

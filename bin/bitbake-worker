@@ -280,6 +280,7 @@ class BitbakeWorker(object):
         bb.msg.loggerDefaultVerbose = self.workerdata["logdefaultverbose"]
         bb.msg.loggerVerboseLogs = self.workerdata["logdefaultverboselogs"]
         bb.msg.loggerDefaultDomains = self.workerdata["logdefaultdomain"]
+        self.data.setVar("PRSERV_HOST", self.workerdata["prhost"])
 
     def handle_ping(self, _):
         workerlog_write("Handling ping\n")

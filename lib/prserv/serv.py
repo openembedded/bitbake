@@ -207,6 +207,9 @@ class PRServerConnection():
     def importone(self, version, pkgarch, checksum, value):
         return self.connection.importone(version, pkgarch, checksum, value)
 
+    def getinfo(self):
+        return self.host, self.port
+
 def start_daemon(dbfile, host, port, logfile):
     pidfile = PIDPREFIX % (host, port)
     try:
@@ -271,7 +274,7 @@ def auto_start(d):
 
     host_params = filter(None, (d.getVar('PRSERV_HOST', True) or '').split(':'))
     if not host_params:
-        return True
+        return None
 
     if len(host_params) != 2:
         logger.critical('\n'.join(['PRSERV_HOST: incorrect format',
@@ -296,7 +299,11 @@ def auto_start(d):
         port = int(host_params[1])
 
     try:
-        return PRServerConnection(host,port).ping()
+        connection = PRServerConnection(host,port)
+        connection.ping()
+        realhost, realport = connection.getinfo()
+        return str(realhost) + ":" + str(realport)
+        
     except Exception:
         logger.critical("PRservice %s:%d not available" % (host, port))
         raise PRServiceConfigError
