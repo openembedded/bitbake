@@ -49,7 +49,7 @@ class Tinfoil:
         self.config.setConfigParameters(configparams)
         self.config.setServerRegIdleCallback(self.register_idle_function)
         self.cooker = BBCooker(self.config)
-        self.config_data = self.cooker.configuration.data
+        self.config_data = self.cooker.data
         bb.providers.logger.setLevel(logging.ERROR)
         self.cooker_data = None
 
