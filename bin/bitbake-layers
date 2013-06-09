@@ -226,7 +226,7 @@ Options:
 
     def list_recipes(self, title, pnspec, show_overlayed_only, show_same_ver_only, show_filenames, show_multi_provider_only):
         pkg_pn = self.bbhandler.cooker.recipecache.pkg_pn
-        (latest_versions, preferred_versions) = bb.providers.findProviders(self.bbhandler.cooker.configuration.data, self.bbhandler.cooker.recipecache, pkg_pn)
+        (latest_versions, preferred_versions) = bb.providers.findProviders(self.bbhandler.config_data, self.bbhandler.cooker.recipecache, pkg_pn)
         allproviders = bb.providers.allProviders(self.bbhandler.cooker.recipecache)
 
         # Ensure we list skipped recipes
@@ -515,7 +515,7 @@ Recipes are listed with the bbappends that apply to them as subitems.
         filenames = self.bbhandler.cooker_data.pkg_pn[pn]
 
         best = bb.providers.findBestProvider(pn,
-                                             self.bbhandler.cooker.configuration.data,
+                                             self.bbhandler.config_data,
                                              self.bbhandler.cooker_data,
                                              self.bbhandler.cooker_data.pkg_pn)
         best_filename = os.path.basename(best[3])
@@ -598,7 +598,7 @@ The .bbappend file can impact the dependency.
             for pn in deps:
                 if pn in self.bbhandler.cooker_data.pkg_pn:
                     best = bb.providers.findBestProvider(pn,
-                            self.bbhandler.cooker.configuration.data,
+                            self.bbhandler.config_data,
                             self.bbhandler.cooker_data,
                             self.bbhandler.cooker_data.pkg_pn)
                     self.check_cross_depends("DEPENDS", layername, f, best[3], show_filenames)
@@ -616,7 +616,7 @@ The .bbappend file can impact the dependency.
                 all_p = bb.providers.getRuntimeProviders(self.bbhandler.cooker_data, rdep)
                 if all_p:
                     best = bb.providers.filterProvidersRunTime(all_p, rdep,
-                                    self.bbhandler.cooker.configuration.data,
+                                    self.bbhandler.config_data,
                                     self.bbhandler.cooker_data)[0][0]
                     self.check_cross_depends("RDEPENDS", layername, f, best, show_filenames)
 
