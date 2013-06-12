@@ -9,14 +9,18 @@
 	    and the configuration files by describing what they are used for
 	    and how they interact.
     </para>
-    <para>BitBake handles the parsing and execution of the data files.
-	    The data itself is of various types:
+    <para>BitBake handles parsing and execution of the data files of various
+     types:
 	    <itemizedlist>
 		    <listitem>
 			    <para>
 				    <emphasis>Recipes:</emphasis>
-				    Provides details about particular pieces
-				    of software.
+				    As described in section 1.4, recipes provide details to BitBake
+				    about software it is to build.
+				    Details may include where and how to fetch the source code.
+				    Information about the recipe itself, such as version.
+				    How to compile the source code, and many other items that will
+				    be described further along in this document.				    
 		    </para>
 	    </listitem>
 	    <listitem>
