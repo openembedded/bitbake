@@ -26,8 +26,10 @@
 	    <listitem>
 		    <para>
 		    			<emphasis>Class Data:</emphasis>
-			An abstraction of common build information (e.g. how
-			to build a Linux kernel).
+		    			As described in section 1.6, class files contain information
+		    			that is useful to share between metadata files.
+		    			For example, an abstraction of common build information
+		    			(e.g. how to build a	Linux kernel).
 		</para>
 	</listitem>
       <listitem>
