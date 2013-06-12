@@ -137,7 +137,7 @@
      </itemizedlist>
      <para>BitBake satisfies all the original requirements and many
 	     more with extensions being made to the basic functionality to
-	     reflect the additionl requirements.
+	     reflect the additional requirements.
 	     Flexibility and power have always been the priorities.
 	     It is highly extensible, supporting embedded Python code and
 	     execution of any arbitrary tasks.
