@@ -5,9 +5,7 @@
   <title>Metadata</title>
   <section>
     <title>Description</title>
-    <para>The BitBake task executor, together with various types of
-	    configuration files form the OpenEmbedded Core.
-	    This section provides an overview of the BitBake task executor
+    <para>This section provides an overview of the BitBake task executor
 	    and the configuration files by describing what they are used for
 	    and how they interact.
     </para>
