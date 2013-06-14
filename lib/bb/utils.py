@@ -863,5 +863,5 @@ def process_profilelog(fn):
 # Was present to work around multiprocessing pool bugs in python < 2.7.3
 #
 def multiprocessingpool(*args, **kwargs):
-    return multiprocessing.pool.Pool(*args, **kwargs)
+    return multiprocessing.Pool(*args, **kwargs)
 
