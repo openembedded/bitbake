@@ -1392,6 +1392,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         sq_revdeps = []
         sq_revdeps_new = []
         sq_revdeps_squash = []
+        self.sq_harddeps = []
 
         # We need to construct a dependency graph for the setscene functions. Intermediate
         # dependencies between the setscene tasks only complicate the code. This code
@@ -1504,6 +1505,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     if taskid is None:
                         bb.msg.fatal("RunQueue", "Task %s:%s depends upon non-existent task %s:%s" % (self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realid]], self.rqdata.taskData.tasks_name[realid], dep, idependtask))
 
+                    self.sq_harddeps.append(self.rqdata.runq_setscene.index(taskid))
                     sq_revdeps_squash[self.rqdata.runq_setscene.index(task)].add(self.rqdata.runq_setscene.index(taskid))
                     # Have to zero this to avoid circular dependencies
                     sq_revdeps_squash[self.rqdata.runq_setscene.index(taskid)] = set()
@@ -1581,8 +1583,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         self.rq.state = runQueueSceneRun
 
-    def scenequeue_updatecounters(self, task):
+    def scenequeue_updatecounters(self, task, fail = False):
         for dep in self.sq_deps[task]:
+            if fail and task in self.sq_harddeps:
+                continue
             self.sq_revdeps2[dep].remove(task)
             if len(self.sq_revdeps2[dep]) == 0:
                 self.runq_buildable[dep] = 1
@@ -1609,7 +1613,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.stats.taskFailed()
         bb.event.fire(sceneQueueTaskFailed(task, self.stats, result, self), self.cfgData)
         self.scenequeue_notcovered.add(task)
-        self.scenequeue_updatecounters(task)
+        self.scenequeue_updatecounters(task, True)
 
     def task_failoutright(self, task):
         self.runq_running[task] = 1
@@ -1618,7 +1622,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         self.stats.taskSkipped()
         index = self.rqdata.runq_setscene[task]
         self.scenequeue_notcovered.add(task)
-        self.scenequeue_updatecounters(task)
+        self.scenequeue_updatecounters(task, True)
 
     def task_skip(self, task):
         self.runq_running[task] = 1
