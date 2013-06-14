@@ -860,11 +860,8 @@ def process_profilelog(fn):
     pout.close()  
 
 #
-# Work around multiprocessing pool bugs in python < 2.7.3
+# Was present to work around multiprocessing pool bugs in python < 2.7.3
 #
 def multiprocessingpool(*args, **kwargs):
-    if sys.version_info < (2, 7, 3):
-        return bb.compat.Pool(*args, **kwargs)
-    else:
-        return multiprocessing.pool.Pool(*args, **kwargs)
+    return multiprocessing.pool.Pool(*args, **kwargs)
 

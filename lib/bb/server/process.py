@@ -142,52 +142,6 @@ class ProcessServer(Process, BaseImplServer):
     def stop(self):
         self.keep_running.clear()
 
-    def bootstrap_2_6_6(self):
-        """Pulled from python 2.6.6. Needed to ensure we have the fix from
-        http://bugs.python.org/issue5313 when running on python version 2.6.2
-        or lower."""
-
-        try:
-            self._children = set()
-            self._counter = itertools.count(1)
-            try:
-                sys.stdin.close()
-                sys.stdin = open(os.devnull)
-            except (OSError, ValueError):
-                pass
-            multiprocessing._current_process = self
-            util._finalizer_registry.clear()
-            util._run_after_forkers()
-            util.info('child process calling self.run()')
-            try:
-                self.run()
-                exitcode = 0
-            finally:
-                util._exit_function()
-        except SystemExit as e:
-            if not e.args:
-                exitcode = 1
-            elif type(e.args[0]) is int:
-                exitcode = e.args[0]
-            else:
-                sys.stderr.write(e.args[0] + '\n')
-                sys.stderr.flush()
-                exitcode = 1
-        except:
-            exitcode = 1
-            import traceback
-            sys.stderr.write('Process %s:\n' % self.name)
-            sys.stderr.flush()
-            traceback.print_exc()
-
-        util.info('process exiting with exitcode %d' % exitcode)
-        return exitcode
-
-    # Python versions 2.6.0 through 2.6.2 suffer from a multiprocessing bug
-    # which can result in a bitbake server hang during the parsing process
-    if (2, 6, 0) <= sys.version_info < (2, 6, 3):
-        _bootstrap = bootstrap_2_6_6
-
 class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
     def __init__(self, serverImpl, ui_channel, event_queue):
         self.procserver = serverImpl

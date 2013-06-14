@@ -51,100 +51,18 @@ import inspect, select
 
 from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
 
-if sys.hexversion < 0x020600F0:
-    print("Sorry, python 2.6 or later is required for bitbake's XMLRPC mode")
-    sys.exit(1)
+class BBTransport(xmlrpclib.Transport):
+    def __init__(self):
+        self.connection_token = None
+        xmlrpclib.Transport.__init__(self)
 
-##
-# The xmlrpclib.Transport class has undergone various changes in Python 2.7
-# which break BitBake's XMLRPC implementation.
-# To work around this we subclass Transport and have a copy/paste of method
-# implementations from Python 2.6.6's xmlrpclib.
-#
-# Upstream Python bug is #8194 (http://bugs.python.org/issue8194)
-# This bug is relevant for Python 2.7.0 and 2.7.1 but was fixed for
-# Python > 2.7.2
-#
-# To implement a simple form of client control, we use a special transport
-# that adds a HTTP header field ("Bitbake-token") to ensure that a server
-# can communicate with only a client at a given time (the client must use
-# the same token).
-##
-if (2, 7, 0) <= sys.version_info < (2, 7, 2):
-    class BBTransport(xmlrpclib.Transport):
-        def __init__(self):
-            self.connection_token = None
-            xmlrpclib.Transport.__init__(self)
+    def set_connection_token(self, token):
+        self.connection_token = token
 
-        def request(self, host, handler, request_body, verbose=0):
-            h = self.make_connection(host)
-            if verbose:
-                h.set_debuglevel(1)
-
-            self.send_request(h, handler, request_body)
-            self.send_host(h, host)
-            self.send_user_agent(h)
-            if self.connection_token:
-                h.putheader("Bitbake-token", self.connection_token)
-            self.send_content(h, request_body)
-
-            errcode, errmsg, headers = h.getreply()
-
-            if errcode != 200:
-                raise ProtocolError(
-                    host + handler,
-                    errcode, errmsg,
-                    headers
-                    )
-
-            self.verbose = verbose
-
-            try:
-                sock = h._conn.sock
-            except AttributeError:
-                sock = None
-
-            return self._parse_response(h.getfile(), sock)
-
-        def make_connection(self, host):
-            import httplib
-            host, extra_headers, x509 = self.get_host_info(host)
-            return httplib.HTTP(host)
-
-        def _parse_response(self, file, sock):
-            p, u = self.getparser()
-
-            while 1:
-                if sock:
-                    response = sock.recv(1024)
-                else:
-                    response = file.read(1024)
-                if not response:
-                    break
-                if self.verbose:
-                    print("body:", repr(response))
-                p.feed(response)
-
-            file.close()
-            p.close()
-
-            return u.close()
-
-        def set_connection_token(self, token):
-            self.connection_token = token
-else:
-    class BBTransport(xmlrpclib.Transport):
-        def __init__(self):
-            self.connection_token = None
-            xmlrpclib.Transport.__init__(self)
-
-        def set_connection_token(self, token):
-            self.connection_token = token
-
-        def send_content(self, h, body):
-            if self.connection_token:
-                h.putheader("Bitbake-token", self.connection_token)
-            xmlrpclib.Transport.send_content(self, h, body)
+    def send_content(self, h, body):
+        if self.connection_token:
+            h.putheader("Bitbake-token", self.connection_token)
+        xmlrpclib.Transport.send_content(self, h, body)
 
 def _create_server(host, port):
     t = BBTransport()
