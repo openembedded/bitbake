@@ -204,6 +204,12 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
                    action = "store_true", dest = "observe_only", default = False)
 
         options, targets = parser.parse_args(sys.argv)
+
+        # some environmental variables set also configuration options
+        if "BBSERVER" in os.environ:
+            options.servertype = "xmlrpc"
+            options.remote_server = os.environ["BBSERVER"]
+
         return options, targets[1:]
 
 
@@ -268,6 +274,9 @@ def main():
             sys.exit("FATAL: If '--server-only' is defined, we must set the servertype as 'xmlrpc'.\n")
         if not configParams.bind:
             sys.exit("FATAL: The '--server-only' option requires a name/address to bind to with the -B option.\n")
+        if configParams.remote_server:
+            sys.exit("FATAL: The '--server-only' option conflicts with the '--remote-server' option. %s\n" % 
+                ("Please check your BBSERVER environment" if "BBSERVER" in os.environ else "" ))
 
     if configParams.bind and configParams.servertype != "xmlrpc":
         sys.exit("FATAL: If '-B' or '--bind' is defined, we must set the servertype as 'xmlrpc'.\n")
