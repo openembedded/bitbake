@@ -197,6 +197,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("", "--remote-server", help = "Connect to the specified server",
                    action = "store", dest = "remote_server", default = False)
 
+        parser.add_option("-m", "--kill-server", help = "Terminate the remote server",
+                    action = "store_true", dest = "kill_server", default = False)
+
         parser.add_option("", "--observe-only", help = "Connect to a server as an observing-only client",
                    action = "store_true", dest = "observe_only", default = False)
 

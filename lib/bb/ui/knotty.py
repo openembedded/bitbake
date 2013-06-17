@@ -250,6 +250,10 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     console.setFormatter(format)
     logger.addHandler(console)
 
+    if params.options.remote_server and params.options.kill_server:
+        server.terminateServer()
+        return
+
     if consolelogfile and not params.options.show_environment:
         bb.utils.mkdirhier(os.path.dirname(consolelogfile))
         conlogformat = bb.msg.BBLogFormatter(format_str)
