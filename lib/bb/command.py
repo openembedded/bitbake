@@ -59,11 +59,14 @@ class Command:
         # FIXME Add lock for this
         self.currentAsyncCommand = None
 
-    def runCommand(self, commandline):
+    def runCommand(self, commandline, ro_only = False):
         command = commandline.pop(0)
         if hasattr(CommandsSync, command):
             # Can run synchronous commands straight away
             command_method = getattr(self.cmds_sync, command)
+            if ro_only:
+                if not hasattr(command_method, 'readonly') or False == getattr(command_method, 'readonly'):
+                    return None, "Not able to execute not readonly commands in readonly mode"
             try:
                 result = command_method(self, commandline)
             except CommandError as exc:
@@ -153,6 +156,7 @@ class CommandsSync:
             expand = params[1]
 
         return command.cooker.data.getVar(varname, expand)
+    getVariable.readonly = True
 
     def setVariable(self, command, params):
         """
@@ -200,6 +204,7 @@ class CommandsSync:
         Get the CPU count on the bitbake server
         """
         return bb.utils.cpu_count()
+    getCpuCount.readonly = True
 
     def matchFile(self, command, params):
         fMatch = params[0]

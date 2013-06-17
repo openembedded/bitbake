@@ -93,7 +93,7 @@ class BitBakeServerCommands():
         """
         Run a cooker command on the server
         """
-        return self.cooker.command.runCommand(command)
+        return self.cooker.command.runCommand(command, self.server.readonly)
 
     def terminateServer(self):
         """
@@ -124,7 +124,7 @@ class BitBakeServerCommands():
 # ("service unavailable") is returned to the client.
 class BitBakeXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def __init__(self, request, client_address, server):
-        self.connection_token = server.connection_token
+        self.server = server
         SimpleXMLRPCRequestHandler.__init__(self, request, client_address, server)
 
     def do_POST(self):
@@ -132,9 +132,13 @@ class BitBakeXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             remote_token = self.headers["Bitbake-token"]
         except:
             remote_token = None
-        if remote_token != self.connection_token:
+        if remote_token != self.server.connection_token and remote_token != "observer":
             self.report_503()
         else:
+            if remote_token == "observer":
+                self.server.readonly = True
+            else:
+                self.server.readonly = False
             SimpleXMLRPCRequestHandler.do_POST(self)
 
     def report_503(self):
@@ -283,13 +287,17 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         self.connection_token = token
 
 class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
-    def __init__(self, serverImpl, clientinfo=("localhost", 0)):
+    def __init__(self, serverImpl, clientinfo=("localhost", 0), observer_only = False):
         self.connection, self.transport = _create_server(serverImpl.host, serverImpl.port)
         self.clientinfo = clientinfo
         self.serverImpl = serverImpl
+        self.observer_only = observer_only
 
     def connect(self):
-        token = self.connection.addClient()
+        if not self.observer_only:
+            token = self.connection.addClient()
+        else:
+            token = "observer"
         if token is None:
             return None
         self.transport.set_connection_token(token)
@@ -299,7 +307,8 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
         return self
 
     def removeClient(self):
-        self.connection.removeClient()
+        if not self.observer_only:
+            self.connection.removeClient()
 
     def terminate(self):
         # Don't wait for server indefinitely
@@ -331,7 +340,8 @@ class BitBakeServer(BitBakeBaseServer):
 
 class BitBakeXMLRPCClient(BitBakeBaseServer):
 
-    def __init__(self):
+    def __init__(self, observer_only = False):
+        self.observer_only = observer_only
         pass
 
     def saveConnectionDetails(self, remote):
@@ -354,7 +364,7 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
         except:
             return None
         self.serverImpl = XMLRPCProxyServer(host, port)
-        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0))
+        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only)
         return self.connection.connect()
 
     def endSession(self):
