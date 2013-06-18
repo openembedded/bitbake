@@ -32,6 +32,7 @@ import sre_constants
 import threading
 from cStringIO import StringIO
 from contextlib import closing
+from functools import wraps
 import bb
 from bb import utils, data, parse, event, cache, providers, taskdata, command, runqueue
 
@@ -495,12 +496,6 @@ class BBCooker:
             path, _ = os.path.split(path)
 
     def parseConfigurationFiles(self, files):
-        def _parse(f, data, include=False):
-            try:
-                return bb.parse.handle(f, data, include)
-            except (IOError, bb.parse.ParseError) as exc:
-                parselog.critical("Unable to parse %s: %s" % (f, exc))
-                sys.exit(1)
 
         data = self.configuration.data
         bb.parse.init_parser(data)
@@ -940,6 +935,21 @@ def parse_file(task):
     except Exception, exc:
         exc.recipe = filename
         raise exc
+
+def catch_parse_error(func):
+    """Exception handling bits for our parsing"""
+    @wraps(func)
+    def wrapped(fn, *args):
+        try:
+            return func(fn, *args)
+        except (IOError, bb.parse.ParseError) as exc:
+            parselog.critical("Unable to parse %s: %s" % (fn, exc))
+            sys.exit(1)
+    return wrapped
+
+@catch_parse_error
+def _parse(fn, data, include=False):
+    return bb.parse.handle(fn, data, include)
 
 class CookerParser(object):
     def __init__(self, cooker, filelist, masked):
