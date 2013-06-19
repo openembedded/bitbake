@@ -1192,9 +1192,6 @@ class BBCooker:
     def stop(self):
         self.state = state.stop
 
-    def reparseFiles(self):
-        return
-
     def initialize(self):
         self.state = state.initial
         self.initConfigurationData()

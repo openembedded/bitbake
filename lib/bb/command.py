@@ -378,14 +378,6 @@ class CommandsAsync:
         command.finishAsyncCommand()
     parseFiles.needcache = True
 
-    def reparseFiles(self, command, params):
-        """
-        Reparse .bb files
-        """
-        command.cooker.reparseFiles()
-        command.finishAsyncCommand()
-    reparseFiles.needcache = True
-
     def compareRevisions(self, command, params):
         """
         Parse the .bb files
