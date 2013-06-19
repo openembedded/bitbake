@@ -19,10 +19,10 @@
 
 <section>
 	<title>Obtaining BitBake</title>
-	<para>Please refer to Chapter 1 Section 1.7 for the various methods to obtain
-	BitBake.
-	Once the source code is on your machine the BitBake directory will appear as
-	follows:
+	<para>Please refer to Chapter 1 Section 1.7 for the various methods to
+	obtain BitBake.
+	Once the source code is on your machine the BitBake directory will
+	appear as follows:
 		<screen>
 			$ ls -al
 			total 100
@@ -50,27 +50,25 @@
 			a directory and it should match the directory tree above.  
 			Please note that you'll see your username wherever 
 			"wmat" appears above.
-	</para>
+		</para>
 </section>
 
 <section>
-	<title>Setting Up BitBake</title>
-	<para>Now let's setup our BitBake environment.
-		The recommended method is to run BitBake from a
-		directory of your choice.
-		The directory can be within your home directory or in
-		/usr/local, depending on your preference.
-		Let's run BitBake now to make sure it's working.
-		From the BitBake source code directory issue
-		the following command:
+	<title>Setting Up the BitBake Environment</title>
+	<para>The recommended method to run BitBake is from a directory of your
+	choice.
+	The directory can be within your home directory or in /usr/local,
+	depending on your preference.
+	Let's run BitBake now to make sure it's working.
+	From the BitBake source code directory issue the following command:
 		<screen>$ ./bin/bitbake --version
 			BitBake Build Tool Core version 1.19.0, bitbake version
 			 1.19.0
 		</screen>
 		You're now ready to use BitBake.
-		</para>
+	</para>
 		
-		<para>Note that if you're a Vim user, you will find useful
+	<para>Note that if you're a Vim user, you will find useful
 			Vim configuration contributions in the 
 			<emphasis>contrib/vim</emphasis> 
 			directory.
