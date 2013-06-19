@@ -602,6 +602,7 @@ def add_tasks(tasklist, d):
         getTask('deptask')
         getTask('rdeptask')
         getTask('recrdeptask')
+        getTask('recideptask')
         getTask('nostamp')
         getTask('fakeroot')
         getTask('noexec')

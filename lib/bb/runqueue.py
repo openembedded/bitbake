@@ -382,6 +382,7 @@ class RunQueueData:
 
         runq_build = []
         recursivetasks = {}
+        recursiveitasks = {}
         recursivetasksselfref = set()
 
         taskData = self.taskData
@@ -504,6 +505,12 @@ class RunQueueData:
                     if taskData.tasks_name[task] in tasknames:
                         recursivetasksselfref.add(task)
 
+                    if 'recideptask' in task_deps and taskData.tasks_name[task] in task_deps['recideptask']:
+                        recursiveitasks[task] = []
+                        for t in task_deps['recideptask'][taskData.tasks_name[task]].split():
+                            newdep = taskData.gettask_id_fromfnid(fnid, t)
+                            recursiveitasks[task].append(newdep)
+
             self.runq_fnid.append(taskData.tasks_fnid[task])
             self.runq_task.append(taskData.tasks_name[task])
             self.runq_depends.append(depends)
@@ -535,6 +542,10 @@ class RunQueueData:
                         if n not in seendeps:
                             generate_recdeps(n)
             generate_recdeps(task)
+
+            if task in recursiveitasks:
+                for dep in recursiveitasks[task]:
+                    generate_recdeps(dep)
 
         # Remove circular references so that do_a[recrdeptask] = "do_a do_b" can work
         for task in recursivetasks:
