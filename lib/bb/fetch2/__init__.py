@@ -1105,7 +1105,7 @@ class FetchMethod(object):
     def recommends_checksum(self, urldata):
         """
         Is the backend on where checksumming is recommended (should warnings 
-        by displayed if there is no checksum)?
+        be displayed if there is no checksum)?
         """
         return False
 
