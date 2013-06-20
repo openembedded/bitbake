@@ -454,7 +454,9 @@ class HobHandler(gobject.GObject):
         return " ".join(ret)
 
     def set_var_in_file(self, var, val, default_file=None):
+        self.runCommand(["enableDataTracking"])
         self.server.runCommand(["setVarFile", var, val, default_file])
+        self.runCommand(["disableDataTracking"])
 
     def get_parameters(self):
         # retrieve the parameters from bitbake

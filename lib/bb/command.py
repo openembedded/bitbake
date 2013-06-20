@@ -217,10 +217,20 @@ class CommandsSync:
         return command.cooker.generateNewImage(image, base_image, package_queue)
 
     def setVarFile(self, command, params):
+        """
+        Save a variable in a file; used for saving in a configuration file
+        """
         var = params[0]
         val = params[1]
         default_file = params[2]
         command.cooker.saveConfigurationVar(var, val, default_file)
+
+    def createConfigFile(self, command, params):
+        """
+        Create an extra configuration file
+        """
+        name = params[0]
+        command.cooker.createConfigFile(name)
 
 class CommandsAsync:
     """
@@ -390,11 +400,11 @@ class CommandsAsync:
         """
         Parse the configuration files
         """
-        prefiles = params[0]
-        postfiles = params[1]
+        prefiles = params[0].split()
+        postfiles = params[1].split()
         command.cooker.configuration.prefile = prefiles
         command.cooker.configuration.postfile = postfiles
-        command.cooker.loadConfigurationData()
+        command.cooker.loadConfigurationData(tracking=True)
         command.finishAsyncCommand()
     parseConfigurationFiles.needcache = False
 
