@@ -150,9 +150,11 @@ class BBCooker:
         self.data = self.databuilder.data
 
     def enableDataTracking(self):
+        self.configuration.tracking = True
         self.data.enableTracking()
 
     def disableDataTracking(self):
+        self.configuration.tracking = False
         self.data.disableTracking()
 
     def loadConfigurationData(self):
