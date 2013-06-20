@@ -169,7 +169,8 @@ class ImageConfigurationPage (HobPage):
 
     def disable_warnings_bar(self):
         if self.builder.parsing_warnings:
-            self.warnings_bar.hide_all()
+            if hasattr(self, 'warnings_bar'):
+                self.warnings_bar.hide_all()
             self.builder.parsing_warnings = []
 
     def create_config_machine(self):
