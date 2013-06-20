@@ -34,7 +34,7 @@ import bb
 import bb.msg
 import bb.process
 from contextlib import nested
-from bb import data, event, utils
+from bb import event, utils
 
 bblogger = logging.getLogger('BitBake')
 logger = logging.getLogger('BitBake.Build')
@@ -142,50 +142,50 @@ class LogTee(object):
 def exec_func(func, d, dirs = None):
     """Execute an BB 'function'"""
 
-    body = data.getVar(func, d)
+    body = d.getVar(func)
     if not body:
         if body is None:
             logger.warn("Function %s doesn't exist", func)
         return
 
-    flags = data.getVarFlags(func, d)
+    flags = d.getVarFlags(func)
     cleandirs = flags.get('cleandirs')
     if cleandirs:
-        for cdir in data.expand(cleandirs, d).split():
+        for cdir in d.expand(cleandirs).split():
             bb.utils.remove(cdir, True)
 
     if dirs is None:
         dirs = flags.get('dirs')
         if dirs:
-            dirs = data.expand(dirs, d).split()
+            dirs = d.expand(dirs).split()
 
     if dirs:
         for adir in dirs:
             bb.utils.mkdirhier(adir)
         adir = dirs[-1]
     else:
-        adir = data.getVar('B', d, 1)
+        adir = d.getVar('B', True)
         bb.utils.mkdirhier(adir)
 
     ispython = flags.get('python')
 
     lockflag = flags.get('lockfiles')
     if lockflag:
-        lockfiles = [data.expand(f, d) for f in lockflag.split()]
+        lockfiles = [d.expand(f) for f in lockflag.split()]
     else:
         lockfiles = None
 
-    tempdir = data.getVar('T', d, 1)
+    tempdir = d.getVar('T', True)
 
     # or func allows items to be executed outside of the normal
     # task set, such as buildhistory
-    task = data.getVar('BB_RUNTASK', d, 1) or func
+    task = d.getVar('BB_RUNTASK', True) or func
     if task == func:
         taskfunc = task
     else:
         taskfunc = "%s.%s" % (task, func)
 
-    runfmt = data.getVar('BB_RUNFMT', d, 1) or "run.{func}.{pid}"
+    runfmt = d.getVar('BB_RUNFMT', True) or "run.{func}.{pid}"
     runfn = runfmt.format(taskfunc=taskfunc, task=task, func=func, pid=os.getpid())
     runfile = os.path.join(tempdir, runfn)
     bb.utils.mkdirhier(os.path.dirname(runfile))
@@ -251,7 +251,7 @@ def exec_func_shell(func, d, runfile, cwd=None):
 
     with open(runfile, 'w') as script:
         script.write('#!/bin/sh -e\n')
-        data.emit_func(func, script, d)
+        bb.data.emit_func(func, script, d)
 
         if bb.msg.loggerVerboseLogs:
             script.write("set -x\n")
@@ -284,13 +284,13 @@ def exec_func_shell(func, d, runfile, cwd=None):
     bb.debug(2, "Shell function %s finished" % func)
 
 def _task_data(fn, task, d):
-    localdata = data.createCopy(d)
+    localdata = bb.data.createCopy(d)
     localdata.setVar('BB_FILENAME', fn)
     localdata.setVar('BB_CURRENTTASK', task[3:])
     localdata.setVar('OVERRIDES', 'task-%s:%s' %
                      (task[3:], d.getVar('OVERRIDES', False)))
     localdata.finalize()
-    data.expandKeys(localdata)
+    bb.data.expandKeys(localdata)
     return localdata
 
 def _exec_task(fn, task, d, quieterr):
@@ -299,7 +299,7 @@ def _exec_task(fn, task, d, quieterr):
     Execution of a task involves a bit more setup than executing a function,
     running it with its own local metadata, and with some useful variables set.
     """
-    if not data.getVarFlag(task, 'task', d):
+    if not d.getVarFlag(task, 'task'):
         event.fire(TaskInvalid(task, d), d)
         logger.error("No such task: %s" % task)
         return 1
@@ -575,7 +575,7 @@ def stampfile(taskname, d, file_name = None):
     return stamp_internal(taskname, d, file_name)
 
 def add_tasks(tasklist, d):
-    task_deps = data.getVar('_task_deps', d)
+    task_deps = d.getVar('_task_deps')
     if not task_deps:
         task_deps = {}
     if not 'tasks' in task_deps:
@@ -584,18 +584,18 @@ def add_tasks(tasklist, d):
         task_deps['parents'] = {}
 
     for task in tasklist:
-        task = data.expand(task, d)
-        data.setVarFlag(task, 'task', 1, d)
+        task = d.expand(task)
+        d.setVarFlag(task, 'task', 1)
 
         if not task in task_deps['tasks']:
             task_deps['tasks'].append(task)
 
-        flags = data.getVarFlags(task, d)
+        flags = d.getVarFlags(task)
         def getTask(name):
             if not name in task_deps:
                 task_deps[name] = {}
             if name in flags:
-                deptask = data.expand(flags[name], d)
+                deptask = d.expand(flags[name])
                 task_deps[name][task] = deptask
         getTask('depends')
         getTask('rdepends')
@@ -610,15 +610,15 @@ def add_tasks(tasklist, d):
         task_deps['parents'][task] = []
         if 'deps' in flags:
             for dep in flags['deps']:
-                dep = data.expand(dep, d)
+                dep = d.expand(dep)
                 task_deps['parents'][task].append(dep)
 
     # don't assume holding a reference
-    data.setVar('_task_deps', task_deps, d)
+    d.setVar('_task_deps', task_deps)
 
 def remove_task(task, kill, d):
     """Remove an BB 'task'.
 
        If kill is 1, also remove tasks that depend on this task."""
 
-    data.delVarFlag(task, 'task', d)
+    d.delVarFlag(task, 'task')
