@@ -684,12 +684,11 @@ class Builder(gtk.Window):
         self.handler.set_sdk_machine(self.configuration.curr_sdk_machine)
         self.handler.set_image_fstypes(self.configuration.image_fstypes)
         self.handler.set_extra_config(self.configuration.extra_setting)
-        self.handler.set_extra_inherit("packageinfo")
-        self.handler.set_extra_inherit("image_types")
+        self.handler.set_extra_inherit("packageinfo image_types")
         self.set_user_config_proxies()
 
     def set_user_config(self):
-        self.handler.init_cooker()
+        self.handler.reset_cooker()
         # set bb layers
         self.handler.set_bblayers(self.configuration.layers)
         # set local configuration
