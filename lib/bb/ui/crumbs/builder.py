@@ -30,7 +30,6 @@ import shlex
 import re
 import logging
 import sys
-from bb.ui.crumbs.template import TemplateMgr
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
@@ -192,36 +191,7 @@ class Configuration:
         self.split_proxy("socks", params["socks_proxy"])
         self.split_proxy("cvs", params["cvs_proxy_host"] + ":" + params["cvs_proxy_port"])
 
-    def load(self, template):
-        try:
-            self.image_rootfs_size = int(template.getVar("IMAGE_ROOTFS_SIZE"))
-        except:
-            pass
-        try:
-            self.image_extra_size = int(template.getVar("IMAGE_EXTRA_SPACE"))
-        except:
-            pass
-        # image_overhead_factor is read-only.
-        self.incompat_license = template.getVar("INCOMPATIBLE_LICENSE")
-        self.curr_sdk_machine = template.getVar("SDKMACHINE")
-        self.extra_setting = eval(template.getVar("EXTRA_SETTING"))
-        self.toolchain_build = eval(template.getVar("TOOLCHAIN_BUILD"))
-        self.image_fstypes = template.getVar("IMAGE_FSTYPES")
-        # image/recipes/packages
-        self.selected_image = template.getVar("__SELECTED_IMAGE__")
-        self.selected_recipes = template.getVar("DEPENDS").split()
-        self.selected_packages = template.getVar("IMAGE_INSTALL").split()
-        # proxy
-        self.enable_proxy = eval(template.getVar("enable_proxy"))
-        self.same_proxy = eval(template.getVar("use_same_proxy"))
-        self.split_proxy("http", template.getVar("http_proxy"))
-        self.split_proxy("https", template.getVar("https_proxy"))
-        self.split_proxy("ftp", template.getVar("ftp_proxy"))
-        self.split_proxy("socks", template.getVar("all_proxy"))
-        self.split_proxy("cvs", template.getVar("CVS_PROXY_HOST") + ":" + template.getVar("CVS_PROXY_PORT"))
-
     def save(self, handler, template, defaults=False):
-        template.setVar("VERSION", "%s" % hobVer)
         # bblayers.conf
         handler.set_var_in_file("BBLAYERS", self.layers, "bblayers.conf")
         # local.conf
@@ -240,29 +210,29 @@ class Configuration:
         handler.set_var_in_file("PARALLEL_MAKE", "-j %s" % self.pmake, "local.conf")
         handler.set_var_in_file("BB_NUMBER_THREADS", self.bbthread, "local.conf")
         handler.set_var_in_file("PACKAGE_CLASSES", " ".join(["package_" + i for i in self.curr_package_format.split()]), "local.conf")
-        template.setVar("IMAGE_ROOTFS_SIZE", self.image_rootfs_size)
-        template.setVar("IMAGE_EXTRA_SPACE", self.image_extra_size)
-        template.setVar("INCOMPATIBLE_LICENSE", self.incompat_license)
-        template.setVar("SDKMACHINE", self.curr_sdk_machine)
+        handler.set_var_in_file("IMAGE_ROOTFS_SIZE", self.image_rootfs_size, "local.conf")
+        handler.set_var_in_file("IMAGE_EXTRA_SPACE", self.image_extra_size, "local.conf")
+        handler.set_var_in_file("INCOMPATIBLE_LICENSE", self.incompat_license, "local.conf")
+        handler.set_var_in_file("SDKMACHINE", self.curr_sdk_machine, "local.conf")
         handler.set_var_in_file("CONF_VERSION", self.conf_version, "local.conf")
         handler.set_var_in_file("LCONF_VERSION", self.lconf_version, "bblayers.conf")
-        template.setVar("EXTRA_SETTING", self.extra_setting)
-        template.setVar("TOOLCHAIN_BUILD", self.toolchain_build)
-        template.setVar("IMAGE_FSTYPES", self.image_fstypes)
+        handler.set_var_in_file("EXTRA_SETTING", self.extra_setting, "local.conf")
+        handler.set_var_in_file("TOOLCHAIN_BUILD", self.toolchain_build, "local.conf")
+        handler.set_var_in_file("IMAGE_FSTYPES", self.image_fstypes, "local.conf")
         if not defaults:
             # image/recipes/packages
-            template.setVar("__SELECTED_IMAGE__", self.selected_image)
-            template.setVar("DEPENDS", self.selected_recipes)
-            template.setVar("IMAGE_INSTALL", self.user_selected_packages)
+            handler.set_var_in_file("__SELECTED_IMAGE__", self.selected_image, "local.conf")
+            handler.set_var_in_file("DEPENDS", self.selected_recipes, "local.conf")
+            handler.set_var_in_file("IMAGE_INSTALL", self.user_selected_packages, "local.conf")
         # proxy
-        template.setVar("enable_proxy", self.enable_proxy)
-        template.setVar("use_same_proxy", self.same_proxy)
-        template.setVar("http_proxy", self.combine_proxy("http"))
-        template.setVar("https_proxy", self.combine_proxy("https"))
-        template.setVar("ftp_proxy", self.combine_proxy("ftp"))
-        template.setVar("all_proxy", self.combine_proxy("socks"))
-        template.setVar("CVS_PROXY_HOST", self.combine_host_only("cvs"))
-        template.setVar("CVS_PROXY_PORT", self.combine_port_only("cvs"))
+        handler.set_var_in_file("enable_proxy", self.enable_proxy, "local.conf")
+        handler.set_var_in_file("use_same_proxy", self.same_proxy, "local.conf")
+        handler.set_var_in_file("http_proxy", self.combine_proxy("http"), "local.conf")
+        handler.set_var_in_file("https_proxy", self.combine_proxy("https"), "local.conf")
+        handler.set_var_in_file("ftp_proxy", self.combine_proxy("ftp"), "local.conf")
+        handler.set_var_in_file("all_proxy", self.combine_proxy("socks"), "local.conf")
+        handler.set_var_in_file("CVS_PROXY_HOST", self.combine_host_only("cvs"), "local.conf")
+        handler.set_var_in_file("CVS_PROXY_PORT", self.combine_port_only("cvs"), "local.conf")
 
     def __str__(self):
         s = "VERSION: '%s', BBLAYERS: '%s', MACHINE: '%s', DISTRO: '%s', DL_DIR: '%s'," % \
@@ -407,8 +377,6 @@ class Builder(gtk.Window):
         # handler
         self.handler = hobHandler
 
-        self.template = None
-
         # logger
         self.logger = logging.getLogger("BitBake")
         self.consolelog = None
@@ -552,7 +520,6 @@ class Builder(gtk.Window):
         self.handler.init_cooker()
         self.handler.set_extra_inherit("image_types")
         self.generate_configuration()
-        self.load_template(TemplateMgr.convert_to_template_pathfilename("default", ".hob/"))
 
     def update_config_async(self):
         self.switch_page(self.MACHINE_SELECTION)
@@ -634,61 +601,6 @@ class Builder(gtk.Window):
 
     def cancel_parse_sync(self):
         self.handler.cancel_parse()
-
-    def load_template(self, path):
-        if not os.path.isfile(path):
-            return False
-
-        self.template = TemplateMgr()
-        # check compatibility
-        tempVer = self.template.getVersion(path)
-        if not tempVer or int(tempVer) < hobVer:
-            self.template.destroy()
-            self.template = None
-            return False
-
-        try:
-            self.template.load(path)
-            self.configuration.load(self.template)
-        except Exception as e:
-            self.show_error_dialog("Hob Exception - %s" % (str(e)))
-            self.reset()
-        finally:
-            self.template.destroy()
-            self.template = None
-
-        for layer in self.configuration.layers:
-            if not os.path.exists(layer+'/conf/layer.conf'):
-                return False
-
-        self.set_user_config_extra()
-        return True
-
-    def save_template(self, path, defaults=False):
-        if path.rfind("/") == -1:
-            filename = "default"
-            path = "."
-        else:
-            filename = path[path.rfind("/") + 1:len(path)]
-            path = path[0:path.rfind("/")]
-
-        self.template = TemplateMgr()
-        try:
-            self.template.open(filename, path)
-            self.configuration.save(self.handler, self.template, defaults)
-
-            self.template.save()
-        except Exception as e:
-            self.show_error_dialog("Hob Exception - %s" % (str(e)))
-            self.reset()
-        finally:
-            self.template.destroy()
-            self.template = None
-
-    def save_defaults(self):
-        if not os.path.exists(".hob/"):
-            os.mkdir(".hob/")
-        self.save_template(".hob/default", True)
 
     def switch_page(self, next_step):
         # Main Workflow (Business Logic)
@@ -1255,7 +1167,6 @@ class Builder(gtk.Window):
         response = dialog.run()
         if response == gtk.RESPONSE_YES:
             self.configuration.layers = dialog.layers
-            self.save_defaults() # remember layers
             # DO refresh layers
             if dialog.layers_changed:
                 self.update_config_async()
