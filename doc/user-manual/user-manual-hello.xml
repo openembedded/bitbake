@@ -67,7 +67,34 @@
 		</screen>
 		You're now ready to use BitBake.
 	</para>
-		
+	<para>A final step to make development easier is to add the executable
+	binary to your environment PATH.
+	First, have a look at your current PATH variable.
+	If I check mine, I get:
+	<screen>$ echo $PATH	
+	/home/wmat/bin:/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:
+	/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+	</screen>
+	Now add the directory location for the BitBake binary to the PATH
+	with:
+	<screen>$ export PATH={path to the bitbake executable}:$PATH
+	</screen>
+	This will add the directory to the beginning of your PATH environment
+	variable.
+	For example, on my machine:
+	<screen>$ export PATH=/media/wmat/Backups/dev/bitbake/bin:$PATH</screen>
+	<screen>$ echo $PATH
+	/media/wmat/Backups/dev/bitbake/bin:/home/wmat/bin:
+	/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:
+	/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+	</screen>
+	Now, you should be able to simply enter the <screen>bitbake</screen>
+	command at the command line to run bitbake.
+	For a more permanent solution and assuming you are running the BASH
+	shell, edit <screen>~/.bashrc</screen> and add the following to the end
+	of that file:
+	<screen>PATH={path to the bitbake executable}:$PATH</screen>
+	</para>
 	<para>Note that if you're a Vim user, you will find useful
 			Vim configuration contributions in the 
 			<emphasis>contrib/vim</emphasis> 
@@ -107,9 +134,141 @@
 				</listitem>
 			</itemizedlist>
 		</para>
+		<section>
+		<title>A Reverse Walkthrough</title>
 		<para>
-		
+		One of the best means to understand anything is to walk
+		through the steps to where we want to be by observing first
+		principles.
+		BitBake allows us to do this through the -D or Debug command
+		line parameter.
+		We know we want to eventually compile a HelloWorld example, but
+		we don't know what we need to do that.
+		Remember that BitBake utilizes three types of metadata files:
+		Configuration Files, Classes, and Recipes.
+		But where do they go, how does BitBake find them, etc. etc.?
+		Hopefully we can use BitBake's error messaging to figure this
+		out and better understand exactly what's going on.
 		</para>
+		
+		<para>
+		First, let's begin by setting up a directory for our HelloWorld
+		project.
+		I'll do this in my home directory and change into that
+		directory:
+		<screen>$mkdir ~/dev/hello && cd ~/dev/hello</screen>
+		Within this new, empty directory, let's run BitBake with
+		Debugging output and see what happens:
+		<screen>$bitbake -DDD
+		The BBPATH variable is not set
+                DEBUG: Removed the following variables from the environment: 
+                GNOME_DESKTOP_SESSION_ID, LESSOPEN, WINDOWID, 
+                GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, 
+                XDG_SESSION_PATH, XAUTHORITY, LANGUAGE, SESSION_MANAGER, 
+                SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, TEXTDOMAIN, 
+                GPG_AGENT_INFO, SSH_AUTH_SOCK, XDG_RUNTIME_DIR, 
+                COMPIZ_BIN_PATH, GDMSESSION, DEFAULTS_PATH, TEXTDOMAINDIR, 
+                XDG_SEAT_PATH, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP, 
+                DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE, 
+                DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID, 
+                UBUNTU_MENUPROXY, OLDPWD, GTK_MODULES, XDG_DATA_DIRS, 
+                COLORTERM, LS_COLORS
+                </screen>
+                The majority of this output is specific to environment variables
+                that are not directly relevant to BitBake.  However, the very
+                first message <screen>The BBPATH variable is not set</screen>
+                is and needs to be rectified.  So how do we set the BBPATH
+                variable?
+                </para>
+                <para>
+                When BitBake is run it begins looking for metadata files.
+                The BBPATH variable is what tells BitBake where to look.
+                It is possible to set BBPATH as an environment variable as you
+                did above for the BitBake exexcutable's PATH.
+                However, it's much more flexible to set the BBPATH variable for
+                each project, as this allows for greater flexibility.
+                </para>
+                <para>
+                Without BBPATH Bitbake will not find any conf/<filename>.conf
+                files or recipe files at all.
+                It will also not find bitbake.conf.
+                Note the reference to conf/<filename>.
+                It is standard practice to organize the project's directory tree
+                to include a conf/ and a classes/ directory.
+                Add those now to your project directory.
+                <screen>$ mkdir conf classes</screen>
+                Now let's copy the sample configuration files provided in the
+                BitBake source tree to their appropriate conf and classes
+                directory.  Change to the BitBake source tree directory and:
+                <screen>cp conf/bitbake.conf ~/dev/hello/conf/
+                cp classes/base.bbclass ~/dev/hello/classes/
+                </screen>
+                At this point your project directory structure should look like
+                the following:
+                <screen>
+                ~/dev/hello$ tree
+                .
+                ├── classes
+                │   └── base.bbclass
+                └── conf
+                    └── bitbake.conf
+                    </screen>
+                </para>
+                <para>
+                But what about BBPATH, we still haven't set it?               
+                </para>
+                <para>
+                The first configuration file that BitBake looks for is always
+                bblayers.conf.
+                With this knowledge we know that to resolve our BBPATH error we
+                can add a <screen>conf/bblayers.conf</screen> file to our
+                project source tree and populate it with the BBPATH variable
+                declaration.
+                From your project source tree:
+                <screen>$ vim conf/bblayers.conf</screen>
+                Add the following to the empty bblayers.conf file:
+                <screen>BBPATH := "${TOPDIR}"</screen>                
+                </para>
+                <para>
+                Now from the root of our project directory, let's run BitBake
+                again and see what happens:
+                <screen>:~/dev/hello$ bitbake -DDD
+                Nothing to do.  Use 'bitbake world' to build everything, or run
+                'bitbake --help' for usage information.
+                DEBUG: Removed the following variables from the environment:
+                GNOME_DESKTOP_SESSION_ID, LESSOPEN, WINDOWID,
+                GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG,
+                XDG_SESSION_PATH, XAUTHORITY, LANGUAGE, SESSION_MANAGER,
+                SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, TEXTDOMAIN,
+                GPG_AGENT_INFO, SSH_AUTH_SOCK, XDG_RUNTIME_DIR,
+                COMPIZ_BIN_PATH, GDMSESSION, DEFAULTS_PATH, TEXTDOMAINDIR,
+                XDG_SEAT_PATH, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP,
+                DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE,
+                DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID, UBUNTU_MENUPROXY,
+                OLDPWD, GTK_MODULES, XDG_DATA_DIRS, COLORTERM, LS_COLORS
+                DEBUG: Found bblayers.conf (/home/wmat/dev/hello/conf/
+                bblayers.conf)
+                DEBUG: LOAD /home/wmat/dev/hello/conf/bblayers.conf
+                DEBUG: LOAD /home/wmat/dev/hello/conf/bitbake.conf
+                DEBUG: BB configuration INHERITs:0: inheriting /home/wmat/dev/
+                hello/classes/base.bbclass
+                DEBUG: BB /home/wmat/dev/hello/classes/base.bbclass: handle
+                (data, include)
+                DEBUG: LOAD /home/wmat/dev/hello/classes/base.bbclass
+                DEBUG: Clearing SRCREV cache due to cache policy of: clear
+                DEBUG: Using cache in '/home/wmat/dev/hello/tmp/cache/
+                local_file_checksum_cache.dat'
+                DEBUG: Using cache in '/home/wmat/dev/hello/tmp/cache/
+                bb_codeparser.dat'
+                </screen>
+                NOTE: From this point forward, the environment variable
+                removal messages will be ignored and omitted.
+                Let's examine the relevant DEBUG messages:
+                
+                
+                </para>
+                </section>
+
 	</section>
 
 </chapter>
