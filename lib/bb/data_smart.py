@@ -485,15 +485,19 @@ class DataSmart(MutableMapping):
 
         # more cookies for the cookie monster
         if '_' in var:
-            override = var[var.rfind('_')+1:]
-            if len(override) > 0:
-                if override not in self._seen_overrides:
-                    self._seen_overrides[override] = set()
-                self._seen_overrides[override].add( var )
+            self._setvar_update_overrides(var)
 
         # setting var
         self.dict[var]["_content"] = value
         self.varhistory.record(**loginfo)
+
+    def _setvar_update_overrides(self, var):
+        # aka pay the cookie monster
+        override = var[var.rfind('_')+1:]
+        if len(override) > 0:
+            if override not in self._seen_overrides:
+                self._seen_overrides[override] = set()
+            self._seen_overrides[override].add( var )
 
     def getVar(self, var, expand=False, noweakdefault=False):
         value = self.getVarFlag(var, "_content", False, noweakdefault)
@@ -565,6 +569,9 @@ class DataSmart(MutableMapping):
         if not var in self.dict:
             self._makeShadowCopy(var)
         self.dict[var][flag] = value
+
+        if flag == "defaultval" and '_' in var:
+            self._setvar_update_overrides(var)
 
     def getVarFlag(self, var, flag, expand=False, noweakdefault=False):
         local_var = self._findVar(var)
