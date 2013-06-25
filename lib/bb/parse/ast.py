@@ -147,7 +147,7 @@ class MethodNode(AstNode):
     def eval(self, data):
         text = '\n'.join(self.body)
         if self.func_name == "__anonymous":
-            funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(string.maketrans('/.+-', '____'))))
+            funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(string.maketrans('/.+-@', '_____'))))
             text = "def %s(d):\n" % (funcname) + text
             bb.methodpool.insert_method(funcname, text, self.filename)
             anonfuncs = data.getVar('__BBANONFUNCS') or []
