@@ -234,7 +234,7 @@ class BBCooker:
                 total += c
 
             #add the variable on a single line, to be easy to replace the second time
-            total += "#added by bitbake"
+            total += "\n#added by bitbake"
             total += "\n%s = \"%s\"\n" % (var, val)
 
             with open(default_file, 'w') as f:
