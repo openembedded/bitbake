@@ -253,7 +253,12 @@ class CookerDataBuilder(object):
             data.delVar('LAYERDIR')
 
         if not data.getVar("BBPATH", True):
-            raise SystemExit("The BBPATH variable is not set")
+            msg = "The BBPATH variable is not set"
+            if not layerconf:
+                msg += (" and bitbake did not find a conf/bblayers.conf file in"
+                        " the expected location.\nMaybe you accidentally"
+                        " invoked bitbake from the wrong directory?")
+            raise SystemExit(msg)
 
         data = parse_config_file(os.path.join("conf", "bitbake.conf"), data)
 
