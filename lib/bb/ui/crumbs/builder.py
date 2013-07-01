@@ -191,7 +191,7 @@ class Configuration:
         self.split_proxy("socks", params["socks_proxy"])
         self.split_proxy("cvs", params["cvs_proxy_host"] + ":" + params["cvs_proxy_port"])
 
-    def save(self, handler, template, defaults=False):
+    def save(self, handler, defaults=False):
         # bblayers.conf
         handler.set_var_in_file("BBLAYERS", self.layers, "bblayers.conf")
         # local.conf
@@ -1229,7 +1229,7 @@ class Builder(gtk.Window):
         settings_changed = False
         if response == gtk.RESPONSE_YES:
             self.configuration = dialog.configuration
-            self.save_defaults() # remember settings
+            self.configuration.save(self.handler, True) # remember settings
             settings_changed = dialog.settings_changed
         dialog.destroy()
         return response == gtk.RESPONSE_YES, settings_changed
@@ -1257,7 +1257,7 @@ class Builder(gtk.Window):
         settings_changed = False
         if response == gtk.RESPONSE_YES:
             self.configuration = dialog.configuration
-            self.save_defaults() # remember settings
+            self.configuration.save(self.handler, True) # remember settings
             settings_changed = dialog.settings_changed
             if dialog.proxy_settings_changed:
                 self.set_user_config_proxies()

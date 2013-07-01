@@ -146,7 +146,9 @@ class HobHandler(gobject.GObject):
         elif next_command == self.SUB_MATCH_CLASS:
             self.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
         elif next_command == self.SUB_PARSE_CONFIG:
+            self.runCommand(["enableDataTracking"])
             self.runCommand(["parseConfigurationFiles", "conf/.hob.conf", ""])
+            self.runCommand(["disableDataTracking"])
         elif next_command == self.SUB_GNERATE_TGTS:
             self.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.SUB_GENERATE_PKGINFO:
