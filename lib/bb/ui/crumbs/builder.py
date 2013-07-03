@@ -30,6 +30,7 @@ import shlex
 import re
 import logging
 import sys
+import signal
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
@@ -440,6 +441,8 @@ class Builder(gtk.Window):
         self.handler.connect("package-populated",        self.handler_package_populated_cb)
 
         self.initiate_new_build_async()
+
+        signal.signal(signal.SIGINT, self.event_handle_SIGINT)
 
     def create_visual_elements(self):
         self.set_title("Hob")
@@ -1074,6 +1077,12 @@ class Builder(gtk.Window):
             return True
         else:
             gtk.main_quit()
+
+    def event_handle_SIGINT(self, signal, frame):
+        for w in gtk.window_list_toplevels():
+            if w.get_modal():
+                w.response(gtk.RESPONSE_DELETE_EVENT)
+        sys.exit(0)
 
     def build_packages(self):
         _, all_recipes = self.recipe_model.get_selected_recipes()
