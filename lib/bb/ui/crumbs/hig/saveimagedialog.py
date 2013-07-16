@@ -147,4 +147,5 @@ class SaveImageDialog (CrumbsDialog):
         HobButton.style_button(button)
 
         res = dialog.run()
+        self.name_entry.grab_focus()
         dialog.destroy()
