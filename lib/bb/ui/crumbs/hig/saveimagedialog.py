@@ -99,7 +99,8 @@ class SaveImageDialog (CrumbsDialog):
         self.save_button.set_label("Save")
         self.save_button.connect("clicked", self.save_button_cb)
         self.save_button.set_size_request(110, 30)
-        self.save_button.set_sensitive(False)
+        if self.name_entry.get_text() == '':
+            self.save_button.set_sensitive(False)
 
         table.attach(cancel_button, 2, 3, 0, 1)
         table.attach(self.save_button, 3, 4, 0, 1)
@@ -124,6 +125,7 @@ class SaveImageDialog (CrumbsDialog):
         description = description_buffer.get_text(description_buffer.get_start_iter(),description_buffer.get_end_iter())
         if new_text.islower() and new_text.isalnum():
             self.builder.image_details_page.image_saved = True
+            self.builder.customized = False
             self.builder.generate_new_image(self.directory+text, description)
             self.builder.recipe_model.set_in_list(text, description)
             self.builder.recipe_model.set_selected_image(text)
