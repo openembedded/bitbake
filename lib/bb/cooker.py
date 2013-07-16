@@ -1155,11 +1155,11 @@ class BBCooker:
                 if topdir in base_image:
                     base_image = require_line.split()[1]
                 imagefile.write("require " + base_image + "\n")
-            package_install = "PACKAGE_INSTALL_forcevariable = \""
+            image_install = "IMAGE_INSTALL = \""
             for package in package_queue:
-                package_install += str(package) + " "
-            package_install += "\"\n"
-            imagefile.write(package_install)
+                image_install += str(package) + " "
+            image_install += "\"\n"
+            imagefile.write(image_install)
 
             description_var = "DESCRIPTION = \"" + description + "\"\n"
             imagefile.write(description_var)
