@@ -28,6 +28,7 @@ from bb.ui.crumbs.hobcolor import HobColors
 from bb.ui.crumbs.hobwidget import hic, HobImageButton, HobInfoButton, HobAltButton, HobButton
 from bb.ui.crumbs.hoblistmodel import RecipeListModel
 from bb.ui.crumbs.hobpages import HobPage
+from bb.ui.crumbs.hig.retrieveimagedialog import RetrieveImageDialog
 
 #
 # ImageConfigurationPage
@@ -48,6 +49,7 @@ class ImageConfigurationPage (HobPage):
         self.machine_combo_changed_by_manual = True
         self.stopping = False
         self.warning_shift = 0
+        self.custom_image_selected = None
         self.create_visual_elements()
 
     def create_visual_elements(self):
@@ -366,8 +368,28 @@ class ImageConfigurationPage (HobPage):
         self.builder.window_sensitive(False)
         selected_image = self.image_combo.get_active_text()
         if selected_image == self.__custom_image__:
-            return
+            topdir = self.builder.get_topdir()
+            images_dir = topdir + "/recipes/images/"
+            self.builder.ensure_dir(images_dir)
+
+            dialog = RetrieveImageDialog(images_dir, "Select from my image recipes",
+                            self.builder, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
+            response = dialog.run()
+            if response == gtk.RESPONSE_OK:
+                image_name = dialog.get_filename()
+                head, tail = os.path.split(image_name)
+                selected_image = os.path.splitext(tail)[0]
+                self.custom_image_selected = selected_image
+                self.update_image_combo(self.builder.recipe_model, selected_image)
+            else:
+                selected_image = self.__dummy_image__
+                self.update_image_combo(self.builder.recipe_model, None)
+            dialog.destroy()
+
         if not selected_image or (selected_image == self.__dummy_image__):
+            self.builder.window_sensitive(True)
+            self.just_bake_button.hide()
+            self.edit_image_button.hide()
             return
 
         # remove __dummy_image__ item from the store list after first user selection
@@ -436,6 +458,7 @@ class ImageConfigurationPage (HobPage):
         self.image_combo.append_text(self.__custom_image__)
         self.image_combo.append_text(self.builder.recipe_model.__custom_image__)
         self.image_combo.append_text("--Separator--")
+        cnt = cnt + 3
 
         topdir = self.builder.get_topdir()
         # append and set active
@@ -471,6 +494,14 @@ class ImageConfigurationPage (HobPage):
                     active = cnt
                 cnt = cnt + 1
 
+        if self.custom_image_selected:
+            self.image_combo.append_text("--Separator--")
+            cnt = cnt + 1
+            self.image_combo.append_text(self.custom_image_selected)
+            if self.custom_image_selected == selected_image:
+                active = cnt
+            cnt = cnt + 1
+
         if selected_image == self.builder.recipe_model.__custom_image__:
             active = cnt
 
@@ -484,14 +515,14 @@ class ImageConfigurationPage (HobPage):
     def layer_button_clicked_cb(self, button):
         # Create a layer selection dialog
         self.builder.show_layer_selection_dialog()
-        
+
     def view_adv_configuration_button_clicked_cb(self, button):
         # Create an advanced settings dialog
         response, settings_changed = self.builder.show_adv_settings_dialog()
         if not response:
             return
         if settings_changed:
-            self.builder.reparse_post_adv_settings()        
+            self.builder.reparse_post_adv_settings()
 
     def just_bake_button_clicked_cb(self, button):
         self.builder.parsing_warnings = []

@@ -520,6 +520,7 @@ class Builder(gtk.Window):
         self.handler.generate_configuration()
 
     def initiate_new_build_async(self):
+        self.configuration.selected_image = None
         self.switch_page(self.MACHINE_SELECTION)
         self.handler.init_cooker()
         self.handler.set_extra_inherit("image_types")
