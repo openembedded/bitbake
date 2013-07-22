@@ -12,4 +12,5 @@ Karfield's addition
 
 1. add gclient fetcher. So the bitbake can support to sync chromium-based project such as chromium, libjingle etc.
    To use this, the SRC_URI for example, could write like this
+
       SRC_URI = "gclient://libjingle.googlecode.com/svn/trunk;name=libjingle;jobs=8".
