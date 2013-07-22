@@ -1521,6 +1521,7 @@ from . import bzr
 from . import hg
 from . import osc
 from . import repo
+from . import gclient
 
 methods.append(local.Local())
 methods.append(wget.Wget())
@@ -1536,3 +1537,4 @@ methods.append(bzr.Bzr())
 methods.append(hg.Hg())
 methods.append(osc.Osc())
 methods.append(repo.Repo())
+methods.append(gclient.Gclient())
