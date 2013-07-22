@@ -310,7 +310,6 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
 
         sub_vbox = gtk.VBox(False)
         advanced_vbox.pack_start(sub_vbox, gtk.TRUE, gtk.TRUE, 0)
-        searched_string = "file://"
 
         if self.sstatemirrors_changed == 0:
             self.sstatemirrors_changed = 1
@@ -319,16 +318,10 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
                 sm_list = ["Standard", "", "file://(.*)"]
                 self.sstatemirrors_list.append(sm_list)
             else:
-                while sstatemirrors.find(searched_string) != -1:
-                    if sstatemirrors.find(searched_string,1) != -1:
-                        sstatemirror = sstatemirrors[:sstatemirrors.find(searched_string,1)]
-                        sstatemirrors = sstatemirrors[sstatemirrors.find(searched_string,1):]
-                    else:
-                        sstatemirror = sstatemirrors
-                        sstatemirrors = sstatemirrors[1:]
-
+                sstatemirrors = [x for x in sstatemirrors.split('\\n')]
+                for sstatemirror in sstatemirrors:
                     sstatemirror_fields = [x for x in sstatemirror.split(' ') if x.strip()]
-                    if len(sstatemirror_fields):
+                    if len(sstatemirror_fields) == 2:
                         if sstatemirror_fields[0] == "file://(.*)":
                             sm_list = ["Standard", sstatemirror_fields[1], "file://(.*)"]
                         else:
