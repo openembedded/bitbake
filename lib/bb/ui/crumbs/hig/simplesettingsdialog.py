@@ -322,8 +322,8 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
                 for sstatemirror in sstatemirrors:
                     sstatemirror_fields = [x for x in sstatemirror.split(' ') if x.strip()]
                     if len(sstatemirror_fields) == 2:
-                        if sstatemirror_fields[0] == "file://(.*)":
-                            sm_list = ["Standard", sstatemirror_fields[1], "file://(.*)"]
+                        if sstatemirror_fields[0] == "file://(.*)" or sstatemirror_fields[0] == "file://.*":
+                            sm_list = ["Standard", sstatemirror_fields[1], sstatemirror_fields[0]]
                         else:
                             sm_list = ["Custom", sstatemirror_fields[1], sstatemirror_fields[0]]
                         self.sstatemirrors_list.append(sm_list)
