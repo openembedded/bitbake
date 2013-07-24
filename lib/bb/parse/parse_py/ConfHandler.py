@@ -128,6 +128,21 @@ def handle(fn, data, include):
         if not w:
             continue
         s = s.rstrip()
+        if s[0] == '#': continue    # skip comments
+        def strip_comments(_s):
+            c1 = re.findall('\".*\"', _s) # used for check
+            v = _s.split('#')
+            if len(v) > 1: # we found some comments
+                _v = v[-1]
+                del v[-1]
+                _s = '#'.join(v).rstrip('#')
+                if re.findall('\".*\"', _s) != c1:
+                    # we remove the expr, roll back
+                    return '%s#%s' % (_s, _v.rstrip())
+                return strip_comments(_s)
+            else:
+                return '#'.join(v).rstrip('[# ]')
+        s = strip_comments(s)
         while s[-1] == '\\':
             s2 = f.readline().strip()
             lineno = lineno + 1
