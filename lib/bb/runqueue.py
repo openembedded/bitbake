@@ -720,6 +720,9 @@ class RunQueueData:
 
         def invalidate_task(fn, taskname, error_nostamp):
             taskdep = self.dataCache.task_deps[fn]
+            fnid = self.taskData.getfn_id(fn)
+            if taskname not in taskData.tasks_lookup[fnid]:
+                logger.warn("Task %s does not exist, invalidating this task will have no effect" % taskname)
             if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
                 if error_nostamp:
                     bb.fatal("Task %s is marked nostamp, cannot invalidate this task" % taskname)
