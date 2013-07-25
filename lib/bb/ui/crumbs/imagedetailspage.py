@@ -333,13 +333,18 @@ class ImageDetailsPage (HobPage):
         #    self.kernel_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=change_kernel_button)
         #    self.box_group_area.pack_start(self.kernel_detail, expand=True, fill=True)
 
-        # Machine, Base image and Layers
+        # Machine, Image recipe and Layers
         layer_num_limit = 15
-        varlist = ["Machine: ", "Base image: ", "Layers: "]
+        varlist = ["Machine: ", "Image recipe: ", "Layers: "]
         vallist = []
         self.setting_detail = None
         if self.build_succeeded:
             vallist.append(machine)
+            if base_image == self.builder.recipe_model.__custom_image__:
+                if self.builder.configuration.initial_selected_image == self.builder.recipe_model.__custom_image__:
+                    base_image ="New image recipe"
+                else:
+                    base_image = self.builder.configuration.initial_selected_image + " (edited)"
             vallist.append(base_image)
             i = 0
             for layer in layers:
@@ -359,7 +364,7 @@ class ImageDetailsPage (HobPage):
                 i += 1
 
             edit_config_button = HobAltButton("Edit configuration")
-            edit_config_button.set_tooltip_text("Edit machine, base image and recipes")
+            edit_config_button.set_tooltip_text("Edit machine and image recipe")
             edit_config_button.connect("clicked", self.edit_config_button_clicked_cb)
             self.setting_detail = self.DetailBox(varlist=varlist, vallist=vallist, button=edit_config_button)
             self.box_group_area.pack_start(self.setting_detail, expand=True, fill=True)

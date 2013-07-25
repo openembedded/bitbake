@@ -35,7 +35,7 @@ from bb.ui.crumbs.hobpages import HobPage
 class ImageConfigurationPage (HobPage):
 
     __dummy_machine__ = "--select a machine--"
-    __dummy_image__   = "--select a base image--"
+    __dummy_image__   = "Select from my image recipes"
 
     def __init__(self, builder):
         super(ImageConfigurationPage, self).__init__(builder, "Image configuration")
@@ -200,12 +200,9 @@ class ImageConfigurationPage (HobPage):
         markup += "http://www.yoctoproject.org/docs/current/dev-manual/"
         markup += "dev-manual.html#understanding-and-using-layers\">reference manual</a>."
         self.layer_info_icon = HobInfoButton("<b>Layers</b>" + "*" + markup, self.get_parent())
-#        self.progress_box = gtk.HBox(False, 6)
         self.progress_bar = HobProgressBar()
-#        self.progress_box.pack_start(self.progress_bar, expand=True, fill=True)
         self.stop_button = HobAltButton("Stop")
         self.stop_button.connect("clicked", self.stop_button_clicked_cb)
-#        self.progress_box.pack_end(stop_button, expand=False, fill=False)
         self.machine_separator = gtk.HSeparator()
 
     def set_config_machine_layout(self, show_progress_bar = False):
@@ -229,14 +226,15 @@ class ImageConfigurationPage (HobPage):
     def create_config_baseimg(self):
         self.image_title = gtk.Label()
         self.image_title.set_alignment(0, 1.0)
-        mark = "<span %s>Select a base image</span>" % self.span_tag('x-large', 'bold')
+        mark = "<span %s>Select an image recipe</span>" % self.span_tag('x-large', 'bold')
         self.image_title.set_markup(mark)
 
         self.image_title_desc = gtk.Label()
         self.image_title_desc.set_alignment(0, 0.5)
-        mark = ("<span %s>Base images are a starting point for the type of image you want. "
+
+        mark = ("<span %s>Image recipes are a starting point for the type of image you want. "
                 "You can build them as \n"
-                "they are or customize them to your specific needs.\n</span>") % self.span_tag('medium')
+                "they are or edit them to suit your needs.\n</span>") % self.span_tag('medium')
         self.image_title_desc.set_markup(mark)
 
         self.image_combo = gtk.combo_box_new_text()
@@ -272,15 +270,13 @@ class ImageConfigurationPage (HobPage):
 
         # create button "Build image"
         self.just_bake_button = HobButton("Build image")
-        #self.just_bake_button.set_size_request(205, 49)
-        self.just_bake_button.set_tooltip_text("Build target image")
+        self.just_bake_button.set_tooltip_text("Build the image recipe as it is")
         self.just_bake_button.connect("clicked", self.just_bake_button_clicked_cb)
         button_box.pack_end(self.just_bake_button, expand=False, fill=False)
 
-        # create button "Edit Image"
-        self.edit_image_button = HobAltButton("Edit image")
-        #self.edit_image_button.set_size_request(205, 49)
-        self.edit_image_button.set_tooltip_text("Edit target image")
+        # create button "Edit image recipe"
+        self.edit_image_button = HobAltButton("Edit image recipe")
+        self.edit_image_button.set_tooltip_text("Customize the recipes and packages to be included in your image")
         self.edit_image_button.connect("clicked", self.edit_image_button_clicked_cb)
         button_box.pack_end(self.edit_image_button, expand=False, fill=False)
 

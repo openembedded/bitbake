@@ -476,7 +476,7 @@ class RecipeListModel(gtk.ListStore):
     (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_INSTALL, COL_PN, COL_FADE_INC, COL_SUMMARY, COL_VERSION,
      COL_REVISION, COL_HOMEPAGE, COL_BUGTRACKER) = range(17)
 
-    __custom_image__ = "Create your own image"
+    __custom_image__ = "Start with an empty image recipe"
 
     __gsignals__ = {
         "recipe-selection-changed" : (gobject.SIGNAL_RUN_LAST,
@@ -679,7 +679,7 @@ class RecipeListModel(gtk.ListStore):
 
         # dummy image for prompt
         self.set(self.append(), self.COL_NAME, self.__custom_image__,
-                 self.COL_DESC, "Use 'Edit image' to customize recipes and packages " \
+                 self.COL_DESC, "Use 'Edit image recipe' to customize recipes and packages " \
                                 "to be included in your image ",
                  self.COL_LIC, "", self.COL_GROUP, "",
                  self.COL_DEPS, "", self.COL_BINB, "",
