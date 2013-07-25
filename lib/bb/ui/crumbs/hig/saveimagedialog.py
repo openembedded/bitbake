@@ -29,10 +29,12 @@ class SaveImageDialog (CrumbsDialog):
     This class is used to create a dialog that permits to save
     a custom image in a predefined directory.
     """
-    def __init__(self, directory, title, parent, flags, buttons=None):
+    def __init__(self, directory, name, description, title, parent, flags, buttons=None):
         super(SaveImageDialog, self).__init__(title, parent, flags, buttons)
         self.directory = directory
         self.builder = parent
+        self.name_field = name
+        self.description_field = description
 
         # create visual elements on the dialog
         self.create_visual_elements()
@@ -52,6 +54,7 @@ class SaveImageDialog (CrumbsDialog):
         content += "characters. The only special character you can use is the ASCII hyphen (-)."
         sub_label.set_markup(content)
         self.name_entry = gtk.Entry()
+        self.name_entry.set_text(self.name_field)
         self.name_entry.set_size_request(350,30)
         self.name_entry.connect("changed", self.name_entry_changed)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -67,6 +70,7 @@ class SaveImageDialog (CrumbsDialog):
         sub_label.set_alignment(0, 0)
         sub_label.set_markup("The description should be less than 150 characters long.")
         self.description_entry = gtk.TextView()
+        self.description_entry.get_buffer().set_text(self.description_field)
         self.description_entry.set_wrap_mode(gtk.WRAP_WORD)
         self.description_entry.set_size_request(350,150)
         sub_vbox.pack_start(label, expand=False, fill=False)
@@ -124,6 +128,8 @@ class SaveImageDialog (CrumbsDialog):
             self.builder.recipe_model.set_in_list(text, description)
             self.builder.recipe_model.set_selected_image(text)
             self.builder.image_details_page.show_page(self.builder.IMAGE_GENERATED)
+            self.builder.image_details_page.name_field_template = text
+            self.builder.image_details_page.description_field_template = description
             self.destroy()
         else:
             self.show_invalid_input_error_dialog()

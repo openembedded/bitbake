@@ -191,6 +191,8 @@ class ImageDetailsPage (HobPage):
         self.details_bottom_buttons = gtk.HBox(False, 6)
         self.image_saved = False
         self.create_visual_elements()
+        self.name_field_template = ""
+        self.description_field_template = ""
 
     def create_visual_elements(self):
         # create visual elements
@@ -632,8 +634,8 @@ class ImageDetailsPage (HobPage):
         images_dir = topdir + "/recipes/images/"
         self.builder.ensure_dir(images_dir)
 
-        dialog = SaveImageDialog(images_dir, "Save image recipe", self.builder,
-                              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
+        dialog = SaveImageDialog(images_dir, self.name_field_template, self.description_field_template,
+                 "Save image recipe", self.builder, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
         response = dialog.run()
         dialog.destroy()
 
