@@ -119,7 +119,11 @@ class SaveImageDialog (CrumbsDialog):
         description_buffer = self.description_entry.get_buffer()
         description = description_buffer.get_text(description_buffer.get_start_iter(),description_buffer.get_end_iter())
         if new_text.islower() and new_text.isalnum():
+            self.builder.image_details_page.image_saved = True
             self.builder.generate_new_image(self.directory+text, description)
+            self.builder.recipe_model.set_in_list(text, description)
+            self.builder.recipe_model.set_selected_image(text)
+            self.builder.image_details_page.show_page(self.builder.IMAGE_GENERATED)
             self.destroy()
         else:
             self.show_invalid_input_error_dialog()

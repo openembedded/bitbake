@@ -678,15 +678,8 @@ class RecipeListModel(gtk.ListStore):
         self.clear()
 
         # dummy image for prompt
-        self.set(self.append(), self.COL_NAME, self.__custom_image__,
-                 self.COL_DESC, "Use 'Edit image recipe' to customize recipes and packages " \
-                                "to be included in your image ",
-                 self.COL_LIC, "", self.COL_GROUP, "",
-                 self.COL_DEPS, "", self.COL_BINB, "",
-                 self.COL_TYPE, "image", self.COL_INC, False,
-                 self.COL_IMG, False, self.COL_INSTALL, "", self.COL_PN, self.__custom_image__,
-                 self.COL_SUMMARY, "", self.COL_VERSION, "", self.COL_REVISION, "",
-                 self.COL_HOMEPAGE, "", self.COL_BUGTRACKER, "")
+        self.set_in_list(self.__custom_image__,  "Use 'Edit image recipe' to customize recipes and packages " \
+                                "to be included in your image ")
 
         for item in event_model["pn"]:
             name = item
@@ -724,6 +717,23 @@ class RecipeListModel(gtk.ListStore):
                      self.COL_SUMMARY, summary, self.COL_VERSION, version, self.COL_REVISION, revision,
                      self.COL_HOMEPAGE, homepage, self.COL_BUGTRACKER, bugtracker)
 
+        self.pn_path = {}
+        it = self.get_iter_first()
+        while it:
+            pn = self.get_value(it, self.COL_NAME)
+            path = self.get_path(it)
+            self.pn_path[pn] = path
+            it = self.iter_next(it)
+
+    def set_in_list(self, item, desc):
+        self.set(self.append(), self.COL_NAME, item,
+                 self.COL_DESC, desc,
+                 self.COL_LIC, "", self.COL_GROUP, "",
+                 self.COL_DEPS, "", self.COL_BINB, "",
+                 self.COL_TYPE, "image", self.COL_INC, False,
+                 self.COL_IMG, False, self.COL_INSTALL, "", self.COL_PN, item,
+                 self.COL_SUMMARY, "", self.COL_VERSION, "", self.COL_REVISION, "",
+                 self.COL_HOMEPAGE, "", self.COL_BUGTRACKER, "")
         self.pn_path = {}
         it = self.get_iter_first()
         while it:

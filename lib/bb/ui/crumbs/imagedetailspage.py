@@ -189,6 +189,7 @@ class ImageDetailsPage (HobPage):
         self.image_store = []
         self.button_ids = {}
         self.details_bottom_buttons = gtk.HBox(False, 6)
+        self.image_saved = False
         self.create_visual_elements()
 
     def create_visual_elements(self):
@@ -248,7 +249,7 @@ class ImageDetailsPage (HobPage):
         self.pack_start(self.group_align, expand=True, fill=True)
 
         self.build_result = None
-        if self.build_succeeded and self.builder.current_step == self.builder.IMAGE_GENERATING:
+        if self.image_saved or (self.build_succeeded and self.builder.current_step == self.builder.IMAGE_GENERATING):
             # building is the previous step
             icon = gtk.Image()
             pixmap_path = hic.ICON_INDI_CONFIRM_FILE
@@ -256,7 +257,10 @@ class ImageDetailsPage (HobPage):
             pix_buffer = gtk.gdk.pixbuf_new_from_file(pixmap_path)
             icon.set_from_pixbuf(pix_buffer)
             varlist = [""]
-            vallist = ["Your image is ready"]
+            if self.image_saved:
+                vallist = ["Your image recipe has been saved"]
+            else:
+                vallist = ["Your image is ready"]
             self.build_result = self.BuildDetailBox(varlist=varlist, vallist=vallist, icon=icon, color=color)
             self.box_group_area.pack_start(self.build_result, expand=False, fill=False)
 
@@ -397,6 +401,7 @@ class ImageDetailsPage (HobPage):
         self.show_all()
         if self.kernel_detail and (not is_runnable):
             self.kernel_detail.hide()
+        self.image_saved = False
 
     def view_files_clicked_cb(self, button, image_addr):
         subprocess.call("xdg-open /%s" % image_addr, shell=True)
@@ -583,6 +588,7 @@ class ImageDetailsPage (HobPage):
         name = "Save image recipe"
         if name in buttonlist and self.builder.recipe_model.is_custom_image():
             save_button = HobAltButton("Save image recipe")
+            save_button.set_sensitive(not self.image_saved)
             button_id = save_button.connect("clicked", self.save_button_clicked_cb)
             self.button_ids[button_id] = save_button
             self.details_bottom_buttons.pack_end(save_button, expand=False, fill=False)
