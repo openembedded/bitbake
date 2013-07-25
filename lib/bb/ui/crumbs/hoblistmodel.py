@@ -474,7 +474,7 @@ class RecipeListModel(gtk.ListStore):
     provide filtered views of the data.
     """
     (COL_NAME, COL_DESC, COL_LIC, COL_GROUP, COL_DEPS, COL_BINB, COL_TYPE, COL_INC, COL_IMG, COL_INSTALL, COL_PN, COL_FADE_INC, COL_SUMMARY, COL_VERSION,
-     COL_REVISION, COL_HOMEPAGE, COL_BUGTRACKER) = range(17)
+     COL_REVISION, COL_HOMEPAGE, COL_BUGTRACKER, COL_FILE) = range(18)
 
     __custom_image__ = "Start with an empty image recipe"
 
@@ -500,6 +500,7 @@ class RecipeListModel(gtk.ListStore):
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_BOOLEAN,
+                                gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
                                 gobject.TYPE_STRING,
@@ -692,6 +693,7 @@ class RecipeListModel(gtk.ListStore):
             revision = event_model["pn"][item]["revision"]
             homepage = event_model["pn"][item]["homepage"]
             bugtracker = event_model["pn"][item]["bugtracker"]
+            filename = event_model["pn"][item]["filename"]
             install = []
 
             depends = event_model["depends"].get(item, []) + event_model["rdepends-pn"].get(item, [])
@@ -715,7 +717,8 @@ class RecipeListModel(gtk.ListStore):
                      self.COL_TYPE, atype, self.COL_INC, False,
                      self.COL_IMG, False, self.COL_INSTALL, " ".join(install), self.COL_PN, item,
                      self.COL_SUMMARY, summary, self.COL_VERSION, version, self.COL_REVISION, revision,
-                     self.COL_HOMEPAGE, homepage, self.COL_BUGTRACKER, bugtracker)
+                     self.COL_HOMEPAGE, homepage, self.COL_BUGTRACKER, bugtracker,
+                     self.COL_FILE, filename)
 
         self.pn_path = {}
         it = self.get_iter_first()

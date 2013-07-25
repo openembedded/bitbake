@@ -437,6 +437,7 @@ class ImageConfigurationPage (HobPage):
         self.image_combo.append_text(self.builder.recipe_model.__custom_image__)
         self.image_combo.append_text("--Separator--")
 
+        topdir = self.builder.get_topdir()
         # append and set active
         while it:
             path = image_model.get_path(it)
@@ -459,6 +460,10 @@ class ImageConfigurationPage (HobPage):
                         break
             else:
                 allow = True
+
+            file_name = image_model[path][recipe_model.COL_FILE]
+            if file_name and topdir in file_name:
+                allow = False
 
             if allow:
                 self.image_combo.append_text(image_name)
