@@ -1143,10 +1143,17 @@ class BBCooker:
             else:
                 dest = image
 
+        if base_image:
+            with open(base_image, 'r') as f:
+                require_line = f.readline()
+
         with open(dest, "w") as imagefile:
             if base_image is None:
                 imagefile.write("inherit image\n")
             else:
+                topdir = self.data.getVar("TOPDIR")
+                if topdir in base_image:
+                    base_image = require_line.split()[1]
                 imagefile.write("require " + base_image + "\n")
             package_install = "PACKAGE_INSTALL_forcevariable = \""
             for package in package_queue:
