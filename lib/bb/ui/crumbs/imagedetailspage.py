@@ -27,6 +27,7 @@ from bb.ui.crumbs.hobwidget import hic, HobViewTable, HobAltButton, HobButton
 from bb.ui.crumbs.hobpages import HobPage
 import subprocess
 from bb.ui.crumbs.hig.crumbsdialog import CrumbsDialog
+from bb.ui.crumbs.hig.saveimagedialog import SaveImageDialog
 
 #
 # ImageDetailsPage
@@ -259,7 +260,7 @@ class ImageDetailsPage (HobPage):
             self.build_result = self.BuildDetailBox(varlist=varlist, vallist=vallist, icon=icon, color=color)
             self.box_group_area.pack_start(self.build_result, expand=False, fill=False)
 
-        self.buttonlist = ["Build new image", "Run image", "Deploy image"]
+        self.buttonlist = ["Build new image", "Save image recipe", "Run image", "Deploy image"]
 
         # Name
         self.image_store = []
@@ -340,7 +341,7 @@ class ImageDetailsPage (HobPage):
         self.setting_detail = None
         if self.build_succeeded:
             vallist.append(machine)
-            if base_image == self.builder.recipe_model.__custom_image__:
+            if self.builder.recipe_model.is_custom_image():
                 if self.builder.configuration.initial_selected_image == self.builder.recipe_model.__custom_image__:
                     base_image ="New image recipe"
                 else:
@@ -579,6 +580,13 @@ class ImageDetailsPage (HobPage):
             created = True
             is_runnable = True
 
+        name = "Save image recipe"
+        if name in buttonlist and self.builder.recipe_model.is_custom_image():
+            save_button = HobAltButton("Save image recipe")
+            button_id = save_button.connect("clicked", self.save_button_clicked_cb)
+            self.button_ids[button_id] = save_button
+            self.details_bottom_buttons.pack_end(save_button, expand=False, fill=False)
+
         name = "Build new image"
         if name in buttonlist:
             # create button "Build new image"
@@ -612,6 +620,14 @@ class ImageDetailsPage (HobPage):
                 self.set_sensitive(True)
             else:
                 self.builder.runqemu_image(self.toggled_image, self.sel_kernel)
+
+    def save_button_clicked_cb(self, button):
+        topdir = self.builder.get_topdir()
+        images_dir = topdir + "/recipes/images/"
+        dialog = SaveImageDialog(images_dir, "Save image recipe", self.builder,
+                              gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
+        response = dialog.run()
+        dialog.destroy()
 
     def build_new_button_clicked_cb(self, button):
         self.builder.initiate_new_build_async()

@@ -452,6 +452,9 @@ class HobHandler(gobject.GObject):
     def get_logfile(self):
         return self.server.runCommand(["getVariable", "BB_CONSOLELOG"])[0]
 
+    def get_topdir(self):
+        return self.runCommand(["getVariable", "TOPDIR"]) or ""
+
     def _remove_redundant(self, string):
         ret = []
         for i in string.split():

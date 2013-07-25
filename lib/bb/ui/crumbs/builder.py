@@ -1451,3 +1451,6 @@ class Builder(gtk.Window):
             self.consolelog.setFormatter(format)
 
             self.logger.addHandler(self.consolelog)
+
+    def get_topdir(self):
+        return self.handler.get_topdir()

@@ -882,3 +882,6 @@ class RecipeListModel(gtk.ListStore):
 
     def get_custom_image_version(self):
         return self.custom_image_version
+
+    def is_custom_image(self):
+        return self.get_selected_image() == self.__custom_image__
