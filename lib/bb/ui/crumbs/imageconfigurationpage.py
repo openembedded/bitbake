@@ -456,7 +456,6 @@ class ImageConfigurationPage (HobPage):
             cnt = cnt + 1
 
         self.image_combo.append_text(self.__custom_image__)
-        self.image_combo.append_text(self.builder.recipe_model.__custom_image__)
         self.image_combo.append_text("--Separator--")
         cnt = cnt + 3
 
@@ -493,6 +492,7 @@ class ImageConfigurationPage (HobPage):
                 if image_name == selected_image:
                     active = cnt
                 cnt = cnt + 1
+        self.image_combo.append_text(self.builder.recipe_model.__custom_image__)
 
         if self.custom_image_selected:
             self.image_combo.append_text("--Separator--")
