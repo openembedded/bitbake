@@ -590,6 +590,7 @@ class ImageDetailsPage (HobPage):
         name = "Save image recipe"
         if name in buttonlist and self.builder.recipe_model.is_custom_image():
             save_button = HobAltButton("Save image recipe")
+            save_button.set_tooltip_text("Keep your changes saving them as an image recipe")
             save_button.set_sensitive(not self.image_saved)
             button_id = save_button.connect("clicked", self.save_button_clicked_cb)
             self.button_ids[button_id] = save_button
