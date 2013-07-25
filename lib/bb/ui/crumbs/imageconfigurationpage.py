@@ -35,7 +35,8 @@ from bb.ui.crumbs.hobpages import HobPage
 class ImageConfigurationPage (HobPage):
 
     __dummy_machine__ = "--select a machine--"
-    __dummy_image__   = "Select from my image recipes"
+    __dummy_image__   = "--select an image recipe--"
+    __custom_image__  = "Select from my image recipes"
 
     def __init__(self, builder):
         super(ImageConfigurationPage, self).__init__(builder, "Image configuration")
@@ -238,6 +239,7 @@ class ImageConfigurationPage (HobPage):
         self.image_title_desc.set_markup(mark)
 
         self.image_combo = gtk.combo_box_new_text()
+        self.image_combo.set_row_separator_func(self.combo_separator_func, None)
         self.image_combo_id = self.image_combo.connect("changed", self.image_combo_changed_cb)
 
         self.image_desc = gtk.Label()
@@ -255,6 +257,11 @@ class ImageConfigurationPage (HobPage):
         self.view_adv_configuration_button.connect("clicked", self.view_adv_configuration_button_clicked_cb)
 
         self.image_separator = gtk.HSeparator()
+
+    def combo_separator_func(self, model, iter, user_data):
+        name = model.get_value(iter, 0)
+        if name == "--Separator--":
+            return True
 
     def set_config_baseimg_layout(self):
         self.gtable.attach(self.image_title, 0, 40, 15+self.warning_shift, 17+self.warning_shift)
@@ -358,6 +365,8 @@ class ImageConfigurationPage (HobPage):
     def image_combo_changed_cb(self, combo):
         self.builder.window_sensitive(False)
         selected_image = self.image_combo.get_active_text()
+        if selected_image == self.__custom_image__:
+            return
         if not selected_image or (selected_image == self.__dummy_image__):
             return
 
@@ -424,6 +433,10 @@ class ImageConfigurationPage (HobPage):
             self.image_combo.append_text(self.__dummy_image__)
             cnt = cnt + 1
 
+        self.image_combo.append_text(self.__custom_image__)
+        self.image_combo.append_text(self.builder.recipe_model.__custom_image__)
+        self.image_combo.append_text("--Separator--")
+
         # append and set active
         while it:
             path = image_model.get_path(it)
@@ -453,7 +466,6 @@ class ImageConfigurationPage (HobPage):
                     active = cnt
                 cnt = cnt + 1
 
-        self.image_combo.append_text(self.builder.recipe_model.__custom_image__)
         if selected_image == self.builder.recipe_model.__custom_image__:
             active = cnt
 
