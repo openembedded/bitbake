@@ -116,8 +116,10 @@ class SaveImageDialog (CrumbsDialog):
     def save_button_cb(self, button):
         text = self.name_entry.get_text()
         new_text = text.replace("-","")
+        description_buffer = self.description_entry.get_buffer()
+        description = description_buffer.get_text(description_buffer.get_start_iter(),description_buffer.get_end_iter())
         if new_text.islower() and new_text.isalnum():
-            self.builder.generate_new_image(self.directory+text)
+            self.builder.generate_new_image(self.directory+text, description)
             self.destroy()
         else:
             self.show_invalid_input_error_dialog()

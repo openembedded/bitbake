@@ -1100,7 +1100,7 @@ class BBCooker:
 
         self.configuration.server_register_idlecallback(buildTargetsIdle, rq)
 
-    def generateNewImage(self, image, base_image, package_queue, timestamp):
+    def generateNewImage(self, image, base_image, package_queue, timestamp, description):
         '''
         Create a new image with a "require"/"inherit" base_image statement
         '''
@@ -1124,6 +1124,9 @@ class BBCooker:
                 package_install += str(package) + " "
             package_install += "\"\n"
             imagefile.write(package_install)
+
+            description_var = "DESCRIPTION = \"" + description + "\"\n"
+            imagefile.write(description_var)
 
         self.state = state.initial
         if timestamp:

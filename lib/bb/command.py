@@ -215,8 +215,9 @@ class CommandsSync:
         base_image = params[1]
         package_queue = params[2]
         timestamp = params[3]
+        description = params[4]
         return command.cooker.generateNewImage(image, base_image,
-                                 package_queue, timestamp)
+                        package_queue, timestamp, description)
 
     def ensureDir(self, command, params):
         directory = params[0]

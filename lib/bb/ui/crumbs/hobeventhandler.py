@@ -176,7 +176,7 @@ class HobHandler(gobject.GObject):
                 hobImage = self.runCommand(["matchFile", "hob-image.bb"])
                 if self.base_image != "Start with an empty image recipe":
                     baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
-                    version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue, True])
+                    version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue, True, ""])
                     targets[0] += version
                     self.recipe_model.set_custom_image_version(version)
 
@@ -426,9 +426,9 @@ class HobHandler(gobject.GObject):
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)
 
-    def generate_new_image(self, image, base_image, package_queue):
+    def generate_new_image(self, image, base_image, package_queue, description):
         base_image = self.runCommand(["matchFile", self.base_image + ".bb"])
-        self.runCommand(["generateNewImage", image, base_image, package_queue, False])
+        self.runCommand(["generateNewImage", image, base_image, package_queue, False, description])
 
     def ensure_dir(self, directory):
         self.runCommand(["ensureDir", directory])
