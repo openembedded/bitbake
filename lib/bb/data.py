@@ -97,6 +97,10 @@ def delVar(var, d):
     """Removes a variable from the data set"""
     d.delVar(var)
 
+def appendVar(var, value, d):
+    """Append additional value to a variable"""
+    d.appendVar(var, value)
+
 def setVarFlag(var, flag, flagvalue, d):
     """Set a flag for a given variable to a given value"""
     d.setVarFlag(var, flag, flagvalue)

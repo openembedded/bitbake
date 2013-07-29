@@ -162,6 +162,35 @@ class BBCooker:
         self.data = self.databuilder.data
         self.data_hash = self.databuilder.data_hash
 
+    def modifyConfigurationVar(self, var, val, default_file, op):
+        if op == "append":
+            self.appendConfigurationVar(var, val, default_file)
+        elif op == "set":
+            self.saveConfigurationVar(var, val, default_file)
+
+    def appendConfigurationVar(self, var, val, default_file):
+        #add append var operation to the end of default_file
+        default_file = bb.cookerdata.findConfigFile(default_file)
+
+        with open(default_file, 'r') as f:
+            contents = f.readlines()
+        f.close()
+
+        total = ""
+        for c in contents:
+            total += c
+
+        total += "#added by bitbake"
+        total += "\n%s += \"%s\"\n" % (var, val)
+
+        with open(default_file, 'w') as f:
+            f.write(total)
+        f.close()
+
+        #add to history
+        loginfo = {"op":append, "file":default_file, "line":total.count("\n")}
+        self.data.appendVar(var, val, **loginfo)
+
     def saveConfigurationVar(self, var, val, default_file):
 
         replaced = False

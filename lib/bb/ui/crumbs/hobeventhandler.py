@@ -471,8 +471,17 @@ class HobHandler(gobject.GObject):
 
     def set_var_in_file(self, var, val, default_file=None):
         self.runCommand(["enableDataTracking"])
-        self.server.runCommand(["setVarFile", var, val, default_file])
+        self.server.runCommand(["setVarFile", var, val, default_file, "set"])
         self.runCommand(["disableDataTracking"])
+
+    def append_var_in_file(self, var, val, default_file=None):
+        self.server.runCommand(["setVarFile", var, val, default_file, "append"])
+
+    def append_to_bbfiles(self, val):
+        bbfiles = self.runCommand(["getVariable", "BBFILES", "False"]) or ""
+        bbfiles = bbfiles.split()
+        if val not in bbfiles:
+            self.append_var_in_file("BBFILES", val, "local.conf")
 
     def get_parameters(self):
         # retrieve the parameters from bitbake

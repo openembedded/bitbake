@@ -153,7 +153,7 @@ class CommandsSync:
         varname = params[0]
         expand = True
         if len(params) > 1:
-            expand = params[1]
+            expand = (params[1] == "True")
 
         return command.cooker.data.getVar(varname, expand)
     getVariable.readonly = True
@@ -230,7 +230,8 @@ class CommandsSync:
         var = params[0]
         val = params[1]
         default_file = params[2]
-        command.cooker.saveConfigurationVar(var, val, default_file)
+        op = params[3]
+        command.cooker.modifyConfigurationVar(var, val, default_file, op)
 
     def createConfigFile(self, command, params):
         """
