@@ -214,7 +214,13 @@ class CommandsSync:
         image = params[0]
         base_image = params[1]
         package_queue = params[2]
-        return command.cooker.generateNewImage(image, base_image, package_queue)
+        timestamp = params[3]
+        return command.cooker.generateNewImage(image, base_image,
+                                 package_queue, timestamp)
+
+    def ensureDir(self, command, params):
+        directory = params[0]
+        bb.utils.mkdirhier(directory)
 
     def setVarFile(self, command, params):
         """

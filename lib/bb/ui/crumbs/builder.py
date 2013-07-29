@@ -593,6 +593,16 @@ class Builder(gtk.Window):
                                     toolchain_packages,
                                     self.configuration.default_task)
 
+    def generate_new_image(self, image):
+        base_image = self.configuration.initial_selected_image
+        if base_image == self.recipe_model.__custom_image__:
+            base_image = None
+        packages = self.package_model.get_selected_packages()
+        self.handler.generate_new_image(image, base_image, packages)
+
+    def ensure_dir(self, directory):
+        self.handler.ensure_dir(directory)
+
     def get_parameters_sync(self):
         return self.handler.get_parameters()
 

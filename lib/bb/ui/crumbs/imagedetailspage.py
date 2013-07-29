@@ -624,6 +624,8 @@ class ImageDetailsPage (HobPage):
     def save_button_clicked_cb(self, button):
         topdir = self.builder.get_topdir()
         images_dir = topdir + "/recipes/images/"
+        self.builder.ensure_dir(images_dir)
+
         dialog = SaveImageDialog(images_dir, "Save image recipe", self.builder,
                               gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
         response = dialog.run()

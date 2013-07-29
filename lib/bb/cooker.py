@@ -1100,16 +1100,25 @@ class BBCooker:
 
         self.configuration.server_register_idlecallback(buildTargetsIdle, rq)
 
-    def generateNewImage(self, image, base_image, package_queue):
+    def generateNewImage(self, image, base_image, package_queue, timestamp):
         '''
-        Create a new image with a "require" base_image statement
+        Create a new image with a "require"/"inherit" base_image statement
         '''
-        image_name = os.path.splitext(image)[0]
-        timestr = time.strftime("-%Y%m%d-%H%M%S")
-        dest = image_name + str(timestr) + ".bb"
+        if timestamp:
+            image_name = os.path.splitext(image)[0]
+            timestr = time.strftime("-%Y%m%d-%H%M%S")
+            dest = image_name + str(timestr) + ".bb"
+        else:
+            if not image.endswith(".bb"):
+                dest = image + ".bb"
+            else:
+                dest = image
 
         with open(dest, "w") as imagefile:
-            imagefile.write("require " + base_image + "\n")
+            if base_image is None:
+                imagefile.write("inherit image\n")
+            else:
+                imagefile.write("require " + base_image + "\n")
             package_install = "PACKAGE_INSTALL_forcevariable = \""
             for package in package_queue:
                 package_install += str(package) + " "
@@ -1117,7 +1126,8 @@ class BBCooker:
             imagefile.write(package_install)
 
         self.state = state.initial
-        return timestr
+        if timestamp:
+            return timestr
 
     def updateCache(self):
         if self.state == state.running:

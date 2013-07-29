@@ -117,7 +117,7 @@ class SaveImageDialog (CrumbsDialog):
         text = self.name_entry.get_text()
         new_text = text.replace("-","")
         if new_text.islower() and new_text.isalnum():
-            print(text)
+            self.builder.generate_new_image(self.directory+text)
             self.destroy()
         else:
             self.show_invalid_input_error_dialog()
