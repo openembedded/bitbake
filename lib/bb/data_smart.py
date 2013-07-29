@@ -738,6 +738,12 @@ class DataSmart(MutableMapping):
             value = d.getVar(key, False) or ""
             data.update({key:value})
 
+            varflags = d.getVarFlags(key)
+            if not varflags:
+                continue
+            for f in varflags:
+                data.update({'%s[%s]' % (key, f):varflags[f]})
+
         for key in ["__BBTASKS", "__BBANONFUNCS", "__BBHANDLERS"]:
             bb_list = d.getVar(key, False) or []
             bb_list.sort()
