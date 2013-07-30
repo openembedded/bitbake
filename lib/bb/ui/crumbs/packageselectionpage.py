@@ -278,7 +278,7 @@ class PackageSelectionPage (HobPage):
                 image_total_size += (51200 * 1024)
             image_total_size_str = HobPage._size_to_string(image_total_size)
 
-        self.label.set_label("Packages included: %s\nSelected packages size: %s\nTotal image size: %s" %
+        self.label.set_label("Packages included: %s\nSelected packages size: %s\nEstimated image size: %s" %
                             (selected_packages_num, selected_packages_size_str, image_total_size_str))
         self.ins.show_indicator_icon("Included packages", selected_packages_num)
 
