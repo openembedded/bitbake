@@ -1157,7 +1157,7 @@ class FetchMethod(object):
                      (file, urldata.parm.get('unpack')))
 
         dots = file.split(".")
-        if dots[-1] in ['gz', 'bz2', 'Z']:
+        if dots[-1] in ['gz', 'bz2', 'Z', 'xz']:
             efile = os.path.join(rootdir, os.path.basename('.'.join(dots[0:-1])))
         else:
             efile = file
