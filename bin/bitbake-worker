@@ -9,6 +9,7 @@ import logging
 import bb
 import select
 import errno
+import signal
 
 # Users shouldn't be running this code directly
 if len(sys.argv) != 2 or sys.argv[1] != "decafbad":
