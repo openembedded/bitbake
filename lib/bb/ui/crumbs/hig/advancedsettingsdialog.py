@@ -131,7 +131,7 @@ class AdvancedSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.rootfs_size_spinner = None
         self.extra_size_spinner = None
         self.gplv3_checkbox = None
-        self.toolchain_checkbox = None
+        self.sdk_checkbox = None
         self.image_types_checkbuttons = {}
 
         self.md5 = self.config_md5()
@@ -286,16 +286,17 @@ class AdvancedSettingsDialog (CrumbsDialog, SettingsUIHelper):
             self.gplv3_checkbox.set_active(False)
         advanced_vbox.pack_start(self.gplv3_checkbox, expand=False, fill=False)
 
-        advanced_vbox.pack_start(self.gen_label_widget('<span weight="bold">Toolchain</span>'), expand=False, fill=False)
+        advanced_vbox.pack_start(self.gen_label_widget('<span weight="bold">SDK</span>'), expand=False, fill=False)
         sub_hbox = gtk.HBox(False, 6)
         advanced_vbox.pack_start(sub_hbox, expand=False, fill=False)
-        self.toolchain_checkbox = gtk.CheckButton("Build toolchain")
-        self.toolchain_checkbox.set_tooltip_text("Check this box to build the related toolchain with your image")
-        self.toolchain_checkbox.set_active(self.configuration.toolchain_build)
-        sub_hbox.pack_start(self.toolchain_checkbox, expand=False, fill=False)
+        self.sdk_checkbox = gtk.CheckButton("Populate SDK")
+        tooltip = "Check this box to generate an SDK tarball that consists of the cross-toolchain and a sysroot that contains development packages for your image."
+        self.sdk_checkbox.set_tooltip_text(tooltip)
+        self.sdk_checkbox.set_active(self.configuration.toolchain_build)
+        sub_hbox.pack_start(self.sdk_checkbox, expand=False, fill=False)
 
-        tooltip = "Selects the host platform for which you want to run the toolchain"
-        sdk_machine_widget, self.sdk_machine_combo = self.gen_combo_widget(self.configuration.curr_sdk_machine, self.all_sdk_machines,"<b>Build toolchain</b>" + "*" + tooltip)
+        tooltip = "Select the host platform for which you want to run the toolchain contained in the SDK tarball."
+        sdk_machine_widget, self.sdk_machine_combo = self.gen_combo_widget(self.configuration.curr_sdk_machine, self.all_sdk_machines,"<b>Populate SDK</b>" + "*" + tooltip)
         sub_hbox.pack_start(sdk_machine_widget, expand=False, fill=False)
 
         return advanced_vbox
@@ -330,7 +331,7 @@ class AdvancedSettingsDialog (CrumbsDialog, SettingsUIHelper):
                 self.configuration.incompat_license = " ".join(self.configuration.incompat_license or [])
         self.configuration.incompat_license = self.configuration.incompat_license.strip()
 
-        self.configuration.toolchain_build = self.toolchain_checkbox.get_active()
+        self.configuration.toolchain_build = self.sdk_checkbox.get_active()
         self.configuration.curr_sdk_machine = self.sdk_machine_combo.get_active_text()
         md5 = self.config_md5()
         self.settings_changed = (self.md5 != md5)
