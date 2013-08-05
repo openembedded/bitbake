@@ -163,23 +163,23 @@ class DepExplorer(gtk.Window):
         self.revdep_treeview.set_current_package(current_package)
 
 
-def parse(depgraph, pkg_model, depends_model):
-    for package in depgraph["pn"]:
-        pkg_model.set(pkg_model.append(), COL_PKG_NAME, package)
+    def parse(self, depgraph):
+        for package in depgraph["pn"]:
+            self.pkg_model.set(self.pkg_model.append(), COL_PKG_NAME, package)
 
-    for package in depgraph["depends"]:
-        for depend in depgraph["depends"][package]:
-            depends_model.set (depends_model.append(),
-                              COL_DEP_TYPE, TYPE_DEP,
-                              COL_DEP_PARENT, package,
-                              COL_DEP_PACKAGE, depend)
+        for package in depgraph["depends"]:
+            for depend in depgraph["depends"][package]:
+                self.depends_model.set (self.depends_model.append(),
+                                        COL_DEP_TYPE, TYPE_DEP,
+                                        COL_DEP_PARENT, package,
+                                        COL_DEP_PACKAGE, depend)
 
-    for package in depgraph["rdepends-pn"]:
-        for rdepend in depgraph["rdepends-pn"][package]:
-            depends_model.set (depends_model.append(),
-                              COL_DEP_TYPE, TYPE_RDEP,
-                              COL_DEP_PARENT, package,
-                              COL_DEP_PACKAGE, rdepend)
+        for package in depgraph["rdepends-pn"]:
+            for rdepend in depgraph["rdepends-pn"][package]:
+                self.depends_model.set (self.depends_model.append(),
+                                        COL_DEP_TYPE, TYPE_RDEP,
+                                        COL_DEP_PARENT, package,
+                                        COL_DEP_PACKAGE, rdepend)
 
 
 class gtkthread(threading.Thread):
@@ -293,7 +293,7 @@ def main(server, eventHandler, params):
 
             if isinstance(event, bb.event.DepTreeGenerated):
                 gtk.gdk.threads_enter()
-                parse(event._depgraph, dep.pkg_model, dep.depends_model)
+                dep.parse(event._depgraph)
                 gtk.gdk.threads_leave()
 
             if isinstance(event, bb.command.CommandCompleted):
