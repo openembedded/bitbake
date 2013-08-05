@@ -154,7 +154,7 @@ class DepExplorer(gtk.Window):
 
     def on_cursor_changed(self, selection):
         (model, it) = selection.get_selected()
-        if iter is None:
+        if it is None:
             current_package = None
         else:
             current_package = model.get_value(it, COL_PKG_NAME)
