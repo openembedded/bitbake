@@ -165,21 +165,15 @@ class DepExplorer(gtk.Window):
 
     def parse(self, depgraph):
         for package in depgraph["pn"]:
-            self.pkg_model.set(self.pkg_model.append(), COL_PKG_NAME, package)
+            self.pkg_model.insert(0, (package,))
 
         for package in depgraph["depends"]:
             for depend in depgraph["depends"][package]:
-                self.depends_model.set (self.depends_model.append(),
-                                        COL_DEP_TYPE, TYPE_DEP,
-                                        COL_DEP_PARENT, package,
-                                        COL_DEP_PACKAGE, depend)
+                self.depends_model.insert (0, (TYPE_DEP, package, depend))
 
         for package in depgraph["rdepends-pn"]:
             for rdepend in depgraph["rdepends-pn"][package]:
-                self.depends_model.set (self.depends_model.append(),
-                                        COL_DEP_TYPE, TYPE_RDEP,
-                                        COL_DEP_PARENT, package,
-                                        COL_DEP_PACKAGE, rdepend)
+                self.depends_model.insert (0, (TYPE_RDEP, package, rdepend))
 
 
 class gtkthread(threading.Thread):
