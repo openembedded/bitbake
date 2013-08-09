@@ -375,10 +375,16 @@ class RunningBuild (gobject.GObject):
                 r = "R"
             else:
                 r = ""
+
+            extra = ''
+            if not event._reasons:
+                if event._close_matches:
+                    extra = ". Close matches:\n  %s" % '\n  '.join(event._close_matches)
+
             if event._dependees:
-                msg = "Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)\n" % (r, event._item, ", ".join(event._dependees), r)
+                msg = "Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s\n" % (r, event._item, ", ".join(event._dependees), r, extra)
             else:
-                msg = "Nothing %sPROVIDES '%s'\n" % (r, event._item)
+                msg = "Nothing %sPROVIDES '%s'%s\n" % (r, event._item, extra)
             if event._reasons:
                 for reason in event._reasons:
                     msg += ("%s\n" % reason)

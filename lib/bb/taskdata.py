@@ -390,6 +390,17 @@ class TaskData:
                     reasons.append("%s PROVIDES %s but was skipped: %s" % (skipitem.pn, item, skipitem.skipreason))
         return reasons
 
+    def get_close_matches(self, item, provider_list):
+        import difflib
+        if self.skiplist:
+            skipped = []
+            for fn in self.skiplist:
+                skipped.append(self.skiplist[fn].pn)
+            full_list = provider_list + skipped
+        else:
+            full_list = provider_list
+        return difflib.get_close_matches(item, full_list, cutoff=0.7)
+
     def add_provider(self, cfgData, dataCache, item):
         try:
             self.add_provider_internal(cfgData, dataCache, item)
@@ -411,7 +422,7 @@ class TaskData:
             return
 
         if not item in dataCache.providers:
-            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item), reasons=self.get_reasons(item)), cfgData)
+            bb.event.fire(bb.event.NoProvider(item, dependees=self.get_dependees_str(item), reasons=self.get_reasons(item), close_matches=self.get_close_matches(item, dataCache.providers.keys())), cfgData)
             raise bb.providers.NoProvider(item)
 
         if self.have_build_target(item):

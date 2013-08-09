@@ -341,12 +341,13 @@ class DiskFull(Event):
 class NoProvider(Event):
     """No Provider for an Event"""
 
-    def __init__(self, item, runtime=False, dependees=None, reasons=[]):
+    def __init__(self, item, runtime=False, dependees=None, reasons=[], close_matches=[]):
         Event.__init__(self)
         self._item = item
         self._runtime = runtime
         self._dependees = dependees
         self._reasons = reasons
+        self._close_matches = close_matches
 
     def getItem(self):
         return self._item

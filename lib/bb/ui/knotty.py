@@ -416,10 +416,15 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 else:
                     r = ""
 
+                extra = ''
+                if not event._reasons:
+                    if event._close_matches:
+                        extra = ". Close matches:\n  %s" % '\n  '.join(event._close_matches)
+
                 if event._dependees:
-                    logger.error("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)", r, event._item, ", ".join(event._dependees), r)
+                    logger.error("Nothing %sPROVIDES '%s' (but %s %sDEPENDS on or otherwise requires it)%s", r, event._item, ", ".join(event._dependees), r, extra)
                 else:
-                    logger.error("Nothing %sPROVIDES '%s'", r, event._item)
+                    logger.error("Nothing %sPROVIDES '%s'%s", r, event._item, extra)
                 if event._reasons:
                     for reason in event._reasons:
                         logger.error("%s", reason)
