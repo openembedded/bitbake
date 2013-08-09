@@ -601,7 +601,13 @@ class RunQueueData:
                 continue
 
             if target[1] not in taskData.tasks_lookup[fnid]:
-                bb.msg.fatal("RunQueue", "Task %s does not exist for target %s" % (target[1], target[0]))
+                import difflib
+                close_matches = difflib.get_close_matches(target[1], taskData.tasks_lookup[fnid], cutoff=0.7)
+                if close_matches:
+                    extra = ". Close matches:\n  %s" % "\n  ".join(close_matches)
+                else:
+                    extra = ""
+                bb.msg.fatal("RunQueue", "Task %s does not exist for target %s%s" % (target[1], target[0], extra))
 
             listid = taskData.tasks_lookup[fnid][target[1]]
 
