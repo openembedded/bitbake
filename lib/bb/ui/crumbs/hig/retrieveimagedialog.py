@@ -43,7 +43,9 @@ class RetrieveImageDialog (gtk.FileChooserDialog):
             vbox.get_children()[0].get_children()[0].get_children()[0].remove(child)
 
         label1 = gtk.Label()
-        label1.set_text("File system:  " + self.directory)
+        label1.set_text("File system" + self.directory)
         label1.show()
         vbox.get_children()[0].get_children()[0].get_children()[0].pack_start(label1, expand=False, fill=False, padding=0)
         vbox.get_children()[0].get_children()[1].get_children()[0].hide()
+
+        self.get_children()[0].get_children()[1].get_children()[0].set_label("Select")
