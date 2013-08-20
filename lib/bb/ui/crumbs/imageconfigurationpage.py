@@ -319,6 +319,8 @@ class ImageConfigurationPage (HobPage):
         # reset machine_combo_changed_by_manual
         self.machine_combo_changed_by_manual = True
 
+        self.builder.configuration.selected_image = None
+
         # Do reparse recipes
         self.builder.populate_recipe_package_info_async()
 
@@ -457,7 +459,7 @@ class ImageConfigurationPage (HobPage):
 
         self.image_combo.append_text(self.__custom_image__)
         self.image_combo.append_text("--Separator--")
-        cnt = cnt + 3
+        cnt = cnt + 2
 
         topdir = self.builder.get_topdir()
         # append and set active
