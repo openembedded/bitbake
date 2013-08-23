@@ -107,6 +107,9 @@ def resolve_file(fn, d):
             raise IOError("file %s not found in %s" % (fn, bbpath))
         fn = newfn
 
+    if not os.path.isfile(fn):
+        raise IOError("file %s not found" % fn)
+
     logger.debug(2, "LOAD %s", fn)
     return fn
 

@@ -89,7 +89,7 @@ def include(oldfn, fn, lineno, data, error_out):
     from bb.parse import handle
     try:
         ret = handle(fn, data, True)
-    except IOError:
+    except (IOError, OSError):
         if error_out:
             raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
         logger.debug(2, "CONF file '%s' not found", fn)
