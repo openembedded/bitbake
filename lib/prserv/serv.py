@@ -157,7 +157,7 @@ class PRServer(SimpleXMLRPCServer):
         pf.close()
 
         self.work_forever()
-        self.delpid
+        self.delpid()
         os._exit(0)
 
 class PRServSingleton():
