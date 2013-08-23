@@ -37,8 +37,9 @@ from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
 logger = logging.getLogger('BitBake')
 
 class ServerCommunicator():
-    def __init__(self, connection):
+    def __init__(self, connection, event_handle):
         self.connection = connection
+        self.event_handle = event_handle
 
     def runCommand(self, command):
         # @todo try/except
@@ -54,6 +55,8 @@ class ServerCommunicator():
             except KeyboardInterrupt:
                 pass
 
+    def getEventHandle(self):
+        return self.event_handle.value
 
 class EventAdapter():
     """
@@ -84,11 +87,12 @@ class ProcessServer(Process, BaseImplServer):
 
         self.keep_running = Event()
         self.keep_running.set()
+        self.event_handle = multiprocessing.Value("i")
 
     def run(self):
         for event in bb.event.ui_queue:
             self.event_queue.put(event)
-        self.event_handle = bb.event.register_UIHhandler(self)
+        self.event_handle.value = bb.event.register_UIHhandler(self)
         bb.cooker.server_main(self.cooker, self.main)
 
     def main(self):
@@ -106,7 +110,7 @@ class ProcessServer(Process, BaseImplServer):
                 logger.exception('Running command %s', command)
 
         self.event_queue.close()
-        bb.event.unregister_UIHhandler(self.event_handle)
+        bb.event.unregister_UIHhandler(self.event_handle.value)
         self.command_channel.close()
         self.cooker.stop()
         self.idle_commands(.1)
@@ -147,7 +151,7 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         self.procserver = serverImpl
         self.ui_channel = ui_channel
         self.event_queue = event_queue
-        self.connection = ServerCommunicator(self.ui_channel)
+        self.connection = ServerCommunicator(self.ui_channel, self.procserver.event_handle)
         self.events = self.event_queue
 
     def terminate(self):

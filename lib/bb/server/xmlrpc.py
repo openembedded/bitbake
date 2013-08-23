@@ -95,7 +95,8 @@ class BitBakeServerCommands():
         """
         s, t = _create_server(host, port)
 
-        return bb.event.register_UIHhandler(s)
+        self.event_handle = bb.event.register_UIHhandler(s)
+        return self.event_handle
 
     def unregisterEventHandler(self, handlerNum):
         """
@@ -108,6 +109,9 @@ class BitBakeServerCommands():
         Run a cooker command on the server
         """
         return self.cooker.command.runCommand(command, self.server.readonly)
+
+    def getEventHandle(self):
+        return self.event_handle
 
     def terminateServer(self):
         """

@@ -240,6 +240,13 @@ class CommandsSync:
         name = params[0]
         command.cooker.createConfigFile(name)
 
+    def setEventMask(self, command, params):
+        handlerNum = params[0]
+        llevel = params[1]
+        debug_domains = params[2]
+        mask = params[3]
+        return bb.event.set_UIHmask(handlerNum, llevel, debug_domains, mask)
+
 class CommandsAsync:
     """
     A class of asynchronous commands

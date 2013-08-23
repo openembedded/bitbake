@@ -193,7 +193,7 @@ def register(name, handler, mask=[]):
         else:
             _handlers[name] = handler
 
-        if not mask:
+        if not mask or '*' in mask:
             _catchall_handlers[name] = True
         else:
             for m in mask:
@@ -225,7 +225,7 @@ class UIEventFilter(object):
         self.update(None, level, debug_domains)
 
     def update(self, eventmask, level, debug_domains):
-        self.eventmask = None
+        self.eventmask = eventmask
         self.stdlevel = level
         self.debug_domains = debug_domains
 
@@ -236,8 +236,19 @@ class UIEventFilter(object):
             if event.name in self.debug_domains and event.levelno >= self.debug_domains[event.name]:
                 return True
             return False
-        # Implement other event masking here on self.eventmask
+        eid = str(event.__class__)[8:-2]
+        if eid not in self.eventmask:
+            return False
         return True
+
+def set_UIHmask(handlerNum, level, debug_domains, mask):
+    if not handlerNum in _ui_handlers:
+        return False
+    if '*' in mask:
+        _ui_logfilters[handlerNum].update(None, level, debug_domains)
+    else:
+        _ui_logfilters[handlerNum].update(mask, level, debug_domains)
+    return True
 
 def getName(e):
     """Returns the name of a class or class instance"""
