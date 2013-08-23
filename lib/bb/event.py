@@ -63,6 +63,7 @@ def clean_class_handlers():
 # Internal
 _handlers = clean_class_handlers()
 _ui_handlers = {}
+_ui_logfilters = {}
 _ui_handler_seq = 0
 _event_handler_map = {}
 _catchall_handlers = {}
@@ -135,6 +136,8 @@ def fire_ui_handlers(event, d):
     for h in _ui_handlers:
         #print "Sending event %s" % event
         try:
+             if not _ui_logfilters[h].filter(event):
+                 continue
              # We use pickle here since it better handles object instances
              # which xmlrpc's marshaller does not. Events *must* be serializable
              # by pickle.
@@ -207,12 +210,34 @@ def remove(name, handler):
 def register_UIHhandler(handler):
     bb.event._ui_handler_seq = bb.event._ui_handler_seq + 1
     _ui_handlers[_ui_handler_seq] = handler
+    level, debug_domains = bb.msg.constructLogOptions()
+    _ui_logfilters[_ui_handler_seq] = UIEventFilter(level, debug_domains)
     return _ui_handler_seq
 
 def unregister_UIHhandler(handlerNum):
     if handlerNum in _ui_handlers:
         del _ui_handlers[handlerNum]
     return
+
+# Class to allow filtering of events and specific filtering of LogRecords *before* we put them over the IPC
+class UIEventFilter(object):
+    def __init__(self, level, debug_domains):
+        self.update(None, level, debug_domains)
+
+    def update(self, eventmask, level, debug_domains):
+        self.eventmask = None
+        self.stdlevel = level
+        self.debug_domains = debug_domains
+
+    def filter(self, event):
+        if isinstance(event, logging.LogRecord):
+            if event.levelno >= self.stdlevel:
+                return True
+            if event.name in self.debug_domains and event.levelno >= self.debug_domains[event.name]:
+                return True
+            return False
+        # Implement other event masking here on self.eventmask
+        return True
 
 def getName(e):
     """Returns the name of a class or class instance"""

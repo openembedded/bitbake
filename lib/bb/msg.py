@@ -146,8 +146,7 @@ def init_msgconfig(verbose, debug, debug_domains = []):
         bb.msg.loggerVerboseLogs = True
     bb.msg.loggerDefaultDomains = debug_domains
 
-def addDefaultlogFilter(handler):
-
+def constructLogOptions():
     debug = loggerDefaultDebugLevel
     verbose = loggerDefaultVerbose
     domains = loggerDefaultDomains
@@ -163,6 +162,10 @@ def addDefaultlogFilter(handler):
     for (domainarg, iterator) in groupby(domains):
         dlevel = len(tuple(iterator))
         debug_domains["BitBake.%s" % domainarg] = logging.DEBUG - dlevel + 1
+    return level, debug_domains
+
+def addDefaultlogFilter(handler):
+    level, debug_domains = constructLogOptions()
 
     BBLogFilter(handler, level, debug_domains)
 
