@@ -47,14 +47,28 @@ except ImportError:
 DEBUG = False
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
-import inspect, select
+import inspect, select, httplib
 
 from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
 
 class BBTransport(xmlrpclib.Transport):
-    def __init__(self):
+    def __init__(self, timeout):
+        self.timeout = timeout
         self.connection_token = None
         xmlrpclib.Transport.__init__(self)
+
+    # Modified from default to pass timeout to HTTPConnection
+    def make_connection(self, host):
+        #return an existing connection if possible.  This allows
+        #HTTP/1.1 keep-alive.
+        if self._connection and host == self._connection[0]:
+            return self._connection[1]
+
+        # create a HTTP connection object from a host descriptor
+        chost, self._extra_headers, x509 = self.get_host_info(host)
+        #store the host argument along with the connection object
+        self._connection = host, httplib.HTTPConnection(chost, timeout=self.timeout)
+        return self._connection[1]
 
     def set_connection_token(self, token):
         self.connection_token = token
@@ -64,8 +78,8 @@ class BBTransport(xmlrpclib.Transport):
             h.putheader("Bitbake-token", self.connection_token)
         xmlrpclib.Transport.send_content(self, h, body)
 
-def _create_server(host, port):
-    t = BBTransport()
+def _create_server(host, port, timeout = 5):
+    t = BBTransport(timeout)
     s = xmlrpclib.Server("http://%s:%d/" % (host, port), transport=t, allow_none=True)
     return s, t
 
