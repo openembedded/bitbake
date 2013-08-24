@@ -105,7 +105,7 @@ class ProcessServer(Process, BaseImplServer):
             except Exception:
                 logger.exception('Running command %s', command)
 
-        self.event_queue.cancel_join_thread()
+        self.event_queue.close()
         bb.event.unregister_UIHhandler(self.event_handle)
         self.command_channel.close()
         self.cooker.stop()
@@ -150,27 +150,25 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         self.connection = ServerCommunicator(self.ui_channel)
         self.events = self.event_queue
 
-    def terminate(self, force = False):
+    def terminate(self):
+        def flushevents():
+            while True:
+                try:
+                    event = self.event_queue.get(block=False)
+                except (Empty, IOError):
+                    break
+                if isinstance(event, logging.LogRecord):
+                    logger.handle(event)
+
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         self.procserver.stop()
-        if force:
-            self.procserver.join(0.5)
-            if self.procserver.is_alive():
-                self.procserver.terminate()
-                self.procserver.join()
-        else:
-            self.procserver.join()
-        while True:
-            try:
-                event = self.event_queue.get(block=False)
-            except (Empty, IOError):
-                break
-            if isinstance(event, logging.LogRecord):
-                logger.handle(event)
+
+        while self.procserver.is_alive():
+            flushevents()
+            self.procserver.join(0.1)
+
         self.ui_channel.close()
         self.event_queue.close()
-        if force:
-            sys.exit(1)
 
 # Wrap Queue to provide API which isn't server implementation specific
 class ProcessEventQueue(multiprocessing.queues.Queue):
@@ -203,5 +201,5 @@ class BitBakeServer(BitBakeBaseServer):
 
     def establishConnection(self):
         self.connection = BitBakeProcessServerConnection(self.serverImpl, self.ui_channel, self.event_queue)
-        signal.signal(signal.SIGTERM, lambda i, s: self.connection.terminate(force=True))
+        signal.signal(signal.SIGTERM, lambda i, s: self.connection.terminate())
         return self.connection
