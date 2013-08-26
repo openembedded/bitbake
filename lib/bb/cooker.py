@@ -1168,6 +1168,7 @@ class BBCooker:
         if timestamp:
             return timestr
 
+    # This is called for all async commands when self.state != running
     def updateCache(self):
         if self.state == state.running:
             return
