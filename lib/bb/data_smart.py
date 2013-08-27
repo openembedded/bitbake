@@ -589,13 +589,9 @@ class DataSmart(MutableMapping):
         if expand and value:
             value = self.expand(value, None)
         if value and flag == "_content" and local_var and "_removeactive" in local_var:
-            for i in local_var["_removeactive"]:
-                if " " + i + " " in value:
-                    value = value.replace(" " + i + " ", " ")
-                if value.startswith(i + " "):
-                    value = value[len(i + " "):]
-                if value.endswith(" " + i):
-                    value = value[:-len(" " + i)]
+            filtered = filter(lambda v: v not in local_var["_removeactive"],
+                              value.split(" "))
+            value = " ".join(filtered)
         return value
 
     def delVarFlag(self, var, flag, **loginfo):
