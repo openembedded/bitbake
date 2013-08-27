@@ -143,6 +143,11 @@ class PRServer(SimpleXMLRPCServer):
         os.dup2(so.fileno(),sys.stdout.fileno())
         os.dup2(se.fileno(),sys.stderr.fileno())
 
+        # Clear out all log handlers prior to the fork() to avoid calling
+        # event handlers not part of the PRserver
+        for logger_iter in logging.Logger.manager.loggerDict.keys():
+            logger_iter.handlers = []
+
         # Ensure logging makes it to the logfile
         streamhandler = logging.StreamHandler()
         streamhandler.setLevel(logging.DEBUG)
