@@ -418,7 +418,7 @@ class DataSmart(MutableMapping):
                             self.setVar(append, sval)
                         elif op == "_remove":
                             removes = self.getVarFlag(append, "_removeactive", False) or []
-                            removes.append(a)
+                            removes.extend(a.split())
                             self.setVarFlag(append, "_removeactive", removes, ignore=True)
 
                     # We save overrides that may be applied at some later stage
