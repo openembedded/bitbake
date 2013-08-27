@@ -237,7 +237,7 @@ class UIEventFilter(object):
                 return True
             return False
         eid = str(event.__class__)[8:-2]
-        if eid not in self.eventmask:
+        if self.eventmask and eid not in self.eventmask:
             return False
         return True
 
