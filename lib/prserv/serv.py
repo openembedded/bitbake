@@ -31,19 +31,20 @@ class Handler(SimpleXMLRPCRequestHandler):
 PIDPREFIX = "/tmp/PRServer_%s_%s.pid"
 singleton = None
 
-class PRServer(SimpleXMLRPCServer):
+import SocketServer
+class SimpleThreadedXMLRPCServer(SocketServer.ThreadingMixIn, SimpleXMLRPCServer):
+    pass
+
+class PRServer(SimpleThreadedXMLRPCServer):
     def __init__(self, dbfile, logfile, interface, daemon=True):
         ''' constructor '''
-        SimpleXMLRPCServer.__init__(self, interface,
-                                    requestHandler=SimpleXMLRPCRequestHandler,
+        SimpleThreadedXMLRPCServer.__init__(self, interface,
                                     logRequests=False, allow_none=True)
         self.dbfile=dbfile
         self.daemon=daemon
         self.logfile=logfile
         self.working_thread=None
         self.host, self.port = self.socket.getsockname()
-        self.db=prserv.db.PRData(dbfile)
-        self.table=self.db["PRMAIN"]
         self.pidfile=PIDPREFIX % (self.host, self.port)
 
         self.register_function(self.getPR, "getPR")
@@ -55,13 +56,17 @@ class PRServer(SimpleXMLRPCServer):
 
     def export(self, version=None, pkgarch=None, checksum=None, colinfo=True):
         try:
-            return self.table.export(version, pkgarch, checksum, colinfo)
+            db = prserv.db.PRData(self.dbfile)
+            table = db["PRMAIN"]
+            return table.export(version, pkgarch, checksum, colinfo)
         except sqlite3.Error as exc:
             logger.error(str(exc))
             return None
 
     def importone(self, version, pkgarch, checksum, value):
-        return self.table.importone(version, pkgarch, checksum, value)
+        db = prserv.db.PRData(self.dbfile)
+        table = db["PRMAIN"]
+        return table.importone(version, pkgarch, checksum, value)
 
     def ping(self):
         return not self.quit
@@ -71,7 +76,9 @@ class PRServer(SimpleXMLRPCServer):
 
     def getPR(self, version, pkgarch, checksum):
         try:
-            return self.table.getValue(version, pkgarch, checksum)
+            db = prserv.db.PRData(self.dbfile)
+            table = db["PRMAIN"]
+            return table.getValue(version, pkgarch, checksum)
         except prserv.NotFoundError:
             logger.error("can not find value for (%s, %s)",version, checksum)
             return None
@@ -177,7 +184,6 @@ class PRServSingleton(object):
         self.prserv = PRServer(self.dbfile, self.logfile, self.interface)
         self.prserv.start()
         self.host, self.port = self.prserv.getinfo()
-        del self.prserv.db
 
     def getinfo(self):
         return (self.host, self.port)
