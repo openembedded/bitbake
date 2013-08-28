@@ -165,7 +165,7 @@ class PRServer(SimpleXMLRPCServer):
         self.delpid()
         os._exit(0)
 
-class PRServSingleton():
+class PRServSingleton(object):
     def __init__(self, dbfile, logfile, interface):
         self.dbfile = dbfile
         self.logfile = logfile
@@ -182,7 +182,7 @@ class PRServSingleton():
     def getinfo(self):
         return (self.host, self.port)
 
-class PRServerConnection():
+class PRServerConnection(object):
     def __init__(self, host, port):
         if is_local_special(host, port):
             host, port = singleton.getinfo()

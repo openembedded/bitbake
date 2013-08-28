@@ -14,7 +14,7 @@ sqlversion = sqlite3.sqlite_version_info
 if sqlversion[0] < 3 or (sqlversion[0] == 3 and sqlversion[1] < 3):
     raise Exception("sqlite3 version 3.3.0 or later is required.")
 
-class PRTable():
+class PRTable(object):
     def __init__(self, conn, table, nohist):
         self.conn = conn
         self.nohist = nohist
@@ -223,7 +223,7 @@ class PRData(object):
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise e
-        self.connection=sqlite3.connect(self.filename, isolation_level="DEFERRED")
+        self.connection=sqlite3.connect(self.filename, isolation_level="DEFERRED", check_same_thread = False)
         self.connection.row_factory=sqlite3.Row
         self._tables={}
 
