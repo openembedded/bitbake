@@ -146,7 +146,7 @@ class PRServer(SimpleXMLRPCServer):
         # Clear out all log handlers prior to the fork() to avoid calling
         # event handlers not part of the PRserver
         for logger_iter in logging.Logger.manager.loggerDict.keys():
-            logger_iter.handlers = []
+            logging.getLogger(logger_iter).handlers = []
 
         # Ensure logging makes it to the logfile
         streamhandler = logging.StreamHandler()
