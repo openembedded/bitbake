@@ -177,14 +177,21 @@ def _inherit(bbclass, data):
     bb.parse.BBHandler.inherit(bbclass, "configuration INHERITs", 0, data)
     return data
 
-def findConfigFile(configfile):
+def findConfigFile(configfile, data):
+    search = []
+    bbpath = data.getVar("BBPATH", True)
+    if bbpath:
+        for i in bbpath.split(":"):
+            search.append(os.path.join(i, "conf", configfile))
     path = os.getcwd()
     while path != "/":
-        confpath = os.path.join(path, "conf", configfile)
-        if os.path.exists(confpath):
-            return confpath
-
+        search.append(os.path.join(path, "conf", configfile))
         path, _ = os.path.split(path)
+
+    for i in search:
+        if os.path.exists(i):
+            return i
+
     return None
 
 class CookerDataBuilder(object):
@@ -225,8 +232,8 @@ class CookerDataBuilder(object):
             logger.exception("Error parsing configuration files")
             sys.exit(1)
 
-    def _findLayerConf(self):
-        return findConfigFile("bblayers.conf")
+    def _findLayerConf(self, data):
+        return findConfigFile("bblayers.conf", data)
 
     def parseConfigurationFiles(self, prefiles, postfiles):
         data = self.data
@@ -236,7 +243,7 @@ class CookerDataBuilder(object):
         for f in prefiles:
             data = parse_config_file(f, data)
 
-        layerconf = self._findLayerConf()
+        layerconf = self._findLayerConf(data)
         if layerconf:
             parselog.debug(2, "Found bblayers.conf (%s)", layerconf)
             # By definition bblayers.conf is in conf/ of TOPDIR.
