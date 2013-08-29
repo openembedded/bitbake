@@ -239,6 +239,9 @@ class CookerDataBuilder(object):
         layerconf = self._findLayerConf()
         if layerconf:
             parselog.debug(2, "Found bblayers.conf (%s)", layerconf)
+            # By definition bblayers.conf is in conf/ of TOPDIR.
+            # We may have been called with cwd somewhere else so reset TOPDIR
+            data.setVar("TOPDIR", os.path.dirname(os.path.dirname(layerconf)))
             data = parse_config_file(layerconf, data)
 
             layers = (data.getVar('BBLAYERS', True) or "").split()
