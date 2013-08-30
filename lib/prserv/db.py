@@ -37,7 +37,7 @@ class PRTable(object):
             try:
                 return self.conn.execute(*query)
             except sqlite3.OperationalError as exc:
-                if 'database is locked' in str(exc) and count < 500:
+                if 'is locked' in str(exc) and count < 500:
                     count = count + 1
                     continue
                 raise exc
