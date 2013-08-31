@@ -133,6 +133,8 @@ class BitBakeServerCommands():
         if self.has_client:
             self.server.set_connection_token(None)
             self.has_client = False
+            if self.server.single_use:
+                self.server.quit = True
 
 # This request handler checks if the request has a "Bitbake-token" header
 # field (this comes from the client side) and compares it with its internal
@@ -239,6 +241,9 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         self.commands = BitBakeServerCommands(self)
         self.autoregister_all_functions(self.commands, "")
         self.interface = interface
+        self.single_use = False
+        if (interface[1] == 0):     # anonymous port, not getting reused
+            self.single_use = True
 
     def addcooker(self, cooker):
         BaseImplServer.addcooker(self, cooker)
