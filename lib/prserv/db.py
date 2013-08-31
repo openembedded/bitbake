@@ -52,11 +52,9 @@ class PRTable(object):
         else:
             #no value found, try to insert
             try:
-                self._execute("BEGIN")
-                self._execute("INSERT OR ROLLBACK INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1,0) from %s where version=? AND pkgarch=?));"
+                self._execute("INSERT INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1,0) from %s where version=? AND pkgarch=?));"
                            % (self.table,self.table),
                            (version,pkgarch, checksum,version, pkgarch))
-                self.conn.commit()
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
@@ -80,11 +78,9 @@ class PRTable(object):
         else:
             #no value found, try to insert
             try:
-                self._execute("BEGIN")
                 self._execute("INSERT OR REPLACE INTO %s VALUES (?, ?, ?, (select ifnull(max(value)+1,0) from %s where version=? AND pkgarch=?));"
                                % (self.table,self.table),
                                (version, pkgarch, checksum, version, pkgarch))
-                self.conn.commit()
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
                 self.conn.rollback()
@@ -113,10 +109,8 @@ class PRTable(object):
         else:
             #no value found, try to insert
             try:
-                self._execute("BEGIN")
-                self._execute("INSERT OR ROLLBACK INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
+                self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
                            (version, pkgarch, checksum, value))
-                self.conn.commit()
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
@@ -130,18 +124,14 @@ class PRTable(object):
     def _importNohist(self, version, pkgarch, checksum, value):
         try:
             #try to insert
-            self._execute("BEGIN")
-            self._execute("INSERT OR ROLLBACK INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
+            self._execute("INSERT INTO %s VALUES (?, ?, ?, ?);"  % (self.table),
                            (version, pkgarch, checksum,value))
-            self.conn.commit()
         except sqlite3.IntegrityError as exc:
             #already have the record, try to update
             try:
-                self._execute("BEGIN")
                 self._execute("UPDATE %s SET value=? WHERE version=? AND pkgarch=? AND checksum=? AND value<?"  
                               % (self.table),
                                (value,version,pkgarch,checksum,value))
-                self.conn.commit()
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
