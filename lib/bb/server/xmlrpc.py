@@ -264,12 +264,9 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         Serve Requests. Overloaded to honor a quit command
         """
         self.quit = False
-        self.timeout = 0 # Run Idle calls for our first callback
         while not self.quit:
-            #print "Idle queue length %s" % len(self._idlefuns)
-            self.handle_request()
-            #print "Idle timeout, running idle functions"
-            nextsleep = None
+            fds = [self]
+            nextsleep = 0.1
             for function, data in self._idlefuns.items():
                 try:
                     retval = function(self, data, False)
@@ -277,21 +274,22 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
                         del self._idlefuns[function]
                     elif retval is True:
                         nextsleep = 0
-                    elif nextsleep is 0:
-                        continue
-                    elif nextsleep is None:
-                        nextsleep = retval
-                    elif retval < nextsleep:
-                        nextsleep = retval
+                    else:
+                        fds = fds + retval
                 except SystemExit:
                     raise
                 except:
                     import traceback
                     traceback.print_exc()
                     pass
-            if nextsleep is None and len(self._idlefuns) > 0:
-                nextsleep = 0
-            self.timeout = nextsleep
+
+            socktimeout = self.socket.gettimeout() or nextsleep
+            socktimeout = min(socktimeout, nextsleep)
+            # Mirror what BaseServer handle_request would do
+            fd_sets = select.select(fds, [], [], socktimeout)
+            if fd_sets[0] and self in fd_sets[0]:
+                self._handle_request_noblock()
+
         # Tell idle functions we're exiting
         for function, data in self._idlefuns.items():
             try:

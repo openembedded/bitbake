@@ -895,6 +895,14 @@ class RunQueue:
         if self.fakeworkerpipe:
             self.fakeworkerpipe.read()
 
+    def active_fds(self):
+        fds = []
+        if self.workerpipe:
+            fds.append(self.workerpipe.input)
+        if self.fakeworkerpipe:
+            fds.append(self.fakeworkerpipe.input)
+        return fds
+
     def check_stamp_task(self, task, taskname = None, recurse = False, cache = None):
         def get_timestamp(f):
             try:
@@ -972,7 +980,7 @@ class RunQueue:
         (if the abort on failure configuration option isn't set)
         """
 
-        retval = 0.5
+        retval = True
 
         if self.state is runQueuePrepare:
             self.rqexe = RunQueueExecuteDummy(self)
@@ -1375,7 +1383,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
         if self.stats.active > 0:
             self.rq.read_workers()
-            return 0.5
+            return self.rq.active_fds()
 
         if len(self.failed_fnids) != 0:
             self.rq.state = runQueueFailed

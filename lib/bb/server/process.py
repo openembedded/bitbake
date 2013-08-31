@@ -29,6 +29,7 @@ import os
 import signal
 import sys
 import time
+import select
 from Queue import Empty
 from multiprocessing import Event, Process, util, Queue, Pipe, queues
 
@@ -105,7 +106,7 @@ class ProcessServer(Process, BaseImplServer):
                     command = self.command_channel.recv()
                     self.runCommand(command)
 
-                self.idle_commands(.1)
+                self.idle_commands(.1, [self.event_queue._reader, self.command_channel])
             except Exception:
                 logger.exception('Running command %s', command)
 
@@ -115,7 +116,7 @@ class ProcessServer(Process, BaseImplServer):
         self.cooker.stop()
         self.idle_commands(.1)
 
-    def idle_commands(self, delay):
+    def idle_commands(self, delay, fds = []):
         nextsleep = delay
 
         for function, data in self._idlefuns.items():
@@ -127,15 +128,15 @@ class ProcessServer(Process, BaseImplServer):
                     nextsleep = None
                 elif nextsleep is None:
                     continue
-                elif retval < nextsleep:
-                    nextsleep = retval
+                else:
+                    fds = fds + retval
             except SystemExit:
                 raise
             except Exception:
                 logger.exception('Running idle function')
 
         if nextsleep is not None:
-            time.sleep(nextsleep)
+            select.select(fds,[],[],nextsleep)
 
     def runCommand(self, command):
         """
