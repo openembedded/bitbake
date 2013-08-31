@@ -2,6 +2,7 @@ import logging
 import os.path
 import errno
 import prserv
+import time
 
 try:
     import sqlite3
@@ -32,13 +33,13 @@ class PRTable(object):
 
     def _execute(self, *query):
         """Execute a query, waiting to acquire a lock if necessary"""
-        count = 0
+        start = time.time()
+        end = start + 20
         while True:
             try:
                 return self.conn.execute(*query)
             except sqlite3.OperationalError as exc:
-                if 'is locked' in str(exc) and count < 500:
-                    count = count + 1
+                if 'is locked' in str(exc) and end > time.time():
                     continue
                 raise exc
 
