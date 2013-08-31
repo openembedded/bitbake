@@ -467,7 +467,7 @@ def exec_task(fn, task, d, profile = False):
             quieterr = True
 
         if profile: 
-            profname = "profile-%s.log" % (os.path.basename(fn) + "-" + task)
+            profname = "profile-%s.log" % (d.getVar("PN", True) + "-" + task)
             try:
                 import cProfile as profile
             except:
