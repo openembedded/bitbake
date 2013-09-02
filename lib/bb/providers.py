@@ -341,7 +341,7 @@ def filterProvidersRunTime(providers, item, cfgData, dataCache):
     if numberPreferred > 1:
         logger.error("Trying to resolve runtime dependency %s resulted in conflicting PREFERRED_PROVIDER entries being found.\nThe providers found were: %s\nThe PREFERRED_PROVIDER entries resulting in this conflict were: %s", item, preferred, preferred_vars)
 
-    logger.debug(1, "sorted providers for %s are: %s", item, eligible)
+    logger.debug(1, "sorted runtime providers for %s are: %s", item, eligible)
 
     return eligible, numberPreferred
 
