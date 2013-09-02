@@ -306,8 +306,10 @@ def main(server, eventHandler, params, tf = TerminalFilter):
 
     while True:
         try:
-            termfilter.updateFooter()
-            event = eventHandler.waitEvent(0.25)
+            event = eventHandler.waitEvent(0)
+            if event is None:
+                termfilter.updateFooter()
+                event = eventHandler.waitEvent(0.25)
             if event is None:
                 if main.shutdown > 1:
                     break
