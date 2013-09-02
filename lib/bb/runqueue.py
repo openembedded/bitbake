@@ -696,13 +696,20 @@ class RunQueueData:
                     prov_list[prov].append(fn)
         for prov in prov_list:
             if len(prov_list[prov]) > 1 and prov not in self.multi_provider_whitelist:
+                seen_pn = []
+                # If two versions of the same PN are being built its fatal, we don't support it.
+                for fn in prov_list[prov]:
+                    pn = self.dataCache.pkg_fn[fn]
+                    if pn not in seen_pn:
+                        seen_pn.append(pn)
+                    else:
+                        bb.fatal("Multiple versions of %s are due to be built (%s). Only one version of a given PN should be built in any given build. You likely need to set PREFERRED_VERSION_%s to select the correct version or don't depend on multiple versions." % (pn, " ".join(prov_list[prov]), pn))
                 msg = "Multiple .bb files are due to be built which each provide %s (%s)." % (prov, " ".join(prov_list[prov]))
                 if self.warn_multi_bb:
                     logger.warn(msg)
                 else:
                     msg += "\n This usually means one provides something the other doesn't and should."
                     logger.error(msg)
-
 
         # Create a whitelist usable by the stamp checks
         stampfnwhitelist = []
