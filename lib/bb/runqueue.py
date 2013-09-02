@@ -1723,7 +1723,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         if self.stats.active > 0:
             self.rq.read_workers()
-            return 0.5
+            return self.rq.active_fds()
 
         # Convert scenequeue_covered task numbers into full taskgraph ids
         oldcovered = self.scenequeue_covered
