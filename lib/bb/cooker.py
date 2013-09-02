@@ -170,7 +170,7 @@ class BBCooker:
 
     def appendConfigurationVar(self, var, val, default_file):
         #add append var operation to the end of default_file
-        default_file = bb.cookerdata.findConfigFile(default_file)
+        default_file = bb.cookerdata.findConfigFile(default_file, self.data)
 
         with open(default_file, 'r') as f:
             contents = f.readlines()
@@ -252,7 +252,7 @@ class BBCooker:
             self.data.varhistory.del_var_history(var)
 
             #add var to the end of default_file
-            default_file = bb.cookerdata.findConfigFile(default_file)
+            default_file = bb.cookerdata.findConfigFile(default_file, self.data)
 
             with open(default_file, 'r') as f:
                 contents = f.readlines()
@@ -697,7 +697,7 @@ class BBCooker:
         Find the location on disk of configfile and if it exists and was parsed by BitBake
         emit the ConfigFilePathFound event with the path to the file.
         """
-        path = bb.cookerdata.findConfigFile(configfile)
+        path = bb.cookerdata.findConfigFile(configfile, self.data)
         if not path:
             return
 
