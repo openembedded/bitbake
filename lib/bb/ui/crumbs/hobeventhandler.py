@@ -166,13 +166,11 @@ class HobHandler(gobject.GObject):
             self.clear_busy()
             self.building = True
             targets = [self.image]
-            if self.package_queue:
-                self.set_var_in_file("LINGUAS_INSTALL", "", "local.conf")
-                self.set_var_in_file("PACKAGE_INSTALL", " ".join(self.package_queue), "local.conf")
             if self.toolchain_packages:
                 self.set_var_in_file("TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages), "local.conf")
                 targets.append(self.toolchain)
             if targets[0] == "hob-image":
+                self.set_var_in_file("LINGUAS_INSTALL", "", "local.conf")
                 hobImage = self.runCommand(["matchFile", "hob-image.bb"])
                 if self.base_image != "Start with an empty image recipe":
                     baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
