@@ -387,6 +387,10 @@ class ImageConfigurationPage (HobPage):
                 selected_image = self.__dummy_image__
                 self.update_image_combo(self.builder.recipe_model, None)
             dialog.destroy()
+        else:
+            if self.custom_image_selected:
+                self.custom_image_selected = None
+                self.update_image_combo(self.builder.recipe_model, selected_image)
 
         if not selected_image or (selected_image == self.__dummy_image__):
             self.builder.window_sensitive(True)
