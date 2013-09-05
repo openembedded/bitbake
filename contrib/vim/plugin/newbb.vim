@@ -15,7 +15,7 @@ if &compatible || v:version < 600
 endif
 
 fun! <SID>GetUserName()
-    let l:user_name = system("git-config --get user.name")
+    let l:user_name = system("git config --get user.name")
     if v:shell_error
         return "Unknow User"
     else
@@ -23,7 +23,7 @@ fun! <SID>GetUserName()
 endfun
 
 fun! <SID>GetUserEmail()
-    let l:user_email = system("git-config --get user.email")
+    let l:user_email = system("git config --get user.email")
     if v:shell_error
         return "unknow@user.org"
     else
