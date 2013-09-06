@@ -853,6 +853,8 @@ class RunQueue:
             "logdefaultdomain" : bb.msg.loggerDefaultDomains,
             "prhost" : self.cooker.prhost,
             "buildname" : self.cfgData.getVar("BUILDNAME", True),
+            "date" : self.cfgData.getVar("DATE", True),
+            "time" : self.cfgData.getVar("TIME", True),
         }
 
         worker.stdin.write("<cookerconfig>" + pickle.dumps(self.cooker.configuration) + "</cookerconfig>")

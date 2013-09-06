@@ -148,6 +148,8 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, quieterror
 
             data.setVar("BB_WORKERCONTEXT", "1")
             data.setVar("BUILDNAME", workerdata["buildname"])
+            data.setVar("DATE", workerdata["date"])
+            data.setVar("TIME", workerdata["time"])
             bb.parse.siggen.set_taskdata(workerdata["hashes"], workerdata["hash_deps"], workerdata["sigchecksums"])
             ret = 0
             try:
