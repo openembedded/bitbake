@@ -14,7 +14,7 @@ endif
 au BufNewFile,BufRead *.{bb,bbappend,bbclass}	set filetype=bitbake
 
 " .inc
-au BufNewFile,BufRead *.inc 		set filetype=bitbake
+au BufNewFile,BufRead *.inc		set filetype=bitbake
 
 " .conf
 au BufNewFile,BufRead *.conf
