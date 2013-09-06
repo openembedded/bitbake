@@ -505,12 +505,7 @@ class DataSmart(MutableMapping):
             self._seen_overrides[override].add( var )
 
     def getVar(self, var, expand=False, noweakdefault=False):
-        value = self.getVarFlag(var, "_content", False, noweakdefault)
-
-        # Call expand() separately to make use of the expand cache
-        if expand and value:
-            return self.expand(value, var)
-        return value
+        return self.getVarFlag(var, "_content", expand, noweakdefault)
 
     def renameVar(self, key, newkey, **loginfo):
         """
@@ -587,7 +582,11 @@ class DataSmart(MutableMapping):
             elif flag == "_content" and "defaultval" in local_var and not noweakdefault:
                 value = copy.copy(local_var["defaultval"])
         if expand and value:
-            value = self.expand(value, None)
+            # Only getvar (flag == _content) hits the expand cache
+            cachename = None
+            if flag == "_content":
+                cachename = var
+            value = self.expand(value, cachename)
         if value and flag == "_content" and local_var and "_removeactive" in local_var:
             filtered = filter(lambda v: v not in local_var["_removeactive"],
                               value.split(" "))
