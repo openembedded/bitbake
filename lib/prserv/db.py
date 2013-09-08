@@ -43,6 +43,10 @@ class PRTable(object):
                     continue
                 raise exc
 
+    def sync(self):
+        self.conn.commit()
+        self._execute("BEGIN EXCLUSIVE TRANSACTION")
+
     def _getValueHist(self, version, pkgarch, checksum):
         data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))

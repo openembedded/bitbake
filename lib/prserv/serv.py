@@ -74,7 +74,7 @@ class PRServer(SimpleXMLRPCServer):
             except:
                 self.handle_error(request, client_address)
                 self.shutdown_request(request)
-
+                self.table.sync()
 
     def process_request(self, request, client_address):
         self.requestqueue.put((request, client_address))
@@ -120,6 +120,7 @@ class PRServer(SimpleXMLRPCServer):
         while not self.quit:
             self.handle_request()
 
+        self.table.sync()
         logger.info("PRServer: stopping...")
         self.server_close()
         return
