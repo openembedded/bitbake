@@ -1645,6 +1645,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
     def task_complete(self, task):
         self.stats.taskCompleted()
+        bb.event.fire(sceneQueueTaskCompleted(task, self.stats, self.rq), self.cfgData)
         self.task_completeoutright(task)
 
     def task_fail(self, task, result):
@@ -1826,6 +1827,11 @@ class sceneQueueTaskFailed(sceneQueueEvent):
 class runQueueTaskCompleted(runQueueEvent):
     """
     Event notifing a task completed
+    """
+
+class sceneQueueTaskCompleted(sceneQueueEvent):
+    """
+    Event notifing a setscene task completed
     """
 
 class runQueuePipe():
