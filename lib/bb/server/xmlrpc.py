@@ -169,51 +169,6 @@ class BitBakeXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         self.end_headers()
         self.wfile.write(response)
 
-class BitBakeUIEventServer(threading.Thread):
-    class EventAdapter():
-        """
-        Adapter to wrap our event queue since the caller (bb.event) expects to
-        call a send() method, but our actual queue only has put()
-        """
-        def __init__(self, notify):
-            self.queue = []
-            self.notify = notify
-            self.qlock = threading.Lock()
-
-        def send(self, event):
-            self.qlock.acquire()
-            self.queue.append(event)
-            self.qlock.release()
-            self.notify.set()
-
-        def get(self):
-            self.qlock.acquire()
-            if len(self.queue) == 0:
-                self.qlock.release()
-                return None
-            e = self.queue.pop(0)
-            if len(self.queue) == 0:
-                self.notify.clear()
-            self.qlock.release()
-            return e
-
-    def __init__(self, connection):
-        self.connection = connection
-        self.notify = threading.Event()
-        self.event = BitBakeUIEventServer.EventAdapter(self.notify)
-        self.quit = False
-        threading.Thread.__init__(self)
-
-    def terminateServer(self):
-        self.quit = True
-
-    def run(self):
-        while not self.quit:
-            self.notify.wait(0.1)
-            evt = self.event.get()
-            if evt:
-                self.connection.event.sendpickle(pickle.dumps(evt))
-
 
 class XMLRPCProxyServer(BaseImplServer):
     """ not a real working server, but a stub for a proxy server connection
