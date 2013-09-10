@@ -148,9 +148,8 @@ class MethodNode(AstNode):
         text = '\n'.join(self.body)
         if self.func_name == "__anonymous":
             funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(string.maketrans('/.+-', '____'))))
-            if not funcname in bb.methodpool._parsed_fns:
-                text = "def %s(d):\n" % (funcname) + text
-                bb.methodpool.insert_method(funcname, text, self.filename)
+            text = "def %s(d):\n" % (funcname) + text
+            bb.methodpool.insert_method(funcname, text, self.filename)
             anonfuncs = data.getVar('__BBANONFUNCS') or []
             anonfuncs.append(funcname)
             data.setVar('__BBANONFUNCS', anonfuncs)
@@ -171,8 +170,7 @@ class PythonMethodNode(AstNode):
         # 'this' file. This means we will not parse methods from
         # bb classes twice
         text = '\n'.join(self.body)
-        if not bb.methodpool.parsed_module(self.modulename):
-            bb.methodpool.insert_method(self.modulename, text, self.filename)
+        bb.methodpool.insert_method(self.modulename, text, self.filename)
         data.setVarFlag(self.function, "func", 1)
         data.setVarFlag(self.function, "python", 1)
         data.setVar(self.function, text)
