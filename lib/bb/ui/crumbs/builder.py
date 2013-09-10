@@ -31,6 +31,7 @@ import re
 import logging
 import sys
 import signal
+import time
 from bb.ui.crumbs.imageconfigurationpage import ImageConfigurationPage
 from bb.ui.crumbs.recipeselectionpage import RecipeSelectionPage
 from bb.ui.crumbs.packageselectionpage import PackageSelectionPage
@@ -1466,3 +1467,10 @@ class Builder(gtk.Window):
 
     def get_topdir(self):
         return self.handler.get_topdir()
+
+    def wait(self, delay):
+        time_start = time.time()
+        time_end = time_start + delay
+        while time_end > time.time():
+            while gtk.events_pending():
+                gtk.main_iteration()
