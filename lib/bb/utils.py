@@ -532,6 +532,8 @@ def approved_variables():
     Determine and return the list of whitelisted variables which are approved
     to remain in the envrionment.
     """
+    if 'BB_PRESERVE_ENV' in os.environ:
+        return os.environ.keys()
     approved = []
     if 'BB_ENV_WHITELIST' in os.environ:
         approved = os.environ['BB_ENV_WHITELIST'].split()
