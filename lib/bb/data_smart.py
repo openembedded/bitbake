@@ -635,13 +635,13 @@ class DataSmart(MutableMapping):
             self.varhistory.record(**loginfo)
             self.dict[var][i] = flags[i]
 
-    def getVarFlags(self, var):
+    def getVarFlags(self, var, internalflags=False):
         local_var = self._findVar(var)
         flags = {}
 
         if local_var:
             for i in local_var:
-                if i.startswith("_"):
+                if i.startswith("_") and not internalflags:
                     continue
                 flags[i] = local_var[i]
 
@@ -750,13 +750,16 @@ class DataSmart(MutableMapping):
         for key in keys:
             if key in config_whitelist:
                 continue
+
             value = d.getVar(key, False) or ""
             data.update({key:value})
 
-            varflags = d.getVarFlags(key)
+            varflags = d.getVarFlags(key, internalflags = True)
             if not varflags:
                 continue
             for f in varflags:
+                if f == "_content":
+                    continue
                 data.update({'%s[%s]' % (key, f):varflags[f]})
 
         for key in ["__BBTASKS", "__BBANONFUNCS", "__BBHANDLERS"]:
