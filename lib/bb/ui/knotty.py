@@ -405,8 +405,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
 
             if isinstance(event, bb.command.CommandFailed):
                 return_value = event.exitcode
-                errors = errors + 1
-                logger.error("Command execution failed: %s", event.error)
+                if event.error:
+                    errors = errors + 1
+                    logger.error("Command execution failed: %s", event.error)
                 main.shutdown = 2
                 continue
             if isinstance(event, bb.command.CommandExit):
@@ -520,7 +521,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     if warnings:
         summary += pluralise("\nSummary: There was %s WARNING message shown.",
                              "\nSummary: There were %s WARNING messages shown.", warnings)
-    if return_value:
+    if return_value and errors:
         summary += pluralise("\nSummary: There was %s ERROR message shown, returning a non-zero exit code.",
                              "\nSummary: There were %s ERROR messages shown, returning a non-zero exit code.", errors)
     if summary:
