@@ -93,22 +93,6 @@ class BBCooker:
 
         self.configuration = configuration
 
-        self.caches_array = []
-
-        caches_name_array = ['bb.cache:CoreRecipeInfo'] + configuration.extra_caches
-
-        # At least CoreRecipeInfo will be loaded, so caches_array will never be empty!
-        # This is the entry point, no further check needed!
-        for var in caches_name_array:
-            try:
-                module_name, cache_name = var.split(':')
-                module = __import__(module_name, fromlist=(cache_name,))
-                self.caches_array.append(getattr(module, cache_name)) 
-            except ImportError as exc:
-                logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
-                sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
-
-        self.data = None
         self.loadConfigurationData()
 
         # Take a lock so only one copy of bitbake can run against a given build
@@ -117,13 +101,6 @@ class BBCooker:
         self.lock = bb.utils.lockfile(lockfile, False, False)
         if not self.lock:
             bb.fatal("Only one copy of bitbake should be run against a build directory")
-
-        #
-        # Special updated configuration we use for firing events
-        #
-        self.event_data = bb.data.createCopy(self.data)
-        bb.data.update_data(self.event_data)
-        bb.parse.init_parser(self.event_data)
 
         # TOSTOP must not be set or our children will hang when they output
         fd = sys.stdout.fileno()
@@ -141,6 +118,23 @@ class BBCooker:
         self.parser = None
 
     def initConfigurationData(self):
+
+        self.state = state.initial
+
+        self.caches_array = []
+        caches_name_array = ['bb.cache:CoreRecipeInfo'] + self.configuration.extra_caches
+
+        # At least CoreRecipeInfo will be loaded, so caches_array will never be empty!
+        # This is the entry point, no further check needed!
+        for var in caches_name_array:
+            try:
+                module_name, cache_name = var.split(':')
+                module = __import__(module_name, fromlist=(cache_name,))
+                self.caches_array.append(getattr(module, cache_name)) 
+            except ImportError as exc:
+                logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
+                sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
+
         self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration, False)
         self.data = self.databuilder.data
 
@@ -157,6 +151,13 @@ class BBCooker:
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
         self.data_hash = self.databuilder.data_hash
+
+        #
+        # Special updated configuration we use for firing events
+        #
+        self.event_data = bb.data.createCopy(self.data)
+        bb.data.update_data(self.event_data)
+        bb.parse.init_parser(self.event_data)
 
     def modifyConfigurationVar(self, var, val, default_file, op):
         if op == "append":
@@ -1246,11 +1247,9 @@ class BBCooker:
         self.state = state.stop
 
     def initialize(self):
-        self.state = state.initial
         self.initConfigurationData()
 
     def reset(self):
-        self.state = state.initial
         self.loadConfigurationData()
 
 def server_main(cooker, func, *args):
