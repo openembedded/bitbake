@@ -117,5 +117,5 @@ def main (server, eventHandler, params):
     except KeyboardInterrupt:
         pass
     finally:
-        server.runCommand(["stateStop"])
+        server.runCommand(["stateForceShutdown"])
 

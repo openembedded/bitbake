@@ -314,7 +314,7 @@ def main(server, eventHandler, params):
                 break
             if shutdown == 1:
                 print("\nSecond Keyboard Interrupt, stopping...\n")
-                _, error = server.runCommand(["stateStop"])
+                _, error = server.runCommand(["stateForceShutdown"])
                 if error:
                     print('Unable to cleanly stop: %s' % error)
             if shutdown == 0:

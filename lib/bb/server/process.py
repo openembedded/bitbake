@@ -113,7 +113,7 @@ class ProcessServer(Process, BaseImplServer):
         self.event_queue.close()
         bb.event.unregister_UIHhandler(self.event_handle.value)
         self.command_channel.close()
-        self.cooker.stop()
+        self.cooker.shutdown(True)
         self.idle_commands(.1)
 
     def idle_commands(self, delay, fds = []):

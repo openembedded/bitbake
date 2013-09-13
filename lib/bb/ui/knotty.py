@@ -499,7 +499,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 main.shutdown = 2
             if not params.observe_only and main.shutdown == 1:
                 print("\nSecond Keyboard Interrupt, stopping...\n")
-                _, error = server.runCommand(["stateStop"])
+                _, error = server.runCommand(["stateForceShutdown"])
                 if error:
                     logger.error("Unable to cleanly stop: %s" % error)
             if not params.observe_only and main.shutdown == 0:

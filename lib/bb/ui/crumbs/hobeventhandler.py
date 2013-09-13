@@ -440,12 +440,12 @@ class HobHandler(gobject.GObject):
         self.building = False
 
     def cancel_parse(self):
-        self.runCommand(["stateStop"])
+        self.runCommand(["stateForceShutdown"])
 
     def cancel_build(self, force=False):
         if force:
             # Force the cooker to stop as quickly as possible
-            self.runCommand(["stateStop"])
+            self.runCommand(["stateForceShutdown"])
         else:
             # Wait for tasks to complete before shutting down, this helps
             # leave the workdir in a usable state

@@ -350,7 +350,7 @@ class NCursesUI:
                     exitflag = True
                 if shutdown == 1:
                     mw.appendText("Second Keyboard Interrupt, stopping...\n")
-                    _, error = server.runCommand(["stateStop"])
+                    _, error = server.runCommand(["stateForceShutdown"])
                     if error:
                         print("Unable to cleanly stop: %s" % error)
                 if shutdown == 0:

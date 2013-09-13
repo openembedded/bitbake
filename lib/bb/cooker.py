@@ -61,7 +61,7 @@ class CollectionError(bb.BBHandledException):
     """
 
 class state:
-    initial, parsing, running, shutdown, stop = range(5)
+    initial, parsing, running, shutdown, forceshutdown, stopped = range(6)
 
 
 class SkippedPackage:
@@ -1044,7 +1044,7 @@ class BBCooker:
 
         def buildFileIdle(server, rq, abort):
 
-            if abort or self.state == state.stop:
+            if abort or self.state == state.forceshutdown:
                 rq.finish_runqueue(True)
             elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
@@ -1081,7 +1081,7 @@ class BBCooker:
         targets = self.checkPackages(targets)
 
         def buildTargetsIdle(server, rq, abort):
-            if abort or self.state == state.stop:
+            if abort or self.state == state.forceshutdown:
                 rq.finish_runqueue(True)
             elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
@@ -1170,7 +1170,7 @@ class BBCooker:
         if self.state == state.running:
             return
 
-        if self.state in (state.shutdown, state.stop):
+        if self.state in (state.shutdown, state.forceshutdown):
             self.parser.shutdown(clean=False, force = True)
             sys.exit(1)
 
@@ -1240,11 +1240,11 @@ class BBCooker:
         prserv.serv.auto_shutdown(self.data)
         bb.event.fire(CookerExit(), self.event_data)
 
-    def shutdown(self):
-        self.state = state.shutdown
-
-    def stop(self):
-        self.state = state.stop
+    def shutdown(self, force = False):
+        if force:
+            self.state = state.forceshutdown
+        else:
+            self.state = state.shutdown
 
     def initialize(self):
         self.initConfigurationData()

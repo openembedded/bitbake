@@ -137,13 +137,13 @@ class CommandsSync:
         """
         Trigger cooker 'shutdown' mode
         """
-        command.cooker.shutdown()
+        command.cooker.shutdown(False)
 
-    def stateStop(self, command, params):
+    def stateForceShutdown(self, command, params):
         """
         Stop the cooker
         """
-        command.cooker.stop()
+        command.cooker.shutdown(True)
 
     def getVariable(self, command, params):
         """
