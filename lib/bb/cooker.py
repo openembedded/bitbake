@@ -1172,7 +1172,7 @@ class BBCooker:
 
         if self.state in (state.shutdown, state.forceshutdown):
             self.parser.shutdown(clean=False, force = True)
-            sys.exit(1)
+            raise bb.BBHandledException()
 
         if self.state != state.parsing:
             self.parseConfiguration ()
@@ -1194,7 +1194,7 @@ class BBCooker:
         if not self.parser.parse_next():
             collectlog.debug(1, "parsing complete")
             if self.parser.error:
-                sys.exit(1)
+                raise bb.BBHandledException()
             self.show_appends_with_no_recipes()
             self.handlePrefProviders()
             self.recipecache.bbfile_priority = self.collection.collection_priorities(self.recipecache.pkg_fn)
