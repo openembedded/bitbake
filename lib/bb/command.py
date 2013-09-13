@@ -124,7 +124,7 @@ class Command:
         else:
             bb.event.fire(CommandCompleted(), self.cooker.event_data)
         self.currentAsyncCommand = None
-
+        self.cooker.finishcommand()
 
 class CommandsSync:
     """

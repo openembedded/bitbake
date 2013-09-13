@@ -1246,6 +1246,9 @@ class BBCooker:
         else:
             self.state = state.shutdown
 
+    def finishcommand(self):
+        self.state = state.initial
+
     def initialize(self):
         self.initConfigurationData()
 
