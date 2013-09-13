@@ -117,7 +117,7 @@ class Command:
             return False
 
     def finishAsyncCommand(self, msg=None, code=None):
-        if msg:
+        if msg or msg == "":
             bb.event.fire(CommandFailed(msg), self.cooker.event_data)
         elif code:
             bb.event.fire(CommandExit(code), self.cooker.event_data)
