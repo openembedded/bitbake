@@ -141,6 +141,3 @@ def deprecate_import(current, modulename, fromlist, renames = None):
 
         setattr(sys.modules[current], newname, newobj)
 
-deprecate_import(__name__, "bb.fetch", ("MalformedUrl", "encodeurl", "decodeurl"))
-deprecate_import(__name__, "bb.utils", ("mkdirhier", "movefile", "copyfile", "which"))
-deprecate_import(__name__, "bb.utils", ["vercmp_string"], ["vercmp"])
