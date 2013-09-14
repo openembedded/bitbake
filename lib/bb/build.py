@@ -69,9 +69,10 @@ class FuncFailed(Exception):
 class TaskBase(event.Event):
     """Base class for task events"""
 
-    def __init__(self, t, d ):
+    def __init__(self, t, logfile, d):
         self._task = t
         self._package = d.getVar("PF", True)
+        self.logfile = logfile
         event.Event.__init__(self)
         self._message = "recipe %s: task %s: %s" % (d.getVar("PF", True), t, self.getDisplayName())
 
@@ -96,16 +97,11 @@ class TaskFailed(TaskBase):
     """Task execution failed"""
 
     def __init__(self, task, logfile, metadata, errprinted = False):
-        self.logfile = logfile
         self.errprinted = errprinted
-        super(TaskFailed, self).__init__(task, metadata)
+        super(TaskFailed, self).__init__(task, logfile, metadata)
 
 class TaskFailedSilent(TaskBase):
     """Task execution failed (silently)"""
-    def __init__(self, task, logfile, metadata):
-        self.logfile = logfile
-        super(TaskFailedSilent, self).__init__(task, metadata)
-
     def getDisplayName(self):
         # Don't need to tell the user it was silent
         return "Failed"
@@ -113,7 +109,7 @@ class TaskFailedSilent(TaskBase):
 class TaskInvalid(TaskBase):
 
     def __init__(self, task, metadata):
-        super(TaskInvalid, self).__init__(task, metadata)
+        super(TaskInvalid, self).__init__(task, None, metadata)
         self._message = "No such task '%s'" % task
 
 
@@ -416,7 +412,7 @@ def _exec_task(fn, task, d, quieterr):
     localdata.setVar('BB_LOGFILE', logfn)
     localdata.setVar('BB_RUNTASK', task)
 
-    event.fire(TaskStarted(task, localdata), localdata)
+    event.fire(TaskStarted(task, logfn, localdata), localdata)
     try:
         for func in (prefuncs or '').split():
             exec_func(func, localdata)
@@ -453,7 +449,7 @@ def _exec_task(fn, task, d, quieterr):
             logger.debug(2, "Zero size logfn %s, removing", logfn)
             bb.utils.remove(logfn)
             bb.utils.remove(loglink)
-    event.fire(TaskSucceeded(task, localdata), localdata)
+    event.fire(TaskSucceeded(task, logfn, localdata), localdata)
 
     if not localdata.getVarFlag(task, 'nostamp') and not localdata.getVarFlag(task, 'selfstamp'):
         make_stamp(task, localdata)
