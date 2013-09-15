@@ -1467,7 +1467,7 @@ class Feeder(multiprocessing.Process):
                 continue
 
 class Parser(multiprocessing.Process):
-    def __init__(self, jobs, results, quit, init):
+    def __init__(self, jobs, results, quit, init, profile):
         self.jobs = jobs
         self.results = results
         self.quit = quit
@@ -1475,8 +1475,28 @@ class Parser(multiprocessing.Process):
         multiprocessing.Process.__init__(self)
         self.context = bb.utils.get_context().copy()
         self.handlers = bb.event.get_class_handlers().copy()
+        self.profile = profile
 
     def run(self):
+
+        if not self.profile:
+            self.realrun()
+            return
+
+        try:
+            import cProfile as profile
+        except:
+            import profile
+        prof = profile.Profile()
+        try:
+            profile.Profile.runcall(prof, self.realrun)
+        finally:
+            logfile = "profile-parse-%s.log" % multiprocessing.current_process().name
+            prof.dump_stats(logfile)
+            bb.utils.process_profilelog(logfile)
+            print("Raw profiling information saved to %s and processed statistics to %s.processed" % (logfile, logfile))
+
+    def realrun(self):
         if self.init:
             self.init()
 
@@ -1577,7 +1597,7 @@ class CookerParser(object):
             self.feeder = Feeder(self.willparse, self.jobs, self.feeder_quit)
             self.feeder.start()
             for i in range(0, self.num_processes):
-                parser = Parser(self.jobs, self.result_queue, self.parser_quit, init)
+                parser = Parser(self.jobs, self.result_queue, self.parser_quit, init, self.cooker.configuration.profile)
                 parser.start()
                 self.processes.append(parser)
 
