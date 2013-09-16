@@ -59,7 +59,7 @@ def init():
 def init_db(parent = None):
     """Return a new object representing the Bitbake data,
     optionally based on an existing object"""
-    if parent:
+    if parent is not None:
         return parent.createCopy()
     else:
         return _dict_type()
