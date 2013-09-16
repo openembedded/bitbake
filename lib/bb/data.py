@@ -148,7 +148,7 @@ def expandKeys(alterdata, readdata = None):
         readdata = alterdata
 
     todolist = {}
-    for key in keys(alterdata):
+    for key in alterdata:
         if not '${' in key:
             continue
 
@@ -341,7 +341,7 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
 
 def generate_dependencies(d):
 
-    keys = set(key for key in d.keys() if not key.startswith("__"))
+    keys = set(key for key in d if not key.startswith("__"))
     shelldeps = set(key for key in keys if d.getVarFlag(key, "export") and not d.getVarFlag(key, "unexport"))
     vardepvals = set(key for key in keys if d.getVarFlag(key, "vardepvalue"))
 
