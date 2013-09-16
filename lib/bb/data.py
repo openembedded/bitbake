@@ -287,18 +287,19 @@ def update_data(d):
 
 def build_dependencies(key, keys, shelldeps, vardepvals, d):
     deps = set()
-    vardeps = d.getVarFlag(key, "vardeps", True)
     try:
         if key[-1] == ']':
             vf = key[:-1].split('[')
             value = d.getVarFlag(vf[0], vf[1], False)
         else:
             value = d.getVar(key, False)
+        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude"]) or {}
+        vardeps = varflags.get("vardeps")
 
-        if key in vardepvals:
-           value =  d.getVarFlag(key, "vardepvalue", True)
-        elif d.getVarFlag(key, "func"):
-            if d.getVarFlag(key, "python"):
+        if "vardepvalue" in varflags:
+           value = varflags.get("vardepvalue")
+        elif varflags.get("func"):
+            if varflags.get("python"):
                 parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.PythonParser(key, logger)
                 if parsedvar.value and "\t" in parsedvar.value:
@@ -323,16 +324,14 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
         varflagsexcl = d.getVar('BB_SIGNATURE_EXCLUDE_FLAGS', True)
         if varflagsexcl:
             varfdeps = []
-            varflags = d.getVarFlags(key)
-            if varflags:
-                for f in varflags:
-                    if f not in varflagsexcl:
-                        varfdeps.append('%s[%s]' % (key, f))
+            for f in varflags:
+                if f not in varflagsexcl:
+                    varfdeps.append('%s[%s]' % (key, f))
             if varfdeps:
                 deps |= set(varfdeps)
 
         deps |= set((vardeps or "").split())
-        deps -= set((d.getVarFlag(key, "vardepsexclude", True) or "").split())
+        deps -= set(varflags.get("vardepsexclude", "").split())
     except Exception as e:
         raise bb.data_smart.ExpansionError(key, None, e)
     return deps, value
