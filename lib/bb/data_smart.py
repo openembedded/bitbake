@@ -94,6 +94,11 @@ class VariableParse:
             if self.varname and key:
                 if self.varname == key:
                     raise Exception("variable %s references itself!" % self.varname)
+            if key in self.d.expand_cache:
+                varparse = self.d.expand_cache[key]
+                self.references |= varparse.references
+                self.execs |= varparse.execs
+                return varparse.value
             var = self.d.getVar(key, True)
             if var is not None:
                 self.references.add(key)
