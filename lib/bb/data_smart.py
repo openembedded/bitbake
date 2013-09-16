@@ -578,6 +578,13 @@ class DataSmart(MutableMapping):
         if flag == "defaultval" and '_' in var:
             self._setvar_update_overrides(var)
 
+        if flag == "unexport" or flag == "export":
+            if not "__exportlist" in self.dict:
+                self._makeShadowCopy("__exportlist")
+            if not "_content" in self.dict["__exportlist"]:
+                self.dict["__exportlist"]["_content"] = set()
+            self.dict["__exportlist"]["_content"].add(var)
+
     def getVarFlag(self, var, flag, expand=False, noweakdefault=False):
         local_var = self._findVar(var)
         value = None

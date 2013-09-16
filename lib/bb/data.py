@@ -342,7 +342,7 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
 def generate_dependencies(d):
 
     keys = set(key for key in d if not key.startswith("__"))
-    shelldeps = set(key for key in keys if d.getVarFlag(key, "export") and not d.getVarFlag(key, "unexport"))
+    shelldeps = set(key for key in d.getVar("__exportlist", False) if d.getVarFlag(key, "export") and not d.getVarFlag(key, "unexport"))
     vardepvals = set(key for key in keys if d.getVarFlag(key, "vardepvalue"))
 
     deps = {}
