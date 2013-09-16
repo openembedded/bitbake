@@ -285,7 +285,7 @@ def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
     d.finalize(parent = True)
 
-def build_dependencies(key, keys, shelldeps, vardepvals, d):
+def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
     deps = set()
     try:
         if key[-1] == ']':
@@ -324,7 +324,6 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
             deps = deps | (keys & parser.execs)
 
         # Add varflags, assuming an exclusion list is set
-        varflagsexcl = d.getVar('BB_SIGNATURE_EXCLUDE_FLAGS', True)
         if varflagsexcl:
             varfdeps = []
             for f in varflags:
@@ -345,14 +344,14 @@ def generate_dependencies(d):
 
     keys = set(key for key in d if not key.startswith("__"))
     shelldeps = set(key for key in d.getVar("__exportlist", False) if d.getVarFlag(key, "export") and not d.getVarFlag(key, "unexport"))
-    vardepvals = set(key for key in keys if d.getVarFlag(key, "vardepvalue"))
+    varflagsexcl = d.getVar('BB_SIGNATURE_EXCLUDE_FLAGS', True)
 
     deps = {}
     values = {}
 
     tasklist = d.getVar('__BBTASKS') or []
     for task in tasklist:
-        deps[task], values[task] = build_dependencies(task, keys, shelldeps, vardepvals, d)
+        deps[task], values[task] = build_dependencies(task, keys, shelldeps, varflagsexcl, d)
         newdeps = deps[task]
         seen = set()
         while newdeps:
@@ -361,7 +360,7 @@ def generate_dependencies(d):
             newdeps = set()
             for dep in nextdeps:
                 if dep not in deps:
-                    deps[dep], values[dep] = build_dependencies(dep, keys, shelldeps, vardepvals, d)
+                    deps[dep], values[dep] = build_dependencies(dep, keys, shelldeps, varflagsexcl, d)
                 newdeps |=  deps[dep]
             newdeps -= seen
         #print "For %s: %s" % (task, str(deps[task]))
