@@ -588,7 +588,7 @@ class DataSmart(MutableMapping):
     def getVarFlag(self, var, flag, expand=False, noweakdefault=False):
         local_var = self._findVar(var)
         value = None
-        if local_var:
+        if local_var is not None:
             if flag in local_var:
                 value = copy.copy(local_var[flag])
             elif flag == "_content" and "defaultval" in local_var and not noweakdefault:
@@ -599,7 +599,7 @@ class DataSmart(MutableMapping):
             if flag == "_content":
                 cachename = var
             value = self.expand(value, cachename)
-        if value and flag == "_content" and local_var and "_removeactive" in local_var:
+        if value is not None and flag == "_content" and local_var is not None and "_removeactive" in local_var:
             filtered = filter(lambda v: v not in local_var["_removeactive"],
                               value.split(" "))
             value = " ".join(filtered)
