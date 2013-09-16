@@ -291,10 +291,13 @@ def build_dependencies(key, keys, shelldeps, vardepvals, d):
         if key[-1] == ']':
             vf = key[:-1].split('[')
             value = d.getVarFlag(vf[0], vf[1], False)
-        else:
-            value = d.getVar(key, False)
+            parser = d.expandWithRefs(value, key)
+            deps |= parser.references
+            deps = deps | (keys & parser.execs)
+            return deps, value
         varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude"]) or {}
         vardeps = varflags.get("vardeps")
+        value = d.getVar(key, False)
 
         if "vardepvalue" in varflags:
            value = varflags.get("vardepvalue")
