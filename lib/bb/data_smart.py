@@ -647,7 +647,7 @@ class DataSmart(MutableMapping):
             self.varhistory.record(**loginfo)
             self.dict[var][i] = flags[i]
 
-    def getVarFlags(self, var, internalflags=False):
+    def getVarFlags(self, var, expand = False, internalflags=False):
         local_var = self._findVar(var)
         flags = {}
 
@@ -656,7 +656,8 @@ class DataSmart(MutableMapping):
                 if i.startswith("_") and not internalflags:
                     continue
                 flags[i] = local_var[i]
-
+                if expand and i in expand:
+                    flags[i] = self.expand(flags[i], None)
         if len(flags) == 0:
             return None
         return flags
