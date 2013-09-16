@@ -100,8 +100,8 @@ class VariableParse:
                 self.execs |= varparse.execs
                 return varparse.value
             var = self.d.getVar(key, True)
+            self.references.add(key)
             if var is not None:
-                self.references.add(key)
                 return var
             else:
                 return match.group()
