@@ -1325,9 +1325,10 @@ class RunQueueExecuteTasks(RunQueueExecute):
         if self.rqdata.taskData.abort:
             self.rq.state = runQueueCleanUp
 
-    def task_skip(self, task):
+    def task_skip(self, task, reason):
         self.runq_running[task] = 1
         self.runq_buildable[task] = 1
+        bb.event.fire(runQueueTaskSkipped(task, self.stats, self.rq, reason), self.cfgData)
         self.task_completeoutright(task)
         self.stats.taskCompleted()
         self.stats.taskSkipped()
@@ -1352,13 +1353,13 @@ class RunQueueExecuteTasks(RunQueueExecute):
             if task in self.rq.scenequeue_covered:
                 logger.debug(2, "Setscene covered task %s (%s)", task,
                                 self.rqdata.get_user_idstring(task))
-                self.task_skip(task)
+                self.task_skip(task, "covered")
                 return True
 
             if self.rq.check_stamp_task(task, taskname, cache=self.stampcache):
                 logger.debug(2, "Stamp current task %s (%s)", task,
                                 self.rqdata.get_user_idstring(task))
-                self.task_skip(task)
+                self.task_skip(task, "existing")
                 return True
 
             taskdep = self.rqdata.dataCache.task_deps[fn]
@@ -1833,6 +1834,14 @@ class sceneQueueTaskCompleted(sceneQueueEvent):
     """
     Event notifing a setscene task completed
     """
+
+class runQueueTaskSkipped(runQueueEvent):
+    """
+    Event notifing a task was skipped
+    """
+    def __init__(self, task, stats, rq, reason):
+        runQueueEvent.__init__(self, task, stats, rq)
+        self.reason = reason
 
 class runQueuePipe():
     """
