@@ -138,6 +138,24 @@ share common metadata between many packages.</para></listitem>
 will be introduced.</para>
             </section>
             <section>
+                <title>Appending and Prepending (override style syntax)</title>
+                    <para><screen><varname>B</varname> = "bval"
+<varname>B_append</varname> = " additional data"
+<varname>C</varname> = "cval"
+<varname>C_prepend</varname> = "additional data "</screen></para>
+                 <para>This example results in <varname>B</varname> becoming <literal>bval additional data</literal>
+and <varname>C</varname> becoming <literal>additional data cval</literal>. Note the spaces in the append.
+Unlike the += operator, additional space is not automatically added.  You must take steps to add space
+yourself.</para>
+            </section>
+            <section>
+                <title>Removing (override style syntax)</title>
+                <para><screen><varname>FOO</varname> = "123 456 789 123456 123 456 123 456"
+<varname>FOO_remove</varname> = "123"
+<varname>FOO_remove</varname> = "456"</screen></para>
+                <para>In this example, <varname>FOO</varname> is now <literal>789 123456</literal>.</para>
+            </section>
+            <section>
                 <title>Conditional metadata set</title>
                 <para>OVERRIDES is a <quote>:</quote> separated variable containing each item you want to satisfy conditions.  So, if you have a variable which is conditional on <quote>arm</quote>, and <quote>arm</quote> is in OVERRIDES, then the <quote>arm</quote> specific version of the variable is used rather than the non-conditional version.  Example:</para>
                 <para><screen><varname>OVERRIDES</varname> = "architecture:os:machine"
@@ -536,7 +554,7 @@ options:
                 <example>
                     <title>Generating dependency graphs</title>
                     <para>BitBake is able to generate dependency graphs using the dot syntax. These graphs can be converted
-to images using the <application>dot</application> application from <ulink url="http://www.graphviz.org">Graphviz</ulink>. 
+to images using the <application>dot</application> application from <ulink url="http://www.graphviz.org">Graphviz</ulink>.
 Two files will be written into the current working directory, <emphasis>depends.dot</emphasis> containing dependency information at the package level and <emphasis>task-depends.dot</emphasis> containing a breakdown of the dependencies at the task level. To stop depending on common depends, one can use the <prompt>-I depend</prompt> to omit these from the graph. This can lead to more readable graphs.  This way, <varname>DEPENDS</varname> from inherited classes such as base.bbclass can be removed from the graph.</para>
                     <screen><prompt>$ </prompt>bitbake -g blah</screen>
                     <screen><prompt>$ </prompt>bitbake -g -I virtual/whatever -I bloom blah</screen>
