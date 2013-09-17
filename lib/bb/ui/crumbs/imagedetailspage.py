@@ -635,6 +635,14 @@ class ImageDetailsPage (HobPage):
         images_dir = topdir + "/recipes/images/"
         self.builder.ensure_dir(images_dir)
 
+        self.name_field_template = self.builder.image_configuration_page.custom_image_selected
+        if self.name_field_template:
+            image_path = self.builder.recipe_model.pn_path[self.name_field_template]
+            image_iter = self.builder.recipe_model.get_iter(image_path)
+            self.description_field_template = self.builder.recipe_model.get_value(image_iter, self.builder.recipe_model.COL_DESC)
+        else:
+            self.name_field_template = ""
+
         dialog = SaveImageDialog(images_dir, self.name_field_template, self.description_field_template,
                  "Save image recipe", self.builder, gtk.DIALOG_MODAL | gtk.DIALOG_DESTROY_WITH_PARENT)
         response = dialog.run()
