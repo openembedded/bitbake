@@ -99,7 +99,8 @@ def error(*args):
 
 def fatal(*args):
     logger.critical(''.join(args))
-    raise BBHandledException()
+    sys.exit(1)
+
 
 def deprecated(func, name=None, advice=""):
     """This is a decorator which can be used to mark functions
