@@ -589,6 +589,16 @@ class PackageInfo(Event):
         Event.__init__(self)
         self._pkginfolist = pkginfolist
 
+class MetadataEvent(Event):
+    """
+    Generic event that target for OE-Core classes
+    to report information during asynchrous execution
+    """
+    def __init__(self, eventtype, eventdata):
+        Event.__init__(self)
+        self.type = eventtype
+        self.data = eventdata
+
 class SanityCheck(Event):
     """
     Event to issue sanity check
