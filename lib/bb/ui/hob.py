@@ -46,7 +46,7 @@ from bb.ui.crumbs.hoblistmodel import RecipeListModel, PackageListModel
 from bb.ui.crumbs.hobeventhandler import HobHandler
 from bb.ui.crumbs.builder import Builder
 
-extraCaches = ['bb.cache_extra:HobRecipeInfo']
+featureSet = [bb.cooker.CookerFeatures.HOB_EXTRA_CACHES]
 
 def event_handle_idle_func(eventHandler, hobHandler):
     # Consume as many messages as we can in the time available to us

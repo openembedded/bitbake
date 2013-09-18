@@ -79,6 +79,29 @@ class SkippedPackage:
         elif reason:
             self.skipreason = reason
 
+
+class CookerFeatures(object):
+    _feature_list = [HOB_EXTRA_CACHES] = range(1)
+
+    def __init__(self):
+        self._features=set()
+
+    def setFeature(self, f):
+        # validate we got a request for a feature we support
+        if f not in CookerFeatures._feature_list:
+            return
+        self._features.add(f)
+
+    def __contains__(self, f):
+        return f in self._features
+
+    def __iter__(self):
+        return self._features.__iter__()
+
+    def next(self):
+        return self._features.next()
+
+
 #============================================================================#
 # BBCooker
 #============================================================================#
@@ -90,6 +113,7 @@ class BBCooker:
     def __init__(self, configuration):
         self.recipecache = None
         self.skiplist = {}
+        self.featureset = CookerFeatures()
 
         self.configuration = configuration
 
@@ -122,7 +146,13 @@ class BBCooker:
         self.state = state.initial
 
         self.caches_array = []
-        caches_name_array = ['bb.cache:CoreRecipeInfo'] + self.configuration.extra_caches
+
+        all_extra_cache_names = []
+        # We hardcode all known cache types in a single place, here.
+        if CookerFeatures.HOB_EXTRA_CACHES in self.featureset:
+            all_extra_cache_names.append("bb.cache_extra:HobRecipeInfo")
+
+        caches_name_array = ['bb.cache:CoreRecipeInfo'] + all_extra_cache_names
 
         # At least CoreRecipeInfo will be loaded, so caches_array will never be empty!
         # This is the entry point, no further check needed!
@@ -130,7 +160,7 @@ class BBCooker:
             try:
                 module_name, cache_name = var.split(':')
                 module = __import__(module_name, fromlist=(cache_name,))
-                self.caches_array.append(getattr(module, cache_name)) 
+                self.caches_array.append(getattr(module, cache_name))
             except ImportError as exc:
                 logger.critical("Unable to import extra RecipeInfo '%s' from '%s': %s" % (cache_name, module_name, exc))
                 sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)

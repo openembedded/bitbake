@@ -89,7 +89,7 @@ class BitBakeBaseServer(object):
     def detach(self):
         return
 
-    def establishConnection(self):
+    def establishConnection(self, featureset):
         raise   "Must redefine the %s.establishConnection()" % self.__class__.__name__
 
     def endSession(self):

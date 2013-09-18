@@ -89,11 +89,22 @@ class BitBakeServerCommands():
         self.server = server
         self.has_client = False
 
-    def registerEventHandler(self, host, port):
+    def registerEventHandler(self, host, port, featureset = []):
         """
         Register a remote UI Event Handler
         """
         s, t = _create_server(host, port)
+
+        # we don't allow connections if the cooker is running
+        if (self.cooker.state in [bb.cooker.state.parsing, bb.cooker.state.running]):
+            return None
+
+        original_featureset = list(self.cooker.featureset)
+        for f in featureset:
+            self.cooker.featureset.setFeature(f)
+
+        if (original_featureset != list(self.cooker.featureset)):
+            self.cooker.reset()
 
         self.event_handle = bb.event.register_UIHhandler(s)
         return self.event_handle
@@ -263,11 +274,12 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         self.connection_token = token
 
 class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
-    def __init__(self, serverImpl, clientinfo=("localhost", 0), observer_only = False):
+    def __init__(self, serverImpl, clientinfo=("localhost", 0), observer_only = False, featureset = []):
         self.connection, self.transport = _create_server(serverImpl.host, serverImpl.port)
         self.clientinfo = clientinfo
         self.serverImpl = serverImpl
         self.observer_only = observer_only
+        self.featureset = featureset
 
     def connect(self):
         if not self.observer_only:
@@ -277,7 +289,8 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
         if token is None:
             return None
         self.transport.set_connection_token(token)
-        self.events = uievent.BBUIEventQueue(self.connection, self.clientinfo)
+
+        self.events = uievent.BBUIEventQueue(self.connection, self.clientinfo, self.featureset)
         for event in bb.event.ui_queue:
             self.events.queue_event(event)
         return self
@@ -301,14 +314,15 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
 
 class BitBakeServer(BitBakeBaseServer):
     def initServer(self, interface = ("localhost", 0)):
+        self.interface = interface
         self.serverImpl = XMLRPCServer(interface)
 
     def detach(self):
         daemonize.createDaemon(self.serverImpl.serve_forever, "bitbake-cookerdaemon.log")
         del self.cooker
 
-    def establishConnection(self):
-        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl)
+    def establishConnection(self, featureset):
+        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, self.interface, False, featureset)
         return self.connection.connect()
 
     def set_connection_token(self, token):
@@ -318,12 +332,13 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
 
     def __init__(self, observer_only = False):
         self.observer_only = observer_only
+        # if we need extra caches, just tell the server to load them all
         pass
 
     def saveConnectionDetails(self, remote):
         self.remote = remote
 
-    def establishConnection(self):
+    def establishConnection(self, featureset):
         # The format of "remote" must be "server:port"
         try:
             [host, port] = self.remote.split(":")
@@ -340,7 +355,7 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
         except:
             return None
         self.serverImpl = XMLRPCProxyServer(host, port)
-        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only)
+        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only, featureset)
         return self.connection.connect()
 
     def endSession(self):
