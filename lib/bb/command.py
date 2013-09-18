@@ -145,6 +145,15 @@ class CommandsSync:
         """
         command.cooker.shutdown(True)
 
+    def getAllKeysWithFlags(self, command, params):
+        """
+        Returns a dump of the global state. Call with
+        variable flags to be retrieved as params.
+        """
+        flaglist = params[0]
+        return command.cooker.getAllKeysWithFlags(flaglist)
+    getAllKeysWithFlags.readonly = True
+
     def getVariable(self, command, params):
         """
         Read the value of a variable from data

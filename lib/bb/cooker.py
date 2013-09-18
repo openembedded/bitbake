@@ -1154,6 +1154,21 @@ class BBCooker:
 
         self.configuration.server_register_idlecallback(buildTargetsIdle, rq)
 
+
+    def getAllKeysWithFlags(self, flaglist):
+        dump = {}
+        for k in self.data.keys():
+            try:
+                v = self.data.getVar(k, True)
+                if not k.startswith("__") and not isinstance(v, bb.data_smart.DataSmart):
+                    dump[k] = { 'v' : v }
+                    for d in flaglist:
+                        dump[k][d] = self.data.getVarFlag(k, d)
+            except Exception as e:
+                print(e)
+        return dump
+
+
     def generateNewImage(self, image, base_image, package_queue, timestamp, description):
         '''
         Create a new image with a "require"/"inherit" base_image statement
