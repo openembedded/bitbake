@@ -81,7 +81,7 @@ class SkippedPackage:
 
 
 class CookerFeatures(object):
-    _feature_list = [HOB_EXTRA_CACHES] = range(1)
+    _feature_list = [HOB_EXTRA_CACHES, SEND_DEPENDS_TREE] = range(2)
 
     def __init__(self):
         self._features=set()
@@ -457,7 +457,10 @@ class BBCooker:
         runlist, taskdata = self.prepareTreeData(pkgs_to_build, task)
         rq = bb.runqueue.RunQueue(self, self.data, self.recipecache, taskdata, runlist)
         rq.rqdata.prepare()
+        return self.buildDependTree(rq, taskdata)
 
+
+    def buildDependTree(self, rq, taskdata):
         seen_fnids = []
         depend_tree = {}
         depend_tree["depends"] = {}

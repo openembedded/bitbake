@@ -999,6 +999,11 @@ class RunQueue:
             else:
                 self.state = runQueueSceneInit
 
+                # we are ready to run, see if any UI client needs the dependency info
+                if bb.cooker.CookerFeatures.SEND_DEPENDS_TREE in self.cooker.featureset:
+                    depgraph = self.cooker.buildDependTree(self, self.rqdata.taskData)
+                    bb.event.fire(bb.event.DepTreeGenerated(depgraph), self.cooker.data)
+
         if self.state is runQueueSceneInit:
             if self.cooker.configuration.dump_signatures:
                 self.dump_signatures()
