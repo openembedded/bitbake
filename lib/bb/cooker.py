@@ -1192,6 +1192,9 @@ class BBCooker:
 
     def checkPackages(self, pkgs_to_build):
 
+        # Return a copy, don't modify the original
+        pkgs_to_build = pkgs_to_build[:]
+
         if len(pkgs_to_build) == 0:
             raise NothingToBuild
 
