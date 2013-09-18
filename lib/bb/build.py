@@ -72,6 +72,8 @@ class TaskBase(event.Event):
     def __init__(self, t, logfile, d):
         self._task = t
         self._package = d.getVar("PF", True)
+        self.taskfile = d.getVar("FILE", True)
+        self.taskname = self._task
         self.logfile = logfile
         event.Event.__init__(self)
         self._message = "recipe %s: task %s: %s" % (d.getVar("PF", True), t, self.getDisplayName())

@@ -217,6 +217,12 @@ class RunQueueData:
             ret.extend([nam])
         return ret
 
+    def get_task_name(self, task):
+        return self.runq_task[task]
+
+    def get_task_file(self, task):
+        return self.taskData.fn_index[self.runq_fnid[task]]
+
     def get_user_idstring(self, task, task_name_suffix = ""):
         fn = self.taskData.fn_index[self.runq_fnid[task]]
         taskname = self.runq_task[task] + task_name_suffix
@@ -1786,6 +1792,8 @@ class runQueueEvent(bb.event.Event):
     def __init__(self, task, stats, rq):
         self.taskid = task
         self.taskstring = rq.rqdata.get_user_idstring(task)
+        self.taskname = rq.rqdata.get_task_name(task)
+        self.taskfile = rq.rqdata.get_task_file(task)
         self.stats = stats.copy()
         bb.event.Event.__init__(self)
 
@@ -1797,6 +1805,8 @@ class sceneQueueEvent(runQueueEvent):
         runQueueEvent.__init__(self, task, stats, rq)
         realtask = rq.rqdata.runq_setscene[task]
         self.taskstring = rq.rqdata.get_user_idstring(realtask, "_setscene")
+        self.taskname = rq.rqdata.get_task_name(realtask) + "_setscene"
+        self.taskfile = rq.rqdata.get_task_file(realtask)
 
 class runQueueTaskStarted(runQueueEvent):
     """
