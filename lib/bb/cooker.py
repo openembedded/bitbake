@@ -481,6 +481,19 @@ class BBCooker:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = fn
                 depend_tree["pn"][pn]["version"] = version
+
+                # if we have extra caches, list all attributes they bring in
+                extra_info = []
+                for cache_class in self.caches_array:
+                    if type(cache_class) is type and issubclass(cache_class, bb.cache.RecipeInfoCommon) and hasattr(cache_class, 'cachefields'):
+                        cachefields = getattr(cache_class, 'cachefields', [])
+                        extra_info = extra_info + cachefields
+
+                # for all attributes stored, add them to the dependency tree
+                for ei in extra_info:
+                    depend_tree["pn"][pn][ei] = vars(self.recipecache)[ei][fn]
+
+
             for dep in rq.rqdata.runq_depends[task]:
                 depfn = taskdata.fn_index[rq.rqdata.runq_fnid[dep]]
                 deppn = self.recipecache.pkg_fn[depfn]
@@ -543,35 +556,30 @@ class BBCooker:
         depend_tree["rdepends-pkg"] = {}
         depend_tree["rrecs-pkg"] = {}
 
+        # if we have extra caches, list all attributes they bring in
+        extra_info = []
+        for cache_class in self.caches_array:
+            if type(cache_class) is type and issubclass(cache_class, bb.cache.RecipeInfoCommon) and hasattr(cache_class, 'cachefields'):
+                cachefields = getattr(cache_class, 'cachefields', [])
+                extra_info = extra_info + cachefields
+
         for task in xrange(len(tasks_fnid)):
             fnid = tasks_fnid[task]
             fn = taskdata.fn_index[fnid]
             pn = self.recipecache.pkg_fn[fn]
-            version  = "%s:%s-%s" % self.recipecache.pkg_pepvpr[fn]
-            summary = self.recipecache.summary[fn]
-            lic = self.recipecache.license[fn]
-            section = self.recipecache.section[fn]
-            description = self.recipecache.description[fn]
-            homepage = self.recipecache.homepage[fn]
-            bugtracker = self.recipecache.bugtracker[fn]
-            files_info = self.recipecache.files_info[fn]
-            rdepends = self.recipecache.rundeps[fn]
-            rrecs = self.recipecache.runrecs[fn]
-            prevision = self.recipecache.prevision[fn]
-            inherits = self.recipecache.inherits.get(fn, None)
+
             if pn not in depend_tree["pn"]:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = fn
+                version  = "%s:%s-%s" % self.recipecache.pkg_pepvpr[fn]
                 depend_tree["pn"][pn]["version"] = version
-                depend_tree["pn"][pn]["summary"] = summary
-                depend_tree["pn"][pn]["license"] = lic
-                depend_tree["pn"][pn]["section"] = section
-                depend_tree["pn"][pn]["description"] = description
-                depend_tree["pn"][pn]["inherits"] = inherits
-                depend_tree["pn"][pn]["homepage"] = homepage
-                depend_tree["pn"][pn]["bugtracker"] = bugtracker
-                depend_tree["pn"][pn]["files_info"] = files_info
-                depend_tree["pn"][pn]["revision"] = prevision
+                rdepends = self.recipecache.rundeps[fn]
+                rrecs = self.recipecache.runrecs[fn]
+                depend_tree["pn"][pn]["inherits"] = self.recipecache.inherits.get(fn, None)
+
+                # for all extra attributes stored, add them to the dependency tree
+                for ei in extra_info:
+                    depend_tree["pn"][pn][ei] = vars(self.recipecache)[ei][fn]
 
             if fnid not in seen_fnids:
                 seen_fnids.append(fnid)

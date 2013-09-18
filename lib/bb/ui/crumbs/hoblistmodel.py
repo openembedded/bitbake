@@ -690,7 +690,7 @@ class RecipeListModel(gtk.ListStore):
             inherits = event_model["pn"][item]["inherits"]
             summary = event_model["pn"][item]["summary"]
             version = event_model["pn"][item]["version"]
-            revision = event_model["pn"][item]["revision"]
+            revision = event_model["pn"][item]["prevision"]
             homepage = event_model["pn"][item]["homepage"]
             bugtracker = event_model["pn"][item]["bugtracker"]
             filename = event_model["pn"][item]["filename"]

@@ -35,6 +35,12 @@ class HobRecipeInfo(RecipeInfoCommon):
     # such as (bb_cache.dat, bb_extracache_hob.dat) 
     cachefile = "bb_extracache_" + classname +".dat"        
 
+    # override this member with the list of extra cache fields
+    # that this class will provide
+    cachefields = ['summary', 'license', 'section',
+            'description', 'homepage', 'bugtracker',
+            'prevision', 'files_info']
+
     def __init__(self, filename, metadata):
 
         self.summary = self.getvar('SUMMARY', metadata)
