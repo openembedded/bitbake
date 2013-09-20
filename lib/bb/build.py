@@ -346,6 +346,14 @@ def _exec_task(fn, task, d, quieterr):
     if not tempdir:
         bb.fatal("T variable not set, unable to build")
 
+    # Change nice level if we're asked to
+    nice = localdata.getVar("BB_TASK_NICE_LEVEL", True)
+    if nice:
+        curnice = os.nice(0)
+        nice = int(nice) - curnice
+        newnice = os.nice(nice)
+        logger.debug(1, "Renice to %s " % newnice)
+
     bb.utils.mkdirhier(tempdir)
 
     # Determine the logfile to generate
