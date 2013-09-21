@@ -27,21 +27,21 @@ import bb.data
 class DataExpansions(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
-        self.d["foo"] = "value of foo"
-        self.d["bar"] = "value of bar"
-        self.d["value of foo"] = "value of 'value of foo'"
+        self.d["foo"] = "value_of_foo"
+        self.d["bar"] = "value_of_bar"
+        self.d["value_of_foo"] = "value_of_'value_of_foo'"
 
     def test_one_var(self):
         val = self.d.expand("${foo}")
-        self.assertEqual(str(val), "value of foo")
+        self.assertEqual(str(val), "value_of_foo")
 
     def test_indirect_one_var(self):
         val = self.d.expand("${${foo}}")
-        self.assertEqual(str(val), "value of 'value of foo'")
+        self.assertEqual(str(val), "value_of_'value_of_foo'")
 
     def test_indirect_and_another(self):
         val = self.d.expand("${${foo}} ${bar}")
-        self.assertEqual(str(val), "value of 'value of foo' value of bar")
+        self.assertEqual(str(val), "value_of_'value_of_foo' value_of_bar")
 
     def test_python_snippet(self):
         val = self.d.expand("${@5*12}")
@@ -49,11 +49,11 @@ class DataExpansions(unittest.TestCase):
 
     def test_expand_in_python_snippet(self):
         val = self.d.expand("${@'boo ' + '${foo}'}")
-        self.assertEqual(str(val), "boo value of foo")
+        self.assertEqual(str(val), "boo value_of_foo")
 
     def test_python_snippet_getvar(self):
         val = self.d.expand("${@d.getVar('foo', True) + ' ${bar}'}")
-        self.assertEqual(str(val), "value of foo value of bar")
+        self.assertEqual(str(val), "value_of_foo value_of_bar")
 
     def test_python_snippet_syntax_error(self):
         self.d.setVar("FOO", "${@foo = 5}")
@@ -70,7 +70,7 @@ class DataExpansions(unittest.TestCase):
 
     def test_value_containing_value(self):
         val = self.d.expand("${@d.getVar('foo', True) + ' ${bar}'}")
-        self.assertEqual(str(val), "value of foo value of bar")
+        self.assertEqual(str(val), "value_of_foo value_of_bar")
 
     def test_reference_undefined_var(self):
         val = self.d.expand("${undefinedvar} meh")
@@ -109,7 +109,7 @@ class DataExpansions(unittest.TestCase):
 
     def test_rename(self):
         self.d.renameVar("foo", "newfoo")
-        self.assertEqual(self.d.getVar("newfoo"), "value of foo")
+        self.assertEqual(self.d.getVar("newfoo"), "value_of_foo")
         self.assertEqual(self.d.getVar("foo"), None)
 
     def test_deletion(self):
@@ -118,17 +118,17 @@ class DataExpansions(unittest.TestCase):
 
     def test_keys(self):
         keys = self.d.keys()
-        self.assertEqual(keys, ['value of foo', 'foo', 'bar'])
+        self.assertEqual(keys, ['value_of_foo', 'foo', 'bar'])
 
 class TestNestedExpansions(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
         self.d["foo"] = "foo"
         self.d["bar"] = "bar"
-        self.d["value of foobar"] = "187"
+        self.d["value_of_foobar"] = "187"
 
     def test_refs(self):
-        val = self.d.expand("${value of ${foo}${bar}}")
+        val = self.d.expand("${value_of_${foo}${bar}}")
         self.assertEqual(str(val), "187")
 
     #def test_python_refs(self):
@@ -154,11 +154,11 @@ class TestNestedExpansions(unittest.TestCase):
     #    self.assertEqual(str(val), str(depth + 1))
 
     def test_mixed(self):
-        val = self.d.expand("${value of ${@('${foo}'+'bar')[0:3]}${${@'BAR'.lower()}}}")
+        val = self.d.expand("${value_of_${@('${foo}'+'bar')[0:3]}${${@'BAR'.lower()}}}")
         self.assertEqual(str(val), "187")
 
     def test_runtime(self):
-        val = self.d.expand("${${@'value of' + ' f'+'o'+'o'+'b'+'a'+'r'}}")
+        val = self.d.expand("${${@'value_of' + '_f'+'o'+'o'+'b'+'a'+'r'}}")
         self.assertEqual(str(val), "187")
 
 class TestMemoize(unittest.TestCase):
