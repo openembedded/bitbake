@@ -193,7 +193,10 @@ class BBCooker:
         if op == "append":
             self.appendConfigurationVar(var, val, default_file)
         elif op == "set":
-            self.saveConfigurationVar(var, val, default_file)
+            self.saveConfigurationVar(var, val, default_file, "=")
+        elif op == "earlyAssign":
+            self.saveConfigurationVar(var, val, default_file, "?=")
+
 
     def appendConfigurationVar(self, var, val, default_file):
         #add append var operation to the end of default_file
@@ -207,7 +210,7 @@ class BBCooker:
         for c in contents:
             total += c
 
-        total += "#added by bitbake"
+        total += "#added by hob"
         total += "\n%s += \"%s\"\n" % (var, val)
 
         with open(default_file, 'w') as f:
@@ -218,7 +221,7 @@ class BBCooker:
         loginfo = {"op":append, "file":default_file, "line":total.count("\n")}
         self.data.appendVar(var, val, **loginfo)
 
-    def saveConfigurationVar(self, var, val, default_file):
+    def saveConfigurationVar(self, var, val, default_file, op):
 
         replaced = False
         #do not save if nothing changed
@@ -260,8 +263,8 @@ class BBCooker:
                     #check if the variable was saved before in the same way
                     #if true it replace the place where the variable was declared
                     #else it comments it
-                    if contents[begin_line-1]== "#added by bitbake\n":
-                        contents[begin_line] = "%s = \"%s\"\n" % (var, val)
+                    if contents[begin_line-1]== "#added by hob\n":
+                        contents[begin_line] = "%s %s \"%s\"\n" % (var, op, val)
                         replaced = True
                     else:
                         for ii in range(begin_line, end_line):
@@ -290,8 +293,8 @@ class BBCooker:
                 total += c
 
             #add the variable on a single line, to be easy to replace the second time
-            total += "\n#added by bitbake"
-            total += "\n%s = \"%s\"\n" % (var, val)
+            total += "\n#added by hob"
+            total += "\n%s %s \"%s\"\n" % (var, op, val)
 
             with open(default_file, 'w') as f:
                 f.write(total)

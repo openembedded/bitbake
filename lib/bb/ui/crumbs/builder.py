@@ -198,7 +198,7 @@ class Configuration:
         handler.set_var_in_file("BBLAYERS", self.layers, "bblayers.conf")
         # local.conf
         if not defaults:
-            handler.set_var_in_file("MACHINE", self.curr_mach, "local.conf")
+            handler.early_assign_var_in_file("MACHINE", self.curr_mach, "local.conf")
         handler.set_var_in_file("DISTRO", self.curr_distro, "local.conf")
         handler.set_var_in_file("DL_DIR", self.dldir, "local.conf")
         handler.set_var_in_file("SSTATE_DIR", self.sstatedir, "local.conf")

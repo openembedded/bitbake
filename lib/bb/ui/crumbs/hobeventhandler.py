@@ -315,7 +315,7 @@ class HobHandler(gobject.GObject):
 
     def set_machine(self, machine):
         if machine:
-            self.set_var_in_file("MACHINE", machine, "local.conf")
+            self.early_assign_var_in_file("MACHINE", machine, "local.conf")
 
     def set_sdk_machine(self, sdk_machine):
         self.set_var_in_file("SDKMACHINE", sdk_machine, "local.conf")
@@ -470,6 +470,11 @@ class HobHandler(gobject.GObject):
     def set_var_in_file(self, var, val, default_file=None):
         self.runCommand(["enableDataTracking"])
         self.server.runCommand(["setVarFile", var, val, default_file, "set"])
+        self.runCommand(["disableDataTracking"])
+
+    def early_assign_var_in_file(self, var, val, default_file=None):
+        self.runCommand(["enableDataTracking"])
+        self.server.runCommand(["setVarFile", var, val, default_file, "earlyAssign"])
         self.runCommand(["disableDataTracking"])
 
     def append_var_in_file(self, var, val, default_file=None):
