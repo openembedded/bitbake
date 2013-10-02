@@ -724,7 +724,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         if not sstat:
             sstat = os.lstat(src)
     except Exception as e:
-        print("copyfile: Stating source file failed...", e)
+        logger.warn("copyfile: stat of %s failed (%s)" % (src, e))
         return False
 
     destexists = 1
@@ -751,7 +751,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
             #os.lchown(dest,sstat[stat.ST_UID],sstat[stat.ST_GID])
             return os.lstat(dest)
         except Exception as e:
-            print("copyfile: failed to properly create symlink:", dest, "->", target, e)
+            logger.warn("copyfile: failed to create symlink %s to %s (%s)" % (dest, target, e))
             return False
 
     if stat.S_ISREG(sstat[stat.ST_MODE]):
@@ -766,7 +766,7 @@ def copyfile(src, dest, newmtime = None, sstat = None):
             shutil.copyfile(src, dest + "#new")
             os.rename(dest + "#new", dest)
         except Exception as e:
-            print('copyfile: copy', src, '->', dest, 'failed.', e)
+            logger.warn("copyfile: copy %s to %s failed (%s)" % (src, dest, e))
             return False
         finally:
             if srcchown:
@@ -777,13 +777,13 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         #we don't yet handle special, so we need to fall back to /bin/mv
         a = getstatusoutput("/bin/cp -f " + "'" + src + "' '" + dest + "'")
         if a[0] != 0:
-            print("copyfile: Failed to copy special file:" + src + "' to '" + dest + "'", a)
+            logger.warn("copyfile: failed to copy special file %s to %s (%s)" % (src, dest, a))
             return False # failure
     try:
         os.lchown(dest, sstat[stat.ST_UID], sstat[stat.ST_GID])
         os.chmod(dest, stat.S_IMODE(sstat[stat.ST_MODE])) # Sticky is reset on chown
     except Exception as e:
-        print("copyfile: Failed to chown/chmod/unlink", dest, e)
+        logger.warn("copyfile: failed to chown/chmod %s (%s)" % (dest, e))
         return False
 
     if newmtime:
