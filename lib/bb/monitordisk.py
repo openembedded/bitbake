@@ -225,7 +225,7 @@ class diskMonitor:
                         self.preFreeS[k] = freeSpace
 
                     if action == "STOPTASKS" and not self.checked[k]:
-                        logger.error("No new tasks can be excuted since the disk space monitor action is \"STOPTASKS\"!")
+                        logger.error("No new tasks can be executed since the disk space monitor action is \"STOPTASKS\"!")
                         self.checked[k] = True
                         rq.finish_runqueue(False)
                         bb.event.fire(bb.event.DiskFull(dev, 'disk', freeSpace, path), self.configuration)
@@ -253,7 +253,7 @@ class diskMonitor:
                         self.preFreeI[k] = freeInode
 
                     if action  == "STOPTASKS" and not self.checked[k]:
-                        logger.error("No new tasks can be excuted since the disk space monitor action is \"STOPTASKS\"!")
+                        logger.error("No new tasks can be executed since the disk space monitor action is \"STOPTASKS\"!")
                         self.checked[k] = True
                         rq.finish_runqueue(False)
                         bb.event.fire(bb.event.DiskFull(dev, 'inode', freeInode, path), self.configuration)
