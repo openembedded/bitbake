@@ -39,6 +39,9 @@ def find_compare_task(bbhandler, pn, taskname):
         logger.error('Metadata does not support finding signature data files')
         sys.exit(1)
 
+    if not taskname.startswith('do_'):
+        taskname = 'do_%s' % taskname
+
     filedates = bb.siggen.find_siginfo(pn, taskname, None, bbhandler.config_data)
     latestfiles = sorted(filedates.keys(), key=lambda f: filedates[f])[-2:]
     if not latestfiles:
