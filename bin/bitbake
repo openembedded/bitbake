@@ -323,6 +323,8 @@ def main():
 if __name__ == "__main__":
     try:
         ret = main()
+    except bb.BBHandledException:
+        ret = 1
     except Exception:
         ret = 1
         import traceback
