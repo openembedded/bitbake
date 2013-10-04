@@ -297,8 +297,6 @@ def main():
         server = servermodule.BitBakeXMLRPCClient(configParams.observe_only)
         server.saveConnectionDetails(configParams.remote_server)
 
-    logger.removeHandler(handler)
-
     if not configParams.server_only:
         # Collect the feature set for the UI
         featureset = getattr(ui_module, "featureSet", [])
@@ -309,6 +307,8 @@ def main():
         # Restore the environment in case the UI needs it
         for k in cleanedvars:
             os.environ[k] = cleanedvars[k]
+
+        logger.removeHandler(handler)
 
         try:
             return ui_module.main(server_connection.connection, server_connection.events, configParams)
