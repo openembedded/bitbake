@@ -3,7 +3,7 @@
 # bitbake-diffsigs
 # BitBake task signature data comparison utility
 #
-# Copyright (C) 2012 Intel Corporation
+# Copyright (C) 2012-2013 Intel Corporation
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 2 as
@@ -30,7 +30,18 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(sys.argv[0])), '
 import bb.tinfoil
 import bb.siggen
 
-logger = logging.getLogger('BitBake')
+def logger_create(name, output=sys.stderr):
+    logger = logging.getLogger(name)
+    console = logging.StreamHandler(output)
+    format = bb.msg.BBLogFormatter("%(levelname)s: %(message)s")
+    if output.isatty():
+        format.enable_color()
+    console.setFormatter(format)
+    logger.addHandler(console)
+    logger.setLevel(logging.INFO)
+    return logger
+
+logger = logger_create('bitbake-diffsigs')
 
 def find_compare_task(bbhandler, pn, taskname):
     """ Find the most recent signature files for the specified PN/task and compare them """
@@ -93,10 +104,19 @@ if options.taskargs:
 else:
     if len(args) == 1:
         parser.print_help()
-    elif len(args) == 2:
-        output = bb.siggen.dump_sigfile(sys.argv[1])
     else:
-        output = bb.siggen.compare_sigfiles(sys.argv[1], sys.argv[2])
+        import cPickle
+        try:
+            if len(args) == 2:
+                output = bb.siggen.dump_sigfile(sys.argv[1])
+            else:
+                output = bb.siggen.compare_sigfiles(sys.argv[1], sys.argv[2])
+        except IOError as e:
+            logger.error(str(e))
+            sys.exit(1)
+        except cPickle.UnpicklingError, EOFError:
+            logger.error('Invalid signature data - ensure you are specifying sigdata/siginfo files')
+            sys.exit(1)
 
     if output:
         print '\n'.join(output)
