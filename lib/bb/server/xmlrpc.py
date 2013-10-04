@@ -354,9 +354,12 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
             s.close()
         except:
             return None
-        self.serverImpl = XMLRPCProxyServer(host, port)
-        self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only, featureset)
-        return self.connection.connect()
+        try:
+            self.serverImpl = XMLRPCProxyServer(host, port)
+            self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only, featureset)
+            return self.connection.connect()
+        except Exception as e:
+            bb.fatal("Could not connect to server at %s:%s (%s)" % (host, port, str(e)))
 
     def endSession(self):
         self.connection.removeClient()
