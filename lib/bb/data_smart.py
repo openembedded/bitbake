@@ -281,9 +281,13 @@ class VariableHistory(object):
                 lines.append(line)
         return lines
 
-    def del_var_history(self, var):
+    def del_var_history(self, var, f=None, line=None):
+        """If file f and line are not given, the entire history of var is deleted"""
         if var in self.variables:
-            self.variables[var] = []
+            if f and line:
+                self.variables[var] = [ x for x in self.variables[var] if x['file']!=f and x['line']!=line]
+            else:
+                self.variables[var] = []
 
 class DataSmart(MutableMapping):
     def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):

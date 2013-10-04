@@ -304,6 +304,44 @@ class BBCooker:
             loginfo = {"op":set, "file":default_file, "line":total.count("\n")}
             self.data.setVar(var, val, **loginfo)
 
+    def removeConfigurationVar(self, var):
+        conf_files = self.data.varhistory.get_variable_files(var)
+        topdir = self.data.getVar("TOPDIR")
+
+        for conf_file in conf_files:
+            if topdir in conf_file:
+                with open(conf_file, 'r') as f:
+                    contents = f.readlines()
+                f.close()
+
+                lines = self.data.varhistory.get_variable_lines(var, conf_file)
+                for line in lines:
+                    total = ""
+                    i = 0
+                    for c in contents:
+                        total += c
+                        i = i + 1
+                        if i==int(line):
+                            end_index = len(total)
+                    index = total.rfind(var, 0, end_index)
+
+                    begin_line = total.count("\n",0,index)
+
+                    #check if the variable was saved before in the same way
+                    if contents[begin_line-1]== "#added by bitbake\n":
+                        contents[begin_line-1] = contents[begin_line] = "\n"
+                    else:
+                        contents[begin_line] = "\n"
+                    #remove var from history
+                    self.data.varhistory.del_var_history(var, conf_file, line)
+
+                total = ""
+                for c in contents:
+                    total += c
+                with open(conf_file, 'w') as f:
+                    f.write(total)
+                f.close()
+
     def createConfigFile(self, name):
         path = os.getcwd()
         confpath = os.path.join(path, "conf", name)

@@ -21,6 +21,7 @@
 
 import gobject
 import logging
+import ast
 from bb.ui.crumbs.runningbuild import RunningBuild
 
 class HobHandler(gobject.GObject):
@@ -357,7 +358,20 @@ class HobHandler(gobject.GObject):
     def set_incompatible_license(self, incompat_license):
         self.set_var_in_file("INCOMPATIBLE_LICENSE", incompat_license, "local.conf")
 
+    def set_extra_setting(self, extra_setting):
+        self.set_var_in_file("EXTRA_SETTING", extra_setting, "local.conf")
+
     def set_extra_config(self, extra_setting):
+        old_extra_setting = ast.literal_eval(self.runCommand(["getVariable", "EXTRA_SETTING"]) or "{}")
+        if extra_setting:
+            self.set_var_in_file("EXTRA_SETTING", extra_setting, "local.conf")
+        else:
+            self.remove_var_from_file("EXTRA_SETTING")
+
+        #remove not needed settings from conf
+        for key in old_extra_setting:
+            if key not in extra_setting:
+                self.remove_var_from_file(key)
         for key in extra_setting.keys():
             value = extra_setting[key]
             self.set_var_in_file(key, value, "local.conf")
@@ -476,6 +490,9 @@ class HobHandler(gobject.GObject):
         self.runCommand(["enableDataTracking"])
         self.server.runCommand(["setVarFile", var, val, default_file, "earlyAssign"])
         self.runCommand(["disableDataTracking"])
+
+    def remove_var_from_file(self, var):
+        self.server.runCommand(["removeVarFile", var])
 
     def append_var_in_file(self, var, val, default_file=None):
         self.server.runCommand(["setVarFile", var, val, default_file, "append"])

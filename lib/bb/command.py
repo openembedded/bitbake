@@ -241,6 +241,13 @@ class CommandsSync:
         op = params[3]
         command.cooker.modifyConfigurationVar(var, val, default_file, op)
 
+    def removeVarFile(self, command, params):
+        """
+        Remove a variable declaration from a file
+        """
+        var = params[0]
+        command.cooker.removeConfigurationVar(var)
+
     def createConfigFile(self, command, params):
         """
         Create an extra configuration file

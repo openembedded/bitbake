@@ -218,7 +218,7 @@ class Configuration:
         handler.set_var_in_file("SDKMACHINE", self.curr_sdk_machine, "local.conf")
         handler.set_var_in_file("CONF_VERSION", self.conf_version, "local.conf")
         handler.set_var_in_file("LCONF_VERSION", self.lconf_version, "bblayers.conf")
-        handler.set_var_in_file("EXTRA_SETTING", self.extra_setting, "local.conf")
+        handler.set_extra_config(self.extra_setting)
         handler.set_var_in_file("TOOLCHAIN_BUILD", self.toolchain_build, "local.conf")
         handler.set_var_in_file("IMAGE_FSTYPES", self.image_fstypes, "local.conf")
         if not defaults:
