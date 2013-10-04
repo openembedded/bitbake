@@ -74,6 +74,7 @@ def find_compare_task(bbhandler, pn, taskname):
 
 
 parser = optparse.OptionParser(
+    description = "Compares siginfo/sigdata files written out by BitBake",
     usage = """
   %prog -t recipename taskname
   %prog sigdatafile1 sigdatafile2
@@ -81,25 +82,21 @@ parser = optparse.OptionParser(
 
 parser.add_option("-t", "--task",
         help = "find the signature data files for last two runs of the specified task and compare them",
-        action="store_true", dest="taskmode")
+        action="store", dest="taskargs", nargs=2, metavar='recipename taskname')
 
 options, args = parser.parse_args(sys.argv)
 
-if len(args) == 1:
-    parser.print_help()
+if options.taskargs:
+    tinfoil = bb.tinfoil.Tinfoil()
+    tinfoil.prepare(config_only = True)
+    find_compare_task(tinfoil, options.taskargs[0], options.taskargs[1])
 else:
-    if options.taskmode:
-        tinfoil = bb.tinfoil.Tinfoil()
-        if len(args) < 3:
-            logger.error("Please specify a recipe and task name")
-            sys.exit(1)
-        tinfoil.prepare(config_only = True)
-        find_compare_task(tinfoil, args[1], args[2])
+    if len(args) == 1:
+        parser.print_help()
+    elif len(args) == 2:
+        output = bb.siggen.dump_sigfile(sys.argv[1])
     else:
-        if len(args) == 2:
-            output = bb.siggen.dump_sigfile(sys.argv[1])
-        else:
-            output = bb.siggen.compare_sigfiles(sys.argv[1], sys.argv[2])
+        output = bb.siggen.compare_sigfiles(sys.argv[1], sys.argv[2])
 
-        if output:
-            print '\n'.join(output)
+    if output:
+        print '\n'.join(output)
