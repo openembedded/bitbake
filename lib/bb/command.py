@@ -86,6 +86,8 @@ class Command:
 
     def runAsyncCommand(self):
         try:
+            if self.cooker.state == bb.cooker.state.error:
+                return False
             if self.currentAsyncCommand is not None:
                 (command, options) = self.currentAsyncCommand
                 commandmethod = getattr(CommandsAsync, command)

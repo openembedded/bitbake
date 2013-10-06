@@ -61,7 +61,7 @@ class CollectionError(bb.BBHandledException):
     """
 
 class state:
-    initial, parsing, running, shutdown, forceshutdown, stopped = range(6)
+    initial, parsing, running, shutdown, forceshutdown, stopped, error = range(7)
 
 
 class SkippedPackage:
@@ -1321,6 +1321,7 @@ class BBCooker:
             self.prhost = prserv.serv.auto_start(self.data)
         except prserv.serv.PRServiceConfigError:
             bb.event.fire(CookerExit(), self.event_data)
+            self.state = state.error
         return
 
     def post_serve(self):
