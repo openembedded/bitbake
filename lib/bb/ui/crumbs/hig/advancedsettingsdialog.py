@@ -234,7 +234,10 @@ class AdvancedSettingsDialog (CrumbsDialog, SettingsUIHelper):
             article = ""
             if image_type.startswith(("a", "e", "i", "o", "u")):
                 article = "n"
-            self.image_types_checkbuttons[image_type].set_tooltip_text("Build a%s %s image" % (article, image_type))
+            if image_type == "live":
+                self.image_types_checkbuttons[image_type].set_tooltip_text("Build iso and hddimg images")
+            else:
+                self.image_types_checkbuttons[image_type].set_tooltip_text("Build a%s %s image" % (article, image_type))
             table.attach(self.image_types_checkbuttons[image_type], j - 1, j + 3, i, i + 1)
             if image_type in self.configuration.image_fstypes.split():
                 self.image_types_checkbuttons[image_type].set_active(True)
