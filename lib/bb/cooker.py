@@ -328,7 +328,7 @@ class BBCooker:
                     begin_line = total.count("\n",0,index)
 
                     #check if the variable was saved before in the same way
-                    if contents[begin_line-1]== "#added by bitbake\n":
+                    if contents[begin_line-1]== "#added by hob\n":
                         contents[begin_line-1] = contents[begin_line] = "\n"
                     else:
                         contents[begin_line] = "\n"
