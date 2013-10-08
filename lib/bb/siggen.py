@@ -224,7 +224,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
 
         if runtime and k in self.taskhash:
             data['runtaskdeps'] = self.runtaskdeps[k]
-            data['file_checksum_values'] = self.file_checksum_values[k]
+            data['file_checksum_values'] = [(os.path.basename(f), cs) for f,cs in self.file_checksum_values[k].items()]
             data['runtaskhashes'] = {}
             for dep in data['runtaskdeps']:
                 data['runtaskhashes'][dep] = self.taskhash[dep]
@@ -322,6 +322,39 @@ def compare_sigfiles(a, b, recursecb = None):
         removed = sb - sa
         return changed, added, removed
 
+    def file_checksums_diff(a, b):
+        from collections import Counter
+        # Handle old siginfo format
+        if isinstance(a, dict):
+            a = [(os.path.basename(f), cs) for f, cs in a.items()]
+        if isinstance(b, dict):
+            b = [(os.path.basename(f), cs) for f, cs in b.items()]
+        # Compare lists, ensuring we can handle duplicate filenames if they exist
+        removedcount = Counter(a)
+        removedcount.subtract(b)
+        addedcount = Counter(b)
+        addedcount.subtract(a)
+        added = []
+        for x in b:
+            if addedcount[x] > 0:
+                addedcount[x] -= 1
+                added.append(x)
+        removed = []
+        changed = []
+        for x in a:
+            if removedcount[x] > 0:
+                removedcount[x] -= 1
+                for y in added:
+                    if y[0] == x[0]:
+                        changed.append((x[0], x[1], y[1]))
+                        added.remove(y)
+                        break
+                else:
+                    removed.append(x)
+        added = [x[0] for x in added]
+        removed = [x[0] for x in removed]
+        return changed, added, removed
+
     if 'basewhitelist' in a_data and a_data['basewhitelist'] != b_data['basewhitelist']:
         output.append("basewhitelist changed from '%s' to '%s'" % (a_data['basewhitelist'], b_data['basewhitelist']))
         if a_data['basewhitelist'] and b_data['basewhitelist']:
@@ -357,10 +390,10 @@ def compare_sigfiles(a, b, recursecb = None):
         for dep in changed:
             output.append("Variable %s value changed from '%s' to '%s'" % (dep, a_data['varvals'][dep], b_data['varvals'][dep]))
 
-    changed, added, removed = dict_diff(a_data['file_checksum_values'], b_data['file_checksum_values'])
+    changed, added, removed = file_checksums_diff(a_data['file_checksum_values'], b_data['file_checksum_values'])
     if changed:
-        for f in changed:
-            output.append("Checksum for file %s changed from %s to %s" % (f, a_data['file_checksum_values'][f], b_data['file_checksum_values'][f]))
+        for f, old, new in changed:
+            output.append("Checksum for file %s changed from %s to %s" % (f, old, new))
     if added:
         for f in added:
             output.append("Dependency on checksum of file %s was added" % (f))
