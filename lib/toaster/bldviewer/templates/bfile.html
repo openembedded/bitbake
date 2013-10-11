@@ -1,0 +1,24 @@
+{% extends "basebuildpage.html" %}
+
+{% block pagetitle %}Files for package {{files.0.bpackage.name}} {% endblock %}
+{% block pagetable %}
+    {% if not files %}
+        <p>No files were recorded for this package!</p>
+    {% else %}
+
+            <tr>
+            <th>Name</th>
+            <th>Size (Bytes)</th>
+            </tr>
+
+            {% for file in files %}
+
+            <tr class="data">
+            <td>{{file.path}}</td>
+            <td>{{file.size}}</td>
+
+            {% endfor %}
+
+    {% endif %}
+
+{% endblock %}
