@@ -354,6 +354,9 @@ def better_exec(code, context, text = None, realfile = "<code>"):
         code = better_compile(code, realfile, realfile)
     try:
         exec(code, get_context(), context)
+    except bb.BBHandledException:
+        # Error already shown so passthrough
+        raise
     except Exception as e:
         (t, value, tb) = sys.exc_info()
 
