@@ -243,7 +243,7 @@ class diskMonitor:
                     # zero, this is a feature of the fs, we disable the inode
                     # checking for such a fs.
                     if st.f_files == 0:
-                        logger.warn("Inode check for %s is unavaliable, will remove it from disk monitor" % path)
+                        logger.info("Inode check for %s is unavaliable, will remove it from disk monitor" % path)
                         self.devDict[k][2] = None
                         continue
                     # Always show warning, the self.checked would always be False if the action is WARN
