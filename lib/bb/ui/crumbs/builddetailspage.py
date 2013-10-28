@@ -423,7 +423,7 @@ class BuildDetailsPage (HobPage):
         if "recipes" in action:
             self.builder.show_recipes()
         elif "packages" in action:
-            self.builder.show_packages(ask=False)
+            self.builder.show_packages()
         elif "image" in action:
             self.builder.show_configuration()
 

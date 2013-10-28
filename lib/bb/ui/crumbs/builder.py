@@ -1384,25 +1384,8 @@ class Builder(gtk.Window):
             dialog.run()
             dialog.destroy()
 
-    def show_packages(self, ask=True):
-        _, selected_recipes = self.recipe_model.get_selected_recipes()
-        if selected_recipes and ask:
-            lbl = "<b>Package list may be incomplete!</b>\nDo you want to build selected recipes"
-            lbl = lbl + " to get a full list or just view the existing packages?"
-            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
-            button = dialog.add_button("View packages", gtk.RESPONSE_NO)
-            HobAltButton.style_button(button)
-            button = dialog.add_button("Build packages", gtk.RESPONSE_YES)
-            HobButton.style_button(button)
-            dialog.set_default_response(gtk.RESPONSE_YES)
-            response = dialog.run()
-            dialog.destroy()
-            if response == gtk.RESPONSE_YES:
-                self.generate_packages_async(True)
-            else:
-                self.switch_page(self.PACKAGE_SELECTION)
-        else:
-            self.switch_page(self.PACKAGE_SELECTION)
+    def show_packages(self):
+        self.switch_page(self.PACKAGE_SELECTION)
 
     def show_recipes(self):
         self.switch_page(self.RECIPE_SELECTION)

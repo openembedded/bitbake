@@ -655,7 +655,7 @@ class ImageDetailsPage (HobPage):
         self.builder.show_configuration()
 
     def edit_packages_button_clicked_cb(self, button):
-        self.builder.show_packages(ask=False)
+        self.builder.show_packages()
 
     def my_images_button_clicked_cb(self, button):
         self.builder.show_load_my_images_dialog()
