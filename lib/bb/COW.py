@@ -18,7 +18,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#Please Note:
+# Please Note:
 # Be careful when using mutable types (ie Dict and Lists) - operations involving these are SLOW.
 # Assign a file to __warn__ to get warnings about slow operations.
 #
@@ -40,46 +40,63 @@ ImmutableTypes = (
 
 MUTABLE = "__mutable__"
 
+IGNORELIST = ['__module__', '__doc__',  # Python's default builtins
+              '__count__',  # from class COWDictBase, COWSetBase
+              '__hasmutable__',  # from COWDictMeta
+              ]
+
+
 class COWMeta(type):
     pass
 
+
 class COWDictMeta(COWMeta):
-    __warn__ = False
+    __warn__ = None
     __hasmutable__ = False
     __marker__ = tuple()
 
-    def __str__(cls):
-        # FIXME: I have magic numbers!
-        return "<COWDict Level: %i Current Keys: %i>" % (cls.__count__, len(cls.__dict__) - 3)
-    __repr__ = __str__
-
     def cow(cls):
-        class C(cls):
+        class COWDict(cls):
             __count__ = cls.__count__ + 1
-        return C
+        return COWDict
     copy = cow
     __call__ = cow
 
+    def count(cls):
+        return cls.__count__
+
     def __setitem__(cls, key, value):
+        if not isinstance(key, str):
+            raise TypeError("%s: user key must be a string" % cls.__name__)
+        if key.startswith('__'):
+            # It does not make sense to let the user enter keys starting with
+            # '__' since we risk to overwrite existing Python builtins or
+            # even our own builtins
+            raise TypeError("%s: user key is not allowed to start with '__'" %
+                            cls.__name__)
         if not isinstance(value, ImmutableTypes):
             if not isinstance(value, COWMeta):
                 cls.__hasmutable__ = True
-            key += MUTABLE
+            key += MUTABLE  # mutable keys will be suffixed by "__mutable__"
         setattr(cls, key, value)
 
     def __getmutable__(cls, key, readonly=False):
+        # Add the __mutable__ suffix to the key
         nkey = key + MUTABLE
         try:
             return cls.__dict__[nkey]
         except KeyError:
             pass
 
+        # Get nkey's value otherwise will raise AttributeError
         value = getattr(cls, nkey)
         if readonly:
             return value
 
-        if not cls.__warn__ is False and not isinstance(value, COWMeta):
-            print("Warning: Doing a copy because %s is a mutable type." % key, file=cls.__warn__)
+        if cls.__warn__ and not isinstance(value, COWMeta):
+            print("Warning: Doing a copy because %s is a mutable type." %
+                  key, file=cls.__warn__)
+
         try:
             value = value.copy()
         except AttributeError as e:
@@ -88,17 +105,21 @@ class COWDictMeta(COWMeta):
         return value
 
     __getmarker__ = []
+
     def __getreadonly__(cls, key, default=__getmarker__):
-        """\
+        """
         Get a value (even if mutable) which you promise not to change.
         """
         return cls.__getitem__(key, default, True)
 
     def __getitem__(cls, key, default=__getmarker__, readonly=False):
+        """ This method is called when calling obj[key] """
         try:
             try:
+                # Check if the key is present in the attribute list
                 value = getattr(cls, key)
             except AttributeError:
+                # Check if the key is mutable (with '__mutable__' suffix)
                 value = cls.__getmutable__(key, readonly)
 
             # This is for values which have been deleted
@@ -129,15 +150,17 @@ class COWDictMeta(COWMeta):
             return False
         return True
 
-    def iter(cls, type, readonly=False):
+    def iter(cls, type_str, readonly=False):
         for key in dir(cls):
+            # We skip Python's builtins and the ones in IGNORELIST
             if key.startswith("__"):
                 continue
 
+            # Mutable keys have a __mutable__ suffix that we remove
             if key.endswith(MUTABLE):
                 key = key[:-len(MUTABLE)]
 
-            if type == "keys":
+            if type_str == "keys":
                 yield key
 
             try:
@@ -148,33 +171,58 @@ class COWDictMeta(COWMeta):
             except KeyError:
                 continue
 
-            if type == "values":
+            if type_str == "values":
                 yield value
-            if type == "items":
+            if type_str == "items":
                 yield (key, value)
         raise StopIteration()
 
-    def iterkeys(cls):
-        return cls.iter("keys")
+    def iterkeys(cls, readonly=False):
+        return cls.iter("keys", readonly)
+
+    # The default iterator is 'readonly'
+    def __iter__(cls):
+        return cls.iter("keys", readonly=True)
+
     def itervalues(cls, readonly=False):
-        if not cls.__warn__ is False and cls.__hasmutable__ and readonly is False:
-            print("Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
+        if cls.__warn__ and cls.__hasmutable__ and readonly is False:
+            print(
+                "Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
         return cls.iter("values", readonly)
+
     def iteritems(cls, readonly=False):
-        if not cls.__warn__ is False and cls.__hasmutable__ and readonly is False:
-            print("Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
+        if cls.__warn__ and cls.__hasmutable__ and readonly is False:
+            print(
+                "Warning: If you arn't going to change any of the values call with True.", file=cls.__warn__)
         return cls.iter("items", readonly)
 
-class COWSetMeta(COWDictMeta):
     def __str__(cls):
-        # FIXME: I have magic numbers!
-        return "<COWSet Level: %i Current Keys: %i>" % (cls.__count__, len(cls.__dict__) -3)
+        """
+        Returns a string representation of this object
+        The number of keys is only showing keys in the current 'level'
+        """
+        return ("<%s Level: %i Number of keys: %i>" %
+               (cls.__name__, cls.__count__, cls.__len__()))
     __repr__ = __str__
 
+    def __len__(cls):
+        """ Returns the number of 'keys' in the COWDict """
+        # cls.__dict__ is the default module namespace as a dictionary
+        # We skip keys found in IGNORELIST
+        i = 0
+        for x in cls.__dict__:
+            if x in IGNORELIST:
+                continue
+            i += 1
+        return i
+
+
+class COWSetMeta(COWDictMeta):
+
     def cow(cls):
-        class C(cls):
+        class COWSet(cls):
             __count__ = cls.__count__ + 1
-        return C
+        return COWSet
 
     def add(cls, value):
         COWDictMeta.__setitem__(cls, repr(hash(value)), value)
@@ -182,8 +230,8 @@ class COWSetMeta(COWDictMeta):
     def remove(cls, value):
         COWDictMeta.__delitem__(cls, repr(hash(value)))
 
-    def __in__(cls, value):
-        return COWDictMeta.has_key(repr(hash(value)))
+    def __contains__(cls, value):
+        return COWDictMeta.has_key(cls, repr(hash(value)))
 
     def iterkeys(cls):
         raise TypeError("sets don't have keys")
@@ -192,132 +240,17 @@ class COWSetMeta(COWDictMeta):
         raise TypeError("sets don't have 'items'")
 
 # These are the actual classes you use!
+
+
 class COWDictBase(object):
     __metaclass__ = COWDictMeta
     __count__ = 0
+
 
 class COWSetBase(object):
     __metaclass__ = COWSetMeta
     __count__ = 0
 
+
 if __name__ == "__main__":
-    import sys
-    COWDictBase.__warn__ = sys.stderr
-    a = COWDictBase()
-    print("a", a)
-
-    a['a'] = 'a'
-    a['b'] = 'b'
-    a['dict'] = {}
-
-    b = a.copy()
-    print("b", b)
-    b['c'] = 'b'
-
-    print()
-
-    print("a", a)
-    for x in a.iteritems():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b.iteritems():
-        print(x)
-    print()
-
-    b['dict']['a'] = 'b'
-    b['a'] = 'c'
-
-    print("a", a)
-    for x in a.iteritems():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b.iteritems():
-        print(x)
-    print()
-
-    try:
-        b['dict2']
-    except KeyError as e:
-        print("Okay!")
-
-    a['set'] = COWSetBase()
-    a['set'].add("o1")
-    a['set'].add("o1")
-    a['set'].add("o2")
-
-    print("a", a)
-    for x in a['set'].itervalues():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b['set'].itervalues():
-        print(x)
-    print()
-
-    b['set'].add('o3')
-
-    print("a", a)
-    for x in a['set'].itervalues():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b['set'].itervalues():
-        print(x)
-    print()
-
-    a['set2'] = set()
-    a['set2'].add("o1")
-    a['set2'].add("o1")
-    a['set2'].add("o2")
-
-    print("a", a)
-    for x in a.iteritems():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b.iteritems(readonly=True):
-        print(x)
-    print()
-
-    del b['b']
-    try:
-        print(b['b'])
-    except KeyError:
-        print("Yay! deleted key raises error")
-
-    if b.has_key('b'):
-        print("Boo!")
-    else:
-        print("Yay - has_key with delete works!")
-
-    print("a", a)
-    for x in a.iteritems():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b.iteritems(readonly=True):
-        print(x)
-    print()
-
-    b.__revertitem__('b')
-
-    print("a", a)
-    for x in a.iteritems():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b.iteritems(readonly=True):
-        print(x)
-    print()
-
-    b.__revertitem__('dict')
-    print("a", a)
-    for x in a.iteritems():
-        print(x)
-    print("--")
-    print("b", b)
-    for x in b.iteritems(readonly=True):
-        print(x)
-    print()
+    print("The unit tests in test_cow.py show how COWDict/SetBase are used")
