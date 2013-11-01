@@ -36,7 +36,6 @@ function webserverKillAll()
 	done
 }
 
-
 function webserverStartAll()
 {
         retval=0
@@ -47,6 +46,14 @@ function webserverStartAll()
             python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
         fi
         return $retval
+}
+
+# Helper functions to add a special configuration file
+
+function addtoConfiguration()
+{
+        echo "#Created by toaster start script" > ${BUILDDIR}/conf/$2
+        echo $1 >> ${BUILDDIR}/conf/$2
 }
 
 # define the stop command
@@ -136,9 +143,10 @@ fi
 
 case $CMD in
     start )
+        addtoConfiguration "INHERIT+=\"toaster buildhistory\"" toaster.conf
         webserverStartAll || return 4
         unset BBSERVER
-        bitbake --server-only -t xmlrpc -B localhost:8200
+        bitbake --postread conf/toaster.conf --server-only -t xmlrpc -B localhost:8200
         export BBSERVER=localhost:8200
         if [ $NOTOASTERUI == 0 ]; then        # we start the TOASTERUI only if not inhibited
             bitbake --observe-only -u toasterui >${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
