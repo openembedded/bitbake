@@ -140,6 +140,7 @@ def main(server, eventHandler, params ):
                 logfile = event.logfile
                 if logfile and os.path.exists(logfile):
                     bb.error("Logfile of failure stored in: %s" % logfile)
+                continue
 
             # these events are unprocessed now, but may be used in the future to log
             # timing and error informations from the parsing phase in Toaster
@@ -230,8 +231,6 @@ def main(server, eventHandler, params ):
             if isinstance(event, bb.event.MetadataEvent):
                 if event.type == "SinglePackageInfo":
                     buildinfohelper.store_build_package_information(event)
-                elif event.type == "PackageFileSize":
-                    buildinfohelper.store_package_file_information(event)
                 continue
 
             # ignore

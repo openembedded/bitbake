@@ -171,7 +171,7 @@ class ORMWrapper(object):
         return log_object.save()
 
 
-    def save_build_package_information(self, build_obj, package_info, recipes, files):
+    def save_build_package_information(self, build_obj, package_info, recipes):
         # create and save the object
         bp_object = Build_Package.objects.create( build = build_obj,
                                        recipe = recipes[package_info['PN']],
@@ -185,35 +185,33 @@ class ORMWrapper(object):
                                        license = package_info['LICENSE'],
                                        )
         # save any attached file information
-        if bp_object.name in files.keys():
-            for path, size in files[bp_object.name]:
+        for path in package_info['FILES_INFO']:
                 fo = Build_File.objects.create( bpackage = bp_object,
                                         path = path,
-                                        size = size )
-            del files[bp_object.name]
+                                        size = package_info['FILES_INFO'][path] )
 
         # save soft dependency information
-        if package_info['RDEPENDS']:
+        if 'RDEPENDS' in package_info and package_info['RDEPENDS']:
             for p in bb.utils.explode_deps(package_info['RDEPENDS']):
                 Build_Package_Dependency.objects.get_or_create( package = bp_object,
                     depends_on = p, dep_type = Build_Package_Dependency.TYPE_RDEPENDS)
-        if package_info['RPROVIDES']:
+        if 'RPROVIDES' in package_info and package_info['RPROVIDES']:
             for p in bb.utils.explode_deps(package_info['RPROVIDES']):
                 Build_Package_Dependency.objects.get_or_create( package = bp_object,
                     depends_on = p, dep_type = Build_Package_Dependency.TYPE_RPROVIDES)
-        if package_info['RRECOMMENDS']:
+        if 'RRECOMMENDS' in package_info and package_info['RRECOMMENDS']:
             for p in bb.utils.explode_deps(package_info['RRECOMMENDS']):
                 Build_Package_Dependency.objects.get_or_create( package = bp_object,
                     depends_on = p, dep_type = Build_Package_Dependency.TYPE_RRECOMMENDS)
-        if package_info['RSUGGESTS']:
+        if 'RSUGGESTS' in package_info and package_info['RSUGGESTS']:
             for p in bb.utils.explode_deps(package_info['RSUGGESTS']):
                 Build_Package_Dependency.objects.get_or_create( package = bp_object,
                     depends_on = p, dep_type = Build_Package_Dependency.TYPE_RSUGGESTS)
-        if package_info['RREPLACES']:
+        if 'RREPLACES' in package_info and package_info['RREPLACES']:
             for p in bb.utils.explode_deps(package_info['RREPLACES']):
                 Build_Package_Dependency.objects.get_or_create( package = bp_object,
                     depends_on = p, dep_type = Build_Package_Dependency.TYPE_RREPLACES)
-        if package_info['RCONFLICTS']:
+        if 'RCONFLICTS' in package_info and package_info['RCONFLICTS']:
             for p in bb.utils.explode_deps(package_info['RCONFLICTS']):
                 Build_Package_Dependency.objects.get_or_create( package = bp_object,
                     depends_on = p, dep_type = Build_Package_Dependency.TYPE_RCONFLICTS)
@@ -223,10 +221,16 @@ class ORMWrapper(object):
     def save_build_variables(self, build_obj, vardump):
         for k in vardump:
             if not bool(vardump[k]['func']):
+                value = vardump[k]['v'];
+                if value is None:
+                    value = ''
+                desc = vardump[k]['doc'];
+                if desc is None:
+                    desc = ''
                 Variable.objects.create( build = build_obj,
                     variable_name = k,
-                    variable_value = vardump[k]['v'],
-                    description = vardump[k]['doc'])
+                    variable_value = value,
+                    description = desc)
 
 
 class BuildInfoHelper(object):
@@ -668,15 +672,7 @@ class BuildInfoHelper(object):
         self.orm_wrapper.save_build_package_information(self.internal_state['build'],
                             package_info,
                             self.internal_state['recipes'],
-                            self.internal_state['package_files'])
-
-
-    def store_package_file_information(self, event):
-        if not 'package_files' in self.internal_state.keys():
-            self.internal_state['package_files'] = {}
-
-        data = event.data
-        self.internal_state['package_files'][data['PKG']] = data['FILES']
+                            )
 
     def _store_log_information(self, level, text):
         log_information = {}
