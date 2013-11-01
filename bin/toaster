@@ -49,6 +49,19 @@ function webserverStartAll()
         return $retval
 }
 
+# define the stop command
+function stop_system()
+{
+    if [ -f ${BUILDDIR}/.toasterui.pid ]; then
+        kill $(< ${BUILDDIR}/.toasterui.pid )
+        rm ${BUILDDIR}/.toasterui.pid
+    fi
+    BBSERVER=localhost:8200 bitbake -m
+    unset BBSERVER
+    webserverKillAll
+    # force stop any misbehaving bitbake server
+    lsof bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
+}
 
 # We make sure we're running in the current shell and in a good environment
 
@@ -116,6 +129,9 @@ and
 fi
 
 
+
+
+
 # Execute the commands
 
 case $CMD in
@@ -127,17 +143,12 @@ case $CMD in
         if [ $NOTOASTERUI == 0 ]; then        # we start the TOASTERUI only if not inhibited
             bitbake --observe-only -u toasterui >${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
         fi
+        # stop system on terminal exit
+        trap stop_system SIGHUP
     ;;
     stop )
-        if [ -f ${BUILDDIR}/.toasterui.pid ]; then
-            kill $(< ${BUILDDIR}/.toasterui.pid )
-            rm ${BUILDDIR}/.toasterui.pid
-        fi
-        bitbake -m
-        unset BBSERVER
-        webserverKillAll
-        # force stop any misbehaving bitbake server
-        lsof bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
+        stop_system
+        trap '' SIGHUP
     ;;
 esac
 
