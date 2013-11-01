@@ -483,6 +483,8 @@ class BuildInfoHelper(object):
                 task_information['outcome'] = Task.OUTCOME_EXISTING
         else:
             task_information['task_executed'] = True
+            if 'noexec' in vars(event) and event.noexec == True:
+                task_information['script_type'] = Task.CODING_NOEXEC
 
         self.task_order += 1
         task_information['order'] = self.task_order
@@ -506,8 +508,9 @@ class BuildInfoHelper(object):
         if '_message' in vars(event):
             task_information['message'] = event._message
 
-        if 'ispython' in vars(event):
-            if event.ispython:
+        if 'taskflags' in vars(event):
+            # with TaskStarted, we get even more information
+            if 'python' in event.taskflags.keys() and event.taskflags['python'] == '1':
                 task_information['script_type'] = Task.CODING_PYTHON
             else:
                 task_information['script_type'] = Task.CODING_SHELL

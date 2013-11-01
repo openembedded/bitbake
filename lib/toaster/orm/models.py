@@ -74,10 +74,12 @@ class Task(models.Model):
         (SSTATE_RESTORED, 'Restored'), # succesfully restored
     )
 
-    CODING_PYTHON = 0
-    CODING_SHELL = 1
+    CODING_NOEXEC = 0
+    CODING_PYTHON = 1
+    CODING_SHELL = 2
 
     TASK_CODING = (
+        (CODING_NOEXEC, 'NoExec'),
         (CODING_PYTHON, 'Python'),
         (CODING_SHELL, 'Shell'),
     )
@@ -108,7 +110,7 @@ class Task(models.Model):
     task_name = models.CharField(max_length=100)
     source_url = models.FilePathField(max_length=255, blank=True)
     work_directory = models.FilePathField(max_length=255, blank=True)
-    script_type = models.IntegerField(choices=TASK_CODING, default=CODING_PYTHON)
+    script_type = models.IntegerField(choices=TASK_CODING, default=CODING_NOEXEC)
     line_number = models.IntegerField(default=0)
     disk_io = models.IntegerField(null=True)
     cpu_usage = models.DecimalField(max_digits=6, decimal_places=2, null=True)

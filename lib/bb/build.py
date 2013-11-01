@@ -91,6 +91,9 @@ class TaskBase(event.Event):
 
 class TaskStarted(TaskBase):
     """Task execution started"""
+    def __init__(self, t, logfile, taskflags, d):
+        super(TaskStarted, self).__init__(t, logfile, d)
+        self.taskflags = taskflags
 
 class TaskSucceeded(TaskBase):
     """Task execution completed"""
@@ -422,7 +425,9 @@ def _exec_task(fn, task, d, quieterr):
     localdata.setVar('BB_LOGFILE', logfn)
     localdata.setVar('BB_RUNTASK', task)
 
-    event.fire(TaskStarted(task, logfn, localdata), localdata)
+    flags = localdata.getVarFlags(task)
+
+    event.fire(TaskStarted(task, logfn, flags, localdata), localdata)
     try:
         for func in (prefuncs or '').split():
             exec_func(func, localdata)
