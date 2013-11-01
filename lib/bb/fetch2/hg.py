@@ -92,7 +92,10 @@ class Hg(FetchMethod):
         if not ud.user:
             hgroot = host + ud.path
         else:
-            hgroot = ud.user + "@" + host + ud.path
+            if ud.pswd:
+                hgroot = ud.user + ":" + ud.pswd + "@" + host + ud.path
+            else:
+                hgroot = ud.user + "@" + host + ud.path
 
         if command == "info":
             return "%s identify -i %s://%s/%s" % (basecmd, proto, hgroot, ud.module)
@@ -112,7 +115,10 @@ class Hg(FetchMethod):
             # do not pass options list; limiting pull to rev causes the local
             # repo not to contain it and immediately following "update" command
             # will crash
-            cmd = "%s pull" % (basecmd)
+            if ud.user and ud.pswd:
+                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" pull" % (basecmd, ud.user, ud.pswd, proto)
+            else:
+                cmd = "%s pull" % (basecmd)
         elif command == "update":
             cmd = "%s update -C %s" % (basecmd, " ".join(options))
         else:
