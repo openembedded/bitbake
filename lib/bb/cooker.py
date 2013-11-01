@@ -1085,7 +1085,6 @@ class BBCooker:
 
         self.buildSetVars()
 
-        self.recipecache = bb.cache.CacheData(self.caches_array)
         infos = bb.cache.Cache.parse(fn, self.collection.get_file_appends(fn), \
                                      self.data,
                                      self.caches_array)
