@@ -226,6 +226,11 @@ class ORMWrapper(object):
                     value = ''
                 desc = vardump[k]['doc'];
                 if desc is None:
+                    var_words = [word for word in k.split('_')]
+                    root_var = "_".join([word for word in var_words if word.isupper()])
+                    if root_var and root_var != k and root_var in vardump:
+                        desc = vardump[root_var]['doc']
+                if desc is None:
                     desc = ''
                 Variable.objects.create( build = build_obj,
                     variable_name = k,
