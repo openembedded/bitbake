@@ -511,6 +511,7 @@ class BBCooker:
         depend_tree["packages"] = {}
         depend_tree["rdepends-pkg"] = {}
         depend_tree["rrecs-pkg"] = {}
+        depend_tree["layer-priorities"] = self.recipecache.bbfile_config_priorities
 
         for task in xrange(len(rq.rqdata.runq_fnid)):
             taskname = rq.rqdata.runq_task[task]
@@ -522,6 +523,7 @@ class BBCooker:
                 depend_tree["pn"][pn] = {}
                 depend_tree["pn"][pn]["filename"] = fn
                 depend_tree["pn"][pn]["version"] = version
+                depend_tree["pn"][pn]["inherits"] = self.recipecache.inherits.get(fn, None)
 
                 # if we have extra caches, list all attributes they bring in
                 extra_info = []
