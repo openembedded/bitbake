@@ -183,8 +183,9 @@ class AdvancedSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.set_save_button_state()
         if self.get_num_checked_image_types() == 0:
             # Show an error dialog
-            lbl = "<b>Select an image type</b>\n\nYou need to select at least one image type."
-            dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING)
+            lbl = "<b>Select an image type</b>"
+            msg = "You need to select at least one image type."
+            dialog = CrumbsMessageDialog(self, lbl, gtk.MESSAGE_WARNING, msg)
             button = dialog.add_button("OK", gtk.RESPONSE_OK)
             HobButton.style_button(button)
             response = dialog.run()

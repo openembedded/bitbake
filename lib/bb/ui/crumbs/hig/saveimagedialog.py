@@ -146,12 +146,11 @@ class SaveImageDialog (CrumbsDialog):
             self.show_invalid_input_error_dialog()
 
     def show_invalid_input_error_dialog(self):
-        lbl = "<b>Invalid characters in image recipe name</b>\n"
+        lbl = "<b>Invalid characters in image recipe name</b>"
         msg = "Image recipe names should be all lowercase and\n"
         msg += "include only alphanumeric characters. The only\n"
         msg += "special character you can use is the ASCII hyphen (-)."
-        lbl = lbl + "\n%s\n" % glib.markup_escape_text(msg)
-        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_ERROR)
+        dialog = CrumbsMessageDialog(self, lbl, gtk.MESSAGE_ERROR, msg)
         button = dialog.add_button("Close", gtk.RESPONSE_OK)
         HobButton.style_button(button)
 

@@ -212,13 +212,12 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
     def response_cb(self, dialog, response_id):
         if response_id == gtk.RESPONSE_YES:
             if self.proxy_checkbox.get_active():
-                # Check that all proxy entries have a corresponding port 
+                # Check that all proxy entries have a corresponding port
                 for proxy, port in zip(self.all_proxy_addresses, self.all_proxy_ports):
                     if proxy.get_text() and not port.get_text():
-                        lbl = "<b>Enter all port numbers</b>\n\n"
-                        msg = "Proxy servers require a port number. Please make sure "
-                        msg += "you have entered a port number for each proxy server."
-                        dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_WARNING, msg)
+                        lbl = "<b>Enter all port numbers</b>"
+                        msg = "Proxy servers require a port number. Please make sure you have entered a port number for each proxy server."
+                        dialog = CrumbsMessageDialog(self, lbl, gtk.MESSAGE_WARNING, msg)
                         button = dialog.add_button("Close", gtk.RESPONSE_OK)
                         HobButton.style_button(button)
                         response = dialog.run()

@@ -160,6 +160,7 @@ class DeployImageDialog (CrumbsDialog):
     def response_cb(self, dialog, response_id):
         if response_id == gtk.RESPONSE_YES:
             lbl = ''
+            msg = ''
             combo_item = self.usb_combo.get_active_text()
             if combo_item and combo_item != self.__dummy_usb__ and self.image_path:
                 cmdline = bb.ui.crumbs.utils.which_terminal()
@@ -172,15 +173,18 @@ class DeployImageDialog (CrumbsDialog):
                     if int(tmpfile.readline().strip()) == 0:
                         lbl = "<b>Deploy image successfully.</b>"
                     else:
-                        lbl = "<b>Failed to deploy image.</b>\nPlease check image <b>%s</b> exists and USB device <b>%s</b> is writable." % (self.image_path, combo_item)
+                        lbl = "<b>Failed to deploy image.</b>"
+                        msg = "Please check image <b>%s</b> exists and USB device <b>%s</b> is writable." % (self.image_path, combo_item)
                     tmpfile.close()
             else:
                 if not self.image_path:
-                    lbl = "<b>No selection made.</b>\nYou have not selected an image to deploy."
+                    lbl = "<b>No selection made.</b>"
+                    msg = "You have not selected an image to deploy."
                 else:
-                    lbl = "<b>No selection made.</b>\nYou have not selected a USB device."
+                    lbl = "<b>No selection made.</b>"
+                    msg = "You have not selected a USB device."
             if len(lbl):
-                crumbs_dialog = CrumbsMessageDialog(self, lbl, gtk.STOCK_DIALOG_INFO)
+                crumbs_dialog = CrumbsMessageDialog(self, lbl, gtk.MESSAGE_INFO, msg)
                 button = crumbs_dialog.add_button("Close", gtk.RESPONSE_OK)
                 HobButton.style_button(button)
                 crumbs_dialog.run()
