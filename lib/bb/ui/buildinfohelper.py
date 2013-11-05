@@ -548,7 +548,7 @@ class BuildInfoHelper(object):
 
             MACHINE_ARCH, error = self.server.runCommand(['getVariable', 'MACHINE_ARCH'])
             TCLIBC, error = self.server.runCommand(['getVariable', 'TCLIBC'])
-            BUILDHISTORY_DIR = self.server.runCommand(['getVariable', 'BUILDHISTORY_DIR'])
+            BUILDHISTORY_DIR, error = self.server.runCommand(['getVariable', 'BUILDHISTORY_DIR'])
             BUILDHISTORY_DIR_IMAGE = "%s/images/%s/%s/%s" % (BUILDHISTORY_DIR, MACHINE_ARCH, TCLIBC, target.target)
 
             self.internal_state['packages'] = {}
