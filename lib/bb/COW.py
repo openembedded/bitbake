@@ -55,12 +55,12 @@ class COWDictMeta(COWMeta):
     __hasmutable__ = False
     __marker__ = tuple()
 
-    def cow(cls):
+    def copy(cls):
         class COWDict(cls):
             __count__ = cls.__count__ + 1
         return COWDict
-    copy = cow
-    __call__ = cow
+
+    __call__ = copy
 
     def count(cls):
         return cls.__count__
@@ -219,7 +219,7 @@ class COWDictMeta(COWMeta):
 
 class COWSetMeta(COWDictMeta):
 
-    def cow(cls):
+    def copy(cls):
         class COWSet(cls):
             __count__ = cls.__count__ + 1
         return COWSet
@@ -239,9 +239,8 @@ class COWSetMeta(COWDictMeta):
     def iteritems(cls):
         raise TypeError("sets don't have 'items'")
 
+
 # These are the actual classes you use!
-
-
 class COWDictBase(object):
     __metaclass__ = COWDictMeta
     __count__ = 0
