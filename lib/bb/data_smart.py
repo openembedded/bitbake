@@ -37,6 +37,7 @@ import logging
 import hashlib
 import bb
 import bb.codeparser
+import bb.parse
 from bb import utils
 from bb.COW import COWDictBase
 

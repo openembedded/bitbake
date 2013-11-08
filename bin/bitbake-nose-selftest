@@ -21,23 +21,24 @@ import nose
 #sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib'))
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))) + '/lib')
 
-import inspect
-import __builtin__
+if False:
+    import inspect
+    import __builtin__
 
-print sys.path
-cdir = os.path.abspath(os.path.curdir)
-for d in sys.path:
-    if cdir in d:
-        print d
+    print sys.path
+    cdir = os.path.abspath(os.path.curdir)
+    for d in sys.path:
+        if cdir in d:
+            print d
 
-savimp = __builtin__.__import__
+    savimp = __builtin__.__import__
 
-def newimp(name, *x, **xx):
-  caller = inspect.currentframe().f_back
-  print "module: [%s]" % name, "caller: [%s]" % caller.f_globals.get('__name__')
-  return savimp(name, *x, **xx)
+    def newimp(name, *x, **xx):
+      caller = inspect.currentframe().f_back
+      print "module: [%s]" % name, "caller: [%s]" % caller.f_globals.get('__name__')
+      return savimp(name, *x, **xx)
 
-__builtin__.__import__ = newimp
+    __builtin__.__import__ = newimp
 
 #sys.exit(0)
 #import unittest
