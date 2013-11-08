@@ -221,7 +221,7 @@ class VariableHistory(object):
 
     def __init__(self, dataroot):
         self.dataroot = dataroot
-        self.variables = COWDictBase.copy()
+        self.variables = COWDictBase()
 
     def copy(self):
         new = VariableHistory(self.dataroot)
@@ -316,7 +316,7 @@ class VariableHistory(object):
 
 class DataSmart(MutableMapping):
 
-    def __init__(self, special=COWDictBase.copy(), seen=COWDictBase.copy()):
+    def __init__(self, special=None, seen=None):
         self.dict = {}
 
         self.inchistory = IncludeHistory()
@@ -324,8 +324,15 @@ class DataSmart(MutableMapping):
         self._tracking = False
 
         # cookie monster tribute
-        self._special_values = special
-        self._seen_overrides = seen
+        if special is None:
+            self._special_values = COWDictBase()
+        else:
+            self._special_values = special
+
+        if seen is None:
+            self._seen_overrides = COWDictBase()
+        else:
+            self._seen_overrides = seen
 
         self.expand_cache = {}
 
