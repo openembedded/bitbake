@@ -28,22 +28,28 @@ BitBake build tools.
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 # Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
-import copy, re, sys, traceback
+import copy
+import re
+import sys
+import traceback
 from collections import MutableMapping
 import logging
 import hashlib
-import bb, bb.codeparser
-from bb   import utils
-from bb.COW  import COWDictBase
+import bb
+import bb.codeparser
+from bb import utils
+from bb.COW import COWDictBase
 
 logger = logging.getLogger("BitBake.Data")
 
 __setvar_keyword__ = ["_append", "_prepend", "_remove"]
-__setvar_regexp__ = re.compile('(?P<base>.*?)(?P<keyword>_append|_prepend|_remove)(_(?P<add>.*))?$')
+__setvar_regexp__ = re.compile(
+    '(?P<base>.*?)(?P<keyword>_append|_prepend|_remove)(_(?P<add>.*))?$')
 __expand_var_regexp__ = re.compile(r"\${[^{}@\n\t ]+}")
 __expand_python_regexp__ = re.compile(r"\${@.+?}")
 
-def infer_caller_details(loginfo, parent = False, varval = True):
+
+def infer_caller_details(loginfo, parent=False, varval=True):
     """Save the caller the trouble of specifying everything."""
     # Save effort.
     if 'ignore' in loginfo and loginfo['ignore']:
@@ -52,7 +58,7 @@ def infer_caller_details(loginfo, parent = False, varval = True):
     if not loginfo:
         loginfo['ignore'] = True
         return
-    # Infer caller's likely values for variable (var) and value (value), 
+    # Infer caller's likely values for variable (var) and value (value),
     # to reduce clutter in the rest of the code.
     if varval and ('variable' not in loginfo or 'detail' not in loginfo):
         try:
@@ -71,17 +77,19 @@ def infer_caller_details(loginfo, parent = False, varval = True):
                 loginfo['variable'] = v
     # Infer file/line/function from traceback
     if 'file' not in loginfo:
-        depth = 3    
+        depth = 3
         if parent:
             depth = 4
-        file, line, func, text = traceback.extract_stack(limit = depth)[0]
-        loginfo['file'] = file
+        file_, line, func, text = traceback.extract_stack(limit=depth)[0]
+        loginfo['file'] = file_
         loginfo['line'] = line
         if func not in loginfo:
             loginfo['func'] = func
 
+
 class VariableParse:
-    def __init__(self, varname, d, val = None):
+
+    def __init__(self, varname, d, val=None):
         self.varname = varname
         self.d = d
         self.value = val
@@ -90,41 +98,43 @@ class VariableParse:
         self.execs = set()
 
     def var_sub(self, match):
-            key = match.group()[2:-1]
-            if self.varname and key:
-                if self.varname == key:
-                    raise Exception("variable %s references itself!" % self.varname)
-            if key in self.d.expand_cache:
-                varparse = self.d.expand_cache[key]
-                var = varparse.value
-            else:
-                var = self.d.getVar(key, True)
-            self.references.add(key)
-            if var is not None:
-                return var
-            else:
-                return match.group()
+        key = match.group()[2:-1]
+        if self.varname and key:
+            if self.varname == key:
+                raise Exception(
+                    "variable %s references itself!" % self.varname)
+        if key in self.d.expand_cache:
+            varparse = self.d.expand_cache[key]
+            var = varparse.value
+        else:
+            var = self.d.getVar(key, True)
+        self.references.add(key)
+        if var is not None:
+            return var
+        else:
+            return match.group()
 
     def python_sub(self, match):
-            code = match.group()[3:-1]
-            codeobj = compile(code.strip(), self.varname or "<expansion>", "eval")
+        code = match.group()[3:-1]
+        codeobj = compile(code.strip(), self.varname or "<expansion>", "eval")
 
-            parser = bb.codeparser.PythonParser(self.varname, logger)
-            parser.parse_python(code)
-            if self.varname:
-                vardeps = self.d.getVarFlag(self.varname, "vardeps", True)
-                if vardeps is None:
-                    parser.log.flush()
-            else:
+        parser = bb.codeparser.PythonParser(self.varname, logger)
+        parser.parse_python(code)
+        if self.varname:
+            vardeps = self.d.getVarFlag(self.varname, "vardeps", True)
+            if vardeps is None:
                 parser.log.flush()
-            self.references |= parser.references
-            self.execs |= parser.execs
+        else:
+            parser.log.flush()
+        self.references |= parser.references
+        self.execs |= parser.execs
 
-            value = utils.better_eval(codeobj, DataContext(self.d))
-            return str(value)
+        value = utils.better_eval(codeobj, DataContext(self.d))
+        return str(value)
 
 
 class DataContext(dict):
+
     def __init__(self, metadata, **kwargs):
         self.metadata = metadata
         dict.__init__(self, **kwargs)
@@ -137,25 +147,33 @@ class DataContext(dict):
         else:
             return value
 
+
 class ExpansionError(Exception):
+
     def __init__(self, varname, expression, exception):
         self.expression = expression
         self.variablename = varname
         self.exception = exception
         if varname:
             if expression:
-                self.msg = "Failure expanding variable %s, expression was %s which triggered exception %s: %s" % (varname, expression, type(exception).__name__, exception)
+                self.msg = "Failure expanding variable %s, expression was %s which triggered exception %s: %s" % (
+                    varname, expression, type(exception).__name__, exception)
             else:
-                self.msg = "Failure expanding variable %s: %s: %s" % (varname, type(exception).__name__, exception)
+                self.msg = "Failure expanding variable %s: %s: %s" % (
+                    varname, type(exception).__name__, exception)
         else:
-            self.msg = "Failure expanding expression %s which triggered exception %s: %s" % (expression, type(exception).__name__, exception)
+            self.msg = "Failure expanding expression %s which triggered exception %s: %s" % (
+                expression, type(exception).__name__, exception)
         Exception.__init__(self, self.msg)
         self.args = (varname, expression, exception)
+
     def __str__(self):
         return self.msg
 
+
 class IncludeHistory(object):
-    def __init__(self, parent = None, filename = '[TOP LEVEL]'):
+
+    def __init__(self, parent=None, filename='[TOP LEVEL]'):
         self.parent = parent
         self.filename = filename
         self.children = []
@@ -180,10 +198,11 @@ class IncludeHistory(object):
         if self.current.parent:
             self.current = self.current.parent
         else:
-            bb.warn("Include log: Tried to finish '%s' at top level." % filename)
+            bb.warn("Include log: Tried to finish '%s' at top level." %
+                    filename)
         return False
 
-    def emit(self, o, level = 0):
+    def emit(self, o, level=0):
         """Emit an include history file, and its children."""
         if level:
             spaces = "  " * (level - 1)
@@ -197,7 +216,9 @@ class IncludeHistory(object):
             o.write("\n")
             child.emit(o, level)
 
+
 class VariableHistory(object):
+
     def __init__(self, dataroot):
         self.dataroot = dataroot
         self.variables = COWDictBase.copy()
@@ -212,7 +233,7 @@ class VariableHistory(object):
             return
         if len(kwonly) > 0:
             raise TypeError
-        infer_caller_details(loginfo, parent = True)
+        infer_caller_details(loginfo, parent=True)
         if 'ignore' in loginfo and loginfo['ignore']:
             return
         if 'op' not in loginfo or not loginfo['op']:
@@ -244,9 +265,9 @@ class VariableHistory(object):
             for event in history:
                 # o.write("# %s\n" % str(event))
                 if 'func' in event:
-                    # If we have a function listed, this is internal
-                    # code, not an operation in a config file, and the
-                    # full path is distracting.
+                # If we have a function listed, this is internal
+                # code, not an operation in a config file, and the
+                # full path is distracting.
                     event['file'] = re.sub('.*/', '', event['file'])
                     display_func = ' [%s]' % event['func']
                 else:
@@ -255,7 +276,10 @@ class VariableHistory(object):
                     flag = '[%s] ' % (event['flag'])
                 else:
                     flag = ''
-                o.write("#   %s %s:%s%s\n#     %s\"%s\"\n" % (event['op'], event['file'], event['line'], display_func, flag, re.sub('\n', '\n#     ', event['detail'])))
+                o.write("#   %s %s:%s%s\n#     %s\"%s\"\n" %
+                        (event['op'], event['file'], event['line'],
+                         display_func, flag, re.sub('\n', '\n#     ',
+                         event['detail'])))
             if len(history) > 1:
                 o.write("# computed:\n")
                 o.write('#   "%s"\n' % (commentVal))
@@ -276,7 +300,7 @@ class VariableHistory(object):
         var_history = self.variable(var)
         lines = []
         for event in var_history:
-            if f== event['file']:
+            if f == event['file']:
                 line = event['line']
                 lines.append(line)
         return lines
@@ -285,12 +309,14 @@ class VariableHistory(object):
         """If file f and line are not given, the entire history of var is deleted"""
         if var in self.variables:
             if f and line:
-                self.variables[var] = [ x for x in self.variables[var] if x['file']!=f and x['line']!=line]
+                self.variables[var] = [x for x in self.variables[var] if x['file'] != f and x['line'] != line]
             else:
                 self.variables[var] = []
 
+
 class DataSmart(MutableMapping):
-    def __init__(self, special = COWDictBase.copy(), seen = COWDictBase.copy() ):
+
+    def __init__(self, special=COWDictBase.copy(), seen=COWDictBase.copy()):
         self.dict = {}
 
         self.inchistory = IncludeHistory()
@@ -311,7 +337,7 @@ class DataSmart(MutableMapping):
 
     def expandWithRefs(self, s, varname):
 
-        if not isinstance(s, basestring): # sanity check
+        if not isinstance(s, basestring):  # sanity check
             return VariableParse(varname, self, s)
 
         if varname and varname in self.expand_cache:
@@ -340,18 +366,17 @@ class DataSmart(MutableMapping):
 
         return varparse
 
-    def expand(self, s, varname = None):
+    def expand(self, s, varname=None):
         return self.expandWithRefs(s, varname).value
 
-
-    def finalize(self, parent = False):
+    def finalize(self, parent=False):
         """Performs final steps upon the datastore, including application of overrides"""
 
         overrides = (self.getVar("OVERRIDES", True) or "").split(":") or []
         finalize_caller = {
             'op': 'finalize',
         }
-        infer_caller_details(finalize_caller, parent = parent, varval = False)
+        infer_caller_details(finalize_caller, parent=parent, varval=False)
 
         #
         # Well let us see what breaks here. We used to iterate
@@ -380,15 +405,16 @@ class DataSmart(MutableMapping):
             if o not in self._seen_overrides:
                 continue
 
-            vars = self._seen_overrides[o].copy()
-            for var in vars:
+            vars_ = self._seen_overrides[o].copy()
+            for var in vars_:
                 name = var[:-l]
                 try:
                     # Report only once, even if multiple changes.
                     if name not in finalizes_reported:
                         finalizes_reported[name] = True
                         finalize_caller['variable'] = name
-                        finalize_caller['detail'] = 'was: ' + str(self.getVar(name, False))
+                        finalize_caller['detail'] = 'was: ' + str(
+                            self.getVar(name, False))
                         self.varhistory.record(**finalize_caller)
                     # Copy history of the override over.
                     for event in self.varhistory.variable(var):
@@ -396,7 +422,8 @@ class DataSmart(MutableMapping):
                         loginfo['variable'] = name
                         loginfo['op'] = 'override[%s]:%s' % (o, loginfo['op'])
                         self.varhistory.record(**loginfo)
-                    self.setVar(name, self.getVar(var, False), op = 'finalize', file = 'override[%s]' % o, line = '')
+                    self.setVar(
+                        name, self.getVar(var, False), op='finalize', file='override[%s]' % o, line='')
                     self.delVar(var)
                 except Exception:
                     logger.info("Untracked delVar")
@@ -414,7 +441,7 @@ class DataSmart(MutableMapping):
                                 if not o2 in overrides:
                                     match = False
                         if not match:
-                            keep.append((a ,o))
+                            keep.append((a, o))
                             continue
 
                         if op == "_append":
@@ -425,9 +452,11 @@ class DataSmart(MutableMapping):
                             sval = a + (self.getVar(append, False) or "")
                             self.setVar(append, sval)
                         elif op == "_remove":
-                            removes = self.getVarFlag(append, "_removeactive", False) or []
+                            removes = self.getVarFlag(
+                                append, "_removeactive", False) or []
                             removes.extend(a.split())
-                            self.setVarFlag(append, "_removeactive", removes, ignore=True)
+                            self.setVarFlag(
+                                append, "_removeactive", removes, ignore=True)
 
                     # We save overrides that may be applied at some later stage
                     if keep:
@@ -461,13 +490,12 @@ class DataSmart(MutableMapping):
         else:
             self.initVar(var)
 
-
     def setVar(self, var, value, **loginfo):
-        #print("var=" + str(var) + "  val=" + str(value))
+        # print("var=" + str(var) + "  val=" + str(value))
         if 'op' not in loginfo:
             loginfo['op'] = "set"
         self.expand_cache = {}
-        match  = __setvar_regexp__.match(var)
+        match = __setvar_regexp__.match(var)
         if match and match.group("keyword") in __setvar_keyword__:
             base = match.group('base')
             keyword = match.group("keyword")
@@ -506,11 +534,11 @@ class DataSmart(MutableMapping):
 
     def _setvar_update_overrides(self, var):
         # aka pay the cookie monster
-        override = var[var.rfind('_')+1:]
+        override = var[var.rfind('_') + 1:]
         if len(override) > 0:
             if override not in self._seen_overrides:
                 self._seen_overrides[override] = set()
-            self._seen_overrides[override].add( var )
+            self._seen_overrides[override].add(var)
 
     def getVar(self, var, expand=False, noweakdefault=False):
         return self.getVarFlag(var, "_content", expand, noweakdefault)
@@ -565,7 +593,7 @@ class DataSmart(MutableMapping):
         self.expand_cache = {}
         self.dict[var] = {}
         if '_' in var:
-            override = var[var.rfind('_')+1:]
+            override = var[var.rfind('_') + 1:]
             if override and override in self._seen_overrides and var in self._seen_overrides[override]:
                 self._seen_overrides[override].remove(var)
 
@@ -652,7 +680,7 @@ class DataSmart(MutableMapping):
             self.varhistory.record(**loginfo)
             self.dict[var][i] = flags[i]
 
-    def getVarFlags(self, var, expand = False, internalflags=False):
+    def getVarFlags(self, var, expand=False, internalflags=False):
         local_var = self._findVar(var)
         flags = {}
 
@@ -667,7 +695,6 @@ class DataSmart(MutableMapping):
             return None
         return flags
 
-
     def delVarFlags(self, var, **loginfo):
         if not var in self.dict:
             self._makeShadowCopy(var)
@@ -680,19 +707,19 @@ class DataSmart(MutableMapping):
 
             # try to save the content
             if "_content" in self.dict[var]:
-                content  = self.dict[var]["_content"]
-                self.dict[var]            = {}
+                content = self.dict[var]["_content"]
+                self.dict[var] = {}
                 self.dict[var]["_content"] = content
             else:
                 del self.dict[var]
-
 
     def createCopy(self):
         """
         Create a copy of self by setting _data to self
         """
         # we really want this to be a DataSmart...
-        data = DataSmart(seen=self._seen_overrides.copy(), special=self._special_values.copy())
+        data = DataSmart(
+            seen=self._seen_overrides.copy(), special=self._special_values.copy())
         data.dict["_data"] = self.dict
         data.varhistory = self.varhistory.copy()
         data.varhistory.datasmart = data
@@ -724,7 +751,7 @@ class DataSmart(MutableMapping):
                 yield key
 
     def __iter__(self):
-        def keylist(d):        
+        def keylist(d):
             klist = set()
             for key in d:
                 if key == "_data":
@@ -739,7 +766,7 @@ class DataSmart(MutableMapping):
             return klist
 
         for k in keylist(self.dict):
-             yield k
+            yield k
 
     def __len__(self):
         return len(frozenset(self))
@@ -763,32 +790,33 @@ class DataSmart(MutableMapping):
         bb.data.expandKeys(d)
         bb.data.update_data(d)
 
-        config_whitelist = set((d.getVar("BB_HASHCONFIG_WHITELIST", True) or "").split())
+        config_whitelist = set(
+            (d.getVar("BB_HASHCONFIG_WHITELIST", True) or "").split())
         keys = set(key for key in iter(d) if not key.startswith("__"))
         for key in keys:
             if key in config_whitelist:
                 continue
 
             value = d.getVar(key, False) or ""
-            data.update({key:value})
+            data.update({key: value})
 
-            varflags = d.getVarFlags(key, internalflags = True)
+            varflags = d.getVarFlags(key, internalflags=True)
             if not varflags:
                 continue
             for f in varflags:
                 if f == "_content":
                     continue
-                data.update({'%s[%s]' % (key, f):varflags[f]})
+                data.update({'%s[%s]' % (key, f): varflags[f]})
 
         for key in ["__BBTASKS", "__BBANONFUNCS", "__BBHANDLERS"]:
             bb_list = d.getVar(key, False) or []
             bb_list.sort()
-            data.update({key:str(bb_list)})
+            data.update({key: str(bb_list)})
 
             if key == "__BBANONFUNCS":
                 for i in bb_list:
                     value = d.getVar(i, True) or ""
-                    data.update({i:value})
+                    data.update({i: value})
 
         data_str = str([(k, data[k]) for k in sorted(data.keys())])
         return hashlib.md5(data_str).hexdigest()
