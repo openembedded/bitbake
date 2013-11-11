@@ -17,7 +17,7 @@ endif
 fun! <SID>GetUserName()
     let l:user_name = system("git config --get user.name")
     if v:shell_error
-        return "Unknow User"
+        return "Unknown User"
     else
         return substitute(l:user_name, "\n", "", "")
 endfun
