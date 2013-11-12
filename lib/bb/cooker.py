@@ -202,20 +202,11 @@ class BBCooker:
         #add append var operation to the end of default_file
         default_file = bb.cookerdata.findConfigFile(default_file, self.data)
 
-        with open(default_file, 'r') as f:
-            contents = f.readlines()
-        f.close()
-
-        total = ""
-        for c in contents:
-            total += c
-
-        total += "#added by hob"
+        total = "#added by hob"
         total += "\n%s += \"%s\"\n" % (var, val)
 
-        with open(default_file, 'w') as f:
+        with open(default_file, 'a') as f:
             f.write(total)
-        f.close()
 
         #add to history
         loginfo = {"op":append, "file":default_file, "line":total.count("\n")}
@@ -244,7 +235,6 @@ class BBCooker:
             if topdir in conf_file:
                 with open(conf_file, 'r') as f:
                     contents = f.readlines()
-                f.close()
 
                 lines = self.data.varhistory.get_variable_lines(var, conf_file)
                 for line in lines:
@@ -270,12 +260,8 @@ class BBCooker:
                         for ii in range(begin_line, end_line):
                             contents[ii] = "#" + contents[ii]
 
-                total = ""
-                for c in contents:
-                    total += c
                 with open(conf_file, 'w') as f:
-                    f.write(total)
-                f.close()
+                    f.writelines(contents)
 
         if replaced == False:
             #remove var from history
@@ -284,21 +270,12 @@ class BBCooker:
             #add var to the end of default_file
             default_file = bb.cookerdata.findConfigFile(default_file, self.data)
 
-            with open(default_file, 'r') as f:
-                contents = f.readlines()
-            f.close()
-
-            total = ""
-            for c in contents:
-                total += c
-
             #add the variable on a single line, to be easy to replace the second time
-            total += "\n#added by hob"
+            total = "\n#added by hob"
             total += "\n%s %s \"%s\"\n" % (var, op, val)
 
-            with open(default_file, 'w') as f:
+            with open(default_file, 'a') as f:
                 f.write(total)
-            f.close()
 
             #add to history
             loginfo = {"op":set, "file":default_file, "line":total.count("\n")}
@@ -312,7 +289,6 @@ class BBCooker:
             if topdir in conf_file:
                 with open(conf_file, 'r') as f:
                     contents = f.readlines()
-                f.close()
 
                 lines = self.data.varhistory.get_variable_lines(var, conf_file)
                 for line in lines:
@@ -335,12 +311,8 @@ class BBCooker:
                     #remove var from history
                     self.data.varhistory.del_var_history(var, conf_file, line)
 
-                total = ""
-                for c in contents:
-                    total += c
                 with open(conf_file, 'w') as f:
-                    f.write(total)
-                f.close()
+                    f.writelines(contents)
 
     def createConfigFile(self, name):
         path = os.getcwd()
