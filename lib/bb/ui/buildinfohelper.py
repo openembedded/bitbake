@@ -180,7 +180,7 @@ class ORMWrapper(object):
                                        revision = package_info['PKGR'],
                                        summary = package_info['SUMMARY'],
                                        description = package_info['DESCRIPTION'],
-                                       size = package_info['PKGSIZE'],
+                                       size = int(package_info['PKGSIZE']) * 1024,
                                        section = package_info['SECTION'],
                                        license = package_info['LICENSE'],
                                        )
