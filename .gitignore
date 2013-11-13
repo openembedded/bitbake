@@ -7,7 +7,5 @@ pyshtables.py
 /bin/bitbakec
 *.swp
 tags
-lib/BAR
-lib/FOO
 .coverage
 htmlcov/
