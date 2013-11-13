@@ -1389,6 +1389,7 @@ class Builder(gtk.Window):
             dialog.destroy()
 
     def show_packages(self):
+        self.package_details_page.refresh_tables()
         self.switch_page(self.PACKAGE_SELECTION)
 
     def show_recipes(self):
