@@ -117,7 +117,14 @@ class VariableParse:
 
     def python_sub(self, match):
         code = match.group()[3:-1]
-        codeobj = compile(code.strip(), self.varname or "<expansion>", "eval")
+        # compile builtin: compile(source, filename, mode[, flags[, dont_inherit]])
+        # Compile the source into a code or AST object
+        # The filename argument is the file name from which the code was read;
+        # pass some recognizable value if it wasn't read from a file: '<string>'
+        # The mode argument specifies what kind of code must be compiled
+        # ('eval' if it consists of a single expression)
+        # Use <string> when to be able to run with nose option '--with-coverage'
+        codeobj = compile(code.strip(), "<string>", "eval")
 
         parser = bb.codeparser.PythonParser(self.varname, logger)
         parser.parse_python(code)
@@ -132,6 +139,9 @@ class VariableParse:
 
         value = utils.better_eval(codeobj, DataContext(self.d))
         return str(value)
+
+    def __str__(self):
+        return str(self.varname) + " : " + str(self.value)
 
 
 class DataContext(dict):
@@ -356,7 +366,9 @@ class DataSmart(MutableMapping):
         while s.find('${') != -1:
             olds = s
             try:
+                # Variable substitution: ${FOO}
                 s = __expand_var_regexp__.sub(varparse.var_sub, s)
+                # Python expression substitution: ${@<python-code>}
                 s = __expand_python_regexp__.sub(varparse.python_sub, s)
                 if s == olds:
                     break
