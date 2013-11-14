@@ -1268,6 +1268,11 @@ class BBCooker:
         if len(pkgs_to_build) == 0:
             raise NothingToBuild
 
+        ignore = (self.data.getVar("ASSUME_PROVIDED", True) or "").split()
+        for pkg in pkgs_to_build:
+            if pkg in ignore:
+                parselog.warn("Explicit target \"%s\" is in ASSUME_PROVIDED, ignoring" % pkg)
+
         if 'world' in pkgs_to_build:
             self.buildWorldTargetList()
             pkgs_to_build.remove('world')
