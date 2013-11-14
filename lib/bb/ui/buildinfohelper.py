@@ -386,7 +386,11 @@ class BuildInfoHelper(object):
             target = t.target
             machine = self.internal_state['build'].machine
             buildname = self.internal_state['build'].build_name
-            package = task_object.recipe.name + "-" + task_object.recipe.version.strip(":")
+            pe, pv = task_object.recipe.version.split(":",1)
+            if len(pe) > 0:
+                package = task_object.recipe.name + "-" + pe + "_" + pv
+            else:
+                package = task_object.recipe.name + "-" + pv
 
             build_stats_path.append(build_stats_format.format(tmpdir=self.tmp_dir, target=target,
                                                      machine=machine, buildname=buildname,
