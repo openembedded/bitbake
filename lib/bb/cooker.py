@@ -81,7 +81,7 @@ class SkippedPackage:
 
 
 class CookerFeatures(object):
-    _feature_list = [HOB_EXTRA_CACHES, SEND_DEPENDS_TREE] = range(2)
+    _feature_list = [HOB_EXTRA_CACHES, SEND_DEPENDS_TREE, BASEDATASTORE_TRACKING] = range(3)
 
     def __init__(self):
         self._features=set()
@@ -177,6 +177,9 @@ class BBCooker:
         self.data.disableTracking()
 
     def loadConfigurationData(self):
+        if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
+            self.enableDataTracking()
+
         self.initConfigurationData()
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
@@ -188,6 +191,10 @@ class BBCooker:
         self.event_data = bb.data.createCopy(self.data)
         bb.data.update_data(self.event_data)
         bb.parse.init_parser(self.event_data)
+
+        if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
+            self.disableDataTracking()
+
 
     def modifyConfigurationVar(self, var, val, default_file, op):
         if op == "append":
@@ -320,7 +327,6 @@ class BBCooker:
         open(confpath, 'w').close()
 
     def parseConfiguration(self):
-
         # Set log file verbosity
         verboselogs = bb.utils.to_boolean(self.data.getVar("BB_VERBOSE_LOGS", "0"))
         if verboselogs:
@@ -1175,7 +1181,10 @@ class BBCooker:
             try:
                 v = self.data.getVar(k, True)
                 if not k.startswith("__") and not isinstance(v, bb.data_smart.DataSmart):
-                    dump[k] = { 'v' : v }
+                    dump[k] = {
+    'v' : v ,
+    'history' : self.data.varhistory.variable(k),
+                    }
                     for d in flaglist:
                         dump[k][d] = self.data.getVarFlag(k, d)
             except Exception as e:

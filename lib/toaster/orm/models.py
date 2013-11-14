@@ -239,11 +239,15 @@ class Variable(models.Model):
     build = models.ForeignKey(Build, related_name='variable_build')
     variable_name = models.CharField(max_length=100)
     variable_value = models.TextField(blank=True)
-    file = models.FilePathField(max_length=255)
     changed = models.BooleanField(default=False)
     human_readable_name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
 
+class VariableHistory(models.Model):
+    variable = models.ForeignKey(Variable)
+    file_name = models.FilePathField(max_length=255)
+    line_number = models.IntegerField(null=True)
+    operation = models.CharField(max_length=16)
 
 class LogMessage(models.Model):
     INFO = 0

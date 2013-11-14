@@ -27,8 +27,10 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toaster.toastermain.settings")
 
 import toaster.toastermain.settings as toaster_django_settings
 from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage
-from toaster.orm.models import Target_Package, Build_Package, Variable, Build_File
-from toaster.orm.models import Task_Dependency, Build_Package_Dependency, Target_Package_Dependency, Recipe_Dependency
+from toaster.orm.models import Variable, VariableHistory
+from toaster.orm.models import Target_Package, Build_Package, Build_File
+from toaster.orm.models import Task_Dependency, Build_Package_Dependency
+from toaster.orm.models import Target_Package_Dependency, Recipe_Dependency
 from bb.msg import BBLogFormatter as format
 
 class ORMWrapper(object):
@@ -238,11 +240,15 @@ class ORMWrapper(object):
                         desc = vardump[root_var]['doc']
                 if desc is None:
                     desc = ''
-                Variable.objects.create( build = build_obj,
+                variable_obj = Variable.objects.create( build = build_obj,
                     variable_name = k,
                     variable_value = value,
                     description = desc)
-
+                for vh in vardump[k]['history']:
+                    VariableHistory.objects.create( variable = variable_obj,
+                            file_name = vh['file'],
+                            line_number = vh['line'],
+                            operation = vh['op'])
 
 class BuildInfoHelper(object):
     """ This class gathers the build information from the server and sends it
