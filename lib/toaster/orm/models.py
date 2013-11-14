@@ -207,7 +207,6 @@ class Recipe(models.Model):
     licensing_info = models.TextField(blank=True)
     homepage = models.URLField(blank=True)
     bugtracker = models.URLField(blank=True)
-    author = models.CharField(max_length=100, blank=True)
     file_path = models.FilePathField(max_length=255)
 
 

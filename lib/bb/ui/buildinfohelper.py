@@ -618,7 +618,6 @@ class BuildInfoHelper(object):
             recipe_info['licensing_info'] = 'Not Available'
             recipe_info['homepage'] = event._depgraph['pn'][pn]['homepage']
             recipe_info['bugtracker'] = event._depgraph['pn'][pn]['bugtracker']
-            recipe_info['author'] = 'Not Available'
             recipe_info['file_path'] = file_name
             recipe = self.orm_wrapper.get_update_recipe_object(recipe_info)
             if 'inherits' in event._depgraph['pn'][pn].keys():
