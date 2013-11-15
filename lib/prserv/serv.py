@@ -13,6 +13,7 @@ except ImportError:
 import bb.server.xmlrpc
 import prserv
 import prserv.db
+import errno
 
 logger = logging.getLogger("BitBake.PRserv")
 
@@ -280,14 +281,32 @@ def stop_daemon(host, port):
         if pid:
             if os.path.exists(pidfile):
                 os.remove(pidfile)
-            os.kill(pid,signal.SIGTERM)
-            time.sleep(0.1)
+
+            wait_timeout = 0
+            while is_running(pid) and wait_timeout < 10:
+                print("Waiting for pr-server to exit.")
+                time.sleep(0.5)
+                wait_timeout += 1
+
+            if is_running(pid):
+                print("Sending SIGTERM to pr-server.")
+                os.kill(pid,signal.SIGTERM)
+                time.sleep(0.1)
+
     except OSError as e:
         err = str(e)
         if err.find("No such process") <= 0:
             raise e
 
     return 0
+
+def is_running(pid):
+    try:
+        os.kill(pid, 0)
+    except OSError as err:
+        if err.errno == errno.ESRCH:
+            return False
+    return True
 
 def is_local_special(host, port):
     if host.strip().upper() == 'localhost'.upper() and (not port):
