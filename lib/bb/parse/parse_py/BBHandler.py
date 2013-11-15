@@ -28,15 +28,58 @@
 from __future__ import absolute_import
 import re, bb, os
 import logging
+#from bb import deprecate_import
 import bb.build, bb.utils
-from bb import data
+import bb.data
+#from bb import data
 
 from . import ConfHandler
 from .. import resolve_file, ast, logger
 from .ConfHandler import include, init
 
+# I had to move deprecated and deprecate_import here to avoid an import error
+# and this is actually only used in this module
+def deprecated(func, name=None, advice=""):
+    """This is a decorator which can be used to mark functions
+    as deprecated. It will result in a warning being emmitted
+    when the function is used."""
+    import warnings
+
+    if advice:
+        advice = ": %s" % advice
+    if name is None:
+        name = func.__name__
+
+    def newFunc(*args, **kwargs):
+        warnings.warn("Call to deprecated function %s%s." % (name,
+                                                             advice),
+                      category=DeprecationWarning,
+                      stacklevel=2)
+        return func(*args, **kwargs)
+    newFunc.__name__ = func.__name__
+    newFunc.__doc__ = func.__doc__
+    newFunc.__dict__.update(func.__dict__)
+    return newFunc
+
 # For compatibility
-bb.deprecate_import(__name__, "bb.parse", ["vars_from_file"])
+def deprecate_import(current, modulename, fromlist, renames = None):
+    """Import objects from one module into another, wrapping them with a DeprecationWarning"""
+    import sys
+
+    module = __import__(modulename, fromlist = fromlist)
+    for position, objname in enumerate(fromlist):
+        obj = getattr(module, objname)
+        newobj = deprecated(obj, "{0}.{1}".format(current, objname),
+                            "Please use {0}.{1} instead".format(modulename, objname))
+        if renames:
+            newname = renames[position]
+        else:
+            newname = objname
+
+        setattr(sys.modules[current], newname, newobj)
+
+# For compatibility
+deprecate_import(__name__, "bb.parse", ["vars_from_file"])
 
 __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*(?P<func>[\w\.\-\+\{\}\$]+)?\s*\(\s*\)\s*{$" )
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )

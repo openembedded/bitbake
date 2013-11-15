@@ -15,24 +15,36 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+"""
+
+Prerequirements:
+% pip install nose
+% pip install coverage
+
+* bitbake-selftest Usage:
+
+ * Code coverage analysis
+
+   Run all tests with coverage from bitbake top dir:
+   % ./bin/bitbake-selftest --with-coverage
+
+   Generate HTML coverage reports under htmlcov (default):
+   % coverage html && firefox htmlcov/index.html
+
+ * Has same options as nosetests
+
+   Specify a specific unit testsuite:
+   % ./bin/bitbake-selftest -v lib/bb/tests/test_data.py
+
+   Specify a specific testcase from a test suite:
+   % ./bin/bitbake-selftest -v lib/bb/tests/test_fetch.py:FetcherNetworkTest.test_gitfetch
+
+"""
+
 import os
-import sys, logging
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), 'lib'))
+import sys
+import nose
+sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))) + '/lib')
 
-import unittest
-try:
-    import bb
-except RuntimeError as exc:
-    sys.exit(str(exc))
-
-tests = ["bb.tests.codeparser", 
-         "bb.tests.cow",
-         "bb.tests.data",
-         "bb.tests.fetch",
-         "bb.tests.utils"]
-
-for t in tests:
-    __import__(t)
-
-unittest.main(argv=["bitbake-selftest"] + tests)
-
+if __name__ == '__main__':
+    nose.run(argv=sys.argv)
