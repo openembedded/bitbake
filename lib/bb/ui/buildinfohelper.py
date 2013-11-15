@@ -93,6 +93,12 @@ class ORMWrapper(object):
         # if we got covered by a setscene task, we're SSTATE
         if task_object.outcome == Task.OUTCOME_COVERED and 1 == Task.objects.filter(task_executed=True, build = task_object.build, recipe = task_object.recipe, task_name=task_object.task_name+"_setscene").count():
             task_object.outcome = Task.OUTCOME_SSTATE
+            outcome_task_setscene = Task.objects.get(task_executed=True, build = task_object.build,
+                                    recipe = task_object.recipe, task_name=task_object.task_name+"_setscene").outcome
+            if outcome_task_setscene == Task.OUTCOME_SUCCESS:
+                task_object.sstate_result = Task.SSTATE_RESTORED
+            elif outcome_task_setscene == Task.OUTCOME_FAILED:
+                task_object.sstate_result = Task.SSTATE_FAILED
 
         # mark down duration if we have a start time
         if 'start_time' in task_information.keys():
