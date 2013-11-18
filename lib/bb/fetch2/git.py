@@ -150,7 +150,7 @@ class Git(FetchMethod):
             return True
         os.chdir(ud.clonedir)
         for name in ud.names:
-            if not self._contains_ref(ud.revisions[name], d):
+            if not self._contains_ref(ud.revisions[name], ud.branches[name], d):
                 return True
         if ud.write_tarballs and not os.path.exists(ud.fullmirror):
             return True
@@ -197,7 +197,7 @@ class Git(FetchMethod):
         # Update the checkout if needed
         needupdate = False
         for name in ud.names:
-            if not self._contains_ref(ud.revisions[name], d):
+            if not self._contains_ref(ud.revisions[name], ud.branches[name], d):
                 needupdate = True
         if needupdate:
             try: 
@@ -281,13 +281,14 @@ class Git(FetchMethod):
     def supports_srcrev(self):
         return True
 
-    def _contains_ref(self, tag, d):
+    def _contains_ref(self, tag, branch, d):
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
-        cmd = "%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (basecmd, tag)
-        output = runfetchcmd(cmd, d, quiet=True)
-        if len(output.split()) > 1:
-            raise bb.fetch2.FetchError("The command '%s' gave output with more then 1 line unexpectedly, output: '%s'" % (cmd, output))
-        return output.split()[0] != "0"
+        cmd = "%s merge-base --is-ancestorlog %s %s" % (basecmd, tag, branch)
+        try:
+            output = runfetchcmd(cmd, d, quiet=True)
+        except bb.fetch2.FetchError:
+            return False
+        return True
 
     def _revision_key(self, url, ud, d, name):
         """
