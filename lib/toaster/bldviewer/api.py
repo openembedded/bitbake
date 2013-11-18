@@ -33,5 +33,6 @@ urlpatterns = patterns('bldviewer.views',
         url(r'^recipes$', 'model_explorer', {'model_name':'recipe'}, name='recipe'),
         url(r'^recipe_dependencies$', 'model_explorer',  {'model_name':'recipe_dependency'}, name='recipe_dependencies'),
         url(r'^variables$', 'model_explorer',  {'model_name':'variable'}, name='variables'),
+        url(r'^variableshistory$', 'model_explorer',  {'model_name':'variablehistory'}, name='variablehistory'),
         url(r'^logmessages$', 'model_explorer',  {'model_name':'logmessage'}, name='logmessages'),
 )
