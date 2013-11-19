@@ -543,7 +543,7 @@ class BuildInfoHelper(object):
             task_information['disk_io'] = task_build_stats['disk_io']
             del self.internal_state[identifier]
 
-        if isinstance(event, (bb.runqueue.runQueueTaskFailed, bb.runCommand.sceneQueueTaskFailed)):
+        if isinstance(event, (bb.runqueue.runQueueTaskFailed, bb.runqueue.sceneQueueTaskFailed)):
             task_information['outcome'] = Task.OUTCOME_FAILED
             del self.internal_state[identifier]
 
