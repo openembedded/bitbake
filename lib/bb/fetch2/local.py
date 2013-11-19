@@ -34,7 +34,7 @@ from   bb.fetch2 import FetchMethod, FetchError
 from   bb.fetch2 import logger
 
 class Local(FetchMethod):
-    def supports(self, url, urldata, d):
+    def supports(self, urldata, d):
         """
         Check to see if a given url represents a local fetch.
         """
@@ -47,7 +47,7 @@ class Local(FetchMethod):
         ud.basepath = ud.decodedurl
         return
 
-    def localpath(self, url, urldata, d):
+    def localpath(self, urldata, d):
         """
         Return the local filename of a given url assuming a successful fetch.
         """
@@ -75,14 +75,14 @@ class Local(FetchMethod):
                 return dldirfile
         return newpath
 
-    def need_update(self, url, ud, d):
-        if url.find("*") != -1:
+    def need_update(self, ud, d):
+        if ud.url.find("*") != -1:
             return False
         if os.path.exists(ud.localpath):
             return False
         return True
 
-    def download(self, url, urldata, d):
+    def download(self, urldata, d):
         """Fetch urls (no-op for Local method)"""
         # no need to fetch local files, we'll deal with them in place.
         if self.supports_checksum(urldata) and not os.path.exists(urldata.localpath):
@@ -95,17 +95,17 @@ class Local(FetchMethod):
                 locations.append(filesdir)
             locations.append(d.getVar("DL_DIR", True))
 
-            msg = "Unable to find file " + url + " anywhere. The paths that were searched were:\n    " + "\n    ".join(locations)
+            msg = "Unable to find file " + urldata.url + " anywhere. The paths that were searched were:\n    " + "\n    ".join(locations)
             raise FetchError(msg)
 
         return True
 
-    def checkstatus(self, url, urldata, d):
+    def checkstatus(self, urldata, d):
         """
         Check the status of the url
         """
         if urldata.localpath.find("*") != -1:
-            logger.info("URL %s looks like a glob and was therefore not checked.", url)
+            logger.info("URL %s looks like a glob and was therefore not checked.", urldata.url)
             return True
         if os.path.exists(urldata.localpath):
             return True

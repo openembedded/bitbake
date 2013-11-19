@@ -72,8 +72,8 @@ __pattern__ = re.compile(r'''
 class SSH(FetchMethod):
     '''Class to fetch a module or modules via Secure Shell'''
 
-    def supports(self, url, urldata, d):
-        return __pattern__.match(url) != None
+    def supports(self, urldata, d):
+        return __pattern__.match(urldata.url) != None
 
     def supports_checksum(self, urldata):
         return False
@@ -89,10 +89,10 @@ class SSH(FetchMethod):
         host = m.group('host')
         urldata.localpath = os.path.join(d.getVar('DL_DIR', True), os.path.basename(path))
 
-    def download(self, url, urldata, d):
+    def download(self, urldata, d):
         dldir = d.getVar('DL_DIR', True)
 
-        m = __pattern__.match(url)
+        m = __pattern__.match(urldata.url)
         path = m.group('path')
         host = m.group('host')
         port = m.group('port')

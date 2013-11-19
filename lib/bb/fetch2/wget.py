@@ -37,7 +37,7 @@ from   bb.fetch2 import runfetchcmd
 
 class Wget(FetchMethod):
     """Class to fetch urls via 'wget'"""
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with wget.
         """
@@ -58,7 +58,7 @@ class Wget(FetchMethod):
 
         ud.localfile = data.expand(urllib.unquote(ud.basename), d)
 
-    def download(self, uri, ud, d, checkonly = False):
+    def download(self, ud, d, checkonly = False):
         """Fetch urls"""
 
         basecmd = d.getVar("FETCHCMD_wget", True) or "/usr/bin/env wget -t 2 -T 30 -nv --passive-ftp --no-check-certificate"
@@ -76,7 +76,7 @@ class Wget(FetchMethod):
         else:
             fetchcmd = d.getVar("FETCHCOMMAND_wget", True) or d.expand(basecmd + " -P ${DL_DIR} '${URI}'")
 
-        uri = uri.split(";")[0]
+        uri = ud.url.split(";")[0]
 
         fetchcmd = fetchcmd.replace("${URI}", uri.split(";")[0])
         fetchcmd = fetchcmd.replace("${FILE}", ud.basename)
@@ -93,5 +93,5 @@ class Wget(FetchMethod):
 
         return True
 
-    def checkstatus(self, uri, ud, d):
-        return self.download(uri, ud, d, True)
+    def checkstatus(self, ud, d):
+        return self.download(ud, d, True)

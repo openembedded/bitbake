@@ -37,7 +37,7 @@ from   bb.fetch2 import logger
 from   bb.fetch2 import runfetchcmd
 
 class Perforce(FetchMethod):
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         return ud.type in ['p4']
 
     def doparse(url, d):
@@ -120,12 +120,12 @@ class Perforce(FetchMethod):
 
         ud.localfile = data.expand('%s+%s+%s.tar.gz' % (host, base.replace('/', '.'), cset), d)
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
         """
         Fetch urls
         """
 
-        (host, depot, user, pswd, parm) = Perforce.doparse(loc, d)
+        (host, depot, user, pswd, parm) = Perforce.doparse(ud.url, d)
 
         if depot.find('/...') != -1:
             path = depot[:depot.find('/...')]
@@ -158,7 +158,7 @@ class Perforce(FetchMethod):
         tmpfile, errors = bb.process.run(data.getVar('MKTEMPDIRCMD', localdata, True) or "false")
         tmpfile = tmpfile.strip()
         if not tmpfile:
-            raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", loc)
+            raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", ud.url)
 
         if "label" in parm:
             depot = "%s@%s" % (depot, parm["label"])
@@ -167,13 +167,13 @@ class Perforce(FetchMethod):
             depot = "%s@%s" % (depot, cset)
 
         os.chdir(tmpfile)
-        logger.info("Fetch " + loc)
+        logger.info("Fetch " + ud.url)
         logger.info("%s%s files %s", p4cmd, p4opt, depot)
         p4file, errors = bb.process.run("%s%s files %s" % (p4cmd, p4opt, depot))
         p4file = [f.rstrip() for f in p4file.splitlines()]
 
         if not p4file:
-            raise FetchError("Fetch: unable to get the P4 files from %s" % depot, loc)
+            raise FetchError("Fetch: unable to get the P4 files from %s" % depot, ud.url)
 
         count = 0
 
@@ -191,7 +191,7 @@ class Perforce(FetchMethod):
 
         if count == 0:
             logger.error()
-            raise FetchError("Fetch: No files gathered from the P4 fetch", loc)
+            raise FetchError("Fetch: No files gathered from the P4 fetch", ud.url)
 
         runfetchcmd("tar -czf %s %s" % (ud.localpath, module), d, cleanup = [ud.localpath])
         # cleanup

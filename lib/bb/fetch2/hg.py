@@ -37,7 +37,7 @@ from bb.fetch2 import logger
 
 class Hg(FetchMethod):
     """Class to fetch from mercurial repositories"""
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with mercurial.
         """
@@ -66,7 +66,7 @@ class Hg(FetchMethod):
 
         ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
-    def need_update(self, url, ud, d):
+    def need_update(self, ud, d):
         revTag = ud.parm.get('rev', 'tip')
         if revTag == "tip":
             return True
@@ -126,14 +126,14 @@ class Hg(FetchMethod):
 
         return cmd
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
         """Fetch url"""
 
         logger.debug(2, "Fetch: checking for module directory '" + ud.moddir + "'")
 
         if os.access(os.path.join(ud.moddir, '.hg'), os.R_OK):
             updatecmd = self._buildhgcommand(ud, d, "pull")
-            logger.info("Update " + loc)
+            logger.info("Update " + ud.url)
             # update sources there
             os.chdir(ud.moddir)
             logger.debug(1, "Running %s", updatecmd)
@@ -142,7 +142,7 @@ class Hg(FetchMethod):
 
         else:
             fetchcmd = self._buildhgcommand(ud, d, "fetch")
-            logger.info("Fetch " + loc)
+            logger.info("Fetch " + ud.url)
             # check out sources there
             bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
@@ -169,7 +169,7 @@ class Hg(FetchMethod):
     def supports_srcrev(self):
         return True
 
-    def _latest_revision(self, url, ud, d, name):
+    def _latest_revision(self, ud, d, name):
         """
         Compute tip revision for the url
         """
@@ -177,10 +177,10 @@ class Hg(FetchMethod):
         output = runfetchcmd(self._buildhgcommand(ud, d, "info"), d)
         return output.strip()
 
-    def _build_revision(self, url, ud, d, name):
+    def _build_revision(self, ud, d, name):
         return ud.revision
 
-    def _revision_key(self, url, ud, d, name):
+    def _revision_key(self, ud, d, name):
         """
         Return a unique key for the url
         """

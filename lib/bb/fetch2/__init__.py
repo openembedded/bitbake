@@ -619,7 +619,7 @@ def get_srcrev(d):
         raise FetchError("SRCREV was used yet no valid SCM was found in SRC_URI")
 
     if len(scms) == 1 and len(urldata[scms[0]].names) == 1:
-        autoinc, rev = urldata[scms[0]].method.sortable_revision(scms[0], urldata[scms[0]], d, urldata[scms[0]].names[0])
+        autoinc, rev = urldata[scms[0]].method.sortable_revision(urldata[scms[0]], d, urldata[scms[0]].names[0])
         if len(rev) > 10:
             rev = rev[:10]
         if autoinc:
@@ -637,7 +637,7 @@ def get_srcrev(d):
     for scm in scms:
         ud = urldata[scm]
         for name in ud.names:
-            autoinc, rev = ud.method.sortable_revision(scm, ud, d, name)
+            autoinc, rev = ud.method.sortable_revision(ud, d, name)
             seenautoinc = seenautoinc or autoinc
             if len(rev) > 10:
                 rev = rev[:10]
@@ -777,17 +777,17 @@ def try_mirror_url(origud, ud, ld, check = False):
     # False means try another url
     try:
         if check:
-            found = ud.method.checkstatus(ud.url, ud, ld)
+            found = ud.method.checkstatus(ud, ld)
             if found:
                 return found
             return False
 
         os.chdir(ld.getVar("DL_DIR", True))
 
-        if not os.path.exists(ud.donestamp) or ud.method.need_update(ud.url, ud, ld):
-            ud.method.download(ud.url, ud, ld)
+        if not os.path.exists(ud.donestamp) or ud.method.need_update(ud, ld):
+            ud.method.download(ud, ld)
             if hasattr(ud.method,"build_mirror_data"):
-                ud.method.build_mirror_data(ud.url, ud, ld)
+                ud.method.build_mirror_data(ud, ld)
 
         if not ud.localpath or not os.path.exists(ud.localpath):
             return False
@@ -805,10 +805,10 @@ def try_mirror_url(origud, ud, ld, check = False):
             dest = os.path.join(dldir, os.path.basename(ud.localpath))
             if not os.path.exists(dest):
                 os.symlink(ud.localpath, dest)
-            if not os.path.exists(origud.donestamp) or origud.method.need_update(origud.url, origud, ld):
-                origud.method.download(origud.url, origud, ld)
+            if not os.path.exists(origud.donestamp) or origud.method.need_update(origud, ld):
+                origud.method.download(origud, ld)
                 if hasattr(ud.method,"build_mirror_data"):
-                    origud.method.build_mirror_data(origud.url, origud, ld)
+                    origud.method.build_mirror_data(origud, ld)
             return None
         # Otherwise the result is a local file:// and we symlink to it
         if not os.path.exists(origud.localpath):
@@ -888,7 +888,7 @@ def srcrev_internal_helper(ud, d, name):
             var = "SRCREV_%s_pn-%s" % (name, pn)
         raise FetchError("Please set %s to a valid value" % var, ud.url)
     if rev == "AUTOINC":
-        rev = ud.method.latest_revision(ud.url, ud, d, name)
+        rev = ud.method.latest_revision(ud, d, name)
 
     return rev
 
@@ -1009,7 +1009,7 @@ class FetchData(object):
 
         self.method = None
         for m in methods:
-            if m.supports(url, self, d):
+            if m.supports(self, d):
                 self.method = m
                 break                
 
@@ -1031,7 +1031,7 @@ class FetchData(object):
             self.localpath = self.parm["localpath"]
             self.basename = os.path.basename(self.localpath)
         elif self.localfile:
-            self.localpath = self.method.localpath(self.url, self, d)
+            self.localpath = self.method.localpath(self, d)
 
         dldir = d.getVar("DL_DIR", True)
         # Note: .done and .lock files should always be in DL_DIR whereas localpath may not be.
@@ -1055,7 +1055,7 @@ class FetchData(object):
 
     def setup_localpath(self, d):
         if not self.localpath:
-            self.localpath = self.method.localpath(self.url, self, d)
+            self.localpath = self.method.localpath(self, d)
 
     def getSRCDate(self, d):
         """
@@ -1079,13 +1079,13 @@ class FetchMethod(object):
     def __init__(self, urls = []):
         self.urls = []
 
-    def supports(self, url, urldata, d):
+    def supports(self, urldata, d):
         """
         Check to see if this fetch class supports a given url.
         """
         return 0
 
-    def localpath(self, url, urldata, d):
+    def localpath(self, urldata, d):
         """
         Return the local filename of a given url assuming a successful fetch.
         Can also setup variables in urldata for use in go (saving code duplication
@@ -1129,7 +1129,7 @@ class FetchMethod(object):
 
     urls = property(getUrls, setUrls, None, "Urls property")
 
-    def need_update(self, url, ud, d):
+    def need_update(self, ud, d):
         """
         Force a fetch, even if localpath exists?
         """
@@ -1143,7 +1143,7 @@ class FetchMethod(object):
         """
         return False
 
-    def download(self, url, urldata, d):
+    def download(self, urldata, d):
         """
         Fetch urls
         Assumes localpath was called first
@@ -1267,13 +1267,13 @@ class FetchMethod(object):
        """
        bb.utils.remove(urldata.localpath)
 
-    def try_premirror(self, url, urldata, d):
+    def try_premirror(self, urldata, d):
         """
         Should premirrors be used?
         """
         return True
 
-    def checkstatus(self, url, urldata, d):
+    def checkstatus(self, urldata, d):
         """
         Check the status of a URL
         Assumes localpath was called first
@@ -1281,7 +1281,7 @@ class FetchMethod(object):
         logger.info("URL %s could not be checked for status since no method exists.", url)
         return True
 
-    def latest_revision(self, url, ud, d, name):
+    def latest_revision(self, ud, d, name):
         """
         Look in the cache for the latest revision, if not present ask the SCM.
         """
@@ -1289,19 +1289,19 @@ class FetchMethod(object):
             raise ParameterError("The fetcher for this URL does not support _latest_revision", url)
 
         revs = bb.persist_data.persist('BB_URI_HEADREVS', d)
-        key = self.generate_revision_key(url, ud, d, name)
+        key = self.generate_revision_key(ud, d, name)
         try:
             return revs[key]
         except KeyError:
-            revs[key] = rev = self._latest_revision(url, ud, d, name)
+            revs[key] = rev = self._latest_revision(ud, d, name)
             return rev
 
-    def sortable_revision(self, url, ud, d, name):
-        latest_rev = self._build_revision(url, ud, d, name)
+    def sortable_revision(self, ud, d, name):
+        latest_rev = self._build_revision(ud, d, name)
         return True, str(latest_rev)
 
-    def generate_revision_key(self, url, ud, d, name):
-        key = self._revision_key(url, ud, d, name)
+    def generate_revision_key(self, ud, d, name):
+        key = self._revision_key(ud, d, name)
         return "%s-%s" % (key, d.getVar("PN", True) or "")
 
 class Fetch(object):
@@ -1372,9 +1372,9 @@ class Fetch(object):
             try:
                 self.d.setVar("BB_NO_NETWORK", network)
  
-                if os.path.exists(ud.donestamp) and not m.need_update(u, ud, self.d):
+                if os.path.exists(ud.donestamp) and not m.need_update(ud, self.d):
                     localpath = ud.localpath
-                elif m.try_premirror(u, ud, self.d):
+                elif m.try_premirror(ud, self.d):
                     logger.debug(1, "Trying PREMIRRORS")
                     mirrors = mirror_from_string(self.d.getVar('PREMIRRORS', True))
                     localpath = try_mirrors(self.d, ud, mirrors, False)
@@ -1385,12 +1385,12 @@ class Fetch(object):
                 os.chdir(self.d.getVar("DL_DIR", True))
 
                 firsterr = None
-                if not localpath and ((not os.path.exists(ud.donestamp)) or m.need_update(u, ud, self.d)):
+                if not localpath and ((not os.path.exists(ud.donestamp)) or m.need_update(ud, self.d)):
                     try:
                         logger.debug(1, "Trying Upstream")
-                        m.download(u, ud, self.d)
+                        m.download(ud, self.d)
                         if hasattr(m, "build_mirror_data"):
-                            m.build_mirror_data(u, ud, self.d)
+                            m.build_mirror_data(ud, self.d)
                         localpath = ud.localpath
                         # early checksum verify, so that if checksum mismatched,
                         # fetcher still have chance to fetch from mirror
@@ -1452,7 +1452,7 @@ class Fetch(object):
             if not ret:
                 # Next try checking from the original uri, u
                 try:
-                    ret = m.checkstatus(u, ud, self.d)
+                    ret = m.checkstatus(ud, self.d)
                 except:
                     # Finally, try checking uri, u, from MIRRORS
                     mirrors = mirror_from_string(self.d.getVar('MIRRORS', True))

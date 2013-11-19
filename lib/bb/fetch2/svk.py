@@ -37,7 +37,7 @@ from   bb.fetch2 import runfetchcmd
 
 class Svk(FetchMethod):
     """Class to fetch a module or modules from svk repositories"""
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with svk.
         """
@@ -54,14 +54,14 @@ class Svk(FetchMethod):
 
         ud.localfile = data.expand('%s_%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision, ud.date), d)
 
-    def need_update(self, url, ud, d):
+    def need_update(self, ud, d):
         if ud.date == "now":
             return True
         if not os.path.exists(ud.localpath):
             return True
         return False
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
         """Fetch urls"""
 
         svkroot = ud.host + ud.path
@@ -81,11 +81,11 @@ class Svk(FetchMethod):
         tmpfile = tmpfile.strip()
         if not tmpfile:
             logger.error()
-            raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", loc)
+            raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", ud.url)
 
         # check out sources there
         os.chdir(tmpfile)
-        logger.info("Fetch " + loc)
+        logger.info("Fetch " + ud.url)
         logger.debug(1, "Running %s", svkcmd)
         runfetchcmd(svkcmd, d, cleanup = [tmpfile])
 

@@ -20,7 +20,7 @@ class Osc(FetchMethod):
     """Class to fetch a module or modules from Opensuse build server
        repositories."""
 
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with osc.
         """
@@ -77,7 +77,7 @@ class Osc(FetchMethod):
 
         return osccmd
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
         """
         Fetch url
         """
@@ -86,7 +86,7 @@ class Osc(FetchMethod):
 
         if os.access(os.path.join(data.expand('${OSCDIR}', d), ud.path, ud.module), os.R_OK):
             oscupdatecmd = self._buildosccommand(ud, d, "update")
-            logger.info("Update "+ loc)
+            logger.info("Update "+ ud.url)
             # update sources there
             os.chdir(ud.moddir)
             logger.debug(1, "Running %s", oscupdatecmd)
@@ -94,7 +94,7 @@ class Osc(FetchMethod):
             runfetchcmd(oscupdatecmd, d)
         else:
             oscfetchcmd = self._buildosccommand(ud, d, "fetch")
-            logger.info("Fetch " + loc)
+            logger.info("Fetch " + ud.url)
             # check out sources there
             bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)

@@ -31,7 +31,7 @@ from   bb.fetch2 import runfetchcmd
 
 class Repo(FetchMethod):
     """Class to fetch a module or modules from repo (git) repositories"""
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with repo.
         """
@@ -53,7 +53,7 @@ class Repo(FetchMethod):
 
         ud.localfile = data.expand("repo_%s%s_%s_%s.tar.gz" % (ud.host, ud.path.replace("/", "."), ud.manifest, ud.branch), d)
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
         """Fetch url"""
 
         if os.access(os.path.join(data.getVar("DL_DIR", d, True), ud.localfile), os.R_OK):
@@ -91,8 +91,8 @@ class Repo(FetchMethod):
     def supports_srcrev(self):
         return False
 
-    def _build_revision(self, url, ud, d):
+    def _build_revision(self, ud, d):
         return ud.manifest
 
-    def _want_sortable_revision(self, url, ud, d):
+    def _want_sortable_revision(self, ud, d):
         return False

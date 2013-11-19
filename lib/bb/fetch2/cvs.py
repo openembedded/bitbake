@@ -36,7 +36,7 @@ class Cvs(FetchMethod):
     """
     Class to fetch a module or modules from cvs repositories
     """
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with cvs.
         """
@@ -65,14 +65,14 @@ class Cvs(FetchMethod):
 
         ud.localfile = bb.data.expand('%s_%s_%s_%s%s%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.tag, ud.date, norecurse, fullpath), d)
 
-    def need_update(self, url, ud, d):
+    def need_update(self, ud, d):
         if (ud.date == "now"):
             return True
         if not os.path.exists(ud.localpath):
             return True
         return False
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
 
         method = ud.parm.get('method', 'pserver')
         localdir = ud.parm.get('localdir', ud.module)
@@ -124,13 +124,13 @@ class Cvs(FetchMethod):
         pkgdir = os.path.join(d.getVar('CVSDIR', True), pkg)
         moddir = os.path.join(pkgdir, localdir)
         if os.access(os.path.join(moddir, 'CVS'), os.R_OK):
-            logger.info("Update " + loc)
+            logger.info("Update " + ud.url)
             bb.fetch2.check_network_access(d, cvsupdatecmd, ud.url)
             # update sources there
             os.chdir(moddir)
             cmd = cvsupdatecmd
         else:
-            logger.info("Fetch " + loc)
+            logger.info("Fetch " + ud.url)
             # check out sources there
             bb.utils.mkdirhier(pkgdir)
             os.chdir(pkgdir)

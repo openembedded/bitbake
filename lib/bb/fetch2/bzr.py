@@ -34,7 +34,7 @@ from bb.fetch2 import runfetchcmd
 from bb.fetch2 import logger
 
 class Bzr(FetchMethod):
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         return ud.type in ['bzr']
 
     def urldata_init(self, ud, d):
@@ -81,12 +81,12 @@ class Bzr(FetchMethod):
 
         return bzrcmd
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
         """Fetch url"""
 
         if os.access(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir), '.bzr'), os.R_OK):
             bzrcmd = self._buildbzrcommand(ud, d, "update")
-            logger.debug(1, "BZR Update %s", loc)
+            logger.debug(1, "BZR Update %s", ud.url)
             bb.fetch2.check_network_access(d, bzrcmd, ud.url)
             os.chdir(os.path.join (ud.pkgdir, os.path.basename(ud.path)))
             runfetchcmd(bzrcmd, d)
@@ -94,7 +94,7 @@ class Bzr(FetchMethod):
             bb.utils.remove(os.path.join(ud.pkgdir, os.path.basename(ud.pkgdir)), True)
             bzrcmd = self._buildbzrcommand(ud, d, "fetch")
             bb.fetch2.check_network_access(d, bzrcmd, ud.url)
-            logger.debug(1, "BZR Checkout %s", loc)
+            logger.debug(1, "BZR Checkout %s", ud.url)
             bb.utils.mkdirhier(ud.pkgdir)
             os.chdir(ud.pkgdir)
             logger.debug(1, "Running %s", bzrcmd)
@@ -114,17 +114,17 @@ class Bzr(FetchMethod):
     def supports_srcrev(self):
         return True
 
-    def _revision_key(self, url, ud, d, name):
+    def _revision_key(self, ud, d, name):
         """
         Return a unique key for the url
         """
         return "bzr:" + ud.pkgdir
 
-    def _latest_revision(self, url, ud, d, name):
+    def _latest_revision(self, ud, d, name):
         """
         Return the latest upstream revision number
         """
-        logger.debug(2, "BZR fetcher hitting network for %s", url)
+        logger.debug(2, "BZR fetcher hitting network for %s", ud.url)
 
         bb.fetch2.check_network_access(d, self._buildbzrcommand(ud, d, "revno"), ud.url)
 
@@ -132,12 +132,12 @@ class Bzr(FetchMethod):
 
         return output.strip()
 
-    def sortable_revision(self, url, ud, d, name):
+    def sortable_revision(self, ud, d, name):
         """
         Return a sortable revision number which in our case is the revision number
         """
 
-        return False, self._build_revision(url, ud, d)
+        return False, self._build_revision(ud, d)
 
-    def _build_revision(self, url, ud, d):
+    def _build_revision(self, ud, d):
         return ud.revision

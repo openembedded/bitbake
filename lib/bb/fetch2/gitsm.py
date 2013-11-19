@@ -27,7 +27,7 @@ from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger
 
 class GitSM(Git):
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with git.
         """
@@ -42,7 +42,7 @@ class GitSM(Git):
                 pass
         return False
 
-    def update_submodules(self, u, ud, d):
+    def update_submodules(self, ud, d):
         # We have to convert bare -> full repo, do the submodule bit, then convert back
         tmpclonedir = ud.clonedir + ".tmp"
         gitdir = tmpclonedir + os.sep + ".git"
@@ -58,13 +58,13 @@ class GitSM(Git):
         os.rename(gitdir, ud.clonedir,)
         bb.utils.remove(tmpclonedir, True)
 
-    def download(self, loc, ud, d):
-        Git.download(self, loc, ud, d)
+    def download(self, ud, d):
+        Git.download(self, ud, d)
 
         os.chdir(ud.clonedir)
         submodules = self.uses_submodules(ud, d)
         if submodules:
-            self.update_submodules(loc, ud, d)
+            self.update_submodules(ud, d)
 
     def unpack(self, ud, destdir, d):
         Git.unpack(self, ud, destdir, d)

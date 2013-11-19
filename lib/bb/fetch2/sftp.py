@@ -72,7 +72,7 @@ from bb.fetch2 import runfetchcmd
 class SFTP(FetchMethod):
     """Class to fetch urls via 'sftp'"""
 
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with sftp.
         """
@@ -95,10 +95,10 @@ class SFTP(FetchMethod):
 
         ud.localfile = data.expand(urllib.unquote(ud.basename), d)
 
-    def download(self, uri, ud, d):
+    def download(self, ud, d):
         """Fetch urls"""
 
-        urlo = URI(uri)
+        urlo = URI(ud.url)
         basecmd = 'sftp -oPasswordAuthentication=no'
         port = ''
         if urlo.port:
@@ -124,6 +124,6 @@ class SFTP(FetchMethod):
         cmd = '%s %s %s %s' % (basecmd, port, commands.mkarg(remote),
                                commands.mkarg(lpath))
 
-        bb.fetch2.check_network_access(d, cmd, uri)
+        bb.fetch2.check_network_access(d, cmd, ud.url)
         runfetchcmd(cmd, d)
         return True

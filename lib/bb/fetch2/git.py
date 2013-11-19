@@ -73,7 +73,7 @@ class Git(FetchMethod):
     def init(self, d):
         pass
 
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with git.
         """
@@ -142,10 +142,10 @@ class Git(FetchMethod):
 
         ud.localfile = ud.clonedir
 
-    def localpath(self, url, ud, d):
+    def localpath(self, ud, d):
         return ud.clonedir
 
-    def need_update(self, u, ud, d):
+    def need_update(self, ud, d):
         if not os.path.exists(ud.clonedir):
             return True
         os.chdir(ud.clonedir)
@@ -156,7 +156,7 @@ class Git(FetchMethod):
             return True
         return False
 
-    def try_premirror(self, u, ud, d):
+    def try_premirror(self, ud, d):
         # If we don't do this, updating an existing checkout with only premirrors
         # is not possible
         if d.getVar("BB_FETCH_PREMIRRORONLY", True) is not None:
@@ -165,7 +165,7 @@ class Git(FetchMethod):
             return False
         return True
 
-    def download(self, loc, ud, d):
+    def download(self, ud, d):
         """Fetch url"""
 
         if ud.user:
@@ -214,7 +214,7 @@ class Git(FetchMethod):
             runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
             ud.repochanged = True
 
-    def build_mirror_data(self, url, ud, d):
+    def build_mirror_data(self, ud, d):
         # Generate a mirror tarball if needed
         if ud.write_tarballs and (ud.repochanged or not os.path.exists(ud.fullmirror)):
             # it's possible that this symlink points to read-only filesystem with PREMIRROR
@@ -292,13 +292,13 @@ class Git(FetchMethod):
             raise bb.fetch2.FetchError("The command '%s' gave output with more then 1 line unexpectedly, output: '%s'" % (cmd, output))
         return output.split()[0] != "0"
 
-    def _revision_key(self, url, ud, d, name):
+    def _revision_key(self, ud, d, name):
         """
         Return a unique key for the url
         """
         return "git:" + ud.host + ud.path.replace('/', '.') + ud.branches[name]
 
-    def _latest_revision(self, url, ud, d, name):
+    def _latest_revision(self, ud, d, name):
         """
         Compute the HEAD revision for the url
         """
@@ -314,14 +314,14 @@ class Git(FetchMethod):
             bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
         if not output:
-            raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, url)
+            raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, ud.url)
         return output.split()[0]
 
-    def _build_revision(self, url, ud, d, name):
+    def _build_revision(self, ud, d, name):
         return ud.revisions[name]
 
-    def checkstatus(self, uri, ud, d):
-        fetchcmd = "%s ls-remote %s" % (ud.basecmd, uri)
+    def checkstatus(self, ud, d):
+        fetchcmd = "%s ls-remote %s" % (ud.basecmd, ud.url)
         try:
             runfetchcmd(fetchcmd, d, quiet=True)
             return True
