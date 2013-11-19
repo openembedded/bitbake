@@ -1109,10 +1109,13 @@ class BBCooker:
 
         def buildFileIdle(server, rq, abort):
 
+            msg = None
             if abort or self.state == state.forceshutdown:
                 rq.finish_runqueue(True)
+                msg = "Forced shutdown"
             elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
+                msg = "Stopped build"
             failures = 0
             try:
                 retval = rq.execute_runqueue()
@@ -1125,7 +1128,7 @@ class BBCooker:
 
             if not retval:
                 bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, item, failures), self.event_data)
-                self.command.finishAsyncCommand()
+                self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
                 return True
@@ -1139,10 +1142,13 @@ class BBCooker:
         """
 
         def buildTargetsIdle(server, rq, abort):
+            msg = None
             if abort or self.state == state.forceshutdown:
                 rq.finish_runqueue(True)
+                msg = "Forced shutdown"
             elif self.state == state.shutdown:
                 rq.finish_runqueue(False)
+                msg = "Stopped build"
             failures = 0
             try:
                 retval = rq.execute_runqueue()
@@ -1155,7 +1161,7 @@ class BBCooker:
 
             if not retval:
                 bb.event.fire(bb.event.BuildCompleted(len(rq.rqdata.runq_fnid), buildname, targets, failures), self.data)
-                self.command.finishAsyncCommand()
+                self.command.finishAsyncCommand(msg)
                 return False
             if retval is True:
                 return True

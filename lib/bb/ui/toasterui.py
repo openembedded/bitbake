@@ -217,6 +217,13 @@ def main(server, eventHandler, params ):
             if isinstance(event, (bb.command.CommandCompleted,
                                   bb.command.CommandFailed,
                                   bb.command.CommandExit)):
+                if (isinstance(event, bb.command.CommandFailed)):
+                    event.levelno = format.ERROR
+                    event.msg = event.error
+                    event.pathname = ""
+                    event.lineno = 0
+                    buildinfohelper.store_log_event(event)
+                    errors += 1
 
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
 
