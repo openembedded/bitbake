@@ -283,12 +283,14 @@ class Git(FetchMethod):
 
     def _contains_ref(self, tag, branch, d):
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
-        cmd = "%s merge-base --is-ancestorlog %s %s" % (basecmd, tag, branch)
+        cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (basecmd, tag, branch)
         try:
             output = runfetchcmd(cmd, d, quiet=True)
         except bb.fetch2.FetchError:
             return False
-        return True
+        if len(output.split()) > 1:
+            raise bb.fetch2.FetchError("The command '%s' gave output with more then 1 line unexpectedly, output: '%s'" % (cmd, output))
+        return output.split()[0] != "0"
 
     def _revision_key(self, url, ud, d, name):
         """
