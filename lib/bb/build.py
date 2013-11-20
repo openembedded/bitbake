@@ -288,7 +288,7 @@ set -e
         if bb.msg.loggerVerboseLogs:
             script.write("set -x\n")
         if cwd:
-            script.write("cd %s\n" % cwd)
+            script.write("cd '%s'\n" % cwd)
         script.write("%s\n" % func)
         script.write('''
 # cleanup
