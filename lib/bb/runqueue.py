@@ -1204,6 +1204,8 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
         self.stampcache = {}
 
+        initial_covered = self.rq.scenequeue_covered.copy()
+
         # Mark initial buildable tasks
         for task in xrange(self.stats.total):
             self.runq_running.append(0)
@@ -1257,12 +1259,27 @@ class RunQueueExecuteTasks(RunQueueExecute):
             except TypeError:
                 covered_remove = bb.utils.better_eval(call2, locs)
 
-        for task in covered_remove:
+        def removecoveredtask(task):
             fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
             taskname = self.rqdata.runq_task[task] + '_setscene'
             bb.build.del_stamp(taskname, self.rqdata.dataCache, fn)
-            logger.debug(1, 'Not skipping task %s due to setsceneverify', task)
             self.rq.scenequeue_covered.remove(task)
+
+        toremove = covered_remove
+        for task in toremove:
+            logger.debug(1, 'Not skipping task %s due to setsceneverify', task)
+        while toremove:
+            covered_remove = []
+            for task in toremove:
+                removecoveredtask(task)
+                for deptask in self.rqdata.runq_depends[task]:
+                    if deptask not in self.rq.scenequeue_covered:
+                        continue
+                    if deptask in toremove or deptask in covered_remove or deptask in initial_covered:
+                        continue
+                    logger.debug(1, 'Task %s depends on task %s so not skipping' % (task, deptask))
+                    covered_remove.append(deptask)
+            toremove = covered_remove
 
         logger.debug(1, 'Full skip list %s', self.rq.scenequeue_covered)
 
