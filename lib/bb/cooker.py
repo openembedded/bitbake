@@ -706,14 +706,9 @@ class BBCooker:
         logger.info("Task dependencies saved to 'task-depends.dot'")
 
     def show_appends_with_no_recipes( self ):
-        recipes = set(os.path.basename(f)
-                      for f in self.recipecache.pkg_fn.iterkeys())
-        recipes |= set(os.path.basename(f)
-                      for f in self.skiplist.iterkeys())
-        appended_recipes = self.collection.appendlist.iterkeys()
         appends_without_recipes = [self.collection.appendlist[recipe]
-                                   for recipe in appended_recipes
-                                   if recipe not in recipes]
+                                   for recipe in self.collection.appendlist
+                                   if recipe not in self.collection.appliedappendlist]
         if appends_without_recipes:
             appendlines = ('  %s' % append
                            for appends in appends_without_recipes
@@ -1371,6 +1366,7 @@ class CookerExit(bb.event.Event):
 class CookerCollectFiles(object):
     def __init__(self, priorities):
         self.appendlist = {}
+        self.appliedappendlist = []
         self.bbfile_config_priorities = priorities
 
     def calc_bbfile_priority( self, filename, matched = None ):
@@ -1487,10 +1483,14 @@ class CookerCollectFiles(object):
         """
         Returns a list of .bbappend files to apply to fn
         """
+        filelist = []
         f = os.path.basename(fn)
-        if f in self.appendlist:
-            return self.appendlist[f]
-        return []
+        for bbappend in self.appendlist:
+            if bbappend in f or ('%' in bbappend and bbappend.startswith(f[:bbappend.index('%')])):
+                self.appliedappendlist.append(bbappend)
+                for filename in self.appendlist[bbappend]:
+                    filelist.append(filename)
+        return filelist
 
     def collection_priorities(self, pkgfns):
 
