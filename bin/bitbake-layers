@@ -55,10 +55,16 @@ def main(args):
 
 class Commands(cmd.Cmd):
     def __init__(self):
-        cmd.Cmd.__init__(self)
-        self.bbhandler = bb.tinfoil.Tinfoil()
+        self.bbhandler = None
         self.returncode = 0
-        self.bblayers = (self.bbhandler.config_data.getVar('BBLAYERS', True) or "").split()
+        self.bblayers = []
+        cmd.Cmd.__init__(self)
+
+    def init_bbhandler(self, config_only = False):
+        if not self.bbhandler:
+            self.bbhandler = bb.tinfoil.Tinfoil()
+            self.bblayers = (self.bbhandler.config_data.getVar('BBLAYERS', True) or "").split()
+            self.bbhandler.prepare(config_only)
 
     def default(self, line):
         """Handle unrecognised commands"""
@@ -83,7 +89,7 @@ class Commands(cmd.Cmd):
 
     def do_show_layers(self, args):
         """show current configured layers"""
-        self.bbhandler.prepare(config_only = True)
+        self.init_bbhandler(config_only = True)
         logger.plain("%s  %s  %s" % ("layer".ljust(20), "path".ljust(40), "priority"))
         logger.plain('=' * 74)
         for layerdir in self.bblayers:
@@ -120,7 +126,7 @@ Options:
        recipes with the ones they overlay indented underneath
   -s   only list overlayed recipes where the version is the same
 """
-        self.bbhandler.prepare()
+        self.init_bbhandler()
 
         show_filenames = False
         show_same_ver_only = False
@@ -203,7 +209,7 @@ Options:
   -m   only list where multiple recipes (in the same layer or different
        layers) exist for the same recipe name
 """
-        self.bbhandler.prepare()
+        self.init_bbhandler()
 
         show_filenames = False
         show_multi_provider_only = False
@@ -341,7 +347,7 @@ build results (as the layer priority order has effectively changed).
             logger.error('Directory %s exists and is non-empty, please clear it out first' % outputdir)
             return
 
-        self.bbhandler.prepare()
+        self.init_bbhandler()
         layers = self.bblayers
         if len(arglist) > 2:
             layernames = arglist[:-1]
@@ -497,7 +503,7 @@ usage: show-appends
 
 Recipes are listed with the bbappends that apply to them as subitems.
 """
-        self.bbhandler.prepare()
+        self.init_bbhandler()
         if not self.bbhandler.cooker.collection.appendlist:
             logger.plain('No append files found')
             return
@@ -570,7 +576,7 @@ Options:
 NOTE:
 The .bbappend file can impact the dependency.
 """
-        self.bbhandler.prepare()
+        self.init_bbhandler()
 
         show_filenames = False
         for arg in args.split():
