@@ -174,6 +174,15 @@ class RunningBuild (gobject.GObject):
                       color,
                       0))
 
+            # if there are warnings, mark the task with warning
+            # color;
+            # in case there are errors, the updates will be
+            #  handled on TaskFailed.
+            if color == HobColors.WARNING:
+                self.model.set(parent, self.model.COL_COLOR, color)
+                if task: #then we have a parent, and update it's color
+                    self.model.set(self.tasks_to_iter[(package, None)], self.model.COL_COLOR, color)
+
         elif isinstance(event, bb.build.TaskStarted):
             (package, task) = (event._package, event._task)
 
@@ -201,9 +210,10 @@ class RunningBuild (gobject.GObject):
 
             # Because this parent package now has an active child mark it as
             # such.
-            # @todo if parent is already in error, don't mark it green
-            self.model.set(parent, self.model.COL_ICON, "gtk-execute",
-                           self.model.COL_COLOR, HobColors.RUNNING)
+            self.model.set(parent, self.model.COL_ICON, "gtk-execute")
+            parent_color = self.model.get(parent, self.model.COL_COLOR)[0]
+            if parent_color != HobColors.ERROR and parent_color != HobColors.WARNING:
+                self.model.set(parent, self.model.COL_COLOR, HobColors.RUNNING)
 
             # Add an entry in the model for this task
             i = self.model.append (parent, (None,
@@ -246,20 +256,28 @@ class RunningBuild (gobject.GObject):
                     self.model.set(i, self.model.COL_ICON, icon,
                                    self.model.COL_COLOR, color)
             else:
-                icon = None
-                color = HobColors.OK
+                # Mark the parent package and the task as inactive,
+                # but make sure to preserve error, warnings and active
+                # states
+                parent_color = self.model.get(parent, self.model.COL_COLOR)[0]
+                task_color = self.model.get(current, self.model.COL_COLOR)[0]
 
                 # Mark the task as inactive
-                self.model.set(current, self.model.COL_ICON, icon,
-                               self.model.COL_COLOR, color)
+                self.model.set(current, self.model.COL_ICON, None)
+                if task_color != HobColors.ERROR:
+                    if task_color == HobColors.WARNING:
+                        self.model.set(current, self.model.COL_ICON, 'dialog-warning')
+                    else:
+                        self.model.set(current, self.model.COL_COLOR, HobColors.OK)
 
-                # Mark the parent package as inactive, but make sure to
-                # preserve error and active states
-                i = self.tasks_to_iter[(package, None)]
-                if self.model.get(parent, self.model.COL_ICON) != 'dialog-error':
-                    self.model.set(parent, self.model.COL_ICON, icon)
-                    if num_active == 0:
-                        self.model.set(parent, self.model.COL_COLOR, HobColors.OK)
+                # Mark the parent as inactive
+                if parent_color != HobColors.ERROR:
+                    if parent_color == HobColors.WARNING:
+                        self.model.set(parent, self.model.COL_ICON, "dialog-warning")
+                    else:
+                        self.model.set(parent, self.model.COL_ICON, None)
+                        if num_active == 0:
+                            self.model.set(parent, self.model.COL_COLOR, HobColors.OK)
 
             # Clear the iters and the pids since when the task goes away the
             # pid will no longer be used for messages
