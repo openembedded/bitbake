@@ -97,7 +97,8 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, quieterror
         except TypeError:
              umask = taskdep['umask'][taskname]
 
-    if 'fakeroot' in taskdep and taskname in taskdep['fakeroot']:
+    # We can't use the fakeroot environment in a dry run as it possibly hasn't been built
+    if 'fakeroot' in taskdep and taskname in taskdep['fakeroot'] and not cfg.dry_run:
         envvars = (workerdata["fakerootenv"][fn] or "").split()
         for key, value in (var.split('=') for var in envvars):
             envbackup[key] = os.environ.get(key)
