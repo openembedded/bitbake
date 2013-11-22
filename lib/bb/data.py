@@ -214,7 +214,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
         o.write('unset %s\n' % varExpanded)
         return 0
 
-    if not val:
+    if val is None:
         return 0
 
     val = str(val)
@@ -229,7 +229,7 @@ def emit_var(var, o=sys.__stdout__, d = init(), all=False):
 
     # if we're going to output this within doublequotes,
     # to a shell, we need to escape the quotes in the var
-    alter = re.sub('"', '\\"', val.strip())
+    alter = re.sub('"', '\\"', val)
     alter = re.sub('\n', ' \\\n', alter)
     o.write('%s="%s"\n' % (varExpanded, alter))
     return 0
