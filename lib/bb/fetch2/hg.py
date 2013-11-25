@@ -62,7 +62,7 @@ class Hg(FetchMethod):
         if 'rev' in ud.parm:
             ud.revision = ud.parm['rev']
         elif not ud.revision:
-            ud.revision = self.latest_revision(ud.url, ud, d)
+            ud.revision = self.latest_revision(ud, d)
 
         ud.localfile = data.expand('%s_%s_%s_%s.tar.gz' % (ud.module.replace('/', '.'), ud.host, ud.path.replace('/', '.'), ud.revision), d)
 

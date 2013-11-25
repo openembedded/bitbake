@@ -48,7 +48,7 @@ class Bzr(FetchMethod):
         ud.setup_revisons(d)
 
         if not ud.revision:
-            ud.revision = self.latest_revision(ud.url, ud, d)
+            ud.revision = self.latest_revision(ud, d)
 
         ud.localfile = data.expand('bzr_%s_%s_%s.tar.gz' % (ud.host, ud.path.replace('/', '.'), ud.revision), d)
 
