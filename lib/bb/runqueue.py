@@ -98,26 +98,49 @@ class RunQueueScheduler(object):
         """
         self.rq = runqueue
         self.rqdata = rqdata
-        numTasks = len(self.rqdata.runq_fnid)
+        self.numTasks = len(self.rqdata.runq_fnid)
 
         self.prio_map = []
-        self.prio_map.extend(range(numTasks))
+        self.prio_map.extend(range(self.numTasks))
+
+        self.buildable = []
+        self.stamps = {}
+        for taskid in xrange(self.numTasks):
+            fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[taskid]]
+            taskname = self.rqdata.runq_task[taskid]
+            self.stamps[taskid] = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
+            if self.rq.runq_buildable[taskid] == 1:
+                self.buildable.append(taskid)
+
+        self.rev_prio_map = None
 
     def next_buildable_task(self):
         """
         Return the id of the first task we find that is buildable
         """
-        for tasknum in xrange(len(self.rqdata.runq_fnid)):
-            taskid = self.prio_map[tasknum]
-            if self.rq.runq_running[taskid] == 1:
-                continue
-            if self.rq.runq_buildable[taskid] == 1:
-                fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[taskid]]
-                taskname = self.rqdata.runq_task[taskid]
-                stamp = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
-                if stamp in self.rq.build_stamps.values():
+        self.buildable = [x for x in self.buildable if not self.rq.runq_running[x] == 1]
+        if not self.buildable:
+            return None
+        if len(self.buildable) == 1:
+            return self.buildable[0]
+
+        if not self.rev_prio_map:
+            self.rev_prio_map = range(self.numTasks)
+            for taskid in xrange(self.numTasks):
+                self.rev_prio_map[self.prio_map[taskid]] = taskid
+
+        best = None
+        bestprio = None
+        for taskid in self.buildable:
+            prio = self.rev_prio_map[taskid]
+            if not bestprio or bestprio > prio:
+                stamp = self.stamps[taskid]
+                if stamp in self.rq.build_stamps.itervalues():
                     continue
-                return taskid
+                bestprio = prio
+                best = taskid
+
+        return best
 
     def next(self):
         """
@@ -125,6 +148,9 @@ class RunQueueScheduler(object):
         """
         if self.rq.stats.active < self.rq.number_tasks:
             return self.next_buildable_task()
+
+    def newbuilable(self, task):
+        self.buildable.append(task)
 
 class RunQueueSchedulerSpeed(RunQueueScheduler):
     """
@@ -137,9 +163,7 @@ class RunQueueSchedulerSpeed(RunQueueScheduler):
         """
         The priority map is sorted by task weight.
         """
-
-        self.rq = runqueue
-        self.rqdata = rqdata
+        RunQueueScheduler.__init__(self, runqueue, rqdata)
 
         sortweight = sorted(copy.deepcopy(self.rqdata.runq_weight))
         copyweight = copy.deepcopy(self.rqdata.runq_weight)
@@ -1116,6 +1140,7 @@ class RunQueueExecute:
         self.runq_complete = []
 
         self.build_stamps = {}
+        self.build_stamps2 = []
         self.failed_fnids = []
 
         self.stampcache = {}
@@ -1128,6 +1153,7 @@ class RunQueueExecute:
 
         # self.build_stamps[pid] may not exist when use shared work directory.
         if task in self.build_stamps:
+            self.build_stamps2.remove(self.build_stamps[task])
             del self.build_stamps[task]
 
         if status != 0:
@@ -1317,6 +1343,10 @@ class RunQueueExecuteTasks(RunQueueExecute):
                     schedulers.add(getattr(module, name))
         return schedulers
 
+    def setbuildable(self, task):
+        self.runq_buildable[task] = 1
+        self.sched.newbuilable(task)
+
     def task_completeoutright(self, task):
         """
         Mark a task as completed
@@ -1334,7 +1364,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 if self.runq_complete[dep] != 1:
                     alldeps = 0
             if alldeps == 1:
-                self.runq_buildable[revdep] = 1
+                self.setbuildable(revdep)
                 fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[revdep]]
                 taskname = self.rqdata.runq_task[revdep]
                 logger.debug(1, "Marking task %s (%s, %s) as buildable", revdep, fn, taskname)
@@ -1358,7 +1388,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
 
     def task_skip(self, task, reason):
         self.runq_running[task] = 1
-        self.runq_buildable[task] = 1
+        self.setbuildable(task)
         bb.event.fire(runQueueTaskSkipped(task, self.stats, self.rq, reason), self.cfgData)
         self.task_completeoutright(task)
         self.stats.taskCompleted()
@@ -1418,6 +1448,7 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 self.rq.worker.stdin.flush()
 
             self.build_stamps[task] = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
+            self.build_stamps2.append(self.build_stamps[task]) 
             self.runq_running[task] = 1
             self.stats.taskActive()
             if self.stats.active < self.number_tasks:
