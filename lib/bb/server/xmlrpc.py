@@ -198,6 +198,11 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         Constructor
         """
         BaseImplServer.__init__(self)
+        if (interface[1] == 0):     # anonymous port, not getting reused
+            self.single_use = True
+        # Use auto port configuration
+        if (interface[1] == -1):
+            interface = (interface[0], 0)
         SimpleXMLRPCServer.__init__(self, interface,
                                     requestHandler=BitBakeXMLRPCRequestHandler,
                                     logRequests=False, allow_none=True)
@@ -208,8 +213,6 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
         self.autoregister_all_functions(self.commands, "")
         self.interface = interface
         self.single_use = False
-        if (interface[1] == 0):     # anonymous port, not getting reused
-            self.single_use = True
 
     def addcooker(self, cooker):
         BaseImplServer.addcooker(self, cooker)

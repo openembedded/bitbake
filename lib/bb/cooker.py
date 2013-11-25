@@ -125,6 +125,14 @@ class BBCooker:
         self.lock = bb.utils.lockfile(lockfile, False, False)
         if not self.lock:
             bb.fatal("Only one copy of bitbake should be run against a build directory")
+        try:
+            self.lock.seek(0)
+            self.lock.truncate()
+            if len(configuration.interface) >= 2:
+                self.lock.write("%s:%s\n" % (configuration.interface[0], configuration.interface[1]));
+            self.lock.flush()
+        except:
+            pass
 
         # TOSTOP must not be set or our children will hang when they output
         fd = sys.stdout.fileno()
