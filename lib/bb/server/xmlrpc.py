@@ -338,13 +338,38 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
     def saveConnectionDetails(self, remote):
         self.remote = remote
 
+    def saveConnectionConfigParams(self, configParams):
+        self.configParams = configParams
+
     def establishConnection(self, featureset):
         # The format of "remote" must be "server:port"
         try:
             [host, port] = self.remote.split(":")
             port = int(port)
-        except:
-            return None
+        except Exception as e:
+            bb.fatal("Failed to read remote definition (%s)" % str(e))
+
+        # use automatic port if port set to -1, meaning read it from
+        # the bitbake.lock file
+        if port == -1:
+            lock_location = "%s/bitbake.lock" % self.configParams.environment.get('BUILDDIR')
+            lock = bb.utils.lockfile(lock_location, False, False)
+            if lock:
+                # This means there is no server running which we can
+                # connect to on the local system.
+                bb.utils.unlockfile(lock)
+                return None
+
+            try:
+                lf = open(lock_location, 'r')
+                remotedef = lf.readline()
+                [host, port] = remotedef.split(":")
+                port = int(port)
+                lf.close()
+                self.remote = remotedef
+            except Exception as e:
+                bb.fatal("Failed to read bitbake.lock (%s)" % str(e))
+
         # We need our IP for the server connection. We get the IP
         # by trying to connect with the server
         try:
@@ -352,8 +377,8 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
             s.connect((host, port))
             ip = s.getsockname()[0]
             s.close()
-        except:
-            return None
+        except Exception as e:
+            bb.fatal("Could not create socket for %s:%s (%s)" % (host, port, str(e)))
         try:
             self.serverImpl = XMLRPCProxyServer(host, port)
             self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only, featureset)
