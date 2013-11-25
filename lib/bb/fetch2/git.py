@@ -125,7 +125,7 @@ class Git(FetchMethod):
             if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
                 if ud.revisions[name]:
                     ud.branches[name] = ud.revisions[name]
-                ud.revisions[name] = self.latest_revision(ud.url, ud, d, name)
+                ud.revisions[name] = self.latest_revision(ud, d, name)
 
         gitsrcname = '%s%s' % (ud.host.replace(':','.'), ud.path.replace('/', '.').replace('*', '.'))
         # for rebaseable git repo, it is necessary to keep mirror tar ball
