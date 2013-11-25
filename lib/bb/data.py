@@ -299,6 +299,21 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
         vardeps = varflags.get("vardeps")
         value = d.getVar(key, False)
 
+        def handle_contains(value, contains, d):
+            newvalue = ""
+            for k in contains:
+                l = (d.getVar(k, True) or "").split()
+                for word in contains[k]:
+                    if word in l:
+                        newvalue += "\n%s{%s} = Set" %  (k, word)
+                    else:
+                        newvalue += "\n%s{%s} = Unset" %  (k, word)
+            if not newvalue:
+                return value
+            if not value:
+                return newvalue
+            return value + newvalue
+
         if "vardepvalue" in varflags:
            value = varflags.get("vardepvalue")
         elif varflags.get("func"):
@@ -309,6 +324,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                     logger.warn("Variable %s contains tabs, please remove these (%s)" % (key, d.getVar("FILE", True)))
                 parser.parse_python(parsedvar.value)
                 deps = deps | parser.references
+                value = handle_contains(value, parser.contains, d)
             else:
                 parsedvar = d.expandWithRefs(value, key)
                 parser = bb.codeparser.ShellParser(key, logger)
@@ -318,10 +334,12 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 parser.log.flush()
             deps = deps | parsedvar.references
             deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
+            value = handle_contains(value, parsedvar.contains, d)
         else:
             parser = d.expandWithRefs(value, key)
             deps |= parser.references
             deps = deps | (keys & parser.execs)
+            value = handle_contains(value, parser.contains, d)
 
         # Add varflags, assuming an exclusion list is set
         if varflagsexcl:

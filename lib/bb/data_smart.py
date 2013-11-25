@@ -35,6 +35,7 @@ import hashlib
 import bb, bb.codeparser
 from bb   import utils
 from bb.COW  import COWDictBase
+import collections
 
 logger = logging.getLogger("BitBake.Data")
 
@@ -88,6 +89,7 @@ class VariableParse:
 
         self.references = set()
         self.execs = set()
+        self.contains = collections.defaultdict(set)
 
     def var_sub(self, match):
             key = match.group()[2:-1]
@@ -120,6 +122,8 @@ class VariableParse:
             self.references |= parser.references
             self.execs |= parser.execs
 
+            for k in parser.contains:
+                self.contains[k].update(parser.contains[k])
             value = utils.better_eval(codeobj, DataContext(self.d))
             return str(value)
 

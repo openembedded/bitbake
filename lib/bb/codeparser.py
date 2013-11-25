@@ -1,6 +1,7 @@
 import ast
 import codegen
 import logging
+import collections
 import os.path
 import bb.utils, bb.data
 from itertools import chain
@@ -35,7 +36,7 @@ def check_indent(codestr):
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
-    CACHE_VERSION = 3
+    CACHE_VERSION = 4
 
     def __init__(self):
         MultiProcessCache.__init__(self)
@@ -122,7 +123,11 @@ class PythonParser():
         name = self.called_node_name(node.func)
         if name in self.getvars or name in self.containsfuncs:
             if isinstance(node.args[0], ast.Str):
-                self.references.add(node.args[0].s)
+                varname = node.args[0].s
+                if name in self.containsfuncs and isinstance(node.args[1], ast.Str):
+                    self.contains[varname].add(node.args[1].s)
+                else:                      
+                    self.references.add(node.args[0].s)
             else:
                 self.warn(node.func, node.args[0])
         elif name in self.execfuncs:
@@ -148,6 +153,7 @@ class PythonParser():
 
     def __init__(self, name, log):
         self.var_execs = set()
+        self.contains = collections.defaultdict(set)
         self.execs = set()
         self.references = set()
         self.log = BufferedLogger('BitBake.Data.%s' % name, logging.DEBUG, log)
@@ -161,13 +167,14 @@ class PythonParser():
         if h in codeparsercache.pythoncache:
             self.references = codeparsercache.pythoncache[h]["refs"]
             self.execs = codeparsercache.pythoncache[h]["execs"]
+            self.contains = codeparsercache.pythoncache[h]["contains"]
             return
 
         if h in codeparsercache.pythoncacheextras:
             self.references = codeparsercache.pythoncacheextras[h]["refs"]
             self.execs = codeparsercache.pythoncacheextras[h]["execs"]
+            self.contains = codeparsercache.pythoncacheextras[h]["contains"]
             return
-
 
         code = compile(check_indent(str(node)), "<string>", "exec",
                        ast.PyCF_ONLY_AST)
@@ -181,6 +188,7 @@ class PythonParser():
         codeparsercache.pythoncacheextras[h] = {}
         codeparsercache.pythoncacheextras[h]["refs"] = self.references
         codeparsercache.pythoncacheextras[h]["execs"] = self.execs
+        codeparsercache.pythoncacheextras[h]["contains"] = self.contains
 
 class ShellParser():
     def __init__(self, name, log):
