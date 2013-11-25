@@ -190,6 +190,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("", "--observe-only", help = "Connect to a server as an observing-only client.",
                    action = "store_true", dest = "observe_only", default = False)
 
+        parser.add_option("", "--status-only", help = "Check the status of the remote bitbake server.",
+                   action = "store_true", dest = "status_only", default = False)
+
         options, targets = parser.parse_args(sys.argv)
 
         # some environmental variables set also configuration options
@@ -284,7 +287,9 @@ def main():
 
     # Ensure logging messages get sent to the UI as events
     handler = bb.event.LogHandler()
-    logger.addHandler(handler)
+    if not configParams.status_only:
+        # In status only mode there are no logs and no UI
+        logger.addHandler(handler)
 
     # Clear away any spurious environment variables while we stoke up the cooker
     cleanedvars = bb.utils.clean_environment()
@@ -301,6 +306,14 @@ def main():
     if not configParams.server_only:
         # Collect the feature set for the UI
         featureset = getattr(ui_module, "featureSet", [])
+
+        if configParams.status_only:
+            try:
+                server_connection = server.establishConnection(featureset)
+            except:
+                sys.exit(1)
+            server_connection.terminate()
+            sys.exit(0)
 
         # Setup a connection to the server (cooker)
         server_connection = server.establishConnection(featureset)
