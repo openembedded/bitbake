@@ -122,7 +122,7 @@ class PythonParser():
         name = self.called_node_name(node.func)
         if name in self.getvars or name in self.containsfuncs:
             if isinstance(node.args[0], ast.Str):
-                self.var_references.add(node.args[0].s)
+                self.references.add(node.args[0].s)
             else:
                 self.warn(node.func, node.args[0])
         elif name in self.execfuncs:
@@ -147,7 +147,6 @@ class PythonParser():
                 break
 
     def __init__(self, name, log):
-        self.var_references = set()
         self.var_execs = set()
         self.execs = set()
         self.references = set()
@@ -177,7 +176,6 @@ class PythonParser():
             if n.__class__.__name__ == "Call":
                 self.visit_Call(n)
 
-        self.references.update(self.var_references)
         self.references.update(self.var_execs)
 
         codeparsercache.pythoncacheextras[h] = {}
