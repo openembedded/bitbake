@@ -185,6 +185,7 @@ class BuildDetailsPage (HobPage):
     def show_issues(self):
         self.num_of_issues += 1
         self.notebook.show_indicator_icon("Issues", self.num_of_issues)
+        self.notebook.queue_draw()
 
     def reset_issues(self):
         self.num_of_issues = 0
