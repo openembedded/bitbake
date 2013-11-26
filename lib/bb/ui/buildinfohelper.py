@@ -20,15 +20,16 @@ import datetime
 import sys
 import bb
 import re
+import ast
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toaster.toastermain.settings")
 
 import toaster.toastermain.settings as toaster_django_settings
 from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage
 from toaster.orm.models import Variable, VariableHistory
-from toaster.orm.models import Target_Package, Build_Package, Build_File
-from toaster.orm.models import Task_Dependency, Build_Package_Dependency
-from toaster.orm.models import Target_Package_Dependency, Recipe_Dependency
+from toaster.orm.models import Package, Package_File, Target_Installed_Package
+from toaster.orm.models import Task_Dependency, Package_Dependency
+from toaster.orm.models import Recipe_Dependency
 from bb.msg import BBLogFormatter as format
 
 class ORMWrapper(object):
@@ -148,21 +149,48 @@ class ORMWrapper(object):
         return layer_object[0]
 
 
-    def save_target_package_information(self, target_obj, packagedict, bldpkgs, recipes):
+    def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes):
         for p in packagedict:
-            packagedict[p]['object'] = Target_Package.objects.create( target = target_obj,
-                                        name = p,
-                                        size = packagedict[p]['size'])
-            if p in bldpkgs:
-                packagedict[p]['object'].version = bldpkgs[p]['version']
-                packagedict[p]['object'].recipe =  recipes[bldpkgs[p]['pn']]
-                packagedict[p]['object'].save()
+            packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = p )
+            if created:
+                # package was not build in the current build, but
+                # fill in everything we can from the runtime-reverse package data
+                try:
+                    packagedict[p]['object'].recipe = recipes[pkgpnmap[p]['PN']]
+                    packagedict[p]['object'].version = pkgpnmap[p]['PV']
+                    packagedict[p]['object'].revision = pkgpnmap[p]['PR']
+                    packagedict[p]['object'].license = pkgpnmap[p]['LICENSE']
+                    packagedict[p]['object'].section = pkgpnmap[p]['SECTION']
+                    packagedict[p]['object'].summary = pkgpnmap[p]['SUMMARY']
+                    packagedict[p]['object'].description = pkgpnmap[p]['DESCRIPTION']
+                    packagedict[p]['object'].size = int(pkgpnmap[p]['PKGSIZE'])
+
+                # no files recorded for this package, so save files info
+                    for targetpath in pkgpnmap[p]['FILES_INFO']:
+                        targetfilesize = pkgpnmap[p]['FILES_INFO'][targetpath]
+                        Package_File.objects.create( package = packagedict[p]['object'],
+                            path = targetpath,
+                            size = targetfilesize)
+                except KeyError as e:
+                    print "Key error, package", p, "key", e
+
+            # save disk installed size
+            packagedict[p]['object'].installed_size = packagedict[p]['size']
+            packagedict[p]['object'].save()
+
+            Target_Installed_Package.objects.create(target = target_obj, package = packagedict[p]['object'])
 
         for p in packagedict:
             for (px,deptype) in packagedict[p]['depends']:
-                Target_Package_Dependency.objects.create( package = packagedict[p]['object'],
+                if deptype == 'depends':
+                    tdeptype = Package_Dependency.TYPE_TRDEPENDS
+                elif deptype == 'recommends':
+                    tdeptype = Package_Dependency.TYPE_TRECOMMENDS
+
+                Package_Dependency.objects.create( package = packagedict[p]['object'],
                                         depends_on = packagedict[px]['object'],
-                                        dep_type = deptype);
+                                        dep_type = tdeptype,
+                                        target = target_obj);
 
 
     def create_logmessage(self, log_information):
@@ -180,48 +208,53 @@ class ORMWrapper(object):
 
     def save_build_package_information(self, build_obj, package_info, recipes):
         # create and save the object
-        bp_object = Build_Package.objects.create( build = build_obj,
-                                       recipe = recipes[package_info['PN']],
-                                       name = package_info['PKG'],
-                                       version = package_info['PKGV'],
-                                       revision = package_info['PKGR'],
-                                       summary = package_info['SUMMARY'],
-                                       description = package_info['DESCRIPTION'],
-                                       size = int(package_info['PKGSIZE']),
-                                       section = package_info['SECTION'],
-                                       license = package_info['LICENSE'],
-                                       )
+        bp_object, created = Package.objects.get_or_create( build = build_obj,
+                                       name = package_info['PKG'] )
+
+        bp_object.recipe = recipes[package_info['PN']]
+        bp_object.version = package_info['PKGV']
+        bp_object.revision = package_info['PKGR']
+        bp_object.summary = package_info['SUMMARY']
+        bp_object.description = package_info['DESCRIPTION']
+        bp_object.size = int(package_info['PKGSIZE'])
+        bp_object.section = package_info['SECTION']
+        bp_object.license = package_info['LICENSE']
+        bp_object.save()
+
         # save any attached file information
         for path in package_info['FILES_INFO']:
-                fo = Build_File.objects.create( bpackage = bp_object,
+                fo = Package_File.objects.create( package = bp_object,
                                         path = path,
                                         size = package_info['FILES_INFO'][path] )
+
+        def _po_byname(p):
+            return Package.objects.get_or_create(build = build_obj, name = p)[0]
 
         # save soft dependency information
         if 'RDEPENDS' in package_info and package_info['RDEPENDS']:
             for p in bb.utils.explode_deps(package_info['RDEPENDS']):
-                Build_Package_Dependency.objects.get_or_create( package = bp_object,
-                    depends_on = p, dep_type = Build_Package_Dependency.TYPE_RDEPENDS)
+                Package_Dependency.objects.get_or_create( package = bp_object,
+                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RDEPENDS)
         if 'RPROVIDES' in package_info and package_info['RPROVIDES']:
             for p in bb.utils.explode_deps(package_info['RPROVIDES']):
-                Build_Package_Dependency.objects.get_or_create( package = bp_object,
-                    depends_on = p, dep_type = Build_Package_Dependency.TYPE_RPROVIDES)
+                Package_Dependency.objects.get_or_create( package = bp_object,
+                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RPROVIDES)
         if 'RRECOMMENDS' in package_info and package_info['RRECOMMENDS']:
             for p in bb.utils.explode_deps(package_info['RRECOMMENDS']):
-                Build_Package_Dependency.objects.get_or_create( package = bp_object,
-                    depends_on = p, dep_type = Build_Package_Dependency.TYPE_RRECOMMENDS)
+                Package_Dependency.objects.get_or_create( package = bp_object,
+                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RRECOMMENDS)
         if 'RSUGGESTS' in package_info and package_info['RSUGGESTS']:
             for p in bb.utils.explode_deps(package_info['RSUGGESTS']):
-                Build_Package_Dependency.objects.get_or_create( package = bp_object,
-                    depends_on = p, dep_type = Build_Package_Dependency.TYPE_RSUGGESTS)
+                Package_Dependency.objects.get_or_create( package = bp_object,
+                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RSUGGESTS)
         if 'RREPLACES' in package_info and package_info['RREPLACES']:
             for p in bb.utils.explode_deps(package_info['RREPLACES']):
-                Build_Package_Dependency.objects.get_or_create( package = bp_object,
-                    depends_on = p, dep_type = Build_Package_Dependency.TYPE_RREPLACES)
+                Package_Dependency.objects.get_or_create( package = bp_object,
+                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RREPLACES)
         if 'RCONFLICTS' in package_info and package_info['RCONFLICTS']:
             for p in bb.utils.explode_deps(package_info['RCONFLICTS']):
-                Build_Package_Dependency.objects.get_or_create( package = bp_object,
-                    depends_on = p, dep_type = Build_Package_Dependency.TYPE_RCONFLICTS)
+                Package_Dependency.objects.get_or_create( package = bp_object,
+                    depends_on = _po_byname(p), dep_type = Package_Dependency.TYPE_RCONFLICTS)
 
         return bp_object
 
@@ -469,54 +502,13 @@ class BuildInfoHelper(object):
         self.orm_wrapper.get_update_task_object(task_information)
 
 
-    def read_target_package_dep_data(self, event):
-        # for all targets
+    def store_target_package_data(self, event):
+        # for all image targets
         for target in self.internal_state['targets']:
-            # verify that we have something to read
-            if not target.is_image or not self.has_build_history:
-                print "not collecting package info ", target.is_image, self.has_build_history
-                break
-
-            # TODO this is a temporary replication of the code in buildhistory.bbclass
-            # This MUST be changed to query the actual BUILD_DIR_IMAGE in the target context when
-            # the capability will be implemented in Bitbake
-
-            MACHINE_ARCH, error = self.server.runCommand(['getVariable', 'MACHINE_ARCH'])
-            TCLIBC, error = self.server.runCommand(['getVariable', 'TCLIBC'])
-            BUILDHISTORY_DIR, error = self.server.runCommand(['getVariable', 'BUILDHISTORY_DIR'])
-            BUILDHISTORY_DIR_IMAGE = "%s/images/%s/%s/%s" % (BUILDHISTORY_DIR, MACHINE_ARCH, TCLIBC, target.target)
-
-            self.internal_state['packages'] = {}
-
-            with open("%s/installed-package-sizes.txt" % BUILDHISTORY_DIR_IMAGE, "r") as fin:
-                for line in fin:
-                    line = line.rstrip(";")
-                    psize, px = line.split("\t")
-                    punit, pname = px.split(" ")
-                    self.internal_state['packages'][pname.strip()] = {'size':int(psize)*1024, 'depends' : []}
-
-            with open("%s/depends.dot" % BUILDHISTORY_DIR_IMAGE, "r") as fin:
-                p = re.compile(r' -> ')
-                dot = re.compile(r'.*style=dotted')
-                for line in fin:
-                    line = line.rstrip(';')
-                    linesplit = p.split(line)
-                    if len(linesplit) == 2:
-                        pname = linesplit[0].rstrip('"').strip('"')
-                        dependsname = linesplit[1].split(" ")[0].strip().strip(";").strip('"').rstrip('"')
-                        deptype = Target_Package_Dependency.TYPE_DEPENDS
-                        if dot.match(line):
-                            deptype = Target_Package_Dependency.TYPE_RECOMMENDS
-                        if not pname in self.internal_state['packages']:
-                            self.internal_state['packages'][pname] = {'size': 0, 'depends' : []}
-                        if not dependsname in self.internal_state['packages']:
-                            self.internal_state['packages'][dependsname] = {'size': 0, 'depends' : []}
-                        self.internal_state['packages'][pname]['depends'].append((dependsname, deptype))
-
-            self.orm_wrapper.save_target_package_information(target,
-                        self.internal_state['packages'],
-                        self.internal_state['bldpkgs'], self.internal_state['recipes'])
-
+            if target.is_image:
+                pkgdata = event.data['pkgdata']
+                imgdata = event.data['imgdata'][target.target]
+                self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
 
     def store_dependency_information(self, event):
         # save layer version priorities
@@ -527,11 +519,6 @@ class BuildInfoHelper(object):
                 assert layer_version_obj is not None
                 layer_version_obj.priority = priority
                 layer_version_obj.save()
-
-        # save build time package information
-        self.internal_state['bldpkgs'] = {}
-        for pkg  in event._depgraph['packages']:
-            self.internal_state['bldpkgs'][pkg] = event._depgraph['packages'][pkg]
 
         # save recipe information
         self.internal_state['recipes'] = {}

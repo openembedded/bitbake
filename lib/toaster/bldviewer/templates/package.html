@@ -23,7 +23,7 @@
                 <a href="{% url layer_versions_recipes package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
                 <td>
             <div style="height: 4em; overflow:auto">
-                    {% for d in package.tpackage_dependencies_package.all %}
+                    {% for d in package.package_dependencies_source.all %}
                     <a href="#{{d.name}}">{{d.depends_on.name}}</a><br/>
                     {% endfor %}
             </div>

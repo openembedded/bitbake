@@ -209,7 +209,6 @@ def main(server, eventHandler, params ):
                 continue
 
             if isinstance(event, (bb.event.BuildCompleted)):
-                buildinfohelper.read_target_package_dep_data(event)
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
                 continue
 
@@ -240,6 +239,8 @@ def main(server, eventHandler, params ):
                     buildinfohelper.store_layer_info(event)
                 if event.type == "BuildStatsList":
                     buildinfohelper.store_tasks_stats(event)
+                if event.type == "ImagePkgList":
+                    buildinfohelper.store_target_package_data(event)
                 continue
 
             # ignore

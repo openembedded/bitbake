@@ -20,8 +20,9 @@ import operator
 
 from django.db.models import Q
 from django.shortcuts import render
-from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, Target_Package, LogMessage, Variable
-from orm.models import Task_Dependency, Recipe_Dependency, Build_Package, Build_File, Build_Package_Dependency
+from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
+from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
+from orm.models import Target_Installed_Package
 from django.views.decorators.cache import cache_control
 
 @cache_control(no_store=True)
@@ -78,23 +79,20 @@ def configuration(request, build_id):
 
 def bpackage(request, build_id):
     template = 'bpackage.html'
-    packages = Build_Package.objects.filter(build = build_id)
+    packages = Package.objects.filter(build = build_id)
     context = {'build': Build.objects.filter(pk=build_id)[0], 'packages' : packages}
     return render(request, template, context)
 
 def bfile(request, build_id, package_id):
     template = 'bfile.html'
-    files = Build_File.objects.filter(bpackage = package_id)
+    files = Package_File.objects.filter(package = package_id)
     context = {'build': Build.objects.filter(pk=build_id)[0], 'files' : files}
     return render(request, template, context)
 
 def tpackage(request, build_id, target_id):
     template = 'package.html'
-
-    packages = Target_Package.objects.filter(target=target_id)
-
-    context = {'build' : Build.objects.filter(pk=build_id)[0],'packages': packages}
-
+    packages = map(lambda x: x.package, list(Target_Installed_Package.objects.filter(target=target_id)))
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'packages' : packages}
     return render(request, template, context)
 
 def layer(request):
@@ -135,17 +133,16 @@ def model_explorer(request, model_name):
     model_mapping = {
         'build': Build,
         'target': Target,
-        'target_package': Target_Package,
         'task': Task,
         'task_dependency': Task_Dependency,
-        'package': Build_Package,
+        'package': Package,
         'layer': Layer,
         'layerversion': Layer_Version,
         'recipe': Recipe,
         'recipe_dependency': Recipe_Dependency,
-        'build_package': Build_Package,
-        'build_package_dependency': Build_Package_Dependency,
-        'build_file': Build_File,
+        'package': Package,
+        'package_dependency': Package_Dependency,
+        'build_file': Package_File,
         'variable': Variable,
         'logmessage': LogMessage,
         }

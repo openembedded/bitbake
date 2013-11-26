@@ -130,7 +130,7 @@ class Task_Dependency(models.Model):
     depends_on = models.ForeignKey(Task, related_name='task_dependencies_depends')
 
 
-class Build_Package(models.Model):
+class Package(models.Model):
     build = models.ForeignKey('Build')
     recipe = models.ForeignKey('Recipe', null=True)
     name = models.CharField(max_length=100)
@@ -139,16 +139,19 @@ class Build_Package(models.Model):
     summary = models.CharField(max_length=200, blank=True)
     description = models.CharField(max_length=200, blank=True)
     size = models.IntegerField(default=0)
+    installed_size = models.IntegerField(default=0)
     section = models.CharField(max_length=80, blank=True)
     license = models.CharField(max_length=80, blank=True)
 
-class Build_Package_Dependency(models.Model):
+class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0
     TYPE_RPROVIDES = 1
     TYPE_RRECOMMENDS = 2
     TYPE_RSUGGESTS = 3
     TYPE_RREPLACES = 4
     TYPE_RCONFLICTS = 5
+    TYPE_TRDEPENDS = 6
+    TYPE_TRECOMMENDS = 7
     DEPENDS_TYPE = (
         (TYPE_RDEPENDS, "rdepends"),
         (TYPE_RPROVIDES, "rprovides"),
@@ -156,45 +159,22 @@ class Build_Package_Dependency(models.Model):
         (TYPE_RSUGGESTS, "rsuggests"),
         (TYPE_RREPLACES, "rreplaces"),
         (TYPE_RCONFLICTS, "rconflicts"),
+        (TYPE_TRDEPENDS, "trdepends"),
+        (TYPE_TRECOMMENDS, "trecommends"),
     )
-    package = models.ForeignKey(Build_Package, related_name='bpackage_dependencies_package')
-    depends_on = models.CharField(max_length=100)   # soft dependency
+    package = models.ForeignKey(Package, related_name='package_dependencies_source')
+    depends_on = models.ForeignKey(Package, related_name='package_dependencies_target')   # soft dependency
     dep_type = models.IntegerField(choices=DEPENDS_TYPE)
+    target = models.ForeignKey(Target, null=True)
 
+class Target_Installed_Package(models.Model):
+    target = models.ForeignKey(Target)
+    package = models.ForeignKey(Package)
 
-class Target_Package(models.Model):
-    target = models.ForeignKey('Target')
-    recipe = models.ForeignKey('Recipe', null=True)
-    name = models.CharField(max_length=100)
-    version = models.CharField(max_length=100, blank=True)
-    size = models.IntegerField()
-
-
-class Target_Package_Dependency(models.Model):
-    TYPE_DEPENDS = 0
-    TYPE_RDEPENDS = 1
-    TYPE_RECOMMENDS = 2
-
-    DEPENDS_TYPE = (
-        (TYPE_DEPENDS, "depends"),
-        (TYPE_RDEPENDS, "rdepends"),
-        (TYPE_RECOMMENDS, "recommends"),
-    )
-    package = models.ForeignKey(Target_Package, related_name='tpackage_dependencies_package')
-    depends_on = models.ForeignKey(Target_Package, related_name='tpackage_dependencies_depends')
-    dep_type = models.IntegerField(choices=DEPENDS_TYPE)
-
-
-class Build_File(models.Model):
-    bpackage = models.ForeignKey(Build_Package, related_name='filelist_bpackage')
+class Package_File(models.Model):
+    package = models.ForeignKey(Package, related_name='buildfilelist_package')
     path = models.FilePathField(max_length=255, blank=True)
     size = models.IntegerField()
-
-class Target_File(models.Model):
-    tpackage = models.ForeignKey(Target_Package, related_name='filelist_tpackage')
-    path = models.FilePathField(max_length=255, blank=True)
-    size = models.IntegerField()
-
 
 class Recipe(models.Model):
     name = models.CharField(max_length=100, blank=True)
