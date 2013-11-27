@@ -1352,7 +1352,7 @@ class Builder(gtk.Window):
 
     def runqemu_image(self, image_name, kernel_name):
         if not image_name or not kernel_name:
-            lbl = "<b>Please select an %s to launch in QEMU.</b>" % ("kernel" if image_name else "image")
+            lbl = "<b>Please select %s to launch in QEMU.</b>" % ("a kernel" if image_name else "an image")
             dialog = CrumbsMessageDialog(self, lbl, gtk.MESSAGE_INFO)
             button = dialog.add_button("Close", gtk.RESPONSE_OK)
             HobButton.style_button(button)
