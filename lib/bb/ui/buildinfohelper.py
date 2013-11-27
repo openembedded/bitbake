@@ -319,22 +319,15 @@ class BuildInfoHelper(object):
         assert False
         return None
 
-    def _get_recipe_information_from_build_event(self, event):
+    def _get_recipe_information_from_taskfile(self, taskfile):
 
-        layer_version_obj = self._get_layer_version_for_path(re.split(':', event.taskfile)[-1])
+        layer_version_obj = self._get_layer_version_for_path(re.split(':', taskfile)[-1])
 
         recipe_info = {}
         recipe_info['layer_version'] = layer_version_obj
-        recipe_info['file_path'] = re.split(':', event.taskfile)[-1]
+        recipe_info['file_path'] = re.split(':', taskfile)[-1]
 
         return recipe_info
-
-    def _get_task_build_stats(self, task_object):
-        bs_path = self._get_path_information(task_object)
-        for bp in bs_path:  # TODO: split for each target
-            task_build_stats = self._get_build_stats_from_file(bp, task_object.task_name)
-
-        return task_build_stats
 
     def _get_path_information(self, task_object):
         build_stats_format = "{tmpdir}/buildstats/{target}-{machine}/{buildname}/{package}/"
@@ -355,36 +348,6 @@ class BuildInfoHelper(object):
                                                      package=package))
 
         return build_stats_path
-
-    def _get_build_stats_from_file(self, bs_path, task_name):
-
-        task_bs_filename = str(bs_path) + str(task_name)
-        task_bs = open(task_bs_filename, 'r')
-
-        cpu_usage = 0
-        disk_io = 0
-        startio = ''
-        endio = ''
-
-        for line in task_bs.readlines():
-            if line.startswith('CPU usage: '):
-                cpu_usage = line[11:]
-            elif line.startswith('EndTimeIO: '):
-                endio = line[11:]
-            elif line.startswith('StartTimeIO: '):
-                startio = line[13:]
-
-        task_bs.close()
-
-        if startio and endio:
-            disk_io = int(endio.strip('\n ')) - int(startio.strip('\n '))
-
-        if cpu_usage:
-            cpu_usage = float(cpu_usage.strip('% \n'))
-
-        task_build_stats = {'cpu_usage': cpu_usage, 'disk_io': disk_io}
-
-        return task_build_stats
 
     def _remove_redundant(self, string):
         ret = []
@@ -435,7 +398,7 @@ class BuildInfoHelper(object):
     def store_started_task(self, event):
         identifier = event.taskfile + event.taskname
 
-        recipe_information = self._get_recipe_information_from_build_event(event)
+        recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
 
         task_information = self._get_task_information(event, recipe)
@@ -458,9 +421,23 @@ class BuildInfoHelper(object):
 
         self.internal_state[identifier] = {'start_time': datetime.datetime.now()}
 
+
+    def store_tasks_stats(self, event):
+        for (taskfile, taskname, taskstats) in event.data:
+            recipe_information = self._get_recipe_information_from_taskfile(taskfile)
+            recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
+
+            task_information = {}
+            task_information['build'] = self.internal_state['build']
+            task_information['recipe'] = recipe
+            task_information['task_name'] = taskname
+            task_information['cpu_usage'] = taskstats['cpu_usage']
+            task_information['disk_io'] = taskstats['disk_io']
+            task_obj = self.orm_wrapper.get_update_task_object(task_information)
+
     def update_and_store_task(self, event):
         identifier = event.taskfile + event.taskname
-        recipe_information = self._get_recipe_information_from_build_event(event)
+        recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
         task_information = self._get_task_information(event,recipe)
         try:
@@ -483,9 +460,6 @@ class BuildInfoHelper(object):
 
         if isinstance(event, (bb.runqueue.runQueueTaskCompleted, bb.runqueue.sceneQueueTaskCompleted)):
             task_information['outcome'] = Task.OUTCOME_SUCCESS
-            task_build_stats = self._get_task_build_stats(self.orm_wrapper.get_update_task_object(task_information))
-            task_information['cpu_usage'] = task_build_stats['cpu_usage']
-            task_information['disk_io'] = task_build_stats['disk_io']
             del self.internal_state[identifier]
 
         if isinstance(event, (bb.runqueue.runQueueTaskFailed, bb.runqueue.sceneQueueTaskFailed)):

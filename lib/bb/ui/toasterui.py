@@ -238,6 +238,8 @@ def main(server, eventHandler, params ):
                     buildinfohelper.store_build_package_information(event)
                 if event.type == "LayerInfo":
                     buildinfohelper.store_layer_info(event)
+                if event.type == "BuildStatsList":
+                    buildinfohelper.store_tasks_stats(event)
                 continue
 
             # ignore
