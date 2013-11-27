@@ -20,8 +20,6 @@ import datetime
 import sys
 import bb
 import re
-import subprocess
-
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toaster.toastermain.settings")
 
@@ -125,10 +123,11 @@ class ORMWrapper(object):
 
         return recipe_object
 
-    def get_layer_version_object(self, layer_version_information):
+    def get_update_layer_version_object(self, build_obj, layer_obj, layer_version_information):
 
         layer_version_object = Layer_Version.objects.get_or_create(
-                                    layer = layer_version_information['layer'],
+                                    build = build_obj,
+                                    layer = layer_obj,
                                     branch = layer_version_information['branch'],
                                     commit = layer_version_information['commit'],
                                     priority = layer_version_information['priority']
@@ -274,60 +273,6 @@ class BuildInfoHelper(object):
     ###################
     ## methods to convert event/external info into objects that the ORM layer uses
 
-    def _get_layer_dict(self, layer_path):
-
-        layer_info = {}
-        layer_name = layer_path.split('/')[-1]
-        layer_url = 'http://layers.openembedded.org/layerindex/layer/{layer}/'
-        layer_url_name = self._get_url_map_name(layer_name)
-
-        layer_info['name'] = layer_name
-        layer_info['local_path'] = layer_path
-        layer_info['layer_index_url'] = layer_url.format(layer=layer_url_name)
-
-        return layer_info
-
-    def _get_url_map_name(self, layer_name):
-        """ Some layers have a different name on openembedded.org site,
-            this method returns the correct name to use in the URL
-        """
-
-        url_name = layer_name
-        url_mapping = {'meta': 'openembedded-core'}
-
-        for key in url_mapping.keys():
-            if key == layer_name:
-                url_name = url_mapping[key]
-
-        return url_name
-
-    def _get_layer_information(self):
-
-        layer_info = {}
-
-        return layer_info
-
-    def _get_layer_version_information(self, layer_object):
-
-        layer_version_info = {}
-        layer_version_info['build'] = self.internal_state['build']
-        layer_version_info['layer'] = layer_object
-        layer_version_info['branch'] = self._get_git_branch(layer_object.local_path)
-        layer_version_info['commit'] = self._get_git_revision(layer_object.local_path)
-        layer_version_info['priority'] = 0
-
-        return layer_version_info
-
-
-    def _get_git_branch(self, layer_path):
-        branch = subprocess.Popen("git symbolic-ref HEAD 2>/dev/null ", cwd=layer_path, shell=True, stdout=subprocess.PIPE).communicate()[0]
-        branch = branch.replace('refs/heads/', '').rstrip()
-        return branch
-
-    def _get_git_revision(self, layer_path):
-        revision = subprocess.Popen("git rev-parse HEAD 2>/dev/null ", cwd=layer_path, shell=True, stdout=subprocess.PIPE).communicate()[0].rstrip()
-        return revision
-
 
     def _get_build_information(self):
         build_info = {}
@@ -366,7 +311,7 @@ class BuildInfoHelper(object):
 
         # Heuristics: we always match recipe to the deepest layer path that
         # we can match to the recipe file path
-        for bl in sorted(self.internal_state['layer_versions'], reverse=True, key=_slkey):
+        for bl in sorted(Layer_Version.objects.filter(build = self.internal_state['build']), reverse=True, key=_slkey):
             if (path.startswith(bl.layer.local_path)):
                 return bl
 
@@ -452,12 +397,12 @@ class BuildInfoHelper(object):
     ################################
     ## external available methods to store information
 
-    def store_layer_info(self):
-        layers = self.server.runCommand(["getVariable", "BBLAYERS"])[0].strip().split(" ")
-        self.internal_state['layers'] = []
-        for layer_path in { l for l in layers if len(l) }:
-            layer_information = self._get_layer_dict(layer_path)
-            self.internal_state['layers'].append(self.orm_wrapper.get_update_layer_object(layer_information))
+    def store_layer_info(self, event):
+        layerinfos = event.data
+        self.internal_state['lvs'] = {}
+        for layer in layerinfos:
+            self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer])] = layerinfos[layer]['version']
+
 
     def store_started_build(self, event):
 
@@ -466,6 +411,12 @@ class BuildInfoHelper(object):
         build_obj = self.orm_wrapper.create_build_object(build_information)
         self.internal_state['build'] = build_obj
 
+        # save layer version information for this build
+        for layer_obj in self.internal_state['lvs']:
+            self.orm_wrapper.get_update_layer_version_object(build_obj, layer_obj, self.internal_state['lvs'][layer_obj])
+
+        del self.internal_state['lvs']
+
         # create target information
         target_information = {}
         target_information['targets'] = event.getPkgs()
@@ -473,13 +424,6 @@ class BuildInfoHelper(object):
 
         self.internal_state['targets'] = self.orm_wrapper.create_target_objects(target_information)
 
-        # Load layer information for the build
-        self.internal_state['layer_versions'] = []
-        for layer_object in self.internal_state['layers']:
-            layer_version_information = self._get_layer_version_information(layer_object)
-            self.internal_state['layer_versions'].append(self.orm_wrapper.get_layer_version_object(layer_version_information))
-
-        del self.internal_state['layers']
         # Save build configuration
         self.orm_wrapper.save_build_variables(build_obj, self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0])
 

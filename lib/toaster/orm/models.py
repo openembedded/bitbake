@@ -229,6 +229,7 @@ class Layer(models.Model):
 
 
 class Layer_Version(models.Model):
+    build = models.ForeignKey(Build, related_name='layer_version_build')
     layer = models.ForeignKey(Layer, related_name='layer_version_layer')
     branch = models.CharField(max_length=50)
     commit = models.CharField(max_length=100)

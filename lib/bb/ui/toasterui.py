@@ -93,7 +93,6 @@ def main(server, eventHandler, params ):
     taskfailures = []
 
     buildinfohelper = BuildInfoHelper(server, build_history_enabled)
-    buildinfohelper.store_layer_info()
 
 
     while True:
@@ -232,12 +231,13 @@ def main(server, eventHandler, params ):
                 warnings = 0
                 taskfailures = []
                 buildinfohelper = BuildInfoHelper(server, build_history_enabled)
-                buildinfohelper.store_layer_info()
                 continue
 
             if isinstance(event, bb.event.MetadataEvent):
                 if event.type == "SinglePackageInfo":
                     buildinfohelper.store_build_package_information(event)
+                if event.type == "LayerInfo":
+                    buildinfohelper.store_layer_info(event)
                 continue
 
             # ignore
