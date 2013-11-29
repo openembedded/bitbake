@@ -77,7 +77,10 @@ def inherit(files, fn, lineno, d):
         if not os.path.isabs(file):
             dname = os.path.dirname(fn)
             bbpath = "%s:%s" % (dname, d.getVar("BBPATH", True))
-            abs_fn = bb.utils.which(bbpath, file)
+            abs_fn, attempts = bb.utils.which(bbpath, file, history=True)
+            for af in attempts:
+                if af != abs_fn:
+                    bb.parse.mark_dependency(d, af)
             if abs_fn:
                 file = abs_fn
 
