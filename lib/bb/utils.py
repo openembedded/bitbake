@@ -793,22 +793,28 @@ def copyfile(src, dest, newmtime = None, sstat = None):
         newmtime = sstat[stat.ST_MTIME]
     return newmtime
 
-def which(path, item, direction = 0):
+def which(path, item, direction = 0, history = False):
     """
     Locate a file in a PATH
     """
 
+    hist = []
     paths = (path or "").split(':')
     if direction != 0:
         paths.reverse()
 
     for p in paths:
         next = os.path.join(p, item)
+        hist.append(next)
         if os.path.exists(next):
             if not os.path.isabs(next):
                 next = os.path.abspath(next)
+            if history:
+                return next, hist
             return next
 
+    if history:
+        return "", hist
     return ""
 
 def to_boolean(string, default=None):

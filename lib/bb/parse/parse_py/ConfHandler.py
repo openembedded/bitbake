@@ -82,9 +82,15 @@ def include(oldfn, fn, lineno, data, error_out):
     if not os.path.isabs(fn):
         dname = os.path.dirname(oldfn)
         bbpath = "%s:%s" % (dname, data.getVar("BBPATH", True))
-        abs_fn = bb.utils.which(bbpath, fn)
+        abs_fn, attempts = bb.utils.which(bbpath, fn, history=True)
+        if abs_fn and bb.parse.check_dependency(data, abs_fn):
+            bb.warn("Duplicate inclusion for %s in %s" % (abs_fn, data.getVar('FILE', True)))
+        for af in attempts:
+            bb.parse.mark_dependency(data, af)
         if abs_fn:
             fn = abs_fn
+    elif bb.parse.check_dependency(data, fn):
+        bb.warn("Duplicate inclusion for %s in %s" % (fn, data.getVar('FILE', True)))
 
     from bb.parse import handle
     try:
@@ -93,6 +99,7 @@ def include(oldfn, fn, lineno, data, error_out):
         if error_out:
             raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
         logger.debug(2, "CONF file '%s' not found", fn)
+        bb.parse.mark_dependency(data, fn)
 
 # We have an issue where a UI might want to enforce particular settings such as
 # an empty DISTRO variable. If configuration files do something like assigning
