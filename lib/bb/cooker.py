@@ -1486,7 +1486,7 @@ class CookerCollectFiles(object):
         filelist = []
         f = os.path.basename(fn)
         for bbappend in self.appendlist:
-            if bbappend in f or ('%' in bbappend and bbappend.startswith(f[:bbappend.index('%')])):
+            if (bbappend == f) or ('%' in bbappend and bbappend.startswith(f[:bbappend.index('%')])):
                 self.appliedappendlist.append(bbappend)
                 for filename in self.appendlist[bbappend]:
                     filelist.append(filename)
