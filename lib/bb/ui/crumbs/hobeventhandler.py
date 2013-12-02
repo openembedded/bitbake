@@ -308,9 +308,7 @@ class HobHandler(gobject.GObject):
         self.runCommand(["createConfigFile", ".hob.conf"])
 
     def reset_cooker(self):
-        self.runCommand(["enableDataTracking"])
         self.runCommand(["resetCooker"])
-        self.runCommand(["disableDataTracking"])
 
     def set_extra_inherit(self, bbclass):
         inherits = self.runCommand(["getVariable", "INHERIT"]) or ""
