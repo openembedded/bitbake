@@ -531,7 +531,7 @@ class BuildInfoHelper(object):
 
             recipe_info = {}
             recipe_info['name'] = pn
-            recipe_info['version'] = event._depgraph['pn'][pn]['version']
+            recipe_info['version'] = event._depgraph['pn'][pn]['version'].lstrip(":")
             recipe_info['layer_version'] = layer_version_obj
             recipe_info['summary'] = event._depgraph['pn'][pn]['summary']
             recipe_info['license'] = event._depgraph['pn'][pn]['license']
