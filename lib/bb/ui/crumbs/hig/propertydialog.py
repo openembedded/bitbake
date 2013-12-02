@@ -187,17 +187,17 @@ class PropertyDialog(CrumbsDialog):
                         self.textWindow.set_policy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
                         self.textWindow.set_size_request(100, 170)
 
-                        sstatemirrors_store = gtk.ListStore(str)
+                        packagefiles_store = gtk.ListStore(str)
 
-                        self.sstatemirrors_tv = gtk.TreeView()
-                        self.sstatemirrors_tv.set_rules_hint(True)
-                        self.sstatemirrors_tv.set_headers_visible(True)
-                        self.textWindow.add(self.sstatemirrors_tv)
+                        self.packagefiles_tv = gtk.TreeView()
+                        self.packagefiles_tv.set_rules_hint(True)
+                        self.packagefiles_tv.set_headers_visible(True)
+                        self.textWindow.add(self.packagefiles_tv)
 
                         self.cell1 = gtk.CellRendererText()
                         col1 = gtk.TreeViewColumn('Package files', self.cell1)
                         col1.set_cell_data_func(self.cell1, self.regex_field)
-                        self.sstatemirrors_tv.append_column(col1)
+                        self.packagefiles_tv.append_column(col1)
 
                         for items in file_list.split(']'):
                             if len(items) > 1:
@@ -223,15 +223,15 @@ class PropertyDialog(CrumbsDialog):
                                         items = items[:len(items)/2] + "..." + items[len(items)/2+3:]
                                         self.tooltip_items[items] = temp
 
-                                sstatemirrors_store.append([str(items)])
+                                packagefiles_store.append([str(items)])
                                 
                                 
-                        self.sstatemirrors_tv.set_model(sstatemirrors_store)
+                        self.packagefiles_tv.set_model(packagefiles_store)
 
                         tips = gtk.Tooltips()
-                        tips.set_tip(self.sstatemirrors_tv, "")
-                        self.sstatemirrors_tv.connect("motion-notify-event", self.treeViewTooltip, tips, 0)
-                        self.sstatemirrors_tv.set_events(gtk.gdk.POINTER_MOTION_MASK)
+                        tips.set_tip(self.packagefiles_tv, "")
+                        self.packagefiles_tv.connect("motion-notify-event", self.treeViewTooltip, tips, 0)
+                        self.packagefiles_tv.set_events(gtk.gdk.POINTER_MOTION_MASK)
                         
                         self.vbox.add(self.textWindow)                                      
 
