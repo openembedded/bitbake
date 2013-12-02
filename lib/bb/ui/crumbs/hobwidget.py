@@ -734,7 +734,7 @@ class HobCellRendererController(gobject.GObject):
         self.current_angle_pos += self.step_angle
         if self.running_mode == self.MODE_CYCLE_RUNNING:
             if (self.current_angle_pos >= 1):
-                self.current_angle_pos = self.step_angle
+                self.current_angle_pos = 0
         else:
             if self.current_angle_pos > 1:
                 self.force_stop()
