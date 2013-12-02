@@ -117,7 +117,7 @@ class BBCooker:
 
         self.configuration = configuration
 
-        self.loadConfigurationData()
+        self.initConfigurationData()
 
         # Take a lock so only one copy of bitbake can run against a given build
         # directory at a time
@@ -152,8 +152,10 @@ class BBCooker:
     def initConfigurationData(self):
 
         self.state = state.initial
-
         self.caches_array = []
+
+        if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
+            self.enableDataTracking()
 
         all_extra_cache_names = []
         # We hardcode all known cache types in a single place, here.
@@ -176,19 +178,6 @@ class BBCooker:
         self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration, False)
         self.data = self.databuilder.data
 
-    def enableDataTracking(self):
-        self.configuration.tracking = True
-        self.data.enableTracking()
-
-    def disableDataTracking(self):
-        self.configuration.tracking = False
-        self.data.disableTracking()
-
-    def loadConfigurationData(self):
-        if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
-            self.enableDataTracking()
-
-        self.initConfigurationData()
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
         self.data_hash = self.databuilder.data_hash
@@ -203,6 +192,13 @@ class BBCooker:
         if CookerFeatures.BASEDATASTORE_TRACKING in self.featureset:
             self.disableDataTracking()
 
+    def enableDataTracking(self):
+        self.configuration.tracking = True
+        self.data.enableTracking()
+
+    def disableDataTracking(self):
+        self.configuration.tracking = False
+        self.data.disableTracking()
 
     def modifyConfigurationVar(self, var, val, default_file, op):
         if op == "append":
@@ -1333,11 +1329,8 @@ class BBCooker:
     def finishcommand(self):
         self.state = state.initial
 
-    def initialize(self):
-        self.initConfigurationData()
-
     def reset(self):
-        self.loadConfigurationData()
+        self.initConfigurationData()
 
 def server_main(cooker, func, *args):
     cooker.pre_serve()

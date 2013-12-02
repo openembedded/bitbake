@@ -149,9 +149,7 @@ class HobHandler(gobject.GObject):
         elif next_command == self.SUB_MATCH_CLASS:
             self.runCommand(["findFilesMatchingInDir", "rootfs_", "classes"])
         elif next_command == self.SUB_PARSE_CONFIG:
-            self.runCommand(["enableDataTracking"])
-            self.runCommand(["parseConfigurationFiles", "conf/.hob.conf", ""])
-            self.runCommand(["disableDataTracking"])
+            self.runCommand(["resetCooker"])
         elif next_command == self.SUB_GNERATE_TGTS:
             self.runCommand(["generateTargetsTree", "classes/image.bbclass", []])
         elif next_command == self.SUB_GENERATE_PKGINFO:
@@ -206,7 +204,8 @@ class HobHandler(gobject.GObject):
             reparse = self.runCommand(["getVariable", "BB_INVALIDCONF"]) or None
             if reparse is True:
                 self.set_var_in_file("BB_INVALIDCONF", False, "local.conf")
-                self.runCommand(["parseConfigurationFiles", "conf/.hob.conf", ""])
+                self.runCommand(["setPrePostConfFiles", "conf/.hob.conf", ""])
+                self.commands_async.prepend(self.SUB_PARSE_CONFIG)
             self.run_next_command()
 
         elif isinstance(event, bb.event.SanityCheckFailed):
@@ -304,11 +303,7 @@ class HobHandler(gobject.GObject):
         return
 
     def init_cooker(self):
-        self.runCommand(["initCooker"])
         self.runCommand(["createConfigFile", ".hob.conf"])
-
-    def reset_cooker(self):
-        self.runCommand(["resetCooker"])
 
     def set_extra_inherit(self, bbclass):
         inherits = self.runCommand(["getVariable", "INHERIT"]) or ""
@@ -409,15 +404,17 @@ class HobHandler(gobject.GObject):
         self.run_next_command(self.NETWORK_TEST)
 
     def generate_configuration(self):
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
+        self.runCommand(["setPrePostConfFiles", "conf/.hob.conf", ""])
         self.commands_async.append(self.SUB_PATH_LAYERS)
         self.commands_async.append(self.SUB_FILES_DISTRO)
         self.commands_async.append(self.SUB_FILES_MACH)
         self.commands_async.append(self.SUB_FILES_SDKMACH)
         self.commands_async.append(self.SUB_MATCH_CLASS)
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.run_next_command(self.GENERATE_CONFIGURATION)
 
     def generate_recipes(self):
+        self.runCommand(["setPrePostConfFiles", "conf/.hob.conf", ""])
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_GNERATE_TGTS)
         self.run_next_command(self.GENERATE_RECIPES)
@@ -427,6 +424,7 @@ class HobHandler(gobject.GObject):
         targets.extend(tgts)
         self.recipe_queue = targets
         self.default_task = default_task
+        self.runCommand(["setPrePostConfFiles", "conf/.hob.conf", ""])
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_RECIPES)
         self.run_next_command(self.GENERATE_PACKAGES)
@@ -438,6 +436,7 @@ class HobHandler(gobject.GObject):
         self.package_queue = image_packages
         self.toolchain_packages = toolchain_packages
         self.default_task = default_task
+        self.runCommand(["setPrePostConfFiles", "conf/.hob.conf", ""])
         self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_BUILD_IMAGE)
         self.run_next_command(self.GENERATE_IMAGE)

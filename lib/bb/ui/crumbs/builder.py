@@ -704,7 +704,6 @@ class Builder(gtk.Window):
         self.set_user_config_proxies()
 
     def set_user_config(self):
-        self.handler.reset_cooker()
         # set bb layers
         self.handler.set_bblayers(self.configuration.layers)
         # set local configuration

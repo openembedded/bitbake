@@ -196,18 +196,11 @@ class CommandsSync:
         """
         command.cooker.disableDataTracking()
 
-    def initCooker(self, command, params):
-        """
-        Init the cooker to initial state with nothing parsed
-        """
-        command.cooker.initialize()
-
-    def resetCooker(self, command, params):
-        """
-        Reset the cooker to its initial state, thus forcing a reparse for
-        any async command that has the needcache property set to True
-        """
-        command.cooker.reset()
+    def setPrePostConfFiles(self, command, params):
+        prefiles = params[0].split()
+        postfiles = params[1].split()
+        command.cooker.configuration.prefile = prefiles
+        command.cooker.configuration.postfile = postfiles
 
     def getCpuCount(self, command, params):
         """
@@ -420,18 +413,6 @@ class CommandsAsync:
             command.finishAsyncCommand()
     compareRevisions.needcache = True
 
-    def parseConfigurationFiles(self, command, params):
-        """
-        Parse the configuration files
-        """
-        prefiles = params[0].split()
-        postfiles = params[1].split()
-        command.cooker.configuration.prefile = prefiles
-        command.cooker.configuration.postfile = postfiles
-        command.cooker.loadConfigurationData()
-        command.finishAsyncCommand()
-    parseConfigurationFiles.needcache = False
-
     def triggerEvent(self, command, params):
         """
         Trigger a certain event
@@ -440,4 +421,13 @@ class CommandsAsync:
         bb.event.fire(eval(event), command.cooker.data)
         command.currentAsyncCommand = None
     triggerEvent.needcache = False
+
+    def resetCooker(self, command, params):
+        """
+        Reset the cooker to its initial state, thus forcing a reparse for
+        any async command that has the needcache property set to True
+        """
+        command.cooker.reset()
+        command.finishAsyncCommand()
+    resetCooker.needcache = False
 
