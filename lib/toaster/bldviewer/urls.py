@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.conf.urls import patterns, include, url
-from django.views.generic.simple import redirect_to
+from django.views.generic import RedirectView
 
 urlpatterns = patterns('bldviewer.views',
         url(r'^builds/$', 'build', name='all-builds'),
@@ -28,5 +28,5 @@ urlpatterns = patterns('bldviewer.views',
         url(r'^build/(?P<build_id>\d+)/configuration/$', 'configuration', name='configuration'),
         url(r'^layers/$', 'layer', name='all-layers'),
         url(r'^layerversions/(?P<layerversion_id>\d+)/recipes/.*$', 'layer_versions_recipes', name='layer_versions_recipes'),
-        url(r'^$', redirect_to, {'url': 'builds/'}),
+        url(r'^$', RedirectView.as_view( url= 'builds/')),
 )

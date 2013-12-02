@@ -17,7 +17,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.conf.urls import patterns, include, url
-from django.views.generic.simple import redirect_to
+from django.views.generic import RedirectView
 from django.views.decorators.cache import never_cache
 
 
@@ -29,7 +29,7 @@ urlpatterns = patterns('',
     url(r'^simple/', include('bldviewer.urls')),
     url(r'^api/1.0/', include('bldviewer.api')),
     url(r'^gui/', include('toastergui.urls')),
-    url(r'^$', never_cache(redirect_to), {'url': '/simple/'}),
+    url(r'^$', never_cache(RedirectView.as_view(url='/simple/'))),
     # Examples:
     # url(r'^toaster/', include('toaster.foo.urls')),
 
