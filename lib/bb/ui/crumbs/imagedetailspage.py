@@ -355,9 +355,9 @@ class ImageDetailsPage (HobPage):
             vallist.append(base_image)
             i = 0
             for layer in layers:
-                varlist.append(" - ")
                 if i > layer_num_limit:
                     break
+                varlist.append(" - ")
                 i += 1
             vallist.append("")
             i = 0
