@@ -105,13 +105,14 @@ class PropertyDialog(CrumbsDialog):
                 
         def create_package_visual_elements(self):
 
+                import json
+
                 name = self.properties['name']
                 binb = self.properties['binb']
                 size = self.properties['size']
                 recipe = self.properties['recipe']
-                file_list = self.properties['files_list']
+                file_list = json.loads(self.properties['files_list'])
 
-                file_list = file_list.strip("{}'")
                 files_temp = ''
                 paths_temp = ''
                 files_binb = []
@@ -180,7 +181,7 @@ class PropertyDialog(CrumbsDialog):
 
                 #################################### FILES BROUGHT BY PACKAGES ###################################
 
-                if file_list != '':
+                if file_list:
                 
                         self.textWindow = gtk.ScrolledWindow()
                         self.textWindow.set_shadow_type(gtk.SHADOW_IN)
@@ -199,33 +200,18 @@ class PropertyDialog(CrumbsDialog):
                         col1.set_cell_data_func(self.cell1, self.regex_field)
                         self.packagefiles_tv.append_column(col1)
 
-                        for items in file_list.split(']'):
-                            if len(items) > 1:
-                                paths_temp = items.split(":")[0]
-                                paths_binb.append(paths_temp.strip(" ,'"))
-                                files_temp = items.split(":")[1]
-                                files_binb.append(files_temp.strip(" ['"))
+                        items = file_list.keys()
+                        items.sort()
+                        for item in items:
+                                fullpath = item
+                                while len(item) > 35:
+                                        item = item[:len(item)/2] + "" + item[len(item)/2+1:]
+                                if len(item) == 35:
+                                        item = item[:len(item)/2] + "..." + item[len(item)/2+3:]
+                                        self.tooltip_items[item] = fullpath
 
-                        unsorted_list = []
-                        
-                        for items in range(len(paths_binb)):
-                              if len(files_binb[items]) > 1:
-                                  for aduse in (files_binb[items].split(",")):
-                                        unsorted_list.append(paths_binb[items].split(name)[len(paths_binb[items].split(name))-1] + '/' + aduse.strip(" '"))
-                       
-                         
-                        unsorted_list.sort()
-                        for items in unsorted_list:
-                                temp = items
-                                while len(items) > 35:
-                                        items = items[:len(items)/2] + "" + items[len(items)/2+1:]
-                                if len(items) == 35:
-                                        items = items[:len(items)/2] + "..." + items[len(items)/2+3:]
-                                        self.tooltip_items[items] = temp
+                                packagefiles_store.append([str(item)])
 
-                                packagefiles_store.append([str(items)])
-                                
-                                
                         self.packagefiles_tv.set_model(packagefiles_store)
 
                         tips = gtk.Tooltips()
