@@ -174,13 +174,13 @@ class RunningBuild (gobject.GObject):
                       color,
                       0))
 
-            # if there are warnings, mark the task with warning
-            # color;
+            # if there are warnings while processing a package
+            #  (parent), mark the task with warning color;
             # in case there are errors, the updates will be
             #  handled on TaskFailed.
-            if color == HobColors.WARNING:
+            if color == HobColors.WARNING and parent:
                 self.model.set(parent, self.model.COL_COLOR, color)
-                if task: #then we have a parent, and update it's color
+                if task: #then we have a parent (package), and update it's color
                     self.model.set(self.tasks_to_iter[(package, None)], self.model.COL_COLOR, color)
 
         elif isinstance(event, bb.build.TaskStarted):
