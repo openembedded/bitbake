@@ -1,7 +1,6 @@
 import ast
 import codegen
 import logging
-import collections
 import os.path
 import bb.utils, bb.data
 from itertools import chain
@@ -65,6 +64,8 @@ class CodeParserCache(MultiProcessCache):
         for h in data[0]:
             data[0][h]["refs"] = self.internSet(data[0][h]["refs"])
             data[0][h]["execs"] = self.internSet(data[0][h]["execs"])
+            for k in data[0][h]["contains"]:
+                data[0][h]["contains"][k] = self.internSet(data[0][h]["contains"][k])
         for h in data[1]:
             data[1][h]["execs"] = self.internSet(data[1][h]["execs"])
         return
@@ -125,6 +126,8 @@ class PythonParser():
             if isinstance(node.args[0], ast.Str):
                 varname = node.args[0].s
                 if name in self.containsfuncs and isinstance(node.args[1], ast.Str):
+                    if varname not in self.contains:
+                        self.contains[varname] = set()
                     self.contains[varname].add(node.args[1].s)
                 else:                      
                     self.references.add(node.args[0].s)
@@ -153,10 +156,10 @@ class PythonParser():
 
     def __init__(self, name, log):
         self.var_execs = set()
-        self.contains = collections.defaultdict(set)
+        self.contains = {}
         self.execs = set()
         self.references = set()
-        self.log = BufferedLogger('BitBake.Data.%s' % name, logging.DEBUG, log)
+        self.log = BufferedLogger('BitBake.Data.PythonParser', logging.DEBUG, log)
 
         self.unhandled_message = "in call of %s, argument '%s' is not a string literal"
         self.unhandled_message = "while parsing %s, %s" % (name, self.unhandled_message)
