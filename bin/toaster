@@ -40,9 +40,16 @@ function webserverStartAll()
 {
         retval=0
         python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
+        python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
         if [ $retval -eq 1 ]; then
                 echo "Failed db sync, stopping system start" 1>&2
-        else
+        elif [ $retval -eq 2 ]; then
+            echo -e "\nError on migration, trying to recover... \n"
+            python $BBBASEDIR/lib/toaster/manage.py migrate orm 0001_initial --fake
+            retval=0
+            python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
+        fi
+        if [ $retval -eq 0 ]; then
             python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
         fi
         return $retval
@@ -91,6 +98,13 @@ if ! echo "import django; print (1,5) == django.VERSION[0:2]" | python 2>/dev/nu
     echo -e "This program needs Django 1.5. Please install with\n\nsudo pip install django==1.5"
     return 2
 fi
+
+if ! echo "import south; print [0,8,4] ==  map(int,south.__version__.split(\".\"))" | python 2>/dev/null | grep True >/dev/null; then
+    echo -e "This program needs South 0.8.4. Please install with\n\nsudo pip install south==0.8.4"
+    return 2
+fi
+
+
 
 
 

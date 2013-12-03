@@ -148,6 +148,7 @@ INSTALLED_APPS = (
     'toastermain',
     'bldviewer',
     'toastergui',
+    'south',
 )
 
 # A sample logging configuration. The only tangible logging
