@@ -245,10 +245,11 @@ class ORMWrapper(object):
                     variable_value = value,
                     description = desc)
                 for vh in vardump[k]['history']:
-                    VariableHistory.objects.create( variable = variable_obj,
-                            file_name = vh['file'],
-                            line_number = vh['line'],
-                            operation = vh['op'])
+                    if not 'documentation.conf' in vh['file']:
+                        VariableHistory.objects.create( variable = variable_obj,
+                                file_name = vh['file'],
+                                line_number = vh['line'],
+                                operation = vh['op'])
 
 class BuildInfoHelper(object):
     """ This class gathers the build information from the server and sends it
