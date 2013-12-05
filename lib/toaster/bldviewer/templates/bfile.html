@@ -1,8 +1,8 @@
 {% extends "basebuildpage.html" %}
 
-{% block pagetitle %}Files for package {{files.0.bpackage.name}} {% endblock %}
+{% block pagetitle %}Files for package {{objects.0.bpackage.name}} {% endblock %}
 {% block pagetable %}
-    {% if not files %}
+    {% if not objects %}
         <p>No files were recorded for this package!</p>
     {% else %}
 
@@ -11,7 +11,7 @@
             <th>Size (Bytes)</th>
             </tr>
 
-            {% for file in files %}
+            {% for file in objects %}
 
             <tr class="data">
             <td>{{file.path}}</td>

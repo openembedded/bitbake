@@ -24,15 +24,38 @@ from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMes
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package
 from django.views.decorators.cache import cache_control
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+
+
+def _build_page_range(paginator, index = 1):
+    try:
+        page = paginator.page(index)
+    except PageNotAnInteger:
+        page = paginator.page(1)
+    except  EmptyPage:
+        page = paginator.page(paginator.num_pages)
+
+    page.page_range = [page.number]
+    crt_range = 0
+    for i in range(1,5):
+        if (page.number + i) <= paginator.num_pages:
+            page.page_range = page.page_range + [ page.number + i]
+            crt_range +=1
+        if (page.number - i) > 0:
+            page.page_range =  [page.number -i] + page.page_range
+            crt_range +=1
+        if crt_range == 4:
+            break
+    return page
 
 @cache_control(no_store=True)
 def build(request):
     template = 'build.html'
-    build_info = Build.objects.all()
-
     logs = LogMessage.objects.all()
 
-    context = {'builds': build_info, 'logs': logs ,
+    build_info = _build_page_range(Paginator(Build.objects.order_by("-id"), 10),request.GET.get('page', 1))
+
+    context = {'objects': build_info, 'logs': logs ,
         'hideshowcols' : [
                 {'name': 'Output', 'order':10},
                 {'name': 'Log', 'order':11},
@@ -61,38 +84,38 @@ def _find_task_provider(task):
 def task(request, build_id):
     template = 'task.html'
 
-    tasks = Task.objects.filter(build=build_id)
+    tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id), 100),request.GET.get('page', 1))
 
     for t in tasks:
         if t.outcome == Task.OUTCOME_COVERED:
             t.provider = _find_task_provider(t)
 
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'tasks': tasks}
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': tasks}
 
     return render(request, template, context)
 
 def configuration(request, build_id):
     template = 'configuration.html'
-    variables = Variable.objects.filter(build=build_id)
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'configuration' : variables}
+    variables = _build_page_range(Paginator(Variable.objects.filter(build=build_id), 50), request.GET.get('page', 1))
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : variables}
     return render(request, template, context)
 
 def bpackage(request, build_id):
     template = 'bpackage.html'
     packages = Package.objects.filter(build = build_id)
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'packages' : packages}
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
     return render(request, template, context)
 
 def bfile(request, build_id, package_id):
     template = 'bfile.html'
     files = Package_File.objects.filter(package = package_id)
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'files' : files}
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : files}
     return render(request, template, context)
 
 def tpackage(request, build_id, target_id):
     template = 'package.html'
     packages = map(lambda x: x.package, list(Target_Installed_Package.objects.filter(target=target_id)))
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'packages' : packages}
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
     return render(request, template, context)
 
 def layer(request):
@@ -104,7 +127,7 @@ def layer(request):
         for liv in li.versions:
             liv.count = Recipe.objects.filter(layer_version__id = liv.id).count()
 
-    context = {'layers': layer_info}
+    context = {'objects': layer_info}
 
     return render(request, template, context)
 
@@ -113,7 +136,7 @@ def layer_versions_recipes(request, layerversion_id):
     template = 'recipe.html'
     recipes = Recipe.objects.filter(layer_version__id = layerversion_id)
 
-    context = {'recipes': recipes,
+    context = {'objects': recipes,
             'layer_version' : Layer_Version.objects.filter( id = layerversion_id )[0]
     }
 

@@ -1,7 +1,7 @@
 {% extends "basebuildpage.html" %}
 
 {% block pagetable %}
-    {% if not packages %}
+    {% if not objects %}
         <p>No packages were recorded for this target!</p>
     {% else %}
 
@@ -13,7 +13,7 @@
             <th>Depends on</th>
             </tr>
 
-            {% for package in packages %}
+            {% for package in objects %}
 
             <tr class="data">
                 <td><a name="#{{package.name}}">{{package.name}}</a></td>

@@ -21,7 +21,7 @@
             <th>Bitbake Version</th>
             <th>Build Name</th>
         </tr>
-        {% for build in builds %}
+        {% for build in objects %}
         <tr class="data">
             <td><a href="{% url "configuration" build.id %}">{{build.get_outcome_display}}</a></td>
             <td>{{build.started_on}}</td>

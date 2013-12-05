@@ -2,7 +2,7 @@
 
 {% block pagetitle %}Tasks{% endblock %}
 {% block pagetable %}
-    {% if not tasks %}
+    {% if not objects %}
         <p>No tasks were executed in this build!</p>
     {% else %}
 
@@ -23,7 +23,7 @@
             <th>Depends</th>
             </tr>
 
-            {% for task in tasks %}
+            {% for task in objects %}
 
             <tr class="data">
                 <td>{{task.order}}</td>
