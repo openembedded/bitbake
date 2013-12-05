@@ -306,9 +306,7 @@ class HobHandler(gobject.GObject):
         self.runCommand(["createConfigFile", ".hob.conf"])
 
     def set_extra_inherit(self, bbclass):
-        inherits = self.runCommand(["getVariable", "INHERIT"]) or ""
-        inherits = inherits + " " + bbclass
-        self.set_var_in_file("INHERIT", inherits, ".hob.conf")
+        self.append_var_in_file("INHERIT", bbclass, ".hob.conf")
 
     def set_bblayers(self, bblayers):
         self.set_var_in_file("BBLAYERS", " ".join(bblayers), "bblayers.conf")
