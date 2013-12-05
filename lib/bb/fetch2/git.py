@@ -213,6 +213,9 @@ class Git(FetchMethod):
             runfetchcmd("%s prune-packed" % ud.basecmd, d)
             runfetchcmd("%s pack-redundant --all | xargs -r rm" % ud.basecmd, d)
             ud.repochanged = True
+        for name in ud.names:
+            if not self._contains_ref(ud.revisions[name], ud.branches[name], d):
+                raise bb.fetch2.FetchError("Unable to find revision %s in branch %s even from upstream" % (ud.revisions[name], ud.branches[name]))
 
     def build_mirror_data(self, ud, d):
         # Generate a mirror tarball if needed
