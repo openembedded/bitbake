@@ -403,12 +403,12 @@ class HobHandler(gobject.GObject):
 
     def generate_configuration(self):
         self.runCommand(["setPrePostConfFiles", "conf/.hob.conf", ""])
+        self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.commands_async.append(self.SUB_PATH_LAYERS)
         self.commands_async.append(self.SUB_FILES_DISTRO)
         self.commands_async.append(self.SUB_FILES_MACH)
         self.commands_async.append(self.SUB_FILES_SDKMACH)
         self.commands_async.append(self.SUB_MATCH_CLASS)
-        self.commands_async.append(self.SUB_PARSE_CONFIG)
         self.run_next_command(self.GENERATE_CONFIGURATION)
 
     def generate_recipes(self):

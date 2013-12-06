@@ -528,9 +528,9 @@ class Builder(gtk.Window):
         self.generate_configuration()
 
     def update_config_async(self):
-        self.switch_page(self.MACHINE_SELECTION)
         self.set_user_config()
         self.generate_configuration()
+        self.switch_page(self.MACHINE_SELECTION)
 
     def sanity_check(self):
         self.handler.trigger_sanity_check()
