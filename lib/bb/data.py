@@ -301,9 +301,9 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
 
         def handle_contains(value, contains, d):
             newvalue = ""
-            for k in contains:
+            for k in sorted(contains):
                 l = (d.getVar(k, True) or "").split()
-                for word in contains[k]:
+                for word in sorted(contains[k]):
                     if word in l:
                         newvalue += "\n%s{%s} = Set" %  (k, word)
                     else:
