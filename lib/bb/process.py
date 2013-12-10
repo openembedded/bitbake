@@ -84,7 +84,7 @@ def _logged_communicate(pipe, log, input):
         while pipe.poll() is None:
             rlist = rin
             try:
-                r,w,e = select.select (rlist, [], [])
+                r,w,e = select.select (rlist, [], [], 1)
             except OSError as e:
                 if e.errno != errno.EINTR:
                     raise
