@@ -51,6 +51,11 @@ function webserverStartAll()
         fi
         if [ $retval -eq 0 ]; then
             python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
+            sleep 1
+            if ! cat "${BUILDDIR}/.toastermain.pid" | xargs -I{} kill -0 {} ; then
+                retval=1
+                rm "${BUILDDIR}/.toastermain.pid"
+            fi
         fi
         return $retval
 }
@@ -120,9 +125,13 @@ else
 fi
 
 NOTOASTERUI=0
-if [ "x$2" == "xnoui" ]; then
-    NOTOASTERUI=1
-fi
+for param in $*; do
+    case $param in
+    noui )
+            NOTOASTERUI=1
+    ;;
+    esac
+done
 
 echo "The system will $CMD."
 
@@ -157,22 +166,38 @@ fi
 
 case $CMD in
     start )
+        start_success=1
         addtoConfiguration "INHERIT+=\"toaster buildhistory\"" toaster.conf
-        webserverStartAll || return 4
+        if ! webserverStartAll; then
+            echo "Failed ${CMD}."
+            return 4
+        fi
         unset BBSERVER
         bitbake --postread conf/toaster.conf --server-only -t xmlrpc -B localhost:8200
-        export BBSERVER=localhost:8200
-        if [ $NOTOASTERUI == 0 ]; then        # we start the TOASTERUI only if not inhibited
-            bitbake --observe-only -u toasterui >${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
+        if [ $? -ne 0 ]; then
+            start_success=0
+            echo "Bitbake server start failed"
+        else
+            export BBSERVER=localhost:8200
+            if [ $NOTOASTERUI == 0 ]; then        # we start the TOASTERUI only if not inhibited
+                bitbake --observe-only -u toasterui >${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
+            fi
         fi
-        # stop system on terminal exit
-        trap stop_system SIGHUP
+        if [ $start_success -eq 1 ]; then
+            # set fail safe stop system on terminal exit
+            trap stop_system SIGHUP
+            echo "Successful ${CMD}."
+        else
+            # failed start, do stop
+            stop_system
+            echo "Failed ${CMD}."
+        fi
     ;;
     stop )
         stop_system
         trap '' SIGHUP
+        echo "Successful ${CMD}."
     ;;
 esac
 
-echo "Successful ${CMD}."
 
