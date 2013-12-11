@@ -1,7 +1,13 @@
 {% extends "basebuildpage.html" %}
 
-{% block pagetitle %}Tasks{% endblock %}
-{% block pagetable %}
+{% block localbreadcrumb %}
+<li>Tasks</li>
+{% endblock %}
+
+{% block buildinfomain %}
+{% include "basetable_top.html" %}
+
+
     {% if not objects %}
         <p>No tasks were executed in this build!</p>
     {% else %}
@@ -64,4 +70,5 @@
 
     {% endif %}
 
+{% include "basetable_bottom.html" %}
 {% endblock %}

@@ -1,14 +1,11 @@
-{% extends "basetable.html" %}
+{% extends "basebuildpage.html" %}
 
-{% block pagename %}
-<ul class="nav nav-tabs" style="display: inline-block">
-  <li><a>Layer  {{layer_version.layer.name}}&nbsp;:&nbsp;{{layer_version.branch}}&nbsp;:&nbsp;{{layer_version.commit}}&nbsp;:&nbsp;{{layer_version.priority}}</a></li>
-</ul>
-    <h1>Toaster - Recipes for a Layer</h1>
+{% block localbreadcrumb %}
+<li>Recipes</li>
 {% endblock %}
 
-{% block pagetable %}
-    {% load projecttags %}
+{% block buildinfomain %}
+{% include "basetable_top.html" %}
 
         <tr>
         </tr>
@@ -48,5 +45,7 @@
         </tr>
 
         {% endfor %}
+
+{% include "basetable_bottom.html" %}
 
 {% endblock %}

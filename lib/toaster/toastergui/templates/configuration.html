@@ -1,7 +1,11 @@
 {% extends "basebuildpage.html" %}
+{% block localbreadcrumb %}
+<li>Configuration</li>
+{% endblock %}
 
-{% block pagetitle %}Configuration{% endblock %}
-{% block pagetable %}
+{% block buildinfomain %}
+
+{% include "basetable_top.html" %}
 
             <tr>
             <th>Name</th>
@@ -18,5 +22,7 @@
                 <td>{% for vh in variable.variablehistory_set.all %}{{vh.operation}} in {{vh.file_name}}:{{vh.line_number}}<br/>{%endfor%}</td>
                 <td>{{variable.variable_value}}</td>
             {% endfor %}
+
+{% include "basetable_bottom.html" %}
 
 {% endblock %}

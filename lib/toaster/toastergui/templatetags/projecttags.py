@@ -24,3 +24,8 @@ register = template.Library()
 @register.simple_tag
 def time_difference(start_time, end_time):
     return end_time - start_time
+
+@register.filter(name = 'timespent')
+def timespent(build_object):
+    tdsec = (build_object.completed_on - build_object.started_on).total_seconds()
+    return "%02d:%02d:%02d" % (int(tdsec/3600), int((tdsec - tdsec/ 3600)/ 60), int(tdsec) % 60)

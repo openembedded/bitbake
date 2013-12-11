@@ -1,0 +1,60 @@
+    </table>
+
+<!-- Show pagination controls -->
+<div class="pagination pagination-centered">
+   <div class="pull-left">
+   Showing {{objects.start_index}} to {{objects.end_index}} out of {{objects.paginator.count}} entries.
+   </div>
+
+   <ul class="pagination" style="display: block-inline">
+{%if objects.has_previous %}
+  <li><a href="?page={{objects.previous_page_number}}&count={{request.GET.count}}">&laquo;</a></li>
+{%else%}
+  <li class="disabled"><a href="#">&laquo;</a></li>
+{%endif%}
+{% for i in objects.page_range %}
+  <li{%if i == objects.number %} class="active" {%endif%}><a href="?page={{i}}&count={{request.GET.count}}">{{i}}</a></li>
+{% endfor %}
+{%if objects.has_next%}
+  <li><a href="?page={{objects.next_page_number}}&count={{request.GET.count}}">&raquo;</a></li>
+{%else%}
+  <li class="disabled"><a href="#">&raquo;</a></li>
+{%endif%}
+  </ul>
+  <div class="pull-right">
+                            <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+                            <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+  {% with "2 5 10 25 50 100" as list%}
+    {% for i in list.split %}<option{%if i == request.GET.count %} selected{%endif%}>{{i}}</option>
+    {% endfor %}
+  {% endwith %}
+                            </select>
+   </div>
+</div>
+
+<!-- Update page display settings -->
+
+<script>
+ $(document).ready(function() {
+
+    $('.chbxtoggle').each(function () {
+        showhideTableColumn($(this).attr('id'), $(this).is(':checked'))
+    });
+
+    //turn edit columns dropdown into a multi-select menu
+     $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
+        e.stopPropagation();
+    });
+
+    //show tooltip with applied filter
+    $('#filtered').tooltip({container:'table', placement:'bottom', delay:{hide:1500}, html:true});
+
+    //progress bar tooltip
+    $('.progress, .lead span').tooltip({container:'table', placement:'top'});
+
+    $(".pagesize").change(function () {
+        $(".pagesize option:selected").each(function ()
+            {reload_params({"count":$(this).text()}); });
+    });
+});
+</script>

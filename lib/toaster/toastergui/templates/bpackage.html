@@ -1,7 +1,12 @@
 {% extends "basebuildpage.html" %}
 
-{% block pagetitle %}Packages{% endblock %}
-{% block pagetable %}
+{% block localbreadcrumb %}
+<li>Packages</li>
+{% endblock %}
+
+{% block buildinfomain %}
+{% include "basetable_top.html" %}
+
     {% if not objects %}
         <p>No packages were recorded for this target!</p>
     {% else %}
@@ -21,7 +26,7 @@
             {% for package in objects %}
 
             <tr class="data">
-                <td><a name="#{{package.name}}" href="{% url "bfile" build.pk package.pk %}">{{package.name}} ({{package.filelist_bpackage.count}} files)</a></td>
+                <td><a name="#{{package.name}}" href="{% url "package" build.pk package.pk %}">{{package.name}} ({{package.filelist_bpackage.count}} files)</a></td>
                 <td>{{package.version}}-{{package.revision}}</td>
                 <td>{%if package.recipe%}<a href="{% url "layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
 
@@ -41,4 +46,5 @@
 
     {% endif %}
 
+{% include "basetable_bottom.html" %}
 {% endblock %}

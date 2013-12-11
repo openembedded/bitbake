@@ -1,29 +1,63 @@
 <!DOCTYPE html>
 {% load static %}
 <html>
-	<head>
-		<title>Toaster Simple Explorer</title>
-<script src="{% static 'js/jquery-2.0.3.js' %}">
+    <head>
+        <title>Toaster</title>
+<link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" type="text/css">
+<link rel="stylesheet" href="{% static 'css/bootstrap-responsive.min.css' %}" type='text/css'>
+<link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}" type='text/css'>
+<link rel="stylesheet" href="{% static 'css/prettify.css' %}" type='text/css'>
+<link rel="stylesheet" href="{% static 'css/default.css' %}" type='text/css'>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="{% static 'js/jquery-2.0.3.min.js' %}">
 </script>
-<script src="{% static 'js/bootstrap.js' %}">
+<script src="{% static 'js/bootstrap.min.js' %}">
 </script>
-<link href="{% static 'css/bootstrap.css' %}" rel="stylesheet" type="text/css">
-	</head>
+<script src="{% static 'js/prettify.js' %}">
+</script>
+<script src="{% static 'js/main.js' %}">
+</script>
+<script>
+function reload_params(params) {
+    uri = window.location.href;
+    [url, parameters] = uri.split("?");
+    // deserialize the call parameters
+    cparams = parameters.split("&");
+    nparams = {}
+    for (i = 0; i < cparams.length; i++) {
+        temp = cparams[i].split("=");
+        nparams[temp[0]] = temp[1];
+    }
+    // update parameter values
+    for (i in params) {
+        nparams[encodeURIComponent(i)] = encodeURIComponent(params[i]);
+    }
+    // serialize the structure
+    callparams = []
+    for (i in nparams) {
+        callparams.push(i+"="+nparams[i]);
+    }
+    window.location.href = url+"?"+callparams.join('&');
+
+}
+</script>
+    </head>
 
 <body style="height: 100%">
-<div style="width:100%; height: 100%; position:absolute">
-<div style="width: 100%; height: 3em" class="nav">
-    <ul class="nav nav-tabs">
-        <li><a href="{% url "all-builds" %}">All Builds</a></li>
-        <li><a href="{% url "all-layers" %}">All Layers</a></li>
-    </ul>
+<div class="navbar navbar-static-top">
+    <div class="navbar-inner">
+            <a class="brand logo" href="#"><img src="{% static 'img/logo.png' %}" class="" alt="Yocto logo project"/></a>
+            <a class="brand" href="/">Toaster</a>
+            <a class="pull-right manual" href="#">
+                <i class="icon-book"></i>
+                Toaster manual
+            </a>
+    </div>
 </div>
 
-<div style="overflow-y:scroll; width: 100%; position: absolute; top: 3em; bottom:70px ">
+<div class="container-fluid">
 {% block pagecontent %}
 {% endblock %}
-</div>
-<div class="navbar" style="position: absolute; bottom: 0; width:100%"><br/>About Toaster | Yocto Project </div>
 </div>
 </body>
 </html>

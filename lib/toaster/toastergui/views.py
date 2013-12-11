@@ -19,7 +19,7 @@
 import operator
 
 from django.db.models import Q
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package
@@ -35,6 +35,7 @@ def _build_page_range(paginator, index = 1):
     except  EmptyPage:
         page = paginator.page(paginator.num_pages)
 
+
     page.page_range = [page.number]
     crt_range = 0
     for i in range(1,5):
@@ -48,20 +49,122 @@ def _build_page_range(paginator, index = 1):
             break
     return page
 
-@cache_control(no_store=True)
-def build(request):
+
+def _verify_parameters(g, mandatory_parameters):
+    miss = []
+    for mp in mandatory_parameters:
+        if not mp in g:
+            miss.append(mp)
+    if len(miss):
+        return miss
+    return None
+
+def _redirect_parameters(view, g, mandatory_parameters):
+    import urllib
+    from django.core.urlresolvers import reverse
+    url = reverse(view)
+    params = {}
+    for i in g:
+        params[i] = g[i]
+    for i in mandatory_parameters:
+        if not i in params:
+            params[i] = mandatory_parameters[i]
+
+    return redirect(url + "?%s" % urllib.urlencode(params))
+
+
+# shows the "all builds" page
+def builds(request):
     template = 'build.html'
-    logs = LogMessage.objects.all()
+    # define here what parameters the view needs in the GET portion in order to
+    # be able to display something.  'count' and 'page' are mandatory for all views
+    # that use paginators.
+    mandatory_parameters = { 'count': 10,  'page' : 1};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( builds, request.GET, mandatory_parameters)
 
-    build_info = _build_page_range(Paginator(Build.objects.order_by("-id"), 10),request.GET.get('page', 1))
+    # retrieve the objects that will be displayed in the table
+    build_info = _build_page_range(Paginator(Build.objects.exclude(outcome = Build.IN_PROGRESS).order_by("-id"), request.GET.get('count', 10)),request.GET.get('page', 1))
 
-    context = {'objects': build_info, 'logs': logs ,
-        'hideshowcols' : [
-                {'name': 'Output', 'order':10},
-                {'name': 'Log', 'order':11},
+    # build view-specific information; this is rendered specifically in the builds page
+    build_mru = Build.objects.order_by("-started_on")[:3]
+    for b in [ x for x in build_mru if x.outcome == Build.IN_PROGRESS ]:
+        tf = Task.objects.filter(build = b)
+        b.completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
+        from django.utils import timezone
+        b.eta = timezone.now() + ((timezone.now() - b.started_on)*100/b.completeper)
+
+    # send the data to the template
+    context = {
+            # specific info for
+                'mru' : build_mru,
+            # TODO: common objects for all table views, adapt as needed
+                'objects' : build_info,
+                'tablecols' : [
+                {'name': 'Target ', 'clclass': 'target',},
+                {'name': 'Machine ', 'clclass': 'machine'},
+                {'name': 'Completed on ', 'clclass': 'completed_on'},
+                {'name': 'Failed tasks ', 'clclass': 'failed_tasks'},
+                {'name': 'Errors ', 'clclass': 'errors_no'},
+                {'name': 'Warnings', 'clclass': 'warnings_no'},
+                {'name': 'Output ', 'clclass': 'output'},
+                {'name': 'Started on ', 'clclass': 'started_on', 'hidden' : 1},
+                {'name': 'Time ', 'clclass': 'time', 'hidden' : 1},
+                {'name': 'Output', 'clclass': 'output'},
+                {'name': 'Log', 'clclass': 'log', 'hidden': 1},
             ]}
 
     return render(request, template, context)
+
+
+# build dashboard for a single build, coming in as argument
+def builddashboard(request, build_id):
+    template = "builddashboard.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+    }
+    return render(request, template, context)
+
+def task(request, build_id, task_id):
+    template = "singletask.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+    }
+    return render(request, template, context)
+
+def recipe(request, build_id, recipe_id):
+    template = "recipe.html"
+    if Recipe.objects.filter(pk=recipe_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+            'object' : Recipe.objects.filter(pk=recipe_id)[0],
+    }
+    return render(request, template, context)
+
+def package(request, build_id, package_id):
+    template = "singlepackage.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+    }
+    return render(request, template, context)
+
+def target(request, build_id, target_id):
+    template = "target.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+    }
+    return render(request, template, context)
+
 
 
 def _find_task_revdep(task):
@@ -81,7 +184,7 @@ def _find_task_provider(task):
             return trc
     return None
 
-def task(request, build_id):
+def tasks(request, build_id):
     template = 'task.html'
 
     tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id), 100),request.GET.get('page', 1))
@@ -94,11 +197,51 @@ def task(request, build_id):
 
     return render(request, template, context)
 
+def recipes(request, build_id):
+    template = 'recipe.html'
+
+    recipes = _build_page_range(Paginator(Recipe.objects.filter(build_recipe=build_id), 100),request.GET.get('page', 1))
+
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': recipes}
+
+    return render(request, template, context)
+
+
 def configuration(request, build_id):
     template = 'configuration.html'
     variables = _build_page_range(Paginator(Variable.objects.filter(build=build_id), 50), request.GET.get('page', 1))
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : variables}
     return render(request, template, context)
+
+def buildtime(request, build_id):
+    template = "buildtime.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+    }
+    return render(request, template, context)
+
+def cpuusage(request, build_id):
+    template = "cpuusage.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+    }
+    return render(request, template, context)
+
+def diskio(request, build_id):
+    template = "diskio.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+    }
+    return render(request, template, context)
+
+
+
 
 def bpackage(request, build_id):
     template = 'bpackage.html'
@@ -227,8 +370,8 @@ def model_explorer(request, model_name):
         response_data['count'] = queryset.count()
     else:
         response_data['count'] = 0
-
     response_data['list'] = serializers.serialize('json', queryset)
+#    response_data = serializers.serialize('json', queryset)
 
     return HttpResponse(json.dumps(response_data),
                         content_type='application/json')

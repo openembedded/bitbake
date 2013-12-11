@@ -1,17 +1,56 @@
-{% extends "basetable.html" %}
+{% extends "base.html" %}
+{% load humanize %}
+{% block pagecontent %}
 
-{% block pagename %}
-<ul class="nav nav-tabs" style="display: inline-block">
-  <li><a>Build {{build.target_set.all|join:"&nbsp;"}} at {{build.started_on}} : </a></li>
-  <li><a href="{% url "task" build.id %}"> Tasks </a></li>
-  <li><a href="{% url "bpackage" build.id %}"> Build Packages </a></li>
-    {% for t in build.target_set.all %}
-        {% if t.is_image %}
-  <li><a href="{% url "tpackage" build.id t.pk %}"> Packages for {{t.target}} </a> </li>
-        {% endif %}
-    {% endfor %}
-  <li><a href="{% url "configuration" build.id %}"> Configuration </a> </li>
-</ul>
-     <h1>Toaster - Build {% block pagetitle %} {% endblock %}</h1>
+
+ <div class="span12">
+<!-- Breadcrumbs -->
+    <div class="section">
+        <ul class="breadcrumb" id="breadcrumb">
+<li><a href="{% url 'all-builds' %}">All builds</a></li>
+<li><a href="{%url 'builddashboard' build.pk%}">{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|naturaltime}})</a></li>
+            {% block localbreadcrumb %}{% endblock %}
+        </ul>
+        <script>
+        $( function () {
+            $('#breadcrumb > li').append("<span class=\"divider\">→</span>");
+            $('#breadcrumb > li:last').addClass("active");
+            $('#breadcrumb > li:last > span').remove();
+        });
+        </script>
+    </div>
+
+    <div class="row-fluid">
+
+        <!-- begin left sidebar container -->
+        <div id="nav" class="span2">
+            <ul class="nav nav-list well">
+                <li class="nav-header">Images</li>
+            {% for t in build.target_set.all %}
+                <li><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+            {% endfor %}
+                <li class="nav-header">Build</li>
+                <li><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
+                <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
+                <li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
+                <li><a href="{% url 'packages' build.pk %}">Packages</a></li>
+                <li class="nav-header">Performance</li>
+                <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
+                <li><a href="{% url 'cpuusage' build.pk %}">CPU usage</a></li>
+                <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
+            </ul>
+        </div>
+
+        <!-- end left sidebar container -->
+        <!-- Begin right container -->
+        <div class="row span10">
+        {% block buildinfomain %}{% endblock %}
+        </div>
+
+
+    </div>
+  </div>
+
+
 {% endblock %}
 

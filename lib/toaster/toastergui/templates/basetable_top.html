@@ -1,0 +1,66 @@
+<!-- component to display a generic table -->
+    <script>
+    function showhideTableColumn(clname, sh) {
+        if (sh) $('.' + clname).show();
+        else $('.' + clname).hide();
+    }
+
+
+    function filterTableRows(test) {
+        if (test.length > 0) {
+            var r = test.split(/[ ,]+/).map(function (e) { return new RegExp(e, 'i') });
+            $('tr.data').map( function (i, el) {
+                (! r.map(function (j) { return j.test($(el).html())}).reduce(function (c, p) { return c && p;} )) ? $(el).hide() : $(el).show();
+            });
+        } else
+        {
+            $('tr.data').show();
+        }
+    }
+    </script>
+
+<!-- control header -->
+<div class="navbar">
+                    <div class="navbar-inner">
+                        <form class="navbar-search input-append pull-left">
+                            <input class="input-xxlarge" type="text" placeholder="Search {{objectname}}" />
+                            <button class="btn" type="button">Search</button>
+                        </form>
+                        <div class="pull-right">
+
+    {% if tablecols %}
+                            <div class="btn-group">
+                                <button class="btn dropdown-toggle" data-toggle="dropdown">
+                                    Edit columns
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu">
+
+    {% for i in tablecols %}
+                                    <li>
+                                        <label class="checkbox">
+<input type="checkbox" class="chbxtoggle" id="{{i.clclass}}" value="ct{{i.name}}" {% if i.clclass %}{% if not i.hidden %}checked="checked"{%endif%} onchange="showhideTableColumn($(this).attr('id'), $(this).is(':checked'))" {%else%} disabled{% endif %}/>   {{i.name}}
+                                        </label>
+                                    </li>
+    {% endfor %}
+                                </ul>
+                            </div>
+    {% endif %}
+
+    <div style="display:inline">
+                            <span class="divider-vertical"></span>
+                            <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+                            <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+  {% with "2 5 10 25 50 100" as list%}
+    {% for i in list.split %}<option{%if i == request.GET.count %} selected{%endif%}>{{i}}</option>
+    {% endfor %}
+  {% endwith %}
+                            </select>
+    </div>
+                        </div>
+                    </div>
+                </div>
+
+<!-- the actual rows of the table -->
+    <table class="table table-bordered table-hover tablesorter" id="otable">
+
