@@ -106,6 +106,7 @@ class Git(FetchMethod):
         if ud.bareclone:
             ud.nocheckout = 1
   
+        ud.unresolvedrev = {}
         branches = ud.parm.get("branch", "master").split(',')
         if len(branches) != len(ud.names):
             raise bb.fetch2.ParameterError("The number of name and branch parameters is not balanced", ud.url)
@@ -113,6 +114,7 @@ class Git(FetchMethod):
         for name in ud.names:
             branch = branches[ud.names.index(name)]
             ud.branches[name] = branch
+            ud.unresolvedrev[name] = branch
 
         ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
 
@@ -124,7 +126,7 @@ class Git(FetchMethod):
             # Ensure anything that doesn't look like a sha256 checksum/revision is translated into one
             if not ud.revisions[name] or len(ud.revisions[name]) != 40  or (False in [c in "abcdef0123456789" for c in ud.revisions[name]]):
                 if ud.revisions[name]:
-                    ud.branches[name] = ud.revisions[name]
+                    ud.unresolvedrev[name] = ud.revisions[name]
                 ud.revisions[name] = self.latest_revision(ud, d, name)
 
         gitsrcname = '%s%s' % (ud.host.replace(':','.'), ud.path.replace('/', '.').replace('*', '.'))
@@ -300,7 +302,7 @@ class Git(FetchMethod):
         """
         Return a unique key for the url
         """
-        return "git:" + ud.host + ud.path.replace('/', '.') + ud.branches[name]
+        return "git:" + ud.host + ud.path.replace('/', '.') + ud.unresolvedrev[name]
 
     def _latest_revision(self, ud, d, name):
         """
@@ -313,7 +315,7 @@ class Git(FetchMethod):
 
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
         cmd = "%s ls-remote %s://%s%s%s %s" % \
-              (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name])
+              (basecmd, ud.proto, username, ud.host, ud.path, ud.unresolvedrev[name])
         if ud.proto.lower() != 'file':
             bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
