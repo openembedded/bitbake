@@ -152,7 +152,7 @@ class Git(FetchMethod):
             return True
         os.chdir(ud.clonedir)
         for name in ud.names:
-            if not self._contains_ref(ud.revisions[name], ud.branches[name], d):
+            if not self._contains_ref(ud, d, name):
                 return True
         if ud.write_tarballs and not os.path.exists(ud.fullmirror):
             return True
@@ -199,7 +199,7 @@ class Git(FetchMethod):
         # Update the checkout if needed
         needupdate = False
         for name in ud.names:
-            if not self._contains_ref(ud.revisions[name], ud.branches[name], d):
+            if not self._contains_ref(ud, d, name):
                 needupdate = True
         if needupdate:
             try: 
@@ -217,7 +217,7 @@ class Git(FetchMethod):
             ud.repochanged = True
         os.chdir(ud.clonedir)
         for name in ud.names:
-            if not self._contains_ref(ud.revisions[name], ud.branches[name], d):
+            if not self._contains_ref(ud, d, name):
                 raise bb.fetch2.FetchError("Unable to find revision %s in branch %s even from upstream" % (ud.revisions[name], ud.branches[name]))
 
     def build_mirror_data(self, ud, d):
@@ -287,9 +287,9 @@ class Git(FetchMethod):
     def supports_srcrev(self):
         return True
 
-    def _contains_ref(self, tag, branch, d):
-        basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
-        cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (basecmd, tag, branch)
+    def _contains_ref(self, ud, d, name):
+        cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (
+            ud.basecmd, ud.revisions[name], ud.branches[name])
         try:
             output = runfetchcmd(cmd, d, quiet=True)
         except bb.fetch2.FetchError:
@@ -313,9 +313,8 @@ class Git(FetchMethod):
         else:
             username = ""
 
-        basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
         cmd = "%s ls-remote %s://%s%s%s %s" % \
-              (basecmd, ud.proto, username, ud.host, ud.path, ud.unresolvedrev[name])
+              (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.unresolvedrev[name])
         if ud.proto.lower() != 'file':
             bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
