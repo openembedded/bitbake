@@ -53,8 +53,8 @@
     $('.progress, .lead span').tooltip({container:'table', placement:'top'});
 
     $(".pagesize").change(function () {
-        $(".pagesize option:selected").each(function ()
-            {reload_params({"count":$(this).text()}); });
+        console.log("page size change");
+        reload_params({"count":$(this).val()}); ;
     });
 });
 </script>

@@ -59,10 +59,10 @@ def _verify_parameters(g, mandatory_parameters):
         return miss
     return None
 
-def _redirect_parameters(view, g, mandatory_parameters):
+def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
     import urllib
     from django.core.urlresolvers import reverse
-    url = reverse(view)
+    url = reverse(view, kwargs=kwargs)
     params = {}
     for i in g:
         params[i] = g[i]
@@ -70,7 +70,7 @@ def _redirect_parameters(view, g, mandatory_parameters):
         if not i in params:
             params[i] = mandatory_parameters[i]
 
-    return redirect(url + "?%s" % urllib.urlencode(params))
+    return redirect(url + "?%s" % urllib.urlencode(params), *args, **kwargs)
 
 
 # shows the "all builds" page
@@ -82,7 +82,7 @@ def builds(request):
     mandatory_parameters = { 'count': 10,  'page' : 1};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( builds, request.GET, mandatory_parameters)
+        return _redirect_parameters( 'all-builds', request.GET, mandatory_parameters)
 
     # retrieve the objects that will be displayed in the table
     build_info = _build_page_range(Paginator(Build.objects.exclude(outcome = Build.IN_PROGRESS).order_by("-id"), request.GET.get('count', 10)),request.GET.get('page', 1))
@@ -125,6 +125,7 @@ def builddashboard(request, build_id):
         return redirect(builds)
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
+            'recipecount' : Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)).count()
     }
     return render(request, template, context)
 
@@ -186,8 +187,12 @@ def _find_task_provider(task):
 
 def tasks(request, build_id):
     template = 'task.html'
+    mandatory_parameters = { 'count': 100,  'page' : 1};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'tasks', request.GET, mandatory_parameters, build_id = build_id)
 
-    tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id), 100),request.GET.get('page', 1))
+    tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id, order__gt=0), request.GET.get('count', 100)),request.GET.get('page', 1))
 
     for t in tasks:
         if t.outcome == Task.OUTCOME_COVERED:
@@ -199,16 +204,25 @@ def tasks(request, build_id):
 
 def recipes(request, build_id):
     template = 'recipe.html'
+    mandatory_parameters = { 'count': 100,  'page' : 1};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'recipes', request.GET, mandatory_parameters, build_id = build_id)
 
-    recipes = _build_page_range(Paginator(Recipe.objects.filter(build_recipe=build_id), 100),request.GET.get('page', 1))
+    recipes = _build_page_range(Paginator(Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)), request.GET.get('count', 100)),request.GET.get('page', 1))
 
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': recipes}
+    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': recipes, }
 
     return render(request, template, context)
 
 
 def configuration(request, build_id):
     template = 'configuration.html'
+    mandatory_parameters = { 'count': 100,  'page' : 1};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'configuration', request.GET, mandatory_parameters, build_id = build_id)
+
     variables = _build_page_range(Paginator(Variable.objects.filter(build=build_id), 50), request.GET.get('page', 1))
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : variables}
     return render(request, template, context)
@@ -245,7 +259,13 @@ def diskio(request, build_id):
 
 def bpackage(request, build_id):
     template = 'bpackage.html'
-    packages = Package.objects.filter(build = build_id)
+    mandatory_parameters = { 'count': 100,  'page' : 1};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'packages', request.GET, mandatory_parameters, build_id = build_id)
+
+    packages = _build_page_range(Paginator(Package.objects.filter(build = build_id), request.GET.get('count', 100)),request.GET.get('page', 1))
+
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
     return render(request, template, context)
 

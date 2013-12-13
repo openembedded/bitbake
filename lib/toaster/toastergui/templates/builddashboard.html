@@ -1,8 +1,74 @@
 {% extends "basebuildpage.html" %}
+{% load humanize %}
+{% load projecttags %}
 {% block localbreadcrumb %}
 <li>Dashboard</li>
 {% endblock %}
 
 {% block buildinfomain %}
+<!-- page title -->
+<div class="row-fluid span10">
+ <div class="page-header">
+     <h1>{{build.target_set.all|join:" "}} {{build.machine}}</h1>
+ </div>
+</div>
+
+<!-- build result bar -->
+<div class="row-fluid span10 pull-right">
+  <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
+    <div class="row-fluid lead">
+            <span class="pull-left"><strong>{%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}</strong> {{build.completed_on|naturaltime}} with </span>{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}{% if  build.errors_no %}
+            <span class="span2"><i class="icon-minus-sign red"></i><strong><a href="{%url 'builddashboard' build.pk%}" class="error"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
+{% endif %}
+{% if  build.warnings_no %}
+            <span class="span2"><i class="icon-warning-sign yellow"></i><strong><a href="{%url 'builddashboard' build.pk%}" class="warning"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
+{% endif %}
+            <span class="pull-right">Build time: <a href="build-time.html">{{ build|timespent }}</a></span>
+{%endif%}
+    </div>
+  </div>
+</div>
+
+{%if build.outcome == build.SUCCEEDED%}
+<!-- built images -->
+<div class="row-fluid span10 pull-right">
+  <h2>Images</h2>
+
+<div class="well" style="background-color:transparent;">
+</div>
+</div>
+
+{%else%}
+<!-- error dump -->
+{%endif%}
+
+<!-- build summary -->
+<div class="row-fluid span10 pull-right">
+<h2>Build summary</h2>
+    <div class="well span4" style="margin-left:0px; background-color:transparent;">
+        <h4><a href="{%url 'configuration' build.pk%}">Configuration</a></h4>
+            <dl>
+        <dt>Machine</dt><dd>{{build.machine}}</dd>
+        <dt>Distro</dt><dd></dd>
+        <dt>Layers</dt>{% for i in build.layer_version_build.all %}<dd>{{i.layer.name}}</dd>{%endfor%}
+            </dl>
+    </div>
+    <div class="well span4" style="background-color:transparent;">
+        <h4><a href="{%url 'tasks' build.pk%}">Tasks</a></h4>
+            <dl>
+        <dt>Total number of tasks</dt><dd>{{build.task_build.all.count}}</dd>
+        <dt>Tasks executed</dt><dd>{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</dd>
+        <dt>Tasks prebuilt</dt><dd>{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</dd>
+        <dt>Reuse</dt><dd>{% query build.task_build order__gt=0 as texec %}{{noexectask.count|multiply:100|divide:texec.count}}%</dd>
+            </dl>
+    </div>
+    <div class="well span4" style="background-color:transparent;">
+        <h4><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h4>
+            <dl>
+        <dt>Recipes used</dt><dd>{{recipecount}}</dd>
+        <dt>Packages built</dt><dd>{{build.package_set.all.count}}</dd>
+            </dl>
+    </div>
+</div>
 
 {% endblock %}

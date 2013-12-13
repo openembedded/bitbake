@@ -3,7 +3,7 @@
 {% block pagecontent %}
 
 
- <div class="span12">
+ <div class="">
 <!-- Breadcrumbs -->
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
@@ -40,12 +40,11 @@
                 <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
             </ul>
         </div>
-
         <!-- end left sidebar container -->
+
         <!-- Begin right container -->
-        <div class="row span10">
         {% block buildinfomain %}{% endblock %}
-        </div>
+        <!-- End right container -->
 
 
     </div>

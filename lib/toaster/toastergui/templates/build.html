@@ -12,7 +12,6 @@
         Recent Builds
      </h1>
 </div>
-{{build_mru}}
 {% for build in mru %}
 <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
     <div class="row-fluid">
@@ -74,17 +73,17 @@
         </tr>
         {% for build in objects %}
         <tr class="data">
-            <td class="outcome"><a href="{% url "configuration" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a></td>
+            <td class="outcome"><a href="{% url "builddashboard" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a></td>
             <td class="target">{% for t in build.target_set.all %}{%if t.is_image %}<a href="{% url "target" build.id t.id %}">{% endif %}{{t.target}}{% if t.is_image %}</a>{% endif %}<br/>{% endfor %}</td>
-            <td class="machine">{{build.machine}}</td>
-            <td class="started_on">{{build.started_on}}</td>
-            <td class="completed_on">{{build.completed_on}}</td>
+            <td class="machine"><a href="{% url "builddashboard" build.id %}">{{build.machine}}</a></td>
+            <td class="started_on"><a href="{% url "builddashboard" build.id %}">{{build.started_on}}</a></td>
+            <td class="completed_on"><a href="{% url "builddashboard" build.id %}">{{build.completed_on}}</a></td>
             <td class="failed_tasks"></td>
-            <td class="errors">{% if  build.errors_no %}<a class="error" href="#">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>{%endif%}</td>
-            <td class="warnings">{% if  build.warnings_no %}<a class="warning" href="#">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
-            <td class="time">{{build|timespent}}</td>
+            <td class="errors">{% if  build.errors_no %}<a class="error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>{%endif%}</td>
+            <td class="warnings">{% if  build.warnings_no %}<a class="warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
+            <td class="time"><a href="{% url "buildtime" build.id %}">{{build|timespent}}</a></td>
             <td class="log">{{build.log}}</td>
-            <td class="output">{% if build.outcome == 0 %}{% for t in build.target_set.all %}{% if t.is_image %}{{build.image_fstypes}}{% endif %}{% endfor %}{% endif %}</td>
+            <td class="output">{% if build.outcome == 0 %}{% for t in build.target_set.all %}{% if t.is_image %}<a href="{%url "builddashboard" build.id%}#images">{{build.image_fstypes}}</a>{% endif %}{% endfor %}{% endif %}</td>
         </tr>
 
         {% endfor %}

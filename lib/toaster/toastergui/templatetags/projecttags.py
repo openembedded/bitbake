@@ -29,3 +29,21 @@ def time_difference(start_time, end_time):
 def timespent(build_object):
     tdsec = (build_object.completed_on - build_object.started_on).total_seconds()
     return "%02d:%02d:%02d" % (int(tdsec/3600), int((tdsec - tdsec/ 3600)/ 60), int(tdsec) % 60)
+
+@register.assignment_tag
+def query(qs, **kwargs):
+    """ template tag which allows queryset filtering. Usage:
+          {% query books author=author as mybooks %}
+          {% for book in mybooks %}
+            ...
+          {% endfor %}
+    """
+    return qs.filter(**kwargs)
+
+@register.filter
+def divide(value, arg):
+    return int(value) / int(arg)
+
+@register.filter
+def multiply(value, arg):
+    return int(value) * int(arg)
