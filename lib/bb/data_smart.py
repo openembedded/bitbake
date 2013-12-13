@@ -123,7 +123,7 @@ class VariableParse:
 
             for k in parser.contains:
                 if k not in self.contains:
-                    self.contains[k] = parser.contains[k]
+                    self.contains[k] = parser.contains[k].copy()
                 else:
                     self.contains[k].update(parser.contains[k])
             value = utils.better_eval(codeobj, DataContext(self.d))
