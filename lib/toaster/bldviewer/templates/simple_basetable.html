@@ -1,0 +1,64 @@
+{% extends "simple_base.html" %}
+
+{% block pagecontent %}
+<script>
+function showhideTableColumn(i, sh) {
+    if (sh)
+        $('td:nth-child('+i+'),th:nth-child('+i+')').show();
+    else
+        $('td:nth-child('+i+'),th:nth-child('+i+')').hide();
+}
+
+
+function filterTableRows(test) {
+    if (test.length > 0) {
+        var r = test.split(/[ ,]+/).map(function (e) { return new RegExp(e, 'i') });
+        $('tr.data').map( function (i, el) {
+            (! r.map(function (j) { return j.test($(el).html())}).reduce(function (c, p) { return c && p;} )) ? $(el).hide() : $(el).show();
+        });
+    } else
+    {
+        $('tr.data').show();
+    }
+}
+</script>
+<div style="margin-bottom: 0.5em">
+
+    {% block pagename %}
+    {% endblock %}
+    <div align="left" style="display:inline-block; width: 40%; margin-left: 2em"> Filter: <input type="search" id="filterstring" style="width: 80%" onkeyup="filterTableRows($('#filterstring').val())" autocomplete="off">
+    </div>
+    {% if hideshowcols %}
+    <div align="right" style="display: inline-block; width: 40%">Show/Hide columns:
+    {% for i in hideshowcols %}
+        <span>{{i.name}} <input type="checkbox" id="ct{{i.name}}" onchange="showhideTableColumn({{i.order}}, $('#ct{{i.name}}').is(':checked'))" checked autocomplete="off"></span> |
+    {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+   <div style="display: block; float:right; margin-left: auto; margin-right:5em"><span class="pagination" style="vertical-align: top; margin-right: 3em">Showing {{objects.start_index}} to {{objects.end_index}} out of {{objects.paginator.count}} entries.&nbsp;</span>
+   <ul class="pagination" style="display: block-inline">
+{%if objects.has_previous %}
+  <li><a href="?page={{objects.previous_page_number}}">&laquo;</a></li>
+{%else%}
+  <li class="disabled"><a href="#">&laquo;</a></li>
+{%endif%}
+{% for i in objects.page_range %}
+  <li{%if i == objects.number %} class="active" {%endif%}><a href="?page={{i}}">{{i}}</a></li>
+{% endfor %}
+{%if objects.has_next%}
+  <li><a href="?page={{objects.next_page_number}}">&raquo;</a></li>
+{%else%}
+  <li class="disabled"><a href="#">&raquo;</a></li>
+{%endif%}
+  </ul>
+</div>
+
+    <table class="table table-striped table-condensed" style="width:95%">
+{% block pagetable %}
+{% endblock %}
+    </table>
+</div>
+
+{% endblock %}

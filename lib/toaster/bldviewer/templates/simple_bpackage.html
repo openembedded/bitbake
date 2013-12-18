@@ -1,0 +1,44 @@
+{% extends "simple_basebuildpage.html" %}
+
+{% block pagetitle %}Packages{% endblock %}
+{% block pagetable %}
+    {% if not objects %}
+        <p>No packages were recorded for this target!</p>
+    {% else %}
+
+            <tr>
+            <th>Name</th>
+            <th>Version</th>
+            <th>Recipe</th>
+            <th>Summary</th>
+            <th>Section</th>
+            <th>Description</th>
+            <th>Size on host disk (Bytes)</th>
+            <th>License</th>
+            <th>Dependencies List (all)</th>
+            </tr>
+
+            {% for package in objects %}
+
+            <tr class="data">
+                <td><a name="#{{package.name}}" href="{% url "bfile" build.pk package.pk %}">{{package.name}} ({{package.filelist_bpackage.count}} files)</a></td>
+                <td>{{package.version}}-{{package.revision}}</td>
+                <td>{%if package.recipe%}<a href="{% url "layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
+
+            <td>{{package.summary}}</td>
+            <td>{{package.section}}</td>
+            <td>{{package.description}}</td>
+            <td>{{package.size}}</td>
+            <td>{{package.license}}</td>
+            <td>
+        <div style="height: 3em; overflow:auto">
+            {% for bpd in package.package_dependencies_source.all %}
+                {{bpd.dep_type}}: {{bpd.depends_on.name}} <br/>
+            {% endfor %}
+        </div>
+            </td>
+            {% endfor %}
+
+    {% endif %}
+
+{% endblock %}

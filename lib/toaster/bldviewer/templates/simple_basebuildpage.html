@@ -1,0 +1,17 @@
+{% extends "simple_basetable.html" %}
+
+{% block pagename %}
+<ul class="nav nav-tabs" style="display: inline-block">
+  <li><a>Build {{build.target_set.all|join:"&nbsp;"}} at {{build.started_on}} : </a></li>
+  <li><a href="{% url "task" build.id %}"> Tasks </a></li>
+  <li><a href="{% url "bpackage" build.id %}"> Build Packages </a></li>
+    {% for t in build.target_set.all %}
+        {% if t.is_image %}
+  <li><a href="{% url "tpackage" build.id t.pk %}"> Packages for {{t.target}} </a> </li>
+        {% endif %}
+    {% endfor %}
+  <li><a href="{% url "configuration" build.id %}"> Configuration </a> </li>
+</ul>
+     <h1>Toaster - Build {% block pagetitle %} {% endblock %}</h1>
+{% endblock %}
+

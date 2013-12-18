@@ -146,6 +146,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'orm',
     'toastermain',
+    'toastergui',
     'bldviewer',
     'toastergui',
     'south',

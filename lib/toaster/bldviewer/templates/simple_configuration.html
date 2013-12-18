@@ -1,0 +1,22 @@
+{% extends "simple_basebuildpage.html" %}
+
+{% block pagetitle %}Configuration{% endblock %}
+{% block pagetable %}
+
+            <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Definition history</th>
+            <th>Value</th>
+            </tr>
+
+            {% for variable in objects %}
+
+            <tr class="data">
+                <td>{{variable.variable_name}}</td>
+                <td>{% if variable.description %}{{variable.description}}{% endif %}</td>
+                <td>{% for vh in variable.variablehistory_set.all %}{{vh.operation}} in {{vh.file_name}}:{{vh.line_number}}<br/>{%endfor%}</td>
+                <td>{{variable.variable_value}}</td>
+            {% endfor %}
+
+{% endblock %}

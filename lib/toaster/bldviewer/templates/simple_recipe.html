@@ -1,0 +1,52 @@
+{% extends "simple_basetable.html" %}
+
+{% block pagename %}
+<ul class="nav nav-tabs" style="display: inline-block">
+  <li><a>Layer  {{layer_version.layer.name}}&nbsp;:&nbsp;{{layer_version.branch}}&nbsp;:&nbsp;{{layer_version.commit}}&nbsp;:&nbsp;{{layer_version.priority}}</a></li>
+</ul>
+    <h1>Toaster - Recipes for a Layer</h1>
+{% endblock %}
+
+{% block pagetable %}
+    {% load projecttags %}
+
+        <tr>
+        </tr>
+            <th>Name</th>
+            <th>Version</th>
+            <th>Summary</th>
+            <th>Description</th>
+            <th>Section</th>
+            <th>License</th>
+            <th>License file</th>
+            <th>Homepage</th>
+            <th>Bugtracker</th>
+            <th>File_path</th>
+            <th style="width: 30em">Recipe Dependency</th>
+
+
+        {% for recipe in objects %}
+
+        <tr class="data">
+            <td><a name="{{recipe.name}}">{{recipe.name}}</a></td>
+            <td>{{recipe.version}}</td>
+            <td>{{recipe.summary}}</td>
+            <td>{{recipe.description}}</td>
+            <td>{{recipe.section}}</td>
+            <td>{{recipe.license}}</td>
+            <td>{{recipe.licensing_info}}</td>
+            <td>{{recipe.homepage}}</td>
+            <td>{{recipe.bugtracker}}</td>
+            <td>{{recipe.file_path}}</td>
+            <td>
+        <div style="height: 5em; overflow:auto">
+            {% for rr in recipe.r_dependencies_recipe.all %}
+                <a href="#{{rr.depends_on.name}}">{{rr.depends_on.name}}</a><br/>
+            {% endfor %}
+        </div>
+            </td>
+        </tr>
+
+        {% endfor %}
+
+{% endblock %}

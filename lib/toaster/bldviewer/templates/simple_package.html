@@ -1,0 +1,36 @@
+{% extends "simple_basebuildpage.html" %}
+
+{% block pagetable %}
+    {% if not objects %}
+        <p>No packages were recorded for this target!</p>
+    {% else %}
+
+            <tr>
+            <th>Name</th>
+            <th>Version</th>
+            <th>Size (Bytes)</th>
+            <th>Recipe</th>
+            <th>Depends on</th>
+            </tr>
+
+            {% for package in objects %}
+
+            <tr class="data">
+                <td><a name="#{{package.name}}">{{package.name}}</a></td>
+                <td>{{package.version}}</td>
+                <td>{{package.size}}</td>
+                <td>{%if package.recipe %}<a name="{{package.recipe.name}}.{{package.package_name}}">
+                <a href="{% url "layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
+                <td>
+            <div style="height: 4em; overflow:auto">
+                    {% for d in package.package_dependencies_source.all %}
+                    <a href="#{{d.name}}">{{d.depends_on.name}}</a><br/>
+                    {% endfor %}
+            </div>
+                </td>
+
+            {% endfor %}
+
+    {% endif %}
+
+{% endblock %}

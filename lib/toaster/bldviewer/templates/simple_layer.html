@@ -1,0 +1,34 @@
+{% extends "simple_basetable.html" %}
+
+{% block pagename %}
+    <h1>Toaster - Layers</h1>
+{% endblock %}
+
+{% block pagetable %}
+    {% load projecttags %}
+
+        <tr>
+            <th>Name</th>
+            <th>Local Path</th>
+            <th>Layer Index URL</th>
+            <th>Known Versions</th>
+        </tr>
+
+        {% for layer in objects %}
+
+        <tr class="data">
+            <td>{{layer.name}}</td>
+            <td>{{layer.local_path}}</td>
+            <td><a href='{{layer.layer_index_url}}'>{{layer.layer_index_url}}</a></td>
+            <td><table>
+            {% for lv in layer.versions %}
+                <tr><td>
+        <a href="{% url "layer_versions_recipes" lv.id %}">({{lv.priority}}){{lv.branch}}:{{lv.commit}} ({{lv.count}} recipes)</a>
+                </td></tr>
+            {% endfor %}
+            </table></td>
+        </tr>
+
+        {% endfor %}
+
+{% endblock %}

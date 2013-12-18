@@ -50,7 +50,7 @@ def _build_page_range(paginator, index = 1):
 
 @cache_control(no_store=True)
 def build(request):
-    template = 'build.html'
+    template = 'simple_build.html'
     logs = LogMessage.objects.all()
 
     build_info = _build_page_range(Paginator(Build.objects.order_by("-id"), 10),request.GET.get('page', 1))
@@ -82,7 +82,7 @@ def _find_task_provider(task):
     return None
 
 def task(request, build_id):
-    template = 'task.html'
+    template = 'simple_task.html'
 
     tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id), 100),request.GET.get('page', 1))
 
@@ -95,31 +95,31 @@ def task(request, build_id):
     return render(request, template, context)
 
 def configuration(request, build_id):
-    template = 'configuration.html'
+    template = 'simple_configuration.html'
     variables = _build_page_range(Paginator(Variable.objects.filter(build=build_id), 50), request.GET.get('page', 1))
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : variables}
     return render(request, template, context)
 
 def bpackage(request, build_id):
-    template = 'bpackage.html'
+    template = 'simple_bpackage.html'
     packages = Package.objects.filter(build = build_id)
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
     return render(request, template, context)
 
 def bfile(request, build_id, package_id):
-    template = 'bfile.html'
+    template = 'simple_bfile.html'
     files = Package_File.objects.filter(package = package_id)
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : files}
     return render(request, template, context)
 
 def tpackage(request, build_id, target_id):
-    template = 'package.html'
+    template = 'simple_package.html'
     packages = map(lambda x: x.package, list(Target_Installed_Package.objects.filter(target=target_id)))
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
     return render(request, template, context)
 
 def layer(request):
-    template = 'layer.html'
+    template = 'simple_layer.html'
     layer_info = Layer.objects.all()
 
     for li in layer_info:
@@ -133,7 +133,7 @@ def layer(request):
 
 
 def layer_versions_recipes(request, layerversion_id):
-    template = 'recipe.html'
+    template = 'simple_recipe.html'
     recipes = Recipe.objects.filter(layer_version__id = layerversion_id)
 
     context = {'objects': recipes,

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+	<head>
+		<title>Toaster Simple Explorer</title>
+<script src="{% static 'js/jquery-2.0.3.js' %}">
+</script>
+<script src="{% static 'js/bootstrap.js' %}">
+</script>
+<link href="{% static 'css/bootstrap.css' %}" rel="stylesheet" type="text/css">
+	</head>
+
+<body style="height: 100%">
+<div style="width:100%; height: 100%; position:absolute">
+<div style="width: 100%; height: 3em" class="nav">
+    <ul class="nav nav-tabs">
+        <li><a href="{% url "all-builds" %}">All Builds</a></li>
+        <li><a href="{% url "all-layers" %}">All Layers</a></li>
+    </ul>
+</div>
+
+<div style="overflow-y:scroll; width: 100%; position: absolute; top: 3em; bottom:70px ">
+{% block pagecontent %}
+{% endblock %}
+</div>
+<div class="navbar" style="position: absolute; bottom: 0; width:100%"><br/>About Toaster | Yocto Project </div>
+</div>
+</body>
+</html>
+
