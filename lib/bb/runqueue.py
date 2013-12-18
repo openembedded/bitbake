@@ -1039,6 +1039,7 @@ class RunQueue:
 
         if self.state is runQueueSceneInit:
             if self.cooker.configuration.dump_signatures:
+                self.print_diffscenetasks()
                 self.dump_signatures()
             else:
                 self.start_worker()
@@ -1123,6 +1124,82 @@ class RunQueue:
 
         return
 
+    def print_diffscenetasks(self):
+
+        valid = []
+        sq_hash = []
+        sq_hashfn = []
+        sq_fn = []
+        sq_taskname = []
+        sq_task = []
+        noexec = []
+        stamppresent = []
+        valid_new = set()
+
+        for task in xrange(len(self.rqdata.runq_fnid)):
+            fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
+            taskname = self.rqdata.runq_task[task]
+            taskdep = self.rqdata.dataCache.task_deps[fn]
+
+            if 'noexec' in taskdep and taskname in taskdep['noexec']:
+                noexec.append(task)
+                continue
+
+            sq_fn.append(fn)
+            sq_hashfn.append(self.rqdata.dataCache.hashfn[fn])
+            sq_hash.append(self.rqdata.runq_hash[task])
+            sq_taskname.append(taskname)
+            sq_task.append(task)
+        call = self.hashvalidate + "(sq_fn, sq_task, sq_hash, sq_hashfn, d)"
+        locs = { "sq_fn" : sq_fn, "sq_task" : sq_taskname, "sq_hash" : sq_hash, "sq_hashfn" : sq_hashfn, "d" : self.cooker.data }
+        valid = bb.utils.better_eval(call, locs)
+        for v in valid:
+            valid_new.add(sq_task[v])
+
+        # Tasks which are both setscene and noexec never care about dependencies
+        # We therefore find tasks which are setscene and noexec and mark their
+        # unique dependencies as valid.
+        for task in noexec:
+            if task not in self.rqdata.runq_setscene:
+                continue
+            for dep in self.rqdata.runq_depends[task]:
+                hasnoexecparents = True
+                for dep2 in self.rqdata.runq_revdeps[dep]:
+                    if dep2 in self.rqdata.runq_setscene and dep2 in noexec:
+                        continue
+                    hasnoexecparents = False
+                    break
+                if hasnoexecparents:
+                    valid_new.add(dep)
+
+        invalidtasks = set()
+        for task in xrange(len(self.rqdata.runq_fnid)):
+            if task not in valid_new and task not in noexec:
+                invalidtasks.add(task)
+
+        found = set()
+        processed = set()
+        for task in invalidtasks:
+            toprocess = set([task])
+            while toprocess:
+                next = set()
+                for t in toprocess:
+                    for dep in self.rqdata.runq_depends[t]:
+                        if dep in invalidtasks:
+                            found.add(task)
+                        if dep not in processed:
+                            processed.add(dep)
+                            next.add(dep)
+                toprocess = next
+                if task in found:
+                    toprocess = set()
+
+        tasklist = []
+        for task in invalidtasks.difference(found):
+            tasklist.append(self.rqdata.get_user_idstring(task))
+
+        if tasklist:
+            bb.plain("The differences between the current build and any cached tasks start at the following tasks:\n" + "\n".join(tasklist))
 
 class RunQueueExecute:
 
