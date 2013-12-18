@@ -668,9 +668,36 @@ def add_tasks(tasklist, deltasklist, d):
     # don't assume holding a reference
     d.setVar('_task_deps', task_deps)
 
-def remove_task(task, kill, d):
-    """Remove an BB 'task'.
+def addtask(task, before, after, d):
+    if task[:3] != "do_":
+        task = "do_" + task
 
-       If kill is 1, also remove tasks that depend on this task."""
+    d.setVarFlag(task, "task", 1)
+    bbtasks = d.getVar('__BBTASKS') or []
+    if not task in bbtasks:
+        bbtasks.append(task)
+    d.setVar('__BBTASKS', bbtasks)
 
-    d.delVarFlag(task, 'task')
+    existing = d.getVarFlag(task, "deps") or []
+    if after is not None:
+        # set up deps for function
+        for entry in after.split():
+            if entry not in existing:
+                existing.append(entry)
+    d.setVarFlag(task, "deps", existing)
+    if before is not None:
+        # set up things that depend on this func
+        for entry in before.split():
+            existing = d.getVarFlag(entry, "deps") or []
+            if task not in existing:
+                d.setVarFlag(entry, "deps", [task] + existing)
+
+def deltask(task, d):
+    if task[:3] != "do_":
+        task = "do_" + task
+
+    bbtasks = d.getVar('__BBDELTASKS') or []
+    if not task in bbtasks:
+        bbtasks.append(task)
+    d.setVar('__BBDELTASKS', bbtasks)
+

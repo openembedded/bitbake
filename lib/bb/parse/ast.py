@@ -235,29 +235,7 @@ class AddTaskNode(AstNode):
         self.after = after
 
     def eval(self, data):
-        var = self.func
-        if self.func[:3] != "do_":
-            var = "do_" + self.func
-
-        data.setVarFlag(var, "task", 1)
-        bbtasks = data.getVar('__BBTASKS') or []
-        if not var in bbtasks:
-            bbtasks.append(var)
-        data.setVar('__BBTASKS', bbtasks)
-
-        existing = data.getVarFlag(var, "deps") or []
-        if self.after is not None:
-            # set up deps for function
-            for entry in self.after.split():
-                if entry not in existing:
-                    existing.append(entry)
-        data.setVarFlag(var, "deps", existing)
-        if self.before is not None:
-            # set up things that depend on this func
-            for entry in self.before.split():
-                existing = data.getVarFlag(entry, "deps") or []
-                if var not in existing:
-                    data.setVarFlag(entry, "deps", [var] + existing)
+        bb.build.addtask(self.func, self.before, self.after, data)
 
 class DelTaskNode(AstNode):
     def __init__(self, filename, lineno, func):
@@ -265,14 +243,7 @@ class DelTaskNode(AstNode):
         self.func = func
 
     def eval(self, data):
-        var = self.func
-        if self.func[:3] != "do_":
-            var = "do_" + self.func
-
-        bbtasks = data.getVar('__BBDELTASKS') or []
-        if not var in bbtasks:
-            bbtasks.append(var)
-        data.setVar('__BBDELTASKS', bbtasks)
+        bb.build.deltask(self.func, data)
 
 class BBHandlerNode(AstNode):
     def __init__(self, filename, lineno, fns):
