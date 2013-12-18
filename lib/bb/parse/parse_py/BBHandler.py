@@ -42,6 +42,7 @@ __func_start_regexp__    = re.compile( r"(((?P<py>python)|(?P<fr>fakeroot))\s*)*
 __inherit_regexp__       = re.compile( r"inherit\s+(.+)" )
 __export_func_regexp__   = re.compile( r"EXPORT_FUNCTIONS\s+(.+)" )
 __addtask_regexp__       = re.compile("addtask\s+(?P<func>\w+)\s*((before\s*(?P<before>((.*(?=after))|(.*))))|(after\s*(?P<after>((.*(?=before))|(.*)))))*")
+__deltask_regexp__       = re.compile("deltask\s+(?P<func>\w+)")
 __addhandler_regexp__    = re.compile( r"addhandler\s+(.+)" )
 __def_regexp__           = re.compile( r"def\s+(\w+).*:" )
 __python_func_regexp__   = re.compile( r"(\s+.*)|(^$)" )
@@ -241,6 +242,11 @@ def feeder(lineno, s, fn, root, statements):
     m = __addtask_regexp__.match(s)
     if m:
         ast.handleAddTask(statements, fn, lineno, m)
+        return
+
+    m = __deltask_regexp__.match(s)
+    if m:
+        ast.handleDelTask(statements, fn, lineno, m)
         return
 
     m = __addhandler_regexp__.match(s)

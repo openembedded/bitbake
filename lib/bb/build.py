@@ -622,7 +622,7 @@ def stampfile(taskname, d, file_name = None):
     """
     return stamp_internal(taskname, d, file_name)
 
-def add_tasks(tasklist, d):
+def add_tasks(tasklist, deltasklist, d):
     task_deps = d.getVar('_task_deps')
     if not task_deps:
         task_deps = {}
@@ -633,6 +633,10 @@ def add_tasks(tasklist, d):
 
     for task in tasklist:
         task = d.expand(task)
+
+        if task in deltasklist:
+            continue
+
         d.setVarFlag(task, 'task', 1)
 
         if not task in task_deps['tasks']:

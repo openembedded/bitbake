@@ -259,6 +259,21 @@ class AddTaskNode(AstNode):
                 if var not in existing:
                     data.setVarFlag(entry, "deps", [var] + existing)
 
+class DelTaskNode(AstNode):
+    def __init__(self, filename, lineno, func):
+        AstNode.__init__(self, filename, lineno)
+        self.func = func
+
+    def eval(self, data):
+        var = self.func
+        if self.func[:3] != "do_":
+            var = "do_" + self.func
+
+        bbtasks = data.getVar('__BBDELTASKS') or []
+        if not var in bbtasks:
+            bbtasks.append(var)
+        data.setVar('__BBDELTASKS', bbtasks)
+
 class BBHandlerNode(AstNode):
     def __init__(self, filename, lineno, fns):
         AstNode.__init__(self, filename, lineno)
@@ -309,6 +324,13 @@ def handleAddTask(statements, filename, lineno, m):
 
     statements.append(AddTaskNode(filename, lineno, func, before, after))
 
+def handleDelTask(statements, filename, lineno, m):
+    func = m.group("func")
+    if func is None:
+        return
+
+    statements.append(DelTaskNode(filename, lineno, func))
+
 def handleBBHandlers(statements, filename, lineno, m):
     statements.append(BBHandlerNode(filename, lineno, m.group(1)))
 
@@ -333,7 +355,8 @@ def finalize(fn, d, variant = None):
     bb.data.update_data(d)
 
     tasklist = d.getVar('__BBTASKS') or []
-    bb.build.add_tasks(tasklist, d)
+    deltasklist = d.getVar('__BBDELTASKS') or []
+    bb.build.add_tasks(tasklist, deltasklist, d)
 
     bb.parse.siggen.finalise(fn, d, variant)
 
