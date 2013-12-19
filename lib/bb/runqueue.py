@@ -802,19 +802,6 @@ class RunQueueData:
                         procdep.append(self.taskData.fn_index[self.runq_fnid[dep]] + "." + self.runq_task[dep])
                     self.runq_hash[task] = bb.parse.siggen.get_taskhash(self.taskData.fn_index[self.runq_fnid[task]], self.runq_task[task], procdep, self.dataCache)
 
-        self.hashes = {}
-        self.hash_deps = {}
-        for task in xrange(len(self.runq_fnid)):
-            identifier = '%s.%s' % (self.taskData.fn_index[self.runq_fnid[task]],
-                                    self.runq_task[task])
-            self.hashes[identifier] = self.runq_hash[task]
-            deps = []
-            for dep in self.runq_depends[task]:
-                depidentifier = '%s.%s' % (self.taskData.fn_index[self.runq_fnid[dep]],
-                                           self.runq_task[dep])
-                deps.append(depidentifier)
-            self.hash_deps[identifier] = deps
-
         return len(self.runq_fnid)
 
     def dump_data(self, taskQueue):
@@ -883,8 +870,8 @@ class RunQueue:
             "fakerootenv" : self.rqdata.dataCache.fakerootenv,
             "fakerootdirs" : self.rqdata.dataCache.fakerootdirs,
             "fakerootnoenv" : self.rqdata.dataCache.fakerootnoenv,
-            "hashes" : self.rqdata.hashes,
-            "hash_deps" : self.rqdata.hash_deps,
+            "hashes" : bb.parse.siggen.taskhash,
+            "hash_deps" : bb.parse.siggen.runtaskdeps,
             "sigchecksums" : bb.parse.siggen.file_checksum_values,
             "runq_hash" : self.rqdata.runq_hash,
             "logdefaultdebug" : bb.msg.loggerDefaultDebugLevel,
