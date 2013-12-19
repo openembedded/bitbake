@@ -30,6 +30,7 @@ import stat
 import fcntl
 import errno
 import logging
+import re
 import bb
 from bb import msg, data, event
 from bb import monitordisk
@@ -42,6 +43,8 @@ except ImportError:
 
 bblogger = logging.getLogger("BitBake")
 logger = logging.getLogger("BitBake.RunQueue")
+
+__find_md5__ = re.compile( r'(?i)(?<![a-z0-9])[a-f0-9]{32}(?![a-z0-9])' )
 
 class RunQueueStats:
     """
@@ -1026,8 +1029,10 @@ class RunQueue:
 
         if self.state is runQueueSceneInit:
             if self.cooker.configuration.dump_signatures:
-                self.print_diffscenetasks()
+                invalidtasks = self.print_diffscenetasks()
                 self.dump_signatures()
+                self.write_diffscenetasks(invalidtasks)
+                self.state = runQueueComplete
             else:
                 self.start_worker()
                 self.rqexe = RunQueueExecuteScenequeue(self)
@@ -1098,7 +1103,6 @@ class RunQueue:
             self.rqexe.finish()
 
     def dump_signatures(self):
-        self.state = runQueueComplete
         done = set()
         bb.note("Reparsing files to collect dependency data")
         for task in range(len(self.rqdata.runq_fnid)):
@@ -1187,6 +1191,45 @@ class RunQueue:
 
         if tasklist:
             bb.plain("The differences between the current build and any cached tasks start at the following tasks:\n" + "\n".join(tasklist))
+
+        return invalidtasks.difference(found)
+
+    def write_diffscenetasks(self, invalidtasks):
+
+        # Define recursion callback
+        def recursecb(key, hash1, hash2):
+            hashes = [hash1, hash2]
+            hashfiles = bb.siggen.find_siginfo(key, None, hashes, self.cfgData)
+
+            recout = []
+            if len(hashfiles) == 2:
+                out2 = bb.siggen.compare_sigfiles(hashfiles[hash1], hashfiles[hash2], recursecb)
+                recout.extend(list('  ' + l for l in out2))
+            else:
+                recout.append("Unable to find matching sigdata for %s with hashes %s or %s" % (key, hash1, hash2))
+
+            return recout
+
+
+        for task in invalidtasks:
+            fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[task]]
+            pn = self.rqdata.dataCache.pkg_fn[fn]
+            taskname = self.rqdata.runq_task[task]
+            h = self.rqdata.runq_hash[task]
+            matches = bb.siggen.find_siginfo(pn, taskname, [], self.cfgData)
+            match = None
+            for m in matches:
+                if h in m:
+                    match = m
+            if match is None:
+                bb.fatal("Can't find a task we're supposed to have written out? (hash: %s)?" % h)
+            matches = {k : v for k, v in matches.iteritems() if h not in k}
+            latestmatch = sorted(matches.keys(), key=lambda f: matches[f])[-1]
+            prevh = __find_md5__.search(latestmatch).group(0)
+            output = bb.siggen.compare_sigfiles(latestmatch, match, recursecb)
+            bb.plain("\nTask %s:%s couldn't be used from the cache because:\n  We need hash %s, closest matching task was %s\n  " % (pn, taskname, h, prevh) + '\n  '.join(output))
+             
+
 
 class RunQueueExecute:
 
