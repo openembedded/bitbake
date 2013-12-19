@@ -430,9 +430,11 @@ def compare_sigfiles(a, b, recursecb = None):
             for dep in changed:
                 output.append("Hash for dependent task %s changed from %s to %s" % (clean_basepath(dep), a[dep], b[dep]))
                 if callable(recursecb):
+                    # If a dependent hash changed, might as well print the line above and then defer to the changes in 
+                    # that hash since in all likelyhood, they're the same changes this task also saw.
                     recout = recursecb(dep, a[dep], b[dep])
                     if recout:
-                        output.extend(recout)
+                        output = [output[-1]] + recout
 
     a_taint = a_data.get('taint', None)
     b_taint = b_data.get('taint', None)
