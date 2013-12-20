@@ -527,10 +527,11 @@ def verify_checksum(ud, d):
         # If strict checking enabled and neither sum defined, raise error
         strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
         if strict and not (ud.md5_expected or ud.sha256_expected):
-            raise NoChecksumError('No checksum specified for %s, please add at least one to the recipe:\n'
+            logger.error('No checksum specified for %s, please add at least one to the recipe:\n'
                              'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
                              (ud.localpath, ud.md5_name, md5data,
-                              ud.sha256_name, sha256data), ud.url)
+                              ud.sha256_name, sha256data))
+            raise NoChecksumError('Missing SRC_URI checksum', ud.url)
 
         # Log missing sums so user can more easily add them
         if not ud.md5_expected:
@@ -1424,9 +1425,7 @@ class Fetch(object):
                 update_stamp(ud, self.d)
 
             except BBFetchException as e:
-                if isinstance(e, NoChecksumError):
-                    logger.error("%s" % str(e))
-                elif isinstance(e, ChecksumError):
+                if isinstance(e, ChecksumError):
                     logger.error("Checksum failure fetching %s" % u)
                 raise
 
