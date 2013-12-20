@@ -526,19 +526,19 @@ def verify_checksum(ud, d):
     if ud.method.recommends_checksum(ud):
         # If strict checking enabled and neither sum defined, raise error
         strict = d.getVar("BB_STRICT_CHECKSUM", True) or None
-        if (strict and ud.md5_expected == None and ud.sha256_expected == None):
+        if strict and not (ud.md5_expected or ud.sha256_expected):
             raise NoChecksumError('No checksum specified for %s, please add at least one to the recipe:\n'
                              'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
                              (ud.localpath, ud.md5_name, md5data,
                               ud.sha256_name, sha256data), ud.url)
 
         # Log missing sums so user can more easily add them
-        if ud.md5_expected == None:
+        if not ud.md5_expected:
             logger.warn('Missing md5 SRC_URI checksum for %s, consider adding to the recipe:\n'
                         'SRC_URI[%s] = "%s"',
                         ud.localpath, ud.md5_name, md5data)
 
-        if ud.sha256_expected == None:
+        if not ud.sha256_expected:
             logger.warn('Missing sha256 SRC_URI checksum for %s, consider adding to the recipe:\n'
                         'SRC_URI[%s] = "%s"',
                         ud.localpath, ud.sha256_name, sha256data)
