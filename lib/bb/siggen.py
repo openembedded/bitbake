@@ -318,8 +318,8 @@ def compare_sigfiles(a, b, recursecb = None):
         for i in common:
             if a[i] != b[i] and i not in whitelist:
                 changed.add(i)
-        added = sa - sb
-        removed = sb - sa
+        added = sb - sa
+        removed = sa - sb
         return changed, added, removed
 
     def file_checksums_diff(a, b):
@@ -411,21 +411,21 @@ def compare_sigfiles(a, b, recursecb = None):
                 bdep_found = False
                 if removed:
                     for bdep in removed:
-                        if a[dep] == b[bdep]:
+                        if b[dep] == a[bdep]:
                             #output.append("Dependency on task %s was replaced by %s with same hash" % (dep, bdep))
                             bdep_found = True
                 if not bdep_found:
-                    output.append("Dependency on task %s was added with hash %s" % (clean_basepath(dep), a[dep]))
+                    output.append("Dependency on task %s was added with hash %s" % (clean_basepath(dep), b[dep]))
         if removed:
             for dep in removed:
                 adep_found = False
                 if added:
                     for adep in added:
-                        if a[adep] == b[dep]:
+                        if b[adep] == a[dep]:
                             #output.append("Dependency on task %s was replaced by %s with same hash" % (adep, dep))
                             adep_found = True
                 if not adep_found:
-                    output.append("Dependency on task %s was removed with hash %s" % (clean_basepath(dep), b[dep]))
+                    output.append("Dependency on task %s was removed with hash %s" % (clean_basepath(dep), a[dep]))
         if changed:
             for dep in changed:
                 output.append("Hash for dependent task %s changed from %s to %s" % (clean_basepath(dep), a[dep], b[dep]))
