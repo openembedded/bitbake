@@ -283,6 +283,7 @@ class Git(FetchMethod):
 
         bb.utils.remove(ud.localpath, True)
         bb.utils.remove(ud.fullmirror)
+        bb.utils.remove(ud.fullmirror + ".done")
 
     def supports_srcrev(self):
         return True
