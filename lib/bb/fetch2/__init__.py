@@ -1497,7 +1497,7 @@ class Fetch(object):
             ud = self.ud[url]
             ud.setup_localpath(self.d)
 
-            if not ud.localfile or self.localpath is None:
+            if not ud.localfile and ud.localpath is None:
                 continue
 
             if ud.lockfile:
