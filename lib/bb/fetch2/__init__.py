@@ -1263,10 +1263,10 @@ class FetchMethod(object):
         return
 
     def clean(self, urldata, d):
-       """
-       Clean any existing full or partial download
-       """
-       bb.utils.remove(urldata.localpath)
+        """
+        Clean any existing full or partial download
+        """
+        bb.utils.remove(urldata.localpath)
 
     def try_premirror(self, urldata, d):
         """
