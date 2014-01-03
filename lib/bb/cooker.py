@@ -176,8 +176,6 @@ class BBCooker:
                 sys.exit("FATAL: Failed to import extra cache class '%s'." % cache_name)
 
         self.databuilder = bb.cookerdata.CookerDataBuilder(self.configuration, False)
-        self.data = self.databuilder.data
-
         self.databuilder.parseBaseConfiguration()
         self.data = self.databuilder.data
         self.data_hash = self.databuilder.data_hash
