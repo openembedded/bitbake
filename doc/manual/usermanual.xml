@@ -241,7 +241,7 @@ addtask printdate before do_build</screen></para>
                 <title>Task Flags</title>
                 <para>Tasks support a number of flags which control various functionality of the task. These are as follows:</para>
                 <para>'dirs' - directories which should be created before the task runs</para>
-                <para>'cleandirs' - directories which should created before the task runs but should be empty</para>
+                <para>'cleandirs' - directories which should be created before the task runs but should be empty</para>
                 <para>'noexec' - marks the tasks as being empty and no execution required. These are used as dependency placeholders or used when added tasks need to be subsequently disabled.</para>
                 <para>'nostamp' - don't generate a stamp file for a task. This means the task is always rexecuted.</para>
                 <para>'fakeroot' - this task needs to be run in a fakeroot environment, obtained by adding the variables in FAKEROOTENV to the environment.</para>
