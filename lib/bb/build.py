@@ -154,6 +154,7 @@ def exec_func(func, d, dirs = None):
     if cleandirs:
         for cdir in d.expand(cleandirs).split():
             bb.utils.remove(cdir, True)
+            bb.utils.mkdirhier(cdir)
 
     if dirs is None:
         dirs = flags.get('dirs')
