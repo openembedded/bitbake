@@ -4,25 +4,54 @@
 {% endblock %}
 
 {% block buildinfomain %}
+<!-- page title -->
+<div class="row-fluid span10">
+ <div class="page-header">
+     <h1>Configuration</h1>
+ </div>
+</div>
 
-{% include "basetable_top.html" %}
+<!-- configuration table -->
+<div class="row-fluid pull-right span10" id="navTab">
+<ul class="nav nav-pills">
+    <li class="active"><a href="#">Summary</a></li>
+    <li class=""><a href="{% url 'configvars' build.id %}">BitBake variables</a></li>
+</ul>
 
-            <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Definition history</th>
-            <th>Value</th>
-            </tr>
+  <!-- summary -->
+  <div id="summary" class="tab-pane active">
+    <h3>Build configuration</h3>
+    <dl class="dl-horizontal">
+      <dt>BitBake version</dt><dd>1.19.1</dd>
+      <dt>Build system</dt><dd>x86_64-linux</dd>
+      <dt>Host distribution</dt><dd>Ubuntu-12.04</dd>
+      <dt>Target system</dt><dd>i586-poky-linux</dd>
+      <dt><i class="icon-question-sign get-help" data-toggle="tooltip" title="Specifies the target device for which the image is built"></i> Machine</dt><dd>atom-pc</dd>
+      <dt><i class="icon-question-sign get-help" data-toggle="tooltip" title="The short name of the distribution"></i> Distro</dt><dd>poky</dd>
+      <dt>Distro version</dt><dd>1.4+snapshot-20130718</dd>
+      <dt>Tune features</dt><dd>m32 i586</dd>
+      <dt>Target(s)</dt><dd>core-image-sato</dd>
+    </dl>
+    <h3>Layers</h3>
+    <div class="span9" style="margin-left:0px;">
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Layer branch</th>
+          <th>Layer commit</th>
+          <th>Layer directory</th>
+        </tr>
+      </thead>
+      <tbody>{% for lv in build.layer_version_build.all %}
+        <tr>
+            <td>{{lv.layer.name}}<a href="{{lv.layer.layer_index_url}}" target="_blank">&nbsp;<i class="icon-share get-info"></i></a></td><td>{{lv.branch}}</td><td class="layer_commit"><a data-content="{{lv.commit}}" title="" href="#" class="btn" data-original-title="">{{lv.commit|slice:":8"}}...</a></td><td>{{lv.layer.local_path}}</td>
+        </tr>{% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
 
-            {% for variable in objects %}
 
-            <tr class="data">
-                <td>{{variable.variable_name}}</td>
-                <td>{% if variable.description %}{{variable.description}}{% endif %}</td>
-                <td>{% for vh in variable.variablehistory_set.all %}{{vh.operation}} in {{vh.file_name}}:{{vh.line_number}}<br/>{%endfor%}</td>
-                <td>{{variable.variable_value}}</td>
-            {% endfor %}
-
-{% include "basetable_bottom.html" %}
-
+</div>
 {% endblock %}

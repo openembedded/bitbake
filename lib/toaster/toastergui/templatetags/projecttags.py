@@ -16,8 +16,9 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from django import template
+from django.utils import timezone
 
 register = template.Library()
 
@@ -42,8 +43,14 @@ def query(qs, **kwargs):
 
 @register.filter
 def divide(value, arg):
+    if int(arg) == 0:
+        return -1
     return int(value) / int(arg)
 
 @register.filter
 def multiply(value, arg):
     return int(value) * int(arg)
+
+@register.assignment_tag
+def datecompute(delta, start = timezone.now()):
+    return start + timedelta(delta)

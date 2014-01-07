@@ -1,3 +1,4 @@
+    </tbody>
     </table>
 
 <!-- Show pagination controls -->
@@ -8,15 +9,15 @@
 
    <ul class="pagination" style="display: block-inline">
 {%if objects.has_previous %}
-  <li><a href="?page={{objects.previous_page_number}}&count={{request.GET.count}}">&laquo;</a></li>
+  <li><a href="javascript:reload_params({'page':{{objects.previous_page_number}}})">&laquo;</a></li>
 {%else%}
   <li class="disabled"><a href="#">&laquo;</a></li>
 {%endif%}
 {% for i in objects.page_range %}
-  <li{%if i == objects.number %} class="active" {%endif%}><a href="?page={{i}}&count={{request.GET.count}}">{{i}}</a></li>
+  <li{%if i == objects.number %} class="active" {%endif%}><a href="javascript:reload_params({'page':{{i}}})">{{i}}</a></li>
 {% endfor %}
 {%if objects.has_next%}
-  <li><a href="?page={{objects.next_page_number}}&count={{request.GET.count}}">&raquo;</a></li>
+  <li><a href="javascript:reload_params({'page':{{objects.next_page_number}}})">&raquo;</a></li>
 {%else%}
   <li class="disabled"><a href="#">&raquo;</a></li>
 {%endif%}
@@ -58,3 +59,9 @@
     });
 });
 </script>
+
+<!-- modal filter boxes -->
+   {% for tc in tablecols %}{% if tc.filter %}{% with f=tc.filter %}
+        {% include "filtersnippet.html" %}
+   {% endwith %}{% endif %} {% endfor %}
+<!-- end modals -->

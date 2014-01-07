@@ -1,0 +1,19 @@
+
+ <!-- '{{f.class}}' filter -->
+ <form id="filter_{{f.class}}" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <input type="hidden" name="search" value="{{request.GET.search}}"/>
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+            <h3>Filter builds by {{tc.name}}</h3>
+        </div>
+        <div class="modal-body">
+            <label>{{f.label}}</label>
+            <select name="filter">
+                <option value="">No Filter</option>{% for key, value in f.options.items %}
+                <option {%if request.GET.filter == value %}selected="" {%endif%}value="{{value}}">{{key}}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="modal-footer">
+            <button type="submit" class="btn btn-primary disabled">Apply</button>
+        </div>
+  </form>

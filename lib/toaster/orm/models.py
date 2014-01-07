@@ -31,8 +31,8 @@ class Build(models.Model):
         (IN_PROGRESS, 'In Progress'),
     )
 
-    search_allowed_fields = ['machine',
-                             'cooker_log_path']
+    search_allowed_fields = ['machine', 'image_fstypes',
+                             'cooker_log_path', "target__target"]
 
     machine = models.CharField(max_length=100)
     image_fstypes = models.CharField(max_length=100)
@@ -101,6 +101,8 @@ class Task(models.Model):
         (OUTCOME_FAILED, 'Failed'),
         (OUTCOME_NA, 'Not Available'),
     )
+
+    search_allowed_fields = [ "recipe__name", "task_name" ]
 
     build = models.ForeignKey(Build, related_name='task_build')
     order = models.IntegerField(null=True)
@@ -217,6 +219,8 @@ class Layer_Version(models.Model):
 
 
 class Variable(models.Model):
+    search_allowed_fields = ['variable_name', 'variable_value',
+                             'variablehistory__file_name', "description"]
     build = models.ForeignKey(Build, related_name='variable_build')
     variable_name = models.CharField(max_length=100)
     variable_value = models.TextField(blank=True)
@@ -225,7 +229,7 @@ class Variable(models.Model):
     description = models.TextField(blank=True)
 
 class VariableHistory(models.Model):
-    variable = models.ForeignKey(Variable)
+    variable = models.ForeignKey(Variable, related_name='vhistory')
     file_name = models.FilePathField(max_length=255)
     line_number = models.IntegerField(null=True)
     operation = models.CharField(max_length=16)

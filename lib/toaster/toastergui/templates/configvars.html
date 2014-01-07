@@ -1,0 +1,40 @@
+{% extends "basebuildpage.html" %}
+{% block localbreadcrumb %}
+<li>Configuration</li>
+{% endblock %}
+
+{% block buildinfomain %}
+<!-- page title -->
+<div class="row-fluid span10">
+ <div class="page-header">
+     <h1>Configuration</h1>
+ </div>
+</div>
+
+<!-- configuration table -->
+<div class="row-fluid pull-right span10" id="navTab">
+<ul class="nav nav-pills">
+    <li class=""><a href="{% url 'configuration' build.id %}">Summary</a></li>
+    <li class="active"><a href="#" >BitBake variables</a></li>
+</ul>
+
+
+  <!-- variables -->
+  <div id="variables" class="tab-pane">
+{% include "basetable_top.html" %}
+
+{% for variable in objects %}
+   <tr class="data">
+        <td class="variable">{{variable.variable_name}}</td>
+        <td class="variable_value">{{variable.variable_value}}</td>
+        <td class="file">{% for vh in variable.variablehistory_set.all %}{{vh.operation}} in {{vh.file_name}}:{{vh.line_number}}<br/>{%endfor%}</td>
+        <td class="description">{% if variable.description %}{{variable.description}}{% endif %}</td>
+    </tr>
+{% endfor %}
+
+{% include "basetable_bottom.html" %}
+
+  </div> <!-- endvariables -->
+
+</div>
+{% endblock %}

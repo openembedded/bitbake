@@ -21,46 +21,53 @@
 
 <!-- control header -->
 <div class="navbar">
-                    <div class="navbar-inner">
-                        <form class="navbar-search input-append pull-left">
-                            <input class="input-xxlarge" type="text" placeholder="Search {{objectname}}" />
-                            <button class="btn" type="button">Search</button>
-                        </form>
-                        <div class="pull-right">
-
-    {% if tablecols %}
-                            <div class="btn-group">
-                                <button class="btn dropdown-toggle" data-toggle="dropdown">
-                                    Edit columns
-                                    <span class="caret"></span>
-                                </button>
-                                <ul class="dropdown-menu">
-
-    {% for i in tablecols %}
-                                    <li>
-                                        <label class="checkbox">
-<input type="checkbox" class="chbxtoggle" id="{{i.clclass}}" value="ct{{i.name}}" {% if i.clclass %}{% if not i.hidden %}checked="checked"{%endif%} onchange="showhideTableColumn($(this).attr('id'), $(this).is(':checked'))" {%else%} disabled{% endif %}/>   {{i.name}}
-                                        </label>
-                                    </li>
-    {% endfor %}
-                                </ul>
-                            </div>
-    {% endif %}
-
-    <div style="display:inline">
-                            <span class="divider-vertical"></span>
-                            <span class="help-inline" style="padding-top:5px;">Show rows:</span>
-                            <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
+    <div class="navbar-inner">
+        <form class="navbar-search input-append pull-left" >
+            <input class="input-xxlarge" name="search" type="text" placeholder="Search {{objectname}}" value="{{request.GET.search}}"/>
+            <input class="btn" type="submit" value="Search"/>
+        </form>
+        <div class="pull-right">
+{% if tablecols %}
+            <div class="btn-group">
+                <button class="btn dropdown-toggle" data-toggle="dropdown">Edit columns
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">{% for i in tablecols %}
+                    <li>
+                        <label class="checkbox">
+                            <input type="checkbox" class="chbxtoggle" {% if i.clclass %}id="{{i.clclass}}" value="ct{{i.name}}" {% if not i.hidden %}checked="checked"{%endif%} onchange="showhideTableColumn($(this).attr('id'), $(this).is(':checked'))" {%else%} checked disabled{% endif %}/>   {{i.name}}
+                        </label>
+                    </li>{% endfor %}
+                </ul>
+            </div>
+{% endif %}
+            <div style="display:inline">
+                <span class="divider-vertical"></span>
+                <span class="help-inline" style="padding-top:5px;">Show rows:</span>
+                <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
   {% with "2 5 10 25 50 100" as list%}
-    {% for i in list.split %}<option{%if i == request.GET.count %} selected{%endif%}>{{i}}</option>
+{% for i in list.split %}                    <option{%if i == request.GET.count %} selected{%endif%}>{{i}}</option>
     {% endfor %}
   {% endwith %}
-                            </select>
-    </div>
-                        </div>
-                    </div>
-                </div>
+                </select>
+           </div>
+        </div>
+    </div> <!-- navbar-inner -->
+</div>
 
 <!-- the actual rows of the table -->
     <table class="table table-bordered table-hover tablesorter" id="otable">
+    <thead>
+        <!-- Table header row; generated from "tablecols" entry in the context dict -->
+        <tr>
+            {% for tc in tablecols %}<th class="{{tc.dclass}} {{tc.clclass}}">
+                {%if tc.qhelp%}<i class="icon-question-sign get-help" data-toggle="tooltip" title="{{tc.qhelp}}"></i>{%endif%}
+                <a href="javascript:reload_params({'orderby' : '{{tc.orderfield}}' })" style="font-weight:normal;">{{tc.name}}</a>
+                {%if tc.filter%}<div class="btn-group pull-right">
+                    <a href="#filter_{{tc.filter.class}}" role="button" class="btn btn-mini{%if request.GET.filter in tc.filter.options.values%} btn-primary{%endif%}" data-toggle="modal"> <i class="icon-filter filtered"></i> </a>
+                </div>{%endif%}
+            </th>{% endfor %}
+        </tr>
+    </thead>
+    <tbody>
 

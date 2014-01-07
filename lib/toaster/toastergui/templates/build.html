@@ -7,70 +7,77 @@
 {% block pagecontent %}
 <div class="row-fluid">
 
-<div class="page-header" style="margin-top:40px;">
-    <h1>
-        Recent Builds
-     </h1>
-</div>
-{% for build in mru %}
-<div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
-    <div class="row-fluid">
-        <div class="lead span5">
-            {%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}
-            <a href="{%url 'builddashboard' build.pk%}">
-            <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|naturaltime}})</span>
-            </a>
-        </div>
-{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-        <div class="span2 lead">
-{% if  build.errors_no %}
-            <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
-{% endif %}
-        </div>
-        <div class="span2 lead">
-{% if  build.warnings_no %}
-            <i class="icon-warning-sign yellow"></i> <a href="{%url 'builddashboard' build.pk%}" class="warning">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>
-{% endif %}
-        </div>
-        <div class="lead pull-right">
-            Build time: <a href="build-time.html">{{ build|timespent }}</a>
-        </div>
-{%endif%}{%if build.outcome == build.IN_PROGRESS %}
-        <div class="span4">
-            <div class="progress" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
-                <div style="width: {{build.completeper}}%;" class="bar"></div>
+  {%if mru.count > 0%}
+  <div class="page-header" style="margin-top:40px;">
+      <h1>
+          Recent Builds
+       </h1>
+  </div>
+  {% for build in mru %}
+    <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
+        <div class="row-fluid">
+            <div class="lead span5">
+                {%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}
+                <a href="{%url 'builddashboard' build.pk%}">
+                <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|naturaltime}})</span>
+                </a>
             </div>
+    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
+            <div class="span2 lead">
+    {% if  build.errors_no %}
+                <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
+    {% endif %}
+            </div>
+            <div class="span2 lead">
+    {% if  build.warnings_no %}
+                <i class="icon-warning-sign yellow"></i> <a href="{%url 'builddashboard' build.pk%}" class="warning">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>
+    {% endif %}
+            </div>
+            <div class="lead pull-right">
+                Build time: <a href="build-time.html">{{ build|timespent }}</a>
+            </div>
+    {%endif%}{%if build.outcome == build.IN_PROGRESS %}
+            <div class="span4">
+                <div class="progress" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
+                    <div style="width: {{build.completeper}}%;" class="bar"></div>
+                </div>
+            </div>
+            <div class="lead pull-right">ETA: in {{build.eta|naturaltime}}</div>
+    {%endif%}
         </div>
-        <div class="lead pull-right">ETA: in {{build.eta|naturaltime}}</div>
-{%endif%}
     </div>
-</div>
 
-{% endfor %}
+  {% endfor %}{%endif%}
 
-
-<div class="page-header" style="margin-top:40px;">
-    <h1>
-        All builds
+  <div class="page-header" style="margin-top:40px;">
+     <h1>
+      {% if request.GET.filter or request.GET.search and objects.ocount > 0  %}
+          {{objects.ocount}} build{{objects.ocount|pluralize}} found
+      {%elif objects.ocount == 0%}
+          No builds
+      {%else%}
+          All builds
+      {%endif%}
      </h1>
-</div>
+  </div>
 
+ {% if objects.ocount == 0 %}
+  <div class="row-fluid">
+      <div class="alert">
+      <form class="no-results">
+          <div class="input-append">
+              <input class="input-xxlarge" type="text" placeholder="{{request.GET.search}}" />
+              <input class="btn" type="submit" value="Search"/>
+              <button class="btn btn-link" onclick="javascript:reload_params({'search':'', 'filter':''})">Show all builds</button>
+          </div>
+      </form>
+      </div>
+  </div>
+
+
+{% else %}
 {% include "basetable_top.html" %}
-
-        <tr>
-            <th class="outcome span2"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="The outcome tells you if a build completed successfully or failed"></i> <a href="#" style="font-weight:normal;">Outcome</a> <div class="btn-group pull-right"> <a href="#outcome" role="button" class="btn btn-mini" data-toggle="modal"> <i class="icon-filter"></i> </a> </div> </th>
-               <th class="target"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="This is the build target(s): one or more recipes or image recipes"></i> <a href="#" style="font-weight:normal;">Target</a> </th>
-            <th class="machine span3"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="The machine is the hardware for which you are building"></i> <a href="#" style="font-weight:normal;">Machine</a> </th>
-            <th class="started_on"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="The date and time you started the build"></i> <a href="#" style="font-weight:normal;">Started on</a> <div class="btn-group pull-right"> <a href="#started-on" role="button" class="btn btn-mini" data-toggle="modal"> <i class="icon-filter"></i> </a> </div> </th>
-            <th class="completed_on"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="The date and time the build finished"></i> <a href="#" class="sorted"> Completed on </a> <div class="btn-group pull-right"> <a href="#completed-on" role="button" class="btn btn-mini" data-toggle="modal"> <i class="icon-filter"></i> </a> </div> <i class="icon-caret-down"></i> </th>
-            <th class="failed_tasks"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="How many tasks failed during the build"></i> <a href="#" style="font-weight:normal;">Failed tasks</a> <div class="btn-group pull-right"> <a href="#failed-tasks" role="button" class="btn btn-mini" data-toggle="modal"> <i class="icon-filter"></i> </a> </div> <!--div id="filtered" class="btn-group pull-right" title="<p>Showing only builds with failed tasks</p><p><a class='btn btn-mini btn-primary' href='#'>Show all builds</a></p>"> <a class="btn btn-mini btn-primary"> <i class="icon-filter"></i> </a> </div-->   </th>
-            <th class="errors"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="How many errors were encountered during the build (if any)"></i> <a href="#" style="font-weight:normal;">Errors</a> <div class="btn-group pull-right"> <a href="#errors" role="button" class="btn btn-mini" data-toggle="modal"> <i class="icon-filter"></i> </a> </div> </th>
-            <th class="warnings"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="How many warnigns were encountered during the build (if any)"></i> <a href="#" style="font-weight:normal;">Warnings</a> <div class="btn-group pull-right"> <a href="#warnings" role="button" class="btn btn-mini" data-toggle="modal"> <i class="icon-filter"></i> </a> </div> <!--div id="filtered" class="btn-group pull-right" title="<p>Showing only builds without warnings</p><p><a class='btn btn-mini btn-primary' href='#'>Show all builds</a></p>"> <a class="btn btn-mini btn-primary"> <i class="icon-filter"></i> </a> </div--> </th>
-            <th class="time"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="How long it took the build to finish"></i> <a href="#" style="font-weight:normal;">Time</a> </th>
-            <th class="log span4">    <i class="icon-question-sign get-help" data-toggle="tooltip" title="The location in disk of the build main log file"></i> <a href="#" style="font-weight:normal;">Log</a> </th>
-            <th class="output"> <i class="icon-question-sign get-help" data-toggle="tooltip" title="The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory"></i> <a href="#" style="font-weight:normal;">Output</a> </th>
-
-        </tr>
+        <!-- Table data rows; the order needs to match the order of "tablecols" definitions; and the <td class value needs to match the tablecols clclass value for show/hide buttons to work -->
         {% for build in objects %}
         <tr class="data">
             <td class="outcome"><a href="{% url "builddashboard" build.id %}">{%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}</a></td>
@@ -78,11 +85,11 @@
             <td class="machine"><a href="{% url "builddashboard" build.id %}">{{build.machine}}</a></td>
             <td class="started_on"><a href="{% url "builddashboard" build.id %}">{{build.started_on}}</a></td>
             <td class="completed_on"><a href="{% url "builddashboard" build.id %}">{{build.completed_on}}</a></td>
-            <td class="failed_tasks"></td>
-            <td class="errors">{% if  build.errors_no %}<a class="error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>{%endif%}</td>
-            <td class="warnings">{% if  build.warnings_no %}<a class="warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
+            <td class="failed_tasks">{% query build.task_build outcome=4 order__gt=0 as exectask%}{% if exectask.count == 1 %}{{exectask.0.recipe.name}}.{{exectask.0.task_name}}{% elif exectask.count > 1%}{{exectask.count}}{%endif%}</td>
+            <td class="errors_no">{% if  build.errors_no %}<a class="errors_no" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>{%endif%}</td>
+            <td class="warnings_no">{% if  build.warnings_no %}<a class="warnings_no" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
             <td class="time"><a href="{% url "buildtime" build.id %}">{{build|timespent}}</a></td>
-            <td class="log">{{build.log}}</td>
+            <td class="log">{{build.cooker_log_path}}</td>
             <td class="output">{% if build.outcome == 0 %}{% for t in build.target_set.all %}{% if t.is_image %}<a href="{%url "builddashboard" build.id%}#images">{{build.image_fstypes}}</a>{% endif %}{% endfor %}{% endif %}</td>
         </tr>
 
@@ -91,5 +98,7 @@
 
 {% include "basetable_bottom.html" %}
 
-</div>
+{% endif %}
+</div><!-- end row-fluid-->
+
 {% endblock %}

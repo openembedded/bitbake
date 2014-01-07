@@ -25,7 +25,10 @@ from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File
 from orm.models import Target_Installed_Package
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
+from django.http import HttpResponseBadRequest
+from django.utils import timezone
+from datetime import timedelta
+from django.utils import formats
 
 def _build_page_range(paginator, index = 1):
     try:
@@ -72,6 +75,109 @@ def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
 
     return redirect(url + "?%s" % urllib.urlencode(params), *args, **kwargs)
 
+FIELD_SEPARATOR = ":"
+VALUE_SEPARATOR = ";"
+DESCENDING = "-"
+
+def __get_q_for_val(name, value):
+    if "OR" in value:
+        return reduce(operator.or_, map(lambda x: __get_q_for_val(name, x), [ x for x in value.split("OR") ]))
+    if "AND" in value:
+        return reduce(operator.and_, map(lambda x: __get_q_for_val(name, x), [ x for x in value.split("AND") ]))
+    if value.startswith("NOT"):
+        kwargs = { name : value.strip("NOT") }
+        return ~Q(**kwargs)
+    else:
+        kwargs = { name : value }
+        return Q(**kwargs)
+
+def _get_filtering_query(filter_string):
+
+    search_terms = filter_string.split(FIELD_SEPARATOR)
+    keys = search_terms[0].split(VALUE_SEPARATOR)
+    values = search_terms[1].split(VALUE_SEPARATOR)
+
+    querydict = dict(zip(keys, values))
+    return reduce(lambda x, y: x & y, map(lambda x: __get_q_for_val(k, querydict[k]),[k for k in querydict]))
+
+def _get_toggle_order(request, orderkey):
+    return "%s:-" % orderkey if request.GET.get('orderby', "") == "%s:+" % orderkey else "%s:+" % orderkey
+
+# we check that the input comes in a valid form that we can recognize
+def _validate_input(input, model):
+
+    invalid = None
+
+    if input:
+        input_list = input.split(FIELD_SEPARATOR)
+
+        # Check we have only one colon
+        if len(input_list) != 2:
+            invalid = "We have an invalid number of separators"
+            return None, invalid
+
+        # Check we have an equal number of terms both sides of the colon
+        if len(input_list[0].split(VALUE_SEPARATOR)) != len(input_list[1].split(VALUE_SEPARATOR)):
+            invalid = "Not all arg names got values"
+            return None, invalid + str(input_list)
+
+        # Check we are looking for a valid field
+        valid_fields = model._meta.get_all_field_names()
+        for field in input_list[0].split(VALUE_SEPARATOR):
+            if not reduce(lambda x, y: x or y, map(lambda x: field.startswith(x), [ x for x in valid_fields ])):
+                return None, (field, [ x for x in valid_fields ])
+
+    return input, invalid
+
+# uses search_allowed_fields in orm/models.py to create a search query
+# for these fields with the supplied input text
+def _get_search_results(search_term, queryset, model):
+    search_objects = []
+    for st in search_term.split(" "):
+        q_map = map(lambda x: Q(**{x+'__icontains': st}),
+                model.search_allowed_fields)
+
+        search_objects.append(reduce(operator.or_, q_map))
+    search_object = reduce(operator.and_, search_objects)
+    queryset = queryset.filter(search_object)
+
+    return queryset
+
+
+# function to extract the search/filter/ordering parameters from the request
+# it uses the request and the model to validate input for the filter and orderby values
+def _search_tuple(request, model):
+    ordering_string, invalid = _validate_input(request.GET.get('orderby', ''), model)
+    if invalid:
+        raise BaseException("Invalid ordering " + str(invalid))
+
+    filter_string, invalid = _validate_input(request.GET.get('filter', ''), model)
+    if invalid:
+        raise BaseException("Invalid filter " + str(invalid))
+
+    search_term = request.GET.get('search', '')
+    return (filter_string, search_term, ordering_string)
+
+
+# returns a lazy-evaluated queryset for a filter/search/order combination
+def _get_queryset(model, filter_string, search_term, ordering_string):
+    if filter_string:
+        filter_query = _get_filtering_query(filter_string)
+        queryset = model.objects.filter(filter_query)
+    else:
+        queryset = model.objects.all()
+
+    if search_term:
+        queryset = _get_search_results(search_term, queryset, model)
+
+    if ordering_string and queryset:
+        column, order = ordering_string.split(':')
+        if order.lower() == DESCENDING:
+            queryset = queryset.order_by('-' + column)
+        else:
+            queryset = queryset.order_by(column)
+
+    return queryset
 
 # shows the "all builds" page
 def builds(request):
@@ -84,16 +190,24 @@ def builds(request):
     if retval:
         return _redirect_parameters( 'all-builds', request.GET, mandatory_parameters)
 
-    # retrieve the objects that will be displayed in the table
-    build_info = _build_page_range(Paginator(Build.objects.exclude(outcome = Build.IN_PROGRESS).order_by("-id"), request.GET.get('count', 10)),request.GET.get('page', 1))
+    # boilerplate code that takes a request for an object type and returns a queryset
+    # for that object type. copypasta for all needed table searches
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
+    queryset = _get_queryset(Build, filter_string, search_term, ordering_string)
 
-    # build view-specific information; this is rendered specifically in the builds page
-    build_mru = Build.objects.order_by("-started_on")[:3]
+    # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
+    build_info = _build_page_range(Paginator(queryset.exclude(outcome = Build.IN_PROGRESS), request.GET.get('count', 10)),request.GET.get('page', 1))
+
+    # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
+    build_mru = Build.objects.filter(completed_on__gte=(timezone.now()-timedelta(hours=24))).order_by("-started_on")[:3]
     for b in [ x for x in build_mru if x.outcome == Build.IN_PROGRESS ]:
         tf = Task.objects.filter(build = b)
         b.completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
-        from django.utils import timezone
-        b.eta = timezone.now() + ((timezone.now() - b.started_on)*100/b.completeper)
+        b.eta = timezone.now()
+        if b.completeper > 0:
+            b.eta += ((timezone.now() - b.started_on)*100/b.completeper)
+        else:
+            b.eta = 0
 
     # send the data to the template
     context = {
@@ -101,19 +215,78 @@ def builds(request):
                 'mru' : build_mru,
             # TODO: common objects for all table views, adapt as needed
                 'objects' : build_info,
+            # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
-                {'name': 'Target ', 'clclass': 'target',},
-                {'name': 'Machine ', 'clclass': 'machine'},
-                {'name': 'Completed on ', 'clclass': 'completed_on'},
-                {'name': 'Failed tasks ', 'clclass': 'failed_tasks'},
-                {'name': 'Errors ', 'clclass': 'errors_no'},
-                {'name': 'Warnings', 'clclass': 'warnings_no'},
-                {'name': 'Output ', 'clclass': 'output'},
-                {'name': 'Started on ', 'clclass': 'started_on', 'hidden' : 1},
-                {'name': 'Time ', 'clclass': 'time', 'hidden' : 1},
-                {'name': 'Output', 'clclass': 'output'},
-                {'name': 'Log', 'clclass': 'log', 'hidden': 1},
-            ]}
+                {'name': 'Outcome ',                                                # column with a single filter
+                 'qhelp' : "The outcome tells you if a build completed successfully or failed",     # the help button content
+                 'dclass' : "span2",                                                # indication about column width; comes from the design
+                 'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
+                  # filter field will set a filter on that column with the specs in the filter description
+                  # the class field in the filter has no relation with clclass; the control different aspects of the UI
+                  # still, it is recommended for the values to be identical for easy tracking in the generated HTML
+                 'filter' : {'class' : 'outcome', 'label': 'Show only', 'options' : {
+                        'Successful builds': 'outcome:' + str(Build.SUCCEEDED),  # this is the field search expression
+                        'Failed builds': 'outcome:'+ str(Build.FAILED),
+                    }
+                  }
+                },
+                {'name': 'Target ',                                                 # default column, disabled box, with just the name in the list
+                 'qhelp': "This is the build target(s): one or more recipes or image recipes",
+                 'orderfield': _get_toggle_order(request, "target__target"),
+                },
+                {'name': 'Machine ',
+                 'qhelp': "The machine is the hardware for which you are building",
+                 'dclass': 'span3'},                           # a slightly wider column
+                {'name': 'Started on ', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
+                 'qhelp': "The date and time you started the build",
+                  'filter' : {'class' : 'started_on', 'label': 'Show only builds started', 'options' : {
+                        'Today' : 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d"),
+                        'Yesterday' : 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"),
+                        'Within one week' : 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"),
+                    }}
+                },
+                {'name': 'Completed on ',
+                 'qhelp': "The date and time the build finished",
+                 'orderfield': _get_toggle_order(request, "completed_on"),
+                 'filter' : {'class' : 'completed_on', 'label': 'Show only builds completed', 'options' : {
+                        'Today' : 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"),
+                        'Yesterday' : 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"),
+                        'Within one week' : 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"),
+                    }}
+                },
+                {'name': 'Failed tasks ', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
+                 'qhelp': "How many tasks failed during the build",
+                 'filter' : {'class' : 'failed_tasks', 'label': 'Show only ', 'options' : {
+                        'Builds with failed tasks' : 'task_build__outcome:4',
+                        'Builds without failed tasks' : 'task_build__outcome:NOT4',
+                    }}
+                },
+                {'name': 'Errors ', 'clclass': 'errors_no',
+                 'qhelp': "How many errors were encountered during the build (if any)",
+                 'orderfield': _get_toggle_order(request, "errors_no"),
+                 'filter' : {'class' : 'errors_no', 'label': 'Show only ', 'options' : {
+                        'Builds with errors' : 'errors_no__gte:1',
+                        'Builds without errors' : 'errors_no:0',
+                    }}
+                },
+                {'name': 'Warnings', 'clclass': 'warnings_no',
+                 'qhelp': "How many warnigns were encountered during the build (if any)",
+                 'orderfield': _get_toggle_order(request, "warnings_no"),
+                 'filter' : {'class' : 'warnings_no', 'label': 'Show only ', 'options' : {
+                        'Builds with warnings' : 'warnings_no__gte:1',
+                        'Builds without warnings' : 'warnings_no:0',
+                    }}
+                },
+                {'name': 'Time ', 'clclass': 'time', 'hidden' : 1,
+                 'qhelp': "How long it took the build to finish",},
+                {'name': 'Log',
+                 'dclass': "span4",
+                 'qhelp': "The location in disk of the build main log file",
+                 'clclass': 'log', 'hidden': 1},
+                {'name': 'Output', 'clclass': 'output',
+                 'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory"},
+                ]
+            }
 
     return render(request, template, context)
 
@@ -191,8 +364,10 @@ def tasks(request, build_id):
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'tasks', request.GET, mandatory_parameters, build_id = build_id)
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
+    queryset = _get_queryset(Task, filter_string, search_term, ordering_string)
 
-    tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id, order__gt=0), request.GET.get('count', 100)),request.GET.get('page', 1))
+    tasks = _build_page_range(Paginator(queryset.filter(build=build_id, order__gt=0), request.GET.get('count', 100)),request.GET.get('page', 1))
 
     for t in tasks:
         if t.outcome == Task.OUTCOME_COVERED:
@@ -208,8 +383,10 @@ def recipes(request, build_id):
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'recipes', request.GET, mandatory_parameters, build_id = build_id)
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
+    queryset = _get_queryset(Recipe, filter_string, search_term, ordering_string)
 
-    recipes = _build_page_range(Paginator(Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)), request.GET.get('count', 100)),request.GET.get('page', 1))
+    recipes = _build_page_range(Paginator(queryset.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)), request.GET.get('count', 100)),request.GET.get('page', 1))
 
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': recipes, }
 
@@ -218,14 +395,62 @@ def recipes(request, build_id):
 
 def configuration(request, build_id):
     template = 'configuration.html'
+    context = {'build': Build.objects.filter(pk=build_id)[0]}
+    return render(request, template, context)
+
+
+def configvars(request, build_id):
+    template = 'configvars.html'
     mandatory_parameters = { 'count': 100,  'page' : 1};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 'configuration', request.GET, mandatory_parameters, build_id = build_id)
+        return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id = build_id)
 
-    variables = _build_page_range(Paginator(Variable.objects.filter(build=build_id), 50), request.GET.get('page', 1))
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : variables}
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
+    queryset = _get_queryset(Variable, filter_string, search_term, ordering_string)
+
+    variables = _build_page_range(Paginator(queryset.filter(build=build_id), request.GET.get('count', 50)), request.GET.get('page', 1))
+
+    context = {
+                'build': Build.objects.filter(pk=build_id)[0],
+                'objects' : variables,
+            # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
+                'tablecols' : [
+                {'name': 'Variable ',
+                 'qhelp': "Base variable expanded name",
+                 'clclass' : 'variable',
+                 'dclass' : "span3",
+                 'orderfield': _get_toggle_order(request, "variable_name"),
+                },
+                {'name': 'Value ',
+                 'qhelp': "The value assigned to the variable",
+                 'clclass': 'variable_value',
+                 'dclass': "span4",
+                 'orderfield': _get_toggle_order(request, "variable_value"),
+                },
+                {'name': 'Configuration file(s) ',
+                 'qhelp': "The configuration file(s) that touched the variable value",
+                 'clclass': 'file',
+                 'dclass': "span6",
+                 'orderfield': _get_toggle_order(request, "variable_vhistory__file_name"),
+                 'filter' : { 'class': 'file', 'label' : 'Show only', 'options' : {
+                        }
+                 }
+                },
+                {'name': 'Description ',
+                 'qhelp': "A brief explanation of a variable",
+                 'clclass': 'description',
+                 'dclass': "span5",
+                 'orderfield': _get_toggle_order(request, "description"),
+                 'filter' : { 'class' : 'description', 'label' : 'No', 'options' : {
+                        }
+                 },
+                }
+                ]
+            }
+
     return render(request, template, context)
+
 
 def buildtime(request, build_id):
     template = "buildtime.html"
@@ -263,8 +488,10 @@ def bpackage(request, build_id):
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'packages', request.GET, mandatory_parameters, build_id = build_id)
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
+    queryset = _get_queryset(Package, filter_string, search_term, ordering_string)
 
-    packages = _build_page_range(Paginator(Package.objects.filter(build = build_id), request.GET.get('count', 100)),request.GET.get('page', 1))
+    packages = _build_page_range(Paginator(queryset.filter(build = build_id), request.GET.get('count', 100)),request.GET.get('page', 1))
 
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
     return render(request, template, context)
@@ -305,139 +532,4 @@ def layer_versions_recipes(request, layerversion_id):
 
     return render(request, template, context)
 
-#### API
 
-import json
-from django.core import serializers
-from django.http import HttpResponse, HttpResponseBadRequest
-
-
-def model_explorer(request, model_name):
-
-    DESCENDING = 'desc'
-    response_data = {}
-    model_mapping = {
-        'build': Build,
-        'target': Target,
-        'task': Task,
-        'task_dependency': Task_Dependency,
-        'package': Package,
-        'layer': Layer,
-        'layerversion': Layer_Version,
-        'recipe': Recipe,
-        'recipe_dependency': Recipe_Dependency,
-        'package': Package,
-        'package_dependency': Package_Dependency,
-        'build_file': Package_File,
-        'variable': Variable,
-        'logmessage': LogMessage,
-        }
-
-    if model_name not in model_mapping.keys():
-        return HttpResponseBadRequest()
-
-    model = model_mapping[model_name]
-
-    try:
-        limit = int(request.GET.get('limit', 0))
-    except ValueError:
-        limit = 0
-
-    try:
-        offset = int(request.GET.get('offset', 0))
-    except ValueError:
-        offset = 0
-
-    ordering_string, invalid = _validate_input(request.GET.get('orderby', ''),
-                                               model)
-    if invalid:
-        return HttpResponseBadRequest()
-
-    filter_string, invalid = _validate_input(request.GET.get('filter', ''),
-                                             model)
-    if invalid:
-        return HttpResponseBadRequest()
-
-    search_term = request.GET.get('search', '')
-
-    if filter_string:
-        filter_terms = _get_filtering_terms(filter_string)
-        try:
-            queryset = model.objects.filter(**filter_terms)
-        except ValueError:
-            queryset = []
-    else:
-        queryset = model.objects.all()
-
-    if search_term:
-        queryset = _get_search_results(search_term, queryset, model)
-
-    if ordering_string and queryset:
-        column, order = ordering_string.split(':')
-        if order.lower() == DESCENDING:
-            queryset = queryset.order_by('-' + column)
-        else:
-            queryset = queryset.order_by(column)
-
-    if offset and limit:
-        queryset = queryset[offset:(offset+limit)]
-    elif offset:
-        queryset = queryset[offset:]
-    elif limit:
-        queryset = queryset[:limit]
-
-    if queryset:
-        response_data['count'] = queryset.count()
-    else:
-        response_data['count'] = 0
-    response_data['list'] = serializers.serialize('json', queryset)
-#    response_data = serializers.serialize('json', queryset)
-
-    return HttpResponse(json.dumps(response_data),
-                        content_type='application/json')
-
-def _get_filtering_terms(filter_string):
-
-    search_terms = filter_string.split(":")
-    keys = search_terms[0].split(',')
-    values = search_terms[1].split(',')
-
-    return dict(zip(keys, values))
-
-def _validate_input(input, model):
-
-    invalid = 0
-
-    if input:
-        input_list = input.split(":")
-
-        # Check we have only one colon
-        if len(input_list) != 2:
-            invalid = 1
-            return None, invalid
-
-        # Check we have an equal number of terms both sides of the colon
-        if len(input_list[0].split(',')) != len(input_list[1].split(',')):
-            invalid = 1
-            return None, invalid
-
-        # Check we are looking for a valid field
-        valid_fields = model._meta.get_all_field_names()
-        for field in input_list[0].split(','):
-            if field not in valid_fields:
-                invalid = 1
-                return None, invalid
-
-    return input, invalid
-
-def _get_search_results(search_term, queryset, model):
-    search_objects = []
-    for st in search_term.split(" "):
-        q_map = map(lambda x: Q(**{x+'__icontains': st}),
-                model.search_allowed_fields)
-
-        search_objects.append(reduce(operator.or_, q_map))
-    search_object = reduce(operator.and_, search_objects)
-    queryset = queryset.filter(search_object)
-
-    return queryset

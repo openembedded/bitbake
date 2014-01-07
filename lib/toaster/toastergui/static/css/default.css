@@ -172,3 +172,6 @@ dd p {line-height:20px;}
 .tooltip code { background-color:transparent; color:#FFFFFF; font-weight:normal; border:none; font-size: 1em; }
 .manual { margin-top:11px;}
 .heading-help { font-size:14px;}
+
+
+.no-results { margin: 10px 0 0; }
