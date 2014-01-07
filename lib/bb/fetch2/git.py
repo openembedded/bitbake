@@ -101,6 +101,8 @@ class Git(FetchMethod):
 
         ud.rebaseable = ud.parm.get("rebaseable","0") == "1"
 
+        ud.nobranch = ud.parm.get("nobranch","0") == "1"
+
         # bareclone implies nocheckout
         ud.bareclone = ud.parm.get("bareclone","0") == "1"
         if ud.bareclone:
@@ -289,8 +291,13 @@ class Git(FetchMethod):
         return True
 
     def _contains_ref(self, ud, d, name):
-        cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (
-            ud.basecmd, ud.revisions[name], ud.branches[name])
+        cmd = ""
+        if ud.nobranch:
+            cmd = "%s log --pretty=oneline -n 1 %s -- 2> /dev/null | wc -l" % (
+                ud.basecmd, ud.revisions[name])
+        else:
+            cmd =  "%s branch --contains %s --list %s 2> /dev/null | wc -l" % (
+                ud.basecmd, ud.revisions[name], ud.branches[name])
         try:
             output = runfetchcmd(cmd, d, quiet=True)
         except bb.fetch2.FetchError:
