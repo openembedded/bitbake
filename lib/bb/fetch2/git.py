@@ -44,6 +44,11 @@ Supported SRC_URI options are:
    checkout code and tracking branch requirements.
    The default is "0", set bareclone=1 if needed.
 
+- nobranch
+   Don't check the SHA validation for branch. set this option for the recipe
+   referring to commit which is valid in tag instead of branch.
+   The default is "0", set nobranch=1 if needed.
+
 """
 
 #Copyright (C) 2005 Richard Purdie
