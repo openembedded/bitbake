@@ -28,7 +28,7 @@ from   bb.fetch2 import runfetchcmd
 from   bb.fetch2 import logger
 
 class GitANNEX(Git):
-    def supports(self, url, ud, d):
+    def supports(self, ud, d):
         """
         Check to see if a given url can be fetched with git.
         """
@@ -44,7 +44,7 @@ class GitANNEX(Git):
 
         return False
 
-    def update_annex(self, u, ud, d):
+    def update_annex(self, ud, d):
         try:
             runfetchcmd("%s annex get --all" % (ud.basecmd), d, quiet=True)
         except bb.fetch.FetchError:
@@ -53,13 +53,13 @@ class GitANNEX(Git):
 
         return True
 
-    def download(self, loc, ud, d):
-        Git.download(self, loc, ud, d)
+    def download(self, ud, d):
+        Git.download(self, ud, d)
 
         os.chdir(ud.clonedir)
         annex = self.uses_annex(ud, d)
         if annex:
-            self.update_annex(loc, ud, d)
+            self.update_annex(ud, d)
 
     def unpack(self, ud, destdir, d):
         Git.unpack(self, ud, destdir, d)
