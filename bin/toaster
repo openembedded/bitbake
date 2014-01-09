@@ -68,11 +68,16 @@ function addtoConfiguration()
         echo $1 >> ${BUILDDIR}/conf/$2
 }
 
+INSTOPSYSTEM=0
+
 # define the stop command
 function stop_system()
 {
+    # prevent reentry
+    if [ $INSTOPSYSTEM == 1 ]; then return; fi
+    INSTOPSYSTEM=1
     if [ -f ${BUILDDIR}/.toasterui.pid ]; then
-        kill $(< ${BUILDDIR}/.toasterui.pid )
+        kill $(< ${BUILDDIR}/.toasterui.pid ) 2>/dev/null
         rm ${BUILDDIR}/.toasterui.pid
     fi
     BBSERVER=localhost:8200 bitbake -m
@@ -80,7 +85,23 @@ function stop_system()
     webserverKillAll
     # force stop any misbehaving bitbake server
     lsof bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
+    trap - SIGHUP
+    trap - SIGCHLD
+    INSTOPSYSTEM=0
 }
+
+function check_pidbyfile() {
+    [ -e $1 ] && kill -0 $(< $1) 2>/dev/null
+}
+
+
+function notify_chldexit() {
+    if [ $NOTOASTERUI == 0 ]; then
+        check_pidbyfile ${BUILDDIR}/.toasterui.pid && return
+        stop_system
+    fi
+}
+
 
 # We make sure we're running in the current shell and in a good environment
 
@@ -179,10 +200,13 @@ case $CMD in
             stop_system
             echo "Failed ${CMD}."
         fi
+        # stop system on terminal exit
+        set -o monitor
+        trap stop_system SIGHUP
+        trap notify_chldexit SIGCHLD
     ;;
     stop )
         stop_system
-        trap '' SIGHUP
         echo "Successful ${CMD}."
     ;;
 esac

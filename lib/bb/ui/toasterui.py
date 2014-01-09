@@ -249,6 +249,10 @@ def main(server, eventHandler, params ):
                     buildinfohelper.store_license_manifest_path(event)
                 continue
 
+            if isinstance(event, bb.cooker.CookerExit):
+                # exit when the server exits
+                break
+
             # ignore
             if isinstance(event, (bb.event.BuildBase,
                                   bb.event.StampUpdate,
@@ -258,8 +262,7 @@ def main(server, eventHandler, params ):
                                   bb.event.OperationProgress,
                                   bb.command.CommandFailed,
                                   bb.command.CommandExit,
-                                  bb.command.CommandCompleted,
-                                  bb.cooker.CookerExit)):
+                                  bb.command.CommandCompleted)):
                 continue
 
             if isinstance(event, bb.event.DepTreeGenerated):
