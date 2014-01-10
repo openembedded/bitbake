@@ -76,7 +76,7 @@
 </script>
 
 <!-- modal filter boxes -->
-   {% for tc in tablecols %}{% if tc.filter %}{% with f=tc.filter %}
+   {% for tc in tablecols %}{% if tc.filter %}{% with objectname=objectname f=tc.filter %}
         {% include "filtersnippet.html" %}
    {% endwith %}{% endif %} {% endfor %}
 <!-- end modals -->

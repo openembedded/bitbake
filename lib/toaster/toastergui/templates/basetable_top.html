@@ -75,9 +75,10 @@
         <tr>
             {% for tc in tablecols %}<th class="{{tc.dclass}} {{tc.clclass}}">
                 {%if tc.qhelp%}<i class="icon-question-sign get-help" data-toggle="tooltip" title="{{tc.qhelp}}"></i>{%endif%}
-                <a href="javascript:reload_params({'orderby' : '{{tc.orderfield}}' })" style="font-weight:normal;">{{tc.name}}</a>
+                {%if tc.orderfield%}<a {%if tc.ordericon%} class="sorted" {%endif%}href="javascript:reload_params({'orderby' : '{{tc.orderfield}}' })" >{{tc.name}}</a>{%else%}<span class="muted">{{tc.name}}</span>{%endif%}
+                {%if tc.ordericon%} <i class="icon-caret-{{tc.ordericon}}"></i>{%endif%}
                 {%if tc.filter%}<div class="btn-group pull-right">
-                    <a href="#filter_{{tc.filter.class}}" role="button" class="btn btn-mini{%if request.GET.filter in tc.filter.options.values%} btn-primary{%endif%}" data-toggle="modal"> <i class="icon-filter filtered"></i> </a>
+                    <a href="#filter_{{tc.filter.class}}" role="button" class="btn btn-mini {%if request.GET.filter%}{{tc.filter.options|filtered_icon:request.GET.filter}} {%endif%}" {%if request.GET.filter%} title="{{tc.filter.options|filtered_tooltip:request.GET.filter}}"{%endif%} data-toggle="modal"> <i class="icon-filter filtered"></i> </a>
                 </div>{%endif%}
             </th>{% endfor %}
         </tr>

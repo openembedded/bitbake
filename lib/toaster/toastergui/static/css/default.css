@@ -175,3 +175,4 @@ dd p {line-height:20px;}
 
 
 .no-results { margin: 10px 0 0; }
+th > a, th > span { font-weight: normal; color:#333333;}
