@@ -161,7 +161,6 @@ INSTALLED_APPS = (
     'toastermain',
     'toastergui',
     'bldviewer',
-    'toastergui',
     'south',
 )
 
