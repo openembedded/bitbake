@@ -109,6 +109,14 @@ def _get_toggle_order(request, orderkey, reverse = False):
     else:
         return "%s:-" % orderkey if request.GET.get('orderby', "") == "%s:+" % orderkey else "%s:+" % orderkey
 
+def _get_toggle_order_icon(request, orderkey):
+    if request.GET.get('orderby', "") == "%s:+"%orderkey:
+        return "down"
+    elif request.GET.get('orderby', "") == "%s:-"%orderkey:
+        return "up"
+    else:
+        return None
+
 # we check that the input comes in a valid form that we can recognize
 def _validate_input(input, model):
 
@@ -390,8 +398,8 @@ def _find_task_provider(task):
     return None
 
 def tasks(request, build_id):
-    template = 'task.html'
-    mandatory_parameters = { 'count': 100,  'page' : 1};
+    template = 'tasks.html'
+    mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'order:+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'tasks', request.GET, mandatory_parameters, build_id = build_id)
@@ -401,11 +409,115 @@ def tasks(request, build_id):
 
     tasks = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
-    for t in tasks:
-        if t.outcome == Task.OUTCOME_COVERED:
-            t.provider = _find_task_provider(t)
+# Per Belen - do not show the covering task
+#    for t in tasks:
+#        if t.outcome == Task.OUTCOME_COVERED:
+#            t.provider = _find_task_provider(t)
 
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': tasks}
+    context = { 'objectname': 'tasks',
+                'build': Build.objects.filter(pk=build_id)[0],
+                'objects': tasks,
+                'tablecols':[
+                {
+                    'name':'Order',
+                    'qhelp':'The running sequence of each task in the build',
+                    'orderfield': _get_toggle_order(request, "order"),
+                    'ordericon':_get_toggle_order_icon(request, "order"),
+                },
+                {
+                    'name':'Recipe',
+                    'qhelp':'The name of the recipe to which each task applies',
+#                    'orderfield': _get_toggle_order(request, "recipe"),
+                    'ordericon':_get_toggle_order_icon(request, "recipe"),
+                },
+                {
+                    'name':'Recipe version',
+                    'qhelp':'The version of the recipe to which each task applies',
+                    'clclass': 'recipe_version',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Task',
+                    'qhelp':'The name of the task',
+                    'orderfield': _get_toggle_order(request, "task_name"),
+                    'ordericon':_get_toggle_order_icon(request, "task_name"),
+                },
+                {
+                    'name':'Executed',
+                    'qhelp':"This value tells you if a task had to run in order to generate the task output (executed), or if the output was provided by another task and therefore the task didn't need to run (not executed)",
+                    'orderfield': _get_toggle_order(request, "task_executed"),
+                    'ordericon':_get_toggle_order_icon(request, "task_executed"),
+                       'filter' : {
+                               'class' : 'executed',
+                               'label': 'Show:',
+                               'options' : [
+                                           ('Executed Tasks', 'task_executed:1'),
+                                           ('Not Executed Tasks', 'task_executed:0'),
+                                           ]
+                               }
+
+                },
+                {
+                    'name':'Outcome',
+                    'qhelp':'This column tells you if executed tasks succeeded, failed or restored output from the <code>sstate-cache</code> directory or mirrors. It also tells you why not executed tasks did not need to run',
+                    'orderfield': _get_toggle_order(request, "outcome"),
+                    'ordericon':_get_toggle_order_icon(request, "outcome"),
+                    'filter' : {
+                               'class' : 'outcome',
+                               'label': 'Show:',
+                               'options' : [
+                                           ('Succeeded Tasks', 'outcome:%d'%Task.OUTCOME_SUCCESS),
+                                           ('Failed Tasks', 'outcome:%d'%Task.OUTCOME_FAILED),
+                                           ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED),
+                                           ('Prebuilt Tasks', 'outcome:%d'%Task.OUTCOME_PREBUILT),
+                                           ('Covered Tasks', 'outcome:%d'%Task.OUTCOME_COVERED),
+                                           ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_NA),
+                                           ]
+                               }
+
+                },
+                {
+                    'name':'Cache attempt',
+                    'qhelp':'This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirrors, and what was the result: Succeeded, Failed or File not in cache',
+                    'orderfield': _get_toggle_order(request, "sstate_result"),
+                    'ordericon':_get_toggle_order_icon(request, "sstate_result"),
+                    'filter' : {
+                               'class' : 'cache_attempt',
+                               'label': 'Show:',
+                               'options' : [
+                                           ('Tasks with cache attempts', 'sstate_result:%d'%Task.SSTATE_NA),
+                                           ("Tasks with 'File not in cache' attempts", 'sstate_result:%d'%Task.SSTATE_MISS),
+                                           ("Tasks with 'Failed' cache attempts", 'sstate_result:%d'%Task.SSTATE_FAILED),
+                                           ("Tasks with 'Succeeded' cache attempts", 'sstate_result:%d'%Task.SSTATE_RESTORED),
+                                           ]
+                               }
+
+                },
+                {
+                    'name':'Time (secs)',
+                    'qhelp':'How long it took the task to finish, expressed in seconds',
+                    'clclass': 'time_taken',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'CPU usage',
+                    'qhelp':'Task CPU utilisation, expressed as a percentage',
+                    'clclass': 'cpu_used',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Disk I/O (ms)',
+                    'qhelp':'Number of miliseconds the task spent doing disk input and output',
+                    'clclass': 'disk_io',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Log',
+                    'qhelp':'The location in disk of the task log file',
+                    'clclass': 'task_log',
+                    'hidden' : 1,
+                },
+                ]}
 
     return render(request, template, context)
 
