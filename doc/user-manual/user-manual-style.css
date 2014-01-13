@@ -1,6 +1,6 @@
-/* 
+/*
    Generic XHTML / DocBook XHTML CSS Stylesheet.
-   
+
    Browser wrangling and typographic design by
       Oyvind Kolas / pippin@gimp.org
 
@@ -42,7 +42,7 @@
 
 body {
   font-family: Verdana, Sans, sans-serif;
- 
+
   min-width: 640px;
   width: 80%;
   margin:  0em auto;
@@ -118,7 +118,7 @@ h6 {
   background-color: transparent;
   background-repeat: no-repeat;
   padding-top: 256px;
-  background-image: url("figures/dev-title.png");
+  background-image: url("figures/bitbake-title.png");
   background-position: left top;
   margin-top: -256px;
   padding-right: 50px;
@@ -243,7 +243,7 @@ div.legalnotice p.legalnotice-title {
 p {
   line-height: 1.5em;
   margin-top: 0em;
-  
+
 }
 
 dl {
@@ -297,7 +297,7 @@ p a[id] {
   padding: 0px;
   display: inline;
   background-image: none;
-} 
+}
 
 a {
   text-decoration: underline;
@@ -338,10 +338,10 @@ div.table p.title b{
     font-weight: normal;
 }
 
-.mediaobject .caption, 
+.mediaobject .caption,
 .mediaobject .caption p  {
   text-align: center;
-  font-size: 80%;  
+  font-size: 80%;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
 }
@@ -604,7 +604,7 @@ b.keycap,
 .keycap {
   border: 1px solid;
 }
-  
+
 
 div.navheader, div.heading{
   border-bottom: 1px solid;
@@ -675,10 +675,10 @@ hr {
 }
 
 .note {
-  background-color: #f0f0f2; 
+  background-color: #f0f0f2;
 }
 
-.glossary dl dt, 
+.glossary dl dt,
 .variablelist dl dt,
 .variablelist dl dt span.term {
   color: #044;
@@ -778,10 +778,10 @@ div.article .titlepage .title
 }
 */
 
-div.preface .titlepage .title, 
-div.colophon .title, 
+div.preface .titlepage .title,
+div.colophon .title,
 div.chapter .titlepage .title,
-div.article .titlepage .title 
+div.article .titlepage .title
 {
 }
 
@@ -942,8 +942,8 @@ table {
 
 .tip,
 .note {
-   background: #f0f0f2; 
-   color: #333;   
+   background: #f0f0f2;
+   color: #333;
    padding: 20px;
    margin: 20px;
 }
@@ -954,12 +954,12 @@ table {
    margin: 0em;
    font-size: 2em;
    font-weight: bold;
-   color: #333;   
+   color: #333;
 }
 
 .tip a,
 .note a {
-   color: #333;   
+   color: #333;
    text-decoration: underline;
 }
 
@@ -976,4 +976,3 @@ table {
    font-size:large;
    color: #00557D;
 }
-
