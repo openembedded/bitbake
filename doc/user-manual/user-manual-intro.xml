@@ -139,5 +139,93 @@
             It is highly extensible, supporting embedded Python code and
             execution of any arbitrary tasks.
         </para>
-   </section>
+    </section>
+
+    <section id="Concepts">
+        <title>Concepts</title>
+
+        <para>
+            BitBake is a program written in the Python language.
+            At the highest level, BitBake interprets metadata, decides
+            what tasks are required to run, and executes those tasks.
+            Similar to GNU Make, BitBake controls how software is
+            built.
+            GNU Make does this using "makefiles". BitBake uses
+            "recipes".
+            BitBake extends the capabilities of a simple
+            tool like GNU make by allowing for much more complex tasks
+            to be completed, such as assembling entire embedded Linux
+            distributions. Several concepts must be understood to be able
+            to leverage the power of the tool.
+        </para>
+
+        <section id='recipes'>
+            <title>Recipes</title>
+
+            <para>
+                A BitBake Recipe, denoted by the file extension
+                <filename>.bb</filename> is the most
+                basic metadata file.
+                It tells BitBake the following:
+                <itemizedlist>
+                    <listitem><para>descriptive information about the package</para></listitem>
+                    <listitem><para>the version of the recipe</para></listitem>
+                    <listitem><para>when dependencies exist</para></listitem>
+                    <listitem><para>where the source code resides</para></listitem>
+                    <listitem><para>whether the source code requires any patches</para></listitem>
+                    <listitem><para>how to compile the source code</para></listitem>
+                    <listitem><para>where on the target machine to install the package being compiled</para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                Within the context of BitBake, or any project utilizing BitBake
+                as it's build system, files with the .bb extension are referred
+                to as recipes.
+                The term "package" is also commonly used to describe recipes.
+                However, since the same word is used to describe packaged
+                output from a project, it is best to maintain a single
+                descriptive term, "recipes".
+            </para>
+        </section>
+
+        <section id='configuration-files'>
+            <title>Configuration Files</title>
+
+            <para>
+                Configuration files, denoted by the
+                <filename>.conf</filename> extension define
+                various configuration variables that govern the project build
+                process.
+                These files fall into several areas that define
+                machine configuration options, distribution configuration
+                options, compiler tuning options, general common
+                configuration options and user configuration options.
+                The main configuration file is the sample bitbake.conf file,
+                located within the bitbake source tree /conf directory.
+            </para>
+        </section>
+
+        <section id='classes'>
+            <title>Classes</title>
+
+            <para>
+                Class files, denoted by the
+                <filename>.bbclass</filename> extension contain
+                information that is useful to share between metadata files.
+                The BitBake source tree comes with one class metadata file
+                currently, called base.bbclass and it is found in the /classes
+                directory.
+                The base.bbclass is special in that any new classes that a
+                developer adds to a project is required to inherit it
+                automatically.
+                This class contains definitions for standard basic tasks such
+                as fetching, unpacking, configuring (empty by default),
+                compiling (runs any Makefile present), installing (empty by
+                default) and packaging (empty by default).
+                These classes are often overridden or extended by other classes
+                added during the project development process.
+            </para>
+        </section>
+    </section>
 </chapter>
