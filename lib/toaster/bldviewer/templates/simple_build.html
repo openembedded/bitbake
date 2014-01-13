@@ -23,10 +23,10 @@
         </tr>
         {% for build in objects %}
         <tr class="data">
-            <td><a href="{% url "configuration" build.id %}">{{build.get_outcome_display}}</a></td>
+            <td><a href="{% url "simple-configuration" build.id %}">{{build.get_outcome_display}}</a></td>
             <td>{{build.started_on}}</td>
             <td>{{build.completed_on}}</td>
-            <td>{% for t in build.target_set.all %}{%if t.is_image %}<a href="{% url "tpackage" build.id t.id %}">{% endif %}{{t.target}}{% if t.is_image %}</a>{% endif %}<br/>{% endfor %}</td>
+            <td>{% for t in build.target_set.all %}{%if t.is_image %}<a href="{% url "simple-tpackage" build.id t.id %}">{% endif %}{{t.target}}{% if t.is_image %}</a>{% endif %}<br/>{% endfor %}</td>
             <td>{{build.machine}}</td>
             <td>{% time_difference build.started_on build.completed_on %}</td>
             <td>{{build.errors_no}}:{% if  build.errors_no %}{% for error in logs %}{% if error.build == build %}{% if error.level == 2 %}<p>{{error.message}}</p>{% endif %}{% endif %}{% endfor %}{% else %}None{% endif %}</td>

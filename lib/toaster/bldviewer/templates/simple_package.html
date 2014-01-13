@@ -20,7 +20,7 @@
                 <td>{{package.version}}</td>
                 <td>{{package.size}}</td>
                 <td>{%if package.recipe %}<a name="{{package.recipe.name}}.{{package.package_name}}">
-                <a href="{% url "layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
+                <a href="{% url "simple-layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
                 <td>
             <div style="height: 4em; overflow:auto">
                     {% for d in package.package_dependencies_source.all %}

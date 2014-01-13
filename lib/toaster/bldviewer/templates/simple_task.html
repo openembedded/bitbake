@@ -27,7 +27,7 @@
             <tr class="data">
                 <td>{{task.order}}</td>
                 <td><a name="{{task.recipe.name}}.{{task.task_name}}">
-                <a href="{% url "layer_versions_recipes" task.recipe.layer_version_id %}#{{task.recipe.name}}">{{task.recipe.name}}</a>.{{task.task_name}}</a></td>
+                <a href="{% url "simple-layer_versions_recipes" task.recipe.layer_version_id %}#{{task.recipe.name}}">{{task.recipe.name}}</a>.{{task.task_name}}</a></td>
                 <td>{{task.recipe.version}}</td>
 
                 {% if task.task_executed %}

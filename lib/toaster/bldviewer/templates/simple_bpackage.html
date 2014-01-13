@@ -21,9 +21,9 @@
             {% for package in objects %}
 
             <tr class="data">
-                <td><a name="#{{package.name}}" href="{% url "bfile" build.pk package.pk %}">{{package.name}} ({{package.filelist_bpackage.count}} files)</a></td>
+                <td><a name="#{{package.name}}" href="{% url "simple-bfile" build.pk package.pk %}">{{package.name}} ({{package.filelist_bpackage.count}} files)</a></td>
                 <td>{{package.version}}-{{package.revision}}</td>
-                <td>{%if package.recipe%}<a href="{% url "layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
+                <td>{%if package.recipe%}<a href="{% url "simple-layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
 
             <td>{{package.summary}}</td>
             <td>{{package.section}}</td>

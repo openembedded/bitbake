@@ -23,7 +23,7 @@
             <td><table>
             {% for lv in layer.versions %}
                 <tr><td>
-        <a href="{% url "layer_versions_recipes" lv.id %}">({{lv.priority}}){{lv.branch}}:{{lv.commit}} ({{lv.count}} recipes)</a>
+        <a href="{% url "simple-layer_versions_recipes" lv.id %}">({{lv.priority}}){{lv.branch}}:{{lv.commit}} ({{lv.count}} recipes)</a>
                 </td></tr>
             {% endfor %}
             </table></td>
