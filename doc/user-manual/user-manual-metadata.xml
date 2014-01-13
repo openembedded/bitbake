@@ -309,4 +309,3 @@ SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;pat
             </section>
         </section>
     </chapter>
-
