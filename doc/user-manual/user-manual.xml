@@ -1,22 +1,75 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-                      "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
 <book id='bitbake-user-manual' lang='en'
         xmlns:xi="http://www.w3.org/2003/XInclude"
         xmlns="http://docbook.org/ns/docbook"
         >
     <bookinfo>
-        <title>BitBake User Manual</title>
+
+        <mediaobject>
+            <imageobject>
+                <imagedata fileref='figures/bitbake-title.png'
+                    format='SVG'
+                    align='left' scalefit='1' width='100%'/>
+            </imageobject>
+        </mediaobject>
+
+        <title>
+            BitBake User Manual
+        </title>
+
         <authorgroup>
-            <corpauthor>BitBake Team</corpauthor>
+            <author>
+                <firstname>Richard Purdie, Chris Larson, and </firstname> <surname>Phil Blundell</surname>
+                <affiliation>
+                    <orgname>BitBake Community</orgname>
+                </affiliation>
+                <email>bitbake-devel@lists.openembedded.org</email>
+            </author>
         </authorgroup>
+
+<!--
+# Add in some revision history if we want it here.
+        <revhistory>
+            <revision>
+                <revnumber>x.x</revnumber>
+                <date>dd month year</date>
+                <revremark>Some relevent comment</revremark>
+            </revision>
+            <revision>
+                <revnumber>x.x</revnumber>
+                <date>dd month year</date>
+                <revremark>Some relevent comment</revremark>
+            </revision>
+            <revision>
+                <revnumber>x.x</revnumber>
+                <date>dd month year</date>
+                <revremark>Some relevent comment</revremark>
+            </revision>
+            <revision>
+                <revnumber>x.x</revnumber>
+                <date>dd month year</date>
+                <revremark>Some relevent comment</revremark>
+            </revision>
+       </revhistory>
+-->
+
         <copyright>
-            <year>2004, 2005, 2006, 2011, 2013</year>
-            <holder>Chris Larson</holder>
-            <holder>Phil Blundell</holder>
+            <year>2004-2014</year>
             <holder>Richard Purdie</holder>
+            <holder>Chris Larson</holder>
+            <holder>and Phil Blundell</holder>
         </copyright>
+
         <legalnotice>
-            <para>This work is licensed under the Creative Commons Attribution License. To view a copy of this license, visit <ulink url="http://creativecommons.org/licenses/by/3.0/">http://creativecommons.org/licenses/by/3.0/</ulink> or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California 94041, USA.</para>
+            <para>
+                This work is licensed under the Creative Commons Attribution License.
+                To view a copy of this license, visit
+                <ulink url="http://creativecommons.org/licenses/by/3.0/">http://creativecommons.org/licenses/by/3.0/</ulink>
+                or send a letter to Creative Commons, 444 Castro Street,
+                Suite 900, Mountain View, California 94041, USA.
+            </para>
         </legalnotice>
     </bookinfo>
 
