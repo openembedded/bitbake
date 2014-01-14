@@ -211,4 +211,16 @@
             </para>
         </section>
     </section>
+
+    <section id='obtaining-bitbake'>
+        <title>Obtaining BitBake</title>
+
+    </section>
+
+    <section id='exploring-the-bitbake-source-tree'>
+        <title>Exploring the BitBake Source Tree</title>
+
+    </section>
+
+
 </chapter>
