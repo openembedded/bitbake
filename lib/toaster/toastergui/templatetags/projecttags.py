@@ -66,3 +66,38 @@ def datecompute(delta, start = timezone.now()):
 @register.filter(name = 'sortcols')
 def sortcols(tablecols):
     return sorted(tablecols, key = lambda t: t['name'])
+
+@register.filter
+def task_color(task_object):
+    """ Return css class depending on Task execution status and execution outcome
+    """
+    if not task_object.task_executed:
+        return 'class=muted'
+    elif task_object.get_outcome_display == 'Failed':
+        return 'class=error'
+    else:
+        return ''
+
+@register.filter
+def filtered_icon(options, filter):
+    """Returns btn-primary if the filter matches one of the filter options
+    """
+    for option in options:
+        if filter == option[1]:
+            return "btn-primary"
+    return ""
+
+@register.filter
+def filtered_tooltip(options, filter):
+    """Returns tooltip for the filter icon if the filter matches one of the filter options
+    """
+    for option in options:
+        if filter == option[1]:
+            return "Showing only %s"%option[0]
+    return ""
+
+@register.filter
+def format_none_and_zero(value):
+    """Return empty string if the value is None, zero or Not Applicable
+    """
+    return "" if (not value) or (value == 0) or (value == "0") or (value == 'Not Applicable') else value
