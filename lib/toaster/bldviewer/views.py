@@ -23,9 +23,9 @@ import operator
 
 from django.db.models import Q
 from django.shortcuts import render
-from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
+from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable, Target_Installed_Package
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package
+from orm.models import Target_Installed_Package, VariableHistory
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -168,8 +168,10 @@ def model_explorer(request, model_name):
         'recipe_dependency': Recipe_Dependency,
         'package': Package,
         'package_dependency': Package_Dependency,
+        'target_installed_package': Target_Installed_Package,
         'build_file': Package_File,
         'variable': Variable,
+        'variablehistory': VariableHistory,
         'logmessage': LogMessage,
         }
 
