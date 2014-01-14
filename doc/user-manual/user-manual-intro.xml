@@ -9,13 +9,17 @@
 
         <para>
             BitBake is a tool for executing tasks commonly performed by software
-	    developers when building systems on a daily basis.
-	    BitBake can build Systems consisting of numerous individual pieces
+	    developers when building embedded Linux systems on a daily basis.
+            BitBake can build systems consisting of numerous individual pieces
 	    of software, or can be used to build a single application.
 	    Example tasks that BitBake can execute are fetching source code,
 	    applying patches to source code, configuring, compiling, and
 	    packaging applications into a complete system, and managing metadata.
-	    BitBake abstracts the information for completing individual tasks
+            Metadata is stored in recipe (<filename>.bb</filename>),
+            configuration (<filename>.conf</filename>), and class
+            (<filename>.bbclass</filename>) files and provide to BitBake the
+            instructions for which sources to build and how to build them.
+            BitBake abstracts the information for completing individual tasks
 	    into files known as recipes.
 	    Recipes contain all of the relevant information required by BitBake
 	    to complete a given task including dependencies, source file
