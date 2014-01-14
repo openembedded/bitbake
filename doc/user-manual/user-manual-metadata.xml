@@ -33,8 +33,6 @@
     <section id='basic-syntax'>
         <title>Basic Syntax</title>
 
-    </section>
-
         <section id='basic-variable-setting'>
             <title>Basic Variable Setting</title>
 
@@ -111,18 +109,12 @@
                 The ":=" operator results in a variable's contents being expanded immediately,
                 rather than when the variable is actually used:
                 <literallayout class='monospaced'>
-     T =
-     A:=
-     T =
-     B =
-     C =
-     C:=
-     "123"
-     "${B} ${A} test ${T}"
-     "456"
-     "${T} bval"
-     "cval"
-     "${C}append"
+     T = "123"
+     A:= "${B} ${A} test ${T}"
+     T = "456"
+     B ="${T} bval"
+     C = "cval"
+     C:= "${C}append"
                 </literallayout>
                 In this example, <filename>A</filename> would contain
                 <filename>test 123</filename>, <filename>B</filename> would contain
@@ -242,19 +234,15 @@
                 <filename>OVERRIDES</filename> is a “:” separated variable containing
                 each item for which you want to satisfy conditions.
                 So, if you have a variable that is conditional on “arm”, and “arm”
-                is in <filenamer>OVERRIDES</filename>, then the “arm” specific
+                is in <filename>OVERRIDES</filename>, then the “arm” specific
                 version of the variable is used rather than the non-conditional
                 version.
                 Here is an example:
                 <literallayout class='monospaced'>
-     OVERRIDES
-     = "architecture:os:machine"
-     TEST
-     = "defaultvalue"
-     TEST_os
-     = "osspecificvalue"
-     TEST_condnotinoverrides
-     = "othercondvalue"
+     OVERRIDES = "architecture:os:machine"
+     TEST = "defaultvalue"
+     TEST_os = "osspecificvalue"
+     TEST_condnotinoverrides = "othercondvalue"
                 </literallayout>
                 In this example, <filename>TEST</filename> would be
                 <filename>osspecificvalue</filename>, due to the condition
@@ -270,12 +258,9 @@
                 on whether something is in <filename>OVERRIDES</filename>.
                 Here is an example:
                 <literallayout class='monospaced'>
-     DEPENDS
-     = "glibc ncurses"
-     OVERRIDES
-     = "machine:local"
-     DEPENDS_append_machine
-     = "libmad"
+     DEPENDS = "glibc ncurses"
+     OVERRIDES = "machine:local"
+     DEPENDS_append_machine = "libmad"
                 </literallayout>
                 In this example, <filename>DEPENDS</filename> is set to
                 "glibc ncurses libmad".
@@ -300,22 +285,17 @@
                 There is often confusion about which order overrides and the
                 various "append" operators take effect:
                 <literallayout class='monospaced'>
-     OVERRIDES
-     = "foo"
-     A_foo_append
-     = "X"
+     OVERRIDES = "foo"
+     A_foo_append = "X"
                 </literallayout>
                 In this case, <filename>X</filename> is unconditionally appended
                 to the variable <filename>A_foo</filename>.
                 Since foo is an override, <filename>A_foo</filename> would then replace
                 <filename>A</filename>.
                 <literallayout class='monospaced'>
-     OVERRIDES
-     = "foo"
-     A
-     = "X"
-     A_append_foo
-     = "Y"
+     OVERRIDES = "foo"
+     A = "X"
+     A_append_foo = "Y"
                 </literallayout>
                 In this case, only when <filename>foo</filename> is in
                 <filename>OVERRIDES</filename>, <filename>Y</filename>
@@ -323,26 +303,19 @@
                 so the value of <filename>A</filename> would
                 become <filename>XY</filename> (NB: no spaces are appended).
                 <literallayout class='monospaced'>
-     OVERRIDES
-     = "foo"
-     A_foo_append
-     = "X"
-     A_foo_append
-     += "Y"
+     OVERRIDES = "foo"
+     A_foo_append = "X"
+     A_foo_append += "Y"
                 </literallayout>
                 This behaves as per the first case above, but the value of
                 <filename>A</filename> would be "X Y" instead of just "X".
                 <literallayout class='monospaced'>
-     A
-     = "1"
-     A_append
-     = "2"
-     A_append
-     = "3"
-     A
-     += "4"
-     A
-     .= "5"
+     A = "1"
+     A_append = "2"
+     A_append = "3"
+     A += "4"
+     A .= "5"
+                </literallayout>
                 Would ultimately result in <filename>A</filename> taking the value
                 "1 4523" since the "_append" operator executes at the
                 same time as the expansion of other overrides.
@@ -356,12 +329,9 @@
                 Key expansion happens at the data store finalization
                 time just before overrides are expanded.
                 <literallayout class='monospaced'>
-     A${B}
-     = "X"
-     B
-     = "2"
-     A2
-     = "Y"
+     A${B} = "X"
+     B = "2"
+     A2 = "Y"
                 </literallayout>
                 So in this case <filename>A2</filename> would take the value of "X".
             </para>
@@ -1105,8 +1075,7 @@
     <section id='accessing-variables-and-the-data-store-from-python'>
         <title>Accessing Variables and the Data Store from Python</title>
 
-        <note>
-            This section is in draft.
+        <para>
             It is often necessary to manipulate variables within python functions
             and the Bitbake data store has an API which allows this.
             The operations available are:
