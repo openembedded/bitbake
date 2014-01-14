@@ -33,11 +33,15 @@
                 {% if task.task_executed %}
                 <td>Executed</td>
                 {% else %}
-                <td>Prebuilt</td>
+                <td>Not Executed</td>
                 {% endif %}
 
                 <td>{{task.sstate_checksum}}</td>
-                <td>{{task.get_outcome_display}}{% if task.provider %}</br>(by <a href="#{{task.provider.recipe.name}}.{{task.provider.task_name}}">{{task.provider.recipe.name}}.{{task.provider.task_name}}</a>){% endif %}</td>
+                <td>{{task.get_outcome_display}}{% if task.provider %}</br>(by <a href="#{{task.provider.recipe.name}}.{{task.provider.task_name}}">{{task.provider.recipe.name}}.{{task.provider.task_name}}</a>){% endif %}
+			{% if task.outcome == task.OUTCOME_CACHED %}{% for t in task.get_related_setscene %}
+			<br/>({{t.task_name}} {{t.get_outcome_display}})
+			{% endfor %}{%endif%}
+		</td>
                 <td><p>{{task.message}}</td>
                 <td>{{task.elapsed_time}}</td>
                 <td>{{task.cpu_usage}}</td>

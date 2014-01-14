@@ -60,6 +60,11 @@ class Target(models.Model):
         return self.target
 
 
+
+class TaskManager(models.Manager):
+    def related_setscene(self, task_object):
+        return Task.objects.filter(task_executed=True, build = task_object.build, recipe = task_object.recipe, task_name=task_object.task_name+"_setscene")
+
 class Task(models.Model):
 
     SSTATE_NA = 0
@@ -75,38 +80,41 @@ class Task(models.Model):
     )
 
     CODING_NA = 0
-    CODING_NOEXEC = 1
     CODING_PYTHON = 2
     CODING_SHELL = 3
 
     TASK_CODING = (
         (CODING_NA, 'N/A'),
-        (CODING_NOEXEC, 'NoExec'),
         (CODING_PYTHON, 'Python'),
         (CODING_SHELL, 'Shell'),
     )
 
     OUTCOME_SUCCESS = 0
     OUTCOME_COVERED = 1
-    OUTCOME_SSTATE = 2
-    OUTCOME_EXISTING = 3
+    OUTCOME_CACHED = 2
+    OUTCOME_PREBUILT = 3
     OUTCOME_FAILED = 4
     OUTCOME_NA = 5
 
     TASK_OUTCOME = (
         (OUTCOME_SUCCESS, 'Succeeded'),
         (OUTCOME_COVERED, 'Covered'),
-        (OUTCOME_SSTATE, 'Sstate'),
-        (OUTCOME_EXISTING, 'Existing'),
+        (OUTCOME_CACHED, 'Cached'),
+        (OUTCOME_PREBUILT, 'Prebuilt'),
         (OUTCOME_FAILED, 'Failed'),
         (OUTCOME_NA, 'Not Available'),
     )
 
     search_allowed_fields = [ "recipe__name", "task_name" ]
 
+    objects = TaskManager()
+
+    def get_related_setscene(self):
+        return Task.objects.related_setscene(self)
+
     build = models.ForeignKey(Build, related_name='task_build')
     order = models.IntegerField(null=True)
-    task_executed = models.BooleanField(default=False) # True means Executed, False means Prebuilt
+    task_executed = models.BooleanField(default=False) # True means Executed, False means Not/Executed
     outcome = models.IntegerField(choices=TASK_OUTCOME, default=OUTCOME_NA)
     sstate_checksum = models.CharField(max_length=100, blank=True)
     path_to_sstate_obj = models.FilePathField(max_length=500, blank=True)

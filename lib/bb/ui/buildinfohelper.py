@@ -91,9 +91,9 @@ class ORMWrapper(object):
         for v in vars(task_object):
             if v in task_information.keys():
                 vars(task_object)[v] = task_information[v]
-        # if we got covered by a setscene task, we're SSTATE
-        if task_object.outcome == Task.OUTCOME_COVERED and 1 == Task.objects.filter(task_executed=True, build = task_object.build, recipe = task_object.recipe, task_name=task_object.task_name+"_setscene").count():
-            task_object.outcome = Task.OUTCOME_SSTATE
+        # if we got covered by a setscene task, we're CACHED
+        if task_object.outcome == Task.OUTCOME_COVERED and 1 == Task.objects.related_setscene(task_object).count():
+            task_object.outcome = Task.OUTCOME_CACHED
             outcome_task_setscene = Task.objects.get(task_executed=True, build = task_object.build,
                                     recipe = task_object.recipe, task_name=task_object.task_name+"_setscene").outcome
             if outcome_task_setscene == Task.OUTCOME_SUCCESS:
@@ -442,14 +442,19 @@ class BuildInfoHelper(object):
             if event.reason == "covered":
                 task_information['outcome'] = Task.OUTCOME_COVERED
             if event.reason == "existing":
-                task_information['outcome'] = Task.OUTCOME_EXISTING
+                task_information['outcome'] = Task.OUTCOME_PREBUILT
         else:
             task_information['task_executed'] = True
             if 'noexec' in vars(event) and event.noexec == True:
-                task_information['script_type'] = Task.CODING_NOEXEC
+                task_information['task_executed'] = False
+                task_information['outcome'] = Task.OUTCOME_NA
+                task_information['script_type'] = Task.CODING_NA
 
-        self.task_order += 1
-        task_information['order'] = self.task_order
+        # do not assign order numbers to scene tasks
+        if not isinstance(event, bb.runqueue.sceneQueueTaskStarted):
+            self.task_order += 1
+            task_information['order'] = self.task_order
+
         task_obj = self.orm_wrapper.get_update_task_object(task_information)
 
         self.internal_state[identifier] = {'start_time': datetime.datetime.now()}

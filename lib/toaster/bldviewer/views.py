@@ -84,7 +84,7 @@ def _find_task_provider(task):
 def task(request, build_id):
     template = 'simple_task.html'
 
-    tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id), 100),request.GET.get('page', 1))
+    tasks = _build_page_range(Paginator(Task.objects.filter(build=build_id, order__gt=0), 100),request.GET.get('page', 1))
 
     for t in tasks:
         if t.outcome == Task.OUTCOME_COVERED:
