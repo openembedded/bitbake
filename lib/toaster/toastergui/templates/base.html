@@ -2,7 +2,7 @@
 {% load static %}
 <html>
     <head>
-        <title>Toaster</title>
+        <title>{% if objectname %} {{objectname|title}} - {% endif %}Toaster</title>
 <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" type="text/css">
 <link rel="stylesheet" href="{% static 'css/bootstrap-responsive.min.css' %}" type='text/css'>
 <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}" type='text/css'>
