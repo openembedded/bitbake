@@ -2,16 +2,16 @@
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <chapter id='hello'>
-	<title>A BitBake Hello World</title>
+<title>A BitBake Hello World</title>
 	<section>
 		<title>BitBake Hello World</title>
 		<para>The simplest example commonly used to demonstrate any new
 			programming language or tool is the
-			<ulink url="http://en.wikipedia.org/wiki/Hello_world_program">Hello World</ulink> 
+			<ulink url="http://en.wikipedia.org/wiki/Hello_world_program">Hello World</ulink>
 			example.
-			This chapter demonstrates, in tutorial form, Hello 
+			This chapter demonstrates, in tutorial form, Hello
 			World within the context of BitBake.
-			This tutorial describes how to create a new Project 
+			This tutorial describes how to create a new Project
 			and the applicable metadata files necessary to allow
 			BitBake to build it.
 		</para>
@@ -45,10 +45,10 @@
 			-rw-rw-r--. 1 wmat wmat  2887 Nov 26 04:55 TODO
 		</screen>
 		</para>
-		
+
 		<para>At this point you should have BitBake extracted or cloned to
-			a directory and it should match the directory tree above.  
-			Please note that you'll see your username wherever 
+			a directory and it should match the directory tree above.
+			Please note that you'll see your username wherever
 			"wmat" appears above.
 		</para>
 </section>
@@ -71,7 +71,7 @@
 	binary to your environment PATH.
 	First, have a look at your current PATH variable.
 	If I check mine, I get:
-	<screen>$ echo $PATH	
+	<screen>$ echo $PATH
 	/home/wmat/bin:/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:
 	/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
 	</screen>
@@ -96,20 +96,20 @@
 	<screen>PATH={path to the bitbake executable}:$PATH</screen>
 	</para>
 	<para>Note that if you're a Vim user, you will find useful
-			Vim configuration contributions in the 
-			<emphasis>contrib/vim</emphasis> 
+			Vim configuration contributions in the
+			<emphasis>contrib/vim</emphasis>
 			directory.
-			Copy the files from that directory to your 
-			<emphasis>/home/yourusername/.vim</emphasis> 
+			Copy the files from that directory to your
+			<emphasis>/home/yourusername/.vim</emphasis>
 			directory.
 			If it doesn't exist, create it, and restart Vim.
 		</para>
 	</section>
-	
+
 	<section>
 		<title>The Hello World Example</title>
 		<para>The following example leaps directly into how BitBake
-			works.  
+			works.
 			Every attempt is made to explain what is happening,
 			however, further information can be found in the
 			Metadata chapter.
@@ -117,9 +117,9 @@
 		<para>The overall goal of this exercise is to create a Hello
 			World example utilizing concepts used to
 			build and construct a complete example application
-			including Tasks and Layers.  
-			This is how modern projects such as OpenEmbedded and 
-			the Yocto Project utilize BitBake, therefore it 
+			including Tasks and Layers.
+			This is how modern projects such as OpenEmbedded and
+			the Yocto Project utilize BitBake, therefore it
 			provides an excellent starting point for understanding
 			BitBake.
 		</para>
@@ -150,7 +150,7 @@
 		Hopefully we can use BitBake's error messaging to figure this
 		out and better understand exactly what's going on.
 		</para>
-		
+
 		<para>
 		First, let's begin by setting up a directory for our HelloWorld
 		project.
@@ -161,17 +161,17 @@
 		Debugging output and see what happens:
 		<screen>$bitbake -DDD
 		The BBPATH variable is not set
-                DEBUG: Removed the following variables from the environment: 
-                GNOME_DESKTOP_SESSION_ID, LESSOPEN, WINDOWID, 
-                GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, 
-                XDG_SESSION_PATH, XAUTHORITY, LANGUAGE, SESSION_MANAGER, 
-                SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, TEXTDOMAIN, 
-                GPG_AGENT_INFO, SSH_AUTH_SOCK, XDG_RUNTIME_DIR, 
-                COMPIZ_BIN_PATH, GDMSESSION, DEFAULTS_PATH, TEXTDOMAINDIR, 
-                XDG_SEAT_PATH, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP, 
-                DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE, 
-                DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID, 
-                UBUNTU_MENUPROXY, OLDPWD, GTK_MODULES, XDG_DATA_DIRS, 
+                DEBUG: Removed the following variables from the environment:
+                GNOME_DESKTOP_SESSION_ID, LESSOPEN, WINDOWID,
+                GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG,
+                XDG_SESSION_PATH, XAUTHORITY, LANGUAGE, SESSION_MANAGER,
+                SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, TEXTDOMAIN,
+                GPG_AGENT_INFO, SSH_AUTH_SOCK, XDG_RUNTIME_DIR,
+                COMPIZ_BIN_PATH, GDMSESSION, DEFAULTS_PATH, TEXTDOMAINDIR,
+                XDG_SEAT_PATH, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP,
+                DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE,
+                DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID,
+                UBUNTU_MENUPROXY, OLDPWD, GTK_MODULES, XDG_DATA_DIRS,
                 COLORTERM, LS_COLORS
                 </screen>
                 The majority of this output is specific to environment variables
@@ -215,7 +215,7 @@
                     </screen>
                 </para>
                 <para>
-                But what about BBPATH, we still haven't set it?               
+                But what about BBPATH, we still haven't set it?
                 </para>
                 <para>
                 The first configuration file that BitBake looks for is always
@@ -227,7 +227,7 @@
                 From your project source tree:
                 <screen>$ vim conf/bblayers.conf</screen>
                 Add the following to the empty bblayers.conf file:
-                <screen>BBPATH := "${TOPDIR}"</screen>                
+                <screen>BBPATH := "${TOPDIR}"</screen>
                 </para>
                 <para>
                 Now from the root of our project directory, let's run BitBake
@@ -264,8 +264,8 @@
                 NOTE: From this point forward, the environment variable
                 removal messages will be ignored and omitted.
                 Let's examine the relevant DEBUG messages:
-                
-                
+
+
                 </para>
                 </section>
 
