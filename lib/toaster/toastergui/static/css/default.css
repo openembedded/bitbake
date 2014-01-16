@@ -1,14 +1,5 @@
 .block-centered { margin: auto; display: block;}
-.error, .red { color: #b94a48;}
 
-.error:hover {color:#943A38;text-decoration:none;}
-
-.success, 
-.green { color: /*#4EAC4B*/#468847;}
-
-.success:hover {color:#347132;text-decoration: underline;}
-td > .success:hover {text-decoration: underline;}
-.warning, .yellow { color: #c09853;}
 .overflow-hidden { overflow: hidden;}
 .large { font-size: x-large; font-weight: normal; line-height: 30px;}
 .max-width { width: 100%;}
@@ -103,12 +94,26 @@ tr.selected {background-color: yellow;}
 .dropdown-menu {padding: 10px;}
 .modal-footer .btn {float: left;}
 
-a.error:hover, a.error:focus {color:#943A38;text-decoration:underline;}
+/* override default Twitter Boostrap styles for anchor tags inside tables */
+td a {color: #333333;}
+td a:hover {color: #000000;text-decoration: underline;}
+
+/* override default Twitter Bootstrap styles for tr.error */
+.table tbody tr.error > td { background-color:#FFFFFF; }
+.table-hover tbody tr.error:hover > td { background-color: #F5F5F5; }
+
+/* set .error styles */
+.error, .red, tr.error a { color:#B94A48; }
+a.error:hover, a.error:focus, tr.error a:hover {color:#943A38;text-decoration:underline;}
+
+.success, .green { color: /*#4EAC4B*/#468847;}
+
+.success:hover {color:#347132;text-decoration: underline;}
+td > .success:hover {text-decoration: underline;}
+.warning, .yellow { color: #c09853;}
 a.warning {background-color: transparent;}
 a.warning:hover, a.warning:focus {color:#B38942;text-decoration:underline;}
 .clickable_row:hover {background-color: #FAFAFA;cursor: pointer;}
-td a {color: #333333;}
-td a:hover {color: #000000;text-decoration: underline;}
 
 .get-help {color:#CCCCCC;}
 .get-help:hover {color:#999999;cursor:pointer;}
