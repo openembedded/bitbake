@@ -8,25 +8,33 @@
         <title>Introduction</title>
 
         <para>
-            BitBake is a tool for executing tasks commonly performed by software
-	    developers when building embedded Linux systems on a daily basis.
-            BitBake can build systems consisting of numerous individual pieces
-	    of software, or can be used to build a single application.
-	    Example tasks that BitBake can execute are fetching source code,
-	    applying patches to source code, configuring, compiling, and
-	    packaging applications into a complete system, and managing metadata.
+            At it's core, BitBake is a generic task execution
+            engine allowing shell and python tasks to be run
+            efficiently and in parallel while working within
+            complex inter-task dependency constraints.
+            One of it's main users, OpenEmbedded, takes this core
+            and builds embedded Linux software stacks using
+            a task oriented approach.
+            Conceptually, BitBake is similar to GNU Make in
+            some regards but has significant differences.
+            BitBake executes tasks based upon metadata provided
+            to it that build up tasks.
+            It includes a fetcher library for obtaining source
+            code from various places such as source control
+            systems or websites.
             Metadata is stored in recipe (<filename>.bb</filename>),
             configuration (<filename>.conf</filename>), and class
-            (<filename>.bbclass</filename>) files and provide to BitBake the
-            instructions for which sources to build and how to build them.
-            BitBake abstracts the information for completing individual tasks
-	    into files known as recipes.
-	    Recipes contain all of the relevant information required by BitBake
-	    to complete a given task including dependencies, source file
-	    locations, etc.
-	    BitBake is similar to
-            <ulink url='http://www.gnu.org/software/make/'>GNU Make</ulink>
-            and other build tools.
+            (<filename>.bbclass</filename>) files and provide to
+            BitBake the instructions about which tasks to run and
+            the dependencies between them.
+            The instructions for each unit to be built (e.g. a piece
+            of software) are known as recipe files and
+            contain all the information about the unit
+            (dependencies, source file locations, checksums, description
+            and so on).
+            BitBake includes a client/server abstraction and can
+            be used from a command line or as a service over XMLRPC and
+            has several different user interfaces.
         </para>
     </section>
 
@@ -35,93 +43,113 @@
 
         <para>
             BitBake was originally a part of the OpenEmbedded project.
-            It was inspired by the Portage package management system
-            used by the Gentoo Linux distribution.
-            On December 7, 2004, OpenEmbedded project team member,
-            Chris Larson split the project into two distinct pieces:
+            It was inspired by the Portage package
+            management system used by the Gentoo Linux distribution.
+            On December 7, 2004, OpenEmbedded
+            project team member, Chris Larson split the project into
+            two distinct pieces:
             <itemizedlist>
-                <listitem><para>BitBake, a generic task executor</para></listitem>
-                <listitem><para>OpenEmbedded, a metadata set utilized by
-                    BitBake.</para></listitem>
+                <listitem><para>
+                    BitBake, a generic task executor
+                    </para></listitem>
+                <listitem><para>
+                    OpenEmbedded, a metadata set utilized by BitBake
+                    </para></listitem>
             </itemizedlist>
             Today, BitBake is the primary basis of the
-            <ulink url="http://www.openembedded.org/">OpenEmbedded</ulink>
+            <ulink url='http://www.openembedded.org/'>OpenEmbedded</ulink>
             project, which is being used to build and maintain a
             number of projects and embedded Linux distributions
-            such as the Angstrom Distribution and the Yocto
-            Project.
-	</para>
-
-	<para>
-            Prior to BitBake, no other build tool adequately met the needs of
-            an aspiring embedded Linux distribution.
-            All of the build systems used by traditional desktop Linux
-            distributions lacked important functionality, and none of the
-            ad-hoc <emphasis>buildroot</emphasis> systems, prevalent in the
-            embedded space, were scalable or maintainable.
-	</para>
-
-	<para>
-            Some important original goals for BitBake were:
-            <itemizedlist>
-                <listitem><para>Handle cross-compilation.</para></listitem>
-                <listitem><para>Handle inter-package dependencies (build
-                    time on target architecture, build time
-                    on native architecture, and runtime).</para></listitem>
-                <listitem><para>Support running any number of tasks
-                    within a given package, including, but
-                    not limited to, fetching upstream
-                    sources, unpacking them, patching them,
-                    configuring them, etc.</para></listitem>
-                <listitem><para>Must be Linux distribution agnostic (both
-                    build and target).</para></listitem>
-                <listitem><para>Must be architecture agnostic</para></listitem>
-                <listitem><para>Must support multiple build and target
-                    operating systems (including Cygwin, the BSDs, etc).
-                    </para></listitem>
-                <listitem><para>Must be able to be self contained, rather
-                    than tightly integrated into the build
-                    machine's root filesystem.</para></listitem>
-                <listitem><para>There must be a way to handle conditional
-                    metadata (on target architecture,
-                    operating system, distribution, machine).</para>
-                    </listitem>
-                <listitem><para>It must be easy for the person using the
-                    tools to supply their own local
-                    metadata and packages to operate against.</para>
-                    </listitem>
-                <listitem><para>Must make it easy to collaborate between
-                    multiple projects using BitBake for
-                    their builds.</para></listitem>
-                <listitem><para>Should provide an inheritance mechanism
-                    to share common metadata between many
-                    packages.</para></listitem>
-            </itemizedlist>
-	</para>
+            such as the Angstrom Distribution and the Yocto Project.
+        </para>
 
         <para>
-            Over time it has become apparent that some further requirements
-            were necessary:
-            <itemizedlist>
-                <listitem><para>Handle variants of a base recipe (native,
-                    sdk, multilib).</para></listitem>
-                <listitem><para>Able to split metadata into layers and
-                    allow layers to override each other.</para></listitem>
-                <listitem><para>Allow representation of a given set of
-                    input variables to a task as a checksum.
-                    Based on that checksum, allow acceleration of builds with
-                    prebuilt components.</para></listitem>
-            </itemizedlist>
-	</para>
+            Prior to BitBake, no other build tool adequately met
+            the needs of an aspiring embedded Linux
+            distribution.
+            All of the build systems used by traditional desktop
+            Linux distributions lacked important
+            functionality, and none of the ad-hoc buildroot systems,
+            prevalent in the embedded space, were
+            scalable or maintainable.
+        </para>
 
-	<para>
-            BitBake satisfies all the original requirements and many more
-            with extensions being made to the basic functionality to
-            reflect the additional requirements.
+        <para>
+            Some important original goals for BitBake were:
+            <itemizedlist>
+                <listitem><para>
+                    Handle cross-compilation.
+                    </para></listitem>
+                <listitem><para>
+                    Handle inter-package dependencies (build time on
+                    target architecture, build time on native
+                    architecture, and runtime).
+                    </para></listitem>
+                <listitem><para>
+                    Support running any number of tasks within a given
+                    package, including, but not limited to, fetching
+                    upstream sources, unpacking them, patching them,
+                    configuring them, etc.
+                    </para></listitem>
+                <listitem><para>
+                    Must be Linux distribution agnostic (both build and
+                    target).
+                    </para></listitem>
+                <listitem><para>
+                    Must be architecture agnostic
+                    </para></listitem>
+                <listitem><para>
+                    Must support multiple build and target operating systems
+                    (including Cygwin, the BSDs, etc).
+                    </para></listitem>
+                <listitem><para>
+                    Must be able to be self contained, rather than tightly
+                    integrated into the build machine's root
+                    filesystem.
+                    </para></listitem>
+                <listitem><para>
+                    There must be a way to handle conditional metadata
+                    (on target architecture, operating system,
+                    distribution, machine).
+                    </para></listitem>
+                <listitem><para>
+                    It must be easy for the person using the tools to
+                    supply their own local metadata and packages
+                    to operate against.
+                    </para></listitem>
+                <listitem><para>
+                    Must make it easy to collaborate between multiple
+                    projects using BitBake for their builds.
+                    </para></listitem>
+                <listitem><para>
+                    Should provide an inheritance mechanism to share
+                    common metadata between many packages.
+                    </para></listitem>
+            </itemizedlist>
+            Over time it has become apparent that some further
+            requirements were necessary:
+            <itemizedlist>
+                <listitem><para>
+                    Handle variants of a base recipe (native, sdk, multilib).
+                    </para></listitem>
+                <listitem><para>
+                    Able to split metadata into layers and allow layers
+                    to override each other.
+                    </para></listitem>
+                <listitem><para>
+                    Allow representation of a given set of input variables
+                    to a task as a checksum.
+                    Based on that checksum, allow acceleration of builds
+                    with prebuilt components.
+                    </para></listitem>
+            </itemizedlist>
+            BitBake satisfies all the original requirements and many
+            more with extensions being made to the basic
+            functionality to reflect additional requirements.
             Flexibility and power have always been the priorities.
-            It is highly extensible, supporting embedded Python code and
-            execution of any arbitrary tasks.
-	</para>
+            It is highly extensible, supporting embedded Python code
+            and execution of any arbitrary tasks.
+        </para>
     </section>
 
     <section id="Concepts">
@@ -129,17 +157,19 @@
 
         <para>
             BitBake is a program written in the Python language.
-            At the highest level, BitBake interprets metadata, decides
-            what tasks are required to run, and executes those tasks.
-            Similar to GNU Make, BitBake controls how software is
-            built.
-            GNU Make does this using "makefiles". BitBake uses
-            "recipes".
-            BitBake extends the capabilities of a simple
-            tool like GNU make by allowing for much more complex tasks
-            to be completed, such as assembling entire embedded Linux
-            distributions. Several concepts must be understood to be able
-            to leverage the power of the tool.
+            At the highest level, BitBake interprets metadata,
+            decides what tasks are required to run, and executes
+            those tasks.
+            Similar to GNU Make, BitBake controls how software
+            is built.
+            GNU Make does this using "makefiles".
+            BitBake uses "recipes". BitBake
+            extends the capabilities of a simple tool like GNU Make
+            by allowing for much more complex tasks to
+            be completed, such as assembling entire embedded Linux
+            distributions.
+            Several concepts must be understood to be able to leverage
+            the power of the tool.
         </para>
 
         <section id='recipes'>
@@ -149,21 +179,22 @@
                 A BitBake Recipe, denoted by the file extension
                 <filename>.bb</filename> is the most
                 basic metadata file.
-                It tells BitBake the following:
+                In OpenEmbedded, recipes tell BitBake the following:
                 <itemizedlist>
-                    <listitem><para>descriptive information about the package</para></listitem>
-                    <listitem><para>the version of the recipe</para></listitem>
-                    <listitem><para>when dependencies exist</para></listitem>
-                    <listitem><para>where the source code resides</para></listitem>
-                    <listitem><para>whether the source code requires any patches</para></listitem>
-                    <listitem><para>how to compile the source code</para></listitem>
-                    <listitem><para>where on the target machine to install the package being compiled</para></listitem>
+                    <listitem><para>Descriptive information about the package</para></listitem>
+                    <listitem><para>The version of the recipe</para></listitem>
+                    <listitem><para>When dependencies exist</para></listitem>
+                    <listitem><para>Where the source code resides</para></listitem>
+                    <listitem><para>Whether the source code requires any patches</para></listitem>
+                    <listitem><para>How to compile the source code</para></listitem>
+                    <listitem><para>Where on the target machine to install the package being compiled</para></listitem>
                 </itemizedlist>
             </para>
 
             <para>
                 Within the context of BitBake, or any project utilizing BitBake
-                as it's build system, files with the .bb extension are referred
+                as it's build system, files with the <filename>.bb</filename>
+                extension are referred
                 to as recipes.
                 The term "package" is also commonly used to describe recipes.
                 However, since the same word is used to describe packaged
@@ -184,8 +215,10 @@
                 machine configuration options, distribution configuration
                 options, compiler tuning options, general common
                 configuration options and user configuration options.
-                The main configuration file is the sample bitbake.conf file,
-                located within the bitbake source tree /conf directory.
+                The main configuration file is the sample
+                <filename>bitbake.conf</filename> file,
+                located within the bitbake source tree
+                <filename>/conf</filename> directory.
             </para>
         </section>
 
@@ -197,11 +230,11 @@
                 <filename>.bbclass</filename> extension contain
                 information that is useful to share between metadata files.
                 The BitBake source tree comes with one class metadata file
-                currently, called base.bbclass and it is found in the /classes
-                directory.
-                The base.bbclass is special in that any new classes that a
-                developer adds to a project is required to inherit it
-                automatically.
+                currently, called <filename>base.bbclass</filename> and it is
+                found in the <filename>/classes</filename> directory.
+                The <filename>base.bbclass</filename> is special in that any
+                new classes that a developer adds to a project is required to
+                inherit it automatically.
                 This class contains definitions for standard basic tasks such
                 as fetching, unpacking, configuring (empty by default),
                 compiling (runs any Makefile present), installing (empty by
@@ -215,12 +248,83 @@
     <section id='obtaining-bitbake'>
         <title>Obtaining BitBake</title>
 
+        <para>
+            There are several ways to obtain BitBake.
+            These include installing using your Linux distribution's
+            package management system (not recommended), downloading
+            a snapshot from the BitBake source
+            code repository, or using Git to clone the BitBake source
+            code repository.
+            The recommended method for daily BitBake use is to download
+            a stable release from the BitBake source code repository.
+            Using your distribution's version as provided in the package
+            management system is generally not
+            recommended as in most cases, such as with the Ubuntu and
+            Fedora distributions, the version provided is several releases
+            behind the repository snapshot version and is missing
+            important bug fixes and enhancements. Similarly, daily use
+            of the latest clone of the Git repository is not recommended
+            as it can be unstable.
+            However, the Git repository clone will provide the User
+            with the absolute latest version of BitBake.
+        </para>
     </section>
 
-    <section id='exploring-the-bitbake-source-tree'>
-        <title>Exploring the BitBake Source Tree</title>
+    <section id='downloading-a-snapshot-from-the-bitbake-source-tree'>
+        <title>Downloading a Snapshot from the BitBake Source Tree</title>
 
+        <para>
+            The recommended method for obtaining and using BitBake on
+            a daily basis is to download the most
+            recent stable snapshot from the Git source code repository
+            as follows:
+            <literallayout class='monospaced'>
+     $ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
+     $ tar zxpvf bitbake-1.17.0.tar.gz
+            </literallayout>
+            After extraction of the tarball using the tar utility,
+            you will have a directory entitled
+            <filename>bitbake-1.17.0</filename>.
+        </para>
     </section>
 
+    <section id='cloning-the-bitbake-git-repository'>
+        <title>Cloning the BitBake Git Repository</title>
 
+        <para>
+            To obtain the latest BitBake source code from the
+            BitBake Git repository:
+            <literallayout class='monospaced'>
+     $ git clone git://git.openembedded.org/bitbake
+            </literallayout>
+            This will clone the BitBake Git repository into a
+            directory called <filename>bitbake</filename>.
+            Alternatively, you can
+            designate a directory after the git clone command
+            if you'd prefer to call the new directory something
+            other than <filename>bitbake</filename>.
+            For example:
+            <literallayout class='monospaced'>
+     $ git clone git://git.openembedded.org/bitbake bbdev
+            </literallayout>
+            This would clone the Git repository into a local directory
+            called <filename>bbdev</filename>.
+            Please note that although this method of obtaining the
+            source code will provide the absolute latest version,
+            it is under active development and may not be as stable
+            as a released snapshot.
+        </para>
+    </section>
+
+    <section id='summary'>
+        <title>Summary</title>
+
+        <para>
+            At this point you should have a general idea of the concepts
+            that BitBake was built on and how the
+            source code is organized.
+            You should have a working version of BitBake installed
+            and understand how to setup your environment.
+        </para>
+    </section>
 </chapter>
