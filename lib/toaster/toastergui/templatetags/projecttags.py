@@ -29,10 +29,14 @@ register = template.Library()
 def time_difference(start_time, end_time):
     return end_time - start_time
 
-@register.filter(name = 'timespent')
-def timespent(build_object):
-    tdsec = (build_object.completed_on - build_object.started_on).total_seconds()
-    return "%02d:%02d:%02d" % (int(tdsec/3600), int((tdsec - tdsec/ 3600)/ 60), int(tdsec) % 60)
+@register.filter(name = 'sectohms')
+def sectohms(time):
+    try:
+        tdsec = int(time)
+    except ValueError:
+        tdsec = 0
+    hours = int(tdsec / 3600)
+    return "%02d:%02d:%02d" % (hours, int((tdsec - (hours * 3600))/ 60), int(tdsec) % 60)
 
 @register.assignment_tag
 def query(qs, **kwargs):
@@ -57,3 +61,8 @@ def multiply(value, arg):
 @register.assignment_tag
 def datecompute(delta, start = timezone.now()):
     return start + timedelta(delta)
+
+
+@register.filter(name = 'sortcols')
+def sortcols(tablecols):
+    return sorted(tablecols, key = lambda t: t['name'])

@@ -43,6 +43,7 @@ class Build(models.Model):
     distro_version = models.CharField(max_length=100)
     started_on = models.DateTimeField()
     completed_on = models.DateTimeField()
+    timespent = models.IntegerField(default=0)
     outcome = models.IntegerField(choices=BUILD_OUTCOME, default=IN_PROGRESS)
     errors_no = models.IntegerField(default=0)
     warnings_no = models.IntegerField(default=0)
@@ -231,7 +232,7 @@ class Layer_Version(models.Model):
 
 class Variable(models.Model):
     search_allowed_fields = ['variable_name', 'variable_value',
-                             'variablehistory__file_name', "description"]
+                             'vhistory__file_name', "description"]
     build = models.ForeignKey(Build, related_name='variable_build')
     variable_name = models.CharField(max_length=100)
     variable_value = models.TextField(blank=True)

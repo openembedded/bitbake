@@ -75,6 +75,7 @@ class ORMWrapper(object):
             outcome = Build.FAILED
 
         build.completed_on = datetime.datetime.now()
+        build.timespent = int((build.completed_on - build.started_on).total_seconds())
         build.errors_no = errors
         build.warnings_no = warnings
         build.outcome = outcome
@@ -387,7 +388,7 @@ class BuildInfoHelper(object):
         for i in string.split():
             if i not in ret:
                 ret.append(i)
-        return " ".join(ret)
+        return " ".join(sorted(ret))
 
 
     ################################

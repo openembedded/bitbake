@@ -17,13 +17,13 @@
 <div class="row-fluid span10 pull-right">
   <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
     <div class="row-fluid lead">
-            <span class="pull-left"><strong>{%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}</strong> {{build.completed_on|naturaltime}} with </span>{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}{% if  build.errors_no %}
+            <span class="pull-left"><strong>{%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}</strong> {{build.completed_on|date:"d/m/y H:i"}} with </span>{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}{% if  build.errors_no %}
             <span class="span2"><i class="icon-minus-sign red"></i><strong><a href="{%url 'builddashboard' build.pk%}" class="error"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
 {% endif %}
 {% if  build.warnings_no %}
             <span class="span2"><i class="icon-warning-sign yellow"></i><strong><a href="{%url 'builddashboard' build.pk%}" class="warning"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
 {% endif %}
-            <span class="pull-right">Build time: <a href="build-time.html">{{ build|timespent }}</a></span>
+            <span class="pull-right">Build time: <a href="build-time.html">{{ build.timespent|sectohms }}</a></span>
 {%endif%}
     </div>
   </div>

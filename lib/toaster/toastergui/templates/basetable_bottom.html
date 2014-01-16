@@ -38,6 +38,21 @@
 <script>
  $(document).ready(function() {
 
+    // we load cookies for the column display
+    save = $.cookie('_displaycols_{{objectname}}');
+    setting = save.split(';');
+    for ( i = 0; i < setting.length; i++) {
+        if (setting[i].length > 0) {
+            [id, v] = setting[i].split(':');
+            if (v == 'true') {
+                $('.chbxtoggle#'+id).prop('checked', true);
+            }
+            else {
+                $('.chbxtoggle#'+id).prop('checked', false);
+            }
+        }
+    }
+
     $('.chbxtoggle').each(function () {
         showhideTableColumn($(this).attr('id'), $(this).is(':checked'))
     });

@@ -27,7 +27,7 @@
    <tr class="data">
         <td class="variable">{{variable.variable_name}}</td>
         <td class="variable_value">{{variable.variable_value}}</td>
-        <td class="file">{% for vh in variable.variablehistory_set.all %}{{vh.operation}} in {{vh.file_name}}:{{vh.line_number}}<br/>{%endfor%}</td>
+        <td class="file">{% for vh in variable.vhistory_set.all %}{{vh.operation}} in {{vh.file_name}}:{{vh.line_number}}<br/>{%endfor%}</td>
         <td class="description">{% if variable.description %}{{variable.description}}{% endif %}</td>
     </tr>
 {% endfor %}

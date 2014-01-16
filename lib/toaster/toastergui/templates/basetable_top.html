@@ -1,8 +1,15 @@
+{% load projecttags %}
 <!-- component to display a generic table -->
     <script>
     function showhideTableColumn(clname, sh) {
-        if (sh) $('.' + clname).show();
-        else $('.' + clname).hide();
+        if (sh) $('.' + clname).show(100);
+        else $('.' + clname).hide(100);
+
+	// save cookie for all checkboxes
+	save = '';
+	$('.chbxtoggle').each(function() { if ($(this).attr('id') != undefined) { save += ';' + $(this).attr('id') +':'+ $(this).is(':checked')} })
+	$.cookie('_displaycols_{{objectname}}',  save);
+	save = '';
     }
 
 
@@ -22,8 +29,11 @@
 <!-- control header -->
 <div class="navbar">
     <div class="navbar-inner">
-        <form class="navbar-search input-append pull-left" >
-            <input class="input-xxlarge" name="search" type="text" placeholder="Search {{objectname}}" value="{{request.GET.search}}"/>
+        <form class="navbar-search input-append pull-left" id="searchform">
+	<div class="input-append" style="padding-right:1em">
+            <input class="input-xxlarge" id="search" name="search" type="text" placeholder="Search {{objectname}}" value="{{request.GET.search}}"/><a href="javascript:$('#search').val('');searchform.submit()" class="add-on"><i class="icon-remove"></i></a>
+	</div>
+	    <input type="hidden" name="orderby" value="{{request.GET.orderby}}">
             <input class="btn" type="submit" value="Search"/>
         </form>
         <div class="pull-right">
@@ -32,7 +42,10 @@
                 <button class="btn dropdown-toggle" data-toggle="dropdown">Edit columns
                     <span class="caret"></span>
                 </button>
-                <ul class="dropdown-menu">{% for i in tablecols %}
+<!--
+	{{tablecols|sortcols}}
+-->
+                <ul class="dropdown-menu">{% for i in tablecols|sortcols %}
                     <li>
                         <label class="checkbox">
                             <input type="checkbox" class="chbxtoggle" {% if i.clclass %}id="{{i.clclass}}" value="ct{{i.name}}" {% if not i.hidden %}checked="checked"{%endif%} onchange="showhideTableColumn($(this).attr('id'), $(this).is(':checked'))" {%else%} checked disabled{% endif %}/>   {{i.name}}

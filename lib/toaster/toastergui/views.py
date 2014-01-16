@@ -103,8 +103,11 @@ def _get_filtering_query(filter_string):
     querydict = dict(zip(keys, values))
     return reduce(lambda x, y: x & y, map(lambda x: __get_q_for_val(k, querydict[k]),[k for k in querydict]))
 
-def _get_toggle_order(request, orderkey):
-    return "%s:-" % orderkey if request.GET.get('orderby', "") == "%s:+" % orderkey else "%s:+" % orderkey
+def _get_toggle_order(request, orderkey, reverse = False):
+    if reverse:
+        return "%s:+" % orderkey if request.GET.get('orderby', "") == "%s:-" % orderkey else "%s:-" % orderkey
+    else:
+        return "%s:-" % orderkey if request.GET.get('orderby', "") == "%s:+" % orderkey else "%s:+" % orderkey
 
 # we check that the input comes in a valid form that we can recognize
 def _validate_input(input, model):
@@ -163,12 +166,12 @@ def _search_tuple(request, model):
 
 
 # returns a lazy-evaluated queryset for a filter/search/order combination
-def _get_queryset(model, filter_string, search_term, ordering_string):
+def _get_queryset(model, queryset, filter_string, search_term, ordering_string):
     if filter_string:
         filter_query = _get_filtering_query(filter_string)
-        queryset = model.objects.filter(filter_query)
+        queryset = queryset.filter(filter_query)
     else:
-        queryset = model.objects.all()
+        queryset = queryset.all()
 
     if search_term:
         queryset = _get_search_results(search_term, queryset, model)
@@ -196,16 +199,21 @@ def builds(request):
     # boilerplate code that takes a request for an object type and returns a queryset
     # for that object type. copypasta for all needed table searches
     (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
-    queryset = _get_queryset(Build, filter_string, search_term, ordering_string)
+    queryset = Build.objects.exclude(outcome = Build.IN_PROGRESS)
+    queryset = _get_queryset(Build, queryset, filter_string, search_term, ordering_string)
 
     # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
-    build_info = _build_page_range(Paginator(queryset.exclude(outcome = Build.IN_PROGRESS), request.GET.get('count', 10)),request.GET.get('page', 1))
+    build_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
 
     # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
     build_mru = Build.objects.filter(completed_on__gte=(timezone.now()-timedelta(hours=24))).order_by("-started_on")[:3]
     for b in [ x for x in build_mru if x.outcome == Build.IN_PROGRESS ]:
         tf = Task.objects.filter(build = b)
-        b.completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
+        tfc = tf.count()
+        if tfc > 0:
+            b.completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
+        else:
+            b.completeper = 0
         b.eta = timezone.now()
         if b.completeper > 0:
             b.eta += ((timezone.now() - b.started_on)*100/b.completeper)
@@ -218,6 +226,7 @@ def builds(request):
                 'mru' : build_mru,
             # TODO: common objects for all table views, adapt as needed
                 'objects' : build_info,
+                'objectname' : "builds",
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Outcome ',                                                # column with a single filter
@@ -239,10 +248,13 @@ def builds(request):
                 },
                 {'name': 'Machine ',
                  'qhelp': "The machine is the hardware for which you are building",
-                 'dclass': 'span3'},                           # a slightly wider column
+                 'orderfield': _get_toggle_order(request, "machine"),
+                 'dclass': 'span3'
+                },                           # a slightly wider column
                 {'name': 'Started on ', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
                  'qhelp': "The date and time you started the build",
-                  'filter' : {'class' : 'started_on', 'label': 'Show only builds started', 'options' : {
+                 'orderfield': _get_toggle_order(request, "started_on", True),
+                 'filter' : {'class' : 'started_on', 'label': 'Show only builds started', 'options' : {
                         'Today' : 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d"),
                         'Yesterday' : 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"),
                         'Within one week' : 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"),
@@ -250,7 +262,7 @@ def builds(request):
                 },
                 {'name': 'Completed on ',
                  'qhelp': "The date and time the build finished",
-                 'orderfield': _get_toggle_order(request, "completed_on"),
+                 'orderfield': _get_toggle_order(request, "completed_on", True),
                  'filter' : {'class' : 'completed_on', 'label': 'Show only builds completed', 'options' : {
                         'Today' : 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"),
                         'Yesterday' : 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"),
@@ -266,7 +278,7 @@ def builds(request):
                 },
                 {'name': 'Errors ', 'clclass': 'errors_no',
                  'qhelp': "How many errors were encountered during the build (if any)",
-                 'orderfield': _get_toggle_order(request, "errors_no"),
+                 'orderfield': _get_toggle_order(request, "errors_no", True),
                  'filter' : {'class' : 'errors_no', 'label': 'Show only ', 'options' : {
                         'Builds with errors' : 'errors_no__gte:1',
                         'Builds without errors' : 'errors_no:0',
@@ -274,20 +286,25 @@ def builds(request):
                 },
                 {'name': 'Warnings', 'clclass': 'warnings_no',
                  'qhelp': "How many warnigns were encountered during the build (if any)",
-                 'orderfield': _get_toggle_order(request, "warnings_no"),
+                 'orderfield': _get_toggle_order(request, "warnings_no", True),
                  'filter' : {'class' : 'warnings_no', 'label': 'Show only ', 'options' : {
                         'Builds with warnings' : 'warnings_no__gte:1',
                         'Builds without warnings' : 'warnings_no:0',
                     }}
                 },
                 {'name': 'Time ', 'clclass': 'time', 'hidden' : 1,
-                 'qhelp': "How long it took the build to finish",},
+                 'qhelp': "How long it took the build to finish",
+                 'orderfield': _get_toggle_order(request, "timespent", True),
+                },
                 {'name': 'Log',
                  'dclass': "span4",
                  'qhelp': "The location in disk of the build main log file",
-                 'clclass': 'log', 'hidden': 1},
+                 'clclass': 'log', 'hidden': 1
+                },
                 {'name': 'Output', 'clclass': 'output',
-                 'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory"},
+                 'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
+                 'orderfield': _get_toggle_order(request, "image_fstypes")
+                },
                 ]
             }
 
@@ -368,9 +385,10 @@ def tasks(request, build_id):
     if retval:
         return _redirect_parameters( 'tasks', request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
-    queryset = _get_queryset(Task, filter_string, search_term, ordering_string)
+    queryset = Task.objects.filter(build=build_id, order__gt=0)
+    queryset = _get_queryset(Task, queryset, filter_string, search_term, ordering_string)
 
-    tasks = _build_page_range(Paginator(queryset.filter(build=build_id, order__gt=0), request.GET.get('count', 100)),request.GET.get('page', 1))
+    tasks = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
     for t in tasks:
         if t.outcome == Task.OUTCOME_COVERED:
@@ -387,9 +405,10 @@ def recipes(request, build_id):
     if retval:
         return _redirect_parameters( 'recipes', request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
-    queryset = _get_queryset(Recipe, filter_string, search_term, ordering_string)
+    queryset = Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id))
+    queryset = _get_queryset(Recipe, queryset, filter_string, search_term, ordering_string)
 
-    recipes = _build_page_range(Paginator(queryset.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)), request.GET.get('count', 100)),request.GET.get('page', 1))
+    recipes = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': recipes, }
 
@@ -410,9 +429,10 @@ def configvars(request, build_id):
         return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id = build_id)
 
     (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
-    queryset = _get_queryset(Variable, filter_string, search_term, ordering_string)
+    queryset = Variable.objects.filter(build=build_id)
+    queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string)
 
-    variables = _build_page_range(Paginator(queryset.filter(build=build_id), request.GET.get('count', 50)), request.GET.get('page', 1))
+    variables = _build_page_range(Paginator(queryset, request.GET.get('count', 50)), request.GET.get('page', 1))
 
     context = {
                 'build': Build.objects.filter(pk=build_id)[0],
@@ -492,9 +512,10 @@ def bpackage(request, build_id):
     if retval:
         return _redirect_parameters( 'packages', request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
-    queryset = _get_queryset(Package, filter_string, search_term, ordering_string)
+    queryset = Package.objects.filter(build = build_id)
+    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string)
 
-    packages = _build_page_range(Paginator(queryset.filter(build = build_id), request.GET.get('count', 100)),request.GET.get('page', 1))
+    packages = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
     context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
     return render(request, template, context)
