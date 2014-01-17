@@ -1,11 +1,13 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-    <chapter id="user-manual-intro">
+
+<chapter id="user-manual-intro">
     <title>BitBake User Manual</title>
 
     <section id="intro">
         <title>Introduction</title>
-                    <para>
+
+        <para>
             BitBake is a tool for executing tasks commonly performed by software
             developers when building systems on a daily basis.
             BitBake can build Systems consisting of numerous individual pieces
@@ -23,8 +25,10 @@
             and other build tools.
         </para>
     </section>
-        <section id="history-and-goals">
-            <title>History and Goals</title>
+
+    <section id="history-and-goals">
+        <title>History and Goals</title>
+
         <para>
             BitBake was originally a part of the OpenEmbedded project.
             It was inspired by the Portage package management system
@@ -43,39 +47,97 @@
             such as the Angstrom Distribution and the Yocto
             Project.
         </para>
-            <para>Prior to BitBake, no other build tool adequately met
-the needs of an aspiring embedded Linux distribution.  All of the
-buildsystems used by traditional desktop Linux distributions lacked
-important functionality, and none of the ad-hoc
-<emphasis>buildroot</emphasis> systems, prevalent in the
-embedded space, were scalable or maintainable.</para>
-      <para>Some important original goals for BitBake were:
-            <itemizedlist>
-                <listitem><para>Handle crosscompilation.</para></listitem>
-                <listitem><para>Handle interpackage dependencies (build time on target architecture, build time on native architecture, and runtime).</para></listitem>
-                <listitem><para>Support running any number of tasks within a given package, including, but not limited to, fetching upstream sources, unpacking them, patching them, configuring them, etc.</para></listitem>
-                <listitem><para>Must be Linux distribution agnostic (both build and target).</para></listitem>
-                <listitem><para>Must be architecture agnostic</para></listitem>
-                <listitem><para>Must support multiple build and target operating systems (including Cygwin, the BSDs, etc).</para></listitem>
-                <listitem><para>Must be able to be self contained, rather than tightly integrated into the build machine's root filesystem.</para></listitem>
-                <listitem><para>There must be a way to handle conditional metadata (on target architecture, operating system, distribution, machine).</para></listitem>
-                <listitem><para>It must be easy for the person using the tools to supply their own local metadata and packages to operate against.</para></listitem>
-                <listitem><para>Must make it easy to collaborate
-between multiple projects using BitBake for their
-builds.</para></listitem>
-		<listitem><para>Should provide an inheritance mechanism to
-share common metadata between many packages.</para></listitem>
-            </itemizedlist>
+
+        <para>
+            Prior to BitBake, no other build tool adequately met the needs of
+            an aspiring embedded Linux distribution.
+            All of the build systems used by traditional desktop Linux
+            distributions lacked important functionality, and none of the
+            ad-hoc <emphasis>buildroot</emphasis> systems, prevalent in the
+            embedded space, were scalable or maintainable.
         </para>
-        <para>Over time it has become apparent that some further requirements were necessary:
+
+        <para>
+            Some important original goals for BitBake were:
             <itemizedlist>
-                <listitem><para>Handle variants of a base recipe (native, sdk, multilib).</para></listitem>
-                <listitem><para>Able to split metadata into layers and allow layers to override each other.</para></listitem>
-                <listitem><para>Allow representation of a given set of input variables to a task as a checksum. Based on that checksum, allow acceleration of builds with prebuilt components.</para></listitem>
+                <listitem><para>
+                    Handle cross-compilation.
+                    </para></listitem>
+                <listitem><para>
+                    Handle inter-package dependencies (build time on
+                    target architecture, build time on native
+                    architecture, and runtime).
+                    </para></listitem>
+                <listitem><para>
+                    Support running any number of tasks within a given
+                    package, including, but not limited to, fetching
+                    upstream sources, unpacking them, patching them,
+                    configuring them, etc.
+                    </para></listitem>
+                <listitem><para>
+                    Must be Linux distribution agnostic (both build and
+                    target).
+                    </para></listitem>
+                <listitem><para>
+                    Must be architecture agnostic
+                    </para></listitem>
+                <listitem><para>
+                    Must support multiple build and target operating systems
+                    (including Cygwin, the BSDs, etc).
+                    </para></listitem>
+                <listitem><para>
+                    Must be able to be self contained, rather than tightly
+                    integrated into the build machine's root
+                    filesystem.
+                    </para></listitem>
+                <listitem><para>
+                    There must be a way to handle conditional metadata
+                    (on target architecture, operating system,
+                    distribution, machine).
+                    </para></listitem>
+                <listitem><para>
+                    It must be easy for the person using the tools to
+                    supply their own local metadata and packages
+                    to operate against.
+                    </para></listitem>
+                <listitem><para>
+                    Must make it easy to collaborate between multiple
+                    projects using BitBake for their builds.
+                    </para></listitem>
+                <listitem><para>
+                    Should provide an inheritance mechanism to share
+                    common metadata between many packages.
+                    </para></listitem>
             </itemizedlist>
         </para>
 
-        <para>BitBake satisfies all the original requirements and many more with extensions being made to the basic functionality to reflect the additional requirements.  Flexibility and power have always been the priorities.  It is highly extensible, supporting embedded Python code and execution of any arbitrary tasks.</para>
-        </section>
-    </chapter>
+        <para>
+            Over time it has become apparent that some further requirements
+            were necessary:
+            <itemizedlist>
+                <listitem><para>
+                    Handle variants of a base recipe (native, sdk, multilib).
+                    </para></listitem>
+                <listitem><para>
+                    Able to split metadata into layers and allow layers
+                    to override each other.
+                    </para></listitem>
+                <listitem><para>
+                    Allow representation of a given set of input variables
+                    to a task as a checksum.
+                    Based on that checksum, allow acceleration of builds
+                    with prebuilt components.
+                    </para></listitem>
+            </itemizedlist>
+        </para>
 
+        <para>
+            BitBake satisfies all the original requirements and many more
+            with extensions being made to the basic functionality to
+            reflect the additional requirements.
+            Flexibility and power have always been the priorities.
+            It is highly extensible, supporting embedded Python code and
+            execution of any arbitrary tasks.
+        </para>
+   </section>
+</chapter>
