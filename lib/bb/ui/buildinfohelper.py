@@ -152,13 +152,18 @@ class ORMWrapper(object):
 
     def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes):
         for p in packagedict:
-            packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = p )
+            searchname = p
+            if 'OPKGN' in pkgpnmap[p].keys():
+                searchname = pkgpnmap[p]['OPKGN']
+
+            packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = searchname )
             if created:
                 # package was not build in the current build, but
                 # fill in everything we can from the runtime-reverse package data
                 try:
                     packagedict[p]['object'].recipe = recipes[pkgpnmap[p]['PN']]
                     packagedict[p]['object'].version = pkgpnmap[p]['PV']
+                    packagedict[p]['object'].installed_name = p
                     packagedict[p]['object'].revision = pkgpnmap[p]['PR']
                     packagedict[p]['object'].license = pkgpnmap[p]['LICENSE']
                     packagedict[p]['object'].section = pkgpnmap[p]['SECTION']
@@ -209,9 +214,14 @@ class ORMWrapper(object):
 
     def save_build_package_information(self, build_obj, package_info, recipes):
         # create and save the object
-        bp_object, created = Package.objects.get_or_create( build = build_obj,
-                                       name = package_info['PKG'] )
+	pname = package_info['PKG']
+        if 'OPKGN' in package_info.keys():
+            pname = package_info['OPKGN']
 
+        bp_object, created = Package.objects.get_or_create( build = build_obj,
+                                       name = pname )
+
+        bp_object.installed_name = package_info['PKG']
         bp_object.recipe = recipes[package_info['PN']]
         bp_object.version = package_info['PKGV']
         bp_object.revision = package_info['PKGR']

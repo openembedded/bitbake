@@ -148,6 +148,7 @@ class Package(models.Model):
     build = models.ForeignKey('Build')
     recipe = models.ForeignKey('Recipe', null=True)
     name = models.CharField(max_length=100)
+    installed_name = models.CharField(max_length=100, default='')
     version = models.CharField(max_length=100, blank=True)
     revision = models.CharField(max_length=32, blank=True)
     summary = models.CharField(max_length=200, blank=True)
