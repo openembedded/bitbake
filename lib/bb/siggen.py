@@ -57,6 +57,8 @@ class SignatureGenerator(object):
     def invalidate_task(self, task, d, fn):
         bb.build.del_stamp(task, d, fn)
 
+    def dump_sigs(self, dataCache):
+        return
 
 class SignatureGeneratorBasic(SignatureGenerator):
     """
