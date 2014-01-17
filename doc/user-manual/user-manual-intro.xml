@@ -69,7 +69,7 @@
             embedded space, were scalable or maintainable.
 	</para>
 
-        <para>
+	<para>
             Some important original goals for BitBake were:
             <itemizedlist>
                 <listitem><para>
@@ -121,8 +121,8 @@
                     common metadata between many packages.
                     </para></listitem>
             </itemizedlist>
-            Over time it has become apparent that some further
-            requirements were necessary:
+            Over time it has become apparent that some further requirements
+            were necessary:
             <itemizedlist>
                 <listitem><para>
                     Handle variants of a base recipe (native, sdk, multilib).
@@ -138,13 +138,13 @@
                     with prebuilt components.
                     </para></listitem>
             </itemizedlist>
-            BitBake satisfies all the original requirements and many
-            more with extensions being made to the basic
-            functionality to reflect additional requirements.
+            BitBake satisfies all the original requirements and many more
+            with extensions being made to the basic functionality to
+            reflect the additional requirements.
             Flexibility and power have always been the priorities.
-            It is highly extensible, supporting embedded Python code
-            and execution of any arbitrary tasks.
-        </para>
+            It is highly extensible, supporting embedded Python code and
+            execution of any arbitrary tasks.
+	</para>
     </section>
 
     <section id="Concepts">
