@@ -1,27 +1,59 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
-    <chapter>
+    <chapter id="user-manual-intro">
+    <title>BitBake User Manual</title>
+
+    <section id="intro">
         <title>Introduction</title>
-        <section>
-            <title>Overview</title>
-            <para>BitBake is, at its simplest, a tool for executing
-tasks and managing metadata.  As such, its similarities to GNU make and other
-build tools are readily apparent.  It was inspired by Portage, the package management system used by the Gentoo Linux distribution.  BitBake is the basis of the <ulink url="http://www.openembedded.org/">OpenEmbedded</ulink> project, which is being used to build and maintain a number of embedded Linux distributions/projects such as Angstrom and the Yocto project.</para>
-        </section>
-        <section>
-            <title>Background and goals</title>
+                    <para>
+            BitBake is a tool for executing tasks commonly performed by software
+            developers when building systems on a daily basis.
+            BitBake can build Systems consisting of numerous individual pieces
+            of software, or can be used to build a single application.
+            Example tasks that BitBake can execute are fetching source code,
+            applying patches to source code, configuring, compiling, and
+            packaging applications into a complete system, and managing metadata.
+            BitBake abstracts the information for completing individual tasks
+            into files known as recipes.
+            Recipes contain all of the relevant information required by BitBake
+            to complete a given task including dependencies, source file
+            locations, etc.
+            BitBake is similar to
+            <ulink url='http://www.gnu.org/software/make/'>GNU Make</ulink>
+            and other build tools.
+        </para>
+    </section>
+        <section id="history-and-goals">
+            <title>History and Goals</title>
+        <para>
+            BitBake was originally a part of the OpenEmbedded project.
+            It was inspired by the Portage package management system
+            used by the Gentoo Linux distribution.
+            On December 7, 2004, OpenEmbedded project team member,
+            Chris Larson split the project into two distinct pieces:
+            <itemizedlist>
+                <listitem><para>BitBake, a generic task executor</para></listitem>
+                <listitem><para>OpenEmbedded, a metadata set utilized by
+                    BitBake.</para></listitem>
+            </itemizedlist>
+            Today, BitBake is the primary basis of the
+            <ulink url="http://www.openembedded.org/">OpenEmbedded</ulink>
+            project, which is being used to build and maintain a
+            number of projects and embedded Linux distributions
+            such as the Angstrom Distribution and the Yocto
+            Project.
+        </para>
             <para>Prior to BitBake, no other build tool adequately met
 the needs of an aspiring embedded Linux distribution.  All of the
 buildsystems used by traditional desktop Linux distributions lacked
 important functionality, and none of the ad-hoc
 <emphasis>buildroot</emphasis> systems, prevalent in the
 embedded space, were scalable or maintainable.</para>
-
       <para>Some important original goals for BitBake were:
             <itemizedlist>
                 <listitem><para>Handle crosscompilation.</para></listitem>
                 <listitem><para>Handle interpackage dependencies (build time on target architecture, build time on native architecture, and runtime).</para></listitem>
-                <listitem><para>Support running any number of tasks within a given package, including, but not limited to, fetching upstream sources, unpacking them, patching them, configuring them, et cetera.</para></listitem>
+                <listitem><para>Support running any number of tasks within a given package, including, but not limited to, fetching upstream sources, unpacking them, patching them, configuring them, etc.</para></listitem>
                 <listitem><para>Must be Linux distribution agnostic (both build and target).</para></listitem>
                 <listitem><para>Must be architecture agnostic</para></listitem>
                 <listitem><para>Must support multiple build and target operating systems (including Cygwin, the BSDs, etc).</para></listitem>
@@ -39,12 +71,11 @@ share common metadata between many packages.</para></listitem>
             <itemizedlist>
                 <listitem><para>Handle variants of a base recipe (native, sdk, multilib).</para></listitem>
                 <listitem><para>Able to split metadata into layers and allow layers to override each other.</para></listitem>
-                <listitem><para>Allow representation of a given set of input variables to a task as a checksum.</para></listitem>
-                <listitem><para>based on that checksum, allow acceleration of builds with prebuilt components.</para></listitem>
+                <listitem><para>Allow representation of a given set of input variables to a task as a checksum. Based on that checksum, allow acceleration of builds with prebuilt components.</para></listitem>
             </itemizedlist>
         </para>
 
-        <para>BitBake satisfies all the original requirements and many more with extensions being made to the basic functionality to reflect the additionl requirements.  Flexibility and power have always been the priorities.  It is highly extensible, supporting embedded Python code and execution of any arbitrary tasks.</para>
+        <para>BitBake satisfies all the original requirements and many more with extensions being made to the basic functionality to reflect the additional requirements.  Flexibility and power have always been the priorities.  It is highly extensible, supporting embedded Python code and execution of any arbitrary tasks.</para>
         </section>
     </chapter>
 
