@@ -53,7 +53,7 @@
             an aspiring embedded Linux distribution.
             All of the build systems used by traditional desktop Linux
             distributions lacked important functionality, and none of the
-            ad-hoc <emphasis>buildroot</emphasis> systems, prevalent in the
+            ad-hoc buildroot systems, prevalent in the
             embedded space, were scalable or maintainable.
         </para>
 
@@ -109,9 +109,6 @@
                     common metadata between many packages.
                     </para></listitem>
             </itemizedlist>
-        </para>
-
-        <para>
             Over time it has become apparent that some further requirements
             were necessary:
             <itemizedlist>
@@ -129,9 +126,6 @@
                     with prebuilt components.
                     </para></listitem>
             </itemizedlist>
-        </para>
-
-        <para>
             BitBake satisfies all the original requirements and many more
             with extensions being made to the basic functionality to
             reflect the additional requirements.
@@ -166,21 +160,22 @@
                 A BitBake Recipe, denoted by the file extension
                 <filename>.bb</filename> is the most
                 basic metadata file.
-                It tells BitBake the following:
+                These recipe files tell BitBake the following:
                 <itemizedlist>
-                    <listitem><para>descriptive information about the package</para></listitem>
-                    <listitem><para>the version of the recipe</para></listitem>
-                    <listitem><para>when dependencies exist</para></listitem>
-                    <listitem><para>where the source code resides</para></listitem>
-                    <listitem><para>whether the source code requires any patches</para></listitem>
-                    <listitem><para>how to compile the source code</para></listitem>
-                    <listitem><para>where on the target machine to install the package being compiled</para></listitem>
+                    <listitem><para>Descriptive information about the package</para></listitem>
+                    <listitem><para>The version of the recipe</para></listitem>
+                    <listitem><para>When dependencies exist</para></listitem>
+                    <listitem><para>Where the source code resides</para></listitem>
+                    <listitem><para>Whether the source code requires any patches</para></listitem>
+                    <listitem><para>How to compile the source code</para></listitem>
+                    <listitem><para>Where on the target machine to install the package being compiled</para></listitem>
                 </itemizedlist>
             </para>
 
             <para>
                 Within the context of BitBake, or any project utilizing BitBake
-                as it's build system, files with the .bb extension are referred
+                as it's build system, files with the <filename>.bb</filename>
+                extension are referred
                 to as recipes.
                 The term "package" is also commonly used to describe recipes.
                 However, since the same word is used to describe packaged
@@ -201,8 +196,10 @@
                 machine configuration options, distribution configuration
                 options, compiler tuning options, general common
                 configuration options and user configuration options.
-                The main configuration file is the sample bitbake.conf file,
-                located within the bitbake source tree /conf directory.
+                The main configuration file is the sample
+                <filename>bitbake.conf</filename> file,
+                located within the bitbake source tree
+                <filename>/conf</filename> directory.
             </para>
         </section>
 
@@ -214,11 +211,11 @@
                 <filename>.bbclass</filename> extension contain
                 information that is useful to share between metadata files.
                 The BitBake source tree comes with one class metadata file
-                currently, called base.bbclass and it is found in the /classes
-                directory.
-                The base.bbclass is special in that any new classes that a
-                developer adds to a project is required to inherit it
-                automatically.
+                currently, called <filename>base.bbclass</filename> and it is
+                found in the <filename>/classes</filename> directory.
+                The <filename>base.bbclass</filename> is special in that any
+                new classes that a developer adds to a project is required to
+                inherit it automatically.
                 This class contains definitions for standard basic tasks such
                 as fetching, unpacking, configuring (empty by default),
                 compiling (runs any Makefile present), installing (empty by
