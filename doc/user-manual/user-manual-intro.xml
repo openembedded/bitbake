@@ -228,4 +228,87 @@
             </para>
         </section>
     </section>
+
+    <section id='obtaining-bitbake'>
+        <title>Obtaining BitBake</title>
+
+        <para>
+            There are several ways to obtain BitBake.
+            These include installing using your Linux distribution's
+            package management system (not recommended), downloading
+            a snapshot from the BitBake source
+            code repository, or using Git to clone the BitBake source
+            code repository.
+            The recommended method for daily BitBake use is to download
+            a stable release from the BitBake source code repository.
+            Using your distribution's version as provided in the package
+            management system is generally not
+            recommended as in most cases, such as with the Ubuntu and
+            Fedora distributions, the version provided is several releases
+            behind the repository snapshot version and is missing
+            important bug fixes and enhancements. Similarly, daily use
+            of the latest clone of the Git repository is not recommended
+            as it can be unstable.
+            However, the Git repository clone will provide the User
+            with the absolute latest version of BitBake.
+        </para>
+    </section>
+
+    <section id='downloading-a-snapshot-from-the-bitbake-source-tree'>
+        <title>Downloading a Snapshot from the BitBake Source Tree</title>
+
+        <para>
+            The recommended method for obtaining and using BitBake on
+            a daily basis is to download the most
+            recent stable snapshot from the Git source code repository
+            as follows:
+            <literallayout class='monospaced'>
+     $ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
+     $ tar zxpvf bitbake-1.17.0.tar.gz
+            </literallayout>
+            After extraction of the tarball using the tar utility,
+            you will have a directory entitled
+            <filename>bitbake-1.17.0</filename>.
+        </para>
+    </section>
+
+    <section id='cloning-the-bitbake-git-repository'>
+        <title>Cloning the BitBake Git Repository</title>
+
+        <para>
+            To obtain the latest BitBake source code from the
+            BitBake Git repository:
+            <literallayout class='monospaced'>
+     $ git clone git://git.openembedded.org/bitbake
+            </literallayout>
+            This will clone the BitBake Git repository into a
+            directory called <filename>bitbake</filename>.
+            Alternatively, you can
+            designate a directory after the git clone command
+            if you'd prefer to call the new directory something
+            other than <filename>bitbake</filename>.
+            For example:
+            <literallayout class='monospaced'>
+     $ git clone git://git.openembedded.org/bitbake bbdev
+            </literallayout>
+            This would clone the Git repository into a local directory
+            called <filename>bbdev</filename>.
+            Please note that although this method of obtaining the
+            source code will provide the absolute latest version,
+            it is under active development and may not be as stable
+            as a released snapshot.
+        </para>
+    </section>
+
+    <section id='summary'>
+        <title>Summary</title>
+
+        <para>
+            At this point you should have a general idea of the concepts
+            that BitBake was built on and how the
+            source code is organized.
+            You should have a working version of BitBake installed
+            and understand how to setup your environment.
+        </para>
+    </section>
 </chapter>
