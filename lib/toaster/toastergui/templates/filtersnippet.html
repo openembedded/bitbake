@@ -1,19 +1,23 @@
-
- <!-- '{{f.class}}' filter -->
- <form id="filter_{{f.class}}" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+<!-- '{{f.class}}' filter -->
+<form id="filter_{{f.class}}" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
         <input type="hidden" name="search" value="{{request.GET.search}}"/>
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-            <h3>Filter builds by {{tc.name}}</h3>
+            <h3>Filter {{objectname|title}} by '{{tc.name}}'</h3>
         </div>
         <div class="modal-body">
-            <label>{{f.label}}</label>
-            <select name="filter">
-                <option value="">No Filter</option>{% for key, value in f.options.items %}
-                <option {%if request.GET.filter == value %}selected="" {%endif%}value="{{value}}">{{key}}</option>{% endfor %}
-            </select>
+            <p>{{f.label}}</p>
+            <label class="radio">
+                <input type="radio" name="filter" value="">  All {{objectname}}
+            </label>
+            {% for option in f.options %}
+                <label class="radio">
+                    <input type="radio" name="filter" {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}}
+                </label>
+            {% endfor %}
         </div>
         <div class="modal-footer">
             <button type="submit" class="btn btn-primary">Apply</button>
         </div>
-  </form>
+</form>
+
