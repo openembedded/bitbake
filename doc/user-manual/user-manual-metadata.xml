@@ -101,6 +101,19 @@ yourself.</para>
                 <para>In this example, <varname>FOO</varname> is now <literal>789 123456</literal>.</para>
             </section>
 
+            <section  id='variable-flags'>
+                <title>Variable flags</title>
+                <para>Variables can have associated flags which provide a way of tagging extra information onto a variable. Several flags are used internally by BitBake but they can be used externally too if needed. The standard operations mentioned above also work on flags.</para>
+                <para><screen><varname>VARIABLE</varname>[<varname>SOMEFLAG</varname>] = "value"</screen></para>
+                <para>In this example, <varname>VARIABLE</varname> has a flag, <varname>SOMEFLAG</varname> which is set to <literal>value</literal>.</para>
+            </section>
+
+            <section id='inline-python-variable-expansion'>
+                <title>Python variable expansion</title>
+                <para><screen><varname>DATE</varname> = "${@time.strftime('%Y%m%d',time.gmtime())}"</screen></para>
+                <para>This would result in the <varname>DATE</varname> variable containing today's date.</para>
+            </section>
+
             <section id='conditional-syntax-overrides'>
                 <title>Conditional metadata set</title>
                 <para>OVERRIDES is a <quote>:</quote> separated variable containing each item you want to satisfy conditions.  So, if you have a variable which is conditional on <quote>arm</quote>, and <quote>arm</quote> is in OVERRIDES, then the <quote>arm</quote> specific version of the variable is used rather than the non-conditional version.  Example:</para>
@@ -120,6 +133,56 @@ yourself.</para>
                 <para>In this example, <varname>DEPENDS</varname> is set to <literal>glibc ncurses libmad</literal>.</para>
             </section>
 
+            <section id='variable-interaction-worked-examples'>
+            <title>Variable interaction: Worked Examples</title>
+            <para>Despite the documentation of the different forms of variable definition above, it can be hard to work out what happens when variable operators are combined. This section documents some common questions people have regarding the way variables interact.</para>
+
+                <para>There is often confusion about which order overrides and the various append operators take effect.</para>
+
+                <para><screen><varname>OVERRIDES</varname> = "foo"
+<varname>A_foo_append</varname> = "X"</screen></para>
+                <para>In this case, X is unconditionally appended to the variable <varname>A_foo</varname>. Since foo is an override, A_foo would then replace <varname>A</varname>.</para>
+
+                 <para><screen><varname>OVERRIDES</varname> = "foo"
+<varname>A</varname> = "X"
+<varname>A_append_foo</varname> = "Y"</screen></para>
+                <para>In this case, only when foo is in OVERRIDES, Y is appended to the variable <varname>A</varname> so the value of <varname>A</varname> would become XY (NB: no spaces are appended).</para>
+
+                <para><screen><varname>OVERRIDES</varname> = "foo"
+<varname>A_foo_append</varname> = "X"
+<varname>A_foo_append</varname> += "Y"</screen></para>
+                <para>This behaves as per the first case above, but the value of <varname>A</varname> would be "X Y" instead of just "X".</para>
+
+                <para><screen><varname>A</varname> = "1"
+<varname>A_append</varname> = "2"
+<varname>A_append</varname> = "3"
+<varname>A</varname> += "4"
+<varname>A</varname> .= "5"</screen></para>
+
+                <para>Would ultimately result in <varname>A</varname> taking the value "1 4523" since the _append operator executes at the same time as the expansion of other overrides.</para>
+
+            </section>
+            <section id='key-expansion'>
+                <title>Key Expansion</title>
+
+                <para>Key expansion happens at the data store finalisation time just before overrides are expanded.</para>
+
+                <para><screen><varname>A${B}</varname> = "X"
+<varname>B</varname> = "2"
+<varname>A2</varname> = "Y"</screen></para>
+                <para>So in this case <varname>A2</varname> would take the value of "X".</para>
+            </section>
+    </section>
+
+    <section id='inheritance'>
+        <title>Inheritance</title>
+
+            <section id='inheritance-directive'>
+                <title>Inheritance</title>
+                <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
+                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudimentary form of inheritance.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.bbclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
+            </section>
+
             <section id='inclusion-directive'>
                 <title>Inclusion</title>
                 <para>Next, there is the <literal>include</literal> directive, which causes BitBake to parse whatever file you specify, and insert it at that location, which is not unlike <command>make</command>.  However, if the path specified on the <literal>include</literal> line is a relative path, BitBake will locate the first one it can find within <envar>BBPATH</envar>.</para>
@@ -131,25 +194,7 @@ raise an ParseError if the file to be included cannot be found. Otherwise it wil
 include</literal> directive.</para>
             </section>
 
-            <section id='inline-python-variable-expansion'>
-                <title>Python variable expansion</title>
-                <para><screen><varname>DATE</varname> = "${@time.strftime('%Y%m%d',time.gmtime())}"</screen></para>
-                <para>This would result in the <varname>DATE</varname> variable containing today's date.</para>
-            </section>
-
-            <section>
-                <title>Defining executable metadata</title>
-                <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-                <para><screen>do_mytask () {
-    echo "Hello, world!"
-}</screen></para>
-                <para>This is essentially identical to setting a variable, except that this variable happens to be executable shell code.</para>
-                <para><screen>python do_printdate () {
-    import time
-    print time.strftime('%Y%m%d', time.gmtime())
-}</screen></para>
-                <para>This is the similar to the previous, but flags it as Python so that BitBake knows it is Python code.</para>
-            </section>
+    </section>
 
             <section id='defining-python-functions-into-the-global-python-namespace'>
                 <title>Defining Python functions into the global Python namespace</title>
@@ -165,16 +210,18 @@ include</literal> directive.</para>
                 <para>This would result in <varname>DEPENDS</varname> containing <literal>dependencywithcond</literal>.</para>
             </section>
 
-            <section  id='variable-flags'>
-                <title>Variable flags</title>
-                <para>Variables can have associated flags which provide a way of tagging extra information onto a variable. Several flags are used internally by BitBake but they can be used externally too if needed. The standard operations mentioned above also work on flags.</para>
-                <para><screen><varname>VARIABLE</varname>[<varname>SOMEFLAG</varname>] = "value"</screen></para>
-                <para>In this example, <varname>VARIABLE</varname> has a flag, <varname>SOMEFLAG</varname> which is set to <literal>value</literal>.</para>
-            </section>
-            <section id='inheritance-directive'>
-                <title>Inheritance</title>
+            <section>
+                <title>Defining executable metadata</title>
                 <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-                <para>The <literal>inherit</literal> directive is a means of specifying what classes of functionality your .bb requires.  It is a rudimentary form of inheritance.  For example, you can easily abstract out the tasks involved in building a package that uses autoconf and automake, and put that into a bbclass for your packages to make use of.  A given bbclass is located by searching for classes/filename.bbclass in <envar>BBPATH</envar>, where filename is what you inherited.</para>
+                <para><screen>do_mytask () {
+    echo "Hello, world!"
+}</screen></para>
+                <para>This is essentially identical to setting a variable, except that this variable happens to be executable shell code.</para>
+                <para><screen>python do_printdate () {
+    import time
+    print time.strftime('%Y%m%d', time.gmtime())
+}</screen></para>
+                <para>This is the similar to the previous, but flags it as Python so that BitBake knows it is Python code.</para>
             </section>
 
             <section>
@@ -201,6 +248,25 @@ addtask printdate before do_build</screen></para>
                 <para>'umask' - the umask to run the task under.</para>
                 <para> For the 'deptask', 'rdeptask', 'depends', 'rdepends' and 'recrdeptask' flags please see the dependencies section.</para>
             </section>
+
+        <section id='parsing-overview'>
+            <title>Parsing</title>
+            <section id='configiguration-files'>
+                <title>Configuration files</title>
+                <para>The first kind of metadata in BitBake is configuration metadata.  This metadata is global, and therefore affects <emphasis>all</emphasis> packages and tasks which are executed.</para>
+                <para>BitBake will first search the current working directory for an optional "conf/bblayers.conf" configuration file. This file is expected to contain a BBLAYERS variable which is a space delimited list of 'layer' directories. For each directory in this list, a "conf/layer.conf" file will be searched for and parsed with the LAYERDIR variable being set to the directory where the layer was found. The idea is these files will setup BBPATH and other variables correctly for a given build directory automatically for the user.</para>
+                <para>BitBake will then expect to find 'conf/bitbake.conf' somewhere in the user specified <envar>BBPATH</envar>.  That configuration file generally has include directives to pull in any other metadata (generally files specific to architecture, machine, <emphasis>local</emphasis> and so on).</para>
+                <para>Only variable definitions and include directives are allowed in .conf files.</para>
+            </section>
+            <section id='classes'>
+                <title>Classes</title>
+                <para>BitBake classes are our rudimentary inheritance mechanism.  As briefly mentioned in the metadata introduction, they're parsed when an <literal>inherit</literal> directive is encountered, and they are located in classes/ relative to the directories in <envar>BBPATH</envar>.</para>
+            </section>
+            <section id='bb-files'>
+                <title>.bb files</title>
+                <para>A BitBake (.bb) file is a logical unit of tasks to be executed.  Normally this is a package to be built.  Inter-.bb dependencies are obeyed.  The files themselves are located via the <varname>BBFILES</varname> variable, which is set to a space separated list of .bb files, and does handle wildcards.</para>
+            </section>
+        </section>
 
             <section id='events'>
                 <title>Events</title>
@@ -232,53 +298,7 @@ SRC_URI_git = "git://someurl/somepath.git"</screen></para>
 SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;patch=1"</screen></para>
                 <para>Note that the name of the range will default to the original version of the recipe, so given OE, a recipe file of foo_1.0.0+.bb will default the name of its versions to 1.0.0+.  This is useful, as the range name is not only placed into overrides; it's also made available for the metadata to use in the form of the <varname>BPV</varname> variable, for use in file:// search paths (<varname>FILESPATH</varname>).</para>
             </section>
-        </section>
 
-        <section id='variable-interaction-worked-examples'>
-            <title>Variable interaction: Worked Examples</title>
-            <para>Despite the documentation of the different forms of variable definition above, it can be hard to work out what happens when variable operators are combined. This section documents some common questions people have regarding the way variables interact.</para>
-
-            <section>
-                <title>Override and append ordering</title>
-
-                <para>There is often confusion about which order overrides and the various append operators take effect.</para>
-
-                <para><screen><varname>OVERRIDES</varname> = "foo"
-<varname>A_foo_append</varname> = "X"</screen></para>
-                <para>In this case, X is unconditionally appended to the variable <varname>A_foo</varname>. Since foo is an override, A_foo would then replace <varname>A</varname>.</para>
-
-                 <para><screen><varname>OVERRIDES</varname> = "foo"
-<varname>A</varname> = "X"
-<varname>A_append_foo</varname> = "Y"</screen></para>
-                <para>In this case, only when foo is in OVERRIDES, Y is appended to the variable <varname>A</varname> so the value of <varname>A</varname> would become XY (NB: no spaces are appended).</para>
-
-                <para><screen><varname>OVERRIDES</varname> = "foo"
-<varname>A_foo_append</varname> = "X"
-<varname>A_foo_append</varname> += "Y"</screen></para>
-                <para>This behaves as per the first case above, but the value of <varname>A</varname> would be "X Y" instead of just "X".</para>
-
-                <para><screen><varname>A</varname> = "1"
-<varname>A_append</varname> = "2"
-<varname>A_append</varname> = "3"
-<varname>A</varname> += "4"
-<varname>A</varname> .= "5"</screen></para>
-
-                <para>Would ultimately result in <varname>A</varname> taking the value "1 4523" since the _append operator executes at the same time as the expansion of other overrides.</para>
-
-            </section>
-
-            <section id='key-expansion'>
-                <title>Key Expansion</title>
-
-                <para>Key expansion happens at the data store finalisation time just before overrides are expanded.</para>
-
-                <para><screen><varname>A${B}</varname> = "X"
-<varname>B</varname> = "2"
-<varname>A2</varname> = "Y"</screen></para>
-                <para>So in this case <varname>A2</varname> would take the value of "X".</para>
-            </section>
-
-        </section>
         <section id='dependencies'>
             <title>Dependency handling</title>
             <para>BitBake handles dependencies at the task level since to allow for efficient operation with multiple processed executing in parallel. A robust method of specifying task dependencies is therefore needed. </para>
@@ -316,22 +336,5 @@ SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;pat
             </section>
         </section>
 
-        <section id='parsing-overview'>
-            <title>Parsing</title>
-            <section id='configiguration-files'>
-                <title>Configuration files</title>
-                <para>The first kind of metadata in BitBake is configuration metadata.  This metadata is global, and therefore affects <emphasis>all</emphasis> packages and tasks which are executed.</para>
-                <para>BitBake will first search the current working directory for an optional "conf/bblayers.conf" configuration file. This file is expected to contain a BBLAYERS variable which is a space delimited list of 'layer' directories. For each directory in this list, a "conf/layer.conf" file will be searched for and parsed with the LAYERDIR variable being set to the directory where the layer was found. The idea is these files will setup BBPATH and other variables correctly for a given build directory automatically for the user.</para>
-                <para>BitBake will then expect to find 'conf/bitbake.conf' somewhere in the user specified <envar>BBPATH</envar>.  That configuration file generally has include directives to pull in any other metadata (generally files specific to architecture, machine, <emphasis>local</emphasis> and so on).</para>
-                <para>Only variable definitions and include directives are allowed in .conf files.</para>
-            </section>
-            <section id='classes'>
-                <title>Classes</title>
-                <para>BitBake classes are our rudimentary inheritance mechanism.  As briefly mentioned in the metadata introduction, they're parsed when an <literal>inherit</literal> directive is encountered, and they are located in classes/ relative to the directories in <envar>BBPATH</envar>.</para>
-            </section>
-            <section id='bb-files'>
-                <title>.bb files</title>
-                <para>A BitBake (.bb) file is a logical unit of tasks to be executed.  Normally this is a package to be built.  Inter-.bb dependencies are obeyed.  The files themselves are located via the <varname>BBFILES</varname> variable, which is set to a space separated list of .bb files, and does handle wildcards.</para>
-            </section>
-        </section>
+
     </chapter>
