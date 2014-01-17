@@ -43,36 +43,31 @@
 
         <para>
             BitBake was originally a part of the OpenEmbedded project.
-            It was inspired by the Portage package
-            management system used by the Gentoo Linux distribution.
-            On December 7, 2004, OpenEmbedded
-            project team member, Chris Larson split the project into
-            two distinct pieces:
+            It was inspired by the Portage package management system
+            used by the Gentoo Linux distribution.
+            On December 7, 2004, OpenEmbedded project team member,
+            Chris Larson split the project into two distinct pieces:
             <itemizedlist>
-                <listitem><para>
-                    BitBake, a generic task executor
-                    </para></listitem>
-                <listitem><para>
-                    OpenEmbedded, a metadata set utilized by BitBake
-                    </para></listitem>
+                <listitem><para>BitBake, a generic task executor</para></listitem>
+                <listitem><para>OpenEmbedded, a metadata set utilized by
+                    BitBake.</para></listitem>
             </itemizedlist>
             Today, BitBake is the primary basis of the
-            <ulink url='http://www.openembedded.org/'>OpenEmbedded</ulink>
+            <ulink url="http://www.openembedded.org/">OpenEmbedded</ulink>
             project, which is being used to build and maintain a
             number of projects and embedded Linux distributions
-            such as the Angstrom Distribution and the Yocto Project.
-        </para>
+            such as the Angstrom Distribution and the Yocto
+            Project.
+	</para>
 
-        <para>
-            Prior to BitBake, no other build tool adequately met
-            the needs of an aspiring embedded Linux
-            distribution.
-            All of the build systems used by traditional desktop
-            Linux distributions lacked important
-            functionality, and none of the ad-hoc buildroot systems,
-            prevalent in the embedded space, were
-            scalable or maintainable.
-        </para>
+	<para>
+            Prior to BitBake, no other build tool adequately met the needs of
+            an aspiring embedded Linux distribution.
+            All of the build systems used by traditional desktop Linux
+            distributions lacked important functionality, and none of the
+            ad-hoc buildroot systems, prevalent in the
+            embedded space, were scalable or maintainable.
+	</para>
 
         <para>
             Some important original goals for BitBake were:
@@ -157,19 +152,17 @@
 
         <para>
             BitBake is a program written in the Python language.
-            At the highest level, BitBake interprets metadata,
-            decides what tasks are required to run, and executes
-            those tasks.
-            Similar to GNU Make, BitBake controls how software
-            is built.
-            GNU Make does this using "makefiles".
-            BitBake uses "recipes". BitBake
-            extends the capabilities of a simple tool like GNU Make
-            by allowing for much more complex tasks to
-            be completed, such as assembling entire embedded Linux
-            distributions.
-            Several concepts must be understood to be able to leverage
-            the power of the tool.
+            At the highest level, BitBake interprets metadata, decides
+            what tasks are required to run, and executes those tasks.
+            Similar to GNU Make, BitBake controls how software is
+            built.
+            GNU Make does this using "makefiles". BitBake uses
+            "recipes".
+            BitBake extends the capabilities of a simple
+            tool like GNU make by allowing for much more complex tasks
+            to be completed, such as assembling entire embedded Linux
+            distributions. Several concepts must be understood to be able
+            to leverage the power of the tool.
         </para>
 
         <section id='recipes'>
@@ -179,7 +172,7 @@
                 A BitBake Recipe, denoted by the file extension
                 <filename>.bb</filename> is the most
                 basic metadata file.
-                In OpenEmbedded, recipes tell BitBake the following:
+                These recipe files tell BitBake the following:
                 <itemizedlist>
                     <listitem><para>Descriptive information about the package</para></listitem>
                     <listitem><para>The version of the recipe</para></listitem>
