@@ -615,6 +615,46 @@
                 Only variable definitions and include directives are allowed
                 in <filename>.conf</filename> files.
             </para>
+
+            <section id='layers'>
+                <title>Layers</title>
+
+                <para>
+                    Layers allow you to isolate different types of
+                    customizations from each other.
+                    You might find it tempting to keep everything in one layer
+                    when working on a single project.
+                    However, the more modular you organize your Metadata, the
+                    easier it is to cope with future changes.
+                </para>
+
+                <para>
+                    To illustrate how layers are used to keep things modular,
+                    consider machine customizations.
+                    These types of customizations typically reside in a special layer,
+                    rather than a general layer, called a Board Specific Package (BSP) Layer.
+                    Furthermore, the machine customizations should be isolated from
+                    recipes and Metadata that support a new GUI environment, for
+                    example.
+                    This situation gives you a couple of layers: one for the machine
+                    configurations, and one for the GUI environment.
+                    It is important to understand, however, that the BSP layer can still
+                    make machine-specific additions to recipes within
+                    the GUI environment layer without polluting the GUI layer itself
+                    with those machine-specific changes.
+                    You can accomplish this through a recipe that is a BitBake append
+                    (<filename>.bbappend</filename>) file, which is described
+                    later in this section.
+                </para>
+
+                <para>
+                    There are certain variable specific to layers, including:
+                    <itemizedlist>
+                        <listitem><para><filename>LAYERDEPENDS</filename></para></listitem>
+                        <listitem><para><filename>LAYERVERSION</filename></para></listitem>
+                    </itemizedlist>
+                </para>
+            </section>
         </section>
 
         <section id='classes'>
