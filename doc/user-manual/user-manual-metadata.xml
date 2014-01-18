@@ -34,7 +34,7 @@
                 <literallayout class='monospaced'>
      VARIABLE = "value"
                 </literallayout>
-                In this example, <varname>VARIABLE</varname> is <literal>value</literal>.
+                In this example, <filename>VARIABLE</filename> is <filename>value</filename>.
             </para>
         </section>
 
@@ -52,9 +52,9 @@
      A = "aval"
      B = "pre${A}post"
                 </literallayout>
-                This results in <varname>A</varname> containing
-                <literal>aval</literal> and <varname>B</varname> containing
-                <literal>preavalpost</literal>.
+                This results in <filename>A</filename> containing
+                <filename>aval</filename> and <filename>B</filename> containing
+                <filename>preavalpost</filename>.
             </para>
         </section>
 
@@ -65,10 +65,10 @@
                 <literallayout class='monospaced'>
      A ?= "aval"
                 </literallayout>
-                If <varname>A</varname> is set before the above is called,
+                If <filename>A</filename> is set before the above is called,
                 it will retain its previous value.
-                If <varname>A</varname> is unset prior to the above call,
-                <varname>A</varname> will be set to <literal>aval</literal>.
+                If <filename>A</filename> is unset prior to the above call,
+                <filename>A</filename> will be set to <filename>aval</filename>.
                     Note that this assignment is immediate, so if there are multiple ?= assignments
                     to a single variable, the first of those will be used.
             </para>
@@ -82,14 +82,14 @@
      A ??= "somevalue"
      A ??= "someothervalue"
                 </literallayout>
-                If <varname>A</varname> is set before the above,
+                If <filename>A</filename> is set before the above,
                 it will retain that value.
-                If <varname>A</varname> is unset prior to the above,
-                <varname>A</varname> will be set to <literal>someothervalue</literal>.
+                If <filename>A</filename> is unset prior to the above,
+                <filename>A</filename> will be set to <filename>someothervalue</filename>.
                 This is a lazy/weak assignment in that the assignment does not occur until the end
                 of the parsing process, so that the last, rather than the first,
                 ??= assignment to a given variable will be used.
-                Any other setting of A using = or ?=
+                Any other setting of <filename>A</filename> using = or ?=
                 will however override the value set with ??=
             </para>
         </section>
@@ -107,7 +107,10 @@
      C = "cval"
      C := "${C}append"
                 </literallayout>
-                In that example, <varname>A</varname> would contain <literal> test 123</literal>, <varname>B</varname> would contain <literal>456 bval</literal>, and <varname>C</varname> would be <literal>cvalappend</literal>.
+                In that example, <filename>A</filename> would contain
+                <filename>test 123</filename>, <filename>B</filename> would contain
+                <filename>456 bval</filename>, and <filename>C</filename>
+                would be <filename>cvalappend</filename>.
             </para>
         </section>
 
@@ -121,7 +124,9 @@
      C = "cval"
      C =+ "test"
                 </literallayout>
-                In this example, <varname>B</varname> is now <literal>bval additionaldata</literal> and <varname>C</varname> is <literal>test cval</literal>.
+                In this example, <filename>B</filename> is now
+                <filename>bval additionaldata</filename> and <filename>C</filename>
+                is <filename>test cval</filename>.
             </para>
         </section>
 
@@ -135,9 +140,9 @@
      C = "cval"
      C =. "test"
                 </literallayout>
-                In this example, <varname>B</varname> is now
-                <literal>bvaladditionaldata</literal> and
-                <varname>C</varname> is <literal>testcval</literal>.
+                In this example, <filename>B</filename> is now
+                <filename>bvaladditionaldata</filename> and
+                <filename>C</filename> is <filename>testcval</filename>.
                 In contrast to the above appending and prepending operators,
                 no additional space will be introduced.
             </para>
@@ -153,11 +158,11 @@
      C = "cval"
      C_prepend = "additional data "
                 </literallayout>
-                This example results in <varname>B</varname>
-                becoming <literal>bval additional data</literal>
-                and <varname>C</varname> becoming
-                <literal>additional data cval</literal>.
-                    Note the spaces in the append.
+                This example results in <filename>B</filename>
+                becoming <filename>bval additional data</filename>
+                and <filename>C</filename> becoming
+                <filename>additional data cval</filename>.
+                    Note the spaces in the <filename>_append</filename>.
                     Unlike the += operator, additional space is not automatically added.
                     You must take steps to add space
 yourself.
@@ -172,7 +177,7 @@ yourself.
      FOO_remove = "123"
      FOO_remove = "456"
                 </literallayout>
-                In this example, <varname>FOO</varname> is now <literal>789 123456</literal>.
+                In this example, <filename>FOO</filename> is now <filename>789 123456</filename>.
             </para>
         </section>
 
@@ -186,8 +191,8 @@ yourself.
                 <literallayout class='monospaced'>
      VARIABLE[SOMEFLAG] = "value"
                 </literallayout>
-                In this example, <varname>VARIABLE</varname> has a flag,
-                <varname>SOMEFLAG</varname> which is set to <literal>value</literal>.
+                In this example, <filename>VARIABLE</filename> has a flag,
+                <filename>SOMEFLAG</filename> which is set to <filename>value</filename>.
             </para>
         </section>
 
@@ -198,7 +203,7 @@ yourself.
                 <literallayout class='monospaced'>
      DATE = "${@time.strftime('%Y%m%d',time.gmtime())}"
                 </literallayout>
-                This would result in the <varname>DATE</varname>
+                This would result in the <filename>DATE</filename>
                 variable containing today's date.
             </para>
         </section>
@@ -207,10 +212,10 @@ yourself.
         <title>Conditional metadata set</title>
 
             <para>
-                OVERRIDES is a <quote>:</quote> separated variable containing
+                <filename>OVERRIDES</filename> is a <quote>:</quote> separated variable containing
                 each item you want to satisfy conditions.
                 So, if you have a variable which is conditional on <quote>arm</quote>, and <quote>arm</quote>
-                is in OVERRIDES, then the <quote>arm</quote> specific
+                is in <filename>OVERRIDES</filename>, then the <quote>arm</quote> specific
                 version of the variable is used rather than the non-conditional
                 version.
                 Example:
@@ -220,9 +225,9 @@ yourself.
      TEST_os = "osspecificvalue"
      TEST_condnotinoverrides = "othercondvalue"
                 </literallayout>
-                In this example, <varname>TEST</varname> would be
-                <literal>osspecificvalue</literal>, due to the condition
-                <quote>os</quote> being in <varname>OVERRIDES</varname>.
+                In this example, <filename>TEST</filename> would be
+                <filename>osspecificvalue</filename>, due to the condition
+                <quote>os</quote> being in <filename>OVERRIDES</filename>.
             </para>
         </section>
 
@@ -231,14 +236,14 @@ yourself.
 
             <para>
                 BitBake also supports appending and prepending to variables based
-                on whether something is in OVERRIDES.  Example:
+                on whether something is in <filename>OVERRIDES</filename>.  Example:
                 <literallayout class='monospaced'>
      DEPENDS = "glibc ncurses"
      OVERRIDES = "machine:local"
      DEPENDS_append_machine = "libmad"
                 </literallayout>
-                In this example, <varname>DEPENDS</varname> is set to
-                <literal>glibc ncurses libmad</literal>.
+                In this example, <filename>DEPENDS</filename> is set to
+                "glibc ncurses libmad".
             </para>
         </section>
 
@@ -263,27 +268,27 @@ yourself.
      OVERRIDES = "foo"
      A_foo_append = "X"
                 </literallayout>
-                In this case, X is unconditionally appended
-                to the variable <varname>A_foo</varname>.
-                Since foo is an override, A_foo would then replace
-                <varname>A</varname>.
+                In this case, <filename>X</filename> is unconditionally appended
+                to the variable <filename>A_foo</filename>.
+                Since foo is an override, <filename>A_foo</filename> would then replace
+                <filename>A</filename>.
                 <literallayout class='monospaced'>
      OVERRIDES = "foo"
      A = "X"
      A_append_foo = "Y"
                 </literallayout>
-                In this case, only when foo is in
-                OVERRIDES, Y
-                is appended to the variable <varname>A</varname>
-                so the value of <varname>A</varname> would
-                become XY (NB: no spaces are appended).
+                In this case, only when <filename>foo</filename> is in
+                <filename>OVERRIDES</filename>, <filename>Y</filename>
+                is appended to the variable <filename>A</filename>
+                so the value of <filename>A</filename> would
+                become <filename>XY</filename> (NB: no spaces are appended).
                 <literallayout class='monospaced'>
      OVERRIDES = "foo"
      A_foo_append = "X"
      A_foo_append += "Y"
                 </literallayout>
                 This behaves as per the first case above, but the value of
-                <varname>A</varname> would be "X Y" instead of just "X".
+                <filename>A</filename> would be "X Y" instead of just "X".
                 <literallayout class='monospaced'>
      A = "1"
      A_append = "2"
@@ -291,7 +296,7 @@ yourself.
      A += "4"
      A .= "5"
                 </literallayout>
-                Would ultimately result in <varname>A</varname> taking the value
+                Would ultimately result in <filename>A</filename> taking the value
                 "1 4523" since the _append operator executes at the
                 same time as the expansion of other overrides.
             </para>
@@ -308,7 +313,7 @@ yourself.
      B = "2"
      A2 = "Y"
                 </literallayout>
-                So in this case <varname>A2</varname> would take the value of "X".
+                So in this case <filename>A2</filename> would take the value of "X".
             </para>
         </section>
     </section>
@@ -322,14 +327,14 @@ yourself.
                 This is only supported in .bb and .bbclass files.
             </para>
             <para>
-                The <literal>inherit</literal> directive is a means of specifying what classes
-                of functionality your .bb requires.
+                The inherit directive is a means of specifying what classes
+                of functionality your <filename>.bb</filename> requires.
                 It is a rudimentary form of inheritance.
                 For example, you can easily abstract out the tasks involved in
                 building a package that uses autoconf and automake, and put
                 that into a bbclass for your packages to make use of.
                 A given bbclass is located by searching for classes/filename.bbclass
-                in <envar>BBPATH</envar>, where filename is what you inherited.
+                in <filename>BBPATH</filename>, where filename is what you inherited.
             </para>
         </section>
 
@@ -337,22 +342,22 @@ yourself.
             <title>Inclusion</title>
 
             <para>
-                Next, there is the <literal>include</literal> directive, which causes BitBake to parse whatever file you specify,
+                Next, there is the <filename>include</filename> directive, which causes BitBake to parse whatever file you specify,
                 and insert it at that location, which is not unlike <command>make</command>.
-                However, if the path specified on the <literal>include</literal> line is a
+                However, if the path specified on the <filename>include</filename> line is a
                 relative path, BitBake will locate the first one it can find
-                within <envar>BBPATH</envar>.
+                within <filename>BBPATH</filename>.
             </para>
         </section>
 
         <section id='requiring-inclusion'>
             <title>Requiring inclusion</title>
             <para>
-                In contrast to the <literal>include</literal> directive, <literal>require</literal> will
+                In contrast to the <filename>include</filename> directive, <filename>require</filename> will
 raise an
                 ParseError if the file to be included cannot
                 be found.
-                Otherwise it will behave just like the <literal>include</literal> directive.
+                Otherwise it will behave just like the <filename>include</filename> directive.
             </para>
         </section>
 
@@ -371,7 +376,7 @@ raise an
      SOMECONDITION = "1"
      DEPENDS = "${@get_depends(d)}"
                 </literallayout>
-                This would result in <varname>DEPENDS</varname> containing <literal>dependencywithcond</literal>.
+                This would result in <filename>DEPENDS</filename> containing <filename>dependencywithcond</filename>.
             </para>
     </section>
 
@@ -397,7 +402,7 @@ python do_printdate () {
     <section>
         <title>Tasks</title>
         <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-        <para>In BitBake, each step that needs to be run for a given .bb is known as a task.  There is a command <literal>addtask</literal> to add new tasks (must be a defined Python executable metadata and must start with <quote>do_</quote>) and describe intertask dependencies.
+        <para>In BitBake, each step that needs to be run for a given .bb is known as a task.  There is a command <filename>addtask</filename> to add new tasks (must be a defined Python executable metadata and must start with <quote>do_</quote>) and describe intertask dependencies.
             <literallayout class='monospaced'>
      python do_printdate () {
          import time print
@@ -437,28 +442,29 @@ python do_printdate () {
 
             <para>
                 BitBake will first search the current working directory for an
-                optional "conf/bblayers.conf" configuration file.
-                This file is expected to contain a BBLAYERS
+                optional <filename>conf/bblayers.conf</filename> configuration file.
+                This file is expected to contain a <filename>BBLAYERS</filename>
                 variable which is a space delimited list of 'layer' directories.
-                For each directory in this list, a "conf/layer.conf"
+                For each directory in this list, a <filename>conf/layer.conf</filename>
                 file will be searched for and parsed with the
-                LAYERDIR variable being set to the directory where
+                <filename>LAYERDIR</filename> variable being set to the directory where
                 the layer was found.
-                The idea is these files will setup BBPATH
+                The idea is these files will setup <filename>BBPATH</filename>
                 and other variables correctly for a given build directory automatically
                 for the user.
             </para>
 
             <para>
-                BitBake will then expect to find 'conf/bitbake.conf'
-                somewhere in the user specified <envar>BBPATH</envar>.
+                BitBake will then expect to find <filename>conf/bitbake.conf</filename>
+                somewhere in the user specified <filename>BBPATH</filename>.
                 That configuration file generally has include directives to pull
                 in any other metadata (generally files specific to architecture,
                 machine, <emphasis>local</emphasis> and so on).
             </para>
 
             <para>
-                Only variable definitions and include directives are allowed in .conf files.
+                Only variable definitions and include directives are allowed
+                in <filename>.conf</filename> files.
             </para>
         </section>
         <section id='classes'>
@@ -466,23 +472,23 @@ python do_printdate () {
             <para>
                 BitBake classes are our rudimentary inheritance mechanism.
                 As briefly mentioned in the metadata introduction, they're
-                parsed when an <literal>inherit</literal> directive is encountered, and they
-                are located in classes/
-                relative to the directories in <envar>BBPATH</envar>.
+                parsed when an inherit directive is encountered, and they
+                are located in the <filename>classes/</filename> directory
+                relative to the directories in <filename>BBPATH</filename>.
             </para>
         </section>
 
         <section id='bb-files'>
-            <title>.bb files</title>
+            <title>.<filename>.bb</filename> files</title>
 
             <para>
-                BitBake (.bb) file is a logical unit
+                BitBake (<filename>.bb</filename>) file is a logical unit
                 of tasks to be executed.
                 Normally this is a package to be built.
-                Inter-.bb dependencies are obeyed.
+                Inter-<filename>.bb</filename> dependencies are obeyed.
                 The files themselves are located via
-                the <varname>BBFILES</varname> variable, which
-                is set to a space separated list of .bb
+                the <filename>BBFILES</filename> variable, which
+                is set to a space separated list of <filename>.bb</filename>
                 files, and does handle wildcards.
             </para>
         </section>
@@ -493,13 +499,14 @@ python do_printdate () {
 
         <para>
             <emphasis>NOTE:</emphasis>
-            This is only supported in .bb and .bbclass files.
+            This is only supported in <filename>.bb</filename> 
+            and <filename>.bbclass</filename> files.
         </para>
         <para>
             BitBake allows installation of event handlers.
             Events are triggered at certain points during operation,
             such as the beginning of operation against a given
-            .bb, the start of a given task,
+            <filename>.bb</filename>, the start of a given task,
             task failure, task success, et cetera.
             The intent is to make it easy to do things like email
             notification on build failure.
@@ -514,16 +521,16 @@ python do_printdate () {
             </literallayout>
             This event handler gets called every time an event is
             triggered.
-            A global variable <varname>e</varname> is defined.
-            <varname>e</varname>.data contains an instance of
-            bb.data.
-            With the getName(<varname>e</varname>) method one can get
+            A global variable <filename>e</filename> is defined.
+            <filename>e.data</filename> contains an instance of
+            <filename>bb.data</filename>.
+            With the <filename>getName(e)</filename> method one can get
             the name of the triggered event.
         </para>
 
         <para>
             The above event handler prints the name of the event
-            and the content of the <varname>FILE</varname> variable.
+            and the content of the <filename>FILE</filename> variable.
         </para>
     </section>
 
@@ -536,7 +543,7 @@ python do_printdate () {
         </para>
 
         <para>
-            The first is <varname>BBCLASSEXTEND</varname>.
+            The first is <filename>BBCLASSEXTEND</filename>.
             This variable is a space separated list of classes used to "extend" the
             recipe for each variant.
             As an example, setting
@@ -548,10 +555,10 @@ python do_printdate () {
             This second incarnation will have the "native" class inherited.
         </para>
         <para>
-            The second feature is <varname>BBVERSIONS</varname>.
+            The second feature is <filename>BBVERSIONS</filename>.
             This variable allows a single recipe to build multiple versions of a
             project from a single recipe file, and allows you to specify
-            conditional metadata (using the <varname>OVERRIDES</varname>
+            conditional metadata (using the <filename>OVERRIDES</filename>
             mechanism) for a single version, or an optionally named range of versions:
             <literallayout class='monospaced'>
      BBVERSIONS = "1.0 2.0 git"
@@ -562,12 +569,12 @@ python do_printdate () {
      SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;patch=1"
             </literallayout>
             Note that the name of the range will default to the original version of the
-            recipe, so given OE, a recipe file of foo_1.0.0+.bb
-            will default the name of its versions to 1.0.0+.
+            recipe, so given OE, a recipe file of <filename>foo_1.0.0+.bb</filename>
+            will default the name of its versions to <filename>1.0.0+</filename>.
             This is useful, as the range name is not only placed into overrides;
             it's also made available for the metadata to use in the form of the
-            <varname>BPV</varname> variable, for use in
-            file:// search paths (<varname>FILESPATH</varname>).
+            <filename>BPV</filename> variable, for use in
+            <filename>file://</filename> search paths (<filename>FILESPATH</filename>).
         </para>
     </section>
 
@@ -582,12 +589,12 @@ python do_printdate () {
             </para>
 
         <section id='dependencies-internal-to-the-bb-file'>
-            <title>Dependencies internal to the .bb file</title>
+            <title>Dependencies internal to the <filename>.bb</filename> file</title>
 
             <para>
                 Where the dependencies are internal to a given
-                .bb file, the dependencies are handled by the
-                previously detailed addtask directive.
+                <filename>.bb</filename> file, the dependencies are handled by the
+                previously detailed <filename>addtask</filename> directive.
             </para>
         </section>
 
@@ -595,16 +602,16 @@ python do_printdate () {
             <title>Build Dependencies</title>
 
             <para>
-                DEPENDS lists build time dependencies.
+                <filename>DEPENDS</filename> lists build time dependencies.
                 The 'deptask' flag for tasks is used to signify the task of each
-                item listed in DEPENDS which must have
+                item listed in <filename>DEPENDS</filename> which must have
                 completed before that task can be executed.
                 <literallayout class='monospaced'>
      do_configure[deptask] = "do_populate_staging"
                 </literallayout>
-                means the do_populate_staging
-                task of each item in DEPENDS must have completed before
-                do_configure can execute.
+                means the <filename>do_populate_staging</filename>
+                task of each item in <filename>DEPENDS</filename> must have completed before
+                <filename>do_configure</filename> can execute.
             </para>
         </section>
 
@@ -612,18 +619,18 @@ python do_printdate () {
             <title>Runtime Dependencies</title>
 
             <para>
-                The PACKAGES variable lists runtime
-                packages and each of these can have RDEPENDS and
-                RRECOMMENDS runtime dependencies.
+                The <filename>PACKAGES</filename> variable lists runtime
+                packages and each of these can have <filename>RDEPENDS</filename> and
+                <filename>RRECOMMENDS</filename> runtime dependencies.
                 The 'rdeptask' flag for tasks is used to signify the task of each
                 item runtime dependency which must have completed before that
                 task can be executed.
                 <literallayout class='monospaced'>
      do_package_write[rdeptask] = "do_package"
                 </literallayout>
-                means the do_package
-                task of each item in RDEPENDS must have
-                completed before do_package_write can execute.
+                means the <filename>do_package</filename>
+                task of each item in <filename>RDEPENDS</filename> must have
+                completed before <filename>do_package_write</filename> can execute.
             </para>
         </section>
 
@@ -649,7 +656,7 @@ python do_printdate () {
                 build and runtime dependencies of dependent tasks too.
                 If that is the case, the taskname itself should
                 be referenced in the task list, e.g.
-                do_a[recrdeptask] = "do_a do_b".
+                <filename>do_a[recrdeptask] = "do_a do_b"</filename>.
             </para>
         </section>
 
@@ -659,13 +666,13 @@ python do_printdate () {
             <para>
                 The 'depends' flag for tasks is a more generic form of which
                 allows an interdependency on specific tasks rather than specifying
-                the data in DEPENDS.
+                the data in <filename>DEPENDS</filename>.
                 <literallayout class='monospaced'>
      do_patch[depends] = "quilt-native:do_populate_staging"
                 </literallayout>
-                means the do_populate_staging
+                means the <filename>do_populate_staging</filename>
                 task of the target quilt-native must have completed before the
-                do_patch can execute.
+                <filename>do_patch</filename> task can execute.
             </para>
 
             <para>
