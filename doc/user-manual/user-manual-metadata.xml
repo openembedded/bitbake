@@ -409,22 +409,59 @@
         </note>
     </section>
 
-    <section>
-        <title>Defining executable metadata</title>
-            <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.
+    <section id='functions'>
+        <title>Functions</title>
+
+        <note>
+            This is only supported in <filename>.bb</filename>
+            and <filename>.bbclass</filename> files.
+        </note>
+
+        <para>
+            As with most languages, functions are the building blocks
+            that define operations.
+            Bitbake supports shell and Python functions.
+            An example shell function definition is:
             <literallayout class='monospaced'>
-do_mytask () {
-    echo "Hello, world!"
-}
+     some_function () {
+         echo "Hello World"
+     }
             </literallayout>
-            This is essentially identical to setting a variable, except that this variable happens to be executable shell code.
+            An example Python function definition is:
             <literallayout class='monospaced'>
-python do_printdate () {
-    import time
-    print time.strftime('%Y%m%d', time.gmtime())
-}
+     python some_python_function () {
+         d.setVar("TEXT", "Hello World")
+         print d.getVar("TEXT", True)
+     }
             </literallayout>
-            This is the similar to the previous, but flags it as Python so that BitBake knows it is Python code.
+            In python functions, the "bb" and "os" modules are already
+            imported, there is no need to import those modules.
+            The datastore, "d" is also a global variable and always
+            available to these functions automatically.
+        </para>
+
+        <para>
+            Bitbake will execute functions of this form using
+            the <filename>bb.build.exec_func()</filename>, which can also be
+            called from Python functions to execute other functions,
+            either shell or Python based.
+            Shell functions can only execute other shell functions.
+        </para>
+
+        <para>
+            There is also a second way to declare python functions with
+            parameters which takes the form:
+            <literallayout class='monospaced'>
+     def some_python_function(arg1, arg2):
+         print arg1 + " " + arg2
+            </literallayout>
+            The difference is that the second form takes parameters,
+            the datastore is not available automatically
+            and must be passed as a parameter and these functions are
+            not called with the <filename>exec_func()</filename> but are
+            executed with direct Python function calls.
+            The "bb" and "os" modules are still automatically available
+            and there is no need to import them.
         </para>
     </section>
 
