@@ -41,23 +41,22 @@
             a git repository on an http server as a tarball for example.
             Some example commonly used mirror
             definitions are:
-        </para>
+            <literallayout class='monospaced'>
+PREMIRRORS ?= "\
+    bzr://.*/.*   http://somemirror.org/sources/ \n \
+    cvs://.*/.*   http://somemirror.org/sources/ \n \
+    git://.*/.*   http://somemirror.org/sources/ \n \
+    hg://.*/.*    http://somemirror.org/sources/ \n \
+    osc://.*/.*   http://somemirror.org/sources/ \n \
+    p4://.*/.*    http://somemirror.org/sources/ \n \
+    svk://.*/.*   http://somemirror.org/sources/ \n \
+    svn://.*/.*   http://somemirror.org/sources/ \n"
 
-        <para>
-            <screen><varname>PREMIRRORS</varname> ?= "\
-bzr://.*/.*   http://somemirror.org/sources/ \n \
-cvs://.*/.*   http://somemirror.org/sources/ \n \
-git://.*/.*   http://somemirror.org/sources/ \n \
-hg://.*/.*    http://somemirror.org/sources/ \n \
-osc://.*/.*   http://somemirror.org/sources/ \n \
-p4://.*/.*    http://somemirror.org/sources/ \n \
-svk://.*/.*   http://somemirror.org/sources/ \n \
-svn://.*/.*   http://somemirror.org/sources/ \n"
-
-<varname>MIRRORS</varname> =+ "\
-ftp://.*/.*      http://somemirror.org/sources/ \n \
-http://.*/.*     http://somemirror.org/sources/ \n \
-https://.*/.*    http://somemirror.org/sources/ \n"</screen>
+MIRRORS =+ "\
+    ftp://.*/.*      http://somemirror.org/sources/ \n \
+    http://.*/.*     http://somemirror.org/sources/ \n \
+    https://.*/.*    http://somemirror.org/sources/ \n"
+            </literallayout>
         </para>
 
         <para>
@@ -96,10 +95,11 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen>
             The metadata usually extend these variables to include
             variations of the values in <varname>OVERRIDES</varname>.
             Single files and complete directories can be specified.
-<screen><varname>SRC_URI</varname>= "file://relativefile.patch"
-<varname>SRC_URI</varname>= "file://relativefile.patch;this=ignored"
-<varname>SRC_URI</varname>= "file:///Users/ich/very_important_software"
-</screen>
+            <literallayout class='monospaced'>
+     SRC_URI = "file://relativefile.patch"
+     SRC_URI = "file://relativefile.patch;this=ignored"
+     SRC_URI = "file:///Users/ich/very_important_software"
+            </literallayout>
         </para>
     </section>
 
@@ -138,9 +138,10 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen>
             and <varname>CVS_RSH</varname> will be set.
             Finally, <varname>localdir</varname> is used to checkout into a special
             directory relative to <varname>CVSDIR</varname>.
-<screen><varname>SRC_URI</varname> = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
-<varname>SRC_URI</varname> = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
-</screen>
+            <literallayout class='monospaced'>
+     SRC_URI = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
+     SRC_URI = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
+            </literallayout>
         </para>
     </section>
 
@@ -155,12 +156,11 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen>
             for fetching.
             <quote>${URI}</quote> and <quote>${FILES}</quote> will be replaced by the URI and
             basename of the file to be fetched.
-        </para>
-        <para>
-            <screen><varname>SRC_URI</varname> = "http://oe.handhelds.org/not_there.aac"
-<varname>SRC_URI</varname> = "ftp://oe.handhelds.org/not_there_as_well.aac"
-<varname>SRC_URI</varname> = "ftp://you@oe.handheld.sorg/home/you/secret.plan"
-</screen>
+            <literallayout class='monospaced'>
+     SRC_URI = "http://oe.handhelds.org/not_there.aac"
+     SRC_URI = "ftp://oe.handhelds.org/not_there_as_well.aac"
+     SRC_URI = "ftp://you@oe.handheld.sorg/home/you/secret.plan"
+            </literallayout>
         </para>
     </section>
 
@@ -187,11 +187,10 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen>
             Subversion revision.
             If <varname>scmdata</varname> is set to <quote>keep</quote>, the <quote>.svn</quote> directories will
              be available during compile-time.
-        </para>
-        <para>
-            <screen><varname>SRC_URI</varname> = "svn://svn.oe.handhelds.org/svn;module=vip;proto=http;rev=667"
-<varname>SRC_URI</varname> = "svn://svn.oe.handhelds.org/svn/;module=opie;proto=svn+ssh;date=20060126"
-</screen>
+            <literallayout class='monospaced'>
+     SRC_URI = "svn://svn.oe.handhelds.org/svn;module=vip;proto=http;rev=667"
+     SRC_URI = "svn://svn.oe.handhelds.org/svn/;module=opie;proto=svn+ssh;date=20060126"
+            </literallayout>
         </para>
     </section>
 
@@ -213,11 +212,10 @@ https://.*/.*    http://somemirror.org/sources/ \n"</screen>
             if a hostname is set, otherwise its <quote>file</quote>.
             If <emphasis>scmdata</emphasis> is set to <quote>keep</quote>, the <quote>.git</quote> directory will be available
             during compile-time.
-        </para>
-        <para>
-            <screen><varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
-<varname>SRC_URI</varname> = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
-            </screen>
+            <literallayout class='monospaced'>
+     SRC_URI = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
+     SRC_URI = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
+            </literallayout>
         </para>
     </section>
 </chapter>
