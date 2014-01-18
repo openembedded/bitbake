@@ -38,7 +38,7 @@
 
             <para>
                 <literallayout class='monospaced'>
-     VARIABLE= "value"
+     VARIABLE = "value"
                 </literallayout>
                 In this example, <filename>VARIABLE</filename> is <filename>value</filename>.
             </para>
@@ -55,8 +55,8 @@
 
             <para>
                 <literallayout class='monospaced'>
-     A= "aval"
-     B= "pre${A}post"
+     A = "aval"
+     B = "pre${A}post"
                 </literallayout>
                 This results in <filename>A</filename> containing
                 <filename>aval</filename> and <filename>B</filename> containing
@@ -69,7 +69,7 @@
 
             <para>
                 <literallayout class='monospaced'>
-     A?= "aval"
+     A ?= "aval"
                 </literallayout>
                 If <filename>A</filename> is set before the above is called,
                 it will retain its previous value.
@@ -87,8 +87,8 @@
 
             <para>
                 <literallayout class='monospaced'>
-     A??= "somevalue"
-     A??= "someothervalue"
+     A ??= "somevalue"
+     A ??= "someothervalue"
                 </literallayout>
                 If <filename>A</filename> is set before the above,
                 it will retain that value.
@@ -110,11 +110,11 @@
                 rather than when the variable is actually used:
                 <literallayout class='monospaced'>
      T = "123"
-     A:= "${B} ${A} test ${T}"
+     A := "${B} ${A} test ${T}"
      T = "456"
-     B ="${T} bval"
+     B = "${T} bval"
      C = "cval"
-     C:= "${C}append"
+     C := "${C}append"
                 </literallayout>
                 In this example, <filename>A</filename> would contain
                 <filename>test 123</filename>, <filename>B</filename> would contain
@@ -129,9 +129,9 @@
             <para>
                 <literallayout class='monospaced'>
      B = "bval"
-     B+= "additionaldata"
+     B += "additionaldata"
      C = "cval"
-     C=+ "test"
+     C =+ "test"
                 </literallayout>
                 In this example, <filename>B</filename> is now
                 <filename>bval additionaldata</filename> and <filename>C</filename>
@@ -145,9 +145,9 @@
             <para>
                 <literallayout class='monospaced'>
      B = "bval"
-     B.= "additionaldata"
+     B .= "additionaldata"
      C = "cval"
-     C=. "test"
+     C =. "test"
                 </literallayout>
                 In this example, <filename>B</filename> is now
                 <filename>bvaladditionaldata</filename> and
@@ -200,13 +200,10 @@
                 Several flags are used internally by BitBake but they can be used externally too if needed.
                 The standard operations mentioned above also work on flags.
                 <literallayout class='monospaced'>
-     VARIABLE
-     [
-     SOMEFLAG
-     ] = "value"
+     VARIABLE[SOMEFLAG] = "value"
                 </literallayout>
                 In this example, <filename>VARIABLE</filename> has a flag,
-                <filename>SOMEFLAG</filename> that is set to value.
+                <filename>SOMEFLAG</filename> that is set to <filename>value</filename>.
             </para>
         </section>
 
@@ -215,8 +212,7 @@
 
             <para>
                 <literallayout class='monospaced'>
-     DATE =
-       "${@time.strftime('%Y%m%d',time.gmtime())}"
+     DATE = "${@time.strftime('%Y%m%d',time.gmtime())}"
                 </literallayout>
                 This would result in the <filename>DATE</filename>
                 variable containing today's date.
@@ -409,17 +405,17 @@
                 unique names.
                 <literallayout class='monospaced'>
      def get_depends(d):
-     if d.getVar('SOMECONDITION', True):
-     return "dependencywithcond"
-     else:
-     return "dependency"
+         if d.getVar('SOMECONDITION', True):
+             return "dependencywithcond"
+         else:
+             return "dependency"
      SOMECONDITION = "1"
      DEPENDS = "${@get_depends(d)}"
-               </literallayout>
-               This would result in <filename>DEPENDS</filename>
-               containing <filename>dependencywithcond</filename>.
-           </para>
-       </note>
+                </literallayout>
+                This would result in <filename>DEPENDS</filename>
+                containing <filename>dependencywithcond</filename>.
+            </para>
+        </note>
     </section>
 
     <section id='functions'>
@@ -498,8 +494,8 @@
             intertask dependencies.
             <literallayout class='monospaced'>
      python do_printdate () {
-     import time print
-     time.strftime('%Y%m%d', time.gmtime())
+         import time print
+         time.strftime('%Y%m%d', time.gmtime())
      }
      addtask printdate after do_fetch before do_build
             </literallayout>
@@ -873,17 +869,19 @@
             The intent is to make it easy to do things like email
             notification on build failure.
             <literallayout class='monospaced'>
-     addhandler myclass_eventhandler python
-     myclass_eventhandler() { from bb.event import getName from
-     bb import data print("The name of the Event is %s" %
-     getName(e)) print("The file we run for is %s" %
-     data.getVar('FILE', e.data, True)) }
+     addhandler myclass_eventhandler
+     python myclass_eventhandler() {
+         from bb.event import getName
+         from bb import data
+         print("The name of the Event is %s" % getName(e))
+         print("The file we run for is %s" % data.getVar('FILE', e.data, True))
+     }
             </literallayout>
             This event handler gets called every time an event is
             triggered.
             A global variable "<filename>e</filename>" is defined.
             "<filename>e.data</filename>" contains an instance of
-            "<filename>bb.data</filename>.
+            "<filename>bb.data</filename>".
             With the <filename>getName(e)</filename> method one can get
             the name of the triggered event.
         </para>
@@ -945,8 +943,10 @@
             conditional metadata (using the <filename>OVERRIDES</filename>
             mechanism) for a single version, or an optionally named range of versions:
             <literallayout class='monospaced'>
-     BBVERSIONS = "1.0 2.0 git" SRC_URI_git =
-     "git://someurl/somepath.git"
+     BBVERSIONS = "1.0 2.0 git"
+     SRC_URI_git = "git://someurl/somepath.git"
+            </literallayout>
+            <literallayout class='monospaced'>
      BBVERSIONS = "1.0.[0-6]:1.0.0+ \ 1.0.[7-9]:1.0.7+"
      SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;patch=1"
             </literallayout>
@@ -993,8 +993,7 @@
                 item listed in <filename>DEPENDS</filename> which must have
                 completed before that task can be executed.
                 <literallayout class='monospaced'>
-     do_configure[deptask] =
-     "do_populate_staging"
+     do_configure[deptask] = "do_populate_staging"
                 </literallayout>
                 In the previous example, the <filename>do_populate_staging</filename>
                 task of each item in <filename>DEPENDS</filename> must have completed before
@@ -1013,8 +1012,7 @@
                 item runtime dependency which must have completed before that
                 task can be executed.
                 <literallayout class='monospaced'>
-     do_package_write[rdeptask] =
-     "do_package"
+     do_package_write[rdeptask] = "do_package"
                 </literallayout>
                 In the previous example, the <filename>do_package</filename>
                 task of each item in <filename>RDEPENDS</filename> must have
@@ -1056,8 +1054,7 @@
                 allows an inter-dependency on specific tasks rather than specifying
                 the data in <filename>DEPENDS</filename>.
                 <literallayout class='monospaced'>
-     do_patch[depends] =
-     "quilt-native:do_populate_staging"
+     do_patch[depends] = "quilt-native:do_populate_staging"
                 </literallayout>
                 In the previous example, the <filename>do_populate_staging</filename>
                 task of the target quilt-native must have completed before the

@@ -42,19 +42,20 @@
             Here are some examples that show commonly used mirror
             definitions:
             <literallayout class='monospaced'>
-     PREMIRRORS?= "\ bzr://.*/.*
-     http://somemirror.org/sources/ \n \ cvs://.*/.*
-     http://somemirror.org/sources/ \n \ git://.*/.*
-     http://somemirror.org/sources/ \n \ hg://.*/.*
-     http://somemirror.org/sources/ \n \ osc://.*/.*
-     http://somemirror.org/sources/ \n \ p4://.*/.*
-     http://somemirror.org/sources/ \n \ svk://.*/.*
-     http://somemirror.org/sources/ \n \ svn://.*/.*
-     http://somemirror.org/sources/ \n"
-     MIRRORS=+ "\ ftp://.*/.*
-     http://somemirror.org/sources/ \n \ http://.*/.*
-     http://somemirror.org/sources/ \n \ https://.*/.*
-     http://somemirror.org/sources/ \n"
+PREMIRRORS ?= "\
+    bzr://.*/.*   http://somemirror.org/sources/ \n \
+    cvs://.*/.*   http://somemirror.org/sources/ \n \
+    git://.*/.*   http://somemirror.org/sources/ \n \
+    hg://.*/.*    http://somemirror.org/sources/ \n \
+    osc://.*/.*   http://somemirror.org/sources/ \n \
+    p4://.*/.*    http://somemirror.org/sources/ \n \
+    svk://.*/.*   http://somemirror.org/sources/ \n \
+    svn://.*/.*   http://somemirror.org/sources/ \n"
+
+MIRRORS =+ "\
+    ftp://.*/.*      http://somemirror.org/sources/ \n \
+    http://.*/.*     http://somemirror.org/sources/ \n \
+    https://.*/.*    http://somemirror.org/sources/ \n"
             </literallayout>
         </para>
 
@@ -102,9 +103,9 @@
             variations of the values in <filename>OVERRIDES</filename>.
             Single files and complete directories can be specified.
             <literallayout class='monospaced'>
-     SRC_URI= "file://relativefile.patch"
-     SRC_URI="file://relativefile.patch;this=ignored"
-     SRC_URI="file:///Users/ich/very_important_software"
+     SRC_URI = "file://relativefile.patch"
+     SRC_URI = "file://relativefile.patch;this=ignored"
+     SRC_URI = "file:///Users/ich/very_important_software"
             </literallayout>
         </para>
     </section>
@@ -142,11 +143,11 @@
             method is by default pserver.
             If ext is used the rsh parameter will be evaluated
             and <filename>CVS_RSH</filename> will be set.
-            Finally, local dir is used to checkout into a special
+            Finally, localdir is used to checkout into a special
             directory relative to <filename>CVSDIR</filename>.
             <literallayout class='monospaced'>
-     SRC_URI="cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
-     SRC_URI="cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
+     SRC_URI = "cvs://CVSROOT;module=mymodule;tag=some-version;method=ext"
+     SRC_URI = "cvs://CVSROOT;module=mymodule;date=20060126;localdir=usethat"
             </literallayout>
         </para>
     </section>
@@ -163,9 +164,9 @@
             “${URI}” and “${FILES}” will be replaced by the URI and
             basename of the file to be fetched.
             <literallayout class='monospaced'>
-     SRC_URI="http://oe.handhelds.org/not_there.aac"
-     SRC_URI="ftp://oe.handhelds.org/not_there_as_well.aac"
-     SRC_URI="ftp://you@oe.handheld.sorg/home/you/secret.plan"
+     SRC_URI = "http://oe.handhelds.org/not_there.aac"
+     SRC_URI = "ftp://oe.handhelds.org/not_there_as_well.aac"
+     SRC_URI = "ftp://you@oe.handheld.sorg/home/you/secret.plan"
             </literallayout>
         </para>
     </section>
@@ -195,8 +196,8 @@
             If scmdata is set to “keep”, the “.svn” directories will
             be available during compile-time.
             <literallayout class='monospaced'>
-     SRC_URI="svn://svn.oe.handhelds.org/svn;module=vip;proto=http;rev=667"
-     SRC_URI="svn://svn.oe.handhelds.org/svn/;module=opie;proto=svn+ssh;date=20060126"
+     SRC_URI = "svn://svn.oe.handhelds.org/svn;module=vip;proto=http;rev=667"
+     SRC_URI = "svn://svn.oe.handhelds.org/svn/;module=opie;proto=svn+ssh;date=20060126"
             </literallayout>
         </para>
     </section>
@@ -221,8 +222,8 @@
             If scmdata is set to “keep”, the “.git” directory will be available
             during compile-time.
             <literallayout class='monospaced'>
-     SRC_URI="git://git.oe.handhelds.org/git/vip.git;tag=version-1"
-     SRC_URI="git://git.oe.handhelds.org/git/vip.git;protocol=http"
+     SRC_URI = "git://git.oe.handhelds.org/git/vip.git;tag=version-1"
+     SRC_URI = "git://git.oe.handhelds.org/git/vip.git;protocol=http"
             </literallayout>
         </para>
     </section>
