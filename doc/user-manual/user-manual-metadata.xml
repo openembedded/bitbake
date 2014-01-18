@@ -480,6 +480,80 @@
         </para>
     </section>
 
+    <section id='running-a-task'>
+        <title>Running a Task</title>
+
+        <para>
+            Tasks can either be a shell task or a Python task.
+            For shell tasks, BitBake writes a shell script to
+            <filename>${WORKDIR}/temp/run.do_taskname.pid</filename>
+            and then executes the script.
+            The generated shell script contains all the exported variables,
+            and the shell functions with all variables expanded.
+            Output from the shell script goes to the file
+            <filename>${WORKDIR}/temp/log.do_taskname.pid</filename>.
+            Looking at the expanded shell functions in the run file and
+            the output in the log files is a useful debugging technique.
+        </para>
+
+        <para>
+            For Python tasks, BitBake executes the task internally and logs
+            information to the controlling terminal.
+            Future versions of BitBake will write the functions to files
+            similar to the way shell tasks are handled.
+            Logging will be handled in a way similar to shell tasks as well.
+        </para>
+
+        <para>
+            Once all the tasks have been completed BitBake exits.
+        </para>
+
+        <para>
+            When running a task, BitBake tightly controls the execution
+            environment of the build tasks to make
+            sure unwanted contamination from the build machine cannot
+            influence the build.
+            Consequently, if you do want something to get passed into the
+            build task's environment, you must take a few steps:
+            <orderedlist>
+                <listitem><para>
+                    Tell BitBake to load what you want from the environment
+                    into the data store.
+                    You can do so through the
+                    <filename>BB_ENV_EXTRAWHITE</filename> variable.
+                    For example, assume you want to prevent the build system from
+                    accessing your <filename>$HOME/.ccache</filename>
+                    directory.
+                    The following command tells BitBake to load
+                    <filename>CCACHE_DIR</filename> from the environment into
+                    the data store:
+                    <literallayout class='monospaced'>
+     export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
+                    </literallayout></para></listitem>
+                <listitem><para>
+                    Tell BitBake to export what you have loaded into the
+                    environment store to the task environment of
+                    every running task.
+                    Loading something from the environment into the data
+                    store (previous step) only makes it available in the datastore.
+                    To export it to the task environment of every running task,
+                    use a command similar to the following in your
+                    <filename>local.conf</filename> or distribution configuration file:
+                    <literallayout class='monospaced'>
+     export CCACHE_DIR
+                    </literallayout>
+                    <note>
+                        A side effect of the previous steps is that BitBake
+                        records the variable as a dependency of the build process
+                        in things like the shared state checksums.
+                        If doing so results in unnecessary rebuilds of tasks, you can
+                        whitelist the variable so that the shared state code
+                        ignores the dependency when it creates checksums.
+                    </note></para></listitem>
+            </orderedlist>
+        </para>
+    </section>
+
     <section id='task-flags'>
         <title>Task Flags</title>
 
