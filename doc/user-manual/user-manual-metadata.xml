@@ -741,4 +741,73 @@ python do_printdate () {
             </para>
         </section>
     </section>
+
+    <section id='accessing-variables-and-the-data-store-from-python'>
+        <title>Accessing Variables and the Data Store from Python</title>
+
+        <para>
+            It is often necessary to manipulate variables within python functions
+            and the Bitbake data store has an API which allows this.
+            The operations available are:
+            <literallayout class='monospaced'>
+     d.getVar("X", expand=False)
+            </literallayout>
+            returns the value of variable "X", expanding the value
+            if specified.
+            <literallayout class='monospaced'>
+     d.setVar("X", value)
+            </literallayout>
+            sets the value of "X" to "value".
+            <literallayout class='monospaced'>
+     d.appendVar("X", value)
+            </literallayout>
+            adds "value" to the end of variable X.
+            <literallayout class='monospaced'>
+     d.prependVar("X", value)
+            </literallayout>
+            adds "value" to the start of variable X.
+            <literallayout class='monospaced'>
+     d.delVar("X")
+            </literallayout>
+            deletes the variable X from the data store.
+            <literallayout class='monospaced'>
+     d.renameVar("X", "Y")
+            </literallayout>
+            renames variable X to Y.
+            <literallayout class='monospaced'>
+     d.getVarFlag("X", flag, expand=False)
+            </literallayout>
+            gets given flag from variable X but does not expand it.
+            <literallayout class='monospaced'>
+     d.setVarFlag("X", flag, value)
+            </literallayout>
+            sets given flag for variable X to value.
+            <filename>setVarFlags</filename> will not clear previous flags.
+            Think of this method as <filename>addVarFlags</filename>.
+            <literallayout class='monospaced'>
+     d.appendVarFlag("X", flag, value)
+            </literallayout>
+            Need description.
+            <literallayout class='monospaced'>
+     d.prependVarFlag("X", flag, value)
+            </literallayout>
+            Need description.
+            <literallayout class='monospaced'>
+     d.delVarFlag("X", flag)
+            </literallayout>
+            Need description.
+            <literallayout class='monospaced'>
+     d.setVarFlags("X", flagsdict)
+            </literallayout>
+            sets the flags specified in the <filename>dict()</filename> parameter.
+            <literallayout class='monospaced'>
+     d.getVarFlags("X")
+            </literallayout>
+            returns a <filename>dict</filename> of the flags for X.
+            <literallayout class='monospaced'>
+     d.delVarFlags
+            </literallayout>
+            deletes all the flags for a variable.
+        </para>
+    </section>
 </chapter>
