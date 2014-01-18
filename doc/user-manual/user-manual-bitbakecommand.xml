@@ -18,7 +18,8 @@
     <section>
         <title>Usage and syntax</title>
         <para>
-                <screen><prompt>$ </prompt>bitbake --help
+            <literallayout class='monospaced'>
+<prompt>$ </prompt>bitbake --help
 Usage: bitbake [options] [recipename/target ...]
 
     Executes the specified task (default is 'build') for a given set of target recipes (.bb files).
@@ -88,7 +89,8 @@ Options:
   -m, --kill-server     Terminate the remote server.
   --observe-only        Connect to a server as an observing-only client.
   --status-only         Check the status of the remote bitbake server.
-            </screen>
+
+            </literallayout>
         </para>
         <para>
 
@@ -104,9 +106,15 @@ Options:
             </para>
 
                 <para><quote>clean</quote> task:</para>
-                <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb -c clean</screen></para>
+                <literallayout class='monospaced'>
+     $ bitbake -b foo.bb -c clean
+                </literallayout>
+
                 <para><quote>build</quote> task:</para>
-                <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb</screen></para>
+                <literallayout class='monospaced'>
+     $ bitbake -b foo_1.0.bb
+                </literallayout>
+
             </example>
             </para>
             <para>
@@ -137,13 +145,20 @@ Options:
                 anything else.
                 By default, a .bb generally PROVIDES its
                 packagename, packagename-version, and packagename-version-revision.
+                <literallayout class='monospaced'>
+     $ bitbake foo
+
+     $ bitbake foo-1.0
+
+     $ bitbake foo-1.0-r0
+
+     $ bitbake -c clean foo
+
+     $ bitbake virtual/whatever
+
+     $ bitbake -c clean virtual/whatever
+                </literallayout>
             </para>
-                <screen><prompt>$ </prompt>bitbake blah</screen>
-                <screen><prompt>$ </prompt>bitbake blah-1.0</screen>
-                <screen><prompt>$ </prompt>bitbake blah-1.0-r0</screen>
-                <screen><prompt>$ </prompt>bitbake -c clean blah</screen>
-                <screen><prompt>$ </prompt>bitbake virtual/whatever</screen>
-                <screen><prompt>$ </prompt>bitbake -c clean virtual/whatever</screen>
             </example>
             <example>
                 <title>Generating dependency graphs</title>
@@ -163,9 +178,12 @@ Options:
                 This way, <varname>DEPENDS</varname> from inherited classes
                 such as base.bbclass can be removed from the
                 graph.
+                <literallayout class='monospaced'>
+     $ bitbake -g foo
+
+     $ bitbake -g -I virtual/whatever -I bloom foo
+                </literallayout>
             </para>
-                <screen><prompt>$ </prompt>bitbake -g blah</screen>
-                <screen><prompt>$ </prompt>bitbake -g -I virtual/whatever -I bloom blah</screen>
             </example>
             </para>
     </section>
@@ -198,7 +216,9 @@ Options:
             <example>
             <title>Setting BBFILES</title>
 
-            <programlisting><varname>BBFILES</varname> = "/path/to/bbfiles/*.bb"</programlisting>
+                <literallayout class='monospaced'>
+     BBFILES = "/path/to/bbfiles/*.bb"
+                </literallayout>
             </example></para>
             <para>
                 With regard to dependencies, it expects the
@@ -215,13 +235,16 @@ Options:
             <title>Depending on another .bb</title>
 
             <para>
-a.bb:
-<screen>PN = "package-a"
-DEPENDS += "package-b"</screen>
-            </para>
-            <para>
-b.bb:
-<screen>PN = "package-b"</screen>
+                <literallayout class='monospaced'>
+     a.bb:
+
+     PN = "package-a"
+     DEPENDS += "package-b"
+
+     b.bb:
+
+     PN = "package-b"
+                </literallayout>
             </para>
         </example>
 
@@ -230,20 +253,19 @@ b.bb:
 
             <para>
 This example shows the usage of the <varname>PROVIDES</varname> variable, which allows a given .bb to specify what functionality it provides.
-</para>
-            <para>
-package1.bb:
-<screen>PROVIDES += "virtual/package"</screen>
-            </para>
-            <para>
-package2.bb:
-<screen>DEPENDS += "virtual/package"</screen>
-            </para>
-            <para>
-package3.bb:
-<screen>PROVIDES += "virtual/package"</screen>
-            </para>
-            <para>
+                <literallayout class='monospaced'>
+     package1.bb:
+
+     PROVIDES += "virtual/package"
+
+     package2.bb:
+
+     DEPENDS += "virtual/package"
+
+     package3.bb:
+
+     PROVIDES += "virtual/package"
+                </literallayout>
                 As you can see, we have two different
                 .bb's that provide the same functionality
                 (virtual/package).
@@ -254,7 +276,9 @@ package3.bb:
             </para>
             <para>
 The following would go into a .conf file, to select package1:
-<screen>PREFERRED_PROVIDER_virtual/package = "package1"</screen>
+                <literallayout class='monospaced'>
+     PREFERRED_PROVIDER_virtual/package = "package1"
+                </literallayout>
             </para>
         </example>
 
@@ -289,7 +313,10 @@ The following would go into a .conf file, to select package1:
                 However, if we define the following variable in a
                 .conf that BitBake parses, we
                 can change that.
-                <screen>PREFERRED_VERSION_a = "1.1"</screen>
+                <literallayout class='monospaced'>
+     PREFERRED_VERSION_a = "1.1"
+                </literallayout>
+
             </para>
         </example>
         <example>
@@ -305,13 +332,15 @@ The following would go into a .conf file, to select package1:
                 own local copy of an upstream repository, but with
                 custom modifications that one does not want upstream.
                 Usage:
-            </para>
-                <screen>    BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
+                <literallayout class='monospaced'>
+    BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
     BBFILE_COLLECTIONS = "upstream local"
     BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
     BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
     BBFILE_PRIORITY_upstream = "5"
-    BBFILE_PRIORITY_local = "10"</screen>
+    BBFILE_PRIORITY_local = "10"
+                </literallayout>
+            </para>
         </example>
     </section>
 </chapter>
