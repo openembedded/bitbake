@@ -238,7 +238,6 @@ class SignatureGeneratorBasic(SignatureGenerator):
             with os.fdopen(fd, "wb") as stream:
                 p = pickle.dump(data, stream, -1)
                 stream.flush()
-                os.fsync(fd)
             os.chmod(tmpfile, 0664)
             os.rename(tmpfile, sigfile)
         except (OSError, IOError) as err:
