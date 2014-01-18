@@ -474,10 +474,24 @@
         </para>
     </section>
 
-    <section>
+    <section id='tasks'>
         <title>Tasks</title>
-        <para><emphasis>NOTE:</emphasis> This is only supported in .bb and .bbclass files.</para>
-        <para>In BitBake, each step that needs to be run for a given .bb is known as a task.  There is a command <filename>addtask</filename> to add new tasks (must be a defined Python executable metadata and must start with <quote>do_</quote>) and describe intertask dependencies.
+
+        <note>
+            This is only supported in <filename>.bb</filename>
+            and <filename>.bbclass</filename> files.
+        </note>
+
+        <para>
+            A shell or Python function executable through the
+            <filename>exec_func</filename> can be promoted to become a task.
+            Tasks are the execution unit Bitbake uses and each step that
+            needs to be run for a given <filename>.bb</filename> is known as
+            a task.
+            There is an <filename>addtask</filename> command to add new tasks
+            and promote functions which by convention must start with “do_”.
+            The <filename>addtask</filename> command is also used to describe
+            intertask dependencies.
             <literallayout class='monospaced'>
      python do_printdate () {
          import time print
@@ -485,7 +499,13 @@
      }
      addtask printdate after do_fetch before do_build
             </literallayout>
-            This defines the necessary Python function and adds it as a task which is now a dependency of do_build, the default task.  If anyone executes the do_build task, that will result in do_printdate being run first.
+            The above example defined a Python function, then adds
+            it as a task which is now a dependency of
+            <filename>do_build</filename>, the default task and states it
+            has to happen after <filename>do_fetch</filename>.
+            If anyone executes the <filename>do_build</filename>
+            task, that will result in <filename>do_printdate</filename>
+            being run first.
         </para>
     </section>
 
