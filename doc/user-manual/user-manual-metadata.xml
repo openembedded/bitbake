@@ -568,17 +568,33 @@
 
         <para>
             Tasks support a number of flags which control various
-            functionality of the task. These are as follows:
+            functionality of the task.
+            These are as follows:
+            <itemizedlist>
+                <listitem><para><emphasis>dirs:</emphasis>
+                    Directories which should be created before the task runs.
+                    </para></listitem>
+                <listitem><para><emphasis>cleandirs:</emphasis>
+                    Directories which should created before the task runs
+                    but should be empty.</para></listitem>
+                <listitem><para><emphasis>noexec:</emphasis>
+                    Marks the tasks as being empty and no execution required.
+                    These are used as dependency placeholders or used when added tasks
+                    need to be subsequently disabled.</para></listitem>
+                <listitem><para><emphasis>nostamp:</emphasis>
+                    Do not generate a stamp file for a task.
+                    This means the task is always executed.</para></listitem>
+                <listitem><para><emphasis>fakeroot:</emphasis>
+                    This task needs to be run in a fakeroot environment,
+                    obtained by adding the variables in <filename>FAKEROOTENV</filename>
+                    to the environment.</para></listitem>
+                <listitem><para><emphasis>umask:</emphasis>
+                    The umask to run the task under.</para></listitem>
+            </itemizedlist>
+            For the 'deptask', 'rdeptask', 'depends', 'rdepends'and
+            'recrdeptask' flags, please see the dependencies section.
         </para>
-                <para>'dirs' - directories which should be created before the task runs</para>
-                <para>'cleandirs' - directories which should be created before the task runs but should be empty</para>
-                <para>'noexec' - marks the tasks as being empty and no execution required. These are used as dependency placeholders or used when added tasks need to be subsequently disabled.</para>
-                <para>'nostamp' - don't generate a stamp file for a task. This means the task is always rexecuted.</para>
-                <para>'fakeroot' - this task needs to be run in a fakeroot environment, obtained by adding the variables in FAKEROOTENV to the environment.</para>
-                <para>'umask' - the umask to run the task under.</para>
-                <para> For the 'deptask', 'rdeptask', 'depends', 'rdepends' and 'recrdeptask' flags please see the dependencies section.</para>
-        </section>
-
+    </section>
 
     <section id='parsing-and-execution'>
         <title>Parsing and Execution</title>
