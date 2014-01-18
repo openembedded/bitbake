@@ -4,7 +4,7 @@
 <chapter>
     <title>The BitBake command</title>
 
-    <section>
+    <section id='bitbake-command-introduction'>
         <title>Introduction</title>
 
         <para>
@@ -15,8 +15,10 @@
             amongst them.
         </para>
     </section>
-    <section>
+
+    <section id='usage-and-syntax'>
         <title>Usage and syntax</title>
+
         <para>
             <literallayout class='monospaced'>
 <prompt>$ </prompt>bitbake --help
@@ -92,10 +94,12 @@ Options:
 
             </literallayout>
         </para>
-        <para>
+    </section>
 
-            <example>
+    <section id='bitbake-examples'>
+        <title>Examples</title>
 
+        <section id='example-executing-a-task-against-a-single-recipe'>
             <title>Executing a task against a single .bb</title>
 
             <para>
@@ -105,6 +109,7 @@ Options:
                 It obeys intertask dependencies when doing so.
             </para>
 
+            <para>
                 <para><quote>clean</quote> task:</para>
                 <literallayout class='monospaced'>
      $ bitbake -b foo.bb -c clean
@@ -114,12 +119,11 @@ Options:
                 <literallayout class='monospaced'>
      $ bitbake -b foo_1.0.bb
                 </literallayout>
-
-            </example>
             </para>
-            <para>
-            <example>
-                <title>Executing tasks against a set of .bb files</title>
+        </section>
+
+        <section id='executing-tasks-against-a-set-of-recipe-files'>
+            <title>Executing tasks against a set of .bb files</title>
             <para>
                 There are a number of additional complexities introduced
                 when one wants to manage multiple .bb 
@@ -159,8 +163,9 @@ Options:
      $ bitbake -c clean virtual/whatever
                 </literallayout>
             </para>
-            </example>
-            <example>
+        </section>
+
+        <section id='generating-dependency-graphs'>
                 <title>Generating dependency graphs</title>
                 <para>
                 BitBake is able to generate dependency graphs using 
@@ -184,18 +189,17 @@ Options:
      $ bitbake -g -I virtual/whatever -I bloom foo
                 </literallayout>
             </para>
-            </example>
-            </para>
+        </section>
     </section>
 
-    <section>
+    <section id='special-variables'>
         <title>Special variables</title>
 
         <para>
             Certain variables affect BitBake operation:
         </para>
 
-        <section>
+        <section id='bb-number-threads'>
             <title><varname>BB_NUMBER_THREADS</varname></title>
 
             <para>
@@ -204,8 +208,9 @@ Options:
         </section>
     </section>
 
-    <section>
+    <section id='bitbake-command-metadata'>
         <title>Metadata</title>
+
             <para>
                 As you may have seen in the usage information, or in the 
                 information about .bb files, the 
@@ -213,14 +218,14 @@ Options:
                 tool locates its files.
                 This variable is a space separated list of files 
                 that are available, and supports wildcards.
-            <example>
+        </para>
+        <section id='setting-bbfiles'>
             <title>Setting BBFILES</title>
 
+            <para>
                 <literallayout class='monospaced'>
      BBFILES = "/path/to/bbfiles/*.bb"
                 </literallayout>
-            </example></para>
-            <para>
                 With regard to dependencies, it expects the
                 .bb to define a
                 <varname>DEPENDS</varname> variable, which contains a
@@ -230,8 +235,9 @@ Options:
                 set to a component of the .bb
                 filename by default.
             </para>
+        </section>
 
-        <example>
+        <section id='depending-on-another-recipe-file'>
             <title>Depending on another .bb</title>
 
             <para>
@@ -246,9 +252,9 @@ Options:
      PN = "package-b"
                 </literallayout>
             </para>
-        </example>
+        </section>
 
-        <example>
+        <section id='using-provides'>
             <title>Using PROVIDES</title>
 
             <para>
@@ -274,15 +280,16 @@ This example shows the usage of the <varname>PROVIDES</varname> variable, which 
                 gets used.
                 There is, indeed, such a way.
             </para>
+
             <para>
 The following would go into a .conf file, to select package1:
                 <literallayout class='monospaced'>
      PREFERRED_PROVIDER_virtual/package = "package1"
                 </literallayout>
             </para>
-        </example>
+        </section>
 
-       <example>
+        <section id='specifying-version-preference'>
             <title>Specifying version preference</title>
 
             <para>
@@ -318,9 +325,9 @@ The following would go into a .conf file, to select package1:
                 </literallayout>
 
             </para>
-        </example>
-        <example>
+        </section>
 
+        <section id='using-recipe-file-collections'>
             <title>Using <quote>bbfile collections</quote></title>
 
             <para>
@@ -341,6 +348,6 @@ The following would go into a .conf file, to select package1:
     BBFILE_PRIORITY_local = "10"
                 </literallayout>
             </para>
-        </example>
+        </section>
     </section>
 </chapter>
