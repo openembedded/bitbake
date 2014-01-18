@@ -562,6 +562,33 @@ python do_printdate () {
         <para>
             The above event handler prints the name of the event
             and the content of the <filename>FILE</filename> variable.
+            During a Build, the following common events occur:
+            <itemizedlist>
+                <listitem><para><filename>bb.event.ConfigParsed()</filename></para></listitem>
+                <listitem><para><filename>bb.event.ParseStarted()</filename></para></listitem>
+                <listitem><para><filename>bb.event.ParseProgress()</filename></para></listitem>
+                <listitem><para><filename>bb.event.ParseCompleted()</filename></para></listitem>
+                <listitem><para><filename>bb.event.BuildStarted()</filename></para></listitem>
+                <listitem><para><filename>bb.build.TaskStarted()</filename></para></listitem>
+                <listitem><para><filename>bb.build.TaskInvalid()</filename></para></listitem>
+                <listitem><para><filename>bb.build.TaskFailedSilent()</filename></para></listitem>
+                <listitem><para><filename>bb.build.TaskFailed()</filename></para></listitem>
+                <listitem><para><filename>bb.build.TaskSucceeded()</filename></para></listitem>
+                <listitem><para><filename>bb.event.BuildCompleted()</filename></para></listitem>
+                <listitem><para><filename>bb.cooker.CookerExit()</filename></para></listitem>
+            </itemizedlist>
+            Other events that occur based on specific requests to the server:
+            <itemizedlist>
+                <listitem><para><filename>bb.event.TreeDataPreparationStarted()</filename></para></listitem>
+                <listitem><para><filename>bb.event.TreeDataPreparationProgress</filename></para></listitem>
+                <listitem><para><filename>bb.event.TreeDataPreparationCompleted</filename></para></listitem>
+                <listitem><para><filename>bb.event.DepTreeGenerated</filename></para></listitem>
+                <listitem><para><filename>bb.event.CoreBaseFilesFound</filename></para></listitem>
+                <listitem><para><filename>bb.event.ConfigFilePathFound</filename></para></listitem>
+                <listitem><para><filename>bb.event.FilesMatchingFound</filename></para></listitem>
+                <listitem><para><filename>bb.event.ConfigFilesFound</filename></para></listitem>
+                <listitem><para><filename>bb.event.TargetsTreeGenerated</filename></para></listitem>
+            </itemizedlist>
         </para>
     </section>
 
