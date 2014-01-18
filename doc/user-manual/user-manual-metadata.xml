@@ -579,10 +579,96 @@
                 <para> For the 'deptask', 'rdeptask', 'depends', 'rdepends' and 'recrdeptask' flags please see the dependencies section.</para>
         </section>
 
+
+    <section id='parsing-and-execution'>
+        <title>Parsing and Execution</title>
+
         <section id='parsing-overview'>
-            <title>Parsing</title>
+            <title>Parsing Overview</title>
+
+            <para>
+                BitBake parses configuration files, classes, and
+                <filename>.bb</filename> files.
+            </para>
+
+            <para>
+                The first thing BitBake does is look for the
+                <filename>bitbake.conf</filename> file.
+                This file resides in the within the <filename>conf/</filename>
+                directory.
+                BitBake finds it by examining its <filename>BBPATH</filename>
+                environment variable and looking for the
+                <filename>conf/</filename> directory.
+            </para>
+
+            <para>
+                The <filename>bitbake.conf</filename> file lists other configuration
+                files to include from a <filename>conf/</filename> directory below the
+                directories listed in <filename>BBPATH</filename>.
+                In general, the most important configuration file from a user's perspective
+                is <filename>local.conf</filename>, which contains a user's
+                customized settings for the build environment.
+                Other notable configuration files are the distribution configuration
+                file (set by the <filename>DISTRO</filename> variable) and the machine
+                configuration file (set by the <filename>MACHINE</filename> variable).
+                The <filename>DISTRO</filename> and <filename>MACHINE</filename> BitBake
+                environment variables are both usually set in the
+                <filename>local.conf file</filename>.
+                Valid distribution configuration files are available
+                in the <filename>conf/distro/</filename> directory and valid machine
+                configuration files in the <filename>meta/conf/machine/</filename>
+                directory.
+                Within the <filename>conf/machine/include/</filename> directory are
+                various <filename>tune-*.inc</filename> configuration files
+                that provide common "tuning" settings specific to and shared between
+                particular architectures and machines.
+            </para>
+
+            <para>
+                After parsing of the configuration files, some standard classes are
+                included.
+                The <filename>base.bbclass</filename> file
+                is always included.
+                Other classes that are specified in the configuration using the
+                <filename>INHERIT</filename> variable are also included.
+                Class files are searched for in a classes subdirectory under
+                the paths in <filename>BBPATH</filename> in the same way as
+                configuration files.
+            </para>
+
+            <para>
+                After classes are included, the variable
+                <filename>BBFILES</filename> is set, usually in
+                <filename>local.conf</filename>, and defines the list of
+                places to search for <filename>.bb</filename> files.
+                Adding extra content to <filename>BBFILES</filename> is best
+                achieved through the use of BitBake layers as described in the
+                Layers section below.
+            </para>
+
+            <para>
+                BitBake parses each <filename>.bb</filename> file in
+                <filename>BBFILES</filename> and stores the values of various
+                variables.
+                In summary, for each <filename>.bb</filename> file the configuration
+                plus the base class of variables are set, followed by the data in the
+                <filename>.bb</filename> file itself, followed by any inherit commands
+                that <filename>.bb</filename> file might contain.
+            </para>
+
+            <para>
+                Because parsing <filename>.bb</filename> files is a time consuming
+                process, a cache is kept to speed up subsequent parsing.
+                This cache is invalid if the timestamp of the
+                <filename>.bb</filename> file itself changes, or if the timestamps of
+                any of the include, configuration files or class files on which
+                the <filename>.bb</filename> file depends change.
+            </para>
+        </section>
+
         <section id='configiguration-files'>
             <title>Configuration files</title>
+
             <para>
                 The first kind of metadata in BitBake is configuration metadata.
                 This metadata is global, and therefore affects all packages and
