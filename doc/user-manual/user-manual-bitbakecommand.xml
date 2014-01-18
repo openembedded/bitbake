@@ -11,53 +11,75 @@
                 <title>Usage and syntax</title>
                 <para>
                     <screen><prompt>$ </prompt>bitbake --help
-usage: bitbake [options] [package ...]
+Usage: bitbake [options] [recipename/target ...]
 
-Executes the specified task (default is 'build') for a given set of BitBake files.
-It expects that BBFILES is defined, which is a space separated list of files to
-be executed.  BBFILES does support wildcards.
-Default BBFILES are the .bb files in the current directory.
+    Executes the specified task (default is 'build') for a given set of target recipes (.bb files).
+    It is assumed there is a conf/bblayers.conf available in cwd or in BBPATH which
+    will provide the layer, BBFILES and other configuration information.
 
-options:
+Options:
   --version             show program's version number and exit
   -h, --help            show this help message and exit
   -b BUILDFILE, --buildfile=BUILDFILE
-                        execute the task against this .bb file, rather than a
-                        package from BBFILES.
-  -k, --continue        continue as much as possible after an error. While the
-                        target that failed, and those that depend on it,
-                        cannot be remade, the other dependencies of these
-                        targets can be processed all the same.
-  -f, --force           force run of specified cmd, regardless of stamp status
-  -i, --interactive     drop into the interactive mode also called the BitBake
-                        shell.
-  -c CMD, --cmd=CMD     Specify task to execute. Note that this only executes
-                        the specified task for the providee and the packages
-                        it depends on, i.e. 'compile' does not implicitly call
-                        stage for the dependencies (IOW: use only if you know
-                        what you are doing). Depending on the base.bbclass a
-                        listtasks task is defined and will show available
-                        tasks
-  -r FILE, --read=FILE  read the specified file before bitbake.conf
-  -v, --verbose         output more chit-chat to the terminal
+                        Execute tasks from a specific .bb recipe directly.
+                        WARNING: Does not handle any dependencies from other
+                        recipes.
+  -k, --continue        Continue as much as possible after an error. While the
+                        target that failed and anything depending on it cannot
+                        be built, as much as possible will be built before
+                        stopping.
+  -a, --tryaltconfigs   Continue with builds by trying to use alternative
+                        providers where possible.
+  -f, --force           Force the specified targets/task to run (invalidating
+                        any existing stamp file).
+  -c CMD, --cmd=CMD     Specify the task to execute. The exact options
+                        available depend on the metadata. Some examples might
+                        be 'compile' or 'populate_sysroot' or 'listtasks' may
+                        give a list of the tasks available.
+  -C INVALIDATE_STAMP, --clear-stamp=INVALIDATE_STAMP
+                        Invalidate the stamp for the specified task such as
+                        'compile' and then run the default task for the
+                        specified target(s).
+  -r PREFILE, --read=PREFILE
+                        Read the specified file before bitbake.conf.
+  -R POSTFILE, --postread=POSTFILE
+                        Read the specified file after bitbake.conf.
+  -v, --verbose         Output more log message data to the terminal.
   -D, --debug           Increase the debug level. You can specify this more
                         than once.
-  -n, --dry-run         don't execute, just go through the motions
-  -p, --parse-only      quit after parsing the BB files (developers only)
-  -s, --show-versions   show current and preferred versions of all packages
-  -e, --environment     show the global or per-package environment (this is
-                        what used to be bbread)
-  -g, --graphviz        emit the dependency trees of the specified packages in
-                        the dot syntax
-  -I IGNORED_DOT_DEPS, --ignore-deps=IGNORED_DOT_DEPS
-                        Stop processing at the given list of dependencies when
-                        generating dependency graphs. This can help to make
-                        the graph more appealing
+  -n, --dry-run         Don't execute, just go through the motions.
+  -S, --dump-signatures
+                        Don't execute, just dump out the signature
+                        construction information.
+  -p, --parse-only      Quit after parsing the BB recipes.
+  -s, --show-versions   Show current and preferred versions of all recipes.
+  -e, --environment     Show the global or per-package environment complete
+                        with information about where variables were
+                        set/changed.
+  -g, --graphviz        Save dependency tree information for the specified
+                        targets in the dot syntax.
+  -I EXTRA_ASSUME_PROVIDED, --ignore-deps=EXTRA_ASSUME_PROVIDED
+                        Assume these dependencies don't exist and are already
+                        provided (equivalent to ASSUME_PROVIDED). Useful to
+                        make dependency graphs more appealing
   -l DEBUG_DOMAINS, --log-domains=DEBUG_DOMAINS
                         Show debug logging for the specified logging domains
-  -P, --profile         profile the command and print a report
-
-
+  -P, --profile         Profile the command and save reports.
+  -u UI, --ui=UI        The user interface to use (e.g. knotty, hob, depexp).
+  -t SERVERTYPE, --servertype=SERVERTYPE
+                        Choose which server to use, process or xmlrpc.
+  --revisions-changed   Set the exit code depending on whether upstream
+                        floating revisions have changed or not.
+  --server-only         Run bitbake without a UI, only starting a server
+                        (cooker) process.
+  -B BIND, --bind=BIND  The name/address for the bitbake server to bind to.
+  --no-setscene         Do not run any setscene tasks. sstate will be ignored
+                        and everything needed, built.
+  --remote-server=REMOTE_SERVER
+                        Connect to the specified server.
+  -m, --kill-server     Terminate the remote server.
+  --observe-only        Connect to a server as an observing-only client.
+  --status-only         Check the status of the remote bitbake server.
 </screen>
                 </para>
                 <para>
