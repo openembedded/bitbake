@@ -335,9 +335,20 @@ def recipe(request, build_id, recipe_id):
     template = "recipe.html"
     if Recipe.objects.filter(pk=recipe_id).count() == 0 :
         return redirect(builds)
+
+    object = Recipe.objects.filter(pk=recipe_id)[0]
+    layer_version = Layer_Version.objects.filter(pk=object.layer_version_id)[0]
+    layer  = Layer.objects.filter(pk=layer_version.layer_id)[0]
+    tasks  = Task.objects.filter(recipe_id = recipe_id).filter(build_id = build_id)
+    packages = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id)
+
     context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
-            'object' : Recipe.objects.filter(pk=recipe_id)[0],
+            'build'   : Build.objects.filter(pk=build_id)[0],
+            'object'  : object,
+            'layer_version' : layer_version,
+            'layer'   : layer,
+            'tasks'   : tasks,
+            'packages': packages,
     }
     return render(request, template, context)
 
@@ -399,7 +410,7 @@ def tasks(request, build_id):
     return render(request, template, context)
 
 def recipes(request, build_id):
-    template = 'recipe.html'
+    template = 'recipes.html'
     mandatory_parameters = { 'count': 100,  'page' : 1};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:

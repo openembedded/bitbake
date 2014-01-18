@@ -1,51 +1,275 @@
-{% extends "basebuildpage.html" %}
+{% extends "basebuilddetailpage.html" %}
+
+{% load projecttags %}
 
 {% block localbreadcrumb %}
-<li>Recipes</li>
+<li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
+<li>{{object.name}}_{{object.version}} </li>
 {% endblock %}
 
-{% block buildinfomain %}
-{% include "basetable_top.html" %}
+{% block pagedetailinfomain %}
 
-        <tr>
-        </tr>
-            <th>Name</th>
-            <th>Version</th>
-            <th>Summary</th>
-            <th>Description</th>
-            <th>Section</th>
-            <th>License</th>
-            <th>License file</th>
-            <th>Homepage</th>
-            <th>Bugtracker</th>
-            <th>File_path</th>
-            <th style="width: 30em">Recipe Dependency</th>
+<!-- Begin container -->
 
+<div class="row span11">
+    <div class="page-header">
+        <h1>{{object.name}}_{{object.version}}</h1>
+    </div>
+</div>
 
-        {% for recipe in objects %}
+<div class="row span7 tabbable">
+    <ul class="nav nav-pills">
+        <li class="active">
+            <a href="#information" data-toggle="tab">
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Build-related information about the recipe"></i>
+                Recipe details
+            </a>
+        </li>
+        <li>
+            <a href="#packages-built" data-toggle="tab">
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The packaged output resulting from building the recipe"></i>
+                Packages ({{packages.count}})
+            </a>
+        </li>
+        <li>
+            <a href="#dependencies" data-toggle="tab">
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time dependencies (other recipes)"></i>
+                Build dependencies ({{object.r_dependencies_recipe.all.count}})
+            </a>
+        </li>
+        <li>
+            <a href="#brought-in-by" data-toggle="tab">
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time reverse dependencies (i.e. which other recipes depend on this recipe)"></i>
+                Reverse build dependencies ({{object.r_dependencies_depends.all.count}})
+            </a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="information" name="information">
+            <dl class="dl-horizontal">
+                <dt>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="The name of the layer providing the recipe"></i>
+                    Layer
+                </dt>
+                <dd>{{layer.name}}</dd>
+                <dt>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the layer providing the recipe"></i>
+                    Layer directory
+                </dt>
+                <dd><code>{{layer.local_path}}</code></dd>
+                <dt>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the recipe .bb file"></i>
+                    Recipe file
+                </dt>
+                <dd><code>{{object.file_path}}</code></dd>
+                <dt>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git branch of the layer providing the recipe"></i>
+                    Layer branch
+                </dt>
+                <dd>{{layer_version.branch}}</dd>
+                <dt>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git commit of the layer providing the recipe"></i>
+                    Layer commit
+                </dt>
+                <dd class="iscommit">{{layer_version.commit}}</dd>
+            </dl>
 
-        <tr class="data">
-            <td><a name="{{recipe.name}}">{{recipe.name}}</a></td>
-            <td>{{recipe.version}}</td>
-            <td>{{recipe.summary}}</td>
-            <td>{{recipe.description}}</td>
-            <td>{{recipe.section}}</td>
-            <td>{{recipe.license}}</td>
-            <td>{{recipe.licensing_info}}</td>
-            <td>{{recipe.homepage}}</td>
-            <td>{{recipe.bugtracker}}</td>
-            <td>{{recipe.file_path}}</td>
-            <td>
-        <div style="height: 5em; overflow:auto">
-            {% for rr in recipe.r_dependencies_recipe.all %}
-                <a href="#{{rr.depends_on.name}}">{{rr.depends_on.name}}</a><br/>
-            {% endfor %}
+            <h2 class="details">Tasks</h2>
+            {% if not tasks %}
+            <div class="alert alert-info">
+                <strong>{{object.name}}_{{object.version}}</strong> does not have any tasks in this build.
+            </div>
+            {% else %}
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <th>
+                        <i class="icon-question-sign get-help" title="The running sequence of each task in the build"></i>
+                        Order
+                    </th>
+                    <th>
+                        <i class="icon-question-sign get-help" title="The name of the task"></i>
+                        Task
+                    </th>
+                    <th>
+                        <i class="icon-question-sign get-help" title="This value tells you if a task had to run in order to generate the task output (executed), or if the output was provided by another task and therefore the task didn't need to run (not executed)"></i>
+                        Executed
+                    </th>
+                    <th>
+                        <i class="icon-question-sign get-help" title="This column tells you if executed tasks succeeded, failed or reused output from the sstate-cache directory or mirrors. It also tells you why not executed tasks did not need to run"></i>
+                        Outcome
+                    </th>
+                    <th>
+                        <i class="icon-question-sign get-help" title="This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirros, and what was the result: Succeeded, Failed or File not in cache"></i>
+                        Cache attempt
+                    </th>
+                </thead>
+                <tbody>
+
+                    {% for task in tasks %}
+
+                    <tr {{ task|task_color }} >
+
+                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.order}}</a></td>
+                    <td>
+                        <a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.task_name}}</a>
+                        <i class="icon-question-sign get-help hover-help" title="This task fetches the source code"></i>
+                    </td>
+
+                    {% if task.task_executed %}
+                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">Executed</a></td>
+                    {% else %}
+                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">Prebuilt</a></td>
+                    {% endif %}
+
+                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_outcome_display}}</a></td>
+                    <td>
+                        {% ifnotequal task.sstate_result task.SSTATE_NA %}
+                        <a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_sstate_result_display}}</a>
+                        <i class="icon-question-sign get-help hover-help" title="This task did not run because its outcome was reused from a previous build"></i>
+                        {% endifnotequal %}
+                    </td>
+
+                    </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
         </div>
-            </td>
-        </tr>
+        <div class="tab-pane" id="packages-built" name="packages-built">
+            {% if not packages %}
+            <div class="alert alert-info">
+                <strong>{{object.name}}_{{object.version}}</strong> does not build any packages.
+            </div>
+            {% else %}
+            <table class="table table-bordered table-hover" style="margin-top:10px;">
+                <thead>
+                    <tr>
+                        <th>
+                            Package
+                        </th>
+                        <th>
+                            Version
+                        </th>
+                        <th>
+                            Size
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
 
-        {% endfor %}
+                    {% for package in packages %}
 
-{% include "basetable_bottom.html" %}
+                    <tr>
+                        <td><a href="{% url "package" build.pk package.pk %}">{{package.name}}</a></td>
+                        <td><a href="{% url "package" build.pk package.pk %}">{{package.version}}-{{package.revision}}</a></td>
+                        <td><a href="{% url "package" build.pk package.pk %}">{{package.size}}</a></td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+        <div class="tab-pane" id="dependencies" name="dependencies">
+
+            {% if not object.r_dependencies_recipe.all %}
+            <div class="alert alert-info">
+                <strong>{{object.name}}_{{object.version}}</strong> has no build dependencies.
+            </div>
+            {% else %}
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            Recipe
+                        </th>
+                        <th>
+                            Version
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for rr in object.r_dependencies_recipe.all %}
+                    <tr>
+                        <td><a href="{% url "recipe" build.pk rr.depends_on.pk %}">{{rr.depends_on.name}}</a></td>
+                        <td><a href="{% url "recipe" build.pk rr.depends_on.pk %}">{{rr.depends_on.version}}</a></td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+            {% endif %}
+
+        </div>
+        <div class="tab-pane" id="brought-in-by" name="brought-in-by">
+
+            {% if not object.r_dependencies_depends.all %}
+            <div class="alert alert-info">
+                <strong>{{object.name}}_{{object.version}}</strong> has no reverse build dependencies.
+            </div>
+            {% else %}
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>
+                            Recipe
+                        </th>
+                        <th>
+                            Version
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    {% for rr in object.r_dependencies_depends.all %}
+                    <tr>
+                        <td><a href="{% url "recipe" build.pk rr.recipe.pk %}">{{rr.recipe.name}}</a></td>
+                        <td><a href="{% url "recipe" build.pk rr.recipe.pk %}">{{rr.recipe.version}}</a></td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+<div class="row span4 well">
+    <h2>About {{object.name}}</h2>
+    <dl>
+        {% if object.summary %}
+            <dt>Summary</dt>
+            <dd><p>{{object.summary}}</p></dd>
+        {% endif %}
+        {% if object.description %}
+            <dt>Description</dt>
+            <dd><p>{{object.description}}</dd>
+        {% endif %}
+        {% if object.homepage %}
+            <dt>Homepage</dt>
+            <dd><a href="{{object.homepage}}">{{object.homepage}}</a></dd>
+        {% endif %}
+        {% if object.bugtracker %}
+            <dt>Bugtracker</dt>
+            <dd><a href="{{object.bugtracker}}">{{object.bugtracker}}</a></dd>
+        {% endif %}
+        {% if object.section %}
+            <dt>
+            Section
+            <i class="icon-question-sign get-help" data-toggle="tooltip" title="The section in which packages should be categorised. There are 5 sections: base, console, utils, devel and libs."></i>
+            </dt>
+            <dd>{{object.section}}</dd>
+        {% endif %}
+        {% if object.license %}
+            <dt>License</dt>
+            <dd>{{object.license}}</dd>
+        {% endif %}
+    </dl>
+</div>
 
 {% endblock %}
