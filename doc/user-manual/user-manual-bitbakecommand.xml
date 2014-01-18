@@ -1,16 +1,24 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-    "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-    <chapter>
-        <title>The BitBake command</title>
-            <section>
-                <title>Introduction</title>
-                <para>bitbake is the primary command in the system.  It facilitates executing tasks in a single .bb file, or executing a given task on a set of multiple .bb files, accounting for interdependencies amongst them.</para>
-            </section>
-            <section>
-                <title>Usage and syntax</title>
-                <para>
-                    <screen><prompt>$ </prompt>bitbake --help
+<chapter>
+    <title>The BitBake command</title>
+
+    <section>
+        <title>Introduction</title>
+
+        <para>
+            bitbake is the primary command in the system.
+            It facilitates executing tasks in a single .bb 
+            file, or executing a given task on a set of multiple
+            .bb files, accounting for interdependencies
+            amongst them.
+        </para>
+    </section>
+    <section>
+        <title>Usage and syntax</title>
+        <para>
+                <screen><prompt>$ </prompt>bitbake --help
 Usage: bitbake [options] [recipename/target ...]
 
     Executes the specified task (default is 'build') for a given set of target recipes (.bb files).
@@ -80,101 +88,230 @@ Options:
   -m, --kill-server     Terminate the remote server.
   --observe-only        Connect to a server as an observing-only client.
   --status-only         Check the status of the remote bitbake server.
-</screen>
-                </para>
+            </screen>
+        </para>
+        <para>
+
+            <example>
+
+            <title>Executing a task against a single .bb</title>
+
+            <para>
+                Executing tasks for a single file is relatively simple.
+                You specify the file in question, and BitBake parses 
+                it and executes the specified task (or <quote>build</quote> by default).
+                It obeys intertask dependencies when doing so.
+            </para>
+
+                <para><quote>clean</quote> task:</para>
+                <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb -c clean</screen></para>
+                <para><quote>build</quote> task:</para>
+                <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb</screen></para>
+            </example>
+            </para>
+            <para>
+            <example>
+                <title>Executing tasks against a set of .bb files</title>
+            <para>
+                There are a number of additional complexities introduced
+                when one wants to manage multiple .bb 
+                files.
+                Clearly there needs to be a way to tell BitBake what
+                files are available, and of those, which we
+                want to execute at this time
+                There also needs to be a way for each .bb
+                to express its dependencies, both for build time and 
+                runtime.
+                There must be a way for the user to express their preferences
+                when multiple .bb's provide the same functionality, or when
+                there are multiple versions of a .bb.
+            </para>
+
+            <para>
+                The next section, Metadata, outlines how to specify such things.
+            </para>
+
+            <para>
+                Note that the bitbake command, when not using
+                --buildfile, accepts a <varname>PROVIDER</varname>, not a filename or 
+                anything else.
+                By default, a .bb generally PROVIDES its
+                packagename, packagename-version, and packagename-version-revision.
+            </para>
+                <screen><prompt>$ </prompt>bitbake blah</screen>
+                <screen><prompt>$ </prompt>bitbake blah-1.0</screen>
+                <screen><prompt>$ </prompt>bitbake blah-1.0-r0</screen>
+                <screen><prompt>$ </prompt>bitbake -c clean blah</screen>
+                <screen><prompt>$ </prompt>bitbake virtual/whatever</screen>
+                <screen><prompt>$ </prompt>bitbake -c clean virtual/whatever</screen>
+            </example>
+            <example>
+                <title>Generating dependency graphs</title>
                 <para>
-                <example>
-                    <title>Executing a task against a single .bb</title>
-                    <para>Executing tasks for a single file is relatively simple.  You specify the file in question, and BitBake parses it and executes the specified task (or <quote>build</quote> by default).  It obeys intertask dependencies when doing so.</para>
-                    <para><quote>clean</quote> task:</para>
-                    <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb -c clean</screen></para>
-                    <para><quote>build</quote> task:</para>
-                    <para><screen><prompt>$ </prompt>bitbake -b blah_1.0.bb</screen></para>
-                </example>
-                </para>
-                <para>
-                <example>
-                    <title>Executing tasks against a set of .bb files</title>
-                    <para>There are a number of additional complexities introduced when one wants to manage multiple .bb files.  Clearly there needs to be a way to tell BitBake what files are available, and of those, which we want to execute at this time.  There also needs to be a way for each .bb to express its dependencies, both for build time and runtime.  There must be a way for the user to express their preferences when multiple .bb's provide the same functionality, or when there are multiple versions of a .bb.</para>
-                    <para>The next section, Metadata, outlines how to specify such things.</para>
-                    <para>Note that the bitbake command, when not using --buildfile, accepts a <varname>PROVIDER</varname>, not a filename or anything else.  By default, a .bb generally PROVIDES its packagename, packagename-version, and packagename-version-revision.</para>
-                    <screen><prompt>$ </prompt>bitbake blah</screen>
-                    <screen><prompt>$ </prompt>bitbake blah-1.0</screen>
-                    <screen><prompt>$ </prompt>bitbake blah-1.0-r0</screen>
-                    <screen><prompt>$ </prompt>bitbake -c clean blah</screen>
-                    <screen><prompt>$ </prompt>bitbake virtual/whatever</screen>
-                    <screen><prompt>$ </prompt>bitbake -c clean virtual/whatever</screen>
-                </example>
-                <example>
-                    <title>Generating dependency graphs</title>
-                    <para>BitBake is able to generate dependency graphs using the dot syntax. These graphs can be converted
-to images using the <application>dot</application> application from <ulink url="http://www.graphviz.org">Graphviz</ulink>.
-Two files will be written into the current working directory, <emphasis>depends.dot</emphasis> containing dependency information at the package level and <emphasis>task-depends.dot</emphasis> containing a breakdown of the dependencies at the task level. To stop depending on common depends, one can use the <prompt>-I depend</prompt> to omit these from the graph. This can lead to more readable graphs.  This way, <varname>DEPENDS</varname> from inherited classes such as base.bbclass can be removed from the graph.</para>
-                    <screen><prompt>$ </prompt>bitbake -g blah</screen>
-                    <screen><prompt>$ </prompt>bitbake -g -I virtual/whatever -I bloom blah</screen>
-                </example>
-                </para>
-            </section>
-            <section>
-                <title>Special variables</title>
-                <para>Certain variables affect BitBake operation:</para>
-                <section>
-                    <title><varname>BB_NUMBER_THREADS</varname></title>
-                    <para> The number of threads BitBake should run at once (default: 1).</para>
-                </section>
-            </section>
-            <section>
-                <title>Metadata</title>
-                <para>As you may have seen in the usage information, or in the information about .bb files, the <varname>BBFILES</varname> variable is how the BitBake tool locates its files.  This variable is a space separated list of files that are available, and supports wildcards.
-                <example>
-                    <title>Setting BBFILES</title>
-                    <programlisting><varname>BBFILES</varname> = "/path/to/bbfiles/*.bb"</programlisting>
-                </example></para>
-                <para>With regard to dependencies, it expects the .bb to define a <varname>DEPENDS</varname> variable, which contains a space separated list of <quote>package names</quote>, which themselves are the <varname>PN</varname> variable.  The <varname>PN</varname> variable is, in general, set to a component of the .bb filename by default.</para>
-                <example>
-                    <title>Depending on another .bb</title>
-                    <para>a.bb:
-    <screen>PN = "package-a"
+                BitBake is able to generate dependency graphs using 
+                the dot syntax.
+                These graphs can be converted to images using the <application>dot</application> 
+                application from 
+                <ulink url="http://www.graphviz.org">Graphviz</ulink>.
+                Two files will be written into the current working directory,
+                <emphasis>depends.dot</emphasis> containing dependency information
+                at the package level and <emphasis>task-depends.dot</emphasis>
+                containing a breakdown of the dependencies at the task level.
+                To stop depending on common depends, one can use the <prompt>-I depend</prompt> 
+                to omit these from the graph.
+                This can lead to more readable graphs.
+                This way, <varname>DEPENDS</varname> from inherited classes
+                such as base.bbclass can be removed from the
+                graph.
+            </para>
+                <screen><prompt>$ </prompt>bitbake -g blah</screen>
+                <screen><prompt>$ </prompt>bitbake -g -I virtual/whatever -I bloom blah</screen>
+            </example>
+            </para>
+    </section>
+
+    <section>
+        <title>Special variables</title>
+
+        <para>
+            Certain variables affect BitBake operation:
+        </para>
+
+        <section>
+            <title><varname>BB_NUMBER_THREADS</varname></title>
+
+            <para>
+                The number of threads BitBake should run at once (default: 1).
+            </para>
+        </section>
+    </section>
+
+    <section>
+        <title>Metadata</title>
+            <para>
+                As you may have seen in the usage information, or in the 
+                information about .bb files, the 
+                <varname>BBFILES</varname> variable is how the BitBake 
+                tool locates its files.
+                This variable is a space separated list of files 
+                that are available, and supports wildcards.
+            <example>
+            <title>Setting BBFILES</title>
+
+            <programlisting><varname>BBFILES</varname> = "/path/to/bbfiles/*.bb"</programlisting>
+            </example></para>
+            <para>
+                With regard to dependencies, it expects the
+                .bb to define a
+                <varname>DEPENDS</varname> variable, which contains a
+                space separated list of <quote>package names</quote>, which themselves
+                are the <varname>PN</varname> variable. The
+                <varname>PN</varname> variable is, in general,
+                set to a component of the .bb
+                filename by default.
+            </para>
+
+        <example>
+            <title>Depending on another .bb</title>
+
+            <para>
+a.bb:
+<screen>PN = "package-a"
 DEPENDS += "package-b"</screen>
-                    </para>
-                    <para>b.bb:
-    <screen>PN = "package-b"</screen>
-                    </para>
-                </example>
-                <example>
-                    <title>Using PROVIDES</title>
-                    <para>This example shows the usage of the <varname>PROVIDES</varname> variable, which allows a given .bb to specify what functionality it provides.</para>
-                    <para>package1.bb:
-    <screen>PROVIDES += "virtual/package"</screen>
-                    </para>
-                    <para>package2.bb:
-    <screen>DEPENDS += "virtual/package"</screen>
-                    </para>
-                    <para>package3.bb:
-    <screen>PROVIDES += "virtual/package"</screen>
-                    </para>
-                    <para>As you can see, we have two different .bb's that provide the same functionality (virtual/package).  Clearly, there needs to be a way for the person running BitBake to control which of those providers gets used.  There is, indeed, such a way.</para>
-                    <para>The following would go into a .conf file, to select package1:
-    <screen>PREFERRED_PROVIDER_virtual/package = "package1"</screen>
-                    </para>
-                </example>
-                <example>
-                    <title>Specifying version preference</title>
-                    <para>When there are multiple <quote>versions</quote> of a given package, BitBake defaults to selecting the most recent version, unless otherwise specified.  If the .bb in question has a <varname>DEFAULT_PREFERENCE</varname> set lower than the other .bb's (default is 0), then it will not be selected.  This allows the person or persons maintaining the repository of .bb files to specify their preference for the default selected version.  In addition, the user can specify their preferred version.</para>
-                    <para>If the first .bb is named <filename>a_1.1.bb</filename>, then the <varname>PN</varname> variable will be set to <quote>a</quote>, and the <varname>PV</varname> variable will be set to 1.1.</para>
-                    <para>If we then have an <filename>a_1.2.bb</filename>, BitBake will choose 1.2 by default.  However, if we define the following variable in a .conf that BitBake parses, we can change that.
-    <screen>PREFERRED_VERSION_a = "1.1"</screen>
-                    </para>
-                </example>
-                <example>
-                    <title>Using <quote>bbfile collections</quote></title>
-                    <para>bbfile collections exist to allow the user to have multiple repositories of bbfiles that contain the same exact package.  For example, one could easily use them to make one's own local copy of an upstream repository, but with custom modifications that one does not want upstream.  Usage:</para>
-                    <screen>BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
-BBFILE_COLLECTIONS = "upstream local"
-BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
-BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
-BBFILE_PRIORITY_upstream = "5"
-BBFILE_PRIORITY_local = "10"</screen>
-                </example>
-            </section>
-    </chapter>
+            </para>
+            <para>
+b.bb:
+<screen>PN = "package-b"</screen>
+            </para>
+        </example>
+
+        <example>
+            <title>Using PROVIDES</title>
+
+            <para>
+This example shows the usage of the <varname>PROVIDES</varname> variable, which allows a given .bb to specify what functionality it provides.
+</para>
+            <para>
+package1.bb:
+<screen>PROVIDES += "virtual/package"</screen>
+            </para>
+            <para>
+package2.bb:
+<screen>DEPENDS += "virtual/package"</screen>
+            </para>
+            <para>
+package3.bb:
+<screen>PROVIDES += "virtual/package"</screen>
+            </para>
+            <para>
+                As you can see, we have two different
+                .bb's that provide the same functionality
+                (virtual/package).
+                Clearly, there needs to be a way for the person running
+                BitBake to control which of those providers
+                gets used.
+                There is, indeed, such a way.
+            </para>
+            <para>
+The following would go into a .conf file, to select package1:
+<screen>PREFERRED_PROVIDER_virtual/package = "package1"</screen>
+            </para>
+        </example>
+
+       <example>
+            <title>Specifying version preference</title>
+
+            <para>
+                When there are multiple <quote>versions</quote> of a given package,
+                BitBake defaults to selecting the most recent version,
+                unless otherwise specified.
+                If the .bb in question has a 
+                <varname>DEFAULT_PREFERENCE</varname> set lower than
+                the other .bb's (default is 0), then it will not be
+                selected.
+                This allows the person or persons maintaining
+                the repository of .bb files to specify
+                their preference for the default selected version.
+                In addition, the user can specify their preferred version.
+            </para>
+
+            <para>
+                If the first .bb is named
+                <filename>a_1.1.bb</filename>, then the
+                <varname>PN</varname> variable will be set to
+                <quote>a</quote>, and the <varname>PV</varname> variable will be
+                set to 1.1.
+            </para>
+
+            <para>
+                If we then have an <filename>a_1.2.bb</filename>, BitBake
+                will choose 1.2 by default.
+                However, if we define the following variable in a
+                .conf that BitBake parses, we
+                can change that.
+                <screen>PREFERRED_VERSION_a = "1.1"</screen>
+            </para>
+        </example>
+        <example>
+
+            <title>Using <quote>bbfile collections</quote></title>
+
+            <para>
+                bbfile collections exist to allow the user to 
+                have multiple repositories of
+                bbfiles that contain the same
+                exact package.
+                For example, one could easily use them to make one's
+                own local copy of an upstream repository, but with
+                custom modifications that one does not want upstream.
+                Usage:
+            </para>
+                <screen>    BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
+    BBFILE_COLLECTIONS = "upstream local"
+    BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
+    BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
+    BBFILE_PRIORITY_upstream = "5"
+    BBFILE_PRIORITY_local = "10"</screen>
+        </example>
+    </section>
+</chapter>
