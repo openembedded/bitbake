@@ -380,6 +380,15 @@
             </para>
         </section>
 
+        <section id='inherit-configuration-directive'>
+            <title><filename>INHERIT</filename> Configuration Directive</title>
+
+            <para>
+                This configuration directive causes the named class to be inherited
+                at this point during parsing.
+                This variable is only valid in configuration files.
+            </para>
+        </section>
     </section>
 
     <section id='defining-python-functions-into-the-global-python-namespace'>
