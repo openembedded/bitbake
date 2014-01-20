@@ -208,6 +208,10 @@ class URI(object):
         if not uri:
             return
 
+        # We hijack the URL parameters, since the way bitbake uses
+        # them are not quite RFC compliant.
+        uri, param_str = (uri.split(";", 1) + [None])[:2]
+
         urlp = urlparse.urlparse(uri)
         self.scheme = urlp.scheme
 
@@ -242,17 +246,7 @@ class URI(object):
             if urlp.password:
                 self.userinfo += ':%s' % urlp.password
 
-        # Do support params even for URI schemes that Python's
-        # urlparse doesn't support params for.
-        path = ''
-        param_str = ''
-        if not urlp.params:
-            path, param_str = (list(urlp.path.split(";", 1)) + [None])[:2]
-        else:
-            path = urlp.path
-            param_str = urlp.params
-
-        self.path = urllib.unquote(path)
+        self.path = urllib.unquote(urlp.path)
 
         if param_str:
             self.params = self._param_str_split(param_str, ";")
