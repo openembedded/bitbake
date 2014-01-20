@@ -162,6 +162,7 @@ class URI(object):
       * path_quoted (read/write)
         A URI quoted version of path
       * params (dict) (read/write)
+      * query (dict) (read/write)
       * relative (bool) (read only)
         True if this is a "relative URI", (e.g. file:foo.diff)
 
@@ -201,6 +202,7 @@ class URI(object):
         self.port = None
         self._path = ''
         self.params = {}
+        self.query = {}
         self.relative = False
 
         if not uri:
@@ -253,36 +255,42 @@ class URI(object):
         self.path = urllib.unquote(path)
 
         if param_str:
-            self.params = self._param_dict(param_str)
+            self.params = self._param_str_split(param_str, ";")
+        if urlp.query:
+            self.query = self._param_str_split(urlp.query, "&")
 
     def __str__(self):
         userinfo = self.userinfo
         if userinfo:
             userinfo += '@'
 
-        return "%s:%s%s%s%s%s" % (
+        return "%s:%s%s%s%s%s%s" % (
             self.scheme,
             '' if self.relative else '//',
             userinfo,
             self.hostport,
             self.path_quoted,
-            self._param_str)
+            self._query_str(),
+            self._param_str())
 
-    @property
     def _param_str(self):
-        ret = ''
-        for key, val in self.params.items():
-            ret += ";%s=%s" % (key, val)
+        return (
+            ''.join([';', self._param_str_join(self.params, ";")])
+            if self.params else '')
+
+    def _query_str(self):
+        return (
+            ''.join(['?', self._param_str_join(self.query, "&")])
+            if self.query else '')
+
+    def _param_str_split(self, string, elmdelim, kvdelim="="):
+        ret = {}
+        for k, v in [x.split(kvdelim, 1) for x in string.split(elmdelim)]:
+            ret[k] = v
         return ret
 
-    def _param_dict(self, param_str):
-        parm = {}
-
-        for keyval in param_str.split(";"):
-            key, val = keyval.split("=", 1)
-            parm[key] = val
-
-        return parm
+    def _param_str_join(self, dict_, elmdelim, kvdelim="="):
+        return elmdelim.join([kvdelim.join([k, v]) for k, v in dict_.items()])
 
     @property
     def hostport(self):

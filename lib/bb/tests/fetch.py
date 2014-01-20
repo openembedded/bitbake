@@ -39,6 +39,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': False
         },
         "http://www.google.com/index.html;param1=value1" : {
@@ -54,6 +55,23 @@ class URITest(unittest.TestCase):
             'params': {
                 'param1': 'value1'
             },
+            'query': {},
+            'relative': False
+        },
+        "http://www.example.org/index.html?param1=value1" : {
+            'uri': 'http://www.example.org/index.html?param1=value1',
+            'scheme': 'http',
+            'hostname': 'www.example.org',
+            'port': None,
+            'hostport': 'www.example.org',
+            'path': '/index.html',
+            'userinfo': '',
+            'username': '',
+            'password': '',
+            'params': {},
+            'query': {
+                'param1': 'value1'
+            },
             'relative': False
         },
         "http://www.example.com:8080/index.html" : {
@@ -67,6 +85,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': False
         },
         "cvs://anoncvs@cvs.handhelds.org/cvs;module=familiar/dist/ipkg" : {
@@ -82,6 +101,7 @@ class URITest(unittest.TestCase):
             'params': {
                 'module': 'familiar/dist/ipkg'
             },
+            'query': {},
             'relative': False
         },
         "cvs://anoncvs:anonymous@cvs.handhelds.org/cvs;tag=V0-99-81;module=familiar/dist/ipkg": {
@@ -98,6 +118,7 @@ class URITest(unittest.TestCase):
                 'tag': 'V0-99-81',
                 'module': 'familiar/dist/ipkg'
             },
+            'query': {},
             'relative': False
         },
         "file://example.diff": { # NOTE: Not RFC compliant!
@@ -111,6 +132,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': True
         },
         "file:example.diff": { # NOTE: RFC compliant version of the former
@@ -125,6 +147,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': True
         },
         "file:///tmp/example.diff": {
@@ -139,6 +162,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': False
         },
         "git:///path/example.git": {
@@ -153,6 +177,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': False
         },
         "git:path/example.git": {
@@ -167,6 +192,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': True
         },
         "git://example.net/path/example.git": {
@@ -181,6 +207,7 @@ class URITest(unittest.TestCase):
             'username': '',
             'password': '',
             'params': {},
+            'query': {},
             'relative': False
         }
     }
@@ -242,6 +269,9 @@ class URITest(unittest.TestCase):
 
             uri.params = test['params']
             self.assertEqual(uri.params, test['params'])
+
+            uri.query = test['query']
+            self.assertEqual(uri.query, test['query'])
 
             self.assertEqual(str(uri), test['uri'])
 
