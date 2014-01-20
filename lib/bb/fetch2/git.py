@@ -305,8 +305,8 @@ class Git(FetchMethod):
             username = ""
 
         basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
-        cmd = "%s ls-remote %s://%s%s%s %s" % \
-              (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name])
+        cmd = "%s ls-remote %s://%s%s%s refs/heads/%s refs/tags/%s" % \
+              (basecmd, ud.proto, username, ud.host, ud.path, ud.branches[name], ud.branches[name])
         if ud.proto.lower() != 'file':
             bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
