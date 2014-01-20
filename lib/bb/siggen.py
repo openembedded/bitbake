@@ -34,7 +34,9 @@ class SignatureGenerator(object):
     name = "noop"
 
     def __init__(self, data):
-        return
+        self.taskhash = {}
+        self.runtaskdeps = {}
+        self.file_checksum_values = {}
 
     def finalise(self, fn, d, varient):
         return
@@ -42,7 +44,7 @@ class SignatureGenerator(object):
     def get_taskhash(self, fn, task, deps, dataCache):
         return "0"
 
-    def set_taskdata(self, hashes, deps):
+    def set_taskdata(self, hashes, deps, checksum):
         return
 
     def stampfile(self, stampbase, file_name, taskname, extrainfo):
