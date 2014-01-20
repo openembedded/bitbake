@@ -1224,12 +1224,11 @@ class RunQueue:
             if match is None:
                 bb.fatal("Can't find a task we're supposed to have written out? (hash: %s)?" % h)
             matches = {k : v for k, v in matches.iteritems() if h not in k}
-            latestmatch = sorted(matches.keys(), key=lambda f: matches[f])[-1]
-            prevh = __find_md5__.search(latestmatch).group(0)
-            output = bb.siggen.compare_sigfiles(latestmatch, match, recursecb)
-            bb.plain("\nTask %s:%s couldn't be used from the cache because:\n  We need hash %s, closest matching task was %s\n  " % (pn, taskname, h, prevh) + '\n  '.join(output))
-             
-
+            if len(matches):
+                latestmatch = sorted(matches.keys(), key=lambda f: matches[f])[-1]
+                prevh = __find_md5__.search(latestmatch).group(0)
+                output = bb.siggen.compare_sigfiles(latestmatch, match, recursecb)
+                bb.plain("\nTask %s:%s couldn't be used from the cache because:\n  We need hash %s, closest matching task was %s\n  " % (pn, taskname, h, prevh) + '\n  '.join(output))
 
 class RunQueueExecute:
 
