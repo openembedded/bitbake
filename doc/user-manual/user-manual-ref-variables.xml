@@ -1,0 +1,1321 @@
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+[<!ENTITY % poky SYSTEM "../poky.ent"> %poky; ] >
+
+<!-- Dummy chapter -->
+<chapter id='ref-variables-glos'>
+
+<title>Variables Glossary</title>
+
+<para>
+    This chapter lists common variables used by BitBake and gives an overview
+    of their function and contents.
+</para>
+
+<glossary id='ref-variables-glossary'>
+
+
+    <para>
+<!--       <link linkend='var-ALLOW_EMPTY'>A</link> -->
+       <link linkend='var-B'>B</link>
+<!--       <link linkend='var-CFLAGS'>C</link> -->
+       <link linkend='var-DEFAULT_PREFERENCE'>D</link>
+       <link linkend='var-EXCLUDE_FROM_WORLD'>E</link>
+       <link linkend='var-FILESPATH'>F</link>
+<!--       <link linkend='var-GROUPADD_PARAM'>G</link> -->
+       <link linkend='var-HOMEPAGE'>H</link>
+<!--       <link linkend='var-ICECC_DISABLED'>I</link> -->
+<!--               <link linkend='var-glossary-j'>J</link> -->
+<!--       <link linkend='var-KARCH'>K</link> -->
+       <link linkend='var-LAYERDEPENDS'>L</link>
+       <link linkend='var-MIRRORS'>M</link>
+<!--               <link linkend='var-glossary-n'>N</link> -->
+       <link linkend='var-OVERRIDES'>O</link>
+       <link linkend='var-PACKAGES'>P</link>
+<!--       <link linkend='var-QMAKE_PROFILES'>Q</link> -->
+       <link linkend='var-RDEPENDS'>R</link>
+       <link linkend='var-SECTION'>S</link>
+       <link linkend='var-T'>T</link>
+<!--       <link linkend='var-UBOOT_CONFIG'>U</link> -->
+<!--               <link linkend='var-glossary-v'>V</link> -->
+<!--       <link linkend='var-WARN_QA'>W</link> -->
+<!--               <link linkend='var-glossary-x'>X</link> -->
+<!--               <link linkend='var-glossary-y'>Y</link> -->
+<!--               <link linkend='var-glossary-z'>Z</link>-->
+    </para>
+
+
+<!--
+    <glossdiv id='var-glossary-a'><title>A</title>
+    </glossdiv>
+-->
+
+    <glossdiv id='var-glossary-b'><title>B</title>
+
+        <glossentry id='var-B'><glossterm>B</glossterm>
+            <glossdef>
+                <para>
+                    The directory in which BitBake will execute functions
+                    during a recipe's build process.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_DANGLINGAPPENDS_WARNONLY'><glossterm>BB_DANGLINGAPPENDS_WARNONLY</glossterm>
+            <glossdef>
+                <para>
+                    Defines how BitBake handles situations where an append
+                    file (<filename>.bbappend</filename>) has no
+                    corresponding recipe file (<filename>.bb</filename>).
+                    This condition often occurs when layers get out of sync
+                    (e.g. <filename>oe-core</filename> bumps a
+                    recipe version and the old recipe no longer exists and the
+                    other layer has not been updated to the new version
+                    of the recipe yet).
+                </para>
+
+                <para>
+                    The default fatal behavior is safest because it is
+                    the sane reaction given something is out of sync.
+                    It is important to realize when your changes are no longer
+                    being applied.
+                </para>
+
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_DISKMON_DIRS'><glossterm>BB_DISKMON_DIRS</glossterm>
+            <glossdef>
+                <para>
+                    Monitors disk space and available inodes during the build
+                    and allows you to control the build based on these
+                    parameters.
+                </para>
+
+                <para>
+                    Disk space monitoring is disabled by default.
+                    When setting this variable, use the following form:
+                    <literallayout class='monospaced'>
+     BB_DISKMON_DIRS = "&lt;action&gt;,&lt;dir&gt;,&lt;threshold&gt; [...]"
+
+     where:
+
+        &lt;action&gt; is:
+           ABORT:     Immediately abort the build when
+                      a threshold is broken.
+           STOPTASKS: Stop the build after the currently
+                      executing tasks have finished when
+                      a threshold is broken.
+           WARN:      Issue a warning but continue the
+                      build when a threshold is broken.
+                      Subsequent warnings are issued as
+                      defined by the
+                      <link linkend='var-BB_DISKMON_WARNINTERVAL'>BB_DISKMON_WARNINTERVAL</link> variable,
+                      which must be defined.
+
+        &lt;dir&gt; is:
+           Any directory you choose. You can specify one or
+           more directories to monitor by separating the
+           groupings with a space.  If two directories are
+           on the same device, only the first directory
+           is monitored.
+
+        &lt;threshold&gt; is:
+           Either the minimum available disk space,
+           the minimum number of free inodes, or
+           both.  You must specify at least one.  To
+           omit one or the other, simply omit the value.
+           Specify the threshold using G, M, K for Gbytes,
+           Mbytes, and Kbytes, respectively. If you do
+           not specify G, M, or K, Kbytes is assumed by
+           default.  Do not use GB, MB, or KB.
+                    </literallayout>
+                </para>
+
+                <para>
+                    Here are some examples:
+                    <literallayout class='monospaced'>
+     BB_DISKMON_DIRS = "ABORT,${TMPDIR},1G,100K WARN,${SSTATE_DIR},1G,100K"
+     BB_DISKMON_DIRS = "STOPTASKS,${TMPDIR},1G"
+     BB_DISKMON_DIRS = "ABORT,${TMPDIR},,100K"
+                    </literallayout>
+                    The first example works only if you also set
+                    the <link linkend='var-BB_DISKMON_WARNINTERVAL'><filename>BB_DISKMON_WARNINTERVAL</filename></link> variable.
+                    This example causes the build system to immediately
+                    abort when either the disk space in <filename>${TMPDIR}</filename> drops
+                    below 1 Gbyte or the available free inodes drops below
+                    100 Kbytes.
+                    Because two directories are provided with the variable, the
+                    build system also issue a
+                    warning when the disk space in the
+                    <filename>${SSTATE_DIR}</filename> directory drops
+                    below 1 Gbyte or the number of free inodes drops
+                    below 100 Kbytes.
+                    Subsequent warnings are issued during intervals as
+                    defined by the <filename>BB_DISKMON_WARNINTERVAL</filename>
+                    variable.
+                </para>
+
+                <para>
+                    The second example stops the build after all currently
+                    executing tasks complete when the minimum disk space
+                    in the <filename>${TMPDIR}</filename>
+                    directory drops below 1 Gbyte.
+                    No disk monitoring occurs for the free inodes in this case.
+                </para>
+
+                <para>
+                    The final example immediately aborts the build when the
+                    number of free inodes in the <filename>${TMPDIR}</filename> directory
+                    drops below 100 Kbytes.
+                    No disk space monitoring for the directory itself occurs
+                    in this case.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_DISKMON_WARNINTERVAL'><glossterm>BB_DISKMON_WARNINTERVAL</glossterm>
+            <glossdef>
+                <para>
+                    Defines the disk space and free inode warning intervals.
+                </para>
+
+                <para>
+                    If you are going to use the
+                    <filename>BB_DISKMON_WARNINTERVAL</filename> variable, you must
+                    also use the
+                    <link linkend='var-BB_DISKMON_DIRS'><filename>BB_DISKMON_DIRS</filename></link> variable
+                    and define its action as "WARN".
+                    During the build, subsequent warnings are issued each time
+                    disk space or number of free inodes further reduces by
+                    the respective interval.
+                </para>
+
+                <para>
+                    If you do not provide a <filename>BB_DISKMON_WARNINTERVAL</filename>
+                    variable and you do use <filename>BB_DISKMON_DIRS</filename> with
+                    the "WARN" action, the disk monitoring interval defaults to
+                    the following:
+                    <literallayout class='monospaced'>
+     BB_DISKMON_WARNINTERVAL = "50M,5K"
+                    </literallayout>
+                </para>
+
+                <para>
+                    When specifying the variable in your configuration file,
+                    use the following form:
+                    <literallayout class='monospaced'>
+     BB_DISKMON_WARNINTERVAL = "&lt;disk_space_interval&gt;,&lt;disk_inode_interval&gt;"
+
+     where:
+
+        &lt;disk_space_interval&gt; is:
+           An interval of memory expressed in either
+           G, M, or K for Gbytes, Mbytes, or Kbytes,
+           respectively. You cannot use GB, MB, or KB.
+
+        &lt;disk_inode_interval&gt; is:
+           An interval of free inodes expressed in either
+           G, M, or K for Gbytes, Mbytes, or Kbytes,
+           respectively. You cannot use GB, MB, or KB.
+                    </literallayout>
+                </para>
+
+                <para>
+                    Here is an example:
+                    <literallayout class='monospaced'>
+     BB_DISKMON_DIRS = "WARN,${SSTATE_DIR},1G,100K"
+     BB_DISKMON_WARNINTERVAL = "50M,5K"
+                    </literallayout>
+                    These variables cause BitBake to
+                    issue subsequent warnings each time the available
+                    disk space further reduces by 50 Mbytes or the number
+                    of free inodes further reduces by 5 Kbytes in the
+                    <filename>${SSTATE_DIR}</filename> directory.
+                    Subsequent warnings based on the interval occur each time
+                    a respective interval is reached beyond the initial warning
+                    (i.e. 1 Gbytes and 100 Kbytes).
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_GENERATE_MIRROR_TARBALLS'><glossterm>BB_GENERATE_MIRROR_TARBALLS</glossterm>
+            <glossdef>
+                <para>
+                    Causes tarballs of the Git repositories, including the
+                    Git metadata, to be placed in the
+                    <link linkend='var-DL_DIR'><filename>DL_DIR</filename></link>
+                    directory.
+                </para>
+
+                <para>
+                    For performance reasons, creating and placing tarballs of
+                    the Git repositories is not the default action by BitBake.
+                    <literallayout class='monospaced'>
+     BB_GENERATE_MIRROR_TARBALLS = "1"
+                    </literallayout>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_NUMBER_THREADS'><glossterm>BB_NUMBER_THREADS</glossterm>
+            <glossdef>
+                <para>The maximum number of tasks BitBake should run in parallel at any one time.
+                    If your host development system supports multiple cores, a good rule of thumb
+                    is to set this variable to twice the number of cores.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBCLASSEXTEND'><glossterm>BBCLASSEXTEND</glossterm>
+            <glossdef>
+                <para>
+                    Allows you to extend a recipe so that it builds variants of the software.
+                    Common variants for recipes exist such as "natives" like <filename>quilt-native</filename>,
+                    which is a copy of Quilt built to run on the build system;
+                    "crosses" such as <filename>gcc-cross</filename>,
+                    which is a compiler built to run on the build machine but produces binaries
+                    that run on the target <filename>MACHINE</filename>;
+                    "nativesdk", which targets the SDK machine instead of <filename>MACHINE</filename>;
+                    and "mulitlibs" in the form "<filename>multilib:&lt;multilib_name&gt;</filename>".
+                </para>
+
+                <para>
+                    To build a different variant of the recipe with a minimal amount of code, it usually
+                    is as simple as adding the following to your recipe:
+                    <literallayout class='monospaced'>
+     BBCLASSEXTEND =+ "native nativesdk"
+     BBCLASSEXTEND =+ "multilib:&lt;multilib_name&gt;"
+                    </literallayout>
+                </para>
+             </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBFILE_COLLECTIONS'><glossterm>BBFILE_COLLECTIONS</glossterm>
+            <glossdef>
+                <para>Lists the names of configured layers.
+                    These names are used to find the other <filename>BBFILE_*</filename>
+                    variables.
+                    Typically, each layer will append its name to this variable in its
+                    <filename>conf/layer.conf</filename> file.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBFILE_PATTERN'><glossterm>BBFILE_PATTERN</glossterm>
+            <glossdef>
+                <para>Variable that expands to match files from
+                    <link linkend='var-BBFILES'><filename>BBFILES</filename></link>
+                    in a particular layer.
+                    This variable is used in the <filename>conf/layer.conf</filename> file and must
+                    be suffixed with the name of the specific layer (e.g.
+                    <filename>BBFILE_PATTERN_emenlow</filename>).</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBFILE_PRIORITY'><glossterm>BBFILE_PRIORITY</glossterm>
+            <glossdef>
+                <para>Assigns the priority for recipe files in each layer.</para>
+                <para>This variable is useful in situations where the same recipe appears in
+                    more than one layer.
+                    Setting this variable allows you to prioritize a
+                    layer against other layers that contain the same recipe - effectively
+                    letting you control the precedence for the multiple layers.
+                    The precedence established through this variable stands regardless of a
+                    recipe's version
+                    (<link linkend='var-PV'><filename>PV</filename></link> variable).
+                    For example, a layer that has a recipe with a higher <filename>PV</filename> value but for
+                    which the <filename>BBFILE_PRIORITY</filename> is set to have a lower precedence still has a
+                    lower precedence.</para>
+                <para>A larger value for the <filename>BBFILE_PRIORITY</filename> variable results in a higher
+                    precedence.
+                    For example, the value 6 has a higher precedence than the value 5.
+                    If not specified, the <filename>BBFILE_PRIORITY</filename> variable is set based on layer
+                    dependencies (see the
+                    <filename><link linkend='var-LAYERDEPENDS'>LAYERDEPENDS</link></filename> variable for
+                    more information.
+                    The default priority, if unspecified
+                    for a layer with no dependencies, is the lowest defined priority + 1
+                    (or 1 if no priorities are defined).</para>
+                <tip>
+                    You can use the command <filename>bitbake-layers show-layers</filename> to list
+                    all configured layers along with their priorities.
+                </tip>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBFILES'><glossterm>BBFILES</glossterm>
+            <glossdef>
+                <para>List of recipe files used by BitBake to build software.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBINCLUDELOGS'><glossterm>BBINCLUDELOGS</glossterm>
+            <glossdef>
+                <para>Variable that controls how BitBake displays logs on build failure.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBLAYERS'><glossterm>BBLAYERS</glossterm>
+            <glossdef>
+                <para>Lists the layers to enable during the build.
+                    This variable is defined in the <filename>bblayers.conf</filename> configuration
+                    file in the <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>Build Directory</ulink>.
+                    Here is an example:
+                    <literallayout class='monospaced'>
+     BBLAYERS = " \
+       /home/scottrif/poky/meta \
+       /home/scottrif/poky/meta-yocto \
+       /home/scottrif/poky/meta-yocto-bsp \
+       /home/scottrif/poky/meta-mykernel \
+       "
+
+                    </literallayout>
+                    This example enables four layers, one of which is a custom, user-defined layer
+                    named <filename>meta-mykernel</filename>.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBMASK'><glossterm>BBMASK</glossterm>
+            <glossdef>
+                <para>
+                    Prevents BitBake from processing recipes and recipe
+                    append files.
+                </para>
+
+                <para>
+                    You can use the <filename>BBMASK</filename> variable
+                    to "hide" these <filename>.bb</filename> and
+                    <filename>.bbappend</filename> files.
+                    BitBake ignores any recipe or recipe append files that
+                    match the expression.
+                    It is as if BitBake does not see them at all.
+                    Consequently, matching files are not parsed or otherwise
+                    used by BitBake.</para>
+                <para>
+                    The value you provide is passed to Python's regular
+                    expression compiler.
+                    The expression is compared against the full paths to
+                    the files.
+                    For complete syntax information, see Python's
+                    documentation at
+                    <ulink url='http://docs.python.org/release/2.3/lib/re-syntax.html'></ulink>.
+                </para>
+
+                <para>
+                    The following example uses a complete regular expression
+                    to tell BitBake to ignore all recipe and recipe append
+                    files in the <filename>meta-ti/recipes-misc/</filename>
+                    directory:
+                    <literallayout class='monospaced'>
+     BBMASK = "meta-ti/recipes-misc/"
+                    </literallayout>
+                    If you want to mask out multiple directories or recipes,
+                    use the vertical bar to separate the regular expression
+                    fragments.
+                    This next example masks out multiple directories and
+                    individual recipes:
+                    <literallayout class='monospaced'>
+     BBMASK = "meta-ti/recipes-misc/|meta-ti/recipes-ti/packagegroup/"
+     BBMASK .= "|.*meta-oe/recipes-support/"
+     BBMASK .= "|.*openldap"
+     BBMASK .= "|.*opencv"
+     BBMASK .= "|.*lzma"
+                    </literallayout>
+                    Notice how the vertical bar is used to append the fragments.
+                    <note>
+                        When specifying a directory name, use the trailing
+                        slash character to ensure you match just that directory
+                        name.
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBPATH'><glossterm>BBPATH</glossterm>
+            <glossdef>
+                <para>
+                    Used by BitBake to locate
+                    <filename>.bbclass</filename> and configuration files.
+                    This variable is analogous to the
+                    <filename>PATH</filename> variable.
+                    <note>
+                        If you run BitBake from a directory outside of the
+                        <ulink url='&YOCTO_DOCS_DEV_URL;build-directory'>Build Directory</ulink>,
+                        you must be sure to set
+                        <filename>BBPATH</filename> to point to the
+                        Build Directory.
+                        Set the variable as you would any environment variable
+                        and then run BitBake:
+                        <literallayout class='monospaced'>
+     $ BBPATH = "&lt;build_directory&gt;"
+     $ export BBPATH
+     $ bitbake &lt;target&gt;
+                        </literallayout>
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBSERVER'><glossterm>BBSERVER</glossterm>
+            <glossdef>
+                <para>
+                    Points to the server that runs memory-resident BitBake.
+                    The variable is only used when you employ memory-resident
+                    BitBake.
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+<!--
+    <glossdiv id='var-glossary-c'><title>C</title>
+    </glossdiv>
+-->
+
+    <glossdiv id='var-glossary-d'><title>D</title>
+
+        <glossentry id='var-DEFAULT_PREFERENCE'><glossterm>DEFAULT_PREFERENCE</glossterm>
+            <glossdef>
+                <para>
+                    Specifies a weak bias for recipe selection priority.
+                </para>
+                <para>
+                    The most common usage of this is variable is to set
+                    it to "-1" within a recipe for a development version of a
+                    piece of software.
+                    Using the variable in this way causes the stable version
+                    of the recipe to build by default in the absence of
+                    <filename><link linkend='var-PREFERRED_VERSION'>PREFERRED_VERSION</link></filename>
+                    being used to build the development version.
+                </para>
+                <note>
+                    The bias provided by <filename>DEFAULT_PREFERENCE</filename>
+                    is weak and is overridden by
+                    <filename><link linkend='var-BBFILE_PRIORITY'>BBFILE_PRIORITY</link></filename>
+                    if that variable is different between two layers
+                    that contain different versions of the same recipe.
+                </note>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-DEPENDS'><glossterm>DEPENDS</glossterm>
+            <glossdef>
+                <para>
+                    Lists a recipe's build-time dependencies
+                    (i.e. other recipe files).
+                </para>
+
+                <para>
+                    Consider this simple example for two recipes named "a" and
+                    "b" that produce similarly named packages.
+                    In this example, the <filename>DEPENDS</filename>
+                    statement appears in the "a" recipe:
+                    <literallayout class='monospaced'>
+     DEPENDS = "b"
+                    </literallayout>
+                    Here, the dependency is such that the
+                    <filename>do_configure</filename> task for recipe "a"
+                    depends on the <filename>do_populate_sysroot</filename>
+                    task of recipe "b".
+                    This means anything that recipe "b" puts into sysroot
+                    is available when recipe "a" is configuring itself.
+                </para>
+
+                <para>
+                    For information on runtime dependencies, see the
+                    <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
+                    variable.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-DESCRIPTION'><glossterm>DESCRIPTION</glossterm>
+            <glossdef>
+                <para>
+                    A long description for the recipe.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-DL_DIR'><glossterm>DL_DIR</glossterm>
+            <glossdef>
+                <para>
+                    The central download directory used by the build process to
+                    store downloads.
+                    By default, <filename>DL_DIR</filename> gets files
+                    suitable for mirroring for everything except Git
+                    repositories.
+                    If you want tarballs of Git repositories, use the
+                    <link linkend='var-BB_GENERATE_MIRROR_TARBALLS'><filename>BB_GENERATE_MIRROR_TARBALLS</filename></link>
+                    variable.
+                </para>
+            </glossdef>
+
+        </glossentry>
+    </glossdiv>
+
+    <glossdiv id='var-glossary-e'><title>E</title>
+
+        <glossentry id='var-EXCLUDE_FROM_WORLD'><glossterm>EXCLUDE_FROM_WORLD</glossterm>
+            <glossdef>
+                <para>
+                    Directs BitBake to exclude a recipe from world builds (i.e.
+                    <filename>bitbake world</filename>).
+                    During world builds, BitBake locates, parses and builds all
+                    recipes found in every layer exposed in the
+                    <filename>bblayers.conf</filename> configuration file.
+                </para>
+
+                <para>
+                    To exclude a recipe from a world build using this variable,
+                    set the variable to "1" in the recipe.
+                </para>
+
+                <note>
+                    Recipes added to <filename>EXCLUDE_FROM_WORLD</filename>
+                    may still be built during a world build in order to satisfy
+                    dependencies of other recipes.
+                    Adding a recipe to <filename>EXCLUDE_FROM_WORLD</filename>
+                    only ensures that the recipe is not explicitly added
+                    to the list of build targets in a world build.
+                </note>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+    <glossdiv id='var-glossary-f'><title>F</title>
+
+        <glossentry id='var-FILESPATH'><glossterm>FILESPATH</glossterm>
+            <glossdef>
+                <para>
+                    The default set of directories BitBake
+                    uses when searching for patches and files.
+                    During the build process, BitBake searches each directory in
+                    <filename>FILESPATH</filename> in the specified order when
+                    looking for files and patches specified by each
+                    <filename>file://</filename> URI in a recipe.
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+<!--
+    <glossdiv id='var-glossary-g'><title>G</title>
+    </glossdiv>
+-->
+
+    <glossdiv id='var-glossary-h'><title>H</title>
+
+        <glossentry id='var-HOMEPAGE'><glossterm>HOMEPAGE</glossterm>
+            <glossdef>
+                <para>Website where more information about the software the recipe is building
+                    can be found.</para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+    <glossdiv id='var-glossary-i'><title>I</title>
+
+        <glossentry id='var-INHERIT'><glossterm>INHERIT</glossterm>
+            <glossdef>
+                <para>
+                    Causes the named class to be inherited at
+                    this point during parsing.
+                    The variable is only valid in configuration files.
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+<!--
+    <glossdiv id='var-glossary-j'><title>J</title>
+    </glossdiv>
+
+    <glossdiv id='var-glossary-k'><title>K</title>
+    </glossdiv>
+-->
+
+    <glossdiv id='var-glossary-l'><title>L</title>
+
+        <glossentry id='var-LAYERDEPENDS'><glossterm>LAYERDEPENDS</glossterm>
+            <glossdef>
+                <para>Lists the layers that this recipe depends upon, separated by spaces.
+                    Optionally, you can specify a specific layer version for a dependency
+                    by adding it to the end of the layer name with a colon, (e.g. "anotherlayer:3"
+                    to be compared against
+                    <link linkend='var-LAYERVERSION'><filename>LAYERVERSION</filename></link><filename>_anotherlayer</filename>
+                    in this case).
+                    An error will be produced if any dependency is missing or
+                    the version numbers do not match exactly (if specified).
+                    This variable is used in the <filename>conf/layer.conf</filename> file
+                    and must be suffixed with the name of the specific layer (e.g.
+                    <filename>LAYERDEPENDS_mylayer</filename>).</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-LAYERDIR'><glossterm>LAYERDIR</glossterm>
+            <glossdef>
+                <para>When used inside the <filename>layer.conf</filename> configuration
+                    file, this variable provides the path of the current layer.
+                    This variable is not available outside of <filename>layer.conf</filename>
+                    and references are expanded immediately when parsing of the file completes.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-LAYERVERSION'><glossterm>LAYERVERSION</glossterm>
+            <glossdef>
+                <para>Optionally specifies the version of a layer as a single number.
+                    You can use this within
+                    <link linkend='var-LAYERDEPENDS'><filename>LAYERDEPENDS</filename></link>
+                    for another layer in order to depend on a specific version
+                    of the layer.
+                    This variable is used in the <filename>conf/layer.conf</filename> file
+                    and must be suffixed with the name of the specific layer (e.g.
+                    <filename>LAYERVERSION_mylayer</filename>).</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-LICENSE'><glossterm>LICENSE</glossterm>
+            <glossdef>
+                <para>
+                    The list of source licenses for the recipe.
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+    <glossdiv id='var-glossary-m'><title>M</title>
+
+        <glossentry id='var-MIRRORS'><glossterm>MIRRORS</glossterm>
+            <glossdef>
+                <para>
+                    Specifies additional paths from which the BitBake gets source code.
+                    When the build system searches for source code, it first
+                    tries the local download directory.
+                    If that location fails, the build system tries locations
+                    defined by
+                    <link linkend='var-PREMIRRORS'><filename>PREMIRRORS</filename></link>,
+                    the upstream source, and then locations specified by
+                    <filename>MIRRORS</filename> in that order.
+                </para>
+
+                <para>
+                    Assuming your distribution (<filename>DISTRO</filename>)
+                    is "poky", the default value for
+                    <filename>MIRRORS</filename> is defined in the
+                    <filename>conf/distro/poky.conf</filename> file in the
+                    <filename>meta-yocto</filename> Git repository.
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+<!--
+    <glossdiv id='var-glossary-n'><title>N</title>
+    </glossdiv>
+-->
+
+    <glossdiv id='var-glossary-o'><title>O</title>
+
+        <glossentry id='var-OVERRIDES'><glossterm>OVERRIDES</glossterm>
+            <glossdef>
+                <para>
+                    BitBake uses <filename>OVERRIDES</filename> to control
+                    what variables are overridden after BitBake parses
+                    recipes and configuration files.
+                    You can find more information on how overrides are handled
+                    in the BitBake Manual that is located at
+                    <filename>bitbake/doc/manual</filename> in the
+                    <ulink url='&YOCTO_DOCS_DEV_URL;#source-directory'>Source Directory</ulink>.
+                </para>
+            </glossdef>
+        </glossentry>
+    </glossdiv>
+
+    <glossdiv id='var-glossary-p'><title>P</title>
+
+        <glossentry id='var-PACKAGES'><glossterm>PACKAGES</glossterm>
+            <glossdef>
+                <para>The list of packages to be created from the recipe.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PACKAGES_DYNAMIC'><glossterm>PACKAGES_DYNAMIC</glossterm>
+            <glossdef>
+                <para>
+                    A promise that your recipe satisfies runtime dependencies
+                    for optional modules that are found in other recipes.
+                    <filename>PACKAGES_DYNAMIC</filename>
+                    does not actually satisfy the dependencies, it only states that
+                    they should be satisfied.
+                    For example, if a hard, runtime dependency
+                    (<link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>)
+                    of another package is satisfied
+                    at build time through the <filename>PACKAGES_DYNAMIC</filename>
+                    variable, but a package with the module name is never actually
+                    produced, then the other package will be broken.
+                    Thus, if you attempt to include that package in an image,
+                    you will get a dependency failure from the packaging system
+                    during <filename>do_rootfs</filename>.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PE'><glossterm>PE</glossterm>
+            <glossdef>
+                <para>
+                    The epoch of the recipe.
+                    By default, this variable is unset.
+                    The field is used to make upgrades possible when the
+                    versioning scheme changes in some backwards incompatible
+                    way.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PF'><glossterm>PF</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the recipe or package name and includes all version and revision
+                    numbers (i.e. <filename>eglibc-2.13-r20+svnr15508/</filename> and
+                    <filename>bash-4.2-r1/</filename>).
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PN'><glossterm>PN</glossterm>
+            <glossdef>
+                <para>The recipe name.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PR'><glossterm>PR</glossterm>
+            <glossdef>
+                <para>The revision of the recipe.
+                    </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PREFERRED_PROVIDER'><glossterm>PREFERRED_PROVIDER</glossterm>
+            <glossdef>
+                <para>
+                    If multiple recipes provide an item, this variable
+                    determines which recipe should be given preference.
+                    You should always suffix the variable with the name of the
+                    provided item, and you should set it to the
+                    <link linkend='var-PN'><filename>PN</filename></link>
+                    of the recipe to which you want to give precedence.
+                    Some examples:
+                    <literallayout class='monospaced'>
+     PREFERRED_PROVIDER_virtual/kernel ?= "linux-yocto"
+     PREFERRED_PROVIDER_virtual/xserver = "xserver-xf86"
+     PREFERRED_PROVIDER_virtual/libgl ?= "mesa"
+                    </literallayout>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PREFERRED_VERSION'><glossterm>PREFERRED_VERSION</glossterm>
+            <glossdef>
+                <para>
+                    If there are multiple versions of recipes available, this
+                    variable determines which recipe should be given preference.
+                    You must always suffix the variable with the
+                    <link linkend='var-PN'><filename>PN</filename></link>
+                    you want to select, and you should set the
+                    <link linkend='var-PV'><filename>PV</filename></link>
+                    accordingly for precedence.
+                    You can use the "<filename>%</filename>" character as a
+                    wildcard to match any number of characters, which can be
+                    useful when specifying versions that contain long revision
+                    numbers that could potentially change.
+                    Here are two examples:
+                    <literallayout class='monospaced'>
+     PREFERRED_VERSION_python = "2.7.3"
+     PREFERRED_VERSION_linux-yocto = "3.10%"
+                    </literallayout>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PREMIRRORS'><glossterm>PREMIRRORS</glossterm>
+            <glossdef>
+                <para>
+                    Specifies additional paths from which BitBake gets source code.
+                    When the build system searches for source code, it first
+                    tries the local download directory.
+                    If that location fails, the build system tries locations
+                    defined by <filename>PREMIRRORS</filename>, the upstream
+                    source, and then locations specified by
+                    <link linkend='var-MIRRORS'><filename>MIRRORS</filename></link>
+                    in that order.
+                </para>
+
+                <para>
+                    Assuming your distribution
+                    (<filename>DISTRO</filename>)
+                    is "poky", the default value for
+                    <filename>PREMIRRORS</filename> is defined in the
+                    <filename>conf/distro/poky.conf</filename> file in the
+                    <filename>meta-yocto</filename> Git repository.
+                </para>
+
+                <para>
+                    Typically, you could add a specific server for the
+                    build system to attempt before any others by adding
+                    something like the following to your configuration:
+                    <literallayout class='monospaced'>
+     PREMIRRORS_prepend = "\
+     git://.*/.* http://www.yoctoproject.org/sources/ \n \
+     ftp://.*/.* http://www.yoctoproject.org/sources/ \n \
+     http://.*/.* http://www.yoctoproject.org/sources/ \n \
+     https://.*/.* http://www.yoctoproject.org/sources/ \n"
+                    </literallayout>
+                    These changes cause the build system to intercept
+                    Git, FTP, HTTP, and HTTPS requests and direct them to
+                    the <filename>http://</filename> sources mirror.
+                    You can use <filename>file://</filename> URLs to point
+                    to local directories or network shares as well.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PROVIDES'><glossterm>PROVIDES</glossterm>
+            <glossdef>
+                <para>
+                    A list of aliases that a recipe also provides.
+                    These aliases are useful for satisfying dependencies of
+                    other recipes during the build (as specified by
+                    <filename><link linkend='var-DEPENDS'>DEPENDS</link></filename>).
+                    <note>
+                        A recipe's own
+                        <filename><link linkend='var-PN'>PN</link></filename>
+                        is implicitly already in its
+                        <filename>PROVIDES</filename> list.
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PRSERV_HOST'><glossterm>PRSERV_HOST</glossterm>
+            <glossdef>
+                <para>
+                    The network based
+                    <link linkend='var-PR'><filename>PR</filename></link>
+                    service host and port.
+                </para>
+
+                <para>
+                    An example of how the <filename>PRSERV_HOST</filename> variable is
+                    set:
+                    <literallayout class='monospaced'>
+     PRSERV_HOST = "localhost:0"
+                    </literallayout>
+                    You must set the variable if you want to automatically
+                    start a local
+                    <ulink url='&YOCTO_DOCS_DEV_URL;#working-with-a-pr-service'>PR service</ulink>.
+                    You can set <filename>PRSERV_HOST</filename> to other
+                    values to use a remote PR service.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PV'><glossterm>PV</glossterm>
+            <glossdef>
+                <para>The version of the recipe.
+                 </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+<!--
+    <glossdiv id='var-glossary-q'><title>Q</title>
+    </glossdiv>
+-->
+
+    <glossdiv id='var-glossary-r'><title>R</title>
+
+        <glossentry id='var-RDEPENDS'><glossterm>RDEPENDS</glossterm>
+            <glossdef>
+                <para>
+                    Lists a package's runtime dependencies (i.e. other packages)
+                    that must be installed in order for the built package to run
+                    correctly.
+                    If a package in this list cannot be found during the build,
+                    you will get a build error.
+                </para>
+
+                <para>
+                    Because the <filename>RDEPENDS</filename> variable applies
+                    to packages being built, you should always use the variable
+                    in a form with an attached package name.
+                    For example, suppose you are building a development package
+                    that depends on the <filename>perl</filename> package.
+                    In this case, you would use the following
+                    <filename>RDEPENDS</filename> statement:
+                    <literallayout class='monospaced'>
+     RDEPENDS_${PN}-dev += "perl"
+                    </literallayout>
+                    In the example, the development package depends on
+                    the <filename>perl</filename> package.
+                    Thus, the <filename>RDEPENDS</filename> variable has the
+                    <filename>${PN}-dev</filename> package name as part of the
+                    variable.
+                </para>
+
+                <para>
+                    BitBake supports specifying versioned dependencies.
+                    Although the syntax varies depending on the packaging
+                    format, BitBake hides these differences from you.
+                    Here is the general syntax to specify versions with
+                    the <filename>RDEPENDS</filename> variable:
+                    <literallayout class='monospaced'>
+     RDEPENDS_${PN} = "&lt;package&gt; (&lt;operator&gt; &lt;version&gt;)"
+                    </literallayout>
+                    For <filename>operator</filename>, you can specify the
+                    following:
+                    <literallayout class='monospaced'>
+     =
+     &lt;
+     &gt;
+     &lt;=
+     &gt;=
+                    </literallayout>
+                    For example, the following sets up a dependency on version
+                    1.2 or greater of the package <filename>foo</filename>:
+                    <literallayout class='monospaced'>
+     RDEPENDS_${PN} = "foo (>= 1.2)"
+                    </literallayout>
+                </para>
+
+                <para>
+                    For information on build-time dependencies, see the
+                    <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
+                    variable.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-RPROVIDES'><glossterm>RPROVIDES</glossterm>
+            <glossdef>
+                <para>
+                    A list of package name aliases that a package also provides.
+                    These aliases are useful for satisfying runtime dependencies
+                    of other packages both during the build and on the target
+                    (as specified by
+                    <filename><link linkend='var-RDEPENDS'>RDEPENDS</link></filename>).
+                </para>
+                <para>
+                   As with all package-controlling variables, you must always
+                   use the variable in conjunction with a package name override.
+                   Here is an example:
+                   <literallayout class='monospaced'>
+     RPROVIDES_${PN} = "widget-abi-2"
+                   </literallayout>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-RRECOMMENDS'><glossterm>RRECOMMENDS</glossterm>
+            <glossdef>
+                <para>
+                    A list of packages that extends the usability of a package
+                    being built.
+                    The package being built does not depend on this list of
+                    packages in order to successfully build, but needs them for
+                    the extended usability.
+                    To specify runtime dependencies for packages, see the
+                    <filename><link linkend='var-RDEPENDS'>RDEPENDS</link></filename>
+                    variable.
+                </para>
+
+                <para>
+                    BitBake supports specifying versioned recommends.
+                    Although the syntax varies depending on the packaging
+                    format, BitBake hides these differences from you.
+                    Here is the general syntax to specify versions with
+                    the <filename>RRECOMMENDS</filename> variable:
+                    <literallayout class='monospaced'>
+     RRECOMMENDS_${PN} = "&lt;package&gt; (&lt;operator&gt; &lt;version&gt;)"
+                    </literallayout>
+                    For <filename>operator</filename>, you can specify the
+                    following:
+                    <literallayout class='monospaced'>
+     =
+     &lt;
+     &gt;
+     &lt;=
+     &gt;=
+                    </literallayout>
+                    For example, the following sets up a recommend on version
+                    1.2 or greater of the package <filename>foo</filename>:
+                    <literallayout class='monospaced'>
+     RRECOMMENDS_${PN} = "foo (>= 1.2)"
+                    </literallayout>
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+    <glossdiv id='var-glossary-s'><title>S</title>
+
+        <glossentry id='var-SECTION'><glossterm>SECTION</glossterm>
+            <glossdef>
+                <para>The section in which packages should be categorized.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-SRC_URI'><glossterm>SRC_URI</glossterm>
+            <glossdef>
+                <para>The list of source files - local or remote.
+                    This variable tells BitBake which bits
+                    to pull in for the build and how to pull them in.
+                    For example, if the recipe or append file only needs to
+                    fetch a tarball from the Internet, the recipe or
+                    append file uses a single <filename>SRC_URI</filename>
+                    entry.
+                    On the other hand, if the recipe or append file needs to
+                    fetch a tarball, apply two patches, and include a custom
+                    file, the recipe or append file would include four
+                    instances of the variable.</para>
+                <para>The following list explains the available URI protocols:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>file://</filename> -</emphasis>
+                            Fetches files, which are usually files shipped with
+                            the
+                            <ulink url='&YOCTO_DOCS_DEV_URL;#metadata'>Metadata</ulink>,
+                            from the local machine.
+                            The path is relative to the
+                            <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>
+                            variable.
+                            Thus, the build system searches, in order, from the
+                            following directories, which are assumed to be a
+                            subdirectories of the directory in which the
+                            recipe file (<filename>.bb</filename>) or
+                            append file (<filename>.bbappend</filename>)
+                            resides:
+                            <itemizedlist>
+                                <listitem><para><emphasis><filename>${BPN}</filename> -</emphasis>
+                                    The base recipe name without any special
+                                    suffix or version numbers.
+                                    </para></listitem>
+                                <listitem><para><emphasis><filename>${BP}</filename> -</emphasis>
+                                    <filename>${BPN}-${PV}</filename>.
+                                    The base recipe name and version but without
+                                    any special package name suffix.
+                                    </para></listitem>
+                                <listitem><para><emphasis>files -</emphasis>
+                                    Files within a directory, which is named
+                                    <filename>files</filename> and is also
+                                    alongside the recipe or append file.
+                                    </para></listitem>
+                            </itemizedlist>
+                            <note>
+                                If you want the build system to pick up files
+                                specified through a
+                                <filename>SRC_URI</filename>
+                                statement from your append file, you need to be
+                                sure to extend the
+                                <filename>FILESPATH</filename>
+                                variable by also using the
+                                <filename>FILESEXTRAPATHS</filename>
+                                variable from within your append file.
+                            </note>
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>bzr://</filename> -</emphasis> Fetches files from a
+                            Bazaar revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>git://</filename> -</emphasis> Fetches files from a
+                            Git revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>osc://</filename> -</emphasis> Fetches files from
+                            an OSC (OpenSUSE Build service) revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>repo://</filename> -</emphasis> Fetches files from
+                            a repo (Git) repository.</para></listitem>
+                        <listitem><para><emphasis><filename>svk://</filename> -</emphasis> Fetches files from
+                            an SVK revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>http://</filename> -</emphasis> Fetches files from
+                            the Internet using <filename>http</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>https://</filename> -</emphasis> Fetches files
+                            from the Internet using <filename>https</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>ftp://</filename> -</emphasis> Fetches files
+                            from the Internet using <filename>ftp</filename>.</para></listitem>
+                        <listitem><para><emphasis><filename>cvs://</filename> -</emphasis> Fetches files from
+                            a CVS revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>hg://</filename> -</emphasis> Fetches files from
+                            a Mercurial (<filename>hg</filename>) revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>p4://</filename> -</emphasis> Fetches files from
+                            a Perforce (<filename>p4</filename>) revision control repository.</para></listitem>
+                        <listitem><para><emphasis><filename>ssh://</filename> -</emphasis> Fetches files from
+                            a secure shell.</para></listitem>
+                        <listitem><para><emphasis><filename>svn://</filename> -</emphasis> Fetches files from
+                            a Subversion (<filename>svn</filename>) revision control repository.</para></listitem>
+                    </itemizedlist>
+                </para>
+                <para>Standard and recipe-specific options for <filename>SRC_URI</filename> exist.
+                    Here are standard options:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>apply</filename> -</emphasis> Whether to apply
+                            the patch or not.
+                            The default action is to apply the patch.</para></listitem>
+                        <listitem><para><emphasis><filename>striplevel</filename> -</emphasis> Which
+                            striplevel to use when applying the patch.
+                            The default level is 1.</para></listitem>
+                        <listitem><para><emphasis><filename>patchdir</filename> -</emphasis> Specifies
+                            the directory in which the patch should be applied.
+                            The default is <filename>${S}</filename>.
+                            </para></listitem>
+                    </itemizedlist>
+                </para>
+                <para>Here are options specific to recipes building code from a revision control system:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>mindate</filename> -</emphasis>
+                            Apply the patch only if
+                            <link linkend='var-SRCDATE'><filename>SRCDATE</filename></link>
+                            is equal to or greater than <filename>mindate</filename>.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>maxdate</filename> -</emphasis>
+                            Apply the patch only if <filename>SRCDATE</filename>
+                            is not later than <filename>mindate</filename>.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>minrev</filename> -</emphasis>
+                            Apply the patch only if <filename>SRCREV</filename>
+                            is equal to or greater than <filename>minrev</filename>.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>maxrev</filename> -</emphasis>
+                            Apply the patch only if <filename>SRCREV</filename>
+                            is not later than <filename>maxrev</filename>.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>rev</filename> -</emphasis>
+                            Apply the patch only if <filename>SRCREV</filename>
+                            is equal to <filename>rev</filename>.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>notrev</filename> -</emphasis>
+                            Apply the patch only if <filename>SRCREV</filename>
+                            is not equal to <filename>rev</filename>.
+                            </para></listitem>
+                    </itemizedlist>
+                </para>
+                <para>Here are some additional options worth mentioning:
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>unpack</filename> -</emphasis> Controls
+                            whether or not to unpack the file if it is an archive.
+                            The default action is to unpack the file.</para></listitem>
+                        <listitem><para><emphasis><filename>subdir</filename> -</emphasis> Places the file
+                            (or extracts its contents) into the specified
+                            subdirectory of <filename>WORKDIR</filename>.
+                            This option is useful for unusual tarballs or other archives that
+                            do not have their files already in a subdirectory within the archive.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>name</filename> -</emphasis> Specifies a
+                            name to be used for association with <filename>SRC_URI</filename> checksums
+                            when you have more than one file specified in <filename>SRC_URI</filename>.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>downloadfilename</filename> -</emphasis> Specifies
+                            the filename used when storing the downloaded file.</para></listitem>
+                    </itemizedlist>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-SRCDATE'><glossterm>SRCDATE</glossterm>
+            <glossdef>
+                <para>
+                    The date of the source code used to build the package.
+                    This variable applies only if the source was fetched from a Source Code Manager (SCM).
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-SRCREV'><glossterm>SRCREV</glossterm>
+            <glossdef>
+                <para>
+                    The revision of the source code used to build the package.
+                    This variable applies to Subversion, Git, Mercurial and Bazaar
+                    only.
+                    Note that if you wish to build a fixed revision and you wish
+                    to avoid performing a query on the remote repository every time
+                    BitBake parses your recipe, you should specify a <filename>SRCREV</filename> that is a
+                    full revision identifier and not just a tag.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-STAMP'><glossterm>STAMP</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the base path used to create recipe stamp files.
+                    The path to an actual stamp file is constructed by evaluating this
+                    string and then appending additional information.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-SUMMARY'><glossterm>SUMMARY</glossterm>
+            <glossdef>
+                <para>
+                    A short (72 characters or less) summary for the recipe.
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+    <glossdiv id='var-glossary-t'><title>T</title>
+
+        <glossentry id='var-T'><glossterm>T</glossterm>
+            <glossdef>
+                <para>This variable points to a directory were BitBake places
+                    temporary files, which consist mostly of task logs and
+                    scripts, when building a particular recipe.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-TOPDIR'><glossterm>TOPDIR</glossterm>
+            <glossdef>
+                <para>
+                    This variable points to the
+                    <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>Build Directory</ulink>.
+                    BitBake automatically sets this variable.
+                </para>
+            </glossdef>
+        </glossentry>
+
+    </glossdiv>
+
+<!--
+    <glossdiv id='var-glossary-u'><title>U</title>
+    </glossdiv>
+
+    <glossdiv id='var-glossary-v'><title>V</title>
+   </glossdiv>
+
+    <glossdiv id='var-glossary-w'><title>W</title>
+    </glossdiv>
+
+    <glossdiv id='var-glossary-x'><title>X</title>
+    </glossdiv>
+
+    <glossdiv id='var-glossary-y'><title>Y</title>
+    </glossdiv>
+
+    <glossdiv id='var-glossary-z'><title>Z</title>
+    </glossdiv>
+-->
+
+
+</glossary>
+</chapter>
+<!--
+vim: expandtab tw=80 ts=4
+-->

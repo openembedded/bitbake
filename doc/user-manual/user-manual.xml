@@ -81,4 +81,6 @@
 
     <xi:include href="user-manual-bitbakecommand.xml"/>
 
+    <xi:include href="user-manual-ref-variables.xml"/>
+
 </book>
