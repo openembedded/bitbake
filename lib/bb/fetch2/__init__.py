@@ -867,12 +867,6 @@ def srcrev_internal_helper(ud, d, name):
         c) None if not specified
     """
 
-    if 'rev' in ud.parm:
-        return ud.parm['rev']
-
-    if 'tag' in ud.parm:
-        return ud.parm['tag']
-
     srcrev = None
     pn = d.getVar("PN", True)
     attempts = []
@@ -888,6 +882,20 @@ def srcrev_internal_helper(ud, d, name):
         srcrev = d.getVar(a, True)              
         if srcrev and srcrev != "INVALID":
             break
+
+    if 'rev' in ud.parm and 'tag' in ud.parm:
+        raise FetchError("Please specify a ;rev= parameter or a ;tag= parameter in the url %s but not both." % (ud.url))
+
+    if 'rev' in ud.parm or 'tag' in ud.parm:
+        if 'rev' in ud.parm:
+            parmrev = ud.parm['rev']
+        else:
+            parmrev = ud.parm['tag']
+        if srcrev == "INVALID" or not srcrev:
+            return parmrev
+        if srcrev != parmrev:
+            raise FetchError("Conflicting revisions (%s from SRCREV and %s from the url) found, please spcify one valid value" % (srcrev, parmrev))
+        return parmrev
 
     rev = srcrev
     if rev == "INVALID" or not rev:

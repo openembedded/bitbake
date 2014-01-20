@@ -382,6 +382,21 @@ class FetcherNetworkTest(FetcherTest):
             url1 = url2 = "git://git.openembedded.org/bitbake"
             self.gitfetcher(url1, url2)
 
+        def test_gitfetch_goodsrcrev(self):
+            # SRCREV is set but matches rev= parameter
+            url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5"
+            self.gitfetcher(url1, url2)
+
+        def test_gitfetch_badsrcrev(self):
+            # SRCREV is set but does not match rev= parameter
+            url1 = url2 = "git://git.openembedded.org/bitbake;rev=dead05b0b4ba0959fe0624d2a4885d7b70426da5"
+            self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
+
+        def test_gitfetch_tagandrev(self):
+            # SRCREV is set but does not match rev= parameter
+            url1 = url2 = "git://git.openembedded.org/bitbake;rev=270a05b0b4ba0959fe0624d2a4885d7b70426da5;tag=270a05b0b4ba0959fe0624d2a4885d7b70426da5"
+            self.assertRaises(bb.fetch.FetchError, self.gitfetcher, url1, url2)
+
         def test_gitfetch_premirror(self):
             url1 = "git://git.openembedded.org/bitbake"
             url2 = "git://someserver.org/bitbake"
