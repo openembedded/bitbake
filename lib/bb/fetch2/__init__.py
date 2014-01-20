@@ -873,17 +873,24 @@ def srcrev_internal_helper(ud, d, name):
     if 'tag' in ud.parm:
         return ud.parm['tag']
 
-    rev = None
+    srcrev = None
     pn = d.getVar("PN", True)
+    attempts = []
+    if name != '' and pn:
+        attempts.append("SRCREV_%s_pn-%s" % (name, pn))
     if name != '':
-        rev = d.getVar("SRCREV_%s_pn-%s" % (name, pn), True)
-        if not rev:
-            rev = d.getVar("SRCREV_%s" % name, True)
-    if not rev:
-        rev = d.getVar("SRCREV_pn-%s" % pn, True)
-    if not rev:
-        rev = d.getVar("SRCREV", True)
-    if rev == "INVALID":
+        attempts.append("SRCREV_%s" % name)
+    if pn:
+        attempts.append("SRCREV_pn-%s" % pn)
+    attempts.append("SRCREV")
+
+    for a in attempts:
+        srcrev = d.getVar(a, True)              
+        if srcrev and srcrev != "INVALID":
+            break
+
+    rev = srcrev
+    if rev == "INVALID" or not rev:
         var = "SRCREV_pn-%s" % pn
         if name != '':
             var = "SRCREV_%s_pn-%s" % (name, pn)
