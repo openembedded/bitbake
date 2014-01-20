@@ -21,11 +21,15 @@
 
 # Django settings for Toaster project.
 
+import os, re
+
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 # Set to True to see the SQL queries in console
 SQL_DEBUG = False
+if os.environ.get("TOASTER_SQLDEBUG", None) is not None:
+    SQL_DEBUG = True
 
 
 ADMINS = (
@@ -46,7 +50,6 @@ DATABASES = {
 }
 
 # Reinterpret database settings if we have DATABASE_URL environment variable defined
-import os, re
 
 if 'DATABASE_URL' in os.environ:
     dburl = os.environ['DATABASE_URL']
@@ -212,6 +215,9 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+from os.path import dirname as DN
+SITE_ROOT=DN(DN(os.path.abspath(__file__)))
+
 ROOT_URLCONF = 'toastermain.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
@@ -244,6 +250,19 @@ INSTALLED_APPS = (
     'toastermain',
     'south',
 )
+
+
+# Load django-fresh is TOASTER_DEVEL is set, and the module is available
+FRESH_ENABLED = False
+if os.environ.get('TOASTER_DEVEL', None) is not None:
+    try:
+        import fresh
+        MIDDLEWARE_CLASSES = MIDDLEWARE_CLASSES + ("fresh.middleware.FreshMiddleware",)
+        INSTALLED_APPS = INSTALLED_APPS + ('fresh',)
+        FRESH_ENABLED = True
+    except:
+        pass
+
 
 SOUTH_TESTS_MIGRATE = False
 
@@ -286,7 +305,7 @@ LOGGING = {
     },
     'formatters': {
         'datetime': {
-            'format': 'DB %(asctime)s %(message)s'
+            'format': '%(levelname)s %(asctime)s %(message)s'
         }
     },
     'handlers': {
@@ -302,6 +321,10 @@ LOGGING = {
         }
     },
     'loggers': {
+        'toaster' : {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',

@@ -32,6 +32,10 @@ from toastermain import settings
 
 from bbcontroller import BuildEnvironmentController, ShellCmdException, BuildSetupException, _getgitcheckoutdirectoryname
 
+import logging
+logger = logging.getLogger("toaster")
+
+
 class LocalhostBEController(BuildEnvironmentController):
     """ Implementation of the BuildEnvironmentController for the localhost;
         this controller manages the default build directory,
@@ -56,8 +60,10 @@ class LocalhostBEController(BuildEnvironmentController):
                 err = "command: %s \n%s" % (command, out)
             else:
                 err = "command: %s \n%s" % (command, err)
+            logger.debug("localhostbecontroller: shellcmd error %s" % err)
             raise ShellCmdException(err)
         else:
+            logger.debug("localhostbecontroller: shellcmd success")
             return out
 
     def _createdirpath(self, path):
@@ -90,7 +96,7 @@ class LocalhostBEController(BuildEnvironmentController):
         for i in self._shellcmd(cmd).split("\n"):
             if i.startswith("Bitbake server address"):
                 port = i.split(" ")[-1]
-                print "Found bitbake server port ", port
+                logger.debug("localhostbecontroller: Found bitbake server port %s" % port)
 
         def _toaster_ui_started(filepath):
             if not os.path.exists(filepath):
@@ -103,10 +109,10 @@ class LocalhostBEController(BuildEnvironmentController):
 
         while not _toaster_ui_started(os.path.join(self.be.builddir, "toaster_ui.log")):
             import time
-            print "DEBUG: Waiting server to start"
+            logger.debug("localhostbecontroller: Waiting bitbake server to start")
             time.sleep(0.5)
 
-        print("DEBUG: Started server")
+        logger.debug("localhostbecontroller: Started bitbake server")
         assert self.be.sourcedir and os.path.exists(self.be.builddir)
         self.be.bbaddress = "localhost"
         self.be.bbport = port
@@ -116,11 +122,11 @@ class LocalhostBEController(BuildEnvironmentController):
     def stopBBServer(self):
         assert self.pokydirname and os.path.exists(self.pokydirname)
         assert self.islayerset
-        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && %s source toaster stop\"" %
+        self._shellcmd("bash -c \"source %s/oe-init-build-env %s && %s source toaster stop\"" %
             (self.pokydirname, self.be.builddir, (lambda: "" if self.be.bbtoken is None else "BBTOKEN=%s" % self.be.bbtoken)()))
         self.be.bbstate = BuildEnvironment.SERVER_STOPPED
         self.be.save()
-        print "Stopped server"
+        logger.debug("localhostbecontroller: Stopped bitbake server")
 
     def setLayers(self, bitbakes, layers):
         """ a word of attention: by convention, the first layer for any build will be poky! """
@@ -149,12 +155,13 @@ class LocalhostBEController(BuildEnvironmentController):
                     raise BuildSetupException("More than one commit per git url, unsupported configuration: \n%s" % pprint.pformat(gitrepos))
 
 
+        logger.debug("localhostbecontroller, our git repos are %s" % gitrepos)
         layerlist = []
 
         # 2. checkout the repositories
         for giturl in gitrepos.keys():
             localdirname = os.path.join(self.be.sourcedir, _getgitcheckoutdirectoryname(giturl))
-            print "DEBUG: giturl ", giturl ,"checking out in current directory", localdirname
+            logger.debug("localhostbecontroller: giturl %s checking out in current directory %s" % (giturl, localdirname))
 
             # make sure our directory is a git repository
             if os.path.exists(localdirname):
@@ -167,17 +174,17 @@ class LocalhostBEController(BuildEnvironmentController):
 
             # branch magic name "HEAD" will inhibit checkout
             if commit != "HEAD":
-                print "DEBUG: checking out commit ", commit, "to", localdirname
+                logger.debug("localhostbecontroller: checking out commit %s to %s " % (commit, localdirname))
                 self._shellcmd("git fetch --all && git checkout \"%s\"" % commit , localdirname)
 
             # take the localdirname as poky dir if we can find the oe-init-build-env
             if self.pokydirname is None and os.path.exists(os.path.join(localdirname, "oe-init-build-env")):
-                print "DEBUG: selected poky dir name", localdirname
+                logger.debug("localhostbecontroller: selected poky dir name %s" % localdirname)
                 self.pokydirname = localdirname
 
                 # make sure we have a working bitbake
                 if not os.path.exists(os.path.join(self.pokydirname, 'bitbake')):
-                    print "DEBUG: checking bitbake into the poky dirname %s " % self.pokydirname
+                    logger.debug("localhostbecontroller: checking bitbake into the poky dirname %s " % self.pokydirname)
                     self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbakes[0].commit, bitbakes[0].giturl, os.path.join(self.pokydirname, 'bitbake')))
 
             # verify our repositories
@@ -189,7 +196,7 @@ class LocalhostBEController(BuildEnvironmentController):
                 if name != "bitbake":
                     layerlist.append(localdirpath.rstrip("/"))
 
-        print "DEBUG: current layer list ", layerlist
+        logger.debug("localhostbecontroller: current layer list %s " % layerlist)
 
         # 3. configure the build environment, so we have a conf/bblayers.conf
         assert self.pokydirname is not None

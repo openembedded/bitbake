@@ -1,7 +1,7 @@
 from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException
-from bldcontrol.models import BuildRequest, BuildEnvironment
+from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
 from orm.models import ToasterSetting
 import os
 

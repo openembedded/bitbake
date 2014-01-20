@@ -4,6 +4,9 @@ from orm.models import Build
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException, BuildSetupException
 from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
 import os
+import logging
+
+logger = logging.getLogger("toaster")
 
 class Command(NoArgsCommand):
     args    = ""
@@ -32,6 +35,7 @@ class Command(NoArgsCommand):
                 # select the build environment and the request to build
                 br = self._selectBuildRequest()
             except IndexError as e:
+                # logger.debug("runbuilds: No build request")
                 return
             try:
                 bec = self._selectBuildEnvironment()
@@ -39,10 +43,10 @@ class Command(NoArgsCommand):
                 # we could not find a BEC; postpone the BR
                 br.state = BuildRequest.REQ_QUEUED
                 br.save()
-                print "No build env"
+                logger.debug("runbuilds: No build env")
                 return
 
-            print "Build %s, Environment %s" % (br, bec.be)
+            logger.debug("runbuilds: starting build %s, environment %s" % (br, bec.be))
             # let the build request know where it is being executed
             br.environment = bec.be
             br.save()
@@ -63,7 +67,7 @@ class Command(NoArgsCommand):
                 task = None
             bbctrl.build(list(map(lambda x:x.target, br.brtarget_set.all())), task)
 
-            print "Build launched, exiting"
+            logger.debug("runbuilds: Build launched, exiting")
             # disconnect from the server
             bbctrl.disconnect()
 
@@ -71,7 +75,7 @@ class Command(NoArgsCommand):
 
 
         except Exception as e:
-            print " EE Error executing shell command\n", e
+            logger.error("runbuilds: Error executing shell command %s" % e)
             traceback.print_exc(e)
             BRError.objects.create(req = br,
                 errtype = str(type(e)),
@@ -81,6 +85,7 @@ class Command(NoArgsCommand):
             br.save()
             bec.be.lock = BuildEnvironment.LOCK_FREE
             bec.be.save()
+
 
 
     def cleanup(self):

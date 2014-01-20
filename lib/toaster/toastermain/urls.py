@@ -44,11 +44,15 @@ urlpatterns = patterns('',
 )
 
 import toastermain.settings
+
+if toastermain.settings.FRESH_ENABLED:
+    urlpatterns.insert(1, url(r'', include('fresh.urls')))
+
 if toastermain.settings.MANAGED:
-    urlpatterns = urlpatterns + [
+    urlpatterns = [
         # Uncomment the next line to enable the admin:
         url(r'^admin/', include(admin.site.urls)),
-    ]
+    ] + urlpatterns
 # Automatically discover urls.py in various apps, beside our own
 # and map module directories to the patterns
 
@@ -61,4 +65,4 @@ for t in os.walk(os.path.dirname(currentdir)):
 
     if "urls.py" in t[2] and t[0] != currentdir:
         modulename = os.path.basename(t[0])
-        urlpatterns.append( url(r'^' + modulename + '/', include ( modulename + '.urls')))
+        urlpatterns.insert(0, url(r'^' + modulename + '/', include ( modulename + '.urls')))

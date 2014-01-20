@@ -62,15 +62,6 @@ def _log_settings_from_server(server):
 
 def main(server, eventHandler, params ):
 
-    includelogs, loglines = _log_settings_from_server(server)
-
-    # verify and warn
-    build_history_enabled = True
-    inheritlist, error = server.runCommand(["getVariable", "INHERIT"])
-    if not "buildhistory" in inheritlist.split(" "):
-        logger.warn("buildhistory is not enabled. Please enable INHERIT += \"buildhistory\" to see image details.")
-        build_history_enabled = False
-
     helper = uihelper.BBUIHelper()
 
     console = logging.StreamHandler(sys.stdout)
@@ -79,6 +70,16 @@ def main(server, eventHandler, params ):
     bb.msg.addDefaultlogFilter(console)
     console.setFormatter(format)
     logger.addHandler(console)
+
+    includelogs, loglines = _log_settings_from_server(server)
+
+    # verify and warn
+    build_history_enabled = True
+    inheritlist, error = server.runCommand(["getVariable", "INHERIT"])
+
+    if not "buildhistory" in inheritlist.split(" "):
+        logger.warn("buildhistory is not enabled. Please enable INHERIT += \"buildhistory\" to see image details.")
+        build_history_enabled = False
 
     if not params.observe_only:
         logger.error("ToasterUI can only work in observer mode")

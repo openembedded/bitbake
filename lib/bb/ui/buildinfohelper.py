@@ -33,6 +33,11 @@ from toaster.orm.models import Task_Dependency, Package_Dependency
 from toaster.orm.models import Recipe_Dependency
 from bb.msg import BBLogFormatter as format
 from django.db import models
+import logging
+
+
+logger = logging.getLogger("BitBake")
+
 
 class NotExisting(Exception):
     pass
@@ -115,7 +120,9 @@ class ORMWrapper(object):
                                     build_name=build_info['build_name'],
                                     bitbake_version=build_info['bitbake_version'])
 
+        logger.debug(1, "buildinfohelper: build is created %s" % build)
         if brbe is not None:
+            logger.debug(1, "buildinfohelper: brbe is %s" % brbe)
             from bldcontrol.models import BuildEnvironment, BuildRequest
             br, be = brbe.split(":")
 
@@ -605,6 +612,7 @@ class BuildInfoHelper(object):
         self.has_build_history = has_build_history
         self.tmp_dir = self.server.runCommand(["getVariable", "TMPDIR"])[0]
         self.brbe    = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
+        logger.debug(1, "buildinfohelper: Build info helper inited %s" % vars(self))
 
 
     def _configure_django(self):
@@ -1110,10 +1118,10 @@ class BuildInfoHelper(object):
         if 'build' in self.internal_state and 'backlog' in self.internal_state:
             if len(self.internal_state['backlog']):
                 tempevent = self.internal_state['backlog'].pop()
-                print "DEBUG: Saving stored event ", tempevent
+                logger.debug(1, "buildinfohelper: Saving stored event %s " % tempevent)
                 self.store_log_event(tempevent)
             else:
-                print "ERROR: Events not saved: \n", self.internal_state['backlog']
+                logger.error("buildinfohelper: Events not saved: %s" % self.internal_state['backlog'])
                 del self.internal_state['backlog']
 
         log_information = {}
