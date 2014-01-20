@@ -307,7 +307,8 @@ def builds(request):
                 {'name': 'Log',
                  'dclass': "span4",
                  'qhelp': "The location in disk of the build main log file",
-                 'clclass': 'log', 'hidden': 1
+                 'clclass': 'log', 'hidden': 1,
+                 'orderfield': _get_toggle_order(request, "cooker_log_path"),
                 },
                 {'name': 'Output', 'clclass': 'output',
                  'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",

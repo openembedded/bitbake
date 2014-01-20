@@ -19,7 +19,7 @@
             <div class="lead span5">
                 {%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-                <a href="{%url 'builddashboard' build.pk%}">
+                <a href="{%url 'builddashboard' build.pk%}" class="{%if build.outcome == build.SUCCEEDED %}success{%else%}error{%endif%}">
     {% endif %}
                 <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|naturaltime}})</span>
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
@@ -55,9 +55,9 @@
 
   <div class="page-header" style="margin-top:40px;">
      <h1>
-      {% if request.GET.filter or request.GET.search and objects.ocount > 0  %}
-          {{objects.ocount}} build{{objects.ocount|pluralize}} found
-      {%elif objects.ocount == 0%}
+      {% if request.GET.filter or request.GET.search and objects.count > 0  %}
+          {{objects.paginator.count}} build{{objects.paginator.count|pluralize}} found
+      {%elif objects.paginator.count == 0%}
           No builds
       {%else%}
           All builds
@@ -65,12 +65,12 @@
      </h1>
   </div>
 
- {% if objects.ocount == 0 %}
+ {% if objects.paginator.count == 0 %}
   <div class="row-fluid">
       <div class="alert">
-      <form class="no-results">
+      <form class="no-results" id="searchform">
           <div class="input-append">
-              <input class="input-xxlarge" type="text" placeholder="{{request.GET.search}}" />
+              <input id="search" name="search" class="input-xxlarge" type="text" placeholder="{{request.GET.search}}" /><a href="javascript:$('#search').val('');searchform.submit()" class="add-on"><i class="icon-remove"></i></a>
               <input class="btn" type="submit" value="Search"/>
               <button class="btn btn-link" onclick="javascript:reload_params({'search':'', 'filter':''})">Show all builds</button>
           </div>
@@ -89,7 +89,7 @@
             <td class="machine"><a href="{% url "builddashboard" build.id %}">{{build.machine}}</a></td>
             <td class="started_on"><a href="{% url "builddashboard" build.id %}">{{build.started_on|date:"d/m/y H:i"}}</a></td>
             <td class="completed_on"><a href="{% url "builddashboard" build.id %}">{{build.completed_on|date:"d/m/y H:i"}}</a></td>
-            <td class="failed_tasks error">{% query build.task_build outcome=4 order__gt=0 as exectask%}{% if exectask.count == 1 %}{{exectask.0.recipe.name}}.{{exectask.0.task_name}}{% elif exectask.count > 1%}{{exectask.count}}{%endif%}</td>
+            <td class="failed_tasks error">{% query build.task_build outcome=4 order__gt=0 as exectask%}{% if exectask.count == 1 %}<a href="{% url "task" build.id exectask.0.id %}">{{exectask.0.recipe.name}}.{{exectask.0.task_name}}</a>{% elif exectask.count > 1%}<a href="{% url "tasks" build.id %}">{{exectask.count}}</a>{%endif%}</td>
             <td class="errors_no">{% if  build.errors_no %}<a class="errors_no error" href="{% url "builddashboard" build.id %}#errors">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>{%endif%}</td>
             <td class="warnings_no">{% if  build.warnings_no %}<a class="warnings_no warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
             <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent|sectohms}}</a></td>
