@@ -326,8 +326,8 @@ class Git(FetchMethod):
         else:
             username = ""
 
-        cmd = "%s ls-remote %s://%s%s%s %s" % \
-              (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.unresolvedrev[name])
+        cmd = "%s ls-remote %s://%s%s%s refs/heads/%s refs/tags/%s" % \
+              (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.unresolvedrev[name], ud.unresolvedrev[name])
         if ud.proto.lower() != 'file':
             bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
