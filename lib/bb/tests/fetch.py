@@ -274,6 +274,20 @@ class URITest(unittest.TestCase):
             self.assertEqual(uri.username, test['username'])
             self.assertEqual(uri.password, test['password'])
 
+            # make sure changing the values doesn't do anything unexpected
+            uri.username = 'changeme'
+            self.assertEqual(uri.username, 'changeme')
+            self.assertEqual(uri.password, test['password'])
+            uri.password = 'insecure'
+            self.assertEqual(uri.username, 'changeme')
+            self.assertEqual(uri.password, 'insecure')
+
+            # reset back after our trickery
+            uri.userinfo = test['userinfo']
+            self.assertEqual(uri.userinfo, test['userinfo'])
+            self.assertEqual(uri.username, test['username'])
+            self.assertEqual(uri.password, test['password'])
+
             uri.hostname = test['hostname']
             self.assertEqual(uri.hostname, test['hostname'])
             self.assertEqual(uri.hostport, test['hostname'])

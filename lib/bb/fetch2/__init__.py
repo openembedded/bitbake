@@ -321,9 +321,10 @@ class URI(object):
 
     @username.setter
     def username(self, username):
+        password = self.password
         self.userinfo = username
-        if self.password:
-            self.userinfo += ":%s" % self.password
+        if password:
+            self.userinfo += ":%s" % password
 
     @property
     def password(self):
