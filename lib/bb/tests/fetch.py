@@ -243,8 +243,6 @@ class URITest(unittest.TestCase):
             uri.params = test['params']
             self.assertEqual(uri.params, test['params'])
 
-            self.assertEqual(str(uri)+str(uri.relative), str(test['uri'])+str(test['relative']))
-
             self.assertEqual(str(uri), test['uri'])
 
             uri.params = {}
