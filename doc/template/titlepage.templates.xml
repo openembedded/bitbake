@@ -35,7 +35,7 @@
   <t:titlepage-content t:side="recto"
              text-align="center">
 
-    <mediaobject/>	     
+    <mediaobject/>
 
     <title t:named-template="component.title"
 	   param:node="ancestor-or-self::article[1]"
@@ -54,7 +54,7 @@
     <authorgroup space-before="0.5em"
                  font-size="&hsize2;"/>
     <author space-before="0.5em"
-            font-size="&hsize2;" 
+            font-size="&hsize2;"
             space-after="0.8em"/>
 
     <email font-size="&hsize2;"/>
@@ -138,7 +138,16 @@
   <t:titlepage t:element="book" t:wrapper="fo:block">
     <t:titlepage-content t:side="recto">
 
-      <mediaobject/>	     
+      <mediaobject/>
+
+<!--
+
+# If you leave this block of code in then the text title in the
+# <title>BitBake User Manual</title> statement of the
+# user-manual.xml file is rendered on the title page below the
+# image.  Commenting it out gets it out of there yet allows it
+# to be retained in the tab text for the HTML version of the
+# manual.
 
       <title
 	     t:named-template="division.title"
@@ -148,6 +157,7 @@
 	     space-before="&hsize5space;"
 	     font-weight="bold"
 	     font-family="{$title.fontset}"/>
+-->
       <subtitle
 		text-align="center"
 		font-size="&hsize4;"
@@ -163,11 +173,20 @@
     </t:titlepage-content>
 
   <t:titlepage-content t:side="verso">
+<!--
+# If you leave this block of code in then the text title in the
+# <title>BitBake User Manual</title> statement of the
+# user-manual.xml file is rendered on the title page below the
+# image.  Commenting it out gets it out of there yet allows it
+# to be retained in the tab text for the HTML version of the
+# manual.
+
       <title
 	     t:named-template="book.verso.title"
 	     font-size="&hsize2;"
 	     font-weight="bold"
 	     font-family="{$title.fontset}"/>
+-->
       <corpauthor/>
       <authorgroup t:named-template="verso.authorgroup"/>
       <author/>
