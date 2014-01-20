@@ -33,9 +33,6 @@ import glob
 import logging
 import urllib
 import urlparse
-if 'git' not in urlparse.uses_netloc:
-    urlparse.uses_netloc.append('git')
-from urlparse import urlparse
 import operator
 import bb.persist_data, bb.utils
 import bb.checksum
@@ -209,13 +206,25 @@ class URI(object):
         if not uri:
             return
 
-        urlp = urlparse(uri)
+        urlp = urlparse.urlparse(uri)
         self.scheme = urlp.scheme
 
-        # Convert URI to be relative
+        reparse = 0
+
+        # Coerce urlparse to make URI scheme use netloc
+        if not self.scheme in urlparse.uses_netloc:
+            urlparse.uses_params.append(self.scheme)
+            reparse = 1
+
+        # Make urlparse happy(/ier) by converting local resources
+        # to RFC compliant URL format. E.g.:
+        #   file://foo.diff -> file:foo.diff
         if urlp.scheme in self._netloc_forbidden:
             uri = re.sub("(?<=:)//(?!/)", "", uri, 1)
-            urlp = urlparse(uri)
+            reparse = 1
+
+        if reparse:
+            urlp = urlparse.urlparse(uri)
 
         # Identify if the URI is relative or not
         if urlp.scheme in self._relative_schemes and \
