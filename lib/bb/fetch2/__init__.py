@@ -897,17 +897,12 @@ def srcrev_internal_helper(ud, d, name):
             raise FetchError("Conflicting revisions (%s from SRCREV and %s from the url) found, please spcify one valid value" % (srcrev, parmrev))
         return parmrev
 
-    rev = srcrev
-    if rev == "INVALID" or not rev:
-        var = "SRCREV_pn-%s" % pn
-        if name != '':
-            var = "SRCREV_%s_pn-%s" % (name, pn)
-        raise FetchError("Please set %s to a valid value" % var, ud.url)
-    if rev == "AUTOINC":
-        rev = ud.method.latest_revision(ud, d, name)
+    if srcrev == "INVALID" or not srcrev:
+        raise FetchError("Please set a valid SRCREV for url %s (possible key names are %s, or use a ;rev=X URL parameter)" % (str(attempts), ud.url), ud.url)
+    if srcrev == "AUTOINC":
+        srcrev = ud.method.latest_revision(ud, d, name)
 
-    return rev
-
+    return srcrev
 
 def get_checksum_file_list(d):
     """ Get a list of files checksum in SRC_URI
