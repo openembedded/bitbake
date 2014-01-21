@@ -250,7 +250,8 @@ class HobHandler(gobject.GObject):
             self.current_phase = None
             self.run_next_command()
         elif isinstance(event, bb.command.CommandFailed):
-            self.error_msg += event.error
+            if event.error not in ("Forced shutdown", "Stopped build"):
+                self.error_msg += event.error
             self.commands_async = []
             self.display_error()
         elif isinstance(event, (bb.event.ParseStarted,
