@@ -98,7 +98,6 @@ class HobHandler(gobject.GObject):
 
         self.server = server
         self.error_msg = ""
-        self.lastCommand = ""
         self.initcmd = None
         self.parsing = False
 
@@ -113,7 +112,6 @@ class HobHandler(gobject.GObject):
             self.generating = False
 
     def runCommand(self, commandline):
-        self.lastCommand = commandline[0]
         try:
             result, error = self.server.runCommand(commandline)
             if error:
@@ -252,10 +250,7 @@ class HobHandler(gobject.GObject):
             self.current_phase = None
             self.run_next_command()
         elif isinstance(event, bb.command.CommandFailed):
-            if self.error_msg == "":
-                self.error_msg = "The command \"" + self.lastCommand
-                self.error_msg += "\" was sent to bitbake server but it failed. Please"
-                self.error_msg += " check the code executed by this command in bitbake."
+            self.error_msg += event.error
             self.commands_async = []
             self.display_error()
         elif isinstance(event, (bb.event.ParseStarted,
