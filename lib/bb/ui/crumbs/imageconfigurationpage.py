@@ -304,13 +304,14 @@ class ImageConfigurationPage (HobPage):
         self.builder.window.set_cursor(None)
 
     def machine_combo_changed_cb(self, machine_combo):
-        self.builder.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
-        self.builder.wait(0.1) #wait for combo and cursor to update
         self.stopping = False
         self.builder.parsing_warnings = []
         combo_item = machine_combo.get_active_text()
         if not combo_item or combo_item == self.__dummy_machine__:
             return
+
+        self.builder.window.set_cursor(gtk.gdk.Cursor(gtk.gdk.WATCH))
+        self.builder.wait(0.1) #wait for combo and cursor to update
 
         # remove __dummy_machine__ item from the store list after first user selection
         # because it is no longer valid
