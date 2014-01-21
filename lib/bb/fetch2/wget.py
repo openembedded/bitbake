@@ -91,6 +91,10 @@ class Wget(FetchMethod):
         if not os.path.exists(ud.localpath) and not checkonly:
             raise FetchError("The fetch command returned success for url %s but %s doesn't exist?!" % (uri, ud.localpath), uri)
 
+        if not checkonly and os.path.getsize(ud.localpath) == 0:
+            os.remove(ud.localpath)
+            raise FetchError("The fetch of %s resulted in a zero size file?! Deleting and failing since this isn't right." % (uri), uri)
+
         return True
 
     def checkstatus(self, ud, d):
