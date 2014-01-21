@@ -55,7 +55,7 @@
         <glossentry id='var-B'><glossterm>B</glossterm>
             <glossdef>
                 <para>
-                    The directory in which BitBake will execute functions
+                    The directory in which BitBake executes functions
                     during a recipe's build process.
                 </para>
             </glossdef>
@@ -146,7 +146,7 @@
                     below 1 Gbyte or the available free inodes drops below
                     100 Kbytes.
                     Because two directories are provided with the variable, the
-                    build system also issue a
+                    build system also issues a
                     warning when the disk space in the
                     <filename>${SSTATE_DIR}</filename> directory drops
                     below 1 Gbyte or the number of free inodes drops
@@ -295,7 +295,7 @@
                 <para>Lists the names of configured layers.
                     These names are used to find the other <filename>BBFILE_*</filename>
                     variables.
-                    Typically, each layer will append its name to this variable in its
+                    Typically, each layer appends its name to this variable in its
                     <filename>conf/layer.conf</filename> file.
                 </para>
             </glossdef>
@@ -345,7 +345,7 @@
 
         <glossentry id='var-BBFILES'><glossterm>BBFILES</glossterm>
             <glossdef>
-                <para>List of recipe files used by BitBake to build software.</para>
+                <para>List of recipe files BitBake uses to build software.</para>
             </glossdef>
         </glossentry>
 
@@ -435,8 +435,9 @@
         <glossentry id='var-BBPATH'><glossterm>BBPATH</glossterm>
             <glossdef>
                 <para>
-                    Used by BitBake to locate
-                    <filename>.bbclass</filename> and configuration files.
+                    Used by BitBake to locate class
+                    (<filename>.bbclass</filename>) and configuration
+                    (<filename>.conf</filename>) files.
                     This variable is analogous to the
                     <filename>PATH</filename> variable.
                     <note>
@@ -645,17 +646,18 @@
 
         <glossentry id='var-LAYERDEPENDS'><glossterm>LAYERDEPENDS</glossterm>
             <glossdef>
-                <para>Lists the layers that this recipe depends upon, separated by spaces.
+                <para>Lists the layers, separated by spaces, upon which this recipe depends.
                     Optionally, you can specify a specific layer version for a dependency
                     by adding it to the end of the layer name with a colon, (e.g. "anotherlayer:3"
                     to be compared against
                     <link linkend='var-LAYERVERSION'><filename>LAYERVERSION</filename></link><filename>_anotherlayer</filename>
                     in this case).
-                    An error will be produced if any dependency is missing or
-                    the version numbers do not match exactly (if specified).
-                    This variable is used in the <filename>conf/layer.conf</filename> file
-                    and must be suffixed with the name of the specific layer (e.g.
-                    <filename>LAYERDEPENDS_mylayer</filename>).</para>
+                    BitBake produces an error if any dependency is missing or
+                    the version numbers do not match exactly (if specified).</para>
+                <para>
+                    You use this variable in the <filename>conf/layer.conf</filename> file.
+                    You must also use the specific layer name as a suffix
+                    to the variable (e.g. <filename>LAYERDEPENDS_mylayer</filename>).</para>
             </glossdef>
         </glossentry>
 
@@ -671,13 +673,14 @@
         <glossentry id='var-LAYERVERSION'><glossterm>LAYERVERSION</glossterm>
             <glossdef>
                 <para>Optionally specifies the version of a layer as a single number.
-                    You can use this within
+                    You can use this variable within
                     <link linkend='var-LAYERDEPENDS'><filename>LAYERDEPENDS</filename></link>
                     for another layer in order to depend on a specific version
-                    of the layer.
-                    This variable is used in the <filename>conf/layer.conf</filename> file
-                    and must be suffixed with the name of the specific layer (e.g.
-                    <filename>LAYERVERSION_mylayer</filename>).</para>
+                    of the layer.</para>
+                <para>
+                    You use this variable in the <filename>conf/layer.conf</filename> file.
+                    You must also use the specific layer name as a suffix
+                    to the variable (e.g. <filename>LAYERDEPENDS_mylayer</filename>).</para>
             </glossdef>
         </glossentry>
 
@@ -696,7 +699,7 @@
         <glossentry id='var-MIRRORS'><glossterm>MIRRORS</glossterm>
             <glossdef>
                 <para>
-                    Specifies additional paths from which the BitBake gets source code.
+                    Specifies additional paths from which BitBake gets source code.
                     When the build system searches for source code, it first
                     tries the local download directory.
                     If that location fails, the build system tries locations
@@ -732,9 +735,9 @@
                     what variables are overridden after BitBake parses
                     recipes and configuration files.
                     You can find more information on how overrides are handled
-                    in the BitBake Manual that is located at
-                    <filename>bitbake/doc/manual</filename> in the
-                    <ulink url='&YOCTO_DOCS_DEV_URL;#source-directory'>Source Directory</ulink>.
+                    in the
+                    "<link linkend='conditional-syntax-overrides'>Conditional Syntax (Overrides)</link>"
+                    section.
                 </para>
             </glossdef>
         </glossentry>
@@ -744,7 +747,7 @@
 
         <glossentry id='var-PACKAGES'><glossterm>PACKAGES</glossterm>
             <glossdef>
-                <para>The list of packages to be created from the recipe.
+                <para>The list of packages the recipe creates.
                 </para>
             </glossdef>
         </glossentry>
@@ -759,8 +762,8 @@
                     they should be satisfied.
                     For example, if a hard, runtime dependency
                     (<link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>)
-                    of another package is satisfied
-                    at build time through the <filename>PACKAGES_DYNAMIC</filename>
+                    of another package is satisfied during the build
+                    through the <filename>PACKAGES_DYNAMIC</filename>
                     variable, but a package with the module name is never actually
                     produced, then the other package will be broken.
                     Thus, if you attempt to include that package in an image,
@@ -775,7 +778,7 @@
                 <para>
                     The epoch of the recipe.
                     By default, this variable is unset.
-                    The field is used to make upgrades possible when the
+                    The variable is used to make upgrades possible when the
                     versioning scheme changes in some backwards incompatible
                     way.
                 </para>
@@ -831,7 +834,7 @@
                     variable determines which recipe should be given preference.
                     You must always suffix the variable with the
                     <link linkend='var-PN'><filename>PN</filename></link>
-                    you want to select, and you should set the
+                    you want to select, and you should set
                     <link linkend='var-PV'><filename>PV</filename></link>
                     accordingly for precedence.
                     You can use the "<filename>%</filename>" character as a
@@ -870,7 +873,7 @@
                 </para>
 
                 <para>
-                    Typically, you could add a specific server for the
+                    Typically, you would add a specific server for the
                     build system to attempt before any others by adding
                     something like the following to your configuration:
                     <literallayout class='monospaced'>
@@ -915,14 +918,13 @@
                 </para>
 
                 <para>
-                    An example of how the <filename>PRSERV_HOST</filename> variable is
+                    Following is an example of how the <filename>PRSERV_HOST</filename> variable is
                     set:
                     <literallayout class='monospaced'>
      PRSERV_HOST = "localhost:0"
                     </literallayout>
                     You must set the variable if you want to automatically
-                    start a local
-                    <ulink url='&YOCTO_DOCS_DEV_URL;#working-with-a-pr-service'>PR service</ulink>.
+                    start a local PR service.
                     You can set <filename>PRSERV_HOST</filename> to other
                     values to use a remote PR service.
                 </para>
@@ -1083,18 +1085,18 @@
                     to pull in for the build and how to pull them in.
                     For example, if the recipe or append file only needs to
                     fetch a tarball from the Internet, the recipe or
-                    append file uses a single <filename>SRC_URI</filename>
-                    entry.
+                    append file uses a <filename>SRC_URI</filename>
+                    entry that specifies just the tarball.
                     On the other hand, if the recipe or append file needs to
                     fetch a tarball, apply two patches, and include a custom
-                    file, the recipe or append file would include four
-                    instances of the variable.</para>
+                    file, the recipe or append file needs an
+                    <filename>SRC_URI</filename> variable that specifies all
+                    those sources.</para>
                 <para>The following list explains the available URI protocols:
                     <itemizedlist>
                         <listitem><para><emphasis><filename>file://</filename> -</emphasis>
                             Fetches files, which are usually files shipped with
-                            the
-                            <ulink url='&YOCTO_DOCS_DEV_URL;#metadata'>Metadata</ulink>,
+                            the metadata,
                             from the local machine.
                             The path is relative to the
                             <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>
@@ -1116,7 +1118,7 @@
                                     any special package name suffix.
                                     </para></listitem>
                                 <listitem><para><emphasis>files -</emphasis>
-                                    Files within a directory, which is named
+                                    Files within a directory that is named
                                     <filename>files</filename> and is also
                                     alongside the recipe or append file.
                                     </para></listitem>
@@ -1144,11 +1146,11 @@
                         <listitem><para><emphasis><filename>svk://</filename> -</emphasis> Fetches files from
                             an SVK revision control repository.</para></listitem>
                         <listitem><para><emphasis><filename>http://</filename> -</emphasis> Fetches files from
-                            the Internet using <filename>http</filename>.</para></listitem>
+                            the Internet using HTTP.</para></listitem>
                         <listitem><para><emphasis><filename>https://</filename> -</emphasis> Fetches files
-                            from the Internet using <filename>https</filename>.</para></listitem>
+                            from the Internet using HTTPS.</para></listitem>
                         <listitem><para><emphasis><filename>ftp://</filename> -</emphasis> Fetches files
-                            from the Internet using <filename>ftp</filename>.</para></listitem>
+                            from the Internet using FTP.</para></listitem>
                         <listitem><para><emphasis><filename>cvs://</filename> -</emphasis> Fetches files from
                             a CVS revision control repository.</para></listitem>
                         <listitem><para><emphasis><filename>hg://</filename> -</emphasis> Fetches files from
@@ -1240,9 +1242,8 @@
             <glossdef>
                 <para>
                     The revision of the source code used to build the package.
-                    This variable applies to Subversion, Git, Mercurial and Bazaar
-                    only.
-                    Note that if you wish to build a fixed revision and you wish
+                    This variable applies only when using Subversion, Git, Mercurial and Bazaar.
+                    If you want to build a fixed revision and you want
                     to avoid performing a query on the remote repository every time
                     BitBake parses your recipe, you should specify a <filename>SRCREV</filename> that is a
                     full revision identifier and not just a tag.
@@ -1263,7 +1264,7 @@
         <glossentry id='var-SUMMARY'><glossterm>SUMMARY</glossterm>
             <glossdef>
                 <para>
-                    A short (72 characters or less) summary for the recipe.
+                    A short summary for the recipe, which is 72 characters or less.
                 </para>
             </glossdef>
         </glossentry>
@@ -1274,7 +1275,7 @@
 
         <glossentry id='var-T'><glossterm>T</glossterm>
             <glossdef>
-                <para>This variable points to a directory were BitBake places
+                <para>Points to a directory were BitBake places
                     temporary files, which consist mostly of task logs and
                     scripts, when building a particular recipe.
                 </para>
@@ -1284,7 +1285,7 @@
         <glossentry id='var-TOPDIR'><glossterm>TOPDIR</glossterm>
             <glossdef>
                 <para>
-                    This variable points to the
+                    Points to the
                     <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>Build Directory</ulink>.
                     BitBake automatically sets this variable.
                 </para>
