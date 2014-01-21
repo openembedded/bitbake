@@ -359,7 +359,7 @@
             <glossdef>
                 <para>Lists the layers to enable during the build.
                     This variable is defined in the <filename>bblayers.conf</filename> configuration
-                    file in the <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>Build Directory</ulink>.
+                    file in the build directory.
                     Here is an example:
                     <literallayout class='monospaced'>
      BBLAYERS = " \
@@ -442,10 +442,10 @@
                     <filename>PATH</filename> variable.
                     <note>
                         If you run BitBake from a directory outside of the
-                        <ulink url='&YOCTO_DOCS_DEV_URL;build-directory'>Build Directory</ulink>,
+                        build directory,
                         you must be sure to set
                         <filename>BBPATH</filename> to point to the
-                        Build Directory.
+                        build directory.
                         Set the variable as you would any environment variable
                         and then run BitBake:
                         <literallayout class='monospaced'>
@@ -1285,8 +1285,7 @@
         <glossentry id='var-TOPDIR'><glossterm>TOPDIR</glossterm>
             <glossdef>
                 <para>
-                    Points to the
-                    <ulink url='&YOCTO_DOCS_DEV_URL;#build-directory'>Build Directory</ulink>.
+                    Points to the build directory.
                     BitBake automatically sets this variable.
                 </para>
             </glossdef>
