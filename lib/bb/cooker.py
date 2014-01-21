@@ -1245,7 +1245,8 @@ class BBCooker:
             return
 
         if self.state in (state.shutdown, state.forceshutdown):
-            self.parser.shutdown(clean=False, force = True)
+            if hasattr(self.parser, 'shutdown'):
+                self.parser.shutdown(clean=False, force = True)
             raise bb.BBHandledException()
 
         if self.state != state.parsing:
