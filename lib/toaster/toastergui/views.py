@@ -244,11 +244,13 @@ def builds(request):
                   # filter field will set a filter on that column with the specs in the filter description
                   # the class field in the filter has no relation with clclass; the control different aspects of the UI
                   # still, it is recommended for the values to be identical for easy tracking in the generated HTML
-                 'filter' : {'class' : 'outcome', 'label': 'Show only', 'options' : {
-                        'Successful builds': 'outcome:' + str(Build.SUCCEEDED),  # this is the field search expression
-                        'Failed builds': 'outcome:'+ str(Build.FAILED),
-                    }
-                  }
+                 'filter' : {'class' : 'outcome',
+                             'label': 'Show:',
+                             'options' : [
+                                         ('Successful builds', 'outcome:' + str(Build.SUCCEEDED)),  # this is the field search expression
+                                         ('Failed builds', 'outcome:'+ str(Build.FAILED)),
+                                         ]
+                            }
                 },
                 {'name': 'Target ',                                                 # default column, disabled box, with just the name in the list
                  'qhelp': "This is the build target(s): one or more recipes or image recipes",
@@ -262,43 +264,58 @@ def builds(request):
                 {'name': 'Started on ', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
                  'qhelp': "The date and time you started the build",
                  'orderfield': _get_toggle_order(request, "started_on", True),
-                 'filter' : {'class' : 'started_on', 'label': 'Show only builds started', 'options' : {
-                        'Today' : 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d"),
-                        'Yesterday' : 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"),
-                        'Within one week' : 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"),
-                    }}
+                 'filter' : {'class' : 'started_on',
+                             'label': 'Show:',
+                             'options' : [
+                                         ("Today's builds" , 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d")),
+                                         ("Yesterday's builds", 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d")),
+                                         ("This week's builds", 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d")),
+                                         ]
+                            }
                 },
                 {'name': 'Completed on ',
                  'qhelp': "The date and time the build finished",
                  'orderfield': _get_toggle_order(request, "completed_on", True),
-                 'filter' : {'class' : 'completed_on', 'label': 'Show only builds completed', 'options' : {
-                        'Today' : 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"),
-                        'Yesterday' : 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"),
-                        'Within one week' : 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"),
-                    }}
+                 'filter' : {'class' : 'completed_on', 
+                             'label': 'Show:', 
+                             'options' : [
+                                         ("Today's builds", 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d")),
+                                         ("Yesterday's builds", 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d")),
+                                         ("This week's builds", 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d")),
+                                         ]
+                            }
                 },
                 {'name': 'Failed tasks ', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
                  'qhelp': "How many tasks failed during the build",
-                 'filter' : {'class' : 'failed_tasks', 'label': 'Show only ', 'options' : {
-                        'Builds with failed tasks' : 'task_build__outcome:4',
-                        'Builds without failed tasks' : 'task_build__outcome:NOT4',
-                    }}
+                 'filter' : {'class' : 'failed_tasks',
+                             'label': 'Show:',
+                             'options' : [
+                                         ('Builds with failed tasks', 'task_build__outcome:4'),
+                                         ('Builds without failed tasks', 'task_build__outcome:NOT4'),
+                                         ]
+                            }
                 },
                 {'name': 'Errors ', 'clclass': 'errors_no',
                  'qhelp': "How many errors were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "errors_no", True),
-                 'filter' : {'class' : 'errors_no', 'label': 'Show only ', 'options' : {
-                        'Builds with errors' : 'errors_no__gte:1',
-                        'Builds without errors' : 'errors_no:0',
-                    }}
+                 'filter' : {'class' : 'errors_no', 
+                             'label': 'Show:', 
+                             'options' : [
+                                         ('Builds with errors', 'errors_no__gte:1'),
+                                         ('Builds without errors', 'errors_no:0'),
+                                         ]
+                            }
                 },
                 {'name': 'Warnings', 'clclass': 'warnings_no',
                  'qhelp': "How many warnigns were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "warnings_no", True),
-                 'filter' : {'class' : 'warnings_no', 'label': 'Show only ', 'options' : {
-                        'Builds with warnings' : 'warnings_no__gte:1',
-                        'Builds without warnings' : 'warnings_no:0',
-                    }}
+                 'filter' : {'class' : 'warnings_no', 
+                             'label': 'Show:', 
+                             'options' : [
+                                         ('Builds with warnings','warnings_no__gte:1'),
+                                         ('Builds without warnings','warnings_no:0'),
+                                         ]
+                            }
                 },
                 {'name': 'Time ', 'clclass': 'time', 'hidden' : 1,
                  'qhelp': "How long it took the build to finish",
