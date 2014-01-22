@@ -14,9 +14,8 @@
 
 <glossary id='ref-variables-glossary'>
 
-
     <para>
-<!--       <link linkend='var-ALLOW_EMPTY'>A</link> -->
+       <link linkend='var-ASSUME_PROVIDED'>A</link>
        <link linkend='var-B'>B</link>
 <!--       <link linkend='var-CFLAGS'>C</link> -->
        <link linkend='var-DEFAULT_PREFERENCE'>D</link>
@@ -44,11 +43,30 @@
 <!--               <link linkend='var-glossary-z'>Z</link>-->
     </para>
 
-
-<!--
     <glossdiv id='var-glossary-a'><title>A</title>
+
+        <glossentry id='var-ASSUME_PROVIDED'><glossterm>ASSUME_PROVIDED</glossterm>
+            <glossdef>
+                <para>
+                    Recipe names
+                    (<link linkend='var-PN'><filename>PN</filename></link>
+                    values) BitBake does not attempt to build.
+                    Instead, BitBake assumes these recipes have already been
+                    built.
+                </para>
+
+                <para>
+                    <filename>ASSUMED_PROVIDED</filename> often specifies
+                    native tools.
+                    A good example is <filename>git-native</filename>, which
+                    allows for the the Git binary from the host to be used
+                    rather than building <filename>git-native</filename>.
+                </para>
+            </glossdef>
+        </glossentry>
+
     </glossdiv>
--->
+
 
     <glossdiv id='var-glossary-b'><title>B</title>
 
@@ -57,6 +75,16 @@
                 <para>
                     The directory in which BitBake executes functions
                     during a recipe's build process.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_CURRENTTASK'><glossterm>BB_CURRENTTASK</glossterm>
+            <glossdef>
+                <para>
+                    Contains the name of the currently running task.
+                    The name does not include the
+                    <filename>do_</filename> prefix.
                 </para>
             </glossdef>
         </glossentry>
@@ -239,6 +267,34 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_FETCH_PREMIRRORONLY'><glossterm>BB_FETCH_PREMIRRORONLY</glossterm>
+            <glossdef>
+                <para>
+                    When set to "1", causes BitBake's fetcher module to only
+                    search
+                    <link linkend='var-PREMIRRORS'><filename>PREMIRRORS</filename></link>
+                    for files.
+                    BitBake will not search the main
+                    <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>
+                    or
+                    <link linkend='var-MIRRORS'><filename>MIRRORS</filename></link>.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_FILENAME'><glossterm>BB_FILENAME</glossterm>
+            <glossdef>
+                <para>
+                    Contains the filename of the recipe that owns the currently
+                    running task.
+                    For example, if the <filename>do_fetch</filename> task that
+                    resides in the <filename>my-recipe.bb</filename> is
+                    executing, the <filename>BB_FILENAME</filename> variable
+                    contains "/foo/path/my-recipe.bb".
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_GENERATE_MIRROR_TARBALLS'><glossterm>BB_GENERATE_MIRROR_TARBALLS</glossterm>
             <glossdef>
                 <para>
@@ -258,11 +314,93 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_HASHCONFIG_WHITELIST'><glossterm>BB_HASHCONFIG_WHITELIST</glossterm>
+            <glossdef>
+                <para>
+                    A list of variables that BitBake excludes from checksum
+                    comparisons.
+                </para>
+
+                <para>
+                    One of the ways BitBake determines whether to re-parse the
+                    main metadata is by using a checksum of the variables in
+                    the datastore of the base configuration data.
+                    There are variables that you typically want to exclude from
+                    these checksum comparisons.
+                    As an example, you would usually exclude
+                    <filename>TIME</filename> and <filename>DATE</filename>
+                    because these variables are always changing.
+                    If you did not exclude them, BitBake would never use the
+                    cache.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_NICE_LEVEL'><glossterm>BB_NICE_LEVEL</glossterm>
+            <glossdef>
+                <para>
+                    Allows BitBake to run at a specific priority
+                    (i.e. nice level).
+                    System permissions usually mean that BitBake can reduce its
+                    priority but not raise it again.
+                    See
+                    <link linkend='var-BB_TASK_NICE_LEVEL'><filename>BB_TASK_NICE_LEVEL</filename></link>
+                    for additional information.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_NO_NETWORK'><glossterm>BB_NO_NETWORK</glossterm>
+            <glossdef>
+                <para>
+                    Disables network access in the BitBake fetcher modules.
+                    With this access disabled, any command that attempts to
+                    access the network becomes an error.
+                </para>
+
+                <para>
+                    Disabling network access is useful for testing source
+                    mirrors, running builds when not connected to the Internet,
+                    and when operating in certain kinds of firewall
+                    environments.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_NUMBER_PARSE_THREADS'><glossterm>BB_NUMBER_PARSE_THREADS</glossterm>
+            <glossdef>
+                <para>
+                    Sets the number of threads BitBake uses when parsing.
+                    By default, the number of threads is equal to the number
+                    of cores on the system.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_NUMBER_THREADS'><glossterm>BB_NUMBER_THREADS</glossterm>
             <glossdef>
                 <para>The maximum number of tasks BitBake should run in parallel at any one time.
                     If your host development system supports multiple cores, a good rule of thumb
                     is to set this variable to twice the number of cores.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_TASK_NICE_LEVEL'><glossterm>BB_TASK_NICE_LEVEL</glossterm>
+            <glossdef>
+                <para>
+                    Allows specific tasks to change their priority
+                    (i.e. nice level).
+                </para>
+
+                <para>
+                    You can use this variable in combination with task
+                    overrides to raise or lower priorities of specific tasks.
+                    For example, on the
+                    <ulink url='http://www.yoctoproject.org'>Yocto Project</ulink>
+                    autobuilder, QEMU emulation in images is given a higher
+                    priority as compared to build tasks to ensure that images
+                    do not suffer timeouts on loaded systems.
+                </para>
             </glossdef>
         </glossentry>
 
@@ -1257,6 +1395,21 @@
                     Specifies the base path used to create recipe stamp files.
                     The path to an actual stamp file is constructed by evaluating this
                     string and then appending additional information.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-STAMPCLEAN'><glossterm>STAMPCLEAN</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the base path used to create recipe stamp files.
+                    Unlike the
+                    <link linkend='var-STAMP'><filename>STAMP</filename></link>
+                    variable, <filename>STAMPCLEAN</filename> can contain
+                    wildcards to match the range of files a clean operation
+                    should remove.
+                    BitBake uses a clean operation to remove any other stamps
+                    it should be removing when creating a new stamp.
                 </para>
             </glossdef>
         </glossentry>
