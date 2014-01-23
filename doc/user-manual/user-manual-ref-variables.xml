@@ -317,21 +317,95 @@
         <glossentry id='var-BB_HASHCONFIG_WHITELIST'><glossterm>BB_HASHCONFIG_WHITELIST</glossterm>
             <glossdef>
                 <para>
-                    A list of variables that BitBake excludes from checksum
-                    comparisons.
+                    Lists variables that are excluded from checksum
+                    comparisons to determine if the cache can be reused.
                 </para>
 
                 <para>
                     One of the ways BitBake determines whether to re-parse the
-                    main metadata is by using a checksum of the variables in
-                    the datastore of the base configuration data.
-                    There are variables that you typically want to exclude from
-                    these checksum comparisons.
+                    main metadata is through checksums of the variables in the
+                    datastore of the base configuration data (see the
+                    <link linkend='var-BB_HASHBASE_WHITELIST'><filename>BB_HASHBASE_WHITELIST</filename></link>
+                    variable).
+                    There are variables that you typically want to exclude when
+                    checking whether or not to re-parse and thus rebuild the
+                    cache.
                     As an example, you would usually exclude
                     <filename>TIME</filename> and <filename>DATE</filename>
                     because these variables are always changing.
-                    If you did not exclude them, BitBake would never use the
+                    If you did not exclude them, BitBake would never reuse the
                     cache.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_HASHBASE_WHITELIST'><glossterm>BB_HASHBASE_WHITELIST</glossterm>
+            <glossdef>
+                <para>
+                    Lists variables that are excluded from checksum and
+                    dependency data.
+                    Variables that are excluded can therefore change without
+                    affecting the checksum mechanism.
+                    A common example would be the variable for the path of
+                    the build.
+                    BitBake's output should not (and usually does not) depend
+                    on the directory in which it was built.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_HASHCHECK_FUNCTION'><glossterm>BB_HASHCHECK_FUNCTION</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the name of the function to call during the
+                    "setscene" part of the task's execution in order to
+                    validate the list of task hashes.
+                    The function returns the list of setscene tasks that should
+                    be executed.
+                </para>
+
+                <para>
+                    At this point in the execution of the code, the objective
+                    is to quickly verify if a given setscene function is likely
+                    to work or not.
+                    It's easier to check the list of setscene functions in
+                    one pass than to call many individual tasks.
+                    The returned list need not be completely accurate.
+                    A given setscene task can still later fail.
+                    However, the more accurate the data returned, the more
+                    efficient the build will be.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_INVALIDCONF'><glossterm>BB_INVALIDCONF</glossterm>
+            <glossdef>
+                <para>
+                    Used in combination with the
+                    <filename>ConfigParsed</filename> event to trigger
+                    re-parsing the base metadata (i.e. all the
+                    recipes).
+                    The <filename>ConfigParsed</filename> event can set the
+                    variable to trigger the re-parse.
+                    You must be careful to avoid recursive loops with this
+                    functionality.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_LOGFMT'><glossterm>BB_LOGFMT</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the name of the log files saved into
+                    <filename>${</filename><link linkend='var-T'><filename>T</filename></link><filename>}</filename>.
+                    By default, the <filename>BB_LOGFMT</filename> variable
+                    is undefined and the log file names get created using the
+                    following form:
+                    <literallayout class='monospaced'>
+     log.{task}.{pid}
+                    </literallayout>
+                    If you want to force log files to take a specific name,
+                    you can set this variable in a configuration file.
                 </para>
             </glossdef>
         </glossentry>
@@ -385,6 +459,231 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_RUNFMT'><glossterm>BB_RUNFMT</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the name of the executable script files
+                    (i.e. run files) saved into
+                    <filename>${</filename><link linkend='var-T'><filename>T</filename></link><filename>}</filename>.
+                    By default, the <filename>BB_RUNFMT</filename> variable
+                    is undefined and the run file names get created using the
+                    following form:
+                    <literallayout class='monospaced'>
+     run.{task}.{pid}
+                    </literallayout>
+                    If you want to force run files to take a specific name,
+                    you can set this variable in a configuration file.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_RUNTASK'><glossterm>BB_RUNTASK</glossterm>
+            <glossdef>
+                <para>
+                    Contains the name of the currently executing task.
+                    The value does not include the "do_" prefix.
+                    For example, if the currently executing task is
+                    <filename>do_config</filename>, the value is
+                    "config".
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_SCHEDULER'><glossterm>BB_SCHEDULER</glossterm>
+            <glossdef>
+                <para>
+                    Selects the name of the scheduler to use for the
+                    scheduling of BitBake tasks.
+                    Three options exist:
+                    <itemizedlist>
+                        <listitem><para><emphasis>basic</emphasis> -
+                            The basic framework from which everything derives.
+                            Using this option causes tasks to be ordered
+                            numerically as they are parsed.
+                            </para></listitem>
+                        <listitem><para><emphasis>speed</emphasis> -
+                            Executes tasks first that have more tasks
+                            depending on them.
+                            The "speed" option is the default.
+                            </para></listitem>
+                        <listitem><para><emphasis>completion</emphasis> -
+                            Causes the scheduler to try to complete a given
+                            recipe once its build has started.
+                            </para></listitem>
+                    </itemizedlist>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_SCHEDULERS'><glossterm>BB_SCHEDULERS</glossterm>
+            <glossdef>
+                <para>
+                    Defines custom schedulers to import.
+                    Custom schedulers need to be derived from the
+                    <filename>RunQueueScheduler</filename> class.
+                </para>
+
+                <para>
+                    For information how to select a scheduler, see the
+                    <link linkend='var-BB_SCHEDULER'><filename>BB_SCHEDULER</filename></link>
+                    variable.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_SETSCENE_DEPVALID'><glossterm>BB_SETSCENE_DEPVALID</glossterm>
+            <glossdef>
+                <para>
+                    Specifies a function BitBake calls that determines
+                    whether BitBake requires a setscene dependency to be met.
+                </para>
+
+                <para>
+                    When running a setscene task, BitBake needs to
+                    know which dependencies of that setscene task also need
+                    to be run.
+                    Whether dependencies also need to be run is highly
+                    dependent on the metadata.
+                    The function specified by this variable returns a
+                    "True" or "False" depending on whether the dependency needs
+                    to be met.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_SETSCENE_VERIFY_FUNCTION'><glossterm>BB_SETSCENE_VERIFY_FUNCTION</glossterm>
+            <glossdef>
+                <para>
+                    Specifies a function to call that verifies the list of
+                    planned task execution before the main task execution
+                    happens.
+                    The function is called once BitBake has a list of setscene
+                    tasks that have run and either succeeded or failed.
+                </para>
+
+                <para>
+                    The function allows for a task list check to see if they
+                    make sense.
+                    Even if BitBake was planning to skip a task, the
+                    returned value of the function can force BitBake to run
+                    the task, which is necessary under certain metadata
+                    defined circumstances.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_SIGNATURE_EXCLUDE_FLAGS'><glossterm>BB_SIGNATURE_EXCLUDE_FLAGS</glossterm>
+            <glossdef>
+                <para>
+                    Lists flags that can be safely excluded from checksum
+                    and dependency data for keys in the datastore.
+                    When generating checksum or dependency data for keys in the
+                    datastore, the flags set against that key are normally
+                    included in the checksum.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_SIGNATURE_HANDLER'><glossterm>BB_SIGNATURE_HANDLER</glossterm>
+            <glossdef>
+                <para>
+                    Defines the name of the signature handler BitBake uses.
+                    The signature handler defines the way stamp files are
+                    created and handled, if and how the signature is
+                    incorporated into the stamps, and how the signature
+                    itself is generated.
+                </para>
+
+                <para>
+                    A new signature handler can be added by injecting a class
+                    derived from the
+                    <filename>SignatureGenerator</filename> class into the
+                    global namespace.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_SRCREV_POLICY'><glossterm>BB_SRCREV_POLICY</glossterm>
+            <glossdef>
+                <para>
+                    Defines the behavior of the fetcher when it interacts with
+                    source control systems and dynamic source revisions.
+                    The <filename>BB_SRCREV_POLICY</filename> variable is
+                    useful when working without a network.
+                </para>
+
+                <para>
+                    The variable can be set using one of two policies:
+                    <itemizedlist>
+                        <listitem><para><emphasis>cache</emphasis> -
+                            Retains the value the system obtained previously
+                            rather than querying the source control system
+                            each time.
+                            </para></listitem>
+                        <listitem><para><emphasis>clear</emphasis> -
+                            Queries the source controls system every time.
+                            With this policy, there is no cache.
+                            The "clear" policy is the default.
+                            </para></listitem>
+                    </itemizedlist>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_STAMP_POLICY'><glossterm>BB_STAMP_POLICY</glossterm>
+            <glossdef>
+                <para>
+                    Defines the mode used for how timestamps of stamp files
+                    are compared.
+                    You can set the variable to one of the following modes:
+                    <itemizedlist>
+                        <listitem><para><emphasis>perfile</emphasis> -
+                            Timestamp comparisons are only made
+                            between timestamps of a specific recipe.
+                            This is the default mode.
+                            </para></listitem>
+                        <listitem><para><emphasis>full</emphasis> -
+                            Timestamp comparisons are made for all
+                            dependencies.
+                            </para></listitem>
+                        <listitem><para><emphasis>whitelist</emphasis> -
+                            Identical to "full" mode except timestamp
+                            comparisons are made for recipes listed in the
+                            <link linkend='var-BB_STAMP_WHITELIST'><filename>BB_STAMP_WHITELIST</filename></link>
+                            variable.
+                            </para></listitem>
+                    </itemizedlist>
+                    <note>
+                        Stamp policies are largely obsolete with the
+                        introduction of setscene tasks.
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_STAMP_WHITELIST'><glossterm>BB_STAMP_WHITELIST</glossterm>
+            <glossdef>
+                <para>
+                    Lists files whose stamp file timestamps are compared when
+                    the stamp policy mode is set to "whitelist".
+                    For information on stamp policies, see the
+                    <link linkend='var-BB_STAMP_POLICY'><filename>BB_STAMP_POLICY</filename></link>
+                    variable.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_STRICT_CHECKSUM'><glossterm>BB_STRICT_CHECKSUM</glossterm>
+            <glossdef>
+                <para>
+                    Sets a more strict checksum mechanism for non-local URLs.
+                    Setting this variable to a value causes BitBake
+                    to report an error if it encounters a non-local URL
+                    that does not have at least one checksum specified.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_TASK_NICE_LEVEL'><glossterm>BB_TASK_NICE_LEVEL</glossterm>
             <glossdef>
                 <para>
@@ -403,6 +702,29 @@
                 </para>
             </glossdef>
         </glossentry>
+
+        <glossentry id='var-BB_VERBOSE_LOGS'><glossterm>BB_VERBOSE_LOGS</glossterm>
+            <glossdef>
+                <para>
+                    Controls how verbose BitBake is during builds.
+                    If set, shell scripts echo commands and shell script output
+                    appears on standard out (stdout).
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_WORKERCONTEXT'><glossterm>BB_WORKERCONTEXT</glossterm>
+            <glossdef>
+                <para>
+                    Specifies if the current context is executing a task.
+                    BitBake sets this variable to "1" when a task is
+                    being executed.
+                    The value is not set when the task is in server context
+                    during parsing or event handling.
+                </para>
+            </glossdef>
+        </glossentry>
+
 
         <glossentry id='var-BBCLASSEXTEND'><glossterm>BBCLASSEXTEND</glossterm>
             <glossdef>
