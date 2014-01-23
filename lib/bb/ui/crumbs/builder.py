@@ -229,12 +229,20 @@ class Configuration:
         # proxy
         handler.set_var_in_file("enable_proxy", self.enable_proxy, "local.conf")
         handler.set_var_in_file("use_same_proxy", self.same_proxy, "local.conf")
-        handler.set_var_in_file("http_proxy", self.combine_proxy("http"), "local.conf")
-        handler.set_var_in_file("https_proxy", self.combine_proxy("https"), "local.conf")
-        handler.set_var_in_file("ftp_proxy", self.combine_proxy("ftp"), "local.conf")
-        handler.set_var_in_file("all_proxy", self.combine_proxy("socks"), "local.conf")
-        handler.set_var_in_file("CVS_PROXY_HOST", self.combine_host_only("cvs"), "local.conf")
-        handler.set_var_in_file("CVS_PROXY_PORT", self.combine_port_only("cvs"), "local.conf")
+        if self.enable_proxy == True:
+            handler.set_var_in_file("http_proxy", self.combine_proxy("http"), "local.conf")
+            handler.set_var_in_file("https_proxy", self.combine_proxy("https"), "local.conf")
+            handler.set_var_in_file("ftp_proxy", self.combine_proxy("ftp"), "local.conf")
+            handler.set_var_in_file("all_proxy", self.combine_proxy("socks"), "local.conf")
+            handler.set_var_in_file("CVS_PROXY_HOST", self.combine_host_only("cvs"), "local.conf")
+            handler.set_var_in_file("CVS_PROXY_PORT", self.combine_port_only("cvs"), "local.conf")
+        else:
+            handler.set_var_in_file("http_proxy", "", "local.conf")
+            handler.set_var_in_file("https_proxy", "", "local.conf")
+            handler.set_var_in_file("ftp_proxy", "", "local.conf")
+            handler.set_var_in_file("all_proxy", "", "local.conf")
+            handler.set_var_in_file("CVS_PROXY_HOST", "", "local.conf")
+            handler.set_var_in_file("CVS_PROXY_PORT", "", "local.conf")
 
     def __str__(self):
         s = "VERSION: '%s', BBLAYERS: '%s', MACHINE: '%s', DISTRO: '%s', DL_DIR: '%s'," % \
