@@ -227,8 +227,6 @@ class Configuration:
             handler.set_var_in_file("DEPENDS", self.selected_recipes, "local.conf")
             handler.set_var_in_file("IMAGE_INSTALL", self.user_selected_packages, "local.conf")
         # proxy
-        handler.set_var_in_file("enable_proxy", self.enable_proxy, "local.conf")
-        handler.set_var_in_file("use_same_proxy", self.same_proxy, "local.conf")
         if self.enable_proxy == True:
             handler.set_var_in_file("http_proxy", self.combine_proxy("http"), "local.conf")
             handler.set_var_in_file("https_proxy", self.combine_proxy("https"), "local.conf")
