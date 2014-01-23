@@ -20,8 +20,10 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from datetime import datetime, timedelta
+import re
 from django import template
 from django.utils import timezone
+from django.template.defaultfilters import filesizeformat
 
 register = template.Library()
 
@@ -101,3 +103,14 @@ def format_none_and_zero(value):
     """Return empty string if the value is None, zero or Not Applicable
     """
     return "" if (not value) or (value == 0) or (value == "0") or (value == 'Not Applicable') else value
+
+@register.filter
+def filtered_filesizeformat(value):
+    """Change output from fileformatsize to suppress trailing '.0' and change 'bytes' to 'B'
+    """
+    return filesizeformat(value).replace("bytes", "B").replace(".0", "")
+
+@register.filter
+def filtered_packagespec(value):
+    """Strip off empty version and revision"""
+    return re.sub(r'(--$)', '', value)

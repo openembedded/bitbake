@@ -145,6 +145,7 @@ class Task_Dependency(models.Model):
 
 
 class Package(models.Model):
+    search_allowed_fields = ['name', 'installed_name', 'section', 'summary']
     build = models.ForeignKey('Build')
     recipe = models.ForeignKey('Recipe', null=True)
     name = models.CharField(max_length=100)
@@ -160,23 +161,39 @@ class Package(models.Model):
 
 class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0
-    TYPE_RPROVIDES = 1
+    TYPE_TRDEPENDS = 1
     TYPE_RRECOMMENDS = 2
-    TYPE_RSUGGESTS = 3
-    TYPE_RREPLACES = 4
-    TYPE_RCONFLICTS = 5
-    TYPE_TRDEPENDS = 6
-    TYPE_TRECOMMENDS = 7
+    TYPE_TRECOMMENDS = 3
+    TYPE_RSUGGESTS = 4
+    TYPE_RPROVIDES = 5
+    TYPE_RREPLACES = 6
+    TYPE_RCONFLICTS = 7
+    ' TODO: bpackage should be changed to remove the DEPENDS_TYPE access '
     DEPENDS_TYPE = (
-        (TYPE_RDEPENDS, "rdepends"),
-        (TYPE_RPROVIDES, "rprovides"),
-        (TYPE_RRECOMMENDS, "rrecommends"),
-        (TYPE_RSUGGESTS, "rsuggests"),
-        (TYPE_RREPLACES, "rreplaces"),
-        (TYPE_RCONFLICTS, "rconflicts"),
-        (TYPE_TRDEPENDS, "trdepends"),
-        (TYPE_TRECOMMENDS, "trecommends"),
+        (TYPE_RDEPENDS, "depends"),
+        (TYPE_TRDEPENDS, "depends"),
+        (TYPE_TRECOMMENDS, "recommends"),
+        (TYPE_RRECOMMENDS, "recommends"),
+        (TYPE_RSUGGESTS, "suggests"),
+        (TYPE_RPROVIDES, "provides"),
+        (TYPE_RREPLACES, "replaces"),
+        (TYPE_RCONFLICTS, "conflicts"),
     )
+    ''' Indexed by dep_type, in view order, key for short name and help
+        description which when viewed will be printf'd with the
+        package name.
+    '''
+    DEPENDS_DICT = {
+        TYPE_RDEPENDS :     ("depends", "%s is required to run %s"),
+        TYPE_TRDEPENDS :    ("depends", "%s is required to run %s"),
+        TYPE_TRECOMMENDS :  ("recommends", "%s extends the usability of %s"),
+        TYPE_RRECOMMENDS :  ("recommends", "%s extends the usability of %s"),
+        TYPE_RSUGGESTS :    ("suggests", "%s is suggested for installation with %s"),
+        TYPE_RPROVIDES :    ("provides", "%s is provided by %s"),
+        TYPE_RREPLACES :    ("replaces", "%s is replaced by %s"),
+        TYPE_RCONFLICTS :   ("conflicts", "%s conflicts with %s, which will not be installed if this package is not first removed"),
+    }
+
     package = models.ForeignKey(Package, related_name='package_dependencies_source')
     depends_on = models.ForeignKey(Package, related_name='package_dependencies_target')   # soft dependency
     dep_type = models.IntegerField(choices=DEPENDS_TYPE)
@@ -184,7 +201,7 @@ class Package_Dependency(models.Model):
 
 class Target_Installed_Package(models.Model):
     target = models.ForeignKey(Target)
-    package = models.ForeignKey(Package)
+    package = models.ForeignKey(Package, related_name='buildtargetlist_package')
 
 class Package_File(models.Model):
     package = models.ForeignKey(Package, related_name='buildfilelist_package')

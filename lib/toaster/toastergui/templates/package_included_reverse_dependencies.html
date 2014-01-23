@@ -1,0 +1,47 @@
+{% extends "package_detail_base.html" %}
+{% load projecttags %}
+
+{% block title %}
+    {% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec  %}
+        <h1>{{fullPackageSpec}} <small>({{target.target}})</small></h1>
+    {% endwith %}
+{% endblock title %}
+
+{% block tabcontent %}
+    {% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec packageFileCount=package.buildfilelist_package.count %}
+    {% include "package_included_tabs.html" with active_tab="reverse" %}
+    <div class="tab-content">
+        <div class="tab-pane active" id="brought-in-by">
+
+        {% ifequal reverse_deps|length  0 %}
+           <div class="alert alert-info">
+                <strong>{{fullPackageSpec}}</strong> has no reverse runtime dependencies.
+            </div>
+        {% else %}
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>Package</th>
+                        <th>Package Version</th>
+                        <th>Size</th>
+                    </tr>
+                </thead>
+                {% for reverse_dep in reverse_deps|dictsort:"name" %}
+                    <tbody>
+                        <tr>
+                            <td>
+                                <a href="{% url 'package_included_detail' build.id target.id reverse_dep.dependent_id %}">
+                                    {{reverse_dep.name}}
+                                </a>
+                            </td>
+                            <td>{{reverse_dep.version}}</td>
+                            <td>{{reverse_dep.size|filtered_filesizeformat}}</td>
+                        </tr>
+                    </tbody>
+                {% endfor %}
+            </table>
+        {% endifequal %}
+        </div> <!-- end tab-pane -->
+    </div> <!-- end tab content -->
+    {% endwith %}
+{% endblock tabcontent %}

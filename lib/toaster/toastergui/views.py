@@ -378,15 +378,6 @@ def recipe(request, build_id, recipe_id):
     }
     return render(request, template, context)
 
-def package(request, build_id, package_id):
-    template = "singlepackage.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
-        return redirect(builds)
-    context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
-    }
-    return render(request, template, context)
-
 def target(request, build_id, target_id):
     template = "target.html"
     if Build.objects.filter(pk=build_id).count() == 0 :
@@ -705,4 +696,191 @@ def layer_versions_recipes(request, layerversion_id):
 
     return render(request, template, context)
 
+# A set of dependency types valid for both included and built package views
+OTHER_DEPENDS_BASE = [
+    Package_Dependency.TYPE_RSUGGESTS,
+    Package_Dependency.TYPE_RPROVIDES,
+    Package_Dependency.TYPE_RREPLACES,
+    Package_Dependency.TYPE_RCONFLICTS,
+    ]
+
+# value for invalid row id
+INVALID_KEY = -1
+
+"""
+Given a package id, target_id retrieves two sets of this image and package's
+dependencies.  The return value is a dictionary consisting of two other
+lists: a list of 'runtime' dependencies, that is, having RDEPENDS
+values in source package's recipe, and a list of other dependencies, that is
+the list of possible recipe variables as found in OTHER_DEPENDS_BASE plus
+the RRECOMENDS or TRECOMENDS value.
+The lists are built in the sort order specified for the package runtime
+dependency views.
+"""
+def get_package_dependencies(package_id, target_id = INVALID_KEY):
+    runtime_deps = []
+    other_deps = []
+    other_depends_types = OTHER_DEPENDS_BASE
+
+    if target_id != INVALID_KEY :
+        rdepends_type = Package_Dependency.TYPE_TRDEPENDS
+        other_depends_types +=  [Package_Dependency.TYPE_TRECOMMENDS]
+    else :
+        rdepends_type = Package_Dependency.TYPE_RDEPENDS
+        other_depends_types += [Package_Dependency.TYPE_RRECOMMENDS]
+
+    package = Package.objects.get(pk=package_id)
+    if target_id != INVALID_KEY :
+        alldeps = package.package_dependencies_source.filter(target_id__exact = target_id)
+    else :
+        alldeps = package.package_dependencies_source.all()
+    for idep in alldeps:
+        dep_package = Package.objects.get(pk=idep.depends_on_id)
+        dep_entry = Package_Dependency.DEPENDS_DICT[idep.dep_type]
+        if dep_package.version == '' :
+            version = ''
+        else :
+            version = dep_package.version + "-" + dep_package.revision
+        installed = False
+        if target_id != INVALID_KEY :
+            if Target_Installed_Package.objects.filter(target_id__exact = target_id, package_id__exact = dep_package.id).count() > 0:
+                installed = True
+        dep =   {
+                'name' : dep_package.name,
+                'version' : version,
+                'size' : dep_package.size,
+                'dep_type' : idep.dep_type,
+                'dep_type_display' : dep_entry[0].capitalize(),
+                'dep_type_help' : dep_entry[1] % (dep_package.name, package.name),
+                'depends_on_id' : dep_package.id,
+                'installed' : installed,
+                }
+        if idep.dep_type == rdepends_type :
+            runtime_deps.append(dep)
+        elif idep.dep_type in other_depends_types :
+            other_deps.append(dep)
+
+    rdep_sorted = sorted(runtime_deps, key=lambda k: k['name'])
+    odep_sorted = sorted(
+            sorted(other_deps, key=lambda k: k['name']),
+            key=lambda k: k['dep_type'])
+    retvalues = {'runtime_deps' : rdep_sorted, 'other_deps' : odep_sorted}
+    return retvalues
+
+# Return the count of packages dependent on package for this target_id image
+def get_package_reverse_dep_count(package, target_id):
+    return package.package_dependencies_target.filter(target_id__exact=target_id, dep_type__exact = Package_Dependency.TYPE_TRDEPENDS).count()
+
+# Return the count of the packages that this package_id is dependent on.
+# Use one of the two RDEPENDS types, either TRDEPENDS if the package was
+# installed, or else RDEPENDS if only built.
+def get_package_dependency_count(package, target_id, is_installed):
+    if is_installed :
+        return package.package_dependencies_source.filter(target_id__exact = target_id,
+            dep_type__exact = Package_Dependency.TYPE_TRDEPENDS).count()
+    else :
+        return package.package_dependencies_source.filter(dep_type__exact = Package_Dependency.TYPE_RDEPENDS).count()
+
+def package_built_detail(request, build_id, package_id):
+    template = "package_built_detail.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+    package = Package.objects.filter(pk=package_id)[0]
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+            'package' : package,
+            'dependency_count' : get_package_dependency_count(package, -1, False),
+    }
+    return render(request, template, context)
+
+def package_built_dependencies(request, build_id, package_id):
+    template = "package_built_dependencies.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+         return redirect(builds)
+
+    package = Package.objects.filter(pk=package_id)[0]
+    dependencies = get_package_dependencies(package_id)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+            'package' : package,
+            'runtime_deps' : dependencies['runtime_deps'],
+            'other_deps' :   dependencies['other_deps'],
+            'dependency_count' : get_package_dependency_count(package, -1,  False)
+    }
+    return render(request, template, context)
+
+
+def package_included_detail(request, build_id, target_id, package_id):
+    template = "package_included_detail.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+
+    package = Package.objects.filter(pk=package_id)[0]
+    target = Target.objects.filter(pk=target_id)[0]
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+            'target'  : target,
+            'package' : package,
+            'reverse_count' : get_package_reverse_dep_count(package, target_id),
+            'dependency_count' : get_package_dependency_count(package, target_id, True)
+    }
+    return render(request, template, context)
+
+def package_included_dependencies(request, build_id, target_id, package_id):
+    template = "package_included_dependencies.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+
+    package = Package.objects.filter(pk=package_id)[0]
+    target = Target.objects.filter(pk=target_id)[0]
+
+    dependencies = get_package_dependencies(package_id, target_id)
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+            'package' : package,
+            'target' : target,
+            'runtime_deps' : dependencies['runtime_deps'],
+            'other_deps' :   dependencies['other_deps'],
+            'reverse_count' : get_package_reverse_dep_count(package, target_id),
+            'dependency_count' : get_package_dependency_count(package, target_id, True)
+    }
+    return render(request, template, context)
+
+def package_included_reverse_dependencies(request, build_id, target_id, package_id):
+    template = "package_included_reverse_dependencies.html"
+    if Build.objects.filter(pk=build_id).count() == 0 :
+        return redirect(builds)
+
+    package = Package.objects.filter(pk=package_id)[0]
+    target = Target.objects.filter(pk=target_id)[0]
+
+    reverse_deps = []
+    alldeps = package.package_dependencies_target.filter(target_id__exact=target_id)
+    for idep in alldeps:
+        dep_package = Package.objects.get(pk=idep.package_id)
+        version = dep_package.version
+        if version  != '' :
+            version += '-' + dep_package.revision
+        dep = {
+                'name' : dep_package.name,
+                'dependent_id' : dep_package.id,
+                'version' : version,
+                'size' : dep_package.size
+        }
+        if idep.dep_type == Package_Dependency.TYPE_TRDEPENDS :
+            reverse_deps.append(dep)
+
+    context = {
+            'build' : Build.objects.filter(pk=build_id)[0],
+            'package' : package,
+            'target' : target,
+            'reverse_deps' : reverse_deps,
+            'reverse_count' : get_package_reverse_dep_count(package, target_id),
+            'dependency_count' : get_package_dependency_count(package, target_id, True)
+    }
+    return render(request, template, context)
+
+def image_information_dir(request, build_id, target_id, packagefile_id):
+    # stubbed for now
+    return redirect(builds)
 

@@ -1,7 +1,4 @@
 #
-# ex:ts=4:sw=4:sts=4:et
-# -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
-#
 # BitBake Toaster Implementation
 #
 # Copyright (C) 2013        Intel Corporation
@@ -35,7 +32,16 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)/recipe/(?P<recipe_id>\d+)$', 'recipe', name='recipe'),
 
         url(r'^build/(?P<build_id>\d+)/packages/$', 'bpackage', name='packages'),
-        url(r'^build/(?P<build_id>\d+)/package/(?P<package_id>\d+)$', 'bfile', name='package'),
+        url(r'^build/(?P<build_id>\d+)/package/(?P<package_id>\d+)$', 'package_built_detail',
+                name='package_built_detail'),
+        url(r'^build/(?P<build_id>\d+)/package_built_dependencies/(?P<package_id>\d+)$',
+            'package_built_dependencies', name='package_built_dependencies'),
+        url(r'^build/(?P<build_id>\d+)/package_included_detail/(?P<target_id>\d+)/(?P<package_id>\d+)$',
+            'package_included_detail', name='package_included_detail'),
+        url(r'^build/(?P<build_id>\d+)/package_included_dependencies/(?P<target_id>\d+)/(?P<package_id>\d+)$',
+            'package_included_dependencies', name='package_included_dependencies'),
+        url(r'^build/(?P<build_id>\d+)/package_included_reverse_dependencies/(?P<target_id>\d+)/(?P<package_id>\d+)$',
+            'package_included_reverse_dependencies', name='package_included_reverse_dependencies'),
 
         # images are known as targets in the internal model
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)$', 'target', name='target'),
@@ -46,6 +52,10 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)/buildtime$', 'buildtime', name='buildtime'),
         url(r'^build/(?P<build_id>\d+)/cpuusage$', 'cpuusage', name='cpuusage'),
         url(r'^build/(?P<build_id>\d+)/diskio$', 'diskio', name='diskio'),
+
+        # image information dir - not yet implemented
+        url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/packagefile/(?P<packagefile_id>\d+)$',
+             'image_information_dir', name='image_information_dir'),
 
 
         # urls not linked from the dashboard

@@ -1,0 +1,125 @@
+{% extends "basebuilddetailpage.html" %}
+{% load projecttags %}
+
+{% block localbreadcrumb %}
+{% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
+    {% if target %}
+        <li><a href="{% url "target" build.id target.id %}">{{target.target}}</a></li>
+    {% else %}
+        <li><a href="{% url "packages" build.id %}"> Packages </a></li>
+    {% endif %}
+        <li>{{fullPackageSpec}}</li>
+{% endwith %}
+{% endblock localbreadcrumb %}
+
+{% block pagedetailinfomain %}
+{% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
+
+    <div class="row span11">
+        <div class="page-header">
+            {% block title %}
+            <h1>{{fullPackageSpec}}</h1>
+            {% endblock title %}
+        </div> <!-- page-header -->
+    </div> <!-- row span11 page-header -->
+
+    {% block twocolumns %}
+    <div class="row span7 tabbable">
+        {% block tabcontent %}
+        {% endblock tabcontent %}
+    </div> <!-- row span7 -->
+
+    <div class="row span4 well">
+        <h2>Package information</h2>
+
+        <!-- info presented as definition list -->
+        <dl>
+            <dt>
+                Size
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The size of the package"></i>
+            </dt>
+            <dd>
+                {% comment %}
+                    if recipe is absent, filesize is not 0
+                {% endcomment %}
+                {% if package.recipe_id > 0 %}
+                    {{package.size|filtered_filesizeformat}}
+                    {% if target.file_size %}
+                        ({{package.size|multiply:100|divide:target.file_size}}% of included package size)
+                    {% endif %}
+
+                {% endif %}
+            </dd>
+
+            <dt>
+                License
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The license under which this package is distributed"></i>
+            </dt>
+            <dd>{{package.license}}</dd>
+
+            {% comment %}
+            # Removed per review on 1/18/2014 until license data population
+            # problemse are resolved.
+            <dt>
+                License files
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the license files that apply to the package"></i>
+            </dt>
+            <dd></dd>
+            {% endcomment %}
+
+            <dt>
+                Recipe
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The name of the recipe building this package"></i>
+            </dt>
+            <dd>
+                {% if package.recipe_id > 0 %}
+                    <a href="{% url "recipe" build.id package.recipe_id %}"> {{package.recipe.name}} </a>
+                {% else %}
+                    {{package.recipe.name}}
+                {% endif %}
+            </dd>
+
+            <dt>
+                Recipe version
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The version of the recipe building this package"></i>
+            </dt>
+            <dd>{{package.recipe.version}}</dd>
+
+            <dt>
+                Layer
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The name of the layer providing the recipe that builds this package"></i>
+            </dt>
+            <dd>
+                {{package.recipe.layer_version.layer.name}}
+                {% if package.recipe.layer_version.layer.name|format_none_and_zero != "" %}
+                    {% comment %}
+                    # Removed per team meeting of 1/29/2014 until 
+                    # decision on index search algorithm
+                    <a href="http://layers.openembedded.org"  target="_blank">
+                    <i class="icon-share get-info"></i>
+                    {% endcomment %}
+                    </a>
+                {% endif %}
+            </dd>
+
+            <dt>
+                Layer branch
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git branch of the layer providing the recipe that builds this package"></i>
+            </dt>
+            <dd>{{package.recipe.layer_version.branch}}</dd>
+            <dt>
+                Layer commit
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git commit of the layer providing the recipe that builds this package"></i>
+            </dt>
+
+            <dd class="iscommit">{{package.recipe.layer_version.commit}}</dd>
+            <dt>
+                Layer directory
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the layer providing the recipe that builds this package"></i>
+            </dt>
+            <dd><code>{{package.recipe.layer_version.layer.local_path}}</code></dd>
+        </dl>
+    </div> <!-- row4 well -->
+    {% endblock twocolumns %}
+{% endwith %}
+{% endblock pagedetailinfomain %}

@@ -161,9 +161,9 @@
                     {% for package in packages %}
 
                     <tr>
-                        <td><a href="{% url "package" build.pk package.pk %}">{{package.name}}</a></td>
-                        <td><a href="{% url "package" build.pk package.pk %}">{{package.version}}-{{package.revision}}</a></td>
-                        <td><a href="{% url "package" build.pk package.pk %}">{{package.size}}</a></td>
+                        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.name}}</a></td>
+                        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.version}}_{{package.revision}}</a></td>
+                        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.size}}</a></td>
                     </tr>
 
                     {% endfor %}
