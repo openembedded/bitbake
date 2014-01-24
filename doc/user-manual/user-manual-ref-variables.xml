@@ -1172,12 +1172,14 @@
         <glossentry id='var-FILESPATH'><glossterm>FILESPATH</glossterm>
             <glossdef>
                 <para>
-                    The default set of directories BitBake
-                    uses when searching for patches and files.
-                    During the build process, BitBake searches each directory in
-                    <filename>FILESPATH</filename> in the specified order when
-                    looking for files and patches specified by each
-                    <filename>file://</filename> URI in a recipe.
+                    Specifies directories BitBake uses when searching for
+                    patches and files.
+                    The "local" fetcher module uses these directories when
+                    handling <filename>file://</filename> URLs.
+                    The variable behaves like a shell <filename>PATH</filename>
+                    environment variable.
+                    The value is a colon-separated list of directories that
+                    are searched left-to-right in order.
                 </para>
             </glossdef>
         </glossentry>
