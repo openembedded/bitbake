@@ -17,7 +17,7 @@
     <para>
        <link linkend='var-ASSUME_PROVIDED'>A</link>
        <link linkend='var-B'>B</link>
-<!--       <link linkend='var-CFLAGS'>C</link> -->
+       <link linkend='var-CACHE'>C</link>
        <link linkend='var-DEFAULT_PREFERENCE'>D</link>
        <link linkend='var-EXCLUDE_FROM_WORLD'>E</link>
        <link linkend='var-FAKEROOT'>F</link>
@@ -930,10 +930,19 @@
 
     </glossdiv>
 
-<!--
     <glossdiv id='var-glossary-c'><title>C</title>
+
+        <glossentry id='var-CACHE'><glossterm>CACHE</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the directory BitBake uses to store a cache
+                    of the metadata so it does not need to be parsed every
+                    time BitBake is started.
+                </para>
+            </glossdef>
+        </glossentry>
+
     </glossdiv>
--->
 
     <glossdiv id='var-glossary-d'><title>D</title>
 
@@ -1118,6 +1127,48 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-FETCHCMD'><glossterm>FETCHCMD</glossterm>
+            <glossdef>
+                <para>
+                    Defines the command the BitBake fetcher module
+                    executes when running fetch operations.
+                    You need to use an override suffix when you use the
+                    variable (e.g. <filename>FETCHCMD_git</filename>
+                    or <filename>FETCHCMD_svn</filename>).
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-FILE'><glossterm>FILE</glossterm>
+            <glossdef>
+                <para>
+                    Points at the current file.
+                    BitBake sets this variable during the parsing process
+                    to identify the file being parsed.
+                    BitBake also sets this variable when a recipe is being
+                    executed to identify the recipe file.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-FILESDIR'><glossterm>FILESDIR</glossterm>
+            <glossdef>
+                <para>
+                    Specifies directories BitBake uses when searching for
+                    patches and files.
+                    The "local" fetcher module uses these directories when
+                    handling <filename>file://</filename> URLs if the file
+                    was not found using
+                    <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>.
+                    <note>
+                        The <filename>FILESDIR</filename> variable is
+                        deprecated and you should use
+                        <filename>FILESPATH</filename> in all new code.
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-FILESPATH'><glossterm>FILESPATH</glossterm>
             <glossdef>
                 <para>
@@ -1248,6 +1299,32 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-MULTI_PROVIDER_WHITELIST'><glossterm>MULTI_PROVIDER_WHITELIST</glossterm>
+            <glossdef>
+                <para>
+                    Allows you to suppress BitBake warnings caused when
+                    building two separate recipes that provide the same
+                    output.
+                </para>
+
+                <para>
+                    Bitbake normally issues a warning when building two
+                    different recipes where each provides the same output.
+                    This scenario is usually something the user does not
+                    want.
+                    However, cases do exist where it makes sense, particularly
+                    in the <filename>virtual/*</filename> namespace.
+                    You can use this variable to suppress BitBake's warnings.
+                </para>
+
+                <para>
+                    To use the variable, list provider names (e.g.
+                    recipe names, <filename>virtual/kernel</filename>,
+                    and so forth).
+                </para>
+            </glossdef>
+        </glossentry>
+
     </glossdiv>
 
 <!--
@@ -1310,6 +1387,18 @@
                     The variable is used to make upgrades possible when the
                     versioning scheme changes in some backwards incompatible
                     way.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-PERSISTENT_DIR'><glossterm>PERSISTENT_DIR</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the directory BitBake uses to store data that
+                    should be preserved between builds.
+                    In particular, the data stored is the data that uses
+                    BitBake's persistent data API and the data used by the
+                    PR Server and PR Service.
                 </para>
             </glossdef>
         </glossentry>
