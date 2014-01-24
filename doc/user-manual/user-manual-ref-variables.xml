@@ -112,6 +112,17 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_DEFAULT_TASK'><glossterm>BB_DEFAULT_TASK</glossterm>
+            <glossdef>
+                <para>
+                    The default task to use when none is specified (e.g.
+                    with the <filename>-c</filename> command line option).
+                    The task name specified should not include the
+                    <filename>do_</filename> prefix.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_DISKMON_DIRS'><glossterm>BB_DISKMON_DIRS</glossterm>
             <glossdef>
                 <para>
@@ -263,6 +274,44 @@
                     Subsequent warnings based on the interval occur each time
                     a respective interval is reached beyond the initial warning
                     (i.e. 1 Gbytes and 100 Kbytes).
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_ENV_WHITELIST'><glossterm>BB_ENV_WHITELIST</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the internal whitelist of variables to allow
+                    through from the external environment into BitBake's
+                    datastore.
+                    If the value of this variable is not specified
+                    (which is the default), the following list is used:
+                    <link linkend='var-BBPATH'><filename>BBPATH</filename></link>,
+                    <link linkend='var-BB_PRESERVE_ENV'><filename>BB_PRESERVE_ENV</filename></link>,
+                    <link linkend='var-BB_ENV_WHITELIST'><filename>BB_ENV_WHITELIST</filename></link>,
+                    and
+                    <link linkend='var-BB_ENV_EXTRAWHITE'><filename>BB_ENV_EXTRAWHITE</filename></link>.
+                    <note>
+                        You must set this variable in the external environment
+                        in order for it to work.
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_ENV_EXTRAWHITE'><glossterm>BB_ENV_EXTRAWHITE</glossterm>
+            <glossdef>
+                <para>
+                    Specifies an additional set of variables to allow through
+                    (whitelist) from the external environment into BitBake's
+                    datastore.
+                    This list of variables are on top of the internal list
+                    set in
+                    <link linkend='var-BB_ENV_WHITELIST'><filename>BB_ENV_WHITELIST</filename></link>.
+                    <note>
+                        You must set this variable in the external
+                        environment in order for it to work.
+                    </note>
                 </para>
             </glossdef>
         </glossentry>
@@ -447,6 +496,36 @@
                     Sets the number of threads BitBake uses when parsing.
                     By default, the number of threads is equal to the number
                     of cores on the system.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_ORIGENV'><glossterm>BB_ORIGENV</glossterm>
+            <glossdef>
+                <para>
+                    Contains a copy of the original external environment in
+                    which BitBake was run.
+                    The copy is taken before any whitelisted variable values
+                    are filtered into BitBake's datastore.
+                    <note>
+                        The contents of this variable is a datastore object
+                        that can be queried using the normal datastore
+                        operations.
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BB_PRESERVE_ENV'><glossterm>BB_PRESERVE_ENV</glossterm>
+            <glossdef>
+                <para>
+                    Disables whitelisting and instead allows all variables
+                    through from the external environment into BitBake's
+                    datastore.
+                    <note>
+                        You must set this variable in the external
+                        environment in order for it to work.
+                    </note>
                 </para>
             </glossdef>
         </glossentry>
@@ -703,6 +782,16 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_TASKHASH'><glossterm>BB_TASKHASH</glossterm>
+            <glossdef>
+                <para>
+                    Within an executing task, this variable holds the hash
+                    of the task as returned by the currently enabled
+                    signature generator.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_VERBOSE_LOGS'><glossterm>BB_VERBOSE_LOGS</glossterm>
             <glossdef>
                 <para>
@@ -746,6 +835,20 @@
      BBCLASSEXTEND =+ "native nativesdk"
      BBCLASSEXTEND =+ "multilib:&lt;multilib_name&gt;"
                     </literallayout>
+                </para>
+             </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBDEBUG'><glossterm>BBDEBUG</glossterm>
+            <glossdef>
+                <para>
+                    Sets the BitBake debug output level to a specific value
+                    as incremented by the <filename>-d</filename> command line
+                    option.
+                    <note>
+                        You must set this variable in the external environment
+                        in order for it to work.
+                    </note>
                 </para>
              </glossdef>
         </glossentry>
@@ -806,6 +909,16 @@
         <glossentry id='var-BBFILES'><glossterm>BBFILES</glossterm>
             <glossdef>
                 <para>List of recipe files BitBake uses to build software.</para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBINCLUDED'><glossterm>BBINCLUDED</glossterm>
+            <glossdef>
+                <para>
+                    Contains a space-separated list of all of all files that
+                    BitBake's parser included during parsing of the current
+                    file.
+                </para>
             </glossdef>
         </glossentry>
 
@@ -924,6 +1037,30 @@
                     Points to the server that runs memory-resident BitBake.
                     The variable is only used when you employ memory-resident
                     BitBake.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BITBAKE_UI'><glossterm>BITBAKE_UI</glossterm>
+            <glossdef>
+                <para>
+                    Used to specify the UI module to use when running BitBake.
+                    Using this variable is equivalent to using the
+                    <filename>-u</filename> command-line option.
+                    <note>
+                        You must set this variable in the external environment
+                        in order for it to work.
+                    </note>
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BUILDNAME'><glossterm>BUILDNAME</glossterm>
+            <glossdef>
+                <para>
+                    A name assigned to the build.
+                    The name defaults to a datetime stamp of when the build was
+                    started but can be defined by the metadata.
                 </para>
             </glossdef>
         </glossentry>
@@ -1890,6 +2027,33 @@
                     to avoid performing a query on the remote repository every time
                     BitBake parses your recipe, you should specify a <filename>SRCREV</filename> that is a
                     full revision identifier and not just a tag.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-SRCREV_FORMAT'><glossterm>SRCREV_FORMAT</glossterm>
+            <glossdef>
+                <para>
+                    Helps construct valid
+                    <link linkend='var-SRCREV'><filename>SRCREV</filename></link>
+                    values when multiple source controlled URLs are used in
+                    <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>.
+                </para>
+
+                <para>
+                    The system needs help constructing these values under these
+                    circumstances.
+                    Each component in the <filename>SRC_URI</filename>
+                    is assigned a name and these are referenced
+                    in the <filename>SRCREV_FORMAT</filename> variable.
+                    Consider an example with URLs named "machine" and "meta".
+                    In this case, <filename>SRCREV_FORMAT</filename> could look
+                    like "machine_meta" and those names would have the SCM
+                    versions substituted into each position.
+                    Only one <filename>AUTOINC</filename> placeholder is added
+                    and if needed.
+                    And, this placeholder is placed at the start of the
+                    returned string.
                 </para>
             </glossdef>
         </glossentry>
