@@ -1340,8 +1340,8 @@
         <glossentry id='var-PREFERRED_PROVIDER'><glossterm>PREFERRED_PROVIDER</glossterm>
             <glossdef>
                 <para>
-                    If multiple recipes provide an item, this variable
-                    determines which recipe should be given preference.
+                    Determines which recipe should be given preference when
+                    multiple recipes provide the same item.
                     You should always suffix the variable with the name of the
                     provided item, and you should set it to the
                     <link linkend='var-PN'><filename>PN</filename></link>
