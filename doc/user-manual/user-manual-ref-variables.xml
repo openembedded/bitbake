@@ -20,7 +20,7 @@
 <!--       <link linkend='var-CFLAGS'>C</link> -->
        <link linkend='var-DEFAULT_PREFERENCE'>D</link>
        <link linkend='var-EXCLUDE_FROM_WORLD'>E</link>
-       <link linkend='var-FILESPATH'>F</link>
+       <link linkend='var-FAKEROOT'>F</link>
 <!--       <link linkend='var-GROUPADD_PARAM'>G</link> -->
        <link linkend='var-HOMEPAGE'>H</link>
 <!--       <link linkend='var-ICECC_DISABLED'>I</link> -->
@@ -1048,6 +1048,75 @@
     </glossdiv>
 
     <glossdiv id='var-glossary-f'><title>F</title>
+
+        <glossentry id='var-FAKEROOT'><glossterm>FAKEROOT</glossterm>
+            <glossdef>
+                <para>
+                     Contains the command to use when running a shell script
+                     in a fakeroot environment.
+                     The <filename>FAKEROOT</filename> variable is obsolete
+                     and has been replaced by the other
+                     <filename>FAKEROOT*</filename> variables.
+                     See these entries in the glossary for more information.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-FAKEROOTBASEENV'><glossterm>FAKEROOTBASEENV</glossterm>
+            <glossdef>
+                <para>
+                     Lists environment variables to set when executing
+                     the command defined by
+                     <link linkend='var-FAKEROOTCMD'><filename>FAKEROOTCMD</filename></link>
+                     that starts the bitbake-worker process
+                     in the fakeroot environment.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-FAKEROOTCMD'><glossterm>FAKEROOTCMD</glossterm>
+            <glossdef>
+                <para>
+                     Contains the command that starts the bitbake-worker
+                     process in the fakeroot environment.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-FAKEROOTDIRS'><glossterm>FAKEROOTDIRS</glossterm>
+            <glossdef>
+                <para>
+                     Lists directories to create before running a task in
+                     the fakeroot environment.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-FAKEROOTENV'><glossterm>FAKEROOTENV</glossterm>
+            <glossdef>
+                <para>
+                     Lists environment variables to set when running a task
+                     in the fakeroot environment.
+                     For additional information on environment variables and
+                     the fakeroot environment, see the
+                     <link linkend='var-FAKEROOTBASEENV'><filename>FAKEROOTBASEENV</filename></link>
+                     variable.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-FAKEROOTNOENV'><glossterm>FAKEROOTNOENV</glossterm>
+            <glossdef>
+                <para>
+                     Lists environment variables to set when running a task
+                     that is not in the fakeroot environment.
+                     For additional information on environment variables and
+                     the fakeroot environment, see the
+                     <link linkend='var-FAKEROOTENV'><filename>FAKEROOTENV</filename></link>
+                     variable.
+                </para>
+            </glossdef>
+        </glossentry>
 
         <glossentry id='var-FILESPATH'><glossterm>FILESPATH</glossterm>
             <glossdef>
