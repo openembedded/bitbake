@@ -1356,6 +1356,29 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-PREFERRED_PROVIDERS'><glossterm>PREFERRED_PROVIDERS</glossterm>
+            <glossdef>
+                <para>
+                    Determines which recipe should be given preference for
+                    cases where multiple recipes provide the same item.
+                    Functionally,
+                    <filename>PREFERRED_PROVIDERS</filename> is identical to
+                    <link linkend='var-PREFERRED_PROVIDER'><filename>PREFERRED_PROVIDER</filename></link>.
+                    However, the <filename>PREFERRED_PROVIDERS</filename>
+                    variable lets you define preferences for multiple
+                    situations using the following form:
+                    <literallayout class='monospaced'>
+     PREFERRED_PROVIDERS = "xxx:yyy aaa:bbb ..."
+                    </literallayout>
+                    This form is a convenient replacement for the following:
+                    <literallayout class='monospaced'>
+     PREFERRED_PROVIDER_xxx = "yyy"
+     PREFERRED_PROVIDER_aaa = "bbb"
+                    </literallayout>
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-PREFERRED_VERSION'><glossterm>PREFERRED_VERSION</glossterm>
             <glossdef>
                 <para>
