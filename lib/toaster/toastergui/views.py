@@ -445,7 +445,7 @@ def tasks(request, build_id):
                 {
                     'name':'Recipe',
                     'qhelp':'The name of the recipe to which each task applies',
-#                    'orderfield': _get_toggle_order(request, "recipe"),
+                    'orderfield': _get_toggle_order(request, "recipe"),
                     'ordericon':_get_toggle_order_icon(request, "recipe"),
                 },
                 {
@@ -514,24 +514,32 @@ def tasks(request, build_id):
                 {
                     'name':'Time (secs)',
                     'qhelp':'How long it took the task to finish, expressed in seconds',
+                    'orderfield': _get_toggle_order(request, "elapsed_time"),
+                    'ordericon':_get_toggle_order_icon(request, "elapsed_time"),
                     'clclass': 'time_taken',
                     'hidden' : 1,
                 },
                 {
                     'name':'CPU usage',
                     'qhelp':'Task CPU utilisation, expressed as a percentage',
+                    'orderfield': _get_toggle_order(request, "cpu_usage"),
+                    'ordericon':_get_toggle_order_icon(request, "cpu_usage"),
                     'clclass': 'cpu_used',
                     'hidden' : 1,
                 },
                 {
                     'name':'Disk I/O (ms)',
                     'qhelp':'Number of miliseconds the task spent doing disk input and output',
+                    'orderfield': _get_toggle_order(request, "disk_io"),
+                    'ordericon':_get_toggle_order_icon(request, "disk_io"),
                     'clclass': 'disk_io',
                     'hidden' : 1,
                 },
                 {
                     'name':'Log',
                     'qhelp':'The location in disk of the task log file',
+                    'orderfield': _get_toggle_order(request, "logfile"),
+                    'ordericon':_get_toggle_order_icon(request, "logfile"),
                     'clclass': 'task_log',
                     'hidden' : 1,
                 },
