@@ -449,9 +449,14 @@ class BBCooker:
         current = 0
         runlist = []
         for k in fulltargetlist:
+            ktask = task
+            if ":do_" in k:
+                k2 = k.split(":do_")
+                k = k2[0]
+                ktask = k2[1]
             taskdata.add_provider(localdata, self.recipecache, k)
             current += 1
-            runlist.append([k, "do_%s" % task])
+            runlist.append([k, "do_%s" % ktask])
             bb.event.fire(bb.event.TreeDataPreparationProgress(current, len(fulltargetlist)), self.data)
         taskdata.add_unresolved(localdata, self.recipecache)
         bb.event.fire(bb.event.TreeDataPreparationCompleted(len(fulltargetlist)), self.data)
