@@ -48,7 +48,7 @@
         <glossentry id='var-ASSUME_PROVIDED'><glossterm>ASSUME_PROVIDED</glossterm>
             <glossdef>
                 <para>
-                    Recipe names
+                    Lists recipe names
                     (<link linkend='var-PN'><filename>PN</filename></link>
                     values) BitBake does not attempt to build.
                     Instead, BitBake assumes these recipes have already been
@@ -56,11 +56,12 @@
                 </para>
 
                 <para>
-                    <filename>ASSUMED_PROVIDED</filename> often specifies
-                    native tools.
-                    A good example is <filename>git-native</filename>, which
-                    allows for the the Git binary from the host to be used
-                    rather than building <filename>git-native</filename>.
+                    In OpenEmbedded Core, <filename>ASSUME_PROVIDED</filename>
+                    mostly specifies native tools that should not be built.
+                    An example is <filename>git-native</filename>, which
+                    when specified allows for the Git binary from the host to
+                    be used rather than building
+                    <filename>git-native</filename>.
                 </para>
             </glossdef>
         </glossentry>
@@ -108,7 +109,6 @@
                     It is important to realize when your changes are no longer
                     being applied.
                 </para>
-
             </glossdef>
         </glossentry>
 
@@ -490,6 +490,18 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_NUMBER_THREADS'><glossterm>BB_NUMBER_THREADS</glossterm>
+            <glossdef>
+                <para>
+                    The maximum number of tasks BitBake should run in parallel
+                    at any one time.
+                    If your host development system supports multiple cores,
+                    a good rule of thumb is to set this variable to twice the
+                    number of cores.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_NUMBER_PARSE_THREADS'><glossterm>BB_NUMBER_PARSE_THREADS</glossterm>
             <glossdef>
                 <para>
@@ -527,14 +539,6 @@
                         environment in order for it to work.
                     </note>
                 </para>
-            </glossdef>
-        </glossentry>
-
-        <glossentry id='var-BB_NUMBER_THREADS'><glossterm>BB_NUMBER_THREADS</glossterm>
-            <glossdef>
-                <para>The maximum number of tasks BitBake should run in parallel at any one time.
-                    If your host development system supports multiple cores, a good rule of thumb
-                    is to set this variable to twice the number of cores.</para>
             </glossdef>
         </glossentry>
 
@@ -818,19 +822,27 @@
         <glossentry id='var-BBCLASSEXTEND'><glossterm>BBCLASSEXTEND</glossterm>
             <glossdef>
                 <para>
-                    Allows you to extend a recipe so that it builds variants of the software.
-                    Common variants for recipes exist such as "natives" like <filename>quilt-native</filename>,
+                    Allows you to extend a recipe so that it builds variants
+                    of the software.
+                    Common variants for recipes exist such as "natives"
+                    like <filename>quilt-native</filename>,
                     which is a copy of Quilt built to run on the build system;
                     "crosses" such as <filename>gcc-cross</filename>,
-                    which is a compiler built to run on the build machine but produces binaries
-                    that run on the target <filename>MACHINE</filename>;
-                    "nativesdk", which targets the SDK machine instead of <filename>MACHINE</filename>;
-                    and "mulitlibs" in the form "<filename>multilib:&lt;multilib_name&gt;</filename>".
+                    which is a compiler built to run on the build machine
+                    but produces binaries that run on the target
+                    <filename>MACHINE</filename>; "nativesdk", which targets
+                    the SDK machine instead of <filename>MACHINE</filename>;
+                    and "mulitlibs" in the form
+                    "<filename>multilib:&lt;multilib_name&gt;</filename>".
                 </para>
 
                 <para>
-                    To build a different variant of the recipe with a minimal amount of code, it usually
-                    is as simple as adding the following to your recipe:
+                    To build a different variant of the recipe with a minimal
+                    amount of code, it usually is as simple as adding the
+                    variable to your recipe.
+                    Here are two examples.
+                    The "native" variants are from the OpenEmbedded Core
+                    metadata:
                     <literallayout class='monospaced'>
      BBCLASSEXTEND =+ "native nativesdk"
      BBCLASSEXTEND =+ "multilib:&lt;multilib_name&gt;"
@@ -1511,9 +1523,6 @@
                     through the <filename>PACKAGES_DYNAMIC</filename>
                     variable, but a package with the module name is never actually
                     produced, then the other package will be broken.
-                    Thus, if you attempt to include that package in an image,
-                    you will get a dependency failure from the packaging system
-                    during <filename>do_rootfs</filename>.
                 </para>
             </glossdef>
         </glossentry>
@@ -1860,7 +1869,8 @@
 
         <glossentry id='var-SRC_URI'><glossterm>SRC_URI</glossterm>
             <glossdef>
-                <para>The list of source files - local or remote.
+                <para>
+                    The list of source files - local or remote.
                     This variable tells BitBake which bits
                     to pull in for the build and how to pull them in.
                     For example, if the recipe or append file only needs to
@@ -1880,41 +1890,7 @@
                             from the local machine.
                             The path is relative to the
                             <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>
-                            variable.
-                            Thus, the build system searches, in order, from the
-                            following directories, which are assumed to be a
-                            subdirectories of the directory in which the
-                            recipe file (<filename>.bb</filename>) or
-                            append file (<filename>.bbappend</filename>)
-                            resides:
-                            <itemizedlist>
-                                <listitem><para><emphasis><filename>${BPN}</filename> -</emphasis>
-                                    The base recipe name without any special
-                                    suffix or version numbers.
-                                    </para></listitem>
-                                <listitem><para><emphasis><filename>${BP}</filename> -</emphasis>
-                                    <filename>${BPN}-${PV}</filename>.
-                                    The base recipe name and version but without
-                                    any special package name suffix.
-                                    </para></listitem>
-                                <listitem><para><emphasis>files -</emphasis>
-                                    Files within a directory that is named
-                                    <filename>files</filename> and is also
-                                    alongside the recipe or append file.
-                                    </para></listitem>
-                            </itemizedlist>
-                            <note>
-                                If you want the build system to pick up files
-                                specified through a
-                                <filename>SRC_URI</filename>
-                                statement from your append file, you need to be
-                                sure to extend the
-                                <filename>FILESPATH</filename>
-                                variable by also using the
-                                <filename>FILESEXTRAPATHS</filename>
-                                variable from within your append file.
-                            </note>
-                            </para></listitem>
+                            variable.</para></listitem>
                         <listitem><para><emphasis><filename>bzr://</filename> -</emphasis> Fetches files from a
                             Bazaar revision control repository.</para></listitem>
                         <listitem><para><emphasis><filename>git://</filename> -</emphasis> Fetches files from a
@@ -1943,50 +1919,6 @@
                             a Subversion (<filename>svn</filename>) revision control repository.</para></listitem>
                     </itemizedlist>
                 </para>
-                <para>Standard and recipe-specific options for <filename>SRC_URI</filename> exist.
-                    Here are standard options:
-                    <itemizedlist>
-                        <listitem><para><emphasis><filename>apply</filename> -</emphasis> Whether to apply
-                            the patch or not.
-                            The default action is to apply the patch.</para></listitem>
-                        <listitem><para><emphasis><filename>striplevel</filename> -</emphasis> Which
-                            striplevel to use when applying the patch.
-                            The default level is 1.</para></listitem>
-                        <listitem><para><emphasis><filename>patchdir</filename> -</emphasis> Specifies
-                            the directory in which the patch should be applied.
-                            The default is <filename>${S}</filename>.
-                            </para></listitem>
-                    </itemizedlist>
-                </para>
-                <para>Here are options specific to recipes building code from a revision control system:
-                    <itemizedlist>
-                        <listitem><para><emphasis><filename>mindate</filename> -</emphasis>
-                            Apply the patch only if
-                            <link linkend='var-SRCDATE'><filename>SRCDATE</filename></link>
-                            is equal to or greater than <filename>mindate</filename>.
-                            </para></listitem>
-                        <listitem><para><emphasis><filename>maxdate</filename> -</emphasis>
-                            Apply the patch only if <filename>SRCDATE</filename>
-                            is not later than <filename>mindate</filename>.
-                            </para></listitem>
-                        <listitem><para><emphasis><filename>minrev</filename> -</emphasis>
-                            Apply the patch only if <filename>SRCREV</filename>
-                            is equal to or greater than <filename>minrev</filename>.
-                            </para></listitem>
-                        <listitem><para><emphasis><filename>maxrev</filename> -</emphasis>
-                            Apply the patch only if <filename>SRCREV</filename>
-                            is not later than <filename>maxrev</filename>.
-                            </para></listitem>
-                        <listitem><para><emphasis><filename>rev</filename> -</emphasis>
-                            Apply the patch only if <filename>SRCREV</filename>
-                            is equal to <filename>rev</filename>.
-                            </para></listitem>
-                        <listitem><para><emphasis><filename>notrev</filename> -</emphasis>
-                            Apply the patch only if <filename>SRCREV</filename>
-                            is not equal to <filename>rev</filename>.
-                            </para></listitem>
-                    </itemizedlist>
-                </para>
                 <para>Here are some additional options worth mentioning:
                     <itemizedlist>
                         <listitem><para><emphasis><filename>unpack</filename> -</emphasis> Controls
@@ -1994,7 +1926,7 @@
                             The default action is to unpack the file.</para></listitem>
                         <listitem><para><emphasis><filename>subdir</filename> -</emphasis> Places the file
                             (or extracts its contents) into the specified
-                            subdirectory of <filename>WORKDIR</filename>.
+                            subdirectory.
                             This option is useful for unusual tarballs or other archives that
                             do not have their files already in a subdirectory within the archive.
                             </para></listitem>
