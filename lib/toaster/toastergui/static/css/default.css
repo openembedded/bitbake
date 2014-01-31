@@ -64,7 +64,7 @@ td a:hover { color: #000000; text-decoration: underline; }
 .table-hover tbody tr.error:hover > td { background-color: #F5F5F5;} /* override default Bootstrap behaviour */
 
 /* Set error, warning, success and muted styles */
-.error, .red, tr.error a { color: #b94a48; }
+.error, .red, td.error a, tr.error a { color: #b94a48; }
 a.error:hover, a.error:focus, tr.error a:hover { color: #943A38; text-decoration: underline; }
 .warning, .yellow { color: #c09853;}
 a.warning { background-color: transparent; }
