@@ -75,7 +75,7 @@ def task_color(task_object):
     """
     if not task_object.task_executed:
         return 'class=muted'
-    elif task_object.get_outcome_display == 'Failed':
+    elif task_object.outcome == task_object.OUTCOME_FAILED:
         return 'class=error'
     else:
         return ''
