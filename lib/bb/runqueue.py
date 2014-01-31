@@ -125,7 +125,10 @@ class RunQueueScheduler(object):
         if not self.buildable:
             return None
         if len(self.buildable) == 1:
-            return self.buildable[0]
+            taskid = self.buildable[0]
+            stamp = self.stamps[taskid]
+            if stamp not in self.rq.build_stamps.itervalues():
+                return taskid
 
         if not self.rev_prio_map:
             self.rev_prio_map = range(self.numTasks)
