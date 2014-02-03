@@ -8,39 +8,53 @@
         <title>Overview</title>
 
         <para>
-            The BitBake task executor together with various types of configuration files form the OpenEmbedded
-            Core.
-            This section provides an overview of the BitBake task executor and the configuration files by
-            describing what they are used for and how they interact.
+            The BitBake task executor together with various types of configuration
+            files form the OpenEmbedded Core.
+            This section provides an overview of the task executor and the
+            configuration files by describing their use and interaction.
         </para>
 
         <para>
-            BitBake handles the parsing and execution of the data files. The data itself is of various types:
+            BitBake handles the parsing and execution of the data files.
+            The data itself is of various types:
             <itemizedlist>
                 <listitem><para><emphasis>Recipes:</emphasis>
-                    Provides details about particular pieces of software.</para></listitem>
+                    Details about particular pieces of software.
+                    </para></listitem>
                 <listitem><para><emphasis>Class Data:</emphasis>
-                    An abstraction of common build information (e.g. how to build a Linux kernel).</para></listitem>
+                    An abstraction of common build information
+                    (e.g. how to build a Linux kernel).
+                    </para></listitem>
                 <listitem><para><emphasis>Configuration Data:</emphasis>
-                    Defines machine-specific settings, policy decisions, etc. Configuration data acts
-                    as the glue to bind everything together.</para></listitem>
+                    Machine-specific settings, policy decisions,
+                    and so forth.
+                    Configuration data acts as the glue to bind everything
+                    together.</para></listitem>
             </itemizedlist>
-            What follows are a large number of examples of BitBake metadata. Any syntax which isn't supported
-            in any of the aforementioned areas will be documented as such.
+            The remainder of this chapter provides examples of BitBake metadata.
+            Any syntax not supported in any of the previously listed areas
+            is documented as such.
         </para>
     </section>
 
     <section id='basic-syntax'>
         <title>Basic Syntax</title>
 
+        <para>
+            This section provides some basic syntax examples.
+        </para>
+
         <section id='basic-variable-setting'>
             <title>Basic Variable Setting</title>
 
             <para>
+                The following example sets <filename>VARIABLE</filename> to
+                "value".
+                This assignment occurs immediately as the statement is parsed.
+                It is a "hard" assignment.
                 <literallayout class='monospaced'>
      VARIABLE = "value"
                 </literallayout>
-                In this example, <filename>VARIABLE</filename> is <filename>value</filename>.
             </para>
         </section>
 
@@ -49,18 +63,14 @@
 
             <para>
                 BitBake supports variables referencing one another's
-                contents using a syntax which is similar to shell
-                scripting
-            </para>
-
-            <para>
+                contents using a syntax that is similar to shell scripting.
+                Following is an example that results in <filename>A</filename>
+                containing "aval" and <filename>B</filename> containing
+                "preavalpost".
                 <literallayout class='monospaced'>
      A = "aval"
      B = "pre${A}post"
                 </literallayout>
-                This results in <filename>A</filename> containing
-                <filename>aval</filename> and <filename>B</filename> containing
-                <filename>preavalpost</filename>.
             </para>
         </section>
 
@@ -68,16 +78,24 @@
             <title>Setting a default value (?=)</title>
 
             <para>
+                You can use the "?=" operator to achieve a "softer" assignment
+                for a variable.
+                This type of assignment allows you to define a variable if it
+                is undefined when the statement is parsed, but to leave the
+                value alone if the variable has a value.
+                Here is an example:
                 <literallayout class='monospaced'>
      A ?= "aval"
                 </literallayout>
-                If <filename>A</filename> is set before the above is called,
-                it will retain its previous value.
-                If <filename>A</filename> is unset prior to the above call,
-                <filename>A</filename> will be set to <filename>aval</filename>.
+                If <filename>A</filename> is set at the time this statement is parsed,
+                the variable retains its value.
+                However, if <filename>A</filename> is not set,
+                the variable is set to "aval".
                 <note>
-                    This assignment is immediate, so if there are multiple "?=" assignments
-                    to a single variable, the first of those will be used.
+                    This assignment is immediate.
+                    Consequently, if multiple "?=" assignments
+                    to a single variable exist, the first of those ends up getting
+                    used.
                 </note>
             </para>
         </section>
@@ -86,19 +104,30 @@
             <title>Setting a weak default value (??=)</title>
 
             <para>
+                It is possible to use a "weaker" assignment that in the
+                previous section by using the "??=" operator.
+                This assignment behaves identical to "?=" except that the
+                assignment is made at the end of the parsing process rather
+                than immediately.
+                Consequently, when multiple "??=" assignments exist, the last
+                one is used.
+                Also, any "=" or "?=" assignment will override the value set with
+                "??=".
+                Here is an example:
                 <literallayout class='monospaced'>
      A ??= "somevalue"
      A ??= "someothervalue"
                 </literallayout>
-                If <filename>A</filename> is set before the above,
-                it will retain that value.
-                If <filename>A</filename> is unset prior to the above,
-                <filename>A</filename> will be set to <filename>someothervalue</filename>.
-                This is a lazy or weak assignment in that the assignment does not occur until the end
-                of the parsing process, so that the last, rather than the first,
-                "??=" assignment to a given variable will be used.
-                Any other setting of <filename>A</filename> using "=" or "?="
-                will, however, override the value set with "??=".
+                If <filename>A</filename> is set before the above statements are parsed,
+                the variable retains its value.
+                If <filename>A</filename> is not set,
+                the variable is set to "someothervalue".
+            </para>
+
+            <para>
+                Again, this assignment is a "lazy" or "weak" assignment
+                because it does not occur until the end
+                of the parsing process.
             </para>
         </section>
 
@@ -106,7 +135,8 @@
             <title>Immediate variable expansion (:=)</title>
 
             <para>
-                The ":=" operator results in a variable's contents being expanded immediately,
+                The ":=" operator results in a variable's
+                contents being expanded immediately,
                 rather than when the variable is actually used:
                 <literallayout class='monospaced'>
      T = "123"
@@ -116,26 +146,34 @@
      C = "cval"
      C := "${C}append"
                 </literallayout>
-                In this example, <filename>A</filename> would contain
-                <filename>test 123</filename>, <filename>B</filename> would contain
-                <filename>456 bval</filename>, and <filename>C</filename>
-                would be <filename>cvalappend</filename>.
+                In this example, <filename>A</filename> contains
+                "test 123" because <filename>${B}</filename> and
+                <filename>${A}</filename> at the time of parsing are undefined,
+                which leaves "test 123".
+                And, the variable <filename>C</filename>
+                contains "cvalappend" since <filename>${C}</filename> immediately
+                expands to "cval".
             </para>
         </section>
 
         <section id='appending-and-prepending'>
-            <title>Appending (+=) and prepending (=+)</title>
+            <title>Appending (+=) and prepending (=+) With Spaces</title>
 
             <para>
+                Appending and prepending values is common and can be accomplished
+                using the "+=" and "=+" operators.
+                These operators insert a space between the current
+                value and prepended or appended value.
+                Here are some examples:
                 <literallayout class='monospaced'>
      B = "bval"
      B += "additionaldata"
      C = "cval"
      C =+ "test"
                 </literallayout>
-                In this example, <filename>B</filename> is now
-                <filename>bval additionaldata</filename> and <filename>C</filename>
-                is <filename>test cval</filename>.
+                The variable <filename>B</filename> contains
+                "bval additionaldata" and <filename>C</filename>
+                contains "test cval".
             </para>
         </section>
 
@@ -143,17 +181,18 @@
             <title>Appending (.=) and Prepending (=.) Without Spaces</title>
 
             <para>
+                If you want to append or prepend values without an
+                inserted space, use the ".=" and "=." operators.
+                Here are some examples:
                 <literallayout class='monospaced'>
      B = "bval"
      B .= "additionaldata"
      C = "cval"
      C =. "test"
                 </literallayout>
-                In this example, <filename>B</filename> is now
-                <filename>bvaladditionaldata</filename> and
-                <filename>C</filename> is <filename>testcval</filename>.
-                In contrast to the above appending and prepending operators,
-                no additional space will be introduced.
+                The variable <filename>B</filename> contains
+                "bvaladditionaldata" and
+                <filename>C</filename> contains "testcval".
             </para>
         </section>
 
@@ -161,49 +200,88 @@
             <title>Appending and Prepending (Override Style Syntax)</title>
 
             <para>
+                You can also append and prepend a variable's value
+                using an override style syntax.
+                When you use this syntax, no spaces are inserted.
+                Here are some examples:
                 <literallayout class='monospaced'>
      B = "bval"
      B_append = " additional data"
      C = "cval"
      C_prepend = "additional data "
+     D = "dval"
+     D_append = "additional data"
                 </literallayout>
-                This example results in <filename>B</filename>
-                becoming <filename>bval additional data</filename> and
-                <filename>C</filename> becoming
-                <filename>additional data cval</filename>.
+                The variable <filename>B</filename> becomes
+                "bval additional data" and <filename>C</filename> becomes
+                "additional data cval".
+                The variable <filename>D</filename> becomes
+                "dvaladditional data".
                 <note>
-                    The spaces in <filename>_append</filename>.
-                    Unlike the "+=" operator, additional space is not automatically added.
-                    You must take steps to add space yourself.
+                    You must control all spacing when you use the
+                    override syntax.
                 </note>
             </para>
         </section>
 
         <section id='removing-override-style-syntax'>
-            <title>Removing (Override Style Syntax)</title>
+            <title>Removal (Override Style Syntax)</title>
 
             <para>
+                You can remove values from lists using the removal
+                override style syntax.
+                Specifying a value for removal causes all occurrences of that
+                value to be removed from the variable.
+            </para>
+
+            <para>
+                When you use this syntax, BitBake expects one or more strings.
+                Surrounding spaces are removed as well.
+                Here is an example:
                 <literallayout class='monospaced'>
      FOO = "123 456 789 123456 123 456 123 456"
      FOO_remove = "123"
      FOO_remove = "456"
+     FOO2 = "abc def ghi abcdef abc def abc def"
+     FOO2_remove = "abc def"
                 </literallayout>
-                In this example, <filename>FOO</filename> is now <filename>789 123456</filename>.
+                The variable <filename>FOO</filename> becomes
+                "789 123456" and <filename>FOO2</filename> becomes
+                "ghi abcdef".
             </para>
         </section>
 
-        <section id='variable-flags'>
-            <title>Variable Flags</title>
+        <section id='variable-flag-syntax'>
+            <title>Variable Flag Syntax</title>
 
             <para>
-                Variables can have associated flags which provide a way of tagging extra information onto a variable.
-                Several flags are used internally by BitBake but they can be used externally too if needed.
-                The standard operations mentioned above also work on flags.
+                Variable flags are BitBake's implementation of variable properties
+                or attributes.
+                It is a way of tagging extra information onto a variable.
+                You can find more out about variable flags in general in the
+                "<link linkend='variable-flags'>Variable Flags</link>"
+                section.
+            </para>
+
+            <para>
+                You can define, append, and prepend values to variable flags.
+                All the standard syntax operations previously mentioned work
+                for variable flags except for override style syntax
+                (i.e. <filename>_prepend</filename>, <filename>_append</filename>,
+                and <filename>_remove</filename>).
+            </para>
+
+            <para>
+                Here are some examples showing how to set variable flags:
                 <literallayout class='monospaced'>
-     VARIABLE[SOMEFLAG] = "value"
+     FOO[a] = "abc"
+     FOO[b] = "123"
+     FOO[a] += "456"
                 </literallayout>
-                In this example, <filename>VARIABLE</filename> has a flag,
-                <filename>SOMEFLAG</filename> that is set to <filename>value</filename>.
+                The variable <filename>FOO</filename> has two flags:
+                <filename>a</filename> and <filename>b</filename>.
+                The flags are immediately set to "abc" and "123", respectively.
+                The <filename>a</filename> flag becomes "abc456".
             </para>
         </section>
 
@@ -211,11 +289,14 @@
             <title>Inline Python Variable Expansion</title>
 
             <para>
+                You can use inline Python variable expansion to
+                set variables.
+                Here is an example:
                 <literallayout class='monospaced'>
      DATE = "${@time.strftime('%Y%m%d',time.gmtime())}"
                 </literallayout>
-                This would result in the <filename>DATE</filename>
-                variable containing today's date.
+                This example results in the <filename>DATE</filename>
+                variable becoming the current date.
             </para>
         </section>
     </section>
@@ -391,33 +472,6 @@
         </section>
     </section>
 
-    <section id='defining-python-functions-into-the-global-python-namespace'>
-        <title>Defining Python Functions into the Global Python Namespace</title>
-
-        <note>
-            <para>
-                This is only supported in <filename>.bb</filename>
-                and <filename>.bbclass</filename> files.
-            </para>
-
-            <para>
-                Python functions are in the global namespace so should use
-                unique names.
-                <literallayout class='monospaced'>
-     def get_depends(d):
-         if d.getVar('SOMECONDITION', True):
-             return "dependencywithcond"
-         else:
-             return "dependency"
-     SOMECONDITION = "1"
-     DEPENDS = "${@get_depends(d)}"
-                </literallayout>
-                This would result in <filename>DEPENDS</filename>
-                containing <filename>dependencywithcond</filename>.
-            </para>
-        </note>
-    </section>
-
     <section id='functions'>
         <title>Functions</title>
 
@@ -471,6 +525,30 @@
             executed with direct Python function calls.
             The "bb" and "os" modules are still automatically available
             and there is no need to import them.
+        </para>
+    </section>
+
+    <section id='defining-pure-python-functions'>
+        <title>Defining Pure Python functions</title>
+
+        <note>
+            This is only supported in <filename>.bb</filename>
+            and <filename>.bbclass</filename> files.
+        </note>
+
+        <para>
+            Python functions should use unique names.
+            <literallayout class='monospaced'>
+     def get_depends(d):
+         if d.getVar('SOMECONDITION', True):
+             return "dependencywithcond"
+         else:
+             return "dependency"
+     SOMECONDITION = "1"
+     DEPENDS = "${@get_depends(d)}"
+            </literallayout>
+            This would result in <filename>DEPENDS</filename>
+            containing <filename>dependencywithcond</filename>.
         </para>
     </section>
 
@@ -580,6 +658,14 @@
                         ignores the dependency when it creates checksums.
                     </note></para></listitem>
             </orderedlist>
+        </para>
+    </section>
+
+    <section id='variable-flags'>
+        <title>Variable Flags</title>
+
+        <para>
+            This section describes variable flags.
         </para>
     </section>
 
@@ -702,7 +788,7 @@
             </para>
         </section>
 
-        <section id='configiguration-files'>
+        <section id='parsing-configuration-files'>
             <title>Configuration files</title>
 
             <para>
@@ -992,7 +1078,7 @@
             </para>
 
             <para>
-                It may be desireable to recurse not just through the
+                It may be desirable to recurse not just through the
                 dependencies of those tasks but through the
                 build and runtime dependencies of dependent tasks too.
                 If that is the case, the taskname itself should
