@@ -254,19 +254,8 @@ def exec_func_python(func, d, runfile, cwd=None):
             except OSError:
                 pass
 
-def exec_func_shell(func, d, runfile, cwd=None):
-    """Execute a shell function from the metadata
-
-    Note on directory behavior.  The 'dirs' varflag should contain a list
-    of the directories you need created prior to execution.  The last
-    item in the list is where we will chdir/cd to.
-    """
-
-    # Don't let the emitted shell script override PWD
-    d.delVarFlag('PWD', 'export')
-
-    with open(runfile, 'w') as script:
-        script.write('''#!/bin/sh\n
+def shell_trap_code():
+    return '''#!/bin/sh\n
 # Emit a useful diagnostic if something fails:
 bb_exit_handler() {
     ret=$?
@@ -282,7 +271,21 @@ bb_exit_handler() {
 }
 trap 'bb_exit_handler' 0
 set -e
-''')
+'''
+
+def exec_func_shell(func, d, runfile, cwd=None):
+    """Execute a shell function from the metadata
+
+    Note on directory behavior.  The 'dirs' varflag should contain a list
+    of the directories you need created prior to execution.  The last
+    item in the list is where we will chdir/cd to.
+    """
+
+    # Don't let the emitted shell script override PWD
+    d.delVarFlag('PWD', 'export')
+
+    with open(runfile, 'w') as script:
+        script.write(shell_trap_code())
 
         bb.data.emit_func(func, script, d)
 
@@ -473,12 +476,12 @@ def _exec_task(fn, task, d, quieterr):
     return 0
 
 def exec_task(fn, task, d, profile = False):
-    try: 
+    try:
         quieterr = False
         if d.getVarFlag(task, "quieterrors") is not None:
             quieterr = True
 
-        if profile: 
+        if profile:
             profname = "profile-%s.log" % (d.getVar("PN", True) + "-" + task)
             try:
                 import cProfile as profile
@@ -576,7 +579,7 @@ def make_stamp(task, d, file_name = None):
             if name.endswith('.taint'):
                 continue
             os.unlink(name)
-    
+
     stamp = stamp_internal(task, d, file_name)
     # Remove the file and recreate to force timestamp
     # change on broken NFS filesystems
