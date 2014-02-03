@@ -2,7 +2,7 @@
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
 <chapter id="user-manual-intro">
-    <title>BitBake User Manual</title>
+    <title>Overview</title>
 
     <section id="intro">
         <title>Introduction</title>
@@ -63,7 +63,7 @@
             <itemizedlist>
                 <listitem><para>BitBake, a generic task executor</para></listitem>
                 <listitem><para>OpenEmbedded, a metadata set utilized by
-                    BitBake.</para></listitem>
+                    BitBake</para></listitem>
             </itemizedlist>
             Today, BitBake is the primary basis of the
             <ulink url="http://www.openembedded.org/">OpenEmbedded</ulink>
@@ -97,51 +97,50 @@
                     Support running any number of tasks within a given
                     package, including, but not limited to, fetching
                     upstream sources, unpacking them, patching them,
-                    configuring them, etc.
+                    configuring them, and so forth.
                     </para></listitem>
                 <listitem><para>
-                    Must be Linux distribution agnostic (both build and
-                    target).
+                    Be Linux distribution agnostic for both build and
+                    target systems.
                     </para></listitem>
                 <listitem><para>
-                    Must be architecture agnostic
+                    Be architecture agnostic.
                     </para></listitem>
                 <listitem><para>
-                    Must support multiple build and target operating systems
-                    (including Cygwin, the BSDs, etc).
+                    Support multiple build and target operating systems
+                    (e.g. Cygwin, the BSDs, and so forth).
                     </para></listitem>
                 <listitem><para>
-                    Must be able to be self contained, rather than tightly
+                    Be self contained, rather than tightly
                     integrated into the build machine's root
                     filesystem.
                     </para></listitem>
                 <listitem><para>
-                    There must be a way to handle conditional metadata
-                    (on target architecture, operating system,
-                    distribution, machine).
+                    Handle conditional metadata on the target architecture,
+                    operating system, distribution, and machine.
                     </para></listitem>
                 <listitem><para>
-                    It must be easy for the person using the tools to
-                    supply their own local metadata and packages
-                    to operate against.
+                    Be easy to use the tools to supply local metadata and packages
+                    against which to operate.
                     </para></listitem>
                 <listitem><para>
-                    Must make it easy to collaborate between multiple
-                    projects using BitBake for their builds.
+                    Be easy to use BitBake to collaborate between multiple
+                    projects for their builds.
                     </para></listitem>
                 <listitem><para>
-                    Should provide an inheritance mechanism to share
+                    Provide an inheritance mechanism that share
                     common metadata between many packages.
                     </para></listitem>
             </itemizedlist>
-            Over time it has become apparent that some further requirements
+            Over time it became apparent that some further requirements
             were necessary:
             <itemizedlist>
                 <listitem><para>
-                    Handle variants of a base recipe (native, sdk, multilib).
+                    Handle variants of a base recipe (e.g. native, sdk,
+                    and multilib).
                     </para></listitem>
                 <listitem><para>
-                    Able to split metadata into layers and allow layers
+                    Split metadata into layers and allow layers
                     to override each other.
                     </para></listitem>
                 <listitem><para>
@@ -155,7 +154,7 @@
             with extensions being made to the basic functionality to
             reflect the additional requirements.
             Flexibility and power have always been the priorities.
-            It is highly extensible, supporting embedded Python code and
+            BitBake is highly extensible and supports embedded Python code and
             execution of any arbitrary tasks.
         </para>
     </section>
@@ -169,23 +168,30 @@
             what tasks are required to run, and executes those tasks.
             Similar to GNU Make, BitBake controls how software is
             built.
-            GNU Make does this using "makefiles". BitBake uses
-            "recipes".
+            GNU Make achieves its control through "makefiles".
+            BitBake uses "recipes".
+        </para>
+
+        <para>
             BitBake extends the capabilities of a simple
-            tool like GNU make by allowing for much more complex tasks
+            tool like GNU Make by allowing for much more complex tasks
             to be completed, such as assembling entire embedded Linux
-            distributions. Several concepts must be understood to be able
-            to leverage the power of the tool.
+            distributions.
+        </para>
+
+        <para>
+            The remainder of this section introduces several concepts
+            that should be understood in order to better leverage
+            the power of BitBake.
         </para>
 
         <section id='recipes'>
             <title>Recipes</title>
 
             <para>
-                A BitBake Recipe, denoted by the file extension
-                <filename>.bb</filename> is the most
-                basic metadata file.
-                These recipe files tell BitBake the following:
+                BitBake Recipes, which are denoted by the file extension
+                <filename>.bb</filename>, are the most basic metadata files.
+                These recipe files provide BitBake the following:
                 <itemizedlist>
                     <listitem><para>Descriptive information about the package</para></listitem>
                     <listitem><para>The version of the recipe</para></listitem>
@@ -193,19 +199,21 @@
                     <listitem><para>Where the source code resides</para></listitem>
                     <listitem><para>Whether the source code requires any patches</para></listitem>
                     <listitem><para>How to compile the source code</para></listitem>
-                    <listitem><para>Where on the target machine to install the package being compiled</para></listitem>
+                    <listitem><para>Where on the target machine to install the
+                        package being compiled</para></listitem>
                 </itemizedlist>
             </para>
 
             <para>
                 Within the context of BitBake, or any project utilizing BitBake
                 as it's build system, files with the <filename>.bb</filename>
-                extension are referred
-                to as recipes.
-                The term "package" is also commonly used to describe recipes.
-                However, since the same word is used to describe packaged
-                output from a project, it is best to maintain a single
-                descriptive term, "recipes".
+                extension are referred to as recipes.
+                <note>
+                    The term "package" is also commonly used to describe recipes.
+                    However, since the same word is used to describe packaged
+                    output from a project, it is best to maintain a single
+                    descriptive term, "recipes".
+                </note>
             </para>
         </section>
 
@@ -213,18 +221,18 @@
             <title>Configuration Files</title>
 
             <para>
-                Configuration files, denoted by the
-                <filename>.conf</filename> extension define
-                various configuration variables that govern the project build
+                Configuration files, which are denoted by the
+                <filename>.conf</filename> extension, define
+                various configuration variables that govern the project's build
                 process.
                 These files fall into several areas that define
                 machine configuration options, distribution configuration
                 options, compiler tuning options, general common
-                configuration options and user configuration options.
+                configuration options, and user configuration options.
                 The main configuration file is the sample
-                <filename>bitbake.conf</filename> file,
-                located within the bitbake source tree
-                <filename>/conf</filename> directory.
+                <filename>bitbake.conf</filename> file, which is
+                located within the BitBake source tree
+                <filename>conf</filename> directory.
             </para>
         </section>
 
@@ -232,20 +240,21 @@
             <title>Classes</title>
 
             <para>
-                Class files, denoted by the
-                <filename>.bbclass</filename> extension contain
+                Class files, which are denoted by the
+                <filename>.bbclass</filename> extension, contain
                 information that is useful to share between metadata files.
-                The BitBake source tree comes with one class metadata file
-                currently, called <filename>base.bbclass</filename> and it is
-                found in the <filename>/classes</filename> directory.
+                The BitBake source tree currently comes with one class metadata file
+                called <filename>base.bbclass</filename>.
+                You can find this file in the
+                <filename>classes</filename> directory.
                 The <filename>base.bbclass</filename> is special in that any
-                new classes that a developer adds to a project is required to
-                inherit it automatically.
+                new classes that a developer adds to a project are required to
+                inherit <filename>base.bbclass</filename> automatically.
                 This class contains definitions for standard basic tasks such
                 as fetching, unpacking, configuring (empty by default),
                 compiling (runs any Makefile present), installing (empty by
                 default) and packaging (empty by default).
-                These classes are often overridden or extended by other classes
+                These tasks are often overridden or extended by other classes
                 added during the project development process.
             </para>
         </section>
@@ -255,82 +264,53 @@
         <title>Obtaining BitBake</title>
 
         <para>
-            There are several ways to obtain BitBake.
-            These include installing using your Linux distribution's
-            package management system (not recommended), downloading
-            a snapshot from the BitBake source
-            code repository, or using Git to clone the BitBake source
-            code repository.
-            The recommended method for daily BitBake use is to download
-            a stable release from the BitBake source code repository.
-            Using your distribution's version as provided in the package
-            management system is generally not
-            recommended as in most cases, such as with the Ubuntu and
-            Fedora distributions, the version provided is several releases
-            behind the repository snapshot version and is missing
-            important bug fixes and enhancements. Similarly, daily use
-            of the latest clone of the Git repository is not recommended
-            as it can be unstable.
-            However, the Git repository clone will provide the User
-            with the absolute latest version of BitBake.
-        </para>
-    </section>
-
-    <section id='downloading-a-snapshot-from-the-bitbake-source-tree'>
-        <title>Downloading a Snapshot from the BitBake Source Tree</title>
-
-        <para>
-            The recommended method for obtaining and using BitBake on
-            a daily basis is to download the most
-            recent stable snapshot from the Git source code repository
-            as follows:
-            <literallayout class='monospaced'>
+            You can obtain BitBake several different ways:
+            <itemizedlist>
+                <listitem><para><emphasis>Installation using your Distribution
+                    Package Management System:</emphasis>
+                    This method is not
+                    recommended because the BitBake version, in most
+                    cases provided by your distribution, is several
+                    releases behind a snapshot of the BitBake repository.
+                    </para></listitem>
+                <listitem><para><emphasis>Taking a snapshot of BitBake:</emphasis>
+                    Downloading a snapshot of BitBake from the
+                    source code repository is the recommended method
+                    as you are assured of having the most recent stable
+                    BitBake release.</para>
+                    <para>The following example downloads a snapshot of
+                    BitBake version 1.17.0:
+                    <literallayout class='monospaced'>
      $ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
      $ tar zxpvf bitbake-1.17.0.tar.gz
-            </literallayout>
-            After extraction of the tarball using the tar utility,
-            you will have a directory entitled
-            <filename>bitbake-1.17.0</filename>.
-        </para>
-    </section>
-
-    <section id='cloning-the-bitbake-git-repository'>
-        <title>Cloning the BitBake Git Repository</title>
-
-        <para>
-            To obtain the latest BitBake source code from the
-            BitBake Git repository:
-            <literallayout class='monospaced'>
+                    </literallayout>
+                    After extraction of the tarball using the tar utility,
+                    you have a directory entitled
+                    <filename>bitbake-1.17.0</filename>.
+                    </para></listitem>
+                <listitem><para><emphasis>Cloning BitBake:</emphasis>
+                    Using Git to clone the BitBake source code repository
+                    is also a recommended method when you need the absolute latest
+                    BitBake source.
+                    Realize that using this method could expose you to areas of
+                    BitBake that are under development.</para>
+                    <para>Here is an example:
+                    <literallayout class='monospaced'>
      $ git clone git://git.openembedded.org/bitbake
-            </literallayout>
-            This will clone the BitBake Git repository into a
-            directory called <filename>bitbake</filename>.
-            Alternatively, you can
-            designate a directory after the git clone command
-            if you'd prefer to call the new directory something
-            other than <filename>bitbake</filename>.
-            For example:
-            <literallayout class='monospaced'>
+                    </literallayout>
+                    This command clones the BitBake Git repository into a
+                    directory called <filename>bitbake</filename>.
+                    Alternatively, you can
+                    designate a directory after the
+                    <filename>git clone</filename> command
+                    if you want to call the new directory something
+                    other than <filename>bitbake</filename>.
+                    Here is an example that names the directory
+                    <filename>bbdev</filename>:
+                    <literallayout class='monospaced'>
      $ git clone git://git.openembedded.org/bitbake bbdev
-            </literallayout>
-            This would clone the Git repository into a local directory
-            called <filename>bbdev</filename>.
-            Please note that although this method of obtaining the
-            source code will provide the absolute latest version,
-            it is under active development and may not be as stable
-            as a released snapshot.
-        </para>
-    </section>
-
-    <section id='summary'>
-        <title>Summary</title>
-
-        <para>
-            At this point you should have a general idea of the concepts
-            that BitBake was built on and how the
-            source code is organized.
-            You should have a working version of BitBake installed
-            and understand how to setup your environment.
+                    </literallayout></para></listitem>
+            </itemizedlist>
         </para>
     </section>
 </chapter>
