@@ -304,98 +304,64 @@
     <section id='conditional-syntax-overrides'>
         <title>Conditional Syntax (Overrides)</title>
 
+        <para>
+            BitBake uses
+            <link linkend='var-OVERRIDES'><filename>OVERRIDES</filename></link>
+            to control what variables are overridden after BitBake
+            parses recipes and configuration files.
+            This section describes how you can use
+            <filename>OVERRIDES</filename> as conditional metadata,
+            talks about key expansion in relationship to
+            <filename>OVERRIDES</filename>, and provides some examples
+            to help with understanding.
+        </para>
+
         <section id='conditional-metadata'>
             <title>Conditional Metadata</title>
 
             <para>
-                <filename>OVERRIDES</filename> is a “:” separated variable containing
-                each item for which you want to satisfy conditions.
-                So, if you have a variable that is conditional on “arm”, and “arm”
-                is in <filename>OVERRIDES</filename>, then the “arm” specific
-                version of the variable is used rather than the non-conditional
-                version.
-                Here is an example:
-                <literallayout class='monospaced'>
+                You can use <filename>OVERRIDES</filename> to conditionally select
+                a specific version of a variable and to conditionally
+                append or prepend the value of a variable.
+                <itemizedlist>
+                    <listitem><para><emphasis>Selecting a Variable:</emphasis>
+                        The <filename>OVERRIDES</filename> variable is
+                        a colon-character-separated list that contains items
+                        for which you want to satisfy conditions.
+                        Thus, if you have a variable that is conditional on “arm”, and “arm”
+                        is in <filename>OVERRIDES</filename>, then the “arm”-specific
+                        version of the variable is used rather than the non-conditional
+                        version.
+                        Here is an example:
+                        <literallayout class='monospaced'>
      OVERRIDES = "architecture:os:machine"
-     TEST = "defaultvalue"
-     TEST_os = "osspecificvalue"
-     TEST_condnotinoverrides = "othercondvalue"
-                </literallayout>
-                In this example, <filename>TEST</filename> would be
-                <filename>osspecificvalue</filename>, due to the condition
-                “os” being in <filename>OVERRIDES</filename>.
-            </para>
-        </section>
-
-        <section id='conditional-appending'>
-            <title>Conditional Appending</title>
-
-            <para>
-                BitBake also supports appending and prepending to variables based
-                on whether something is in <filename>OVERRIDES</filename>.
-                Here is an example:
-                <literallayout class='monospaced'>
+     TEST = "default"
+     TEST_os = "osspecific"
+     TEST_nooverride = "othercondvalue"
+                        </literallayout>
+                        In this example, the <filename>OVERRIDES</filename>
+                        variable lists three overrides:
+                        "architecture", "os", and "machine".
+                        The variable <filename>TEST</filename> by itself has a default
+                        value of "default".
+                        You select the os-specific version of the <filename>TEST</filename>
+                        variable by appending the "os" override to the variable
+                        (i.e.<filename>TEST_os</filename>).
+                        </para></listitem>
+                    <listitem><para><emphasis>Appending and Prepending:</emphasis>
+                        BitBake also supports append and prepend operations to
+                        variable values based on whether a specific item is
+                        listed in <filename>OVERRIDES</filename>.
+                        Here is an example:
+                        <literallayout class='monospaced'>
      DEPENDS = "glibc ncurses"
      OVERRIDES = "machine:local"
      DEPENDS_append_machine = "libmad"
-                </literallayout>
-                In this example, <filename>DEPENDS</filename> is set to
-                "glibc ncurses libmad".
-            </para>
-        </section>
-
-        <section id='variable-interaction-worked-examples'>
-            <title>Variable Interaction: Worked Examples</title>
-
-            <para>
-                Despite the documentation of the different forms of
-                variable definition above, it can be hard to work
-                out what happens when variable operators are combined.
-            </para>
-
-            <para>
-                Following are some common scenarios where variables interact
-                that can confuse users.
-            </para>
-
-            <para>
-                There is often confusion about which order overrides and the
-                various "append" operators take effect:
-                <literallayout class='monospaced'>
-     OVERRIDES = "foo"
-     A_foo_append = "X"
-                </literallayout>
-                In this case, <filename>X</filename> is unconditionally appended
-                to the variable <filename>A_foo</filename>.
-                Since foo is an override, <filename>A_foo</filename> would then replace
-                <filename>A</filename>.
-                <literallayout class='monospaced'>
-     OVERRIDES = "foo"
-     A = "X"
-     A_append_foo = "Y"
-                </literallayout>
-                In this case, only when <filename>foo</filename> is in
-                <filename>OVERRIDES</filename>, <filename>Y</filename>
-                is appended to the variable <filename>A</filename>
-                so the value of <filename>A</filename> would
-                become <filename>XY</filename> (NB: no spaces are appended).
-                <literallayout class='monospaced'>
-     OVERRIDES = "foo"
-     A_foo_append = "X"
-     A_foo_append += "Y"
-                </literallayout>
-                This behaves as per the first case above, but the value of
-                <filename>A</filename> would be "X Y" instead of just "X".
-                <literallayout class='monospaced'>
-     A = "1"
-     A_append = "2"
-     A_append = "3"
-     A += "4"
-     A .= "5"
-                </literallayout>
-                Would ultimately result in <filename>A</filename> taking the value
-                "1 4523" since the "_append" operator executes at the
-                same time as the expansion of other overrides.
+                        </literallayout>
+                        In this example, <filename>DEPENDS</filename> becomes
+                        "glibc ncurses libmad".
+                        </para></listitem>
+                </itemizedlist>
             </para>
         </section>
 
@@ -403,14 +369,117 @@
             <title>Key Expansion</title>
 
             <para>
-                Key expansion happens at the data store finalization
-                time just before overrides are expanded.
+                Key expansion happens when the BitBake data store is finalized
+                just before BitBake expands overrides.
+                To better understand this, consider the following example:
                 <literallayout class='monospaced'>
      A${B} = "X"
      B = "2"
      A2 = "Y"
                 </literallayout>
-                So in this case <filename>A2</filename> would take the value of "X".
+                In this case, after all the parsing is complete, and
+                before any overrides are handled, BitBake expands
+                <filename>${B}</filename> into "2".
+                This expansion causes <filename>A2</filename>, which was
+                set to "Y" before the expansion, to become "X".
+            </para>
+        </section>
+
+        <section id='variable-interaction-worked-examples'>
+            <title>Examples</title>
+
+            <para>
+                Despite the previous explanations that show the different forms of
+                variable definitions, it can be hard to work
+                out exactly what happens when variable operators, conditional
+                overrides, and unconditional overrides are combined.
+                This section presents some common scenarios along
+                with explanations for variable interactions that
+                typically confuse users.
+            </para>
+
+            <para>
+                There is often confusion concerning the order in which
+                overrides and various "append" operators take effect.
+                Recall that an append or prepend operation using "_append"
+                and "_prepend" does not result in an immediate assignment
+                as would "+=", ".=", "=+", or "=.".
+                Consider the following example:
+                <literallayout class='monospaced'>
+     OVERRIDES = "foo"
+     A = "Z"
+     A_foo_append = "X"
+                </literallayout>
+                For this case, <filename>A</filename> is
+                unconditionally set to "Z" and "X" is
+                unconditionally and immediately appended to the variable
+                <filename>A_foo</filename>.
+                Because overrides have not been applied yet,
+                <filename>A_foo</filename> is set to "X" due to the append
+                and <filename>A</filename> simply equals "Z".
+            </para>
+
+            <para>
+                Applying overrides, however, changes things.
+                Since "foo" is listed in <filename>OVERRIDES</filename>,
+                the conditional variable <filename>A</filename> is replaced
+                with the "foo" version, which is equal to "X".
+                So effectively, <filename>A_foo</filename> replaces <filename>A</filename>.
+            </para>
+
+            <para>
+                This next example changes the order of the override and
+                the append:
+                <literallayout class='monospaced'>
+     OVERRIDES = "foo"
+     A = "Z"
+     A_append_foo = "X"
+                </literallayout>
+                For this case, before overrides are handled,
+                <filename>A</filename> is set to "Z" and <filename>A_append_foo</filename>
+                is set to "X".
+                Once the override for "foo" is applied, however,
+                <filename>A</filename> gets appended with "X".
+                Consequently, <filename>A</filename> becomes "ZX".
+                Notice that spaces are not appended.
+            </para>
+
+            <para>
+                This next example has the order of the appends and overrides reversed
+                back as in the first example:
+                <literallayout class='monospaced'>
+     OVERRIDES = "foo"
+     A = "Y"
+     A_foo_append = "Z"
+     A_foo_append += "X"
+                </literallayout>
+                For this case, before any overrides are resolved,
+                <filename>A</filename> is set to "Y" using an immediate assignment.
+                After this immediate assignment, <filename>A_foo</filename> is set
+                to "Z", and then further appended with
+                "X" leaving the variable set to "Z X".
+                Finally, applying the override for "foo" results in the conditional
+                variable <filename>A</filename> becoming "Z X" (i.e.
+                <filename>A</filename> is replaced with <filename>A_foo</filename>).
+            </para>
+
+            <para>
+                This final example mixes in some varying operators:
+                <literallayout class='monospaced'>
+     A = "1"
+     A_append = "2"
+     A_append = "3"
+     A += "4"
+     A .= "5"
+                </literallayout>
+                For this case, the type of append operators are affecting the
+                order of assignments as BitBake passes through the code
+                multiple times.
+                Initially, <filename>A</filename> is set to "1 45" because
+                of the three statements that use immediate operators.
+                After these assignments are made, BitBake applies the
+                <filename>_append</filename> operations.
+                Those operations result in <filename>A</filename> becoming "1 4523".
             </para>
         </section>
     </section>
