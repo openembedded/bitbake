@@ -537,7 +537,10 @@
         </note>
 
         <para>
-            Python functions should use unique names.
+            For utility functions that you intend to call from
+            in-line Python or other Python functions, BitBake allows
+            you to define these as pure Python functions.
+            Here is an example:
             <literallayout class='monospaced'>
      def get_depends(d):
          if d.getVar('SOMECONDITION', True):
