@@ -275,7 +275,7 @@ def emit_func(func, o=sys.__stdout__, d = init()):
         seen |= deps
         newdeps = set()
         for dep in deps:
-            if d.getVarFlag(dep, "func"):
+            if d.getVarFlag(dep, "func") and not d.getVarFlag(dep, "python"):
                emit_var(dep, o, d, False) and o.write('\n')
                newdeps |=  bb.codeparser.ShellParser(dep, logger).parse_shell(d.getVar(dep, True))
                newdeps |= set((d.getVarFlag(dep, "vardeps", True) or "").split())
@@ -295,7 +295,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             return deps, value
-        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude"]) or {}
+        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "postfuncs", "prefuncs"]) or {}
         vardeps = varflags.get("vardeps")
         value = d.getVar(key, False)
 
@@ -332,6 +332,10 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
                 deps = deps | shelldeps
             if vardeps is None:
                 parser.log.flush()
+            if "prefuncs" in varflags:
+                deps = deps | set(varflags["prefuncs"].split())
+            if "postfuncs" in varflags:
+                deps = deps | set(varflags["postfuncs"].split())
             deps = deps | parsedvar.references
             deps = deps | (keys & parser.execs) | (keys & parsedvar.execs)
             value = handle_contains(value, parsedvar.contains, d)
