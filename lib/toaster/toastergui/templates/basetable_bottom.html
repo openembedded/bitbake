@@ -40,6 +40,7 @@
 
     // we load cookies for the column display
     save = $.cookie('_displaycols_{{objectname}}');
+		if (save != undefined) {
     setting = save.split(';');
     for ( i = 0; i < setting.length; i++) {
         if (setting[i].length > 0) {
@@ -51,6 +52,7 @@
                 $('.chbxtoggle#'+id).prop('checked', false);
             }
         }
+    }
     }
 
     $('.chbxtoggle').each(function () {
