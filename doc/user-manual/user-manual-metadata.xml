@@ -484,49 +484,132 @@
         </section>
     </section>
 
-    <section id='inheritance'>
-        <title>Inheritance</title>
+    <section id='sharing-functionality'>
+        <title>Sharing Functionality</title>
 
-        <section id='inheritance-directive'>
-            <title>Inheritance Directive</title>
+        <para>
+            BitBake allows for metadata sharing through include files and
+            class files (<filename>.bbclass</filename>).
+            For example, suppose you have a piece of common functionality
+            such as a task definition that you want to share between
+            more than one recipe.
+            In this case, creating a <filename>.bbclass</filename>
+            file that contains the common functionality and uses the
+            <filename>inherit</filename> directive would be a common
+            way to share the task.
+        </para>
 
-            <note>
-                This is only supported in <filename>.bb</filename> and
-                <filename>.bbclass</filename> files.
-            </note>
+        <para>
+            This section presents the mechanisms BitBake provides to
+            allow you to share functionality between recipes.
+            Specifically, the mechanisms include <filename>include</filename>,
+            <filename>inherit</filename>, <filename>INHERIT</filename>, and
+            <filename>require</filename> statements.
+        </para>
+
+        <section id='locating-include-and-class-files'>
+            <title>Locating Include and Class Files</title>
 
             <para>
-                The inherit directive is a means of specifying what classes
-                of functionality your <filename>.bb</filename> requires.
-                It is a rudimentary form of inheritance.
+                BitBake uses the <filename>BBPATH</filename> variable
+                to locate needed class and configuration files.
+                The <filename>BBPATH</filename> variable is analogous to
+                the environment variable <filename>PATH</filename>.
+                Use of <filename>BBPATH</filename> is specific to the build
+                environment (e.g. Yocto Project, OpenEmbedded, and so forth).
+            </para>
+        </section>
+
+        <section id='inherit-directive'>
+            <title><filename>inherit</filename> Directive</title>
+
+            <para>
+                When writing a recipe or class file, you can use the
+                <filename>inherit</filename> directive to inherit the
+                functionality of a class (<filename>.bbclass</filename>).
+                BitBake only supports this directive when used within these
+                two types of files (i.e. <filename>.bb</filename> and
+                <filename>.bbclass</filename> files).
+            </para>
+
+            <para>
+                The <filename>inherit</filename> directive is a rudimentary
+                means of specifying what classes of functionality your
+                recipe requires.
                 For example, you can easily abstract out the tasks involved in
-                building a package that uses autoconf and automake, and put
-                that into a bbclass for your packages to make use of.
-                A given bbclass is located by searching for classes/filename.bbclass
-                in <filename>BBPATH</filename>, where filename is what you inherited.
+                building a package that uses Autoconf and Automake and put
+                those tasks into a class file that can be used by your package.
+                As an example, an <filename>autotools.bbclass</filename> file
+                could use the following directive to inherit needed
+                site information:
+                <literallayout class='monospaced'>
+     inherit siteinfo
+                </literallayout>
+                In this case, BitBake would search for the directory
+                <filename>classes/siteinfo.bbclass</filename>
+                in <filename>BBPATH</filename>.
             </para>
         </section>
 
-        <section id='inclusion-directive'>
-            <title>Inclusion Directive</title>
+        <section id='include-directive'>
+            <title><filename>include</filename> Directive</title>
 
             <para>
+                BitBake understands the <filename>include</filename>
+                directive.
                 This directive causes BitBake to parse whatever file you specify,
-                and insert it at that location, which is not unlike Make.
-                However, if the path specified on the include line is a
-                relative path, BitBake will locate the first one it can find
-                within <filename>BBPATH</filename>.
+                and to insert that file at that location.
+                The directive is much like Make except that if the path specified
+                on the include line is a relative path, BitBake locates
+                the first file it can find within <filename>BBPATH</filename>.
+            </para>
+
+            <para>
+                As an example, suppose you needed a recipe to include some
+                self-test files:
+                <literallayout class='monospaced'>
+     include test_recipe.inc
+                </literallayout>
+                <note>
+                    The <filename>include</filename> directive does not
+                    produce an error when the file cannot be found.
+                    Consequently, it is recommended that if the file you
+                    are including is expected to exist, you should use
+                    <link linkend='require-inclusion'><filename>require</filename></link>
+                    instead of <filename>include</filename>.
+                    Doing so makes sure that an error is produced if the
+                    file cannot be found.
+                </note>
             </para>
         </section>
 
-        <section id='requiring-inclusion'>
-            <title>Requiring Inclusion</title>
+        <section id='require-inclusion'>
+            <title><filename>require</filename> Directive</title>
 
             <para>
-                In contrast to the include directive, require will raise a
-                ParseError if the file to be included cannot
+                BitBake understands the <filename>require</filename>
+                directive.
+                This directive behaves just like the
+                <filename>include</filename> directive with the exception that
+                BitBake raises a parsing error if the file to be included cannot
                 be found.
-                Otherwise it will behave just like the include directive.
+                Thus, any file you require is inserted into the file that is
+                being parsed at the location of the directive.
+            </para>
+
+            <para>
+                Similar to how BitBake uses <filename>include</filename>,
+                if the path specified
+                on the require line is a relative path, BitBake locates
+                the first file it can find within <filename>BBPATH</filename>.
+            </para>
+
+            <para>
+                As an example, suppose you needed a recipe to require some
+                self-test files:
+                <literallayout class='monospaced'>
+     require test_recipe.inc
+                </literallayout>
             </para>
         </section>
 
@@ -534,9 +617,20 @@
             <title><filename>INHERIT</filename> Configuration Directive</title>
 
             <para>
+                When creating a configuration file (<filename>.conf</filename>),
+                you can use the <filename>INHERIT</filename> directive to
+                inherit a class.
+                BitBake only supports this directive when used within
+                a configuration file.
+            </para>
+
+            <para>
+                Suppose you needed to inherit a multilib global class.
+                <literallayout class='monospaced'>
+     INHERIT += "multilib_global"
+                </literallayout>
                 This configuration directive causes the named class to be inherited
-                at this point during parsing.
-                This variable is only valid in configuration files.
+                at the point of the directive during parsing.
             </para>
         </section>
     </section>
