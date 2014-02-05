@@ -786,36 +786,104 @@
     <section id='tasks'>
         <title>Tasks</title>
 
-        <note>
-            This is only supported in <filename>.bb</filename>
-            and <filename>.bbclass</filename> files.
-        </note>
+        <para>
+            Tasks are BitBake execution units that originate as
+            functions and make up the steps that BitBake needs to run
+            for given recipe.
+            Tasks are only supported in recipe (<filename>.bb</filename>)
+            and class (<filename>.bbclass</filename>) files.
+            By convention, tasks begin with the string "do_".
+        </para>
 
         <para>
-            A shell or Python function executable through the
-            <filename>exec_func</filename> can be promoted to become a task.
-            Tasks are the execution unit Bitbake uses and each step that
-            needs to be run for a given <filename>.bb</filename> is known as
-            a task.
-            There is an <filename>addtask</filename> command to add new tasks
-            and promote functions which by convention must start with “do_”.
-            The <filename>addtask</filename> command is also used to describe
-            intertask dependencies.
+            Here is an example of a task that prints out the date:
             <literallayout class='monospaced'>
      python do_printdate () {
          import time print
          time.strftime('%Y%m%d', time.gmtime())
      }
-     addtask printdate after do_fetch before do_build
             </literallayout>
-            The above example defined a Python function, then adds
-            it as a task which is now a dependency of
-            <filename>do_build</filename>, the default task and states it
-            has to happen after <filename>do_fetch</filename>.
-            If anyone executes the <filename>do_build</filename>
-            task, that will result in <filename>do_printdate</filename>
-            being run first.
         </para>
+
+        <section id='promoting-a-function-to-a-task'>
+            <title>Promoting a Function to a Task</title>
+
+            <para>
+                Any function can be promoted to a task by applying the
+                <filename>addtask</filename> command.
+                The <filename>addtask</filename> command also describes
+                inter-task dependencies.
+                Here is the function from the previous section but with the
+                <filename>addtask</filename> command promoting it to a task
+                and defining some dependencies:
+                <literallayout class='monospaced'>
+     python do_printdate () {
+         import time print
+         time.strftime('%Y%m%d', time.gmtime())
+     }
+     addtask printdate after do_fetch before do_build
+                </literallayout>
+                In the example, the function is defined and then promoted
+                as a task.
+                The <filename>do_printdate</filename> task becomes a dependency of
+                the <filename>do_build</filename> task, which is the default
+                task.
+                And, the <filename>do_printdate</filename> task is dependent upon
+                the <filename>do_fetch</filename> task.
+                Execution of the <filename>do_build</filename> task results
+                in the <filename>do_printdate</filename> task running first.
+            </para>
+        </section>
+
+        <section id='passing-information-into-the-build-task-environment'>
+            <title>Passing Information Into the Build Task Environment</title>
+
+            <para>
+                When running a task, BitBake tightly controls the execution
+                environment of the build tasks to make
+                sure unwanted contamination from the build machine cannot
+                influence the build.
+                Consequently, if you do want something to get passed into the
+                build task environment, you must take these two steps:
+                <orderedlist>
+                    <listitem><para>
+                        Tell BitBake to load what you want from the environment
+                        into the datastore.
+                        You can do so through the
+                        <link linkend='var-BB_ENV_EXTRAWHITE'><filename>BB_ENV_EXTRAWHITE</filename></link>
+                        variable.
+                        For example, assume you want to prevent the build system from
+                        accessing your <filename>$HOME/.ccache</filename>
+                        directory.
+                        The following command tells BitBake to load
+                        <filename>CCACHE_DIR</filename> from the environment into
+                        the datastore:
+                        <literallayout class='monospaced'>
+     export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
+                        </literallayout></para></listitem>
+                    <listitem><para>
+                        Tell BitBake to export what you have loaded into the
+                        datastore to the task environment of every running task.
+                        Loading something from the environment into the datastore
+                        (previous step) only makes it available in the datastore.
+                        To export it to the task environment of every running task,
+                        use a command similar to the following in your local configuration
+                        file <filename>local.conf</filename> or your
+                        distribution configuration file:
+                        <literallayout class='monospaced'>
+     export CCACHE_DIR
+                        </literallayout>
+                        <note>
+                            A side effect of the previous steps is that BitBake
+                            records the variable as a dependency of the build process
+                            in things like the setscene checksums.
+                            If doing so results in unnecessary rebuilds of tasks, you can
+                            whitelist the variable so that the setscene code
+                            ignores the dependency when it creates checksums.
+                        </note></para></listitem>
+                </orderedlist>
+            </para>
+        </section>
     </section>
 
     <section id='running-a-task'>
@@ -844,51 +912,6 @@
 
         <para>
             Once all the tasks have been completed BitBake exits.
-        </para>
-
-        <para>
-            When running a task, BitBake tightly controls the execution
-            environment of the build tasks to make
-            sure unwanted contamination from the build machine cannot
-            influence the build.
-            Consequently, if you do want something to get passed into the
-            build task's environment, you must take a few steps:
-            <orderedlist>
-                <listitem><para>
-                    Tell BitBake to load what you want from the environment
-                    into the data store.
-                    You can do so through the
-                    <filename>BB_ENV_EXTRAWHITE</filename> variable.
-                    For example, assume you want to prevent the build system from
-                    accessing your <filename>$HOME/.ccache</filename>
-                    directory.
-                    The following command tells BitBake to load
-                    <filename>CCACHE_DIR</filename> from the environment into
-                    the data store:
-                    <literallayout class='monospaced'>
-     export BB_ENV_EXTRAWHITE="$BB_ENV_EXTRAWHITE CCACHE_DIR"
-                    </literallayout></para></listitem>
-                <listitem><para>
-                    Tell BitBake to export what you have loaded into the
-                    environment store to the task environment of
-                    every running task.
-                    Loading something from the environment into the data
-                    store (previous step) only makes it available in the datastore.
-                    To export it to the task environment of every running task,
-                    use a command similar to the following in your
-                    <filename>local.conf</filename> or distribution configuration file:
-                    <literallayout class='monospaced'>
-     export CCACHE_DIR
-                    </literallayout>
-                    <note>
-                        A side effect of the previous steps is that BitBake
-                        records the variable as a dependency of the build process
-                        in things like the shared state checksums.
-                        If doing so results in unnecessary rebuilds of tasks, you can
-                        whitelist the variable so that the shared state code
-                        ignores the dependency when it creates checksums.
-                    </note></para></listitem>
-            </orderedlist>
         </para>
     </section>
 
