@@ -1872,16 +1872,15 @@
                 <para>
                     The list of source files - local or remote.
                     This variable tells BitBake which bits
-                    to pull in for the build and how to pull them in.
-                    For example, if the recipe or append file only needs to
-                    fetch a tarball from the Internet, the recipe or
+                    to pull for the build and how to pull them.
+                    For example, if the recipe or append file needs to
+                    fetch a single tarball from the Internet, the recipe or
                     append file uses a <filename>SRC_URI</filename>
-                    entry that specifies just the tarball.
+                    entry that specifies that tarball.
                     On the other hand, if the recipe or append file needs to
-                    fetch a tarball, apply two patches, and include a custom
-                    file, the recipe or append file needs an
-                    <filename>SRC_URI</filename> variable that specifies all
-                    those sources.</para>
+                    fetch a tarball and include a custom file, the recipe or
+                    append file needs an <filename>SRC_URI</filename> variable
+                    that specifies all those sources.</para>
                 <para>The following list explains the available URI protocols:
                     <itemizedlist>
                         <listitem><para><emphasis><filename>file://</filename> -</emphasis>
