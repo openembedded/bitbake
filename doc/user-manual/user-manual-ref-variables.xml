@@ -824,15 +824,15 @@
                 <para>
                     Allows you to extend a recipe so that it builds variants
                     of the software.
-                    Common variants for recipes exist such as "natives"
-                    like <filename>quilt-native</filename>,
-                    which is a copy of Quilt built to run on the build system;
-                    "crosses" such as <filename>gcc-cross</filename>,
-                    which is a compiler built to run on the build machine
-                    but produces binaries that run on the target
-                    <filename>MACHINE</filename>; "nativesdk", which targets
-                    the SDK machine instead of <filename>MACHINE</filename>;
-                    and "mulitlibs" in the form
+                    Some examples of these variants for recipes from the
+                    OpenEmbedded Core metadata are "natives" such as
+                    <filename>quilt-native</filename>, which is a copy of
+                    Quilt built to run on the build system; "crosses" such
+                    as <filename>gcc-cross</filename>, which is a compiler
+                    built to run on the build machine but produces binaries
+                    that run on the target <filename>MACHINE</filename>;
+                    "nativesdk", which targets the SDK machine instead of
+                    <filename>MACHINE</filename>; and "mulitlibs" in the form
                     "<filename>multilib:&lt;multilib_name&gt;</filename>".
                 </para>
 
