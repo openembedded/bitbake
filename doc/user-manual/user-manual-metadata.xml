@@ -677,73 +677,81 @@
     <section id='functions'>
         <title>Functions</title>
 
-        <note>
-            This is only supported in <filename>.bb</filename>
-            and <filename>.bbclass</filename> files.
-        </note>
-
         <para>
             As with most languages, functions are the building blocks
             that define operations.
-            Bitbake supports shell and Python functions.
-            An example shell function definition is:
-            <literallayout class='monospaced'>
+            BitBake supports three types of functions:
+            <itemizedlist>
+                <listitem><para><emphasis>Shell Functions:</emphasis>
+                    Functions written in a shell language and
+                    executed by the shell.
+                    </para></listitem>
+                <listitem><para><emphasis>BitBake Functions:</emphasis>
+                    Functions written in Python but executed by BitBake using
+                    <filename>bb.build.exec_func()</filename>.
+                    </para></listitem>
+                <listitem><para><emphasis>Python Functions:</emphasis>
+                    Functions written in Python and executed by Python.
+                    </para></listitem>
+            </itemizedlist>
+            Regardless of the type of function, you can only
+            define them in class (<filename>.bbclass</filename>)
+            and recipe (<filename>.bb</filename>) files.
+        </para>
+
+        <section id='shell-functions'>
+            <title>Shell Functions</title>
+
+            <para>
+                These functions are written using a shell language and
+                executed by the shell.
+                Here is an example shell function definition:
+                <literallayout class='monospaced'>
      some_function () {
          echo "Hello World"
      }
-            </literallayout>
-            An example Python function definition is:
-            <literallayout class='monospaced'>
+                </literallayout>
+                When you create these types of functions in your recipe
+                or class files, you need to follow the shell programming
+                rules.
+            </para>
+        </section>
+
+        <section id='bitbake-functions'>
+            <title>BitBake Functions</title>
+
+            <para>
+                These functions are written in Python and are executed using
+                <filename>bb.build.exec_func()</filename>.
+            </para>
+
+            <para>
+                An example BitBake function is:
+                <literallayout class='monospaced'>
      python some_python_function () {
          d.setVar("TEXT", "Hello World")
          print d.getVar("TEXT", True)
      }
-            </literallayout>
-            In python functions, the "bb" and "os" modules are already
-            imported, there is no need to import those modules.
-            The datastore, "d" is also a global variable and always
-            available to these functions automatically.
-        </para>
+                </literallayout>
+                Because the Python "bb" and "os" modules are already
+                imported, you do not need to import these modules.
+                Also in these types of functions, the datastore ("d")
+                is a global variable and is always automatically
+                available.
+           </para>
+        </section>
 
-        <para>
-            Bitbake will execute functions of this form using
-            the <filename>bb.build.exec_func()</filename>, which can also be
-            called from Python functions to execute other functions,
-            either shell or Python based.
-            Shell functions can only execute other shell functions.
-        </para>
+        <section id='python-functions'>
+            <title>Python Functions</title>
 
-        <para>
-            There is also a second way to declare python functions with
-            parameters which takes the form:
-            <literallayout class='monospaced'>
-     def some_python_function(arg1, arg2):
-         print arg1 + " " + arg2
-            </literallayout>
-            The difference is that the second form takes parameters,
-            the datastore is not available automatically
-            and must be passed as a parameter and these functions are
-            not called with the <filename>exec_func()</filename> but are
-            executed with direct Python function calls.
-            The "bb" and "os" modules are still automatically available
-            and there is no need to import them.
-        </para>
-    </section>
-
-    <section id='defining-pure-python-functions'>
-        <title>Defining Pure Python functions</title>
-
-        <note>
-            This is only supported in <filename>.bb</filename>
-            and <filename>.bbclass</filename> files.
-        </note>
-
-        <para>
-            For utility functions that you intend to call from
-            in-line Python or other Python functions, BitBake allows
-            you to define these as pure Python functions.
-            Here is an example:
-            <literallayout class='monospaced'>
+            <para>
+                These functions are written in Python but are executed by
+                Python.
+                Examples of Python functions are utility functions
+                that you intend to call from in-line Python or
+                from within other Python functions.
+                Here is an example:
+                <literallayout class='monospaced'>
      def get_depends(d):
          if d.getVar('SOMECONDITION', True):
              return "dependencywithcond"
@@ -751,10 +759,28 @@
              return "dependency"
      SOMECONDITION = "1"
      DEPENDS = "${@get_depends(d)}"
-            </literallayout>
-            This would result in <filename>DEPENDS</filename>
-            containing <filename>dependencywithcond</filename>.
-        </para>
+                </literallayout>
+                This would result in <filename>DEPENDS</filename>
+                containing <filename>dependencywithcond</filename>.
+            </para>
+
+            <para>
+                Here are some things to know about Python functions:
+                <itemizedlist>
+                    <listitem><para>Python functions take parameters.
+                        </para></listitem>
+                    <listitem><para>The BitBake datastore is not
+                        automatically available.
+                        Consequently, you must pass it in as a
+                        parameter to the function.
+                        </para></listitem>
+                    <listitem><para>The "bb" and "os" Python modules are
+                        automatically available.
+                        You do not need to import them.
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+        </section>
     </section>
 
     <section id='tasks'>
