@@ -1,3 +1,4 @@
+{% load projecttags %}
 <!-- '{{f.class}}' filter -->
 <form id="filter_{{f.class}}" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
         <input type="hidden" name="search" value="{{request.GET.search}}"/>
@@ -8,7 +9,7 @@
         <div class="modal-body">
             <p>{{f.label}}</p>
             <label class="radio">
-                <input type="radio" name="filter" value="">  All {{objectname}}
+                <input type="radio" name="filter" {%if request.GET.filter%}{{f.options|check_filter_status:request.GET.filter}} {%else%} checked {%endif%} value="">  All {{objectname}}
             </label>
             {% for option in f.options %}
                 <label class="radio">

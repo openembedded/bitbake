@@ -114,3 +114,14 @@ def filtered_filesizeformat(value):
 def filtered_packagespec(value):
     """Strip off empty version and revision"""
     return re.sub(r'(--$)', '', value)
+
+@register.filter
+def check_filter_status(options, filter):
+    """Check if the active filter is among the available options, and return 'checked'
+       if filter is not active.
+       Used in FilterDialog to select the first radio button if the filter is not active.
+    """
+    for option in options:
+        if filter == option[1]:
+            return ""
+    return "checked"
