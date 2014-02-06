@@ -8,7 +8,7 @@
 <div class="row-fluid">
 
   {%if mru.count > 0%}
-  <div class="page-header" style="margin-top:40px;">
+  <div class="page-header top-air">
       <h1>
           Recent Builds
        </h1>
@@ -53,7 +53,7 @@
 
   {% endfor %}{%endif%}
 
-  <div class="page-header" style="margin-top:40px;">
+  <div class="page-header top-air">
      <h1>
       {% if request.GET.filter or request.GET.search and objects.count > 0  %}
           {{objects.paginator.count}} build{{objects.paginator.count|pluralize}} found
