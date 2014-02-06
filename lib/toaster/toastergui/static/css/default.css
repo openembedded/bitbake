@@ -83,6 +83,9 @@ th > a, th > span { font-weight: normal; }
 /* Force long strings like commit hashes to wrap */
 .iscommit { white-space: pre-wrap; word-break: break-all; word-wrap: break-word;}
 
+/* Make the popovers scrollable if they are too long */
+.popover-content { max-height: 30em; overflow-y: scroll; }
+
 /* Styles for the directory structure table. We'll probably won't use those in production */
 .one { padding-left: 18px !important; }
 .two { padding-left: 36px !important; }
