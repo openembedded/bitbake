@@ -1040,41 +1040,36 @@
             <title>Parsing Overview</title>
 
             <para>
-                BitBake parses configuration files, classes, and
-                <filename>.bb</filename> files.
+                BitBake parses configuration files, classes, recipes, and append
+                files.
             </para>
 
             <para>
                 The first thing BitBake does is look for the
                 <filename>bitbake.conf</filename> file.
-                This file resides in the within the <filename>conf/</filename>
-                directory.
-                BitBake finds it by examining its <filename>BBPATH</filename>
-                environment variable and looking for the
-                <filename>conf/</filename> directory.
+                This file resides in the <filename>conf</filename>
+                directory, which must be listed in
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
             </para>
 
             <para>
                 The <filename>bitbake.conf</filename> file lists other configuration
-                files to include from a <filename>conf/</filename> directory below the
+                files to include from the <filename>conf</filename> directory below the
                 directories listed in <filename>BBPATH</filename>.
-                In general, the most important configuration file from a user's perspective
-                is <filename>local.conf</filename>, which contains a user's
+                In general, the most important of these
+                configuration files from a user's perspective
+                is <filename>local.conf</filename>, which contains the user's
                 customized settings for the build environment.
+            </para>
+
+            <para>
                 Other notable configuration files are the distribution configuration
-                file (set by the <filename>DISTRO</filename> variable) and the machine
-                configuration file (set by the <filename>MACHINE</filename> variable).
-                The <filename>DISTRO</filename> and <filename>MACHINE</filename> BitBake
-                environment variables are both usually set in the
-                <filename>local.conf file</filename>.
-                Valid distribution configuration files are available
-                in the <filename>conf/distro/</filename> directory and valid machine
-                configuration files in the <filename>meta/conf/machine/</filename>
-                directory.
-                Within the <filename>conf/machine/include/</filename> directory are
-                various <filename>tune-*.inc</filename> configuration files
-                that provide common "tuning" settings specific to and shared between
-                particular architectures and machines.
+                file and the machine configuration file.
+                These configuration files are normally identified by
+                variables unique to the build systems using BitBake.
+                For example, the Yocto Project uses the
+                <filename>DISTRO</filename> and <filename>MACHINE</filename>
+                variables, respectively.
             </para>
 
             <para>
@@ -1083,8 +1078,9 @@
                 The <filename>base.bbclass</filename> file
                 is always included.
                 Other classes that are specified in the configuration using the
-                <filename>INHERIT</filename> variable are also included.
-                Class files are searched for in a classes subdirectory under
+                <link linkend='var-INHERIT'><filename>INHERIT</filename></link>
+                variable are also included.
+                BitBake searches for class files in a "classes" subdirectory under
                 the paths in <filename>BBPATH</filename> in the same way as
                 configuration files.
             </para>
@@ -1093,29 +1089,28 @@
                 After classes are included, the variable
                 <filename>BBFILES</filename> is set, usually in
                 <filename>local.conf</filename>, and defines the list of
-                places to search for <filename>.bb</filename> files.
+                places to search for recipe and append files.
                 Adding extra content to <filename>BBFILES</filename> is best
-                achieved through the use of BitBake layers as described in the
-                Layers section below.
+                achieved through the use of BitBake layers.
             </para>
 
             <para>
-                BitBake parses each <filename>.bb</filename> file in
+                BitBake parses each recipe and append file located with
                 <filename>BBFILES</filename> and stores the values of various
-                variables.
-                In summary, for each <filename>.bb</filename> file the configuration
+                variables into the datastore.
+                In summary, for each recipe and append file pairing, the configuration
                 plus the base class of variables are set, followed by the data in the
-                <filename>.bb</filename> file itself, followed by any inherit commands
-                that <filename>.bb</filename> file might contain.
+                recipe file itself, followed by any inherit commands
+                that the recipe file might contain.
             </para>
 
             <para>
-                Because parsing <filename>.bb</filename> files is a time consuming
-                process, a cache is kept to speed up subsequent parsing.
-                This cache is invalid if the timestamp of the
-                <filename>.bb</filename> file itself changes, or if the timestamps of
-                any of the include, configuration files or class files on which
-                the <filename>.bb</filename> file depends change.
+                Because parsing recipe and append files is a time consuming
+                process, a cache, referred to as the "setscene"
+                is kept to speed up subsequent parsing.
+                The setscene is invalid if the timestamps of a recipe changes,
+                any of the include files change, configuration files change,
+                or class files on which the recipe file depends change.
             </para>
         </section>
 
@@ -1126,12 +1121,12 @@
                 Prior to parsing configuration files, Bitbake looks
                 at certain variables, including:
                 <itemizedlist>
-                    <listitem><para><filename>BB-ENV-WHITELIST</filename></para></listitem>
-                    <listitem><para><filename>BB_PRESERVE-ENV</filename></para></listitem>
-                    <listitem><para><filename>BB_ENV_EXTRAWHITE</filename></para></listitem>
-                    <listitem><para><filename>BB_ORIG_ENV</filename></para></listitem>
-                    <listitem><para><filename>PREFERRED_VERSIONS</filename></para></listitem>
-                    <listitem><para><filename>PREFERRED_PROVIDERS</filename></para></listitem>
+                    <listitem><para><link linkend='var-BB_ENV_WHITELIST'><filename>BB_ENV_WHITELIST</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-BB_PRESERVE_ENV'><filename>BB_PRESERVE_ENV</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-BB_ENV_EXTRAWHITE'><filename>BB_ENV_EXTRAWHITE</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-BB_ORIGENV'><filename>BB_ORIGENV</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-PREFERRED_PROVIDERS'><filename>PREFERRED_PROVIDERS</filename></link></para></listitem>
                 </itemizedlist>
             </para>
 
@@ -1144,13 +1139,15 @@
             <para>
                 BitBake will first search the current working directory for an
                 optional <filename>conf/bblayers.conf</filename> configuration file.
-                This file is expected to contain a <filename>BBLAYERS</filename>
+                This file is expected to contain a
+                <link linkend='var-BBLAYERS'><filename>BBLAYERS</filename></link>
                 variable that is a space delimited list of 'layer' directories.
                 For each directory in this list, a <filename>conf/layer.conf</filename>
                 file will be searched for and parsed with the
-                <filename>LAYERDIR</filename> variable being set to the directory where
-                the layer was found.
-                The idea is these files will setup <filename>BBPATH</filename>
+                <link linkend='var-LAYERDIR'><filename>LAYERDIR</filename></link>
+                variable being set to the directory where the layer was found.
+                The idea is these files will setup
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
                 and other variables correctly for a given build directory automatically
                 for the user.
             </para>
@@ -1168,22 +1165,54 @@
                 in <filename>.conf</filename> files.
                 The following variables include:
                 <itemizedlist>
-                    <listitem><para><filename>BITBAKE_UI</filename></para></listitem>
-                    <listitem><para><filename>BBDEBUG</filename></para></listitem>
-                    <listitem><para><filename>MULTI_PROVIDER_WHITELIST</filename></para></listitem>
-                    <listitem><para><filename>BB_NUMBER_PARSE_THREADS</filename></para></listitem>
-                    <listitem><para><filename>BBPKGS</filename></para></listitem>
-                    <listitem><para><filename>BB_DEFAULT_TASK</filename></para></listitem>
-                    <listitem><para><filename>TOPDIR</filename></para></listitem>
-                    <listitem><para><filename>BB_VERBOSE_LOGS</filename></para></listitem>
-                    <listitem><para><filename>BB_NICE_LEVEL</filename></para></listitem>
-                    <listitem><para><filename>BBFILE_COLLECTIONS</filename></para></listitem>
-                    <listitem><para><filename>ASSUME_PROVIDED</filename></para></listitem>
-                    <listitem><para><filename>BB_DANGLINGAPPENDS_WARNONLY</filename></para></listitem>
-                    <listitem><para><filename>BBINCLUDED</filename></para></listitem>
-                    <listitem><para><filename>BBFILE_PRIORITY</filename></para></listitem>
-                    <listitem><para><filename>BUILDNAME</filename></para></listitem>
-                    <listitem><para><filename>BBMASK</filename></para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BITBAKE_UI'><filename>BITBAKE_UI</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBDEBUG'><filename>BBDEBUG</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-MULTI_PROVIDER_WHITELIST'><filename>MULTI_PROVIDER_WHITELIST</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_NUMBER_PARSE_THREADS'><filename>BB_NUMBER_PARSE_THREADS</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <filename>BBPKGS</filename>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_DEFAULT_TASK'><filename>BB_DEFAULT_TASK</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-TOPDIR'><filename>TOPDIR</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_VERBOSE_LOGS'><filename>BB_VERBOSE_LOGS</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_NICE_LEVEL'><filename>BB_NICE_LEVEL</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBFILE_COLLECTIONS'><filename>BBFILE_COLLECTIONS</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-ASSUME_PROVIDED'><filename>ASSUME_PROVIDED</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_DANGLINGAPPENDS_WARNONLY'><filename>BB_DANGLINGAPPENDS_WARNONLY</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBINCLUDED'><filename>BBINCLUDED</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBFILE_PRIORITY'><filename>BBFILE_PRIORITY</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BUILDNAME'><filename>BUILDNAME</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBMASK'><filename>BBMASK</filename></link>
+                        </para></listitem>
                 </itemizedlist>
             </para>
 
@@ -1193,36 +1222,38 @@
                 <para>
                     Layers allow you to isolate different types of
                     customizations from each other.
-                    You might find it tempting to keep everything in one layer
-                    when working on a single project.
-                    However, the more modular you organize your Metadata, the
-                    easier it is to cope with future changes.
+                    While you might find it tempting to keep everything in one layer
+                    when working on a single project, the more modular you organize
+                    your metadata, the easier it is to cope with future changes.
                 </para>
 
                 <para>
-                    To illustrate how layers are used to keep things modular,
+                    To illustrate how you can use layers to keep things modular,
                     consider machine customizations.
                     These types of customizations typically reside in a special layer,
                     rather than a general layer, called a Board Specific Package (BSP) Layer.
                     Furthermore, the machine customizations should be isolated from
-                    recipes and Metadata that support a new GUI environment, for
+                    recipes and metadata that support a new GUI environment, for
                     example.
                     This situation gives you a couple of layers: one for the machine
-                    configurations, and one for the GUI environment.
+                    configurations and one for the GUI environment.
                     It is important to understand, however, that the BSP layer can still
                     make machine-specific additions to recipes within
                     the GUI environment layer without polluting the GUI layer itself
                     with those machine-specific changes.
                     You can accomplish this through a recipe that is a BitBake append
-                    (<filename>.bbappend</filename>) file, which is described
-                    later in this section.
+                    (<filename>.bbappend</filename>) file.
                 </para>
 
                 <para>
-                    There are certain variable specific to layers, including:
+                    There are certain variables specific to layers:
                     <itemizedlist>
-                        <listitem><para><filename>LAYERDEPENDS</filename></para></listitem>
-                        <listitem><para><filename>LAYERVERSION</filename></para></listitem>
+                        <listitem><para>
+                            <link linkend='var-LAYERDEPENDS'><filename>LAYERDEPENDS</filename></link>
+                            </para></listitem>
+                        <listitem><para>
+                            <link linkend='var-LAYERVERSION'><filename>LAYERVERSION</filename></link>
+                            </para></listitem>
                     </itemizedlist>
                 </para>
             </section>
@@ -1231,11 +1262,14 @@
                 <title>Schedulers</title>
 
                 <para>
-                    There are variables specific to scheduling functionality
-                    including:
+                    Variables specific to scheduling functionality exist:
                     <itemizedlist>
-                        <listitem><para><filename>BB_SCHEDULER</filename></para></listitem>
-                        <listitem><para><filename>BB_SCHEDULERS</filename></para></listitem>
+                        <listitem><para>
+                            <link linkend='var-BB_SCHEDULER'><filename>BB_SCHEDULER</filename></link>
+                            </para></listitem>
+                        <listitem><para>
+                            <link linkend='var-BB_SCHEDULERS'><filename>BB_SCHEDULERS</filename></link>
+                            </para></listitem>
                     </itemizedlist>
                 </para>
             </section>
@@ -1245,26 +1279,60 @@
             <title>Classes</title>
 
             <para>
-                BitBake classes are our rudimentary inheritance mechanism.
-                As briefly mentioned in the metadata introduction, they're
-                parsed when an inherit directive is encountered, and they
-                are located in the <filename>classes/</filename> directory
-                relative to the directories in <filename>BBPATH</filename>.
+                BitBake's rudimentary inheritance mechanism is accomplished using
+                classes.
+                As briefly mentioned in the metadata introduction, BitBake
+                parses a class when an inherit directive is encountered, and it
+                is located in the <filename>classes</filename> directory
+                relative to the directories in
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
             </para>
         </section>
 
-        <section id='bb-files'>
-            <title><filename>.bb</filename> Files</title>
+        <section id='recipe-bb-files'>
+            <title>Recipe (<filename>.bb</filename>) Files</title>
 
             <para>
-                A BitBake (<filename>.bb</filename>) file is a logical unit
-                of tasks to be executed.
-                Normally this is a package to be built.
-                Inter-<filename>.bb</filename> dependencies are obeyed.
-                The files themselves are located via the
-                <filename>BBFILES</filename> variable, which
-                is set to a space separated list of <filename>.bb</filename>
-                files, and does handle wildcards.
+                Recipe files, which are files that have the
+                <filename>.bb</filename> file extension, are logical units of
+                tasks for execution.
+                Normally, that logical unit is a package that needs to be
+                built.
+            </para>
+
+            <para>
+                BitBake obeys all inter-recipe dependencies.
+            </para>
+
+            <para>
+                Recipe files must reside in locations found in the
+                <link linkend='var-BBFILES'><filename>BBFILES</filename></link>
+                variable.
+            </para>
+        </section>
+
+        <section id='append-bbappend-files'>
+            <title>Append (<filename>.bbappend</filename>) Files</title>
+
+            <para>
+                Append files, which are files that have the
+                <filename>.bbappend</filename> file extension, add or
+                extend build information to an existing
+                <link linkend='recipe-bb-files'>recipe file</link>.
+            </para>
+
+            <para>
+                BitBake expects every append file to have a corresponding recipe file.
+                Furthermore, the append file and corresponding recipe file
+                must use the same root filename.
+                The filenames can differ only in the file type suffix used
+                (e.g. <filename>formfactor_0.0.bb</filename> and
+                <filename>formfactor_0.0.bbappend</filename>).
+            </para>
+
+            <para>
+                Information in append files overrides the information in the
+                similarly-named recipe file.
             </para>
         </section>
     </section>
