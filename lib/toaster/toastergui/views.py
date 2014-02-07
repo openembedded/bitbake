@@ -720,7 +720,7 @@ def diskio(request, build_id):
 
 def bpackage(request, build_id):
     template = 'bpackage.html'
-    mandatory_parameters = { 'count': 100,  'page' : 1};
+    mandatory_parameters = { 'count': 100,  'page' : 1, 'orderby':'name:+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'packages', request.GET, mandatory_parameters, build_id = build_id)
@@ -730,7 +730,76 @@ def bpackage(request, build_id):
 
     packages = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
+    context = {
+        'objectname': 'packages',
+        'build': Build.objects.filter(pk=build_id)[0],
+        'objects' : packages,
+        'tablecols':[
+            {
+                'name':'Package',
+                'qhelp':'Packaged output resulting from building a recipe',
+                'orderfield': _get_toggle_order(request, "name"),
+                'ordericon':_get_toggle_order_icon(request, "name"),
+            },
+            {
+                'name':'Package version',
+                'qhelp':'The package version and revision',
+            },
+            {
+                'name':'Size',
+                'qhelp':'The size of the package',
+                'orderfield': _get_toggle_order(request, "size"),
+                'ordericon':_get_toggle_order_icon(request, "size"),
+                'clclass': 'size', 'hidden': 0,
+            },
+            {
+                'name':'License',
+                'qhelp':'The license under which the package is distributed. Separate license names using | (pipe) means there is a choice between licenses. Separate license names using & (ampersand) means multiple licenses exist that cover different parts of the source',
+                'orderfield': _get_toggle_order(request, "license"),
+                'ordericon':_get_toggle_order_icon(request, "license"),
+                'clclass': 'license', 'hidden': 1,
+            },
+            {
+                'name':'Recipe',
+                'qhelp':'The name of the recipe building the package',
+                'orderfield': _get_toggle_order(request, "recipe__name"),
+                'ordericon':_get_toggle_order_icon(request, "recipe__name"),
+                'clclass': 'recipe__name', 'hidden': 0,
+            },
+            {
+                'name':'Recipe version',
+                'qhelp':'Version and revision of the recipe building the package',
+                'clclass': 'recipe__version', 'hidden': 1,
+            },
+            {
+                'name':'Layer',
+                'qhelp':'The name of the layer providing the recipe that builds the package',
+                'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__name"),
+                'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__name"),
+                'clclass': 'recipe__layer_version__layer__name', 'hidden': 1,
+            },
+            {
+                'name':'Layer branch',
+                'qhelp':'The Git branch of the layer providing the recipe that builds the package',
+                'orderfield': _get_toggle_order(request, "recipe__layer_version__branch"),
+                'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__branch"),
+                'clclass': 'recipe__layer_version__branch', 'hidden': 1,
+            },
+            {
+                'name':'Layer commit',
+                'qhelp':'The Git commit of the layer providing the recipe that builds the package',
+                'clclass': 'recipe__layer_version__layer__commit', 'hidden': 1,
+            },
+            {
+                'name':'Layer directory',
+                'qhelp':'Location in disk of the layer providing the recipe that builds the package',
+                'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
+                'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
+                'clclass': 'recipe__layer_version__layer__local_path', 'hidden': 1,
+            },
+            ]
+        }
+
     return render(request, template, context)
 
 def bfile(request, build_id, package_id):

@@ -1,50 +1,73 @@
 {% extends "basebuildpage.html" %}
 
+{% load projecttags %}
+
 {% block localbreadcrumb %}
 <li>Packages</li>
 {% endblock %}
 
 {% block buildinfomain %}
+<div class="span10">
+<div class="page-header" style="margin-top:40px;">
+<h1>
+  {% if request.GET.filter or request.GET.search and objects.count > 0  %}
+      {{objects.paginator.count}} package{{objects.paginator.count|pluralize}} found
+  {%elif objects.paginator.count == 0%}
+      No Packages
+  {%else%}
+      Packages
+  {%endif%}
+ </h1>
+</div>
+
 {% include "basetable_top.html" %}
 
-    {% if not objects %}
-        <p>No packages were recorded for this target!</p>
-    {% else %}
+    {% for package in objects %}
 
-            <tr>
-            <th>Name</th>
-            <th>Version</th>
-            <th>Recipe</th>
-            <th>Summary</th>
-            <th>Section</th>
-            <th>Description</th>
-            <th>Size on host disk (Bytes)</th>
-            <th>License</th>
-            <th>Dependencies List (all)</th>
-            </tr>
+    <tr class="data">
 
-            {% for package in objects %}
+        <!-- Package -->
+        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.name}}</a></td>
+        <!-- Package Version -->
+        <td>{%if package.version%}<a href="{% url "package_built_detail" build.pk package.pk %}">{{package.version}}-{{package.revision}}</a>{%endif%}</td>
+        <!-- Package Size -->
+        <td class="size">{{package.size|filtered_filesizeformat}}</td>
+        <!-- License -->
+        <td class="license">{{package.license}}</td>
 
-            <tr class="data">
-                <td><a name="#{{package.name}}" href="{% url "package_built_detail" build.pk package.pk %}">{{package.name}} ({{package.filelist_bpackage.count}} files)</a></td>
-                <td>{{package.version}}-{{package.revision}}</td>
-                <td>{%if package.recipe%}<a href="{% url "layer_versions_recipes" package.recipe.layer_version_id %}#{{package.recipe.name}}">{{package.recipe.name}}</a>{{package.package_name}}</a>{%endif%}</td>
+        {%if package.recipe%}
+            <!-- Recipe -->
+            <td class="recipe__name"><a href="{% url "recipe" build.pk package.recipe.pk %}">{{package.recipe.name}}</a></td>
+            <!-- Recipe Version -->
+            <td class="recipe__version"><a href="{% url "recipe" build.pk package.recipe.pk %}">{{package.recipe.version}}</a></td>
 
-            <td>{{package.summary}}</td>
-            <td>{{package.section}}</td>
-            <td>{{package.description}}</td>
-            <td>{{package.size}}</td>
-            <td>{{package.license}}</td>
-            <td>
-        <div style="height: 3em; overflow:auto">
-            {% for bpd in package.package_dependencies_source.all %}
-                {{bpd.dep_type}}: {{bpd.depends_on.name}} <br/>
-            {% endfor %}
-        </div>
+            <!-- Layer -->
+            <td class="recipe__layer_version__layer__name">{{package.recipe.layer_version.layer.name}}</td>
+            <!-- Layer branch -->
+            <td class="recipe__layer_version__branch">{{package.recipe.layer_version.branch}}</td>
+            <!-- Layer commit -->
+            <td class="recipe__layer_version__layer__commit">
+                <a class="btn"
+                    data-content="<ul class='unstyled'>
+                      <li>{{package.recipe.layer_version.commit}}</li>
+                    </ul>">
+                    {{package.recipe.layer_version.commit|truncatechars:13}}
+                </a>
             </td>
-            {% endfor %}
+            <!-- Layer directory -->
+            <td class="recipe__layer_version__layer__local_path">{{package.recipe.layer_version.layer.local_path}}</td>
+        {%else%}
+            <td class="recipe__name"></td>
+            <td class="recipe__version"></td>
+            <td class="recipe__layer_version__layer__name"></td>
+            <td class="recipe__layer_version__branch"></td>
+            <td class="recipe__layer_version__layer__commit"></td>
+            <td class="recipe__layer_version__layer__local_path"></td>
+        {%endif%}
 
-    {% endif %}
+    </tr>
+    {% endfor %}
 
 {% include "basetable_bottom.html" %}
+</div>
 {% endblock %}

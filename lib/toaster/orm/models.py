@@ -143,9 +143,8 @@ class Task_Dependency(models.Model):
     task = models.ForeignKey(Task, related_name='task_dependencies_task')
     depends_on = models.ForeignKey(Task, related_name='task_dependencies_depends')
 
-
 class Package(models.Model):
-    search_allowed_fields = ['name', 'installed_name', 'section', 'summary']
+    search_allowed_fields = ['name', 'version', 'revision', 'recipe__name', 'recipe__version', 'recipe__license', 'recipe__layer_version__layer__name', 'recipe__layer_version__branch', 'recipe__layer_version__commit', 'recipe__layer_version__layer__local_path']
     build = models.ForeignKey('Build')
     recipe = models.ForeignKey('Recipe', null=True)
     name = models.CharField(max_length=100)
