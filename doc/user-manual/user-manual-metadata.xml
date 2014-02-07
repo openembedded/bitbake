@@ -678,17 +678,18 @@
         <title>Functions</title>
 
         <para>
-            As with most languages, functions are the building blocks
-            that define operations.
+            As with most languages, functions are the building blocks that
+            are used to build up operations into tasks.
             BitBake supports three types of functions:
             <itemizedlist>
                 <listitem><para><emphasis>Shell Functions:</emphasis>
-                    Functions written in a shell language and
-                    executed by the shell.
+                    Functions written in shell script and executed either
+                    directly as functions, tasks, or both.
+                    They can also be called by other shell functions.
                     </para></listitem>
-                <listitem><para><emphasis>BitBake Functions:</emphasis>
-                    Functions written in Python but executed by BitBake using
-                    <filename>bb.build.exec_func()</filename>.
+                <listitem><para><emphasis>BitBake Style Python Functions:</emphasis>
+                    Functions written in Python and executed by BitBake or other
+                    Python functions using <filename>bb.build.exec_func()</filename>.
                     </para></listitem>
                 <listitem><para><emphasis>Python Functions:</emphasis>
                     Functions written in Python and executed by Python.
@@ -696,15 +697,17 @@
             </itemizedlist>
             Regardless of the type of function, you can only
             define them in class (<filename>.bbclass</filename>)
-            and recipe (<filename>.bb</filename>) files.
+            and recipe (<filename>.bb</filename> or <filename>.inc</filename>)
+            files.
         </para>
 
         <section id='shell-functions'>
             <title>Shell Functions</title>
 
             <para>
-                These functions are written using a shell language and
-                executed by the shell.
+                Functions written in shell script and executed either
+                directly as functions, tasks, or both.
+                They can also be called by other shell functions.
                 Here is an example shell function definition:
                 <literallayout class='monospaced'>
      some_function () {
@@ -714,14 +717,19 @@
                 When you create these types of functions in your recipe
                 or class files, you need to follow the shell programming
                 rules.
+                The scripts are executed by <filename>/bin/sh</filename>,
+                which may not be a bash shell but might be something
+                such as <filename>dash</filename>.
+                You should not use Bash-specific script (bashisms).
             </para>
         </section>
 
-        <section id='bitbake-functions'>
-            <title>BitBake Functions</title>
+        <section id='bitbake-style-python-functions'>
+            <title>BitBake Style Python Functions</title>
 
             <para>
-                These functions are written in Python and are executed using
+                These functions are written in Python and executed by
+                BitBake or other Python functions using
                 <filename>bb.build.exec_func()</filename>.
             </para>
 
@@ -745,8 +753,8 @@
             <title>Python Functions</title>
 
             <para>
-                These functions are written in Python but are executed by
-                Python.
+                These functions are written in Python and are executed by
+                other Python code.
                 Examples of Python functions are utility functions
                 that you intend to call from in-line Python or
                 from within other Python functions.
@@ -767,7 +775,7 @@
             <para>
                 Here are some things to know about Python functions:
                 <itemizedlist>
-                    <listitem><para>Python functions take parameters.
+                    <listitem><para>Python functions can take parameters.
                         </para></listitem>
                     <listitem><para>The BitBake datastore is not
                         automatically available.
@@ -790,8 +798,9 @@
             Tasks are BitBake execution units that originate as
             functions and make up the steps that BitBake needs to run
             for given recipe.
-            Tasks are only supported in recipe (<filename>.bb</filename>)
-            and class (<filename>.bbclass</filename>) files.
+            Tasks are only supported in recipe (<filename>.bb</filename>
+            or <filename>.inc</filename>) and class
+            (<filename>.bbclass</filename>) files.
             By convention, tasks begin with the string "do_".
         </para>
 
@@ -919,40 +928,108 @@
         <title>Variable Flags</title>
 
         <para>
-            This section describes variable flags.
+            Variable flags (varflags) help control a task's functionality
+            and dependencies.
+            BitBake reads and writes varflags to the datastore using the following
+            command forms:
+            <literallayout class='monospaced'>
+     &lt;variable&gt; = d.getVarFlags("&lt;variable&gt;")
+     self.d.setVarFlags("FOO", {"func": True})
+            </literallayout>
         </para>
-    </section>
-
-    <section id='task-flags'>
-        <title>Task Flags</title>
 
         <para>
-            Tasks support a number of flags which control various
-            functionality of the task.
-            These are as follows:
+            When working with varflags, the same syntax, with the exception of
+            overrides, applies.
+            In other words, you can set, append, and prepend varflags just like
+            variables.
+            See the
+            "<link linkend='variable-flag-syntax'>Variable Flag Syntax</link>"
+            section for details.
+        </para>
+
+        <para>
+            BitBake has a defined set of varflags available for recipes and
+            classes.
+            You can discover the complete set by using <filename>grep</filename>
+            within a shell and search on the string "VarFlags".
+        </para>
+
+        <para>
+            Tasks support a number of these flags which control various
+            functionality of the task:
             <itemizedlist>
                 <listitem><para><emphasis>dirs:</emphasis>
-                    Directories which should be created before the task runs.
+                    Directories that should be created before the task runs.
                     </para></listitem>
                 <listitem><para><emphasis>cleandirs:</emphasis>
-                    Directories which should created before the task runs
-                    but should be empty.</para></listitem>
+                    Empty directories that should created before the task runs.
+                    </para></listitem>
                 <listitem><para><emphasis>noexec:</emphasis>
                     Marks the tasks as being empty and no execution required.
-                    These are used as dependency placeholders or used when added tasks
-                    need to be subsequently disabled.</para></listitem>
+                    These flags are used as dependency placeholders or used when
+                    added tasks need to be subsequently disabled.
+                    </para></listitem>
                 <listitem><para><emphasis>nostamp:</emphasis>
-                    Do not generate a stamp file for a task.
-                    This means the task is always executed.</para></listitem>
+                    Tells BitBake to not generate a stamp file for a task,
+                    which implies the task is always executed.
+                    </para></listitem>
                 <listitem><para><emphasis>fakeroot:</emphasis>
-                    This task needs to be run in a fakeroot environment,
-                    obtained by adding the variables in <filename>FAKEROOTENV</filename>
-                    to the environment.</para></listitem>
+                    Causes a task to be run in a fakeroot environment,
+                    obtained by adding the variables in
+                    <link linkend='var-FAKEROOTENV'><filename>FAKEROOTENV</filename></link>
+                    to the environment.
+                    </para></listitem>
                 <listitem><para><emphasis>umask:</emphasis>
-                    The umask to run the task under.</para></listitem>
+                    The umask to run the task under.
+                    </para></listitem>
+                <listitem><para><emphasis>deptask:</emphasis>
+                    Controls task build-time dependencies.
+                    See the
+                    <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
+                    variable and the
+                    "<link linkend='build-dependencies'>Build Dependencies</link>"
+                    section for more information.
+                    </para></listitem>
+                <listitem><para><emphasis>rdeptask:</emphasis>
+                    Controls task runtime dependencies.
+                    See the
+                    <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
+                    variable, the
+                    <link linkend='var-RRECOMMENDS'><filename>RRECOMMENDS</filename></link>
+                    variable, and the
+                    "<link linkend='runtime-dependencies'>Runtime Dependencies</link>"
+                    section for more information.
+                    </para></listitem>
+                <listitem><para><emphasis>recrdeptask:</emphasis>
+                    Controls task recursive runtime dependencies.
+                    See the
+                    <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
+                    variable, the
+                    <link linkend='var-RRECOMMENDS'><filename>RRECOMMENDS</filename></link>
+                    variable, and the
+                    "<link linkend='recursive-dependencies'>Recursive Dependencies</link>"
+                    section for more information.
+                    </para></listitem>
+                <listitem><para><emphasis>depends:</emphasis>
+                    Controls inter-task dependencies.
+                    See the
+                    <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
+                    variable and the
+                    "<link linkend='inter-task-dependencies'>Inter-Task Dependencies</link>"
+                    section for more information.
+                    </para></listitem>
+                <listitem><para><emphasis>rdepends:</emphasis>
+                    Controls inter-task runtime dependencies.
+                    See the
+                    <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>
+                    variable, the
+                    <link linkend='var-RRECOMMENDS'><filename>RRECOMMENDS</filename></link>
+                    variable, and the
+                    "<link linkend='inter-task-dependencies'>Inter-Task Dependencies</link>"
+                    section for more information.
+                    </para></listitem>
             </itemizedlist>
-            For the 'deptask', 'rdeptask', 'depends', 'rdepends'and
-            'recrdeptask' flags, please see the dependencies section.
         </para>
     </section>
 
