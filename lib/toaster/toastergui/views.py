@@ -540,7 +540,7 @@ def tasks(request, build_id):
 
 def recipes(request, build_id):
     template = 'recipes.html'
-    mandatory_parameters = { 'count': 100,  'page' : 1};
+    mandatory_parameters = { 'count': 100,  'page' : 1, 'orderby':'name:+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'recipes', request.GET, mandatory_parameters, build_id = build_id)
@@ -550,7 +550,80 @@ def recipes(request, build_id):
 
     recipes = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects': recipes, }
+    context = {
+        'objectname': 'recipes',
+        'build': Build.objects.filter(pk=build_id)[0],
+        'objects': recipes,
+        'tablecols':[
+            {
+                'name':'Recipe',
+                'qhelp':'Information about a single piece of software, including where to download the source, configuration options, how to compile the source files and how to package the compiled output',
+                'orderfield': _get_toggle_order(request, "name"),
+                'ordericon':_get_toggle_order_icon(request, "name"),
+            },
+            {
+                'name':'Recipe version',
+                'qhelp':'The recipe version and revision',
+            },
+            {
+                'name':'Dependencies',
+                'qhelp':'Recipe build-time dependencies (other recipes)',
+                'clclass': 'depends_on', 'hidden': 1,
+            },
+            {
+                'name':'Reverse dependencies',
+                'qhelp':'Recipe build-time reverse dependencies (i.e. which other recipes depend on this recipe)',
+                'clclass': 'depends_by', 'hidden': 1,
+            },
+            {
+                'name':'Recipe file',
+                'qhelp':'Location in disk of the recipe .bb file',
+                'orderfield': _get_toggle_order(request, "file_path"),
+                'ordericon':_get_toggle_order_icon(request, "file_path"),
+                'clclass': 'recipe_file', 'hidden': 0,
+            },
+            {
+                'name':'Section',
+                'qhelp':'The section in which packages should be categorised. There are 5 sections: base, console, utils, devel and libs',
+                'orderfield': _get_toggle_order(request, "section"),
+                'ordericon':_get_toggle_order_icon(request, "section"),
+                'clclass': 'recipe_section', 'hidden': 0,
+            },
+            {
+                'name':'License',
+                'qhelp':'The list of source licenses for the recipe. Separate license names using | (pipe) means there is a choice between licenses. Separate license names using & (ampersand) means multiple licenses exist that cover different parts of the source',
+                'orderfield': _get_toggle_order(request, "license"),
+                'ordericon':_get_toggle_order_icon(request, "license"),
+                'clclass': 'recipe_license', 'hidden': 0,
+            },
+            {
+                'name':'Layer',
+                'qhelp':'The name of the layer prodiving the recipe',
+                'orderfield': _get_toggle_order(request, "layer_version__layer__name"),
+                'ordericon':_get_toggle_order_icon(request, "layer_version__layer__name"),
+                'clclass': 'layer_version__layer__name', 'hidden': 0,
+            },
+            {
+                'name':'Layer branch',
+                'qhelp':'The Git branch of the layer prodiving the recipe',
+                'orderfield': _get_toggle_order(request, "layer_version__branch"),
+                'ordericon':_get_toggle_order_icon(request, "layer_version__branch"),
+                'clclass': 'layer_version__branch', 'hidden': 1,
+            },
+            {
+                'name':'Layer commit',
+                'qhelp':'The Git commit of the layer prodiving the recipe',
+                'clclass': 'layer_version__layer__commit', 'hidden': 1,
+            },
+            {
+                'name':'Layer directory',
+                'qhelp':'Location in disk of the layer prodiving the recipe',
+                'orderfield': _get_toggle_order(request, "layer_version__layer__local_path"),
+                'ordericon':_get_toggle_order_icon(request, "layer_version__layer__local_path"),
+                'clclass': 'layer_version__layer__local_path', 'hidden': 1,
+            },
+            ]
+        }
 
     return render(request, template, context)
 

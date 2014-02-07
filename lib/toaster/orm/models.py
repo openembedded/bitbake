@@ -209,6 +209,7 @@ class Package_File(models.Model):
     size = models.IntegerField()
 
 class Recipe(models.Model):
+    search_allowed_fields = ['name', 'version', 'file_path', 'license', 'layer_version__layer__name', 'layer_version__branch', 'layer_version__commit', 'layer_version__layer__local_path']
     name = models.CharField(max_length=100, blank=True)
     version = models.CharField(max_length=100, blank=True)
     layer_version = models.ForeignKey('Layer_Version', related_name='recipe_layer_version')

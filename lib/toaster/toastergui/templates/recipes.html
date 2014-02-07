@@ -1,51 +1,83 @@
 {% extends "basebuildpage.html" %}
 
+{% load projecttags %}
+
 {% block localbreadcrumb %}
 <li>Recipes</li>
 {% endblock %}
 
 {% block buildinfomain %}
-<div class="row-fluid pull-right span10">
+<div class="span10">
+<div class="page-header" style="margin-top:40px;">
+<h1>
+  {% if request.GET.filter or request.GET.search and objects.count > 0  %}
+      {{objects.paginator.count}} recipe{{objects.paginator.count|pluralize}} found
+  {%elif objects.paginator.count == 0%}
+      No Recipes
+  {%else%}
+      Recipes
+  {%endif%}
+ </h1>
+</div>
 {% include "basetable_top.html" %}
 
-        <tr>
-        </tr>
-            <th>Name</th>
-            <th>Version</th>
-            <th>Summary</th>
-            <th>Description</th>
-            <th>Section</th>
-            <th>License</th>
-            <th>License file</th>
-            <th>Homepage</th>
-            <th>Bugtracker</th>
-            <th>File_path</th>
-            <th style="width: 30em">Recipe Dependency</th>
+    {% for recipe in objects %}
 
+    <tr class="data">
+        <td><a href="{% url "recipe" build.pk recipe.pk %}">{{recipe.name}}</a></td>
+        <td><a href="{% url "recipe" build.pk recipe.pk %}">{{recipe.version}}</a></td>
+        <!-- Depends -->
+        <td class="depends_on">
+            {% if recipe.r_dependencies_recipe.all.count %}
+            <a class="btn"
+                title="<a href='{% url "recipe" build.pk recipe.pk %}#dependencies'>{{recipe.name}}</a> depends on"
+                data-content="<ul class='unstyled'>
+                  {% for i in recipe.r_dependencies_recipe.all|dictsort:"depends_on.name"%}
+                    <li><a href='{% url "recipe" build.pk i.depends_on.pk %}'>{{i.depends_on.name}}</a></li>
+                  {% endfor %}
+                </ul>">
+                {{recipe.r_dependencies_recipe.all.count}}
+            </a>
+            {% endif %}
+        </td>
+        <!--  Brought in by -->
+        <td class="depends_by">
+            {% if recipe.r_dependencies_depends.all.count %}
+            <a class="btn"
+                title="<a href='{% url "recipe" build.pk recipe.pk %}#brought-in-by'>{{recipe.name}}</a> is brought in by"
+                data-content="<ul class='unstyled'>
+                  {% for i in recipe.r_dependencies_depends.all|dictsort:"recipe.name"%}
+                    <li><a href='{% url "recipe" build.pk i.recipe.pk %}'>{{i.recipe.name}}</a></li>
+                  {% endfor %}
+                </ul>">
+                {{recipe.r_dependencies_depends.all.count}}
+            </a>
+            {% endif %}
+        </td>
+        <!-- Recipe file -->
+        <td class="recipe_file">{{recipe.file_path}}</td>
+        <!-- Section -->
+        <td class="recipe_section">{{recipe.section}}</td>
+        <!-- License -->
+        <td class="recipe_license">{{recipe.license}}</td>
+        <!-- Layer -->
+        <td class="layer_version__layer__name">{{recipe.layer_version.layer.name}}</td>
+        <!-- Layer branch -->
+        <td class="layer_version__branch">{{recipe.layer_version.branch}}</td>
+        <!-- Layer commit -->
+        <td class="layer_version__layer__commit">
+            <a class="btn"
+                data-content="<ul class='unstyled'>
+                  <li>{{recipe.layer_version.commit}}</li>
+                </ul>">
+                {{recipe.layer_version.commit|truncatechars:13}}
+            </a>
+        </td>
+        <!-- Layer directory -->
+        <td class="layer_version__layer__local_path">{{recipe.layer_version.layer.local_path}}</td>
+    </tr>
 
-        {% for recipe in objects %}
-
-        <tr class="data">
-            <td><a name="{{recipe.name}}" href="{% url "recipe" build.pk recipe.pk %}">{{recipe.name}}</a></td>
-            <td>{{recipe.version}}</td>
-            <td>{{recipe.summary}}</td>
-            <td>{{recipe.description}}</td>
-            <td>{{recipe.section}}</td>
-            <td>{{recipe.license}}</td>
-            <td>{{recipe.licensing_info}}</td>
-            <td>{{recipe.homepage}}</td>
-            <td>{{recipe.bugtracker}}</td>
-            <td>{{recipe.file_path}}</td>
-            <td>
-        <div style="height: 5em; overflow:auto">
-            {% for rr in recipe.r_dependencies_recipe.all %}
-                <a href="#{{rr.depends_on.name}}">{{rr.depends_on.name}}</a><br/>
-            {% endfor %}
-        </div>
-            </td>
-        </tr>
-
-        {% endfor %}
+    {% endfor %}
 
 {% include "basetable_bottom.html" %}
 </div>
