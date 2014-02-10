@@ -1053,6 +1053,27 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BBVERSIONS'><glossterm>BBVERSIONS</glossterm>
+            <glossdef>
+                <para>
+                    Allows a single recipe to build multiple versions of a
+                    project from a single recipe file.
+                    You also able to specify conditional metadata
+                    using the
+                    <link linkend='var-OVERRIDES'><filename>OVERRIDES</filename></link>
+                    mechanism for a single version or for an optionally named
+                    range of versions.
+                </para>
+
+                <para>
+                    For more information on <filename>BBVERSIONS</filename>,
+                    see the
+                    "<link linkend='variants-class-extension-mechanism'>Variants - Class Extension Mechanism</link>"
+                    section.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BITBAKE_UI'><glossterm>BITBAKE_UI</glossterm>
             <glossdef>
                 <para>
