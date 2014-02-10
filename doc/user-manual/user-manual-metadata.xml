@@ -1451,40 +1451,51 @@
         <title>Variants - Class Extension Mechanism</title>
 
         <para>
-            Two BitBake features exist to facilitate the creation of
-            multiple buildable incarnations from a single recipe file.
-        </para>
-
-        <para>
-            The first is <filename>BBCLASSEXTEND</filename>.
-            This variable is a space separated list of classes used to "extend" the
-            recipe for each variant.
-            Here is an example that results in a second incarnation of the current
-            recipe being available.
-            This second incarnation will have the "native" class inherited.
-            <literallayout class='monospaced'>
+            BitBake supports two features that facilitate creating
+            from a single recipe file multiple incarnations of that
+            recipe file where all incarnations are buildable.
+            These features are enabled through the
+            <link linkend='var-BBCLASSEXTEND'><filename>BBCLASSEXTEND</filename></link>
+            and
+            <link linkend='var-BBVERSIONS'><filename>BBVERSIONS</filename></link>
+            variables:
+            <itemizedlist>
+                <listitem><para><emphasis><filename>BBCLASSEXTEND</filename>:</emphasis>
+                    This variable is a space separated list of classes used to "extend" the
+                    recipe for each variant.
+                    Here is an example that results in a second incarnation of the current
+                    recipe being available.
+                    This second incarnation will have the "native" class inherited.
+                    <literallayout class='monospaced'>
      BBCLASSEXTEND = "native"
-            </literallayout>
-            The second feature is <filename>BBVERSIONS</filename>.
-            This variable allows a single recipe to build multiple versions of a
-            project from a single recipe file, and allows you to specify
-            conditional metadata (using the <filename>OVERRIDES</filename>
-            mechanism) for a single version, or an optionally named range of versions:
-            <literallayout class='monospaced'>
+                    </literallayout></para></listitem>
+                <listitem><para><emphasis><filename>BBVERSIONS</filename>:</emphasis>
+                    This variable allows a single recipe to build multiple versions of a
+                    project from a single recipe file.
+                    You can also specify conditional metadata
+                    (using the
+                    <link linkend='var-OVERRIDES'><filename>OVERRIDES</filename></link>
+                    mechanism) for a single version, or an optionally named range of versions.
+                    Here is an example:
+                    <literallayout class='monospaced'>
      BBVERSIONS = "1.0 2.0 git"
      SRC_URI_git = "git://someurl/somepath.git"
-            </literallayout>
-            <literallayout class='monospaced'>
+
      BBVERSIONS = "1.0.[0-6]:1.0.0+ \ 1.0.[7-9]:1.0.7+"
      SRC_URI_append_1.0.7+ = "file://some_patch_which_the_new_versions_need.patch;patch=1"
-            </literallayout>
-            The name of the range will default to the original version of the
-            recipe, so given OE, a recipe file of <filename>foo_1.0.0+.bb</filename>
-            will default the name of its versions to <filename>1.0.0+</filename>.
-            This is useful, as the range name is not only placed into overrides;
-            it's also made available for the metadata to use in the form of the
-            <filename>BPV</filename> variable, for use in
-            <filename>file://</filename> search paths (<filename>FILESPATH</filename>).
+                    </literallayout>
+                    The name of the range defaults to the original version of the
+                    recipe.
+                    For example, in OpenEmbedded, the recipe file
+                    <filename>foo_1.0.0+.bb</filename> creates a default name range
+                    of <filename>1.0.0+</filename>.
+                    This is useful because the range name is not only placed
+                    into overrides, but it is also made available for the metadata to use
+                    in the variable that defines the base recipe versions for use in
+                    <filename>file://</filename> search paths
+                    (<link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>).
+                    </para></listitem>
+            </itemizedlist>
         </para>
     </section>
 
