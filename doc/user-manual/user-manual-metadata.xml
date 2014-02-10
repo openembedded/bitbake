@@ -1502,24 +1502,36 @@
     <section id='dependencies'>
         <title>Dependencies</title>
 
-        <section id='dependencies-overview'>
-            <title>Overview</title>
+        <para>
+            To allow for efficient operation given multiple processes
+            executing in parallel, BitBake handles dependencies at
+            the task level.
+            BitBake supports a robust method to handle these dependencies.
+        </para>
 
-            <para>
-                BitBake handles dependencies at the task level since to
-                allow for efficient operation with multiple
-                processes executing in parallel, a robust method of
-                specifying task dependencies is needed.
-            </para>
-        </section>
+        <para>
+            This section describes several types of dependency mechanisms.
+        </para>
 
         <section id='dependencies-internal-to-the-bb-file'>
             <title>Dependencies Internal to the <filename>.bb</filename> File</title>
 
             <para>
-                Where the dependencies are internal to a given
-                <filename>.bb</filename> file, the dependencies are handled by the
-                previously detailed <filename>addtask</filename> directive.
+                BitBake uses the <filename>addtask</filename> directive
+                to manage dependencies that are internal to a given recipe
+                file.
+                You can use the <filename>addtask</filename> directive to
+                indicate when a task is dependent on other tasks or when
+                other tasks depend on that recipe.
+                Here is an example:
+                <literallayout class='monospaced'>
+     addtask printdate after do_fetch before do_build
+                </literallayout>
+                In this example, the <filename>printdate</filename> task is
+                depends on the completion of the <filename>do_fetch</filename>
+                task.
+                And, the <filename>do_build</filename> depends on the completion
+                of the <filename>printdate</filename> task.
             </para>
         </section>
 
@@ -1527,15 +1539,18 @@
             <title>Build Dependencies</title>
 
             <para>
-                <filename>DEPENDS</filename> lists build time dependencies.
-                The 'deptask' flag for tasks is used to signify the task of each
-                item listed in <filename>DEPENDS</filename> which must have
-                completed before that task can be executed.
+                BitBake uses the
+                <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
+                variable to manage build time dependencies.
+                The "deptask" varflag for tasks signifies the task of each
+                item listed in <filename>DEPENDS</filename> that must
+                complete before that task can be executed.
+                Here is an example:
                 <literallayout class='monospaced'>
      do_configure[deptask] = "do_populate_staging"
                 </literallayout>
-                In the previous example, the <filename>do_populate_staging</filename>
-                task of each item in <filename>DEPENDS</filename> must have completed before
+                In this example, the <filename>do_populate_staging</filename>
+                task of each item in <filename>DEPENDS</filename> must complete before
                 <filename>do_configure</filename> can execute.
             </para>
         </section>
@@ -1544,10 +1559,19 @@
             <title>Runtime Dependencies</title>
 
             <para>
+                BitBake uses the
+                <link linkend='var-PACKAGES'><filename>PACKAGES</filename></link>,
+                <link linkend='var-RDEPENDS'><filename>RDEPENDS</filename></link>, and
+                <link linkend='var-RRECOMMENDS'><filename>RRECOMMENDS</filename></link>
+                variables to manage runtime dependencies.
+            </para>
+
+            <para>
                 The <filename>PACKAGES</filename> variable lists runtime
-                packages and each of these can have <filename>RDEPENDS</filename> and
+                packages.
+                Each of those packages can have <filename>RDEPENDS</filename> and
                 <filename>RRECOMMENDS</filename> runtime dependencies.
-                The 'rdeptask' flag for tasks is used to signify the task of each
+                The "rdeptask" flag for tasks is used to signify the task of each
                 item runtime dependency which must have completed before that
                 task can be executed.
                 <literallayout class='monospaced'>
@@ -1563,25 +1587,29 @@
             <title>Recursive Dependencies</title>
 
             <para>
-                These are specified with the 'recrdeptask' flag
-                which is used to signify the task(s) of dependencies
-                which must have completed before that task can be
-                executed.
-                It works by looking though the build
-                and runtime dependencies of the current recipe as well
-                as any inter-task dependencies the task has,
-                then adding a dependency on the listed task.
-                It will then recurse through the dependencies of those
-                tasks and so on.
+                BitBake uses the "recrdeptask" flag to manage
+                recursive task dependencies.
+                BitBake looks through the build-time and runtime
+                dependencies of the current recipe, looks through
+                the task's inter-task
+                dependencies, and then adds dependencies for the
+                listed task.
+                Once BitBake has accomplished this, it recursively works through
+                the dependencies of those tasks.
+                Iterative passes continue until all dependencies are discovered
+                and added.
             </para>
 
             <para>
-                It may be desirable to recurse not just through the
-                dependencies of those tasks but through the
-                build and runtime dependencies of dependent tasks too.
-                If that is the case, the taskname itself should
-                be referenced in the task list (e.g.
-                <filename>do_a[recrdeptask] = "do_a do_b"</filename>).
+                You might want to not only have BitBake look for
+                dependencies of those tasks, but also have BitBake look
+                for build-time and runtime dependencies of the dependent
+                tasks as well.
+                If that is the case, you need to reference the task name
+                itself in the task list:
+                <literallayout class='monospaced'>
+     do_a[recrdeptask] = "do_a do_b"
+                </literallayout>
             </para>
         </section>
 
@@ -1589,19 +1617,23 @@
             <title>Inter-Task Dependencies</title>
 
             <para>
-                The 'depends' flag for tasks is a more generic form which
-                allows an inter-dependency on specific tasks rather than specifying
+                BitBake uses the "depends" flag in a more generic form
+                to manage inter-task dependencies.
+                This more generic form allows for inter-dependency
+                checks for specific tasks rather than checks for
                 the data in <filename>DEPENDS</filename>.
+                Here is an example:
                 <literallayout class='monospaced'>
      do_patch[depends] = "quilt-native:do_populate_staging"
                 </literallayout>
-                In the previous example, the <filename>do_populate_staging</filename>
-                task of the target quilt-native must have completed before the
+                In this example, the <filename>do_populate_staging</filename>
+                task of the target <filename>quilt-native</filename>
+                must have completed before the
                 <filename>do_patch</filename> task can execute.
             </para>
 
             <para>
-                The 'rdepends' flag works in a similar way but takes targets
+                The "rdepends" flag works in a similar way but takes targets
                 in the runtime namespace instead of the build-time dependency
                 namespace.
             </para>
