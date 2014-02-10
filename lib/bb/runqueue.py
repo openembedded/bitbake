@@ -1624,7 +1624,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         sq_revdeps = []
         sq_revdeps_new = []
         sq_revdeps_squash = []
-        self.sq_harddeps = []
+        self.sq_harddeps = {}
 
         # We need to construct a dependency graph for the setscene functions. Intermediate
         # dependencies between the setscene tasks only complicate the code. This code
@@ -1735,15 +1735,19 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     dep = self.rqdata.taskData.fn_index[depdata]
                     taskid = self.rqdata.get_task_id(self.rqdata.taskData.getfn_id(dep), idependtask.replace("_setscene", ""))
                     if taskid is None:
-                        bb.msg.fatal("RunQueue", "Task %s:%s depends upon non-existent task %s:%s" % (self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realid]], self.rqdata.taskData.tasks_name[realid], dep, idependtask))
+                        bb.msg.fatal("RunQueue", "Task %s_setscene depends upon non-existent task %s:%s" % (self.self.rqdata.get_user_idstring(task), dep, idependtask))
 
-                    self.sq_harddeps.append(self.rqdata.runq_setscene.index(taskid))
+                    if not self.rqdata.runq_setscene.index(taskid) in self.sq_harddeps:
+                        self.sq_harddeps[self.rqdata.runq_setscene.index(taskid)] = set()
+                    self.sq_harddeps[self.rqdata.runq_setscene.index(taskid)].add(self.rqdata.runq_setscene.index(task))
+
                     sq_revdeps_squash[self.rqdata.runq_setscene.index(task)].add(self.rqdata.runq_setscene.index(taskid))
                     # Have to zero this to avoid circular dependencies
                     sq_revdeps_squash[self.rqdata.runq_setscene.index(taskid)] = set()
 
         #for task in xrange(len(sq_revdeps_squash)):
-        #    print "Task %s: %s.%s is %s " % (task, self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[self.rqdata.runq_setscene[task]]], self.rqdata.runq_task[self.rqdata.runq_setscene[task]] + "_setscene", sq_revdeps_squash[task])
+        #    realtask = self.rqdata.runq_setscene[task]
+        #    bb.warn("Task %s: %s_setscene is %s " % (task, self.rqdata.get_user_idstring(realtask) , sq_revdeps_squash[task]))
 
         self.sq_deps = []
         self.sq_revdeps = sq_revdeps_squash
@@ -1817,7 +1821,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
     def scenequeue_updatecounters(self, task, fail = False):
         for dep in self.sq_deps[task]:
-            if fail and task in self.sq_harddeps:
+            if fail and task in self.sq_harddeps and dep in self.sq_harddeps[task]:
+                realtask = self.rqdata.runq_setscene[task]
+                realdep = self.rqdata.runq_setscene[dep]
+                logger.debug(2, "%s was unavailable and is a hard dependency of %s so skipping" % (self.rqdata.get_user_idstring(realtask), self.rqdata.get_user_idstring(realdep)))
                 continue
             self.sq_revdeps2[dep].remove(task)
             if len(self.sq_revdeps2[dep]) == 0:
@@ -1929,6 +1936,12 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         if self.stats.active > 0:
             self.rq.read_workers()
             return self.rq.active_fds()
+
+        #for task in xrange(self.stats.total):
+        #    if self.runq_running[task] != 1:
+        #        buildable = self.runq_buildable[task]
+        #        revdeps = self.sq_revdeps[task]
+        #        bb.warn("Found we didn't run %s %s %s %s" % (task, buildable, str(revdeps), self.rqdata.get_user_idstring(self.rqdata.runq_setscene[task])))
 
         # Convert scenequeue_covered task numbers into full taskgraph ids
         oldcovered = self.scenequeue_covered
