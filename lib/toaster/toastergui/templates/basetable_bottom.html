@@ -44,7 +44,8 @@
     setting = save.split(';');
     for ( i = 0; i < setting.length; i++) {
         if (setting[i].length > 0) {
-            [id, v] = setting[i].split(':');
+            splitlist = setting[i].split(':');
+            id = splitlist[0], v = splitlist[1];
             if (v == 'true') {
                 $('.chbxtoggle#'+id).prop('checked', true);
             }
