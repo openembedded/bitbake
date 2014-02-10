@@ -239,7 +239,11 @@ class ORMWrapper(object):
                                         size = package_info['FILES_INFO'][path] )
 
         def _po_byname(p):
-            return Package.objects.get_or_create(build = build_obj, name = p)[0]
+            pkg, created = Package.objects.get_or_create(build = build_obj, name = p)
+            if created:
+                pkg.size = -1
+                pkg.save()
+            return pkg
 
         # save soft dependency information
         if 'RDEPENDS' in package_info and package_info['RDEPENDS']:

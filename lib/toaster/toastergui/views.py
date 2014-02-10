@@ -366,7 +366,7 @@ def recipe(request, build_id, recipe_id):
     layer_version = Layer_Version.objects.filter(pk=object.layer_version_id)[0]
     layer  = Layer.objects.filter(pk=layer_version.layer_id)[0]
     tasks  = Task.objects.filter(recipe_id = recipe_id).filter(build_id = build_id)
-    packages = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id)
+    packages = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0)
 
     context = {
             'build'   : Build.objects.filter(pk=build_id)[0],
@@ -725,7 +725,7 @@ def bpackage(request, build_id):
     if retval:
         return _redirect_parameters( 'packages', request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
-    queryset = Package.objects.filter(build = build_id)
+    queryset = Package.objects.filter(build = build_id).filter(size__gte=0)
     queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string)
 
     packages = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
