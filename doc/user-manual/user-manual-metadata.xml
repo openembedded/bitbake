@@ -1735,36 +1735,77 @@
         <title>Task Checksums and Setscene</title>
 
         <para>
-            This list is a place holder of content that needs explanation here.
-            Items should be moved to appropriate sections below as completed.
+            BitBake uses checksums (or signatures) along with the setscene
+            to determine if a task needs to be run.
+            This section describes the process.
+            To help understand how BitBake does this, the section assumes an
+            OpenEmbedded metadata-based example.
+        </para>
+
+        <para>
+            This list is a place holder of content existed from previous work
+            on the manual.
+            Some or all of it probably needs integrated into the subsections
+            that make up this section.
+            For now, I have just provided a short glossary-like description
+            for each variable.
+            Ultimately, this list goes away.
             <itemizedlist>
-                <listitem><para><filename>STAMP</filename></para></listitem>
-                <listitem><para><filename>STAMPCLEAN</filename></para></listitem>
-                <listitem><para><filename>BB_STAMP_WHITELIST</filename></para></listitem>
-                <listitem><para><filename>BB_STAMP_POLICY</filename></para></listitem>
-                <listitem><para><filename>BB_HASHCHECK_FUNCTION</filename></para></listitem>
-                <listitem><para><filename>BB_SETSCENE_VERIFY_FUNCTION</filename></para></listitem>
-                <listitem><para><filename>BB_SETSCENE_DEPVALID</filename></para></listitem>
-                <listitem><para><filename>BB_TASKHASH</filename></para></listitem>
+                <listitem><para><filename>STAMP</filename>:
+                    The base path to create stamp files.</para></listitem>
+                <listitem><para><filename>STAMPCLEAN</filename>
+                    Again, the base path to create stamp files but can use wildcards
+                    for matching a range of files for clean operations.
+                    </para></listitem>
+                <listitem><para><filename>BB_STAMP_WHITELIST</filename>
+                    Lists stamp files that are looked at when the stamp policy
+                    is "whitelist".
+                    </para></listitem>
+                <listitem><para><filename>BB_STAMP_POLICY</filename>
+                    Defines the mode for comparing timestamps of stamp files.
+                    </para></listitem>
+                <listitem><para><filename>BB_HASHCHECK_FUNCTION</filename>
+                    Specifies the name of the function to call during
+                    the "setscene" part of the task's execution in order
+                    to validate the list of task hashes.
+                    </para></listitem>
+                <listitem><para><filename>BB_SETSCENE_VERIFY_FUNCTION</filename>
+                    Specifies a function to call that verifies the list of
+                    planned task execution before the main task execution
+                    happens.
+                    </para></listitem>
+                <listitem><para><filename>BB_SETSCENE_DEPVALID</filename>
+                    Specifies a function BitBake calls that determines
+                    whether BitBake requires a setscene dependency to
+                    be met.
+                    </para></listitem>
+                <listitem><para><filename>BB_TASKHASH</filename>
+                    Within an executing task, this variable holds the hash
+                    of the task as returned by the currently enabled
+                    signature generator.
+                    </para></listitem>
             </itemizedlist>
         </para>
+
+        <section id='setscene'>
+            <title>Setscene</title>
+
+            <para>
+                This section needs to get the concept of the setscene across.
+                The reader needs to know what it is and what it is used for during
+                the build process.
+            </para>
+        </section>
 
         <section id='checksums'>
             <title>Checksums (Signatures)</title>
 
             <para>
-                BitBake uses checksums (or signatures) along with the setscene
-                to determine if a task needs to be run.
-                This section describes the process.
-                To help understand how BitBake does this, the section assumes an
-                OpenEmbedded metadata-based example.
-            </para>
-
-            <para>
-                The setscene code uses a checksum, which is a unique signature of a task's
-                inputs, to determine if a task needs to be run again.
-                Because it is a change in a task's inputs that triggers a rerun, the process
-                needs to detect all the inputs to a given task.
+                A checksum is a unique signature of a task's inputs.
+                The setscene code uses a checksum to determine if a task needs
+                to be run.
+                Because it is a change in a task's inputs that triggers running
+                the task, the process needs to detect all the inputs to a given task.
                 For shell tasks, this turns out to be fairly easy because
                 BitBake generates a "run" shell script for each task and
                 it is possible to create a checksum that gives you a good idea of when
@@ -1776,9 +1817,9 @@
                 the checksum.
                 First, there is the actual specific build path of a given task -
                 the working directory.
-                It does not matter if the work directory changes because it should not
+                It does not matter if the working directory changes because it should not
                 affect the output for target packages.
-                The simplistic approach for excluding the work directory is to set
+                The simplistic approach for excluding the working directory is to set
                 it to some fixed value and create the checksum for the "run" script.
             </para>
 
