@@ -4,6 +4,17 @@
 <chapter id="user-manual-intro">
     <title>Overview</title>
 
+    <para>
+        Welcome to the BitBake User Manual.
+        This manual provides information on BitBake.
+        The information attempts to be as independent as possible regarding
+        systems that use BitBake, such as the Yocto Project and
+        OpenEmbeddeded.
+        In some cases, scenarios or examples that within the context of
+        a build system are used in the manual to help with understanding.
+        For these cases, the manual clearly states the context.
+    </para>
+
     <section id="intro">
         <title>Introduction</title>
 
