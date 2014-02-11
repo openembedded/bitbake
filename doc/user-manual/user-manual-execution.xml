@@ -1,0 +1,690 @@
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+
+<chapter id="user-manual-execution">
+    <title>Execution</title>
+
+    <para>
+        Tasks can either be a shell task or a Python task.
+        For shell tasks, BitBake writes a shell script to
+        <filename>${WORKDIR}/temp/run.do_taskname.pid</filename>
+        and then executes the script.
+        The generated shell script contains all the exported variables,
+        and the shell functions with all variables expanded.
+        Output from the shell script goes to the file
+        <filename>${WORKDIR}/temp/log.do_taskname.pid</filename>.
+        Looking at the expanded shell functions in the run file and
+        the output in the log files is a useful debugging technique.
+    </para>
+
+    <para>
+        For Python tasks, BitBake executes the task internally and logs
+        information to the controlling terminal.
+        Future versions of BitBake will write the functions to files
+        similar to the way shell tasks are handled.
+        Logging will be handled in a way similar to shell tasks as well.
+    </para>
+
+    <para>
+        Once all the tasks have been completed BitBake exits.
+    </para>
+
+    <section id='parsing-and-execution'>
+        <title>Parsing and Execution</title>
+
+        <section id='parsing-overview'>
+            <title>Parsing Overview</title>
+
+            <para>
+                BitBake parses configuration files, classes, recipes, and append
+                files.
+            </para>
+
+            <para>
+                The first thing BitBake does is look for the
+                <filename>bitbake.conf</filename> file.
+                This file resides in the <filename>conf</filename>
+                directory, which must be listed in
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
+            </para>
+
+            <para>
+                The <filename>bitbake.conf</filename> file lists other configuration
+                files to include from the <filename>conf</filename> directory below the
+                directories listed in <filename>BBPATH</filename>.
+                In general, the most important of these
+                configuration files from a user's perspective
+                is <filename>local.conf</filename>, which contains the user's
+                customized settings for the build environment.
+            </para>
+
+            <para>
+                Other notable configuration files are the distribution configuration
+                file and the machine configuration file.
+                These configuration files are normally identified by
+                variables unique to the build systems using BitBake.
+                For example, the Yocto Project uses the
+                <filename>DISTRO</filename> and <filename>MACHINE</filename>
+                variables, respectively.
+            </para>
+
+            <para>
+                After parsing of the configuration files, some standard classes are
+                included.
+                The <filename>base.bbclass</filename> file
+                is always included.
+                Other classes that are specified in the configuration using the
+                <link linkend='var-INHERIT'><filename>INHERIT</filename></link>
+                variable are also included.
+                BitBake searches for class files in a "classes" subdirectory under
+                the paths in <filename>BBPATH</filename> in the same way as
+                configuration files.
+            </para>
+
+            <para>
+                After classes are included, the variable
+                <filename>BBFILES</filename> is set, usually in
+                <filename>local.conf</filename>, and defines the list of
+                places to search for recipe and append files.
+                Adding extra content to <filename>BBFILES</filename> is best
+                achieved through the use of BitBake layers.
+            </para>
+
+            <para>
+                BitBake parses each recipe and append file located with
+                <filename>BBFILES</filename> and stores the values of various
+                variables into the datastore.
+                In summary, for each recipe and append file pairing, the configuration
+                plus the base class of variables are set, followed by the data in the
+                recipe file itself, followed by any inherit commands
+                that the recipe file might contain.
+            </para>
+
+            <para>
+                Because parsing recipe and append files is a time consuming
+                process, a cache, referred to as the "setscene"
+                is kept to speed up subsequent parsing.
+                The setscene is invalid if the timestamps of a recipe changes,
+                any of the include files change, configuration files change,
+                or class files on which the recipe file depends change.
+            </para>
+        </section>
+
+        <section id='parsing-configuration-files'>
+            <title>Configuration files</title>
+
+            <para>
+                Prior to parsing configuration files, Bitbake looks
+                at certain variables, including:
+                <itemizedlist>
+                    <listitem><para><link linkend='var-BB_ENV_WHITELIST'><filename>BB_ENV_WHITELIST</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-BB_PRESERVE_ENV'><filename>BB_PRESERVE_ENV</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-BB_ENV_EXTRAWHITE'><filename>BB_ENV_EXTRAWHITE</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-BB_ORIGENV'><filename>BB_ORIGENV</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link></para></listitem>
+                    <listitem><para><link linkend='var-PREFERRED_PROVIDERS'><filename>PREFERRED_PROVIDERS</filename></link></para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                The first kind of metadata in BitBake is configuration metadata.
+                This metadata is global, and therefore affects all packages and
+                tasks that are executed.
+            </para>
+
+            <para>
+                BitBake will first search the current working directory for an
+                optional <filename>conf/bblayers.conf</filename> configuration file.
+                This file is expected to contain a
+                <link linkend='var-BBLAYERS'><filename>BBLAYERS</filename></link>
+                variable that is a space delimited list of 'layer' directories.
+                For each directory in this list, a <filename>conf/layer.conf</filename>
+                file will be searched for and parsed with the
+                <link linkend='var-LAYERDIR'><filename>LAYERDIR</filename></link>
+                variable being set to the directory where the layer was found.
+                The idea is these files will setup
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
+                and other variables correctly for a given build directory automatically
+                for the user.
+            </para>
+
+            <para>
+                BitBake will then expect to find <filename>conf/bitbake.conf</filename>
+                file somewhere in the user specified <filename>BBPATH</filename>.
+                That configuration file generally has include directives to pull
+                in any other metadata (generally files specific to architecture,
+                machine, local and so on).
+            </para>
+
+            <para>
+                Only variable definitions and include directives are allowed
+                in <filename>.conf</filename> files.
+                The following variables include:
+                <itemizedlist>
+                    <listitem><para>
+                        <link linkend='var-BITBAKE_UI'><filename>BITBAKE_UI</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBDEBUG'><filename>BBDEBUG</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-MULTI_PROVIDER_WHITELIST'><filename>MULTI_PROVIDER_WHITELIST</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_NUMBER_PARSE_THREADS'><filename>BB_NUMBER_PARSE_THREADS</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <filename>BBPKGS</filename>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_DEFAULT_TASK'><filename>BB_DEFAULT_TASK</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-TOPDIR'><filename>TOPDIR</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_VERBOSE_LOGS'><filename>BB_VERBOSE_LOGS</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_NICE_LEVEL'><filename>BB_NICE_LEVEL</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBFILE_COLLECTIONS'><filename>BBFILE_COLLECTIONS</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-ASSUME_PROVIDED'><filename>ASSUME_PROVIDED</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BB_DANGLINGAPPENDS_WARNONLY'><filename>BB_DANGLINGAPPENDS_WARNONLY</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBINCLUDED'><filename>BBINCLUDED</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBFILE_PRIORITY'><filename>BBFILE_PRIORITY</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BUILDNAME'><filename>BUILDNAME</filename></link>
+                        </para></listitem>
+                    <listitem><para>
+                        <link linkend='var-BBMASK'><filename>BBMASK</filename></link>
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+
+            <section id='layers'>
+                <title>Layers</title>
+
+                <para>
+                    Layers allow you to isolate different types of
+                    customizations from each other.
+                    While you might find it tempting to keep everything in one layer
+                    when working on a single project, the more modular you organize
+                    your metadata, the easier it is to cope with future changes.
+                </para>
+
+                <para>
+                    To illustrate how you can use layers to keep things modular,
+                    consider machine customizations.
+                    These types of customizations typically reside in a special layer,
+                    rather than a general layer, called a Board Specific Package (BSP) Layer.
+                    Furthermore, the machine customizations should be isolated from
+                    recipes and metadata that support a new GUI environment, for
+                    example.
+                    This situation gives you a couple of layers: one for the machine
+                    configurations and one for the GUI environment.
+                    It is important to understand, however, that the BSP layer can still
+                    make machine-specific additions to recipes within
+                    the GUI environment layer without polluting the GUI layer itself
+                    with those machine-specific changes.
+                    You can accomplish this through a recipe that is a BitBake append
+                    (<filename>.bbappend</filename>) file.
+                </para>
+
+                <para>
+                    There are certain variables specific to layers:
+                    <itemizedlist>
+                        <listitem><para>
+                            <link linkend='var-LAYERDEPENDS'><filename>LAYERDEPENDS</filename></link>
+                            </para></listitem>
+                        <listitem><para>
+                            <link linkend='var-LAYERVERSION'><filename>LAYERVERSION</filename></link>
+                            </para></listitem>
+                    </itemizedlist>
+                </para>
+            </section>
+
+            <section id='schedulers'>
+                <title>Schedulers</title>
+
+                <para>
+                    Variables specific to scheduling functionality exist:
+                    <itemizedlist>
+                        <listitem><para>
+                            <link linkend='var-BB_SCHEDULER'><filename>BB_SCHEDULER</filename></link>
+                            </para></listitem>
+                        <listitem><para>
+                            <link linkend='var-BB_SCHEDULERS'><filename>BB_SCHEDULERS</filename></link>
+                            </para></listitem>
+                    </itemizedlist>
+                </para>
+            </section>
+        </section>
+
+        <section id='metadata-classes'>
+            <title>Classes</title>
+
+            <para>
+                BitBake's rudimentary inheritance mechanism is accomplished using
+                classes.
+                As briefly mentioned in the metadata introduction, BitBake
+                parses a class when an inherit directive is encountered, and it
+                is located in the <filename>classes</filename> directory
+                relative to the directories in
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
+            </para>
+        </section>
+
+        <section id='recipe-bb-files'>
+            <title>Recipe (<filename>.bb</filename>) Files</title>
+
+            <para>
+                Recipe files, which are files that have the
+                <filename>.bb</filename> file extension, are logical units of
+                tasks for execution.
+                Normally, that logical unit is a package that needs to be
+                built.
+            </para>
+
+            <para>
+                BitBake obeys all inter-recipe dependencies.
+            </para>
+
+            <para>
+                Recipe files must reside in locations found in the
+                <link linkend='var-BBFILES'><filename>BBFILES</filename></link>
+                variable.
+            </para>
+        </section>
+
+        <section id='append-bbappend-files'>
+            <title>Append (<filename>.bbappend</filename>) Files</title>
+
+            <para>
+                Append files, which are files that have the
+                <filename>.bbappend</filename> file extension, add or
+                extend build information to an existing
+                <link linkend='recipe-bb-files'>recipe file</link>.
+            </para>
+
+            <para>
+                BitBake expects every append file to have a corresponding recipe file.
+                Furthermore, the append file and corresponding recipe file
+                must use the same root filename.
+                The filenames can differ only in the file type suffix used
+                (e.g. <filename>formfactor_0.0.bb</filename> and
+                <filename>formfactor_0.0.bbappend</filename>).
+            </para>
+
+            <para>
+                Information in append files overrides the information in the
+                similarly-named recipe file.
+            </para>
+        </section>
+    </section>
+
+    <section id='bitbake-dev-environment'>
+        <title>BitBake</title>
+
+        <para>
+            The OpenEmbedded build system uses BitBake to produce images.
+            BitBake consists of several functional areas.
+            This section takes a closer look at each of those areas.
+        </para>
+
+        <section id='source-fetching-dev-environment'>
+            <title>Source Fetching</title>
+
+            <para>
+                The first stages of building a recipe are to fetch and unpack
+                the source code:
+                <imagedata fileref="figures/source-fetching.png" align="center" width="6.5in" depth="5in" />
+            </para>
+figures/
+            <para>
+                The <filename>do_fetch</filename> and
+                <filename>do_unpack</filename> tasks fetch the source files
+                and unpack them into the work directory.
+                By default, everything is accomplished in the
+                build directory,
+                which has a defined structure.
+            </para>
+
+            <para>
+                Unpacked source files are pointed to by a variable.
+                For example, in the Yocto Project and OpenEmbedded build systems,
+                the <filename>S</filename> variable points to these source files.
+                Each recipe has an area in the Build Directory where the
+                unpacked source code resides.
+                The name of that directory for any given recipe is defined from
+                several different variables.
+                You can see the variables that define these directories
+                by looking at the figure that shows the structure and variables
+                used in the Yocto Project:
+                <itemizedlist>
+                    <listitem><para><filename>TMPDIR</filename>
+                        </para></listitem>
+                    <listitem><para><filename>PACKAGE_ARCH</filename>
+                        </para></listitem>
+                    <listitem><para><filename>TARGET_OS</filename>
+                        </para></listitem>
+                    <listitem><para><link linkend='var-PN'><filename>PN</filename></link>
+                        </para></listitem>
+                    <listitem><para><link linkend='var-PV'><filename>PV</filename></link>
+                        </para></listitem>
+                    <listitem><para><link linkend='var-PR'><filename>PR</filename></link>
+                        </para></listitem>
+                    <listitem><para><filename>WORKDIR</filename>
+                        </para></listitem>
+                    <listitem><para><filename>S</filename>
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                Briefly, the <filename>S</filename> directory contains the
+                unpacked source files for a recipe.
+                The <filename>WORKDIR</filename> directory is where all the
+                building goes on for a given recipe.
+            </para>
+        </section>
+
+        <section id='patching-dev-environment'>
+            <title>Patching</title>
+
+            <para>
+                Once source code is fetched and unpacked, BitBake locates
+                patch files and applies them to the source files:
+                <imagedata fileref="figures/patching.png" align="center" width="6in" depth="5in" />
+            </para>
+
+            <para>
+                The <filename>do_patch</filename> task processes recipes by
+                using the
+                <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>
+                variable to locate applicable patch files, which by default
+                are <filename>*.patch</filename> or
+                <filename>*.diff</filename> files, or any file if
+                "apply=yes" is specified for the file in
+                <filename>SRC_URI</filename>.
+            </para>
+
+            <para>
+                BitBake finds and applies multiple patches for a single recipe
+                in the order in which it finds the patches.
+                Patches are applied to the recipe's source files located in the
+                <filename>S</filename> directory.
+            </para>
+
+            <para>
+                For more information on how the source directories are
+                created, see the
+                "<link linkend='source-fetching-dev-environment'>Source Fetching</link>"
+                section.
+            </para>
+        </section>
+
+        <section id='configuration-and-compilation-dev-environment'>
+            <title>Configuration and Compilation</title>
+
+            <para>
+                After source code is patched, BitBake executes tasks that
+                configure and compile the source code:
+                <imagedata fileref="figures/configuration-compile-autoreconf.png" align="center" width="7in" depth="5in" />
+            </para>
+
+            <para>
+                This step in the build process consists of three tasks:
+                <itemizedlist>
+                    <listitem><para><emphasis><filename>do_configure</filename>:</emphasis>
+                        This task configures the source by enabling and
+                        disabling any build-time and configuration options for
+                        the software being built.
+                        Configurations can come from the recipe itself as well
+                        as from an inherited class.
+                        Additionally, the software itself might configure itself
+                        depending on the target for which it is being built.
+                        </para>
+
+                        <para>The configurations handled by the
+                        <filename>do_configure</filename> task are specific
+                        to source code configuration for the source code
+                        being built by the recipe.</para>
+
+                        <para>If you are using the Autotools class
+                        (<filename>autotools.bbclass</filename>),
+                        you can add additional configuration options by using
+                        the <filename>EXTRA_OECONF</filename>
+                        variable.
+                        For information on how this variable works within
+                        that class, see the
+                        <filename>meta/classes/autotools.bbclass</filename> file.
+                        </para></listitem>
+                    <listitem><para><emphasis><filename>do_compile</filename>:</emphasis>
+                        Once a configuration task has been satisfied, BitBake
+                        compiles the source using the
+                        <filename>do_compile</filename> task.
+                        Compilation occurs in the directory pointed to by the
+                        <link linkend='var-B'><filename>B</filename></link>
+                        variable.
+                        Realize that the <filename>B</filename> directory is, by
+                        default, the same as the
+                        <filename>S</filename>
+                        directory.</para></listitem>
+                    <listitem><para><emphasis><filename>do_install</filename>:</emphasis>
+                        Once compilation is done, BitBake executes the
+                        <filename>do_install</filename> task.
+                        This task copies files from the <filename>B</filename>
+                        directory and places them in a holding area pointed to
+                        by the <filename>D</filename> variable.</para></listitem>
+                </itemizedlist>
+            </para>
+        </section>
+
+        <section id='package-splitting-dev-environment'>
+            <title>Package Splitting</title>
+
+            <para>
+                After source code is configured and compiled, the
+                OpenEmbedded build system analyzes
+                the results and splits the output into packages:
+                <imagedata fileref="figures/analysis-for-package-splitting.png" align="center" width="7in" depth="7in" />
+            </para>
+
+            <para>
+                The <filename>do_package</filename> and
+                <filename>do_packagedata</filename> tasks combine to analyze
+                the files found in the <filename>D</filename> directory
+                and split them into subsets based on available packages and
+                files.
+                The analyzing process involves the following as well as other
+                items: splitting out debugging symbols,
+                looking at shared library dependencies between packages,
+                and looking at package relationships.
+                The <filename>do_packagedata</filename> task creates package
+                metadata based on the analysis such that the
+                OpenEmbedded build system can generate the final packages.
+                Working, staged, and intermediate results of the analysis
+                and package splitting process use these areas:
+                <itemizedlist>
+                    <listitem><para><filename>PKGD</filename>
+                        </para></listitem>
+                    <listitem><para><filename>PKGDATA_DIR</filename>
+                        </para></listitem>
+                    <listitem><para><filename>PKGDESTWORK</filename>
+                        </para></listitem>
+                    <listitem><para><filename>PKGDEST</filename>
+                        </para></listitem>
+                </itemizedlist>
+                The <filename>FILES</filename>
+                variable defines the files that go into each package in
+                <link linkend='var-PACKAGES'><filename>PACKAGES</filename></link>.
+                If you want details on how this is accomplished in the Yocto Project
+                for example, you can look at the <filename>package.bbclass</filename>
+                file in a Yocto tree.
+            </para>
+
+            <para>
+                Depending on the type of packages being created (RPM, DEB, or
+                IPK), the <filename>do_package_write_*</filename> task
+                creates the actual packages and places them in the
+                Package Feed area, which is
+                <filename>${TMPDIR}/deploy</filename>.
+                <note>
+                    Support for creating feeds directly from the
+                    <filename>deploy/*</filename> directories does not exist.
+                    Creating such feeds usually requires some kind of feed
+                    maintenance mechanism that would upload the new packages
+                    into an official package feed (e.g. the
+                    Ångström distribution).
+                    This functionality is highly distribution-specific
+                    and thus is not provided out of the box.
+                </note>
+            </para>
+        </section>
+
+        <section id='image-generation-dev-environment'>
+            <title>Image Generation</title>
+
+            <para>
+                Once packages are split and stored in the Package Feeds area,
+                the OpenEmbedded build system uses BitBake to generate the
+                root filesystem image:
+                <imagedata fileref="figures/image-generation.png" align="center" width="6in" depth="7in" />
+            </para>
+
+            <para>
+                The image generation process consists of several stages and
+                depends on many variables.
+                The <filename>do_rootfs</filename> task uses these key variables
+                to help create the list of packages to actually install:
+                <itemizedlist>
+                    <listitem><para><filename>IMAGE_INSTALL</filename>:
+                        Lists out the base set of packages to install from
+                        the Package Feeds area.</para></listitem>
+                    <listitem><para><filename>PACKAGE_EXCLUDE</filename>:
+                        Specifies packages that should not be installed.
+                        </para></listitem>
+                    <listitem><para><filename>IMAGE_FEATURES</filename>:
+                        Specifies features to include in the image.
+                        Most of these features map to additional packages for
+                        installation.</para></listitem>
+                    <listitem><para><filename>PACKAGE_CLASSES</filename>:
+                        Specifies the package backend to use and consequently
+                        helps determine where to locate packages within the
+                        Package Feeds area.</para></listitem>
+                    <listitem><para><filename>IMAGE_LINGUAS</filename>:
+                        Determines the language(s) for which additional
+                        language support packages are installed.
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                Package installation is under control of the package manager
+                (e.g. smart/rpm, opkg, or apt/dpkg) regardless of whether or
+                not package management is enabled for the target.
+                At the end of the process, if package management is not
+                enabled for the target, the package manager's data files
+                are deleted from the root filesystem.
+            </para>
+
+            <para>
+                During image generation, the build system attempts to run
+                all post-installation scripts.
+                Any that fail to run on the build host are run on the
+                target when the target system is first booted.
+                If you are using a
+                read-only root filesystem,
+                all the post installation scripts must succeed during the
+                package installation phase since the root filesystem cannot be
+                written into.
+            </para>
+
+            <para>
+                During Optimization, optimizing processes are run across
+                the image.
+                These processes include <filename>mklibs</filename> and
+                <filename>prelink</filename>.
+                The <filename>mklibs</filename> process optimizes the size
+                of the libraries.
+                A <filename>prelink</filename> process optimizes the dynamic
+                linking of shared libraries to reduce start up time of
+                executables.
+            </para>
+
+            <para>
+                Part of the image generation process includes compressing the
+                root filesystem image.
+                Compression is accomplished through several optimization
+                routines designed to reduce the overall size of the image.
+            </para>
+
+            <para>
+                After the root filesystem has been constructed, the image
+                generation process turns everything into an image file or
+                a set of image files.
+                The formats used for the root filesystem depend on the
+                <filename>IMAGE_FSTYPES</filename> variable.
+            </para>
+
+            <note>
+                The entire image generation process is run under Pseudo.
+                Running under Pseudo ensures that the files in the root
+                filesystem have correct ownership.
+            </note>
+        </section>
+
+        <section id='sdk-generation-dev-environment'>
+            <title>SDK Generation</title>
+
+            <para>
+                The OpenEmbedded build system uses BitBake to generate the
+                Software Development Kit (SDK) installer script:
+                <imagedata fileref="figures/sdk-generation.png" align="center" width="6in" depth="7in" />
+            </para>
+
+            <para>
+                Like image generation, the SDK script process consists of
+                several stages and depends on many variables.
+                The <filename>do_populate_sdk</filename> task uses these
+                key variables to help create the list of packages to actually
+                install.
+            </para>
+
+            <para>
+                The <filename>do_populate_sdk</filename> task handles two
+                parts: a target part and a host part.
+                The target part is the part built for the target hardware and
+                includes libraries and headers.
+                The host part is the part of the SDK that runs on the
+                <filename>SDKMACHINE</filename>.
+            </para>
+
+            <para>
+                Once both parts are constructed, the
+                <filename>do_populate_sdk</filename> task performs some cleanup
+                on both parts.
+                After the cleanup, the task creates a cross-development
+                environment setup script and any configuration files that
+                might be needed.
+            </para>
+
+            <para>
+                The final output of the task is the Cross-development
+                toolchain installation script (<filename>.sh</filename> file),
+                which includes the environment setup script.
+            </para>
+        </section>
+    </section>
+</chapter>

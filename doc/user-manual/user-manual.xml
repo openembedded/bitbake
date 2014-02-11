@@ -75,6 +75,8 @@
 
     <xi:include href="user-manual-intro.xml"/>
 
+    <xi:include href="user-manual-execution.xml"/>
+
     <xi:include href="user-manual-metadata.xml"/>
 
     <xi:include href="user-manual-fetching.xml"/>
