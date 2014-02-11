@@ -12,6 +12,28 @@
     of their function and contents.
 </para>
 
+<note>
+    Following are some points regarding the variables listed in this glossary:
+    <itemizedlist>
+        <listitem><para>The variables listed in this glossary
+            are specific to BitBake.
+            Consequently, the descriptions are limited to that context.
+            </para></listitem>
+        <listitem><para>Also, variables exist in other systems that use BitBake
+            (e.g. The Yocto Project and OpenEmbedded) that have names identical
+            to those found in this glossary.
+            For such cases, the variables in those systems extend the
+            functionality of the variable as it is described here in
+            this glossary.
+            </para></listitem>
+        <listitem><para>Finally, there are variables mentioned in this
+            glossary that do not appear in the BitBake glossary.
+            These other variables are variables used in systems that use
+            BitBake.
+            </para></listitem>
+    </itemizedlist>
+</note>
+
 <glossary id='ref-variables-glossary'>
 
     <para>
