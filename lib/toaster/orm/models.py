@@ -93,20 +93,22 @@ class Task(models.Model):
         (CODING_SHELL, 'Shell'),
     )
 
+    OUTCOME_NA = -1
     OUTCOME_SUCCESS = 0
     OUTCOME_COVERED = 1
     OUTCOME_CACHED = 2
     OUTCOME_PREBUILT = 3
     OUTCOME_FAILED = 4
-    OUTCOME_NA = 5
+    OUTCOME_EMPTY = 5
 
     TASK_OUTCOME = (
+        (OUTCOME_NA, 'Not Available'),
         (OUTCOME_SUCCESS, 'Succeeded'),
         (OUTCOME_COVERED, 'Covered'),
         (OUTCOME_CACHED, 'Cached'),
         (OUTCOME_PREBUILT, 'Prebuilt'),
         (OUTCOME_FAILED, 'Failed'),
-        (OUTCOME_NA, 'Not Available'),
+        (OUTCOME_EMPTY, 'Empty'),
     )
 
     search_allowed_fields = [ "recipe__name", "task_name" ]
@@ -142,6 +144,7 @@ class Task(models.Model):
 
     class Meta:
         ordering = ('order', 'recipe' ,)
+        unique_together = ('build', 'recipe', 'task_name', )
 
 
 class Task_Dependency(models.Model):

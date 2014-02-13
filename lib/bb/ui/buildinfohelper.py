@@ -458,7 +458,7 @@ class BuildInfoHelper(object):
             task_information['task_executed'] = True
             if 'noexec' in vars(event) and event.noexec == True:
                 task_information['task_executed'] = False
-                task_information['outcome'] = Task.OUTCOME_NA
+                task_information['outcome'] = Task.OUTCOME_EMPTY
                 task_information['script_type'] = Task.CODING_NA
 
         # do not assign order numbers to scene tasks
@@ -468,7 +468,10 @@ class BuildInfoHelper(object):
 
         task_obj = self.orm_wrapper.get_update_task_object(task_information)
 
-        self.internal_state[identifier] = {'start_time': datetime.datetime.now()}
+        self.internal_state[identifier] = {
+                        'start_time': datetime.datetime.now(),
+                        'outcome': task_information['outcome'],
+                    }
 
 
     def store_tasks_stats(self, event):
@@ -489,10 +492,9 @@ class BuildInfoHelper(object):
         recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
         task_information = self._get_task_information(event,recipe)
-        try:
-            task_information['start_time'] = self.internal_state[identifier]['start_time']
-        except:
-            pass
+
+        task_information['start_time'] = self.internal_state[identifier]['start_time']
+        task_information['outcome'] = self.internal_state[identifier]['outcome']
 
         if 'logfile' in vars(event):
             task_information['logfile'] = event.logfile
@@ -507,13 +509,14 @@ class BuildInfoHelper(object):
             else:
                 task_information['script_type'] = Task.CODING_SHELL
 
-        if isinstance(event, (bb.runqueue.runQueueTaskCompleted, bb.runqueue.sceneQueueTaskCompleted)):
-            task_information['outcome'] = Task.OUTCOME_SUCCESS
-            del self.internal_state[identifier]
+        if task_information['outcome'] == Task.OUTCOME_NA:
+            if isinstance(event, (bb.runqueue.runQueueTaskCompleted, bb.runqueue.sceneQueueTaskCompleted)):
+                task_information['outcome'] = Task.OUTCOME_SUCCESS
+                del self.internal_state[identifier]
 
-        if isinstance(event, (bb.runqueue.runQueueTaskFailed, bb.runqueue.sceneQueueTaskFailed)):
-            task_information['outcome'] = Task.OUTCOME_FAILED
-            del self.internal_state[identifier]
+            if isinstance(event, (bb.runqueue.runQueueTaskFailed, bb.runqueue.sceneQueueTaskFailed)):
+                task_information['outcome'] = Task.OUTCOME_FAILED
+                del self.internal_state[identifier]
 
         self.orm_wrapper.get_update_task_object(task_information)
 
