@@ -1886,10 +1886,18 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     if nexttask in self.unskippable:
                         logger.debug(2, "Setscene task %s is unskippable" % self.rqdata.get_user_idstring(self.rqdata.runq_setscene[nexttask]))                      
                     if nexttask not in self.unskippable and len(self.sq_revdeps[nexttask]) > 0 and self.sq_revdeps[nexttask].issubset(self.scenequeue_covered) and self.check_dependencies(nexttask, self.sq_revdeps[nexttask], True):
-                        logger.debug(2, "Skipping setscene for task %s" % self.rqdata.get_user_idstring(self.rqdata.runq_setscene[nexttask]))
-                        self.task_skip(nexttask)
-                        self.scenequeue_notneeded.add(nexttask)
-                        return True
+                        realtask = self.rqdata.runq_setscene[nexttask]
+                        fn = self.rqdata.taskData.fn_index[self.rqdata.runq_fnid[realtask]]
+                        target = False
+                        for target in self.rqdata.target_pairs:
+                            if target[0] == fn and target[1] == self.rqdata.runq_task[realtask]:
+                                target = True
+                                break
+                        if not target:
+                            logger.debug(2, "Skipping setscene for task %s" % self.rqdata.get_user_idstring(self.rqdata.runq_setscene[nexttask]))
+                            self.task_skip(nexttask)
+                            self.scenequeue_notneeded.add(nexttask)
+                            return True
                     task = nexttask
                     break
         if task is not None:
