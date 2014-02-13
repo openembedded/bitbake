@@ -116,6 +116,11 @@ class Task(models.Model):
     def get_related_setscene(self):
         return Task.objects.related_setscene(self)
 
+    def get_executed_display(self):
+        if self.task_executed:
+            return "Executed"
+        return "Not Executed"
+
     build = models.ForeignKey(Build, related_name='task_build')
     order = models.IntegerField(null=True)
     task_executed = models.BooleanField(default=False) # True means Executed, False means Not/Executed

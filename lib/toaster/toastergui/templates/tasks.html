@@ -30,13 +30,7 @@
                     <a href="{%url "task" build.pk task.pk%} ">{{task.task_name}}</a>
                 </td>
                 <td class="executed">
-                    <a href="{%url "task" build.pk task.pk%} ">
-                    {% if task.task_executed %}
-                        Executed
-                    {% else %}
-                        Not executed
-                    {% endif %}
-                    </a>
+                    <a href="{%url "task" build.pk task.pk%} ">{{task.get_executed_display}}</a>
                 </td>
                 <td class="outcome">
                     <a href="{%url "task" build.pk task.pk%} ">{{task.get_outcome_display}}</a>

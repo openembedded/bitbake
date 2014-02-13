@@ -115,11 +115,7 @@
                         <i class="icon-question-sign get-help hover-help" title="This task fetches the source code"></i>
                     </td>
 
-                    {% if task.task_executed %}
-                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">Executed</a></td>
-                    {% else %}
-                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">Prebuilt</a></td>
-                    {% endif %}
+                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_executed_display}}</a></td>
 
                     <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_outcome_display}}</a></td>
                     <td>
