@@ -228,6 +228,31 @@
             </para>
         </section>
 
+        <section id='append-bbappend-files'>
+            <title>Append Files</title>
+
+            <para>
+                Append files, which are files that have the
+                <filename>.bbappend</filename> file extension, add or
+                extend build information to an existing
+                recipe file.
+            </para>
+
+            <para>
+                BitBake expects every append file to have a corresponding recipe file.
+                Furthermore, the append file and corresponding recipe file
+                must use the same root filename.
+                The filenames can differ only in the file type suffix used
+                (e.g. <filename>formfactor_0.0.bb</filename> and
+                <filename>formfactor_0.0.bbappend</filename>).
+            </para>
+
+            <para>
+                Information in append files overrides the information in the
+                similarly-named recipe file.
+            </para>
+        </section>
+
         <section id='configuration-files'>
             <title>Configuration Files</title>
 
@@ -267,6 +292,36 @@
                 default) and packaging (empty by default).
                 These tasks are often overridden or extended by other classes
                 added during the project development process.
+            </para>
+        </section>
+
+        <section id='layers'>
+            <title>Layers</title>
+
+            <para>
+                Layers allow you to isolate different types of
+                customizations from each other.
+                While you might find it tempting to keep everything in one layer
+                when working on a single project, the more modular you organize
+                your metadata, the easier it is to cope with future changes.
+            </para>
+
+            <para>
+                To illustrate how you can use layers to keep things modular,
+                consider machine customizations.
+                These types of customizations typically reside in a special layer,
+                rather than a general layer, called a Board Specific Package (BSP) Layer.
+                Furthermore, the machine customizations should be isolated from
+                recipes and metadata that support a new GUI environment, for
+                example.
+                This situation gives you a couple of layers: one for the machine
+                configurations and one for the GUI environment.
+                It is important to understand, however, that the BSP layer can still
+                make machine-specific additions to recipes within
+                the GUI environment layer without polluting the GUI layer itself
+                with those machine-specific changes.
+                You can accomplish this through a recipe that is a BitBake append
+                (<filename>.bbappend</filename>) file.
             </para>
         </section>
     </section>
