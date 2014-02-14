@@ -4,17 +4,22 @@
 <chapter id="user-manual-command">
     <title>The BitBake Command</title>
 
-    <section id='bitbake-command-introduction'>
-        <title>Introduction</title>
+    <para>
+        BitBake is the underlying piece of the build system.
+        Two excellent examples are the Yocto Project and the OpenEmbedded
+        build systems.
+        Each provide an environment in which to develop embedded Linux
+        images, and each use BitBake as their underlying build engine.
+    </para>
 
-        <para>
-            Bitbake is the primary command in the system.
-            It facilitates executing tasks in a single <filename>.bb</filename>
-            file, or executing a given task on a set of multiple
-            <filename>.bb</filename> files, accounting for interdependencies
-            amongst them.
-        </para>
-    </section>
+    <para>
+        BitBake facilitates executing tasks in a single <filename>.bb</filename>
+        file, or executing a given task on a set of multiple
+        <filename>.bb</filename> files, accounting for interdependencies
+        amongst them.
+        This chapter presents the BitBake syntax, provides some execution
+        examples, and shows you how to control BitBake with key metadata.
+    </para>
 
     <section id='usage-and-syntax'>
         <title>Usage and syntax</title>
@@ -110,7 +115,9 @@ Options:
             <para>
                 Executing tasks for a single recipe file is relatively simple.
                 You specify the file in question, and BitBake parses
-                it and executes the specified task (or “build” by default).
+                it and executes the specified task.
+                If you do not specify a task, BitBake executes the default
+                task, which is "build”.
                 BitBake obeys inter-task dependencies when doing
                 so.
             </para>
@@ -138,38 +145,36 @@ Options:
                 when one wants to manage multiple <filename>.bb</filename>
                 files.
                 Clearly there needs to be a way to tell BitBake what
-                files are available, and of those, which we
-                want to execute at this time.
-                There also needs to be a way for each <filename>.bb</filename>
+                files are available, and of those, which you
+                want to execute.
+                There also needs to be a way for each recipe
                 to express its dependencies, both for build-time and
                 runtime.
-                There must be a way for the user to express their preferences
+                There must be a way for you to express recipe preferences
                 when multiple recipes provide the same functionality, or when
-                there are multiple versions of a  <filename>.bb</filename> file.
-            </para>
-
-            <para>
-                The next section, Metadata, outlines how to specify such things.
+                there are multiple versions of a  recipe.
             </para>
 
             <para>
                 The <filename>bitbake</filename> command, when not using
-                "--buildfile", accepts a PROVIDER, not a filename or
-                anything else.
-                By default, a <filename>.bb</filename> generally PROVIDES its
-                packagename, packagename-version, and packagename-version-revision.
+                "--buildfile" or "-b" only accepts a "PROVIDER".
+                You cannot provide anything else.
+                By default, a recipe file generally "PROVIDES" its
+                "packagename", "packagename-version", and
+                "packagename-version-revision" as shown in the following
+                example:
                 <literallayout class='monospaced'>
      $ bitbake foo
 
      $ bitbake foo-1.0
 
      $ bitbake foo-1.0-r0
-
+                </literallayout>
+                This next example "PROVIDES" the package name and also uses
+                the "-c" option to tell BitBake to just excute the
+                <filename>do_clean</filename> task:
+                <literallayout class='monospaced'>
      $ bitbake -c clean foo
-
-     $ bitbake virtual/whatever
-
-     $ bitbake -c clean virtual/whatever
                 </literallayout>
             </para>
         </section>
@@ -180,19 +185,31 @@ Options:
             <para>
                 BitBake is able to generate dependency graphs using
                 the dot syntax.
-                These graphs can be converted to images using the dot
+                You can convert these graphs into images using the dot
                 application from
                 <ulink url='http://www.graphviz.org'>Graphviz</ulink>.
-                Two files will be written into the current working directory:
-                <filename>depends.dot</filename> containing dependency information
-                at the package level and <filename>task-depends.dot</filename>
-                containing a breakdown of the dependencies at the task level.
-                To stop depending on common depends, one can use the "-I" depend
-                option to omit these from the graph.
-                This can lead to more readable graphs.
-                This way, <filename>DEPENDS</filename> from inherited classes
-                such as <filename>base.bbclass</filename> can be removed from the
-                graph.
+            </para>
+
+            <para>
+                When you generate a dependency graph, BitBake writes two files
+                to the current working directory:
+                <filename>depends.dot</filename>, which contains dependency information
+                at the package level, and <filename>task-depends.dot</filename>,
+                which contains a breakdown of the dependencies at the task level.
+            </para>
+
+            <para>
+                To stop depending on common depends, use use the "-I" depend
+                option and BitBake omits them from the graph.
+                Leaving this information out can produce more readable graphs.
+                This way, you can remove from the graph
+                <filename>DEPENDS</filename> from inherited classes
+                such as <filename>base.bbclass</filename>.
+            </para>
+
+            <para>
+                Here are two exmples that create dependency graphs.
+                The second example omits common depends from the graph:
                 <literallayout class='monospaced'>
      $ bitbake -g foo
 
@@ -202,66 +219,23 @@ Options:
         </section>
     </section>
 
-    <section id='special-variables'>
-        <title>Special Variables</title>
+    <section id='controlling-bitbake'>
+        <title>Controlling BitBake</title>
 
         <para>
-            Certain variables affect BitBake operation:
+            Including variables in your recipe and class files help control
+            how BitBake operates.
         </para>
 
-        <section id='bb-number-threads'>
-            <title><filename>BB_NUMBER_THREADS</filename></title>
+        <section id='execution-threads'>
+            <title>Execution Threads</title>
 
             <para>
-                The number of threads BitBake should run at once (default: 1).
-            </para>
-        </section>
-    </section>
-
-    <section id='bitbake-command-metadata'>
-        <title>Metadata</title>
-
-        <para>
-            As you may have seen in the usage information, or in the
-            information about <filename>.bb</filename> files, the
-            <filename>BBFILES</filename> variable is how the BitBake
-            tool locates its files.
-            This variable is a space-separated list of files
-            that are available, and supports wildcards.
-        </para>
-
-        <section id='setting-bbfiles'>
-            <title>Setting <filename>BBFILES</filename></title>
-
-            <para>
-                <literallayout class='monospaced'>
-     BBFILES = "/path/to/bbfiles/*.bb"
-                </literallayout>
-                With regard to dependencies, it expects the
-                <filename>.bb</filename> to define a
-                <filename>DEPENDS</filename> variable, which contains a
-                space separated list of “package names”, which themselves
-                are the <filename>PN</filename> variable. The
-                <filename>PN</filename> variable is, in general,
-                set to a component of the <filename>.bb</filename>
-                filename by default.
-            </para>
-        </section>
-
-        <section id='depending-on-another-recipe-file'>
-            <title>Depending on Another Recipe File</title>
-
-            <para>
-                <literallayout class='monospaced'>
-     a.bb:
-
-     PN = "package-a"
-     DEPENDS += "package-b"
-
-     b.bb:
-
-     PN = "package-b"
-                </literallayout>
+                You can control how many thread BitBake supports by using the
+                <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
+                variable.
+                You would set this in your <filename>local.conf</filename>
+                configuration file.
             </para>
         </section>
 
