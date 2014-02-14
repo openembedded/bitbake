@@ -80,7 +80,7 @@ class Task(models.Model):
         (SSTATE_NA, 'Not Applicable'), # For rest of tasks, but they still need checking.
         (SSTATE_MISS, 'Missing'), # it is a miss
         (SSTATE_FAILED, 'Failed'), # there was a pkg, but the script failed
-        (SSTATE_RESTORED, 'Restored'), # succesfully restored
+        (SSTATE_RESTORED, 'Succeeded'), # successfully restored
     )
 
     CODING_NA = 0
@@ -111,7 +111,7 @@ class Task(models.Model):
         (OUTCOME_EMPTY, 'Empty'),
     )
 
-    search_allowed_fields = [ "recipe__name", "task_name" ]
+    search_allowed_fields = [ "recipe__name", "recipe__version", "task_name", "logfile" ]
 
     objects = TaskManager()
 

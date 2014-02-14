@@ -4,12 +4,12 @@
         <input type="hidden" name="search" value="{{request.GET.search}}"/>
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-            <h3>Filter {{objectname|title}} by '{{tc.name}}'</h3>
+            <h3>Filter {%if filter_search_display%}{{filter_search_display|title}}{%else%}{{objectname|title}}{%endif%} by '{{tc.name}}'</h3>
         </div>
         <div class="modal-body">
             <p>{{f.label}}</p>
             <label class="radio">
-                <input type="radio" name="filter" {%if request.GET.filter%}{{f.options|check_filter_status:request.GET.filter}} {%else%} checked {%endif%} value="">  All {{objectname}}
+                <input type="radio" name="filter" {%if request.GET.filter%}{{f.options|check_filter_status:request.GET.filter}} {%else%} checked {%endif%} value="">  All {%if filter_search_display%}{{filter_search_display|title}}{%else%}{{objectname|title}}{%endif%}
             </label>
             {% for option in f.options %}
                 <label class="radio">

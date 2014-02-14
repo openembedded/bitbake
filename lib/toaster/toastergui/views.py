@@ -406,12 +406,52 @@ def _find_task_provider(task):
             return trc
     return None
 
-def tasks(request, build_id):
+def tasks_common(request, build_id, variant):
+# This class is shared between these pages
+#
+# Column    tasks  buildtime  diskio  cpuusage
+# --------- ------ ---------- ------- ---------
+# Cache      def
+# CPU                                   min -
+# Disk                         min -
+# Executed   def     def       def      def
+# Log
+# Order      def +
+# Outcome    def     def       def      def
+# Recipe     min     min       min      min
+# Version
+# Task       min     min       min      min
+# Time               min -
+#
+# 'min':on always, 'def':on by default, else hidden
+# '+' default column sort up, '-' default column sort down
+
+    # default ordering depends on variant
+    if   'buildtime' == variant:
+        title_variant='Time'
+        object_search_display="time data"
+        filter_search_display="tasks"
+        mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'elapsed_time:-'};
+    elif 'diskio'    == variant:
+        title_variant='Disk I/O'
+        object_search_display="disk I/O data"
+        filter_search_display="tasks"
+        mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'disk_io:-'};
+    elif 'cpuusage'  == variant:
+        title_variant='CPU usage'
+        object_search_display="CPU usage data"
+        filter_search_display="tasks"
+        mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'cpu_usage:-'};
+    else :
+        title_variant='Tasks'
+        object_search_display="tasks"
+        filter_search_display="tasks"
+        mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'order:+'};
+
     template = 'tasks.html'
-    mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'order:+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 'tasks', request.GET, mandatory_parameters, build_id = build_id)
+        return _redirect_parameters( variant, request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
     queryset = Task.objects.filter(build=build_id, order__gt=0)
     queryset = _get_queryset(Task, queryset, filter_string, search_term, ordering_string)
@@ -423,120 +463,153 @@ def tasks(request, build_id):
 #        if t.outcome == Task.OUTCOME_COVERED:
 #            t.provider = _find_task_provider(t)
 
-    context = { 'objectname': 'tasks',
+    # define (and modify by variants) the 'tablecols' members
+    tc_order={
+        'name':'Order',
+        'qhelp':'The running sequence of each task in the build',
+        'clclass': 'order', 'hidden' : 1,
+        'orderfield':_get_toggle_order(request, "order"),
+        'ordericon':_get_toggle_order_icon(request, "order")}
+    if 'tasks' == variant: tc_order['hidden']='0';
+    tc_recipe={
+        'name':'Recipe',
+        'qhelp':'The name of the recipe to which each task applies',
+        'orderfield': _get_toggle_order(request, "recipe"),
+        'ordericon':_get_toggle_order_icon(request, "recipe"),
+    }
+    tc_recipe_version={
+        'name':'Recipe version',
+        'qhelp':'The version of the recipe to which each task applies',
+        'clclass': 'recipe_version', 'hidden' : 1,
+    }
+    tc_task={
+        'name':'Task',
+        'qhelp':'The name of the task',
+        'orderfield': _get_toggle_order(request, "task_name"),
+        'ordericon':_get_toggle_order_icon(request, "task_name"),
+    }
+    tc_executed={
+        'name':'Executed',
+        'qhelp':"This value tells you if a task had to run in order to generate the task output (executed), or if the output was provided by another task and therefore the task didn't need to run (not executed)",
+        'clclass': 'executed', 'hidden' : 0,
+        'orderfield': _get_toggle_order(request, "task_executed"),
+        'ordericon':_get_toggle_order_icon(request, "task_executed"),
+        'filter' : {
+                   'class' : 'executed',
+                   'label': 'Show:',
+                   'options' : [
+                               ('Executed Tasks', 'task_executed:1'),
+                               ('Not Executed Tasks', 'task_executed:0'),
+                               ]
+                   }
+
+    }
+    tc_outcome={
+        'name':'Outcome',
+        'qhelp':'This column tells you if executed tasks succeeded, failed or restored output from the <code>sstate-cache</code> directory or mirrors. It also tells you why not executed tasks did not need to run',
+        'clclass': 'outcome', 'hidden' : 0,
+        'orderfield': _get_toggle_order(request, "outcome"),
+        'ordericon':_get_toggle_order_icon(request, "outcome"),
+        'filter' : {
+                   'class' : 'outcome',
+                   'label': 'Show:',
+                   'options' : [
+                               ('Succeeded Tasks', 'outcome:%d'%Task.OUTCOME_SUCCESS),
+                               ('Failed Tasks', 'outcome:%d'%Task.OUTCOME_FAILED),
+                               ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED),
+                               ('Prebuilt Tasks', 'outcome:%d'%Task.OUTCOME_PREBUILT),
+                               ('Covered Tasks', 'outcome:%d'%Task.OUTCOME_COVERED),
+                               ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_NA),
+                               ]
+                   }
+
+    }
+    tc_log={
+        'name':'Log',
+        'qhelp':'The location in disk of the task log file',
+        'orderfield': _get_toggle_order(request, "logfile"),
+        'ordericon':_get_toggle_order_icon(request, "logfile"),
+        'clclass': 'task_log', 'hidden' : 1,
+    }
+    tc_cache={
+        'name':'Cache attempt',
+        'qhelp':'This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirrors, and what was the result: Succeeded, Failed or File not in cache',
+        'clclass': 'cache_attempt', 'hidden' : 1,
+        'orderfield': _get_toggle_order(request, "sstate_result"),
+        'ordericon':_get_toggle_order_icon(request, "sstate_result"),
+        'filter' : {
+                   'class' : 'cache_attempt',
+                   'label': 'Show:',
+                   'options' : [
+                               ('Tasks with cache attempts', 'sstate_result:%d'%Task.SSTATE_NA),
+                               ("Tasks with 'File not in cache' attempts", 'sstate_result:%d'%Task.SSTATE_MISS),
+                               ("Tasks with 'Failed' cache attempts", 'sstate_result:%d'%Task.SSTATE_FAILED),
+                               ("Tasks with 'Succeeded' cache attempts", 'sstate_result:%d'%Task.SSTATE_RESTORED),
+                               ]
+                   }
+
+    }
+    if   'tasks' == variant: tc_cache['hidden']='0'
+    tc_time={
+        'name':'Time (secs)',
+        'qhelp':'How long it took the task to finish, expressed in seconds',
+        'orderfield': _get_toggle_order(request, "elapsed_time", True),
+        'ordericon':_get_toggle_order_icon(request, "elapsed_time"),
+        'clclass': 'time_taken', 'hidden' : 1,
+    }
+    if   'buildtime' == variant: tc_time['hidden']='0'; del tc_time['clclass']
+    tc_cpu={
+        'name':'CPU usage',
+        'qhelp':'Task CPU utilisation, expressed as a percentage',
+        'orderfield': _get_toggle_order(request, "cpu_usage", True),
+        'ordericon':_get_toggle_order_icon(request, "cpu_usage"),
+        'clclass': 'cpu_used', 'hidden' : 1,
+    }
+    if   'cpuusage' == variant: tc_cpu['hidden']='0'; del tc_cpu['clclass']
+    tc_diskio={
+        'name':'Disk I/O (ms)',
+        'qhelp':'Number of miliseconds the task spent doing disk input and output',
+        'orderfield': _get_toggle_order(request, "disk_io", True),
+        'ordericon':_get_toggle_order_icon(request, "disk_io"),
+        'clclass': 'disk_io', 'hidden' : 1,
+    }
+    if   'diskio' == variant: tc_diskio['hidden']='0'; del tc_diskio['clclass']
+
+
+    context = { 'objectname': variant,
+                'object_search_display': object_search_display,
+                'filter_search_display': filter_search_display,
+                'title': title_variant,
                 'build': Build.objects.filter(pk=build_id)[0],
                 'objects': tasks,
                 'tablecols':[
-                {
-                    'name':'Order',
-                    'qhelp':'The running sequence of each task in the build',
-                    'orderfield': _get_toggle_order(request, "order"),
-                    'ordericon':_get_toggle_order_icon(request, "order"),
-                },
-                {
-                    'name':'Recipe',
-                    'qhelp':'The name of the recipe to which each task applies',
-                    'orderfield': _get_toggle_order(request, "recipe"),
-                    'ordericon':_get_toggle_order_icon(request, "recipe"),
-                },
-                {
-                    'name':'Recipe version',
-                    'qhelp':'The version of the recipe to which each task applies',
-                    'clclass': 'recipe_version',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Task',
-                    'qhelp':'The name of the task',
-                    'orderfield': _get_toggle_order(request, "task_name"),
-                    'ordericon':_get_toggle_order_icon(request, "task_name"),
-                },
-                {
-                    'name':'Executed',
-                    'qhelp':"This value tells you if a task had to run in order to generate the task output (executed), or if the output was provided by another task and therefore the task didn't need to run (not executed)",
-                    'orderfield': _get_toggle_order(request, "task_executed"),
-                    'ordericon':_get_toggle_order_icon(request, "task_executed"),
-                       'filter' : {
-                               'class' : 'executed',
-                               'label': 'Show:',
-                               'options' : [
-                                           ('Executed Tasks', 'task_executed:1'),
-                                           ('Not Executed Tasks', 'task_executed:0'),
-                                           ]
-                               }
-
-                },
-                {
-                    'name':'Outcome',
-                    'qhelp':'This column tells you if executed tasks succeeded, failed or restored output from the <code>sstate-cache</code> directory or mirrors. It also tells you why not executed tasks did not need to run',
-                    'orderfield': _get_toggle_order(request, "outcome"),
-                    'ordericon':_get_toggle_order_icon(request, "outcome"),
-                    'filter' : {
-                               'class' : 'outcome',
-                               'label': 'Show:',
-                               'options' : [
-                                           ('Succeeded Tasks', 'outcome:%d'%Task.OUTCOME_SUCCESS),
-                                           ('Failed Tasks', 'outcome:%d'%Task.OUTCOME_FAILED),
-                                           ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED),
-                                           ('Prebuilt Tasks', 'outcome:%d'%Task.OUTCOME_PREBUILT),
-                                           ('Covered Tasks', 'outcome:%d'%Task.OUTCOME_COVERED),
-                                           ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_NA),
-                                           ]
-                               }
-
-                },
-                {
-                    'name':'Cache attempt',
-                    'qhelp':'This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirrors, and what was the result: Succeeded, Failed or File not in cache',
-                    'orderfield': _get_toggle_order(request, "sstate_result"),
-                    'ordericon':_get_toggle_order_icon(request, "sstate_result"),
-                    'filter' : {
-                               'class' : 'cache_attempt',
-                               'label': 'Show:',
-                               'options' : [
-                                           ('Tasks with cache attempts', 'sstate_result:%d'%Task.SSTATE_NA),
-                                           ("Tasks with 'File not in cache' attempts", 'sstate_result:%d'%Task.SSTATE_MISS),
-                                           ("Tasks with 'Failed' cache attempts", 'sstate_result:%d'%Task.SSTATE_FAILED),
-                                           ("Tasks with 'Succeeded' cache attempts", 'sstate_result:%d'%Task.SSTATE_RESTORED),
-                                           ]
-                               }
-
-                },
-                {
-                    'name':'Time (secs)',
-                    'qhelp':'How long it took the task to finish, expressed in seconds',
-                    'orderfield': _get_toggle_order(request, "elapsed_time"),
-                    'ordericon':_get_toggle_order_icon(request, "elapsed_time"),
-                    'clclass': 'time_taken',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'CPU usage',
-                    'qhelp':'Task CPU utilisation, expressed as a percentage',
-                    'orderfield': _get_toggle_order(request, "cpu_usage"),
-                    'ordericon':_get_toggle_order_icon(request, "cpu_usage"),
-                    'clclass': 'cpu_used',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Disk I/O (ms)',
-                    'qhelp':'Number of miliseconds the task spent doing disk input and output',
-                    'orderfield': _get_toggle_order(request, "disk_io"),
-                    'ordericon':_get_toggle_order_icon(request, "disk_io"),
-                    'clclass': 'disk_io',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Log',
-                    'qhelp':'The location in disk of the task log file',
-                    'orderfield': _get_toggle_order(request, "logfile"),
-                    'ordericon':_get_toggle_order_icon(request, "logfile"),
-                    'clclass': 'task_log',
-                    'hidden' : 1,
-                },
+                    tc_order,
+                    tc_recipe,
+                    tc_recipe_version,
+                    tc_task,
+                    tc_executed,
+                    tc_outcome,
+                    tc_cache,
+                    tc_time,
+                    tc_cpu,
+                    tc_diskio,
+                    tc_log,
                 ]}
 
     return render(request, template, context)
+
+def tasks(request, build_id):
+    return tasks_common(request, build_id, 'tasks')
+
+def buildtime(request, build_id):
+    return tasks_common(request, build_id, 'buildtime')
+
+def diskio(request, build_id):
+    return tasks_common(request, build_id, 'diskio')
+
+def cpuusage(request, build_id):
+    return tasks_common(request, build_id, 'cpuusage')
+
 
 def recipes(request, build_id):
     template = 'recipes.html'
@@ -686,36 +759,6 @@ def configvars(request, build_id):
             }
 
     return render(request, template, context)
-
-
-def buildtime(request, build_id):
-    template = "buildtime.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
-        return redirect(builds)
-    context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
-    }
-    return render(request, template, context)
-
-def cpuusage(request, build_id):
-    template = "cpuusage.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
-        return redirect(builds)
-    context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
-    }
-    return render(request, template, context)
-
-def diskio(request, build_id):
-    template = "diskio.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
-        return redirect(builds)
-    context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
-    }
-    return render(request, template, context)
-
-
 
 
 def bpackage(request, build_id):

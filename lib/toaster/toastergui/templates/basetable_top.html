@@ -31,7 +31,7 @@
     <div class="navbar-inner">
         <form class="navbar-search input-append pull-left" id="searchform">
 	<div class="input-append" style="padding-right:1em">
-            <input class="input-xxlarge" id="search" name="search" type="text" placeholder="Search {{objectname}}" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on"><i class="icon-remove"></i></a>{%endif%}
+            <input class="input-xxlarge" id="search" name="search" type="text" placeholder="Search {%if object_search_display %}{{object_search_display}}{%else%}{{objectname}}{%endif%}" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on"><i class="icon-remove"></i></a>{%endif%}
 	</div>
 	    <input type="hidden" name="orderby" value="{{request.GET.orderby}}">
 	    <input type="hidden" name="page" value="1">

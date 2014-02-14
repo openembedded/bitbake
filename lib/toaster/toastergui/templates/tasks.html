@@ -1,60 +1,61 @@
 {% extends "basebuildpage.html" %}
 {% load projecttags %}
 {% block localbreadcrumb %}
-<li>All tasks</li>
+<li>{{title}}</li>
 {% endblock %}
 
 {% block buildinfomain %}
 <div class="span10">
 <div class="page-header">
-<h1> Tasks </h1>
+<h1>
+  {% if request.GET.filter or request.GET.search and objects.count > 0  %}
+      {{objects.paginator.count}} task{{objects.paginator.count|pluralize}} found
+  {%elif objects.paginator.count == 0%}
+      No tasks
+  {%else%}
+      {{title}}
+  {%endif%}
+ </h1>
 </div>
 {% include "basetable_top.html" %}
 
-
-    {% if not objects %}
-        <p>No tasks were executed in this build!</p>
-    {% else %}
-            {% for task in objects %}
-            <tr {{ task|task_color }} >
-                <td class="order">
-                    <a href="{%url "task" build.pk task.pk%} ">{{task.order}}</a>
-                </td>
-                <td class="recipe_name" >
-                    <a href="{% url "recipe" build.pk task.recipe.pk %}">{{task.recipe.name}}</a>
-                </td>
-                <td class="recipe_version">
-                    <a href="{% url "recipe" build.pk task.recipe.pk %}">{{task.recipe.version}}</a>
-                </td>
-                <td class="task_name">
-                    <a href="{%url "task" build.pk task.pk%} ">{{task.task_name}}</a>
-                </td>
-                <td class="executed">
-                    <a href="{%url "task" build.pk task.pk%} ">{{task.get_executed_display}}</a>
-                </td>
-                <td class="outcome">
-                    <a href="{%url "task" build.pk task.pk%} ">{{task.get_outcome_display}}</a>
-                </td>
-                <td    class="cache_attempt">
-                    <a href="{%url "task" build.pk task.pk%} ">{{task.get_sstate_result_display|format_none_and_zero}}</a>
-                </td>
-                <td class="time_taken">
-                    {{task.elapsed_time|format_none_and_zero}}
-                </td>
-                <td class="cpu_used">
-                    {{task.cpu_usage|format_none_and_zero}}
-                </td>
-                <td class="disk_io">
-                    {{task.disk_io|format_none_and_zero}}
-                </td>
-                <td class="task_log">
-                    {{task.logfile}}
-                </td>
-            </tr>
-
-        {% endfor %}
-
-    {% endif %}
+    {% for task in objects %}
+        <tr {{ task|task_color }} >
+            <td class="order">
+                <a href="{%url "task" build.pk task.pk%} ">{{task.order}}</a>
+            </td>
+            <td class="recipe_name" >
+                <a href="{% url "recipe" build.pk task.recipe.pk %}">{{task.recipe.name}}</a>
+            </td>
+            <td class="recipe_version">
+                <a href="{% url "recipe" build.pk task.recipe.pk %}">{{task.recipe.version}}</a>
+            </td>
+            <td class="task_name">
+                <a href="{%url "task" build.pk task.pk%} ">{{task.task_name}}</a>
+            </td>
+            <td class="executed">
+                <a href="{%url "task" build.pk task.pk%} ">{{task.get_executed_display}}</a>
+            </td>
+            <td class="outcome">
+                <a href="{%url "task" build.pk task.pk%} ">{{task.get_outcome_display}}</a>
+            </td>
+            <td class="cache_attempt">
+                <a href="{%url "task" build.pk task.pk%} ">{{task.get_sstate_result_display|format_none_and_zero}}</a>
+            </td>
+            <td class="time_taken">
+                {{task.elapsed_time|format_none_and_zero|floatformat:2}}
+            </td>
+            <td class="cpu_used">
+                {{task.cpu_usage|format_none_and_zero|floatformat:2}}{% if task.cpu_usage %}%{% endif %}
+            </td>
+            <td class="disk_io">
+                {{task.disk_io|format_none_and_zero}}
+            </td>
+            <td class="task_log">
+                {{task.logfile}}
+            </td>
+        </tr>
+    {% endfor %}
 
 {% include "basetable_bottom.html" %}
 </div>
