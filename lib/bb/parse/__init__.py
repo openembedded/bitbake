@@ -127,7 +127,7 @@ def resolve_file(fn, d):
 # Used by OpenEmbedded metadata
 __pkgsplit_cache__={}
 def vars_from_file(mypkg, d):
-    if not mypkg:
+    if not mypkg or not mypkg.endswith((".bb", ".bbappend")):
         return (None, None, None)
     if mypkg in __pkgsplit_cache__:
         return __pkgsplit_cache__[mypkg]
