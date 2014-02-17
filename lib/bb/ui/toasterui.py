@@ -241,6 +241,8 @@ def main(server, eventHandler, params ):
                     buildinfohelper.store_tasks_stats(event)
                 elif event.type == "ImagePkgList":
                     buildinfohelper.store_target_package_data(event)
+                elif event.type == "MissedSstate":
+                    buildinfohelper.store_missed_state_tasks(event)
                 elif event.type == "ImageFileSize":
                     buildinfohelper.update_target_image_file(event)
                 elif event.type == "LicenseManifestPath":

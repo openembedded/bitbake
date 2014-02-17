@@ -749,6 +749,27 @@ class BuildInfoHelper(object):
         self.orm_wrapper.get_update_task_object(task_information, True) # must exist
 
 
+    def store_missed_state_tasks(self, event):
+        for (fn, taskname, taskhash, sstatefile) in event.data:
+
+            identifier = fn + taskname + "_setscene"
+            recipe_information = self._get_recipe_information_from_taskfile(fn)
+            recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
+            class MockEvent: pass
+            event = MockEvent()
+            event.taskname = taskname
+            event.taskhash = taskhash
+            task_information = self._get_task_information(event,recipe)
+
+            task_information['start_time'] = datetime.datetime.now()
+            task_information['outcome'] = Task.OUTCOME_NA
+            task_information['sstate_checksum'] = taskhash
+            task_information['sstate_result'] = Task.SSTATE_MISS
+            task_information['path_to_sstate_obj'] = sstatefile
+
+            self.orm_wrapper.get_update_task_object(task_information)
+
+
     def store_target_package_data(self, event):
         assert 'data' in vars(event)
         # for all image targets
