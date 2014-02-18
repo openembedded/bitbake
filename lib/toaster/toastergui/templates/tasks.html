@@ -20,9 +20,9 @@
 {% include "basetable_top.html" %}
 
     {% for task in objects %}
-        <tr {{ task|task_color }} >
+        <tr {{ task|task_color }} class="flash" id="{{task.order}}" name="{{task.order}}">
             <td class="order">
-                <a href="{%url "task" build.pk task.pk%} ">{{task.order}}</a>
+                <a href="{%url "task" build.pk task.pk%}">{{task.order}}</a>
             </td>
             <td class="recipe_name" >
                 <a href="{% url "recipe" build.pk task.recipe.pk %}">{{task.recipe.name}}</a>

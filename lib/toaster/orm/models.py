@@ -111,12 +111,24 @@ class Task(models.Model):
         (OUTCOME_EMPTY, 'Empty'),
     )
 
+    TASK_OUTCOME_HELP = {
+        OUTCOME_SUCCESS:'This task completed successfully',
+        OUTCOME_COVERED:'This task did not run because its output is provided by another task',
+        OUTCOME_CACHED:'This task restored output from the sstate-cache directory or mirrors',
+        OUTCOME_PREBUILT:'This task did not run because its outcome was reused from a previous build',
+        OUTCOME_FAILED:'This task did not complete',
+        OUTCOME_NA:''
+    }
+
     search_allowed_fields = [ "recipe__name", "recipe__version", "task_name", "logfile" ]
 
     objects = TaskManager()
 
     def get_related_setscene(self):
         return Task.objects.related_setscene(self)
+
+    def outcome_help(self):
+        return Task.TASK_OUTCOME_HELP[self.outcome]
 
     def get_executed_display(self):
         if self.task_executed:

@@ -70,13 +70,17 @@ def sortcols(tablecols):
     return sorted(tablecols, key = lambda t: t['name'])
 
 @register.filter
-def task_color(task_object):
-    """ Return css class depending on Task execution status and execution outcome
+def task_color(task_object, show_green=False):
+    """ Return css class depending on Task execution status and execution outcome.
+        By default, green is not returned for executed and successful tasks;
+        show_green argument should be True to get green color.
     """
     if not task_object.task_executed:
         return 'class=muted'
     elif task_object.outcome == task_object.OUTCOME_FAILED:
         return 'class=error'
+    elif task_object.outcome == task_object.OUTCOME_SUCCESS and show_green:
+        return 'class=green'
     else:
         return ''
 

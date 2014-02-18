@@ -349,12 +349,36 @@ def builddashboard(request, build_id):
     return render(request, template, context)
 
 def task(request, build_id, task_id):
-    template = "singletask.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
+    template = "task.html"
+    if Task.objects.filter(pk=task_id).count() == 0 :
         return redirect(builds)
+    task = Task.objects.filter(pk=task_id)[0]
+
+    dependencies = sorted(_find_task_dep(task), key=lambda t:'%s_%s %s'%(t.recipe.name, t.recipe.version, t.task_name))
+    reverse_dependencies = sorted(_find_task_revdep(task), key=lambda t:'%s_%s %s'%(t.recipe.name, t.recipe.version, t.task_name))
+
+    log_head = ''
+    log_body = ''
+    if task.outcome == task.OUTCOME_FAILED:
+        pass
+# FIXME: the log should be read from the orm_logmessage table.
+# This will be fixed when the backend is done.
+
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
+            'object': task,
+            'task':task,
+            'deps': dependencies,
+            'rdeps': reverse_dependencies,
+            'log_head':log_head,
+            'log_body':log_body,
+            'showing_matches':False,
     }
+
+    if request.GET.get('show_matches', ""):
+        context['showing_matches'] = True
+        context['matching_tasks'] = Task.objects.filter(sstate_checksum=task.sstate_checksum).filter(build__completed_on__lt=task.build.completed_on).order_by('-build__completed_on')
+
     return render(request, template, context)
 
 def recipe(request, build_id, recipe_id):
@@ -387,6 +411,12 @@ def target(request, build_id, target_id):
     }
     return render(request, template, context)
 
+
+def _find_task_dep(task):
+    tp = []
+    for p in Task_Dependency.objects.filter(task=task):
+        tp.append(p.depends_on);
+    return tp
 
 
 def _find_task_revdep(task):
