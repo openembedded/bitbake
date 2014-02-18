@@ -27,9 +27,6 @@
             When BitBake starts to execute, the very first thing
             it does is to fetch the source files needed.
             This section overviews the process.
-            For some additional information on fetching source files, see the
-            "<link linkend='source-fetching-dev-environment'>Source Fetching</link>"
-            section.
         </para>
 
         <para>
