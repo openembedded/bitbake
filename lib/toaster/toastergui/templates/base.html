@@ -25,7 +25,11 @@ function reload_params(params) {
     splitlist = uri.split("?");
     url = splitlist[0], parameters=splitlist[1];
     // deserialize the call parameters
-    cparams = parameters.split("&");
+    if(parameters){
+        cparams = parameters.split("&");
+    }else{
+        cparams = []
+    }
     nparams = {}
     for (i = 0; i < cparams.length; i++) {
         temp = cparams[i].split("=");
