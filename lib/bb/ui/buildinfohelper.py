@@ -612,11 +612,21 @@ class BuildInfoHelper(object):
             task_info['task_name'] = taskname
             task_obj = self.orm_wrapper.get_update_task_object(task_info)
             return task_obj
-
+ 
+        # create tasks
+        tasks = {}
         for taskdesc in event._depgraph['tdepends']:
-            target = _save_a_task(taskdesc)
-            for taskdesc1 in event._depgraph['tdepends'][taskdesc]:
-                dep = _save_a_task(taskdesc1)
+            tasks[taskdesc] = _save_a_task(taskdesc)
+
+        # create dependencies between tasks
+        for taskdesc in event._depgraph['tdepends']:
+            target = tasks[taskdesc]
+            for taskdep in event._depgraph['tdepends'][taskdesc]:
+                if taskdep not in tasks:
+                    # Fetch tasks info is not collected previously
+                    dep = _save_a_task(taskdep)
+                else:
+                    dep = tasks[taskdep]
                 Task_Dependency.objects.get_or_create( task = target, depends_on = dep )
 
     def store_build_package_information(self, event):
