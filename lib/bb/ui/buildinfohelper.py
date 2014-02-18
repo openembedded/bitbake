@@ -308,6 +308,7 @@ class BuildInfoHelper(object):
     def __init__(self, server, has_build_history = False):
         self._configure_django()
         self.internal_state = {}
+        self.internal_state['taskdata'] = {}
         self.task_order = 0
         self.server = server
         self.orm_wrapper = ORMWrapper()
@@ -444,7 +445,7 @@ class BuildInfoHelper(object):
             self.orm_wrapper.update_build_object(self.internal_state['build'], errors, warnings, taskfailures)
 
     def store_started_task(self, event):
-        identifier = event.taskfile + event.taskname
+        identifier = event.taskfile.split(":")[-1] + ":" + event.taskname
 
         recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
@@ -472,7 +473,7 @@ class BuildInfoHelper(object):
 
         task_obj = self.orm_wrapper.get_update_task_object(task_information)
 
-        self.internal_state[identifier] = {
+        self.internal_state['taskdata'][identifier] = {
                         'start_time': datetime.datetime.now(),
                         'outcome': task_information['outcome'],
                     }
@@ -492,13 +493,15 @@ class BuildInfoHelper(object):
             task_obj = self.orm_wrapper.get_update_task_object(task_information)
 
     def update_and_store_task(self, event):
-        identifier = event.taskfile + event.taskname
+        identifier = event.taskfile.split(":")[-1] + ":" + event.taskname
+        assert identifier in self.internal_state['taskdata']
+
         recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
         task_information = self._get_task_information(event,recipe)
 
-        task_information['start_time'] = self.internal_state[identifier]['start_time']
-        task_information['outcome'] = self.internal_state[identifier]['outcome']
+        task_information['start_time'] = self.internal_state['taskdata'][identifier]['start_time']
+        task_information['outcome'] = self.internal_state['taskdata'][identifier]['outcome']
 
         if 'logfile' in vars(event):
             task_information['logfile'] = event.logfile
@@ -516,11 +519,11 @@ class BuildInfoHelper(object):
         if task_information['outcome'] == Task.OUTCOME_NA:
             if isinstance(event, (bb.runqueue.runQueueTaskCompleted, bb.runqueue.sceneQueueTaskCompleted)):
                 task_information['outcome'] = Task.OUTCOME_SUCCESS
-                del self.internal_state[identifier]
+                del self.internal_state['taskdata'][identifier]
 
             if isinstance(event, (bb.runqueue.runQueueTaskFailed, bb.runqueue.sceneQueueTaskFailed)):
                 task_information['outcome'] = Task.OUTCOME_FAILED
-                del self.internal_state[identifier]
+                del self.internal_state['taskdata'][identifier]
 
         self.orm_wrapper.get_update_task_object(task_information)
 
