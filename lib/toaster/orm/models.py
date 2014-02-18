@@ -78,7 +78,7 @@ class Task(models.Model):
 
     SSTATE_RESULT = (
         (SSTATE_NA, 'Not Applicable'), # For rest of tasks, but they still need checking.
-        (SSTATE_MISS, 'Missing'), # it is a miss
+        (SSTATE_MISS, 'File not in cache'), # the sstate object was not found
         (SSTATE_FAILED, 'Failed'), # there was a pkg, but the script failed
         (SSTATE_RESTORED, 'Succeeded'), # successfully restored
     )
