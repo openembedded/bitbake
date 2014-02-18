@@ -19,7 +19,7 @@
         <title>Introduction</title>
 
         <para>
-            fundamentally, BitBake is a generic task execution
+            Fundamentally, BitBake is a generic task execution
             engine that allows shell and Python tasks to be run
             efficiently and in parallel while working within
             complex inter-task dependency constraints.
@@ -78,10 +78,9 @@
             </itemizedlist>
             Today, BitBake is the primary basis of the
             <ulink url="http://www.openembedded.org/">OpenEmbedded</ulink>
-            project, which is being used to build and maintain a
-            number of projects and embedded Linux distributions
-            such as the Angstrom Distribution and the Yocto
-            Project.
+            project, which is being used to build and maintain Linux
+            distributions such as the Angstrom Distribution and which is used
+            as the build tool for Linux projects such as the Yocto Project.
         </para>
 
         <para>
@@ -202,11 +201,11 @@
             <para>
                 BitBake Recipes, which are denoted by the file extension
                 <filename>.bb</filename>, are the most basic metadata files.
-                These recipe files provide BitBake the following:
+                These recipe files provide BitBake with the following:
                 <itemizedlist>
                     <listitem><para>Descriptive information about the package</para></listitem>
                     <listitem><para>The version of the recipe</para></listitem>
-                    <listitem><para>When dependencies exist</para></listitem>
+                    <listitem><para>Existing Dependencies</para></listitem>
                     <listitem><para>Where the source code resides</para></listitem>
                     <listitem><para>Whether the source code requires any patches</para></listitem>
                     <listitem><para>How to compile the source code</para></listitem>
@@ -225,31 +224,6 @@
                     output from a project, it is best to maintain a single
                     descriptive term, "recipes".
                 </note>
-            </para>
-        </section>
-
-        <section id='append-bbappend-files'>
-            <title>Append Files</title>
-
-            <para>
-                Append files, which are files that have the
-                <filename>.bbappend</filename> file extension, add or
-                extend build information to an existing
-                recipe file.
-            </para>
-
-            <para>
-                BitBake expects every append file to have a corresponding recipe file.
-                Furthermore, the append file and corresponding recipe file
-                must use the same root filename.
-                The filenames can differ only in the file type suffix used
-                (e.g. <filename>formfactor_0.0.bb</filename> and
-                <filename>formfactor_0.0.bbappend</filename>).
-            </para>
-
-            <para>
-                Information in append files overrides the information in the
-                similarly-named recipe file.
             </para>
         </section>
 
@@ -283,9 +257,9 @@
                 called <filename>base.bbclass</filename>.
                 You can find this file in the
                 <filename>classes</filename> directory.
-                The <filename>base.bbclass</filename> is special in that any
-                new classes that a developer adds to a project are required to
-                inherit <filename>base.bbclass</filename> automatically.
+                The <filename>base.bbclass</filename> is special since it
+                is always included automatically for all recipes
+                and classes.
                 This class contains definitions for standard basic tasks such
                 as fetching, unpacking, configuring (empty by default),
                 compiling (runs any Makefile present), installing (empty by
@@ -324,6 +298,31 @@
                 (<filename>.bbappend</filename>) file.
             </para>
         </section>
+
+        <section id='append-bbappend-files'>
+            <title>Append Files</title>
+
+            <para>
+                Append files, which are files that have the
+                <filename>.bbappend</filename> file extension, add or
+                extend build information to an existing
+                recipe file.
+            </para>
+
+            <para>
+                BitBake expects every append file to have a corresponding recipe file.
+                Furthermore, the append file and corresponding recipe file
+                must use the same root filename.
+                The filenames can differ only in the file type suffix used
+                (e.g. <filename>formfactor_0.0.bb</filename> and
+                <filename>formfactor_0.0.bbappend</filename>).
+            </para>
+
+            <para>
+                Information in append files overrides the information in the
+                similarly-named recipe file.
+            </para>
+        </section>
     </section>
 
     <section id='obtaining-bitbake'>
@@ -332,35 +331,22 @@
         <para>
             You can obtain BitBake several different ways:
             <itemizedlist>
-                <listitem><para><emphasis>Installation using your Distribution
-                    Package Management System:</emphasis>
-                    This method is not
-                    recommended because the BitBake version, in most
-                    cases provided by your distribution, is several
-                    releases behind a snapshot of the BitBake repository.
-                    </para></listitem>
-                <listitem><para><emphasis>Taking a snapshot of BitBake:</emphasis>
-                    Downloading a snapshot of BitBake from the
-                    source code repository is the recommended method
-                    as you are assured of having the most recent stable
-                    BitBake release.</para>
-                    <para>The following example downloads a snapshot of
-                    BitBake version 1.17.0:
-                    <literallayout class='monospaced'>
-     $ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
-     $ tar zxpvf bitbake-1.17.0.tar.gz
-                    </literallayout>
-                    After extraction of the tarball using the tar utility,
-                    you have a directory entitled
-                    <filename>bitbake-1.17.0</filename>.
-                    </para></listitem>
                 <listitem><para><emphasis>Cloning BitBake:</emphasis>
                     Using Git to clone the BitBake source code repository
-                    is also a recommended method when you need the absolute latest
-                    BitBake source.
-                    Realize that using this method could expose you to areas of
-                    BitBake that are under development.</para>
-                    <para>Here is an example:
+                    is the recommended method for obtaining BitBake.
+                    Cloning the repository makes it easy to get bug fixes
+                    and have access to stable branches and the master
+                    branch.
+                    Once you have cloned BitBake, you should use
+                    the latest stable
+                    branch for development since the master branch is for
+                    BitBake development and might contain less stable changes.
+                    </para>
+                    <para>You usually need a version of BitBake
+                    that matches the metadata you are using.
+                    The metadata is generally backwards compatible but
+                    not forward compatible.</para>
+                    <para>Here is an example that clones the BitBake repository:
                     <literallayout class='monospaced'>
      $ git clone git://git.openembedded.org/bitbake
                     </literallayout>
@@ -376,6 +362,28 @@
                     <literallayout class='monospaced'>
      $ git clone git://git.openembedded.org/bitbake bbdev
                     </literallayout></para></listitem>
+                <listitem><para><emphasis>Installation using your Distribution
+                    Package Management System:</emphasis>
+                    This method is not
+                    recommended because the BitBake version that is
+                    provided by your distribution, in most cases,
+                    is several
+                    releases behind a snapshot of the BitBake repository.
+                    </para></listitem>
+                <listitem><para><emphasis>Taking a snapshot of BitBake:</emphasis>
+                    Downloading a snapshot of BitBake from the
+                    source code repository gives you access to a known
+                    branch or release of BitBake.</para>
+                    <para>The following example downloads a snapshot of
+                    BitBake version 1.17.0:
+                    <literallayout class='monospaced'>
+     $ wget http://git.openembedded.org/bitbake/snapshot/bitbake-1.17.0.tar.gz
+     $ tar zxpvf bitbake-1.17.0.tar.gz
+                    </literallayout>
+                    After extraction of the tarball using the tar utility,
+                    you have a directory entitled
+                    <filename>bitbake-1.17.0</filename>.
+                    </para></listitem>
             </itemizedlist>
         </para>
     </section>
