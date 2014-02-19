@@ -30,7 +30,7 @@
         <td class="depends_on">
             {% if recipe.r_dependencies_recipe.all.count %}
             <a class="btn"
-                title="<a href='{% url "recipe" build.pk recipe.pk %}#dependencies'>{{recipe.name}}</a> depends on"
+                title="<a href='{% url "recipe" build.pk recipe.pk %}#dependencies'>{{recipe.name}}</a> dependencies"
                 data-content="<ul class='unstyled'>
                   {% for i in recipe.r_dependencies_recipe.all|dictsort:"depends_on.name"%}
                     <li><a href='{% url "recipe" build.pk i.depends_on.pk %}'>{{i.depends_on.name}}</a></li>
@@ -44,7 +44,7 @@
         <td class="depends_by">
             {% if recipe.r_dependencies_depends.all.count %}
             <a class="btn"
-                title="<a href='{% url "recipe" build.pk recipe.pk %}#brought-in-by'>{{recipe.name}}</a> is brought in by"
+                title="<a href='{% url "recipe" build.pk recipe.pk %}#brought-in-by'>{{recipe.name}}</a> reverse dependencies"
                 data-content="<ul class='unstyled'>
                   {% for i in recipe.r_dependencies_depends.all|dictsort:"recipe.name"%}
                     <li><a href='{% url "recipe" build.pk i.recipe.pk %}'>{{i.recipe.name}}</a></li>
