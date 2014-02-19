@@ -1,8 +1,8 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<chapter id='hello'>
-    <title>A BitBake Hello World</title>
+<appendix id='hello-world-example'>
+    <title>Hello World Example</title>
 
     <section id='bitbake-hello-world'>
         <title>BitBake Hello World</title>
@@ -12,22 +12,23 @@
             programming language or tool is the
             <ulink url="http://en.wikipedia.org/wiki/Hello_world_program">Hello World</ulink>
             example.
-            This chapter demonstrates, in tutorial form, Hello
+            This appendix demonstrates, in tutorial form, Hello
             World within the context of BitBake.
-            This tutorial describes how to create a new Project
+            The tutorial describes how to create a new Project
             and the applicable metadata files necessary to allow
             BitBake to build it.
         </para>
     </section>
 
-    <section id='obtaining-bitbake'>
+    <section id='example-obtaining-bitbake'>
         <title>Obtaining BitBake</title>
 
         <para>
-            Please refer to Chapter 1 Section 1.7 for the various methods to
-            obtain BitBake.
-            Once the source code is on your machine the BitBake directory will
-            appear as follows:
+            See the
+            "<link linkend='obtaining-bitbake'>Obtaining BitBake</link>"
+            section for information on how to obtain BitBake.
+            Once you have the source code on your machine, the BitBake directory
+            appears as follows:
             <literallayout class='monospaced'>
      $ ls -al
      total 100
@@ -52,10 +53,9 @@
         </para>
 
         <para>
-            At this point you should have BitBake extracted or cloned to
-            a directory and it should match the directory tree above.
-            Please note that you'll see your username wherever
-            "wmat" appears above.
+            At this point, you should have BitBake cloned to
+            a directory that matches the previous listing except for
+            dates and user names.
         </para>
     </section>
 
@@ -68,62 +68,56 @@
             The directory can be within your home directory or in
             <filename>/usr/local</filename>,
             depending on your preference.
-            Let's run BitBake now to make sure it's working.
         </para>
 
         <para>
+            First, run BitBake to make sure it's working.
             From the BitBake source code directory, issue the following command:
             <literallayout class='monospaced'>
      $ ./bin/bitbake --version
      BitBake Build Tool Core version 1.19.0, bitbake version
      1.19.0
             </literallayout>
-            You're now ready to use BitBake.
+            You are now ready to use BitBake.
         </para>
 
         <para>
             A final step to make development easier is to add the executable
             binary to your environment <filename>PATH</filename>.
-            First, have a look at your current <filename>PATH</filename> variable.
-            If I check mine, I get:
+            First, look at your current <filename>PATH</filename> variable
+            by entering the following:
             <literallayout class='monospaced'>
      $ echo $PATH
-     /home/wmat/bin:/usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:
-     /usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
             </literallayout>
-            Now add the directory location for the BitBake binary to the <filename>PATH</filename>
-            with:
+            Next, add the directory location for the BitBake binary to the
+            <filename>PATH</filename> using this form:
             <literallayout class='monospaced'>
-     $ export PATH={path to the bitbake executable}:$PATH
+     $ export PATH=&lt;path-to-bitbake-executable&gt;:$PATH
             </literallayout>
-            This will add the directory to the beginning of your PATH environment
-            variable.
-            For example, on my machine:
-            <literallayout class='monospaced'>
-     $ export PATH=/media/wmat/Backups/dev/bitbake/bin:$PATH
-     /media/wmat/Backups/dev/bitbake/bin:/home/wmat/bin:
-     /usr/lib/lightdm/lightdm:/usr/local/sbin:/usr/local/bin:
-     /usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
-            </literallayout>
-            Now, you should be able to simply enter the
-            <filename>bitbake</filename>
-            command at the command line to run bitbake.
-            For a more permanent solution and assuming you are running the BASH
+            This will add the directory to the beginning of your
+            <filename>PATH</filename> environment variable.
+            You should now be able to enter the <filename>bitbake</filename>
+            command at the command line to run BitBake.
+        </para>
+
+        <para>
+            For a more permanent solution assuming you are running the BASH
             shell, edit <filename>~/.bashrc</filename> and add the following to the end
             of that file:
             <literallayout class='monospaced'>
-     PATH={path to the bitbake executable}:$PATH
+     PATH=&lt;path-to-bitbake-executable&gt;:$PATH
             </literallayout>
         </para>
 
         <para>
-            Note that if you're a Vim user, you will find useful
+            If you're a Vim user, you will find useful
             Vim configuration contributions in the
             <filename>contrib/vim</filename> directory.
             Copy the files from that directory to your
             <filename>/home/yourusername/.vim</filename>
             directory.
-            If it doesn't exist, create it, and restart Vim.
+            If that directory does not exist, create it, and then
+            restart Vim.
         </para>
     </section>
 
@@ -133,16 +127,17 @@
         <para>
             The following example leaps directly into how BitBake
             works.
-            Every attempt is made to explain what is happening,
-            however, further information can be found in the
-            Metadata chapter.
+            While every attempt is made to explain what is happening,
+            not everything can be covered.
+            You can find further information in the
+            "<link linkend='user-manual-metadata'>Syntax and Operators</link>"
+            chapter.
         </para>
 
         <para>
-            The overall goal of this exercise is to create a Hello
-            World example utilizing concepts used to
-            build and construct a complete example application
-            including Tasks and Layers.
+            The overall goal of this exercise is to build a
+            complete "Hello World" example utilizing task and layer
+            concepts.
             This is how modern projects such as OpenEmbedded and
             the Yocto Project utilize BitBake, therefore it
             provides an excellent starting point for understanding
@@ -162,34 +157,39 @@
             </itemizedlist>
         </para>
 
-        <section id='a-reverse-walkthrough'>
-            <title>A Reverse Walkthrough</title>
+        <section id='a-reverse-walk-through'>
+            <title>A Reverse Walk-Through</title>
 
             <para>
-                One of the best means to understand anything is to walk
-                through the steps to where we want to be by observing first
+                A good way to understand anything is to walk through the steps
+                that take you to where you want to be and observe first
                 principles.
-                BitBake allows us to do this through the -D or Debug command
-               line parameter.
-                We know we want to eventually compile a HelloWorld example, but
-                we don't know what we need to do that.
-                Remember that BitBake utilizes three types of metadata files:
-                Configuration Files, Classes, and Recipes.
-                But where do they go, how does BitBake find them, etc. etc.?
-                Hopefully we can use BitBake's error messaging to figure this
-                out and better understand exactly what's going on.
+                BitBake allows us to do this through the
+                <filename>-D</filename> or <filename>Debug</filename>
+                command-line parameter.
             </para>
 
             <para>
-                First, let's begin by setting up a directory for our HelloWorld
-                project.
-                I'll do this in my home directory and change into that
-                directory:
+                The goal is to eventually compile a "Hello World" example.
+                However, it is unknown what is needed to achieve that goal.
+                Recall that BitBake utilizes three types of metadata files:
+                <link linkend='configuration-files'>Configuration Files</link>,
+                <link linkend='classes'>Classes</link>, and
+                <link linkend='recipes'>Recipes</link>.
+                But where do they go?
+                How does BitBake find them?
+                BitBake's error messaging helps you answer these types of questions
+                and helps you better understand exactly what is going on.
+            </para>
+
+            <para>
+                First, set up a directory for the "Hello World" project.
+                Here is how you can do so in your home directory:
                 <literallayout class='monospaced'>
      $ mkdir ~/dev/hello &amp;&amp; cd ~/dev/hello
                 </literallayout>
-                Within this new, empty directory, let's run BitBake with
-                Debugging output and see what happens:
+                Within this new, empty directory, run BitBake with
+                debugging output and see what happens:
                 <literallayout class='monospaced'>
      $ bitbake -DDD
      The BBPATH variable is not set
@@ -208,38 +208,44 @@
                 </literallayout>
                 The majority of this output is specific to environment variables
                 that are not directly relevant to BitBake.
-                However, the very
-                first message <filename>The BBPATH variable is not set</filename>
-                is and needs to be rectified.
-                So how do we set the BBPATH
-                variable?
+                However, the very first message
+                "<filename>The BBPATH variable is not set</filename>"
+                is relevant and you need to rectify it by setting
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
             </para>
 
             <para>
-                When BitBake is run it begins looking for metadata files.
-                The BBPATH variable is what tells BitBake where to look.
-                It is possible to set BBPATH as an environment variable as you
-                did above for the BitBake exexcutable's PATH.
-                However, it's much more flexible to set the BBPATH variable for
-                each project, as this allows for greater flexibility.
+                When you run BitBake, it begins looking for metadata files.
+                The <filename>BBPATH</filename> variable is what tells
+                BitBake where to look.
+                You could set <filename>BBPATH</filename> in the same manner
+                that you set <filename>PATH</filename> as shown earlier.
+                However, it is much more flexible to set the
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
+                variable for each project.
             </para>
 
             <para>
-                Without BBPATH Bitbake will not find any <filename>.conf</filename>
-                files or recipe files at all.
-                It will also not find <filename>bitbake.conf</filename>.
-                Note the reference to <filename>conf/</filename>.
+                Without <filename>BBPATH</filename>, Bitbake cannot
+                find any configuration files (<filename>.conf</filename>)
+                or recipe files (<filename>.bb</filename>) at all.
+                BitBake also cannot find the <filename>bitbake.conf</filename>
+                file.
+            </para>
+
+            <para>
                 It is standard practice to organize the project's directory tree
-                to include a <filename>conf/</filename> and a
+                to include both a <filename>conf/</filename> and
                 <filename>classes/</filename> directory.
-                Add those now to your project directory:
+                You need to add those directories to your project:
                 <literallayout class='monospaced'>
      $ mkdir conf classes
                 </literallayout>
-                Now let's copy the sample configuration files provided in the
-                BitBake source tree to their appropriate conf and classes
-                directory.
-                Change to the BitBake source tree directory and:
+                Once those directories are in place, you can copy the
+                sample configuration files provided in the
+                BitBake source tree to their appropriate directories.
+                First, change to the BitBake source tree directory and
+                then copy the directories:
                 <literallayout class='monospaced'>
      cp conf/bitbake.conf ~/dev/hello/conf/
      cp classes/base.bbclass ~/dev/hello/classes/
@@ -249,36 +255,43 @@
                <literallayout class='monospaced'>
      ~/dev/hello$ tree
      .
-     ├── classes
-     │   └── base.bbclass
-     └── conf
-     └── bitbake.conf
+     |-- classes
+     |   +-- base.bbclass
+     +-- conf
+     +-- bitbake.conf
                 </literallayout>
             </para>
 
             <para>
-                But what about BBPATH, we still haven't set it?
+                Once you have copied these files into your project, you
+                can now get back to resolving the <filename>BBPATH</filename>
+                issue.
             </para>
 
             <para>
                 The first configuration file that BitBake looks for is always
                 <filename>bblayers.conf</filename>.
-                With this knowledge we know that to resolve our BBPATH error we
-                can add a <filename>conf/bblayers.conf</filename> file to our
-                project source tree and populate it with the BBPATH variable
-                declaration.
+                With this knowledge, you know that to resolve your
+                <filename>BBPATH</filename> error you can add a
+                <filename>conf/bblayers.conf</filename> file to the
+                project source tree and populate it with the
+                <filename>BBPATH</filename> variable declaration.
+            </para>
+
+            <para>
                 From your project source tree:
                 <literallayout class='monospaced'>
      $ vim conf/bblayers.conf
                 </literallayout>
-                Add the following to the empty bblayers.conf file:
+                Now add the following to the empty
+                <filename>bblayers.conf</filename> file:
                 <literallayout class='monospaced'>
      BBPATH := "${TOPDIR}"
                 </literallayout>
             </para>
 
             <para>
-                Now from the root of our project directory, let's run BitBake
+                Now, from the root of your project directory, run BitBake
                 again and see what happens:
                 <literallayout class='monospaced'>
      $ bitbake -DDD
@@ -311,11 +324,11 @@
      bb_codeparser.dat'
                 </literallayout>
                 <note>
-                    From this point forward, the environment variable
-                    removal messages will be ignored and omitted.
-                    Let's examine the relevant DEBUG messages:
+                    From this point forward in the example, the environment
+                    variable removal messages are ignored and omitted.
+                    Examine the relevant DEBUG messages:
                 </note>
             </para>
         </section>
     </section>
-</chapter>
+</appendix>
