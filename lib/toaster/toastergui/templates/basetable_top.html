@@ -48,8 +48,8 @@
 -->
                 <ul class="dropdown-menu">{% for i in tablecols|sortcols %}
                     <li>
-                        <label class="checkbox">
-                            <input type="checkbox" class="chbxtoggle" {% if i.clclass %}id="{{i.clclass}}" value="ct{{i.name}}" {% if not i.hidden %}checked="checked"{%endif%} onchange="showhideTableColumn($(this).attr('id'), $(this).is(':checked'))" {%else%} checked disabled{% endif %}/>   {{i.name}}
+                        <label {% if not i.clclass %} class="checkbox muted" {%else%} class="checkbox" {%endif%}>
+                            <input type="checkbox" class="chbxtoggle" {% if i.clclass %}id="{{i.clclass}}" value="ct{{i.name}}" {% if not i.hidden %}checked="checked"{%endif%} onchange="showhideTableColumn($(this).attr('id'), $(this).is(':checked'))" {%else%} checked disabled {% endif %}/>   {{i.name}}
                         </label>
                     </li>{% endfor %}
                 </ul>
