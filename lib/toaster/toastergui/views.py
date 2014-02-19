@@ -657,7 +657,7 @@ def recipes(request, build_id):
             },
             {
                 'name':'Section',
-                'qhelp':'The section in which packages should be categorised. There are 5 sections: base, console, utils, devel and libs',
+                'qhelp':'The section in which recipes should be categorised',
                 'orderfield': _get_toggle_order(request, "section"),
                 'ordericon':_get_toggle_order_icon(request, "section"),
                 'clclass': 'recipe_section', 'hidden': 0,
