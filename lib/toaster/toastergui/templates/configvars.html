@@ -73,12 +73,12 @@
                 <h4>{{variable.variable_name}} value is:</h4>
                 <p>
                     <span>{{variable.variable_value|string_slice:':570'}}
-                        <span class="full-variable"> {{variable.variable_value|string_slice:'570:'}}
+                        <span class="full"> {{variable.variable_value|string_slice:'570:'}}
                         </span>
-                        <a class="btn btn-mini full-variable-show">...</a>
+                        <a class="btn btn-mini full-show">...</a>
                     </span>
                 </p>
-                <a class="btn btn-mini full-variable-hide">Collapse variable value<i class="icon-caret-up"></i>
+                <a class="btn btn-mini full-hide">Collapse variable value<i class="icon-caret-up"></i>
                 </a>
               {% endif %}
             {% else %}
