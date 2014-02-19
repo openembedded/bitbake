@@ -43,6 +43,14 @@ class ORMWrapper(object):
 
 
     def create_build_object(self, build_info):
+        assert 'machine' in build_info
+        assert 'image_fstypes' in build_info
+        assert 'distro' in build_info
+        assert 'distro_version' in build_info
+        assert 'started_on' in build_info
+        assert 'cooker_log_path' in build_info
+        assert 'build_name' in build_info
+        assert 'bitbake_version' in build_info
 
         build = Build.objects.create(
                                     machine=build_info['machine'],
@@ -50,7 +58,7 @@ class ORMWrapper(object):
                                     distro=build_info['distro'],
                                     distro_version=build_info['distro_version'],
                                     started_on=build_info['started_on'],
-                                    completed_on=build_info['completed_on'],
+                                    completed_on=build_info['started_on'],
                                     cooker_log_path=build_info['cooker_log_path'],
                                     build_name=build_info['build_name'],
                                     bitbake_version=build_info['bitbake_version'])
@@ -58,6 +66,9 @@ class ORMWrapper(object):
         return build
 
     def create_target_objects(self, target_info):
+        assert 'build' in target_info
+        assert 'targets' in target_info
+
         targets = []
         for tgt_name in target_info['targets']:
             tgt_object = Target.objects.create( build = target_info['build'],
@@ -69,6 +80,9 @@ class ORMWrapper(object):
         return targets
 
     def update_build_object(self, build, errors, warnings, taskfailures):
+        assert isinstance(build,Build)
+        assert isinstance(errors, int)
+        assert isinstance(warnings, int)
 
         outcome = Build.SUCCEEDED
         if errors or taskfailures:
@@ -82,12 +96,19 @@ class ORMWrapper(object):
         build.save()
 
 
-    def get_update_task_object(self, task_information):
+    def get_update_task_object(self, task_information, must_exist = False):
+        assert 'build' in task_information
+        assert 'recipe' in task_information
+        assert 'task_name' in task_information
+
         task_object, created = Task.objects.get_or_create(
                                 build=task_information['build'],
                                 recipe=task_information['recipe'],
                                 task_name=task_information['task_name'],
                                 )
+
+        if must_exist and created:
+            raise Exception("Task object created when expected to exist")
 
         for v in vars(task_object):
             if v in task_information.keys():
@@ -112,6 +133,8 @@ class ORMWrapper(object):
 
 
     def get_update_recipe_object(self, recipe_information):
+        assert 'layer_version' in recipe_information
+        assert 'file_path' in recipe_information
 
         recipe_object, created = Recipe.objects.get_or_create(
                                          layer_version=recipe_information['layer_version'],
@@ -126,8 +149,13 @@ class ORMWrapper(object):
         return recipe_object
 
     def get_update_layer_version_object(self, build_obj, layer_obj, layer_version_information):
+        assert isinstance(build_obj, Build)
+        assert isinstance(layer_obj, Layer)
+        assert 'branch' in layer_version_information
+        assert 'commit' in layer_version_information
+        assert 'priority' in layer_version_information
 
-        layer_version_object = Layer_Version.objects.get_or_create(
+        layer_version_object, created = Layer_Version.objects.get_or_create(
                                     build = build_obj,
                                     layer = layer_obj,
                                     branch = layer_version_information['branch'],
@@ -135,22 +163,26 @@ class ORMWrapper(object):
                                     priority = layer_version_information['priority']
                                     )
 
-        layer_version_object[0].save()
-
-        return layer_version_object[0]
+        return layer_version_object
 
     def get_update_layer_object(self, layer_information):
+        assert 'name' in layer_information
+        assert 'local_path' in layer_information
+        assert 'layer_index_url' in layer_information
 
-        layer_object = Layer.objects.get_or_create(
+        layer_object, created = Layer.objects.get_or_create(
                                 name=layer_information['name'],
                                 local_path=layer_information['local_path'],
                                 layer_index_url=layer_information['layer_index_url'])
-        layer_object[0].save()
 
-        return layer_object[0]
+        return layer_object
 
 
     def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes):
+        assert isinstance(build_obj, Build)
+        assert isinstance(target_obj, Target)
+
+        errormsg = ""
         for p in packagedict:
             searchname = p
             if 'OPKGN' in pkgpnmap[p].keys():
@@ -178,7 +210,7 @@ class ORMWrapper(object):
                             path = targetpath,
                             size = targetfilesize)
                 except KeyError as e:
-                    print "Key error, package", p, "key", e
+                    errormsg += "  stpi: Key error, package %s key %s \n" % ( p, e )
 
             # save disk installed size
             packagedict[p]['object'].installed_size = packagedict[p]['size']
@@ -198,8 +230,15 @@ class ORMWrapper(object):
                                         dep_type = tdeptype,
                                         target = target_obj);
 
+        if (len(errormsg) > 0):
+            raise Exception(errormsg)
+
 
     def create_logmessage(self, log_information):
+        assert 'build' in log_information
+        assert 'level' in log_information
+        assert 'message' in log_information
+
         log_object = LogMessage.objects.create(
                         build = log_information['build'],
                         level = log_information['level'],
@@ -213,8 +252,10 @@ class ORMWrapper(object):
 
 
     def save_build_package_information(self, build_obj, package_info, recipes):
+        assert isinstance(build_obj, Build)
+
         # create and save the object
-	pname = package_info['PKG']
+        pname = package_info['PKG']
         if 'OPKGN' in package_info.keys():
             pname = package_info['OPKGN']
 
@@ -274,6 +315,8 @@ class ORMWrapper(object):
         return bp_object
 
     def save_build_variables(self, build_obj, vardump):
+        assert isinstance(build_obj, Build)
+
         for k in vardump:
             if not bool(vardump[k]['func']):
                 value = vardump[k]['v'];
@@ -340,7 +383,7 @@ class BuildInfoHelper(object):
         return build_info
 
     def _get_task_information(self, event, recipe):
-
+        assert 'taskname' in vars(event)
 
         task_information = {}
         task_information['build'] = self.internal_state['build']
@@ -355,7 +398,11 @@ class BuildInfoHelper(object):
         return task_information
 
     def _get_layer_version_for_path(self, path):
+        assert path.startswith("/")
+        assert 'build' in self.internal_state
+
         def _slkey(layer_version):
+            assert isinstance(layer_version, Layer_Version)
             return len(layer_version.layer.local_path)
 
         # Heuristics: we always match recipe to the deepest layer path that
@@ -369,16 +416,17 @@ class BuildInfoHelper(object):
         return None
 
     def _get_recipe_information_from_taskfile(self, taskfile):
-
-        layer_version_obj = self._get_layer_version_for_path(re.split(':', taskfile)[-1])
+        localfilepath = taskfile.split(":")[-1]
+        layer_version_obj = self._get_layer_version_for_path(localfilepath)
 
         recipe_info = {}
         recipe_info['layer_version'] = layer_version_obj
-        recipe_info['file_path'] = re.split(':', taskfile)[-1]
+        recipe_info['file_path'] = taskfile
 
         return recipe_info
 
     def _get_path_information(self, task_object):
+        assert isinstance(task_object, Task)
         build_stats_format = "{tmpdir}/buildstats/{target}-{machine}/{buildname}/{package}/"
         build_stats_path = []
 
@@ -410,6 +458,7 @@ class BuildInfoHelper(object):
     ## external available methods to store information
 
     def store_layer_info(self, event):
+        assert 'data' in vars(event)
         layerinfos = event.data
         self.internal_state['lvs'] = {}
         for layer in layerinfos:
@@ -417,7 +466,7 @@ class BuildInfoHelper(object):
 
 
     def store_started_build(self, event):
-
+        assert '_pkgs' in vars(event)
         build_information = self._get_build_information()
 
         build_obj = self.orm_wrapper.create_build_object(build_information)
@@ -431,7 +480,7 @@ class BuildInfoHelper(object):
 
         # create target information
         target_information = {}
-        target_information['targets'] = event.getPkgs()
+        target_information['targets'] = event._pkgs
         target_information['build'] = build_obj
 
         self.internal_state['targets'] = self.orm_wrapper.create_target_objects(target_information)
@@ -445,7 +494,12 @@ class BuildInfoHelper(object):
             self.orm_wrapper.update_build_object(self.internal_state['build'], errors, warnings, taskfailures)
 
     def store_started_task(self, event):
-        identifier = event.taskfile.split(":")[-1] + ":" + event.taskname
+        assert isinstance(event, (bb.runqueue.sceneQueueTaskStarted, bb.runqueue.runQueueTaskStarted, bb.runqueue.runQueueTaskSkipped))
+        assert 'taskfile' in vars(event)
+        localfilepath = event.taskfile.split(":")[-1]
+        assert localfilepath.startswith("/")
+
+        identifier = event.taskfile + ":" + event.taskname
 
         recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
@@ -454,6 +508,7 @@ class BuildInfoHelper(object):
         task_information['outcome'] = Task.OUTCOME_NA
 
         if isinstance(event, bb.runqueue.runQueueTaskSkipped):
+            assert 'reason' in vars(event)
             task_information['task_executed'] = False
             if event.reason == "covered":
                 task_information['outcome'] = Task.OUTCOME_COVERED
@@ -481,6 +536,9 @@ class BuildInfoHelper(object):
 
     def store_tasks_stats(self, event):
         for (taskfile, taskname, taskstats) in event.data:
+            localfilepath = taskfile.split(":")[-1]
+            assert localfilepath.startswith("/")
+
             recipe_information = self._get_recipe_information_from_taskfile(taskfile)
             recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
 
@@ -490,10 +548,14 @@ class BuildInfoHelper(object):
             task_information['task_name'] = taskname
             task_information['cpu_usage'] = taskstats['cpu_usage']
             task_information['disk_io'] = taskstats['disk_io']
-            task_obj = self.orm_wrapper.get_update_task_object(task_information)
+            task_obj = self.orm_wrapper.get_update_task_object(task_information, True)  # must exist
 
     def update_and_store_task(self, event):
-        identifier = event.taskfile.split(":")[-1] + ":" + event.taskname
+        assert 'taskfile' in vars(event)
+        localfilepath = event.taskfile.split(":")[-1]
+        assert localfilepath.startswith("/")
+
+        identifier = event.taskfile + ":" + event.taskname
         assert identifier in self.internal_state['taskdata']
 
         recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
@@ -525,10 +587,11 @@ class BuildInfoHelper(object):
                 task_information['outcome'] = Task.OUTCOME_FAILED
                 del self.internal_state['taskdata'][identifier]
 
-        self.orm_wrapper.get_update_task_object(task_information)
+        self.orm_wrapper.get_update_task_object(task_information, True) # must exist
 
 
     def store_target_package_data(self, event):
+        assert 'data' in vars(event)
         # for all image targets
         for target in self.internal_state['targets']:
             if target.is_image:
@@ -537,6 +600,13 @@ class BuildInfoHelper(object):
                 self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
 
     def store_dependency_information(self, event):
+        assert '_depgraph' in vars(event)
+        assert 'layer-priorities' in event._depgraph
+        assert 'pn' in event._depgraph
+        assert 'tdepends' in event._depgraph
+
+        errormsg = ""
+
         # save layer version priorities
         if 'layer-priorities' in event._depgraph.keys():
             for lv in event._depgraph['layer-priorities']:
@@ -550,8 +620,8 @@ class BuildInfoHelper(object):
         self.internal_state['recipes'] = {}
         for pn in event._depgraph['pn']:
 
-            file_name = re.split(':', event._depgraph['pn'][pn]['filename'])[-1]
-            layer_version_obj = self._get_layer_version_for_path(re.split(':', file_name)[-1])
+            file_name = event._depgraph['pn'][pn]['filename']
+            layer_version_obj = self._get_layer_version_for_path(file_name.split(":")[-1])
 
             assert layer_version_obj is not None
 
@@ -579,6 +649,10 @@ class BuildInfoHelper(object):
                         t.save()
             self.internal_state['recipes'][pn] = recipe
 
+        # we'll not get recipes for key w/ values listed in ASSUME_PROVIDED
+
+        assume_provided = self.server.runCommand(["getVariable", "ASSUME_PROVIDED"])[0].split()
+
         # save recipe dependency
         # buildtime
         for recipe in event._depgraph['depends']:
@@ -588,20 +662,9 @@ class BuildInfoHelper(object):
                     dependency = self.internal_state['recipes'][dep]
                     Recipe_Dependency.objects.get_or_create( recipe = target,
                             depends_on = dependency, dep_type = Recipe_Dependency.TYPE_DEPENDS)
-            except KeyError:    # we'll not get recipes for key w/ values listed in ASSUME_PROVIDED
-                pass
-
-        # runtime
-        for recipe in event._depgraph['rdepends-pn']:
-            try:
-                target = self.internal_state['recipes'][recipe]
-                for dep in event._depgraph['rdepends-pn'][recipe]:
-                    dependency = self.internal_state['recipes'][dep]
-                    Recipe_Dependency.objects.get_or_create( recipe = target,
-                            depends_on = dependency, dep_type = Recipe_Dependency.TYPE_RDEPENDS)
-
-            except KeyError:    # we'll not get recipes for key w/ values listed in ASSUME_PROVIDED
-                pass
+            except KeyError as e:
+                if e not in assume_provided and not str(e).startswith("virtual/"):
+                    errormsg += "  stpd: KeyError saving recipe dependency for %s, %s \n" % (recipe, e)
 
         # save all task information
         def _save_a_task(taskdesc):
@@ -632,7 +695,12 @@ class BuildInfoHelper(object):
                     dep = tasks[taskdep]
                 Task_Dependency.objects.get_or_create( task = target, depends_on = dep )
 
+        if (len(errormsg) > 0):
+            raise Exception(errormsg)
+
+
     def store_build_package_information(self, event):
+        assert 'data' in vars(event)
         package_info = event.data
         self.orm_wrapper.save_build_package_information(self.internal_state['build'],
                             package_info,
