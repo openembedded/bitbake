@@ -154,7 +154,7 @@
                 </thead>
                 <tbody>
 
-                    {% for package in packages %}
+                    {% for package in packages|dictsort:"name" %}
 
                     <tr>
                         <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.name}}</a></td>
@@ -188,7 +188,7 @@
                 </thead>
                 <tbody>
 
-                    {% for rr in object.r_dependencies_recipe.all %}
+                    {% for rr in object.r_dependencies_recipe.all|dictsort:"depends_on.name" %}
                     <tr>
                         <td><a href="{% url "recipe" build.pk rr.depends_on.pk %}">{{rr.depends_on.name}}</a></td>
                         <td><a href="{% url "recipe" build.pk rr.depends_on.pk %}">{{rr.depends_on.version}}</a></td>
@@ -220,7 +220,7 @@
                 </thead>
                 <tbody>
 
-                    {% for rr in object.r_dependencies_depends.all %}
+                    {% for rr in object.r_dependencies_depends.all|dictsort:"recipe.name" %}
                     <tr>
                         <td><a href="{% url "recipe" build.pk rr.recipe.pk %}">{{rr.recipe.name}}</a></td>
                         <td><a href="{% url "recipe" build.pk rr.recipe.pk %}">{{rr.recipe.version}}</a></td>
