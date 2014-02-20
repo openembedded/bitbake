@@ -68,13 +68,11 @@
  {% if objects.paginator.count == 0 %}
   <div class="row-fluid">
       <div class="alert">
-      <form class="no-results" id="searchform">
-          <div class="input-append">
-              <input id="search" name="search" class="input-xxlarge" type="text" placeholder="{{request.GET.search}}" />{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on"><i class="icon-remove"></i></a>{% endif %}
-              <input class="btn" type="submit" value="Search"/>
-              <button class="btn btn-link" onclick="javascript:reload_params({'search':'', 'filter':''})">Show all builds</button>
-          </div>
-      </form>
+        <form class="no-results input-append" id="searchform">
+            <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
+            <button class="btn" type="submit" value="Search">Search</button>
+            <button class="btn btn-link" onclick="javascript:reload_params({'search':'', 'filter':''})">Show all builds</button>
+        </form>
       </div>
   </div>
 

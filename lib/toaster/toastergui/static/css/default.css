@@ -102,7 +102,7 @@ select { width: auto; }
 .progress { margin-bottom: 0px; }
 .lead .badge { font-size: 18px; font-weight: normal; border-radius: 15px; padding: 9px; }
 .well > .lead, .alert .lead { margin-bottom: 0px; }
-.no-results { margin: 10px 0 0; }
+.no-results { margin: 10px 0; }
 .task-name { margin-left: 7px; }
 
 
