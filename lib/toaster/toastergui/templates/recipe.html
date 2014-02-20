@@ -159,7 +159,7 @@
                     <tr>
                         <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.name}}</a></td>
                         <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.version}}_{{package.revision}}</a></td>
-                        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.size}}</a></td>
+                        <td><a href="{% url "package_built_detail" build.pk package.pk %}">{{package.size|filtered_filesizeformat}}</a></td>
                     </tr>
 
                     {% endfor %}
