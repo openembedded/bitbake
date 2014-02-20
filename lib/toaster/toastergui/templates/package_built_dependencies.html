@@ -35,8 +35,8 @@
                             <th>Size</th>
                         </tr>
                     </thead>
-                    {% for runtime_dep in runtime_deps %}
-                        <tbody>
+                    <tbody>
+						{% for runtime_dep in runtime_deps %}
                             {% ifequal runtime_dep.version '' %}
                                 <tr class="muted">
                                     <td>{{runtime_dep.name}}</td>
@@ -55,8 +55,8 @@
                                     <td>{{runtime_dep.size|filtered_filesizeformat}}</td>
                                 </tr>
                             {% endifequal %}
-                        </tbody>
-                    {% endfor %}
+						{% endfor %}
+                    </tbody>    
                 </table>
             {% endifequal %}
             {% ifnotequal other_deps|length 0 %}
@@ -67,43 +67,41 @@
                             <th>Package</th>
                             <th>Version</th>
                             <th>Size</th>
-
                             <th>
                                 <i class="icon-question-sign get-help" title="There are 5 relationship types: recommends, suggests, provides, replaces and conflicts"></i>
                                 Relationship type
                             </th>
                         </tr>
-                    </thead>
-
-                    {% for other_dep in other_deps %}
-                        <tbody>
-                        {% ifequal other_dep.version '' %}
-                            <tr class="muted">
-                                <td>{{other_dep.name}}</td>
-                                <td>{{other_dep.version}}</td>
-                                <td></td>
-                                <td>
-                                    {{other_dep.dep_type_display}}
-                                    <i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
-                                </td>
-                            </tr>
-                        {% else %}
-                            <tr>
-                                <td>
-                                    <a href="{% url 'package_built_detail' build.id other_dep.depends_on_id %}">
-                                        {{other_dep.name}}
-                                    </a>
-                                </td>
-                                <td>{{other_dep.version}}</td>
-                                <td>{{other_dep.size|filtered_filesizeformat}}</td>
-                                <td>
-                                    {{other_dep.dep_type_display}}
-                                    <i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
-                                </td>
-                            </tr>
-                        </tbody>
-                        {% endifequal %}
-                    {% endfor %}
+                    </thead>       
+                    <tbody>
+						{% for other_dep in other_deps %}
+                        	{% ifequal other_dep.version '' %}
+                            	<tr class="muted">
+                                	<td>{{other_dep.name}}</td>
+                                	<td>{{other_dep.version}}</td>
+                                	<td></td>
+                                	<td>
+                                    	{{other_dep.dep_type_display}}
+                                    	<i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
+                                	</td>
+                            	</tr>
+                        	{% else %}
+                            	<tr>
+                                	<td>
+                                    	<a href="{% url 'package_built_detail' build.id other_dep.depends_on_id %}">
+                                        	{{other_dep.name}}
+                                    	</a>
+                                	</td>
+                                	<td>{{other_dep.version}}</td>
+                                	<td>{{other_dep.size|filtered_filesizeformat}}</td>
+                                	<td>
+                                    	{{other_dep.dep_type_display}}
+                                    	<i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
+                                	</td>
+                            	</tr>
+                        	{% endifequal %}
+                    	{% endfor %}
+                    </tbody>
                 </table>
                 {% endifnotequal %}
             </div> <!-- tab-pane -->

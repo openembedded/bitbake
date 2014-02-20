@@ -26,8 +26,8 @@
                         <th>Size</th>
                     </tr>
                 </thead>
-                {% for reverse_dep in reverse_deps|dictsort:"name" %}
-                    <tbody>
+                <tbody>
+					{% for reverse_dep in reverse_deps|dictsort:"name" %}
                         <tr>
                             <td>
                                 <a href="{% url 'package_included_detail' build.id target.id reverse_dep.dependent_id %}">
@@ -37,8 +37,8 @@
                             <td>{{reverse_dep.version}}</td>
                             <td>{{reverse_dep.size|filtered_filesizeformat}}</td>
                         </tr>
-                    </tbody>
-                {% endfor %}
+					{% endfor %}
+                </tbody>
             </table>
         {% endifequal %}
         </div> <!-- end tab-pane -->

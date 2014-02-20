@@ -20,8 +20,8 @@
                         <th>Size</th>
                     </tr>
                 </thead>
-                {% for file in package.buildfilelist_package.all|dictsort:"path" %}
-                    <tbody>
+                <tbody>
+					{% for file in package.buildfilelist_package.all|dictsort:"path" %}
                         <tr>
                             <td>
                                 <a href="{% url 'image_information_dir' build.id target.id file.id %}">
@@ -30,8 +30,8 @@
                              </td>
                             <td>{{file.size|filtered_filesizeformat}}</td>
                         </tr>
-                    </tbody>
-                {% endfor %}
+					{% endfor %}
+                </tbody>
             </table>
 
             {% else %}

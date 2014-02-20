@@ -21,8 +21,8 @@
                         <th>Size</th>
                     </tr>
                 </thead>
-                {% for runtime_dep in runtime_deps %}
-                    <tbody>
+                <tbody>
+					{% for runtime_dep in runtime_deps %}
                         <tr>
                             <td>
                                <a href="{% url 'package_included_detail' build.id target.id runtime_dep.depends_on_id %}">
@@ -32,8 +32,8 @@
                             <td>{{runtime_dep.version}}</td>
                             <td>{{runtime_dep.size|filtered_filesizeformat}}</td>
                         </tr>
-                    </tbody>
-                {% endfor %}
+					{% endfor %}
+                 </tbody>                
             </table>
         {% else %}
             <div class="alert alert-info">
@@ -54,10 +54,9 @@
                             Relationship type
                         </th>
                     </tr>
-                </thead>
-
-                {% for other_dep in other_deps %}
-                    <tbody>
+                </thead>               
+                <tbody>
+					{% for other_dep in other_deps %}
                         {% if other_dep.installed %}
                             <tr>
                                 <td>
@@ -83,8 +82,8 @@
                                 </td>
                             </tr>
                         {% endif %}
-                    </tbody>
-                {% endfor %}
+					{% endfor %}
+                </tbody>               
             </table>
         {% endifnotequal %}
         </div> <!-- end tab-pane -->
