@@ -8,11 +8,11 @@
             {# Not included case #}
             <ul class="nav nav-pills">
                 <li class="active"> <a href="#">
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Shows the files produced by this package."></i>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Files that would be added to a root file system if you were to include {{package.name}} in an image"></i>
                     Generated files ({{packageFileCount}})
                 </a></li>
                 <li class=""><a href="{% url 'package_built_dependencies' build.id package.id %}">
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Shows the runtime packages required by this package."></i>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Projected runtime dependencies if you were to include {{package.name}} in an image"></i>
                     Runtime dependencies ({{dependency_count}})
                 </a></li>
             </ul>
