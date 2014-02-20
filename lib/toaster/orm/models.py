@@ -34,11 +34,9 @@ class Build(models.Model):
         (IN_PROGRESS, 'In Progress'),
     )
 
-    search_allowed_fields = ['machine', 'image_fstypes',
-                             'cooker_log_path', "target__target"]
+    search_allowed_fields = ['machine', 'cooker_log_path', "target__target", "target__target_image_file__file_name"]
 
     machine = models.CharField(max_length=100)
-    image_fstypes = models.CharField(max_length=100)
     distro = models.CharField(max_length=100)
     distro_version = models.CharField(max_length=100)
     started_on = models.DateTimeField()
@@ -53,16 +51,46 @@ class Build(models.Model):
 
 @python_2_unicode_compatible
 class Target(models.Model):
-    search_allowed_fields = ['target', 'image_fstypes', 'file_name']
+    search_allowed_fields = ['target', 'file_name']
     build = models.ForeignKey(Build)
     target = models.CharField(max_length=100)
     is_image = models.BooleanField(default = False)
-    file_name = models.CharField(max_length=100)
-    file_size = models.IntegerField()
 
     def __str__(self):
         return self.target
 
+class Target_Image_File(models.Model):
+    target = models.ForeignKey(Target)
+    file_name = models.FilePathField(max_length=100)
+    file_size = models.IntegerField()
+
+class Target_File(models.Model):
+    ITYPE_REGULAR = 1
+    ITYPE_DIRECTORY = 2
+    ITYPE_SYMLINK = 3
+    ITYPE_SOCKET = 4
+    ITYPE_FIFO = 5
+    ITYPE_CHARACTER = 6
+    ITYPE_BLOCK = 7
+    ITYPE_SYMBLINK = 8
+    ITYPES = ( (ITYPE_REGULAR ,'regular'),
+        ( ITYPE_DIRECTORY ,'directory'),
+        ( ITYPE_SYMLINK ,'symlink'),
+        ( ITYPE_SOCKET ,'socket'),
+        ( ITYPE_FIFO ,'fifo'),
+        ( ITYPE_CHARACTER ,'character'),
+        ( ITYPE_BLOCK ,'block'),
+        ( ITYPE_SYMLINK ,'symblink'))
+
+    target = models.ForeignKey(Target)
+    path = models.FilePathField()
+    size = models.IntegerField()
+    inodetype = models.IntegerField(choices = ITYPES)
+    permission = models.IntegerField()
+    owner = models.CharField(max_length=128)
+    group = models.CharField(max_length=128)
+    directory = models.ForeignKey('Target_File', related_name="directory_set")
+    sym_target = models.ForeignKey('Target_File', related_name="symlink_set", blank=True)
 
 
 class TaskManager(models.Manager):
@@ -149,7 +177,7 @@ class Task(models.Model):
     line_number = models.IntegerField(default=0)
     disk_io = models.IntegerField(null=True)
     cpu_usage = models.DecimalField(max_digits=6, decimal_places=2, null=True)
-    elapsed_time = models.CharField(max_length=50, default=0)
+    elapsed_time = models.DecimalField(max_digits=6, decimal_places=2, null=True)
     sstate_result = models.IntegerField(choices=SSTATE_RESULT, default=SSTATE_NA)
     message = models.CharField(max_length=240)
     logfile = models.FilePathField(max_length=255, blank=True)
@@ -236,7 +264,6 @@ class Recipe(models.Model):
     description = models.CharField(max_length=100, blank=True)
     section = models.CharField(max_length=100, blank=True)
     license = models.CharField(max_length=200, blank=True)
-    licensing_info = models.TextField(blank=True)
     homepage = models.URLField(blank=True)
     bugtracker = models.URLField(blank=True)
     file_path = models.FilePathField(max_length=255)
@@ -280,6 +307,7 @@ class Variable(models.Model):
 
 class VariableHistory(models.Model):
     variable = models.ForeignKey(Variable, related_name='vhistory')
+    value   = models.TextField(blank=True)
     file_name = models.FilePathField(max_length=255)
     line_number = models.IntegerField(null=True)
     operation = models.CharField(max_length=16)
@@ -294,6 +322,7 @@ class LogMessage(models.Model):
             (ERROR, "error") )
 
     build = models.ForeignKey(Build)
+    task  = models.ForeignKey(Task, blank = True, null=True)
     level = models.IntegerField(choices=LOG_LEVEL, default=INFO)
     message=models.CharField(max_length=240)
     pathname = models.FilePathField(max_length=255, blank=True)

@@ -329,7 +329,7 @@ def builds(request):
                 },
                 {'name': 'Output', 'clclass': 'output',
                  'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
-                 'orderfield': _get_toggle_order(request, "image_fstypes")
+                    # TODO: compute image fstypes from Target_Image_File
                 },
                 ]
             }

@@ -44,7 +44,6 @@ class ORMWrapper(object):
 
     def create_build_object(self, build_info):
         assert 'machine' in build_info
-        assert 'image_fstypes' in build_info
         assert 'distro' in build_info
         assert 'distro_version' in build_info
         assert 'started_on' in build_info
@@ -54,7 +53,6 @@ class ORMWrapper(object):
 
         build = Build.objects.create(
                                     machine=build_info['machine'],
-                                    image_fstypes=build_info['image_fstypes'],
                                     distro=build_info['distro'],
                                     distro_version=build_info['distro_version'],
                                     started_on=build_info['started_on'],
@@ -74,8 +72,7 @@ class ORMWrapper(object):
             tgt_object = Target.objects.create( build = target_info['build'],
                                     target = tgt_name,
                                     is_image = False,
-                                    file_name = "",
-                                    file_size = 0);
+                                    );
             targets.append(tgt_object)
         return targets
 
@@ -375,7 +372,6 @@ class BuildInfoHelper(object):
         build_info['distro_version'] = self.server.runCommand(["getVariable", "DISTRO_VERSION"])[0]
         build_info['started_on'] = datetime.datetime.now()
         build_info['completed_on'] = datetime.datetime.now()
-        build_info['image_fstypes'] = self._remove_redundant(self.server.runCommand(["getVariable", "IMAGE_FSTYPES"])[0] or "")
         build_info['cooker_log_path'] = self.server.runCommand(["getVariable", "BB_CONSOLELOG"])[0]
         build_info['build_name'] = self.server.runCommand(["getVariable", "BUILDNAME"])[0]
         build_info['bitbake_version'] = self.server.runCommand(["getVariable", "BB_VERSION"])[0]
@@ -633,7 +629,6 @@ class BuildInfoHelper(object):
             recipe_info['license'] = event._depgraph['pn'][pn]['license']
             recipe_info['description'] = event._depgraph['pn'][pn]['description']
             recipe_info['section'] = event._depgraph['pn'][pn]['section']
-            recipe_info['licensing_info'] = 'Not Available'
             recipe_info['homepage'] = event._depgraph['pn'][pn]['homepage']
             recipe_info['bugtracker'] = event._depgraph['pn'][pn]['bugtracker']
             recipe_info['file_path'] = file_name
@@ -728,7 +723,6 @@ class BuildInfoHelper(object):
         m = re.match("([^:]*): md5 checksum matched for ([^;]*)", event.msg)
         if m:
             (pn, fn) = m.groups()
-            self.internal_state['recipes'][pn].licensing_info = fn
             self.internal_state['recipes'][pn].save()
 
         if event.levelno < format.WARNING:
