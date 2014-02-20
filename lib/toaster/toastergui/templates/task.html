@@ -131,15 +131,16 @@
 {% endif %}
 
 {# Execution section #}
-<h2 {{task|task_color}}>
     {% if task.task_executed %}
+	<h2>
         Executed
         <i class="icon-question-sign get-help heading-help" title="Executed tasks are those that need to run in order to generate the task output"></i>
-     {% else %}
+    {% else %}
+	<h2 class="muted">
         Not Executed
         <i class="icon-question-sign get-help heading-help" title="Not executed tasks don't need to run because their outcome is provided by another task"></i>
-     {% endif %}
-</h2>
+    {% endif %}
+	</h2>
 <dl class="dl-horizontal">
     <dt>
         <i class="icon-question-sign get-help" title="To make builds more efficient, the build system detects changes in the 'inputs' to a given task by creating a 'task signature'. If the signature changes, the build system assumes the inputs have changed and the task needs to be rerun"></i>
