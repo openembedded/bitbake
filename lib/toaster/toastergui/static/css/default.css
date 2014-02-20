@@ -30,7 +30,7 @@ dd code, .alert code { white-space: pre-wrap; word-break: break-all; word-wrap: 
 .tooltip code { background-color: transparent; color: #FFFFFF; font-weight: normal; border: none; font-size: 1em; }
 
 /* Style for definition lists */
-dd ul { list-style-type: none; margin-left: 0px; }
+dd ul { list-style-type: none; margin: 0px; }
 dt, dd  {line-height: 25px; }
 dd li { line-height: 25px; }
 dd p { line-height: 20px; }

@@ -23,12 +23,14 @@
 {%if task.task_executed %}
     {# executed tasks outcome #}
     <dl class="dl-horizontal">
+	{% if task.logfile %}
         <dt>
-            <i class="icon-question-sign get-help" title="" data-original-title="The location in disk of the task log file"></i> Log file
+            <i class="icon-question-sign get-help" title="The location in disk of the task log file"></i> Log file
         </dt>
         <dd>
             <code>{{task.logfile}}</code>
         </dd>
+	{% endif %}
         {# show stack trace for failed task #}
         {% if task.outcome == task.OUTCOME_FAILED and log_head %}
             <h3>Python stack trace</h3>
@@ -47,7 +49,7 @@
             <a class="btn" href="javascript:reload_params({'show_matches' : 'true' })">Match to tasks in previous builds <i class="icon-question-sign get-help" style="margin-top:20px;" data-toggle="tooltip" title="This will show you a list of tasks from previous builds with the same inputs signature as this prebuilt task. Any of them could be the task that generated the output this prebuilt task is reusing"></i></a>
         {% elif matching_tasks %}
             <h3 class="details">Prebuilt task could be based on
-                <i class="icon-question-sign get-help heading-help" title="" data-toggle="tooltip" data-original-title="This table shows a list of tasks from previous builds with the same inputs signature as the prebuilt task. Any of them could be the task that generated the output the prebuilt task is reusing"></i>
+                <i class="icon-question-sign get-help heading-help" title="This table shows a list of tasks from previous builds with the same inputs signature as the prebuilt task. Any of them could be the task that generated the output the prebuilt task is reusing"></i>
             </h3>
             <table class="table table-bordered table-hover">
                 <thead>
@@ -85,7 +87,7 @@
                                 <a href="{%url "task" match.build.pk match.pk%}">{{match.get_executed_display}}</a>
                             </td>
                             <td>
-                                <a href="{%url "task" match.build.pk match.pk%}">{{match.get_outcome_display}}</a><i class="icon-question-sign get-help hover-help" title="" style="visibility: hidden;" data-original-title="{{match.outcome_help}}"></i>
+                                <a href="{%url "task" match.build.pk match.pk%}">{{match.get_outcome_display}}</a><i class="icon-question-sign get-help hover-help" title="{{match.outcome_help}}"></i>
                             </td>
                             <td>
                                 <a href="{%url "task" match.build.pk match.pk%}">{{match.build.completed_on|date:"d/m/y H:i"}}</a>
@@ -103,7 +105,7 @@
     {% elif task.outcome == task.OUTCOME_COVERED %}
         <dl class="dl-horizontal">
             <dt>
-                <i class="icon-question-sign get-help" title="" data-toggle="tooltip" data-original-title="The task providing the outcome of this task"></i>Task covered by
+                <i class="icon-question-sign get-help" title="The task providing the outcome of this task"></i> Task covered by
             </dt>
             <dd>
                 <ul>
@@ -114,7 +116,7 @@
     {%elif task.outcome == task.OUTCOME_CACHED%}
         <dl class="dl-horizontal">
             <dt>
-                <i class="icon-question-sign get-help" title="" data-original-title="The location in disk of the task log file"></i> Log file
+                <i class="icon-question-sign get-help" title="The location in disk of the task log file"></i> Log file
             </dt>
             <dd>
                 <code>{% for t in task.get_related_setscene %} {{t.logfile}}<br/>{% endfor %}
@@ -132,10 +134,10 @@
 <h2 {{task|task_color}}>
     {% if task.task_executed %}
         Executed
-        <i class="icon-question-sign get-help heading-help" title="" data-original-title="Executed tasks are those that need to run in order to generate the task output"></i>
+        <i class="icon-question-sign get-help heading-help" title="Executed tasks are those that need to run in order to generate the task output"></i>
      {% else %}
         Not Executed
-        <i class="icon-question-sign get-help heading-help" title="" data-original-title="Not executed tasks don't need to run because their outcome is provided by another task"></i>
+        <i class="icon-question-sign get-help heading-help" title="Not executed tasks don't need to run because their outcome is provided by another task"></i>
      {% endif %}
 </h2>
 <dl class="dl-horizontal">
@@ -146,12 +148,12 @@
     <dd>
         {{task.sstate_checksum}}
     </dd>
-</dl>
     {% if task.sstate_result != task.SSTATE_NA %}
+		</dl>
         <div class="alert alert-info">Attempting to restore output from sstate cache
             <i class="icon-question-sign get-help get-help-blue" title="The build system is searching for the task output in your <code>sstate-cache</code> directory and mirrors. If it finds it, it will use it instead of building it from scratch by running the real task. This makes the build faster"></i>
         </div>
-        <dl class="dl-horizontal">
+		<dl class="dl-horizontal">
             <dt>
                 <i class="icon-question-sign get-help" title="The name of the file searched for in your <code>sstate-cache</code> directory and mirrors"></i>
                 File searched for
@@ -189,7 +191,7 @@
         </div>
     {% elif task.sstate_result == task.SSTATE_RESTORED %}
         <div class="alert alert-info">
-            Output successfully restored from sstate cache.
+            Output <strong>successfully restored</strong> from sstate cache.
         </div>
     {% endif %}
     <dl class="dl-horizontal">
@@ -221,7 +223,7 @@
             {% for dep in deps %}
                 <li><a href="{%url 'task' dep.build.pk dep.pk%}" class="task-info" title="{{dep.get_executed_display}} | {{dep.get_outcome_display}}">{{dep.recipe.name}}_{{dep.recipe.version}} <span class="task-name">{{dep.task_name}}</span></a></li>
             {% empty %}
-                <li><p class="alert-info">This task has no dependencies</p></li>
+                <li class="muted">This task has no dependencies</li>
             {% endfor %}
         </ul>
     </dd>
@@ -234,7 +236,7 @@
             {% for dep in rdeps %}
                 <li><a href="{%url 'task' dep.build.pk dep.pk%}" class="task-info" title="{{dep.get_executed_display}} | {{dep.get_outcome_display}}">{{dep.recipe.name}}_{{dep.recipe.version}} <span class="task-name">{{dep.task_name}}</span></a></li>
             {% empty %}
-                <li><p class="alert-info">This task has no reverse dependencies</p></li>
+                <li class="muted">This task has no reverse dependencies</li>
             {% endfor %}
         </ul>
 </dl>
@@ -243,21 +245,27 @@
 {%if task.task_executed %}
     <h2 class="details">Performance</h2>
     <dl class="dl-horizontal">
+		{% if task.elapsed_time > 0.01 %}
         <dt>
             <i class="icon-question-sign get-help" title="How long it took the task to finish, expressed in seconds"></i>
             Time (secs)
         </dt>
-        <dd>{{task.elapsed_time|format_none_and_zero}}</dd>
+        <dd>{{task.elapsed_time|format_none_and_zero|floatformat:2}}</dd>
+		{% endif %}	
+		{% if task.cpu_usage > 0 %}	
         <dt>
             <i class="icon-question-sign get-help" title="Task CPU utilisation, expressed as a percentage"></i>
             CPU usage
         </dt>
-        <dd>{{task.cpu_usage|format_none_and_zero}}</dd>
+        <dd>{{task.cpu_usage|format_none_and_zero|floatformat:2}}%</dd>
+		{% endif %}
+		{% if task.disk_io > 0 %}
         <dt>
             <i class="icon-question-sign get-help" title="Number of miliseconds the task spent doing disk input and output"></i>
             Disk I/O (ms)
         </dt>
         <dd>{{task.disk_io|format_none_and_zero}}</dd>
+		{% endif %}
     </dl>
 {%endif%}
 
