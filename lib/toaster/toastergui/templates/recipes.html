@@ -19,6 +19,19 @@
   {%endif%}
  </h1>
 </div>
+
+{% if objects.paginator.count == 0 %}
+  <div class="row-fluid">
+      <div class="alert">
+        <form class="no-results input-append" id="searchform">
+            <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/><a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>
+            <button class="btn" type="submit" value="Search">Search</button>
+            <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all recipes</button>
+        </form>
+      </div>
+  </div>
+
+{% else %}
 {% include "basetable_top.html" %}
 
     {% for recipe in objects %}
@@ -80,5 +93,6 @@
     {% endfor %}
 
 {% include "basetable_bottom.html" %}
+{% endif %}
 </div>
 {% endblock %}
