@@ -853,6 +853,9 @@ def runfetchcmd(cmd, d, quiet=False, cleanup=None, log=None, workdir=None):
         if val:
             cmd = 'export ' + var + '=\"%s\"; %s' % (val, cmd)
 
+    # Disable pseudo as it may affect ssh, potentially causing it to hang.
+    cmd = 'export PSEUDO_DISABLED=1; ' + cmd
+
     logger.debug(1, "Running %s", cmd)
 
     success = False
