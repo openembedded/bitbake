@@ -2,13 +2,13 @@
 {% load projecttags %}
 
 {% block title %}
-{% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
+{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
         <h1>{{fullPackageSpec}} <small>({{target.target}})</small></h1>
 {% endwith %}
 {% endblock title %}
 
 {% block tabcontent %}
-{% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec packageFileCount=package.buildfilelist_package.count %}
+{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec packageFileCount=package.buildfilelist_package.count %}
     {% include "package_included_tabs.html" with active_tab="detail" %}
     <div class="tab-content">
         <div class="tab-pane active" id="files">

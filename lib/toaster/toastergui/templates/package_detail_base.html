@@ -2,7 +2,7 @@
 {% load projecttags %}
 
 {% block localbreadcrumb %}
-{% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
+{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
     {% if target %}
         <li><a href="{% url "target" build.id target.id %}">{{target.target}}</a></li>
     {% else %}
@@ -13,7 +13,7 @@
 {% endblock localbreadcrumb %}
 
 {% block pagedetailinfomain %}
-{% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
+{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
 
     <div class="row span11">
         <div class="page-header">
