@@ -514,7 +514,7 @@ def tasks_common(request, build_id, variant):
         'clclass': 'order', 'hidden' : 1,
         'orderfield':_get_toggle_order(request, "order"),
         'ordericon':_get_toggle_order_icon(request, "order")}
-    if 'tasks' == variant: tc_order['hidden']='0';
+    if 'tasks' == variant: tc_order['hidden']='0'; del tc_order['clclass']
     tc_recipe={
         'name':'Recipe',
         'qhelp':'The name of the recipe to which each task applies',
