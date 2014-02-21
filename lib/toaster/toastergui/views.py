@@ -199,7 +199,7 @@ def builds(request):
     # define here what parameters the view needs in the GET portion in order to
     # be able to display something.  'count' and 'page' are mandatory for all views
     # that use paginators.
-    mandatory_parameters = { 'count': 10,  'page' : 1};
+    mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'completed_on:-' };
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'all-builds', request.GET, mandatory_parameters)
@@ -241,6 +241,7 @@ def builds(request):
                  'qhelp' : "The outcome tells you if a build completed successfully or failed",     # the help button content
                  'dclass' : "span2",                                                # indication about column width; comes from the design
                  'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
+                 'ordericon':_get_toggle_order_icon(request, "outcome"),
                   # filter field will set a filter on that column with the specs in the filter description
                   # the class field in the filter has no relation with clclass; the control different aspects of the UI
                   # still, it is recommended for the values to be identical for easy tracking in the generated HTML
@@ -255,15 +256,18 @@ def builds(request):
                 {'name': 'Target ',                                                 # default column, disabled box, with just the name in the list
                  'qhelp': "This is the build target(s): one or more recipes or image recipes",
                  'orderfield': _get_toggle_order(request, "target__target"),
+                 'ordericon':_get_toggle_order_icon(request, "target__target"),
                 },
                 {'name': 'Machine ',
                  'qhelp': "The machine is the hardware for which you are building",
                  'orderfield': _get_toggle_order(request, "machine"),
+                 'ordericon':_get_toggle_order_icon(request, "machine"),
                  'dclass': 'span3'
                 },                           # a slightly wider column
                 {'name': 'Started on ', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
                  'qhelp': "The date and time you started the build",
                  'orderfield': _get_toggle_order(request, "started_on", True),
+                 'ordericon':_get_toggle_order_icon(request, "started_on"),
                  'filter' : {'class' : 'started_on',
                              'label': 'Show:',
                              'options' : [
@@ -276,6 +280,7 @@ def builds(request):
                 {'name': 'Completed on ',
                  'qhelp': "The date and time the build finished",
                  'orderfield': _get_toggle_order(request, "completed_on", True),
+                 'ordericon':_get_toggle_order_icon(request, "completed_on"),
                  'filter' : {'class' : 'completed_on', 
                              'label': 'Show:', 
                              'options' : [
@@ -298,6 +303,7 @@ def builds(request):
                 {'name': 'Errors ', 'clclass': 'errors_no',
                  'qhelp': "How many errors were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "errors_no", True),
+                 'ordericon':_get_toggle_order_icon(request, "errors_no"),
                  'filter' : {'class' : 'errors_no', 
                              'label': 'Show:', 
                              'options' : [
@@ -309,6 +315,7 @@ def builds(request):
                 {'name': 'Warnings', 'clclass': 'warnings_no',
                  'qhelp': "How many warnigns were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "warnings_no", True),
+                 'ordericon':_get_toggle_order_icon(request, "warnings_no"),
                  'filter' : {'class' : 'warnings_no', 
                              'label': 'Show:', 
                              'options' : [
@@ -320,12 +327,14 @@ def builds(request):
                 {'name': 'Time ', 'clclass': 'time', 'hidden' : 1,
                  'qhelp': "How long it took the build to finish",
                  'orderfield': _get_toggle_order(request, "timespent", True),
+                 'ordericon':_get_toggle_order_icon(request, "timespent"),
                 },
                 {'name': 'Log',
                  'dclass': "span4",
                  'qhelp': "The location in disk of the build main log file",
                  'clclass': 'log', 'hidden': 1,
                  'orderfield': _get_toggle_order(request, "cooker_log_path"),
+                 'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
                 },
                 {'name': 'Output', 'clclass': 'output',
                  'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
