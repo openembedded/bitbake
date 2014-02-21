@@ -518,8 +518,8 @@ def tasks_common(request, build_id, variant):
     tc_recipe={
         'name':'Recipe',
         'qhelp':'The name of the recipe to which each task applies',
-        'orderfield': _get_toggle_order(request, "recipe"),
-        'ordericon':_get_toggle_order_icon(request, "recipe"),
+        'orderfield': _get_toggle_order(request, "recipe__name"),
+        'ordericon':_get_toggle_order_icon(request, "recipe__name"),
     }
     tc_recipe_version={
         'name':'Recipe version',
