@@ -110,9 +110,12 @@ class ORMWrapper(object):
         for v in vars(task_object):
             if v in task_information.keys():
                 vars(task_object)[v] = task_information[v]
-        # if we got covered by a setscene task, we're CACHED
-        if task_object.outcome == Task.OUTCOME_COVERED and 1 == Task.objects.related_setscene(task_object).count():
-            task_object.outcome = Task.OUTCOME_CACHED
+
+        # update setscene-related information
+        if 1 == Task.objects.related_setscene(task_object).count():
+            if task_object.outcome == Task.OUTCOME_COVERED:
+                task_object.outcome = Task.OUTCOME_CACHED
+
             outcome_task_setscene = Task.objects.get(task_executed=True, build = task_object.build,
                                     recipe = task_object.recipe, task_name=task_object.task_name+"_setscene").outcome
             if outcome_task_setscene == Task.OUTCOME_SUCCESS:
