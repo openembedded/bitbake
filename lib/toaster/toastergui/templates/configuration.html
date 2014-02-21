@@ -49,7 +49,7 @@
           <th>Layer directory</th>
         </tr>
       </thead>
-      <tbody>{% for lv in build.layer_version_build.all %}
+      <tbody>{% for lv in build.layer_version_build.all|dictsort:"layer.name" %}
         <tr>
             <td>{{lv.layer.name}}</td>
             <td>{{lv.branch}}</td>
