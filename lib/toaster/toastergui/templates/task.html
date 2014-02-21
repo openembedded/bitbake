@@ -18,7 +18,7 @@
 {# Outcome section #}
 <h2 {{ task|task_color:True }}>
     {{task.get_outcome_display}}
-    <i class="icon-question-sign get-help heading-help" title="" data-original-title="{{task.outcome_help}}"></i>
+    <i class="icon-question-sign get-help heading-help" title="{{task.get_outcome_help}}"></i>
 </h2>
 {%if task.task_executed %}
     {# executed tasks outcome #}
