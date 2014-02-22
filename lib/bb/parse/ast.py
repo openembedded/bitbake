@@ -139,6 +139,8 @@ class DataNode(AstNode):
             data.setVar(key, val, **loginfo)
 
 class MethodNode(AstNode):
+    tr_tbl = string.maketrans('/.+-@%', '______')
+
     def __init__(self, filename, lineno, func_name, body):
         AstNode.__init__(self, filename, lineno)
         self.func_name = func_name
@@ -147,7 +149,7 @@ class MethodNode(AstNode):
     def eval(self, data):
         text = '\n'.join(self.body)
         if self.func_name == "__anonymous":
-            funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(string.maketrans('/.+-@', '_____'))))
+            funcname = ("__anon_%s_%s" % (self.lineno, self.filename.translate(MethodNode.tr_tbl)))
             text = "def %s(d):\n" % (funcname) + text
             bb.methodpool.insert_method(funcname, text, self.filename)
             anonfuncs = data.getVar('__BBANONFUNCS') or []
