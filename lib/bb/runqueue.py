@@ -2092,14 +2092,20 @@ class runQueuePipe():
             found = False
             index = self.queue.find("</event>")
             while index != -1 and self.queue.startswith("<event>"):
-                event = pickle.loads(self.queue[7:index])
+                try:
+                    event = pickle.loads(self.queue[7:index])
+                except ValueError as e:
+                    bb.msg.fatal("RunQueue", "failed load pickle '%s': '%s'" % (e, self.queue[7:index]))
                 bb.event.fire_from_worker(event, self.d)
                 found = True
                 self.queue = self.queue[index+8:]
                 index = self.queue.find("</event>")
             index = self.queue.find("</exitcode>")
             while index != -1 and self.queue.startswith("<exitcode>"):
-                task, status = pickle.loads(self.queue[10:index])
+                try:
+                    task, status = pickle.loads(self.queue[10:index])
+                except ValueError as e:
+                    bb.msg.fatal("RunQueue", "failed load pickle '%s': '%s'" % (e, self.queue[10:index]))
                 self.rq.runqueue_process_waitpid(task, status)
                 found = True
                 self.queue = self.queue[index+11:]
