@@ -42,6 +42,53 @@ class GitSM(Git):
                 pass
         return False
 
+    def _set_relative_paths(self, repopath):
+        """
+        Fix submodule paths to be relative instead of absolute,
+        so that when we move the repo it doesn't break
+        (In Git 1.7.10+ this is done automatically)
+        """
+        submodules = []
+        with open(os.path.join(repopath, '.gitmodules'), 'r') as f:
+            for line in f.readlines():
+                if line.startswith('[submodule'):
+                    submodules.append(line.split('"')[1])
+
+        for module in submodules:
+            repo_conf = os.path.join(repopath, module, '.git')
+            if os.path.exists(repo_conf):
+                with open(repo_conf, 'r') as f:
+                    lines = f.readlines()
+                newpath = ''
+                for i, line in enumerate(lines):
+                    if line.startswith('gitdir:'):
+                        oldpath = line.split(': ')[-1].rstrip()
+                        if oldpath.startswith('/'):
+                            newpath = '../' * (module.count('/') + 1) + '.git/modules/' + module
+                            lines[i] = 'gitdir: %s\n' % newpath
+                            break
+                if newpath:
+                    with open(repo_conf, 'w') as f:
+                        for line in lines:
+                            f.write(line)
+
+            repo_conf2 = os.path.join(repopath, '.git', 'modules', module, 'config')
+            if os.path.exists(repo_conf2):
+                with open(repo_conf2, 'r') as f:
+                    lines = f.readlines()
+                newpath = ''
+                for i, line in enumerate(lines):
+                    if line.lstrip().startswith('worktree = '):
+                        oldpath = line.split(' = ')[-1].rstrip()
+                        if oldpath.startswith('/'):
+                            newpath = '../' * (module.count('/') + 3) + module
+                            lines[i] = '\tworktree = %s\n' % newpath
+                            break
+                if newpath:
+                    with open(repo_conf2, 'w') as f:
+                        for line in lines:
+                            f.write(line)
+
     def update_submodules(self, ud, d):
         # We have to convert bare -> full repo, do the submodule bit, then convert back
         tmpclonedir = ud.clonedir + ".tmp"
@@ -54,6 +101,7 @@ class GitSM(Git):
         runfetchcmd(ud.basecmd + " reset --hard", d)
         runfetchcmd(ud.basecmd + " submodule init", d)
         runfetchcmd(ud.basecmd + " submodule update", d)
+        self._set_relative_paths(tmpclonedir)
         runfetchcmd("sed " + gitdir + "/config -i -e 's/bare.*=.*false/bare = true/'", d)
         os.rename(gitdir, ud.clonedir,)
         bb.utils.remove(tmpclonedir, True)
