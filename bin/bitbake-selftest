@@ -25,13 +25,24 @@ try:
 except RuntimeError as exc:
     sys.exit(str(exc))
 
-tests = ["bb.tests.codeparser", 
-         "bb.tests.cow",
-         "bb.tests.data",
-         "bb.tests.fetch",
-         "bb.tests.utils"]
+def usage():
+    print('usage: %s [testname1 [testname2]...]')
+
+if len(sys.argv) > 1:
+    if '--help' in sys.argv[1:]:
+        usage()
+        sys.exit(0)
+
+    tests = sys.argv[1:]
+else:
+    tests = ["bb.tests.codeparser",
+             "bb.tests.cow",
+             "bb.tests.data",
+             "bb.tests.fetch",
+             "bb.tests.utils"]
 
 for t in tests:
+    t = '.'.join(t.split('.')[:3])
     __import__(t)
 
 unittest.main(argv=["bitbake-selftest"] + tests)
