@@ -23,6 +23,7 @@
 import unittest
 import bb
 import bb.data
+import bb.parse
 
 class DataExpansions(unittest.TestCase):
     def setUp(self):
