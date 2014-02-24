@@ -807,7 +807,7 @@ def try_mirror_url(newuri, origud, ud, ld, check = False):
                 os.symlink(ud.localpath, dest)
             if not os.path.exists(origud.donestamp) or origud.method.need_update(origud.url, origud, ld):
                 origud.method.download(origud.url, origud, ld)
-                if hasattr(ud.method,"build_mirror_data"):
+                if hasattr(origud.method,"build_mirror_data"):
                     origud.method.build_mirror_data(origud.url, origud, ld)
             return None
         # Otherwise the result is a local file:// and we symlink to it
