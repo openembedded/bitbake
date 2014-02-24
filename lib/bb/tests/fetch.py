@@ -417,6 +417,13 @@ class FetcherNetworkTest(FetcherTest):
             self.d.setVar("PREMIRRORS", "%s git://%s;protocol=file \n" % (dummyurl, self.sourcedir))
             self.gitfetcher(dummyurl, dummyurl)
 
+        def test_git_submodule(self):
+            fetcher = bb.fetch.Fetch(["gitsm://git.yoctoproject.org/git-submodule-test;rev=f12e57f2edf0aa534cf1616fa983d165a92b0842"], self.d)
+            fetcher.download()
+            # Previous cwd has been deleted
+            os.chdir(os.path.dirname(self.unpackdir))
+            fetcher.unpack(self.unpackdir)
+
 class URLHandle(unittest.TestCase):
 
     datatable = {
