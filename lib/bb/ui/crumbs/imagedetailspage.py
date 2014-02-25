@@ -632,7 +632,7 @@ class ImageDetailsPage (HobPage):
 
     def save_button_clicked_cb(self, button):
         topdir = self.builder.get_topdir()
-        images_dir = topdir + "/recipes/images/"
+        images_dir = topdir + "/recipes/images/custom/"
         self.builder.ensure_dir(images_dir)
 
         self.name_field_template = self.builder.image_configuration_page.custom_image_selected

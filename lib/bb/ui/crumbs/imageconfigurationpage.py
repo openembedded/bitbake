@@ -379,7 +379,7 @@ class ImageConfigurationPage (HobPage):
         selected_image = self.image_combo.get_active_text()
         if selected_image == self.__custom_image__:
             topdir = self.builder.get_topdir()
-            images_dir = topdir + "/recipes/images/"
+            images_dir = topdir + "/recipes/images/custom/"
             self.builder.ensure_dir(images_dir)
 
             dialog = RetrieveImageDialog(images_dir, "Select from my image recipes",

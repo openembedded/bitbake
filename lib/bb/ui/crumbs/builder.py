@@ -446,7 +446,8 @@ class Builder(gtk.Window):
         self.handler.connect("recipe-populated",         self.handler_recipe_populated_cb)
         self.handler.connect("package-populated",        self.handler_package_populated_cb)
 
-        self.handler.append_to_bbfiles("${TOPDIR}/recipes/images/*.bb")
+        self.handler.append_to_bbfiles("${TOPDIR}/recipes/images/custom/*.bb")
+        self.handler.generate_hob_base_image()
         self.initiate_new_build_async()
 
         signal.signal(signal.SIGINT, self.event_handle_SIGINT)

@@ -436,8 +436,15 @@ class HobHandler(gobject.GObject):
         self.run_next_command(self.GENERATE_IMAGE)
 
     def generate_new_image(self, image, base_image, package_queue, description):
-        base_image = self.runCommand(["matchFile", self.base_image + ".bb"])
+        if base_image:
+            base_image = self.runCommand(["matchFile", self.base_image + ".bb"])
         self.runCommand(["generateNewImage", image, base_image, package_queue, False, description])
+
+    def generate_hob_base_image(self):
+        image_dir = self.get_topdir() + "/recipes/images/"
+        self.ensure_dir(image_dir)
+        self.generate_new_image(image_dir+"hob-image.bb", None, [], "")
+        self.append_to_bbfiles(image_dir + "*.bb")
 
     def ensure_dir(self, directory):
         self.runCommand(["ensureDir", directory])
