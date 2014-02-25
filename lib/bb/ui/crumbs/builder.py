@@ -380,7 +380,6 @@ class Builder(gtk.Window):
         super(Builder, self).__init__()
 
         self.hob_image = "hob-image"
-        self.hob_toolchain = "hob-toolchain"
 
         # handler
         self.handler = hobHandler
@@ -597,7 +596,6 @@ class Builder(gtk.Window):
             image = self.configuration.selected_image
         self.handler.generate_image(image,
                                     base_image,
-                                    self.hob_toolchain,
                                     packages,
                                     toolchain_packages,
                                     self.configuration.default_task)
