@@ -31,7 +31,7 @@
             perhaps in a specific way.
             Getting and unpacking the files is often optionally followed
             by patching.
-            Patching, however, is not covered by the fetch.
+            Patching, however, is not covered by this module.
         </para>
 
         <para>

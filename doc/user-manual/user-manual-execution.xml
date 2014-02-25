@@ -23,10 +23,18 @@
      $ bitbake &lt;target&gt;
         </literallayout>
         For information on the BitBake command and its options,
-        see the
-        "<link linkend='user-manual-command'>BitBake Command</link>
-        chapter.
+        see
+        "<link linkend='user-manual-command'>The BitBake Command</link>"
+        section.
     </para>
+
+    <note>
+        Prior to executing BitBake, you should take advantage of parallel
+        thread execution by setting the
+        <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
+        variable in your <filename>local.conf</filename>
+        configuration file.
+    </note>
 
     <section id='parsing-the-base-configuration-metadata'>
         <title>Parsing the Base Configuration Metadata</title>
@@ -103,10 +111,13 @@
                 <listitem><para><link linkend='var-BB_ENV_WHITELIST'><filename>BB_ENV_WHITELIST</filename></link></para></listitem>
                 <listitem><para><link linkend='var-BB_PRESERVE_ENV'><filename>BB_PRESERVE_ENV</filename></link></para></listitem>
                 <listitem><para><link linkend='var-BB_ENV_EXTRAWHITE'><filename>BB_ENV_EXTRAWHITE</filename></link></para></listitem>
-                <listitem><para><link linkend='var-BB_ORIGENV'><filename>BB_ORIGENV</filename></link></para></listitem>
-                <listitem><para><link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link></para></listitem>
-                <listitem><para><link linkend='var-PREFERRED_PROVIDERS'><filename>PREFERRED_PROVIDERS</filename></link></para></listitem>
+                <listitem><para>
+                    <link linkend='var-BITBAKE_UI'><filename>BITBAKE_UI</filename></link>
+                    </para></listitem>
             </itemizedlist>
+            You can find information on how to pass environment variables into the BitBake
+            execution environment in the
+            "<link linkend='passing-information-into-the-build-task-environment'>Passing Information Into the Build Task Environment</link>" section.
         </para>
 
         <para>
@@ -146,11 +157,15 @@
         <para>
             Only variable definitions and include directives are allowed
             in <filename>.conf</filename> files.
-            The following variables include:
+            Some variables directly influence BitBake's behavior.
+            These variables might have been set from the environment
+            depending on the environment variables previously
+            mentioned or set in the configuration files.
+            See the
+            "<link linkend='ref-variables-glos'>Variables Glossary</link>"
+            for a full list of variables.
+            The following list shows common variables set:
             <itemizedlist>
-                <listitem><para>
-                    <link linkend='var-BITBAKE_UI'><filename>BITBAKE_UI</filename></link>
-                    </para></listitem>
                 <listitem><para>
                     <link linkend='var-BBDEBUG'><filename>BBDEBUG</filename></link>
                     </para></listitem>
@@ -196,6 +211,8 @@
                 <listitem><para>
                     <link linkend='var-BBMASK'><filename>BBMASK</filename></link>
                     </para></listitem>
+                <listitem><para><link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link></para></listitem>
+                <listitem><para><link linkend='var-PREFERRED_PROVIDERS'><filename>PREFERRED_PROVIDERS</filename></link></para></listitem>
             </itemizedlist>
         </para>
 
@@ -234,8 +251,7 @@
         <title>Locating and Parsing Recipes</title>
 
         <para>
-            During the configuration phase, BitBake will have
-            set
+            During the configuration phase, BitBake will have set
             <link linkend='var-BBFILES'><filename>BBFILES</filename></link>.
             BitBake now uses it to construct a list of recipes to parse,
             along with any append files (<filename>.bbappend</filename>)
@@ -244,7 +260,7 @@
             available files and supports wildcards.
             An example would be:
             <literallayout class='monospaced'>
-     BBFILES = "/path/to/bbfiles/*.bb"
+     BBFILES = "/path/to/bbfiles/*.bb /path/to/appends/*.bbappend"
             </literallayout>
             BitBake parses each recipe and append file located
             with <filename>BBFILES</filename> and stores the values of
@@ -279,7 +295,8 @@
         <para>
             By the time parsing is complete for a recipe, BitBake
             has a list of tasks that the recipe defines and a set of
-            data consisting of keys and values.
+            data consisting of keys and values as well as
+            dependency information about the tasks.
         </para>
 
         <para>
@@ -287,16 +304,48 @@
             It only needs a small subset of the information to make
             decisions about the recipe.
             Consequently, BitBake caches the values in which it is
-            interested.
+            interested and does not store the rest of the information.
+            Experience has shown it's faster to re-parse the metadata than to
+            try and write it out to the disk and reload then it.
         </para>
 
         <para>
-            Subsequent BitBake commands then parse the base
-            configuration and compute a checksum of that data.
-            If that checksum matches what is in the cache, the
-            recipe and class files have not changed.
-            In this case, BitBake reloads the cached information
-            about the recipe instead of reparsing it from scratch.
+            Where possible, subsequent BitBake commands reuse this cache of
+            recipe information.
+            The validity of this cache is determined by first computing a
+            checksum of the base configuration data (see
+            <link linkend='var-BB_HASHCONFIG_WHITELIST'><filename>BB_HASHCONFIG_WHITELIST</filename></link>)
+            and then checking if the checksum matches.
+            If that checksum matches what is in the cache and the recipe
+            and class files have not changed, Bitbake is able to use
+            the cache.
+            BitBake then reloads the cached information about the recipe
+            instead of reparsing it from scratch.
+        </para>
+
+        <para>
+            Recipe file collections exist to allow the user to
+            have multiple repositories of
+            <filename>.bb</filename> files that contain the same
+            exact package.
+            For example, one could easily use them to make one's
+            own local copy of an upstream repository, but with
+            custom modifications that one does not want upstream.
+            Here is an example:
+            <literallayout class='monospaced'>
+    BBFILES = "/stuff/openembedded/*/*.bb /stuff/openembedded.modified/*/*.bb"
+    BBFILE_COLLECTIONS = "upstream local"
+    BBFILE_PATTERN_upstream = "^/stuff/openembedded/"
+    BBFILE_PATTERN_local = "^/stuff/openembedded.modified/"
+    BBFILE_PRIORITY_upstream = "5"
+    BBFILE_PRIORITY_local = "10"
+            </literallayout>
+            <note>
+                The layers mechanism is now the preferred method of collecting
+                code.
+                While the collections code remains, its main use is to set layer
+                priorities and to deal with overlap (conflicts) between layers.
+            </note>
         </para>
     </section>
 
@@ -304,35 +353,57 @@
         <title>Preferences and Providers</title>
 
         <para>
-            Assuming BitBake has been instructed to execute a target and
-            that all the recipe files have been parsed, BitBake starts to
-            build the target and look for providers of that target.
-            Once a provider is selected, BitBake resolves all the dependencies for
-            the target.
-            As an example, suppose the target is
-            <filename>core-image-sato</filename>.
-            In this case, it would lead to
-            <filename>packagegroup-core-x11-sato</filename>,
-            which in turn leads to recipes like <filename>matchbox-terminal</filename>,
-            <filename>pcmanfm</filename> and <filename>gthumb</filename>.
-            These recipes in turn depend on <filename>eglibc</filename> and the toolchain.
+            Assuming BitBake has been instructed to execute a target
+            and that all the recipe files have been parsed, BitBake
+            starts to figure out how to build the target.
+            BitBake starts by looking through the
+            <link linkend='var-PROVIDES'><filename>PROVIDES</filename></link>
+            set in recipe files.
+            The default <filename>PROVIDES</filename> for a recipe is its name
+            (<link linkend='var-PN'><filename>PN</filename></link>),
+            however, a recipe can provide multiple things.
+        </para>
+
+        <para>
+            As an example of adding an extra provider, suppose a recipe named
+            <filename>package1.bb</filename> contained the following:
+            <literallayout class='monospaced'>
+     PROVIDES += "virtual/package"
+            </literallayout>
+            The recipe now provides both "package1" and "virtual/package.
+            The "virtual/" namespace is often used to denote cases where
+            multiple providers are expected with the user choosing between
+            them.
+            Kernels and toolchain components are common cases of this in
+            OpenEmbedded.
         </para>
 
         <para>
             Sometimes a target might have multiple providers.
-            A common example is "virtual/kernel", which is provided by each kernel package.
-            Each machine often selects the best kernel provider by using a line similar to the
-            following in the machine configuration file:
-        </para>
-
-        <literallayout class='monospaced'>
+            A common example is "virtual/kernel", which is provided by each
+            kernel recipe.
+            Each machine often selects the best kernel provider by using a
+            line similar to the following in the machine configuration file:
+            <literallayout class='monospaced'>
      PREFERRED_PROVIDER_virtual/kernel = "linux-yocto"
-        </literallayout>
-
-        <para>
+            </literallayout>
             The default
             <link linkend='var-PREFERRED_PROVIDER'><filename>PREFERRED_PROVIDER</filename></link>
             is the provider with the same name as the target.
+        </para>
+
+        <para>
+            Bitbake iterates through each target it needs to build and resolve
+            them using this process.
+            As an example, suppose the target is
+            <filename>core-image-sato</filename>.
+            In this case, it would lead to
+            <filename>packagegroup-core-x11-sato</filename>,
+            which in turn leads to recipes like
+            <filename>matchbox-terminal</filename>, <filename>pcmanfm</filename>
+            and <filename>gthumb</filename>.
+            These recipes in turn depend on <filename>eglibc</filename>
+            and the toolchain.
         </para>
 
         <para>
@@ -357,6 +428,41 @@
 
         <para>
             In summary, BitBake has created a list of providers, which is prioritized, for each target.
+        </para>
+
+        <para>
+            When there are multiple “versions” of a given package,
+            BitBake defaults to selecting the most recent
+            version, unless otherwise specified.
+            If the recipe in question has a
+            <link linkend='var-DEFAULT_PREFERENCE'><filename>DEFAULT_PREFERENCE</filename></link>
+            set lower than
+            the other recipes (default is 0), then it will not be
+            selected.
+            This allows the person or persons maintaining
+            the repository of recipe files to specify
+            their preference for the default selected version.
+            In addition, the user can specify their preferred version.
+        </para>
+
+        <para>
+            If the first recipe is named <filename>a_1.1.bb</filename>,
+            then the
+            <link linkend='var-PN'><filename>PN</filename></link> variable
+            will be set to “a”, and the
+            <link linkend='var-PV'><filename>PV</filename></link>
+            variable will be set to 1.1.
+        </para>
+
+        <para>
+            If we then have a recipe named <filename>a_1.2.bb</filename>, BitBake
+            will choose 1.2 by default.
+            However, if we define the following variable in a
+            <filename>.conf</filename> file that BitBake parses, we
+            can change that.
+            <literallayout class='monospaced'>
+     PREFERRED_VERSION_a = "1.1"
+            </literallayout>
         </para>
     </section>
 
@@ -422,7 +528,20 @@
             compile timestamp for a given target, then the compile task would rerun.
             Running the compile task again, however, has no effect on other providers
             that depend on that target.
-            This behavior could change or become configurable in future versions of BitBake.
+        </para>
+
+        <para>
+            The exact format of the stamps is partly configurable.
+            In modern versions of BitBake, a hash is appended to the
+            stamp so that if the configuration changes, the stamp becomes
+            invalid and the task is automatically rerun.
+            This hash, or signature used, is governed by the signature policy
+            that is configured (see the
+            "<link linkend='checksums'>Checksums (Signatures)</link>"
+            section for information).
+            It is also possible to append extra metadata to the stamp using
+            the "stamp-extra-info" task flag.
+            For example, OpenEmbedded uses this flag to make some tasks machine-specific.
         </para>
 
         <note>
@@ -462,7 +581,12 @@
         </para>
 
         <para>
-            Variables specific to scheduling functionality exist:
+            The order in which BitBake runs the tasks is controlled by its
+            task scheduler.
+            It is possible to configure the scheduler and define custom
+            implementations for specific use cases.
+            For more information, see these variables that control the
+            behavior:
             <itemizedlist>
                 <listitem><para>
                     <link linkend='var-BB_SCHEDULER'><filename>BB_SCHEDULER</filename></link>
@@ -471,22 +595,10 @@
                     <link linkend='var-BB_SCHEDULERS'><filename>BB_SCHEDULERS</filename></link>
                     </para></listitem>
             </itemizedlist>
-        </para>
-    </section>
-
-    <section id='setscene'>
-        <title>Setscene</title>
-
-        <para>
-            This section needs to get the concept of the setscene across.
-            The reader needs to know what it is and what it is used for during
-            the build process.
-        </para>
-
-        <para>
-            You can find more information on setscene metadata in the
-            "<link linkend='task-checksums-and-setscene'>Task Checksums and Setscene</link>"
-            section.
+            It is possible to have functions run before and after a task's main
+            function.
+            This is done using the "prefuncs" and "postfuncs" flags of the task
+            that lists the functions to run.
         </para>
     </section>
 
@@ -495,10 +607,10 @@
 
         <para>
             A checksum is a unique signature of a task's inputs.
-            The setscene code uses a checksum to determine if a task needs
-            to be run.
+            The signature of a task can be used to determine if a task
+            needs to be run.
             Because it is a change in a task's inputs that triggers running
-            the task, the process needs to detect all the inputs to a given task.
+            the task, BitBake needs to detect all the inputs to a given task.
             For shell tasks, this turns out to be fairly easy because
             BitBake generates a "run" shell script for each task and
             it is possible to create a checksum that gives you a good idea of when
@@ -514,6 +626,10 @@
             affect the output for target packages.
             The simplistic approach for excluding the working directory is to set
             it to some fixed value and create the checksum for the "run" script.
+            BitBake goes one step better and uses the
+            <link linkend='var-BB_HASHBASE_WHITELIST'><filename>BB_HASHBASE_WHITELIST</filename></link>
+            variable to define a list of variables that should never be included
+            when generating the signatures.
         </para>
 
         <para>
@@ -648,6 +764,89 @@
 
         <para>
             You can find more information on checksum metadata in the
+            "<link linkend='task-checksums-and-setscene'>Task Checksums and Setscene</link>"
+            section.
+        </para>
+    </section>
+
+    <section id='setscene'>
+        <title>Setscene</title>
+
+        <para>
+            The setscene process enables BitBake to handle "pre-built" artifacts.
+            The ability to handle and reuse these artifacts allows BitBake
+            the luxury of not having to build something from scratch every time.
+            Instead, BitBake can use, when possible, existing build artifacts.
+        </para>
+
+        <para>
+            BitBake needs to have reliable data indicating whether or not an
+            artifact is compatible.
+            Signatures, described in the previous section, provide an ideal
+            way of representing whether an artifact is compatible.
+            If a signature is the same, an object can be reused.
+        </para>
+
+        <para>
+            If an object can be reused, the problem then becomes how to
+            replace a given task or set of tasks with the pre-built artifact.
+            BitBake solves the problem with the "setscene" process.
+        </para>
+
+        <para>
+            When BitBake is asked to build a given target, before building anything,
+            it first asks whether cached information is available for any of the
+            targets it's building, or any of the intermediate targets.
+            If cached information is available, BitBake uses this information instead of
+            running the main tasks.
+        </para>
+
+        <para>
+            BitBake first calls the function defined by the
+            <link linkend='var-BB_HASHCHECK_FUNCTION'><filename>BB_HASHCHECK_FUNCTION</filename></link>
+            variable with a list of tasks and corresponding
+            hashes it wants to build.
+            This function is designed to be fast and returns a list
+            of the tasks for which it believes in can obtain artifacts.
+        </para>
+
+        <para>
+            Next, for each of the tasks that were returned as possibilities,
+            BitBake executes a setscene version of the task that the possible
+            artifact covers.
+            Setscene versions of a task have the string "_setscene" appended to the
+            task name.
+            So, for example, the task with the name <filename>xxx</filename> has
+            a setscene task named <filename>xxx_setscene</filename>.
+            The setscene version of the task executes and provides the necessary
+            artifacts returning either success or failure.
+            <note>
+                Artifacts might need to be fetched from the network.
+            </note>
+        </para>
+
+        <para>
+            As previously mentioned, an artifact can cover more than one task.
+            For example, it is pointless to obtain a compiler if you
+            already have the compiled binary.
+            To handle this, BitBake calls the
+            <link linkend='var-BB_SETSCENE_DEPVALID'><filename>BB_SETSCENE_DEPVALID</filename></link>
+            function for each successful setscene task to know whether or not it needs
+            to obtain the dependencies of that task.
+        </para>
+
+        <para>
+            Finally, after all the setscene tasks have executed, BitBake calls the
+            function listed in
+            <link linkend='var-BB_SETSCENE_VERIFY_FUNCTION'><filename>BB_SETSCENE_VERIFY_FUNCTION</filename></link>
+            with the list of tasks BitBake thinks has been "covered".
+            The metadata can then ensure that this list is correct and can
+            inform BitBake that it wants specific tasks to be run regardless
+            of the setscene result.
+        </para>
+
+        <para>
+            You can find more information on setscene metadata in the
             "<link linkend='task-checksums-and-setscene'>Task Checksums and Setscene</link>"
             section.
         </para>

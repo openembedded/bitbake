@@ -388,16 +388,15 @@
         <glossentry id='var-BB_HASHCONFIG_WHITELIST'><glossterm>BB_HASHCONFIG_WHITELIST</glossterm>
             <glossdef>
                 <para>
-                    Lists variables that are excluded from checksum
-                    comparisons to determine if the cache can be reused.
+                    Lists variables that are excluded from base configuration
+                    checksum, which is used to determine if the cache can
+                    be reused.
                 </para>
 
                 <para>
                     One of the ways BitBake determines whether to re-parse the
                     main metadata is through checksums of the variables in the
-                    datastore of the base configuration data (see the
-                    <link linkend='var-BB_HASHBASE_WHITELIST'><filename>BB_HASHBASE_WHITELIST</filename></link>
-                    variable).
+                    datastore of the base configuration data.
                     There are variables that you typically want to exclude when
                     checking whether or not to re-parse and thus rebuild the
                     cache.

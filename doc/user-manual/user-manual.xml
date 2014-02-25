@@ -81,8 +81,6 @@
 
     <xi:include href="user-manual-fetching.xml"/>
 
-    <xi:include href="user-manual-bitbakecommand.xml"/>
-
     <xi:include href="user-manual-ref-variables.xml"/>
 
     <xi:include href="user-manual-hello.xml"/>

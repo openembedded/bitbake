@@ -819,6 +819,20 @@
             </para>
         </section>
 
+        <section id='deleting-a-task'>
+            <title>Deleting a Task</title>
+
+            <para>
+                As well as being able to add tasks, tasks can also be deleted.
+                This is done simply with <filename>deltask</filename> command.
+                For example, to delete the example task used in the previous
+                sections, you would use:
+                <literallayout class='monospaced'>
+     deltask printdate
+                </literallayout>
+            </para>
+        </section>
+
         <section id='passing-information-into-the-build-task-environment'>
             <title>Passing Information Into the Build Task Environment</title>
 
@@ -866,6 +880,28 @@
                             ignores the dependency when it creates checksums.
                         </note></para></listitem>
                 </orderedlist>
+            </para>
+
+            <para>
+                Sometimes, its useful to be able to obtain information
+                from the original execution environment.
+                Bitbake saves a copy of the original environment into
+                a special variable named
+                <link linkend='var-BB_ORIGENV'><filename>BB_ORIGENV</filename></link>.
+            </para>
+
+            <para>
+                The <filename>BB_ORIGENV</filename> variable returns a datastore
+                object that can be queried using the standard datastore operators
+                such as <filename>getVar()</filename>.
+                The datastore object is useful, for example, to find the original
+                <filename>DISPLAY</filename> variable.
+            </para>
+
+            <para>
+                By default, BitBake cleans the environment to include only those
+                things exported or listed in its whitelist to ensure that the build
+                environment is reproducible and consistent.
             </para>
         </section>
     </section>
@@ -975,6 +1011,17 @@
                     "<link linkend='inter-task-dependencies'>Inter-Task Dependencies</link>"
                     section for more information.
                     </para></listitem>
+                <listitem><para><emphasis>postfuncs:</emphasis>
+                    List of functions to call after the completion of the task.
+                    </para></listitem>
+                <listitem><para><emphasis>prefuncs:</emphasis>
+                    List of functions to call before the task executes.
+                    </para></listitem>
+                <listitem><para><emphasis>stamp-extra-info:</emphasis>
+                    Extra stamp information to append to the task's stamp
+                    As an example, OpenEmbedded uses this flag to allow
+                    machine-specific tasks.
+                    </para></listitem>
             </itemizedlist>
         </para>
     </section>
@@ -1016,7 +1063,7 @@
         </para>
 
         <para>
-            During all builds, the following common events occur:
+            During a standard build, the following common events might occur:
             <itemizedlist>
                 <listitem><para>
                     <filename>bb.event.ConfigParsed()</filename>
@@ -1100,7 +1147,19 @@
             <link linkend='var-BBCLASSEXTEND'><filename>BBCLASSEXTEND</filename></link>
             and
             <link linkend='var-BBVERSIONS'><filename>BBVERSIONS</filename></link>
-            variables:
+            variables.
+            <note>
+                The mechanism for this class extension is extremely
+                specific to the implementation.
+                Usually, the recipe's
+                <link linkend='var-PROVIDES'><filename>PROVIDES</filename></link>,
+                <link linkend='var-PN'><filename>PN</filename></link>, and
+                <link linkend='var-DEPENDS'><filename>DEPENDS</filename></link>
+                variables would need to be modified by the extension class.
+                For specific examples, see the OE-Core
+                <filename>native</filename>, <filename>nativesdk</filename>,
+                and <filename>multilib</filename> classes.
+            </note>
             <itemizedlist>
                 <listitem><para><emphasis><filename>BBCLASSEXTEND</filename>:</emphasis>
                     This variable is a space separated list of classes used to "extend" the

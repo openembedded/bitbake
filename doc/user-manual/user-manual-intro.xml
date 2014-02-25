@@ -322,6 +322,29 @@
                 Information in append files overrides the information in the
                 similarly-named recipe file.
             </para>
+
+            <para>
+                When you name an append file, you can use the
+                wildcard character (%) to allow for matching recipe names.
+                For example, suppose you have an append file named
+                as follows:
+                <literallayout class='monospaced'>
+     busybox_1.21.%.bbappend
+                </literallayout>
+                That append file would match any <filename>busybox_1.21.x.bb</filename>
+                version of the recipe.
+                So, the append file would match the following recipe names:
+                <literallayout class='monospaced'>
+     busybox_1.21.1.bb
+     busybox_1.21.2.bb
+     busybox_1.21.3.bb
+                </literallayout>
+                If the <filename>busybox</filename> recipe was updated to
+                <filename>busybox_1.3.0.bb</filename>, the append name would not
+                match.
+                However, if you named the append file
+                <filename>busybox_1.%.bb</filename>, then you would have a match.
+            </para>
         </section>
     </section>
 
@@ -373,7 +396,13 @@
                 <listitem><para><emphasis>Taking a snapshot of BitBake:</emphasis>
                     Downloading a snapshot of BitBake from the
                     source code repository gives you access to a known
-                    branch or release of BitBake.</para>
+                    branch or release of BitBake.
+                    <note>
+                         Cloning the Git repository, as described earlier,
+                         is the preferred method for getting BitBake.
+                         Cloning the repository makes it easier to update as
+                         patches are added to the stable branches.
+                    </note></para>
                     <para>The following example downloads a snapshot of
                     BitBake version 1.17.0:
                     <literallayout class='monospaced'>
@@ -386,5 +415,224 @@
                     </para></listitem>
             </itemizedlist>
         </para>
+    </section>
+
+    <section id="user-manual-command">
+        <title>The BitBake Command</title>
+
+        <para>
+            BitBake is the underlying piece of the build system.
+            Two excellent examples are the Yocto Project and the OpenEmbedded
+            build systems.
+            Each provide an environment in which to develop embedded Linux
+            images, and each use BitBake as their underlying build engine.
+        </para>
+
+        <para>
+            BitBake facilitates executing tasks in a single <filename>.bb</filename>
+            file, or executing a given task on a set of multiple
+            <filename>.bb</filename> files, accounting for interdependencies
+            amongst them.
+            This section presents the BitBake syntax and provides some execution
+            examples.
+        </para>
+
+        <section id='usage-and-syntax'>
+            <title>Usage and syntax</title>
+
+            <para>
+                Following is the usage and syntax for BitBake:
+                <literallayout class='monospaced'>
+     $ bitbake -h
+Usage: bitbake [options] [recipename/target ...]
+
+    Executes the specified task (default is 'build') for a given set of target recipes (.bb files).
+    It is assumed there is a conf/bblayers.conf available in cwd or in BBPATH which
+    will provide the layer, BBFILES and other configuration information.
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -b BUILDFILE, --buildfile=BUILDFILE
+                        Execute tasks from a specific .bb recipe directly.
+                        WARNING: Does not handle any dependencies from other
+                        recipes.
+  -k, --continue        Continue as much as possible after an error. While the
+                        target that failed and anything depending on it cannot
+                        be built, as much as possible will be built before
+                        stopping.
+  -a, --tryaltconfigs   Continue with builds by trying to use alternative
+                        providers where possible.
+  -f, --force           Force the specified targets/task to run (invalidating
+                        any existing stamp file).
+  -c CMD, --cmd=CMD     Specify the task to execute. The exact options
+                        available depend on the metadata. Some examples might
+                        be 'compile' or 'populate_sysroot' or 'listtasks' may
+                        give a list of the tasks available.
+  -C INVALIDATE_STAMP, --clear-stamp=INVALIDATE_STAMP
+                        Invalidate the stamp for the specified task such as
+                        'compile' and then run the default task for the
+                        specified target(s).
+  -r PREFILE, --read=PREFILE
+                        Read the specified file before bitbake.conf.
+  -R POSTFILE, --postread=POSTFILE
+                        Read the specified file after bitbake.conf.
+  -v, --verbose         Output more log message data to the terminal.
+  -D, --debug           Increase the debug level. You can specify this more
+                        than once.
+  -n, --dry-run         Don't execute, just go through the motions.
+  -S, --dump-signatures
+                        Don't execute, just dump out the signature
+                        construction information.
+  -p, --parse-only      Quit after parsing the BB recipes.
+  -s, --show-versions   Show current and preferred versions of all recipes.
+  -e, --environment     Show the global or per-package environment complete
+                        with information about where variables were
+                        set/changed.
+  -g, --graphviz        Save dependency tree information for the specified
+                        targets in the dot syntax.
+  -I EXTRA_ASSUME_PROVIDED, --ignore-deps=EXTRA_ASSUME_PROVIDED
+                        Assume these dependencies don't exist and are already
+                        provided (equivalent to ASSUME_PROVIDED). Useful to
+                        make dependency graphs more appealing
+  -l DEBUG_DOMAINS, --log-domains=DEBUG_DOMAINS
+                        Show debug logging for the specified logging domains
+  -P, --profile         Profile the command and save reports.
+  -u UI, --ui=UI        The user interface to use (e.g. knotty, hob, depexp).
+  -t SERVERTYPE, --servertype=SERVERTYPE
+                        Choose which server to use, process or xmlrpc.
+  --revisions-changed   Set the exit code depending on whether upstream
+                        floating revisions have changed or not.
+  --server-only         Run bitbake without a UI, only starting a server
+                        (cooker) process.
+  -B BIND, --bind=BIND  The name/address for the bitbake server to bind to.
+  --no-setscene         Do not run any setscene tasks. sstate will be ignored
+                        and everything needed, built.
+  --remote-server=REMOTE_SERVER
+                        Connect to the specified server.
+  -m, --kill-server     Terminate the remote server.
+  --observe-only        Connect to a server as an observing-only client.
+  --status-only         Check the status of the remote bitbake server.
+
+                </literallayout>
+            </para>
+        </section>
+
+        <section id='bitbake-examples'>
+            <title>Examples</title>
+
+            <para>
+                This section presents some examples showing how to use BitBake.
+            </para>
+
+            <section id='example-executing-a-task-against-a-single-recipe'>
+                <title>Executing a Task Against a Single Recipe</title>
+
+                <para>
+                    Executing tasks for a single recipe file is relatively simple.
+                    You specify the file in question, and BitBake parses
+                    it and executes the specified task.
+                    If you do not specify a task, BitBake executes the default
+                    task, which is "build”.
+                    BitBake obeys inter-task dependencies when doing
+                    so.
+                </para>
+
+                <para>
+                    The following command runs the clean task on the
+                    <filename>foo_1.0.bb</filename> recipe file:
+                    <literallayout class='monospaced'>
+     $ bitbake -b foo.bb -c clean
+                    </literallayout>
+                    The following command runs the build task, which is
+                    the default task, on the <filename>foo_1.0.bb</filename>
+                    recipe file:
+                    <literallayout class='monospaced'>
+     $ bitbake -b foo_1.0.bb
+                    </literallayout>
+                </para>
+            </section>
+
+            <section id='executing-tasks-against-a-set-of-recipe-files'>
+                <title>Executing Tasks Against a Set of Recipe Files</title>
+
+                <para>
+                    There are a number of additional complexities introduced
+                    when one wants to manage multiple <filename>.bb</filename>
+                    files.
+                    Clearly there needs to be a way to tell BitBake what
+                    files are available, and of those, which you
+                    want to execute.
+                    There also needs to be a way for each recipe
+                    to express its dependencies, both for build-time and
+                    runtime.
+                    There must be a way for you to express recipe preferences
+                    when multiple recipes provide the same functionality, or when
+                    there are multiple versions of a  recipe.
+                </para>
+
+                <para>
+                    The <filename>bitbake</filename> command, when not using
+                    "--buildfile" or "-b" only accepts a "PROVIDER".
+                    You cannot provide anything else.
+                    By default, a recipe file generally "PROVIDES" its
+                    "packagename", "packagename-version", and
+                    "packagename-version-revision" as shown in the following
+                    example:
+                    <literallayout class='monospaced'>
+     $ bitbake foo
+
+     $ bitbake foo-1.0
+
+     $ bitbake foo-1.0-r0
+                    </literallayout>
+                    This next example "PROVIDES" the package name and also uses
+                    the "-c" option to tell BitBake to just execute the
+                    <filename>do_clean</filename> task:
+                    <literallayout class='monospaced'>
+     $ bitbake -c clean foo
+                    </literallayout>
+                </para>
+            </section>
+
+            <section id='generating-dependency-graphs'>
+                <title>Generating Dependency Graphs</title>
+
+                <para>
+                    BitBake is able to generate dependency graphs using
+                    the dot syntax.
+                    You can convert these graphs into images using the dot
+                    application from
+                    <ulink url='http://www.graphviz.org'>Graphviz</ulink>.
+                </para>
+
+                <para>
+                    When you generate a dependency graph, BitBake writes two files
+                    to the current working directory:
+                    <filename>depends.dot</filename>, which contains dependency information
+                    at the package level, and <filename>task-depends.dot</filename>,
+                    which contains a breakdown of the dependencies at the task level.
+                </para>
+
+                <para>
+                    To stop depending on common depends, use use the "-I" depend
+                    option and BitBake omits them from the graph.
+                    Leaving this information out can produce more readable graphs.
+                    This way, you can remove from the graph
+                    <filename>DEPENDS</filename> from inherited classes
+                    such as <filename>base.bbclass</filename>.
+                </para>
+
+                <para>
+                    Here are two examples that create dependency graphs.
+                    The second example omits common depends from the graph:
+                    <literallayout class='monospaced'>
+     $ bitbake -g foo
+
+     $ bitbake -g -I virtual/whatever -I bloom foo
+                    </literallayout>
+                </para>
+            </section>
+        </section>
     </section>
 </chapter>
