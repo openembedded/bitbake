@@ -173,7 +173,7 @@ def exec_func(func, d, dirs = None):
 
     lockflag = flags.get('lockfiles')
     if lockflag:
-        lockfiles = [d.expand(f) for f in lockflag.split()]
+        lockfiles = [f for f in d.expand(lockflag).split()]
     else:
         lockfiles = None
 
