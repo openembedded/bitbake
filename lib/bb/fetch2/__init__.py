@@ -1527,7 +1527,6 @@ from . import gitannex
 from . import local
 from . import svn
 from . import wget
-from . import svk
 from . import ssh
 from . import sftp
 from . import perforce
@@ -1543,7 +1542,6 @@ methods.append(git.Git())
 methods.append(gitsm.GitSM())
 methods.append(gitannex.GitANNEX())
 methods.append(cvs.Cvs())
-methods.append(svk.Svk())
 methods.append(ssh.SSH())
 methods.append(sftp.SFTP())
 methods.append(perforce.Perforce())
