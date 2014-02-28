@@ -89,7 +89,7 @@ class Perforce(FetchMethod):
         elif p4date:
             depot += "@%s" % (p4date)
 
-        p4cmd = data.getVar('FETCHCOMMAND_p4', d, True)
+        p4cmd = data.getVar('FETCHCMD_p4', d, True)
         logger.debug(1, "Running %s%s changes -m 1 %s", p4cmd, p4opt, depot)
         p4file, errors = bb.process.run("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
         cset = p4file.strip()
@@ -134,10 +134,6 @@ class Perforce(FetchMethod):
 
         module = parm.get('module', os.path.basename(path))
 
-        localdata = data.createCopy(d)
-        data.setVar('OVERRIDES', "p4:%s" % data.getVar('OVERRIDES', localdata), localdata)
-        data.update_data(localdata)
-
         # Get the p4 command
         p4opt = ""
         if user:
@@ -149,13 +145,13 @@ class Perforce(FetchMethod):
         if host:
             p4opt += " -p %s" % (host)
 
-        p4cmd = data.getVar('FETCHCOMMAND', localdata, True)
+        p4cmd = data.getVar('FETCHCMD_p4', d, True)
 
         # create temp directory
         logger.debug(2, "Fetch: creating temporary directory")
-        bb.utils.mkdirhier(data.expand('${WORKDIR}', localdata))
-        data.setVar('TMPBASE', data.expand('${WORKDIR}/oep4.XXXXXX', localdata), localdata)
-        tmpfile, errors = bb.process.run(data.getVar('MKTEMPDIRCMD', localdata, True) or "false")
+        bb.utils.mkdirhier(d.expand('${WORKDIR}'))
+        mktemp = d.getVar("FETCHCMD_p4mktemp", True) or d.expand("mktemp -d -q '${WORKDIR}/oep4.XXXXXX'")
+        tmpfile, errors = bb.process.run(mktemp)
         tmpfile = tmpfile.strip()
         if not tmpfile:
             raise FetchError("Fetch: unable to create temporary directory.. make sure 'mktemp' is in the PATH.", ud.url)
