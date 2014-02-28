@@ -72,12 +72,10 @@ class Svk(FetchMethod):
             svkcmd = "svk co -r %s %s/%s" % (ud.revision, svkroot, ud.module)
 
         # create temp directory
-        localdata = data.createCopy(d)
-        data.update_data(localdata)
         logger.debug(2, "Fetch: creating temporary directory")
-        bb.utils.mkdirhier(data.expand('${WORKDIR}', localdata))
-        data.setVar('TMPBASE', data.expand('${WORKDIR}/oesvk.XXXXXX', localdata), localdata)
-        tmpfile, errors = bb.process.run(data.getVar('MKTEMPDIRCMD', localdata, True) or "false")
+        bb.utils.mkdirhier(d.expand('${WORKDIR}'))
+        mktemp = d.getVar("FETCHCMD_svkmktemp", True) or d.expand("mktemp -d -q '${WORKDIR}/oesvk.XXXXXX'")
+        tmpfile, errors = bb.process.run(mktemp)
         tmpfile = tmpfile.strip()
         if not tmpfile:
             logger.error()
