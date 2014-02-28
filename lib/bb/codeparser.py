@@ -186,7 +186,7 @@ class PythonParser():
             if n.__class__.__name__ == "Call":
                 self.visit_Call(n)
 
-        self.references.update(self.var_execs)
+        self.execs.update(self.var_execs)
 
         codeparsercache.pythoncacheextras[h] = {}
         codeparsercache.pythoncacheextras[h]["refs"] = self.references

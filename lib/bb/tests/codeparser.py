@@ -236,7 +236,8 @@ be. These unit tests are testing snippets."""
             self.d.setVar("do_something", "echo 'hi mom! ${FOO}'")
             self.d.setVarFlag("do_something", etype, True)
             self.parseExpression("bb.build.exec_func('do_something', d)")
-            self.assertReferences(set(["do_something"]))
+            self.assertReferences(set([]))
+            self.assertExecs(set(["do_something"]))
 
     def test_function_reference(self):
         self.context["testfunc"] = lambda msg: bb.msg.note(1, None, msg)
