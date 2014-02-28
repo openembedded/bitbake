@@ -69,12 +69,12 @@ class Wget(FetchMethod):
             basecmd += " -O " + dldir + os.sep + ud.localfile
 
         if checkonly:
-            fetchcmd = d.getVar("CHECKCOMMAND_wget", True) or d.expand(basecmd + " --spider '${URI}'")
+            fetchcmd = d.expand(basecmd + " --spider '${URI}'")
         elif os.path.exists(ud.localpath):
             # file exists, but we didnt complete it.. trying again..
-            fetchcmd = d.getVar("RESUMECOMMAND_wget", True) or d.expand(basecmd + " -c -P ${DL_DIR} '${URI}'")
+            fetchcmd = d.expand(basecmd + " -c -P ${DL_DIR} '${URI}'")
         else:
-            fetchcmd = d.getVar("FETCHCOMMAND_wget", True) or d.expand(basecmd + " -P ${DL_DIR} '${URI}'")
+            fetchcmd = d.expand(basecmd + " -P ${DL_DIR} '${URI}'")
 
         uri = ud.url.split(";")[0]
 
