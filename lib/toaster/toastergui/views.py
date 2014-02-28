@@ -733,59 +733,118 @@ def recipes(request, build_id):
 
 def configuration(request, build_id):
     template = 'configuration.html'
-    context = {'build': Build.objects.filter(pk=build_id)[0]}
+
+    variables = Variable.objects.filter(build=build_id)
+    BB_VERSION=variables.filter(variable_name='BB_VERSION')[0].variable_value
+    BUILD_SYS=variables.filter(variable_name='BUILD_SYS')[0].variable_value
+    NATIVELSBSTRING=variables.filter(variable_name='NATIVELSBSTRING')[0].variable_value
+    TARGET_SYS=variables.filter(variable_name='TARGET_SYS')[0].variable_value
+    MACHINE=variables.filter(variable_name='MACHINE')[0].variable_value
+    DISTRO=variables.filter(variable_name='DISTRO')[0].variable_value
+    DISTRO_VERSION=variables.filter(variable_name='DISTRO_VERSION')[0].variable_value
+    TUNE_FEATURES=variables.filter(variable_name='TUNE_FEATURES')[0].variable_value
+    TARGET_FPU=variables.filter(variable_name='TARGET_FPU')[0].variable_value
+
+    targets = Target.objects.filter(build=build_id)
+
+    context = {
+                'objectname': 'configuration',
+                'object_search_display':'variables',
+                'filter_search_display':'variables',
+                'build': Build.objects.filter(pk=build_id)[0],
+                'BB_VERSION':BB_VERSION,
+                'BUILD_SYS':BUILD_SYS,
+                'NATIVELSBSTRING':NATIVELSBSTRING,
+                'TARGET_SYS':TARGET_SYS,
+                'MACHINE':MACHINE,
+                'DISTRO':DISTRO,
+                'DISTRO_VERSION':DISTRO_VERSION,
+                'TUNE_FEATURES':TUNE_FEATURES,
+                'TARGET_FPU':TARGET_FPU,
+                'targets':targets,
+        }
     return render(request, template, context)
 
 
 def configvars(request, build_id):
     template = 'configvars.html'
-    mandatory_parameters = { 'count': 100,  'page' : 1};
+    mandatory_parameters = { 'count': 100,  'page' : 1, 'orderby':'variable_name:+', 'filter':'description__regex:.+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
         return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id = build_id)
 
     (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
-    queryset = Variable.objects.filter(build=build_id)
+    queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
     queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string)
+    # remove duplicate records from multiple search hits in the VariableHistory table
+    queryset = queryset.distinct()
+    # remove records where the value is empty AND there are no history files
+    queryset = queryset.exclude(variable_value='',vhistory__file_name__isnull=True)    
 
     variables = _build_page_range(Paginator(queryset, request.GET.get('count', 50)), request.GET.get('page', 1))
 
+    file_filter= search_term + ":"
+    if filter_string.find('conf/local.conf') > 0:
+        file_filter += 'conf/local.conf'
+    if filter_string.find('conf/machine/') > 0:
+        file_filter += 'conf/machine/'
+    if filter_string.find('conf/distro/') > 0:
+        file_filter += 'conf/distro/'
+    if filter_string.find('/bitbake.conf') > 0:
+        file_filter += '/bitbake.conf'
+    
     context = {
+                'objectname': 'configvars',
+                'object_search_display':'variables',
+                'filter_search_display':'variables',
+                'file_filter': file_filter,
                 'build': Build.objects.filter(pk=build_id)[0],
                 'objects' : variables,
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Variable ',
-                 'qhelp': "Base variable expanded name",
-                 'clclass' : 'variable',
+                 'qhelp': "BitBake is a generic task executor that considers a list of tasks with dependencies and handles metadata that consists of variables in a certain format that get passed to the tasks",
                  'dclass' : "span3",
                  'orderfield': _get_toggle_order(request, "variable_name"),
+                 'ordericon':_get_toggle_order_icon(request, "variable_name"),
                 },
                 {'name': 'Value ',
                  'qhelp': "The value assigned to the variable",
-                 'clclass': 'variable_value',
                  'dclass': "span4",
                  'orderfield': _get_toggle_order(request, "variable_value"),
+                 'ordericon':_get_toggle_order_icon(request, "variable_value"),
                 },
-                {'name': 'Configuration file(s) ',
-                 'qhelp': "The configuration file(s) that touched the variable value",
-                 'clclass': 'file',
+                {'name': 'Set in file',
+                 'qhelp': "The last configuration file that touched the variable value",
+                 'clclass': 'file', 'hidden' : 0,
                  'dclass': "span6",
-                 'orderfield': _get_toggle_order(request, "variable_vhistory__file_name"),
-                 'filter' : { 'class': 'file', 'label' : 'Show only', 'options' : {
-                        }
-                 }
+                 'orderfield': _get_toggle_order(request, "vhistory__file_name"),
+                 'ordericon':_get_toggle_order_icon(request, "vhistory__file_name"),
+                 'filter' : {
+                    'class' : 'vhistory__file_name',
+                    'label': 'Show:',
+                    'options' : [
+                               ('Local configuration variables', 'vhistory__file_name__contains:conf/local.conf'),
+                               ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/'),
+                               ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/'),
+                               ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf'),
+                               ('bitbake.conf variables', 'vhistory__file_name__contains:/bitbake.conf'),
+                               ]
+                             },
                 },
                 {'name': 'Description ',
-                 'qhelp': "A brief explanation of a variable",
-                 'clclass': 'description',
+                 'qhelp': "A brief explanation of the variable",
+                 'clclass': 'description', 'hidden' : 0,
                  'dclass': "span5",
-                 'orderfield': _get_toggle_order(request, "description"),
-                 'filter' : { 'class' : 'description', 'label' : 'No', 'options' : {
-                        }
-                 },
-                }
-                ]
+                 'filter' : {
+                    'class' : 'description',
+                    'label': 'Show:',
+                    'options' : [
+                               ('Variables with description', 'description__regex:.+'),
+                               ]
+                            },
+                },
+                ],
             }
 
     return render(request, template, context)

@@ -129,3 +129,62 @@ def check_filter_status(options, filter):
         if filter == option[1]:
             return ""
     return "checked"
+
+@register.filter
+def variable_parent_name(value):
+    """ filter extended variable names to the parent name
+    """
+    value=re.sub('_\$.*', '', value)
+    return re.sub('_[a-z].*', '', value)
+  
+@register.filter
+def filter_setin_files(file_list,matchstr):
+    """ filter/search the 'set in' file lists. Note
+        that this output is not autoescaped to allow
+        the <p> marks, but this is safe as the data
+        is file paths
+    """
+   
+    # no filters, show last file (if any)
+    if matchstr == ":":
+        if file_list:
+            return file_list[len(file_list)-1].file_name
+        else:
+            return ''
+
+    search, filter = matchstr.partition(':')[::2]
+    htmlstr=""
+    # match only filters
+    if search == '':
+        for i in range(len(file_list)):   
+            if file_list[i].file_name.find(filter) >= 0:
+                htmlstr += file_list[i].file_name + "<p>"
+        return htmlstr
+       
+    # match only search string, plus always last file
+    if filter == "":
+        for i in range(len(file_list)-1):   
+            if file_list[i].file_name.find(search) >= 0:
+                htmlstr += file_list[i].file_name + "<p>"
+        htmlstr += file_list[len(file_list)-1].file_name
+        return htmlstr
+       
+    # match filter or search string
+    for i in range(len(file_list)):   
+        if (file_list[i].file_name.find(filter) >= 0) or (file_list[i].file_name.find(search) >= 0):
+            htmlstr += file_list[i].file_name + "<p>"
+    return htmlstr
+
+
+@register.filter
+def string_slice(strvar,slicevar):
+    """ slice a string with |string_slice:'[first]:[last]'
+    """
+    first,last= slicevar.partition(':')[::2]
+    if first=='':
+        return strvar[:int(last)]
+    elif last=='':
+        return strvar[int(first):]
+    else:
+        return strvar[int(first):int(last)]
+

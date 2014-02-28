@@ -48,6 +48,59 @@ function reload_params(params) {
 
 }
 </script>
+
+<script>
+    $(document).ready(function() {
+        //show or hide selected columns on load
+        $("input:checkbox").each(function(){
+            var selectedType = $(this).val();
+            if($(this).is(":checked")){
+                $("."+selectedType).show();
+            }
+            else{
+                $("."+selectedType).hide();
+            }
+        });
+        //edit columns functionality (show / hide table columns)
+        $("input:checkbox").change();
+            $("input:checkbox").change(function(){
+                var selectedType = $(this).val();
+                    if($(this).is(":checked")){
+                        $("."+selectedType).show();
+                    }
+                    else{
+                        $("."+selectedType).hide();
+                    }
+            });
+        //turn edit columns dropdown into a multi-select menu
+        $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
+            e.stopPropagation();
+        });
+        //show help information inside modal dialogs
+        $("#filter-variables i").tooltip({ html: true, delay: {show: 500} });
+        //show applied filter tooltip
+        $('.filtered').tooltip({container:'body', placement:'bottom', delay:{hide:1500}, html:true});
+        //hide the applied filter tooltip when you click the filter button
+        $('.btn-primary').on('click', function () {
+             $('.tooltip').hide();
+        });
+
+        $('.full-variable, .full-variable-hide').hide();
+        $('.full-variable-show').click(function(){
+            $('.full-variable').slideDown(function(){
+                $('.full-variable-hide').show();
+            });
+            $(this).hide();
+        });
+        $('.full-variable-hide').click(function(){
+            $(this).hide();
+            $('.full-variable').slideUp(function(){
+                $('.full-variable-show').show();
+            });
+        });
+     });
+</script>
+
     </head>
 
 <body style="height: 100%">

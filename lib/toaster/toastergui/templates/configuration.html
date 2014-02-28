@@ -3,6 +3,8 @@
 <li>Configuration</li>
 {% endblock %}
 
+{% load projecttags %}
+
 {% block buildinfomain %}
 <!-- page title -->
 <div class="row-fluid span10">
@@ -22,15 +24,19 @@
   <div id="summary" class="tab-pane active">
     <h3>Build configuration</h3>
     <dl class="dl-horizontal">
-      <dt>BitBake version</dt><dd>1.19.1</dd>
-      <dt>Build system</dt><dd>x86_64-linux</dd>
-      <dt>Host distribution</dt><dd>Ubuntu-12.04</dd>
-      <dt>Target system</dt><dd>i586-poky-linux</dd>
-      <dt><i class="icon-question-sign get-help" data-toggle="tooltip" title="Specifies the target device for which the image is built"></i> Machine</dt><dd>atom-pc</dd>
-      <dt><i class="icon-question-sign get-help" data-toggle="tooltip" title="The short name of the distribution"></i> Distro</dt><dd>poky</dd>
-      <dt>Distro version</dt><dd>1.4+snapshot-20130718</dd>
-      <dt>Tune features</dt><dd>m32 i586</dd>
-      <dt>Target(s)</dt><dd>core-image-sato</dd>
+      {%if BB_VERSION %}<dt>BitBake version</dt><dd>{{BB_VERSION}}</dd> {% endif %}
+      {%if BUILD_SYS %}<dt>Build system</dt><dd>{{BUILD_SYS}}</dd> {% endif %}
+      {%if NATIVELSBSTRING %}<dt>Host distribution</dt><dd>{{NATIVELSBSTRING}}</dd> {% endif %}
+      {%if TARGET_SYS %}<dt>Target system</dt><dd>{{TARGET_SYS}}</dd> {% endif %}
+      {%if MACHINE %}<dt>Machine</dt><dd>{{MACHINE}}</dd> {% endif %}
+      {%if DISTRO %}<dt>Distro</dt><dd>{{DISTRO}}</dd> {% endif %}
+      {%if DISTRO_VERSION %}<dt>Distro version</dt><dd>{{DISTRO_VERSION}}</dd> {% endif %}
+      {%if TUNE_FEATURES %}<dt>Tune features</dt><dd>{{TUNE_FEATURES}}</dd> {% endif %}
+      {%if TARGET_FPU %}<dt>Target FPU</dt><dd>{{TARGET_FPU}}</dd> {% endif %}
+      {%if targets.all %}<dt>Target(s)</dt>
+          <dd> <ul> {% for target in targets.all %}
+               <li>{{target.target}}{%if forloop.counter > 1 %}<br>{% endif %}</li>
+          {% endfor %} </ul> </dd> {% endif %}
     </dl>
     <h3>Layers</h3>
     <div class="span9" style="margin-left:0px;">
@@ -45,7 +51,13 @@
       </thead>
       <tbody>{% for lv in build.layer_version_build.all %}
         <tr>
-            <td>{{lv.layer.name}}<a href="{{lv.layer.layer_index_url}}" target="_blank">&nbsp;<i class="icon-share get-info"></i></a></td><td>{{lv.branch}}</td><td class="layer_commit"><a data-content="{{lv.commit}}" title="" href="#" class="btn" data-original-title="">{{lv.commit|slice:":8"}}...</a></td><td>{{lv.layer.local_path}}</td>
+            <td>{{lv.layer.name}}</td>
+            <td>{{lv.branch}}</td>
+            <td> <a class="btn" data-content="<ul class='unstyled'>
+                <li>{{lv.commit}}</li> </ul>">
+                    {{lv.commit|truncatechars:13}}
+                </a></td>
+            <td>{{lv.layer.local_path}}</td>
         </tr>{% endfor %}
       </tbody>
     </table>
