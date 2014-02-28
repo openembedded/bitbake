@@ -317,22 +317,30 @@ class Git(FetchMethod):
         """
         return "git:" + ud.host + ud.path.replace('/', '.') + ud.unresolvedrev[name]
 
-    def _latest_revision(self, ud, d, name):
+    def _lsremote(self, ud, d, search):
         """
-        Compute the HEAD revision for the url
+        Run git ls-remote with the specified search string
         """
         if ud.user:
             username = ud.user + '@'
         else:
             username = ""
 
-        cmd = "%s ls-remote %s://%s%s%s refs/heads/%s refs/tags/%s^{}" % \
-              (ud.basecmd, ud.proto, username, ud.host, ud.path, ud.unresolvedrev[name], ud.unresolvedrev[name])
+        cmd = "%s ls-remote %s://%s%s%s %s" % \
+              (ud.basecmd, ud.proto, username, ud.host, ud.path, search)
         if ud.proto.lower() != 'file':
             bb.fetch2.check_network_access(d, cmd)
         output = runfetchcmd(cmd, d, True)
         if not output:
             raise bb.fetch2.FetchError("The command %s gave empty output unexpectedly" % cmd, ud.url)
+        return output
+
+    def _latest_revision(self, ud, d, name):
+        """
+        Compute the HEAD revision for the url
+        """
+        search = "refs/heads/%s refs/tags/%s^{}" % (ud.unresolvedrev[name], ud.unresolvedrev[name])
+        output = self._lsremote(ud, d, search)
         return output.split()[0]
 
     def _build_revision(self, ud, d, name):
