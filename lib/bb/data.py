@@ -295,7 +295,7 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             return deps, value
-        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "postfuncs", "prefuncs"]) or {}
+        varflags = d.getVarFlags(key, ["vardeps", "vardepvalue", "vardepsexclude", "vardepvalueexclude", "postfuncs", "prefuncs"]) or {}
         vardeps = varflags.get("vardeps")
         value = d.getVar(key, False)
 
@@ -344,6 +344,12 @@ def build_dependencies(key, keys, shelldeps, varflagsexcl, d):
             deps |= parser.references
             deps = deps | (keys & parser.execs)
             value = handle_contains(value, parser.contains, d)
+
+        if "vardepvalueexclude" in varflags:
+            exclude = varflags.get("vardepvalueexclude")
+            for excl in exclude.split('|'):
+                if excl:
+                    value = value.replace(excl, '')
 
         # Add varflags, assuming an exclusion list is set
         if varflagsexcl:
