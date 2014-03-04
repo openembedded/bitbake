@@ -883,7 +883,7 @@
             </para>
 
             <para>
-                Sometimes, its useful to be able to obtain information
+                Sometimes, it is useful to be able to obtain information
                 from the original execution environment.
                 Bitbake saves a copy of the original environment into
                 a special variable named
