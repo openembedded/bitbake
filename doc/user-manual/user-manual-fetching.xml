@@ -121,7 +121,6 @@
          hg://.*/.*    http://somemirror.org/sources/ \n \
          osc://.*/.*   http://somemirror.org/sources/ \n \
          p4://.*/.*    http://somemirror.org/sources/ \n \
-         svk://.*/.*   http://somemirror.org/sources/ \n \
          svn://.*/.*   http://somemirror.org/sources/ \n"
 
      MIRRORS =+ "\
@@ -583,9 +582,6 @@ db994d"
                         </para></listitem>
                     <listitem><para>
                         Perforce (<filename>p4://</filename>)
-                        </para></listitem>
-                    <listitem><para>
-                        SVK
                         </para></listitem>
                     <listitem><para>
                         Git Submodules (<filename>gitsm://</filename>)

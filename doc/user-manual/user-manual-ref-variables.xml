@@ -1942,8 +1942,6 @@
                             an OSC (OpenSUSE Build service) revision control repository.</para></listitem>
                         <listitem><para><emphasis><filename>repo://</filename> -</emphasis> Fetches files from
                             a repo (Git) repository.</para></listitem>
-                        <listitem><para><emphasis><filename>svk://</filename> -</emphasis> Fetches files from
-                            an SVK revision control repository.</para></listitem>
                         <listitem><para><emphasis><filename>http://</filename> -</emphasis> Fetches files from
                             the Internet using HTTP.</para></listitem>
                         <listitem><para><emphasis><filename>https://</filename> -</emphasis> Fetches files
