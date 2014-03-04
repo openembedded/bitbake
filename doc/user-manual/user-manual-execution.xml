@@ -167,22 +167,40 @@
             The following list shows common variables set:
             <itemizedlist>
                 <listitem><para>
-                    <link linkend='var-BBDEBUG'><filename>BBDEBUG</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-MULTI_PROVIDER_WHITELIST'><filename>MULTI_PROVIDER_WHITELIST</filename></link>
+                    <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
                     </para></listitem>
                 <listitem><para>
                     <link linkend='var-BB_NUMBER_PARSE_THREADS'><filename>BB_NUMBER_PARSE_THREADS</filename></link>
                     </para></listitem>
                 <listitem><para>
-                    <filename>BBPKGS</filename>
-                    </para></listitem>
-                <listitem><para>
                     <link linkend='var-BB_DEFAULT_TASK'><filename>BB_DEFAULT_TASK</filename></link>
                     </para></listitem>
                 <listitem><para>
+                    <link linkend='var-BBMASK'><filename>BBMASK</filename></link>
+                    </para></listitem>
+                <listitem><para>
+                    <filename>BBPKGS</filename>
+                    </para></listitem>
+                <listitem><para>
                     <link linkend='var-TOPDIR'><filename>TOPDIR</filename></link>
+                    </para></listitem>
+                <listitem><para>
+                    <link linkend='var-ASSUME_PROVIDED'><filename>ASSUME_PROVIDED</filename></link>
+                    </para></listitem>
+                <listitem><para>
+                    <link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link>
+                    </para></listitem>
+                <listitem><para>
+                    <link linkend='var-PREFERRED_PROVIDERS'><filename>PREFERRED_PROVIDERS</filename></link>
+                    </para></listitem>
+                <listitem><para>
+                    <link linkend='var-MULTI_PROVIDER_WHITELIST'><filename>MULTI_PROVIDER_WHITELIST</filename></link>
+                    </para></listitem>
+                <listitem><para>
+                    <link linkend='var-BBFILE_COLLECTIONS'><filename>BBFILE_COLLECTIONS</filename></link>
+                    </para></listitem>
+                <listitem><para>
+                    <link linkend='var-BBDEBUG'><filename>BBDEBUG</filename></link>
                     </para></listitem>
                 <listitem><para>
                     <link linkend='var-BB_VERBOSE_LOGS'><filename>BB_VERBOSE_LOGS</filename></link>
@@ -191,28 +209,11 @@
                     <link linkend='var-BB_NICE_LEVEL'><filename>BB_NICE_LEVEL</filename></link>
                     </para></listitem>
                 <listitem><para>
-                    <link linkend='var-BBFILE_COLLECTIONS'><filename>BBFILE_COLLECTIONS</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-ASSUME_PROVIDED'><filename>ASSUME_PROVIDED</filename></link>
-                    </para></listitem>
-                <listitem><para>
                     <link linkend='var-BB_DANGLINGAPPENDS_WARNONLY'><filename>BB_DANGLINGAPPENDS_WARNONLY</filename></link>
                     </para></listitem>
                 <listitem><para>
                     <link linkend='var-BBINCLUDED'><filename>BBINCLUDED</filename></link>
                     </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BBFILE_PRIORITY'><filename>BBFILE_PRIORITY</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BUILDNAME'><filename>BUILDNAME</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BBMASK'><filename>BBMASK</filename></link>
-                    </para></listitem>
-                <listitem><para><link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link></para></listitem>
-                <listitem><para><link linkend='var-PREFERRED_PROVIDERS'><filename>PREFERRED_PROVIDERS</filename></link></para></listitem>
             </itemizedlist>
         </para>
 
@@ -265,6 +266,10 @@
             BitBake parses each recipe and append file located
             with <filename>BBFILES</filename> and stores the values of
             various variables into the datastore.
+            <note>
+                Append files are applied in the order they are encountered in
+                <filename>BBFILES</filename>.
+            </note>
             For each file, a fresh copy of the base configuration is
             made, then the recipe is parsed line by line.
             Any inherit statements cause BitBake to find and
@@ -305,8 +310,8 @@
             decisions about the recipe.
             Consequently, BitBake caches the values in which it is
             interested and does not store the rest of the information.
-            Experience has shown it's faster to re-parse the metadata than to
-            try and write it out to the disk and reload then it.
+            Experience has shown it is faster to re-parse the metadata than to
+            try and write it out to the disk and then reload it.
         </para>
 
         <para>
@@ -427,10 +432,6 @@
         </para>
 
         <para>
-            In summary, BitBake has created a list of providers, which is prioritized, for each target.
-        </para>
-
-        <para>
             When there are multiple “versions” of a given package,
             BitBake defaults to selecting the most recent
             version, unless otherwise specified.
@@ -463,6 +464,10 @@
             <literallayout class='monospaced'>
      PREFERRED_VERSION_a = "1.1"
             </literallayout>
+        </para>
+
+        <para>
+            In summary, BitBake has created a list of providers, which is prioritized, for each target.
         </para>
     </section>
 
@@ -503,6 +508,12 @@
             Based on the generated list of providers and the dependency information,
             BitBake can now calculate exactly what tasks it needs to run and in what
             order it needs to run them.
+            The
+            "<link linkend='executing-tasks'>Executing Tasks</link>" section has more
+            information on how BitBake chooses which task to execute next.
+        </para>
+
+        <para>
             The build now starts with BitBake forking off threads up to the limit set in the
             <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
             variable.
