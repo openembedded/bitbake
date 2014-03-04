@@ -373,6 +373,8 @@
                     Git metadata, to be placed in the
                     <link linkend='var-DL_DIR'><filename>DL_DIR</filename></link>
                     directory.
+                    Anyone wishing to create a source mirror would want to
+                    enable this variable.
                 </para>
 
                 <para>
