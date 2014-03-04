@@ -896,6 +896,15 @@
                 such as <filename>getVar()</filename>.
                 The datastore object is useful, for example, to find the original
                 <filename>DISPLAY</filename> variable.
+                Here is an example:
+                <literallayout class='monospaced'>
+     BB_ORIGENV - add example?
+
+     origenv = d.getVar("BB_ORIGENV", False)
+     bar = origenv.getVar("BAR", False)
+                </literallayout>
+                The previous example returns <filename>BAR</filename> from the original
+                execution environment.
             </para>
 
             <para>
