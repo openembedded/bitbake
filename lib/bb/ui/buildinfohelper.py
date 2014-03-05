@@ -105,7 +105,8 @@ class ORMWrapper(object):
                                 )
 
         if must_exist and created:
-            raise Exception("Task object created when expected to exist")
+            task_information['debug'] = "build id %d, recipe id %d" % (task_information['build'].pk, task_information['recipe'].pk)
+            raise Exception("Task object created when expected to exist", task_information)
 
         for v in vars(task_object):
             if v in task_information.keys():
@@ -132,13 +133,16 @@ class ORMWrapper(object):
         return task_object
 
 
-    def get_update_recipe_object(self, recipe_information):
+    def get_update_recipe_object(self, recipe_information, must_exist = False):
         assert 'layer_version' in recipe_information
         assert 'file_path' in recipe_information
 
         recipe_object, created = Recipe.objects.get_or_create(
                                          layer_version=recipe_information['layer_version'],
                                          file_path=recipe_information['file_path'])
+
+        if must_exist and created:
+            raise Exception("Recipe object created when expected to exist", recipe_information)
 
         for v in vars(recipe_object):
             if v in recipe_information.keys():
@@ -539,7 +543,11 @@ class BuildInfoHelper(object):
             assert localfilepath.startswith("/")
 
             recipe_information = self._get_recipe_information_from_taskfile(taskfile)
-            recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
+            try:
+                recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
+            except Exception:
+                # we cannot find the recipe information for the task, we move on to the next task
+                continue
 
             task_information = {}
             task_information['build'] = self.internal_state['build']
@@ -555,10 +563,18 @@ class BuildInfoHelper(object):
         assert localfilepath.startswith("/")
 
         identifier = event.taskfile + ":" + event.taskname
-        assert identifier in self.internal_state['taskdata']
+        if not identifier in self.internal_state['taskdata']:
+            if isinstance(event, bb.build.TaskBase):
+                # we do a bit of guessing
+                candidates = [x for x in self.internal_state['taskdata'].keys() if x.endswith(identifier)]
+                if len(candidates) == 1:
+                    identifier = candidates[0]
 
-        recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
-        recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
+        assert identifier in self.internal_state['taskdata']
+        identifierlist = identifier.split(":")
+        realtaskfile = ":".join(identifierlist[0:len(identifierlist)-1])
+        recipe_information = self._get_recipe_information_from_taskfile(realtaskfile)
+        recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
         task_information = self._get_task_information(event,recipe)
 
         task_information['start_time'] = self.internal_state['taskdata'][identifier]['start_time']
