@@ -42,7 +42,7 @@
      fetcher = bb.fetch2.Fetch(src_uri, d)
      fetcher.download()
             </literallayout>
-            This code sets up an instance of the fetch module.
+            This code sets up an instance of the fetch class.
             The instance uses a space-separated list of URLs from the
             <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>
             variable and then calls the <filename>download</filename>
@@ -155,14 +155,13 @@
             <filename>SRC_URI</filename> variable with the appropriate
             varflags as follows:
             <literallayout class='monospaced'>
-     SRC_URI[md5sum]
-     SRC_URI[sha256sum]
+     SRC_URI[md5sum] = "value"
+     SRC_URI[sha256sum] = "value"
             </literallayout>
             You can also specify the checksums as parameters on the
             <filename>SRC_URI</filename> as shown below:
             <literallayout class='monospaced'>
-     SRC_URI = "http://example.com/foobar.tar.bz2;md5sum=4a8e0f237e961fd7785d19d07f
-db994d"
+     SRC_URI = "http://example.com/foobar.tar.bz2;md5sum=4a8e0f237e961fd7785d19d07fdb994d"
             </literallayout>
             If multiple URIs exist, you can specify the checksums either
             directly as in the previous example, or you can name the URLs.
@@ -578,7 +577,7 @@ db994d"
                 Fetch submodules also exist for the following:
                 <itemizedlist>
                     <listitem><para>
-                        Bazzar (<filename>bzr://</filename>)
+                        Bazaar (<filename>bzr://</filename>)
                         </para></listitem>
                     <listitem><para>
                         Perforce (<filename>p4://</filename>)

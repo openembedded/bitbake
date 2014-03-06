@@ -6,10 +6,10 @@
 
     <para>
         Welcome to the BitBake User Manual.
-        This manual provides information on BitBake.
+        This manual provides information on the BitBake tool.
         The information attempts to be as independent as possible regarding
         systems that use BitBake, such as the Yocto Project and
-        OpenEmbeddeded.
+        OpenEmbedded.
         In some cases, scenarios or examples that within the context of
         a build system are used in the manual to help with understanding.
         For these cases, the manual clearly states the context.
@@ -88,7 +88,7 @@
             an aspiring embedded Linux distribution.
             All of the build systems used by traditional desktop Linux
             distributions lacked important functionality, and none of the
-            ad-hoc buildroot systems, prevalent in the
+            ad-hoc Buildroot-based systems, prevalent in the
             embedded space, were scalable or maintainable.
         </para>
 
@@ -216,7 +216,7 @@
 
             <para>
                 Within the context of BitBake, or any project utilizing BitBake
-                as it's build system, files with the <filename>.bb</filename>
+                as its build system, files with the <filename>.bb</filename>
                 extension are referred to as recipes.
                 <note>
                     The term "package" is also commonly used to describe recipes.
@@ -282,7 +282,7 @@
 
             <para>
                 To illustrate how you can use layers to keep things modular,
-                consider machine customizations.
+                consider customizations you might make to support a specific target machine.
                 These types of customizations typically reside in a special layer,
                 rather than a general layer, called a Board Specific Package (BSP) Layer.
                 Furthermore, the machine customizations should be isolated from
@@ -343,7 +343,7 @@
                 <filename>busybox_1.3.0.bb</filename>, the append name would not
                 match.
                 However, if you named the append file
-                <filename>busybox_1.%.bb</filename>, then you would have a match.
+                <filename>busybox_1.%.bbappend</filename>, then you would have a match.
             </para>
         </section>
     </section>
@@ -421,20 +421,10 @@
         <title>The BitBake Command</title>
 
         <para>
-            BitBake is the underlying piece of the build system.
-            Two excellent examples are the Yocto Project and the OpenEmbedded
-            build systems.
-            Each provide an environment in which to develop embedded Linux
-            images, and each use BitBake as their underlying build engine.
-        </para>
-
-        <para>
-            BitBake facilitates executing tasks in a single <filename>.bb</filename>
-            file, or executing a given task on a set of multiple
-            <filename>.bb</filename> files, accounting for interdependencies
-            amongst them.
-            This section presents the BitBake syntax and provides some execution
-            examples.
+            The BitBake command is the primary interface to the BitBake
+            tool.
+            This section presents the BitBake command syntax and provides
+            several execution examples.
         </para>
 
         <section id='usage-and-syntax'>
@@ -539,17 +529,21 @@ Options:
                 </para>
 
                 <para>
-                    The following command runs the clean task on the
-                    <filename>foo_1.0.bb</filename> recipe file:
-                    <literallayout class='monospaced'>
-     $ bitbake -b foo.bb -c clean
-                    </literallayout>
                     The following command runs the build task, which is
                     the default task, on the <filename>foo_1.0.bb</filename>
                     recipe file:
                     <literallayout class='monospaced'>
      $ bitbake -b foo_1.0.bb
                     </literallayout>
+                    The following command runs the clean task on the
+                    <filename>foo_1.0.bb</filename> recipe file:
+                    <literallayout class='monospaced'>
+     $ bitbake -b foo.bb -c clean
+                    </literallayout>
+                    <note>
+                        The "-b" option explicitly does not handle recipe
+                        dependencies.
+                    </note>
                 </para>
             </section>
 
@@ -573,7 +567,7 @@ Options:
 
                 <para>
                     The <filename>bitbake</filename> command, when not using
-                    "--buildfile" or "-b" only accepts a "PROVIDER".
+                    "--buildfile" or "-b" only accepts a "PROVIDES".
                     You cannot provide anything else.
                     By default, a recipe file generally "PROVIDES" its
                     "packagename", "packagename-version", and
@@ -581,10 +575,6 @@ Options:
                     example:
                     <literallayout class='monospaced'>
      $ bitbake foo
-
-     $ bitbake foo-1.0
-
-     $ bitbake foo-1.0-r0
                     </literallayout>
                     This next example "PROVIDES" the package name and also uses
                     the "-c" option to tell BitBake to just execute the
@@ -600,22 +590,35 @@ Options:
 
                 <para>
                     BitBake is able to generate dependency graphs using
-                    the dot syntax.
-                    You can convert these graphs into images using the dot
-                    application from
+                    the <filename>dot</filename> syntax.
+                    You can convert these graphs into images using the
+                    <filename>dot</filename> tool from
                     <ulink url='http://www.graphviz.org'>Graphviz</ulink>.
                 </para>
 
                 <para>
-                    When you generate a dependency graph, BitBake writes two files
+                    When you generate a dependency graph, BitBake writes four files
                     to the current working directory:
-                    <filename>depends.dot</filename>, which contains dependency information
-                    at the package level, and <filename>task-depends.dot</filename>,
-                    which contains a breakdown of the dependencies at the task level.
+                    <itemizedlist>
+                        <listitem><para><emphasis><filename>package-depends.dot</filename>:</emphasis>
+                            Shows BitBake's knowledge of dependencies between
+                            runtime targets.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>pn-depends.dot</filename>:</emphasis>
+                            Shows dependencies between build-time targets
+                            (i.e. recipes).
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>task-depends.dot</filename>:</emphasis>
+                            Shows dependencies between tasks.
+                            </para></listitem>
+                        <listitem><para><emphasis><filename>pn-buildlist</filename>:</emphasis>
+                            Shows a simple list of targets that are to be built.
+                            </para></listitem>
+                    </itemizedlist>
                 </para>
 
                 <para>
-                    To stop depending on common depends, use use the "-I" depend
+                    To stop depending on common depends, use the "-I" depend
                     option and BitBake omits them from the graph.
                     Leaving this information out can produce more readable graphs.
                     This way, you can remove from the graph
@@ -629,7 +632,7 @@ Options:
                     <literallayout class='monospaced'>
      $ bitbake -g foo
 
-     $ bitbake -g -I virtual/whatever -I bloom foo
+     $ bitbake -g -I virtual/kernel -I eglibc foo
                     </literallayout>
                 </para>
             </section>

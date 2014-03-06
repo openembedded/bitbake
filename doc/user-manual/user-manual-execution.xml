@@ -87,21 +87,6 @@
             just constructed.
             The <filename>bitbake.conf</filename> file usually indicates
             all the other key include files to parse.
-            The usual convention is to have machine, distro, site, and local
-            configurations.
-            This means a user provides their own customizations
-            through a <filename>local.conf</filename> file.
-        </para>
-
-        <para>
-            As mentioned in the previous paragraph, two of the other notable
-            configuration files are the distro and machine configuration
-            files.
-            These configuration files are normally identified by
-            variables unique to the build systems using BitBake.
-            For example, the Yocto Project uses the
-            <filename>DISTRO</filename> and <filename>MACHINE</filename>
-            variables, respectively.
         </para>
 
         <para>
@@ -122,7 +107,7 @@
 
         <para>
             The base configuration metadata is global
-            and therefore affects all packages and tasks that are executed.
+            and therefore affects all recipes and tasks that are executed.
         </para>
 
         <para>
@@ -161,10 +146,11 @@
             These variables might have been set from the environment
             depending on the environment variables previously
             mentioned or set in the configuration files.
-            See the
+            The
             "<link linkend='ref-variables-glos'>Variables Glossary</link>"
-            for a full list of variables.
-            The following list shows common variables set:
+            chapter presents a full list of variables.
+<!--
+            Here are some common ones used:
             <itemizedlist>
                 <listitem><para>
                     <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
@@ -215,6 +201,7 @@
                     <link linkend='var-BBINCLUDED'><filename>BBINCLUDED</filename></link>
                     </para></listitem>
             </itemizedlist>
+-->
         </para>
 
         <para>
@@ -305,7 +292,7 @@
         </para>
 
         <para>
-            BitBake does not need all this information.
+            BitBake does not need all of this information.
             It only needs a small subset of the information to make
             decisions about the recipe.
             Consequently, BitBake caches the values in which it is
@@ -375,7 +362,7 @@
             <literallayout class='monospaced'>
      PROVIDES += "virtual/package"
             </literallayout>
-            The recipe now provides both "package1" and "virtual/package.
+            The recipe now provides both "package1" and "virtual/package".
             The "virtual/" namespace is often used to denote cases where
             multiple providers are expected with the user choosing between
             them.
@@ -395,20 +382,8 @@
             The default
             <link linkend='var-PREFERRED_PROVIDER'><filename>PREFERRED_PROVIDER</filename></link>
             is the provider with the same name as the target.
-        </para>
-
-        <para>
-            Bitbake iterates through each target it needs to build and resolve
-            them using this process.
-            As an example, suppose the target is
-            <filename>core-image-sato</filename>.
-            In this case, it would lead to
-            <filename>packagegroup-core-x11-sato</filename>,
-            which in turn leads to recipes like
-            <filename>matchbox-terminal</filename>, <filename>pcmanfm</filename>
-            and <filename>gthumb</filename>.
-            These recipes in turn depend on <filename>eglibc</filename>
-            and the toolchain.
+            Bitbake iterates through each target it needs to build and
+            resolves them and their dependencies using this process.
         </para>
 
         <para>
@@ -418,21 +393,21 @@
             Version comparisons are made using the same method as Debian.
             You can use the
             <link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link>
-            variable to specify a particular version (usually in the distro configuration).
+            variable to specify a particular version.
             You can influence the order by using the
             <link linkend='var-DEFAULT_PREFERENCE'><filename>DEFAULT_PREFERENCE</filename></link>
             variable.
             By default, files have a preference of "0".
             Setting the <filename>DEFAULT_PREFERENCE</filename> to "-1" makes the
-            package unlikely to be used unless it is explicitly referenced.
-            Setting the <filename>DEFAULT_PREFERENCE</filename> to "1" makes it likely the package is used.
+            recipe unlikely to be used unless it is explicitly referenced.
+            Setting the <filename>DEFAULT_PREFERENCE</filename> to "1" makes it likely the recipe is used.
             <filename>PREFERRED_VERSION</filename> overrides any <filename>DEFAULT_PREFERENCE</filename> setting.
-            <filename>DEFAULT_PREFERENCE</filename> is often used to mark newer and more experimental package
+            <filename>DEFAULT_PREFERENCE</filename> is often used to mark newer and more experimental recipe
             versions until they have undergone sufficient testing to be considered stable.
         </para>
 
         <para>
-            When there are multiple “versions” of a given package,
+            When there are multiple “versions” of a given recipe,
             BitBake defaults to selecting the most recent
             version, unless otherwise specified.
             If the recipe in question has a
@@ -573,12 +548,12 @@
         <para>
             Tasks can either be a shell task or a Python task.
             For shell tasks, BitBake writes a shell script to
-            <filename>${WORKDIR}/temp/run.do_taskname.pid</filename>
+            <filename>${</filename><link linkend='var-T'><filename>T</filename></link><filename>}/run.do_taskname.pid</filename>
             and then executes the script.
             The generated shell script contains all the exported variables,
             and the shell functions with all variables expanded.
             Output from the shell script goes to the file
-            <filename>${WORKDIR}/temp/log.do_taskname.pid</filename>.
+            <filename>${T}/log.do_taskname.pid</filename>.
             Looking at the expanded shell functions in the run file and
             the output in the log files is a useful debugging technique.
         </para>
@@ -831,9 +806,6 @@
             a setscene task named <filename>xxx_setscene</filename>.
             The setscene version of the task executes and provides the necessary
             artifacts returning either success or failure.
-            <note>
-                Artifacts might need to be fetched from the network.
-            </note>
         </para>
 
         <para>

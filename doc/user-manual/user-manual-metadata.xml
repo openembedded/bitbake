@@ -40,12 +40,15 @@
                 BitBake supports variables referencing one another's
                 contents using a syntax that is similar to shell scripting.
                 Following is an example that results in <filename>A</filename>
-                containing "aval" and <filename>B</filename> containing
+                containing "aval" and <filename>B</filename> evaluating to
                 "preavalpost".
                 <literallayout class='monospaced'>
      A = "aval"
      B = "pre${A}post"
                 </literallayout>
+                Because the expansion happens later, the value of
+                <filename>B</filename> expands differently if the value
+                of <filename>A</filename> changes.
             </para>
         </section>
 
@@ -79,7 +82,7 @@
             <title>Setting a weak default value (??=)</title>
 
             <para>
-                It is possible to use a "weaker" assignment that in the
+                It is possible to use a "weaker" assignment than in the
                 previous section by using the "??=" operator.
                 This assignment behaves identical to "?=" except that the
                 assignment is made at the end of the parsing process rather
@@ -196,6 +199,13 @@
                     You must control all spacing when you use the
                     override syntax.
                 </note>
+            </para>
+
+            <para>
+                The operators "_append" and "_prepend" differ from
+                the operators ".=" and "=." in that they are deferred
+                until after parsing completes rather than being immediately
+                applied.
             </para>
         </section>
 
@@ -519,7 +529,7 @@
                 recipes require.
                 For example, you can easily abstract out the tasks involved in
                 building a package that uses Autoconf and Automake and put
-                those tasks into a class file that can be used by your package.
+                those tasks into a class file that can be used by your recipe.
             </para>
 
             <para>
@@ -549,9 +559,10 @@
                 directive.
                 This directive causes BitBake to parse whatever file you specify,
                 and to insert that file at that location.
-                The directive is much like Make except that if the path specified
-                on the include line is a relative path, BitBake locates
-                the first file it can find within <filename>BBPATH</filename>.
+                The directive is much like its equivalent in Make except
+                that if the path specified on the include line is a relative
+                path, BitBake locates the first file it can find
+                within <filename>BBPATH</filename>.
             </para>
 
             <para>
@@ -588,7 +599,7 @@
             </para>
 
             <para>
-                Similar to how BitBake uses
+                Similar to how BitBake handles
                 <link linkend='include-directive'><filename>include</filename></link>,
                 if the path specified
                 on the require line is a relative path, BitBake locates
@@ -776,16 +787,17 @@
             Tasks are only supported in recipe (<filename>.bb</filename>
             or <filename>.inc</filename>) and class
             (<filename>.bbclass</filename>) files.
-            By convention, tasks begin with the string "do_".
+            By convention, task names begin with the string "do_".
         </para>
 
         <para>
             Here is an example of a task that prints out the date:
             <literallayout class='monospaced'>
      python do_printdate () {
-         import time print
-         time.strftime('%Y%m%d', time.gmtime())
+         import time
+         print time.strftime('%Y%m%d', time.gmtime())
      }
+     addtask printdate after do_fetch before do_build
             </literallayout>
         </para>
 
@@ -802,8 +814,8 @@
                 and defining some dependencies:
                 <literallayout class='monospaced'>
      python do_printdate () {
-         import time print
-         time.strftime('%Y%m%d', time.gmtime())
+         import time
+         print time.strftime('%Y%m%d', time.gmtime())
      }
      addtask printdate after do_fetch before do_build
                 </literallayout>
@@ -942,11 +954,6 @@
         <para>
             BitBake has a defined set of varflags available for recipes and
             classes.
-            You can discover the complete set by using <filename>grep</filename>
-            within a shell and search on the string "VarFlags".
-        </para>
-
-        <para>
             Tasks support a number of these flags which control various
             functionality of the task:
             <itemizedlist>
@@ -958,12 +965,13 @@
                     </para></listitem>
                 <listitem><para><emphasis>noexec:</emphasis>
                     Marks the tasks as being empty and no execution required.
-                    These flags are used as dependency placeholders or used when
-                    added tasks need to be subsequently disabled.
+                    The <filename>noexec</filename> flag can be used to set up
+                    tasks as dependency placeholders, or to disable tasks defined
+                    elsewhere that are not needed in a particular recipe.
                     </para></listitem>
                 <listitem><para><emphasis>nostamp:</emphasis>
                     Tells BitBake to not generate a stamp file for a task,
-                    which implies the task is always executed.
+                    which implies the task should always be executed.
                     </para></listitem>
                 <listitem><para><emphasis>fakeroot:</emphasis>
                     Causes a task to be run in a fakeroot environment,
@@ -1027,7 +1035,7 @@
                     List of functions to call before the task executes.
                     </para></listitem>
                 <listitem><para><emphasis>stamp-extra-info:</emphasis>
-                    Extra stamp information to append to the task's stamp
+                    Extra stamp information to append to the task's stamp.
                     As an example, OpenEmbedded uses this flag to allow
                     machine-specific tasks.
                     </para></listitem>
@@ -1380,15 +1388,18 @@
                         </row>
                         <row>
                             <entry align="left"><filename>d.setVar("X", value)</filename></entry>
-                            <entry align="left">Sets the variable "X" to "value".</entry>
+                            <entry align="left">Sets the variable "X" to the value of the Python
+                            variable called "value".</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.appendVar("X", value)</filename></entry>
-                            <entry align="left">Adds "value" to the end of the variable "X".</entry>
+                            <entry align="left">Adds the value of the Python variable called
+                            "value" to the end of the variable "X".</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.prependVar("X", value)</filename></entry>
-                            <entry align="left">Adds "value" to the start of the variable "X".</entry>
+                            <entry align="left">Adds the value of the Python variable called
+                            "value" to the start of the variable "X".</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.delVar("X")</filename></entry>
@@ -1400,40 +1411,44 @@
                         </row>
                         <row>
                             <entry align="left"><filename>d.getVarFlag("X", flag, expand=False)</filename></entry>
-                            <entry align="left">Gets "flag" from the variable "X".
-                                Using "expand=True" expands the flag.</entry>
+                            <entry align="left">Gets then named flag from the variable "X".
+                                Using "expand=True" expands the named flag.</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.setVarFlag("X", flag, value)</filename></entry>
-                            <entry align="left">Sets "flag" for variable "X" to "value".
-                                <filename>setVarFlags</filename> does not clear previous flags.
-                                Think of this operation as <filename>addVarFlags</filename>.</entry>
+                            <entry align="left">Sets the named flag for variable "X" to the value
+                                of the Python variable called "value".</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.appendVarFlag("X", flag, value)</filename></entry>
-                            <entry align="left">Need description.</entry>
+                            <entry align="left">Appends a value to the named flag on the
+                            variable "X".</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.prependVarFlag("X", flag, value)</filename></entry>
-                            <entry align="left">Need description.</entry>
+                            <entry align="left">Prepends a value to the named flag on
+                               the variable "X".</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.delVarFlag("X", flag)</filename></entry>
-                            <entry align="left">Need description.</entry>
+                            <entry align="left">Deletes the named flag on the variable
+                                "X" from the datastore.</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.setVarFlags("X", flagsdict)</filename></entry>
                             <entry align="left">Sets the flags specified in
-                                the <filename>dict()</filename> parameter.</entry>
+                                the <filename>flagsdict()</filename> parameter.
+                                <filename>setVarFlags</filename> does not clear previous flags.
+                                Think of this operation as <filename>addVarFlags</filename>.</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.getVarFlags("X")</filename></entry>
-                            <entry align="left">Returns a <filename>dict</filename> of the flags for
+                            <entry align="left">Returns a <filename>flagsdict</filename> of the flags for
                                 the variable "X".</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.delVarFlags</filename></entry>
-                            <entry align="left">Deletes all the flags for a variable.</entry>
+                            <entry align="left"><filename>d.delVarFlags("X")</filename></entry>
+                            <entry align="left">Deletes all the flags for the variable "X".</entry>
                         </row>
                     </tbody>
                 </tgroup>
