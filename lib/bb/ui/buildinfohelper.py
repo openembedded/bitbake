@@ -27,7 +27,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toaster.toastermain.settings")
 import toaster.toastermain.settings as toaster_django_settings
 from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage
 from toaster.orm.models import Variable, VariableHistory
-from toaster.orm.models import Package, Package_File, Target_Installed_Package
+from toaster.orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from toaster.orm.models import Task_Dependency, Package_Dependency
 from toaster.orm.models import Recipe_Dependency
 from bb.msg import BBLogFormatter as format
@@ -180,6 +180,113 @@ class ORMWrapper(object):
                                 layer_index_url=layer_information['layer_index_url'])
 
         return layer_object
+
+    def save_target_file_information(self, build_obj, target_obj, filedata):
+        assert isinstance(build_obj, Build)
+        assert isinstance(target_obj, Target)
+        dirs = filedata['dirs']
+        files = filedata['files']
+        syms = filedata['syms']
+
+        # we insert directories, ordered by name depth
+        for d in sorted(dirs, key=lambda x:len(x[-1].split("/"))):
+            (user, group, size) = d[1:4]
+            permission = d[0][1:]
+            path = d[4].lstrip(".")
+            if len(path) == 0:
+                # we create the root directory as a special case
+                path = "/"
+                tf_obj = Target_File.objects.create(
+                        target = target_obj,
+                        path = path,
+                        size = size,
+                        inodetype = Target_File.ITYPE_DIRECTORY,
+                        permission = permission,
+                        owner = user,
+                        group = group,
+                        )
+                tf_obj.directory = tf_obj
+                tf_obj.save()
+                continue
+            parent_path = "/".join(path.split("/")[:len(path.split("/")) - 1])
+            if len(parent_path) == 0:
+                parent_path = "/"
+            parent_obj = Target_File.objects.get(target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
+            tf_obj = Target_File.objects.create(
+                        target = target_obj,
+                        path = path,
+                        size = size,
+                        inodetype = Target_File.ITYPE_DIRECTORY,
+                        permission = permission,
+                        owner = user,
+                        group = group,
+                        directory = parent_obj)
+
+
+        # we insert files
+        for d in files:
+            (user, group, size) = d[1:4]
+            permission = d[0][1:]
+            path = d[4].lstrip(".")
+            parent_path = "/".join(path.split("/")[:len(path.split("/")) - 1])
+            inodetype = Target_File.ITYPE_REGULAR
+            if permission.startswith('b'):
+                inodetype = Target_File.ITYPE_BLOCK
+            if permission.startswith('c'):
+                inodetype = Target_File.ITYPE_CHARACTER
+            if permission.startswith('p'):
+                inodetype = Target_File.ITYPE_FIFO
+
+            tf_obj = Target_File.objects.create(
+                        target = target_obj,
+                        path = path,
+                        size = size,
+                        inodetype = inodetype,
+                        permission = permission,
+                        owner = user,
+                        group = group)
+            parent_obj = Target_File.objects.get(target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
+            tf_obj.directory = parent_obj
+            tf_obj.save()
+
+        # we insert symlinks
+        for d in syms:
+            (user, group, size) = d[1:4]
+            permission = d[0][1:]
+            path = d[4].lstrip(".")
+            filetarget_path = d[6]
+
+            parent_path = "/".join(path.split("/")[:len(path.split("/")) - 1])
+            if not filetarget_path.startswith("/"):
+                # we have a relative path, get a normalized absolute one
+                filetarget_path = parent_path + "/" + filetarget_path
+                fcp = filetarget_path.split("/")
+                fcpl = []
+                for i in fcp:
+                    if i == "..":
+                        fcpl.pop()
+                    else:
+                        fcpl.append(i)
+                filetarget_path = "/".join(fcpl)
+
+            try:
+                filetarget_obj = Target_File.objects.get(target = target_obj, path = filetarget_path)
+            except Exception as e:
+                # we might have an invalid link; no way to detect this. just set it to None
+                filetarget_obj = None
+
+            parent_obj = Target_File.objects.get(target = target_obj, path = parent_path, inodetype = Target_File.ITYPE_DIRECTORY)
+
+            tf_obj = Target_File.objects.create(
+                        target = target_obj,
+                        path = path,
+                        size = size,
+                        inodetype = Target_File.ITYPE_REGULAR,
+                        permission = permission,
+                        owner = user,
+                        group = group,
+                        directory = parent_obj,
+                        sym_target = filetarget_obj)
 
 
     def save_target_package_information(self, build_obj, target_obj, packagedict, pkgpnmap, recipes):
@@ -613,6 +720,10 @@ class BuildInfoHelper(object):
                 pkgdata = event.data['pkgdata']
                 imgdata = event.data['imgdata'][target.target]
                 self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
+                filedata = event.data['filedata'][target.target]
+                self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
+
+
 
     def store_dependency_information(self, event):
         assert '_depgraph' in vars(event)
@@ -692,7 +803,7 @@ class BuildInfoHelper(object):
             task_info['task_name'] = taskname
             task_obj = self.orm_wrapper.get_update_task_object(task_info)
             return task_obj
- 
+
         # create tasks
         tasks = {}
         for taskdesc in event._depgraph['tdepends']:
