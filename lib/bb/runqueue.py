@@ -1735,7 +1735,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     dep = self.rqdata.taskData.fn_index[depdata]
                     taskid = self.rqdata.get_task_id(self.rqdata.taskData.getfn_id(dep), idependtask.replace("_setscene", ""))
                     if taskid is None:
-                        bb.msg.fatal("RunQueue", "Task %s_setscene depends upon non-existent task %s:%s" % (self.self.rqdata.get_user_idstring(task), dep, idependtask))
+                        bb.msg.fatal("RunQueue", "Task %s_setscene depends upon non-existent task %s:%s" % (self.rqdata.get_user_idstring(task), dep, idependtask))
 
                     if not self.rqdata.runq_setscene.index(taskid) in self.sq_harddeps:
                         self.sq_harddeps[self.rqdata.runq_setscene.index(taskid)] = set()
