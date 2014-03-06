@@ -55,6 +55,8 @@ class Target(models.Model):
     build = models.ForeignKey(Build)
     target = models.CharField(max_length=100)
     is_image = models.BooleanField(default = False)
+    image_size = models.IntegerField(default=0)
+    license_manifest_path = models.CharField(max_length=500, null=True)
 
     def __str__(self):
         return self.target
@@ -72,7 +74,6 @@ class Target_File(models.Model):
     ITYPE_FIFO = 5
     ITYPE_CHARACTER = 6
     ITYPE_BLOCK = 7
-    ITYPE_SYMBLINK = 8
     ITYPES = ( (ITYPE_REGULAR ,'regular'),
         ( ITYPE_DIRECTORY ,'directory'),
         ( ITYPE_SYMLINK ,'symlink'),
@@ -80,17 +81,17 @@ class Target_File(models.Model):
         ( ITYPE_FIFO ,'fifo'),
         ( ITYPE_CHARACTER ,'character'),
         ( ITYPE_BLOCK ,'block'),
-        ( ITYPE_SYMLINK ,'symblink'))
+        )
 
     target = models.ForeignKey(Target)
     path = models.FilePathField()
     size = models.IntegerField()
     inodetype = models.IntegerField(choices = ITYPES)
-    permission = models.IntegerField()
+    permission = models.CharField(max_length=16)
     owner = models.CharField(max_length=128)
     group = models.CharField(max_length=128)
-    directory = models.ForeignKey('Target_File', related_name="directory_set")
-    sym_target = models.ForeignKey('Target_File', related_name="symlink_set", blank=True)
+    directory = models.ForeignKey('Target_File', related_name="directory_set", null=True)
+    sym_target = models.ForeignKey('Target_File', related_name="symlink_set", null=True)
 
 
 class TaskManager(models.Manager):
