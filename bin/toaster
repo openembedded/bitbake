@@ -143,23 +143,10 @@ if [ -e $BUILDDIR/bitbake.lock ]; then
 fi
 
 if [ ${CMD} == "start" ] && ( [ $lock -eq 0 ] || [ -e $BUILDDIR/.toastermain.pid ] ); then
-    echo "Error: bitbake lock state error. System is already on." 2>&1
-    return 3
-elif [ ${CMD} == "stop" ] && ( [ $lock -eq 1 ] || ! [ -e $BUILDDIR/.toastermain.pid ] ) ; then
-    echo "Error: bitbake lock state error. Trying to stop a stopped system ?
-If you think the system is hanged up, you can try to manually stop system with the commands
-
-# BBSERVER=localhost:8200 bitbake -m
-
-and
-
-# webserverKillAll
-" 2>&1
+    echo "Error: bitbake lock state error. File locks show that the system is on." 2>&1
+    echo "If you see problems, stop and then start the system again." 2>&1
     return 3
 fi
-
-
-
 
 
 # Execute the commands
