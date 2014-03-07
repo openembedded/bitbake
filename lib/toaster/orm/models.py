@@ -146,6 +146,7 @@ class Task(models.Model):
         (OUTCOME_CACHED, 'This task restored output from the sstate-cache directory or mirrors'),
         (OUTCOME_PREBUILT, 'This task did not run because its outcome was reused from a previous build'),
         (OUTCOME_FAILED, 'This task did not complete'),
+        (OUTCOME_EMPTY, 'This task has no executable content'),
         (OUTCOME_NA, ''),
     )
 

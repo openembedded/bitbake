@@ -558,7 +558,7 @@ def tasks_common(request, build_id, variant):
                                ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED),
                                ('Prebuilt Tasks', 'outcome:%d'%Task.OUTCOME_PREBUILT),
                                ('Covered Tasks', 'outcome:%d'%Task.OUTCOME_COVERED),
-                               ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_NA),
+                               ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_EMPTY),
                                ]
                    }
 

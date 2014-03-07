@@ -121,6 +121,10 @@
 		</code>
             </dd>
         </dl>
+    {%elif task.outcome == task.OUTCOME_EMPTY%}
+        <div class="alert alert-info details">
+            This task is empty because it has the <code>noexec</code> flag set to <code>1</code>, or the task function is empty
+        </div>
     {% endif %}
 {% endif %}
 
