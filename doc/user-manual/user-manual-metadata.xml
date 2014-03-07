@@ -41,14 +41,18 @@
                 contents using a syntax that is similar to shell scripting.
                 Following is an example that results in <filename>A</filename>
                 containing "aval" and <filename>B</filename> evaluating to
-                "preavalpost".
+                "preavalpost" based on that current value of
+                <filename>A</filename>.
                 <literallayout class='monospaced'>
      A = "aval"
      B = "pre${A}post"
                 </literallayout>
-                Because the expansion happens later, the value of
-                <filename>B</filename> expands differently if the value
-                of <filename>A</filename> changes.
+                You should realize that whenever <filename>B</filename> is
+                referenced, its evaluation will depend on the state of
+                <filename>A</filename> at that time.
+                Thus, later evaluations of <filename>B</filename> in the
+                previous example could result in different values
+                depending on the value of <filename>A</filename>.
             </para>
         </section>
 
@@ -1387,19 +1391,16 @@
                                 Using "expand=True" expands the value.</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.setVar("X", value)</filename></entry>
-                            <entry align="left">Sets the variable "X" to the value of the Python
-                            variable called "value".</entry>
+                            <entry align="left"><filename>d.setVar("X", "value")</filename></entry>
+                            <entry align="left">Sets the variable "X" to "value".</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.appendVar("X", value)</filename></entry>
-                            <entry align="left">Adds the value of the Python variable called
-                            "value" to the end of the variable "X".</entry>
+                            <entry align="left"><filename>d.appendVar("X", "value")</filename></entry>
+                            <entry align="left">Adds "value" to the end of the variable "X".</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.prependVar("X", value)</filename></entry>
-                            <entry align="left">Adds the value of the Python variable called
-                            "value" to the start of the variable "X".</entry>
+                            <entry align="left"><filename>d.prependVar("X", "value")</filename></entry>
+                            <entry align="left">Adds "value" to the start of the variable "X".</entry>
                         </row>
                         <row>
                             <entry align="left"><filename>d.delVar("X")</filename></entry>
@@ -1415,18 +1416,17 @@
                                 Using "expand=True" expands the named flag.</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.setVarFlag("X", flag, value)</filename></entry>
-                            <entry align="left">Sets the named flag for variable "X" to the value
-                                of the Python variable called "value".</entry>
+                            <entry align="left"><filename>d.setVarFlag("X", flag, "value")</filename></entry>
+                            <entry align="left">Sets the named flag for variable "X" to "value".</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.appendVarFlag("X", flag, value)</filename></entry>
-                            <entry align="left">Appends a value to the named flag on the
+                            <entry align="left"><filename>d.appendVarFlag("X", flag, "value")</filename></entry>
+                            <entry align="left">Appends "value" to the named flag on the
                             variable "X".</entry>
                         </row>
                         <row>
-                            <entry align="left"><filename>d.prependVarFlag("X", flag, value)</filename></entry>
-                            <entry align="left">Prepends a value to the named flag on
+                            <entry align="left"><filename>d.prependVarFlag("X", flag, "value")</filename></entry>
+                            <entry align="left">Prepends "value" to the named flag on
                                the variable "X".</entry>
                         </row>
                         <row>

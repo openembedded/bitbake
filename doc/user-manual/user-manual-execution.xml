@@ -85,8 +85,10 @@
             Next, the <filename>bitbake.conf</filename> file is searched
             using the <filename>BBPATH</filename> variable that was
             just constructed.
-            The <filename>bitbake.conf</filename> file usually indicates
-            all the other key include files to parse.
+            The <filename>bitbake.conf</filename> file may also include other
+            configuration files using the
+            <filename>include</filename> or
+            <filename>require</filename> directives.
         </para>
 
         <para>
@@ -358,11 +360,11 @@
 
         <para>
             As an example of adding an extra provider, suppose a recipe named
-            <filename>package1.bb</filename> contained the following:
+            <filename>foo_1.0.bb</filename> contained the following:
             <literallayout class='monospaced'>
-     PROVIDES += "virtual/package"
+     PROVIDES += "virtual/bar_1.0"
             </literallayout>
-            The recipe now provides both "package1" and "virtual/package".
+            The recipe now provides both "foo_1.0" and "virtual/bar_1.0".
             The "virtual/" namespace is often used to denote cases where
             multiple providers are expected with the user choosing between
             them.

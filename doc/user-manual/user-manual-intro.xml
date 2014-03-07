@@ -421,8 +421,8 @@
         <title>The BitBake Command</title>
 
         <para>
-            The BitBake command is the primary interface to the BitBake
-            tool.
+            The <filename>bitbake</filename> command is the primary interface
+            to the BitBake tool.
             This section presents the BitBake command syntax and provides
             several execution examples.
         </para>
@@ -536,13 +536,16 @@ Options:
      $ bitbake -b foo_1.0.bb
                     </literallayout>
                     The following command runs the clean task on the
-                    <filename>foo_1.0.bb</filename> recipe file:
+                    <filename>foo.bb</filename> recipe file:
                     <literallayout class='monospaced'>
      $ bitbake -b foo.bb -c clean
                     </literallayout>
                     <note>
                         The "-b" option explicitly does not handle recipe
                         dependencies.
+                        Other than for debugging purposes, it is instead
+                        recommended that you use the syntax presented in the
+                        next section.
                     </note>
                 </para>
             </section>
@@ -570,9 +573,7 @@ Options:
                     "--buildfile" or "-b" only accepts a "PROVIDES".
                     You cannot provide anything else.
                     By default, a recipe file generally "PROVIDES" its
-                    "packagename", "packagename-version", and
-                    "packagename-version-revision" as shown in the following
-                    example:
+                    "packagename" as shown in the following example:
                     <literallayout class='monospaced'>
      $ bitbake foo
                     </literallayout>
@@ -628,7 +629,8 @@ Options:
 
                 <para>
                     Here are two examples that create dependency graphs.
-                    The second example omits common depends from the graph:
+                    The second example omits depends common in OpenEmbedded from
+                    the graph:
                     <literallayout class='monospaced'>
      $ bitbake -g foo
 

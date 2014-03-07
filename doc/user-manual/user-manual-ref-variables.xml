@@ -102,6 +102,15 @@
             </glossdef>
         </glossentry>
 
+        <glossentry id='var-BB_CONSOLELOG'><glossterm>BB_CONSOLELOG</glossterm>
+            <glossdef>
+                <para>
+                    Specifies the path to a log file into which BitBake's user
+                    interface writes output during the build.
+                </para>
+            </glossdef>
+        </glossentry>
+
         <glossentry id='var-BB_CURRENTTASK'><glossterm>BB_CURRENTTASK</glossterm>
             <glossdef>
                 <para>
@@ -681,11 +690,18 @@
         <glossentry id='var-BB_SIGNATURE_EXCLUDE_FLAGS'><glossterm>BB_SIGNATURE_EXCLUDE_FLAGS</glossterm>
             <glossdef>
                 <para>
-                    Lists flags that can be safely excluded from checksum
+                    Lists variable flags (varflags)
+                    that can be safely excluded from checksum
                     and dependency data for keys in the datastore.
                     When generating checksum or dependency data for keys in the
                     datastore, the flags set against that key are normally
                     included in the checksum.
+                </para>
+
+                <para>
+                    For more information on varflags, see the
+                    "<link linkend='variable-flags'>Variable Flags</link>"
+                    section.
                 </para>
             </glossdef>
         </glossentry>
@@ -959,7 +975,23 @@
 
         <glossentry id='var-BBINCLUDELOGS'><glossterm>BBINCLUDELOGS</glossterm>
             <glossdef>
-                <para>Variable that controls how BitBake displays logs on build failure.</para>
+                <para>
+                    If set to a value, enables printing the task log when
+                    reporting a failed task.
+                </para>
+            </glossdef>
+        </glossentry>
+
+        <glossentry id='var-BBINCLUDELOGS_LINES'><glossterm>BBINCLUDELOGS_LINES</glossterm>
+            <glossdef>
+                <para>
+                    If
+                    <link linkend='var-BBINCLUDELOGS'><filename>BBINCLUDELOGS</filename></link>
+                    is set, specifies the maximum number of lines from the
+                    task log file to print when reporting a failed task.
+                    If you do not set <filename>BBINCLUDELOGS_LINES</filename>,
+                    the entire log is printed.
+                </para>
             </glossdef>
         </glossentry>
 
@@ -1483,14 +1515,6 @@
                     the upstream source, and then locations specified by
                     <filename>MIRRORS</filename> in that order.
                 </para>
-
-                <para>
-                    Assuming your distribution (<filename>DISTRO</filename>)
-                    is "poky", the default value for
-                    <filename>MIRRORS</filename> is defined in the
-                    <filename>conf/distro/poky.conf</filename> file in the
-                    <filename>meta-yocto</filename> Git repository.
-                </para>
             </glossdef>
         </glossentry>
 
@@ -1694,15 +1718,6 @@
                     source, and then locations specified by
                     <link linkend='var-MIRRORS'><filename>MIRRORS</filename></link>
                     in that order.
-                </para>
-
-                <para>
-                    Assuming your distribution
-                    (<filename>DISTRO</filename>)
-                    is "poky", the default value for
-                    <filename>PREMIRRORS</filename> is defined in the
-                    <filename>conf/distro/poky.conf</filename> file in the
-                    <filename>meta-yocto</filename> Git repository.
                 </para>
 
                 <para>

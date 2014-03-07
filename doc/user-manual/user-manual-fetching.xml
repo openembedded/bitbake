@@ -50,7 +50,7 @@
         </para>
 
         <para>
-            The instance of the fetch module is usually followed by:
+            The instantiation of the fetch class is usually followed by:
             <literallayout class='monospaced'>
      rootdir = l.getVar('WORKDIR', True)
      fetcher.unpack(rootdir)
