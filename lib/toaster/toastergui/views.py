@@ -795,6 +795,8 @@ def configvars(request, build_id):
     file_filter= search_term + ":"
     if filter_string.find('conf/local.conf') > 0:
         file_filter += 'conf/local.conf'
+    if filter_string.find('conf/bblayers.conf') > 0:
+        file_filter += 'conf/bblayers.conf'
     if filter_string.find('conf/machine/') > 0:
         file_filter += 'conf/machine/'
     if filter_string.find('conf/distro/') > 0:
@@ -833,7 +835,7 @@ def configvars(request, build_id):
                     'class' : 'vhistory__file_name',
                     'label': 'Show:',
                     'options' : [
-                               ('Local configuration variables', 'vhistory__file_name__contains:conf/local.conf'),
+                               ('Local configuration variables', 'vhistory__file_name__regex:conf/(local|bblayers).conf'),
                                ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/'),
                                ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/'),
                                ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf'),
