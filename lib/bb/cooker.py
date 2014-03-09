@@ -37,6 +37,7 @@ from collections import defaultdict
 import bb, bb.exceptions, bb.command
 from bb import utils, data, parse, event, cache, providers, taskdata, runqueue
 import Queue
+import signal
 import prserv.serv
 
 logger      = logging.getLogger("BitBake")
@@ -148,6 +149,12 @@ class BBCooker:
         self.state = state.initial
 
         self.parser = None
+
+        signal.signal(signal.SIGTERM, self.sigterm_exception)
+
+    def sigterm_exception(self, signum, stackframe):
+        bb.warn("Cooker recieved SIGTERM, shutting down...")
+        self.state = state.forceshutdown
 
     def setFeatures(self, features):
         original_featureset = list(self.featureset)
