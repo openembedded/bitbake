@@ -869,7 +869,7 @@ class RunQueue:
         else:
             worker = subprocess.Popen(["bitbake-worker", "decafbad"], stdout=subprocess.PIPE, stdin=subprocess.PIPE)
         bb.utils.nonblockingfd(worker.stdout)
-        workerpipe = runQueuePipe(worker.stdout, None, self.cfgData, rqexec)
+        workerpipe = runQueuePipe(worker.stdout, None, self.cfgData, self, rqexec)
 
         workerdata = {
             "taskdeps" : self.rqdata.dataCache.task_deps,
@@ -912,6 +912,7 @@ class RunQueue:
     def start_worker(self):
         if self.worker:
             self.teardown_workers()
+        self.teardown = False
         self.worker, self.workerpipe = self._start_worker()
 
     def start_fakeworker(self, rqexec):
@@ -919,6 +920,7 @@ class RunQueue:
             self.fakeworker, self.fakeworkerpipe = self._start_worker(True, rqexec)
 
     def teardown_workers(self):
+        self.teardown = True
         self._teardown_worker(self.worker, self.workerpipe)
         self.worker = None
         self.workerpipe = None
@@ -2067,7 +2069,7 @@ class runQueuePipe():
     """
     Abstraction for a pipe between a worker thread and the server
     """
-    def __init__(self, pipein, pipeout, d, rq):
+    def __init__(self, pipein, pipeout, d, rq, rqexec):
         self.input = pipein
         if pipeout:
             pipeout.close()
@@ -2075,11 +2077,26 @@ class runQueuePipe():
         self.queue = ""
         self.d = d
         self.rq = rq
+        self.rqexec = rqexec
 
-    def setrunqueueexec(self, rq):
-        self.rq = rq
+    def setrunqueueexec(self, rqexec):
+        self.rqexec = rqexec
 
     def read(self):
+        try:
+            pid, status = os.waitpid(-1, os.WNOHANG)
+            if pid != 0 and not self.rq.teardown:
+                if self.rq.worker and pid == self.rq.worker.pid:
+                    name = "Worker"
+                elif self.rq.fakeworker and pid == self.rq.fakeworker.pid:
+                    name = "Fakeroot"
+                else:
+                    name = "Unknown"
+                bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, pid, str(status)))
+                self.rq.finish_runqueue(True)
+        except OSError:
+            pass
+
         start = len(self.queue)
         try:
             self.queue = self.queue + self.input.read(102400)
@@ -2106,7 +2123,7 @@ class runQueuePipe():
                     task, status = pickle.loads(self.queue[10:index])
                 except ValueError as e:
                     bb.msg.fatal("RunQueue", "failed load pickle '%s': '%s'" % (e, self.queue[10:index]))
-                self.rq.runqueue_process_waitpid(task, status)
+                self.rqexec.runqueue_process_waitpid(task, status)
                 found = True
                 self.queue = self.queue[index+11:]
                 index = self.queue.find("</exitcode>")
