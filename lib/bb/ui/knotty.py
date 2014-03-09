@@ -31,6 +31,7 @@ import time
 import fcntl
 import struct
 import copy
+import atexit
 from bb.ui import uihelper
 
 logger = logging.getLogger("BitBake")
@@ -303,6 +304,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     taskfailures = []
 
     termfilter = tf(main, helper, console, format)
+    atexit.register(termfilter.finish)
 
     while True:
         try:
@@ -535,7 +537,5 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         print("Execution was interrupted, returning a non-zero exit code.")
         if return_value == 0:
             return_value = 1
-
-    termfilter.finish()
 
     return return_value
