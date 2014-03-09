@@ -79,9 +79,9 @@ class Wget(FetchMethod):
         uri = ud.url.split(";")[0]
         if os.path.exists(ud.localpath):
             # file exists, but we didnt complete it.. trying again..
-            fetchcmd = self.basecmd + d.expand(" -c -P ${DL_DIR} '%s'" % uri)
+            fetchcmd += d.expand(" -c -P ${DL_DIR} '%s'" % uri)
         else:
-            fetchcmd = self.basecmd + d.expand(" -P ${DL_DIR} '%s'" % uri)
+            fetchcmd += d.expand(" -P ${DL_DIR} '%s'" % uri)
 
         self._runwget(ud, d, fetchcmd, False)
 
