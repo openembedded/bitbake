@@ -257,6 +257,13 @@ class CommandsSync:
         mask = params[3]
         return bb.event.set_UIHmask(handlerNum, llevel, debug_domains, mask)
 
+    def setFeatures(self, command, params):
+        """
+        Set the cooker features to include the passed list of features
+        """
+        features = params[0]
+        command.cooker.setFeatures(features)
+
 class CommandsAsync:
     """
     A class of asynchronous commands

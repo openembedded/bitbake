@@ -149,6 +149,14 @@ class BBCooker:
 
         self.parser = None
 
+    def setFeatures(self, features):
+        original_featureset = list(self.featureset)
+        for feature in features:
+            self.featureset.setFeature(feature)
+        bb.debug(1, "Features set %s (was %s)" % (original_featureset, list(self.featureset)))
+        if (original_featureset != list(self.featureset)):
+            self.reset()
+
     def initConfigurationData(self):
 
         self.state = state.initial
