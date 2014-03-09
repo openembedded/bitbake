@@ -80,7 +80,7 @@ class ProcessServer(Process, BaseImplServer):
 
     def __init__(self, command_channel, event_queue, featurelist):
         BaseImplServer.__init__(self)
-        Process.__init__(self, args=(featurelist))
+        Process.__init__(self)
         self.command_channel = command_channel
         self.event_queue = event_queue
         self.event = EventAdapter(event_queue)
@@ -95,13 +95,6 @@ class ProcessServer(Process, BaseImplServer):
         for event in bb.event.ui_queue:
             self.event_queue.put(event)
         self.event_handle.value = bb.event.register_UIHhandler(self)
-
-        # process any feature changes based on what UI requested
-        original_featureset = list(self.cooker.featureset)
-        while len(self.featurelist)> 0:
-            self.cooker.featureset.setFeature(self.featurelist.pop())
-        if (original_featureset != list(self.cooker.featureset)):
-            self.cooker.reset()
 
         bb.cooker.server_main(self.cooker, self.main)
 
@@ -207,17 +200,19 @@ class BitBakeServer(BitBakeBaseServer):
         #
         self.ui_channel, self.server_channel = Pipe()
         self.event_queue = ProcessEventQueue(0)
-        manager = Manager()
-        self.featurelist = manager.list()
-        self.serverImpl = ProcessServer(self.server_channel, self.event_queue, self.featurelist)
+        self.serverImpl = ProcessServer(self.server_channel, self.event_queue, None)
 
     def detach(self):
         self.serverImpl.start()
         return
 
     def establishConnection(self, featureset):
-        for f in featureset:
-            self.featurelist.append(f)
+
         self.connection = BitBakeProcessServerConnection(self.serverImpl, self.ui_channel, self.event_queue)
+
+        _, error = self.connection.connection.runCommand(["setFeatures", featureset])
+        if error:
+            logger.error("Unable to set the cooker to the correct featureset: %s" % error)
+            raise BaseException(error)
         signal.signal(signal.SIGTERM, lambda i, s: self.connection.terminate())
         return self.connection
