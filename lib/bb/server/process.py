@@ -157,6 +157,10 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         self.connection = ServerCommunicator(self.ui_channel, self.procserver.event_handle)
         self.events = self.event_queue
 
+    def sigterm_terminate(self):
+        bb.error("UI received SIGTERM")
+        self.terminate()
+
     def terminate(self):
         def flushevents():
             while True:
@@ -176,10 +180,20 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
 
         self.ui_channel.close()
         self.event_queue.close()
+        self.event_queue.setexit()
 
 # Wrap Queue to provide API which isn't server implementation specific
 class ProcessEventQueue(multiprocessing.queues.Queue):
+    def __init__(self, maxsize):
+        multiprocessing.queues.Queue.__init__(self, maxsize)
+        self.exit = False
+
+    def setexit(self):
+        self.exit = True
+
     def waitEvent(self, timeout):
+        if self.exit:
+            raise KeyboardInterrupt()
         try:
             return self.get(True, timeout)
         except Empty:
@@ -214,5 +228,5 @@ class BitBakeServer(BitBakeBaseServer):
         if error:
             logger.error("Unable to set the cooker to the correct featureset: %s" % error)
             raise BaseException(error)
-        signal.signal(signal.SIGTERM, lambda i, s: self.connection.terminate())
+        signal.signal(signal.SIGTERM, lambda i, s: self.connection.sigterm_terminate())
         return self.connection
