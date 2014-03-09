@@ -900,8 +900,11 @@ class RunQueue:
         if not worker:
             return
         logger.debug(1, "Teardown for bitbake-worker")
-        worker.stdin.write("<quit></quit>")
-        worker.stdin.flush()
+        try:
+           worker.stdin.write("<quit></quit>")
+           worker.stdin.flush()
+        except IOError:
+           pass
         while worker.returncode is None:
             workerpipe.read()
             worker.poll()
@@ -1275,11 +1278,15 @@ class RunQueueExecute:
 
     def finish_now(self):
 
-        self.rq.worker.stdin.write("<finishnow></finishnow>")
-        self.rq.worker.stdin.flush()
-        if self.rq.fakeworker:
-            self.rq.fakeworker.stdin.write("<finishnow></finishnow>")
-            self.rq.fakeworker.stdin.flush()
+        for worker in [self.rq.worker, self.rq.fakeworker]:
+            if not worker:
+                continue
+            try:
+                worker.stdin.write("<finishnow></finishnow>")
+                worker.stdin.flush()
+            except IOError:
+                # worker must have died?
+                pass
 
         if len(self.failed_fnids) != 0:
             self.rq.state = runQueueFailed
