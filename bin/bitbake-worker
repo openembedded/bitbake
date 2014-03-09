@@ -242,6 +242,14 @@ class BitbakeWorker(object):
         self.build_pids = {}
         self.build_pipes = {}
     
+        signal.signal(signal.SIGTERM, self.sigterm_exception)
+
+    def sigterm_exception(self, signum, stackframe):
+        bb.warn("Worker recieved SIGTERM, shutting down...")
+        self.handle_finishnow(None)
+        signal.signal(signal.SIGTERM, signal.SIG_DFL)
+        os.kill(os.getpid(), signal.SIGTERM)
+
     def serve(self):        
         while True:
             (ready, _, _) = select.select([self.input] + [i.input for i in self.build_pipes.values()], [] , [], 1)
