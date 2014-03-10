@@ -912,10 +912,28 @@ class RunQueue:
             continue
         workerpipe.close()
 
+    def sigchild_exception(self, signum, stackframe):
+        pid = True
+        while pid:
+            try:
+                pid, status = os.waitpid(-1, os.WNOHANG)
+                if pid != 0 and not self.teardown:
+                    if self.worker and pid == self.worker.pid:
+                        name = "Worker"
+                    elif self.fakeworker and pid == self.fakeworker.pid:
+                        name = "Fakeroot"
+                    else:
+                        name = "Unknown"
+                    bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, pid, str(status)))
+                    self.finish_runqueue(True)
+            except OSError:
+                pid = False
+
     def start_worker(self):
         if self.worker:
             self.teardown_workers()
         self.teardown = False
+        signal.signal(signal.SIGCHLD, self.sigchild_exception)
         self.worker, self.workerpipe = self._start_worker()
 
     def start_fakeworker(self, rqexec):
@@ -924,6 +942,7 @@ class RunQueue:
 
     def teardown_workers(self):
         self.teardown = True
+        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
         self._teardown_worker(self.worker, self.workerpipe)
         self.worker = None
         self.workerpipe = None
@@ -2090,20 +2109,6 @@ class runQueuePipe():
         self.rqexec = rqexec
 
     def read(self):
-        try:
-            pid, status = os.waitpid(-1, os.WNOHANG)
-            if pid != 0 and not self.rq.teardown:
-                if self.rq.worker and pid == self.rq.worker.pid:
-                    name = "Worker"
-                elif self.rq.fakeworker and pid == self.rq.fakeworker.pid:
-                    name = "Fakeroot"
-                else:
-                    name = "Unknown"
-                bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, pid, str(status)))
-                self.rq.finish_runqueue(True)
-        except OSError:
-            pass
-
         start = len(self.queue)
         try:
             self.queue = self.queue + self.input.read(102400)
