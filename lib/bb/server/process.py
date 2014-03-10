@@ -119,7 +119,6 @@ class ProcessServer(Process, BaseImplServer):
         bb.event.unregister_UIHhandler(self.event_handle.value)
         self.command_channel.close()
         self.cooker.shutdown(True)
-        self.idle_commands(.1)
 
     def idle_commands(self, delay, fds = []):
         nextsleep = delay
