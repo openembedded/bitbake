@@ -207,23 +207,29 @@ class TaskData:
         if not fnid in self.depids:
             dependids = {}
             for depend in dataCache.deps[fn]:
-                logger.debug(2, "Added dependency %s for %s", depend, fn)
                 dependids[self.getbuild_id(depend)] = None
             self.depids[fnid] = dependids.keys()
+            logger.debug(2, "Added dependencies %s for %s", str(dataCache.deps[fn]), fn)
 
         # Work out runtime dependencies
         if not fnid in self.rdepids:
             rdependids = {}
             rdepends = dataCache.rundeps[fn]
             rrecs = dataCache.runrecs[fn]
+            rdependlist = []
+            rreclist = []
             for package in rdepends:
                 for rdepend in rdepends[package]:
-                    logger.debug(2, "Added runtime dependency %s for %s", rdepend, fn)
+                    rdependlist.append(rdepend)
                     rdependids[self.getrun_id(rdepend)] = None
             for package in rrecs:
                 for rdepend in rrecs[package]:
-                    logger.debug(2, "Added runtime recommendation %s for %s", rdepend, fn)
+                    rreclist.append(rdepend)
                     rdependids[self.getrun_id(rdepend)] = None
+            if rdependlist:
+                logger.debug(2, "Added runtime dependencies %s for %s", str(rdependlist), fn)
+            if rreclist:
+                logger.debug(2, "Added runtime recommendations %s for %s", str(rreclist), fn)
             self.rdepids[fnid] = rdependids.keys()
 
         for dep in self.depids[fnid]:

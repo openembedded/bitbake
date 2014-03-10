@@ -481,7 +481,7 @@ class RunQueueData:
             fn = taskData.fn_index[fnid]
             task_deps = self.dataCache.task_deps[fn]
 
-            logger.debug(2, "Processing %s:%s", fn, taskData.tasks_name[task])
+            #logger.debug(2, "Processing %s:%s", fn, taskData.tasks_name[task])
 
             if fnid not in taskData.failed_fnids:
 
