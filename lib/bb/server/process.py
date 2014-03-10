@@ -128,6 +128,7 @@ class ProcessServer(Process, BaseImplServer):
                 retval = function(self, data, False)
                 if retval is False:
                     del self._idlefuns[function]
+                    nextsleep = None
                 elif retval is True:
                     nextsleep = None
                 elif nextsleep is None:
