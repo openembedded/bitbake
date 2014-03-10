@@ -320,7 +320,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             if isinstance(event, bb.runqueue.runQueueExitWait):
                 if not main.shutdown:
                     main.shutdown = 1
-
+                continue
             if isinstance(event, bb.event.LogExecTTY):
                 if log_exec_tty:
                     tries = event.retries
@@ -485,7 +485,6 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                                   bb.event.RecipeParsed,
                                   bb.event.RecipePreFinalise,
                                   bb.runqueue.runQueueEvent,
-                                  bb.runqueue.runQueueExitWait,
                                   bb.event.OperationStarted,
                                   bb.event.OperationCompleted,
                                   bb.event.OperationProgress,
