@@ -1061,6 +1061,19 @@
                     </itemizedlist>
                 </para>
             </section>
+
+            <section id='schedulers'>
+                <title>Schedulers</title>
+
+                <para>
+                    There are variables specific to scheduling functionality
+                    including:
+                    <itemizedlist>
+                        <listitem><para><filename>BB_SCHEDULER</filename></para></listitem>
+                        <listitem><para><filename>BB_SCHEDULERS</filename></para></listitem>
+                    </itemizedlist>
+                </para>
+            </section>
         </section>
 
         <section id='metadata-classes'>
