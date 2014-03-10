@@ -259,7 +259,7 @@ def main():
         servermodule = getattr(module, server_type)
     except AttributeError:
         sys.exit("FATAL: Invalid server type '%s' specified.\n"
-                 "Valid interfaces: xmlrpc, process [default]." % servertype)
+                 "Valid interfaces: xmlrpc, process [default]." % server_type)
 
     if configParams.server_only:
         if configParams.servertype != "xmlrpc":
