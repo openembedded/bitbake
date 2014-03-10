@@ -958,6 +958,19 @@
             <title>Configuration files</title>
 
             <para>
+                Prior to parsing configuration files, Bitbake looks
+                at certain variables, including:
+                <itemizedlist>
+                    <listitem><para><filename>BB-ENV-WHITELIST</filename></para></listitem>
+                    <listitem><para><filename>BB_PRESERVE-ENV</filename></para></listitem>
+                    <listitem><para><filename>BB_ENV_EXTRAWHITE</filename></para></listitem>
+                    <listitem><para><filename>BB_ORIG_ENV</filename></para></listitem>
+                    <listitem><para><filename>PREFERRED_VERSIONS</filename></para></listitem>
+                    <listitem><para><filename>PREFERRED_PROVIDERS</filename></para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
                 The first kind of metadata in BitBake is configuration metadata.
                 This metadata is global, and therefore affects all packages and
                 tasks that are executed.
