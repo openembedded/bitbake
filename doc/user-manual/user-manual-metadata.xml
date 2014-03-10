@@ -1001,6 +1001,25 @@
             <para>
                 Only variable definitions and include directives are allowed
                 in <filename>.conf</filename> files.
+                The following variables include:
+                <itemizedlist>
+                    <listitem><para><filename>BITBAKE_UI</filename></para></listitem>
+                    <listitem><para><filename>BBDEBUG</filename></para></listitem>
+                    <listitem><para><filename>MULTI_PROVIDER_WHITELIST</filename></para></listitem>
+                    <listitem><para><filename>BB_NUMBER_PARSE_THREADS</filename></para></listitem>
+                    <listitem><para><filename>BBPKGS</filename></para></listitem>
+                    <listitem><para><filename>BB_DEFAULT_TASK</filename></para></listitem>
+                    <listitem><para><filename>TOPDIR</filename></para></listitem>
+                    <listitem><para><filename>BB_VERBOSE_LOGS</filename></para></listitem>
+                    <listitem><para><filename>BB_NICE_LEVEL</filename></para></listitem>
+                    <listitem><para><filename>BBFILE_COLLECTIONS</filename></para></listitem>
+                    <listitem><para><filename>ASSUME_PROVIDED</filename></para></listitem>
+                    <listitem><para><filename>BB_DANGLINGAPPENDS_WARNONLY</filename></para></listitem>
+                    <listitem><para><filename>BBINCLUDED</filename></para></listitem>
+                    <listitem><para><filename>BBFILE_PRIORITY</filename></para></listitem>
+                    <listitem><para><filename>BUILDNAME</filename></para></listitem>
+                    <listitem><para><filename>BBMASK</filename></para></listitem>
+                </itemizedlist>
             </para>
 
             <section id='layers'>
