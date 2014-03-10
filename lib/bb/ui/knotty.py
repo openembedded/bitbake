@@ -310,11 +310,11 @@ def main(server, eventHandler, params, tf = TerminalFilter):
         try:
             event = eventHandler.waitEvent(0)
             if event is None:
+                if main.shutdown > 1:
+                    break
                 termfilter.updateFooter()
                 event = eventHandler.waitEvent(0.25)
             if event is None:
-                if main.shutdown > 1:
-                    break
                 continue
             helper.eventHandler(event)
             if isinstance(event, bb.runqueue.runQueueExitWait):
