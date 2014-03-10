@@ -87,8 +87,7 @@ class ProcessServer(Process, BaseImplServer):
         self.featurelist = featurelist
         self.quit = False
 
-        self.keep_running = Event()
-        self.keep_running.set()
+        self.quitin, self.quitout = Pipe()
         self.event_handle = multiprocessing.Value("i")
 
     def run(self):
@@ -101,14 +100,18 @@ class ProcessServer(Process, BaseImplServer):
     def main(self):
         # Ignore SIGINT within the server, as all SIGINT handling is done by
         # the UI and communicated to us
+        self.quitin.close()
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        while self.keep_running.is_set():
+        while not self.quit:
             try:
                 if self.command_channel.poll():
                     command = self.command_channel.recv()
                     self.runCommand(command)
+                if self.quitout.poll():
+                    self.quitout.recv()
+                    self.quit = True
 
-                self.idle_commands(.1, [self.event_queue._reader, self.command_channel])
+                self.idle_commands(.1, [self.event_queue._reader, self.command_channel, self.quitout])
             except Exception:
                 logger.exception('Running command %s', command)
 
@@ -147,7 +150,8 @@ class ProcessServer(Process, BaseImplServer):
         self.command_channel.send(self.cooker.command.runCommand(command))
 
     def stop(self):
-        self.keep_running.clear()
+        self.quitin.send("quit")
+        self.quitin.close()
 
 class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
     def __init__(self, serverImpl, ui_channel, event_queue):
