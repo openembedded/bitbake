@@ -144,7 +144,7 @@ def handle(fn, data, include):
         # skip comments
         if s[0] == '#':
             continue
-        feeder(lineno, s, fn, statements)
+        feeder(lineno, s, abs_fn, statements)
 
     # DONE WITH PARSING... time to evaluate
     data.setVar('FILE', abs_fn)
