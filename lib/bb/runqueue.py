@@ -856,6 +856,7 @@ class RunQueue:
         self.workerpipe = None
         self.fakeworker = None
         self.fakeworkerpipe = None
+        self.oldsigchld = None
 
     def _start_worker(self, fakeroot = False, rqexec = None):
         logger.debug(1, "Starting bitbake-worker")
@@ -912,11 +913,12 @@ class RunQueue:
             continue
         workerpipe.close()
 
-    def sigchild_exception(self, signum, stackframe):
-        pid = True
-        while pid:
+    def sigchild_exception(self, *args, **kwargs):
+        for w in [self.worker, self.fakeworker]:
+            if not w:
+                continue
             try:
-                pid, status = os.waitpid(-1, os.WNOHANG)
+                pid, status = os.waitpid(w.pid, os.WNOHANG)
                 if pid != 0 and not self.teardown:
                     if self.worker and pid == self.worker.pid:
                         name = "Worker"
@@ -928,11 +930,14 @@ class RunQueue:
                     self.finish_runqueue(True)
             except OSError:
                 pid = False
+        if callable(self.oldsigchld):
+            self.oldsigchld(*args, **kwargs)
 
     def start_worker(self):
         if self.worker:
             self.teardown_workers()
         self.teardown = False
+        self.oldsigchld = signal.getsignal(signal.SIGCHLD)
         signal.signal(signal.SIGCHLD, self.sigchild_exception)
         self.worker, self.workerpipe = self._start_worker()
 
@@ -942,7 +947,7 @@ class RunQueue:
 
     def teardown_workers(self):
         self.teardown = True
-        signal.signal(signal.SIGCHLD, signal.SIG_DFL)
+        signal.signal(signal.SIGCHLD, self.oldsigchld)
         self._teardown_worker(self.worker, self.workerpipe)
         self.worker = None
         self.workerpipe = None
