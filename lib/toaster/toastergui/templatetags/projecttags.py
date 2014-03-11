@@ -24,6 +24,8 @@ import re
 from django import template
 from django.utils import timezone
 from django.template.defaultfilters import filesizeformat
+from orm.models import Target_Installed_Package, Target_Image_File
+from orm.models import Build, Target, Task, Layer, Layer_Version
 
 register = template.Library()
 
@@ -187,4 +189,29 @@ def string_slice(strvar,slicevar):
         return strvar[int(first):]
     else:
         return strvar[int(first):int(last)]
+
+@register.filter
+def get_image_extensions( build ):
+    """
+    This is a simple filter that returns a list (string)
+    of extensions of the build-targets-image files. Note
+    that each build can have multiple targets and each
+    target can yield more than one image file
+    """
+    targets = Target.objects.filter( build_id = build.id );
+    comma = "";
+    extensions = "";
+    for t in targets:
+        if ( not t.is_image ):
+            continue;
+        tif = Target_Image_File.objects.filter( target_id = t.id );
+        for i in tif:
+            try:
+                ndx = i.file_name.index( "." );
+            except ValueError:
+                ndx = 0;
+            s = i.file_name[ ndx + 1 : ];
+            extensions += comma + s;
+            comma = ", ";
+    return( extensions );
 
