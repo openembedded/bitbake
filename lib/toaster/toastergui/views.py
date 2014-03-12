@@ -207,8 +207,9 @@ def builds(request):
     # boilerplate code that takes a request for an object type and returns a queryset
     # for that object type. copypasta for all needed table searches
     (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
-    queryset = Build.objects.exclude(outcome = Build.IN_PROGRESS)
-    queryset = _get_queryset(Build, queryset, filter_string, search_term, ordering_string)
+    queryset_all = Build.objects.exclude(outcome = Build.IN_PROGRESS)
+    queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string)
+    queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string)
 
     # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
     build_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
@@ -235,6 +236,8 @@ def builds(request):
             # TODO: common objects for all table views, adapt as needed
                 'objects' : build_info,
                 'objectname' : "builds",
+                'search_term' : search_term,
+                'total_count' : queryset_with_search.count(),
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Outcome ',                                                # column with a single filter
@@ -248,8 +251,8 @@ def builds(request):
                  'filter' : {'class' : 'outcome',
                              'label': 'Show:',
                              'options' : [
-                                         ('Successful builds', 'outcome:' + str(Build.SUCCEEDED)),  # this is the field search expression
-                                         ('Failed builds', 'outcome:'+ str(Build.FAILED)),
+                                         ('Successful builds', 'outcome:' + str(Build.SUCCEEDED), queryset_with_search.filter(outcome=str(Build.SUCCEEDED)).count()),  # this is the field search expression
+                                         ('Failed builds', 'outcome:'+ str(Build.FAILED), queryset_with_search.filter(outcome=str(Build.FAILED)).count()),
                                          ]
                             }
                 },
@@ -271,9 +274,9 @@ def builds(request):
                  'filter' : {'class' : 'started_on',
                              'label': 'Show:',
                              'options' : [
-                                         ("Today's builds" , 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d")),
-                                         ("Yesterday's builds", 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d")),
-                                         ("This week's builds", 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d")),
+                                         ("Today's builds" , 'started_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=timezone.now().strftime("%Y-%m-%d")).count()),
+                                         ("Yesterday's builds", 'started_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d")).count()),
+                                         ("This week's builds", 'started_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(started_on__gte=(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d")).count()),
                                          ]
                             }
                 },
@@ -284,9 +287,9 @@ def builds(request):
                  'filter' : {'class' : 'completed_on', 
                              'label': 'Show:', 
                              'options' : [
-                                         ("Today's builds", 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d")),
-                                         ("Yesterday's builds", 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d")),
-                                         ("This week's builds", 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d")),
+                                         ("Today's builds", 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=timezone.now().strftime("%Y-%m-%d")).count()),
+                                         ("Yesterday's builds", 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d")).count()),
+                                         ("This week's builds", 'completed_on__gte:'+(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(days=7)).strftime("%Y-%m-%d")).count()),
                                          ]
                             }
                 },
@@ -295,8 +298,8 @@ def builds(request):
                  'filter' : {'class' : 'failed_tasks',
                              'label': 'Show:',
                              'options' : [
-                                         ('Builds with failed tasks', 'task_build__outcome:4'),
-                                         ('Builds without failed tasks', 'task_build__outcome:NOT4'),
+                                         ('Builds with failed tasks', 'task_build__outcome:4', queryset_with_search.filter(task_build__outcome=4).count()),
+                                         ('Builds without failed tasks', 'task_build__outcome:NOT4', queryset_with_search.filter(~Q(task_build__outcome=4)).count()),
                                          ]
                             }
                 },
@@ -307,8 +310,8 @@ def builds(request):
                  'filter' : {'class' : 'errors_no', 
                              'label': 'Show:', 
                              'options' : [
-                                         ('Builds with errors', 'errors_no__gte:1'),
-                                         ('Builds without errors', 'errors_no:0'),
+                                         ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
+                                         ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
                                          ]
                             }
                 },
@@ -319,8 +322,8 @@ def builds(request):
                  'filter' : {'class' : 'warnings_no', 
                              'label': 'Show:', 
                              'options' : [
-                                         ('Builds with warnings','warnings_no__gte:1'),
-                                         ('Builds without warnings','warnings_no:0'),
+                                         ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
+                                         ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
                                          ]
                             }
                 },
@@ -492,8 +495,9 @@ def tasks_common(request, build_id, variant):
     if retval:
         return _redirect_parameters( variant, request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
-    queryset = Task.objects.filter(build=build_id, order__gt=0)
-    queryset = _get_queryset(Task, queryset, filter_string, search_term, ordering_string)
+    queryset_all = Task.objects.filter(build=build_id, order__gt=0)
+    queryset_with_search = _get_queryset(Task, queryset_all, None , search_term, ordering_string)
+    queryset = _get_queryset(Task, queryset_all, filter_string, search_term, ordering_string)
 
     tasks = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
@@ -537,8 +541,8 @@ def tasks_common(request, build_id, variant):
                    'class' : 'executed',
                    'label': 'Show:',
                    'options' : [
-                               ('Executed Tasks', 'task_executed:1'),
-                               ('Not Executed Tasks', 'task_executed:0'),
+                               ('Executed Tasks', 'task_executed:1', queryset_with_search.filter(task_executed=1).count()),
+                               ('Not Executed Tasks', 'task_executed:0', queryset_with_search.filter(task_executed=0).count()),
                                ]
                    }
 
@@ -553,12 +557,12 @@ def tasks_common(request, build_id, variant):
                    'class' : 'outcome',
                    'label': 'Show:',
                    'options' : [
-                               ('Succeeded Tasks', 'outcome:%d'%Task.OUTCOME_SUCCESS),
-                               ('Failed Tasks', 'outcome:%d'%Task.OUTCOME_FAILED),
-                               ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED),
-                               ('Prebuilt Tasks', 'outcome:%d'%Task.OUTCOME_PREBUILT),
-                               ('Covered Tasks', 'outcome:%d'%Task.OUTCOME_COVERED),
-                               ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_EMPTY),
+                               ('Succeeded Tasks', 'outcome:%d'%Task.OUTCOME_SUCCESS, queryset_with_search.filter(outcome=Task.OUTCOME_SUCCESS).count() ),
+                               ('Failed Tasks', 'outcome:%d'%Task.OUTCOME_FAILED, queryset_with_search.filter(outcome=Task.OUTCOME_FAILED).count()),
+                               ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED, queryset_with_search.filter(outcome=Task.OUTCOME_CACHED).count()),
+                               ('Prebuilt Tasks', 'outcome:%d'%Task.OUTCOME_PREBUILT, queryset_with_search.filter(outcome=Task.OUTCOME_PREBUILT).count()),
+                               ('Covered Tasks', 'outcome:%d'%Task.OUTCOME_COVERED, queryset_with_search.filter(outcome=Task.OUTCOME_COVERED).count()),
+                               ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_EMPTY, queryset_with_search.filter(outcome=Task.OUTCOME_NA).count()),
                                ]
                    }
 
@@ -580,10 +584,10 @@ def tasks_common(request, build_id, variant):
                    'class' : 'cache_attempt',
                    'label': 'Show:',
                    'options' : [
-                               ('Tasks with cache attempts', 'sstate_result:%d'%Task.SSTATE_NA),
-                               ("Tasks with 'File not in cache' attempts", 'sstate_result:%d'%Task.SSTATE_MISS),
-                               ("Tasks with 'Failed' cache attempts", 'sstate_result:%d'%Task.SSTATE_FAILED),
-                               ("Tasks with 'Succeeded' cache attempts", 'sstate_result:%d'%Task.SSTATE_RESTORED),
+                               ('Tasks with cache attempts', 'sstate_result:%d'%Task.SSTATE_NA, queryset_with_search.filter(sstate_result=Task.SSTATE_NA).count()),
+                               ("Tasks with 'File not in cache' attempts", 'sstate_result:%d'%Task.SSTATE_MISS,  queryset_with_search.filter(sstate_result=Task.SSTATE_MISS).count()),
+                               ("Tasks with 'Failed' cache attempts", 'sstate_result:%d'%Task.SSTATE_FAILED,  queryset_with_search.filter(sstate_result=Task.SSTATE_FAILED).count()),
+                               ("Tasks with 'Succeeded' cache attempts", 'sstate_result:%d'%Task.SSTATE_RESTORED,  queryset_with_search.filter(sstate_result=Task.SSTATE_RESTORED).count()),
                                ]
                    }
 
@@ -621,6 +625,8 @@ def tasks_common(request, build_id, variant):
                 'title': title_variant,
                 'build': Build.objects.filter(pk=build_id)[0],
                 'objects': tasks,
+                'search_term': search_term,
+                'total_count': queryset_with_search.count(),
                 'tablecols':[
                     tc_order,
                     tc_recipe,
@@ -784,6 +790,7 @@ def configvars(request, build_id):
 
     (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
+    queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string).distinct().exclude(variable_value='',vhistory__file_name__isnull=True)
     queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string)
     # remove duplicate records from multiple search hits in the VariableHistory table
     queryset = queryset.distinct()
@@ -811,6 +818,8 @@ def configvars(request, build_id):
                 'file_filter': file_filter,
                 'build': Build.objects.filter(pk=build_id)[0],
                 'objects' : variables,
+                'total_count':queryset_with_search.count(),
+                'search_term':search_term,
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Variable ',
@@ -835,11 +844,11 @@ def configvars(request, build_id):
                     'class' : 'vhistory__file_name',
                     'label': 'Show:',
                     'options' : [
-                               ('Local configuration variables', 'vhistory__file_name__regex:conf/(local|bblayers).conf'),
-                               ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/'),
-                               ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/'),
-                               ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf'),
-                               ('bitbake.conf variables', 'vhistory__file_name__contains:/bitbake.conf'),
+                               ('Local configuration variables', 'vhistory__file_name__regex:conf/(local|bblayers).conf', queryset_with_search.filter(vhistory__file_name__contains='conf/local.conf').count()),
+                               ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/',queryset_with_search.filter(vhistory__file_name__contains='conf/machine').count()),
+                               ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/',queryset_with_search.filter(vhistory__file_name__contains='conf/distro').count()),
+                               ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf',queryset_with_search.filter(vhistory__file_name__contains='conf/layer.conf').count()),
+                               ('bitbake.conf variables', 'vhistory__file_name__contains:/bitbake.conf',queryset_with_search.filter(vhistory__file_name__contains='/bitbake.conf').count()),
                                ]
                              },
                 },
@@ -851,7 +860,7 @@ def configvars(request, build_id):
                     'class' : 'description',
                     'label': 'Show:',
                     'options' : [
-                               ('Variables with description', 'description__regex:.+'),
+                               ('Variables with description', 'description__regex:.+', queryset_with_search.filter(description__regex='.+').count()),
                                ]
                             },
                 },

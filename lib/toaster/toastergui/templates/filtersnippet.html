@@ -4,16 +4,25 @@
         <input type="hidden" name="search" value="{{request.GET.search}}"/>
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-            <h3>Filter {%if filter_search_display%}{{filter_search_display|title}}{%else%}{{objectname|title}}{%endif%} by '{{tc.name}}'</h3>
+            {% if search_term %}
+                 <h3>Filter {{total_count}} {%if filter_search_display%}{{filter_search_display|title}}{%else%}{{objectname|title}}{%endif%} matching '{{search_term}}' by '{{tc.name}}'</h3>
+            {% else %}
+                <h3>Filter {%if filter_search_display%}{{filter_search_display|title}}{%else%}{{objectname|title}}{%endif%} by '{{tc.name}}'</h3>
+            {% endif %}
         </div>
         <div class="modal-body">
             <p>{{f.label}}</p>
             <label class="radio">
-                <input type="radio" name="filter" {%if request.GET.filter%}{{f.options|check_filter_status:request.GET.filter}} {%else%} checked {%endif%} value="">  All {%if filter_search_display%}{{filter_search_display|title}}{%else%}{{objectname|title}}{%endif%}
+                <input type="radio" name="filter" {%if request.GET.filter%}{{f.options|check_filter_status:request.GET.filter}} {%else%} checked {%endif%} value="">  All {%if filter_search_display%}{{filter_search_display|title}}{%else%}{{objectname|title}}{%endif%} ({{total_count}})
             </label>
             {% for option in f.options %}
-                <label class="radio">
-                    <input type="radio" name="filter" {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}}
+                {% if option.2 %}
+                    <label class="radio">
+                        <input type="radio" name="filter" {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}} ({{option.2}})
+                {% else %}
+                    <label class="radio muted">
+                        <input type="radio" name="filter" disabled {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}} ({{option.2}})
+                {% endif %}
                 </label>
             {% endfor %}
         </div>
