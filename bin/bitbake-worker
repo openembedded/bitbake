@@ -132,6 +132,8 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
             global worker_pipe
             pipein.close()
 
+            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
             # Save out the PID so that the event can include it the
             # events
             bb.event.worker_pid = os.getpid()
