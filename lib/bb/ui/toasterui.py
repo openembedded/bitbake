@@ -241,6 +241,8 @@ def main(server, eventHandler, params ):
                     buildinfohelper.store_tasks_stats(event)
                 if event.type == "ImagePkgList":
                     buildinfohelper.store_target_package_data(event)
+                elif event.type == "ImageFileSize":
+                    buildinfohelper.update_target_image_file(event)
                 continue
 
             # ignore

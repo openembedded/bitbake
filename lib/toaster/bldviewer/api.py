@@ -25,6 +25,7 @@ from django.conf.urls import patterns, include, url
 urlpatterns = patterns('bldviewer.views',
         url(r'^builds$', 'model_explorer',  {'model_name':'build'}, name='builds'),
         url(r'^targets$', 'model_explorer',  {'model_name':'target'}, name='targets'),
+        url(r'^target_image_file$', 'model_explorer',  {'model_name':'target_image_file'}, name='target_image_file'),
         url(r'^tasks$', 'model_explorer', {'model_name':'task'}, name='task'),
         url(r'^task_dependencies$', 'model_explorer',  {'model_name':'task_dependency'}, name='task_dependencies'),
         url(r'^packages$', 'model_explorer',  {'model_name':'package'}, name='package'),

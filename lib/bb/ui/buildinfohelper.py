@@ -26,6 +26,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toaster.toastermain.settings")
 
 import toaster.toastermain.settings as toaster_django_settings
 from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage
+from toaster.orm.models import Target_Image_File
 from toaster.orm.models import Variable, VariableHistory
 from toaster.orm.models import Package, Package_File, Target_Installed_Package, Target_File
 from toaster.orm.models import Task_Dependency, Package_Dependency
@@ -344,6 +345,11 @@ class ORMWrapper(object):
         if (len(errormsg) > 0):
             raise Exception(errormsg)
 
+    def save_target_image_file_information(self, target_obj, file_name, file_size):
+        target_image_file = Target_Image_File.objects.create( target = target_obj,
+                            file_name = file_name,
+                            file_size = file_size)
+        target_image_file.save()
 
     def create_logmessage(self, log_information):
         assert 'build' in log_information
@@ -598,6 +604,13 @@ class BuildInfoHelper(object):
         # Save build configuration
         self.orm_wrapper.save_build_variables(build_obj, self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0])
 
+    def update_target_image_file(self, event):
+        for t in self.internal_state['targets']:
+            if t.is_image == True:
+                output_files = list(event.data.viewkeys())
+                for output in output_files:
+                    if t.target in output:
+                        self.orm_wrapper.save_target_image_file_information(t, output, event.data[output])
 
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
