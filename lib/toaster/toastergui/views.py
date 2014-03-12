@@ -356,7 +356,8 @@ def builddashboard(request, build_id):
         return redirect(builds)
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
-            'recipecount' : Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)).count()
+            'recipecount' : Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)).count(),
+            'logmessages' : LogMessage.objects.filter(build=build_id),
     }
     return render(request, template, context)
 

@@ -18,16 +18,42 @@
   <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
     <div class="row-fluid lead">
             <span class="pull-left"><strong>{%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}</strong> {{build.completed_on|date:"d/m/y H:i"}} with </span>{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}{% if  build.errors_no %}
-            <span class="span2"><i class="icon-minus-sign red"></i><strong><a href="{%url 'builddashboard' build.pk%}" class="error"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
+            <span class="span2"><i class="icon-minus-sign red"></i><strong><a href="#errors" class="error"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
 {% endif %}
 {% if  build.warnings_no %}
-            <span class="span2"><i class="icon-warning-sign yellow"></i><strong><a href="{%url 'builddashboard' build.pk%}" class="warning"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
+            <span class="span2"><i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
 {% endif %}
             <span class="pull-right">Build time: <a href="build-time.html">{{ build.timespent|sectohms }}</a></span>
 {%endif%}
     </div>
   </div>
 </div>
+
+{% if build.errors_no %}
+<div class="accordion span10 pull-right" id="errors">
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a class="accordion-toggle error toggle-errors">
+         <h2 id="error-toggle">
+           <i class="icon-minus-sign"></i>
+           {{build.errors_no}} error{{build.errors_no|pluralize}}
+         </h2>
+      </a>
+    </div>
+    <div class="accordion-body collapse in" id="collapse-errors">
+      <div class="accordion-inner">
+        <div class="span10">
+          {% for error in logmessages %}{% if error.level == 2 %}
+            <div class="alert alert-error">
+              <pre>{{error.message}}</pre>
+            </div>
+          {% endif %}{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 {%if build.outcome == build.SUCCEEDED%}
 <!-- built images -->
@@ -70,5 +96,31 @@
             </dl>
     </div>
 </div>
+
+{% if build.warnings_no %}
+<div class="accordion span10 pull-right" id="warnings">
+  <div class="accordion-group">
+    <div class="accordion-heading">
+      <a class="accordion-toggle warning toggle-warnings">
+        <h2 id="warning-toggle">
+          <i class="icon-warning-sign"></i>
+          {{build.warnings_no}} warning{{build.warnings_no|pluralize}}
+        </h2>
+      </a>
+    </div>
+    <div class="accordion-body collapse" id="collapse-warnings">
+      <div class="accordion-inner">
+        <div class="span10">
+          {% for warning in logmessages %}{% if warning.level == 1 %}
+            <div class="alert alert-warning">
+              <pre>{{warning.message}}</pre>
+            </div>
+          {% endif %}{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
 
 {% endblock %}
