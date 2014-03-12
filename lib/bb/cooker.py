@@ -1235,7 +1235,7 @@ class BBCooker:
 
         with open(dest, "w") as imagefile:
             if base_image is None:
-                imagefile.write("inherit image\n")
+                imagefile.write("inherit core-image\n")
             else:
                 topdir = self.data.getVar("TOPDIR")
                 if topdir in base_image:
