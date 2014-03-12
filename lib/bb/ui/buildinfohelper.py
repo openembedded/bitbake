@@ -93,6 +93,10 @@ class ORMWrapper(object):
         build.outcome = outcome
         build.save()
 
+    def update_target_object(self, target, license_manifest_path):
+
+        target.license_manifest_path = license_manifest_path
+        target.save()
 
     def get_update_task_object(self, task_information, must_exist = False):
         assert 'build' in task_information
@@ -615,6 +619,16 @@ class BuildInfoHelper(object):
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
             self.orm_wrapper.update_build_object(self.internal_state['build'], errors, warnings, taskfailures)
+
+
+    def store_license_manifest_path(self, event):
+        deploy_dir = event.data['deploy_dir_image']
+        image_name =  event.data['image_name']
+        path = deploy_dir + "/licenses/" + image_name + "/"
+        for target in self.internal_state['targets']:
+            if target.target in image_name:
+                self.orm_wrapper.update_target_object(target, path)
+
 
     def store_started_task(self, event):
         assert isinstance(event, (bb.runqueue.sceneQueueTaskStarted, bb.runqueue.runQueueTaskStarted, bb.runqueue.runQueueTaskSkipped))

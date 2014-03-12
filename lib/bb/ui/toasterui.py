@@ -235,14 +235,16 @@ def main(server, eventHandler, params ):
             if isinstance(event, bb.event.MetadataEvent):
                 if event.type == "SinglePackageInfo":
                     buildinfohelper.store_build_package_information(event)
-                if event.type == "LayerInfo":
+                elif event.type == "LayerInfo":
                     buildinfohelper.store_layer_info(event)
-                if event.type == "BuildStatsList":
+                elif event.type == "BuildStatsList":
                     buildinfohelper.store_tasks_stats(event)
-                if event.type == "ImagePkgList":
+                elif event.type == "ImagePkgList":
                     buildinfohelper.store_target_package_data(event)
                 elif event.type == "ImageFileSize":
                     buildinfohelper.update_target_image_file(event)
+                elif event.type == "LicenseManifestPath":
+                    buildinfohelper.store_license_manifest_path(event)
                 continue
 
             # ignore
