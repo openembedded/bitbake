@@ -26,7 +26,7 @@
         <div id="nav" class="span2">
             <ul class="nav nav-list well">
                 <li class="nav-header">Images</li>
-            {% for t in build.target_set.all %}
+            {% for t in build.target_set.all|dictsort:"target" %}
                 <li><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
             {% endfor %}
                 <li class="nav-header">Build</li>

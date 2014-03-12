@@ -24,7 +24,7 @@
 					{% for file in package.buildfilelist_package.all|dictsort:"path" %}
                         <tr>
                             <td>
-                                <a href="{% url 'image_information_dir' build.id target.id file.id %}">
+                                <a href="{% url 'dirinfo_filepath' build.id target.id file.path %}">
                                     {{file.path}}
                                 </a>
                              </td>

@@ -215,3 +215,52 @@ def get_image_extensions( build ):
             comma = ", ";
     return( extensions );
 
+@register.filter
+def filtered_installedsize(size, installed_size):
+    """If package.installed_size not null and not empty return it,
+       else return package.size
+    """
+    return size if (installed_size == 0) or (installed_size == "") or (installed_size == None) else installed_size
+
+@register.filter
+def filtered_installedname(name, installed_name):
+    """If package.installed_name not null and not empty
+        return <div class=muted> as {{package.installed_name}}
+        otherwise ""
+    """
+    return name if (name == installed_name) or (not installed_name) or (installed_name == "") else name + " as " + installed_name
+
+@register.filter
+def filtered_packageversion(version, revision):
+    """ Emit "version-revision" if version and revision are not null
+        else "version" if version is not null
+        else ""
+    """
+    return "" if (not version or version == "") else version if (not revision or revision == "") else version + "-" + revision
+        
+from django.db import models
+from orm.models import Package
+@register.filter
+def runtime_dependencies(package_object, targetid):
+    """ Return a queryset that lists the packages this package depends on
+    """
+    return package_object.package_dependencies_source.filter(target_id__exact=targetid, dep_type__in={'1'})
+
+@register.filter
+def reverse_runtime_dependencies(package_object, targetid):
+    """ Return a queryset that lists the packages depending on this package
+    """
+    return package_object.package_dependencies_target.filter(target_id__exact = targetid,dep_type__in={'1'})
+
+@register.filter
+def filter_sizeovertotal(package_object, total_size):
+    """ Return the % size of the package over the total size argument
+        formatted nicely.
+    """
+    size = package_object.installed_size
+    if size == None or size == '':
+        size = package_object.size
+  
+    return '{:.1%}'.format(float(size)/float(total_size))
+
+

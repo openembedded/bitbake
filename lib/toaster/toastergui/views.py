@@ -21,17 +21,18 @@
 
 import operator
 
-from django.db.models import Q
+from django.db.models import Q, Sum
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package
+from orm.models import Target_Installed_Package, Target_File
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
 from datetime import timedelta
 from django.utils import formats
+import json
 
 def _build_page_range(paginator, index = 1):
     try:
@@ -163,7 +164,7 @@ def _get_search_results(search_term, queryset, model):
 def _search_tuple(request, model):
     ordering_string, invalid = _validate_input(request.GET.get('orderby', ''), model)
     if invalid:
-        raise BaseException("Invalid ordering " + str(invalid))
+        raise BaseException("Invalid ordering model:" + str(model) + str(invalid))
 
     filter_string, invalid = _validate_input(request.GET.get('filter', ''), model)
     if invalid:
@@ -284,8 +285,8 @@ def builds(request):
                  'qhelp': "The date and time the build finished",
                  'orderfield': _get_toggle_order(request, "completed_on", True),
                  'ordericon':_get_toggle_order_icon(request, "completed_on"),
-                 'filter' : {'class' : 'completed_on', 
-                             'label': 'Show:', 
+                 'filter' : {'class' : 'completed_on',
+                             'label': 'Show:',
                              'options' : [
                                          ("Today's builds", 'completed_on__gte:'+timezone.now().strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=timezone.now().strftime("%Y-%m-%d")).count()),
                                          ("Yesterday's builds", 'completed_on__gte:'+(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d"), queryset_with_search.filter(completed_on__gte=(timezone.now()-timedelta(hours=24)).strftime("%Y-%m-%d")).count()),
@@ -307,8 +308,8 @@ def builds(request):
                  'qhelp': "How many errors were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "errors_no", True),
                  'ordericon':_get_toggle_order_icon(request, "errors_no"),
-                 'filter' : {'class' : 'errors_no', 
-                             'label': 'Show:', 
+                 'filter' : {'class' : 'errors_no',
+                             'label': 'Show:',
                              'options' : [
                                          ('Builds with errors', 'errors_no__gte:1', queryset_with_search.filter(errors_no__gte=1).count()),
                                          ('Builds without errors', 'errors_no:0', queryset_with_search.filter(errors_no=0).count()),
@@ -319,8 +320,8 @@ def builds(request):
                  'qhelp': "How many warnigns were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "warnings_no", True),
                  'ordericon':_get_toggle_order_icon(request, "warnings_no"),
-                 'filter' : {'class' : 'warnings_no', 
-                             'label': 'Show:', 
+                 'filter' : {'class' : 'warnings_no',
+                             'label': 'Show:',
                              'options' : [
                                          ('Builds with warnings','warnings_no__gte:1', queryset_with_search.filter(warnings_no__gte=1).count()),
                                          ('Builds without warnings','warnings_no:0', queryset_with_search.filter(warnings_no=0).count()),
@@ -417,13 +418,236 @@ def recipe(request, build_id, recipe_id):
 
 def target(request, build_id, target_id):
     template = "target.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
-        return redirect(builds)
-    context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
-    }
+    mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'name:+'};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'target', request.GET, mandatory_parameters, build_id = build_id, target_id = target_id)
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
+
+    # FUTURE:  get rid of nested sub-queries replacing with ManyToMany field
+    queryset = Package.objects.filter(id__in=Target_Installed_Package.objects.filter(target_id=target_id).values('package_id'))
+    packages_sum =  queryset.aggregate(Sum('installed_size'))
+    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string)
+    packages = _build_page_range(Paginator(queryset, request.GET.get('count', 25)),request.GET.get('page', 1))
+    context = { 'build': Build.objects.filter(pk=build_id)[0],
+                'target': Target.objects.filter(pk=target_id)[0],
+                'objects': packages,
+                'packages_sum' : packages_sum['installed_size__sum'],
+                'object_search_display': "packages included",
+                'tablecols':[
+                {
+                    'name':'Package',
+                    'qhelp':'Packaged output resulting from building a recipe and included in this image',
+                    'orderfield': _get_toggle_order(request, "name"),
+                    'ordericon':_get_toggle_order_icon(request, "name"),
+                },
+                {
+                    'name':'Package version',
+                    'qhelp':'The package version and revision',
+                },
+                {
+                    'name':'Size',
+                    'qhelp':'The size of the package',
+                    'orderfield': _get_toggle_order(request, "size"),
+                    'ordericon':_get_toggle_order_icon(request, "size"),
+                    'clclass': 'package_size',
+                    'hidden' : 0,
+                },
+                {
+                    'name':'Size over total (%)',
+                    'qhelp':'Proportion of the overall included package size represented by this package',
+                    'orderfield': _get_toggle_order(request, "size"),
+                    'ordericon':_get_toggle_order_icon(request, "size"),
+                    'clclass': 'size_over_total',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'License',
+                    'qhelp':'The license under which the package is distributed. Separate license names using | (pipe) means there is a choice between licenses. Separate license names using & (ampersand) means multiple licenses exist that cover different parts of the source',
+                    'orderfield': _get_toggle_order(request, "license"),
+                    'ordericon':_get_toggle_order_icon(request, "license"),
+                    'clclass': 'license',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Dependencies',
+                    'qhelp':"Package runtime dependencies (other packages)",
+                    'clclass': 'depends',
+                    'hidden' : 0,
+                },
+                {
+                    'name':'Reverse dependencies',
+                    'qhelp':'Package run-time reverse dependencies (i.e. which other packages depend on this package',
+                    'clclass': 'brought_in_by',
+                    'hidden' : 0,
+                },
+                {
+                    'name':'Recipe',
+                    'qhelp':'The name of the recipe building the package',
+                    'orderfield': _get_toggle_order(request, "recipe__name"),
+                    'ordericon':_get_toggle_order_icon(request, "recipe__name"),
+                    'clclass': 'recipe_name',
+                    'hidden' : 0,
+                },
+                {
+                    'name':'Recipe version',
+                    'qhelp':'Version and revision of the recipe building the package',
+                    'clclass': 'recipe_version',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Layer',
+                    'qhelp':'The name of the layer providing the recipe that builds the package',
+                    'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__name"),
+                    'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__name"),
+                    'clclass': 'layer_name',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Layer branch',
+                    'qhelp':'The Git branch of the layer providing the recipe that builds the package',
+                    'orderfield': _get_toggle_order(request, "recipe__layer_version__branch"),
+                    'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__branch"),
+                    'clclass': 'layer_branch',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Layer commit',
+                    'qhelp':'The Git commit of the layer providing the recipe that builds the package',
+                    'clclass': 'layer_commit',
+                    'hidden' : 1,
+                },
+                {
+                    'name':'Layer directory',
+                    'qhelp':'Location in disk of the layer providing the recipe that builds the package',
+                    'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
+                    'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
+                    'clclass': 'layer_directory',
+                    'hidden' : 1,
+                },
+                ]
+        }
+
     return render(request, template, context)
 
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse
+def dirinfo_ajax(request, build_id, target_id):
+    top = request.GET.get('start', '/')
+    return HttpResponse(_get_dir_entries(build_id, target_id, top))
+
+from django.utils.functional import Promise
+from django.utils.encoding import force_text
+class LazyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Promise):
+            return force_text(obj)
+        return super(LazyEncoder, self).default(obj)
+
+from toastergui.templatetags.projecttags import filtered_filesizeformat
+from django import template
+import os
+def _get_dir_entries(build_id, target_id, start):
+    node_str = {
+        Target_File.ITYPE_REGULAR   : '-',
+        Target_File.ITYPE_DIRECTORY : 'd',
+        Target_File.ITYPE_SYMLINK   : 'l',
+        Target_File.ITYPE_SOCKET    : 's',
+        Target_File.ITYPE_FIFO      : 'p',
+        Target_File.ITYPE_CHARACTER : 'c',
+        Target_File.ITYPE_BLOCK     : 'b',
+    }
+    response = []
+    objects  = Target_File.objects.filter(target__exact=target_id, directory__path=start)
+    target_packages = Target_Installed_Package.objects.filter(target__exact=target_id).values_list('package_id', flat=True)
+    for o in objects:
+        # exclude root inode '/'
+        if o.path == '/':
+            continue
+        try:
+            entry = {}
+            entry['parent'] = start
+            entry['name'] = os.path.basename(o.path)
+            entry['fullpath'] = o.path
+
+            # set defaults, not all dentries have packages
+            entry['installed_package'] = None
+            entry['package_id'] = None
+            entry['package'] = None
+            entry['link_to'] = None
+            if o.inodetype == Target_File.ITYPE_DIRECTORY:
+                entry['isdir'] = 1
+                # is there content in directory
+                entry['childcount'] = Target_File.objects.filter(directory__path=o.path).all().count()
+            else:
+                entry['isdir'] = 0
+
+                # resolve the file to get the package from the resolved file
+                resolved_id = o.sym_target_id
+                resolved_path = o.path
+                if target_packages.count():
+                    while resolved_id != "" and resolved_id != None:
+                        tf = Target_File.objects.get(pk=resolved_id)
+                        resolved_path = tf.path
+                        resolved_id = tf.sym_target_id
+
+                    thisfile=Package_File.objects.all().filter(path__exact=resolved_path, package_id__in=target_packages)
+                    if thisfile.count():
+                        p = Package.objects.get(pk=thisfile[0].package_id)
+                        entry['installed_package'] = p.installed_name
+                        entry['package_id'] = str(p.id)
+                        entry['package'] = p.name
+                # don't use resolved path from above, show immediate link-to
+                if o.sym_target_id != "" and o.sym_target_id != None:
+                    entry['link_to'] = Target_File.objects.get(pk=o.sym_target_id).path
+            t = template.Template('{% load projecttags %} {{ size|filtered_filesizeformat }}')
+            c = template.Context({'size': o.size})
+            entry['size'] = str(t.render(c))
+            if entry['link_to'] != None:
+                entry['permission'] = node_str[o.inodetype] + o.permission
+            else:
+                entry['permission'] = node_str[o.inodetype] + o.permission
+            entry['owner'] = o.owner
+            entry['group'] = o.group
+            response.append(entry)
+
+        except:
+            pass
+
+    # sort by directories first, then by name
+    rsorted = sorted(response, key=lambda entry :  entry['name'])
+    rsorted = sorted(rsorted, key=lambda entry :  entry['isdir'], reverse=True)
+    return json.dumps(rsorted, cls=LazyEncoder)
+
+def dirinfo(request, build_id, target_id, file_path=None):
+    template = "dirinfo.html"
+    objects = _get_dir_entries(build_id, target_id, '/')
+    packages_sum = Package.objects.filter(id__in=Target_Installed_Package.objects.filter(target_id=target_id).values('package_id')).aggregate(Sum('installed_size'))
+    dir_list = None
+    if file_path != None:
+        """
+        Link from the included package detail file list page and is
+        requesting opening the dir info to a specific file path.
+        Provide the list of directories to expand and the full path to
+        highlight in the page.
+        """
+        # Aassume target's path separator matches host's, that is, os.sep
+        sep = os.sep
+        dir_list = []
+        head = file_path
+        while head != sep:
+            (head,tail) = os.path.split(head)
+            if head != sep:
+                dir_list.insert(0, head)
+
+    context = { 'build': Build.objects.filter(pk=build_id)[0],
+                'target': Target.objects.filter(pk=target_id)[0],
+                'packages_sum': packages_sum['installed_size__sum'],
+                'objects': objects,
+                'dir_list': dir_list,
+                'file_path': file_path,
+              }
+    return render(request, template, context)
 
 def _find_task_dep(task):
     tp = []
@@ -593,7 +817,7 @@ def tasks_common(request, build_id, variant):
                    }
 
     }
-    #if   'tasks' == variant: tc_cache['hidden']='0'; 
+    #if   'tasks' == variant: tc_cache['hidden']='0';
     tc_time={
         'name':'Time (secs)',
         'qhelp':'How long it took the task to finish, expressed in seconds',
@@ -796,7 +1020,7 @@ def configvars(request, build_id):
     # remove duplicate records from multiple search hits in the VariableHistory table
     queryset = queryset.distinct()
     # remove records where the value is empty AND there are no history files
-    queryset = queryset.exclude(variable_value='',vhistory__file_name__isnull=True)    
+    queryset = queryset.exclude(variable_value='',vhistory__file_name__isnull=True)
 
     variables = _build_page_range(Paginator(queryset, request.GET.get('count', 50)), request.GET.get('page', 1))
 
@@ -811,7 +1035,7 @@ def configvars(request, build_id):
         file_filter += 'conf/distro/'
     if filter_string.find('/bitbake.conf') > 0:
         file_filter += '/bitbake.conf'
-    
+
     context = {
                 'objectname': 'configvars',
                 'object_search_display':'variables',
