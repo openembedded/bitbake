@@ -240,7 +240,7 @@ def builds(request):
                 'total_count' : queryset_with_search.count(),
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
-                {'name': 'Outcome ',                                                # column with a single filter
+                {'name': 'Outcome',                                                # column with a single filter
                  'qhelp' : "The outcome tells you if a build completed successfully or failed",     # the help button content
                  'dclass' : "span2",                                                # indication about column width; comes from the design
                  'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
@@ -256,18 +256,18 @@ def builds(request):
                                          ]
                             }
                 },
-                {'name': 'Target ',                                                 # default column, disabled box, with just the name in the list
+                {'name': 'Target',                                                 # default column, disabled box, with just the name in the list
                  'qhelp': "This is the build target(s): one or more recipes or image recipes",
                  'orderfield': _get_toggle_order(request, "target__target"),
                  'ordericon':_get_toggle_order_icon(request, "target__target"),
                 },
-                {'name': 'Machine ',
+                {'name': 'Machine',
                  'qhelp': "The machine is the hardware for which you are building",
                  'orderfield': _get_toggle_order(request, "machine"),
                  'ordericon':_get_toggle_order_icon(request, "machine"),
                  'dclass': 'span3'
                 },                           # a slightly wider column
-                {'name': 'Started on ', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
+                {'name': 'Started on', 'clclass': 'started_on', 'hidden' : 1,      # this is an unchecked box, which hides the column
                  'qhelp': "The date and time you started the build",
                  'orderfield': _get_toggle_order(request, "started_on", True),
                  'ordericon':_get_toggle_order_icon(request, "started_on"),
@@ -280,7 +280,7 @@ def builds(request):
                                          ]
                             }
                 },
-                {'name': 'Completed on ',
+                {'name': 'Completed on',
                  'qhelp': "The date and time the build finished",
                  'orderfield': _get_toggle_order(request, "completed_on", True),
                  'ordericon':_get_toggle_order_icon(request, "completed_on"),
@@ -293,7 +293,7 @@ def builds(request):
                                          ]
                             }
                 },
-                {'name': 'Failed tasks ', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
+                {'name': 'Failed tasks', 'clclass': 'failed_tasks',                # specifing a clclass will enable the checkbox
                  'qhelp': "How many tasks failed during the build",
                  'filter' : {'class' : 'failed_tasks',
                              'label': 'Show:',
@@ -303,7 +303,7 @@ def builds(request):
                                          ]
                             }
                 },
-                {'name': 'Errors ', 'clclass': 'errors_no',
+                {'name': 'Errors', 'clclass': 'errors_no',
                  'qhelp': "How many errors were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "errors_no", True),
                  'ordericon':_get_toggle_order_icon(request, "errors_no"),
@@ -327,7 +327,7 @@ def builds(request):
                                          ]
                             }
                 },
-                {'name': 'Time ', 'clclass': 'time', 'hidden' : 1,
+                {'name': 'Time', 'clclass': 'time', 'hidden' : 1,
                  'qhelp': "How long it took the build to finish",
                  'orderfield': _get_toggle_order(request, "timespent", True),
                  'ordericon':_get_toggle_order_icon(request, "timespent"),
