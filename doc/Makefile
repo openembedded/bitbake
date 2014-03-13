@@ -22,7 +22,7 @@
 #     make pdf DOC=user-manual
 #
 # The first example generates the HTML and PDF versions of the User Manual.
-# The second example generates the HTML version only of the User Manual. 
+# The second example generates the HTML version only of the User Manual.
 #
 
 ifeq ($(DOC),user-manual)
@@ -72,6 +72,20 @@ tarball: html
 
 validate:
 	cd $(DOC); xmllint --postvalid --xinclude --noout $(DOC).xml; cd ..
+
+publish:
+	@if test -f $(DOC)/$(DOC).html; \
+	  then \
+            echo " "; \
+            echo "******** Publishing "$(DOC)".html"; \
+            echo " "; \
+            scp -r $(MANUALS) $(STYLESHEET) docs.yp:/var/www/www.yoctoproject.org-docs/$(VER)/$(DOC); \
+            cd $(DOC); scp -r $(FIGURES) docs.yp:/var/www/www.yoctoproject.org-docs/$(VER)/$(DOC); \
+	else \
+          echo " "; \
+          echo $(DOC)".html missing.  Generate the file first then try again."; \
+          echo " "; \
+	fi
 
 clean:
 	rm -rf $(MANUALS); rm $(DOC)/$(DOC).tgz;
