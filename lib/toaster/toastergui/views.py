@@ -402,7 +402,7 @@ def recipe(request, build_id, recipe_id):
     object = Recipe.objects.filter(pk=recipe_id)[0]
     layer_version = Layer_Version.objects.filter(pk=object.layer_version_id)[0]
     layer  = Layer.objects.filter(pk=layer_version.layer_id)[0]
-    tasks  = Task.objects.filter(recipe_id = recipe_id).filter(build_id = build_id)
+    tasks  = Task.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).exclude(task_name__endswith='_setscene')
     packages = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0)
 
     context = {
