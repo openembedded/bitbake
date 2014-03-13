@@ -578,7 +578,7 @@ def tasks_common(request, build_id, variant):
     tc_cache={
         'name':'Cache attempt',
         'qhelp':'This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirrors, and what was the result: Succeeded, Failed or File not in cache',
-        'clclass': 'cache_attempt', 'hidden' : 1,
+        'clclass': 'cache_attempt', 'hidden' : 0,
         'orderfield': _get_toggle_order(request, "sstate_result"),
         'ordericon':_get_toggle_order_icon(request, "sstate_result"),
         'filter' : {
@@ -593,7 +593,7 @@ def tasks_common(request, build_id, variant):
                    }
 
     }
-    if   'tasks' == variant: tc_cache['hidden']='0'
+    #if   'tasks' == variant: tc_cache['hidden']='0'; 
     tc_time={
         'name':'Time (secs)',
         'qhelp':'How long it took the task to finish, expressed in seconds',
@@ -601,7 +601,7 @@ def tasks_common(request, build_id, variant):
         'ordericon':_get_toggle_order_icon(request, "elapsed_time"),
         'clclass': 'time_taken', 'hidden' : 1,
     }
-    if   'buildtime' == variant: tc_time['hidden']='0'; del tc_time['clclass']
+    if   'buildtime' == variant: tc_time['hidden']='0'; del tc_time['clclass']; tc_cache['hidden']='1';
     tc_cpu={
         'name':'CPU usage',
         'qhelp':'Task CPU utilisation, expressed as a percentage',
@@ -609,7 +609,7 @@ def tasks_common(request, build_id, variant):
         'ordericon':_get_toggle_order_icon(request, "cpu_usage"),
         'clclass': 'cpu_used', 'hidden' : 1,
     }
-    if   'cpuusage' == variant: tc_cpu['hidden']='0'; del tc_cpu['clclass']
+    if   'cpuusage' == variant: tc_cpu['hidden']='0'; del tc_cpu['clclass']; tc_cache['hidden']='1';
     tc_diskio={
         'name':'Disk I/O (ms)',
         'qhelp':'Number of miliseconds the task spent doing disk input and output',
@@ -617,7 +617,7 @@ def tasks_common(request, build_id, variant):
         'ordericon':_get_toggle_order_icon(request, "disk_io"),
         'clclass': 'disk_io', 'hidden' : 1,
     }
-    if   'diskio' == variant: tc_diskio['hidden']='0'; del tc_diskio['clclass']
+    if   'diskio' == variant: tc_diskio['hidden']='0'; del tc_diskio['clclass']; tc_cache['hidden']='1';
 
 
     context = { 'objectname': variant,
