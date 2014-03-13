@@ -235,11 +235,11 @@ class ORMWrapper(object):
             path = d[4].lstrip(".")
             parent_path = "/".join(path.split("/")[:len(path.split("/")) - 1])
             inodetype = Target_File.ITYPE_REGULAR
-            if permission.startswith('b'):
+            if d[0].startswith('b'):
                 inodetype = Target_File.ITYPE_BLOCK
-            if permission.startswith('c'):
+            if d[0].startswith('c'):
                 inodetype = Target_File.ITYPE_CHARACTER
-            if permission.startswith('p'):
+            if d[0].startswith('p'):
                 inodetype = Target_File.ITYPE_FIFO
 
             tf_obj = Target_File.objects.create(
@@ -286,7 +286,7 @@ class ORMWrapper(object):
                         target = target_obj,
                         path = path,
                         size = size,
-                        inodetype = Target_File.ITYPE_REGULAR,
+                        inodetype = Target_File.ITYPE_SYMLINK,
                         permission = permission,
                         owner = user,
                         group = group,
