@@ -1111,7 +1111,7 @@ def bpackage(request, build_id):
     packages = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
     context = {
-        'objectname': 'packages',
+        'objectname': 'packages built',
         'build': Build.objects.filter(pk=build_id)[0],
         'objects' : packages,
         'tablecols':[
