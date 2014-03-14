@@ -28,6 +28,11 @@
         </div>
         <div class="modal-footer">
             <button type="submit" class="btn btn-primary">Apply</button>
+            {% if request.GET.filter %}
+                {% if request.GET.filter|string_remove_regex:':.*' != f.options.0.1|string_remove_regex:':.*' %}
+                <span class="help-inline pull-left">You can only apply one filter to the table. This filter will override the current filter.</span>
+                {% endif %}
+            {% endif %}
         </div>
 </form>
 

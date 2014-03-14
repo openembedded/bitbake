@@ -189,6 +189,12 @@ def string_slice(strvar,slicevar):
         return strvar[int(first):int(last)]
 
 @register.filter
+def string_remove_regex(value,ex):
+    """ remove sub-string of string that matches regex
+    """
+    return re.sub(ex, '', value)
+
+@register.filter
 def filtered_installedsize(size, installed_size):
     """If package.installed_size not null and not empty return it,
        else return package.size
