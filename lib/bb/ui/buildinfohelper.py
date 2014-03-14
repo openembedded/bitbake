@@ -33,6 +33,9 @@ from toaster.orm.models import Task_Dependency, Package_Dependency
 from toaster.orm.models import Recipe_Dependency
 from bb.msg import BBLogFormatter as format
 
+class NotExisting(Exception):
+    pass
+
 class ORMWrapper(object):
     """ This class creates the dictionaries needed to store information in the database
         following the format defined by the Django models. It is also used to save this
@@ -111,7 +114,8 @@ class ORMWrapper(object):
 
         if must_exist and created:
             task_information['debug'] = "build id %d, recipe id %d" % (task_information['build'].pk, task_information['recipe'].pk)
-            raise Exception("Task object created when expected to exist", task_information)
+            task_object.delete()
+            raise NotExisting("Task object created when expected to exist", task_information)
 
         for v in vars(task_object):
             if v in task_information.keys():
@@ -142,12 +146,14 @@ class ORMWrapper(object):
         assert 'layer_version' in recipe_information
         assert 'file_path' in recipe_information
 
+
         recipe_object, created = Recipe.objects.get_or_create(
                                          layer_version=recipe_information['layer_version'],
                                          file_path=recipe_information['file_path'])
 
         if must_exist and created:
-            raise Exception("Recipe object created when expected to exist", recipe_information)
+            recipe_object.delete()
+            raise NotExisting("Recipe object created when expected to exist", recipe_information)
 
         for v in vars(recipe_object):
             if v in recipe_information.keys():
@@ -639,7 +645,7 @@ class BuildInfoHelper(object):
         identifier = event.taskfile + ":" + event.taskname
 
         recipe_information = self._get_recipe_information_from_taskfile(event.taskfile)
-        recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
+        recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
 
         task_information = self._get_task_information(event, recipe)
         task_information['outcome'] = Task.OUTCOME_NA
@@ -679,9 +685,9 @@ class BuildInfoHelper(object):
             recipe_information = self._get_recipe_information_from_taskfile(taskfile)
             try:
                 recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
-            except Exception:
-                # we cannot find the recipe information for the task, we move on to the next task
-                continue
+            except NotExisting:
+                recipe = Recipe.objects.get(layer_version = recipe_information['layer_version'],
+                            file_path__endswith = recipe_information['file_path'])
 
             task_information = {}
             task_information['build'] = self.internal_state['build']
