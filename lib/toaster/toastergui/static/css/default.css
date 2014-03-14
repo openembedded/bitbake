@@ -46,8 +46,7 @@ dd p { line-height: 20px; }
 .details { margin-top: 30px; }
 
 /* Required classes for the highlight behaviour in tables */
-.highlight { background-color: #D9EDF7; }
-.flash:target { -webkit-animation: target-fade 7s 1; -moz-animation: target-fade 7s 1; animation: target-fade 7s 1; }
+.highlight { -webkit-animation: target-fade 7s 1; -moz-animation: target-fade 7s 1; animation: target-fade 7s 1; }
 @-webkit-keyframes target-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
 @-moz-keyframes target-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
 @keyframes target-fade { 0% { background-color: #D9EDF7; } 25% { background-color: #D9EDF7; } 100% { background-color: white; } }
