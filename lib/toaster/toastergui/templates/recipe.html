@@ -117,11 +117,13 @@
 
                     <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_executed_display}}</a></td>
 
-                    <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_outcome_display}}</a></td>
+                    <td>
+                        <a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_outcome_display}} </a>
+                        <i class="icon-question-sign get-help hover-help" title="{{task.get_outcome_help}}"></i>
+                    </td>
                     <td>
                         {% ifnotequal task.sstate_result task.SSTATE_NA %}
                         <a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_sstate_result_display}}</a>
-                        <i class="icon-question-sign get-help hover-help" title="This task did not run because its outcome was reused from a previous build"></i>
                         {% endifnotequal %}
                     </td>
 

@@ -51,7 +51,8 @@
                 <a href="{%url "task" build.pk task.pk%} ">{{task.get_executed_display}}</a>
             </td>
             <td class="outcome">
-                <a href="{%url "task" build.pk task.pk%} ">{{task.get_outcome_display}}</a>
+                <a href="{%url "task" build.pk task.pk%} ">{{task.get_outcome_display}} </a>
+                <i class="icon-question-sign get-help hover-help" title="{{task.get_outcome_help}}"></i>
             </td>
             <td class="cache_attempt">
                 <a href="{%url "task" build.pk task.pk%} ">{{task.get_sstate_result_display|format_none_and_zero}}</a>

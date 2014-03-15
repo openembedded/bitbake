@@ -76,7 +76,7 @@
                 </thead>
                 <tbody>
                     {% for match in matching_tasks %}
-                        <tr>
+                        <tr {{ match|task_color }}>
                             <td>
                                 <a href="{%url "task" match.build.pk match.pk%}">{{match.recipe.name}}</a>
                             </td>
@@ -87,7 +87,7 @@
                                 <a href="{%url "task" match.build.pk match.pk%}">{{match.get_executed_display}}</a>
                             </td>
                             <td>
-                                <a href="{%url "task" match.build.pk match.pk%}">{{match.get_outcome_display}}</a><i class="icon-question-sign get-help hover-help" title="{{match.outcome_help}}"></i>
+                                <a href="{%url "task" match.build.pk match.pk%}">{{match.get_outcome_display}} </a><i class="icon-question-sign get-help hover-help" title="{{match.get_outcome_help}}"></i>
                             </td>
                             <td>
                                 <a href="{%url "task" match.build.pk match.pk%}">{{match.build.completed_on|date:"d/m/y H:i"}}</a>
@@ -98,8 +98,8 @@
             </table>
         {% else %}
             <p class="alert">
-                We have found no tasks matching this prebuilt task.<br/>
-                The task you are looking for could belong to a build for which Toaster has not data.
+                <strong> We have found no tasks matching this prebuilt task</strong><br/>
+                The task you are looking for could belong to a build for which Toaster has no data.
             </p>
         {% endif %}
     {% elif task.outcome == task.OUTCOME_COVERED %}
@@ -119,8 +119,7 @@
                 <i class="icon-question-sign get-help" title="The location in disk of the task log file"></i> Log file
             </dt>
             <dd>
-                <code>{% for t in task.get_related_setscene %} {{t.logfile}}<br/>{% endfor %}
-		</code>
+                <code>{% for t in task.get_related_setscene %} {{t.logfile}} {% endfor %}</code>
             </dd>
         </dl>
     {%elif task.outcome == task.OUTCOME_EMPTY%}
@@ -243,10 +242,11 @@
 </dl>
 
 {# Performance section - shown only for executed tasks #}
-{%if task.task_executed %}
+{%if task.elapsed_time or task.cpu_usage or task.disk_io %}
     <h2 class="details">Performance</h2>
+{% endif %}
     <dl class="dl-horizontal">
-		{% if task.elapsed_time > 0.01 %}
+		{% if task.elapsed_time %}
         <dt>
             <i class="icon-question-sign get-help" title="How long it took the task to finish, expressed in seconds"></i>
             Time (secs)
@@ -268,8 +268,6 @@
         <dd>{{task.disk_io|format_none_and_zero}}</dd>
 		{% endif %}
     </dl>
-{%endif%}
-
 
 </div>
 {% endblock %}
