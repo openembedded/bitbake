@@ -23,6 +23,7 @@
                     <label class="radio muted">
                         <input type="radio" name="filter" disabled {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}} ({{option.2}})
                 {% endif %}
+                {% if option.3 %}<i class="icon-question-sign get-help" data-placement="right" title="{{option.3}}"></i>{% endif %}
                 </label>
             {% endfor %}
         </div>
