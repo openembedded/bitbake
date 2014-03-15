@@ -1010,10 +1010,13 @@ def configvars(request, build_id):
     template = 'configvars.html'
     mandatory_parameters = { 'count': 100,  'page' : 1, 'orderby':'variable_name:+', 'filter':'description__regex:.+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
     if retval:
+        # if new search, clear the default filter
+        if search_term and len(search_term):
+            mandatory_parameters['filter']=''
         return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id = build_id)
 
-    (filter_string, search_term, ordering_string) = _search_tuple(request, Variable)
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
     queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string).distinct().exclude(variable_value='',vhistory__file_name__isnull=True)
     queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string)
