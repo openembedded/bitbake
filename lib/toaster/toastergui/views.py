@@ -732,11 +732,6 @@ def tasks_common(request, build_id, variant):
 
     tasks = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
-# Per Belen - do not show the covering task
-#    for t in tasks:
-#        if t.outcome == Task.OUTCOME_COVERED:
-#            t.provider = _find_task_provider(t)
-
     # define (and modify by variants) the 'tablecols' members
     tc_order={
         'name':'Order',
