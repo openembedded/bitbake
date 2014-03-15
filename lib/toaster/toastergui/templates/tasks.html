@@ -8,10 +8,10 @@
 <div class="span10">
 <div class="page-header">
 <h1>
-  {% if request.GET.filter or request.GET.search and objects.count > 0  %}
+  {% if request.GET.filter or request.GET.search and objects.paginator.count > 0  %}
       {{objects.paginator.count}} task{{objects.paginator.count|pluralize}} found
-  {%elif objects.paginator.count == 0%}
-      No tasks
+  {%elif request.GET.filter or request.GET.search and objects.paginator.count == 0%}
+      No tasks found
   {%else%}
       {{title}}
   {%endif%}
