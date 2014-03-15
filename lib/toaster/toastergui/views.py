@@ -1047,7 +1047,7 @@ def configvars(request, build_id):
 
     context = {
                 'objectname': 'configvars',
-                'object_search_display':'variables',
+                'object_search_display':'BitBake variables',
                 'filter_search_display':'variables',
                 'file_filter': file_filter,
                 'build': Build.objects.filter(pk=build_id)[0],
