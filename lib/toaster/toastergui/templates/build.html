@@ -85,10 +85,10 @@
   {% else %}
   <div class="page-header top-air">
      <h1>
-      {% if request.GET.filter and objects.count or request.GET.search and objects.count > 0  %}
+      {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
           {{objects.paginator.count}} build{{objects.paginator.count|pluralize}} found
-      {%elif objects.paginator.count == 0%}
-          No builds
+      {%elif request.GET.filter and objects.paginator.count == 0 or request.GET.search and objects.paginator.count == 0 %}
+          No builds found
       {%else%}
           All builds
       {%endif%}
