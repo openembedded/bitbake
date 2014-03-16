@@ -27,7 +27,7 @@
     {% endif %}
             <a href="{% url 'package_included_reverse_dependencies' build.id target.id package.id %}">
                 <i class="icon-question-sign get-help" data-toggle="tooltip" title="The package runtime reverse dependencies (i.e. which other packages in this image depend on this package). Reverse dependencies reflect only the 'depends' dependency type"></i>
-                Reverse Runtime dependencies ({{reverse_count}})
+                Reverse runtime dependencies ({{reverse_count}})
             </a>
         </li>
     </ul>

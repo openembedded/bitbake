@@ -93,10 +93,10 @@
             {% with deps_count=deps|length %}
             {% if deps_count > 0 %}
             <a class="btn"
-                title="<a href='{% url "package_included_dependencies" build.id target.id package.id %}'>{{package.name}}</a> depends on"
+                title="<a href='{% url "package_included_dependencies" build.id target.id package.id %}'>{{package.name}}</a> dependencies"
                 data-content="<ul class='unstyled'>
                   {% for i in deps|dictsort:'depends_on.name' %}
-                    <li><a href='{% url "package_included_dependencies" build.pk target.id i.depends_on.pk %}'>{{i.depends_on.name}}</a></li>
+                    <li><a href='{% url "package_included_detail" build.pk target.id i.depends_on.pk %}'>{{i.depends_on.name}}</a></li>
                   {% endfor %}
                 </ul>">
                 {{deps_count}}
@@ -110,10 +110,10 @@
             {% with rdeps_count=rdeps|length %}
             {% if rdeps_count > 0 %}
             <a class="btn"
-                title="<a href='{% url "package_included_reverse_dependencies" build.id target.id package.id %}'>{{package.name}}</a> is brought in by"
+                title="<a href='{% url "package_included_reverse_dependencies" build.id target.id package.id %}'>{{package.name}}</a> reverse dependencies"
                 data-content="<ul class='unstyled'>
                   {% for i in rdeps|dictsort:'package.name' %}
-                    <li><a href='{% url "package_included_dependencies" build.id target.id i.package.id %}'>{{i.package.name}}</a></li>
+                    <li><a href='{% url "package_included_detail" build.id target.id i.package.id %}'>{{i.package.name}}</a></li>
                   {% endfor %}
                 </ul>">
                 {{rdeps_count}}
