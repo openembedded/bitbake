@@ -16,7 +16,7 @@
  <h1>
   {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
       {{objects.paginator.count}} variable{{objects.paginator.count|pluralize}} found
-  {%elif request.GET.filter and objects.paginator.count == 0 or request.GETs.search and objects.paginator.count == 0 %}
+  {%elif request.GET.filter and objects.paginator.count == 0 or request.GET.search and objects.paginator.count == 0 %}
       No variables found
   {%else%}
       Configuration
