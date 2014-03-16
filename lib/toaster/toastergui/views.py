@@ -268,7 +268,7 @@ def builds(request):
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
                 {'name': 'Outcome',                                                # column with a single filter
-                 'qhelp' : "The outcome tells you if a build completed successfully or failed",     # the help button content
+                 'qhelp' : "The outcome tells you if a build successfully completed or failed",     # the help button content
                  'dclass' : "span2",                                                # indication about column width; comes from the design
                  'orderfield': _get_toggle_order(request, "outcome"),               # adds ordering by the field value; default ascending unless clicked from ascending into descending
                  'ordericon':_get_toggle_order_icon(request, "outcome"),
@@ -284,12 +284,12 @@ def builds(request):
                             }
                 },
                 {'name': 'Target',                                                 # default column, disabled box, with just the name in the list
-                 'qhelp': "This is the build target(s): one or more recipes or image recipes",
+                 'qhelp': "This is the build target or build targets (i.e. one or more recipes or image recipes)",
                  'orderfield': _get_toggle_order(request, "target__target"),
                  'ordericon':_get_toggle_order_icon(request, "target__target"),
                 },
                 {'name': 'Machine',
-                 'qhelp': "The machine is the hardware for which you are building",
+                 'qhelp': "The machine is the hardware for which you are building a recipe or image recipe",
                  'orderfield': _get_toggle_order(request, "machine"),
                  'ordericon':_get_toggle_order_icon(request, "machine"),
                  'dclass': 'span3'
@@ -361,7 +361,7 @@ def builds(request):
                 },
                 {'name': 'Log',
                  'dclass': "span4",
-                 'qhelp': "The location in disk of the build main log file",
+                 'qhelp': "Path to the build main log file",
                  'clclass': 'log', 'hidden': 1,
                  'orderfield': _get_toggle_order(request, "cooker_log_path"),
                  'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
@@ -536,7 +536,7 @@ def target(request, build_id, target_id):
                 },
                 {
                     'name':'License',
-                    'qhelp':'The license under which the package is distributed. Separate license names using | (pipe) means there is a choice between licenses. Separate license names using & (ampersand) means multiple licenses exist that cover different parts of the source',
+                    'qhelp':'The license under which the package is distributed. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source',
                     'orderfield': _get_toggle_order(request, "license"),
                     'ordericon':_get_toggle_order_icon(request, "license"),
                     'clclass': 'license',
@@ -544,13 +544,13 @@ def target(request, build_id, target_id):
                 },
                 {
                     'name':'Dependencies',
-                    'qhelp':"Package runtime dependencies (other packages)",
+                    'qhelp':"Package runtime dependencies (i.e. other packages)",
                     'clclass': 'depends',
                     'hidden' : 0,
                 },
                 {
                     'name':'Reverse dependencies',
-                    'qhelp':'Package run-time reverse dependencies (i.e. which other packages depend on this package',
+                    'qhelp':'Package run-time reverse dependencies (i.e. other packages that depend on this package)',
                     'clclass': 'brought_in_by',
                     'hidden' : 0,
                 },
@@ -592,7 +592,7 @@ def target(request, build_id, target_id):
                 },
                 {
                     'name':'Layer directory',
-                    'qhelp':'Location in disk of the layer providing the recipe that builds the package',
+                    'qhelp':'Path to the layer providing the recipe that builds the package',
                     'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
                     'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
                     'clclass': 'layer_directory',
@@ -847,7 +847,7 @@ def tasks_common(request, build_id, variant, task_anchor):
     }
     tc_executed={
         'name':'Executed',
-        'qhelp':"This value tells you if a task had to run in order to generate the task output (executed), or if the output was provided by another task and therefore the task didn't need to run (not executed)",
+        'qhelp':"This value tells you if a task had to run (executed) in order to generate the task output, or if the output was provided by another task and therefore the task didn't need to run (not executed)",
         'clclass': 'executed', 'hidden' : 0,
         'orderfield': _get_toggle_order(request, "task_executed"),
         'ordericon':_get_toggle_order_icon(request, "task_executed"),
@@ -863,7 +863,7 @@ def tasks_common(request, build_id, variant, task_anchor):
     }
     tc_outcome={
         'name':'Outcome',
-        'qhelp':'This column tells you if executed tasks succeeded, failed or restored output from the <code>sstate-cache</code> directory or mirrors. It also tells you why not executed tasks did not need to run',
+        'qhelp':"This column tells you if 'executed' tasks succeeded or failed. The column also tells you why 'not executed' tasks did not need to run",
         'clclass': 'outcome', 'hidden' : 0,
         'orderfield': _get_toggle_order(request, "outcome"),
         'ordericon':_get_toggle_order_icon(request, "outcome"),
@@ -871,9 +871,9 @@ def tasks_common(request, build_id, variant, task_anchor):
                    'class' : 'outcome',
                    'label': 'Show:',
                    'options' : [
-                               ('Succeeded Tasks', 'outcome:%d'%Task.OUTCOME_SUCCESS, queryset_with_search.filter(outcome=Task.OUTCOME_SUCCESS).count(), 'Succeeded tasks are those that ran and completed during the build' ),
-                               ('Failed Tasks', 'outcome:%d'%Task.OUTCOME_FAILED, queryset_with_search.filter(outcome=Task.OUTCOME_FAILED).count(), 'Failed tasks are those that ran but did not complete during the build'),
-                               ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED, queryset_with_search.filter(outcome=Task.OUTCOME_CACHED).count(), 'Cached tasks restored output from the <code>sstate-cache</code> directory or mirrors'),
+                               ('Succeeded Tasks', 'outcome:%d'%Task.OUTCOME_SUCCESS, queryset_with_search.filter(outcome=Task.OUTCOME_SUCCESS).count(), "'Succeeded' tasks are those that ran and completed during the build" ),
+                               ('Failed Tasks', 'outcome:%d'%Task.OUTCOME_FAILED, queryset_with_search.filter(outcome=Task.OUTCOME_FAILED).count(), "'Failed' tasks are those that ran but did not complete during the build"),
+                               ('Cached Tasks', 'outcome:%d'%Task.OUTCOME_CACHED, queryset_with_search.filter(outcome=Task.OUTCOME_CACHED).count(), 'Cached tasks restore output from the <code>sstate-cache</code> directory or mirrors'),
                                ('Prebuilt Tasks', 'outcome:%d'%Task.OUTCOME_PREBUILT, queryset_with_search.filter(outcome=Task.OUTCOME_PREBUILT).count(),'Prebuilt tasks didn\'t need to run because their output was reused from a previous build'),
                                ('Covered Tasks', 'outcome:%d'%Task.OUTCOME_COVERED, queryset_with_search.filter(outcome=Task.OUTCOME_COVERED).count(), 'Covered tasks didn\'t need to run because their output is provided by another task in this build'),
                                ('Empty Tasks', 'outcome:%d'%Task.OUTCOME_EMPTY, queryset_with_search.filter(outcome=Task.OUTCOME_NA).count(), 'Empty tasks have no executable content'),
@@ -883,14 +883,14 @@ def tasks_common(request, build_id, variant, task_anchor):
     }
     tc_log={
         'name':'Log',
-        'qhelp':'The location in disk of the task log file',
+        'qhelp':'Path to the task log file',
         'orderfield': _get_toggle_order(request, "logfile"),
         'ordericon':_get_toggle_order_icon(request, "logfile"),
         'clclass': 'task_log', 'hidden' : 1,
     }
     tc_cache={
         'name':'Cache attempt',
-        'qhelp':'This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirrors, and what was the result: Succeeded, Failed or File not in cache',
+        'qhelp':'This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirrors, and reports the result: Succeeded, Failed or File not in cache',
         'clclass': 'cache_attempt', 'hidden' : 0,
         'orderfield': _get_toggle_order(request, "sstate_result"),
         'ordericon':_get_toggle_order_icon(request, "sstate_result"),
@@ -909,7 +909,7 @@ def tasks_common(request, build_id, variant, task_anchor):
     #if   'tasks' == variant: tc_cache['hidden']='0';
     tc_time={
         'name':'Time (secs)',
-        'qhelp':'How long it took the task to finish, expressed in seconds',
+        'qhelp':'How long it took the task to finish in seconds',
         'orderfield': _get_toggle_order(request, "elapsed_time", True),
         'ordericon':_get_toggle_order_icon(request, "elapsed_time"),
         'clclass': 'time_taken', 'hidden' : 1,
@@ -917,7 +917,7 @@ def tasks_common(request, build_id, variant, task_anchor):
     if   'buildtime' == variant: tc_time['hidden']='0'; del tc_time['clclass']; tc_cache['hidden']='1';
     tc_cpu={
         'name':'CPU usage',
-        'qhelp':'Task CPU utilisation, expressed as a percentage',
+        'qhelp':'The percentage of task CPU utilization',
         'orderfield': _get_toggle_order(request, "cpu_usage", True),
         'ordericon':_get_toggle_order_icon(request, "cpu_usage"),
         'clclass': 'cpu_used', 'hidden' : 1,
@@ -1002,31 +1002,31 @@ def recipes(request, build_id):
             },
             {
                 'name':'Dependencies',
-                'qhelp':'Recipe build-time dependencies (other recipes)',
+                'qhelp':'Recipe build-time dependencies (i.e. other recipes)',
                 'clclass': 'depends_on', 'hidden': 1,
             },
             {
                 'name':'Reverse dependencies',
-                'qhelp':'Recipe build-time reverse dependencies (i.e. which other recipes depend on this recipe)',
+                'qhelp':'Recipe build-time reverse dependencies (i.e. the recipes that depend on this recipe)',
                 'clclass': 'depends_by', 'hidden': 1,
             },
             {
                 'name':'Recipe file',
-                'qhelp':'Location in disk of the recipe .bb file',
+                'qhelp':'Path to the recipe .bb file',
                 'orderfield': _get_toggle_order(request, "file_path"),
                 'ordericon':_get_toggle_order_icon(request, "file_path"),
                 'clclass': 'recipe_file', 'hidden': 0,
             },
             {
                 'name':'Section',
-                'qhelp':'The section in which recipes should be categorised',
+                'qhelp':'The section in which recipes should be categorized',
                 'orderfield': _get_toggle_order(request, "section"),
                 'ordericon':_get_toggle_order_icon(request, "section"),
                 'clclass': 'recipe_section', 'hidden': 0,
             },
             {
                 'name':'License',
-                'qhelp':'The list of source licenses for the recipe. Separate license names using | (pipe) means there is a choice between licenses. Separate license names using & (ampersand) means multiple licenses exist that cover different parts of the source',
+                'qhelp':'The list of source licenses for the recipe. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source',
                 'orderfield': _get_toggle_order(request, "license"),
                 'ordericon':_get_toggle_order_icon(request, "license"),
                 'clclass': 'recipe_license', 'hidden': 0,
@@ -1052,7 +1052,7 @@ def recipes(request, build_id):
             },
             {
                 'name':'Layer directory',
-                'qhelp':'Location in disk of the layer providing the recipe',
+                'qhelp':'Path to the layer prodiving the recipe',
                 'orderfield': _get_toggle_order(request, "layer_version__layer__local_path"),
                 'ordericon':_get_toggle_order_icon(request, "layer_version__layer__local_path"),
                 'clclass': 'layer_version__layer__local_path', 'hidden': 1,
@@ -1174,7 +1174,7 @@ def configvars(request, build_id):
                     'class' : 'description',
                     'label': 'Show:',
                     'options' : [
-                               ('Variables with description', 'description__regex:.+', queryset_with_search.filter(description__regex='.+').count(), 'We provide descriptions for the most common BiBake variables, so this filter effectively shows you a curated list of variables put together by the Yocto Project maintainers. The curated list lives in <code>/meta/conf/documentation.conf</code> inside your <code>poky</code> directory'),
+                               ('Variables with description', 'description__regex:.+', queryset_with_search.filter(description__regex='.+').count(), 'We provide descriptions for the most common BitBake variables. The list of descriptions lives in <code>meta/conf/documentation.conf</code>'),
                                ]
                             },
                 },
@@ -1220,7 +1220,7 @@ def bpackage(request, build_id):
             },
             {
                 'name':'License',
-                'qhelp':'The license under which the package is distributed. Separate license names using | (pipe) means there is a choice between licenses. Separate license names using & (ampersand) means multiple licenses exist that cover different parts of the source',
+                'qhelp':'The license under which the package is distributed. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source',
                 'orderfield': _get_toggle_order(request, "license"),
                 'ordericon':_get_toggle_order_icon(request, "license"),
                 'clclass': 'license', 'hidden': 1,
@@ -1258,7 +1258,7 @@ def bpackage(request, build_id):
             },
             {
                 'name':'Layer directory',
-                'qhelp':'Location in disk of the layer providing the recipe that builds the package',
+                'qhelp':'Path to the layer providing the recipe that builds the package',
                 'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
                 'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
                 'clclass': 'recipe__layer_version__layer__local_path', 'hidden': 1,

@@ -33,13 +33,13 @@
         </li>
         <li>
             <a href="#dependencies" data-toggle="tab">
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time dependencies (other recipes)"></i>
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time dependencies (i.e. other recipes)"></i>
                 Build dependencies ({{object.r_dependencies_recipe.all.count}})
             </a>
         </li>
         <li>
             <a href="#brought-in-by" data-toggle="tab">
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time reverse dependencies (i.e. which other recipes depend on this recipe)"></i>
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time reverse dependencies (i.e. the recipes that depend on this recipe)"></i>
                 Reverse build dependencies ({{object.r_dependencies_depends.all.count}})
             </a>
         </li>
@@ -53,12 +53,12 @@
                 </dt>
                 <dd>{{layer.name}}</dd>
                 <dt>
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the layer providing the recipe"></i>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the layer providing the recipe"></i>
                     Layer directory
                 </dt>
                 <dd><code>{{layer.local_path}}</code></dd>
                 <dt>
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the recipe .bb file"></i>
+                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the recipe .bb file"></i>
                     Recipe file
                 </dt>
                 <dd><code>{{object.file_path}}</code></dd>
@@ -91,15 +91,15 @@
                         Task
                     </th>
                     <th>
-                        <i class="icon-question-sign get-help" title="This value tells you if a task had to run in order to generate the task output (executed), or if the output was provided by another task and therefore the task didn't need to run (not executed)"></i>
+                        <i class="icon-question-sign get-help" title="This value tells you if a task had to run (executed) in order to generate the task output, or if the output was provided by another task and therefore the task didn't need to run (not executed)"></i>
                         Executed
                     </th>
                     <th>
-                        <i class="icon-question-sign get-help" title="This column tells you if executed tasks succeeded, failed or reused output from the sstate-cache directory or mirrors. It also tells you why not executed tasks did not need to run"></i>
+                        <i class="icon-question-sign get-help" title="This column tells you if 'executed' tasks succeeded or failed. The column also tells you why 'not executed' tasks did not need to run"></i>
                         Outcome
                     </th>
                     <th>
-                        <i class="icon-question-sign get-help" title="This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirros, and what was the result: Succeeded, Failed or File not in cache"></i>
+                        <i class="icon-question-sign get-help" title="This column tells you if a task tried to restore output from the <code>sstate-cache</code> directory or mirrors, and reports the result: Succeeded, Failed or File not in cache"></i>
                         Cache attempt
                     </th>
                 </thead>
@@ -259,7 +259,7 @@
         {% if object.section %}
             <dt>
             Section
-            <i class="icon-question-sign get-help" data-toggle="tooltip" title="The section in which recipes should be categorised"></i>
+            <i class="icon-question-sign get-help" data-toggle="tooltip" title="The section in which recipes should be categorized"></i>
             </dt>
             <dd>{{object.section}}</dd>
         {% endif %}

@@ -83,7 +83,7 @@
             # problemse are resolved.
             <dt>
                 License files
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the license files that apply to the package"></i>
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the license files that apply to the package"></i>
             </dt>
             <dd></dd>
             {% endcomment %}
@@ -136,7 +136,7 @@
             <dd class="iscommit">{{package.recipe.layer_version.commit}}</dd>
             <dt>
                 Layer directory
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Location in disk of the layer providing the recipe that builds this package"></i>
+                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the layer providing the recipe that builds this package"></i>
             </dt>
             <dd><code>{{package.recipe.layer_version.layer.local_path}}</code></dd>
         </dl>

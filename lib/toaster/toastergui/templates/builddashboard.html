@@ -84,7 +84,7 @@
 			<dt>Total package size</dt>
 			<dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
 			<dt>
-				<i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
+				<i class="icon-question-sign get-help" title="Path to the license manifest, which is a document listing all packages installed in your image and their licenses"></i>
 				License manifest
 			</dt>
 			<dd><a href="{% url 'targetpackages' build.pk target.target.pk %}"><code>{{target.target.license_manifest_path}}</code></a></dd>
@@ -126,9 +126,21 @@
         <h4><a href="{%url 'tasks' build.pk%}">Tasks</a></h4>
             <dl>
         <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{{build.task_build.all.count}}</a></dd>
-        <dt>Tasks executed</dt><dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A1&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
-        <dt>Tasks not executed</dt><dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A0&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
-        <dt>Reuse</dt><dd>
+        <dt>
+            Tasks executed
+            <i class="icon-question-sign get-help" title="'Executed' tasks are those that need to be run in order to generate the task output"></i>
+        </dt>
+        <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A1&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
+        <dt>
+            Tasks not executed
+            <i class="icon-question-sign get-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></i>
+        </dt>           
+        <dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A0&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
+        <dt>
+            Reuse
+            <i class="icon-question-sign get-help" title="The percentage of 'not executed' tasks over the total number of tasks, which is a measure of the efficiency of your build"></i>
+        </dt>     
+        <dd>
 {% query build.task_build order__gt=0 as texec %}
 {% if noexectask.count|multiply:100|divide:texec.count < 0 %}
 0

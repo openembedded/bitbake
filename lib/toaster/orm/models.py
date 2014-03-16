@@ -150,7 +150,7 @@ class Task(models.Model):
     )
 
     TASK_OUTCOME_HELP = (
-        (OUTCOME_SUCCESS, 'This task completed successfully'),
+        (OUTCOME_SUCCESS, 'This task successfully completed'),
         (OUTCOME_COVERED, 'This task did not run because its output is provided by another task'),
         (OUTCOME_CACHED, 'This task restored output from the sstate-cache directory or mirrors'),
         (OUTCOME_PREBUILT, 'This task did not run because its outcome was reused from a previous build'),

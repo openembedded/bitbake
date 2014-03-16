@@ -25,7 +25,7 @@
     <dl class="dl-horizontal">
 	{% if task.logfile %}
         <dt>
-            <i class="icon-question-sign get-help" title="The location in disk of the task log file"></i> Log file
+            <i class="icon-question-sign get-help" title="Path the task log file"></i> Log file
         </dt>
         <dd>
             <code>{{task.logfile}}</code>
@@ -46,10 +46,10 @@
 {# not executed tasks outcome #}
     {% if task.outcome == task.OUTCOME_PREBUILT %}
         {% if not showing_matches %}
-            <a class="btn" href="javascript:reload_params({'show_matches' : 'true' })">Match to tasks in previous builds <i class="icon-question-sign get-help" style="margin-top:20px;" data-toggle="tooltip" title="This will show you a list of tasks from previous builds with the same inputs signature as this prebuilt task. Any of them could be the task that generated the output this prebuilt task is reusing"></i></a>
+            <a class="btn" href="javascript:reload_params({'show_matches' : 'true' })">Match to tasks in previous builds <i class="icon-question-sign get-help" style="margin-top:20px;" data-toggle="tooltip" title="This shows you a list of tasks from previous builds with the same signature generated from the same inputs as used in the prebuilt task. Any of them could be the task that generated the output this prebuilt task is reusing"></i></a>
         {% elif matching_tasks %}
             <h3 class="details">Prebuilt task could be based on
-                <i class="icon-question-sign get-help heading-help" title="This table shows a list of tasks from previous builds with the same inputs signature as the prebuilt task. Any of them could be the task that generated the output the prebuilt task is reusing"></i>
+                <i class="icon-question-sign get-help heading-help" title="This table shows a list of tasks from previous builds with the same signature generated from the same inputs as used in the prebuilt task. Any of them could be the task that generated the output this prebuilt task is reusing"></i>
             </h3>
             <table class="table table-bordered table-hover">
                 <thead>
@@ -62,11 +62,11 @@
                         Task
                     </th>
                     <th>
-                        <i class="icon-question-sign get-help" title="This value tells you if a task had to run in order to generate the task output (executed), or if the output was provided by another task and therefore the task didn't need to run (not executed)"></i>
+                        <i class="icon-question-sign get-help" title="This value tells you if a task had to run (executed) in order to generate the task output, or if the output was provided by another task and therefore the task didn't need to run (not executed)"></i>
                         Executed
                     </th>
                     <th>
-                        <i class="icon-question-sign get-help" title="This column tells you if executed tasks succeeded, failed or reused output from the sstate-cache directory or mirrors. It also tells you why not executed tasks did not need to run"></i>
+                        <i class="icon-question-sign get-help" title="This column tells you if 'executed' tasks succeeded or failed. The column also tells you why 'not executed' tasks did not need to run"></i>
                         Outcome
                     </th>
                     <th>
@@ -116,7 +116,7 @@
     {%elif task.outcome == task.OUTCOME_CACHED%}
         <dl class="dl-horizontal">
             <dt>
-                <i class="icon-question-sign get-help" title="The location in disk of the task log file"></i> Log file
+                <i class="icon-question-sign get-help" title="Path the task log file"></i> Log file
             </dt>
             <dd>
                 <code>{% for t in task.get_related_setscene %} {{t.logfile}} {% endfor %}</code>
@@ -133,11 +133,11 @@
     {% if task.task_executed %}
 	<h2>
         Executed
-        <i class="icon-question-sign get-help heading-help" title="Executed tasks are those that need to run in order to generate the task output"></i>
+        <i class="icon-question-sign get-help heading-help" title="'Executed' tasks are those that need to run in order to generate the task output"></i>
     {% else %}
 	<h2 class="muted">
         Not Executed
-        <i class="icon-question-sign get-help heading-help" title="Not executed tasks don't need to run because their outcome is provided by another task"></i>
+        <i class="icon-question-sign get-help heading-help" title="'Not executed' tasks don't need to run because their outcome is provided by another task"></i>
     {% endif %}
 	</h2>
 <dl class="dl-horizontal">
@@ -151,7 +151,7 @@
     {% if task.sstate_result != task.SSTATE_NA %}
 		</dl>
         <div class="alert alert-info">Attempting to restore output from sstate cache
-            <i class="icon-question-sign get-help get-help-blue" title="The build system is searching for the task output in your <code>sstate-cache</code> directory and mirrors. If it finds it, it will use it instead of building it from scratch by running the real task. This makes the build faster"></i>
+            <i class="icon-question-sign get-help get-help-blue" title="The build system is searching for the task output in your <code>sstate-cache</code> directory and mirrors. If the build system finds the task output, it will reuse it instead of building it from scratch by running the real task. Reusing the task output makes the build faster"></i>
         </div>
 		<dl class="dl-horizontal">
             <dt>
@@ -160,7 +160,7 @@
             </dt>
             <dd><code>{{task.path_to_sstate_obj}}</code></dd>
             <dt>
-                <i class="icon-question-sign get-help" title="The locations where the above file was searched: your <code>sstate-cache</code> directory and the mirrors you have set up (if any)"></i>
+                <i class="icon-question-sign get-help" title="The locations searched for the above file (i.e. your <code>sstate-cache</code> directory and any mirrors you have set up)"></i>
                 URI(s) searched
             </dt>
             <dd><code>{{task.work_directory}}</code></dd>
@@ -176,12 +176,12 @@
         </div>
         <dl class="dl-horizontal">
             <dt>
-                <i class="icon-question-sign get-help" title="The location in disk of the cache attempt log file"></i>
+                <i class="icon-question-sign get-help" title="Path to the cache attempt log file"></i>
                 Log file
             </dt>
             <dd><code>{{task.logfile}}</code></dd>
             <dt>
-                <i class="icon-question-sign get-help" title="How long it took the cache attempt to finish, expressed in seconds"></i>
+                <i class="icon-question-sign get-help" title="How long it took the cache attempt to finish in seconds"></i>
                 Time (secs)
             </dt>
             <dd>{{task.elapsed_time|format_none_and_zero}}</dd>
@@ -202,7 +202,7 @@
     <dd><a href="{%url "tasks_task" build.pk task.order %}#{{task.order}}">{{task.order}}</a></dd>
     {% if task.task_executed %}
         <dt>
-            <i class="icon-question-sign get-help" title="If this task executes a Python or Shell function(s)"></i>
+            <i class="icon-question-sign get-help" title="Indicates if this task executes a Python or Shell function(s)"></i>
             Task script type
         </dt>
         <dd>{{task.get_script_type_display}}</dd>
@@ -215,7 +215,7 @@
     <dd><code>{{task.source_url}}</code></dd>
 -->
     <dt>
-        <i class="icon-question-sign get-help" title="Task dependency chain (other tasks)"></i>
+        <i class="icon-question-sign get-help" title="Task dependency chain (i.e. other tasks)"></i>
         Dependencies
     </dt>
     <dd>
@@ -228,7 +228,7 @@
         </ul>
     </dd>
     <dt>
-        <i class="icon-question-sign get-help" title="Which other tasks depend on this task"></i>
+        <i class="icon-question-sign get-help" title="Tasks that depend on this task"></i>
         Reverse dependencies
     </dt>
     <dd>
@@ -248,14 +248,14 @@
     <dl class="dl-horizontal">
 		{% if task.elapsed_time %}
         <dt>
-            <i class="icon-question-sign get-help" title="How long it took the task to finish, expressed in seconds"></i>
+            <i class="icon-question-sign get-help" title="How long it took the task to finish in seconds"></i>
             Time (secs)
         </dt>
         <dd>{{task.elapsed_time|format_none_and_zero|floatformat:2}}</dd>
 		{% endif %}	
 		{% if task.cpu_usage > 0 %}	
         <dt>
-            <i class="icon-question-sign get-help" title="Task CPU utilisation, expressed as a percentage"></i>
+            <i class="icon-question-sign get-help" title="The percentage of task CPU utilization"></i>
             CPU usage
         </dt>
         <dd>{{task.cpu_usage|format_none_and_zero|floatformat:2}}%</dd>

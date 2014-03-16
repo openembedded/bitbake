@@ -24,7 +24,7 @@
                 </div>
             {% else %}
                 <div class="alert alert-info">
-                    <strong>{{package.fullpackagespec}}</strong> is <strong>not included</strong> in any image.  These are its projected runtime dependencies if you were to include it in future builds.
+                    <strong>{{package.fullpackagespec}}</strong> is <strong>not included</strong> in any image. This page shows you the projected runtime dependencies if you include <strong>{{package.fullpackagespec}}</strong> in future builds.
                 </div>
                 <table class="table table-bordered table-hover">
                     <thead>
@@ -64,7 +64,7 @@
                             <th>Version</th>
                             <th>Size</th>
                             <th>
-                                <i class="icon-question-sign get-help" title="There are 5 relationship types: recommends, suggests, provides, replaces and conflicts"></i>
+                                <i class="icon-question-sign get-help" title="Five relationship types exist: recommends, suggests, provides, replaces and conflicts"></i>
                                 Relationship type
                             </th>
                         </tr>
