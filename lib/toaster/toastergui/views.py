@@ -1111,13 +1111,13 @@ def configvars(request, build_id):
                 'search_term':search_term,
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
-                {'name': 'Variable ',
+                {'name': 'Variable',
                  'qhelp': "BitBake is a generic task executor that considers a list of tasks with dependencies and handles metadata that consists of variables in a certain format that get passed to the tasks",
                  'dclass' : "span3",
                  'orderfield': _get_toggle_order(request, "variable_name"),
                  'ordericon':_get_toggle_order_icon(request, "variable_name"),
                 },
-                {'name': 'Value ',
+                {'name': 'Value',
                  'qhelp': "The value assigned to the variable",
                  'dclass': "span4",
                 },
@@ -1137,7 +1137,7 @@ def configvars(request, build_id):
                                ]
                              },
                 },
-                {'name': 'Description ',
+                {'name': 'Description',
                  'qhelp': "A brief explanation of the variable",
                  'clclass': 'description', 'hidden' : 0,
                  'dclass': "span5",
