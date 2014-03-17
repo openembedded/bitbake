@@ -167,7 +167,7 @@ class DeployImageDialog (CrumbsDialog):
                 if cmdline:
                     tmpfile = tempfile.NamedTemporaryFile()
                     cmdline += "\"sudo dd if=" + self.image_path + \
-                                " of=" + combo_item + "; echo $? > " + tmpfile.name + "\""
+                                " of=" + combo_item + " && sync; echo $? > " + tmpfile.name + "\""
                     subprocess.call(shlex.split(cmdline))
 
                     if int(tmpfile.readline().strip()) == 0:
