@@ -30,6 +30,7 @@ import sys
 import logging
 import shlex
 import glob
+import time
 import bb
 import bb.msg
 import bb.process
@@ -75,6 +76,7 @@ class TaskBase(event.Event):
         self.taskfile = d.getVar("FILE", True)
         self.taskname = self._task
         self.logfile = logfile
+        self.time = time.time()
         event.Event.__init__(self)
         self._message = "recipe %s: task %s: %s" % (d.getVar("PF", True), t, self.getDisplayName())
 

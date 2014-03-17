@@ -133,10 +133,10 @@ class ORMWrapper(object):
             elif outcome_task_setscene == Task.OUTCOME_FAILED:
                 task_object.sstate_result = Task.SSTATE_FAILED
 
-        # mark down duration if we have a start time
-        if 'start_time' in task_information.keys():
-            duration = datetime.datetime.now() - task_information['start_time']
-            task_object.elapsed_time = duration.total_seconds()
+        # mark down duration if we have a start time and a current time
+        if 'start_time' in task_information.keys() and 'time' in vars(event):
+            duration = event.time - task_information['start_time']
+            task_object.elapsed_time = duration
 
         task_object.save()
         return task_object
@@ -716,6 +716,9 @@ class BuildInfoHelper(object):
         recipe_information = self._get_recipe_information_from_taskfile(realtaskfile)
         recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
         task_information = self._get_task_information(event,recipe)
+
+        if 'time' in vars(event) and isinstance(event, bb.build.TaskStarted):
+            self.internal_state['taskdata'][identifier]['start_time'] = event.time
 
         task_information['start_time'] = self.internal_state['taskdata'][identifier]['start_time']
         task_information['outcome'] = self.internal_state['taskdata'][identifier]['outcome']
