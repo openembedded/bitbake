@@ -237,7 +237,7 @@ def format_vpackage_rowclass(size):
 def format_vpackage_namehelp(name):
     r =  name + '&nbsp;'
     r += '<i class="icon-question-sign get-help hover-help"'
-    r += ' title="' + name + ' only has dependency information available.">'
+    r += ' title = "' + name + ' has not been built">'
     r += '</i>'
     return mark_safe(r)
 
