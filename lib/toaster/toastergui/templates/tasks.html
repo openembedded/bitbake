@@ -75,7 +75,7 @@
   {% include "basetable_top.html" %}
 
     {% for task in objects %}
-        <tr {{ task|task_color }} class="flash" id="{{task.order}}" name="{{task.order}}">
+        <tr {{ task|task_color }} id="{{task.order}}">
             <td class="order">
                 <a href="{%url "task" build.pk task.pk%}">{{task.order}}</a>
             </td>
@@ -117,4 +117,17 @@
   {% endif %} {# objects.paginator.count #}
 {% endif %} {# empty #}
 </div>
+
+<script type="text/javascript">
+
+    $(document).ready(function() {
+        // enable blue hightlight animation for the order link
+        if (location.href.search('#') > -1) {
+            var task_order = location.href.split('#')[1];
+            $("#" + task_order).addClass("highlight"); 
+        }
+    });
+    
+</script>
+
 {% endblock %}
