@@ -947,7 +947,8 @@ class RunQueue:
 
     def teardown_workers(self):
         self.teardown = True
-        signal.signal(signal.SIGCHLD, self.oldsigchld)
+        if self.oldsigchld:
+            signal.signal(signal.SIGCHLD, self.oldsigchld)
         self._teardown_worker(self.worker, self.workerpipe)
         self.worker = None
         self.workerpipe = None
