@@ -615,11 +615,12 @@ class BuildInfoHelper(object):
         self.orm_wrapper.save_build_variables(build_obj, self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0])
 
     def update_target_image_file(self, event):
+        image_fstypes = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"])[0]
         for t in self.internal_state['targets']:
             if t.is_image == True:
                 output_files = list(event.data.viewkeys())
                 for output in output_files:
-                    if t.target in output:
+                    if t.target in output and output.split('.rootfs.')[1] in image_fstypes:
                         self.orm_wrapper.save_target_image_file_information(t, output, event.data[output])
 
     def update_build_information(self, event, errors, warnings, taskfailures):
