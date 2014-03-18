@@ -930,7 +930,7 @@ class RunQueue:
                     self.finish_runqueue(True)
             except OSError:
                 pid = False
-        if callable(self.oldsigchld):
+        if callable(self.oldsigchld) and self.oldsigchld != self.sigchild_exception:
             self.oldsigchld(*args, **kwargs)
 
     def start_worker(self):
