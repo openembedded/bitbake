@@ -112,7 +112,7 @@
                     <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.order}}</a></td>
                     <td>
                         <a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.task_name}}</a>
-                        <i class="icon-question-sign get-help hover-help" title="This task fetches the source code"></i>
+                        {% if task.get_description %}<i class="icon-question-sign get-help hover-help" title="" data-original-title="{{task.get_description}}"></i> {% endif %}
                     </td>
 
                     <td><a {{ task|task_color }} href="{% url "task" build.pk task.pk %}">{{task.get_executed_display}}</a></td>

@@ -174,6 +174,13 @@ class Task(models.Model):
             return "Executed"
         return "Not Executed"
 
+    def get_description(self):
+        variable = Variable.objects.filter(variable_name=self.task_name, build = self.build)
+        try:
+            return variable[0].description
+        except IndexError:
+            return ''
+
     build = models.ForeignKey(Build, related_name='task_build')
     order = models.IntegerField(null=True)
     task_executed = models.BooleanField(default=False) # True means Executed, False means Not/Executed
