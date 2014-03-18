@@ -937,8 +937,9 @@ class RunQueue:
         if self.worker:
             self.teardown_workers()
         self.teardown = False
-        self.oldsigchld = signal.getsignal(signal.SIGCHLD)
-        signal.signal(signal.SIGCHLD, self.sigchild_exception)
+        if not self.oldsigchld:
+            self.oldsigchld = signal.getsignal(signal.SIGCHLD)
+            signal.signal(signal.SIGCHLD, self.sigchild_exception)
         self.worker, self.workerpipe = self._start_worker()
 
     def start_fakeworker(self, rqexec):
@@ -949,6 +950,7 @@ class RunQueue:
         self.teardown = True
         if self.oldsigchld:
             signal.signal(signal.SIGCHLD, self.oldsigchld)
+            self.oldsigchld = None
         self._teardown_worker(self.worker, self.workerpipe)
         self.worker = None
         self.workerpipe = None
