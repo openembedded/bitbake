@@ -165,14 +165,17 @@ class HobHandler(gobject.GObject):
             self.clear_busy()
             self.building = True
             target = self.image
-            if target == "hob-image":
+
+            if self.base_image:
+                # Request the build of a custom image
+                self.generate_hob_base_image(target)
                 self.set_var_in_file("LINGUAS_INSTALL", "", "local.conf")
-                hobImage = self.runCommand(["matchFile", "hob-image.bb"])
-                if self.base_image != "Start with an empty image recipe":
-                    baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
-                    version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue, True, ""])
-                    target += version
-                    self.recipe_model.set_custom_image_version(version)
+                hobImage = self.runCommand(["matchFile", target + ".bb"])
+                baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
+                version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue, True, ""])
+                target += version
+                self.recipe_model.set_custom_image_version(version)
+
             targets = [target]
             if self.toolchain_packages:
                 self.set_var_in_file("TOOLCHAIN_TARGET_TASK", " ".join(self.toolchain_packages), "local.conf")
@@ -440,10 +443,11 @@ class HobHandler(gobject.GObject):
             base_image = self.runCommand(["matchFile", self.base_image + ".bb"])
         self.runCommand(["generateNewImage", image, base_image, package_queue, False, description])
 
-    def generate_hob_base_image(self):
+    def generate_hob_base_image(self, hob_image):
         image_dir = self.get_topdir() + "/recipes/images/"
+        recipe_name = hob_image + ".bb"
         self.ensure_dir(image_dir)
-        self.generate_new_image(image_dir+"hob-image.bb", None, [], "")
+        self.generate_new_image(image_dir + recipe_name, None, [], "")
         self.append_to_bbfiles(image_dir + "*.bb")
 
     def ensure_dir(self, directory):

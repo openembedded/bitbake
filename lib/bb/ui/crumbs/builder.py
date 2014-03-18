@@ -447,7 +447,6 @@ class Builder(gtk.Window):
         self.handler.connect("package-populated",        self.handler_package_populated_cb)
 
         self.handler.append_to_bbfiles("${TOPDIR}/recipes/images/custom/*.bb")
-        self.handler.generate_hob_base_image()
         self.initiate_new_build_async()
 
         signal.signal(signal.SIGINT, self.event_handle_SIGINT)
@@ -738,6 +737,10 @@ class Builder(gtk.Window):
             self.configuration.update(params)
             self.parameters.update(params)
 
+    def set_base_image(self):
+        self.configuration.initial_selected_image = self.configuration.selected_image
+        self.hob_image = self.configuration.selected_image + "-edited"
+
     def reset(self):
         self.configuration.curr_mach = ""
         self.configuration.clear_selection()
@@ -962,7 +965,7 @@ class Builder(gtk.Window):
             if selected_image == self.recipe_model.__custom_image__:
                 if self.configuration.initial_selected_image != selected_image:
                     version = self.recipe_model.get_custom_image_version()
-                linkname = 'hob-image' + version+ "-" + self.configuration.curr_mach
+                linkname = self.hob_image + version + "-" + self.configuration.curr_mach
             else:
                 linkname = selected_image + '-' + self.configuration.curr_mach
             image_extension = self.get_image_extension()
