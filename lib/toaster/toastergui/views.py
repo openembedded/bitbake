@@ -448,7 +448,7 @@ def target(request, build_id, target_id):
                 {
                     'name':'Size',
                     'qhelp':'The size of the package',
-                    'orderfield': _get_toggle_order(request, "size"),
+                    'orderfield': _get_toggle_order(request, "size", True),
                     'ordericon':_get_toggle_order_icon(request, "size"),
                     'clclass': 'package_size',
                     'hidden' : 0,
@@ -1128,7 +1128,7 @@ def bpackage(request, build_id):
             {
                 'name':'Size',
                 'qhelp':'The size of the package',
-                'orderfield': _get_toggle_order(request, "size"),
+                'orderfield': _get_toggle_order(request, "size", True),
                 'ordericon':_get_toggle_order_icon(request, "size"),
                 'clclass': 'size', 'hidden': 0,
             },
