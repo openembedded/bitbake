@@ -914,10 +914,11 @@ class RunQueue:
         workerpipe.close()
 
     def sigchild_exception(self, *args, **kwargs):
-        pid = -1
-        while pid:
+        for w in [self.worker, self.fakeworker]:
+            if not w:
+                continue
             try:
-                pid, status = os.waitpid(-1, os.WNOHANG)
+                pid, status = os.waitpid(w.pid, os.WNOHANG)
                 if pid != 0 and not self.teardown:
                     name = None
                     if self.worker and pid == self.worker.pid:
