@@ -856,7 +856,6 @@ class RunQueue:
         self.workerpipe = None
         self.fakeworker = None
         self.fakeworkerpipe = None
-        self.oldsigchld = None
 
     def _start_worker(self, fakeroot = False, rqexec = None):
         logger.debug(1, "Starting bitbake-worker")
@@ -913,34 +912,10 @@ class RunQueue:
             continue
         workerpipe.close()
 
-    def sigchild_exception(self, *args, **kwargs):
-        for w in [self.worker, self.fakeworker]:
-            if not w:
-                continue
-            try:
-                pid, status = os.waitpid(w.pid, os.WNOHANG)
-                if pid != 0 and not self.teardown:
-                    name = None
-                    if self.worker and pid == self.worker.pid:
-                        name = "Worker"
-                    elif self.fakeworker and pid == self.fakeworker.pid:
-                        name = "Fakeroot"
-                    else:
-                        bb.warn("Unknown process (%s) exited unexpectedly (%s), shutting down..." % (pid, str(status)))
-                    if name and not self.teardown:
-                        bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, pid, str(status)))
-                        self.finish_runqueue(True)
-            except OSError:
-                return
-
     def start_worker(self):
         if self.worker:
             self.teardown_workers()
         self.teardown = False
-        if self.oldsigchld is None:
-            self.oldsigchld = signal.signal(signal.SIGCHLD, self.sigchild_exception)
-            if self.oldsigchld is None:
-                self.oldsigchld = signal.SIG_DFL
         self.worker, self.workerpipe = self._start_worker()
 
     def start_fakeworker(self, rqexec):
@@ -949,9 +924,6 @@ class RunQueue:
 
     def teardown_workers(self):
         self.teardown = True
-        if self.oldsigchld is not None:
-            signal.signal(signal.SIGCHLD, self.oldsigchld)
-            self.oldsigchld = None
         self._teardown_worker(self.worker, self.workerpipe)
         self.worker = None
         self.workerpipe = None
@@ -2118,6 +2090,23 @@ class runQueuePipe():
         self.rqexec = rqexec
 
     def read(self):
+        try:
+            for w in [self.rq.worker, self.rq.fakeworker]:
+                if not w:
+                    continue
+                pid, status = os.waitpid(w.pid, os.WNOHANG)
+                if pid != 0 and not self.rq.teardown:
+                    if self.rq.worker and pid == self.rq.worker.pid:
+                        name = "Worker"
+                    elif self.rq.fakeworker and pid == self.rq.fakeworker.pid:
+                        name = "Fakeroot"
+                    else:
+                        name = "Unknown"
+                    bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, pid, str(status)))
+                    self.rq.finish_runqueue(True)
+        except OSError:
+            pass
+
         start = len(self.queue)
         try:
             self.queue = self.queue + self.input.read(102400)
