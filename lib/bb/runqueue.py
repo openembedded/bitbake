@@ -2090,22 +2090,18 @@ class runQueuePipe():
         self.rqexec = rqexec
 
     def read(self):
-        try:
-            for w in [self.rq.worker, self.rq.fakeworker]:
-                if not w:
-                    continue
-                pid, status = os.waitpid(w.pid, os.WNOHANG)
-                if pid != 0 and not self.rq.teardown:
-                    if self.rq.worker and pid == self.rq.worker.pid:
-                        name = "Worker"
-                    elif self.rq.fakeworker and pid == self.rq.fakeworker.pid:
-                        name = "Fakeroot"
-                    else:
-                        name = "Unknown"
-                    bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, pid, str(status)))
-                    self.rq.finish_runqueue(True)
-        except OSError:
-            pass
+        for w in [self.rq.worker, self.rq.fakeworker]:
+            if not w:
+                continue
+            w.poll()
+            if w.returncode is not None and not self.rq.teardown:
+                name = None
+                if self.rq.worker and w.pid == self.rq.worker.pid:
+                    name = "Worker"
+                elif self.rq.fakeworker and w.pid == self.rq.fakeworker.pid:
+                    name = "Fakeroot"
+                bb.error("%s process (%s) exited unexpectedly (%s), shutting down..." % (name, w.pid, str(w.returncode)))
+                self.rq.finish_runqueue(True)
 
         start = len(self.queue)
         try:
