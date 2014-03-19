@@ -678,20 +678,18 @@ class BuildInfoHelper(object):
 
 
     def store_tasks_stats(self, event):
-        for (taskfile, taskname, taskstats) in event.data:
+        for (taskfile, taskname, taskstats, recipename) in event.data:
             localfilepath = taskfile.split(":")[-1]
             assert localfilepath.startswith("/")
 
             recipe_information = self._get_recipe_information_from_taskfile(taskfile)
-            try:
-                recipe = self.orm_wrapper.get_update_recipe_object(recipe_information, True)
-            except NotExisting:
-                recipe = Recipe.objects.get(layer_version = recipe_information['layer_version'],
-                            file_path__endswith = recipe_information['file_path'])
+            recipe_object = Recipe.objects.get(layer_version = recipe_information['layer_version'],
+                            file_path__endswith = recipe_information['file_path'],
+                            name = recipename)
 
             task_information = {}
             task_information['build'] = self.internal_state['build']
-            task_information['recipe'] = recipe
+            task_information['recipe'] = recipe_object
             task_information['task_name'] = taskname
             task_information['cpu_usage'] = taskstats['cpu_usage']
             task_information['disk_io'] = taskstats['disk_io']
@@ -756,11 +754,15 @@ class BuildInfoHelper(object):
         # for all image targets
         for target in self.internal_state['targets']:
             if target.is_image:
-                pkgdata = event.data['pkgdata']
-                imgdata = event.data['imgdata'][target.target]
-                self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
-                filedata = event.data['filedata'][target.target]
-                self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
+                try:
+                    pkgdata = event.data['pkgdata']
+                    imgdata = event.data['imgdata'][target.target]
+                    self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
+                    filedata = event.data['filedata'][target.target]
+                    self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
+                except KeyError:
+                    # we must have not got the data for this image, nothing to save
+                    pass
 
 
 
