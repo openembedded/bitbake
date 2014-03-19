@@ -20,6 +20,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 from django.db import models
+from django.db.models import F
 from django.utils.encoding import python_2_unicode_compatible
 
 
@@ -211,6 +212,12 @@ class Package(models.Model):
     section = models.CharField(max_length=80, blank=True)
     license = models.CharField(max_length=80, blank=True)
 
+class Package_DependencyManager(models.Manager):
+    use_for_related_fields = True
+
+    def get_query_set(self):
+        return super(Package_DependencyManager, self).get_query_set().exclude(package_id = F('depends_on__id'))
+
 class Package_Dependency(models.Model):
     TYPE_RDEPENDS = 0
     TYPE_TRDEPENDS = 1
@@ -250,6 +257,7 @@ class Package_Dependency(models.Model):
     depends_on = models.ForeignKey(Package, related_name='package_dependencies_target')   # soft dependency
     dep_type = models.IntegerField(choices=DEPENDS_TYPE)
     target = models.ForeignKey(Target, null=True)
+    objects = Package_DependencyManager()
 
 class Target_Installed_Package(models.Model):
     target = models.ForeignKey(Target)
@@ -273,6 +281,11 @@ class Recipe(models.Model):
     bugtracker = models.URLField(blank=True)
     file_path = models.FilePathField(max_length=255)
 
+class Recipe_DependencyManager(models.Manager):
+    use_for_related_fields = True
+
+    def get_query_set(self):
+        return super(Recipe_DependencyManager, self).get_query_set().exclude(recipe_id = F('depends_on__id'))
 
 class Recipe_Dependency(models.Model):
     TYPE_DEPENDS = 0
@@ -285,6 +298,7 @@ class Recipe_Dependency(models.Model):
     recipe = models.ForeignKey(Recipe, related_name='r_dependencies_recipe')
     depends_on = models.ForeignKey(Recipe, related_name='r_dependencies_depends')
     dep_type = models.IntegerField(choices=DEPENDS_TYPE)
+    objects = Recipe_DependencyManager()
 
 class Layer(models.Model):
     name = models.CharField(max_length=100)
