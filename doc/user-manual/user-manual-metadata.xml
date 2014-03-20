@@ -1058,6 +1058,40 @@
                     </para></listitem>
             </itemizedlist>
         </para>
+
+        <para>
+            Several varflags are useful for controlling how signatures are
+            calculated for variables.
+            For more information on this process, see the
+            "<link linkend='checksums'>Checksums (Signatures)</link>"
+            section.
+            <itemizedlist>
+                <listitem><para><emphasis>vardeps:</emphasis>
+                    Specifies a space-separated list of additional
+                    variables to add to a variable's dependencies
+                    for the purposes of calculating its signature.
+                    Adding variables to this list is useful, for example, when
+                    a function refers to a variable in a manner that
+                    does not allow BitBake to automatically determine
+                    that the variable is referred to.
+                    </para></listitem>
+                <listitem><para><emphasis>vardepvalue:</emphasis>
+                    If set, instructs BitBake to ignore the actual
+                    value of the variable and instead use the specified
+                    value when calculating the variable's signature.
+                    </para></listitem>
+                <listitem><para><emphasis>vardepsexclude:</emphasis>
+                    Specifies a space-separated list of variables
+                    that should be excluded from a variable's dependencies
+                    for the purposes of calculating its signature.
+                    </para></listitem>
+                <listitem><para><emphasis>vardepvalueexclude:</emphasis>
+                    Specifies a pipe-separated list of strings to exclude
+                    from the variable's value when calculating the
+                    variable's signature.
+                    </para></listitem>
+            </itemizedlist>
+        </para>
     </section>
 
     <section id='events'>
