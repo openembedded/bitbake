@@ -30,6 +30,26 @@
                 <literallayout class='monospaced'>
      VARIABLE = "value"
                 </literallayout>
+                As expected, if you include leading or trailing spaces as part of
+                an assignment, the spaces are retained:
+                <literallayout class='monospaced'>
+     VARIABLE = " value"
+     VARIABLE = "value "
+                </literallayout>
+            </para>
+        </section>
+
+        <section id='null-and-blank-variable-setting'>
+            <title>Null and Blank Variable Setting</title>
+
+            <para>
+                Setting <filename>VARIABLE</filename> to "" sets it to null,
+                while setting the variable to " " sets it to a blank space
+                (i.e. these are not the same values).
+                <literallayout class='monospaced'>
+     VARIABLE = ""
+     VARIABLE = " "
+                </literallayout>
             </para>
         </section>
 
