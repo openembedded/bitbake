@@ -92,11 +92,7 @@
             <td class="warnings_no">{% if  build.warnings_no %}<a class="warnings_no warning" href="{% url "builddashboard" build.id %}#warnings">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>{%endif%}</td>
             <td class="time"><a href="{% url "buildtime" build.id %}">{{build.timespent|sectohms}}</a></td>
             <td class="log">{{build.cooker_log_path}}</td>
-            <td class="output">
-              {% if build.outcome == 0 %}
-              {{build|get_image_extensions}}
-              {% endif %}
-            </td>
+            <td class="output">{% if build.outcome == 0 %}{% for t in build.target_set.all %}{% if t.is_image %}<a href="{%url "builddashboard" build.id%}#images">TODO: compute image output fstypes</a>{% endif %}{% endfor %}{% endif %}</td>
         </tr>
 
         {% endfor %}
