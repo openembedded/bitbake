@@ -1,15 +1,12 @@
 {% extends "basebuildpage.html" %}
 {% load humanize %}
 {% load projecttags %}
-{% block localbreadcrumb %}
-<li>Dashboard</li>
-{% endblock %}
 
 {% block buildinfomain %}
 <!-- page title -->
 <div class="row-fluid span10">
  <div class="page-header">
-     <h1>{{build.target_set.all|join:" "}} {{build.machine}}</h1>
+     <h1>{{build.target_set.all|join:", "}} {{build.machine}}</h1>
  </div>
 </div>
 
@@ -17,13 +14,25 @@
 <div class="row-fluid span10 pull-right">
   <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
     <div class="row-fluid lead">
-            <span class="pull-left"><strong>{%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}</strong> {{build.completed_on|date:"d/m/y H:i"}} with </span>{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}{% if  build.errors_no %}
-            <span class="span2"><i class="icon-minus-sign red"></i><strong><a href="#errors" class="error"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
+            <span class="pull-left"><strong>
+                {%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}
+              </strong>
+            {{build.completed_on|date:"d/m/y H:i"}}
+</span>
+{% if  build.warnings_no or build.errors_no %}
+&nbsp;with
+{% endif %}
+{%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
+{% if  build.errors_no %}
+     <span > <i class="icon-minus-sign red"></i><strong><a href="#errors" class="error"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
 {% endif %}
 {% if  build.warnings_no %}
-            <span class="span2"><i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
+{% if  build.errors_no %}
+&nbsp;and
 {% endif %}
-            <span class="pull-right">Build time: <a href="build-time.html">{{ build.timespent|sectohms }}</a></span>
+    <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
+{% endif %}
+            <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a></span>
 {%endif%}
     </div>
   </div>
@@ -58,10 +67,40 @@
 {%if build.outcome == build.SUCCEEDED%}
 <!-- built images -->
 <div class="row-fluid span10 pull-right">
-  <h2>Images</h2>
-
-<div class="well" style="background-color:transparent;">
-</div>
+  {% if hasImages %}
+	<h2>Images</h2>
+	{% for target in targets %}
+        {% if target.target.is_image %}
+	<div class="well" style="background-color:transparent;">
+		<h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a>
+                </h3>
+		<dl class="dl-horizontal">
+			<dt>Packages included</dt>
+			<dd><a href="{% url 'packages' build.pk %}">{{target.npkg}}</a></dd>
+			<dt>Total package size</dt>
+			<dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
+			<dt>
+				<i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
+				License manifest
+			</dt>
+			<dd><a href="{% url 'targetpackages' build.pk target.target.pk %}"><code>{{target.target.license_manifest_path}}</code></a></dd>
+			<dt>
+				<i class="icon-question-sign get-help" title="Image files are stored in <code style='background-color:transparent;color:#FFFFFF;font-weight:normal;border:none;'>/build/tmp/deploy/images/</code>"></i>
+				Image files
+			</dt>
+			<dd>
+				<ul>
+                                  {% for i in target.imageFiles %}
+					<li><strong>{{i.path}}</strong>
+					({{i.size|filtered_filesizeformat}})</li>
+                                  {% endfor %}
+				</ul>
+			</dd>
+		</dl>
+	</div>
+        {% endif %}
+	{% endfor %}
+  {% endif %}
 </div>
 
 {%else%}
@@ -75,24 +114,32 @@
         <h4><a href="{%url 'configuration' build.pk%}">Configuration</a></h4>
             <dl>
         <dt>Machine</dt><dd>{{build.machine}}</dd>
-        <dt>Distro</dt><dd></dd>
-        <dt>Layers</dt>{% for i in build.layer_version_build.all %}<dd>{{i.layer.name}}</dd>{%endfor%}
+        <dt>Distro</dt><dd>{{build.distro}}</dd>
+        <dt>Layers</dt>{% for i in build.layer_version_build.all|dictsort:"layer.name" %}<dd>{{i.layer.name}}</dd>{%endfor%}
             </dl>
     </div>
     <div class="well span4" style="background-color:transparent;">
         <h4><a href="{%url 'tasks' build.pk%}">Tasks</a></h4>
             <dl>
-        <dt>Total number of tasks</dt><dd>{{build.task_build.all.count}}</dd>
-        <dt>Tasks executed</dt><dd>{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</dd>
-        <dt>Tasks prebuilt</dt><dd>{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</dd>
-        <dt>Reuse</dt><dd>{% query build.task_build order__gt=0 as texec %}{{noexectask.count|multiply:100|divide:texec.count}}%</dd>
+        <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{{build.task_build.all.count}}</a></dd>
+        <dt>Tasks executed</dt><dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A1&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=1 order__gt=0 as exectask%}{{exectask.count}}</a></dd>
+        <dt>Tasks not executed</dt><dd><a href="{% url 'tasks' build.pk %}?filter=task_executed%3A0&amp;count=25&amp;search=&amp;page=1&amp;orderby=order%3A%2B">{% query build.task_build task_executed=0 order__gt=0 as noexectask%}{{noexectask.count}}</a></dd>
+        <dt>Reuse</dt><dd>
+{% query build.task_build order__gt=0 as texec %}
+{% if noexectask.count|multiply:100|divide:texec.count < 0 %}
+0
+{% else %}
+{{noexectask.count|multiply:100|divide:texec.count}}
+{% endif %}
+%
+        </dd>
             </dl>
     </div>
     <div class="well span4" style="background-color:transparent;">
         <h4><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h4>
             <dl>
-        <dt>Recipes used</dt><dd>{{recipecount}}</dd>
-        <dt>Packages built</dt><dd>{{build.package_set.all.count}}</dd>
+        <dt>Recipes built</dt><dd><a href="{% url 'recipes' build.pk %}">{{recipecount}}</a></dd>
+        <dt>Packages built</dt><dd><a href="{% url 'packages' build.pk %}">{{build.package_set.all.count}}</a></dd>
             </dl>
     </div>
 </div>

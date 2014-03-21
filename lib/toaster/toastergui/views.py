@@ -25,7 +25,7 @@ from django.db.models import Q, Sum
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package, Target_File
+from orm.models import Target_Installed_Package, Target_Image_File
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest
@@ -350,17 +350,58 @@ def builds(request):
     return render(request, template, context)
 
 
+##
 # build dashboard for a single build, coming in as argument
+# Each build may contain multiple targets and each target
+# may generate multiple image files. display them all.
+#
 def builddashboard(request, build_id):
     template = "builddashboard.html"
     if Build.objects.filter(pk=build_id).count() == 0 :
         return redirect(builds)
+    build = Build.objects.filter(pk = build_id)[0];
+    layerVersionId = Layer_Version.objects.filter( build = build_id );
+    recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( );
+    tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' );
+
+    # set up custom target list with computed package and image data
+    targets = [ ];
+    ntargets = 0;
+    hasImages = False;
+    for t in tgts:
+        elem = { };
+        elem[ 'target' ] = t;
+        if ( t.is_image ):
+            hasImages = True;
+        npkg = 0;
+        pkgsz = 0;
+        pid= 0;
+        tp = Target_Installed_Package.objects.filter( target_id = t.id );
+        package = None;
+        for p in tp:
+            pid = p.package_id;
+            package = Package.objects.get( pk = p.package_id )
+            pkgsz = pkgsz + package.size;
+            npkg = npkg + 1;
+        elem[ 'npkg' ] = npkg;
+        elem[ 'pkgsz' ] = pkgsz;
+        ti = Target_Image_File.objects.filter( target_id = t.id );
+        imageFiles = [ ];
+        for i in ti:
+            imageFiles.append({ 'path': i.file_name, 'size' : i.file_size });
+        elem[ 'imageFiles' ] = imageFiles;
+        targets.append( elem );
+
     context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
-            'recipecount' : Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id)).count(),
-            'logmessages' : LogMessage.objects.filter(build=build_id),
+            'build'           : build,
+            'hasImages'       : hasImages,
+            'ntargets'        : ntargets,
+            'targets'         : targets,
+            'recipecount'     : recipeCount,
+            'logmessages'     : LogMessage.objects.filter(build=build_id),
     }
     return render(request, template, context)
+
 
 def task(request, build_id, task_id):
     template = "task.html"

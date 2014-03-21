@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load projecttags %}
 {% load humanize %}
 {% block pagecontent %}
 
@@ -8,7 +9,7 @@
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
 <li><a href="{% url 'all-builds' %}">All builds</a></li>
-<li><a href="{%url 'builddashboard' build.pk%}">{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+{{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})</a></li>
+<li><a href="{%url 'builddashboard' build.pk%}">{{build.get_sorted_target_list.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})</a></li>
             {% block localbreadcrumb %}{% endblock %}
         </ul>
         <script>
@@ -25,10 +26,12 @@
         <!-- begin left sidebar container -->
         <div id="nav" class="span2">
             <ul class="nav nav-list well">
+              {% if build.target_set.all.0.is_image %}
                 <li class="nav-header">Images</li>
-            {% for t in build.target_set.all|dictsort:"target" %}
+            {% for t in build.get_sorted_target_list %}
                 <li><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
             {% endfor %}
+                  {% endif %}
                 <li class="nav-header">Build</li>
                 <li><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
                 <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>

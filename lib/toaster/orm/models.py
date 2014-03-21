@@ -50,6 +50,11 @@ class Build(models.Model):
     build_name = models.CharField(max_length=100)
     bitbake_version = models.CharField(max_length=50)
 
+    def get_sorted_target_list(self):
+        tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
+        return( tgts );
+
+
 @python_2_unicode_compatible
 class Target(models.Model):
     search_allowed_fields = ['target', 'file_name']
