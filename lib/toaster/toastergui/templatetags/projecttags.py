@@ -110,8 +110,14 @@ def format_none_and_zero(value):
 
 @register.filter
 def filtered_filesizeformat(value):
-    """Change output from fileformatsize to suppress trailing '.0' and change 'bytes' to 'B'
     """
+    If the value is -1 return an empty string. Otherwise,
+    change output from fileformatsize to suppress trailing '.0'
+    and change 'bytes' to 'B'.
+    """
+    if value == -1:
+        return ''
+
     return filesizeformat(value).replace("bytes", "B").replace(".0", "")
 
 @register.filter
@@ -228,4 +234,17 @@ def filter_sizeovertotal(package_object, total_size):
   
     return '{:.1%}'.format(float(size)/float(total_size))
 
+from django.utils.safestring import mark_safe
+@register.filter
+def format_vpackage_rowclass(size):
+    if size == -1:
+        return mark_safe('class="muted"')
+    return ''
 
+@register.filter
+def format_vpackage_namehelp(name):
+    r =  name + '&nbsp;'
+    r += '<i class="icon-question-sign get-help hover-help"'
+    r += ' title = "' + name + ' only has dependency information available.">'
+    r += '</i>'
+    return mark_safe(r)

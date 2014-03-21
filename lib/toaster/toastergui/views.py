@@ -425,7 +425,7 @@ def target(request, build_id, target_id):
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
 
     # FUTURE:  get rid of nested sub-queries replacing with ManyToMany field
-    queryset = Package.objects.filter(id__in=Target_Installed_Package.objects.filter(target_id=target_id).values('package_id'))
+    queryset = Package.objects.filter(size__gte=0, id__in=Target_Installed_Package.objects.filter(target_id=target_id).values('package_id'))
     packages_sum =  queryset.aggregate(Sum('installed_size'))
     queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string)
     packages = _build_page_range(Paginator(queryset, request.GET.get('count', 25)),request.GET.get('page', 1))

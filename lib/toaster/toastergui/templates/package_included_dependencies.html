@@ -23,12 +23,19 @@
                 </thead>
                 <tbody>
 					{% for runtime_dep in runtime_deps %}
-                        <tr>
+                        <tr {{runtime_dep.size|format_vpackage_rowclass}} >
+                            {% if runtime_dep.size != -1 %}
                             <td>
                                <a href="{% url 'package_included_detail' build.id target.id runtime_dep.depends_on_id %}">
                                     {{runtime_dep.name}}
                                 </a>
                             </td>
+                            {% else %}
+                            <td>
+                                {{runtime_dep.name|format_vpackage_namehelp}}
+                            </td>
+                            {% endif %}
+
                             <td>{{runtime_dep.version}}</td>
                             <td>{{runtime_dep.size|filtered_filesizeformat}}</td>
                         </tr>
@@ -58,12 +65,18 @@
                 <tbody>
 					{% for other_dep in other_deps %}
                         {% if other_dep.installed %}
-                            <tr>
+                            <tr {{other_dep.size|format_vpackage_rowclass}}>
+                                {% if other_dep.size != -1 %}
                                 <td>
-                                   <a href="{% url 'package_included_detail' build.id target.id other_dep.depends_on_id %}">
+                                    <a href="{% url 'package_included_detail' build.id target.id other_dep.depends_on_id %}">
                                         {{other_dep.name}}
                                     </a>
                                 </td>
+                                {% else %}
+                                    <td>
+                                        {{other_dep.name|format_vpackage_namehelp}}
+                                    </td>
+                                {% endif %}
                                 <td>{{other_dep.version}}</td>
                                 <td>{{other_dep.size|filtered_filesizeformat}}</td>
                                 <td>
