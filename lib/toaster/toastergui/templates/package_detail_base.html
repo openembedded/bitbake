@@ -1,24 +1,45 @@
 {% extends "basebuilddetailpage.html" %}
 {% load projecttags %}
 
+{% block extraheadcontent %}
+    <!-- functions to format package 'installed_package' alias -->
+    <script>
+    function fmtAliasHelp(package_name, alias, hover) {
+        var r = null;
+        if (alias != null && alias != '') {
+            r = '<span class="muted"> as ' + alias + '&nbsp';
+            r += '<i class="icon-question-sign get-help';
+            if (hover) {
+                r+= ' hover-help';
+            }
+            else {
+                r+= ' heading-help';
+            }
+            r += '"';
+            title = package_name + ' was renamed at packaging time and was installed on your system as ' + alias;
+            r += ' title="' + title + '">';
+            r += '</i>';
+            r += '</span>';
+            document.write(r);
+        }
+    }
+    </script>
+{% endblock extraheadcontent %}
 {% block localbreadcrumb %}
-{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
     {% if target %}
         <li><a href="{% url "target" build.id target.id %}">{{target.target}}</a></li>
+        <li>{{package.fullpackagespec}} {% if package.alias %} as {{package.alias}}{% endif %}</li>
     {% else %}
         <li><a href="{% url "packages" build.id %}"> Packages </a></li>
+        <li>{{package.fullpackagespec}}</li>
     {% endif %}
-        <li>{{fullPackageSpec}}</li>
-{% endwith %}
 {% endblock localbreadcrumb %}
 
 {% block pagedetailinfomain %}
-{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
-
     <div class="row span11">
         <div class="page-header">
             {% block title %}
-            <h1>{{fullPackageSpec}}</h1>
+            <h1>{{package.fullpackagespec}}</h1>
             {% endblock title %}
         </div> <!-- page-header -->
     </div> <!-- row span11 page-header -->
@@ -93,7 +114,7 @@
                 {{package.recipe.layer_version.layer.name}}
                 {% if package.recipe.layer_version.layer.name|format_none_and_zero != "" %}
                     {% comment %}
-                    # Removed per team meeting of 1/29/2014 until 
+                    # Removed per team meeting of 1/29/2014 until
                     # decision on index search algorithm
                     <a href="http://layers.openembedded.org"  target="_blank">
                     <i class="icon-share get-info"></i>
@@ -121,5 +142,4 @@
         </dl>
     </div> <!-- row4 well -->
     {% endblock twocolumns %}
-{% endwith %}
 {% endblock pagedetailinfomain %}

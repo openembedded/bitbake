@@ -2,7 +2,7 @@
 {% load projecttags %}
 
 {% block tabcontent %}
-    {% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec packageFileCount=package.buildfilelist_package.count %}
+    {% with packageFileCount=package.buildfilelist_package.count %}
         <!-- Generated Files -->
         {% if package.buildtargetlist_package.count == 0 %}
             {# Not included case #}
@@ -21,7 +21,7 @@
             <!-- Package file list or if empty, alert pane -->
             {% if packageFileCount > 0 %}
                 <div class="alert alert-info">
-                    {{fullPackageSpec}} is <strong>not included</strong> in any image.  These are the files that would be added to an image root file system if you were to include it in future builds.
+                    {{package.fullpackagespec}} is <strong>not included</strong> in any image.  These are the files that would be added to an image root file system if you were to include it in future builds.
                 </div>
                 <table class="table table-bordered table-hover">
                     <thead>
@@ -29,7 +29,7 @@
                             <th>File</th>
                             <th>Size</th>
                         </tr>
-                    </thead>                   
+                    </thead>
                     <tbody>
 						{% for file in package.buildfilelist_package.all|dictsort:"path" %}
                             <tr>
@@ -42,7 +42,7 @@
 
             {% else %}
                 <div class="alert alert-info">
-                    <strong>{{fullPackageSpec}}</strong> does not generate any files.
+                    <strong>{{package.fullpackagespec}}</strong> does not generate any files.
                 </div>
             {% endif %}
 

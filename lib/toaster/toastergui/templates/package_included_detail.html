@@ -2,13 +2,17 @@
 {% load projecttags %}
 
 {% block title %}
-{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
-        <h1>{{fullPackageSpec}} <small>({{target.target}})</small></h1>
-{% endwith %}
+        <h1>
+            {{package.fullpackagespec}}
+            <script>
+                fmtAliasHelp("{{package.name}}", "{{package.alias}}", false)
+            </script>
+            <small>({{target.target}})</small>
+        </h1>
 {% endblock title %}
 
 {% block tabcontent %}
-{% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec packageFileCount=package.buildfilelist_package.count %}
+{% with packageFileCount=package.buildfilelist_package.count %}
     {% include "package_included_tabs.html" with active_tab="detail" %}
     <div class="tab-content">
         <div class="tab-pane active" id="files">
@@ -36,7 +40,7 @@
 
             {% else %}
             <div class="alert alert-info">
-                <strong>{{fullPackageSpec}}</strong> does not generate any files.
+                <strong>{{package.fullpackagespec}}</strong> does not generate any files.
             </div>
             {% endif %}
         </div> <!-- end tab-pane -->

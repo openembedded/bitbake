@@ -2,13 +2,15 @@
 {% load projecttags %}
 
 {% block title %}
-    {% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
-        <h1>{{fullPackageSpec}} <small>({{target.target}})</small></h1>
-    {% endwith %}
+    <h1>
+        {{package.fullpackagespec}}
+        <script> fmtAliasHelp("{{package.name}}", "{{package.alias}}", false) </script>
+        <small>({{target.target}})</small>
+    </h1>
 {% endblock title %}
 
 {% block tabcontent %}
-    {% with fullPackageSpec=package.name|add:"_"|add:package.version|add:"-"|add:package.revision|filtered_packagespec packageFileCount=package.buildfilelist_package.count %}
+    {% with packageFileCount=package.buildfilelist_package.count %}
     {% include "package_included_tabs.html" with active_tab="dependencies" %}
     <div class="tab-content">
        <div class="tab-pane active" id="dependencies">
@@ -29,22 +31,22 @@
                                <a href="{% url 'package_included_detail' build.id target.id runtime_dep.depends_on_id %}">
                                     {{runtime_dep.name}}
                                 </a>
+                                <script>fmtAliasHelp("{{runtime_dep.name}}", "{{runtime_dep.alias}}", true)</script>
                             </td>
                             {% else %}
                             <td>
                                 {{runtime_dep.name|format_vpackage_namehelp}}
                             </td>
                             {% endif %}
-
-                            <td>{{runtime_dep.version}}</td>
-                            <td>{{runtime_dep.size|filtered_filesizeformat}}</td>
+                            <td>{{runtime_dep.version}}&nbsp;</td>
+                            <td>{{runtime_dep.size|filtered_filesizeformat}}&nbsp;</td>
                         </tr>
 					{% endfor %}
-                 </tbody>                
+                 </tbody>
             </table>
         {% else %}
             <div class="alert alert-info">
-                <strong>{{fullPackageSpec}}</strong> has no runtime dependencies.
+                <strong>{{package.fullpackagespec}}</strong> has no runtime dependencies.
             </div>
         {% endifnotequal %}
 
@@ -61,7 +63,7 @@
                             Relationship type
                         </th>
                     </tr>
-                </thead>               
+                </thead>
                 <tbody>
 					{% for other_dep in other_deps %}
                         {% if other_dep.installed %}
@@ -70,6 +72,9 @@
                                 <td>
                                     <a href="{% url 'package_included_detail' build.id target.id other_dep.depends_on_id %}">
                                         {{other_dep.name}}
+                                        <script>
+                                        fmtAliasHelp("{{other_dep.name}}","{{other_dep.alias}}", true)
+                                        </script>
                                     </a>
                                 </td>
                                 {% else %}
@@ -77,8 +82,8 @@
                                         {{other_dep.name|format_vpackage_namehelp}}
                                     </td>
                                 {% endif %}
-                                <td>{{other_dep.version}}</td>
-                                <td>{{other_dep.size|filtered_filesizeformat}}</td>
+                                <td>{{other_dep.version}}&nbsp;</td>
+                                <td>{{other_dep.size|filtered_filesizeformat}}&nbsp;</td>
                                 <td>
                                     {{other_dep.dep_type_display}}
                                     <i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
@@ -96,7 +101,7 @@
                             </tr>
                         {% endif %}
 					{% endfor %}
-                </tbody>               
+                </tbody>
             </table>
         {% endifnotequal %}
         </div> <!-- end tab-pane -->

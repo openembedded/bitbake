@@ -2,7 +2,6 @@
 {% load projecttags %}
 
 {% block tabcontent %}
-    {% with fullPackageSpec=package.name|add:"-"|add:package.version|add:"-"|add:package.revision|filtered_packagespec %}
         <ul class="nav nav-pills">
             <li class="">
                 <a href="{% url 'package_built_detail' build.id package.id %}">
@@ -21,11 +20,11 @@
             <div class="tab-pane active" id="dependencies">
             {% ifequal runtime_deps|length 0 %}
                 <div class="alert alert-info">
-                    <strong>{{fullPackageSpec}}</strong> has no runtime dependencies.
+                    <strong>{{package.fullpackagespec}}</strong> has no runtime dependencies.
                 </div>
             {% else %}
                 <div class="alert alert-info">
-                    <strong>{{fullPackageSpec}}</strong> is <strong>not included</strong> in any image.  These are its projected runtime dependencies if you were to include it in future builds.
+                    <strong>{{package.fullpackagespec}}</strong> is <strong>not included</strong> in any image.  These are its projected runtime dependencies if you were to include it in future builds.
                 </div>
                 <table class="table table-bordered table-hover">
                     <thead>
@@ -56,7 +55,7 @@
                                 </tr>
                             {% endifequal %}
 						{% endfor %}
-                    </tbody>    
+                    </tbody>
                 </table>
             {% endifequal %}
             {% ifnotequal other_deps|length 0 %}
@@ -72,7 +71,7 @@
                                 Relationship type
                             </th>
                         </tr>
-                    </thead>       
+                    </thead>
                     <tbody>
 						{% for other_dep in other_deps %}
                         	{% ifequal other_dep.version '' %}
@@ -106,5 +105,4 @@
                 {% endifnotequal %}
             </div> <!-- tab-pane -->
         </div> <!-- tab-content -->
-    {% endwith %}
 {% endblock tabcontent %}

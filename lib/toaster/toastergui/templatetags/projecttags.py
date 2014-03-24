@@ -208,14 +208,6 @@ def filtered_installedsize(size, installed_size):
     return size if (installed_size == 0) or (installed_size == "") or (installed_size == None) else installed_size
 
 @register.filter
-def filtered_installedname(name, installed_name):
-    """If package.installed_name not null and not empty
-        return <div class=muted> as {{package.installed_name}}
-        otherwise ""
-    """
-    return name if (name == installed_name) or (not installed_name) or (installed_name == "") else name + " as " + installed_name
-
-@register.filter
 def filtered_packageversion(version, revision):
     """ Emit "version-revision" if version and revision are not null
         else "version" if version is not null
@@ -245,6 +237,6 @@ def format_vpackage_rowclass(size):
 def format_vpackage_namehelp(name):
     r =  name + '&nbsp;'
     r += '<i class="icon-question-sign get-help hover-help"'
-    r += ' title = "' + name + ' only has dependency information available.">'
+    r += ' title="' + name + ' only has dependency information available.">'
     r += '</i>'
     return mark_safe(r)

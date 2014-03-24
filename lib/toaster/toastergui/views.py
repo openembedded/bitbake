@@ -1280,7 +1280,7 @@ the RRECOMENDS or TRECOMENDS value.
 The lists are built in the sort order specified for the package runtime
 dependency views.
 """
-def get_package_dependencies(package_id, target_id = INVALID_KEY):
+def _get_package_dependencies(package_id, target_id = INVALID_KEY):
     runtime_deps = []
     other_deps = []
     other_depends_types = OTHER_DEPENDS_BASE
@@ -1318,6 +1318,10 @@ def get_package_dependencies(package_id, target_id = INVALID_KEY):
                 'depends_on_id' : dep_package.id,
                 'installed' : installed,
                 }
+
+        if target_id != INVALID_KEY:
+                dep['alias'] = _get_package_alias(dep_package)
+
         if idep.dep_type == rdepends_type :
             runtime_deps.append(dep)
         elif idep.dep_type in other_depends_types :
@@ -1331,28 +1335,50 @@ def get_package_dependencies(package_id, target_id = INVALID_KEY):
     return retvalues
 
 # Return the count of packages dependent on package for this target_id image
-def get_package_reverse_dep_count(package, target_id):
+def _get_package_reverse_dep_count(package, target_id):
     return package.package_dependencies_target.filter(target_id__exact=target_id, dep_type__exact = Package_Dependency.TYPE_TRDEPENDS).count()
 
 # Return the count of the packages that this package_id is dependent on.
 # Use one of the two RDEPENDS types, either TRDEPENDS if the package was
 # installed, or else RDEPENDS if only built.
-def get_package_dependency_count(package, target_id, is_installed):
+def _get_package_dependency_count(package, target_id, is_installed):
     if is_installed :
         return package.package_dependencies_source.filter(target_id__exact = target_id,
             dep_type__exact = Package_Dependency.TYPE_TRDEPENDS).count()
     else :
         return package.package_dependencies_source.filter(dep_type__exact = Package_Dependency.TYPE_RDEPENDS).count()
 
+def _get_package_alias(package):
+    alias = package.installed_name
+    if alias != None and alias != '' and alias != package.name:
+        return alias
+    else:
+        return ''
+
+def _get_fullpackagespec(package):
+    r = package.name
+    version_good = package.version != None and  package.version != ''
+    revision_good = package.revision != None and package.revision != ''
+    if version_good or revision_good:
+        r += '_'
+        if version_good:
+            r += package.version
+            if revision_good:
+                r += '-'
+        if revision_good:
+            r += package.revision
+    return r
+
 def package_built_detail(request, build_id, package_id):
     template = "package_built_detail.html"
     if Build.objects.filter(pk=build_id).count() == 0 :
         return redirect(builds)
     package = Package.objects.filter(pk=package_id)[0]
+    package.fullpackagespec = _get_fullpackagespec(package)
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
             'package' : package,
-            'dependency_count' : get_package_dependency_count(package, -1, False),
+            'dependency_count' : _get_package_dependency_count(package, -1, False),
     }
     return render(request, template, context)
 
@@ -1362,13 +1388,14 @@ def package_built_dependencies(request, build_id, package_id):
          return redirect(builds)
 
     package = Package.objects.filter(pk=package_id)[0]
-    dependencies = get_package_dependencies(package_id)
+    package.fullpackagespec = _get_fullpackagespec(package)
+    dependencies = _get_package_dependencies(package_id)
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
             'package' : package,
             'runtime_deps' : dependencies['runtime_deps'],
             'other_deps' :   dependencies['other_deps'],
-            'dependency_count' : get_package_dependency_count(package, -1,  False)
+            'dependency_count' : _get_package_dependency_count(package, -1,  False)
     }
     return render(request, template, context)
 
@@ -1379,13 +1406,15 @@ def package_included_detail(request, build_id, target_id, package_id):
         return redirect(builds)
 
     package = Package.objects.filter(pk=package_id)[0]
+    package.fullpackagespec = _get_fullpackagespec(package)
+    package.alias = _get_package_alias(package)
     target = Target.objects.filter(pk=target_id)[0]
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
             'target'  : target,
             'package' : package,
-            'reverse_count' : get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : get_package_dependency_count(package, target_id, True)
+            'reverse_count' : _get_package_reverse_dep_count(package, target_id),
+            'dependency_count' : _get_package_dependency_count(package, target_id, True)
     }
     return render(request, template, context)
 
@@ -1395,17 +1424,19 @@ def package_included_dependencies(request, build_id, target_id, package_id):
         return redirect(builds)
 
     package = Package.objects.filter(pk=package_id)[0]
+    package.fullpackagespec = _get_fullpackagespec(package)
+    package.alias = _get_package_alias(package)
     target = Target.objects.filter(pk=target_id)[0]
 
-    dependencies = get_package_dependencies(package_id, target_id)
+    dependencies = _get_package_dependencies(package_id, target_id)
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
             'package' : package,
             'target' : target,
             'runtime_deps' : dependencies['runtime_deps'],
             'other_deps' :   dependencies['other_deps'],
-            'reverse_count' : get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : get_package_dependency_count(package, target_id, True)
+            'reverse_count' : _get_package_reverse_dep_count(package, target_id),
+            'dependency_count' : _get_package_dependency_count(package, target_id, True)
     }
     return render(request, template, context)
 
@@ -1415,6 +1446,8 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
         return redirect(builds)
 
     package = Package.objects.filter(pk=package_id)[0]
+    package.fullpackagespec = _get_fullpackagespec(package)
+    package.alias = _get_package_alias(package)
     target = Target.objects.filter(pk=target_id)[0]
 
     reverse_deps = []
@@ -1426,6 +1459,7 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
             version += '-' + dep_package.revision
         dep = {
                 'name' : dep_package.name,
+                'alias' :  _get_package_alias(dep_package),
                 'dependent_id' : dep_package.id,
                 'version' : version,
                 'size' : dep_package.size
@@ -1438,8 +1472,8 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
             'package' : package,
             'target' : target,
             'reverse_deps' : reverse_deps,
-            'reverse_count' : get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : get_package_dependency_count(package, target_id, True)
+            'reverse_count' : _get_package_reverse_dep_count(package, target_id),
+            'dependency_count' : _get_package_dependency_count(package, target_id, True)
     }
     return render(request, template, context)
 
