@@ -79,7 +79,7 @@
             {{package.license}}
         </td>
         <td class="depends">
-            {% with deps=package|runtime_dependencies:target.id %}
+            {% with deps=package.runtime_dependencies %}
             {% with deps_count=deps|length %}
             {% if deps_count > 0 %}
             <a class="btn"
@@ -96,7 +96,7 @@
             {% endwith %}
         </td>
         <td class="brought_in_by">
-            {% with rdeps=package|reverse_runtime_dependencies:target.id %}
+            {% with rdeps=package.reverse_runtime_dependencies %}
             {% with rdeps_count=rdeps|length %}
             {% if rdeps_count > 0 %}
             <a class="btn"

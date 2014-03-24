@@ -429,6 +429,12 @@ def target(request, build_id, target_id):
     packages_sum =  queryset.aggregate(Sum('installed_size'))
     queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string)
     packages = _build_page_range(Paginator(queryset, request.GET.get('count', 25)),request.GET.get('page', 1))
+
+    # bring in package dependencies
+    for p in packages.object_list:
+        p.runtime_dependencies = p.package_dependencies_source.filter(target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
+        p.reverse_runtime_dependencies = p.package_dependencies_target.filter(target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
+
     context = { 'build': Build.objects.filter(pk=build_id)[0],
                 'target': Target.objects.filter(pk=target_id)[0],
                 'objects': packages,
