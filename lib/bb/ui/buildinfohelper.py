@@ -750,7 +750,7 @@ class BuildInfoHelper(object):
 
 
     def store_missed_state_tasks(self, event):
-        for (fn, taskname, taskhash, sstatefile) in event.data:
+        for (fn, taskname, taskhash, sstatefile) in event.data['missed']:
 
             identifier = fn + taskname + "_setscene"
             recipe_information = self._get_recipe_information_from_taskfile(fn)
@@ -765,6 +765,21 @@ class BuildInfoHelper(object):
             task_information['outcome'] = Task.OUTCOME_NA
             task_information['sstate_checksum'] = taskhash
             task_information['sstate_result'] = Task.SSTATE_MISS
+            task_information['path_to_sstate_obj'] = sstatefile
+
+            self.orm_wrapper.get_update_task_object(task_information)
+
+        for (fn, taskname, taskhash, sstatefile) in event.data['found']:
+
+            identifier = fn + taskname + "_setscene"
+            recipe_information = self._get_recipe_information_from_taskfile(fn)
+            recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
+            class MockEvent: pass
+            event = MockEvent()
+            event.taskname = taskname
+            event.taskhash = taskhash
+            task_information = self._get_task_information(event,recipe)
+
             task_information['path_to_sstate_obj'] = sstatefile
 
             self.orm_wrapper.get_update_task_object(task_information)
