@@ -6,6 +6,10 @@
 <li>Packages</li>
 {% endblock %}
 
+{% block nav-packages %}
+  <li class="active"><a href="{% url 'packages' build.pk %}">Packages</a></li>
+{% endblock %}
+
 {% block buildinfomain %}
 <div class="span10">
 <div class="page-header">
@@ -30,7 +34,7 @@
         </form>
       </div>
   </div>
-  
+
 {% else %}
 {% include "basetable_top.html" %}
 

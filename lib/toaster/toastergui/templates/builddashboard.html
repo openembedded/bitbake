@@ -2,6 +2,10 @@
 {% load humanize %}
 {% load projecttags %}
 
+{% block parentbreadcrumb %}
+{{build.get_sorted_target_list.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})
+{% endblock %}
+
 {% block buildinfomain %}
 <!-- page title -->
 <div class="row-fluid span10">

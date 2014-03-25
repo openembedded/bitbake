@@ -9,7 +9,13 @@
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
 <li><a href="{% url 'all-builds' %}">All builds</a></li>
-<li><a href="{%url 'builddashboard' build.pk%}">{{build.get_sorted_target_list.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})</a></li>
+            <li>
+            {% block parentbreadcrumb %}
+            <a href="{%url 'builddashboard' build.pk%}">
+                {{build.get_sorted_target_list.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})
+            </a>
+            {% endblock %}
+            </li>
             {% block localbreadcrumb %}{% endblock %}
         </ul>
         <script>
@@ -28,19 +34,35 @@
             <ul class="nav nav-list well">
               {% if build.target_set.all.0.is_image %}
                 <li class="nav-header">Images</li>
-            {% for t in build.get_sorted_target_list %}
-                <li><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
-            {% endfor %}
-                  {% endif %}
-                <li class="nav-header">Build</li>
-                <li><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
-                <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
-                <li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
-                <li><a href="{% url 'packages' build.pk %}">Packages</a></li>
-                <li class="nav-header">Performance</li>
-                <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
-                <li><a href="{% url 'cpuusage' build.pk %}">CPU usage</a></li>
-                <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
+                {% block nav-target %}
+                  {% for t in build.get_sorted_target_list %}
+                    <li><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+                  {% endfor %}
+                {% endblock %}
+              {% endif %}
+              <li class="nav-header">Build</li>
+              {% block nav-configuration %}
+                  <li><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
+              {% endblock %}
+              {% block nav-tasks %}
+                  <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
+              {% endblock %}
+              {% block nav-recipes %}
+                  <li><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
+              {% endblock %}
+              {% block nav-packages %}
+                  <li><a href="{% url 'packages' build.pk %}">Packages</a></li>
+              {% endblock %}
+                  <li class="nav-header">Performance</li>
+              {% block nav-buildtime %}
+                  <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
+              {% endblock %}
+              {% block nav-cpuusage %}
+                  <li><a href="{% url 'cpuusage' build.pk %}">CPU usage</a></li>
+              {% endblock %}
+              {% block nav-diskio %}
+                  <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
+              {% endblock %}
             </ul>
         </div>
         <!-- end left sidebar container -->

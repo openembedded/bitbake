@@ -6,6 +6,10 @@
 <li>Recipes</li>
 {% endblock %}
 
+{% block nav-recipes %}
+  <li class="active"><a href="{% url 'recipes' build.pk %}">Recipes</a></li>
+{% endblock %}
+
 {% block buildinfomain %}
 <div class="span10">
 <div class="page-header">

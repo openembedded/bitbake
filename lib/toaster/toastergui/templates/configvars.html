@@ -1,9 +1,13 @@
 {% extends "basebuildpage.html" %}
+{% load projecttags %}
+
 {% block localbreadcrumb %}
 <li>Configuration</li>
 {% endblock %}
 
-{% load projecttags %}
+{% block nav-configuration %}
+  <li class="active"><a href="{% url 'configuration' build.pk %}">Configuration</a></li>
+{% endblock %}
 
 {% block buildinfomain %}
 <!-- page title -->
@@ -30,7 +34,7 @@
 
   <!-- variables -->
   <div id="variables" class="tab-pane">
-  
+
   {% if objects.paginator.count == 0 %}
   <div class="row-fluid">
       <div class="alert">
@@ -41,7 +45,7 @@
         </form>
       </div>
   </div>
-  
+
   {% else %}
   {% include "basetable_top.html" %}
 

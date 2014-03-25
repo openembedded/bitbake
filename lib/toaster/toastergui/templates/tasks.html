@@ -1,7 +1,37 @@
 {% extends "basebuildpage.html" %}
 {% load projecttags %}
+
 {% block localbreadcrumb %}
 <li>{{title}}</li>
+{% endblock %}
+
+{% block nav-tasks %}
+  {% if 'Tasks' == title %}
+    <li class="active"><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
+  {% else %}
+    <li><a href="{% url 'tasks' build.pk %}">Tasks</a></li>
+  {% endif %}
+{% endblock %}
+{% block nav-buildtime %}
+  {% if 'Time' == title %}
+    <li class="active"><a href="{% url 'buildtime' build.pk %}">Time</a></li>
+  {% else %}
+    <li><a href="{% url 'buildtime' build.pk %}">Time</a></li>
+  {% endif %}
+{% endblock %}
+{% block nav-cpuusage %}
+  {% if 'CPU usage' == title %}
+    <li class="active"><a href="{% url 'cpuusage' build.pk %}">CPU usage</a></li>
+  {% else %}
+    <li><a href="{% url 'cpuusage' build.pk %}">CPU usage</a></li>
+  {% endif %}
+{% endblock %}
+{% block nav-diskio %}
+  {% if 'Disk I/O' == title %}
+    <li class="active"><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
+  {% else %}
+    <li><a href="{% url 'diskio' build.pk %}">Disk I/O</a></li>
+  {% endif %}
 {% endblock %}
 
 {% block buildinfomain %}

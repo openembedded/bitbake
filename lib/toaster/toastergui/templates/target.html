@@ -5,6 +5,16 @@
 
 {% load projecttags %}
 
+{% block nav-target %}
+  {% for t in build.get_sorted_target_list %}
+    {% ifequal target.pk t.pk %}
+      <li class="active"><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+    {% else %}
+      <li><a href="{% url 'target' build.pk t.pk %}">{{t.target}}</a><li>
+    {% endifequal %}
+  {% endfor %}
+{% endblock %}
+
 {% block buildinfomain %}
 
 <div class="row-fluid span10">
