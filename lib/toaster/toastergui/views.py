@@ -646,7 +646,7 @@ def _get_dir_entries(build_id, target_id, start):
             if o.inodetype == Target_File.ITYPE_DIRECTORY:
                 entry['isdir'] = 1
                 # is there content in directory
-                entry['childcount'] = Target_File.objects.filter(directory__path=o.path).all().count()
+                entry['childcount'] = Target_File.objects.filter(target__exact=target_id, directory__path=o.path).all().count()
             else:
                 entry['isdir'] = 0
 
