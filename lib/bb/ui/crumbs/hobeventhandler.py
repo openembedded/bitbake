@@ -359,19 +359,31 @@ class HobHandler(gobject.GObject):
         self.set_var_in_file("EXTRA_SETTING", extra_setting, "local.conf")
 
     def set_extra_config(self, extra_setting):
-        old_extra_setting = ast.literal_eval(self.runCommand(["getVariable", "EXTRA_SETTING"]) or "{}")
-        if extra_setting:
-            self.set_var_in_file("EXTRA_SETTING", extra_setting, "local.conf")
-        else:
-            self.remove_var_from_file("EXTRA_SETTING")
+        old_extra_setting = self.runCommand(["getVariable", "EXTRA_SETTING"]) or {}
+        old_extra_setting = str(old_extra_setting)
 
-        #remove not needed settings from conf
-        for key in old_extra_setting:
+        old_extra_setting = ast.literal_eval(old_extra_setting)
+        if not type(old_extra_setting) == dict:
+            old_extra_setting = {}
+
+        # settings not changed
+        if old_extra_setting == extra_setting:
+            return
+
+        # remove the old EXTRA SETTING variable
+        self.remove_var_from_file("EXTRA_SETTING")
+
+        # remove old settings from conf
+        for key in old_extra_setting.keys():
             if key not in extra_setting:
                 self.remove_var_from_file(key)
-        for key in extra_setting.keys():
-            value = extra_setting[key]
+
+        # add new settings
+        for key, value in extra_setting.iteritems():
             self.set_var_in_file(key, value, "local.conf")
+
+        if extra_setting:
+            self.set_var_in_file("EXTRA_SETTING", extra_setting, "local.conf")
 
     def set_http_proxy(self, http_proxy):
         self.set_var_in_file("http_proxy", http_proxy, "local.conf")
