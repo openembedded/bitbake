@@ -240,3 +240,12 @@ def format_vpackage_namehelp(name):
     r += ' title="' + name + ' only has dependency information available.">'
     r += '</i>'
     return mark_safe(r)
+
+@register.filter
+def get_dict_value(dictionary, key):
+    """ return the value of a dictionary key
+    """
+    try:
+        return dictionary[key]
+    except KeyError:
+        return ''

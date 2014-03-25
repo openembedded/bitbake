@@ -19,13 +19,13 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
-import operator
+import operator,re
 
 from django.db.models import Q, Sum
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package, Target_Image_File
+from orm.models import Target_Installed_Package, Target_File, Target_Image_File
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest
@@ -231,6 +231,25 @@ def builds(request):
         else:
             b.eta = 0
 
+    # set up list of fstypes for each build
+    fstypes_map = {};
+    for build in build_info:
+        targets = Target.objects.filter( build_id = build.id )
+        comma = "";
+        extensions = "";
+        for t in targets:
+            if ( not t.is_image ):
+                continue
+            tif = Target_Image_File.objects.filter( target_id = t.id )
+            for i in tif:
+                s=re.sub('.*tar.bz2', 'tar.bz2', i.file_name)
+                if s == i.file_name:
+                    s=re.sub('.*\.', '', i.file_name)
+                if None == re.search(s,extensions):
+                    extensions += comma + s
+                    comma = ", "
+        fstypes_map[build.id]=extensions
+
     # send the data to the template
     context = {
             # specific info for
@@ -238,6 +257,7 @@ def builds(request):
             # TODO: common objects for all table views, adapt as needed
                 'objects' : build_info,
                 'objectname' : "builds",
+                'fstypes' : fstypes_map,
                 'search_term' : search_term,
                 'total_count' : queryset_with_search.count(),
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
