@@ -213,6 +213,47 @@ class TestConcat(unittest.TestCase):
         self.d.appendVar("TEST", ":${BAR}")
         self.assertEqual(self.d.getVar("TEST", True), "foo:val:val2:bar")
 
+class TestConcatOverride(unittest.TestCase):
+    def setUp(self):
+        self.d = bb.data.init()
+        self.d.setVar("FOO", "foo")
+        self.d.setVar("VAL", "val")
+        self.d.setVar("BAR", "bar")
+
+    def test_prepend(self):
+        self.d.setVar("TEST", "${VAL}")
+        self.d.setVar("TEST_prepend", "${FOO}:")
+        bb.data.update_data(self.d)
+        self.assertEqual(self.d.getVar("TEST", True), "foo:val")
+
+    def test_append(self):
+        self.d.setVar("TEST", "${VAL}")
+        self.d.setVar("TEST_append", ":${BAR}")
+        bb.data.update_data(self.d)
+        self.assertEqual(self.d.getVar("TEST", True), "val:bar")
+
+    def test_multiple_append(self):
+        self.d.setVar("TEST", "${VAL}")
+        self.d.setVar("TEST_prepend", "${FOO}:")
+        self.d.setVar("TEST_append", ":val2")
+        self.d.setVar("TEST_append", ":${BAR}")
+        bb.data.update_data(self.d)
+        self.assertEqual(self.d.getVar("TEST", True), "foo:val:val2:bar")
+
+    def test_remove(self):
+        self.d.setVar("TEST", "${VAL} ${BAR}")
+        self.d.setVar("TEST_remove", "val")
+        bb.data.update_data(self.d)
+        self.assertEqual(self.d.getVar("TEST", True), "bar")
+
+    def test_doubleref_remove(self):
+        self.d.setVar("TEST", "${VAL} ${BAR}")
+        self.d.setVar("TEST_remove", "val")
+        self.d.setVar("TEST_TEST", "${TEST} ${TEST}")
+        bb.data.update_data(self.d)
+        self.assertEqual(self.d.getVar("TEST_TEST", True), "bar bar")
+
+
 class TestOverrides(unittest.TestCase):
     def setUp(self):
         self.d = bb.data.init()
