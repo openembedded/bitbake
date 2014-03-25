@@ -2020,7 +2020,7 @@ class sceneQueueEvent(runQueueEvent):
         self.taskstring = rq.rqdata.get_user_idstring(realtask, "_setscene")
         self.taskname = rq.rqdata.get_task_name(realtask) + "_setscene"
         self.taskfile = rq.rqdata.get_task_file(realtask)
-        self.taskhash = rq.rqdata.get_task_hash(task)
+        self.taskhash = rq.rqdata.get_task_hash(realtask)
 
 class runQueueTaskStarted(runQueueEvent):
     """
