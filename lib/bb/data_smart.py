@@ -614,6 +614,10 @@ class DataSmart(MutableMapping):
             filtered = filter(lambda v: v not in local_var["_removeactive"],
                               value.split(" "))
             value = " ".join(filtered)
+            if expand:
+                 # We need to ensure the expand cache has the correct value
+                 # flag == "_content" here
+                self.expand_cache[var].value = value
         return value
 
     def delVarFlag(self, var, flag, **loginfo):
