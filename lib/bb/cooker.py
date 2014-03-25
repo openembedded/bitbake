@@ -334,6 +334,8 @@ class BBCooker:
                         contents[begin_line] = "\n"
                     #remove var from history
                     self.data.varhistory.del_var_history(var, conf_file, line)
+                    #remove variable
+                    self.data.delVar(var)
 
                 with open(conf_file, 'w') as f:
                     f.writelines(contents)
