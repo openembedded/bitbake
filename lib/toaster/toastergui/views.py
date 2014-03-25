@@ -192,7 +192,8 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string):
         else:
             queryset = queryset.order_by(column)
 
-    return queryset
+    # insure only distinct records (e.g. from multiple search hits) are returned 
+    return queryset.distinct()
 
 # shows the "all builds" page
 def builds(request):
@@ -1060,10 +1061,8 @@ def configvars(request, build_id):
         return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id = build_id)
 
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
-    queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string).distinct().exclude(variable_value='',vhistory__file_name__isnull=True)
+    queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string).exclude(variable_value='',vhistory__file_name__isnull=True)
     queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string)
-    # remove duplicate records from multiple search hits in the VariableHistory table
-    queryset = queryset.distinct()
     # remove records where the value is empty AND there are no history files
     queryset = queryset.exclude(variable_value='',vhistory__file_name__isnull=True)
 
