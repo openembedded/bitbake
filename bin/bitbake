@@ -139,8 +139,8 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-n", "--dry-run", help = "Don't execute, just go through the motions.",
                    action = "store_true", dest = "dry_run", default = False)
 
-        parser.add_option("-S", "--dump-signatures", help = "Don't execute, just dump out the signature construction information.",
-                   action = "store_true", dest = "dump_signatures", default = False)
+        parser.add_option("-S", "--dump-signatures", help = "Dump out the signature construction information, with no task execution. Parameters are passed to the signature handling code, use 'none' if no specific handler is required.",
+                   action = "append", dest = "dump_signatures", default = [])
 
         parser.add_option("-p", "--parse-only", help = "Quit after parsing the BB recipes.",
                    action = "store_true", dest = "parse_only", default = False)

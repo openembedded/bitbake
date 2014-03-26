@@ -124,7 +124,7 @@ class CookerConfiguration(object):
         self.profile = False
         self.nosetscene = False
         self.invalidate_stamp = False
-        self.dump_signatures = False
+        self.dump_signatures = []
         self.dry_run = False
         self.tracking = False
         self.interface = []

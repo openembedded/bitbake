@@ -1036,10 +1036,13 @@ class RunQueue:
                     bb.event.fire(bb.event.DepTreeGenerated(depgraph), self.cooker.data)
 
         if self.state is runQueueSceneInit:
-            if self.cooker.configuration.dump_signatures:
-                invalidtasks = self.print_diffscenetasks()
+            dump = self.cooker.configuration.dump_signatures
+            if dump:
+                if 'printdiff' in dump:
+                    invalidtasks = self.print_diffscenetasks()
                 self.dump_signatures()
-                self.write_diffscenetasks(invalidtasks)
+                if 'printdiff' in dump:
+                    self.write_diffscenetasks(invalidtasks)
                 self.state = runQueueComplete
             else:
                 self.start_worker()
