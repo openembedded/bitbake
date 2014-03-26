@@ -1,11 +1,30 @@
 {% extends "base.html" %}
 
-
+{% load static %}
 {% load projecttags %}
 {% load humanize %}
 
 {% block pagecontent %}
 <div class="row-fluid">
+  {% if not objects.paginator.count and not request.GET.filter and not request.GET.search %}
+    <!-- Empty - no data in database -->
+    <div class="hero-unit span12">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <div class="row-fluid">
+            <div class="span6">
+                <h1>This is Toaster</h1>
+                <p>A web interface to <a href="http://www.yoctoproject.org/tools-resources/projects/bitbake">BitBake</a>, the <a href="http://www.yoctoproject.org">Yocto Project</a> build system.</p>
+                <p class="hero-actions">
+                    <a class="btn btn-primary btn-large" href="https://www.yoctoproject.org/documentation/toaster-manual">Show me the manual</a>
+                    <a class="btn btn-large" href="https://wiki.yoctoproject.org/wiki/Contribute_to_Toaster">I want to contribute</a>
+                </p>
+            </div>
+            <div class="span5">
+                <a href="http://www.yoctoproject.org"><img src="{% static 'img/toaster.png' %}" class="thumbnail" alt="Yocto Project"/> </a>
+            </div>
+        </div>
+    </div>
+  {% endif %}
 
   {%if mru.count > 0%}
   <div class="page-header top-air">
@@ -53,9 +72,20 @@
 
   {% endfor %}{%endif%}
 
+  {% if not objects.paginator.count and not request.GET.filter and not request.GET.search %}
+    <!-- Empty - no data in database -->
+    {% if mru.count == 0 %}
+    <div class="page-header top-air">
+       <h1>All builds</h1>
+    </div>
+    <div class="alert alert-info lead">
+        Toaster has not recorded any builds yet. Go build something with <a href="http://www.yoctoproject.org/docs/current/yocto-project-qs/yocto-project-qs.html#test-run">Knotty</a> or <a href="https://www.yoctoproject.org/documentation/hob-manual">Hob</a>
+    </div>
+    {% endif %}
+  {% else %}
   <div class="page-header top-air">
      <h1>
-      {% if request.GET.filter or request.GET.search and objects.count > 0  %}
+      {% if request.GET.filter and objects.count or request.GET.search and objects.count > 0  %}
           {{objects.paginator.count}} build{{objects.paginator.count|pluralize}} found
       {%elif objects.paginator.count == 0%}
           No builds
@@ -65,8 +95,8 @@
      </h1>
   </div>
 
- {% if objects.paginator.count == 0 %}
-  <div class="row-fluid">
+  {% if objects.paginator.count == 0 %}
+    <div class="row-fluid">
       <div class="alert">
         <form class="no-results input-append" id="searchform">
             <input id="search" name="search" class="input-xxlarge" type="text" value="{{request.GET.search}}"/>{% if request.GET.search %}<a href="javascript:$('#search').val('');searchform.submit()" class="add-on btn" tabindex="-1"><i class="icon-remove"></i></a>{% endif %}
@@ -74,11 +104,11 @@
             <button class="btn btn-link" onclick="javascript:$('#search').val('');searchform.submit()">Show all builds</button>
         </form>
       </div>
-  </div>
+    </div>
 
 
-{% else %}
-{% include "basetable_top.html" %}
+  {% else %}
+  {% include "basetable_top.html" %}
         <!-- Table data rows; the order needs to match the order of "tablecols" definitions; and the <td class value needs to match the tablecols clclass value for show/hide buttons to work -->
         {% for build in objects %}
         <tr class="data">
@@ -98,9 +128,9 @@
         {% endfor %}
 
 
-{% include "basetable_bottom.html" %}
-
-{% endif %}
+  {% include "basetable_bottom.html" %}
+  {% endif %} {# objects.paginator.count #}
+{% endif %} {# empty #}
 </div><!-- end row-fluid-->
 
 {% endblock %}

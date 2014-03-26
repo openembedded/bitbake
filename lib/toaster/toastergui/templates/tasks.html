@@ -36,19 +36,30 @@
 
 {% block buildinfomain %}
 <div class="span10">
-<div class="page-header">
-<h1>
-  {% if request.GET.filter or request.GET.search and objects.paginator.count > 0  %}
+{% if not request.GET.filter and not request.GET.search and not objects.paginator.count %}
+  <!-- Empty - no data in database -->
+  <div class="page-header">
+  <h1>{{title}}</h1>
+  </div>
+  <div class="alert alert-info lead">
+  No data was recorded for this build.
+  </div>
+
+{% else %}
+
+  <div class="page-header">
+  <h1>
+  {% if  request.GET.filter and objects.paginator.count >  0 or request.GET.search and objects.paginator.count >  0 %}
       {{objects.paginator.count}} task{{objects.paginator.count|pluralize}} found
-  {%elif request.GET.filter or request.GET.search and objects.paginator.count == 0%}
+  {%elif request.GET.filter and objects.paginator.count == 0 or request.GET.search and objects.paginator.count == 0 %}
       No tasks found
   {%else%}
       {{title}}
   {%endif%}
- </h1>
-</div>
+  </h1>
+  </div>
 
-{% if objects.paginator.count == 0 %}
+  {% if objects.paginator.count == 0 %}
   <div class="row-fluid">
       <div class="alert">
         <form class="no-results input-append" id="searchform">
@@ -60,8 +71,8 @@
   </div>
 
 
-{% else %}
-{% include "basetable_top.html" %}
+  {% else %}
+  {% include "basetable_top.html" %}
 
     {% for task in objects %}
         <tr {{ task|task_color }} class="flash" id="{{task.order}}" name="{{task.order}}">
@@ -102,7 +113,8 @@
         </tr>
     {% endfor %}
 
-{% include "basetable_bottom.html" %}
-{% endif %}
+  {% include "basetable_bottom.html" %}
+  {% endif %} {# objects.paginator.count #}
+{% endif %} {# empty #}
 </div>
 {% endblock %}
