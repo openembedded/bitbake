@@ -34,6 +34,8 @@ import copy
 import atexit
 from bb.ui import uihelper
 
+featureSet = [bb.cooker.CookerFeatures.SEND_SANITYEVENTS]
+
 logger = logging.getLogger("BitBake")
 interactive = sys.stdout.isatty()
 

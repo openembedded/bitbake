@@ -601,8 +601,11 @@ class MetadataEvent(Event):
 
 class SanityCheck(Event):
     """
-    Event to issue sanity check
+    Event to runs sanity checks, either raise errors or generate events as return status.
     """
+    def __init__(self, generateevents = True):
+        Event.__init__(self)
+        self.generateevents = generateevents
 
 class SanityCheckPassed(Event):
     """
@@ -620,8 +623,11 @@ class SanityCheckFailed(Event):
 
 class NetworkTest(Event):
     """
-    Event to start network test
+    Event to run network connectivity tests, either raise errors or generate events as return status.
     """
+    def __init__(self, generateevents = True):
+        Event.__init__(self)
+        self.generateevents = generateevents
 
 class NetworkTestPassed(Event):
     """

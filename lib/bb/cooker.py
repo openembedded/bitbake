@@ -82,7 +82,7 @@ class SkippedPackage:
 
 
 class CookerFeatures(object):
-    _feature_list = [HOB_EXTRA_CACHES, SEND_DEPENDS_TREE, BASEDATASTORE_TRACKING] = range(3)
+    _feature_list = [HOB_EXTRA_CACHES, SEND_DEPENDS_TREE, BASEDATASTORE_TRACKING, SEND_SANITYEVENTS] = range(4)
 
     def __init__(self):
         self._features=set()
@@ -1268,6 +1268,8 @@ class BBCooker:
 
         if self.state != state.parsing:
             self.parseConfiguration ()
+            if CookerFeatures.SEND_SANITYEVENTS in self.featureset:
+                bb.event.fire(bb.event.SanityCheck(False), self.data)
 
             ignore = self.data.getVar("ASSUME_PROVIDED", True) or ""
             self.recipecache.ignored_dependencies = set(ignore.split())
