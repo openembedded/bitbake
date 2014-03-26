@@ -256,11 +256,15 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     helper = uihelper.BBUIHelper()
 
     console = logging.StreamHandler(sys.stdout)
+    errconsole = logging.StreamHandler(sys.stderr)
     format_str = "%(levelname)s: %(message)s"
     format = bb.msg.BBLogFormatter(format_str)
-    bb.msg.addDefaultlogFilter(console)
+    bb.msg.addDefaultlogFilter(console, bb.msg.BBLogFilterStdOut)
+    bb.msg.addDefaultlogFilter(errconsole, bb.msg.BBLogFilterStdErr)
     console.setFormatter(format)
+    errconsole.setFormatter(format)
     logger.addHandler(console)
+    logger.addHandler(errconsole)
 
     if params.options.remote_server and params.options.kill_server:
         server.terminateServer()
