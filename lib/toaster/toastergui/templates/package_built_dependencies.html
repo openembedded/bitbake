@@ -36,24 +36,21 @@
                     </thead>
                     <tbody>
 						{% for runtime_dep in runtime_deps %}
-                            {% ifequal runtime_dep.version '' %}
-                                <tr class="muted">
-                                    <td>{{runtime_dep.name}}</td>
-                                    <td>{{runtime_dep.version}}</td>
-                                    <td></td>
-                                    </div>
-                                </tr>
+                        <tr {{runtime_dep.size|format_vpackage_rowclass}} >
+                            {% if runtime_dep.size != -1 %}
+                            <td>
+                                <a href="{% url 'package_built_detail' build.id runtime_dep.depends_on_id %}">
+                                    {{runtime_dep.name}}
+                                </a>
+                            </td>
                             {% else %}
-                                <tr>
-                                    <td>
-                                        <a href="{% url 'package_built_detail' build.id runtime_dep.depends_on_id %}">
-                                            {{runtime_dep.name}}
-                                        </a>
-                                    </td>
-                                    <td>{{runtime_dep.version}}</td>
-                                    <td>{{runtime_dep.size|filtered_filesizeformat}}</td>
-                                </tr>
-                            {% endifequal %}
+                            <td>
+                                {{runtime_dep.name|format_vpackage_namehelp}}
+                            </td>
+                            {% endif %}
+                            <td>{{runtime_dep.version}}</td>
+                            <td>{{runtime_dep.size|filtered_filesizeformat}}</td>
+                        </tr>
 						{% endfor %}
                     </tbody>
                 </table>
@@ -74,31 +71,25 @@
                     </thead>
                     <tbody>
 						{% for other_dep in other_deps %}
-                        	{% ifequal other_dep.version '' %}
-                            	<tr class="muted">
-                                	<td>{{other_dep.name}}</td>
-                                	<td>{{other_dep.version}}</td>
-                                	<td></td>
-                                	<td>
-                                    	{{other_dep.dep_type_display}}
-                                    	<i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
-                                	</td>
-                            	</tr>
-                        	{% else %}
-                            	<tr>
-                                	<td>
-                                    	<a href="{% url 'package_built_detail' build.id other_dep.depends_on_id %}">
-                                        	{{other_dep.name}}
-                                    	</a>
-                                	</td>
-                                	<td>{{other_dep.version}}</td>
-                                	<td>{{other_dep.size|filtered_filesizeformat}}</td>
-                                	<td>
-                                    	{{other_dep.dep_type_display}}
-                                    	<i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
-                                	</td>
-                            	</tr>
-                        	{% endifequal %}
+                        <tr {{other_dep.size|format_vpackage_rowclass}} >
+                        {% if other_dep.size != -1 %}
+                            <td>
+                                <a href="{% url 'package_built_detail' build.id other_dep.depends_on_id %}">
+                                    {{other_dep.name}}
+                                </a>
+                            </td>
+                        {% else %}
+                            <td>
+                                {{other_dep.name|format_vpackage_namehelp}}
+                            </td>
+                        {% endif %}
+                            <td>{{other_dep.version}}</td>
+                            <td>{{other_dep.size|filtered_filesizeformat}}</td>
+                            <td>
+                                {{other_dep.dep_type_display}}
+                                <i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>
+                            </td>
+                        </tr>
                     	{% endfor %}
                     </tbody>
                 </table>
