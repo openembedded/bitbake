@@ -175,7 +175,7 @@ def _search_tuple(request, model):
 
 
 # returns a lazy-evaluated queryset for a filter/search/order combination
-def _get_queryset(model, queryset, filter_string, search_term, ordering_string):
+def _get_queryset(model, queryset, filter_string, search_term, ordering_string, ordering_secondary=''):
     if filter_string:
         filter_query = _get_filtering_query(filter_string)
         queryset = queryset.filter(filter_query)
@@ -187,13 +187,18 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string):
 
     if ordering_string and queryset:
         column, order = ordering_string.split(':')
+        if column == re.sub('-','',ordering_secondary):
+            ordering_secondary=''
         if order.lower() == DESCENDING:
-            queryset = queryset.order_by('-' + column)
+            column = '-' + column
+        if ordering_secondary:
+            queryset = queryset.order_by(column, ordering_secondary)
         else:
             queryset = queryset.order_by(column)
 
     # insure only distinct records (e.g. from multiple search hits) are returned 
     return queryset.distinct()
+
 
 # shows the "all builds" page
 def builds(request):
@@ -210,8 +215,8 @@ def builds(request):
     # for that object type. copypasta for all needed table searches
     (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
     queryset_all = Build.objects.exclude(outcome = Build.IN_PROGRESS)
-    queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string)
-    queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string)
+    queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
+    queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
 
     # retrieve the objects that will be displayed in the table; builds a paginator and gets a page range to display
     build_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
@@ -489,7 +494,7 @@ def target(request, build_id, target_id):
     # FUTURE:  get rid of nested sub-queries replacing with ManyToMany field
     queryset = Package.objects.filter(size__gte=0, id__in=Target_Installed_Package.objects.filter(target_id=target_id).values('package_id'))
     packages_sum =  queryset.aggregate(Sum('installed_size'))
-    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string)
+    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string, 'name')
     packages = _build_page_range(Paginator(queryset, request.GET.get('count', 25)),request.GET.get('page', 1))
 
     # bring in package dependencies
@@ -789,8 +794,8 @@ def tasks_common(request, build_id, variant):
         return _redirect_parameters( variant, request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
     queryset_all = Task.objects.filter(build=build_id, order__gt=0)
-    queryset_with_search = _get_queryset(Task, queryset_all, None , search_term, ordering_string)
-    queryset = _get_queryset(Task, queryset_all, filter_string, search_term, ordering_string)
+    queryset_with_search = _get_queryset(Task, queryset_all, None , search_term, ordering_string, 'order')
+    queryset = _get_queryset(Task, queryset_all, filter_string, search_term, ordering_string, 'order')
 
     tasks = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
@@ -952,7 +957,7 @@ def recipes(request, build_id):
         return _redirect_parameters( 'recipes', request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
     queryset = Recipe.objects.filter(layer_version__id__in=Layer_Version.objects.filter(build=build_id))
-    queryset = _get_queryset(Recipe, queryset, filter_string, search_term, ordering_string)
+    queryset = _get_queryset(Recipe, queryset, filter_string, search_term, ordering_string, 'name')
 
     recipes = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
@@ -1081,8 +1086,8 @@ def configvars(request, build_id):
         return _redirect_parameters( 'configvars', request.GET, mandatory_parameters, build_id = build_id)
 
     queryset = Variable.objects.filter(build=build_id).exclude(variable_name__istartswith='B_').exclude(variable_name__istartswith='do_')
-    queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string).exclude(variable_value='',vhistory__file_name__isnull=True)
-    queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string)
+    queryset_with_search =  _get_queryset(Variable, queryset, None, search_term, ordering_string, 'variable_name').exclude(variable_value='',vhistory__file_name__isnull=True)
+    queryset = _get_queryset(Variable, queryset, filter_string, search_term, ordering_string, 'variable_name')
     # remove records where the value is empty AND there are no history files
     queryset = queryset.exclude(variable_value='',vhistory__file_name__isnull=True)
 
@@ -1163,7 +1168,7 @@ def bpackage(request, build_id):
         return _redirect_parameters( 'packages', request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
     queryset = Package.objects.filter(build = build_id).filter(size__gte=0)
-    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string)
+    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string, 'name')
 
     packages = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
