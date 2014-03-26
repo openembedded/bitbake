@@ -1040,7 +1040,7 @@ class RunQueue:
             if dump:
                 if 'printdiff' in dump:
                     invalidtasks = self.print_diffscenetasks()
-                self.dump_signatures()
+                self.dump_signatures(dump)
                 if 'printdiff' in dump:
                     self.write_diffscenetasks(invalidtasks)
                 self.state = runQueueComplete
@@ -1113,7 +1113,7 @@ class RunQueue:
         else:
             self.rqexe.finish()
 
-    def dump_signatures(self):
+    def dump_signatures(self, options):
         done = set()
         bb.note("Reparsing files to collect dependency data")
         for task in range(len(self.rqdata.runq_fnid)):
@@ -1122,7 +1122,7 @@ class RunQueue:
                 the_data = bb.cache.Cache.loadDataFull(fn, self.cooker.collection.get_file_appends(fn), self.cooker.data)
                 done.add(self.rqdata.runq_fnid[task])
 
-        bb.parse.siggen.dump_sigs(self.rqdata.dataCache)
+        bb.parse.siggen.dump_sigs(self.rqdata.dataCache, options)
 
         return
 
