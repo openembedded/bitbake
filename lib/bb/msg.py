@@ -126,7 +126,21 @@ class BBLogFilter(object):
             return True
         return False
 
+class BBLogFilterStdErr(BBLogFilter):
+    def filter(self, record):
+        if not BBLogFilter.filter(self, record):
+            return False
+        if record.levelno >= logging.ERROR:
+            return True
+        return False
 
+class BBLogFilterStdOut(BBLogFilter):
+    def filter(self, record):
+        if not BBLogFilter.filter(self, record):
+            return False
+        if record.levelno < logging.ERROR:
+            return True
+        return False
 
 # Message control functions
 #
@@ -164,10 +178,10 @@ def constructLogOptions():
         debug_domains["BitBake.%s" % domainarg] = logging.DEBUG - dlevel + 1
     return level, debug_domains
 
-def addDefaultlogFilter(handler):
+def addDefaultlogFilter(handler, cls = BBLogFilter):
     level, debug_domains = constructLogOptions()
 
-    BBLogFilter(handler, level, debug_domains)
+    cls(handler, level, debug_domains)
 
 #
 # Message handling functions
