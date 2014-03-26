@@ -49,7 +49,7 @@ class BBProgress(progressbar.ProgressBar):
             self._resize_default = signal.getsignal(signal.SIGWINCH)
         except:
             self._resize_default = None
-        progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets)
+        progressbar.ProgressBar.__init__(self, maxval, [self.msg + ": "] + widgets, fd=sys.stdout)
 
     def _handle_resize(self, signum, frame):
         progressbar.ProgressBar._handle_resize(self, signum, frame)
