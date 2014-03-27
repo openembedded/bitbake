@@ -355,6 +355,9 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 logger.handle(event)
                 continue
 
+            if isinstance(event, bb.build.TaskFailedSilent):
+                logger.warn("Logfile for failed setscene task is %s" % event.logfile)
+                continue
             if isinstance(event, bb.build.TaskFailed):
                 return_value = 1
                 logfile = event.logfile
