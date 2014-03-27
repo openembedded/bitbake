@@ -629,7 +629,7 @@ class BuildInfoHelper(object):
 
 
     def store_license_manifest_path(self, event):
-        deploy_dir = event.data['deploy_dir_image']
+        deploy_dir = event.data['deploy_dir']
         image_name =  event.data['image_name']
         path = deploy_dir + "/licenses/" + image_name + "/"
         for target in self.internal_state['targets']:
