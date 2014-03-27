@@ -751,6 +751,30 @@
         </para>
 
         <para>
+            It is worth noting that BitBake's "-S" option lets you
+            debug Bitbake's processing of signatures.
+            The options passed to -S allow different debugging modes
+            to be used, either using BitBake's own debug functions
+            or possibly those defined in the metadata/signature handler
+            itself.
+            The simplest parameter to pass is "none", which causes a
+            set of signature information to be written out into
+            <filename>STAMP_DIR</filename>
+            corresponding to the targets specified.
+            The other currently available parameter is "printdiff",
+            which causes BitBake to try to establish the closest
+            signature match it can (e.g. in the sstate cache) and then
+            run <filename>bitbake-diffsigs</filename> over the matches
+            to determine the stamps and delta where these two
+            stamp trees diverge.
+            <note>
+                It is likely that future versions of BitBake with
+                provide other signature handlers triggered through
+                additional "-S" paramters.
+            </note>
+        </para>
+
+        <para>
             You can find more information on checksum metadata in the
             "<link linkend='task-checksums-and-setscene'>Task Checksums and Setscene</link>"
             section.
