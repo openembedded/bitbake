@@ -222,7 +222,7 @@ def start_server(servermodule, configParams, configuration, features):
         server.saveConnectionDetails()
     except Exception as e:
         exc_info = sys.exc_info()
-        while True:
+        while hasattr(server, "event_queue"):
             try:
                 import queue
             except ImportError:
