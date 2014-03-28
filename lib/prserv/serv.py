@@ -275,23 +275,22 @@ def stop_daemon(host, port):
         PRServerConnection(host, port).terminate()
     except:
         logger.critical("Stop PRService %s:%d failed" % (host,port))
-    time.sleep(0.5)
 
     try:
         if pid:
-            if os.path.exists(pidfile):
-                os.remove(pidfile)
-
             wait_timeout = 0
-            while is_running(pid) and wait_timeout < 10:
-                print("Waiting for pr-server to exit.")
-                time.sleep(0.5)
+            print("Waiting for pr-server to exit.")
+            while is_running(pid) and wait_timeout < 50:
+                time.sleep(0.1)
                 wait_timeout += 1
 
             if is_running(pid):
                 print("Sending SIGTERM to pr-server.")
                 os.kill(pid,signal.SIGTERM)
                 time.sleep(0.1)
+
+            if os.path.exists(pidfile):
+                os.remove(pidfile)
 
     except OSError as e:
         err = str(e)
