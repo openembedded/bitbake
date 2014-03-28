@@ -89,7 +89,7 @@ class BitBakeServerCommands():
         self.server = server
         self.has_client = False
 
-    def registerEventHandler(self, host, port, featureset = []):
+    def registerEventHandler(self, host, port):
         """
         Register a remote UI Event Handler
         """
@@ -98,13 +98,6 @@ class BitBakeServerCommands():
         # we don't allow connections if the cooker is running
         if (self.cooker.state in [bb.cooker.state.parsing, bb.cooker.state.running]):
             return None
-
-        original_featureset = list(self.cooker.featureset)
-        for f in featureset:
-            self.cooker.featureset.setFeature(f)
-
-        if (original_featureset != list(self.cooker.featureset)):
-            self.cooker.reset()
 
         self.event_handle = bb.event.register_UIHhandler(s)
         return self.event_handle
@@ -293,9 +286,15 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
             return None
         self.transport.set_connection_token(token)
 
-        self.events = uievent.BBUIEventQueue(self.connection, self.clientinfo, self.featureset)
+        self.events = uievent.BBUIEventQueue(self.connection, self.clientinfo)
         for event in bb.event.ui_queue:
             self.events.queue_event(event)
+
+        _, error = self.connection.runCommand(["setFeatures", self.featureset])
+        if error:
+            logger.error("Unable to set the cooker to the correct featureset: %s" % error)
+            raise BaseException(error)
+
         return self
 
     def removeClient(self):
