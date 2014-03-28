@@ -151,59 +151,6 @@
             The
             "<link linkend='ref-variables-glos'>Variables Glossary</link>"
             chapter presents a full list of variables.
-<!--
-            Here are some common ones used:
-            <itemizedlist>
-                <listitem><para>
-                    <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BB_NUMBER_PARSE_THREADS'><filename>BB_NUMBER_PARSE_THREADS</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BB_DEFAULT_TASK'><filename>BB_DEFAULT_TASK</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BBMASK'><filename>BBMASK</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <filename>BBPKGS</filename>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-TOPDIR'><filename>TOPDIR</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-ASSUME_PROVIDED'><filename>ASSUME_PROVIDED</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-PREFERRED_VERSION'><filename>PREFERRED_VERSION</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-PREFERRED_PROVIDERS'><filename>PREFERRED_PROVIDERS</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-MULTI_PROVIDER_WHITELIST'><filename>MULTI_PROVIDER_WHITELIST</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BBFILE_COLLECTIONS'><filename>BBFILE_COLLECTIONS</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BBDEBUG'><filename>BBDEBUG</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BB_VERBOSE_LOGS'><filename>BB_VERBOSE_LOGS</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BB_NICE_LEVEL'><filename>BB_NICE_LEVEL</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BB_DANGLINGAPPENDS_WARNONLY'><filename>BB_DANGLINGAPPENDS_WARNONLY</filename></link>
-                    </para></listitem>
-                <listitem><para>
-                    <link linkend='var-BBINCLUDED'><filename>BBINCLUDED</filename></link>
-                    </para></listitem>
-            </itemizedlist>
--->
         </para>
 
         <para>
@@ -235,6 +182,46 @@
             shows you the many configuration files and class files
             used in your execution environment.
         </para>
+
+        <note>
+            <para>
+                You need to be aware of how BitBake parses curly braces.
+                If a recipe uses a closing curly brace within the function and
+                the character has no leading spaces, BitBake produces a parsing
+                error.
+                If you use a pair of curly brace in a shell function, the
+                closing curly brace must not be located at the start of the line
+                without leading spaces.
+            </para>
+
+            <para>
+                Here is an example that causes BitBake to produce a parsing
+                error:
+                <literallayout class='monospaced'>
+     fakeroot create_shar() {
+         cat &lt;&lt; "EOF" &gt; ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh
+     usage()
+     {
+       echo "test"
+       ###### The following "}" at the start of the line causes a parsing error ######
+     }
+     EOF
+     }
+                </literallayout>
+                Writing the recipe this way avoids the error:
+                <literallayout class='monospaced'>
+     fakeroot create_shar() {
+         cat &lt;&lt; "EOF" &gt; ${SDK_DEPLOY}/${TOOLCHAIN_OUTPUTNAME}.sh
+     usage()
+     {
+       echo "test"
+       ######The following "}" with a leading space at the start of the line avoids the error ######
+      }
+     EOF
+     }
+                </literallayout>
+            </para>
+        </note>
     </section>
 
     <section id='locating-and-parsing-recipes'>
