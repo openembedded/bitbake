@@ -50,9 +50,23 @@ ALLOWED_HOSTS = []
 # although not all choices may be available on all operating systems.
 # In a Windows environment this must be set to your system time zone.
 
-# Always use local computer's time zone
-import time
-TIME_ZONE = time.tzname[0]
+# Always use local computer's time zone, find
+import os, hashlib
+if 'TZ' in os.environ:
+    TIME_ZONE = os.environ['TZ']
+else:
+    # need to read the /etc/localtime file which is the libc standard
+    # and do a reverse-mapping to /usr/share/zoneinfo/;
+    # since the timezone may match any number of identical timezone definitions,
+
+    zonefilelist = {}
+    ZONEINFOPATH = '/usr/share/zoneinfo/'
+    for dirpath, dirnames, filenames in os.walk(ZONEINFOPATH):
+        for fn in filenames:
+            filepath = os.path.join(dirpath, fn)
+            zonefilelist[hashlib.md5(open(filepath).read()).hexdigest()] = filepath.lstrip(ZONEINFOPATH).strip()
+
+    TIME_ZONE = zonefilelist[hashlib.md5(open('/etc/localtime').read()).hexdigest()]
 
 # Language code for this installation. All choices can be found here:
 # http://www.i18nguy.com/unicode/language-identifiers.html
