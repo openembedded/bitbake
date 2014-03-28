@@ -86,7 +86,7 @@ function stop_system()
     # force stop any misbehaving bitbake server
     lsof bitbake.lock | awk '{print $2}' | grep "[0-9]\+" | xargs -n1 -r kill
     trap - SIGHUP
-    trap - SIGCHLD
+    #trap - SIGCHLD
     INSTOPSYSTEM=0
 }
 
@@ -203,7 +203,7 @@ case $CMD in
         # stop system on terminal exit
         set -o monitor
         trap stop_system SIGHUP
-        trap notify_chldexit SIGCHLD
+        #trap notify_chldexit SIGCHLD
     ;;
     stop )
         stop_system
