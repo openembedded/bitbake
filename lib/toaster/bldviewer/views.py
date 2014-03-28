@@ -25,7 +25,7 @@ from django.db.models import Q
 from django.shortcuts import render
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable, Target_Installed_Package
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
-from orm.models import Target_Installed_Package, VariableHistory, Target_Image_File
+from orm.models import Target_Installed_Package, VariableHistory, Target_Image_File, Target_File
 from django.views.decorators.cache import cache_control
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
@@ -159,6 +159,7 @@ def model_explorer(request, model_name):
     model_mapping = {
         'build': Build,
         'target': Target,
+        'target_file': Target_File,
         'target_image_file': Target_Image_File,
         'task': Task,
         'task_dependency': Task_Dependency,
