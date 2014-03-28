@@ -203,7 +203,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         return options, targets[1:]
 
 
-def start_server(servermodule, configParams, configuration):
+def start_server(servermodule, configParams, configuration, features):
     server = servermodule.BitBakeServer()
     if configParams.bind:
         (host, port) = configParams.bind.split(':')
@@ -216,7 +216,7 @@ def start_server(servermodule, configParams, configuration):
     try:
         configuration.setServerRegIdleCallback(server.getServerIdleCB())
 
-        cooker = bb.cooker.BBCooker(configuration)
+        cooker = bb.cooker.BBCooker(configuration, features)
 
         server.addcooker(cooker)
         server.saveConnectionDetails()
@@ -296,9 +296,14 @@ def main():
     # Clear away any spurious environment variables while we stoke up the cooker
     cleanedvars = bb.utils.clean_environment()
 
+    featureset = []
+    if not configParams.server_only:
+        # Collect the feature set for the UI
+        featureset = getattr(ui_module, "featureSet", [])
+
     if not configParams.remote_server:
         # we start a server with a given configuration
-        server = start_server(servermodule, configParams, configuration)
+        server = start_server(servermodule, configParams, configuration, featureset)
         bb.event.ui_queue = []
     else:
         # we start a stub server that is actually a XMLRPClient that connects to a real server
@@ -307,9 +312,6 @@ def main():
         server.saveConnectionConfigParams(configParams)
 
     if not configParams.server_only:
-        # Collect the feature set for the UI
-        featureset = getattr(ui_module, "featureSet", [])
-
         if configParams.status_only:
             try:
                 server_connection = server.establishConnection(featureset)
@@ -326,7 +328,7 @@ def main():
             if configParams.kill_server:
                 bb.fatal("Server already killed")
             configParams.bind = configParams.remote_server
-            start_server(servermodule, configParams, configuration)
+            start_server(servermodule, configParams, configuration, featureset)
             bb.event.ui_queue = []
             server_connection = server.establishConnection(featureset)
 

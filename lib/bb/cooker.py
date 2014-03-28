@@ -111,10 +111,12 @@ class BBCooker:
     Manages one bitbake build run
     """
 
-    def __init__(self, configuration):
+    def __init__(self, configuration, featureSet = []):
         self.recipecache = None
         self.skiplist = {}
         self.featureset = CookerFeatures()
+        for f in featureSet:
+            self.featureset.setFeature(f)
 
         self.configuration = configuration
 
