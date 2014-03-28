@@ -207,11 +207,13 @@ class BBCooker:
 
     def enableDataTracking(self):
         self.configuration.tracking = True
-        self.data.enableTracking()
+        if hasattr(self, "data"):
+            self.data.enableTracking()
 
     def disableDataTracking(self):
         self.configuration.tracking = False
-        self.data.disableTracking()
+        if hasattr(self, "data"):
+            self.data.disableTracking()
 
     def modifyConfigurationVar(self, var, val, default_file, op):
         if op == "append":
