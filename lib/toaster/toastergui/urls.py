@@ -26,6 +26,7 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)$', 'builddashboard', name="builddashboard"),
 
         url(r'^build/(?P<build_id>\d+)/tasks/$', 'tasks', name='tasks'),
+        url(r'^build/(?P<build_id>\d+)/tasks/(?P<task_id>\d+)/$', 'tasks_task', name='tasks_task'),
         url(r'^build/(?P<build_id>\d+)/task/(?P<task_id>\d+)$', 'task', name='task'),
 
         url(r'^build/(?P<build_id>\d+)/recipes/$', 'recipes', name='recipes'),

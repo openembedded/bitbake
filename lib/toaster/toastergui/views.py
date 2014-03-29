@@ -196,7 +196,7 @@ def _get_queryset(model, queryset, filter_string, search_term, ordering_string, 
         else:
             queryset = queryset.order_by(column)
 
-    # insure only distinct records (e.g. from multiple search hits) are returned 
+    # insure only distinct records (e.g. from multiple search hits) are returned
     return queryset.distinct()
 
 
@@ -746,7 +746,7 @@ def _find_task_provider(task):
             return trc
     return None
 
-def tasks_common(request, build_id, variant):
+def tasks_common(request, build_id, variant, task_anchor):
 # This class is shared between these pages
 #
 # Column    tasks  buildtime  diskio  cpuusage
@@ -765,6 +765,10 @@ def tasks_common(request, build_id, variant):
 #
 # 'min':on always, 'def':on by default, else hidden
 # '+' default column sort up, '-' default column sort down
+
+    anchor = request.GET.get('anchor', '')
+    if not anchor:
+        anchor=task_anchor
 
     # default ordering depends on variant
     if   'buildtime' == variant:
@@ -791,11 +795,28 @@ def tasks_common(request, build_id, variant):
     template = 'tasks.html'
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
+        if task_anchor:
+	        mandatory_parameters['anchor']=task_anchor
         return _redirect_parameters( variant, request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
     queryset_all = Task.objects.filter(build=build_id, order__gt=0)
     queryset_with_search = _get_queryset(Task, queryset_all, None , search_term, ordering_string, 'order')
     queryset = _get_queryset(Task, queryset_all, filter_string, search_term, ordering_string, 'order')
+
+	# compute the anchor's page
+    if anchor:
+	    request.GET = request.GET.copy()
+        del request.GET['anchor']
+        i=0
+        a=int(anchor)
+		count_per_page=int(request.GET.get('count', 100))
+        for task in queryset.iterator():
+            if a == task.order:
+				new_page= (i / count_per_page ) + 1
+				request.GET.__setitem__('page', new_page)
+				mandatory_parameters['page']=new_page
+				return _redirect_parameters( variant, request.GET, mandatory_parameters, build_id = build_id)
+            i += 1
 
     tasks = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
@@ -937,16 +958,19 @@ def tasks_common(request, build_id, variant):
     return render(request, template, context)
 
 def tasks(request, build_id):
-    return tasks_common(request, build_id, 'tasks')
+    return tasks_common(request, build_id, 'tasks', '')
+
+def tasks_task(request, build_id, task_id):
+    return tasks_common(request, build_id, 'tasks', task_id)
 
 def buildtime(request, build_id):
-    return tasks_common(request, build_id, 'buildtime')
+    return tasks_common(request, build_id, 'buildtime', '')
 
 def diskio(request, build_id):
-    return tasks_common(request, build_id, 'diskio')
+    return tasks_common(request, build_id, 'diskio', '')
 
 def cpuusage(request, build_id):
-    return tasks_common(request, build_id, 'cpuusage')
+    return tasks_common(request, build_id, 'cpuusage', '')
 
 
 def recipes(request, build_id):
