@@ -568,8 +568,6 @@ def target(request, build_id, target_id):
                 {
                     'name':'Size over total (%)',
                     'qhelp':'Proportion of the overall included package size represented by this package',
-                    'orderfield': _get_toggle_order(request, "size"),
-                    'ordericon':_get_toggle_order_icon(request, "size"),
                     'clclass': 'size_over_total',
                     'hidden' : 1,
                 },
