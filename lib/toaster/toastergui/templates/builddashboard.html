@@ -186,4 +186,13 @@
 </div>
 {% endif %}
 
+<script type="text/javascript">
+    $(document).ready(function() {
+        //show warnings section when requested from the previous page
+        if (location.href.search('#warnings') > -1) {
+            $('#collapse-warnings').addClass('in');
+        }
+    });
+</script>
+
 {% endblock %}

@@ -48,16 +48,16 @@
     {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
             <div class="span2 lead">
     {% if  build.errors_no %}
-                <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
+                <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}#errors" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
     {% endif %}
             </div>
             <div class="span2 lead">
     {% if  build.warnings_no %}
-                <i class="icon-warning-sign yellow"></i> <a href="{%url 'builddashboard' build.pk%}" class="warning">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>
+                <i class="icon-warning-sign yellow"></i> <a href="{%url 'builddashboard' build.pk%}#warnings" class="warning">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>
     {% endif %}
             </div>
             <div class="lead pull-right">
-                Build time: <a href="build-time.html">{{ build.timespent|sectohms }}</a>
+                Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
             </div>
     {%endif%}{%if build.outcome == build.IN_PROGRESS %}
             <div class="span4">
