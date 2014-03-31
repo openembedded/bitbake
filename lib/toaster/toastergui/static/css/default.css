@@ -108,6 +108,7 @@ select { width: auto; }
 .hero-unit { margin: 20px 0 30px; }
 .hero-unit > .close { font-size:40px; }
 .hero-actions { margin-top: 30px; }
+.dashboard-section { background-color: transparent; }
 
 /* make tables Chrome-happy (me, not so much) */
 #otable { table-layout: fixed; word-wrap: break-word; }

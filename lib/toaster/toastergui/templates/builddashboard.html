@@ -10,7 +10,7 @@
 <!-- page title -->
 <div class="row-fluid span10">
  <div class="page-header">
-     <h1>{{build.target_set.all|join:", "}} {{build.machine}}</h1>
+     <h1>{{build.target_set.all|dictsort:"target"|join:", "}} {{build.machine}}</h1>
  </div>
 </div>
 
@@ -20,7 +20,7 @@
     <div class="row-fluid lead">
             <span class="pull-left"><strong>
                 {%if build.outcome == build.SUCCEEDED%}Completed{%elif build.outcome == build.FAILED%}Failed{%else%}{%endif%}
-              </strong>
+              </strong> on
             {{build.completed_on|date:"d/m/y H:i"}}
 </span>
 {% if  build.warnings_no or build.errors_no %}
@@ -28,13 +28,13 @@
 {% endif %}
 {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
 {% if  build.errors_no %}
-     <span > <i class="icon-minus-sign red"></i><strong><a href="#errors" class="error"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
+     <span > <i class="icon-minus-sign red"></i><strong><a href="#errors" class="error show-errors"> {{build.errors_no}} error{{build.errors_no|pluralize}}</a></strong></span>
 {% endif %}
 {% if  build.warnings_no %}
 {% if  build.errors_no %}
-&nbsp;and
+    and
 {% endif %}
-    <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
+    <span > <i class="icon-warning-sign yellow"></i><strong><a href="#warnings" class="warning show-warnings"> {{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a></strong></span>
 {% endif %}
             <span class="pull-right">Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a></span>
 {%endif%}
@@ -75,27 +75,27 @@
 	<h2>Images</h2>
 	{% for target in targets %}
         {% if target.target.is_image %}
-	<div class="well" style="background-color:transparent;">
+	<div class="well dashboard-section">
 		<h3><a href="{% url 'target' build.pk target.target.pk %}">{{target.target}}</a>
                 </h3>
 		<dl class="dl-horizontal">
 			<dt>Packages included</dt>
-			<dd><a href="{% url 'packages' build.pk %}">{{target.npkg}}</a></dd>
+			<dd><a href="{% url 'target' build.pk target.target.pk %}">{{target.npkg}}</a></dd>
 			<dt>Total package size</dt>
 			<dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
 			<dt>
-				<i class="icon-question-sign get-help" title="Path to the license manifest, which is a document listing all packages installed in your image and their licenses"></i>
-				License manifest
+				<i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
+				<a href="{% url 'target' build.pk target.target.pk %}">License manifest</a>
 			</dt>
-			<dd><a href="{% url 'targetpackages' build.pk target.target.pk %}"><code>{{target.target.license_manifest_path}}</code></a></dd>
+			<dd><code>{{target.target.license_manifest_path}}</code></dd>
 			<dt>
-				<i class="icon-question-sign get-help" title="Image files are stored in <code style='background-color:transparent;color:#FFFFFF;font-weight:normal;border:none;'>/build/tmp/deploy/images/</code>"></i>
+				<i class="icon-question-sign get-help" title="Image files are stored in <code>/build/tmp/deploy/images/</code>"></i>
 				Image files
 			</dt>
 			<dd>
 				<ul>
                                   {% for i in target.imageFiles %}
-					<li><strong>{{i.path}}</strong>
+					<li>{{i.path}}
 					({{i.size|filtered_filesizeformat}})</li>
                                   {% endfor %}
 				</ul>
@@ -114,7 +114,7 @@
 <!-- build summary -->
 <div class="row-fluid span10 pull-right">
 <h2>Build summary</h2>
-    <div class="well span4" style="margin-left:0px; background-color:transparent;">
+    <div class="well span4 dashboard-section" style="margin-left:0px;">
         <h4><a href="{%url 'configuration' build.pk%}">Configuration</a></h4>
             <dl>
         <dt>Machine</dt><dd>{{build.machine}}</dd>
@@ -122,7 +122,7 @@
         <dt>Layers</dt>{% for i in build.layer_version_build.all|dictsort:"layer.name" %}<dd>{{i.layer.name}}</dd>{%endfor%}
             </dl>
     </div>
-    <div class="well span4" style="background-color:transparent;">
+    <div class="well span4 dashboard-section">
         <h4><a href="{%url 'tasks' build.pk%}">Tasks</a></h4>
             <dl>
         <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{{build.task_build.all.count}}</a></dd>
@@ -151,7 +151,7 @@
         </dd>
             </dl>
     </div>
-    <div class="well span4" style="background-color:transparent;">
+    <div class="well span4 dashboard-section">
         <h4><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h4>
             <dl>
         <dt>Recipes built</dt><dd><a href="{% url 'recipes' build.pk %}">{{recipecount}}</a></dd>

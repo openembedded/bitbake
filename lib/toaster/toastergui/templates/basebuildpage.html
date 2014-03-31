@@ -32,7 +32,7 @@
         <!-- begin left sidebar container -->
         <div id="nav" class="span2">
             <ul class="nav nav-list well">
-              {% if build.target_set.all.0.is_image %}
+              {% if build.target_set.all.0.is_image and build.outcome == 0 %}
                 <li class="nav-header">Images</li>
                 {% block nav-target %}
                   {% for t in build.get_sorted_target_list %}
