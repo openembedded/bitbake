@@ -1757,6 +1757,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     # Have to zero this to avoid circular dependencies
                     sq_revdeps_squash[self.rqdata.runq_setscene.index(taskid)] = set()
 
+        for task in self.sq_harddeps:
+             for dep in self.sq_harddeps[task]:
+                 sq_revdeps_squash[dep].add(task)
+
         #for task in xrange(len(sq_revdeps_squash)):
         #    realtask = self.rqdata.runq_setscene[task]
         #    bb.warn("Task %s: %s_setscene is %s " % (task, self.rqdata.get_user_idstring(realtask) , sq_revdeps_squash[task]))
