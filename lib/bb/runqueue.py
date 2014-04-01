@@ -1779,6 +1779,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
             if len(self.sq_revdeps[task]) == 0:
                 self.runq_buildable[task] = 1
 
+        self.outrightfail = []
         if self.rq.hashvalidate:
             sq_hash = []
             sq_hashfn = []
@@ -1829,7 +1830,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                     realtask = self.rqdata.runq_setscene[task]
                     logger.debug(2, 'No package found, so skipping setscene task %s',
                                  self.rqdata.get_user_idstring(realtask))
-                    self.task_failoutright(task)
+                    self.outrightfail.append(task)
 
         logger.info('Executing SetScene Tasks')
 
@@ -1914,6 +1915,9 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                             self.task_skip(nexttask)
                             self.scenequeue_notneeded.add(nexttask)
                             return True
+                    if nexttask in self.outrightfail:
+                        self.task_failoutright(nexttask)
+                        return True
                     task = nexttask
                     break
         if task is not None:
