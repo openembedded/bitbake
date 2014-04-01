@@ -1228,6 +1228,7 @@ class BBCooker:
         '''
         Create a new image with a "require"/"inherit" base_image statement
         '''
+        import re
         if timestamp:
             image_name = os.path.splitext(image)[0]
             timestr = time.strftime("-%Y%m%d-%H%M%S")
@@ -1238,9 +1239,14 @@ class BBCooker:
             else:
                 dest = image
 
+        basename = False
         if base_image:
             with open(base_image, 'r') as f:
                 require_line = f.readline()
+                p = re.compile("IMAGE_BASENAME *=")
+                for line in f:
+                    if p.search(line):
+                        basename = True
 
         with open(dest, "w") as imagefile:
             if base_image is None:
@@ -1258,6 +1264,11 @@ class BBCooker:
 
             description_var = "DESCRIPTION = \"" + description + "\"\n"
             imagefile.write(description_var)
+
+            if basename:
+                # If this is overwritten in a inherited image, reset it to default
+                image_basename = "IMAGE_BASENAME = \"${PN}\"\n"
+                imagefile.write(image_basename)
 
         self.state = state.initial
         if timestamp:
