@@ -1142,7 +1142,6 @@ def configvars(request, build_id):
                 'tablecols' : [
                 {'name': 'Variable',
                  'qhelp': "BitBake is a generic task executor that considers a list of tasks with dependencies and handles metadata that consists of variables in a certain format that get passed to the tasks",
-                 'dclass' : "span3",
                  'orderfield': _get_toggle_order(request, "variable_name"),
                  'ordericon':_get_toggle_order_icon(request, "variable_name"),
                 },
@@ -1153,7 +1152,6 @@ def configvars(request, build_id):
                 {'name': 'Set in file',
                  'qhelp': "The last configuration file that touched the variable value",
                  'clclass': 'file', 'hidden' : 0,
-                 'dclass': "span6",
                  'filter' : {
                     'class' : 'vhistory__file_name',
                     'label': 'Show:',
@@ -1169,7 +1167,7 @@ def configvars(request, build_id):
                 {'name': 'Description',
                  'qhelp': "A brief explanation of the variable",
                  'clclass': 'description', 'hidden' : 0,
-                 'dclass': "span5",
+                 'dclass': "span4",
                  'filter' : {
                     'class' : 'description',
                     'label': 'Show:',

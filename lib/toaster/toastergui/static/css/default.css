@@ -109,6 +109,9 @@ select { width: auto; }
 .hero-unit > .close { font-size:40px; }
 .hero-actions { margin-top: 30px; }
 
+/* make tables Chrome-happy (me, not so much) */
+#otable { table-layout: fixed; word-wrap: break-word; }
+
 
 
 
