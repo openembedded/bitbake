@@ -264,6 +264,10 @@ class CommandsSync:
         features = params[0]
         command.cooker.setFeatures(features)
 
+    # although we change the internal state of the cooker, this is transparent since
+    # we always take and leave the cooker in state.initial
+    setFeatures.readonly = True
+
 class CommandsAsync:
     """
     A class of asynchronous commands

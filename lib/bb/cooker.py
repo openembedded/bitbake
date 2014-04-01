@@ -159,6 +159,9 @@ class BBCooker:
         self.state = state.forceshutdown
 
     def setFeatures(self, features):
+        # we only accept a new feature set if we're in state initial, so we can reset without problems
+        if self.state != state.initial:
+            raise Exception("Illegal state for feature set change")
         original_featureset = list(self.featureset)
         for feature in features:
             self.featureset.setFeature(feature)

@@ -292,7 +292,7 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
 
         _, error = self.connection.runCommand(["setFeatures", self.featureset])
         if error:
-            logger.error("Unable to set the cooker to the correct featureset: %s" % error)
+            # no need to log it here, the error shall be sent to the client
             raise BaseException(error)
 
         return self
