@@ -46,7 +46,7 @@
 {# not executed tasks outcome #}
     {% if task.outcome == task.OUTCOME_PREBUILT %}
         {% if not showing_matches %}
-            <a class="btn" href="javascript:reload_params({'show_matches' : 'true' })">Match to tasks in previous builds <i class="icon-question-sign get-help" style="margin-top:20px;" data-toggle="tooltip" title="This shows you a list of tasks from previous builds with the same signature generated from the same inputs as used in the prebuilt task. Any of them could be the task that generated the output this prebuilt task is reusing"></i></a>
+            <a class="btn" href="javascript:reload_params({'show_matches' : 'true' })">Match to tasks in previous builds <i class="icon-question-sign get-help" style="margin-top:20px;" title="This shows you a list of tasks from previous builds with the same signature generated from the same inputs as used in the prebuilt task. Any of them could be the task that generated the output this prebuilt task is reusing"></i></a>
         {% elif matching_tasks %}
             <h3 class="details">Prebuilt task could be based on
                 <i class="icon-question-sign get-help heading-help" title="This table shows a list of tasks from previous builds with the same signature generated from the same inputs as used in the prebuilt task. Any of them could be the task that generated the output this prebuilt task is reusing"></i>

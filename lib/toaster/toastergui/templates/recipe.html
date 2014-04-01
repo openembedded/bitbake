@@ -21,25 +21,25 @@
     <ul class="nav nav-pills">
         <li class="active">
             <a href="#information" data-toggle="tab">
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Build-related information about the recipe"></i>
+                <i class="icon-question-sign get-help" title="Build-related information about the recipe"></i>
                 Recipe details
             </a>
         </li>
         <li>
             <a href="#packages-built" data-toggle="tab">
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The packaged output resulting from building the recipe"></i>
+                <i class="icon-question-sign get-help" title="The packaged output resulting from building the recipe"></i>
                 Packages ({{packages.count}})
             </a>
         </li>
         <li>
             <a href="#dependencies" data-toggle="tab">
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time dependencies (i.e. other recipes)"></i>
+                <i class="icon-question-sign get-help" title="The recipe build-time dependencies (i.e. other recipes)"></i>
                 Build dependencies ({{object.r_dependencies_recipe.all.count}})
             </a>
         </li>
         <li>
             <a href="#brought-in-by" data-toggle="tab">
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The recipe build-time reverse dependencies (i.e. the recipes that depend on this recipe)"></i>
+                <i class="icon-question-sign get-help" title="The recipe build-time reverse dependencies (i.e. the recipes that depend on this recipe)"></i>
                 Reverse build dependencies ({{object.r_dependencies_depends.all.count}})
             </a>
         </li>
@@ -48,27 +48,29 @@
         <div class="tab-pane active" id="information" name="information">
             <dl class="dl-horizontal">
                 <dt>
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="The name of the layer providing the recipe"></i>
+                    <i class="icon-question-sign get-help" title="The name of the layer providing the recipe"></i>
                     Layer
                 </dt>
                 <dd>{{layer.name}}</dd>
                 <dt>
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the layer providing the recipe"></i>
+                    <i class="icon-question-sign get-help" title="Path to the layer providing the recipe"></i>
                     Layer directory
                 </dt>
                 <dd><code>{{layer.local_path}}</code></dd>
                 <dt>
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the recipe .bb file"></i>
+                    <i class="icon-question-sign get-help" title="Path to the recipe .bb file"></i>
                     Recipe file
                 </dt>
                 <dd><code>{{object.file_path}}</code></dd>
+                {% if layer_version.branch %}
                 <dt>
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git branch of the layer providing the recipe"></i>
+                    <i class="icon-question-sign get-help" title="The Git branch of the layer providing the recipe"></i>
                     Layer branch
                 </dt>
                 <dd>{{layer_version.branch}}</dd>
+                {% endif %}
                 <dt>
-                    <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git commit of the layer providing the recipe"></i>
+                    <i class="icon-question-sign get-help" title="The Git commit of the layer providing the recipe"></i>
                     Layer commit
                 </dt>
                 <dd class="iscommit">{{layer_version.commit}}</dd>
@@ -259,7 +261,7 @@
         {% if object.section %}
             <dt>
             Section
-            <i class="icon-question-sign get-help" data-toggle="tooltip" title="The section in which recipes should be categorized"></i>
+            <i class="icon-question-sign get-help" title="The section in which recipes should be categorized"></i>
             </dt>
             <dd>{{object.section}}</dd>
         {% endif %}

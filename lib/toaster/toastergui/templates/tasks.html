@@ -86,7 +86,7 @@
                 <a href="{% url "recipe" build.pk task.recipe.pk %}">{{task.recipe.version}}</a>
             </td>
             <td class="task_name">
-                <a href="{%url "task" build.pk task.pk%} ">{{task.task_name}}</a> {% if task.get_description %}<i class="icon-question-sign get-help hover-help" title="" data-original-title="{{task.get_description}}"></i> {% endif %}
+                <a href="{%url "task" build.pk task.pk%} ">{{task.task_name}}</a> {% if task.get_description %}<i class="icon-question-sign get-help hover-help" title="{{task.get_description}}"></i> {% endif %}
             </td>
             <td class="executed">
                 <a href="{%url "task" build.pk task.pk%} ">{{task.get_executed_display}}</a>

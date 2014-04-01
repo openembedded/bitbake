@@ -35,13 +35,13 @@
     <ul class="nav nav-pills">
         <li class="active">
             <a href="#target">
-            <i class="icon-question-sign get-help" data-toggle="tooltip" title="Of all the packages built, the subset installed in the root file system of this image"></i>
+            <i class="icon-question-sign get-help" title="Of all the packages built, the subset installed in the root file system of this image"></i>
                 Packages included ({{target.package_count}} - {{packages_sum|filtered_filesizeformat}})
             </a>
         </li>
         <li>
             <a href="{% url 'dirinfo' build.id target.id %}">
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The directories and files in the root file system of this image"></i>
+                <i class="icon-question-sign get-help" title="The directories and files in the root file system of this image"></i>
                 Directory structure
             </a>
         </li>

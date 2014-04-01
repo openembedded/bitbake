@@ -57,7 +57,7 @@
         <dl>
             <dt>
                 Size
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The size of the package"></i>
+                <i class="icon-question-sign get-help" title="The size of the package"></i>
             </dt>
             <dd>
                 {% comment %}
@@ -74,7 +74,7 @@
 
             <dt>
                 License
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The license under which this package is distributed"></i>
+                <i class="icon-question-sign get-help" title="The license under which this package is distributed"></i>
             </dt>
             <dd>{{package.license}}</dd>
 
@@ -83,14 +83,14 @@
             # problemse are resolved.
             <dt>
                 License files
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the license files that apply to the package"></i>
+                <i class="icon-question-sign get-help" title="Path to the license files that apply to the package"></i>
             </dt>
             <dd></dd>
             {% endcomment %}
 
             <dt>
                 Recipe
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The name of the recipe building this package"></i>
+                <i class="icon-question-sign get-help" title="The name of the recipe building this package"></i>
             </dt>
             <dd>
                 {% if package.recipe_id > 0 %}
@@ -102,13 +102,13 @@
 
             <dt>
                 Recipe version
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The version of the recipe building this package"></i>
+                <i class="icon-question-sign get-help" title="The version of the recipe building this package"></i>
             </dt>
             <dd>{{package.recipe.version}}</dd>
 
             <dt>
                 Layer
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The name of the layer providing the recipe that builds this package"></i>
+                <i class="icon-question-sign get-help" title="The name of the layer providing the recipe that builds this package"></i>
             </dt>
             <dd>
                 {{package.recipe.layer_version.layer.name}}
@@ -122,21 +122,22 @@
                     {% endcomment %}
                 {% endif %}
             </dd>
-
+            {% if package.recipe.layer_version.branch %}
             <dt>
                 Layer branch
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git branch of the layer providing the recipe that builds this package"></i>
+                <i class="icon-question-sign get-help" title="The Git branch of the layer providing the recipe that builds this package"></i>
             </dt>
             <dd>{{package.recipe.layer_version.branch}}</dd>
+            {% endif %}
             <dt>
                 Layer commit
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="The Git commit of the layer providing the recipe that builds this package"></i>
+                <i class="icon-question-sign get-help" title="The Git commit of the layer providing the recipe that builds this package"></i>
             </dt>
 
             <dd class="iscommit">{{package.recipe.layer_version.commit}}</dd>
             <dt>
                 Layer directory
-                <i class="icon-question-sign get-help" data-toggle="tooltip" title="Path to the layer providing the recipe that builds this package"></i>
+                <i class="icon-question-sign get-help" title="Path to the layer providing the recipe that builds this package"></i>
             </dt>
             <dd><code>{{package.recipe.layer_version.layer.local_path}}</code></dd>
         </dl>
