@@ -155,7 +155,7 @@
         <h4><a href="{% url 'recipes' build.pk %}">Recipes</a> & <a href="{% url 'packages' build.pk %}">Packages</a></h4>
             <dl>
         <dt>Recipes built</dt><dd><a href="{% url 'recipes' build.pk %}">{{recipecount}}</a></dd>
-        <dt>Packages built</dt><dd><a href="{% url 'packages' build.pk %}">{{build.package_set.all.count}}</a></dd>
+        <dt>Packages built</dt><dd><a href="{% url 'packages' build.pk %}">{{packagecount}}</a></dd>
             </dl>
     </div>
 </div>

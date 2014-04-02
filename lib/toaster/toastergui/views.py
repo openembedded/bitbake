@@ -381,42 +381,60 @@ def builds(request):
 # Each build may contain multiple targets and each target
 # may generate multiple image files. display them all.
 #
-def builddashboard(request, build_id):
+def builddashboard( request, build_id ):
     template = "builddashboard.html"
-    if Build.objects.filter(pk=build_id).count() == 0 :
-        return redirect(builds)
-    build = Build.objects.filter(pk = build_id)[0];
+    if Build.objects.filter( pk=build_id ).count( ) == 0 :
+        return redirect( builds )
+    build = Build.objects.filter( pk = build_id )[ 0 ];
     layerVersionId = Layer_Version.objects.filter( build = build_id );
     recipeCount = Recipe.objects.filter( layer_version__id__in = layerVersionId ).count( );
     tgts = Target.objects.filter( build_id = build_id ).order_by( 'target' );
 
+    ##
     # set up custom target list with computed package and image data
-    targets = [ ];
-    ntargets = 0;
-    hasImages = False;
+    #
+
+    targets = [ ]
+    ntargets = 0
+    hasImages = False
     for t in tgts:
-        elem = { };
-        elem[ 'target' ] = t;
+        elem = { }
+        elem[ 'target' ] = t
         if ( t.is_image ):
-            hasImages = True;
-        npkg = 0;
-        pkgsz = 0;
-        pid= 0;
-        tp = Target_Installed_Package.objects.filter( target_id = t.id );
-        package = None;
+            hasImages = True
+        npkg = 0
+        pkgsz = 0
+        pid= 0
+        tp = Target_Installed_Package.objects.filter( target_id = t.id )
+        package = None
         for p in tp:
-            pid = p.package_id;
+            pid = p.package_id
             package = Package.objects.get( pk = p.package_id )
-            pkgsz = pkgsz + package.size;
-            npkg = npkg + 1;
-        elem[ 'npkg' ] = npkg;
-        elem[ 'pkgsz' ] = pkgsz;
-        ti = Target_Image_File.objects.filter( target_id = t.id );
-        imageFiles = [ ];
+            pkgsz = pkgsz + package.size
+            if ( package.installed_name ):
+                npkg = npkg + 1
+        elem[ 'npkg' ] = npkg
+        elem[ 'pkgsz' ] = pkgsz
+        ti = Target_Image_File.objects.filter( target_id = t.id )
+        imageFiles = [ ]
         for i in ti:
-            imageFiles.append({ 'path': i.file_name, 'size' : i.file_size });
-        elem[ 'imageFiles' ] = imageFiles;
-        targets.append( elem );
+            ndx = i.file_name.rfind( '/' )
+            if ( ndx < 0 ):
+                ndx = 0;
+            f = i.file_name[ ndx + 1: ]
+            imageFiles.append({ 'path': f, 'size' : i.file_size })
+        elem[ 'imageFiles' ] = imageFiles
+        targets.append( elem )
+
+    ##
+    # how many packages in this build - ignore anonymous ones
+    #
+
+    packageCount = 0
+    packages = Package.objects.filter( build_id = build_id )
+    for p in packages:
+        if ( p.installed_name ):
+            packageCount = packageCount + 1
 
     context = {
             'build'           : build,
@@ -424,9 +442,10 @@ def builddashboard(request, build_id):
             'ntargets'        : ntargets,
             'targets'         : targets,
             'recipecount'     : recipeCount,
-            'logmessages'     : LogMessage.objects.filter(build=build_id),
+            'packagecount'    : packageCount,
+            'logmessages'     : LogMessage.objects.filter( build = build_id ),
     }
-    return render(request, template, context)
+    return render( request, template, context )
 
 
 def task(request, build_id, task_id):
