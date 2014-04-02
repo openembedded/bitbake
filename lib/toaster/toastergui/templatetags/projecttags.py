@@ -247,5 +247,5 @@ def get_dict_value(dictionary, key):
     """
     try:
         return dictionary[key]
-    except KeyError:
+    except (KeyError, IndexError):
         return ''
