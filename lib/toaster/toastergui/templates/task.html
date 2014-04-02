@@ -109,7 +109,16 @@
             </dt>
             <dd>
                 <ul>
-                    <li><p class="alert-info">TODO:Covering tasks will be displayed here</p></li>
+                  {% for t in covered_by %}
+                    <li>
+                      <a href="{%url 'task' t.build.pk t.pk%}"
+                         class="task-info"
+                        title="{{t.get_executed_display}} | {{t.get_outcome_display}}">
+                        {{t.recipe.name}}_{{t.recipe.version}}
+                        {{t.task_name}}
+                      </a>
+                    </li>
+                  {% endfor %}
                 </ul>
             </dd>
         </dl>
