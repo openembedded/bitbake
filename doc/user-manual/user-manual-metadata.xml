@@ -792,6 +792,82 @@
                 </itemizedlist>
             </para>
         </section>
+
+        <section id='automatically-mapping-functions-within-the-context-of-a-class'>
+            <title>Automatically Mapping Functions Within the Context of a Class</title>
+
+            <para>
+                Through coding techniques and the use of
+                <filename>EXPORT_FUNCTIONS</filename>, BitBake supports
+                automatic mapping for functions within the context of
+                a class.
+            </para>
+
+            <para>
+                To understand the benefits of this feature, consider the basic scenario
+                where a class defines a function and your recipe inherits the class.
+                In this basic scenario, your recipe has access to the function in the
+                class by way of inheritance and can freely call and use the function
+                as defined in the class.
+                However, if you need to have a modified version of that function
+                in your recipe you are limited to using either your modified version
+                of the function or using "prepend_" or "_append" operators to add
+                code to be executed before or after the original function in the
+                class.
+                Your recipe cannot use both versions of the fucntion.
+            </para>
+
+            <para>
+                Function mapping allows you to access both your custom function
+                function that is defined in the recipe and the original function that
+                is defined in the class.
+                You have this access all from within your recipe.
+                To accomplish this, you need some things in place:
+                <itemizedlist>
+                    <listitem><para>
+                        The class needs to define the function as follows:
+                        <literallayout class='monospaced'>
+     &lt;classname&gt;_&lt;functionname&gt;
+                        </literallayout>
+                        For example, if you have a class file
+                        <filename>bar.bbclass</filename> and a function named
+                        <filename>do_foo</filename>, the class must define the function
+                        as follows:
+                        <literallayout class='monospaced'>
+     bar_do_foo
+                        </literallayout>
+                        </para></listitem>
+                    <listitem><para>
+                        The class needs to contain the <filename>EXPORT_FUNCTIONS</filename>
+                        statement as follows:
+                        <literallayout class='monospaced'>
+     EXPORT_FUNCTIONS &lt;functionname&gt;
+                        </literallayout>
+                        For example, continuing with the same example, the
+                        statement in the <filename>bar.bbclass</filename> would be
+                        as follows:
+                        <literallayout class='monospaced'>
+     EXPORT_FUNCTIONS do_foo
+                        </literallayout>
+                        </para></listitem>
+                    <listitem><para>
+                        You need to call the function appropriately from within your
+                        recipe.
+                        Continuing with the same example,
+                        your recipe would call the <filename>do_foo</filename> function
+                        from the recipe by referring to it as
+                        <filename>bar_do_foo</filename>.
+                        To call your modified version of the function as defined in your
+                        recipe, call it as <filename>do_foo</filename>.
+                        </para></listitem>
+                </itemizedlist>
+                With these conditions met, your single recipe
+                can freely choose between the original function
+                as defined in the class file and the modified function in your recipe.
+                If you do not set up these conditions, you are limited to using one function
+                or the other.
+            </para>
+        </section>
     </section>
 
     <section id='tasks'>
