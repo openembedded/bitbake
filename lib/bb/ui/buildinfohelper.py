@@ -761,10 +761,10 @@ class BuildInfoHelper(object):
             recipe_information = self._get_recipe_information_from_taskfile(fn)
             recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
             class MockEvent: pass
-            event = MockEvent()
-            event.taskname = taskname
-            event.taskhash = taskhash
-            task_information = self._get_task_information(event,recipe)
+            mevent = MockEvent()
+            mevent.taskname = taskname
+            mevent.taskhash = taskhash
+            task_information = self._get_task_information(mevent,recipe)
 
             task_information['start_time'] = datetime.datetime.now()
             task_information['outcome'] = Task.OUTCOME_NA
@@ -780,10 +780,10 @@ class BuildInfoHelper(object):
             recipe_information = self._get_recipe_information_from_taskfile(fn)
             recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
             class MockEvent: pass
-            event = MockEvent()
-            event.taskname = taskname
-            event.taskhash = taskhash
-            task_information = self._get_task_information(event,recipe)
+            mevent = MockEvent()
+            mevent.taskname = taskname
+            mevent.taskhash = taskhash
+            task_information = self._get_task_information(mevent,recipe)
 
             task_information['path_to_sstate_obj'] = sstatefile
 
