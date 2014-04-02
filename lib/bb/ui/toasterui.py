@@ -143,6 +143,8 @@ def main(server, eventHandler, params ):
 
             # these events are unprocessed now, but may be used in the future to log
             # timing and error informations from the parsing phase in Toaster
+            if isinstance(event, (bb.event.SanityCheckPassed, bb.event.SanityCheck)):
+                continue
             if isinstance(event, bb.event.ParseStarted):
                 continue
             if isinstance(event, bb.event.ParseProgress):
@@ -209,7 +211,6 @@ def main(server, eventHandler, params ):
                 continue
 
             if isinstance(event, (bb.event.BuildCompleted)):
-                buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
                 continue
 
             if isinstance(event, (bb.command.CommandCompleted,

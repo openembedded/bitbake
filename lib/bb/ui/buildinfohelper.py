@@ -933,15 +933,23 @@ class BuildInfoHelper(object):
         self._store_log_information(LogMessage.ERROR, text)
 
     def store_log_event(self, event):
-        # look up license files info from insane.bbclass
-        m = re.match("([^:]*): md5 checksum matched for ([^;]*)", event.msg)
-        if m:
-            (pn, fn) = m.groups()
-            self.internal_state['recipes'][pn].save()
+        if 'build' in self.internal_state and 'backlog' in self.internal_state:
+            if len(self.internal_state['backlog']):
+                tempevent = self.internal_state['backlog'].pop()
+                print "Saving stored event ", tempevent
+                self.store_log_event(tempevent)
+            else:
+                del self.internal_state['backlog']
 
         if event.levelno < format.WARNING:
             return
+
         if not 'build' in self.internal_state:
+            print "Save event for later"
+            if not 'backlog' in self.internal_state:
+                self.internal_state['backlog'] = []
+            self.internal_state['backlog'].append(event)
+
             return
         log_information = {}
         log_information['build'] = self.internal_state['build']
