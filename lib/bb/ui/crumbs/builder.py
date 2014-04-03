@@ -739,7 +739,8 @@ class Builder(gtk.Window):
 
     def set_base_image(self):
         self.configuration.initial_selected_image = self.configuration.selected_image
-        self.hob_image = self.configuration.selected_image + "-edited"
+        if self.configuration.selected_image != self.recipe_model.__custom_image__:
+            self.hob_image = self.configuration.selected_image + "-edited"
 
     def reset(self):
         self.configuration.curr_mach = ""

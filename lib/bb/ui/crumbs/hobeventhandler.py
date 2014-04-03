@@ -171,10 +171,11 @@ class HobHandler(gobject.GObject):
                 self.generate_hob_base_image(target)
                 self.set_var_in_file("LINGUAS_INSTALL", "", "local.conf")
                 hobImage = self.runCommand(["matchFile", target + ".bb"])
-                baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
-                version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue, True, ""])
-                target += version
-                self.recipe_model.set_custom_image_version(version)
+                if self.base_image != self.recipe_model.__custom_image__:
+                    baseImage = self.runCommand(["matchFile", self.base_image + ".bb"])
+                    version = self.runCommand(["generateNewImage", hobImage, baseImage, self.package_queue, True, ""])
+                    target += version
+                    self.recipe_model.set_custom_image_version(version)
 
             targets = [target]
             if self.toolchain_packages:
