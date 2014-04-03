@@ -845,10 +845,12 @@ class BuildInfoHelper(object):
             recipe_info['bugtracker'] = event._depgraph['pn'][pn]['bugtracker']
             recipe_info['file_path'] = file_name
             recipe = self.orm_wrapper.get_update_recipe_object(recipe_info)
+            recipe.is_image = False
             if 'inherits' in event._depgraph['pn'][pn].keys():
-                recipe.is_image = True in map(lambda x: x.endswith('image.bbclass'), event._depgraph['pn'][pn]['inherits'])
-            else:
-                recipe.is_image = False
+                for cls in event._depgraph['pn'][pn]['inherits']:
+                    if cls.endswith('/image.bbclass'):
+                        recipe.is_image = True
+                        break
             if recipe.is_image:
                 for t in self.internal_state['targets']:
                     if pn == t.target:
