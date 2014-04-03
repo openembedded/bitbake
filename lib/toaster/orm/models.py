@@ -175,9 +175,9 @@ class Task(models.Model):
         return "Not Executed"
 
     def get_description(self):
-        variable = Variable.objects.filter(variable_name=self.task_name, build = self.build)
+        helptext = HelpText.objects.filter(key=self.task_name, area=HelpText.VARIABLE, build=self.build)
         try:
-            return variable[0].description
+            return helptext[0].text
         except IndexError:
             return ''
 
@@ -342,6 +342,15 @@ class VariableHistory(models.Model):
     file_name = models.FilePathField(max_length=255)
     line_number = models.IntegerField(null=True)
     operation = models.CharField(max_length=16)
+
+class HelpText(models.Model):
+    VARIABLE = 0
+    HELPTEXT_AREA = ((VARIABLE, 'variable'), )
+
+    build = models.ForeignKey(Build, related_name='helptext_build')
+    area = models.IntegerField(choices=HELPTEXT_AREA)
+    key = models.CharField(max_length=100)
+    text = models.TextField()
 
 class LogMessage(models.Model):
     INFO = 0

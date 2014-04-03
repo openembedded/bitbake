@@ -25,7 +25,7 @@ import ast
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toaster.toastermain.settings")
 
 import toaster.toastermain.settings as toaster_django_settings
-from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage
+from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
 from toaster.orm.models import Target_Image_File
 from toaster.orm.models import Variable, VariableHistory
 from toaster.orm.models import Package, Package_File, Target_Installed_Package, Target_File
@@ -445,18 +445,23 @@ class ORMWrapper(object):
         assert isinstance(build_obj, Build)
 
         for k in vardump:
+            desc = vardump[k]['doc'];
+            if desc is None:
+                var_words = [word for word in k.split('_')]
+                root_var = "_".join([word for word in var_words if word.isupper()])
+                if root_var and root_var != k and root_var in vardump:
+                    desc = vardump[root_var]['doc']
+            if desc is None:
+                desc = ''
+            if desc:
+                helptext_obj = HelpText.objects.create(build=build_obj,
+                    area=HelpText.VARIABLE,
+                    key=k,
+                    text=desc)
             if not bool(vardump[k]['func']):
                 value = vardump[k]['v'];
                 if value is None:
                     value = ''
-                desc = vardump[k]['doc'];
-                if desc is None:
-                    var_words = [word for word in k.split('_')]
-                    root_var = "_".join([word for word in var_words if word.isupper()])
-                    if root_var and root_var != k and root_var in vardump:
-                        desc = vardump[root_var]['doc']
-                if desc is None:
-                    desc = ''
                 variable_obj = Variable.objects.create( build = build_obj,
                     variable_name = k,
                     variable_value = value,
