@@ -703,7 +703,7 @@ class RecipeListModel(gtk.ListStore):
 
             if ('packagegroup.bbclass' in " ".join(inherits)):
                 atype = 'packagegroup'
-            elif ('image.bbclass' in " ".join(inherits)):
+            elif ('/image.bbclass' in " ".join(inherits)):
                 if "edited" not in name:
                     atype = 'image'
                     install = event_model["rdepends-pkg"].get(item, []) + event_model["rrecs-pkg"].get(item, [])
