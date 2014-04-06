@@ -969,6 +969,7 @@ def get_file_checksums(filelist, pn):
                 checksum = checksum_file(f)
                 if checksum:
                     checksums.append((f, checksum))
+            continue
         elif os.path.isdir(pth):
             # Handle directories
             for root, dirs, files in os.walk(pth):
@@ -977,6 +978,7 @@ def get_file_checksums(filelist, pn):
                     checksum = checksum_file(fullpth)
                     if checksum:
                         checksums.append((fullpth, checksum))
+            continue
         else:
             checksum = checksum_file(pth)
 
