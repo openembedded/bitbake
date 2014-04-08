@@ -932,6 +932,9 @@ def get_checksum_file_list(d):
         if ud and isinstance(ud.method, local.Local):
             ud.setup_localpath(d)
             f = ud.localpath
+            pth = ud.decodedurl
+            if '*' in pth:
+                f = os.path.join(os.path.abspath(f), pth)
             if f.startswith(dl_dir):
                 # The local fetcher's behaviour is to return a path under DL_DIR if it couldn't find the file anywhere else
                 if os.path.exists(f):
