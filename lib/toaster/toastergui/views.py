@@ -496,7 +496,8 @@ def task( request, build_id, task_id ):
         context[ 'showing_matches' ] = True
         context[ 'matching_tasks' ] = Task.objects.filter( 
             sstate_checksum=task.sstate_checksum ).filter( 
-            build__completed_on__lt=task.build.completed_on ).order_by('-build__completed_on')
+            build__completed_on__lt=task.build.completed_on).exclude(
+            order__isnull=True).exclude(outcome=Task.OUTCOME_NA).order_by('-build__completed_on')
 
     return render( request, template, context )
 
@@ -509,7 +510,7 @@ def recipe(request, build_id, recipe_id):
     object = Recipe.objects.filter(pk=recipe_id)[0]
     layer_version = Layer_Version.objects.filter(pk=object.layer_version_id)[0]
     layer  = Layer.objects.filter(pk=layer_version.layer_id)[0]
-    tasks  = Task.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).exclude(task_name__endswith='_setscene')
+    tasks  = Task.objects.filter(recipe_id = recipe_id, build_id = build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
     packages = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0)
 
     context = {
@@ -762,14 +763,16 @@ def dirinfo(request, build_id, target_id, file_path=None):
 def _find_task_dep(task):
     tp = []
     for p in Task_Dependency.objects.filter(task=task):
-        tp.append(p.depends_on);
+        if (p.depends_on.order > 0) and (p.depends_on.outcome != Task.OUTCOME_NA):
+            tp.append(p.depends_on);
     return tp
 
 
 def _find_task_revdep(task):
     tp = []
     for p in Task_Dependency.objects.filter(depends_on=task):
-        tp.append(p.task);
+        if (p.task.order > 0) and (p.task.outcome != Task.OUTCOME_NA):
+            tp.append(p.task);
     return tp
 
 def _find_task_provider(task):
@@ -836,7 +839,7 @@ def tasks_common(request, build_id, variant, task_anchor):
 	        mandatory_parameters['anchor']=task_anchor
         return _redirect_parameters( variant, request.GET, mandatory_parameters, build_id = build_id)
     (filter_string, search_term, ordering_string) = _search_tuple(request, Task)
-    queryset_all = Task.objects.filter(build=build_id, order__gt=0)
+    queryset_all = Task.objects.filter(build=build_id).exclude(order__isnull=True).exclude(outcome=Task.OUTCOME_NA)
     queryset_with_search = _get_queryset(Task, queryset_all, None , search_term, ordering_string, 'order')
     queryset = _get_queryset(Task, queryset_all, filter_string, search_term, ordering_string, 'order')
 
