@@ -133,7 +133,7 @@ class TerminalFilter(object):
                 cr = (25, 80)
         return cr[1]
 
-    def __init__(self, main, helper, console, format):
+    def __init__(self, main, helper, console, errconsole, format):
         self.main = main
         self.helper = helper
         self.cuu = None
@@ -174,6 +174,7 @@ class TerminalFilter(object):
         except:
             self.cuu = None
         console.addFilter(InteractConsoleLogFilter(self, format))
+        errconsole.addFilter(InteractConsoleLogFilter(self, format))
 
     def clearFooter(self):
         if self.footer_present:
@@ -309,7 +310,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
     warnings = 0
     taskfailures = []
 
-    termfilter = tf(main, helper, console, format)
+    termfilter = tf(main, helper, console, errconsole, format)
     atexit.register(termfilter.finish)
 
     while True:
