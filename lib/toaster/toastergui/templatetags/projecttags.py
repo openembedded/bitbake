@@ -163,7 +163,7 @@ def filter_setin_files(file_list,matchstr):
     # match only filters
     if search == '':
         for i in range(len(file_list)):   
-            if file_list[i].file_name.find(filter) >= 0:
+            if re.search(filter, file_list[i].file_name):
                 if htmlstr.find(file_list[i].file_name + "<p>") < 0:
                     htmlstr += file_list[i].file_name + "<p>"
         return htmlstr
@@ -171,7 +171,7 @@ def filter_setin_files(file_list,matchstr):
     # match only search string, plus always last file
     if filter == "":
         for i in range(len(file_list)-1):   
-            if file_list[i].file_name.find(search) >= 0:
+            if re.search(search,file_list[i].file_name):
                 if htmlstr.find(file_list[i].file_name + "<p>") < 0:
                     htmlstr += file_list[i].file_name + "<p>"
         if htmlstr.find(file_list[len(file_list)-1].file_name) < 0:
@@ -180,7 +180,7 @@ def filter_setin_files(file_list,matchstr):
        
     # match filter or search string
     for i in range(len(file_list)):   
-        if (file_list[i].file_name.find(filter) >= 0) or (file_list[i].file_name.find(search) >= 0):
+        if re.search(filter, file_list[i].file_name) or re.search(search,file_list[i].file_name):
             if htmlstr.find(file_list[i].file_name + "<p>") < 0:
                 htmlstr += file_list[i].file_name + "<p>"
     return htmlstr

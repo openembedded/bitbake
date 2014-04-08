@@ -1154,17 +1154,17 @@ def configvars(request, build_id):
 
     variables = _build_page_range(Paginator(queryset, request.GET.get('count', 50)), request.GET.get('page', 1))
 
+    # show all matching files (not just the last one)
     file_filter= search_term + ":"
-    if filter_string.find('conf/local.conf') > 0:
-        file_filter += 'conf/local.conf'
-    if filter_string.find('conf/bblayers.conf') > 0:
-        file_filter += 'conf/bblayers.conf'
+    if filter_string.find('/conf/') > 0:
+        file_filter += 'conf/(local|bblayers).conf'
     if filter_string.find('conf/machine/') > 0:
         file_filter += 'conf/machine/'
     if filter_string.find('conf/distro/') > 0:
         file_filter += 'conf/distro/'
     if filter_string.find('/bitbake.conf') > 0:
         file_filter += '/bitbake.conf'
+    build_dir=re.sub("/tmp/log/.*","",Build.objects.filter(pk=build_id)[0].cooker_log_path)
 
     context = {
                 'objectname': 'configvars',
@@ -1193,7 +1193,7 @@ def configvars(request, build_id):
                     'class' : 'vhistory__file_name',
                     'label': 'Show:',
                     'options' : [
-                               ('Local configuration variables', 'vhistory__file_name__regex:conf/(local|bblayers).conf', queryset_with_search.filter(vhistory__file_name__regex='conf/(local|bblayers).conf').count(), 'Select this filter to see variables set by the <code>local.conf</code> and <code>bblayers.conf</code> configuration files inside the <code>/build/conf/</code> directory'),
+                               ('Local configuration variables', 'vhistory__file_name__contains:'+build_dir+'/conf/',queryset_with_search.filter(vhistory__file_name__contains=build_dir+'/conf/').count(), 'Select this filter to see variables set by the <code>local.conf</code> and <code>bblayers.conf</code> configuration files inside the <code>/build/conf/</code> directory'),
                                ('Machine configuration variables', 'vhistory__file_name__contains:conf/machine/',queryset_with_search.filter(vhistory__file_name__contains='conf/machine').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/machine/</code> directory'),
                                ('Distro configuration variables', 'vhistory__file_name__contains:conf/distro/',queryset_with_search.filter(vhistory__file_name__contains='conf/distro').count(), 'Select this filter to see variables set by the configuration file(s) inside your layers <code>/conf/distro/</code> directory'),
                                ('Layer configuration variables', 'vhistory__file_name__contains:conf/layer.conf',queryset_with_search.filter(vhistory__file_name__contains='conf/layer.conf').count(), 'Select this filter to see variables set by the <code>layer.conf</code> configuration file inside your layers'),
