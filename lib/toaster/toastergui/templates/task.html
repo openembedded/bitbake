@@ -172,7 +172,7 @@
                 <i class="icon-question-sign get-help" title="The locations searched for the above file (i.e. your <code>sstate-cache</code> directory and any mirrors you have set up)"></i>
                 URI(s) searched
             </dt>
-            <dd><code>{{task.work_directory}}</code></dd>
+            <dd><ul>{% for uri in uri_list %}<li><code>{{uri}}</code></li>{% endfor %}</ul></dd>
         </dl>
     {% endif %}
     {% if task.sstate_result == task.SSTATE_MISS %}

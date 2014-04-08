@@ -481,6 +481,17 @@ def task( request, build_id, task_id ):
     if task.outcome == task.OUTCOME_FAILED:
         pass
 
+    uri_list= [ ]
+    variables = Variable.objects.filter(build=build_id)
+    v=variables.filter(variable_name='SSTATE_DIR')
+    if v.count > 0:
+        uri_list.append(v[0].variable_value)
+    v=variables.filter(variable_name='SSTATE_MIRRORS')
+    if (v.count > 0):
+        for mirror in v[0].variable_value.split('\\n'):
+            s=re.sub('.* ','',mirror.strip(' \t\n\r'))
+            if len(s): uri_list.append(s)
+
     context = {
             'build'           : Build.objects.filter( pk = build_id )[ 0 ],
             'object'          : task,
@@ -491,6 +502,7 @@ def task( request, build_id, task_id ):
             'log_head'        : log_head,
             'log_body'        : log_body,
             'showing_matches' : False,
+			'uri_list'        : uri_list,
     }
     if request.GET.get( 'show_matches', "" ):
         context[ 'showing_matches' ] = True
