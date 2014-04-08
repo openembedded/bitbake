@@ -80,7 +80,7 @@ def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
     return redirect(url + "?%s" % urllib.urlencode(params), *args, **kwargs)
 
 FIELD_SEPARATOR = ":"
-VALUE_SEPARATOR = ";"
+VALUE_SEPARATOR = "!"
 DESCENDING = "-"
 
 def __get_q_for_val(name, value):
@@ -102,7 +102,7 @@ def _get_filtering_query(filter_string):
     values = search_terms[1].split(VALUE_SEPARATOR)
 
     querydict = dict(zip(keys, values))
-    return reduce(lambda x, y: x & y, map(lambda x: __get_q_for_val(k, querydict[k]),[k for k in querydict]))
+    return reduce(operator.and_, map(lambda x: __get_q_for_val(x, querydict[x]), [k for k in querydict]))
 
 def _get_toggle_order(request, orderkey, reverse = False):
     if reverse:
@@ -128,7 +128,7 @@ def _validate_input(input, model):
 
         # Check we have only one colon
         if len(input_list) != 2:
-            invalid = "We have an invalid number of separators"
+            invalid = "We have an invalid number of separators: " + input + " -> " + str(input_list)
             return None, invalid
 
         # Check we have an equal number of terms both sides of the colon
