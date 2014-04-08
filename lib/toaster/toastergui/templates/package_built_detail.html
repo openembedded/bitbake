@@ -23,18 +23,12 @@
                 <div class="alert alert-info">
                     <strong>{{package.fullpackagespec}}</strong> is <strong>not included</strong> in any image. This page shows you the files added to an image root file system if you include <strong>{{package.fullpackagespec}}</strong> in future builds.
                 </div>
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th>File</th>
-                            <th>Size</th>
-                        </tr>
-                    </thead>
+                {% include "tablesort.html" %}
                     <tbody>
-						{% for file in package.buildfilelist_package.all|dictsort:"path" %}
+						{% for file in objects %}
                             <tr>
-                                <td>{{file.path}}</td>
-                                <td>{{file.size|filtered_filesizeformat}}</td>
+                                <td class="path">{{file.path}}</td>
+                                <td class="filesize sizecol">{{file.size|filtered_filesizeformat}}</td>
                             </tr>
 						{% endfor %}
                     </tbody>

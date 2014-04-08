@@ -64,7 +64,7 @@
         <!-- Package Version -->
         <td>{%if package.version%}<a href="{% url "package_built_detail" build.pk package.pk %}">{{package.version}}-{{package.revision}}</a>{%endif%}</td>
         <!-- Package Size -->
-        <td class="size">{{package.size|filtered_filesizeformat}}</td>
+        <td class="size sizecol">{{package.size|filtered_filesizeformat}}</td>
         <!-- License -->
         <td class="license">{{package.license}}</td>
 

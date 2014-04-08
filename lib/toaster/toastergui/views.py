@@ -563,13 +563,13 @@ def target(request, build_id, target_id):
                     'qhelp':'The size of the package',
                     'orderfield': _get_toggle_order(request, "size", True),
                     'ordericon':_get_toggle_order_icon(request, "size"),
-                    'clclass': 'package_size',
+                    'clclass': 'package_size span2',
                     'hidden' : 0,
                 },
                 {
                     'name':'Size over total (%)',
                     'qhelp':'Proportion of the overall included package size represented by this package',
-                    'clclass': 'size_over_total',
+                    'clclass': 'size_over_total span2',
                     'hidden' : 1,
                 },
                 {
@@ -1254,7 +1254,7 @@ def bpackage(request, build_id):
                 'qhelp':'The size of the package',
                 'orderfield': _get_toggle_order(request, "size", True),
                 'ordericon':_get_toggle_order_icon(request, "size"),
-                'clclass': 'size', 'hidden': 0,
+                'clclass': 'size span2', 'hidden': 0,
             },
             {
                 'name':'License',
@@ -1456,13 +1456,40 @@ def package_built_detail(request, build_id, package_id):
     template = "package_built_detail.html"
     if Build.objects.filter(pk=build_id).count() == 0 :
         return redirect(builds)
+
+    # follow convention for pagination w/ search although not used for this view
+    queryset = Package_File.objects.filter(package_id__exact=package_id)
+    mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'path:+'};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'package_built_detail', request.GET, mandatory_parameters, build_id = build_id, package_id = package_id)
+
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
+    paths = _get_queryset(Package_File, queryset, filter_string, search_term, ordering_string, 'path')
+
     package = Package.objects.filter(pk=package_id)[0]
     package.fullpackagespec = _get_fullpackagespec(package)
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
             'package' : package,
             'dependency_count' : _get_package_dependency_count(package, -1, False),
+            'objects' : paths,
+            'tablecols':[
+                {
+                    'name':'File',
+                    'orderfield': _get_toggle_order(request, "path"),
+                    'ordericon':_get_toggle_order_icon(request, "path"),
+                },
+                {
+                    'name':'Size',
+                    'orderfield': _get_toggle_order(request, "size", True),
+                    'ordericon':_get_toggle_order_icon(request, "size"),
+                    'dclass': 'sizecol span2',
+                },
+            ]
     }
+    if paths.all().count() < 2:
+        context['disable_sort'] = True;
     return render(request, template, context)
 
 def package_built_dependencies(request, build_id, package_id):
@@ -1488,6 +1515,17 @@ def package_included_detail(request, build_id, target_id, package_id):
     if Build.objects.filter(pk=build_id).count() == 0 :
         return redirect(builds)
 
+
+    # follow convention for pagination w/ search although not used for this view
+    mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'path:+'};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'package_included_detail', request.GET, mandatory_parameters, build_id = build_id, target_id = target_id, package_id = package_id)
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
+
+    queryset = Package_File.objects.filter(package_id__exact=package_id)
+    paths = _get_queryset(Package_File, queryset, filter_string, search_term, ordering_string, 'path')
+
     package = Package.objects.filter(pk=package_id)[0]
     package.fullpackagespec = _get_fullpackagespec(package)
     package.alias = _get_package_alias(package)
@@ -1497,8 +1535,24 @@ def package_included_detail(request, build_id, target_id, package_id):
             'target'  : target,
             'package' : package,
             'reverse_count' : _get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : _get_package_dependency_count(package, target_id, True)
+            'dependency_count' : _get_package_dependency_count(package, target_id, True),
+            'objects': paths,
+            'tablecols':[
+                {
+                    'name':'File',
+                    'orderfield': _get_toggle_order(request, "path"),
+                    'ordericon':_get_toggle_order_icon(request, "path"),
+                },
+                {
+                    'name':'Size',
+                    'orderfield': _get_toggle_order(request, "size", True),
+                    'ordericon':_get_toggle_order_icon(request, "size"),
+                    'dclass': 'sizecol span2',
+                },
+            ]
     }
+    if paths.all().count() < 2:
+        context['disable_sort'] = True;
     return render(request, template, context)
 
 def package_included_dependencies(request, build_id, target_id, package_id):
@@ -1528,36 +1582,49 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
     if Build.objects.filter(pk=build_id).count() == 0 :
         return redirect(builds)
 
+    mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'package__name:+'};
+    retval = _verify_parameters( request.GET, mandatory_parameters )
+    if retval:
+        return _redirect_parameters( 'package_included_reverse_dependencies', request.GET, mandatory_parameters, build_id = build_id, target_id = target_id, package_id = package_id)
+    (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
+
+    queryset = Package_Dependency.objects.select_related('depends_on__name', 'depends_on__size').filter(depends_on=package_id, target_id=target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
+    objects = _get_queryset(Package_Dependency, queryset, filter_string, search_term, ordering_string, 'package__name')
+
     package = Package.objects.filter(pk=package_id)[0]
     package.fullpackagespec = _get_fullpackagespec(package)
     package.alias = _get_package_alias(package)
     target = Target.objects.filter(pk=target_id)[0]
-
-    reverse_deps = []
-    alldeps = package.package_dependencies_target.filter(target_id__exact=target_id)
-    for idep in alldeps:
-        dep_package = Package.objects.get(pk=idep.package_id)
-        version = dep_package.version
-        if version  != '' :
-            version += '-' + dep_package.revision
-        dep = {
-                'name' : dep_package.name,
-                'alias' :  _get_package_alias(dep_package),
-                'dependent_id' : dep_package.id,
-                'version' : version,
-                'size' : dep_package.size
-        }
-        if idep.dep_type == Package_Dependency.TYPE_TRDEPENDS :
-            reverse_deps.append(dep)
-
+    for o in objects:
+        if o.package.version != '':
+            o.package.version += '-' + o.package.revision
+        o.alias = _get_package_alias(o.package)
     context = {
             'build' : Build.objects.filter(pk=build_id)[0],
             'package' : package,
             'target' : target,
-            'reverse_deps' : reverse_deps,
+            'objects' : objects,
             'reverse_count' : _get_package_reverse_dep_count(package, target_id),
-            'dependency_count' : _get_package_dependency_count(package, target_id, True)
+            'dependency_count' : _get_package_dependency_count(package, target_id, True),
+            'tablecols':[
+                {
+                    'name':'Package',
+                    'orderfield': _get_toggle_order(request, "package__name"),
+                    'ordericon': _get_toggle_order_icon(request, "package__name"),
+                },
+                {
+                    'name':'Version',
+                },
+                {
+                    'name':'Size',
+                    'orderfield': _get_toggle_order(request, "package__size", True),
+                    'ordericon': _get_toggle_order_icon(request, "package__size"),
+                    'dclass': 'sizecol span2',
+                },
+            ]
     }
+    if objects.all().count() < 2:
+        context['disable_sort'] = True;
     return render(request, template, context)
 
 def image_information_dir(request, build_id, target_id, packagefile_id):

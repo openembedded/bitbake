@@ -62,6 +62,9 @@ td a:hover { color: #000000; text-decoration: underline; }
 .table tbody tr.error > td { background-color: #FFFFFF; } /* override default Bootstrap behaviour */
 .table-hover tbody tr.error:hover > td { background-color: #F5F5F5;} /* override default Bootstrap behaviour */
 
+/* Right justify Bootstrap table columns for size fields */
+.table .sizecol { text-align: right; }
+
 /* Set error, warning, success and muted styles */
 .error, .red, td.error a, tr.error a { color: #b94a48; }
 a.error:hover, a.error:focus, tr.error a:hover { color: #943A38; text-decoration: underline; }
@@ -112,7 +115,6 @@ select { width: auto; }
 
 /* make tables Chrome-happy (me, not so much) */
 #otable { table-layout: fixed; word-wrap: break-word; }
-
 
 
 

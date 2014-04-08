@@ -31,7 +31,7 @@
                         <tr>
                             <th>Package</th>
                             <th>Version</th>
-                            <th>Size</th>
+                            <th class="sizecol span2">Size</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -49,7 +49,7 @@
                             </td>
                             {% endif %}
                             <td>{{runtime_dep.version}}</td>
-                            <td>{{runtime_dep.size|filtered_filesizeformat}}</td>
+                            <td class="sizecol">{{runtime_dep.size|filtered_filesizeformat}}</td>
                         </tr>
 						{% endfor %}
                     </tbody>
@@ -62,7 +62,7 @@
                         <tr>
                             <th>Package</th>
                             <th>Version</th>
-                            <th>Size</th>
+                            <th class="sizecol span2">Size</th>
                             <th>
                                 <i class="icon-question-sign get-help" title="Five relationship types exist: recommends, suggests, provides, replaces and conflicts"></i>
                                 Relationship type
@@ -84,7 +84,7 @@
                             </td>
                         {% endif %}
                             <td>{{other_dep.version}}</td>
-                            <td>{{other_dep.size|filtered_filesizeformat}}</td>
+                            <td class="sizecol">{{other_dep.size|filtered_filesizeformat}}</td>
                             <td>
                                 {{other_dep.dep_type_display}}
                                 <i class="icon-question-sign get-help hover-help" title="{{other_dep.dep_type_help}}" ></i>

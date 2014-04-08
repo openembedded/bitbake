@@ -20,21 +20,14 @@
                 <strong>{{package.fullpackagespec}}</strong> has no reverse runtime dependencies.
             </div>
         {% else %}
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>Package</th>
-                        <th>Version</th>
-                        <th>Size</th>
-                    </tr>
-                </thead>
+            {% include "tablesort.html" %}
                 <tbody>
-					{% for reverse_dep in reverse_deps|dictsort:"name" %}
+					{% for reverse_dep in objects %}
                         <tr {{reverse_dep.size|format_vpackage_rowclass}} >
                         {% if reverse_dep.size != -1 %}
                             <td>
-                                <a href="{% url 'package_included_detail' build.id target.id reverse_dep.dependent_id %}">
-                                    {{reverse_dep.name}}
+                                <a href="{% url 'package_included_detail' build.id target.id reverse_dep.package_id %}">
+                                    {{reverse_dep.package.name}}
                                 </a>
                                 <script>fmtAliasHelp("{{reverse_dep.name}}", "{{reverse_dep.alias}}", true)</script>
                             </td>
@@ -44,8 +37,8 @@
                             </td>
                             {% endif %}
 
-                            <td>{{reverse_dep.version}}&nbsp;</td>
-                            <td>{{reverse_dep.size|filtered_filesizeformat}}&nbsp;</td>
+                            <td>{{reverse_dep.package.version}}&nbsp;</td>
+                            <td class='sizecol'>{{reverse_dep.package.size|filtered_filesizeformat}}&nbsp;</td>
                         </tr>
 					{% endfor %}
                 </tbody>

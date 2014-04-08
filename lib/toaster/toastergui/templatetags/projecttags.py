@@ -118,7 +118,7 @@ def filtered_filesizeformat(value):
     if value == -1:
         return ''
 
-    return filesizeformat(value).replace("bytes", "B").replace(".0", "")
+    return filesizeformat(value).replace("bytes", "B")
 
 @register.filter
 def filtered_packagespec(value):

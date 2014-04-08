@@ -17,22 +17,16 @@
     <div class="tab-content">
         <div class="tab-pane active" id="files">
             {% if packageFileCount > 0 %}
-            <table class="table table-bordered table-hover">
-                <thead>
-                    <tr>
-                        <th>File</th>
-                        <th>Size</th>
-                    </tr>
-                </thead>
+            {% include "tablesort.html" %}
                 <tbody>
-					{% for file in package.buildfilelist_package.all|dictsort:"path" %}
+					{% for file in objects %}
                         <tr>
-                            <td>
+                            <td class="path">
                                 <a href="{% url 'dirinfo_filepath' build.id target.id file.path %}">
                                     {{file.path}}
                                 </a>
                              </td>
-                            <td>{{file.size|filtered_filesizeformat}}</td>
+                            <td class="filesize sizecol" >{{file.size|filtered_filesizeformat}}</td>
                         </tr>
 					{% endfor %}
                 </tbody>
