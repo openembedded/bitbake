@@ -390,6 +390,61 @@ class MirrorUriTest(FetcherTest):
         uris, uds = bb.fetch2.build_mirroruris(fetcher, mirrors, self.d)
         self.assertEqual(uris, ['file:///someotherpath/downloads/bitbake-1.0.tar.gz'])
 
+
+class FetcherLocalTest(FetcherTest):
+    def setUp(self):
+        def touch(fn):
+            with file(fn, 'a'):
+                os.utime(fn, None)
+
+        super(FetcherLocalTest, self).setUp()
+        self.localsrcdir = os.path.join(self.tempdir, 'localsrc')
+        os.makedirs(self.localsrcdir)
+        touch(os.path.join(self.localsrcdir, 'a'))
+        touch(os.path.join(self.localsrcdir, 'b'))
+        os.makedirs(os.path.join(self.localsrcdir, 'dir'))
+        touch(os.path.join(self.localsrcdir, 'dir', 'c'))
+        touch(os.path.join(self.localsrcdir, 'dir', 'd'))
+        os.makedirs(os.path.join(self.localsrcdir, 'dir', 'subdir'))
+        touch(os.path.join(self.localsrcdir, 'dir', 'subdir', 'e'))
+        self.d.setVar("FILESPATH", self.localsrcdir)
+
+    def fetchUnpack(self, uris):
+        fetcher = bb.fetch.Fetch(uris, self.d)
+        fetcher.download()
+        fetcher.unpack(self.unpackdir)
+        flst = []
+        for root, dirs, files in os.walk(self.unpackdir):
+            for f in files:
+                flst.append(os.path.relpath(os.path.join(root, f), self.unpackdir))
+        flst.sort()
+        return flst
+
+    def test_local(self):
+        tree = self.fetchUnpack(['file://a', 'file://dir/c'])
+        self.assertEqual(tree, ['a', 'dir/c'])
+
+    def test_local_wildcard(self):
+        tree = self.fetchUnpack(['file://a', 'file://dir/*'])
+        # FIXME: this is broken - it should return ['a', 'dir/c', 'dir/d', 'dir/subdir/e']
+        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=6128
+        self.assertEqual(tree, ['a', 'b', 'dir/c', 'dir/d', 'dir/subdir/e'])
+
+    def test_local_dir(self):
+        tree = self.fetchUnpack(['file://a', 'file://dir'])
+        self.assertEqual(tree, ['a', 'dir/c', 'dir/d', 'dir/subdir/e'])
+
+    def test_local_subdir(self):
+        tree = self.fetchUnpack(['file://dir/subdir'])
+        # FIXME: this is broken - it should return ['dir/subdir/e']
+        # see https://bugzilla.yoctoproject.org/show_bug.cgi?id=6129
+        self.assertEqual(tree, ['subdir/e'])
+
+    def test_local_subdir_file(self):
+        tree = self.fetchUnpack(['file://dir/subdir/e'])
+        self.assertEqual(tree, ['dir/subdir/e'])
+
+
 class FetcherNetworkTest(FetcherTest):
 
     if os.environ.get("BB_SKIP_NETTESTS") == "yes":
