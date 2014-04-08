@@ -461,7 +461,6 @@ class HobHandler(gobject.GObject):
         recipe_name = hob_image + ".bb"
         self.ensure_dir(image_dir)
         self.generate_new_image(image_dir + recipe_name, None, [], "")
-        self.append_to_bbfiles(image_dir + "*.bb")
 
     def ensure_dir(self, directory):
         self.runCommand(["ensureDir", directory])
