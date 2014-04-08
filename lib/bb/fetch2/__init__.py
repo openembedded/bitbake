@@ -962,24 +962,32 @@ def get_file_checksums(filelist, pn):
             return None
         return checksum
 
+    def checksum_dir(pth):
+        # Handle directories recursively
+        dirchecksums = []
+        for root, dirs, files in os.walk(pth):
+            for name in files:
+                fullpth = os.path.join(root, name)
+                checksum = checksum_file(fullpth)
+                if checksum:
+                    dirchecksums.append((fullpth, checksum))
+        return dirchecksums
+
     checksums = []
     for pth in filelist.split():
         checksum = None
         if '*' in pth:
             # Handle globs
             for f in glob.glob(pth):
-                checksum = checksum_file(f)
-                if checksum:
-                    checksums.append((f, checksum))
+                if os.path.isdir(f):
+                    checksums.extend(checksum_dir(f))
+                else:
+                    checksum = checksum_file(f)
+                    if checksum:
+                        checksums.append((f, checksum))
             continue
         elif os.path.isdir(pth):
-            # Handle directories
-            for root, dirs, files in os.walk(pth):
-                for name in files:
-                    fullpth = os.path.join(root, name)
-                    checksum = checksum_file(fullpth)
-                    if checksum:
-                        checksums.append((fullpth, checksum))
+            checksums.extend(checksum_dir(pth))
             continue
         else:
             checksum = checksum_file(pth)
