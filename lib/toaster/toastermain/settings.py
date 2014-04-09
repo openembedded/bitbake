@@ -64,15 +64,19 @@ else:
     for dirpath, dirnames, filenames in os.walk(ZONEINFOPATH):
         for fn in filenames:
             filepath = os.path.join(dirpath, fn)
+            zonename = filepath.lstrip(ZONEINFOPATH).strip()
             try:
                 import pytz
                 from pytz.exceptions import UnknownTimeZoneError
-                zonename = filepath.lstrip(ZONEINFOPATH).strip()
-                if pytz.timezone(zonename) is not None:
-                    zonefilelist[hashlib.md5(open(filepath).read()).hexdigest()] = zonename
-            except UnknownTimeZoneError, ValueError:
-                # we expect timezone failures here, just move over
                 pass
+                try:
+                    if pytz.timezone(zonename) is not None:
+                        zonefilelist[hashlib.md5(open(filepath).read()).hexdigest()] = zonename
+                except UnknownTimeZoneError, ValueError:
+                    # we expect timezone failures here, just move over
+                    pass
+            except ImportError:
+                zonefilelist[hashlib.md5(open(filepath).read()).hexdigest()] = zonename
 
     TIME_ZONE = zonefilelist[hashlib.md5(open('/etc/localtime').read()).hexdigest()]
 
