@@ -149,7 +149,6 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
                 if preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
                     preferred_list.append((f, pe, pv, pr))
 
-
         preferred_list = sorted(preferred_list,cmp = utils.vercmp, key = lambda entry: (entry[1],entry[2],entry[3]), reverse=True)
 
         if preferred_r:
