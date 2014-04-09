@@ -142,15 +142,17 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
             preferred_e = None
             preferred_r = None
 
+        preferred_list = []
         for file_set in pkg_pn:
             for f in file_set:
                 pe, pv, pr = dataCache.pkg_pepvpr[f]
                 if preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
                     preferred_file = f
-                    preferred_ver = (pe, pv, pr)
-                    break
-            if preferred_file:
-                break;
+                    preferred_list.append((f, pe, pv, pr))
+
+
+        preferred_list = sorted(preferred_list,cmp = utils.vercmp, key = lambda entry: (entry[1],entry[2],entry[3]), reverse=True)
+
         if preferred_r:
             pv_str = '%s-%s' % (preferred_v, preferred_r)
         else:
@@ -160,8 +162,11 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
         itemstr = ""
         if item:
             itemstr = " (for item %s)" % item
-        if preferred_file is None:
-            logger.info("preferred version %s of %s not available%s", pv_str, pn, itemstr)
+
+        if preferred_list == []:
+            logger.warning("preferred version %s of %s not available%s", pv_str, pn, itemstr)
+            preferred_file = None
+            preferred_ver = None
             available_vers = []
             for file_set in pkg_pn:
                 for f in file_set:
@@ -175,6 +180,8 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
                 available_vers.sort()
                 logger.info("versions of %s available: %s", pn, ' '.join(available_vers))
         else:
+            preferred_file = preferred_list[0][0]
+            preferred_ver = (preferred_list[0][1],preferred_list[0][2],preferred_list[0][3])
             logger.debug(1, "selecting %s as PREFERRED_VERSION %s of package %s%s", preferred_file, pv_str, pn, itemstr)
 
     return (preferred_ver, preferred_file)
