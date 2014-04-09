@@ -147,7 +147,6 @@ def findPreferredProvider(pn, cfgData, dataCache, pkg_pn = None, item = None):
             for f in file_set:
                 pe, pv, pr = dataCache.pkg_pepvpr[f]
                 if preferredVersionMatch(pe, pv, pr, preferred_e, preferred_v, preferred_r):
-                    preferred_file = f
                     preferred_list.append((f, pe, pv, pr))
 
 
