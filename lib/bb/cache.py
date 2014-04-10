@@ -527,7 +527,7 @@ class Cache(object):
         if hasattr(info_array[0], 'file_checksums'):
             for _, fl in info_array[0].file_checksums.items():
                 for f in fl.split():
-                    if not os.path.exists(f):
+                    if not ('*' in f or os.path.exists(f)):
                         logger.debug(2, "Cache: %s's file checksum list file %s was removed",
                                         fn, f)
                         self.remove(fn)
