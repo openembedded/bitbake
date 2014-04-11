@@ -125,7 +125,7 @@
     <div class="well span4 dashboard-section">
         <h4><a href="{%url 'tasks' build.pk%}">Tasks</a></h4>
             <dl>
-        <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{{build.task_build.all.count}}</a></dd>
+        <dt>Total number of tasks</dt><dd><a href="{% url 'tasks' build.pk %}">{% query build.task_build order__gt=0 as alltasks %}{{alltasks.count}}</a></dd>
         <dt>
             Tasks executed
             <i class="icon-question-sign get-help" title="'Executed' tasks are those that need to be run in order to generate the task output"></i>
