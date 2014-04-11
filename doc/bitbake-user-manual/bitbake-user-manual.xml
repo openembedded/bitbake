@@ -73,16 +73,16 @@
         </legalnotice>
     </bookinfo>
 
-    <xi:include href="user-manual-intro.xml"/>
+    <xi:include href="bitbake-user-manual-intro.xml"/>
 
-    <xi:include href="user-manual-execution.xml"/>
+    <xi:include href="bitbake-user-manual-execution.xml"/>
 
-    <xi:include href="user-manual-metadata.xml"/>
+    <xi:include href="bitbake-user-manual-metadata.xml"/>
 
-    <xi:include href="user-manual-fetching.xml"/>
+    <xi:include href="bitbake-user-manual-fetching.xml"/>
 
-    <xi:include href="user-manual-ref-variables.xml"/>
+    <xi:include href="bitbake-user-manual-ref-variables.xml"/>
 
-    <xi:include href="user-manual-hello.xml"/>
+    <xi:include href="bitbake-user-manual-hello.xml"/>
 
 </book>

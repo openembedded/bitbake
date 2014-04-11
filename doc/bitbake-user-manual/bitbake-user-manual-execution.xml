@@ -1,7 +1,7 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
 "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<chapter id="user-manual-execution">
+<chapter id="bitbake-user-manual-execution">
     <title>Execution</title>
 
     <para>
@@ -24,7 +24,7 @@
         </literallayout>
         For information on the BitBake command and its options,
         see
-        "<link linkend='user-manual-command'>The BitBake Command</link>"
+        "<link linkend='bitbake-user-manual-command'>The BitBake Command</link>"
         section.
     </para>
 

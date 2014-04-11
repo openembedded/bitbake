@@ -130,7 +130,7 @@
             While every attempt is made to explain what is happening,
             not everything can be covered.
             You can find further information in the
-            "<link linkend='user-manual-metadata'>Syntax and Operators</link>"
+            "<link linkend='bitbake-user-manual-metadata'>Syntax and Operators</link>"
             chapter.
         </para>
 
