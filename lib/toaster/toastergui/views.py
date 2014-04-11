@@ -575,13 +575,15 @@ def target(request, build_id, target_id):
                     'qhelp':'The size of the package',
                     'orderfield': _get_toggle_order(request, "size", True),
                     'ordericon':_get_toggle_order_icon(request, "size"),
-                    'clclass': 'package_size span2',
+                    'clclass': 'size',
+                    'dclass' : 'span2',
                     'hidden' : 0,
                 },
                 {
                     'name':'Size over total (%)',
                     'qhelp':'Proportion of the overall included package size represented by this package',
-                    'clclass': 'size_over_total span2',
+                    'clclass': 'size_over_total',
+                    'dclass' : 'span2',
                     'hidden' : 1,
                 },
                 {
@@ -1273,7 +1275,8 @@ def bpackage(request, build_id):
                 'qhelp':'The size of the package',
                 'orderfield': _get_toggle_order(request, "size", True),
                 'ordericon':_get_toggle_order_icon(request, "size"),
-                'clclass': 'size span2', 'hidden': 0,
+                'clclass': 'size', 'hidden': 0,
+                'dclass' : 'span2',
             },
             {
                 'name':'License',
