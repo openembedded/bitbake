@@ -8,7 +8,7 @@ Manual Organization
 
 Folders exist for individual manuals as follows:
 
-* user-manual      - The BitBake User Manual 
+* bitbake-user-manual      - The BitBake User Manual 
 
 Each folder is self-contained regarding content and figures.
 
@@ -28,7 +28,7 @@ For example, the following command run from the documentation directory
 creates an HTML and a PDF version of the BitBake User Manual.
 The DOC variable specifies the manual you are making:
 
-     $ make DOC=user-manual
+     $ make DOC=bitbake-user-manual
 
 template
 ========

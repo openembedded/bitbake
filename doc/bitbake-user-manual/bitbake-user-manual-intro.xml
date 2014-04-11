@@ -1,7 +1,7 @@
 <!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
     "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
 
-<chapter id="user-manual-intro">
+<chapter id="bitbake-user-manual-intro">
     <title>Overview</title>
 
     <para>
@@ -417,7 +417,7 @@
         </para>
     </section>
 
-    <section id="user-manual-command">
+    <section id="bitbake-user-manual-command">
         <title>The BitBake Command</title>
 
         <para>

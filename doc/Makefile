@@ -18,21 +18,21 @@
 #
 # Examples:
 #
-#     make DOC=user-manual
-#     make pdf DOC=user-manual
+#     make DOC=bitbake-user-manual
+#     make pdf DOC=bitbake-user-manual
 #
 # The first example generates the HTML and PDF versions of the User Manual.
 # The second example generates the HTML version only of the User Manual.
 #
 
-ifeq ($(DOC),user-manual)
-XSLTOPTS = --stringparam html.stylesheet user-manual-style.css \
+ifeq ($(DOC),bitbake-user-manual)
+XSLTOPTS = --stringparam html.stylesheet bitbake-user-manual-style.css \
            --stringparam  chapter.autolabel 1 \
            --stringparam  section.autolabel 1 \
            --stringparam  section.label.includes.component.label 1 \
            --xinclude
 ALLPREQ = html pdf tarball
-TARFILES = user-manual-style.css user-manual.html user-manual.pdf figures/bitbake-title.png
+TARFILES = bitbake-user-manual-style.css bitbake-user-manual.html bitbake-user-manual.pdf figures/bitbake-title.png
 MANUALS = $(DOC)/$(DOC).html $(DOC)/$(DOC).pdf
 FIGURES = figures
 STYLESHEET = $(DOC)/*.css
@@ -48,7 +48,7 @@ XSL_XHTML_URI = $(XSL_BASE_URI)/xhtml/docbook.xsl
 all: $(ALLPREQ)
 
 pdf:
-ifeq ($(DOC),user-manual)
+ifeq ($(DOC),bitbake-user-manual)
 	@echo " "
 	@echo "********** Building."$(DOC)
 	@echo " "
@@ -56,7 +56,7 @@ ifeq ($(DOC),user-manual)
 endif
 
 html:
-ifeq ($(DOC),user-manual)
+ifeq ($(DOC),bitbake-user-manual)
 #       See http://www.sagehill.net/docbookxsl/HtmlOutput.html
 	@echo " "
 	@echo "******** Building "$(DOC)

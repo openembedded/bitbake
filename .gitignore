@@ -7,6 +7,6 @@ pyshtables.py
 /bin/bitbakec
 *.swp
 tags
-doc/user-manual/user-manual.html
-doc/user-manual/user-manual.pdf
-doc/user-manual/user-manual.tgz
+doc/bitbake-user-manual/bitbake-user-manual.html
+doc/bitbake-user-manual/bitbake-user-manual.pdf
+doc/bitbake-user-manual/bitbake-user-manual.tgz

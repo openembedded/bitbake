@@ -144,7 +144,7 @@
 
 # If you leave this block of code in then the text title in the
 # <title>BitBake User Manual</title> statement of the
-# user-manual.xml file is rendered on the title page below the
+# bitbake-user-manual.xml file is rendered on the title page below the
 # image.  Commenting it out gets it out of there yet allows it
 # to be retained in the tab text for the HTML version of the
 # manual.
@@ -176,7 +176,7 @@
 <!--
 # If you leave this block of code in then the text title in the
 # <title>BitBake User Manual</title> statement of the
-# user-manual.xml file is rendered on the title page below the
+# bitbake-user-manual.xml file is rendered on the title page below the
 # image.  Commenting it out gets it out of there yet allows it
 # to be retained in the tab text for the HTML version of the
 # manual.
