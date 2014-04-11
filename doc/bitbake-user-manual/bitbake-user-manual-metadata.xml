@@ -793,36 +793,35 @@
             </para>
         </section>
 
-        <section id='automatically-mapping-functions-within-the-context-of-a-class'>
-            <title>Automatically Mapping Functions Within the Context of a Class</title>
+        <section id='flexible-inheritance-for-class-functions'>
+            <title>Flexible Inheritance for Class Functions</title>
 
             <para>
                 Through coding techniques and the use of
                 <filename>EXPORT_FUNCTIONS</filename>, BitBake supports
-                automatic mapping for functions within the context of
-                a class.
+                exporting a function from a class such that the
+                class function appears as the default implementation
+                of the function, but can still be called if a recipe
+                inheriting the class needs to define its own version of
+                the function.
             </para>
 
             <para>
-                To understand the benefits of this feature, consider the basic scenario
-                where a class defines a function and your recipe inherits the class.
-                In this basic scenario, your recipe has access to the function in the
-                class by way of inheritance and can freely call and use the function
-                as defined in the class.
-                However, if you need to have a modified version of that function
-                in your recipe you are limited to using either your modified version
-                of the function or using "prepend_" or "_append" operators to add
-                code to be executed before or after the original function in the
-                class.
-                Your recipe cannot use both versions of the fucntion.
+                To understand the benefits of this feature, consider
+                the basic scenario where a class defines a task function
+                and your recipe inherits the class.
+                In this basic scenario, your recipe inherits the task
+                function as defined in the class.
+                If desired, your recipe can add to the start and end of the
+                function by using the "_prepend" or "_append" operations
+                respectively, or it can redefine the function completely.
+                However, if it redefines the function, there is
+                no means  for it to call the class version of the function.
             </para>
 
             <para>
-                Function mapping allows you to access both your custom function
-                function that is defined in the recipe and the original function that
-                is defined in the class.
-                You have this access all from within your recipe.
-                To accomplish this, you need some things in place:
+                To make use of this technique, you need the following
+                things in place:
                 <itemizedlist>
                     <listitem><para>
                         The class needs to define the function as follows:
@@ -853,12 +852,24 @@
                     <listitem><para>
                         You need to call the function appropriately from within your
                         recipe.
-                        Continuing with the same example,
-                        your recipe would call the <filename>do_foo</filename> function
-                        from the recipe by referring to it as
-                        <filename>bar_do_foo</filename>.
-                        To call your modified version of the function as defined in your
-                        recipe, call it as <filename>do_foo</filename>.
+                        Continuing with the same example, if your recipe
+                        needs to call the class version of the function,
+                        it should call <filename>bar_do_foo</filename>.
+                        Assuming <filename>do_foo</filename> was a shell function
+                        and <filename>EXPORT_FUNCTIONS</filename> was used as above,
+                        the recipe's function could conditionally call the
+                        class version of the function as follows:
+                        <literallayout class='monospaced'>
+     do_foo() {
+             if [ somecondition ] ; then
+                     bar_do_foo
+             else
+                     # Do something else
+             fi
+     }
+                        </literallayout>
+                        To call your modified version of the function as defined
+                        in your recipe, call it as <filename>do_foo</filename>.
                         </para></listitem>
                 </itemizedlist>
                 With these conditions met, your single recipe
