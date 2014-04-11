@@ -166,8 +166,17 @@ class Task(models.Model):
     def get_related_setscene(self):
         return Task.objects.related_setscene(self)
 
+    def get_outcome_text(self):
+        return Task.TASK_OUTCOME[self.outcome + 1][1]
+
     def get_outcome_help(self):
         return Task.TASK_OUTCOME_HELP[self.outcome][1]
+
+    def get_sstate_text(self):
+        if self.sstate_result==Task.SSTATE_NA:
+            return ''
+        else:
+            return Task.SSTATE_RESULT[self.sstate_result][1]
 
     def get_executed_display(self):
         if self.task_executed:
@@ -199,6 +208,9 @@ class Task(models.Model):
     sstate_result = models.IntegerField(choices=SSTATE_RESULT, default=SSTATE_NA)
     message = models.CharField(max_length=240)
     logfile = models.FilePathField(max_length=255, blank=True)
+
+    outcome_text = property(get_outcome_text)
+    sstate_text  = property(get_sstate_text)
 
     class Meta:
         ordering = ('order', 'recipe' ,)
