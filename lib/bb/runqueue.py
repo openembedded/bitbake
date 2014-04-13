@@ -139,7 +139,7 @@ class RunQueueScheduler(object):
         bestprio = None
         for taskid in self.buildable:
             prio = self.rev_prio_map[taskid]
-            if not bestprio or bestprio > prio:
+            if bestprio is None or bestprio > prio:
                 stamp = self.stamps[taskid]
                 if stamp in self.rq.build_stamps.itervalues():
                     continue
