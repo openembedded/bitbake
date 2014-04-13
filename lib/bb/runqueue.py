@@ -1551,7 +1551,8 @@ class RunQueueExecuteTasks(RunQueueExecute):
                 bb.event.fire(startevent, self.cfgData)
                 self.runq_running[task] = 1
                 self.stats.taskActive()
-                bb.build.make_stamp(taskname, self.rqdata.dataCache, fn)
+                if not self.cooker.configuration.dry_run:
+                    bb.build.make_stamp(taskname, self.rqdata.dataCache, fn)
                 self.task_complete(task)
                 return True
             else:
