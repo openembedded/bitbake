@@ -159,10 +159,6 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
             try:
                 the_data = bb.cache.Cache.loadDataFull(fn, appends, data)
                 the_data.setVar('BB_TASKHASH', workerdata["runq_hash"][task])
-                for h in workerdata["hashes"]:
-                    the_data.setVar("BBHASH_%s" % h, workerdata["hashes"][h])
-                for h in workerdata["hash_deps"]:
-                    the_data.setVar("BBHASHDEPS_%s" % h, workerdata["hash_deps"][h])
 
                 # exported_vars() returns a generator which *cannot* be passed to os.environ.update() 
                 # successfully. We also need to unset anything from the environment which shouldn't be there 
