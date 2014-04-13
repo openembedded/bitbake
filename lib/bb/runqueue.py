@@ -370,11 +370,11 @@ class RunQueueData:
 
         for listid in xrange(numTasks):
             task_done.append(False)
-            weight.append(0)
+            weight.append(1)
             deps_left.append(len(self.runq_revdeps[listid]))
 
         for listid in endpoints:
-            weight[listid] = 1
+            weight[listid] = 10
             task_done[listid] = True
 
         while True:
