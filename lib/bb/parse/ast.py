@@ -337,8 +337,10 @@ def finalize(fn, d, variant = None):
 
     bb.event.fire(bb.event.RecipeParsed(fn), d)
 
-def _create_variants(datastores, names, function):
+def _create_variants(datastores, names, function, onlyfinalise):
     def create_variant(name, orig_d, arg = None):
+        if onlyfinalise and name not in onlyfinalise:
+            return
         new_d = bb.data.createCopy(orig_d)
         function(arg or name, new_d)
         datastores[name] = new_d
@@ -430,7 +432,7 @@ def multi_finalize(fn, d):
             except bb.parse.SkipPackage as e:
                 d.setVar("__SKIPPED", e.args[0])
 
-        _create_variants(datastores, versions, verfunc)
+        _create_variants(datastores, versions, verfunc, onlyfinalise)
 
     extended = d.getVar("BBCLASSEXTEND", True) or ""
     if extended:
@@ -460,7 +462,7 @@ def multi_finalize(fn, d):
             bb.parse.BBHandler.inherit(extendedmap[name], fn, 0, d)
 
         safe_d.setVar("BBCLASSEXTEND", extended)
-        _create_variants(datastores, extendedmap.keys(), extendfunc)
+        _create_variants(datastores, extendedmap.keys(), extendfunc, onlyfinalise)
 
     for variant, variant_d in datastores.iteritems():
         if variant:
