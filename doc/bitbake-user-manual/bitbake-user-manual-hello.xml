@@ -10,7 +10,7 @@
         <para>
             The simplest example commonly used to demonstrate any new
             programming language or tool is the
-            <ulink url="http://en.wikipedia.org/wiki/Hello_world_program">Hello World</ulink>
+            "<ulink url="http://en.wikipedia.org/wiki/Hello_world_program">Hello World</ulink>"
             example.
             This appendix demonstrates, in tutorial form, Hello
             World within the context of BitBake.
@@ -75,8 +75,7 @@
             From the BitBake source code directory, issue the following command:
             <literallayout class='monospaced'>
      $ ./bin/bitbake --version
-     BitBake Build Tool Core version 1.19.0, bitbake version
-     1.19.0
+     BitBake Build Tool Core version 1.23.0, bitbake version 1.23.0
             </literallayout>
             You are now ready to use BitBake.
         </para>
@@ -138,8 +137,8 @@
             The overall goal of this exercise is to build a
             complete "Hello World" example utilizing task and layer
             concepts.
-            This is how modern projects such as OpenEmbedded and
-            the Yocto Project utilize BitBake, therefore it
+            Because this is how modern projects such as OpenEmbedded and
+            the Yocto Project utilize BitBake, the example
             provides an excellent starting point for understanding
             BitBake.
         </para>
@@ -186,30 +185,34 @@
                 First, set up a directory for the "Hello World" project.
                 Here is how you can do so in your home directory:
                 <literallayout class='monospaced'>
-     $ mkdir ~/dev/hello &amp;&amp; cd ~/dev/hello
+     $ mkdir ~/dev
+     $ mkdir ~/dev/hello
+     $ cd ~/dev/hello
                 </literallayout>
                 Within this new, empty directory, run BitBake with
                 debugging output and see what happens:
                 <literallayout class='monospaced'>
      $ bitbake -DDD
-     The BBPATH variable is not set
+     The BBPATH variable is not set and bitbake did not find
+     a conf/bblayers.conf file in the expected location.
+     Maybe you accidentally invoked bitbake from the wrong
+     directory?
      DEBUG: Removed the following variables from the environment:
-     GNOME_DESKTOP_SESSION_ID, LESSOPEN, WINDOWID,
+     GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP,
      GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG,
-     XDG_SESSION_PATH, XAUTHORITY, LANGUAGE, SESSION_MANAGER,
-     SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, TEXTDOMAIN,
-     GPG_AGENT_INFO, SSH_AUTH_SOCK, XDG_RUNTIME_DIR,
-     COMPIZ_BIN_PATH, GDMSESSION, DEFAULTS_PATH, TEXTDOMAINDIR,
-     XDG_SEAT_PATH, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP,
+     no_proxy, XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER,
+     SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID,
+     EDITOR, GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION,
+     DEFAULTS_PATH, XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN,
      DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE,
      DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID,
-     UBUNTU_MENUPROXY, OLDPWD, GTK_MODULES, XDG_DATA_DIRS,
-     COLORTERM, LS_COLORS
+     UBUNTU_MENUPROXY, OLDPWD, XDG_DATA_DIRS, COLORTERM,
+     LS_COLORS
                 </literallayout>
                 The majority of this output is specific to environment variables
                 that are not directly relevant to BitBake.
-                However, the very first message
-                "<filename>The BBPATH variable is not set</filename>"
+                However, the very first message regarding the
+                <filename>BBPATH</filename> variable
                 is relevant and you need to rectify it by setting
                 <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
             </para>
@@ -258,7 +261,7 @@
      |-- classes
      |   +-- base.bbclass
      +-- conf
-     +-- bitbake.conf
+         +-- bitbake.conf
                 </literallayout>
             </para>
 
@@ -295,33 +298,28 @@
                 again and see what happens:
                 <literallayout class='monospaced'>
      $ bitbake -DDD
-     Nothing to do.  Use 'bitbake world' to build everything, or run
-     'bitbake --help' for usage information.
+     Nothing to do.  Use 'bitbake world' to build everything, or
+     run 'bitbake --help' for usage information.
      DEBUG: Removed the following variables from the environment:
-     GNOME_DESKTOP_SESSION_ID, LESSOPEN, WINDOWID,
-     GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG,
-     XDG_SESSION_PATH, XAUTHORITY, LANGUAGE, SESSION_MANAGER,
-     SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, TEXTDOMAIN,
-     GPG_AGENT_INFO, SSH_AUTH_SOCK, XDG_RUNTIME_DIR,
-     COMPIZ_BIN_PATH, GDMSESSION, DEFAULTS_PATH, TEXTDOMAINDIR,
-     XDG_SEAT_PATH, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP,
+     GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP,
+     GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, no_proxy,
+     XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER, SHLVL,
+     MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID, EDITOR,
+     GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION, DEFAULTS_PATH,
+     XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN,
      DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE,
      DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID, UBUNTU_MENUPROXY,
-     OLDPWD, GTK_MODULES, XDG_DATA_DIRS, COLORTERM, LS_COLORS
-     DEBUG: Found bblayers.conf (/home/wmat/dev/hello/conf/
-     bblayers.conf)
-     DEBUG: LOAD /home/wmat/dev/hello/conf/bblayers.conf
-     DEBUG: LOAD /home/wmat/dev/hello/conf/bitbake.conf
-     DEBUG: BB configuration INHERITs:0: inheriting /home/wmat/dev/
-     hello/classes/base.bbclass
-     DEBUG: BB /home/wmat/dev/hello/classes/base.bbclass: handle
-     (data, include)
-     DEBUG: LOAD /home/wmat/dev/hello/classes/base.bbclass
+     OLDPWD, XDG_DATA_DIRS, COLORTERM, LS_COLORS
+     DEBUG: Found bblayers.conf (/home/scott-lenovo/dev/hello/conf/bblayers.conf)
+     DEBUG: LOAD /home/scott-lenovo/dev/hello/conf/bblayers.conf
+     DEBUG: LOAD /home/scott-lenovo/dev/hello/conf/bitbake.conf
+     DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/dev/hello/classes/base.bbclass
+     DEBUG: BB /home/scott-lenovo/dev/hello/classes/base.bbclass: handle(data, include)
+     DEBUG: LOAD /home/scott-lenovo/dev/hello/classes/base.bbclass
      DEBUG: Clearing SRCREV cache due to cache policy of: clear
-     DEBUG: Using cache in '/home/wmat/dev/hello/tmp/cache/
-     local_file_checksum_cache.dat'
-     DEBUG: Using cache in '/home/wmat/dev/hello/tmp/cache/
-     bb_codeparser.dat'
+     DEBUG: Using cache in '/home/scott-lenovo/dev/hello/tmp/cache/local_file_checksum_cache.dat'
+     DEBUG: Using cache in '/home/scott-lenovo/dev/hello/tmp/cache/bb_codeparser.dat'
+     DEBUG: Features set [3] (was [3])
                 </literallayout>
                 <note>
                     From this point forward in the example, the environment
