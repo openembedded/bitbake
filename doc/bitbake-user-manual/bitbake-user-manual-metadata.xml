@@ -683,7 +683,7 @@
         <para>
             As with most languages, functions are the building blocks that
             are used to build up operations into tasks.
-            BitBake supports three types of functions:
+            BitBake supports these types of functions:
             <itemizedlist>
                 <listitem><para><emphasis>Shell Functions:</emphasis>
                     Functions written in shell script and executed either
@@ -696,6 +696,10 @@
                     </para></listitem>
                 <listitem><para><emphasis>Python Functions:</emphasis>
                     Functions written in Python and executed by Python.
+                    </para></listitem>
+                <listitem><para><emphasis>Anonymous Python Functions:</emphasis>
+                    Python functions executed automatically during
+                    parsing.
                     </para></listitem>
             </itemizedlist>
             Regardless of the type of function, you can only
@@ -793,6 +797,39 @@
             </para>
         </section>
 
+        <section id='anonymous-python-functions'>
+            <title>Anonymous Python Functions</title>
+
+            <para>
+                Sometimes it is useful to run some code during
+                parsing to set variables or to perform other operations
+                programmatically.
+                To do this, you can define an anonymous Python function.
+                Here is an example that conditionally sets a
+                variable based on the value of another variable:
+                <literallayout class='monospaced'>
+     python __anonymous () {
+         if d.getVar('SOMEVAR', True) == 'value':
+             d.setVar('ANOTHERVAR', 'value2')
+     }
+                </literallayout>
+                The "__anonymous" function name is optional, so the
+                following example is functionally equivalent to the above:
+                <literallayout class='monospaced'>
+     python () {
+         if d.getVar('SOMEVAR', True) == 'value':
+             d.setVar('ANOTHERVAR', 'value2')
+     }
+                </literallayout>
+                Because unlike other Python functions anonymous
+                Python functions are executed during parsing, the
+                "d" variable within an anonymous Python function represents
+                the datastore for the entire recipe.
+                Consequently, you can set variable values here and
+                those values can be picked up by other functions.
+            </para>
+        </section>
+
         <section id='flexible-inheritance-for-class-functions'>
             <title>Flexible Inheritance for Class Functions</title>
 
@@ -817,6 +854,9 @@
                 respectively, or it can redefine the function completely.
                 However, if it redefines the function, there is
                 no means  for it to call the class version of the function.
+                <filename>EXPORT_FUNCTIONS</filename> provides a mechanism
+                that enables the recipe's version of the function to call
+                the original version of the function.
             </para>
 
             <para>
