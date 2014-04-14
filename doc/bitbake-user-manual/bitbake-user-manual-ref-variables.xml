@@ -1089,7 +1089,7 @@
                         Set the variable as you would any environment variable
                         and then run BitBake:
                         <literallayout class='monospaced'>
-     $ BBPATH = "&lt;build_directory&gt;"
+     $ BBPATH="&lt;build_directory&gt;"
      $ export BBPATH
      $ bitbake &lt;target&gt;
                         </literallayout>
