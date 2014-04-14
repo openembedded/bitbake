@@ -149,10 +149,10 @@
             and draws heavily from several sources:
             <itemizedlist>
                 <listitem><para>
-                    <ulink href="http://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html">Mailing List post - The BitBake equivalent of "Hello, World!"</ulink>
+                    <ulink url="http://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html">Mailing List post - The BitBake equivalent of "Hello, World!"</ulink>
                     </para></listitem>
                 <listitem><para>
-                    <ulink href="http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/">Hambedded Linux blog post - From Bitbake Hello World to an Image</ulink>
+                    <ulink url="http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/">Hambedded Linux blog post - From Bitbake Hello World to an Image</ulink>
                     </para></listitem>
             </itemizedlist>
         </para>
