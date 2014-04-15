@@ -121,16 +121,6 @@
         <title>The Hello World Example</title>
 
         <para>
-            The following example leaps directly into how BitBake
-            works.
-            While every attempt is made to explain what is happening,
-            not everything can be covered.
-            You can find further information in the
-            "<link linkend='bitbake-user-manual-metadata'>Syntax and Operators</link>"
-            chapter.
-        </para>
-
-        <para>
             The overall goal of this exercise is to build a
             complete "Hello World" example utilizing task and layer
             concepts.
@@ -141,8 +131,25 @@
         </para>
 
         <para>
-            It should be noted that this chapter was inspired by
-            and draws heavily from several sources:
+            To help you understand how to use BitBake to build targets,
+            the example starts with nothing but the <filename>bitbake</filename>
+            command, which causes BitBake to fail and report problems.
+            The example progresses by adding pieces to the build to
+            eventually conclude with a working, minimal "Hello World"
+            example.
+        </para>
+
+        <para>
+            While every attempt is made to explain what is happening during
+            the example, the descriptions cannot cover everything.
+            You can find further information throughout this manual.
+            Also, you can actively participate in the
+            <ulink url='http://lists.openembedded.org/mailman/listinfo/bitbake-devel'></ulink>
+            discussion mailing list about the BitBake build tool.
+        </para>
+
+        <note>
+            This example was inspired by and drew heavily from these sources:
             <itemizedlist>
                 <listitem><para>
                     <ulink url="http://www.mail-archive.com/yocto@yoctoproject.org/msg09379.html">Mailing List post - The BitBake equivalent of "Hello, World!"</ulink>
@@ -151,114 +158,177 @@
                     <ulink url="http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/">Hambedded Linux blog post - From Bitbake Hello World to an Image</ulink>
                     </para></listitem>
             </itemizedlist>
+        </note>
+
+        <para>
+            As stated earlier, the goal of this example
+            is to eventually compile "Hello World".
+            However, it is unknown what BitBake needs and what you have
+            to provide in order to achieve that goal.
+            Recall that BitBake utilizes three types of metadata files:
+            <link linkend='configuration-files'>Configuration Files</link>,
+            <link linkend='classes'>Classes</link>, and
+            <link linkend='recipes'>Recipes</link>.
+            But where do they go?
+            How does BitBake find them?
+            BitBake's error messaging helps you answer these types of questions
+            and helps you better understand exactly what is going on.
         </para>
 
-        <section id='a-reverse-walk-through'>
-            <title>A Reverse Walk-Through</title>
+        <para>
+            Following is the complete "Hello World" example.
+        </para>
 
-            <para>
-                A good way to understand anything is to walk through the steps
-                that take you to where you want to be and observe first
-                principles.
-                BitBake allows us to do this through the
-                <filename>-D</filename> or <filename>Debug</filename>
-                command-line parameter.
-            </para>
-
-            <para>
-                The goal is to eventually compile a "Hello World" example.
-                However, it is unknown what is needed to achieve that goal.
-                Recall that BitBake utilizes three types of metadata files:
-                <link linkend='configuration-files'>Configuration Files</link>,
-                <link linkend='classes'>Classes</link>, and
-                <link linkend='recipes'>Recipes</link>.
-                But where do they go?
-                How does BitBake find them?
-                BitBake's error messaging helps you answer these types of questions
-                and helps you better understand exactly what is going on.
-            </para>
-
-            <para>
+        <orderedlist>
+            <listitem><para><emphasis>Create a Project Directory:</emphasis>
                 First, set up a directory for the "Hello World" project.
                 Here is how you can do so in your home directory:
                 <literallayout class='monospaced'>
      $ mkdir ~/hello
      $ cd ~/hello
                 </literallayout>
-                Within this new, empty directory, run BitBake with
-                debugging output and see what happens:
+                This is the directory that BitBake will use to do all of
+                its work.
+                You can use this directory to keep all the metafiles needed
+                by BitBake.
+                Having a project directory is a good way to isolate your
+                project.
+                </para></listitem>
+            <listitem><para><emphasis>Run Bitbake:</emphasis>
+                At this point, you have nothing but a project directory.
+                Run the <filename>bitbake</filename> command and see what
+                it does:
                 <literallayout class='monospaced'>
-     $ bitbake -DDD
-     The BBPATH variable is not set and bitbake did not find
-     a conf/bblayers.conf file in the expected location.
-     Maybe you accidentally invoked bitbake from the wrong
-     directory?
+     $ bitbake
+     The BBPATH variable is not set and bitbake did not
+     find a conf/bblayers.conf file in the expected location.
+     Maybe you accidentally invoked bitbake from the wrong directory?
      DEBUG: Removed the following variables from the environment:
      GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP,
-     GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG,
-     no_proxy, XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER,
-     SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID,
-     EDITOR, GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION,
-     DEFAULTS_PATH, XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN,
-     DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE,
-     DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID,
-     UBUNTU_MENUPROXY, OLDPWD, XDG_DATA_DIRS, COLORTERM,
-     LS_COLORS
+     GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, no_proxy,
+     XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER, SHLVL,
+     MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID, EDITOR,
+     GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION, GNOME_KEYRING_PID,
+     XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN, DBUS_SESSION_BUS_ADDRESS,
+     _, XDG_SESSION_COOKIE, DESKTOP_SESSION, LESSCLOSE, DEFAULTS_PATH,
+     UBUNTU_MENUPROXY, OLDPWD, XDG_DATA_DIRS, COLORTERM, LS_COLORS
                 </literallayout>
                 The majority of this output is specific to environment variables
                 that are not directly relevant to BitBake.
                 However, the very first message regarding the
                 <filename>BBPATH</filename> variable and the
                 <filename>conf/bblayers.conf</filename> file
-                is relevant.
-            </para>
-
-            <para>
+                is relevant.</para>
+                <para>
+                When you run BitBake, it begins looking for metadata files.
+                The
+                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
+                variable is what tells BitBake where to look for those files.
+                <filename>BBPATH</filename> is not set and you need to set it.
+                Without <filename>BBPATH</filename>, Bitbake cannot
+                find any configuration files (<filename>.conf</filename>)
+                or recipe files (<filename>.bb</filename>) at all.
+                BitBake also cannot find the <filename>bitbake.conf</filename>
+                file.
+                </para></listitem>
+            <listitem><para><emphasis>Setting <filename>BBPATH</filename>:</emphasis>
+                For this example, you can set <filename>BBPATH</filename>
+                in the same manner that you set <filename>PATH</filename>
+                earlier in the appendix.
+                You should realize, though, that it is much more flexible to set the
+                <filename>BBPATH</filename> variable up in a configuration
+                file for each project.</para>
+                <para>From your shell, enter the following commands to set and
+                export the <filename>BBPATH</filename> variable:
                 <literallayout class='monospaced'>
-1. Once you have PATH set up to actually run BB, and then you run it
-   using:
+     $ BBPATH="&lt;projectdirectory&gt;"
+     $ export BBPATH
+                </literallayout>
+                Use your actual project directory in the command.
+                BitBake uses that directory to find the metadata it needs for
+                your project.
+                <note>
+                    When specifying your project directory, do not use the
+                    tilde ("~") character as BitBake does not expand that character
+                    as the shell would.
+                </note>
+                </para></listitem>
+            <listitem><para><emphasis>Run Bitbake:</emphasis>
+                Now that you have <filename>BBPATH</filename> defined, run
+                the <filename>bitbake</filename> command again:
+                <literallayout class='monospaced'>
+     $ bitbake
+     ERROR: Traceback (most recent call last):
+       File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 163, in wrapped
+         return func(fn, *args)
+       File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 173, in parse_config_file
+         return bb.parse.handle(fn, data, include)
+       File "/home/scott-lenovo/bitbake/lib/bb/parse/__init__.py", line 99, in handle
+         return h['handle'](fn, data, include)
+       File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 120, in handle
+         abs_fn = resolve_file(fn, data)
+       File "/home/scott-lenovo/bitbake/lib/bb/parse/__init__.py", line 117, in resolve_file
+         raise IOError("file %s not found in %s" % (fn, bbpath))
+     IOError: file conf/bitbake.conf not found in /home/scott-lenovo/hello
 
-   bitbake -DDD
-
-   You get these complaints:
-
-The BBPATH variable is not set and bitbake did not find a conf/bblayers.conf file in the expected location.
-Maybe you accidentally invoked bitbake from the wrong directory?
-
-2. If you export BBPATH to point to your build directory and do nothing
-   else, BB will look for the &lt;buildir&gt;/conf/bitbake.conf file. It will
-   throw and error with a bunch of traceback stuff and say:
-
-scott-lenovo@scott-lenovo:~ [master #]
-$ mkdir junk
-scott-lenovo@scott-lenovo:~ [master #]
-$ BBPATH="/home/scott-lenovo/junk"
-scott-lenovo@scott-lenovo:~ [master #]
-$ export BBPATH
-scott-lenovo@scott-lenovo:~ [master #]
-$ bitbake -DDD
-ERROR: Traceback (most recent call last):
-  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 163, in wrapped
-    return func(fn, *args)
-  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 173, in parse_config_file
-    return bb.parse.handle(fn, data, include)
-  File "/home/scott-lenovo/bitbake/lib/bb/parse/__init__.py", line 99, in handle
-    return h['handle'](fn, data, include)
-  File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 120, in handle
-    abs_fn = resolve_file(fn, data)
-  File "/home/scott-lenovo/bitbake/lib/bb/parse/__init__.py", line 117, in resolve_file
-    raise IOError("file %s not found in %s" % (fn, bbpath))
-IOError: file conf/bitbake.conf not found in /home/scott-lenovo/junk
-
-ERROR: Unable to parse conf/bitbake.conf: file conf/bitbake.conf not found in /home/scott-lenovo/junk
-scott-lenovo@scott-lenovo:~ [master #]
-
-3. Now I am going to create the conf/bitbake.conf file I need for the hello
-   world example.  Then run it again.  Time it complains about not finding
-   classes/base.bbclass.
-
-scott-lenovo@scott-lenovo:~/junk [master #]
-$ bitbake -DDD
+     ERROR: Unable to parse conf/bitbake.conf: file conf/bitbake.conf not found in /home/scott-lenovo/hello
+                </literallayout>
+                This sample output shows that BitBake could not find the
+                <filename>conf/bitbake.conf</filename> file in the project
+                directory.
+                This file is the first thing BitBake must find in order
+                to build a target.
+                And, since the project directory for this example is
+                empty, you need to provide a <filename>conf/bitbake.conf</filename>
+                file.
+                </para></listitem>
+            <listitem><para><emphasis>Creating <filename>conf/bitbake.conf</filename>:</emphasis>
+                The <filename>conf/bitbake.conf</filename> includes a number of
+                configuration variables BitBake uses for metadata and recipe
+                files.
+                For this example, you need to create the file in your project directory
+                and define some key BitBake variables.
+                For more information on the <filename>bitbake.conf</filename>,
+                see
+                <ulink url='http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/#an-overview-of-bitbakeconf'></ulink>
+                </para>
+                <para>Use the following commands to create the <filename>conf</filename>
+                directory in the project directory:
+                <literallayout class='monospaced'>
+     $ mkdir conf
+                </literallayout>
+                From within the <filename>conf</filename> directory, use
+                some editor to create the <filename>bitbake.conf</filename>
+                so that it contains the following:
+                <literallayout class='monospaced'>
+     TMPDIR  = "${<link linkend='var-TOPDIR'>TOPDIR</link>}/tmp"
+     <link linkend='var-CACHE'>CACHE</link>   = "${TMPDIR}/cache"
+     <link linkend='var-STAMP'>STAMP</link>   = "${TMPDIR}/stamps"
+     <link linkend='var-T'>T</link>       = "${TMPDIR}/work"
+     <link linkend='var-B'>B</link>       = "${TMPDIR}"
+                </literallayout>
+                The <filename>TMPDIR</filename> variable establishes a directory
+                that BitBake uses for build output and intermediate files (other
+                than the cached information used by the
+                <link linkend='setscene'>Setscene</link> process.
+                Here, the <filename>TMPDIR</filename> directory is set to
+                <filename>hello/tmp</filename>.
+                <note><title>Tip</title>
+                    You can always safely delete the <filename>tmp</filename>
+                    directory in order to rebuild a BitBake target.
+                    The build process creates the directory for you
+                    when you run BitBake.
+                </note></para>
+                <para>For information about each of the other variables defined in this
+                example, click on the links to take you to the definitions in
+                the glossary.
+                </para></listitem>
+            <listitem><para><emphasis>Run Bitbake:</emphasis>
+                After making sure that the <filename>conf/bitbake.conf</filename>
+                file exists, you can run the <filename>bitbake</filename>
+                command again:
+                <literallayout class='monospaced'>
+$ bitbake
 ERROR: Traceback (most recent call last):
   File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 163, in wrapped
     return func(fn, *args)
@@ -271,241 +341,178 @@ ERROR: Traceback (most recent call last):
 ParseError: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
 
 ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
-scott-lenovo@scott-lenovo:~/junk [master #]
-
-4. So now we add that classes/base.bbclass file and put in one line that says
-   "addtask build", which is the minimum task you need.  We run it again and
-   things work but there is nothing to do.  That stands to reason since I gave it
-   no target.
-
-scott-lenovo@scott-lenovo:~/junk [master #]
-$ bitbake -DDD
-Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.
-DEBUG: Removed the following variables from the environment: GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP, GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, no_proxy, XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER, SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID, EDITOR, GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION, GNOME_KEYRING_PID, XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN, DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE, DESKTOP_SESSION, LESSCLOSE, DEFAULTS_PATH, UBUNTU_MENUPROXY, OLDPWD, XDG_DATA_DIRS, COLORTERM, LS_COLORS
-DEBUG: LOAD /home/scott-lenovo/junk/conf/bitbake.conf
-DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/junk/classes/base.bbclass
-DEBUG: BB /home/scott-lenovo/junk/classes/base.bbclass: handle(data, include)
-DEBUG: LOAD /home/scott-lenovo/junk/classes/base.bbclass
-DEBUG: Clearing SRCREV cache due to cache policy of: clear
-DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/local_file_checksum_cache.dat'
-DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/bb_codeparser.dat'
-DEBUG: Features set [3] (was [3])
-scott-lenovo@scott-lenovo:~/junk [master #]
-
-5. Here is what happens when you do provide a target but the target doesn't
-   exist yet.
-
-scott-lenovo@scott-lenovo:~/junk [master #]
-$ bitbake a
-ERROR: no recipe files to build, check your BBPATH and BBFILES?
-
-Summary: There was 1 ERROR message shown, returning a non-zero exit code.
-scott-lenovo@scott-lenovo:~/junk [master #]
-
-6. Create a layer that has your metadata in it.  You need your recipe file
-   and your layer.conf file.  That is all good but you still need to
-   tell BB where your layers are.  You do that through a bblayers.conf file.
-   We will use this one:
-
-   BBLAYERS ?=" \
-     /home/scott-lenovo/LayerA \
-     "
-
-   Now when you run it, you get this:
-
-$ bitbake -DDD a
-DEBUG: Removed the following variables from the environment: GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP, GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, no_proxy, XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER, SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID, EDITOR, GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION, GNOME_KEYRING_PID, XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN, DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE, DESKTOP_SESSION, LESSCLOSE, DEFAULTS_PATH, UBUNTU_MENUPROXY, OLDPWD, XDG_DATA_DIRS, COLORTERM, LS_COLORS
-DEBUG: Found bblayers.conf (/home/scott-lenovo/junk/conf/bblayers.conf)
-DEBUG: LOAD /home/scott-lenovo/junk/conf/bblayers.conf
-DEBUG: Adding layer /home/scott-lenovo/LayerA
-DEBUG: LOAD /home/scott-lenovo/LayerA/conf/layer.conf
-DEBUG: LOAD /home/scott-lenovo/junk/conf/bitbake.conf
-DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/junk/classes/base.bbclass
-DEBUG: BB /home/scott-lenovo/junk/classes/base.bbclass: handle(data, include)
-DEBUG: LOAD /home/scott-lenovo/junk/classes/base.bbclass
-DEBUG: Clearing SRCREV cache due to cache policy of: clear
-DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/local_file_checksum_cache.dat'
-DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/bb_codeparser.dat'
-DEBUG: Features set [3] (was [3])
-DEBUG: Calculated priority of layer A as 1
-DEBUG: collecting .bb files
-DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache'
-DEBUG: Cache: /home/scott-lenovo/LayerA/a.bb is not cached
-DEBUG: BB /home/scott-lenovo/LayerA/a.bb: handle(data)                                                           | ETA:  --:--:--
-DEBUG: LOAD /home/scott-lenovo/LayerA/a.bb
-Parsing recipes: 100% |##########################################################################################| Time: 00:00:00
-Parsing of 1 .bb files complete (0 cached, 1 parsed). 1 targets, 0 skipped, 0 masked, 0 errors.
-DEBUG: parsing complete
-DEBUG: providers for a are: ['a']
-DEBUG: sorted providers for a are: ['/home/scott-lenovo/LayerA/a.bb']
-DEBUG: adding /home/scott-lenovo/LayerA/a.bb to satisfy a
-DEBUG: Added dependencies [] for /home/scott-lenovo/LayerA/a.bb
-NOTE: Resolving any missing task queue dependencies
-DEBUG: Resolved 0 extra dependencies
-NOTE: Preparing runqueue
-NOTE: Marking Active Tasks
-NOTE: Pruned 0 inactive tasks, 1 left
-NOTE: Assign Weightings
-NOTE: Compute totals (have 1 endpoint(s))
-DEBUG: Starting bitbake-worker
-NOTE: Executing RunQueue Tasks
-DEBUG: Considering 0 (/home/scott-lenovo/LayerA/a.bb, do_build): set([])
-DEBUG: Skip list (pre setsceneverify) []
-DEBUG: Full skip list set([])
-DEBUG: Using runqueue scheduler 'speed'
-DEBUG: Stampfile /home/scott-lenovo/junk/tmp/stamps.do_build not available
-DEBUG: Found bblayers.conf (/home/scott-lenovo/junk/conf/bblayers.conf)
-DEBUG: LOAD /home/scott-lenovo/junk/conf/bblayers.conf
-DEBUG: Adding layer /home/scott-lenovo/LayerA
-DEBUG: LOAD /home/scott-lenovo/LayerA/conf/layer.conf
-DEBUG: LOAD /home/scott-lenovo/junk/conf/bitbake.conf
-DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/junk/classes/base.bbclass
-DEBUG: BB /home/scott-lenovo/junk/classes/base.bbclass: handle(data, include)
-DEBUG: LOAD /home/scott-lenovo/junk/classes/base.bbclass
-DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/bb_codeparser.dat'
-************************
-*                      *
-*     Hello, World!    *
-*                      *
-************************
-DEBUG: Teardown for bitbake-worker
-NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
-scott-lenovo@scott-lenovo:~/junk/conf [master #]
-
-7. If you run it without the "-DDD" option, the output is cleaner.
-
-scott-lenovo@scott-lenovo:~/junk [master #]
-$ bitbake a
-Parsing recipes: 100% |##########################################################################################| Time: 00:00:00
-Parsing of 1 .bb files complete (0 cached, 1 parsed). 1 targets, 0 skipped, 0 masked, 0 errors.
-NOTE: Resolving any missing task queue dependencies
-NOTE: Preparing runqueue
-NOTE: Executing RunQueue Tasks
-************************
-*                      *
-*     Hello, World!    *
-*                      *
-************************
-NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
-scott-lenovo@scott-lenovo:~/junk [master #]
                 </literallayout>
-            </para>
-
-            <para>
-                You need to set
-                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
-            </para>
-
-            <para>
-                When you run BitBake, it begins looking for metadata files.
-                The <filename>BBPATH</filename> variable is what tells
-                BitBake where to look.
-                You could set <filename>BBPATH</filename> in the same manner
-                that you set <filename>PATH</filename> as shown earlier.
-                However, it is much more flexible to set the
-                <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
-                variable for each project.
-            </para>
-
-            <para>
-                Without <filename>BBPATH</filename>, Bitbake cannot
-                find any configuration files (<filename>.conf</filename>)
-                or recipe files (<filename>.bb</filename>) at all.
-                BitBake also cannot find the <filename>bitbake.conf</filename>
-                file.
-            </para>
-
-            <para>
-                It is standard practice to organize the project's directory tree
-                to include both a <filename>conf/</filename> and
-                <filename>classes/</filename> directory.
-                You need to add those directories to your project:
+                In the sample output, BitBake could not find the
+                <filename>classes/base.bbclass</filename> file.
+                You need to create that file next.
+                </para></listitem>
+            <listitem><para><emphasis>Creating <filename>classes/base.bbclass</filename>:</emphasis>
+                BitBake uses class files to provide common code and functionality.
+                The minimally required class for BitBake is the
+                <filename>classes/base.bbclass</filename> file.
+                The <filename>base</filename> class is implicitly inherited by
+                every recipe.
+                BitBake looks for the class in the <filename>classes</filename>
+                directory of the project (i.e <filename>hello/classes</filename>
+                in this example).
+                </para>
+                <para>Create the <filename>classes</filename> directory as follows:
                 <literallayout class='monospaced'>
-     $ mkdir conf classes
+     $ cd $HOME/hello
+     $ mkdir classes
                 </literallayout>
-                Once those directories are in place, you can copy the
-                sample configuration files provided in the
-                BitBake source tree to their appropriate directories.
-                First, change to the BitBake source tree directory and
-                then copy the directories:
+                Move to the <filename>classes</filename> directory and then
+                create the <filename>base.bbclass</filename> file by inserting
+                this single line:
                 <literallayout class='monospaced'>
-     cp conf/bitbake.conf ~/dev/hello/conf/
-     cp classes/base.bbclass ~/dev/hello/classes/
+     addtask build
                 </literallayout>
-                At this point your project directory structure should look like
-                the following:
-               <literallayout class='monospaced'>
-     ~/dev/hello$ tree
-     .
-     |-- classes
-     |   +-- base.bbclass
-     +-- conf
-         +-- bitbake.conf
-                </literallayout>
-            </para>
-
-            <para>
-                Once you have copied these files into your project, you
-                can now get back to resolving the <filename>BBPATH</filename>
-                issue.
-            </para>
-
-            <para>
-                The first configuration file that BitBake looks for is always
-                <filename>bblayers.conf</filename>.
-                With this knowledge, you know that to resolve your
-                <filename>BBPATH</filename> error you can add a
-                <filename>conf/bblayers.conf</filename> file to the
-                project source tree and populate it with the
-                <filename>BBPATH</filename> variable declaration.
-            </para>
-
-            <para>
-                From your project source tree:
+                The minimal task that BitBake runs is the
+                <filename>do_build</filename> task.
+                This is all the example needs in order to build the project.
+                Of course, the <filename>base.bbclass</filename> can have much
+                more depending on which build environments BitBake is
+                supporting.
+                For more information on the <filename>base.bbclass</filename> file,
+                you can look at
+                <ulink url='http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/#tasks'></ulink>.
+                </para></listitem>
+            <listitem><para><emphasis>Run Bitbake:</emphasis>
+                After making sure that the <filename>classes/base.bbclass</filename>
+                file exists, you can run the <filename>bitbake</filename>
+                command again:
                 <literallayout class='monospaced'>
-     $ vim conf/bblayers.conf
+     $ bitbake
+     Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.
                 </literallayout>
-                Now add the following to the empty
-                <filename>bblayers.conf</filename> file:
-                <literallayout class='monospaced'>
-     BBPATH := "${TOPDIR}"
-                </literallayout>
-            </para>
-
-            <para>
-                Now, from the root of your project directory, run BitBake
-                again and see what happens:
-                <literallayout class='monospaced'>
-     $ bitbake -DDD
-     Nothing to do.  Use 'bitbake world' to build everything, or
-     run 'bitbake --help' for usage information.
-     DEBUG: Removed the following variables from the environment:
-     GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP,
-     GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, no_proxy,
-     XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER, SHLVL,
-     MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID, EDITOR,
-     GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION, DEFAULTS_PATH,
-     XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN,
-     DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE,
-     DESKTOP_SESSION, LESSCLOSE, GNOME_KEYRING_PID, UBUNTU_MENUPROXY,
-     OLDPWD, XDG_DATA_DIRS, COLORTERM, LS_COLORS
-     DEBUG: Found bblayers.conf (/home/scott-lenovo/dev/hello/conf/bblayers.conf)
-     DEBUG: LOAD /home/scott-lenovo/dev/hello/conf/bblayers.conf
-     DEBUG: LOAD /home/scott-lenovo/dev/hello/conf/bitbake.conf
-     DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/dev/hello/classes/base.bbclass
-     DEBUG: BB /home/scott-lenovo/dev/hello/classes/base.bbclass: handle(data, include)
-     DEBUG: LOAD /home/scott-lenovo/dev/hello/classes/base.bbclass
-     DEBUG: Clearing SRCREV cache due to cache policy of: clear
-     DEBUG: Using cache in '/home/scott-lenovo/dev/hello/tmp/cache/local_file_checksum_cache.dat'
-     DEBUG: Using cache in '/home/scott-lenovo/dev/hello/tmp/cache/bb_codeparser.dat'
-     DEBUG: Features set [3] (was [3])
-                </literallayout>
+                BitBake is finally reporting no errors.
+                However, you can see that it really does not have anything
+                to do.
+                You need to create a recipe that gives BitBake something to do.
+                </para></listitem>
+            <listitem><para><emphasis>Creating a Layer:</emphasis>
+                While it is not really necessary for such a small example,
+                it is good practice to create a layer in which to keep your
+                code separate from the general metadata used by BitBake.
+                Thus, this example creates and uses a layer called "mylayer".
                 <note>
-                    From this point forward in the example, the environment
-                    variable removal messages are ignored and omitted.
-                    Examine the relevant DEBUG messages:
+                    You can find additional information on adding a layer at
+                    <ulink url='http://hambedded.org/blog/2012/11/24/from-bitbake-hello-world-to-an-image/#adding-an-example-layer'></ulink>.
                 </note>
-            </para>
-        </section>
+                </para>
+                <para>Minimally, you need a recipe file and a layer configuration
+                file in your layer.
+                The configuration file needs to be in the <filename>conf</filename>
+                directory inside the layer.
+                Use these commands to set up the layer and the <filename>conf</filename>
+                directory:
+                <literallayout class='monospaced'>
+     $ cd $HOME
+     $ mkdir mylayer
+     $ cd mylayer
+     $ mkdir conf
+                </literallayout>
+                Move to the <filename>conf</filename> directory and create a
+                <filename>layer.conf</filename> file that has the following:
+                <literallayout class='monospaced'>
+     BBPATH .= ":${<link linkend='var-LAYERDIR'>LAYERDIR</link>}"
+
+     <link linkend='var-BBFILES'>BBFILES</link> += "${LAYERDIR}/*.bb"
+
+     <link linkend='var-BBFILE_COLLECTIONS'>BBFILE_COLLECTIONS</link> += "mylayer"
+     <link linkend='var-BBFILE_PATTERN'>BBFILE_PATTERN_mylayer</link> := "^${LAYERDIR}/"
+                </literallayout>
+                For information on these variables, click the links
+                to go to the definitions in the glossary.</para>
+                <para>You need to create the recipe file next.
+                Inside your layer at the top-level, use an editor and create
+                a recipe file named <filename>printhello.bb</filename> that
+                has the following:
+                <literallayout class='monospaced'>
+     <link linkend='var-DESCRIPTION'>DESCRIPTION</link> = "Prints Hello World"
+     <link linkend='var-PN'>PN</link> = 'printhello'
+     <link linkend='var-PV'>PV</link> = '1'
+
+     python do_build() {
+        bb.plain("********************");
+        bb.plain("*                  *");
+        bb.plain("*  Hello, World!   *");
+        bb.plain("*                  *");
+        bb.plain("********************");
+     }
+                </literallayout>
+                The recipe file simply provides a description of the
+                recipe, the name, version, and the <filename>do_build</filename>
+                task, which prints out "Hello World" to the console.
+                For more information on these variables, follow the links
+                to the glossary.
+                </para></listitem>
+            <listitem><para><emphasis>Run Bitbake With a Target:</emphasis>
+                Now that a BitBake target exists, run the command and provide
+                that target:
+                <literallayout class='monospaced'>
+     $ cd $HOME/hello
+     $ bitbake printhello
+     ERROR: no recipe files to build, check your BBPATH and BBFILES?
+
+     Summary: There was 1 ERROR message shown, returning a non-zero exit code.
+                </literallayout>
+                We have created the layer with the recipe and the layer
+                configuration file but it still seems that BitBake cannot
+                find the recipe.
+                BitBake needs a <filename>conf/bblayers.conf</filename> that
+                lists the layers for the project.
+                Without this file, BitBake cannot find the recipe.
+                </para></listitem>
+            <listitem><para><emphasis>Creating <filename>conf/bblayers.conf</filename>:</emphasis>
+                BitBake uses the <filename>conf/bblayers.conf</filename> file
+                to locate layers needed for the project.
+                This file must reside in the <filename>conf</filename> directory
+                of the project (i.e. <filename>hello/conf</filename> for this
+                example).</para>
+                <para>Set your working directory to the <filename>hello/conf</filename>
+                directory and then create the <filename>bblayers.conf</filename>
+                file so that it contains the following:
+                <literallayout class='monospaced'>
+     BBLAYERS ?= " \
+       /home/&lt;you&gt;/mylayer \
+       "
+                </literallayout>
+                You need to provide your own information for
+                <filename>you</filename> in the file.
+                </para></listitem>
+            <listitem><para><emphasis>Run Bitbake With a Target:</emphasis>
+                Now that you have supplied the <filename>bblayers.conf</filename>
+                file, run the <filename>bitbake</filename> command and provide
+                the target:
+                <literallayout class='monospaced'>
+     $ bitbake printhello
+     Parsing recipes: 100% |##################################################################################|
+     Time: 00:00:00
+     Parsing of 1 .bb files complete (0 cached, 1 parsed). 1 targets, 0 skipped, 0 masked, 0 errors.
+     NOTE: Resolving any missing task queue dependencies
+     NOTE: Preparing runqueue
+     NOTE: Executing RunQueue Tasks
+     ********************
+     *                  *
+     *  Hello, World!   *
+     *                  *
+     ********************
+     NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
+                </literallayout>
+                BitBake finds the <filename>printhello</filename> recipe and
+                successfully runs the task.
+                <note>
+                    Rerunning the task without removing the <filename>tmp</filename>
+                    directory will not result in a BitBake run that prints the
+                    same console output.
+                    BitBake uses its Setscene process and determines that
+                    nothing needs to be re-run.
+                    If you delete the <filename>tmp</filename> directory and
+                    then re-run the build, the printed output appears
+                    at the console.
+                </note>
+                </para></listitem>
+        </orderedlist>
     </section>
 </appendix>
