@@ -63,44 +63,41 @@
         <title>Setting Up the BitBake Environment</title>
 
         <para>
-            The recommended method to run BitBake is from a directory of your
-            choice.
-            The directory can be within your home directory or in
-            <filename>/usr/local</filename>,
-            depending on your preference.
-        </para>
-
-        <para>
-            First, run BitBake to make sure it's working.
-            From the BitBake source code directory, issue the following command:
+            First, you need to be sure that you can run BitBake.
+            Set your working directory to where your local BitBake
+            files are and run the following command:
             <literallayout class='monospaced'>
      $ ./bin/bitbake --version
      BitBake Build Tool Core version 1.23.0, bitbake version 1.23.0
             </literallayout>
-            You are now ready to use BitBake.
+            The console output tells you what version you are running.
         </para>
 
         <para>
-            A final step to make development easier is to add the executable
-            binary to your environment <filename>PATH</filename>.
+            The recommended method to run BitBake is from a directory of your
+            choice.
+            To be able to run BitBake from any directory, you need to add the
+            executable binary to your binary to your shell's environment
+            <filename>PATH</filename> variable.
             First, look at your current <filename>PATH</filename> variable
             by entering the following:
             <literallayout class='monospaced'>
      $ echo $PATH
             </literallayout>
             Next, add the directory location for the BitBake binary to the
-            <filename>PATH</filename> using this form:
+            <filename>PATH</filename>.
+            Here is an example that adds the
+            <filename>/home/scott-lenovo/bitbake/bin</filename> directory
+            to the front of the <filename>PATH</filename> variable:
             <literallayout class='monospaced'>
-     $ export PATH=&lt;path-to-bitbake-executable&gt;:$PATH
+     $ export PATH=/home/scott-lenovo/bitbake/bin:$PATH
             </literallayout>
-            This will add the directory to the beginning of your
-            <filename>PATH</filename> environment variable.
             You should now be able to enter the <filename>bitbake</filename>
-            command at the command line to run BitBake.
+            command from the command line while working from any directory.
         </para>
 
         <para>
-            For a more permanent solution assuming you are running the BASH
+            For a more permanent solution, assuming you are running the BASH
             shell, edit <filename>~/.bashrc</filename> and add the following to the end
             of that file:
             <literallayout class='monospaced'>
@@ -185,9 +182,8 @@
                 First, set up a directory for the "Hello World" project.
                 Here is how you can do so in your home directory:
                 <literallayout class='monospaced'>
-     $ mkdir ~/dev
-     $ mkdir ~/dev/hello
-     $ cd ~/dev/hello
+     $ mkdir ~/hello
+     $ cd ~/hello
                 </literallayout>
                 Within this new, empty directory, run BitBake with
                 debugging output and see what happens:
@@ -212,8 +208,191 @@
                 The majority of this output is specific to environment variables
                 that are not directly relevant to BitBake.
                 However, the very first message regarding the
-                <filename>BBPATH</filename> variable
-                is relevant and you need to rectify it by setting
+                <filename>BBPATH</filename> variable and the
+                <filename>conf/bblayers.conf</filename> file
+                is relevant.
+            </para>
+
+            <para>
+                <literallayout class='monospaced'>
+1. Once you have PATH set up to actually run BB, and then you run it
+   using:
+
+   bitbake -DDD
+
+   You get these complaints:
+
+The BBPATH variable is not set and bitbake did not find a conf/bblayers.conf file in the expected location.
+Maybe you accidentally invoked bitbake from the wrong directory?
+
+2. If you export BBPATH to point to your build directory and do nothing
+   else, BB will look for the &lt;buildir&gt;/conf/bitbake.conf file. It will
+   throw and error with a bunch of traceback stuff and say:
+
+scott-lenovo@scott-lenovo:~ [master #]
+$ mkdir junk
+scott-lenovo@scott-lenovo:~ [master #]
+$ BBPATH="/home/scott-lenovo/junk"
+scott-lenovo@scott-lenovo:~ [master #]
+$ export BBPATH
+scott-lenovo@scott-lenovo:~ [master #]
+$ bitbake -DDD
+ERROR: Traceback (most recent call last):
+  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 163, in wrapped
+    return func(fn, *args)
+  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 173, in parse_config_file
+    return bb.parse.handle(fn, data, include)
+  File "/home/scott-lenovo/bitbake/lib/bb/parse/__init__.py", line 99, in handle
+    return h['handle'](fn, data, include)
+  File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 120, in handle
+    abs_fn = resolve_file(fn, data)
+  File "/home/scott-lenovo/bitbake/lib/bb/parse/__init__.py", line 117, in resolve_file
+    raise IOError("file %s not found in %s" % (fn, bbpath))
+IOError: file conf/bitbake.conf not found in /home/scott-lenovo/junk
+
+ERROR: Unable to parse conf/bitbake.conf: file conf/bitbake.conf not found in /home/scott-lenovo/junk
+scott-lenovo@scott-lenovo:~ [master #]
+
+3. Now I am going to create the conf/bitbake.conf file I need for the hello
+   world example.  Then run it again.  Time it complains about not finding
+   classes/base.bbclass.
+
+scott-lenovo@scott-lenovo:~/junk [master #]
+$ bitbake -DDD
+ERROR: Traceback (most recent call last):
+  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 163, in wrapped
+    return func(fn, *args)
+  File "/home/scott-lenovo/bitbake/lib/bb/cookerdata.py", line 177, in _inherit
+    bb.parse.BBHandler.inherit(bbclass, "configuration INHERITs", 0, data)
+  File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/BBHandler.py", line 92, in inherit
+    include(fn, file, lineno, d, "inherit")
+  File "/home/scott-lenovo/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 100, in include
+    raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), oldfn, lineno)
+ParseError: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
+
+ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inherit file classes/base.bbclass
+scott-lenovo@scott-lenovo:~/junk [master #]
+
+4. So now we add that classes/base.bbclass file and put in one line that says
+   "addtask build", which is the minimum task you need.  We run it again and
+   things work but there is nothing to do.  That stands to reason since I gave it
+   no target.
+
+scott-lenovo@scott-lenovo:~/junk [master #]
+$ bitbake -DDD
+Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.
+DEBUG: Removed the following variables from the environment: GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP, GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, no_proxy, XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER, SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID, EDITOR, GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION, GNOME_KEYRING_PID, XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN, DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE, DESKTOP_SESSION, LESSCLOSE, DEFAULTS_PATH, UBUNTU_MENUPROXY, OLDPWD, XDG_DATA_DIRS, COLORTERM, LS_COLORS
+DEBUG: LOAD /home/scott-lenovo/junk/conf/bitbake.conf
+DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/junk/classes/base.bbclass
+DEBUG: BB /home/scott-lenovo/junk/classes/base.bbclass: handle(data, include)
+DEBUG: LOAD /home/scott-lenovo/junk/classes/base.bbclass
+DEBUG: Clearing SRCREV cache due to cache policy of: clear
+DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/local_file_checksum_cache.dat'
+DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/bb_codeparser.dat'
+DEBUG: Features set [3] (was [3])
+scott-lenovo@scott-lenovo:~/junk [master #]
+
+5. Here is what happens when you do provide a target but the target doesn't
+   exist yet.
+
+scott-lenovo@scott-lenovo:~/junk [master #]
+$ bitbake a
+ERROR: no recipe files to build, check your BBPATH and BBFILES?
+
+Summary: There was 1 ERROR message shown, returning a non-zero exit code.
+scott-lenovo@scott-lenovo:~/junk [master #]
+
+6. Create a layer that has your metadata in it.  You need your recipe file
+   and your layer.conf file.  That is all good but you still need to
+   tell BB where your layers are.  You do that through a bblayers.conf file.
+   We will use this one:
+
+   BBLAYERS ?=" \
+     /home/scott-lenovo/LayerA \
+     "
+
+   Now when you run it, you get this:
+
+$ bitbake -DDD a
+DEBUG: Removed the following variables from the environment: GNOME_DESKTOP_SESSION_ID, XDG_CURRENT_DESKTOP, GNOME_KEYRING_CONTROL, DISPLAY, SSH_AGENT_PID, LANG, no_proxy, XDG_SESSION_PATH, XAUTHORITY, SESSION_MANAGER, SHLVL, MANDATORY_PATH, COMPIZ_CONFIG_PROFILE, WINDOWID, EDITOR, GPG_AGENT_INFO, SSH_AUTH_SOCK, GDMSESSION, GNOME_KEYRING_PID, XDG_SEAT_PATH, XDG_CONFIG_DIRS, LESSOPEN, DBUS_SESSION_BUS_ADDRESS, _, XDG_SESSION_COOKIE, DESKTOP_SESSION, LESSCLOSE, DEFAULTS_PATH, UBUNTU_MENUPROXY, OLDPWD, XDG_DATA_DIRS, COLORTERM, LS_COLORS
+DEBUG: Found bblayers.conf (/home/scott-lenovo/junk/conf/bblayers.conf)
+DEBUG: LOAD /home/scott-lenovo/junk/conf/bblayers.conf
+DEBUG: Adding layer /home/scott-lenovo/LayerA
+DEBUG: LOAD /home/scott-lenovo/LayerA/conf/layer.conf
+DEBUG: LOAD /home/scott-lenovo/junk/conf/bitbake.conf
+DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/junk/classes/base.bbclass
+DEBUG: BB /home/scott-lenovo/junk/classes/base.bbclass: handle(data, include)
+DEBUG: LOAD /home/scott-lenovo/junk/classes/base.bbclass
+DEBUG: Clearing SRCREV cache due to cache policy of: clear
+DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/local_file_checksum_cache.dat'
+DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/bb_codeparser.dat'
+DEBUG: Features set [3] (was [3])
+DEBUG: Calculated priority of layer A as 1
+DEBUG: collecting .bb files
+DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache'
+DEBUG: Cache: /home/scott-lenovo/LayerA/a.bb is not cached
+DEBUG: BB /home/scott-lenovo/LayerA/a.bb: handle(data)                                                           | ETA:  --:--:--
+DEBUG: LOAD /home/scott-lenovo/LayerA/a.bb
+Parsing recipes: 100% |##########################################################################################| Time: 00:00:00
+Parsing of 1 .bb files complete (0 cached, 1 parsed). 1 targets, 0 skipped, 0 masked, 0 errors.
+DEBUG: parsing complete
+DEBUG: providers for a are: ['a']
+DEBUG: sorted providers for a are: ['/home/scott-lenovo/LayerA/a.bb']
+DEBUG: adding /home/scott-lenovo/LayerA/a.bb to satisfy a
+DEBUG: Added dependencies [] for /home/scott-lenovo/LayerA/a.bb
+NOTE: Resolving any missing task queue dependencies
+DEBUG: Resolved 0 extra dependencies
+NOTE: Preparing runqueue
+NOTE: Marking Active Tasks
+NOTE: Pruned 0 inactive tasks, 1 left
+NOTE: Assign Weightings
+NOTE: Compute totals (have 1 endpoint(s))
+DEBUG: Starting bitbake-worker
+NOTE: Executing RunQueue Tasks
+DEBUG: Considering 0 (/home/scott-lenovo/LayerA/a.bb, do_build): set([])
+DEBUG: Skip list (pre setsceneverify) []
+DEBUG: Full skip list set([])
+DEBUG: Using runqueue scheduler 'speed'
+DEBUG: Stampfile /home/scott-lenovo/junk/tmp/stamps.do_build not available
+DEBUG: Found bblayers.conf (/home/scott-lenovo/junk/conf/bblayers.conf)
+DEBUG: LOAD /home/scott-lenovo/junk/conf/bblayers.conf
+DEBUG: Adding layer /home/scott-lenovo/LayerA
+DEBUG: LOAD /home/scott-lenovo/LayerA/conf/layer.conf
+DEBUG: LOAD /home/scott-lenovo/junk/conf/bitbake.conf
+DEBUG: BB configuration INHERITs:0: inheriting /home/scott-lenovo/junk/classes/base.bbclass
+DEBUG: BB /home/scott-lenovo/junk/classes/base.bbclass: handle(data, include)
+DEBUG: LOAD /home/scott-lenovo/junk/classes/base.bbclass
+DEBUG: Using cache in '/home/scott-lenovo/junk/tmp/cache/bb_codeparser.dat'
+************************
+*                      *
+*     Hello, World!    *
+*                      *
+************************
+DEBUG: Teardown for bitbake-worker
+NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
+scott-lenovo@scott-lenovo:~/junk/conf [master #]
+
+7. If you run it without the "-DDD" option, the output is cleaner.
+
+scott-lenovo@scott-lenovo:~/junk [master #]
+$ bitbake a
+Parsing recipes: 100% |##########################################################################################| Time: 00:00:00
+Parsing of 1 .bb files complete (0 cached, 1 parsed). 1 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+NOTE: Preparing runqueue
+NOTE: Executing RunQueue Tasks
+************************
+*                      *
+*     Hello, World!    *
+*                      *
+************************
+NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
+scott-lenovo@scott-lenovo:~/junk [master #]
+                </literallayout>
+            </para>
+
+            <para>
+                You need to set
                 <link linkend='var-BBPATH'><filename>BBPATH</filename></link>.
             </para>
 
