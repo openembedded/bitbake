@@ -1080,20 +1080,21 @@
                     (<filename>.conf</filename>) files.
                     This variable is analogous to the
                     <filename>PATH</filename> variable.
-                    <note>
-                        If you run BitBake from a directory outside of the
-                        build directory,
-                        you must be sure to set
-                        <filename>BBPATH</filename> to point to the
-                        build directory.
-                        Set the variable as you would any environment variable
-                        and then run BitBake:
-                        <literallayout class='monospaced'>
+                </para>
+
+                <para>
+                    If you run BitBake from a directory outside of the
+                    build directory,
+                    you must be sure to set
+                    <filename>BBPATH</filename> to point to the
+                    build directory.
+                    Set the variable as you would any environment variable
+                    and then run BitBake:
+                    <literallayout class='monospaced'>
      $ BBPATH="&lt;build_directory&gt;"
      $ export BBPATH
      $ bitbake &lt;target&gt;
-                        </literallayout>
-                    </note>
+                    </literallayout>
                 </para>
             </glossdef>
         </glossentry>
