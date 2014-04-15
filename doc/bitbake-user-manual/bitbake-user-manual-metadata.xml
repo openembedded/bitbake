@@ -301,6 +301,29 @@
                 variable becoming the current date.
             </para>
         </section>
+
+        <section id='providing-pathnames'>
+            <title>Providing Pathnames</title>
+
+            <para>
+                When specifying pathnames for use with BitBake,
+                do not use the tilde ("~") character as a shortcut
+                for your home directory.
+                Doing so might cause BitBake to not recognize the
+                path since BitBake does not expand this character in
+                the same way a shell would.
+            </para>
+
+            <para>
+                Instead, provide a fuller path as the following
+                example illustrates:
+                <literallayout class='monospaced'>
+     BBLAYERS ?= " \
+       /home/scott-lenovo/LayerA \
+       "
+                </literallayout>
+            </para>
+        </section>
     </section>
 
     <section id='conditional-syntax-overrides'>
