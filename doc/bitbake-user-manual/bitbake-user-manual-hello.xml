@@ -14,7 +14,7 @@
             example.
             This appendix demonstrates, in tutorial form, Hello
             World within the context of BitBake.
-            The tutorial describes how to create a new Project
+            The tutorial describes how to create a new project
             and the applicable metadata files necessary to allow
             BitBake to build it.
         </para>
@@ -94,26 +94,6 @@
             </literallayout>
             You should now be able to enter the <filename>bitbake</filename>
             command from the command line while working from any directory.
-        </para>
-
-        <para>
-            For a more permanent solution, assuming you are running the BASH
-            shell, edit <filename>~/.bashrc</filename> and add the following to the end
-            of that file:
-            <literallayout class='monospaced'>
-     PATH=&lt;path-to-bitbake-executable&gt;:$PATH
-            </literallayout>
-        </para>
-
-        <para>
-            If you're a Vim user, you will find useful
-            Vim configuration contributions in the
-            <filename>contrib/vim</filename> directory.
-            Copy the files from that directory to your
-            <filename>/home/yourusername/.vim</filename>
-            directory.
-            If that directory does not exist, create it, and then
-            restart Vim.
         </para>
     </section>
 
@@ -503,14 +483,22 @@ ERROR: Unable to parse base: ParseError in configuration INHERITs: Could not inh
                 BitBake finds the <filename>printhello</filename> recipe and
                 successfully runs the task.
                 <note>
-                    Rerunning the task without removing the <filename>tmp</filename>
-                    directory will not result in a BitBake run that prints the
-                    same console output.
-                    BitBake uses its Setscene process and determines that
-                    nothing needs to be re-run.
-                    If you delete the <filename>tmp</filename> directory and
-                    then re-run the build, the printed output appears
-                    at the console.
+                    After the first execution, re-running
+                    <filename>bitbake printhello</filename> again will not
+                    result in a BitBake run that prints the same console
+                    output.
+                    The reason for this is that the first time the
+                    <filename>printhello.bb</filename> recipe's
+                    <filename>do_build</filename> task executes
+                    successfully, BitBake writes a stamp file for the task.
+                    Thus, the next time you attempt to run the task
+                    using that same <filename>bitbake</filename> command,
+                    BitBake notices the stamp and therefore determines
+                    that the task does not need to be re-run.
+                    If you delete the <filename>tmp</filename> directory
+                    or run <filename>bitbake -c clean printhello</filename>
+                    and then re-run the build, the "Hello, World!" message will
+                    be printed again.
                 </note>
                 </para></listitem>
         </orderedlist>
