@@ -845,6 +845,19 @@ def contains(variable, checkvalues, truevalue, falsevalue, d):
         return truevalue
     return falsevalue
 
+def contains_any(variable, checkvalues, truevalue, falsevalue, d):
+    val = d.getVar(variable, True)
+    if not val:
+        return falsevalue
+    val = set(val.split())
+    if isinstance(checkvalues, basestring):
+        checkvalues = set(checkvalues.split())
+    else:
+        checkvalues = set(checkvalues)
+    if checkvalues in val:
+        return truevalue
+    return falsevalue
+
 def cpu_count():
     return multiprocessing.cpu_count()
 
