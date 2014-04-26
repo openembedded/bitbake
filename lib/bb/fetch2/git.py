@@ -123,7 +123,7 @@ class Git(FetchMethod):
             ud.branches[name] = branch
             ud.unresolvedrev[name] = branch
 
-        ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git"
+        ud.basecmd = data.getVar("FETCHCMD_git", d, True) or "git -c core.fsyncobjectfiles=0"
 
         ud.write_tarballs = ((data.getVar("BB_GENERATE_MIRROR_TARBALLS", d, True) or "0") != "0") or ud.rebaseable
 
@@ -275,7 +275,7 @@ class Git(FetchMethod):
             os.symlink(ud.clonedir, indirectiondir)
             clonedir = indirectiondir
 
-        runfetchcmd("git clone %s %s/ %s" % (cloneflags, clonedir, destdir), d)
+        runfetchcmd("%s clone %s %s/ %s" % (ud.basecmd, cloneflags, clonedir, destdir), d)
         if not ud.nocheckout:
             os.chdir(destdir)
             if subdir != "":
