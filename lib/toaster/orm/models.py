@@ -72,7 +72,7 @@ class Target(models.Model):
 
 class Target_Image_File(models.Model):
     target = models.ForeignKey(Target)
-    file_name = models.FilePathField(max_length=100)
+    file_name = models.FilePathField(max_length=254)
     file_size = models.IntegerField()
 
 class Target_File(models.Model):
@@ -230,7 +230,7 @@ class Package(models.Model):
     version = models.CharField(max_length=100, blank=True)
     revision = models.CharField(max_length=32, blank=True)
     summary = models.CharField(max_length=200, blank=True)
-    description = models.CharField(max_length=200, blank=True)
+    description = models.TextField(blank=True)
     size = models.IntegerField(default=0)
     installed_size = models.IntegerField(default=0)
     section = models.CharField(max_length=80, blank=True)
@@ -298,7 +298,7 @@ class Recipe(models.Model):
     version = models.CharField(max_length=100, blank=True)
     layer_version = models.ForeignKey('Layer_Version', related_name='recipe_layer_version')
     summary = models.CharField(max_length=100, blank=True)
-    description = models.CharField(max_length=100, blank=True)
+    description = models.TextField(blank=True)
     section = models.CharField(max_length=100, blank=True)
     license = models.CharField(max_length=200, blank=True)
     homepage = models.URLField(blank=True)
@@ -353,7 +353,7 @@ class VariableHistory(models.Model):
     value   = models.TextField(blank=True)
     file_name = models.FilePathField(max_length=255)
     line_number = models.IntegerField(null=True)
-    operation = models.CharField(max_length=16)
+    operation = models.CharField(max_length=64)
 
 class HelpText(models.Model):
     VARIABLE = 0
