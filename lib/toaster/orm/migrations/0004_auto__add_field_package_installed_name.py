@@ -34,6 +34,7 @@ class Migration(SchemaMigration):
             'machine': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'outcome': ('django.db.models.fields.IntegerField', [], {'default': '2'}),
             'started_on': ('django.db.models.fields.DateTimeField', [], {}),
+            'timespent': ('django.db.models.fields.IntegerField', [], {'default': '0'}),
             'warnings_no': ('django.db.models.fields.IntegerField', [], {'default': '0'})
         },
         u'orm.layer': {

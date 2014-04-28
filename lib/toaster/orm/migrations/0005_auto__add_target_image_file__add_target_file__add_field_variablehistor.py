@@ -8,15 +8,6 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding model 'Target_Image_File'
-        db.create_table(u'orm_target_image_file', (
-            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('target', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.Target'])),
-            ('file_name', self.gf('django.db.models.fields.FilePathField')(max_length=100)),
-            ('file_size', self.gf('django.db.models.fields.IntegerField')()),
-        ))
-        db.send_create_signal(u'orm', ['Target_Image_File'])
-
         # Adding model 'Target_File'
         db.create_table(u'orm_target_file', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
@@ -31,6 +22,15 @@ class Migration(SchemaMigration):
             ('sym_target', self.gf('django.db.models.fields.related.ForeignKey')(related_name='symlink_set', blank=True, to=orm['orm.Target_File'])),
         ))
         db.send_create_signal(u'orm', ['Target_File'])
+
+        # Adding model 'Target_Image_File'
+        db.create_table(u'orm_target_image_file', (
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('target', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.Target'])),
+            ('file_name', self.gf('django.db.models.fields.FilePathField')(max_length=100)),
+            ('file_size', self.gf('django.db.models.fields.IntegerField')()),
+        ))
+        db.send_create_signal(u'orm', ['Target_Image_File'])
 
         # Adding field 'VariableHistory.value'
         db.add_column(u'orm_variablehistory', 'value',
@@ -49,11 +49,6 @@ class Migration(SchemaMigration):
         # Deleting field 'Build.image_fstypes'
         db.delete_column(u'orm_build', 'image_fstypes')
 
-        # Adding field 'Build.timespent'
-        db.add_column(u'orm_build', 'timespent',
-                      self.gf('django.db.models.fields.IntegerField')(default=0),
-                      keep_default=False)
-
         # Adding field 'LogMessage.task'
         db.add_column(u'orm_logmessage', 'task',
                       self.gf('django.db.models.fields.related.ForeignKey')(to=orm['orm.Task'], null=True, blank=True),
@@ -70,11 +65,11 @@ class Migration(SchemaMigration):
         # Removing unique constraint on 'Task', fields ['build', 'recipe', 'task_name']
         db.delete_unique(u'orm_task', ['build_id', 'recipe_id', 'task_name'])
 
-        # Deleting model 'Target_Image_File'
-        db.delete_table(u'orm_target_image_file')
-
         # Deleting model 'Target_File'
         db.delete_table(u'orm_target_file')
+
+        # Deleting model 'Target_Image_File'
+        db.delete_table(u'orm_target_image_file')
 
         # Deleting field 'VariableHistory.value'
         db.delete_column(u'orm_variablehistory', 'value')
@@ -84,35 +79,20 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.TextField')(default='', blank=True),
                       keep_default=False)
 
-
-        # User chose to not deal with backwards NULL issues for 'Target.file_name'
-        raise RuntimeError("Cannot reverse this migration. 'Target.file_name' and its values cannot be restored.")
-        
-        # The following code is provided here to aid in writing a correct migration        # Adding field 'Target.file_name'
+        # Adding field 'Target.file_name'
         db.add_column(u'orm_target', 'file_name',
-                      self.gf('django.db.models.fields.CharField')(max_length=100),
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=100),
                       keep_default=False)
 
-
-        # User chose to not deal with backwards NULL issues for 'Target.file_size'
-        raise RuntimeError("Cannot reverse this migration. 'Target.file_size' and its values cannot be restored.")
-        
-        # The following code is provided here to aid in writing a correct migration        # Adding field 'Target.file_size'
+        # Adding field 'Target.file_size'
         db.add_column(u'orm_target', 'file_size',
-                      self.gf('django.db.models.fields.IntegerField')(),
+                      self.gf('django.db.models.fields.IntegerField')(default=0),
                       keep_default=False)
 
-
-        # User chose to not deal with backwards NULL issues for 'Build.image_fstypes'
-        raise RuntimeError("Cannot reverse this migration. 'Build.image_fstypes' and its values cannot be restored.")
-        
-        # The following code is provided here to aid in writing a correct migration        # Adding field 'Build.image_fstypes'
+        # Adding field 'Build.image_fstypes'
         db.add_column(u'orm_build', 'image_fstypes',
-                      self.gf('django.db.models.fields.CharField')(max_length=100),
+                      self.gf('django.db.models.fields.CharField')(default='', max_length=100),
                       keep_default=False)
-
-        # Deleting field 'Build.timespent'
-        db.delete_column(u'orm_build', 'timespent')
 
         # Deleting field 'LogMessage.task'
         db.delete_column(u'orm_logmessage', 'task_id')
