@@ -35,7 +35,7 @@ def check_indent(codestr):
 
 class CodeParserCache(MultiProcessCache):
     cache_file_name = "bb_codeparser.dat"
-    CACHE_VERSION = 4
+    CACHE_VERSION = 5
 
     def __init__(self):
         MultiProcessCache.__init__(self)
@@ -217,6 +217,15 @@ class ShellParser():
             self.execs = codeparsercache.shellcacheextras[h]["execs"]
             return self.execs
 
+        self._parse_shell(value)
+        self.execs = set(cmd for cmd in self.allexecs if cmd not in self.funcdefs)
+
+        codeparsercache.shellcacheextras[h] = {}
+        codeparsercache.shellcacheextras[h]["execs"] = self.execs
+
+        return self.execs
+
+    def _parse_shell(self, value):
         try:
             tokens, _ = pyshyacc.parse(value, eof=True, debug=False)
         except pyshlex.NeedMore:
@@ -224,12 +233,6 @@ class ShellParser():
 
         for token in tokens:
             self.process_tokens(token)
-        self.execs = set(cmd for cmd in self.allexecs if cmd not in self.funcdefs)
-
-        codeparsercache.shellcacheextras[h] = {}
-        codeparsercache.shellcacheextras[h]["execs"] = self.execs
-
-        return self.execs
 
     def process_tokens(self, tokens):
         """Process a supplied portion of the syntax tree as returned by
@@ -303,7 +306,7 @@ class ShellParser():
 
                 if part[0] in ('`', '$('):
                     command = pyshlex.wordtree_as_string(part[1:-1])
-                    self.parse_shell(command)
+                    self._parse_shell(command)
 
                     if word[0] in ("cmd_name", "cmd_word"):
                         if word in words:
@@ -322,7 +325,7 @@ class ShellParser():
                     self.log.debug(1, self.unhandled_template % cmd)
                 elif cmd == "eval":
                     command = " ".join(word for _, word in words[1:])
-                    self.parse_shell(command)
+                    self._parse_shell(command)
                 else:
                     self.allexecs.add(cmd)
                 break
