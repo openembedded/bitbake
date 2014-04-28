@@ -975,7 +975,6 @@ def get_file_checksums(filelist, pn):
 
     checksums = []
     for pth in filelist.split():
-        checksum = None
         if '*' in pth:
             # Handle globs
             for f in glob.glob(pth):
@@ -985,15 +984,12 @@ def get_file_checksums(filelist, pn):
                     checksum = checksum_file(f)
                     if checksum:
                         checksums.append((f, checksum))
-            continue
         elif os.path.isdir(pth):
             checksums.extend(checksum_dir(pth))
-            continue
         else:
             checksum = checksum_file(pth)
-
-        if checksum:
-            checksums.append((pth, checksum))
+            if checksum:
+                checksums.append((pth, checksum))
 
     checksums.sort(key=operator.itemgetter(1))
     return checksums
