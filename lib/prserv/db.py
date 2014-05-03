@@ -220,6 +220,7 @@ class PRData(object):
                 raise e
         self.connection=sqlite3.connect(self.filename, isolation_level="EXCLUSIVE", check_same_thread = False)
         self.connection.row_factory=sqlite3.Row
+        self.connection.execute("pragma synchronous = off;")
         self._tables={}
 
     def __del__(self):
