@@ -199,7 +199,9 @@ class PersistData(object):
         del self.data[domain][key]
 
 def connect(database):
-    return sqlite3.connect(database, timeout=5, isolation_level=None)
+    connection = sqlite3.connect(database, timeout=5, isolation_level=None)
+    connection.execute("pragma synchronous = off;")
+    return connection
 
 def persist(domain, d):
     """Convenience factory for SQLTable objects based upon metadata"""
