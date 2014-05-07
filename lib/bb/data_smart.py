@@ -513,10 +513,15 @@ class DataSmart(MutableMapping):
     def _setvar_update_overrides(self, var):
         # aka pay the cookie monster
         override = var[var.rfind('_')+1:]
-        if len(override) > 0:
+        shortvar = var[:var.rfind('_')]
+        while override:
             if override not in self._seen_overrides:
                 self._seen_overrides[override] = set()
             self._seen_overrides[override].add( var )
+            override = None
+            if "_" in shortvar:
+                override = var[shortvar.rfind('_')+1:]
+                shortvar = var[:shortvar.rfind('_')]
 
     def getVar(self, var, expand=False, noweakdefault=False):
         return self.getVarFlag(var, "_content", expand, noweakdefault)
