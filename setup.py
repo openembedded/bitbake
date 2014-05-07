@@ -33,17 +33,17 @@ class Clean(clean):
     def run(self):
         clean.run(self)
         origpath = os.path.abspath(os.curdir)
-        os.chdir(os.path.join(origpath, 'doc', 'manual'))
+        os.chdir(os.path.join(origpath, 'doc'))
         make = os.environ.get('MAKE') or 'make'
-        os.system('%s clean-%s' % (make, doctype))
+        os.system('%s clean-%s DOC=bitbake-user-manual' % (make, doctype))
 
 class Build(build):
     def run(self):
         build.run(self)
         origpath = os.path.abspath(os.curdir)
-        os.chdir(os.path.join(origpath, 'doc', 'manual'))
+        os.chdir(os.path.join(origpath, 'doc'))
         make = os.environ.get('MAKE') or 'make'
-        ret = os.system('%s %s' % (make, doctype))
+        ret = os.system('%s %s DOC=bitbake-user-manual' % (make, doctype))
         if ret != 0:
             print("ERROR: Unable to generate html documentation.")
             sys.exit(ret)
@@ -58,7 +58,7 @@ setup(name='bitbake',
       py_modules = ["codegen"],
       scripts = ["bin/bitbake", "bin/bitbake-layers", "bin/bitbake-diffsigs", "bin/bitbake-prserv", "bin/bitbake-selftest", "bin/image-writer"],
       data_files = [("share/bitbake", glob("conf/*") + glob("classes/*")),
-                  ("share/doc/bitbake-%s/manual" % __version__, glob("doc/manual/html/*"))],
+                  ("share/doc/bitbake-%s/bitbake-user-manual" % __version__, glob("doc/bitbake-user-manual/html/*"))],
       cmdclass = {
           "build": Build,
           "clean": Clean,
