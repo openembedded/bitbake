@@ -377,7 +377,7 @@ def _expand_versions(versions):
 def multi_finalize(fn, d):
     appends = (d.getVar("__BBAPPEND", True) or "").split()
     for append in appends:
-        logger.debug(2, "Appending .bbappend file %s to %s", append, fn)
+        logger.debug(1, "Appending .bbappend file %s to %s", append, fn)
         bb.parse.BBHandler.handle(append, d, True)
 
     onlyfinalise = d.getVar("__ONLYFINALISE", False)
