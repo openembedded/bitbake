@@ -351,7 +351,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                 # For "normal" logging conditions, don't show note logs from tasks
                 # but do show them if the user has changed the default log level to
                 # include verbose/debug messages
-                if event.taskpid != 0 and event.levelno <= format.NOTE:
+                if event.taskpid != 0 and event.levelno <= format.NOTE and (event.levelno < llevel or (event.levelno == format.NOTE and llevel != format.VERBOSE)):
                     continue
                 logger.handle(event)
                 continue
