@@ -86,7 +86,7 @@ def inherit(files, fn, lineno, d):
                 file = abs_fn
 
         if not file in __inherit_cache:
-            logger.log(logging.DEBUG -1, "BB %s:%d: inheriting %s", fn, lineno, file)
+            logger.debug(1, "Inheriting %s (from %s:%d)" % (file, fn, lineno))
             __inherit_cache.append( file )
             d.setVar('__inherit_cache', __inherit_cache)
             include(fn, file, lineno, d, "inherit")
@@ -123,12 +123,6 @@ def handle(fn, d, include):
     __infunc__ = ""
     __classname__ = ""
     __residue__ = []
-
-
-    if include == 0:
-        logger.debug(2, "BB %s: handle(data)", fn)
-    else:
-        logger.debug(2, "BB %s: handle(data, include)", fn)
 
     base_name = os.path.basename(fn)
     (root, ext) = os.path.splitext(base_name)

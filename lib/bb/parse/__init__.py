@@ -121,7 +121,6 @@ def resolve_file(fn, d):
     if not os.path.isfile(fn):
         raise IOError("file %s not found" % fn)
 
-    logger.debug(2, "LOAD %s", fn)
     return fn
 
 # Used by OpenEmbedded metadata
