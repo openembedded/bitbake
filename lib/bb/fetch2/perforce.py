@@ -48,7 +48,7 @@ class Perforce(FetchMethod):
             (user, pswd, host, port) = path.split('@')[0].split(":")
             path = path.split('@')[1]
         else:
-            (host, port) = data.getVar('P4PORT', d).split(':')
+            (host, port) = d.getVar('P4PORT').split(':')
             user = ""
             pswd = ""
 
@@ -81,7 +81,7 @@ class Perforce(FetchMethod):
         if host:
             p4opt += " -p %s" % (host)
 
-        p4date = data.getVar("P4DATE", d, True)
+        p4date = d.getVar("P4DATE", True)
         if "revision" in parm:
             depot += "#%s" % (parm["revision"])
         elif "label" in parm:
@@ -89,7 +89,7 @@ class Perforce(FetchMethod):
         elif p4date:
             depot += "@%s" % (p4date)
 
-        p4cmd = data.getVar('FETCHCMD_p4', d, True)
+        p4cmd = d.getVar('FETCHCMD_p4', True) or "p4"
         logger.debug(1, "Running %s%s changes -m 1 %s", p4cmd, p4opt, depot)
         p4file, errors = bb.process.run("%s%s changes -m 1 %s" % (p4cmd, p4opt, depot))
         cset = p4file.strip()
@@ -145,7 +145,7 @@ class Perforce(FetchMethod):
         if host:
             p4opt += " -p %s" % (host)
 
-        p4cmd = data.getVar('FETCHCMD_p4', d, True)
+        p4cmd = d.getVar('FETCHCMD_p4', True) or "p4"
 
         # create temp directory
         logger.debug(2, "Fetch: creating temporary directory")
