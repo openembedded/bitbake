@@ -570,6 +570,19 @@
             </para>
         </section>
 
+        <section id='gitsm-fetcher'>
+            <title>GIT Submodule Fetcher (<filename>gitsm://</filename>)</title>
+
+            <para>
+                This fetcher inherits from the Git fetcher and extends its
+                behavior by fetching a repositories submodules.
+                Uri is passed to the Git fetcher so see <link linkend='git-fetcher'>
+                the git fetcher documentation for syntax</link>.
+                NOTE: You must clean a recipe when switching between 'git://' and
+                'gitsm://' urls.
+            </para>
+        </section>
+
         <section id='other-fetchers'>
             <title>Other Fetchers</title>
 
@@ -581,9 +594,6 @@
                         </para></listitem>
                     <listitem><para>
                         Perforce (<filename>p4://</filename>)
-                        </para></listitem>
-                    <listitem><para>
-                        Git Submodules (<filename>gitsm://</filename>)
                         </para></listitem>
                     <listitem><para>
                         Trees using Git Annex (<filename>gitannex://</filename>)

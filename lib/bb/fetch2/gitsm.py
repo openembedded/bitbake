@@ -2,6 +2,16 @@
 # -*- tab-width: 4; c-basic-offset: 4; indent-tabs-mode: nil -*-
 """
 BitBake 'Fetch' git submodules implementation
+
+Inherits from and extends the Git fetcher to retrieve submodules of a git repository
+after cloning.
+
+SRC_URI = "gitsm://<see Git fetcher for syntax>"
+
+See the Git fetcher, git://, for usage documentation.
+
+NOTE: Switching a SRC_URI from "git://" to "gitsm://" requires a clean of your recipe.
+
 """
 
 # Copyright (C) 2013 Richard Purdie
