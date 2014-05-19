@@ -574,12 +574,27 @@
             <title>GIT Submodule Fetcher (<filename>gitsm://</filename>)</title>
 
             <para>
-                This fetcher inherits from the Git fetcher and extends its
-                behavior by fetching a repositories submodules.
-                Uri is passed to the Git fetcher so see <link linkend='git-fetcher'>
-                the git fetcher documentation for syntax</link>.
-                NOTE: You must clean a recipe when switching between 'git://' and
-                'gitsm://' urls.
+                This fetcher submodule inherits from the
+                <link linkend='git-fetcher'>Git fetcher</link> and extends
+                that fetcher's behavior by fetching a repository's submodules.
+                URI is passed to the Git fetcher as described in the
+                "<link linkend='git-fetcher'>GIT Fetcher (<filename>git://</filename>)</link>"
+                section.
+                <note>
+                    <title>Notes and Warnings</title>
+                    <para>
+                        You must clean a recipe when switching between
+                        '<filename>git://</filename>' and
+                        '<filename>gitsm://</filename>' URLs.
+                    </para>
+
+                    <para>
+                        The Git Submodules fetcher is not a complete fetcher
+                        implementation.
+                        The fetcher has known issues where it does not use the
+                        normal source mirroring infrastructure properly.
+                    </para>
+                </note>
             </para>
         </section>
 
