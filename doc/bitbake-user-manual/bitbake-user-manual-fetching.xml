@@ -577,7 +577,8 @@
                 This fetcher submodule inherits from the
                 <link linkend='git-fetcher'>Git fetcher</link> and extends
                 that fetcher's behavior by fetching a repository's submodules.
-                URI is passed to the Git fetcher as described in the
+                <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>
+                is passed to the Git fetcher as described in the
                 "<link linkend='git-fetcher'>GIT Fetcher (<filename>git://</filename>)</link>"
                 section.
                 <note>
