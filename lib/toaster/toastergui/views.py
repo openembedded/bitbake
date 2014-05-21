@@ -262,6 +262,7 @@ def builds(request):
             # TODO: common objects for all table views, adapt as needed
                 'objects' : build_info,
                 'objectname' : "builds",
+                'default_orderby' : 'completed_on:-',
                 'fstypes' : fstypes_map,
                 'search_term' : search_term,
                 'total_count' : queryset_with_search.count(),
@@ -311,6 +312,7 @@ def builds(request):
                  'qhelp': "The date and time the build finished",
                  'orderfield': _get_toggle_order(request, "completed_on", True),
                  'ordericon':_get_toggle_order_icon(request, "completed_on"),
+                 'orderkey' : 'completed_on',
                  'filter' : {'class' : 'completed_on',
                              'label': 'Show:',
                              'options' : [
@@ -334,6 +336,7 @@ def builds(request):
                  'qhelp': "How many errors were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "errors_no", True),
                  'ordericon':_get_toggle_order_icon(request, "errors_no"),
+                 'orderkey' : 'errors_no',
                  'filter' : {'class' : 'errors_no',
                              'label': 'Show:',
                              'options' : [
@@ -346,6 +349,7 @@ def builds(request):
                  'qhelp': "How many warnings were encountered during the build (if any)",
                  'orderfield': _get_toggle_order(request, "warnings_no", True),
                  'ordericon':_get_toggle_order_icon(request, "warnings_no"),
+                 'orderkey' : 'warnings_no',
                  'filter' : {'class' : 'warnings_no',
                              'label': 'Show:',
                              'options' : [
@@ -358,6 +362,7 @@ def builds(request):
                  'qhelp': "How long it took the build to finish",
                  'orderfield': _get_toggle_order(request, "timespent", True),
                  'ordericon':_get_toggle_order_icon(request, "timespent"),
+                 'orderkey' : 'timespent',
                 },
                 {'name': 'Log',
                  'dclass': "span4",
@@ -365,6 +370,7 @@ def builds(request):
                  'clclass': 'log', 'hidden': 1,
                  'orderfield': _get_toggle_order(request, "cooker_log_path"),
                  'ordericon':_get_toggle_order_icon(request, "cooker_log_path"),
+                 'orderkey' : 'cooker_log_path',
                 },
                 {'name': 'Output', 'clclass': 'output',
                  'qhelp': "The root file system types produced by the build. You can find them in your <code>/build/tmp/deploy/images/</code> directory",
@@ -502,7 +508,7 @@ def task( request, build_id, task_id ):
             'log_head'        : log_head,
             'log_body'        : log_body,
             'showing_matches' : False,
-			'uri_list'        : uri_list,
+            'uri_list'        : uri_list,
     }
     if request.GET.get( 'show_matches', "" ):
         context[ 'showing_matches' ] = True
@@ -559,6 +565,7 @@ def target(request, build_id, target_id):
                 'objects': packages,
                 'packages_sum' : packages_sum['installed_size__sum'],
                 'object_search_display': "packages included",
+                'default_orderby' : 'name:+',
                 'tablecols':[
                 {
                     'name':'Package',
@@ -575,6 +582,7 @@ def target(request, build_id, target_id):
                     'qhelp':'The size of the package',
                     'orderfield': _get_toggle_order(request, "size", True),
                     'ordericon':_get_toggle_order_icon(request, "size"),
+                    'orderkey' : 'size',
                     'clclass': 'size',
                     'dclass' : 'span2',
                     'hidden' : 0,
@@ -582,6 +590,7 @@ def target(request, build_id, target_id):
                 {
                     'name':'Size over total (%)',
                     'qhelp':'Proportion of the overall included package size represented by this package',
+                    'orderkey' : 'size',
                     'clclass': 'size_over_total',
                     'dclass' : 'span2',
                     'hidden' : 1,
@@ -591,6 +600,7 @@ def target(request, build_id, target_id):
                     'qhelp':'The license under which the package is distributed. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source',
                     'orderfield': _get_toggle_order(request, "license"),
                     'ordericon':_get_toggle_order_icon(request, "license"),
+                    'orderkey' : 'license',
                     'clclass': 'license',
                     'hidden' : 1,
                 },
@@ -611,6 +621,7 @@ def target(request, build_id, target_id):
                     'qhelp':'The name of the recipe building the package',
                     'orderfield': _get_toggle_order(request, "recipe__name"),
                     'ordericon':_get_toggle_order_icon(request, "recipe__name"),
+                    'orderkey' : 'recipe__name',
                     'clclass': 'recipe_name',
                     'hidden' : 0,
                 },
@@ -625,6 +636,7 @@ def target(request, build_id, target_id):
                     'qhelp':'The name of the layer providing the recipe that builds the package',
                     'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__name"),
                     'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__name"),
+                    'orderkey' : 'recipe__layer_version__layer__name',
                     'clclass': 'layer_name',
                     'hidden' : 1,
                 },
@@ -633,6 +645,7 @@ def target(request, build_id, target_id):
                     'qhelp':'The Git branch of the layer providing the recipe that builds the package',
                     'orderfield': _get_toggle_order(request, "recipe__layer_version__branch"),
                     'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__branch"),
+                    'orderkey' : 'recipe__layer_version__branch',
                     'clclass': 'layer_branch',
                     'hidden' : 1,
                 },
@@ -830,21 +843,25 @@ def tasks_common(request, build_id, variant, task_anchor):
         object_search_display="time data"
         filter_search_display="tasks"
         mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'elapsed_time:-'};
+        default_orderby = 'elapsed_time:-';
     elif 'diskio'    == variant:
         title_variant='Disk I/O'
         object_search_display="disk I/O data"
         filter_search_display="tasks"
         mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'disk_io:-'};
+        default_orderby = 'disk_io:-';
     elif 'cpuusage'  == variant:
         title_variant='CPU usage'
         object_search_display="CPU usage data"
         filter_search_display="tasks"
         mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'cpu_usage:-'};
+        default_orderby = 'cpu_usage:-';
     else :
         title_variant='Tasks'
         object_search_display="tasks"
         filter_search_display="tasks"
         mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'order:+'};
+        default_orderby = 'order:+';
 
     template = 'tasks.html'
     retval = _verify_parameters( request.GET, mandatory_parameters )
@@ -886,12 +903,14 @@ def tasks_common(request, build_id, variant, task_anchor):
         'name':'Order',
         'qhelp':'The running sequence of each task in the build',
         'clclass': 'order', 'hidden' : 1,
+        'orderkey' : 'order',
         'orderfield':_get_toggle_order(request, "order"),
         'ordericon':_get_toggle_order_icon(request, "order")}
     if 'tasks' == variant: tc_order['hidden']='0'; del tc_order['clclass']
     tc_recipe={
         'name':'Recipe',
         'qhelp':'The name of the recipe to which each task applies',
+        'orderkey' : 'recipe__name',
         'orderfield': _get_toggle_order(request, "recipe__name"),
         'ordericon':_get_toggle_order_icon(request, "recipe__name"),
     }
@@ -905,6 +924,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'qhelp':'The name of the task',
         'orderfield': _get_toggle_order(request, "task_name"),
         'ordericon':_get_toggle_order_icon(request, "task_name"),
+        'orderkey' : 'task_name',
     }
     tc_executed={
         'name':'Executed',
@@ -912,6 +932,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'clclass': 'executed', 'hidden' : 0,
         'orderfield': _get_toggle_order(request, "task_executed"),
         'ordericon':_get_toggle_order_icon(request, "task_executed"),
+        'orderkey' : 'task_executed',
         'filter' : {
                    'class' : 'executed',
                    'label': 'Show:',
@@ -928,6 +949,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'clclass': 'outcome', 'hidden' : 0,
         'orderfield': _get_toggle_order(request, "outcome"),
         'ordericon':_get_toggle_order_icon(request, "outcome"),
+        'orderkey' : 'outcome',
         'filter' : {
                    'class' : 'outcome',
                    'label': 'Show:',
@@ -947,6 +969,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'qhelp':'Path to the task log file',
         'orderfield': _get_toggle_order(request, "logfile"),
         'ordericon':_get_toggle_order_icon(request, "logfile"),
+        'orderkey' : 'logfile',
         'clclass': 'task_log', 'hidden' : 1,
     }
     tc_cache={
@@ -955,6 +978,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'clclass': 'cache_attempt', 'hidden' : 0,
         'orderfield': _get_toggle_order(request, "sstate_result"),
         'ordericon':_get_toggle_order_icon(request, "sstate_result"),
+        'orderkey' : 'sstate_result',
         'filter' : {
                    'class' : 'cache_attempt',
                    'label': 'Show:',
@@ -973,6 +997,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'qhelp':'How long it took the task to finish in seconds',
         'orderfield': _get_toggle_order(request, "elapsed_time", True),
         'ordericon':_get_toggle_order_icon(request, "elapsed_time"),
+        'orderkey' : 'elapsed_time',
         'clclass': 'time_taken', 'hidden' : 1,
     }
     if   'buildtime' == variant: tc_time['hidden']='0'; del tc_time['clclass']; tc_cache['hidden']='1';
@@ -981,6 +1006,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'qhelp':'The percentage of task CPU utilization',
         'orderfield': _get_toggle_order(request, "cpu_usage", True),
         'ordericon':_get_toggle_order_icon(request, "cpu_usage"),
+        'orderkey' : 'cpu_usage',
         'clclass': 'cpu_used', 'hidden' : 1,
     }
     if   'cpuusage' == variant: tc_cpu['hidden']='0'; del tc_cpu['clclass']; tc_cache['hidden']='1';
@@ -989,6 +1015,7 @@ def tasks_common(request, build_id, variant, task_anchor):
         'qhelp':'Number of miliseconds the task spent doing disk input and output',
         'orderfield': _get_toggle_order(request, "disk_io", True),
         'ordericon':_get_toggle_order_icon(request, "disk_io"),
+        'orderkey' : 'disk_io',
         'clclass': 'disk_io', 'hidden' : 1,
     }
     if   'diskio' == variant: tc_diskio['hidden']='0'; del tc_diskio['clclass']; tc_cache['hidden']='1';
@@ -1000,6 +1027,7 @@ def tasks_common(request, build_id, variant, task_anchor):
                 'title': title_variant,
                 'build': Build.objects.filter(pk=build_id)[0],
                 'objects': tasks,
+                'default_orderby' : default_orderby,
                 'search_term': search_term,
                 'total_count': queryset_with_search.count(),
                 'tablecols':[
@@ -1050,6 +1078,7 @@ def recipes(request, build_id):
         'objectname': 'recipes',
         'build': Build.objects.filter(pk=build_id)[0],
         'objects': recipes,
+        'default_orderby' : 'name:+',
         'tablecols':[
             {
                 'name':'Recipe',
@@ -1076,6 +1105,7 @@ def recipes(request, build_id):
                 'qhelp':'Path to the recipe .bb file',
                 'orderfield': _get_toggle_order(request, "file_path"),
                 'ordericon':_get_toggle_order_icon(request, "file_path"),
+                'orderkey' : 'file_path',
                 'clclass': 'recipe_file', 'hidden': 0,
             },
             {
@@ -1083,6 +1113,7 @@ def recipes(request, build_id):
                 'qhelp':'The section in which recipes should be categorized',
                 'orderfield': _get_toggle_order(request, "section"),
                 'ordericon':_get_toggle_order_icon(request, "section"),
+                'orderkey' : 'section',
                 'clclass': 'recipe_section', 'hidden': 0,
             },
             {
@@ -1090,6 +1121,7 @@ def recipes(request, build_id):
                 'qhelp':'The list of source licenses for the recipe. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source',
                 'orderfield': _get_toggle_order(request, "license"),
                 'ordericon':_get_toggle_order_icon(request, "license"),
+                'orderkey' : 'license',
                 'clclass': 'recipe_license', 'hidden': 0,
             },
             {
@@ -1097,6 +1129,7 @@ def recipes(request, build_id):
                 'qhelp':'The name of the layer providing the recipe',
                 'orderfield': _get_toggle_order(request, "layer_version__layer__name"),
                 'ordericon':_get_toggle_order_icon(request, "layer_version__layer__name"),
+                'orderkey' : 'layer_version__layer__name',
                 'clclass': 'layer_version__layer__name', 'hidden': 0,
             },
             {
@@ -1104,6 +1137,7 @@ def recipes(request, build_id):
                 'qhelp':'The Git branch of the layer providing the recipe',
                 'orderfield': _get_toggle_order(request, "layer_version__branch"),
                 'ordericon':_get_toggle_order_icon(request, "layer_version__branch"),
+                'orderkey' : 'layer_version__branch',
                 'clclass': 'layer_version__branch', 'hidden': 1,
             },
             {
@@ -1116,6 +1150,7 @@ def recipes(request, build_id):
                 'qhelp':'Path to the layer prodiving the recipe',
                 'orderfield': _get_toggle_order(request, "layer_version__layer__local_path"),
                 'ordericon':_get_toggle_order_icon(request, "layer_version__layer__local_path"),
+                'orderkey' : 'layer_version__layer__local_path',
                 'clclass': 'layer_version__layer__local_path', 'hidden': 1,
             },
             ]
@@ -1198,6 +1233,7 @@ def configvars(request, build_id):
                 'build': Build.objects.filter(pk=build_id)[0],
                 'objects' : variables,
                 'total_count':queryset_with_search.count(),
+                'default_orderby' : 'variable_name:+',
                 'search_term':search_term,
             # Specifies the display of columns for the table, appearance in "Edit columns" box, toggling default show/hide, and specifying filters for columns
                 'tablecols' : [
@@ -1213,6 +1249,7 @@ def configvars(request, build_id):
                 {'name': 'Set in file',
                  'qhelp': "The last configuration file that touched the variable value",
                  'clclass': 'file', 'hidden' : 0,
+                 'orderkey' : 'vhistory__file_name',
                  'filter' : {
                     'class' : 'vhistory__file_name',
                     'label': 'Show:',
@@ -1259,6 +1296,7 @@ def bpackage(request, build_id):
         'objectname': 'packages built',
         'build': Build.objects.filter(pk=build_id)[0],
         'objects' : packages,
+        'default_orderby' : 'name:+',
         'tablecols':[
             {
                 'name':'Package',
@@ -1275,6 +1313,7 @@ def bpackage(request, build_id):
                 'qhelp':'The size of the package',
                 'orderfield': _get_toggle_order(request, "size", True),
                 'ordericon':_get_toggle_order_icon(request, "size"),
+                'orderkey' : 'size',
                 'clclass': 'size', 'hidden': 0,
                 'dclass' : 'span2',
             },
@@ -1283,6 +1322,7 @@ def bpackage(request, build_id):
                 'qhelp':'The license under which the package is distributed. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source',
                 'orderfield': _get_toggle_order(request, "license"),
                 'ordericon':_get_toggle_order_icon(request, "license"),
+                'orderkey' : 'license',
                 'clclass': 'license', 'hidden': 1,
             },
             {
@@ -1290,6 +1330,7 @@ def bpackage(request, build_id):
                 'qhelp':'The name of the recipe building the package',
                 'orderfield': _get_toggle_order(request, "recipe__name"),
                 'ordericon':_get_toggle_order_icon(request, "recipe__name"),
+                'orderkey' : 'recipe__name',
                 'clclass': 'recipe__name', 'hidden': 0,
             },
             {
@@ -1302,6 +1343,7 @@ def bpackage(request, build_id):
                 'qhelp':'The name of the layer providing the recipe that builds the package',
                 'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__name"),
                 'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__name"),
+                'orderkey' : 'recipe__layer_version__layer__name',
                 'clclass': 'recipe__layer_version__layer__name', 'hidden': 1,
             },
             {
@@ -1309,6 +1351,7 @@ def bpackage(request, build_id):
                 'qhelp':'The Git branch of the layer providing the recipe that builds the package',
                 'orderfield': _get_toggle_order(request, "recipe__layer_version__branch"),
                 'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__branch"),
+                'orderkey' : 'recipe__layer_version__layer__branch',
                 'clclass': 'recipe__layer_version__branch', 'hidden': 1,
             },
             {
@@ -1321,6 +1364,7 @@ def bpackage(request, build_id):
                 'qhelp':'Path to the layer providing the recipe that builds the package',
                 'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
                 'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
+                'orderkey' : 'recipe__layer_version__layer__local_path',
                 'clclass': 'recipe__layer_version__layer__local_path', 'hidden': 1,
             },
             ]
