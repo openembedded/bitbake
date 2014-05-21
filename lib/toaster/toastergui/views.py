@@ -1074,11 +1074,26 @@ def recipes(request, build_id):
 
     recipes = _build_page_range(Paginator(queryset, request.GET.get('count', 100)),request.GET.get('page', 1))
 
+    # prefetch the forward and reverse recipe dependencies
+    deps = { }; revs = { }
+    queryset_dependency=Recipe_Dependency.objects.filter(recipe__layer_version__build_id = build_id)
+    for recipe in recipes:
+        deplist = [ ]
+        for recipe_dep in [x for x in queryset_dependency if x.recipe_id == recipe.id]:
+            deplist.append(recipe_dep)
+        deps[recipe.id] = deplist
+        revlist = [ ]
+        for recipe_dep in [x for x in queryset_dependency if x.depends_on_id == recipe.id]:
+            revlist.append(recipe_dep)
+        revs[recipe.id] = revlist
+
     context = {
         'objectname': 'recipes',
         'build': Build.objects.filter(pk=build_id)[0],
         'objects': recipes,
         'default_orderby' : 'name:+',
+        'recipe_deps' : deps,
+        'recipe_revs' : revs,
         'tablecols':[
             {
                 'name':'Recipe',
