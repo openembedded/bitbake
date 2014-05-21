@@ -45,31 +45,39 @@
         <td><a href="{% url "recipe" build.pk recipe.pk %}">{{recipe.version}}</a></td>
         <!-- Depends -->
         <td class="depends_on">
-            {% if recipe.r_dependencies_recipe.all.count %}
+            {% with deps=recipe_deps|get_dict_value:recipe.pk %}
+            {% with count=deps|length %}
+            {% if count %}
             <a class="btn"
                 title="<a href='{% url "recipe" build.pk recipe.pk %}#dependencies'>{{recipe.name}}</a> dependencies"
                 data-content="<ul class='unstyled'>
-                  {% for i in recipe.r_dependencies_recipe.all|dictsort:"depends_on.name"%}
+                  {% for i in deps|dictsort:"depends_on.name"%}
                     <li><a href='{% url "recipe" build.pk i.depends_on.pk %}'>{{i.depends_on.name}}</a></li>
                   {% endfor %}
                 </ul>">
-                {{recipe.r_dependencies_recipe.all.count}}
+                {{count}}
             </a>
             {% endif %}
+            {% endwith %}
+            {% endwith %}
         </td>
         <!--  Brought in by -->
         <td class="depends_by">
-            {% if recipe.r_dependencies_depends.all.count %}
+            {% with revs=recipe_revs|get_dict_value:recipe.pk %}
+            {% with count=revs|length %}
+            {% if count %}
             <a class="btn"
                 title="<a href='{% url "recipe" build.pk recipe.pk %}#brought-in-by'>{{recipe.name}}</a> reverse dependencies"
                 data-content="<ul class='unstyled'>
-                  {% for i in recipe.r_dependencies_depends.all|dictsort:"recipe.name"%}
+                  {% for i in revs|dictsort:"recipe.name" %}
                     <li><a href='{% url "recipe" build.pk i.recipe.pk %}'>{{i.recipe.name}}</a></li>
                   {% endfor %}
                 </ul>">
-                {{recipe.r_dependencies_depends.all.count}}
+                {{count}}
             </a>
             {% endif %}
+            {% endwith %}
+            {% endwith %}
         </td>
         <!-- Recipe file -->
         <td class="recipe_file">{{recipe.file_path}}</td>
