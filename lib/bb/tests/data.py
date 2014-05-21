@@ -253,6 +253,11 @@ class TestConcatOverride(unittest.TestCase):
         bb.data.update_data(self.d)
         self.assertEqual(self.d.getVar("TEST_TEST", True), "bar bar")
 
+    def test_empty_remove(self):
+        self.d.setVar("TEST", "")
+        self.d.setVar("TEST_remove", "val")
+        bb.data.update_data(self.d)
+        self.assertEqual(self.d.getVar("TEST", True), "")
 
 class TestOverrides(unittest.TestCase):
     def setUp(self):
