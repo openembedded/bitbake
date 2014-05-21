@@ -615,7 +615,7 @@ class DataSmart(MutableMapping):
             else:
                 cachename = var + "[" + flag + "]"
             value = self.expand(value, cachename)
-        if value is not None and flag == "_content" and local_var is not None and "_removeactive" in local_var:
+        if value and flag == "_content" and local_var is not None and "_removeactive" in local_var:
             filtered = filter(lambda v: v not in local_var["_removeactive"],
                               value.split(" "))
             value = " ".join(filtered)
