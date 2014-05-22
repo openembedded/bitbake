@@ -85,7 +85,7 @@
 			<dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
 			<dt>
 				<i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
-				<a href="{% url 'target' build.pk target.target.pk %}">License manifest</a>
+				<a href="{% url 'targetpkg' build.pk target.target.pk %}">License manifest</a>
 			</dt>
 			<dd><code>{{target.target.license_manifest_path}}</code></dd>
 			<dt>
