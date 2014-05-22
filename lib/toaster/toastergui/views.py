@@ -540,132 +540,174 @@ def recipe(request, build_id, recipe_id):
     }
     return render(request, template, context)
 
-def target(request, build_id, target_id):
+def target_common( request, build_id, target_id, variant ):
     template = "target.html"
+    default_orderby = 'name:+';
     mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'name:+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 'target', request.GET, mandatory_parameters, build_id = build_id, target_id = target_id)
-    (filter_string, search_term, ordering_string) = _search_tuple(request, Package)
+        return _redirect_parameters( 
+                    variant, request.GET, mandatory_parameters, 
+                    build_id = build_id, target_id = target_id )
+    ( filter_string, search_term, ordering_string ) = _search_tuple( request, Package )
 
     # FUTURE:  get rid of nested sub-queries replacing with ManyToMany field
-    queryset = Package.objects.filter(size__gte=0, id__in=Target_Installed_Package.objects.filter(target_id=target_id).values('package_id'))
-    packages_sum =  queryset.aggregate(Sum('installed_size'))
-    queryset = _get_queryset(Package, queryset, filter_string, search_term, ordering_string, 'name')
-    packages = _build_page_range(Paginator(queryset, request.GET.get('count', 25)),request.GET.get('page', 1))
+    queryset = Package.objects.filter(
+                    size__gte = 0, 
+                    id__in = Target_Installed_Package.objects.filter(
+                        target_id=target_id ).values( 'package_id' ))
+    packages_sum =  queryset.aggregate( Sum( 'installed_size' ))
+    queryset = _get_queryset(
+            Package, queryset, filter_string, search_term, ordering_string, 'name' )
+    packages = _build_page_range( Paginator(
+            queryset, request.GET.get( 'count', 25 )),request.GET.get( 'page', 1 ))
 
     # bring in package dependencies
     for p in packages.object_list:
-        p.runtime_dependencies = p.package_dependencies_source.filter(target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
-        p.reverse_runtime_dependencies = p.package_dependencies_target.filter(target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
-
-    context = { 'build': Build.objects.filter(pk=build_id)[0],
-                'target': Target.objects.filter(pk=target_id)[0],
-                'objects': packages,
-                'packages_sum' : packages_sum['installed_size__sum'],
-                'object_search_display': "packages included",
-                'default_orderby' : 'name:+',
-                'tablecols':[
-                {
-                    'name':'Package',
-                    'qhelp':'Packaged output resulting from building a recipe and included in this image',
-                    'orderfield': _get_toggle_order(request, "name"),
-                    'ordericon':_get_toggle_order_icon(request, "name"),
-                },
-                {
-                    'name':'Package version',
-                    'qhelp':'The package version and revision',
-                },
-                {
-                    'name':'Size',
-                    'qhelp':'The size of the package',
-                    'orderfield': _get_toggle_order(request, "size", True),
-                    'ordericon':_get_toggle_order_icon(request, "size"),
-                    'orderkey' : 'size',
-                    'clclass': 'size',
-                    'dclass' : 'span2',
-                    'hidden' : 0,
-                },
-                {
-                    'name':'Size over total (%)',
-                    'qhelp':'Proportion of the overall included package size represented by this package',
-                    'orderkey' : 'size',
-                    'clclass': 'size_over_total',
-                    'dclass' : 'span2',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'License',
-                    'qhelp':'The license under which the package is distributed. Multiple license names separated by the pipe character indicates a choice between licenses. Multiple license names separated by the ampersand character indicates multiple licenses exist that cover different parts of the source',
-                    'orderfield': _get_toggle_order(request, "license"),
-                    'ordericon':_get_toggle_order_icon(request, "license"),
-                    'orderkey' : 'license',
-                    'clclass': 'license',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Dependencies',
-                    'qhelp':"Package runtime dependencies (i.e. other packages)",
-                    'clclass': 'depends',
-                    'hidden' : 0,
-                },
-                {
-                    'name':'Reverse dependencies',
-                    'qhelp':'Package run-time reverse dependencies (i.e. other packages that depend on this package)',
-                    'clclass': 'brought_in_by',
-                    'hidden' : 0,
-                },
-                {
-                    'name':'Recipe',
-                    'qhelp':'The name of the recipe building the package',
-                    'orderfield': _get_toggle_order(request, "recipe__name"),
-                    'ordericon':_get_toggle_order_icon(request, "recipe__name"),
-                    'orderkey' : 'recipe__name',
-                    'clclass': 'recipe_name',
-                    'hidden' : 0,
-                },
-                {
-                    'name':'Recipe version',
-                    'qhelp':'Version and revision of the recipe building the package',
-                    'clclass': 'recipe_version',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Layer',
-                    'qhelp':'The name of the layer providing the recipe that builds the package',
-                    'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__name"),
-                    'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__name"),
-                    'orderkey' : 'recipe__layer_version__layer__name',
-                    'clclass': 'layer_name',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Layer branch',
-                    'qhelp':'The Git branch of the layer providing the recipe that builds the package',
-                    'orderfield': _get_toggle_order(request, "recipe__layer_version__branch"),
-                    'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__branch"),
-                    'orderkey' : 'recipe__layer_version__branch',
-                    'clclass': 'layer_branch',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Layer commit',
-                    'qhelp':'The Git commit of the layer providing the recipe that builds the package',
-                    'clclass': 'layer_commit',
-                    'hidden' : 1,
-                },
-                {
-                    'name':'Layer directory',
-                    'qhelp':'Path to the layer providing the recipe that builds the package',
-                    'orderfield': _get_toggle_order(request, "recipe__layer_version__layer__local_path"),
-                    'ordericon':_get_toggle_order_icon(request, "recipe__layer_version__layer__local_path"),
-                    'clclass': 'layer_directory',
-                    'hidden' : 1,
-                },
+        p.runtime_dependencies = p.package_dependencies_source.filter(
+            target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS )
+        p.reverse_runtime_dependencies = p.package_dependencies_target.filter(
+            target_id = target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS )
+    tc_package = {
+        'name'       : 'Package',
+        'qhelp'      : 'Packaged output resulting from building a recipe included in this image',
+        'orderfield' : _get_toggle_order( request, "name" ),
+        'ordericon'  : _get_toggle_order_icon( request, "name" ),
+        }
+    tc_packageVersion = {
+        'name'       : 'Package version',
+        'qhelp'      : 'The package version and revision',
+        }
+    tc_size = {
+        'name'       : 'Size',
+        'qhelp'      : 'The size of the package',
+        'orderfield' : _get_toggle_order( request, "size", True ),
+        'ordericon'  : _get_toggle_order_icon( request, "size" ),
+        'orderkey'   : 'size',
+        'clclass'    : 'size',
+        'dclass'     : 'span2',
+        }
+    if ( variant == 'target' ):
+        tc_size[ "hidden" ] = 0
+    else:
+        tc_size[ "hidden" ] = 1
+    tc_sizePercentage = {
+        'name'       : 'Size over total (%)',
+        'qhelp'      : 'Proportion of the overall size represented by this package',
+        'orderfield' : _get_toggle_order( request, "size" ),
+        'ordericon'  : _get_toggle_order_icon( request, "size" ),
+        'clclass'    : 'size_over_total',
+        'hidden'     : 1,
+        }
+    tc_license = {
+        'name'       : 'License',
+        'qhelp'      : 'The license under which the package is distributed. Separate license names u\
+sing | (pipe) means there is a choice between licenses. Separate license names using & (ampersand) m\
+eans multiple licenses exist that cover different parts of the source',
+        'orderfield' : _get_toggle_order( request, "license" ),
+        'ordericon'  : _get_toggle_order_icon( request, "license" ),
+        'orderkey'   : 'license',
+        'clclass'    : 'license',
+        }
+    if ( variant == 'target' ):
+        tc_license[ "hidden" ] = 1
+    else:
+        tc_license[ "hidden" ] = 0
+    tc_dependencies = {
+        'name'       : 'Dependencies',
+        'qhelp'      : "Package runtime dependencies (other packages)",
+        'clclass'    : 'depends',
+        }
+    if ( variant == 'target' ):
+        tc_dependencies[ "hidden" ] = 0
+    else:
+        tc_dependencies[ "hidden" ] = 1
+    tc_rdependencies = {
+        'name'       : 'Reverse dependencies',
+        'qhelp'      : 'Package run-time reverse dependencies (i.e. which other packages depend on t\
+his package',
+        'clclass'    : 'brought_in_by',
+        }
+    if ( variant == 'target' ):
+        tc_rdependencies[ "hidden" ] = 0
+    else:
+        tc_rdependencies[ "hidden" ] = 1
+    tc_recipe = {
+        'name'       : 'Recipe',
+        'qhelp'      : 'The name of the recipe building the package',
+        'orderfield' : _get_toggle_order( request, "recipe__name" ),
+        'ordericon'  : _get_toggle_order_icon( request, "recipe__name" ),
+        'clclass'    : 'recipe_name',
+        'hidden'     : 0,
+        }
+    tc_recipeVersion = {
+        'name'       : 'Recipe version',
+        'qhelp'      : 'Version and revision of the recipe building the package',
+        'clclass'    : 'recipe_version',
+        'hidden'     : 1,
+        }
+    tc_layer = {
+        'name'       : 'Layer',
+        'qhelp'      : 'The name of the layer providing the recipe that builds the package',
+        'orderfield' : _get_toggle_order( request, "recipe__layer_version__layer__name" ),
+        'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__layer__name" ),
+        'clclass'    : 'layer_name',
+        'hidden'     : 1,
+        }
+    tc_layerBranch = {
+        'name'       : 'Layer branch',
+        'qhelp'      : 'The Git branch of the layer providing the recipe that builds the package',
+        'orderfield' : _get_toggle_order( request, "recipe__layer_version__branch" ),
+        'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__branch" ),
+        'clclass'    : 'layer_branch',
+        'hidden'     : 1,
+        }
+    tc_layerCommit = {
+        'name'       : 'Layer commit',
+        'qhelp'      : 'The Git commit of the layer providing the recipe that builds the package',
+        'clclass'    : 'layer_commit',
+        'hidden'     : 1,
+        }
+    tc_layerDir = {
+        'name':'Layer directory',
+        'qhelp':'Location in disk of the layer providing the recipe that builds the package',
+        'orderfield' : _get_toggle_order( request, "recipe__layer_version__layer__local_path" ),
+        'ordericon'  : _get_toggle_order_icon( request, "recipe__layer_version__layer__local_path" )\
+,
+        'clclass'    : 'layer_directory',
+        'hidden'     : 1,
+        }
+    context = { 
+        'objectname': variant,
+        'build'                : Build.objects.filter( pk = build_id )[ 0 ],
+        'target'               : Target.objects.filter( pk = target_id )[ 0 ],
+        'objects'              : packages,
+        'packages_sum'         : packages_sum[ 'installed_size__sum' ],
+        'object_search_display': "packages included",
+        'default_orderby'      : default_orderby,
+        'tablecols'            : [
+                    tc_package,
+                    tc_packageVersion,
+                    tc_license,
+                    tc_size,
+                    tc_sizePercentage,
+                    tc_dependencies,
+                    tc_rdependencies,
+                    tc_recipe,
+                    tc_recipeVersion,
+                    tc_layer,
+                    tc_layerBranch,
+                    tc_layerCommit,
+                    tc_layerDir,
                 ]
         }
+    return( render( request, template, context ))
 
-    return render(request, template, context)
+def target( request, build_id, target_id ):
+    return( target_common( request, build_id, target_id, "target" ))
+
+def targetpkg( request, build_id, target_id ):
+    return( target_common( request, build_id, target_id, "targetpkg" ))
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpResponse
