@@ -596,6 +596,8 @@ The .bbappend file can impact the dependency.
         self.include_re = re.compile(r"include\s+(.+)")
         self.inherit_re = re.compile(r"inherit\s+(.+)")
 
+        global_inherit = (self.bbhandler.config_data.getVar('INHERIT', True) or "").split()
+
         # The bb's DEPENDS and RDEPENDS
         for f in pkg_fn:
             f = bb.cache.Cache.virtualfn2realfn(f)[0]
@@ -637,6 +639,9 @@ The .bbappend file can impact the dependency.
                     # The inherits' format is [classes/cls, /path/to/classes/cls]
                     # ignore the classes/cls.
                     if not cls_re.match(cls):
+                        classname = os.path.splitext(os.path.basename(cls))[0]
+                        if classname in global_inherit:
+                            continue
                         inherit_layername = self.get_file_layer(cls)
                         if inherit_layername != layername and not inherit_layername in ignore_layers:
                             if not options.show_filenames:
