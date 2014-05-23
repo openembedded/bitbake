@@ -634,6 +634,26 @@ The .bbappend file can impact the dependency.
                                     self.bbhandler.cooker_data)[0][0]
                     self.check_cross_depends("RDEPENDS", layername, f, best, options.show_filenames, ignore_layers)
 
+            # The RRECOMMENDS
+            all_rrecs = self.bbhandler.cooker_data.runrecs[f].values()
+            # Remove the duplicated or null one.
+            sorted_rrecs = {}
+            # The all_rrecs is the list in list, so we need two for loops
+            for k1 in all_rrecs:
+                for k2 in k1:
+                    sorted_rrecs[k2] = 1
+            all_rrecs = sorted_rrecs.keys()
+            for rrec in all_rrecs:
+                all_p = bb.providers.getRuntimeProviders(self.bbhandler.cooker_data, rrec)
+                if all_p:
+                    if f in all_p:
+                        # The recipe provides this one itself, ignore
+                        continue
+                    best = bb.providers.filterProvidersRunTime(all_p, rrec,
+                                    self.bbhandler.config_data,
+                                    self.bbhandler.cooker_data)[0][0]
+                    self.check_cross_depends("RRECOMMENDS", layername, f, best, options.show_filenames, ignore_layers)
+
             # The inherit class
             cls_re = re.compile('classes/')
             if f in self.bbhandler.cooker_data.inherits:
