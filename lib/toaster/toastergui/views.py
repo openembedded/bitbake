@@ -402,6 +402,7 @@ def builddashboard( request, build_id ):
     targets = [ ]
     ntargets = 0
     hasImages = False
+    targetHasNoImages = False
     for t in tgts:
         elem = { }
         elem[ 'target' ] = t
@@ -428,7 +429,11 @@ def builddashboard( request, build_id ):
                 ndx = 0;
             f = i.file_name[ ndx + 1: ]
             imageFiles.append({ 'path': f, 'size' : i.file_size })
+        if ( t.is_image and 
+             (( len( imageFiles ) <= 0 ) or ( len( t.license_manifest_path ) <= 0 ))):
+            targetHasNoImages = True
         elem[ 'imageFiles' ] = imageFiles
+        elem[ 'targetHasNoImages' ] = targetHasNoImages
         targets.append( elem )
 
     ##
