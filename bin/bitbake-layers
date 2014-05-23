@@ -626,6 +626,9 @@ The .bbappend file can impact the dependency.
             for rdep in all_rdeps:
                 all_p = bb.providers.getRuntimeProviders(self.bbhandler.cooker_data, rdep)
                 if all_p:
+                    if f in all_p:
+                        # The recipe provides this one itself, ignore
+                        continue
                     best = bb.providers.filterProvidersRunTime(all_p, rdep,
                                     self.bbhandler.config_data,
                                     self.bbhandler.cooker_data)[0][0]
