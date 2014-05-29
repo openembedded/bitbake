@@ -56,8 +56,11 @@ class BBFetchException(Exception):
 
 class MalformedUrl(BBFetchException):
     """Exception raised when encountering an invalid url"""
-    def __init__(self, url):
-         msg = "The URL: '%s' is invalid and cannot be interpreted" % url
+    def __init__(self, url, message=''):
+         if message:
+             msg = message
+         else:
+             msg = "The URL: '%s' is invalid and cannot be interpreted" % url
          self.url = url
          BBFetchException.__init__(self, msg)
          self.args = (url,)
@@ -371,8 +374,11 @@ def decodeurl(url):
     p = {}
     if parm:
         for s in parm.split(';'):
-            s1, s2 = s.split('=')
-            p[s1] = s2
+            if s:
+                if not '=' in s:
+                    raise MalformedUrl(url, "The URL: '%s' is invalid: parameter %s does not specify a value (missing '=')" % (url, s))
+                s1, s2 = s.split('=')
+                p[s1] = s2
 
     return type, host, urllib.unquote(path), user, pswd, p
 
