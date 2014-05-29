@@ -357,6 +357,8 @@ def better_exec(code, context, text = None, realfile = "<code>"):
     except bb.BBHandledException:
         # Error already shown so passthrough
         raise
+    except bb.data_smart.ExpansionError:
+        raise
     except Exception as e:
         (t, value, tb) = sys.exc_info()
 
