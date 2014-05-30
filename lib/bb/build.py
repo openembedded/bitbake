@@ -243,7 +243,7 @@ def exec_func_python(func, d, runfile, cwd=None):
         comp = utils.better_compile(code, func, bbfile)
         utils.better_exec(comp, {"d": d}, code, bbfile)
     except:
-        if sys.exc_info()[0] in (bb.parse.SkipPackage, bb.build.FuncFailed):
+        if sys.exc_info()[0] in (bb.parse.SkipRecipe, bb.build.FuncFailed):
             raise
 
         raise FuncFailed(func, None)

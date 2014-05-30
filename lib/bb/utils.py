@@ -362,7 +362,7 @@ def better_exec(code, context, text = None, realfile = "<code>"):
     except Exception as e:
         (t, value, tb) = sys.exc_info()
 
-        if t in [bb.parse.SkipPackage, bb.build.FuncFailed]:
+        if t in [bb.parse.SkipRecipe, bb.build.FuncFailed]:
             raise
         try:
             _print_exception(t, value, tb, realfile, text, context)

@@ -386,7 +386,7 @@ def multi_finalize(fn, d):
     d = bb.data.createCopy(safe_d)
     try:
         finalize(fn, d)
-    except bb.parse.SkipPackage as e:
+    except bb.parse.SkipRecipe as e:
         d.setVar("__SKIPPED", e.args[0])
     datastores = {"": safe_d}
 
@@ -429,7 +429,7 @@ def multi_finalize(fn, d):
             verfunc(pv, d, safe_d)
             try:
                 finalize(fn, d)
-            except bb.parse.SkipPackage as e:
+            except bb.parse.SkipRecipe as e:
                 d.setVar("__SKIPPED", e.args[0])
 
         _create_variants(datastores, versions, verfunc, onlyfinalise)
@@ -469,7 +469,7 @@ def multi_finalize(fn, d):
             try:
                 if not onlyfinalise or variant in onlyfinalise:
                     finalize(fn, variant_d, variant)
-            except bb.parse.SkipPackage as e:
+            except bb.parse.SkipRecipe as e:
                 variant_d.setVar("__SKIPPED", e.args[0])
 
     if len(datastores) > 1:

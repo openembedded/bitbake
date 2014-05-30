@@ -49,8 +49,11 @@ class ParseError(Exception):
         else:
             return "ParseError in %s: %s" % (self.filename, self.msg)
 
-class SkipPackage(Exception):
-    """Exception raised to skip this package"""
+class SkipRecipe(Exception):
+    """Exception raised to skip this recipe"""
+
+class SkipPackage(SkipRecipe):
+    """Exception raised to skip this recipe (use SkipRecipe in new code)"""
 
 __mtime_cache = {}
 def cached_mtime(f):

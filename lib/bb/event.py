@@ -72,7 +72,7 @@ def execute_handler(name, handler, event, d):
     event.data = d
     try:
         ret = handler(event)
-    except (bb.parse.SkipPackage, bb.BBHandledException):
+    except (bb.parse.SkipRecipe, bb.BBHandledException):
         raise
     except Exception:
         etype, value, tb = sys.exc_info()

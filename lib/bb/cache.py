@@ -692,7 +692,7 @@ def init(cooker):
 
     * Its mtime
     * The mtimes of all its dependencies
-    * Whether it caused a parse.SkipPackage exception
+    * Whether it caused a parse.SkipRecipe exception
 
     Files causing parsing errors are evicted from the cache.
 
