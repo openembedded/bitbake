@@ -227,10 +227,13 @@ class CookerDataBuilder(object):
         try:
             self.parseConfigurationFiles(self.prefiles, self.postfiles)
         except SyntaxError:
-            sys.exit(1)
+            raise bb.BBHandledException
+        except bb.data_smart.ExpansionError as e:
+            logger.error(str(e))
+            raise bb.BBHandledException
         except Exception:
             logger.exception("Error parsing configuration files")
-            sys.exit(1)
+            raise bb.BBHandledException
 
     def _findLayerConf(self, data):
         return findConfigFile("bblayers.conf", data)
