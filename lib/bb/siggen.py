@@ -190,6 +190,7 @@ class SignatureGeneratorBasic(SignatureGenerator):
         taint = self.read_taint(fn, task, dataCache.stamp[fn])
         if taint:
             data = data + taint
+            logger.warn("%s is tainted from a forced run" % k)
 
         h = hashlib.md5(data).hexdigest()
         self.taskhash[k] = h
