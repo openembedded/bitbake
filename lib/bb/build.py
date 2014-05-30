@@ -242,10 +242,9 @@ def exec_func_python(func, d, runfile, cwd=None):
     try:
         comp = utils.better_compile(code, func, bbfile)
         utils.better_exec(comp, {"d": d}, code, bbfile)
+    except (bb.parse.SkipRecipe, bb.build.FuncFailed):
+        raise
     except:
-        if sys.exc_info()[0] in (bb.parse.SkipRecipe, bb.build.FuncFailed):
-            raise
-
         raise FuncFailed(func, None)
     finally:
         bb.debug(2, "Python function %s finished" % func)

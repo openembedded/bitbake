@@ -354,16 +354,11 @@ def better_exec(code, context, text = None, realfile = "<code>"):
         code = better_compile(code, realfile, realfile)
     try:
         exec(code, get_context(), context)
-    except bb.BBHandledException:
-        # Error already shown so passthrough
-        raise
-    except bb.data_smart.ExpansionError:
+    except (bb.BBHandledException, bb.parse.SkipRecipe, bb.build.FuncFailed, bb.data_smart.ExpansionError):
+        # Error already shown so passthrough, no need for traceback
         raise
     except Exception as e:
         (t, value, tb) = sys.exc_info()
-
-        if t in [bb.parse.SkipRecipe, bb.build.FuncFailed]:
-            raise
         try:
             _print_exception(t, value, tb, realfile, text, context)
         except Exception as e:
