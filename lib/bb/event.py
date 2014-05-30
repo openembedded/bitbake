@@ -94,10 +94,7 @@ def fire_class_handlers(event, d):
     evt_hmap = _event_handler_map.get(eid, {})
     for name, handler in _handlers.iteritems():
         if name in _catchall_handlers or name in evt_hmap:
-            try:
-                execute_handler(name, handler, event, d)
-            except Exception:
-                continue
+            execute_handler(name, handler, event, d)
 
 ui_queue = []
 @atexit.register
