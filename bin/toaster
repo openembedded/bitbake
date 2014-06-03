@@ -146,10 +146,14 @@ else
 fi
 
 NOTOASTERUI=0
+WEBSERVER=1
 for param in $*; do
     case $param in
     noui )
             NOTOASTERUI=1
+    ;;
+    noweb )
+            WEBSERVER=0
     ;;
     esac
 done
@@ -176,7 +180,7 @@ case $CMD in
     start )
         start_success=1
         addtoConfiguration "INHERIT+=\"toaster buildhistory\"" toaster.conf
-        if ! webserverStartAll; then
+        if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
             echo "Failed ${CMD}."
             return 4
         fi
