@@ -22,7 +22,7 @@ import bb
 import re
 import ast
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "toaster.toastermain.settings")
+os.environ["DJANGO_SETTINGS_MODULE"] = "toaster.toastermain.settings"
 
 import toaster.toastermain.settings as toaster_django_settings
 from toaster.orm.models import Build, Task, Recipe, Layer_Version, Layer, Target, LogMessage, HelpText
