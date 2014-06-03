@@ -23,6 +23,10 @@ from django.db import models
 from django.db.models import F
 from django.utils.encoding import python_2_unicode_compatible
 
+class Project(models.Model):
+    name = models.CharField(max_length=100)
+    created     = models.DateTimeField(auto_now_add = True)
+    updated     = models.DateTimeField(auto_now = True)
 
 class Build(models.Model):
     SUCCEEDED = 0
@@ -37,6 +41,7 @@ class Build(models.Model):
 
     search_allowed_fields = ['machine', 'cooker_log_path', "target__target", "target__target_image_file__file_name"]
 
+    project = models.ForeignKey(Project)
     machine = models.CharField(max_length=100)
     distro = models.CharField(max_length=100)
     distro_version = models.CharField(max_length=100)
@@ -54,6 +59,9 @@ class Build(models.Model):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
         return( tgts );
 
+class ProjectTarget(models.Model):
+    project = models.ForeignKey(Project)
+    target = models.CharField(max_length=100)
 
 @python_2_unicode_compatible
 class Target(models.Model):
@@ -324,6 +332,12 @@ class Recipe_Dependency(models.Model):
     dep_type = models.IntegerField(choices=DEPENDS_TYPE)
     objects = Recipe_DependencyManager()
 
+class ProjectLayer(models.Model):
+    project = models.ForeignKey(Project)
+    name = models.CharField(max_length = 100)
+    giturl = models.CharField(max_length = 254)
+    commit = models.CharField(max_length = 254)
+
 class Layer(models.Model):
     name = models.CharField(max_length=100)
     local_path = models.FilePathField(max_length=255)
@@ -337,6 +351,11 @@ class Layer_Version(models.Model):
     commit = models.CharField(max_length=100)
     priority = models.IntegerField()
 
+
+class ProjectVariable(models.Model):
+    project = models.ForeignKey(Project)
+    name = models.CharField(max_length=100)
+    value = models.TextField(blank = True)
 
 class Variable(models.Model):
     search_allowed_fields = ['variable_name', 'variable_value',
