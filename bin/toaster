@@ -16,9 +16,15 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 
-# This script enables toaster event logging and
-# starts bitbake resident server
-# use as:  source toaster [start|stop]
+# This script can be run in two modes.
+
+# When used with "source", from a build directory,
+# it enables toaster event logging and starts the bitbake resident server.
+# use as:  source toaster [start|stop] [noweb] [noui]
+
+# When it is called as a stand-alone script, it starts just the
+# web server, and the building shall be done through the web interface.
+# As script, it will not return to the command prompt. Stop with Ctrl-C.
 
 # Helper function to kill a background toaster development server
 
@@ -30,6 +36,8 @@ function webserverKillAll()
 		while kill -0 $(< ${pidfile}) 2>/dev/null; do
 			kill -SIGTERM -$(< ${pidfile}) 2>/dev/null
 			sleep 1;
+			# Kill processes if they are still running - may happen in interactive shells
+			ps fux | grep "python.*manage.py" | awk '{print $2}' | xargs kill
 		done;
 		rm  ${pidfile}
 		fi
@@ -38,6 +46,12 @@ function webserverKillAll()
 
 function webserverStartAll()
 {
+	# do not start if toastermain points to a valid process
+	if ! cat "${BUILDDIR}/.toastermain.pid" 2>/dev/null | xargs -I{} kill -0 {} ; then
+            retval=1
+            rm "${BUILDDIR}/.toastermain.pid"
+        fi
+
         retval=0
         python $BBBASEDIR/lib/toaster/manage.py syncdb || retval=1
         python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=2
@@ -49,6 +63,8 @@ function webserverStartAll()
             retval=0
             python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
         fi
+        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
+
         if [ $retval -eq 0 ]; then
             python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
             sleep 1
@@ -103,19 +119,43 @@ function notify_chldexit() {
 }
 
 
-# We make sure we're running in the current shell and in a good environment
+BBBASEDIR=`dirname ${BASH_SOURCE}`/..
+RUNNING=0
 
 if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; then
-    echo "Error: This script needs to be sourced. Please run as 'source toaster [start|stop]'" 1>&2;
+    # We are called as standalone. We refuse to run in a build environment - we need the interactive mode for that.
+    # Start just the web server, point the web browser to the interface, and start any Django services.
+
+    if [ -n "$BUILDDIR" ]; then
+        echo "Error: build/ directory detected. Standalone Toaster will not start in a build environment." 1>&2;
+        return 1;
+    fi
+
+    # Define a fake builddir where only the pid files are actually created. No real builds will take place here.
+    BUILDDIR=/tmp
+    RUNNING=1
+    function trap_ctrlc() {
+        echo "** Stopping system"
+        webserverKillAll
+        RUNNING=0
+    }
+    webserverStartAll || exit 1
+    xdg-open http://0.0.0.0:8000/ >/dev/null 2>&1 &
+    trap trap_ctrlc SIGINT
+    echo "Running. Stop with Ctrl-C"
+    while [ $RUNNING -gt 0 ]; do
+        wait;
+    done
+    echo "**** Exit"
     exit 1
 fi
 
+# We make sure we're running in the current shell and in a good environment
 if [ -z "$BUILDDIR" ] || [ -z `which bitbake` ]; then
     echo "Error: Build environment is not setup or bitbake is not in path." 1>&2;
     return 2
 fi
 
-BBBASEDIR=`dirname ${BASH_SOURCE}`/..
 
 
 # Verify prerequisites
