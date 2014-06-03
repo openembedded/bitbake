@@ -41,6 +41,39 @@ DATABASES = {
     }
 }
 
+# Reinterpret database settings if we have DATABASE_URL environment variable defined
+import os, re
+
+if 'DATABASE_URL' in os.environ:
+    dburl = os.environ['DATABASE_URL']
+    if dburl.startswith('sqlite3://'):
+        result = re.match('sqlite3://(.*)', dburl)
+        if result is None:
+            raise Exception("ERROR: Could not read sqlite database url: %s" % dburl)
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': result.group(1),
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': '',
+            'PORT': '',
+        }
+    elif dburl.startswith('mysql://'):
+        # URL must be in this form: mysql://user:pass@host:port/name
+        result = re.match(r"mysql://([^:]*):([^@]*)@([^:]*):(\d+)/([^/]*)", dburl)
+        if result is None:
+            raise Exception("ERROR: Could not read mysql database url: %s" % dburl)
+        DATABASES['default'] = {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': result.group(5),
+            'USER': result.group(1),
+            'PASSWORD': result.group(2),
+            'HOST': result.group(3),
+            'PORT': result.group(4),
+        }
+    else:
+        raise Exception("FIXME: Please implement missing database url schema for url: %s" % dburl)
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = []
@@ -51,7 +84,7 @@ ALLOWED_HOSTS = []
 # In a Windows environment this must be set to your system time zone.
 
 # Always use local computer's time zone, find
-import os, hashlib
+import hashlib
 if 'TZ' in os.environ:
     TIME_ZONE = os.environ['TZ']
 else:
