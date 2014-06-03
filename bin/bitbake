@@ -200,6 +200,28 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
             options.servertype = "xmlrpc"
             options.remote_server = os.environ["BBSERVER"]
 
+        # if BBSERVER says to autodetect, let's do that
+        if options.remote_server:
+            [host, port] = options.remote_server.split(":", 2)
+            port = int(port)
+            # use automatic port if port set to -1, means read it from
+            # the bitbake.lock file; this is a bit tricky, but we always expect
+            # to be in the base of the build directory if we need to have a
+            # chance to start the server later, anyway
+            if port == -1:
+                lock_location = "./bitbake.lock"
+                # we try to read the address at all times; if the server is not started,
+                # we'll try to start it after the first connect fails, below
+                try:
+                    lf = open(lock_location, 'r')
+                    remotedef = lf.readline()
+                    [host, port] = remotedef.split(":")
+                    port = int(port)
+                    lf.close()
+                    options.remote_server = remotedef
+                except Exception as e:
+                    sys.exit("Failed to read bitbake.lock (%s), invalid port" % str(e))
+
         return options, targets[1:]
 
 
@@ -309,7 +331,6 @@ def main():
         # we start a stub server that is actually a XMLRPClient that connects to a real server
         server = servermodule.BitBakeXMLRPCClient(configParams.observe_only)
         server.saveConnectionDetails(configParams.remote_server)
-        server.saveConnectionConfigParams(configParams)
 
     if not configParams.server_only:
         if configParams.status_only:
