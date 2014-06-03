@@ -226,11 +226,19 @@ def main(server, eventHandler, params ):
 
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
 
+
+                brbe = server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
                 # we start a new build info
-                errors = 0
-                warnings = 0
-                taskfailures = []
-                buildinfohelper = BuildInfoHelper(server, build_history_enabled)
+                if brbe is not None:
+                    print "we are under BuildEnvironment management - after the build, we exit"
+                    server.terminateServer()
+                else:
+                    print "prepared for new build"
+                    errors = 0
+                    warnings = 0
+                    taskfailures = []
+                    buildinfohelper = BuildInfoHelper(server, build_history_enabled)
+
                 continue
 
             if isinstance(event, bb.event.MetadataEvent):
