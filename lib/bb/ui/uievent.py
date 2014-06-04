@@ -47,7 +47,8 @@ class BBUIEventQueue:
         self.EventHandle = self.BBServer.registerEventHandler(self.host, self.port)
 
         if (self.EventHandle == None):
-            bb.fatal("Could not register UI event handler")
+            bb.warn("Could not register UI event handler %s:%d" % (self.host, self.port))
+            raise Exception("Could not register UI event handler")
 
         self.server = server
 

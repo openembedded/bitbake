@@ -80,7 +80,7 @@ class BBTransport(xmlrpclib.Transport):
 
 def _create_server(host, port, timeout = 60):
     t = BBTransport(timeout)
-    s = xmlrpclib.Server("http://%s:%d/" % (host, port), transport=t, allow_none=True)
+    s = xmlrpclib.ServerProxy("http://%s:%d/" % (host, port), transport=t, allow_none=True)
     return s, t
 
 class BitBakeServerCommands():
@@ -253,9 +253,13 @@ class XMLRPCServer(SimpleXMLRPCServer, BaseImplServer):
             socktimeout = self.socket.gettimeout() or nextsleep
             socktimeout = min(socktimeout, nextsleep)
             # Mirror what BaseServer handle_request would do
-            fd_sets = select.select(fds, [], [], socktimeout)
-            if fd_sets[0] and self in fd_sets[0]:
-                self._handle_request_noblock()
+            try:
+                fd_sets = select.select(fds, [], [], socktimeout)
+                if fd_sets[0] and self in fd_sets[0]:
+                    self._handle_request_noblock()
+            except IOError:
+                # we ignore interrupted calls
+                pass
 
         # Tell idle functions we're exiting
         for function, data in self._idlefuns.items():
@@ -346,7 +350,8 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
             [host, port] = self.remote.split(":")
             port = int(port)
         except Exception as e:
-            bb.fatal("Failed to read remote definition (%s)" % str(e))
+            bb.warn("Failed to read remote definition (%s)" % str(e))
+            raise e
 
         # We need our IP for the server connection. We get the IP
         # by trying to connect with the server
@@ -356,13 +361,15 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
             ip = s.getsockname()[0]
             s.close()
         except Exception as e:
-            bb.fatal("Could not create socket for %s:%s (%s)" % (host, port, str(e)))
+            bb.warn("Could not create socket for %s:%s (%s)" % (host, port, str(e)))
+            raise e
         try:
             self.serverImpl = XMLRPCProxyServer(host, port)
             self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only, featureset)
             return self.connection.connect()
         except Exception as e:
-            bb.fatal("Could not connect to server at %s:%s (%s)" % (host, port, str(e)))
+            bb.warn("Could not connect to server at %s:%s (%s)" % (host, port, str(e)))
+            raise e
 
     def endSession(self):
         self.connection.removeClient()
