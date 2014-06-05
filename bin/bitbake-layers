@@ -556,7 +556,7 @@ Recipes are listed with the bbappends that apply to them as subitems.
                 continue
 
             basename = os.path.basename(filename)
-            appends = self.bbhandler.cooker.collection.appendlist.get(basename)
+            appends = self.bbhandler.cooker.collection.get_file_appends(basename)
             if appends:
                 appended.append((basename, list(appends)))
             else:
