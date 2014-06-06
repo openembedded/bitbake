@@ -5,7 +5,6 @@
 
   <xsl:param name="html.stylesheet" select="'user-manual-style.css'" />
   <xsl:param name="chapter.autolabel" select="1" />
-<!--  <xsl:param name="appendix.autolabel" select="A" /> -->
   <xsl:param name="section.autolabel" select="1" />
   <xsl:param name="section.label.includes.component.label" select="1" />
   <xsl:param name="appendix.autolabel">A</xsl:param>
