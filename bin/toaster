@@ -63,7 +63,7 @@ function webserverStartAll()
             retval=0
             python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
         fi
-        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
+        # python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
 
         if [ $retval -eq 0 ]; then
             python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
