@@ -221,6 +221,7 @@ INSTALLED_APPS = (
     'toastergui',
     'bldviewer',
     'south',
+    'bldcontrol',
 )
 
 # A sample logging configuration. The only tangible logging
