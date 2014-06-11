@@ -851,7 +851,7 @@ def contains_any(variable, checkvalues, truevalue, falsevalue, d):
         checkvalues = set(checkvalues.split())
     else:
         checkvalues = set(checkvalues)
-    if checkvalues in val:
+    if checkvalues & val:
         return truevalue
     return falsevalue
 
