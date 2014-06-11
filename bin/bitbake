@@ -169,6 +169,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-t", "--servertype", help = "Choose which server to use, process or xmlrpc.",
                    action = "store", dest = "servertype")
 
+        parser.add_option("", "--token", help = "Specify the connection token to be used when connecting to a remote server.",
+                   action = "store", dest = "xmlrpctoken")
+
         parser.add_option("", "--revisions-changed", help = "Set the exit code depending on whether upstream floating revisions have changed or not.",
                    action = "store_true", dest = "revisions_changed", default = False)
 
@@ -199,6 +202,9 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         if "BBSERVER" in os.environ:
             options.servertype = "xmlrpc"
             options.remote_server = os.environ["BBSERVER"]
+
+        if "BBTOKEN" in os.environ:
+            options.xmlrpctoken = os.environ["BBTOKEN"]
 
         # if BBSERVER says to autodetect, let's do that
         if options.remote_server:
@@ -332,7 +338,7 @@ def main():
         bb.event.ui_queue = []
     else:
         # we start a stub server that is actually a XMLRPClient that connects to a real server
-        server = servermodule.BitBakeXMLRPCClient(configParams.observe_only)
+        server = servermodule.BitBakeXMLRPCClient(configParams.observe_only, configParams.xmlrpctoken)
         server.saveConnectionDetails(configParams.remote_server)
 
 

@@ -281,13 +281,16 @@ class BitBakeXMLRPCServerConnection(BitBakeBaseServerConnection):
         self.observer_only = observer_only
         self.featureset = featureset
 
-    def connect(self):
-        if not self.observer_only:
-            token = self.connection.addClient()
-        else:
-            token = "observer"
+    def connect(self, token = None):
+        if token is None:
+            if self.observer_only:
+                token = "observer"
+            else:
+                token = self.connection.addClient()
+
         if token is None:
             return None
+
         self.transport.set_connection_token(token)
 
         self.events = uievent.BBUIEventQueue(self.connection, self.clientinfo)
@@ -336,7 +339,9 @@ class BitBakeServer(BitBakeBaseServer):
 
 class BitBakeXMLRPCClient(BitBakeBaseServer):
 
-    def __init__(self, observer_only = False):
+    def __init__(self, observer_only = False, token = None):
+        self.token = token
+
         self.observer_only = observer_only
         # if we need extra caches, just tell the server to load them all
         pass
@@ -366,7 +371,7 @@ class BitBakeXMLRPCClient(BitBakeBaseServer):
         try:
             self.serverImpl = XMLRPCProxyServer(host, port)
             self.connection = BitBakeXMLRPCServerConnection(self.serverImpl, (ip, 0), self.observer_only, featureset)
-            return self.connection.connect()
+            return self.connection.connect(self.token)
         except Exception as e:
             bb.warn("Could not connect to server at %s:%s (%s)" % (host, port, str(e)))
             raise e
