@@ -84,17 +84,22 @@
 			<dt>Total package size</dt>
 			<dd>{{target.pkgsz|filtered_filesizeformat}}</dd>
                         {% if target.targetHasNoImages %}
-                        <div class="alert alert-info">
-                          <p>
-                            <b>This build did not create any image files</b>
-                          </p>
-                          <p>
-                            This is probably because valid image and license manifest
-                            files from a previous build already exist in your
-                            .../poky/build/tmp/deploy directory. You can also <b>view the
-                              license manifest information</b> in Toaster.
-                          </p>
-                        </div>
+				</dl>
+				<div class="row-fluid">
+					<div class="alert alert-info span7">
+                    <p>
+                                    <b>This build did not create any image files</b>
+                                  </p>
+                                  <p>
+                                    This is probably because valid image and license manifest
+                                    files from a previous build already exist in your
+                                    <code>.../poky/build/tmp/deploy</code>
+                                    directory. You can
+                                    also <a href="{% url 'targetpkg' build.pk target.target.pk %}">view the
+                                      license manifest information</a> in Toaster.
+                                  </p>
+                    </div>
+				</div>
                         {% else %}
 			<dt>
 				<i class="icon-question-sign get-help" title="The location in disk of the license manifest, a document listing all packages installed in your image and their licenses"></i>
@@ -113,8 +118,8 @@
                                   {% endfor %}
 				</ul>
 			</dd>
-                        {% endif %}
 		</dl>
+                        {% endif %}
 	</div>
         {% endif %}
 	{% endfor %}
