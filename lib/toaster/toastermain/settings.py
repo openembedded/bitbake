@@ -74,6 +74,25 @@ if 'DATABASE_URL' in os.environ:
     else:
         raise Exception("FIXME: Please implement missing database url schema for url: %s" % dburl)
 
+
+# Allows current database settings to be exported as a DATABASE_URL environment variable value
+
+def getDATABASE_URL():
+    d = DATABASES['default']
+    if d['ENGINE'] == 'django.db.backends.sqlite3':
+        if d['NAME'] == ':memory:':
+            return 'sqlite3://:memory:'
+        elif d['NAME'].startswith("/"):
+            return 'sqlite3://' + d['NAME']
+        return "sqlite3://" + os.path.join(os.getcwd(), d['NAME'])
+
+    elif d['ENGINE'] == 'django.db.backends.mysql':
+        return "mysql://" + d['USER'] + ":" + d['PASSWORD'] + "@" + d['HOST'] + ":" + d['PORT'] + "/" + d['NAME']
+
+    raise Exception("FIXME: Please implement missing database url schema for engine: %s" % d['ENGINE'])
+
+
+
 # Hosts/domain names that are valid for this site; required if DEBUG is False
 # See https://docs.djangoproject.com/en/1.5/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = []
