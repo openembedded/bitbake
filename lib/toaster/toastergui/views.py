@@ -230,11 +230,10 @@ def builds(request):
             b.completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
         else:
             b.completeper = 0
-        b.eta = timezone.now()
+
+        b.eta = 0
         if b.completeper > 0:
-            b.eta += ((timezone.now() - b.started_on)*100/b.completeper)
-        else:
-            b.eta = 0
+            b.eta = timezone.now() + ((timezone.now() - b.started_on)*(100-b.completeper)/b.completeper)
 
     # set up list of fstypes for each build
     fstypes_map = {};
