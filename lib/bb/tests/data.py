@@ -299,3 +299,39 @@ class TestFlags(unittest.TestCase):
         self.assertEqual(self.d.getVarFlag("foo", "flag2"), None)
 
 
+class Contains(unittest.TestCase):
+    def setUp(self):
+        self.d = bb.data.init()
+        self.d.setVar("SOMEFLAG", "a b c")
+
+    def test_contains(self):
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "a", True, False, self.d))
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "b", True, False, self.d))
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "c", True, False, self.d))
+
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "a b", True, False, self.d))
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "b c", True, False, self.d))
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "c a", True, False, self.d))
+
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "a b c", True, False, self.d))
+        self.assertTrue(bb.utils.contains("SOMEFLAG", "c b a", True, False, self.d))
+
+        self.assertFalse(bb.utils.contains("SOMEFLAG", "x", True, False, self.d))
+        self.assertFalse(bb.utils.contains("SOMEFLAG", "a x", True, False, self.d))
+        self.assertFalse(bb.utils.contains("SOMEFLAG", "x c b", True, False, self.d))
+        self.assertFalse(bb.utils.contains("SOMEFLAG", "x c b a", True, False, self.d))
+
+    def test_contains_any(self):
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "a", True, False, self.d))
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "b", True, False, self.d))
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "c", True, False, self.d))
+
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "a b", True, False, self.d))
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "b c", True, False, self.d))
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "c a", True, False, self.d))
+
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "a x", True, False, self.d))
+        self.assertTrue(bb.utils.contains_any("SOMEFLAG", "x c", True, False, self.d))
+
+        self.assertFalse(bb.utils.contains_any("SOMEFLAG", "x", True, False, self.d))
+        self.assertFalse(bb.utils.contains_any("SOMEFLAG", "x y z", True, False, self.d))
