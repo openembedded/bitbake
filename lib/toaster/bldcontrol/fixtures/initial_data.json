@@ -1,1 +1,1 @@
-[{"pk": 1, "model": "bldcontrol.buildenvironment", "fields": {"updated": "2014-05-20T12:17:30Z", "created": "2014-05-20T12:17:30Z", "lock": 0, "bbstate": 0, "bbaddress": "", "betype": 0, "bbtoken": "", "address": "localhost", "bbport": -1}}]
+[{"pk": 1, "model": "bldcontrol.buildenvironment", "fields": {"updated": "2014-05-20T12:17:30Z", "created": "2014-05-20T12:17:30Z", "lock": 0, "bbstate": 0, "bbaddress": "", "betype": 0, "bbtoken": "", "address": "", "bbport": -1}}]

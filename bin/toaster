@@ -139,15 +139,16 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
         webserverKillAll
         RUNNING=0
     }
-    webserverStartAll || exit 1
+    webserverStartAll || (echo "Fail to start the web server, stopping" 1>&2 && exit 1)
     xdg-open http://0.0.0.0:8000/ >/dev/null 2>&1 &
     trap trap_ctrlc SIGINT
     echo "Running. Stop with Ctrl-C"
     while [ $RUNNING -gt 0 ]; do
-        wait;
+	python $BBBASEDIR/lib/toaster/manage.py runbuilds
+	sleep 1
     done
     echo "**** Exit"
-    exit 1
+    exit 0
 fi
 
 # We make sure we're running in the current shell and in a good environment

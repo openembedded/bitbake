@@ -20,9 +20,11 @@ class BuildEnvironment(models.Model):
 
     LOCK_FREE = 0
     LOCK_LOCK = 1
+    LOCK_RUNNING = 2
     LOCK_STATE = (
         (LOCK_FREE, "free"),
         (LOCK_LOCK, "lock"),
+        (LOCK_RUNNING, "running"),
     )
 
     address     = models.CharField(max_length = 254)

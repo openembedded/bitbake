@@ -916,6 +916,16 @@ class BuildInfoHelper(object):
                             self.internal_state['recipes'],
                             )
 
+    def store_build_done(self, br_id, be_id):
+        from bldcontrol.models import BuildEnvironment, BuildRequest
+        be = BuildEnvironment.objects.get(pk = be_id)
+        be.lock = BuildEnvironment.LOCK_LOCK
+        be.save()
+        br = BuildRequest.objects.get(pk = br_id)
+        br.state = BuildRequest.REQ_COMPLETED
+        br.build = self.internal_state['build']
+        br.save()
+
     def _store_log_information(self, level, text):
         log_information = {}
         log_information['build'] = self.internal_state['build']

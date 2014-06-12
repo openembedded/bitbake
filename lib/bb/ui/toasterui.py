@@ -228,8 +228,11 @@ def main(server, eventHandler, params ):
 
 
                 brbe = server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
+                br_id, be_id = brbe.split(":")
                 # we start a new build info
                 if brbe is not None:
+                    buildinfohelper.store_build_done(br_id, be_id)
+
                     print "we are under BuildEnvironment management - after the build, we exit"
                     server.terminateServer()
                 else:
