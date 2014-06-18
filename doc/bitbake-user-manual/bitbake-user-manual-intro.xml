@@ -10,7 +10,7 @@
         The information attempts to be as independent as possible regarding
         systems that use BitBake, such as the Yocto Project and
         OpenEmbedded.
-        In some cases, scenarios or examples that within the context of
+        In some cases, scenarios or examples within the context of
         a build system are used in the manual to help with understanding.
         For these cases, the manual clearly states the context.
     </para>
@@ -36,6 +36,7 @@
                     BitBake executes tasks according to provided
                     metadata that builds up the tasks.
                     Metadata is stored in recipe (<filename>.bb</filename>),
+                    recipe "append" (<filename>.bbappend</filename>),
                     configuration (<filename>.conf</filename>), and class
                     (<filename>.bbclass</filename>) files and provides
                     BitBake with instructions on what tasks to run and
@@ -44,11 +45,11 @@
                 <listitem><para>
                     BitBake includes a fetcher library for obtaining source
                     code from various places such as source control
-                    systems or websites.
+                    systems, websites, or local files.
                     </para></listitem>
                 <listitem><para>
                     The instructions for each unit to be built (e.g. a piece
-                    of software) are known as recipe files and
+                    of software) are known as "recipe" files and
                     contain all the information about the unit
                     (dependencies, source file locations, checksums, description
                     and so on).
@@ -69,7 +70,7 @@
             BitBake was originally a part of the OpenEmbedded project.
             It was inspired by the Portage package management system
             used by the Gentoo Linux distribution.
-            On December 7, 2004, OpenEmbedded project team member,
+            On December 7, 2004, OpenEmbedded project team member
             Chris Larson split the project into two distinct pieces:
             <itemizedlist>
                 <listitem><para>BitBake, a generic task executor</para></listitem>
@@ -138,7 +139,7 @@
                     projects for their builds.
                     </para></listitem>
                 <listitem><para>
-                    Provide an inheritance mechanism that share
+                    Provide an inheritance mechanism to share
                     common metadata between many packages.
                     </para></listitem>
             </itemizedlist>
@@ -178,14 +179,14 @@
             what tasks are required to run, and executes those tasks.
             Similar to GNU Make, BitBake controls how software is
             built.
-            GNU Make achieves its control through "makefiles".
+            GNU Make achieves its control through "makefiles", while
             BitBake uses "recipes".
         </para>
 
         <para>
             BitBake extends the capabilities of a simple
-            tool like GNU Make by allowing for much more complex tasks
-            to be completed, such as assembling entire embedded Linux
+            tool like GNU Make by allowing for the definition of much more
+            complex tasks, such as assembling entire embedded Linux
             distributions.
         </para>
 
@@ -203,12 +204,15 @@
                 <filename>.bb</filename>, are the most basic metadata files.
                 These recipe files provide BitBake with the following:
                 <itemizedlist>
-                    <listitem><para>Descriptive information about the package</para></listitem>
+                    <listitem><para>Descriptive information about the
+                        package (author, homepage, license, and so on)</para></listitem>
                     <listitem><para>The version of the recipe</para></listitem>
-                    <listitem><para>Existing Dependencies</para></listitem>
+                    <listitem><para>Existing dependencies (both build
+                        and runtime dependencies)</para></listitem>
                     <listitem><para>Where the source code resides</para></listitem>
                     <listitem><para>Whether the source code requires any patches</para></listitem>
-                    <listitem><para>How to compile the source code</para></listitem>
+                    <listitem><para>How to configure and compile the
+                        source code</para></listitem>
                     <listitem><para>Where on the target machine to install the
                         package being compiled</para></listitem>
                 </itemizedlist>
@@ -284,7 +288,8 @@
                 To illustrate how you can use layers to keep things modular,
                 consider customizations you might make to support a specific target machine.
                 These types of customizations typically reside in a special layer,
-                rather than a general layer, called a Board Specific Package (BSP) Layer.
+                rather than a general layer, called a Board Support Package (BSP)
+                Layer.
                 Furthermore, the machine customizations should be isolated from
                 recipes and metadata that support a new GUI environment, for
                 example.
@@ -412,6 +417,21 @@
                     After extraction of the tarball using the tar utility,
                     you have a directory entitled
                     <filename>bitbake-1.17.0</filename>.
+                    </para></listitem>
+                <listitem><para><emphasis>Using the BitBake that comes with your
+                    build checkout:</emphasis>
+                    A final possibility for getting a copy of BitBake is that it
+                    already comes with your checkout of a larger Bitbake-based build
+                    system, such as Poky or Yocto Project.
+                    Rather than manually checking out individual layers and
+                    gluing them together yourself, you can check
+                    out an entire build system such as Poky with something like:
+                    <literallayout class='monospaced'>
+     $ git clone git://git.yoctoproject.org/poky
+                    </literallayout>
+                    The checkout will already include a version of BitBake that
+                    has been thoroughly tested for compatibility with the other
+                    components.
                     </para></listitem>
             </itemizedlist>
         </para>
