@@ -506,7 +506,7 @@ def exec_task(fn, task, d, profile = False):
             event.fire(failedevent, d)
         return 1
 
-def stamp_internal(taskname, d, file_name):
+def stamp_internal(taskname, d, file_name, baseonly=False):
     """
     Internal stamp helper function
     Makes sure the stamp directory exists
@@ -526,6 +526,9 @@ def stamp_internal(taskname, d, file_name):
         stamp = d.getVarFlag(taskflagname, 'stamp-base', True) or d.getVar('STAMP', True)
         file_name = d.getVar('BB_FILENAME', True)
         extrainfo = d.getVarFlag(taskflagname, 'stamp-extra-info', True) or ""
+
+    if baseonly:
+        return stamp
 
     if not stamp:
         return
@@ -591,8 +594,9 @@ def make_stamp(task, d, file_name = None):
     # If we're in task context, write out a signature file for each task
     # as it completes
     if not task.endswith("_setscene") and task != "do_setscene" and not file_name:
+        stampbase = stamp_internal(task, d, None, True)
         file_name = d.getVar('BB_FILENAME', True)
-        bb.parse.siggen.dump_sigtask(file_name, task, d.getVar('STAMP', True), True)
+        bb.parse.siggen.dump_sigtask(file_name, task, stampbase, True)
 
 def del_stamp(task, d, file_name = None):
     """
