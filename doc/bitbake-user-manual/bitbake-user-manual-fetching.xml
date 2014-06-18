@@ -8,14 +8,14 @@
         BitBake's fetch module is a standalone piece of library code
         that deals with the intricacies of downloading source code
         and files from remote systems.
-        Fetching source code is one of the corner stones of building software.
+        Fetching source code is one of the cornerstones of building software.
         As such, this module forms an important part of BitBake.
     </para>
 
     <para>
         The current fetch module is called "fetch2" and refers to the
         fact that it is the second major version of the API.
-        The original version is obsolete and removed from the codebase.
+        The original version is obsolete and has been removed from the codebase.
         Thus, in all cases, "fetch" refers to "fetch2" in this
         manual.
     </para>
@@ -60,17 +60,19 @@
             <note>
                 For convenience, the naming in these examples matches
                 the variables used by OpenEmbedded.
+                If you want to see the above code in action, examine
+                the OpenEmbedded class file <filename>base.bbclass</filename>.
             </note>
             The <filename>SRC_URI</filename> and <filename>WORKDIR</filename>
-            variables are not coded into the fetcher.
-            They variables can (and are) called with different variable names.
+            variables are not hardcoded into the fetcher, since those fetcher
+            methods can be (and are) called with different variable names.
             In OpenEmbedded for example, the shared state (sstate) code uses
             the fetch module to fetch the sstate files.
         </para>
 
         <para>
             When the <filename>download()</filename> method is called,
-            BitBake tries to fulfill the URLs by looking for source files
+            BitBake tries to resolve the URLs by looking for source files
             in a specific search order:
             <itemizedlist>
                 <listitem><para><emphasis>Pre-mirror Sites:</emphasis>
@@ -84,7 +86,7 @@
                     <filename>SRC_URI</filename>).
                     </para></listitem>
                 <listitem><para><emphasis>Mirror Sites:</emphasis>
-                    If fetch failures occur, BitBake next uses mirror location as
+                    If fetch failures occur, BitBake next uses mirror locations as
                     defined by the
                     <link linkend='var-MIRRORS'><filename>MIRRORS</filename></link>
                     variable.
@@ -149,7 +151,7 @@
         <para>
             File integrity is of key importance for reproducing builds.
             For non-local archive downloads, the fetcher code can verify
-            sha256 and md5 checksums to ensure the archives have been
+            SHA-256 and MD5 checksums to ensure the archives have been
             downloaded correctly.
             You can specify these checksums by using the
             <filename>SRC_URI</filename> variable with the appropriate
@@ -260,8 +262,8 @@
             <para>
                 This submodule handles URLs that begin with
                 <filename>file://</filename>.
-                The filename you specify with in the URL can
-                either be an absolute or relative path to a file.
+                The filename you specify within the URL can be
+                either an absolute or relative path to a file.
                 If the filename is relative, the contents of the
                 <link linkend='var-FILESPATH'><filename>FILESPATH</filename></link>
                 variable is used in the same way
@@ -286,11 +288,41 @@
             </para>
 
             <para>
-                Here are some example URLs:
+                Here are a couple example URLs, the first relative and
+                the second absolute:
                 <literallayout class='monospaced'>
      SRC_URI = "file://relativefile.patch"
-     SRC_URI = "file://relativefile.patch;this=ignored"
      SRC_URI = "file:///Users/ich/very_important_software"
+                </literallayout>
+            </para>
+        </section>
+
+        <section id='http-ftp-fetcher'>
+            <title>HTTP/FTP wget fetcher (<filename>http://</filename>, <filename>ftp://</filename>, <filename>https://</filename>)</title>
+
+            <para>
+                This fetcher obtains files from web and FTP servers.
+                Internally, the fetcher uses the wget utility.
+            </para>
+
+            <para>
+                The executable and parameters used are specified by the
+                <filename>FETCHCMD_wget</filename> variable, which defaults
+                to sensible values.
+                The fetcher supports a parameter "downloadfilename" that
+                allows the name of the downloaded file to be specified.
+                Specifying the name of the downloaded file is useful
+                for avoiding collisions in
+                <link linkend='var-DL_DIR'><filename>DL_DIR</filename></link>
+                when dealing with multiple files that have the same name.
+            </para>
+
+            <para>
+                Some example URLs are as follows:
+                <literallayout class='monospaced'>
+     SRC_URI = "http://oe.handhelds.org/not_there.aac"
+     SRC_URI = "ftp://oe.handhelds.org/not_there_as_well.aac"
+     SRC_URI = "ftp://you@oe.handhelds.org/home/you/secret.plan"
                 </literallayout>
             </para>
         </section>
@@ -334,7 +366,7 @@
                 The supported parameters are as follows:
                 <itemizedlist>
                     <listitem><para><emphasis>"method":</emphasis>
-                        The protocol over which to communicate with the cvs server.
+                        The protocol over which to communicate with the CVS server.
                         By default, this protocol is "pserver".
                         If "method" is set to "ext", BitBake examines the
                         "rsh" parameter and sets <filename>CVS_RSH</filename>.
@@ -394,36 +426,6 @@
             </para>
         </section>
 
-        <section id='http-ftp-fetcher'>
-            <title>HTTP/FTP wget fetcher (<filename>http://</filename>, <filename>ftp://</filename>, <filename>https://</filename>)</title>
-
-            <para>
-                This fetcher obtains files from web and FTP servers.
-                Internally, the fetcher uses the wget utility.
-            </para>
-
-            <para>
-                The executable and parameters used are specified by the
-                <filename>FETCHCMD_wget</filename> variable, which defaults
-                to a sensible values.
-                The fetcher supports a parameter "downloadfilename" that
-                allows the name of the downloaded file to be specified.
-                Specifying the name of the downloaded file is useful
-                for avoiding collisions in
-                <link linkend='var-DL_DIR'><filename>DL_DIR</filename></link>
-                when dealing with multiple files that have the same name.
-            </para>
-
-            <para>
-                Some example URLs are as follows:
-                <literallayout class='monospaced'>
-     SRC_URI = "http://oe.handhelds.org/not_there.aac"
-     SRC_URI = "ftp://oe.handhelds.org/not_there_as_well.aac"
-     SRC_URI = "ftp://you@oe.handheld.sorg/home/you/secret.plan"
-                </literallayout>
-            </para>
-        </section>
-
         <section id='svn-fetcher'>
             <title>Subversion (SVN) Fetcher (<filename>svn://</filename>)</title>
 
@@ -476,14 +478,14 @@
         </section>
 
         <section id='git-fetcher'>
-            <title>GIT Fetcher (<filename>git://</filename>)</title>
+            <title>Git Fetcher (<filename>git://</filename>)</title>
 
             <para>
                 This fetcher submodule fetches code from the Git
                 source control system.
                 The fetcher works by creating a bare clone of the
                 remote into <filename>GITDIR</filename>, which is
-                usually <filename>DL_DIR/git</filename>.
+                usually <filename>DL_DIR/git2</filename>.
                 This bare clone is then cloned into the work directory during the
                 unpack stage when a specific tree is checked out.
                 This is done using alternates and by reference to
@@ -571,7 +573,7 @@
         </section>
 
         <section id='gitsm-fetcher'>
-            <title>GIT Submodule Fetcher (<filename>gitsm://</filename>)</title>
+            <title>Git Submodule Fetcher (<filename>gitsm://</filename>)</title>
 
             <para>
                 This fetcher submodule inherits from the
@@ -579,7 +581,7 @@
                 that fetcher's behavior by fetching a repository's submodules.
                 <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>
                 is passed to the Git fetcher as described in the
-                "<link linkend='git-fetcher'>GIT Fetcher (<filename>git://</filename>)</link>"
+                "<link linkend='git-fetcher'>Git Fetcher (<filename>git://</filename>)</link>"
                 section.
                 <note>
                     <title>Notes and Warnings</title>
