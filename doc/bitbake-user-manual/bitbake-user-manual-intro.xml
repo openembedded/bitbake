@@ -418,20 +418,19 @@
                     you have a directory entitled
                     <filename>bitbake-1.17.0</filename>.
                     </para></listitem>
-                <listitem><para><emphasis>Using the BitBake that comes with your
-                    build checkout:</emphasis>
+                <listitem><para><emphasis>Using the BitBake that Comes With Your
+                    Build Checkout:</emphasis>
                     A final possibility for getting a copy of BitBake is that it
                     already comes with your checkout of a larger Bitbake-based build
                     system, such as Poky or Yocto Project.
                     Rather than manually checking out individual layers and
                     gluing them together yourself, you can check
-                    out an entire build system such as Poky with something like:
-                    <literallayout class='monospaced'>
-     $ git clone git://git.yoctoproject.org/poky
-                    </literallayout>
+                    out an entire build system.
                     The checkout will already include a version of BitBake that
                     has been thoroughly tested for compatibility with the other
                     components.
+                    For information on how to check out a particular BitBake-based
+                    build system, the build system's supporting documentation.
                     </para></listitem>
             </itemizedlist>
         </para>
