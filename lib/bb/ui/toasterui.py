@@ -91,6 +91,7 @@ def main(server, eventHandler, params ):
     errors = 0
     warnings = 0
     taskfailures = []
+    first = True
 
     buildinfohelper = BuildInfoHelper(server, build_history_enabled)
 
@@ -98,6 +99,9 @@ def main(server, eventHandler, params ):
     while True:
         try:
             event = eventHandler.waitEvent(0.25)
+            if first:
+                first = False
+                logger.info("ToasterUI waiting for events")
 
             if event is None:
                 if main.shutdown > 0:
