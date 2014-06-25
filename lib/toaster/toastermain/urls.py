@@ -27,12 +27,10 @@ from django.views.decorators.cache import never_cache
 # Uncomment the next two lines to enable the admin:
 # from django.contrib import admin
 # admin.autodiscover()
-
 urlpatterns = patterns('',
-    url(r'^simple/', include('bldviewer.urls')),
     url(r'^api/1.0/', include('bldviewer.api')),
-    url(r'^gui/', include('toastergui.urls')),
-    url(r'^$', never_cache(RedirectView.as_view(url='/gui/'))),
+    url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/'))),
+
     # Examples:
     # url(r'^toaster/', include('toaster.foo.urls')),
 
@@ -42,3 +40,13 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
 )
+
+# Automatically discover urls.py in various apps, beside our own
+# and map module directories to the patterns
+
+import os
+currentdir = os.path.dirname(__file__)
+for t in os.walk(os.path.dirname(currentdir)):
+    if "urls.py" in t[2] and t[0] != currentdir:
+        modulename = os.path.basename(t[0])
+        urlpatterns.append( url(r'^' + modulename + '/', include ( modulename + '.urls')))
