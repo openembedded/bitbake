@@ -8,6 +8,7 @@
   <xsl:include href="../template/component.title.xsl"/>
   <xsl:include href="../template/division.title.xsl"/>
   <xsl:include href="../template/formal.object.heading.xsl"/>
+  <xsl:include href="../template/gloss-permalinks.xsl"/>
 
   <xsl:param name="html.stylesheet" select="'user-manual-style.css'" />
   <xsl:param name="chapter.autolabel" select="1" />
