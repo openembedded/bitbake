@@ -553,7 +553,7 @@
                         network.
                         For that reason, tags are often not used.
                         As far as Git is concerned, the "tag" parameter behaves
-                        effectively the same as the "revision" parameter.
+                        effectively the same as the "rev" parameter.
                         </para></listitem>
                     <listitem><para><emphasis>"subpath":</emphasis>
                         Limits the checkout to a specific subpath of the tree.
