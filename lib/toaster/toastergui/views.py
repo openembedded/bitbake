@@ -1758,3 +1758,41 @@ def image_information_dir(request, build_id, target_id, packagefile_id):
     # stubbed for now
     return redirect(builds)
 
+
+import toastermain.settings
+def managedcontextprocessor(request):
+    return { "MANAGED" : toastermain.settings.MANAGED }
+
+
+# we have a set of functions if we're in managed mode, or
+# a default "page not available" simple functions for interactive mode
+if toastermain.settings.MANAGED:
+
+    # new project
+    def newproject(request):
+        template = "newproject.html"
+        context = {}
+        if request.method == "GET":
+            # render new project page
+            return render(request, template, context)
+        elif request.method == "POST":
+            if request.method:
+                return redirect(project)
+            else:
+                return render(request, template, context)
+        raise Exception("Invalid HTTP method for this page")
+
+    # Shows the edit project page
+    def project(request):
+        template = "project.html"
+        context = {}
+        return render(request, template, context)
+
+
+else:
+    # these are pages that are NOT available in interactive mode
+    def newproject(request):
+        raise Exception("page not available in interactive mode")
+
+    def project(request):
+        raise Exception("page not available in interactive mode")

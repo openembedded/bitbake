@@ -58,6 +58,19 @@ function reload_params(params) {
     <div class="navbar-inner">
             <a class="brand logo" href="#"><img src="{% static 'img/logo.png' %}" class="" alt="Yocto logo project"/></a>
             <a class="brand" href="/">Toaster</a>
+				{%if MANAGED %}
+					  <div class="btn-group pull-right">
+						  <a class="btn" href="{% url 'newproject' %}">New project</a>
+						  <button class="btn dropdown-toggle" data-toggle="dropdown">
+							  <i class="icon-caret-down"></i>
+						  </button>
+						  <ul class="dropdown-menu">
+							  <li><a href="#">Clone project</a></li>
+							  <li><a href="#">Export project</a></li>
+							  <li><a href="#">Import project</a></li>
+						  </ul>
+					  </div>
+				{%endif%}
             <a class="pull-right manual" target="_blank" href="http://www.yoctoproject.org/documentation/toaster-manual">
                 <i class="icon-book"></i>
                 Toaster manual

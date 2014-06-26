@@ -65,6 +65,11 @@ urlpatterns = patterns('toastergui.views',
         # urls not linked from the dashboard
         url(r'^layers/$', 'layer', name='all-layers'),
         url(r'^layerversions/(?P<layerversion_id>\d+)/recipes/.*$', 'layer_versions_recipes', name='layer_versions_recipes'),
+
+        # project URLs
+        url(r'^newproject/$', 'newproject', name='newproject'),
+        url(r'^project/$', 'project', name='project'),
+
         # default redirection
         url(r'^$', RedirectView.as_view( url= 'builds/')),
 )

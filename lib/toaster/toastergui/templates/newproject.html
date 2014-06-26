@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load projecttags %}
+{% load humanize %}
+{% block pagecontent %}
+<div class="row-fluid">
+				<div class="span6">
+				<div class="page-header">
+					<h1>Create a new project</h1>
+				</div>  
+					<form>
+						<fieldset>
+							<label>Project name <span class="muted">(required)</span></label>
+							<input type="text" class="input-xlarge" required name="projectname">
+							<label class="project-form">
+								Project owner
+								<i class="icon-question-sign get-help" title="The go-to person for this project"></i>
+							</label>
+				<form method="POST">
+							<input type="text">
+							<label class="project-form">Owner's email</label>
+							<input type="email" class="input-large" name="email">
+							<label class="project-form">
+								Yocto Project version
+								<i class="icon-question-sign get-help" title="This sets the branch for the Yocto Project core layers (meta, meta-yocto and meta-yocto-bsp), and for the layers you use from the OpenEmbedded Metadata Index"></i>
+							</label>
+							<select>
+								<option>Yocto Project 1.7 "D?"</option>
+								<option>Yocto Project 1.6 "Daisy"</option>
+								<option>Yocto Project 1.5 "Dora"</option>
+							</select>
+				</form>
+						</fieldset>
+									
+						<div class="form-actions">
+							<a href="project-with-targets.html" class="btn btn-primary btn-large">Create project</a>
+						</div>
+					</form> 
+				</div>
+			</div>
+		</div>  
+{% endblock %}

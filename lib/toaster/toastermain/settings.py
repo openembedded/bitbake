@@ -75,6 +75,11 @@ if 'DATABASE_URL' in os.environ:
         raise Exception("FIXME: Please implement missing database url schema for url: %s" % dburl)
 
 
+if 'TOASTER_MANAGED' in os.environ and os.environ['TOASTER_MANAGED'] == "1":
+    MANAGED = True
+else:
+    MANAGED = False
+
 # Allows current database settings to be exported as a DATABASE_URL environment variable value
 
 def getDATABASE_URL():
@@ -221,12 +226,11 @@ TEMPLATE_CONTEXT_PROCESSORS = ('django.contrib.auth.context_processors.auth',
  'django.core.context_processors.static',
  'django.core.context_processors.tz',
  'django.contrib.messages.context_processors.messages',
- "django.core.context_processors.request")
+ "django.core.context_processors.request",
+ 'toastergui.views.managedcontextprocessor',
+ )
 
 INSTALLED_APPS = (
-    #'django.contrib.auth',
-    #'django.contrib.contenttypes',
-    #'django.contrib.sessions',
     #'django.contrib.sites',
     #'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -242,6 +246,13 @@ INSTALLED_APPS = (
     'south',
     'bldcontrol',
 )
+
+# if we run in managed mode, we need user support
+if MANAGED:
+    INSTALLED_APPS = ('django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',) + INSTALLED_APPS
+
 
 # We automatically detect and install applications here if
 # they have a 'models.py' or 'views.py' file
