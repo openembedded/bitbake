@@ -1744,16 +1744,28 @@
         <glossentry id='var-PROVIDES'><glossterm>PROVIDES</glossterm>
             <glossdef>
                 <para>
-                    A list of aliases that a recipe also provides.
-                    These aliases are useful for satisfying dependencies of
-                    other recipes during the build (as specified by
-                    <filename><link linkend='var-DEPENDS'>DEPENDS</link></filename>).
-                    <note>
-                        A recipe's own
-                        <filename><link linkend='var-PN'>PN</link></filename>
-                        is implicitly already in its
-                        <filename>PROVIDES</filename> list.
-                    </note>
+                    A list of aliases by which a particular recipe can be
+                    known.
+                    By default, a recipe's own
+                    <filename><link linkend='var-PN'>PN</link></filename>
+                    is implicitly already in its <filename>PROVIDES</filename>
+                    list.
+                    If a recipe uses <filename>PROVIDES</filename>, the
+                    additional aliases are synonyms for the recipe and can
+                    be useful satisfying dependencies of other recipes during
+                    the build as specified by
+                    <filename><link linkend='var-DEPENDS'>DEPENDS</link></filename>.
+                </para>
+
+                <para>
+                    Consider the following example
+                    <filename>PROVIDES</filename> statement from a recipe
+                    file <filename>libav_0.8.11.bb</filename>:
+                    <literallayout class='monospaced'>
+     PROVIDES += "libpostproc"
+                    </literallayout>
+                    The <filename>PROVIDES</filename> statement results in
+                    the "libav" recipe also being known as "libpostproc".
                 </para>
             </glossdef>
         </glossentry>
