@@ -331,38 +331,55 @@
     </section>
 
     <section id='bb-bitbake-providers'>
-        <title>Preferences and Providers</title>
+        <title>Providers</title>
 
         <para>
             Assuming BitBake has been instructed to execute a target
             and that all the recipe files have been parsed, BitBake
             starts to figure out how to build the target.
-            BitBake starts by looking through the
+            BitBake looks through the <filename>PROVIDES</filename> list
+            for each of the recipes.
+            A <filename>PROVIDES</filename> list is the list of names by which
+            the recipe can be known.
+            Each recipe's <filename>PROVIDES</filename> list is created
+            implicitly through the recipe's
+            <link linkend='var-PN'><filename>PN</filename></link> variable
+            and explicitly through the recipe's
             <link linkend='var-PROVIDES'><filename>PROVIDES</filename></link>
-            set in recipe files.
-            The default <filename>PROVIDES</filename> for a recipe is its name
-            (<link linkend='var-PN'><filename>PN</filename></link>),
-            however, a recipe can provide multiple things.
+            variable, which is optional.
         </para>
 
         <para>
-            As an example of adding an extra provider, suppose a recipe named
-            <filename>foo_1.0.bb</filename> contained the following:
+            When a recipe uses <filename>PROVIDES</filename>, that recipe's
+            functionality can be found under an alternative name or names other
+            than the implicit <filename>PN</filename> name.
+            As an example, suppose a recipe named <filename>keyboard_1.0.bb</filename>
+            contained the following:
             <literallayout class='monospaced'>
-     PROVIDES += "virtual/bar_1.0"
+     PROVIDES += "fullkeyboard"
             </literallayout>
-            The recipe now provides both "foo_1.0" and "virtual/bar_1.0".
-            The "virtual/" namespace is often used to denote cases where
-            multiple providers are expected with the user choosing between
-            them.
-            Kernels and toolchain components are common cases of this in
-            OpenEmbedded.
+            The <filename>PROVIDES</filename> list for this recipe becomes
+            "keyboard", which is implicit, and "fullkeyboard", which is explicit.
+            Consequently, the functionality found in
+            <filename>keyboard_1.0.bb</filename> can be found under two
+            different names.
+        </para>
+    </section>
+
+    <section id='bb-bitbake-preferences'>
+        <title>Preferences</title>
+
+        <para>
+            The <filename>PROVIDES</filename> list is only part of the solution
+            for figuring out a target's recipes.
+            Because targets might have multiple providers, BitBake needs
+            to prioritize providers by determining provider preferences.
         </para>
 
         <para>
-            Sometimes a target might have multiple providers.
-            A common example is "virtual/kernel", which is provided by each
-            kernel recipe.
+            A common example in which a target has multiple providers
+            is "virtual/kernel", which is on the
+            <filename>PROVIDES</filename> list for each kernel recipe.
             Each machine often selects the best kernel provider by using a
             line similar to the following in the machine configuration file:
             <literallayout class='monospaced'>
@@ -377,7 +394,7 @@
 
         <para>
             Understanding how providers are chosen is made complicated by the fact
-            that multiple versions might exist.
+            that multiple versions might exist for a given provider.
             BitBake defaults to the highest version of a provider.
             Version comparisons are made using the same method as Debian.
             You can use the
@@ -386,13 +403,19 @@
             You can influence the order by using the
             <link linkend='var-DEFAULT_PREFERENCE'><filename>DEFAULT_PREFERENCE</filename></link>
             variable.
+        </para>
+
+        <para>
             By default, files have a preference of "0".
-            Setting the <filename>DEFAULT_PREFERENCE</filename> to "-1" makes the
+            Setting <filename>DEFAULT_PREFERENCE</filename> to "-1" makes the
             recipe unlikely to be used unless it is explicitly referenced.
-            Setting the <filename>DEFAULT_PREFERENCE</filename> to "1" makes it likely the recipe is used.
-            <filename>PREFERRED_VERSION</filename> overrides any <filename>DEFAULT_PREFERENCE</filename> setting.
-            <filename>DEFAULT_PREFERENCE</filename> is often used to mark newer and more experimental recipe
-            versions until they have undergone sufficient testing to be considered stable.
+            Setting <filename>DEFAULT_PREFERENCE</filename> to "1" makes it
+            likely the recipe is used.
+            <filename>PREFERRED_VERSION</filename> overrides any
+            <filename>DEFAULT_PREFERENCE</filename> setting.
+            <filename>DEFAULT_PREFERENCE</filename> is often used to mark newer
+            and more experimental recipe versions until they have undergone
+            sufficient testing to be considered stable.
         </para>
 
         <para>
@@ -401,18 +424,16 @@
             version, unless otherwise specified.
             If the recipe in question has a
             <link linkend='var-DEFAULT_PREFERENCE'><filename>DEFAULT_PREFERENCE</filename></link>
-            set lower than
-            the other recipes (default is 0), then it will not be
-            selected.
+            set lower than the other recipes (default is 0), then
+            it will not be selected.
             This allows the person or persons maintaining
             the repository of recipe files to specify
             their preference for the default selected version.
-            In addition, the user can specify their preferred version.
+            Additionally, the user can specify their preferred version.
         </para>
 
         <para>
-            If the first recipe is named <filename>a_1.1.bb</filename>,
-            then the
+            If the first recipe is named <filename>a_1.1.bb</filename>, then the
             <link linkend='var-PN'><filename>PN</filename></link> variable
             will be set to “a”, and the
             <link linkend='var-PV'><filename>PV</filename></link>
@@ -420,18 +441,14 @@
         </para>
 
         <para>
-            If we then have a recipe named <filename>a_1.2.bb</filename>, BitBake
+            Thus, if a recipe named <filename>a_1.2.bb</filename> exists, BitBake
             will choose 1.2 by default.
-            However, if we define the following variable in a
-            <filename>.conf</filename> file that BitBake parses, we
-            can change that.
+            However, if you define the following variable in a
+            <filename>.conf</filename> file that BitBake parses, you
+            can change that preference:
             <literallayout class='monospaced'>
      PREFERRED_VERSION_a = "1.1"
             </literallayout>
-        </para>
-
-        <para>
-            In summary, BitBake has created a list of providers, which is prioritized, for each target.
         </para>
     </section>
 
