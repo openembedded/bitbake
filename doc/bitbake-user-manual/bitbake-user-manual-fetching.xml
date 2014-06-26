@@ -288,7 +288,7 @@
             </para>
 
             <para>
-                Here are a couple example URLs, the first relative and
+                Here are a couple of example URLs, the first relative and
                 the second absolute:
                 <literallayout class='monospaced'>
      SRC_URI = "file://relativefile.patch"
