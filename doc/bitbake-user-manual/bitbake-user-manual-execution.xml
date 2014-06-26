@@ -72,7 +72,7 @@
             <link linkend='var-BBFILES'><filename>BBFILES</filename></link>.
             <filename>BBPATH</filename> is used to search for
             configuration and class files under
-            <filename>conf/</filename> and <filename>class/</filename>
+            <filename>conf/</filename> and <filename>classes/</filename>
             directories, respectively.
             <filename>BBFILES</filename> is used to find recipe files
             (<filename>.bb</filename> and <filename>.bbappend</filename>).
@@ -120,7 +120,7 @@
             variable that is a space delimited list of 'layer' directories.
             Recall that if BitBake cannot find a <filename>bblayers.conf</filename>
             file then it is assumed the user has set the <filename>BBPATH</filename>
-            and <filename>BBFILES</filename> directly in the environment.
+            and <filename>BBFILES</filename> variables directly in the environment.
         </para>
 
         <para>
@@ -128,7 +128,7 @@
             file is searched for and parsed with the
             <link linkend='var-LAYERDIR'><filename>LAYERDIR</filename></link>
             variable being set to the directory where the layer was found.
-            The idea is these files automatically setup
+            The idea is these files automatically set up
             <link linkend='var-BBPATH'><filename>BBPATH</filename></link>
             and other variables correctly for a given build directory.
         </para>
@@ -512,7 +512,7 @@
             As each task completes, a timestamp is written to the directory specified by the
             <link linkend='var-STAMP'><filename>STAMP</filename></link> variable.
             On subsequent runs, BitBake looks in the build directory within
-            <filename>tmp/stamps</filename>and does not rerun
+            <filename>tmp/stamps</filename> and does not rerun
             tasks that are already completed unless a timestamp is found to be invalid.
             Currently, invalid timestamps are only considered on a per
             recipe file basis.
@@ -552,7 +552,7 @@
         <title>Executing Tasks</title>
 
         <para>
-            Tasks can either be a shell task or a Python task.
+            Tasks can be either a shell task or a Python task.
             For shell tasks, BitBake writes a shell script to
             <filename>${</filename><link linkend='var-T'><filename>T</filename></link><filename>}/run.do_taskname.pid</filename>
             and then executes the script.
@@ -772,9 +772,9 @@
             to determine the stamps and delta where these two
             stamp trees diverge.
             <note>
-                It is likely that future versions of BitBake with
+                It is likely that future versions of BitBake will
                 provide other signature handlers triggered through
-                additional "-S" paramters.
+                additional "-S" parameters.
             </note>
         </para>
 
