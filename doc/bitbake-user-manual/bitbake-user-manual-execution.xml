@@ -6,8 +6,8 @@
 
     <para>
         The primary purpose for running BitBake is to produce some kind
-        of output such as an image, a kernel, or a software development
-        kit.
+        of output such as a single installable package, a kernel, a software
+        development kit, or even a full, board-specific bootable Linux image.
         Of course, you can execute the <filename>bitbake</filename>
         command with options that cause it to execute single tasks,
         compile single recipe files, capture or clear data, or simply
@@ -26,15 +26,27 @@
         see
         "<link linkend='bitbake-user-manual-command'>The BitBake Command</link>"
         section.
-    </para>
+        <note>
+            <para>
+                Prior to executing BitBake, you should take advantage of available
+                parallel thread execution on your build host by setting the
+                <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
+                variable in your project's <filename>local.conf</filename>
+                configuration file.
+            </para>
 
-    <note>
-        Prior to executing BitBake, you should take advantage of parallel
-        thread execution by setting the
-        <link linkend='var-BB_NUMBER_THREADS'><filename>BB_NUMBER_THREADS</filename></link>
-        variable in your <filename>local.conf</filename>
-        configuration file.
-    </note>
+            <para>
+                A common way to determine this value for your build host is to run:
+                <literallayout class='monospaced'>
+     $ grep processor /proc/cpuinfo
+                </literallayout>
+                and count the number of processors displayed. Note that the number of
+                processors will take into account hyper-threading, so that a quad-core
+                build host with hyper-threading will most likely show eight processors,
+                which is the value you would then assign to that variable.
+            </para>
+        </note>
+    </para>
 
     <section id='parsing-the-base-configuration-metadata'>
         <title>Parsing the Base Configuration Metadata</title>
@@ -42,7 +54,7 @@
         <para>
             The first thing BitBake does is parse base configuration
             metadata.
-            Base configuration metadata consists of the
+            Base configuration metadata consists of your project's
             <filename>bblayers.conf</filename> file to determine what
             layers BitBake needs to recognize, all necessary
             <filename>layer.conf</filename> files (one from each layer),
@@ -71,10 +83,11 @@
             and
             <link linkend='var-BBFILES'><filename>BBFILES</filename></link>.
             <filename>BBPATH</filename> is used to search for
-            configuration and class files under
-            <filename>conf/</filename> and <filename>classes/</filename>
+            configuration and class files under the
+            <filename>conf</filename> and <filename>classes</filename>
             directories, respectively.
-            <filename>BBFILES</filename> is used to find recipe files
+            <filename>BBFILES</filename> is used to locate both recipe
+            and recipe append files
             (<filename>.bb</filename> and <filename>.bbappend</filename>).
             If there is no <filename>bblayers.conf</filename> file,
             it is assumed the user has set the <filename>BBPATH</filename>
@@ -82,7 +95,7 @@
         </para>
 
         <para>
-            Next, the <filename>bitbake.conf</filename> file is searched
+            Next, the <filename>bitbake.conf</filename> file is located
             using the <filename>BBPATH</filename> variable that was
             just constructed.
             The <filename>bitbake.conf</filename> file may also include other
@@ -117,15 +130,15 @@
             optional <filename>conf/bblayers.conf</filename> configuration file.
             This file is expected to contain a
             <link linkend='var-BBLAYERS'><filename>BBLAYERS</filename></link>
-            variable that is a space delimited list of 'layer' directories.
+            variable that is a space-delimited list of 'layer' directories.
             Recall that if BitBake cannot find a <filename>bblayers.conf</filename>
-            file then it is assumed the user has set the <filename>BBPATH</filename>
+            file, then it is assumed the user has set the <filename>BBPATH</filename>
             and <filename>BBFILES</filename> variables directly in the environment.
         </para>
 
         <para>
             For each directory (layer) in this list, a <filename>conf/layer.conf</filename>
-            file is searched for and parsed with the
+            file is located and parsed with the
             <link linkend='var-LAYERDIR'><filename>LAYERDIR</filename></link>
             variable being set to the directory where the layer was found.
             The idea is these files automatically set up
@@ -143,7 +156,7 @@
 
         <para>
             Only variable definitions and include directives are allowed
-            in <filename>.conf</filename> files.
+            in BitBake <filename>.conf</filename> files.
             Some variables directly influence BitBake's behavior.
             These variables might have been set from the environment
             depending on the environment variables previously
@@ -166,7 +179,8 @@
             Other classes that are specified in the configuration using the
             <link linkend='var-INHERIT'><filename>INHERIT</filename></link>
             variable are also included.
-            BitBake searches for class files in a "classes" subdirectory under
+            BitBake searches for class files in a
+            <filename>classes</filename> subdirectory under
             the paths in <filename>BBPATH</filename> in the same way as
             configuration files.
         </para>
@@ -189,7 +203,7 @@
                 If a recipe uses a closing curly brace within the function and
                 the character has no leading spaces, BitBake produces a parsing
                 error.
-                If you use a pair of curly brace in a shell function, the
+                If you use a pair of curly braces in a shell function, the
                 closing curly brace must not be located at the start of the line
                 without leading spaces.
             </para>
@@ -261,14 +275,14 @@
             One common convention is to use the recipe filename to define
             pieces of metadata.
             For example, in <filename>bitbake.conf</filename> the recipe
-            name and version set
+            name and version are used to set the variables
             <link linkend='var-PN'><filename>PN</filename></link> and
             <link linkend='var-PV'><filename>PV</filename></link>:
             <literallayout class='monospaced'>
-     PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1] or '1.0'}"
      PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[0] or 'defaultpkgname'}"
+     PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1] or '1.0'}"
             </literallayout>
-            In this example, a recipe called "something_1.2.3.bb" sets
+            In this example, a recipe called "something_1.2.3.bb" would set
             <filename>PN</filename> to "something" and
             <filename>PV</filename> to "1.2.3".
         </para>
