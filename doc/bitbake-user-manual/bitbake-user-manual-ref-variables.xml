@@ -1560,8 +1560,16 @@
                     BitBake uses <filename>OVERRIDES</filename> to control
                     what variables are overridden after BitBake parses
                     recipes and configuration files.
-                    You can find more information on how overrides are handled
-                    in the
+                </para>
+
+                <para>
+                    Following is a simple example that uses an overrides
+                    list based on machine architectures:
+                    <literallayout class='monospaced'>
+     OVERRIDES = "arm:x86:mips:powerpc"
+                    </literallayout>
+                    You can find information on how to use
+                    <filename>OVERRIDES</filename> in the
                     "<link linkend='conditional-syntax-overrides'>Conditional Syntax (Overrides)</link>"
                     section.
                 </para>
