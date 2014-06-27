@@ -8,8 +8,8 @@
         Welcome to the BitBake User Manual.
         This manual provides information on the BitBake tool.
         The information attempts to be as independent as possible regarding
-        systems that use BitBake, such as the Yocto Project and
-        OpenEmbedded.
+        systems that use BitBake, such as OpenEmbedded and the
+        Yocto Project.
         In some cases, scenarios or examples within the context of
         a build system are used in the manual to help with understanding.
         For these cases, the manual clearly states the context.
@@ -44,7 +44,7 @@
                     </para></listitem>
                 <listitem><para>
                     BitBake includes a fetcher library for obtaining source
-                    code from various places such as source control
+                    code from various places such as local files, source control
                     systems, websites, or local files.
                     </para></listitem>
                 <listitem><para>
@@ -89,7 +89,7 @@
             an aspiring embedded Linux distribution.
             All of the build systems used by traditional desktop Linux
             distributions lacked important functionality, and none of the
-            ad-hoc Buildroot-based systems, prevalent in the
+            ad hoc Buildroot-based systems, prevalent in the
             embedded space, were scalable or maintainable.
         </para>
 
@@ -209,12 +209,14 @@
                     <listitem><para>The version of the recipe</para></listitem>
                     <listitem><para>Existing dependencies (both build
                         and runtime dependencies)</para></listitem>
-                    <listitem><para>Where the source code resides</para></listitem>
-                    <listitem><para>Whether the source code requires any patches</para></listitem>
+                    <listitem><para>Where the source code resides and
+                        how to fetch it</para></listitem>
+                    <listitem><para>Whether the source code requires
+                        any patches</para></listitem>
                     <listitem><para>How to configure and compile the
                         source code</para></listitem>
                     <listitem><para>Where on the target machine to install the
-                        package being compiled</para></listitem>
+                        package or packages being compiled</para></listitem>
                 </itemizedlist>
             </para>
 
@@ -261,7 +263,7 @@
                 called <filename>base.bbclass</filename>.
                 You can find this file in the
                 <filename>classes</filename> directory.
-                The <filename>base.bbclass</filename> is special since it
+                The <filename>base.bbclass</filename> class files is special since it
                 is always included automatically for all recipes
                 and classes.
                 This class contains definitions for standard basic tasks such
@@ -309,8 +311,8 @@
 
             <para>
                 Append files, which are files that have the
-                <filename>.bbappend</filename> file extension, add or
-                extend build information to an existing
+                <filename>.bbappend</filename> file extension, extend or
+                override information in an existing recipe file.
                 recipe file.
             </para>
 
@@ -578,14 +580,14 @@
                     when one wants to manage multiple <filename>.bb</filename>
                     files.
                     Clearly there needs to be a way to tell BitBake what
-                    files are available, and of those, which you
+                    files are available and, of those, which you
                     want to execute.
                     There also needs to be a way for each recipe
                     to express its dependencies, both for build-time and
                     runtime.
                     There must be a way for you to express recipe preferences
                     when multiple recipes provide the same functionality, or when
-                    there are multiple versions of a  recipe.
+                    there are multiple versions of a recipe.
                 </para>
 
                 <para>
