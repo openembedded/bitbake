@@ -1768,17 +1768,42 @@ def managedcontextprocessor(request):
 # a default "page not available" simple functions for interactive mode
 if toastermain.settings.MANAGED:
 
+    from django.contrib.auth.models import User
+    from django.contrib.auth import authenticate, login
+    from django.contrib.auth.decorators import login_required
+
+
     # new project
     def newproject(request):
         template = "newproject.html"
-        context = {}
+        context = {
+            'email': request.user.email if request.user.is_authenticated() else '',
+            'username': request.user.username if request.user.is_authenticated() else '',
+        }
+
+
         if request.method == "GET":
             # render new project page
             return render(request, template, context)
         elif request.method == "POST":
-            if request.method:
+            mandatory_fields = ['projectname', 'email', 'username', 'projectversion']
+            if reduce( lambda x, y: x and y, map(lambda x: x in request.POST and len(request.POST[x]) > 0, mandatory_fields)):
+                if not request.user.is_authenticated():
+                    user = authenticate(username = request.POST['username'], password = 'nopass')
+                    if user is None:
+                        user = User.objects.create_user(username = request.POST['username'], email = request.POST['email'], password = "nopass")
+                        raise Exception("User cannot be authed, creating")
+                        user = authenticate(username = request.POST['username'], password = '')
+                    login(request, user)
+
                 return redirect(project)
             else:
+                alerts = []
+                # set alerts for missing fields
+                map(lambda x: alerts.append('Field '+ x + ' not filled in') if not x in request.POST or len(request.POST[x]) == 0 else None, mandatory_fields)
+                # fill in new page with already submitted values
+                map(lambda x: context.__setitem__(x, request.POST[x]), mandatory_fields)
+                context['alerts'] = alerts
                 return render(request, template, context)
         raise Exception("Invalid HTTP method for this page")
 

@@ -6,36 +6,39 @@
 				<div class="span6">
 				<div class="page-header">
 					<h1>Create a new project</h1>
-				</div>  
-					<form>
+				</div>
+				<div class="container-fluid">
+		{% for a in alerts %}
+			<div class="alert alert-error row-fluid" role="alert">{{a}}</div>
+		{% endfor %}
+				</div>
+					<form method="POST">{% csrf_token %}
 						<fieldset>
 							<label>Project name <span class="muted">(required)</span></label>
-							<input type="text" class="input-xlarge" required name="projectname">
+							<input type="text" class="input-xlarge" required name="projectname" value="{{projectname}}">
 							<label class="project-form">
 								Project owner
-								<i class="icon-question-sign get-help" title="The go-to person for this project"></i>
+					<i class="icon-question-sign get-help" title="The go-to person for this project"></i>
 							</label>
-				<form method="POST">
-							<input type="text">
+							<input type="text" name="username" value="{{username}}">
 							<label class="project-form">Owner's email</label>
-							<input type="email" class="input-large" name="email">
+							<input type="email" class="input-large" name="email" value="{{email}}">
 							<label class="project-form">
 								Yocto Project version
 								<i class="icon-question-sign get-help" title="This sets the branch for the Yocto Project core layers (meta, meta-yocto and meta-yocto-bsp), and for the layers you use from the OpenEmbedded Metadata Index"></i>
 							</label>
-							<select>
-								<option>Yocto Project 1.7 "D?"</option>
-								<option>Yocto Project 1.6 "Daisy"</option>
-								<option>Yocto Project 1.5 "Dora"</option>
+							<select name="projectversion">
+		<option value="1.7" {%if projectversion == "1.7" %}selected{%endif%}>Yocto Project 1.7 "D?"</option>
+		<option value="1.6" {%if projectversion == "1.6" %}selected{%endif%}>Yocto Project 1.6 "Daisy"</option>
+		<option value="1.5" {%if projectversion == "1.5" %}selected{%endif%}>Yocto Project 1.5 "Dora"</option>
 							</select>
-				</form>
 						</fieldset>
-									
+
 						<div class="form-actions">
-							<a href="project-with-targets.html" class="btn btn-primary btn-large">Create project</a>
+							<input type="submit" class="btn btn-primary btn-large" value="Create project"/>
 						</div>
-					</form> 
+					</form>
 				</div>
 			</div>
-		</div>  
+		</div>
 {% endblock %}
