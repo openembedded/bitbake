@@ -3,4 +3,360 @@
 {% load humanize %}
 {% block pagecontent %}
 
+<script>
+
+var buildrequests = [];
+
+function targetInPage(targetname) {
+    return targetname in $("ul#target-list > li > a").map(function (i, x) {return x.text});
+}
+
+function setEventHandlers() {
+    $("i#del-target-icon").unbind().click(function (evt) {
+        console.log("del target", evt.target.attributes["x-data"].value);
+        postEditAjaxRequest({"targetDel": evt.target.attributes["x-data"].value});
+    });
+    $("button#add-target-button").unbind().click( function (evt) {
+        if ( $("input#target")[0].value.length == 0) {
+            alert("cannot add empty target");
+            return;
+        }
+        postEditAjaxRequest({"targetAdd" : $("input#target")[0].value});
+    });
+}
+
+function onEditPageUpdate(data) {
+    // update targets
+    var i; var orightml = "";
+
+    $("span#target-count").html(data.targets.length);
+    for (i = 0; i < data.targets.length; i++) {
+        if (! targetInPage(data.targets[i].target)) {
+            orightml += '<li><a href="#">'+data.targets[i].target;
+            if (data.targets[i].task != "" && data.targets[i].task !== null) {
+                orightml += " ("+data.targets[i].task+")";
+            }
+            orightml += '</a><i title="" data-original-title="" class="icon-trash" id="del-target-icon" x-data="'+data.targets[i].pk+'"></i></li>';
+        }
+    }
+
+    $("ul#target-list").html(orightml);
+
+    // update recent builds
+
+    setEventHandlers();
+}
+
+function onEditAjaxSuccess(data, textstatus) {
+    console.log("XHR returned:", data, "(" + textstatus + ")");
+    if (data.error != "ok") {
+        alert("error on request:\n" + data.error);
+        return;
+    }
+    onEditPageUpdate(data);
+}
+
+function onEditAjaxError(jqXHR, textstatus, error) {
+    alert("XHR errored:\n" + error + "\n(" + textstatus + ")");
+}
+
+function postEditAjaxRequest(reqdata) {
+    var ajax = $.ajax({
+            type:"POST",
+            data: $.param(reqdata),
+            url:"{% url 'xhr_projectedit' project.id%}",
+            headers: { 'X-CSRFToken': $.cookie("csrftoken")},
+            success: onEditAjaxSuccess,
+            error: onEditAjaxError,
+        })
+}
+
+$(document).ready(function () {
+    setEventHandlers();
+});
+
+</script>
+
+
+            <div class="page-header">
+                <h1>
+                    {{project.name}}
+                    {% if project.build_set.all.count == 0 %}
+                    <small>No builds yet</small>
+                    {% else %}
+                    <small><a href="#">{{project.build_set.all.count}} builds</a></small>
+                    {% endif %}
+                </h1>
+            </div>
+
+
+            <div class="well">
+                <!--div class="control-group error"-->
+                    <button id="build-all-button" class="btn btn-primary btn-large">Build all added targets</button>
+                    <div class="input-append build-form controls">
+                        <input class="huge input-xxlarge" placeholder="Or enter the target you want to build" autocomplete="off" data-minlength="1" data-autocomplete="off" data-provide="typeahead" data-source="" type="text">
+                        <button id="build-button" class="btn btn-large" disabled="">Build</button>
+                    </div>
+                    <script>
+/* Provide XHR calls for the "build" buttons.*/
+$("button#build-all-button").click( function (evt) {
+    var ajax = $.ajax({
+            type:"POST",
+            url:"{% url 'xhr_projectbuild' project.id %}",
+            headers: { 'X-CSRFToken': $.cookie("csrftoken")},
+            success: function (data, textstatus) {
+                if (data.error != "ok") {
+                    alert("XHR fail: " + data.error );
+                }
+            },
+            error: function (jqXHR, textstatus, error) { alert("XHR errored:" + error + "(" + textstatus + ")"); },
+        })
+});
+
+                    </script>
+                    <!--span class="help-inline">This target is not provided <br />by any of your added layers
+                        <i class="icon-question-sign get-help get-help-red" title="Review your list of added layers to make sure one of them provides core-image-xyz. Clicking on a layer name will give you all the information Toaster has about the layer"></i>
+                    </span>
+                </div-->
+            </div>
+
+            <div id="meta-tizen-alert" class="alert alert-info lead air" style="display:none;">
+                 <button type="button" class="close" data-dismiss="alert">?</button>
+                You have added <strong>6</strong> layers: <a href="#">meta-tizen</a> and its dependencies (<a href="#">meta-efl</a>, <a href="#">meta-intel</a>, <a href="#">meta-multimedia</a>, <a href="#">meta-oe</a> and <a href="#">meta-ruby</a>).
+            </div>
+
+
+
+
+
+        {% if builds|length > 0 or buildrequests|length > 0 %}
+            <h2 class="air">Recent Builds</h2>
+
+    <div id="scheduled-builds">
+          {% for br in buildrequests %}
+<div class="alert {% if br.0.state == br.0.REQ_FAILED%}alert-error{%else%}alert-info{%endif%}" id="build-request">
+        <div class="row-fluid">
+            <div class="lead span4">
+                <span>
+                {{br.0.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} {{br.1.machine.value}} (Created {{br.0.created}})
+                </span>
+            </div>
+            <div class="span2">
+	 {{br.0.get_state_display}}
+            </div>
+	    <div class="span8">
+{% if br.state == br.REQ_FAILED%}
+	{% for bre in br.0.brerror_set.all %} {{bre.errmsg}} ({{bre.errtype}}) <br/><hr/><code>{{bre.traceback}}</code>{%endfor%}
+{%endif%}
+            </div>
+
+        </div>
+</div>
+
+          {% endfor %}
+
+    </div>
+
+
+
+<!-- Lifted from build.html -->
+          {% for build in builds %}
+<div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
+        <div class="row-fluid">
+            <div class="lead span5">
+                {%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}
+    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
+                <a href="{%url 'builddashboard' build.pk%}" class="{%if build.outcome == build.SUCCEEDED %}success{%else%}error{%endif%}">
+    {% endif %}
+                <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|naturaltime}})</span>
+    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
+                </a>
+    {% endif %}
+            </div>
+    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
+            <div class="span2 lead">
+    {% if  build.errors_no %}
+                <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}#errors" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
+    {% endif %}
+            </div>
+            <div class="span2 lead">
+    {% if  build.warnings_no %}
+                <i class="icon-warning-sign yellow"></i> <a href="{%url 'builddashboard' build.pk%}#warnings" class="warning">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>
+    {% endif %}
+            </div >
+            <div class="lead pull-right">
+                Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
+            </div>
+    {%endif%}{%if build.outcome == build.IN_PROGRESS %}
+            <div class="span4">
+                <div class="progress" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
+                    <div style="width: {{build.completeper}}%;" class="bar"></div>
+                </div>
+            </div>
+            <div class="lead pull-right">ETA: in {{build.eta|naturaltime}}</div>
+    {%endif%}
+        </div>
+    </div>
+          {% endfor %}
+<!-- end of lift-->
+        {%endif%}
+
+            <h2 class="air">Project configuration</h2>
+
+            <div class="row-fluid">
+
+                <div id="layer-container" class="well well-transparent span4">
+                    <h3>
+                        Add layers
+                        <i data-original-title="OpenEmbedded organises metadata into modules called 'layers'. Layers allow you to isolate different types of customizations from each other. <a href='http://www.yoctoproject.org/docs/1.6.1/dev-manual/dev-manual.html#understanding-and-creating-layers' target='_blank'>More on layers</a>" class="icon-question-sign get-help heading-help" title=""></i>
+                    </h3>
+                    <form style="margin-top:20px;">
+                        <div class="input-append">
+                            <input class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-provide="typeahead" data-source="" data-minlength="1" data-autocomplete="off" type="text">
+                            <button id="add-layer" class="btn" disabled="">Add</button>
+                        </div>
+                        <div id="import-alert" class="alert alert-info" style="display:none;">
+                            Toaster does not know about this layer. Please <a href="#">import it</a>
+                        </div>
+                        <div id="dependency-alert" class="alert alert-info" style="display:none;">
+                            <p><strong>meta-tizen</strong> depends on the layers below. Check the ones you want to add: </p>
+                            <ul class="unstyled">
+                                <li>
+                                    <label class="checkbox">
+                                        <input checked="checked" type="checkbox">
+                                        meta-efl
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="checkbox">
+                                        <input checked="checked" type="checkbox">
+                                        meta-intel
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="checkbox">
+                                        <input checked="checked" type="checkbox">
+                                        meta-multimedia
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="checkbox">
+                                        <input checked="checked" type="checkbox">
+                                        meta-oe
+                                    </label>
+                                </li>
+                                <li>
+                                    <label class="checkbox">
+                                        <input checked="checked" type="checkbox">
+                                        meta-ruby
+                                    </label>
+                                </li>
+                            </ul>
+                            <button id="add-layer-dependencies" class="btn btn-info add-layer">Add layers</button>
+                        </div>
+
+                        <p><a href="#">Import your layer</a> | <a href="#">View all layers</a></p>
+                    </form>
+
+                    <h4 class="air">
+                        Added layers
+                        <span class="muted counter">{{project.projectlayer_set.count}}</span>
+                        <i data-original-title="Your added layers will be listed in this same order in your <code>bblayers.conf</code> file" class="icon-question-sign get-help heading-help" title=""></i>
+                    </h4>
+                    <ul class="unstyled configuration-list">
+            {% for pl in project.projectlayer_set.all %}
+                        <li>
+                            <a href="#">{{pl.name}} (<span class="layer-version">{{pl.giturl}}</span>)</a>
+                {% if pl.optional %}
+                            <i title="" data-original-title="" class="icon-trash" id="del-layer-icon" x-data="{{pl.pk}}"></i>
+                {% endif %}
+                        </li>
+            {% endfor %}
+                    </ul>
+                </div>
+
+                <div id="target-container" class="well well-transparent span4">
+                    <h3>
+                        Add targets
+                        <i data-original-title="A target is what you want to build, usually an image recipe that produces a root file system" class="icon-question-sign get-help heading-help" title=""></i>
+                    </h3>
+                    <form style="margin-top:20px;">
+                        <div class="input-append">
+                            <input id="target" class="input-xlarge" autocomplete="off" placeholder="Type a target name" data-provide="typeahead" data-source="" data-minlength="1" data-autocomplete="off" type="text">
+                            <button id="add-target-button" class="btn" type="button">Add</button>
+                        </div>
+
+                        <p><a href="#" class="link">View all targets</a></p>
+                    </form>
+                    <h4 class="air">
+                        Added targets
+                        <span id="target-count" class="muted counter">{{project.projecttarget_set.count}}</span>
+                    </h4>
+                    <ul class="unstyled configuration-list" id="target-list">
+        {% for target in project.projecttarget_set.all %}
+            {% if target %}
+                        <li>
+                            <a href="#">{{target.target}}{% if target.task%} (target.task){%endif%}</a>
+			    {% if target.notprovided %}
+                            <i title="" data-original-title="" id="msg1" class="icon-exclamation-sign get-help-yellow" data-title="<strong>Target may not be provided</strong>" data-content="From the layer information it currently has, Toaster thinks this target is not provided by any of your added layers. If a target is not provided by one of your added layers, the build will fail.<h5>What Toaster suggests</h5><p>The <a href='#'>meta-abc</a> and <a href='#'>meta-efg</a> layers provide core-image-notprovided. You could add one of them to your project.</p><button class='btn btn-block'>Add meta-abc</button><button class='btn btn-block'>Add meta-efg</button><button id='dismiss1' class='btn btn-block btn-info'>Stop showing this message</button>"></i>
+		            {% elif target.notknown %}
+                            <i title="" data-original-title="" id="msg2" class="icon-exclamation-sign get-help-yellow" data-title="<strong>Target may not be provided</strong>" data-content="From the layer information it currently has, Toaster thinks this target is not provided by any of your added layers. If a target is not provided by one of your added layers, the build will fail.<h5>What Toaster suggests</h5><p>Review your added layers to make sure one of them provides core-image-unknown. Clicking on a layer name will give you all the information Toaster has about the layer. </p> <button class='btn btn-block btn-info'>Stop showing this message</button>"></i>
+                            {% endif %}
+                            <i title="" data-original-title="" class="icon-trash" id="del-target-icon" x-data="{{target.pk}}"></i>
+                        </li>
+            {% endif %}
+        {% endfor %}
+
+
+                    </ul>
+                </div>
+
+                <div class="well well-transparent span4">
+                    <h3>
+                        Set machine
+                        <i data-original-title="The machine is the hardware for which you want to build. You can only set one machine per project" class="icon-question-sign get-help heading-help" title=""></i>
+                    </h3>
+                    <p class="lead">
+                        {{machine}}
+                        <i title="" data-original-title="" class="icon-pencil"></i>
+                    </p>
+                    <h3>
+                        Set distro
+                        <i data-original-title="When you build an image using the Yocto Project and do not alter the distro, you are creating a Poky distribution" class="icon-question-sign get-help heading-help" title=""></i>
+                    </h3>
+                    <p class="lead">
+                        {{distro}}
+                        <i title="" data-original-title="" class="icon-pencil"></i>
+                    </p>
+                    <p class="localconf">
+                        <a href="#" class="link">Edit the <code>local.conf</code> file</a>
+                        <i data-original-title="The <code>local.conf</code> file is where other project configuration options are set. Pretty much any configuration option can be set in this file. Each option, like everything else in the build system, is a variable - value pair" class="icon-question-sign get-help heading-help" title=""></i>
+                    </p>
+                </div>
+            </div>
+
+            <h2>Project details</h2>
+
+            <div class="well well-transparent">
+                <h3>Project name</h3>
+                <p class="lead">
+                    {{project.name}}
+                    <i title="" data-original-title="" class="icon-pencil"></i>
+                </p>
+                <h3>Project owner</h3>
+                <p class="lead">
+                    {{puser.username}}
+                    <i title="" data-original-title="" class="icon-pencil"></i>
+                </p>
+                <h3>Owner's email</h3>
+                <p class="lead">
+            {{puser.email}}
+                    <i title="" data-original-title="" class="icon-pencil"></i>
+                </p>
+                <h3>Yocto Project version</h3>
+                <p class="lead">
+                    {{project.branch}} - {{project.short_description}}
+                    <i title="" data-original-title="" class="icon-pencil"></i>
+                </p>
+            </div>
 {% endblock %}

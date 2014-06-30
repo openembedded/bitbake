@@ -37,13 +37,15 @@ class ProjectManager(models.Manager):
             name = "meta",
             giturl = "git://git.yoctoproject.org/poky",
             commit = branch,
-            dirpath = "meta")
+            dirpath = "meta",
+            optional = False)
 
         ProjectLayer.objects.create(project = prj,
             name = "meta-yocto",
             giturl = "git://git.yoctoproject.org/poky",
             commit = branch,
-            dirpath = "meta-yocto")
+            dirpath = "meta-yocto",
+            optional = False)
 
         return prj
 
@@ -116,6 +118,7 @@ class Build(models.Model):
 class ProjectTarget(models.Model):
     project = models.ForeignKey(Project)
     target = models.CharField(max_length=100)
+    task = models.CharField(max_length=100, null=True)
 
 @python_2_unicode_compatible
 class Target(models.Model):
@@ -392,6 +395,7 @@ class ProjectLayer(models.Model):
     giturl = models.CharField(max_length = 254)
     commit = models.CharField(max_length = 254)
     dirpath = models.CharField(max_length = 254)
+    optional = models.BooleanField(default = True)
 
 class Layer(models.Model):
     name = models.CharField(max_length=100)

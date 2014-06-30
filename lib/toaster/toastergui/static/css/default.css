@@ -116,17 +116,31 @@ select { width: auto; }
 /* make tables Chrome-happy (me, not so much) */
 #otable { table-layout: fixed; word-wrap: break-word; }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/* Configuration styles */
+.icon-trash { color: #B94A48; font-size: 16px; padding-left: 2px; }
+.icon-trash:hover { color: #943A38; text-decoration: none; cursor: pointer; }
+.icon-pencil, .icon-download-alt { font-size: 16px; color: #0088CC; padding-left: 2px; }
+.icon-pencil:hover, .icon-download-alt:hover { color: #005580; text-decoration: none; cursor: pointer; }
+.configuration-list li { line-height: 35px; font-size: 21px; font-weight: 200; }
+.configuration-list { font-size: 16px; margin-bottom: 1.5em; }
+.configuration-list i { font-size: 16px; }
+/*.configuration-layers { height: 135px; overflow: scroll; }*/
+.counter { font-weight: normal; }
+.well-alert { background-color: #FCF8E3; border: 1px solid #FBEED5; border-radius: 4px; }
+.well-alert > .lead { color: #C09853; padding-bottom: .75em; }
+.configuration-alert { margin-bottom: 0px; padding: 8px 14px; }
+.configuration-alert p { margin-bottom: 0px; }
+fieldset { padding-left: 19px; }
+.project-form { margin-top: 10px; }
+.add-layers .btn-block + .btn-block { margin-top: 0px; }
+input.huge { font-size: 17.5px; padding: 11px 19px; }
+.build-form { margin-bottom: 0px; padding-left: 20px; }
+a code { color: #0088CC; }
+a code:hover { color: #005580; }
+.localconf { font-size: 17.5px; margin-top: 40px; }
+.localconf code { font-size: 17.5px; }
+#add-layer-dependencies {  margin-top: 5px; }
+.artifact { width: 9em; }
+.control-group { margin-bottom: 0px; }
+#project-details form { margin: 0px; }
+dd form { margin: 10px 0 0 0; }

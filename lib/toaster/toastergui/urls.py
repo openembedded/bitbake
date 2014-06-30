@@ -69,6 +69,9 @@ urlpatterns = patterns('toastergui.views',
         # project URLs
         url(r'^newproject/$', 'newproject', name='newproject'),
         url(r'^project/(?P<pid>\d+)/$', 'project', name='project'),
+        url(r'^xhr_projectbuild/(?P<pid>\d+)/$', 'xhr_projectbuild', name='xhr_projectbuild'),
+        url(r'^xhr_projectedit/(?P<pid>\d+)/$', 'xhr_projectedit', name='xhr_projectedit'),
+
 
         # default redirection
         url(r'^$', RedirectView.as_view( url= 'builds/')),

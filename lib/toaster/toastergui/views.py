@@ -30,7 +30,7 @@ from orm.models import Target_Installed_Package, Target_File, Target_Image_File
 from django.views.decorators.cache import cache_control
 from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.http import HttpResponseBadRequest
+from django.http import HttpResponseBadRequest, HttpResponseNotFound
 from django.utils import timezone
 from datetime import timedelta
 from django.utils import formats
@@ -1761,8 +1761,6 @@ def image_information_dir(request, build_id, target_id, packagefile_id):
 
 
 import toastermain.settings
-def managedcontextprocessor(request):
-    return { "MANAGED" : toastermain.settings.MANAGED }
 
 
 # we have a set of functions if we're in managed mode, or
@@ -1773,7 +1771,8 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth import authenticate, login
     from django.contrib.auth.decorators import login_required
 
-    from orm.models import Project
+    from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
+    from bldcontrol.models import BuildRequest
 
     import traceback
 
@@ -1831,19 +1830,113 @@ if toastermain.settings.MANAGED:
                 else:
                     context['alert'] = str(e)
                 return render(request, template, context)
+
         raise Exception("Invalid HTTP method for this page")
 
     # Shows the edit project page
     def project(request, pid):
         template = "project.html"
-        context = {}
+        try:
+            prj = Project.objects.get(id = pid)
+        except Project.DoesNotExist:
+            return HttpResponseNotFound("<h1>Project id " + pid + " is unavailable</h1>")
+
+        try:
+            puser = User.objects.get(id = prj.user_id)
+        except User.DoesNotExist:
+            puser = None
+
+        context = {
+            "project" : prj,
+            #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
+            "buildrequests" : map(lambda x: (x, {"machine" : x.brvariable_set.filter(name="MACHINE")[0]}), prj.buildrequest_set.order_by("-pk")),
+            "builds" : prj.build_set.all(),
+            "puser": puser,
+        }
+        try:
+            context["machine"] = prj.projectvariable_set.get(name="MACHINE").value
+        except ProjectVariable.DoesNotExist:
+            context["machine"] = "-- not set yet"
+
+        try:
+            context["distro"] = prj.projectvariable_set.get(name="DISTRO").value
+        except ProjectVariable.DoesNotExist:
+            context["distro"] = "-- not set yet"
+
+
         return render(request, template, context)
+
+    import json
+
+    def xhr_projectbuild(request, pid):
+        try:
+            if request.method != "POST":
+                raise BadParameterException("invalid method")
+            prj = Project.objects.get(id = pid)
+
+            if prj.projecttarget_set.count() == 0:
+                raise BadParameterException("no targets selected")
+
+            br = prj.schedule_build()
+            return HttpResponse(json.dumps({"error":"ok",
+                "brtarget" : map(lambda x: x.target, br.brtarget_set.all()),
+                "machine" : br.brvariable_set.get(name="MACHINE").value,
+
+            }), content_type = "application/json")
+        except Exception as e:
+            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+
+    def xhr_projectedit(request, pid):
+        try:
+            prj = Project.objects.get(id = pid)
+            # add targets
+            if 'targetAdd' in request.POST:
+                for t in request.POST['targetAdd'].strip().split(" "):
+                    if ":" in t:
+                        target, task = t.split(":")
+                    else:
+                        target = t
+                        task = ""
+
+                    pt, created = ProjectTarget.objects.get_or_create(project = prj, target = target, task = task)
+            # remove targets
+            if 'targetDel' in request.POST:
+                for t in request.POST['targetDel'].strip().split(" "):
+                    pt = ProjectTarget.objects.get(pk = int(t)).delete()
+
+            # add layers
+
+            # remove layers
+
+            # return all project settings
+            return HttpResponse(json.dumps( {
+                "error": "ok",
+                "layers": map(lambda x: (x.name, x.giturl), prj.projectlayer_set.all()),
+                "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
+                "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
+                }), content_type = "application/json")
+
+        except Exception as e:
+            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
 
 else:
     # these are pages that are NOT available in interactive mode
+    def managedcontextprocessor(request):
+        return {
+            "projects": [],
+            "MANAGED" : toastermain.settings.MANAGED
+        }
+
     def newproject(request):
         raise Exception("page not available in interactive mode")
 
-    def project(request):
+    def project(request, pid):
         raise Exception("page not available in interactive mode")
+
+    def xhr_projectbuild(request, pid):
+        raise Exception("page not available in interactive mode")
+
+    def xhr_projectedit(request, pid):
+        raise Exception("page not available in interactive mode")
+
