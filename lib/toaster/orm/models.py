@@ -23,10 +23,48 @@ from django.db import models
 from django.db.models import F
 from django.utils.encoding import python_2_unicode_compatible
 
+class ProjectManager(models.Manager):
+    def create_project(self, name, branch, short_description):
+        prj = self.model(name = name, branch = branch, short_description = short_description)
+        prj.save()
+
+        # create default variables
+        ProjectVariable.objects.create(project = prj, name = "MACHINE", value = "qemux86")
+        ProjectVariable.objects.create(project = prj, name = "DISTRO", value = "poky")
+
+        # create default layers
+        ProjectLayer.objects.create(project = prj,
+            name = "meta",
+            giturl = "git://git.yoctoproject.org/poky",
+            commit = branch,
+            treepath = "meta")
+
+        ProjectLayer.objects.create(project = prj,
+            name = "meta-yocto",
+            giturl = "git://git.yoctoproject.org/poky",
+            commit = branch,
+            treepath = "meta-yocto")
+
+        return prj
+
+    def create(self, *args, **kwargs):
+        raise Exception("Invalid call to Project.objects.create. Use Project.objects.create_project() to create a project")
+
+    def get_or_create(self, *args, **kwargs):
+        raise Exception("Invalid call to Project.objects.get_or_create. Use Project.objects.create_project() to create a project")
+
 class Project(models.Model):
     name = models.CharField(max_length=100)
+    branch = models.CharField(max_length=50)
+    short_description = models.CharField(max_length=50, blank=True)
     created     = models.DateTimeField(auto_now_add = True)
     updated     = models.DateTimeField(auto_now = True)
+    # This is a horrible hack; since Toaster has no "User" model available when
+    # running in interactive mode, we can't reference the field here directly
+    # Instead, we keep a possible null reference to the User id, as not to force
+    # hard links to possibly missing models
+    user_id     = models.IntegerField(null = True)
+    objects     = ProjectManager()
 
 class Build(models.Model):
     SUCCEEDED = 0

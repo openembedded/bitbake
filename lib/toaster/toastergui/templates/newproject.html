@@ -8,9 +8,9 @@
 					<h1>Create a new project</h1>
 				</div>
 				<div class="container-fluid">
-		{% for a in alerts %}
-			<div class="alert alert-error row-fluid" role="alert">{{a}}</div>
-		{% endfor %}
+		{% if alert %}
+			<div class="alert alert-error row-fluid" role="alert">{{alert}}</div>
+		{% endif %}
 				</div>
 					<form method="POST">{% csrf_token %}
 						<fieldset>
@@ -27,10 +27,9 @@
 								Yocto Project version
 								<i class="icon-question-sign get-help" title="This sets the branch for the Yocto Project core layers (meta, meta-yocto and meta-yocto-bsp), and for the layers you use from the OpenEmbedded Metadata Index"></i>
 							</label>
-							<select name="projectversion">
-		<option value="1.7" {%if projectversion == "1.7" %}selected{%endif%}>Yocto Project 1.7 "D?"</option>
-		<option value="1.6" {%if projectversion == "1.6" %}selected{%endif%}>Yocto Project 1.6 "Daisy"</option>
-		<option value="1.5" {%if projectversion == "1.5" %}selected{%endif%}>Yocto Project 1.5 "Dora"</option>
+							<select name="projectversion" id="projectversion">
+		<!-- TODO: XHR data from http://layers.openembedded.org/layerindex/branch/master/layers/ -->
+		<option value="master" {%if projectversion == "master" %}selected{%endif%}>master</option>
 							</select>
 						</fieldset>
 

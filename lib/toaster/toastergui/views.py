@@ -22,11 +22,13 @@
 import operator,re
 
 from django.db.models import Q, Sum
+from django.db import IntegrityError
 from django.shortcuts import render, redirect
 from orm.models import Build, Target, Task, Layer, Layer_Version, Recipe, LogMessage, Variable
 from orm.models import Task_Dependency, Recipe_Dependency, Package, Package_File, Package_Dependency
 from orm.models import Target_Installed_Package, Target_File, Target_Image_File
 from django.views.decorators.cache import cache_control
+from django.core.urlresolvers import reverse
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.http import HttpResponseBadRequest
 from django.utils import timezone
@@ -68,7 +70,6 @@ def _verify_parameters(g, mandatory_parameters):
 
 def _redirect_parameters(view, g, mandatory_parameters, *args, **kwargs):
     import urllib
-    from django.core.urlresolvers import reverse
     url = reverse(view, kwargs=kwargs)
     params = {}
     for i in g:
@@ -1772,6 +1773,16 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth import authenticate, login
     from django.contrib.auth.decorators import login_required
 
+    import traceback
+
+    class BadParameterException(Exception): pass        # error thrown on invalid POST requests
+
+    # the context processor that supplies data used across all the pages
+    def managedcontextprocessor(request):
+        return {
+            "projects": Project.objects.all(),
+            "MANAGED" : toastermain.settings.MANAGED
+        }
 
     # new project
     def newproject(request):
@@ -1787,28 +1798,41 @@ if toastermain.settings.MANAGED:
             return render(request, template, context)
         elif request.method == "POST":
             mandatory_fields = ['projectname', 'email', 'username', 'projectversion']
-            if reduce( lambda x, y: x and y, map(lambda x: x in request.POST and len(request.POST[x]) > 0, mandatory_fields)):
+            try:
+                # make sure we have values for all mandatory_fields
+                if reduce( lambda x, y: x or y, map(lambda x: len(request.POST.get(x, '')) == 0, mandatory_fields)):
+                # set alert for missing fields
+                    raise BadParameterException("Fields missing: " +
+            ", ".join([x for x in mandatory_fields if len(request.POST.get(x, '')) == 0 ]))
+
                 if not request.user.is_authenticated():
                     user = authenticate(username = request.POST['username'], password = 'nopass')
                     if user is None:
                         user = User.objects.create_user(username = request.POST['username'], email = request.POST['email'], password = "nopass")
-                        raise Exception("User cannot be authed, creating")
-                        user = authenticate(username = request.POST['username'], password = '')
+
+                        user = authenticate(username = user.username, password = 'nopass')
                     login(request, user)
 
-                return redirect(project)
-            else:
-                alerts = []
-                # set alerts for missing fields
-                map(lambda x: alerts.append('Field '+ x + ' not filled in') if not x in request.POST or len(request.POST[x]) == 0 else None, mandatory_fields)
-                # fill in new page with already submitted values
+                #  save the project
+                prj = Project.objects.create_project(name = request.POST['projectname'],
+                    branch = request.POST['projectversion'].split(" ")[0],
+                    short_description=request.POST['projectversion'].split(" ")[1:])
+                prj.user_id = request.user.pk
+                prj.save()
+                return redirect(reverse(project, args = (prj.pk,)))
+
+            except (IntegrityError, BadParameterException) as e:
+                # fill in page with previously submitted values
                 map(lambda x: context.__setitem__(x, request.POST[x]), mandatory_fields)
-                context['alerts'] = alerts
+                if isinstance(e, IntegrityError) and "username" in str(e):
+                    context['alert'] = "Your chosen username is already used"
+                else:
+                    context['alert'] = str(e)
                 return render(request, template, context)
         raise Exception("Invalid HTTP method for this page")
 
     # Shows the edit project page
-    def project(request):
+    def project(request, pid):
         template = "project.html"
         context = {}
         return render(request, template, context)
