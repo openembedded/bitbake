@@ -429,7 +429,7 @@ def builddashboard( request, build_id ):
                 ndx = 0;
             f = i.file_name[ ndx + 1: ]
             imageFiles.append({ 'path': f, 'size' : i.file_size })
-        if ( t.is_image and 
+        if ( t.is_image and
              (( len( imageFiles ) <= 0 ) or ( len( t.license_manifest_path ) <= 0 ))):
             targetHasNoImages = True
         elem[ 'imageFiles' ] = imageFiles
@@ -516,8 +516,8 @@ def task( request, build_id, task_id ):
     }
     if request.GET.get( 'show_matches', "" ):
         context[ 'showing_matches' ] = True
-        context[ 'matching_tasks' ] = Task.objects.filter( 
-            sstate_checksum=task.sstate_checksum ).filter( 
+        context[ 'matching_tasks' ] = Task.objects.filter(
+            sstate_checksum=task.sstate_checksum ).filter(
             build__completed_on__lt=task.build.completed_on).exclude(
             order__isnull=True).exclude(outcome=Task.OUTCOME_NA).order_by('-build__completed_on')
 
@@ -551,14 +551,14 @@ def target_common( request, build_id, target_id, variant ):
     mandatory_parameters = { 'count': 25,  'page' : 1, 'orderby':'name:+'};
     retval = _verify_parameters( request.GET, mandatory_parameters )
     if retval:
-        return _redirect_parameters( 
-                    variant, request.GET, mandatory_parameters, 
+        return _redirect_parameters(
+                    variant, request.GET, mandatory_parameters,
                     build_id = build_id, target_id = target_id )
     ( filter_string, search_term, ordering_string ) = _search_tuple( request, Package )
 
     # FUTURE:  get rid of nested sub-queries replacing with ManyToMany field
     queryset = Package.objects.filter(
-                    size__gte = 0, 
+                    size__gte = 0,
                     id__in = Target_Installed_Package.objects.filter(
                         target_id=target_id ).values( 'package_id' ))
     packages_sum =  queryset.aggregate( Sum( 'installed_size' ))
@@ -682,7 +682,7 @@ his package',
         'clclass'    : 'layer_directory',
         'hidden'     : 1,
         }
-    context = { 
+    context = {
         'objectname': variant,
         'build'                : Build.objects.filter( pk = build_id )[ 0 ],
         'target'               : Target.objects.filter( pk = target_id )[ 0 ],

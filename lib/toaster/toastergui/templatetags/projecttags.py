@@ -142,7 +142,7 @@ def variable_parent_name(value):
     """
     value=re.sub('_\$.*', '', value)
     return re.sub('_[a-z].*', '', value)
-  
+
 @register.filter
 def filter_setin_files(file_list,matchstr):
     """ filter/search the 'set in' file lists. Note
@@ -150,7 +150,7 @@ def filter_setin_files(file_list,matchstr):
         the <p> marks, but this is safe as the data
         is file paths
     """
-   
+
     # no filters, show last file (if any)
     if matchstr == ":":
         if file_list:
@@ -162,24 +162,24 @@ def filter_setin_files(file_list,matchstr):
     htmlstr=""
     # match only filters
     if search == '':
-        for i in range(len(file_list)):   
+        for i in range(len(file_list)):
             if re.search(filter, file_list[i].file_name):
                 if htmlstr.find(file_list[i].file_name + "<p>") < 0:
                     htmlstr += file_list[i].file_name + "<p>"
         return htmlstr
-       
+
     # match only search string, plus always last file
     if filter == "":
-        for i in range(len(file_list)-1):   
+        for i in range(len(file_list)-1):
             if re.search(search,file_list[i].file_name):
                 if htmlstr.find(file_list[i].file_name + "<p>") < 0:
                     htmlstr += file_list[i].file_name + "<p>"
         if htmlstr.find(file_list[len(file_list)-1].file_name) < 0:
             htmlstr += file_list[len(file_list)-1].file_name
         return htmlstr
-       
+
     # match filter or search string
-    for i in range(len(file_list)):   
+    for i in range(len(file_list)):
         if re.search(filter, file_list[i].file_name) or re.search(search,file_list[i].file_name):
             if htmlstr.find(file_list[i].file_name + "<p>") < 0:
                 htmlstr += file_list[i].file_name + "<p>"
@@ -218,7 +218,7 @@ def filtered_packageversion(version, revision):
         else ""
     """
     return "" if (not version or version == "") else version if (not revision or revision == "") else version + "-" + revision
-        
+
 @register.filter
 def filter_sizeovertotal(package_object, total_size):
     """ Return the % size of the package over the total size argument
@@ -227,7 +227,7 @@ def filter_sizeovertotal(package_object, total_size):
     size = package_object.installed_size
     if size == None or size == '':
         size = package_object.size
-  
+
     return '{:.1%}'.format(float(size)/float(total_size))
 
 from django.utils.safestring import mark_safe
