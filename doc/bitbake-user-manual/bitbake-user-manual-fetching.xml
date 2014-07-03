@@ -468,6 +468,13 @@
                         compile-time when set to "keep".
                         By default, these directories are removed.
                         </para></listitem>
+                    <listitem><para><emphasis>"transportuser":</emphasis>
+                        When required, sets the username for the transport.
+                        By default, this parameter is empty.
+                        The transport username is different than the username
+                        used in the main URL, which is passed to the subversion
+                        command.
+                        </para></listitem>
                 </itemizedlist>
                 Following are two examples using svn:
                 <literallayout class='monospaced'>
