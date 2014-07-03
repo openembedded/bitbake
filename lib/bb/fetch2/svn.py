@@ -101,7 +101,8 @@ class Svn(FetchMethod):
                 suffix = "@%s" % (ud.revision)
 
             if command == "fetch":
-                svncmd = "%s co %s %s://%s/%s%s %s" % (ud.basecmd, " ".join(options), proto, svnroot, ud.module, suffix, ud.module)
+                transportuser = ud.parm.get("transportuser", "")
+                svncmd = "%s co %s %s://%s%s/%s%s %s" % (ud.basecmd, " ".join(options), proto, transportuser, svnroot, ud.module, suffix, ud.module)
             elif command == "update":
                 svncmd = "%s update %s" % (ud.basecmd, " ".join(options))
             else:
