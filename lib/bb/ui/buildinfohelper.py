@@ -46,7 +46,7 @@ class ORMWrapper(object):
         pass
 
 
-    def create_build_object(self, build_info):
+    def create_build_object(self, build_info, brbe):
         assert 'machine' in build_info
         assert 'distro' in build_info
         assert 'distro_version' in build_info
@@ -64,6 +64,13 @@ class ORMWrapper(object):
                                     cooker_log_path=build_info['cooker_log_path'],
                                     build_name=build_info['build_name'],
                                     bitbake_version=build_info['bitbake_version'])
+
+        if brbe is not None:
+            from bldcontrol.models import BuildEnvironment, BuildRequest
+            br, be = brbe.split(":")
+            buildrequest = BuildRequest.objects.get(pk = br)
+            build.project = buildrequest.project
+            build.save()
 
         return build
 
@@ -600,7 +607,10 @@ class BuildInfoHelper(object):
         assert '_pkgs' in vars(event)
         build_information = self._get_build_information()
 
-        build_obj = self.orm_wrapper.create_build_object(build_information)
+        brbe = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
+
+        build_obj = self.orm_wrapper.create_build_object(build_information, brbe)
+
         self.internal_state['build'] = build_obj
 
         # save layer version information for this build
@@ -618,6 +628,9 @@ class BuildInfoHelper(object):
 
         # Save build configuration
         self.orm_wrapper.save_build_variables(build_obj, self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0])
+
+        return brbe
+
 
     def update_target_image_file(self, event):
         image_fstypes = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"])[0]
