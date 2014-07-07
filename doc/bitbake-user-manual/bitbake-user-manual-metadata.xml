@@ -1466,9 +1466,9 @@
                 complete before that task can be executed.
                 Here is an example:
                 <literallayout class='monospaced'>
-     do_configure[deptask] = "do_populate_staging"
+     do_configure[deptask] = "do_populate_sysroot"
                 </literallayout>
-                In this example, the <filename>do_populate_staging</filename>
+                In this example, the <filename>do_populate_sysroot</filename>
                 task of each item in <filename>DEPENDS</filename> must complete before
                 <filename>do_configure</filename> can execute.
             </para>
@@ -1543,9 +1543,9 @@
                 the data in <filename>DEPENDS</filename>.
                 Here is an example:
                 <literallayout class='monospaced'>
-     do_patch[depends] = "quilt-native:do_populate_staging"
+     do_patch[depends] = "quilt-native:do_populate_sysroot"
                 </literallayout>
-                In this example, the <filename>do_populate_staging</filename>
+                In this example, the <filename>do_populate_sysroot</filename>
                 task of the target <filename>quilt-native</filename>
                 must have completed before the
                 <filename>do_patch</filename> task can execute.
