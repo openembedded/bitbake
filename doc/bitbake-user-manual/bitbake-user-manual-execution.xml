@@ -7,7 +7,8 @@
     <para>
         The primary purpose for running BitBake is to produce some kind
         of output such as a single installable package, a kernel, a software
-        development kit, or even a full, board-specific bootable Linux image.
+        development kit, or even a full, board-specific bootable Linux image,
+        complete with bootloader, kernel, and root filesystem.
         Of course, you can execute the <filename>bitbake</filename>
         command with options that cause it to execute single tasks,
         compile single recipe files, capture or clear data, or simply
@@ -44,6 +45,11 @@
                 processors will take into account hyper-threading, so that a quad-core
                 build host with hyper-threading will most likely show eight processors,
                 which is the value you would then assign to that variable.
+            </para>
+
+            <para>
+                A possibly simpler solution is that some Linux distributions
+                (e.g. Debian and Ubuntu) provide the <filename>ncpus</filename> command.
             </para>
         </note>
     </para>
@@ -464,6 +470,29 @@
      PREFERRED_VERSION_a = "1.1"
             </literallayout>
         </para>
+
+        <note>
+            <para>
+                It is common for a recipe to provide two versions -- a stable,
+                numbered (and preferred) version, and a version that is
+                automatically checked out from a source code repository that
+                is considered more "bleeding edge" but can be selected only
+                explicitly.
+            </para>
+
+            <para>
+                For example, in the OpenEmbedded codebase, there is a standard,
+                versioned recipe file for BusyBox,
+                <filename>busybox_1.22.1.bb</filename>,
+                but there is also a Git-based version,
+                <filename>busybox_git.bb</filename>, which explicitly contains the line
+                <literallayout class='monospaced'>
+    DEFAULT_PREFERENCE = "-1"
+                </literallayout>
+                to ensure that the numbered, stable version is always preferred
+                unless the developer selects otherwise.
+            </para>
+        </note>
     </section>
 
     <section id='bb-bitbake-dependencies'>
