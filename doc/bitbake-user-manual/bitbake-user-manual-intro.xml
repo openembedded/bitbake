@@ -35,17 +35,19 @@
                 <listitem><para>
                     BitBake executes tasks according to provided
                     metadata that builds up the tasks.
-                    Metadata is stored in recipe (<filename>.bb</filename>),
-                    recipe "append" (<filename>.bbappend</filename>),
-                    configuration (<filename>.conf</filename>), and class
-                    (<filename>.bbclass</filename>) files and provides
+                    Metadata is stored in recipe (<filename>.bb</filename>)
+                    and related recipe "append" (<filename>.bbappend</filename>)
+                    files, configuration (<filename>.conf</filename>) and
+                    underlying include (<filename>.inc</filename>) files, and
+                    in class (<filename>.bbclass</filename>) files.
+                    The metadata provides
                     BitBake with instructions on what tasks to run and
                     the dependencies between those tasks.
                     </para></listitem>
                 <listitem><para>
                     BitBake includes a fetcher library for obtaining source
                     code from various places such as local files, source control
-                    systems, websites, or local files.
+                    systems, or websites.
                     </para></listitem>
                 <listitem><para>
                     The instructions for each unit to be built (e.g. a piece
@@ -56,8 +58,8 @@
                     </para></listitem>
                 <listitem><para>
                     BitBake includes a client/server abstraction and can
-                    be used from a command line or used as a service over XMLRPC and
-                    has several different user interfaces.
+                    be used from a command line or used as a service over
+                    XML-RPC and has several different user interfaces.
                     </para></listitem>
             </itemizedlist>
         </para>
@@ -80,8 +82,11 @@
             Today, BitBake is the primary basis of the
             <ulink url="http://www.openembedded.org/">OpenEmbedded</ulink>
             project, which is being used to build and maintain Linux
-            distributions such as the Angstrom Distribution and which is used
-            as the build tool for Linux projects such as the Yocto Project.
+            distributions such as the
+            <ulink url='http://www.angstrom-distribution.org/'>Angstrom Distribution</ulink>,
+            and which is also being used as the build tool for Linux projects
+            such as the
+            <ulink url='&YOCTO_HOME_URL;'>Yocto Project</ulink>.
         </para>
 
         <para>
@@ -152,7 +157,7 @@
                     </para></listitem>
                 <listitem><para>
                     Split metadata into layers and allow layers
-                    to override each other.
+                    to enhance or override other layers.
                     </para></listitem>
                 <listitem><para>
                     Allow representation of a given set of input variables
