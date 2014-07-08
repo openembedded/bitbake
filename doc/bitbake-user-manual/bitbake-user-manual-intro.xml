@@ -217,11 +217,12 @@
                     <listitem><para>Where the source code resides and
                         how to fetch it</para></listitem>
                     <listitem><para>Whether the source code requires
-                        any patches</para></listitem>
+                        any patches, where to find them, and how to apply
+                        them</para></listitem>
                     <listitem><para>How to configure and compile the
                         source code</para></listitem>
                     <listitem><para>Where on the target machine to install the
-                        package or packages being compiled</para></listitem>
+                        package or packages created</para></listitem>
                 </itemizedlist>
             </para>
 
@@ -233,7 +234,11 @@
                     The term "package" is also commonly used to describe recipes.
                     However, since the same word is used to describe packaged
                     output from a project, it is best to maintain a single
-                    descriptive term, "recipes".
+                    descriptive term - "recipes".
+                    Put another way, a single "recipe" file is quite capable
+                    of generating a number of related but separately installable
+                    "packages".
+                    In fact, that ability is fairly common.
                 </note>
             </para>
         </section>
@@ -318,7 +323,6 @@
                 Append files, which are files that have the
                 <filename>.bbappend</filename> file extension, extend or
                 override information in an existing recipe file.
-                recipe file.
             </para>
 
             <para>
@@ -331,8 +335,9 @@
             </para>
 
             <para>
-                Information in append files overrides the information in the
-                similarly-named recipe file.
+                Information in append files extends or
+                overrides the information in the underlying,
+                similarly-named recipe files.
             </para>
 
             <para>
@@ -356,6 +361,12 @@
                 match.
                 However, if you named the append file
                 <filename>busybox_1.%.bbappend</filename>, then you would have a match.
+            </para>
+
+            <para>
+                In the most general case, you could name the append file something as
+                simple as <filename>busybox_%.bbappend</filename> to be entirely
+                version independent.
             </para>
         </section>
     </section>
@@ -437,7 +448,7 @@
                     has been thoroughly tested for compatibility with the other
                     components.
                     For information on how to check out a particular BitBake-based
-                    build system, the build system's supporting documentation.
+                    build system, consult that build system's supporting documentation.
                     </para></listitem>
             </itemizedlist>
         </para>
