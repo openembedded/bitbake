@@ -159,6 +159,10 @@
                 using the "+=" and "=+" operators.
                 These operators insert a space between the current
                 value and prepended or appended value.
+            </para>
+
+            <para>
+                These operators take immediate effect during parsing.
                 Here are some examples:
                 <literallayout class='monospaced'>
      B = "bval"
@@ -178,6 +182,10 @@
             <para>
                 If you want to append or prepend values without an
                 inserted space, use the ".=" and "=." operators.
+            </para>
+
+            <para>
+                These operators take immediate effect during parsing.
                 Here are some examples:
                 <literallayout class='monospaced'>
      B = "bval"
@@ -198,6 +206,13 @@
                 You can also append and prepend a variable's value
                 using an override style syntax.
                 When you use this syntax, no spaces are inserted.
+            </para>
+
+            <para>
+                These operators differ from the ":=", ".=", "=.", "+=", and "=+"
+                operators in that their effects are deferred
+                until after parsing completes rather than being immediately
+                applied.
                 Here are some examples:
                 <literallayout class='monospaced'>
      B = "bval"
@@ -216,13 +231,6 @@
                     You must control all spacing when you use the
                     override syntax.
                 </note>
-            </para>
-
-            <para>
-                The operators "_append" and "_prepend" differ from
-                the operators ".=" and "=." in that they are deferred
-                until after parsing completes rather than being immediately
-                applied.
             </para>
         </section>
 
