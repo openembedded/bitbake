@@ -1202,12 +1202,6 @@
                     Tells BitBake to not generate a stamp file for a task,
                     which implies the task should always be executed.
                     </para></listitem>
-                <listitem><para><emphasis>fakeroot:</emphasis>
-                    Causes a task to be run in a fakeroot environment,
-                    obtained by adding the variables in
-                    <link linkend='var-FAKEROOTENV'><filename>FAKEROOTENV</filename></link>
-                    to the environment.
-                    </para></listitem>
                 <listitem><para><emphasis>umask:</emphasis>
                     The umask to run the task under.
                     </para></listitem>
