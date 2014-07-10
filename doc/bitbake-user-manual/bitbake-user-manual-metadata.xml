@@ -293,6 +293,17 @@
                 The flags are immediately set to "abc" and "123", respectively.
                 The <filename>a</filename> flag becomes "abc456".
             </para>
+
+            <para>
+                No need exists to pre-define variable flags.
+                You can simply start using them.  
+                One extremely common application
+                is to attach some brief documentation to a BitBake variable as
+                follows:
+                <literallayout class='monospaced'>
+    CACHE[doc] = "The directory holding the cache of the metadata."
+                </literallayout>
+            </para>
         </section>
 
         <section id='inline-python-variable-expansion'>
@@ -306,7 +317,19 @@
      DATE = "${@time.strftime('%Y%m%d',time.gmtime())}"
                 </literallayout>
                 This example results in the <filename>DATE</filename>
-                variable becoming the current date.
+                variable being set to the current date.
+            </para>
+
+            <para>
+                Probably the most common use of this feature is to extract
+                the value of variables from BitBake's internal data dictionary,
+                <filename>d</filename>. 
+                The following lines select the values of a package name 
+                and its version number, respectively:
+                <literallayout class='monospaced'>
+    PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[0] or 'defaultpkgname'}"
+    PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1] or '1.0'}"
+                </literallayout>
             </para>
         </section>
 
