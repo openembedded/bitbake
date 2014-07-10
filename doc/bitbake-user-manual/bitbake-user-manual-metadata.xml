@@ -301,7 +301,7 @@
                 is to attach some brief documentation to a BitBake variable as
                 follows:
                 <literallayout class='monospaced'>
-    CACHE[doc] = "The directory holding the cache of the metadata."
+     CACHE[doc] = "The directory holding the cache of the metadata."
                 </literallayout>
             </para>
         </section>
