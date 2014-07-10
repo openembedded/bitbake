@@ -296,7 +296,7 @@
 
             <para>
                 No need exists to pre-define variable flags.
-                You can simply start using them.  
+                You can simply start using them.
                 One extremely common application
                 is to attach some brief documentation to a BitBake variable as
                 follows:
@@ -323,12 +323,12 @@
             <para>
                 Probably the most common use of this feature is to extract
                 the value of variables from BitBake's internal data dictionary,
-                <filename>d</filename>. 
-                The following lines select the values of a package name 
+                <filename>d</filename>.
+                The following lines select the values of a package name
                 and its version number, respectively:
                 <literallayout class='monospaced'>
-    PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[0] or 'defaultpkgname'}"
-    PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1] or '1.0'}"
+     PN = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[0] or 'defaultpkgname'}"
+     PV = "${@bb.parse.BBHandler.vars_from_file(d.getVar('FILE'),d)[1] or '1.0'}"
                 </literallayout>
             </para>
         </section>
@@ -407,20 +407,20 @@
 
                         <para>
                             To better understand this, consider a practical example
-                            that assumes an OpenEmbedded metadata-based Linux 
+                            that assumes an OpenEmbedded metadata-based Linux
                             kernel recipe file.
                             The following lines from the recipe file first set
                             the kernel branch variable <filename>KBRANCH</filename>
                             to a default value, then conditionally override that
                             value based on the architecture of the build:
                         <literallayout class='monospaced'>
-    KBRANCH = "standard/base"
-    KBRANCH_qemuarm  = "standard/arm-versatile-926ejs"
-    KBRANCH_qemumips = "standard/mti-malta32"
-    KBRANCH_qemuppc  = "standard/qemuppc"
-    KBRANCH_qemux86  = "standard/common-pc/base"
-    KBRANCH_qemux86-64  = "standard/common-pc-64/base"
-    KBRANCH_qemumips64 = "standard/mti-malta64"
+     KBRANCH = "standard/base"
+     KBRANCH_qemuarm  = "standard/arm-versatile-926ejs"
+     KBRANCH_qemumips = "standard/mti-malta32"
+     KBRANCH_qemuppc  = "standard/qemuppc"
+     KBRANCH_qemux86  = "standard/common-pc/base"
+     KBRANCH_qemux86-64  = "standard/common-pc-64/base"
+     KBRANCH_qemumips64 = "standard/mti-malta64"
                         </literallayout>
                         </para></listitem>
                     <listitem><para><emphasis>Appending and Prepending:</emphasis>
