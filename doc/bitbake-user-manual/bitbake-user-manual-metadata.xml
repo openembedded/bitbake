@@ -438,14 +438,15 @@
                         </para>
 
                         <para>
-                            Again using a kernel recipe file as an example, the
+                            Again, using an OpenEmbedded metadata-based
+                            kernel recipe file as an example, the
                             following lines will conditionally append to the
                             <filename>KERNEL_FEATURES</filename> variable based
                             on the architecture:
                         <literallayout class='monospaced'>
-    KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
-    KERNEL_FEATURES_append_qemux86=" cfg/sound.scc cfg/paravirt_kvm.scc"
-    KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc cfg/paravirt_kvm.scc"
+     KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
+     KERNEL_FEATURES_append_qemux86=" cfg/sound.scc cfg/paravirt_kvm.scc"
+     KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc cfg/paravirt_kvm.scc"
                         </literallayout>
                         </para></listitem>
                 </itemizedlist>
