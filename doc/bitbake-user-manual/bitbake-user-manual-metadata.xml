@@ -403,6 +403,25 @@
                         You select the os-specific version of the <filename>TEST</filename>
                         variable by appending the "os" override to the variable
                         (i.e.<filename>TEST_os</filename>).
+                        </para>
+
+                        <para>
+                            To better understand this, consider a practical example
+                            that assumes an OpenEmbedded metadata-based Linux 
+                            kernel recipe file.
+                            The following lines from the recipe file first set
+                            the kernel branch variable <filename>KBRANCH</filename>
+                            to a default value, then conditionally override that
+                            value based on the architecture of the build:
+                        <literallayout class='monospaced'>
+    KBRANCH = "standard/base"
+    KBRANCH_qemuarm  = "standard/arm-versatile-926ejs"
+    KBRANCH_qemumips = "standard/mti-malta32"
+    KBRANCH_qemuppc  = "standard/qemuppc"
+    KBRANCH_qemux86  = "standard/common-pc/base"
+    KBRANCH_qemux86-64  = "standard/common-pc-64/base"
+    KBRANCH_qemumips64 = "standard/mti-malta64"
+                        </literallayout>
                         </para></listitem>
                     <listitem><para><emphasis>Appending and Prepending:</emphasis>
                         BitBake also supports append and prepend operations to
@@ -416,6 +435,18 @@
                         </literallayout>
                         In this example, <filename>DEPENDS</filename> becomes
                         "glibc ncurses libmad".
+                        </para>
+
+                        <para>
+                            Again using a kernel recipe file as an example, the
+                            following lines will conditionally append to the
+                            <filename>KERNEL_FEATURES</filename> variable based
+                            on the architecture:
+                        <literallayout class='monospaced'>
+    KERNEL_FEATURES_append = " ${KERNEL_EXTRA_FEATURES}"
+    KERNEL_FEATURES_append_qemux86=" cfg/sound.scc cfg/paravirt_kvm.scc"
+    KERNEL_FEATURES_append_qemux86-64=" cfg/sound.scc cfg/paravirt_kvm.scc"
+                        </literallayout>
                         </para></listitem>
                 </itemizedlist>
             </para>
