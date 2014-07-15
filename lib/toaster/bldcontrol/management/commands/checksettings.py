@@ -27,7 +27,12 @@ class Command(NoArgsCommand):
                 if not be.builddir.startswith("/"):
                     be.builddir = raw_input(" -- builddir must be an absolute path:")
                     is_changed = True
+                if is_changed:
+                    print "saved"
+                    be.save()
                 return is_changed
 
             while (_verify_be()):
                 pass
+
+            return 0
