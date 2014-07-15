@@ -170,27 +170,16 @@ class LocalhostBEController(BuildEnvironmentController):
         this controller manages the default build directory,
         the server setup and system start and stop for the localhost-type build environment
 
-        The address field is used as working directory; if not set, the build/ directory
-        is created
     """
+    from os.path import dirname as DN
 
     def __init__(self, be):
         super(LocalhostBEController, self).__init__(be)
         from os.path import dirname as DN
-        self.cwd = DN(DN(DN(DN(DN(os.path.realpath(__file__))))))
-        if self.be.address is None or len(self.be.address) == 0:
-            self.be.address = "build"
-            self.be.save()
-        self.bwd = self.be.address
         self.dburl = settings.getDATABASE_URL()
 
-        # transform relative paths to absolute ones
-        if not self.bwd.startswith("/"):
-            self.bwd = os.path.join(self.cwd, self.bwd)
-        self._createBE()
-
     def _shellcmd(self, command):
-        p = subprocess.Popen(command, cwd=self.cwd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen(command, cwd=self.be.sourcedir, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         (out,err) = p.communicate()
         if p.returncode:
             if len(err) == 0:
@@ -201,39 +190,49 @@ class LocalhostBEController(BuildEnvironmentController):
         else:
             return out
 
-    def _createBE(self):
-        assert self.cwd and os.path.exists(self.cwd)
-        self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.cwd, self.bwd))
+    def _createdirpath(self, path):
+        if not os.path.exists(DN(path)):
+            self._createdirpath(DN(path))
+        if not os.path.exists(path):
+            os.mkdir(path, 0755)
+
+    def _startBE(self):
+        assert self.be.sourcedir and os.path.exists(self.be.sourcedir)
+        self._createdirpath(self.be.builddir)
+        self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.be.sourcedir, self.be.builddir))
 
     def startBBServer(self):
-        assert self.cwd and os.path.exists(self.cwd)
-        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb && sleep 1\"" % (self.cwd, self.bwd, self.dburl))
+        assert self.be.sourcedir and os.path.exists(self.be.sourcedir)
+
+        self._startBE()
+
+        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb && sleep 1\"" % (self.be.sourcedir, self.be.builddir, self.dburl))
         # FIXME unfortunate sleep 1 - we need to make sure that bbserver is started and the toaster ui is connected
         # but since they start async without any return, we just wait a bit
         print "Started server"
-        assert self.cwd and os.path.exists(self.bwd)
+        assert self.be.sourcedir and os.path.exists(self.be.builddir)
         self.be.bbaddress = "localhost"
         self.be.bbport = "8200"
         self.be.bbstate = BuildEnvironment.SERVER_STARTED
         self.be.save()
 
     def stopBBServer(self):
-        assert self.cwd
+        assert self.be.sourcedir
         print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && %s source toaster stop\"" %
-            (self.cwd, self.bwd, (lambda: "" if self.be.bbtoken is None else "BBTOKEN=%s" % self.be.bbtoken)()))
+            (self.be.sourcedir, self.be.builddir, (lambda: "" if self.be.bbtoken is None else "BBTOKEN=%s" % self.be.bbtoken)()))
         self.be.bbstate = BuildEnvironment.SERVER_STOPPED
         self.be.save()
         print "Stopped server"
 
     def setLayers(self, layers):
-        assert self.cwd is not None
-        layerconf = os.path.join(self.bwd, "conf/bblayers.conf")
+        assert self.be.sourcedir is not None
+        layerconf = os.path.join(self.be.builddir, "conf/bblayers.conf")
         if not os.path.exists(layerconf):
             raise Exception("BE is not consistent: bblayers.conf file missing at ", layerconf)
         return True
 
     def release(self):
-        assert self.cwd and os.path.exists(self.bwd)
+        assert self.be.sourcedir and os.path.exists(self.be.builddir)
         import shutil
-        shutil.rmtree(os.path.join(self.cwd, "build"))
-        assert not os.path.exists(self.bwd)
+        shutil.rmtree(os.path.join(self.be.sourcedir, "build"))
+        assert not os.path.exists(self.be.builddir)

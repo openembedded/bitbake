@@ -33,6 +33,8 @@ class BuildEnvironment(models.Model):
     bbport      = models.IntegerField(default = -1)
     bbtoken     = models.CharField(max_length = 126, blank = True)
     bbstate     = models.IntegerField(choices = SERVER_STATE, default = SERVER_STOPPED)
+    sourcedir   = models.CharField(max_length = 512, blank = True)
+    builddir    = models.CharField(max_length = 512, blank = True)
     lock        = models.IntegerField(choices = LOCK_STATE, default = LOCK_FREE)
     created     = models.DateTimeField(auto_now_add = True)
     updated     = models.DateTimeField(auto_now = True)
