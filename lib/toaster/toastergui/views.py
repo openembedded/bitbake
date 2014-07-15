@@ -1773,6 +1773,8 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth import authenticate, login
     from django.contrib.auth.decorators import login_required
 
+    from orm.models import Project
+
     import traceback
 
     class BadParameterException(Exception): pass        # error thrown on invalid POST requests

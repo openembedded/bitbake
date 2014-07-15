@@ -71,6 +71,8 @@ class BRLayer(models.Model):
     name        = models.CharField(max_length = 100)
     giturl      = models.CharField(max_length = 254)
     commit      = models.CharField(max_length = 254)
+    dirpath     = models.CharField(max_length = 254)
+
 
 class BRVariable(models.Model):
     req         = models.ForeignKey(BuildRequest)
