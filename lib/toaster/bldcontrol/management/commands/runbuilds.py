@@ -1,8 +1,8 @@
 from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
 from orm.models import Build
-from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException
-from bldcontrol.models import BuildRequest, BuildEnvironment
+from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException, BuildSetupException
+from bldcontrol.models import BuildRequest, BuildEnvironment, BRError
 import os
 
 class Command(NoArgsCommand):
@@ -25,6 +25,7 @@ class Command(NoArgsCommand):
         return br
 
     def schedule(self):
+        import traceback
         try:
             br = None
             try:
@@ -63,15 +64,19 @@ class Command(NoArgsCommand):
 
             # cleanup to be performed by toaster when the deed is done
 
-        except ShellCmdException as e:
-            import traceback
-            print " EE Error executing shell command\n", e
-            traceback.format_exc(e)
 
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            raise e
+            print " EE Error executing shell command\n", e
+            traceback.print_exc(e)
+            BRError.objects.create(req = br,
+                errtype = str(type(e)),
+                errmsg = str(e),
+                traceback = traceback.format_exc(e))
+            br.state = BuildRequest.REQ_FAILED
+            br.save()
+            bec.be.lock = BuildEnvironment.LOCK_FREE
+            bec.be.save()
+
 
     def cleanup(self):
         from django.utils import timezone

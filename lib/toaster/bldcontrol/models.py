@@ -48,12 +48,14 @@ class BuildRequest(models.Model):
     REQ_QUEUED = 1
     REQ_INPROGRESS = 2
     REQ_COMPLETED = 3
+    REQ_FAILED = 4
 
     REQUEST_STATE = (
         (REQ_CREATED, "created"),
         (REQ_QUEUED, "queued"),
         (REQ_INPROGRESS, "in progress"),
         (REQ_COMPLETED, "completed"),
+        (REQ_FAILED, "failed"),
     )
 
     project     = models.ForeignKey(Project)
@@ -84,4 +86,8 @@ class BRTarget(models.Model):
     target      = models.CharField(max_length=100)
     task        = models.CharField(max_length=100, null=True)
 
-
+class BRError(models.Model):
+    req         = models.ForeignKey(BuildRequest)
+    errtype     = models.CharField(max_length=100)
+    errmsg      = models.TextField()
+    traceback   = models.TextField()
