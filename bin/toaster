@@ -63,9 +63,11 @@ function webserverStartAll()
             retval=0
             python $BBBASEDIR/lib/toaster/manage.py migrate orm || retval=1
         fi
-        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
-	python $BBBASEDIR/lib/toaster/manage.py checksettings  || retval=1
-
+	if [ "x$TOASTER_MANAGED" == "x1" ]; then
+	        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
+		python $BBBASEDIR/lib/toaster/manage.py checksettings  || retval=1
+	fi
+	echo "Starting webserver"
         if [ $retval -eq 0 ]; then
             python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
             sleep 1
@@ -128,8 +130,8 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
     # Start just the web server, point the web browser to the interface, and start any Django services.
 
     if [ -n "$BUILDDIR" ]; then
-        echo "Error: build/ directory detected. Standalone Toaster will not start in a build environment." 1>&2;
-        return 1;
+        echo -e "Error: build/ directory detected. Toaster will not start in managed mode if a build environment is detected.\nUse a clean terminal to start Toaster." 1>&2;
+        exit 1;
     fi
 
     # Define a fake builddir where only the pid files are actually created. No real builds will take place here.
@@ -140,6 +142,7 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
         webserverKillAll
         RUNNING=0
     }
+    TOASTER_MANAGED=1
     export TOASTER_MANAGED=1
     webserverStartAll || (echo "Fail to start the web server, stopping" 1>&2 && exit 1)
     xdg-open http://0.0.0.0:8000/ >/dev/null 2>&1 &
@@ -163,13 +166,13 @@ fi
 
 # Verify prerequisites
 
-if ! echo "import django; print (1,5) == django.VERSION[0:2]" | python 2>/dev/null | grep True >/dev/null; then
-    echo -e "This program needs Django 1.5. Please install with\n\nsudo pip install django==1.5"
+if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (5,6)" | python 2>/dev/null | grep True >/dev/null; then
+    echo -e "This program needs Django 1.5 or 1.6. Please install with\n\npip install django==1.6"
     return 2
 fi
 
 if ! echo "import south; print [0,8,4] ==  map(int,south.__version__.split(\".\"))" | python 2>/dev/null | grep True >/dev/null; then
-    echo -e "This program needs South 0.8.4. Please install with\n\nsudo pip install south==0.8.4"
+    echo -e "This program needs South 0.8.4. Please install with\n\npip install south==0.8.4"
     return 2
 fi
 

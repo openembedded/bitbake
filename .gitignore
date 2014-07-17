@@ -7,6 +7,8 @@ pyshtables.py
 /bin/bitbakec
 *.swp
 tags
+*.sqlite
+venv/
 doc/bitbake-user-manual/bitbake-user-manual.html
 doc/bitbake-user-manual/bitbake-user-manual.pdf
 doc/bitbake-user-manual/bitbake-user-manual.tgz
