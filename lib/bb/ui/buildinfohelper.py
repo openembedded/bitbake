@@ -596,8 +596,8 @@ class BuildInfoHelper(object):
     ## external available methods to store information
 
     def store_layer_info(self, event):
-        assert 'data' in vars(event)
-        layerinfos = event.data
+        assert '_localdata' in vars(event)
+        layerinfos = event._localdata
         self.internal_state['lvs'] = {}
         for layer in layerinfos:
             self.internal_state['lvs'][self.orm_wrapper.get_update_layer_object(layerinfos[layer])] = layerinfos[layer]['version']
@@ -636,10 +636,10 @@ class BuildInfoHelper(object):
         image_fstypes = self.server.runCommand(["getVariable", "IMAGE_FSTYPES"])[0]
         for t in self.internal_state['targets']:
             if t.is_image == True:
-                output_files = list(event.data.viewkeys())
+                output_files = list(event._localdata.viewkeys())
                 for output in output_files:
                     if t.target in output and output.split('.rootfs.')[1] in image_fstypes:
-                        self.orm_wrapper.save_target_image_file_information(t, output, event.data[output])
+                        self.orm_wrapper.save_target_image_file_information(t, output, event._localdata[output])
 
     def update_build_information(self, event, errors, warnings, taskfailures):
         if 'build' in self.internal_state:
@@ -647,8 +647,8 @@ class BuildInfoHelper(object):
 
 
     def store_license_manifest_path(self, event):
-        deploy_dir = event.data['deploy_dir']
-        image_name =  event.data['image_name']
+        deploy_dir = event._localdata['deploy_dir']
+        image_name =  event._localdata['image_name']
         path = deploy_dir + "/licenses/" + image_name + "/"
         for target in self.internal_state['targets']:
             if target.target in image_name:
@@ -696,7 +696,7 @@ class BuildInfoHelper(object):
 
 
     def store_tasks_stats(self, event):
-        for (taskfile, taskname, taskstats, recipename) in event.data:
+        for (taskfile, taskname, taskstats, recipename) in event._localdata:
             localfilepath = taskfile.split(":")[-1]
             assert localfilepath.startswith("/")
 
@@ -768,7 +768,7 @@ class BuildInfoHelper(object):
 
 
     def store_missed_state_tasks(self, event):
-        for (fn, taskname, taskhash, sstatefile) in event.data['missed']:
+        for (fn, taskname, taskhash, sstatefile) in event._localdata['missed']:
 
             identifier = fn + taskname + "_setscene"
             recipe_information = self._get_recipe_information_from_taskfile(fn)
@@ -787,7 +787,7 @@ class BuildInfoHelper(object):
 
             self.orm_wrapper.get_update_task_object(task_information)
 
-        for (fn, taskname, taskhash, sstatefile) in event.data['found']:
+        for (fn, taskname, taskhash, sstatefile) in event._localdata['found']:
 
             identifier = fn + taskname + "_setscene"
             recipe_information = self._get_recipe_information_from_taskfile(fn)
@@ -804,15 +804,15 @@ class BuildInfoHelper(object):
 
 
     def store_target_package_data(self, event):
-        assert 'data' in vars(event)
+        assert '_localdata' in vars(event)
         # for all image targets
         for target in self.internal_state['targets']:
             if target.is_image:
                 try:
-                    pkgdata = event.data['pkgdata']
-                    imgdata = event.data['imgdata'][target.target]
+                    pkgdata = event._localdata['pkgdata']
+                    imgdata = event._localdata['imgdata'][target.target]
                     self.orm_wrapper.save_target_package_information(self.internal_state['build'], target, imgdata, pkgdata, self.internal_state['recipes'])
-                    filedata = event.data['filedata'][target.target]
+                    filedata = event._localdata['filedata'][target.target]
                     self.orm_wrapper.save_target_file_information(self.internal_state['build'], target, filedata)
                 except KeyError:
                     # we must have not got the data for this image, nothing to save
@@ -922,8 +922,8 @@ class BuildInfoHelper(object):
 
 
     def store_build_package_information(self, event):
-        assert 'data' in vars(event)
-        package_info = event.data
+        assert '_localdata' in vars(event)
+        package_info = event._localdata
         self.orm_wrapper.save_build_package_information(self.internal_state['build'],
                             package_info,
                             self.internal_state['recipes'],

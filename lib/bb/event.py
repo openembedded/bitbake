@@ -594,7 +594,7 @@ class MetadataEvent(Event):
     def __init__(self, eventtype, eventdata):
         Event.__init__(self)
         self.type = eventtype
-        self.data = eventdata
+        self._localdata = eventdata
 
 class SanityCheck(Event):
     """
