@@ -86,7 +86,7 @@ class Command:
 
     def runAsyncCommand(self):
         try:
-            if self.cooker.state == bb.cooker.state.error:
+            if self.cooker.state in (bb.cooker.state.error, bb.cooker.state.shutdown, bb.cooker.state.forceshutdown):
                 return False
             if self.currentAsyncCommand is not None:
                 (command, options) = self.currentAsyncCommand

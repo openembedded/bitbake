@@ -1065,7 +1065,7 @@ class RunQueue:
         if self.state is runQueueCleanUp:
            self.rqexe.finish()
 
-        if self.state is runQueueComplete or self.state is runQueueFailed:
+        if (self.state is runQueueComplete or self.state is runQueueFailed) and self.rqexe:
             self.teardown_workers()
             if self.rqexe.stats.failed:
                 logger.info("Tasks Summary: Attempted %d tasks of which %d didn't need to be rerun and %d failed.", self.rqexe.stats.completed + self.rqexe.stats.failed, self.rqexe.stats.skipped, self.rqexe.stats.failed)
@@ -1106,6 +1106,7 @@ class RunQueue:
 
     def finish_runqueue(self, now = False):
         if not self.rqexe:
+            self.state = runQueueComplete
             return
 
         if now:
