@@ -608,6 +608,87 @@
             </para>
         </section>
 
+        <section id='clearcase-fetcher'>
+            <title>Git Submodule Fetcher (<filename>gitsm://</filename>)</title>
+
+            <para>
+                This fetcher submodule fetches code from a
+                <ulink url='http://en.wikipedia.org/wiki/Rational_ClearCase'>ClearCase</ulink>
+                repository.
+            </para>
+
+            <para>
+                To use this fetcher, make sure your recipe has proper
+                <ulink url='var-SRC_URI'><filename>SRC_URI</filename></ulink>,
+                <ulink url='var-SRCREV'><filename>SRCREV</filename></ulink>, and
+                <ulink url='var-PV'><filename>PV</filename></ulink> settings.
+                Here is an example:
+                <literallayout class='monospaced'>
+     SRC_URI = "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
+     SRCREV = "EXAMPLE_CLEARCASE_TAG"
+     PV = "${@d.getVar("SRCREV").replace("/", "+")}"
+                </literallayout>
+                The fetcher uses the <filename>rcleartool</filename> or
+                <filename>cleartool</filename> remote client, depending on
+                which one is available.
+            </para>
+
+            <para>
+                Following are options for the <filename>SRC_URI</filename>
+                statement:
+                <itemizedlist>
+                    <listitem><para><emphasis><filename>vob</filename></emphasis>:
+                        The name, which must include the
+                        prepending "/" character, of the ClearCase VOB.
+                        This option is required.
+                        </para></listitem>
+                    <listitem><para><emphasis><filename>module</filename></emphasis>:
+                        The module, which must include the
+                        prepending "/" character, in the selected VOB
+                        The <filename>module</filename> and <filename>vob</filename>
+                        options are combined to create the following load rule in
+                        the view config spec:
+                        <literallayout class='monospaced'>
+     load &lt;vob&gt;&lt;module&gt;
+                        </literallayout>
+                        </para></listitem>
+                    <listitem><para><emphasis><filename>proto</filename></emphasis>:
+                        The protocol, which can be either <filename>http</filename> or
+                        <filename>https</filename>.
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+
+            <para>
+                By default, the fetcher creates a configuration specification.
+                If you want this specification written to an area other than the default,
+                use the <filename>CCASE_CUSTOM_CONFIG_SPEC</filename> variable
+                in your recipe to define where the specification is written.
+                <note>
+                    the <filename>SRCREV</filename> loses its functionality if you
+                    specify this variable.
+                    However, <filename>SRCREV</filename> is still used to label the
+                    archive after a fetch even though it does not define what is
+                    fetched.
+                </note>
+            </para>
+
+            <para>
+                Here are a couple of other behaviors worth mentioning:
+                <itemizedlist>
+                    <listitem><para>
+                        When using <filename>cleartool</filename>, the login of
+                        <filename>cleartool</filename> is handled by the system.
+                        The login require no special steps.
+                        </para></listitem>
+                    <listitem><para>
+                        In order to use <filename>rcleartool</filename> with authenticated
+                        users, an "rcleartool login" is necessary before using the fetcher.
+                        </para></listitem>
+                </itemizedlist>
+            </para>
+        </section>
+
         <section id='other-fetchers'>
             <title>Other Fetchers</title>
 
