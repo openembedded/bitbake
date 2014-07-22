@@ -609,7 +609,7 @@
         </section>
 
         <section id='clearcase-fetcher'>
-            <title>Git Submodule Fetcher (<filename>gitsm://</filename>)</title>
+            <title>ClearCase Fetcher (<filename>ccrc://</filename>)</title>
 
             <para>
                 This fetcher submodule fetches code from a
@@ -619,9 +619,9 @@
 
             <para>
                 To use this fetcher, make sure your recipe has proper
-                <ulink url='var-SRC_URI'><filename>SRC_URI</filename></ulink>,
-                <ulink url='var-SRCREV'><filename>SRCREV</filename></ulink>, and
-                <ulink url='var-PV'><filename>PV</filename></ulink> settings.
+                <link linkend='var-SRC_URI'><filename>SRC_URI</filename></link>,
+                <link linkend='var-SRCREV'><filename>SRCREV</filename></link>, and
+                <link linkend='var-PV'><filename>PV</filename></link> settings.
                 Here is an example:
                 <literallayout class='monospaced'>
      SRC_URI = "ccrc://cc.example.org/ccrc;vob=/example_vob;module=/example_module"
