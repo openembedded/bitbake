@@ -86,7 +86,7 @@
             <ulink url='http://www.angstrom-distribution.org/'>Angstrom Distribution</ulink>,
             and which is also being used as the build tool for Linux projects
             such as the
-            <ulink url='&YOCTO_HOME_URL;'>Yocto Project</ulink>.
+            <ulink url='http://www.yoctoproject.org'>Yocto Project</ulink>.
         </para>
 
         <para>
