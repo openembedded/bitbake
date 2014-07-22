@@ -517,7 +517,7 @@
                              the dumped signature with the cached one.
        -p, --parse-only      Quit after parsing the BB recipes.
        -s, --show-versions   Show current and preferred versions of all recipes.
-       -e, --environment     Show the global or per-package environment complete
+       -e, --environment     Show the global or per-recipe environment complete
                              with information about where variables were
                              set/changed.
        -g, --graphviz        Save dependency tree information for the specified

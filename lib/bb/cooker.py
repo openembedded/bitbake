@@ -402,7 +402,7 @@ class BBCooker:
 
     def showEnvironment(self, buildfile = None, pkgs_to_build = []):
         """
-        Show the outer or per-package environment
+        Show the outer or per-recipe environment
         """
         fn = None
         envdata = None

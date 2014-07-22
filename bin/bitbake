@@ -148,7 +148,7 @@ class BitBakeConfigParameters(cookerdata.ConfigParameters):
         parser.add_option("-s", "--show-versions", help = "Show current and preferred versions of all recipes.",
                    action = "store_true", dest = "show_versions", default = False)
 
-        parser.add_option("-e", "--environment", help = "Show the global or per-package environment complete with information about where variables were set/changed.",
+        parser.add_option("-e", "--environment", help = "Show the global or per-recipe environment complete with information about where variables were set/changed.",
                    action = "store_true", dest = "show_environment", default = False)
 
         parser.add_option("-g", "--graphviz", help = "Save dependency tree information for the specified targets in the dot syntax.",
