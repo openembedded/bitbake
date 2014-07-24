@@ -480,12 +480,15 @@ class ORMWrapper(object):
                                 line_number = vh['line'],
                                 operation = vh['op'])
 
+class MockEvent: pass           # sometimes we mock an event, declare it here
+
 class BuildInfoHelper(object):
     """ This class gathers the build information from the server and sends it
         towards the ORM wrapper for storing in the database
         It is instantiated once per build
         Keeps in memory all data that needs matching before writing it to the database
     """
+
 
     def __init__(self, server, has_build_history = False):
         self._configure_django()
@@ -496,6 +499,8 @@ class BuildInfoHelper(object):
         self.orm_wrapper = ORMWrapper()
         self.has_build_history = has_build_history
         self.tmp_dir = self.server.runCommand(["getVariable", "TMPDIR"])[0]
+        self.brbe    = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
+
 
     def _configure_django(self):
         # Add toaster to sys path for importing modules
@@ -607,9 +612,7 @@ class BuildInfoHelper(object):
         assert '_pkgs' in vars(event)
         build_information = self._get_build_information()
 
-        brbe = self.server.runCommand(["getVariable", "TOASTER_BRBE"])[0]
-
-        build_obj = self.orm_wrapper.create_build_object(build_information, brbe)
+        build_obj = self.orm_wrapper.create_build_object(build_information, self.brbe)
 
         self.internal_state['build'] = build_obj
 
@@ -629,7 +632,8 @@ class BuildInfoHelper(object):
         # Save build configuration
         self.orm_wrapper.save_build_variables(build_obj, self.server.runCommand(["getAllKeysWithFlags", ["doc", "func"]])[0])
 
-        return brbe
+        return self.brbe
+
 
 
     def update_target_image_file(self, event):
@@ -773,7 +777,6 @@ class BuildInfoHelper(object):
             identifier = fn + taskname + "_setscene"
             recipe_information = self._get_recipe_information_from_taskfile(fn)
             recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
-            class MockEvent: pass
             mevent = MockEvent()
             mevent.taskname = taskname
             mevent.taskhash = taskhash
@@ -792,7 +795,6 @@ class BuildInfoHelper(object):
             identifier = fn + taskname + "_setscene"
             recipe_information = self._get_recipe_information_from_taskfile(fn)
             recipe = self.orm_wrapper.get_update_recipe_object(recipe_information)
-            class MockEvent: pass
             mevent = MockEvent()
             mevent.taskname = taskname
             mevent.taskhash = taskhash
@@ -929,7 +931,8 @@ class BuildInfoHelper(object):
                             self.internal_state['recipes'],
                             )
 
-    def store_build_done(self, br_id, be_id):
+    def _store_build_done(self):
+        br_id, be_id = self.brbe.split(":")
         from bldcontrol.models import BuildEnvironment, BuildRequest
         be = BuildEnvironment.objects.get(pk = be_id)
         be.lock = BuildEnvironment.LOCK_LOCK
@@ -939,49 +942,61 @@ class BuildInfoHelper(object):
         br.build = self.internal_state['build']
         br.save()
 
-    def _store_log_information(self, level, text):
-        log_information = {}
-        log_information['build'] = self.internal_state['build']
-        log_information['level'] = level
-        log_information['message'] = text
-        self.orm_wrapper.create_logmessage(log_information)
-
-    def store_log_info(self, text):
-        self._store_log_information(LogMessage.INFO, text)
-
-    def store_log_warn(self, text):
-        self._store_log_information(LogMessage.WARNING, text)
 
     def store_log_error(self, text):
-        self._store_log_information(LogMessage.ERROR, text)
+        mockevent = MockEvent()
+        mockevent.levelno = format.ERROR
+        mockevent.msg = text
+        self.store_log_event(mockevent)
 
     def store_log_event(self, event):
+        if event.levelno < format.WARNING:
+            return
+
+        if 'args' in vars(event):
+            event.msg = event.msg % event.args
+
+        if not 'build' in self.internal_state:
+            if self.brbe is None:
+                if not 'backlog' in self.internal_state:
+                    self.internal_state['backlog'] = []
+                self.internal_state['backlog'].append(event)
+            else:   # we're under Toaster control, post the errors to the build request
+                from bldcontrol.models import BuildRequest, BRError
+                br, be = brbe.split(":")
+                buildrequest = BuildRequest.objects.get(pk = br)
+                brerror = BRError.objects.create(req = buildrequest, errtype="build", errmsg = event.msg)
+
+            return
+
         if 'build' in self.internal_state and 'backlog' in self.internal_state:
             if len(self.internal_state['backlog']):
                 tempevent = self.internal_state['backlog'].pop()
-                print "Saving stored event ", tempevent
+                print "    Saving stored event ", tempevent
                 self.store_log_event(tempevent)
             else:
                 del self.internal_state['backlog']
 
-        if event.levelno < format.WARNING:
-            return
-
-        if not 'build' in self.internal_state:
-            print "Save event for later"
-            if not 'backlog' in self.internal_state:
-                self.internal_state['backlog'] = []
-            self.internal_state['backlog'].append(event)
-
-            return
         log_information = {}
         log_information['build'] = self.internal_state['build']
         if event.levelno >= format.ERROR:
-            log_information['level'] = LogMessage.ERROR
+            log_information['level'] = event.levelno
         elif event.levelno == format.WARNING:
             log_information['level'] = LogMessage.WARNING
+        elif event.levelno == format.INFO:
+            log_information['level'] = LogMessage.INFO
+        else:
+            log_information['level'] = event.levelno
+
         log_information['message'] = event.msg
         log_information['pathname'] = event.pathname
         log_information['lineno'] = event.lineno
         self.orm_wrapper.create_logmessage(log_information)
 
+    def close(self):
+        if self.brbe is not None:
+            buildinfohelper._store_build_done()
+
+        if 'backlog' in self.internal_state:
+            for event in self.internal_state['backlog']:
+                   print "NOTE: Unsaved log: ", event.msg

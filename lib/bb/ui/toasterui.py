@@ -94,7 +94,6 @@ def main(server, eventHandler, params ):
     first = True
 
     buildinfohelper = BuildInfoHelper(server, build_history_enabled)
-    brbe = None
 
     while True:
         try:
@@ -111,7 +110,7 @@ def main(server, eventHandler, params ):
             helper.eventHandler(event)
 
             if isinstance(event, bb.event.BuildStarted):
-                brbe = buildinfohelper.store_started_build(event)
+                buildinfohelper.store_started_build(event)
 
             if isinstance(event, (bb.build.TaskStarted, bb.build.TaskSucceeded, bb.build.TaskFailedSilent)):
                 buildinfohelper.update_and_store_task(event)
@@ -222,19 +221,18 @@ def main(server, eventHandler, params ):
                                   bb.command.CommandExit)):
                 if (isinstance(event, bb.command.CommandFailed)):
                     event.levelno = format.ERROR
-                    event.msg = event.error
+                    event.msg = "Command Failed " + event.error
                     event.pathname = ""
                     event.lineno = 0
                     buildinfohelper.store_log_event(event)
                     errors += 1
 
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
+                buildinfohelper.close()
 
 
                 # we start a new build info
-                if brbe is not None:
-                    br_id, be_id = brbe.split(":")
-                    buildinfohelper.store_build_done(br_id, be_id)
+                if buildinfohelper.brbe is not None:
 
                     print "we are under BuildEnvironment management - after the build, we exit"
                     server.terminateServer()
