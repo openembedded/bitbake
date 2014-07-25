@@ -823,9 +823,11 @@ class MultiProcessCache(object):
                     p = pickle.Unpickler(fd)
                     extradata, version = p.load()
             except (IOError, EOFError):
-                extradata, version = self.create_cachedata(), None
+                os.unlink(f)
+                continue
 
             if version != self.__class__.CACHE_VERSION:
+                os.unlink(f)
                 continue
 
             self.merge_data(extradata, data)
