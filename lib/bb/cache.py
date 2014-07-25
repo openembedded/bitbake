@@ -814,15 +814,7 @@ class MultiProcessCache(object):
 
         glf = bb.utils.lockfile(self.cachefile + ".lock")
 
-        try:
-            with open(self.cachefile, "rb") as f:
-                p = pickle.Unpickler(f)
-                data, version = p.load()
-        except (IOError, EOFError):
-            data, version = None, None
-
-        if version != self.__class__.CACHE_VERSION:
-            data = self.create_cachedata()
+        data = self.cachedata
 
         for f in [y for y in os.listdir(os.path.dirname(self.cachefile)) if y.startswith(os.path.basename(self.cachefile) + '-')]:
             f = os.path.join(os.path.dirname(self.cachefile), f)
