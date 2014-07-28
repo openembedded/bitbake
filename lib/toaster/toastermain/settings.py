@@ -241,8 +241,6 @@ INSTALLED_APPS = (
     'django.contrib.humanize',
     'orm',
     'toastermain',
-    'toastergui',
-    'bldviewer',
     'south',
     'bldcontrol',
 )
@@ -261,7 +259,7 @@ currentdir = os.path.dirname(__file__)
 for t in os.walk(os.path.dirname(currentdir)):
     modulename = os.path.basename(t[0])
     if ("views.py" in t[2] or "models.py" in t[2]) and not modulename in INSTALLED_APPS:
-        INSTALLED_APPS.append(modulename)
+        INSTALLED_APPS = INSTALLED_APPS + (modulename,)
 
 # A sample logging configuration. The only tangible logging
 # performed by this configuration is to send an email to
