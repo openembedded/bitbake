@@ -321,8 +321,8 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     break
                 termfilter.updateFooter()
                 event = eventHandler.waitEvent(0.25)
-            if event is None:
-                continue
+                if event is None:
+                    continue
             helper.eventHandler(event)
             if isinstance(event, bb.runqueue.runQueueExitWait):
                 if not main.shutdown:
