@@ -1265,7 +1265,10 @@ class FetchMethod(object):
                     if urldata.type == "file" and urldata.path.find("/") != -1:
                        destdir = urldata.path.rsplit("/", 1)[0]
                     else:
-                       destdir = "."
+                       if urldata.parm.get('subdir') != None:
+                          destdir = urldata.parm.get('subdir')
+                       else:
+                          destdir = "."
                     bb.utils.mkdirhier("%s/%s" % (rootdir, destdir))
                     cmd = 'cp -f %s %s/%s/' % (file, rootdir, destdir)
 
