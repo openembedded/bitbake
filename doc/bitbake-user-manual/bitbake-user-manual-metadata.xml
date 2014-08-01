@@ -291,7 +291,7 @@
                 The variable <filename>FOO</filename> has two flags:
                 <filename>a</filename> and <filename>b</filename>.
                 The flags are immediately set to "abc" and "123", respectively.
-                The <filename>a</filename> flag becomes "abc456".
+                The <filename>a</filename> flag becomes "abc 456".
             </para>
 
             <para>
