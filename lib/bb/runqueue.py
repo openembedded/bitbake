@@ -1985,6 +1985,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
         logger.debug(1, 'We can skip tasks %s', sorted(self.rq.scenequeue_covered))
 
         self.rq.state = runQueueRunInit
+
+        completeevent = sceneQueueComplete(self.stats, self.rq)
+        bb.event.fire(completeevent, self.cfgData)
+
         return True
 
     def runqueue_process_waitpid(self, task, status):
@@ -2066,6 +2070,14 @@ class sceneQueueTaskFailed(sceneQueueEvent):
     def __init__(self, task, stats, exitcode, rq):
         sceneQueueEvent.__init__(self, task, stats, rq)
         self.exitcode = exitcode
+
+class sceneQueueComplete(sceneQueueEvent):
+    """
+    Event when all the sceneQueue tasks are complete
+    """
+    def __init__(self, stats, rq):
+        self.stats = stats.copy()
+        bb.event.Event.__init__(self)
 
 class runQueueTaskCompleted(runQueueEvent):
     """
