@@ -63,12 +63,21 @@ urlpatterns = patterns('toastergui.views',
 
 
         # urls not linked from the dashboard
-        url(r'^layers/$', 'layer', name='all-layers'),
         url(r'^layerversions/(?P<layerversion_id>\d+)/recipes/.*$', 'layer_versions_recipes', name='layer_versions_recipes'),
 
         # project URLs
         url(r'^newproject/$', 'newproject', name='newproject'),
+        url(r'^importlayer/$', 'importlayer', name='importlayer'),
+
+        url(r'^layers/$', 'layers', name='layers'),
+        url(r'^layer/(?P<layerid>\d+)/$', 'layerdetails', name='layerdetails'),
+        url(r'^targets/$', 'targets', name='targets'),
+        url(r'^machines/$', 'machines', name='machines'),
+
         url(r'^project/(?P<pid>\d+)/$', 'project', name='project'),
+        url(r'^project/(?P<pid>\d+)/configuration$', 'projectconf', name='projectconf'),
+        url(r'^project/(?P<pid>\d+)/builds$', 'projectbuilds', name='projectbuild'),
+
         url(r'^xhr_projectbuild/(?P<pid>\d+)/$', 'xhr_projectbuild', name='xhr_projectbuild'),
         url(r'^xhr_projectedit/(?P<pid>\d+)/$', 'xhr_projectedit', name='xhr_projectedit'),
 

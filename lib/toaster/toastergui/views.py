@@ -1772,6 +1772,7 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth.decorators import login_required
 
     from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
+    from orm.models import Branch, LayerSource, ToasterSetting
     from bldcontrol.models import BuildRequest
 
     import traceback
@@ -1791,6 +1792,8 @@ if toastermain.settings.MANAGED:
         context = {
             'email': request.user.email if request.user.is_authenticated() else '',
             'username': request.user.username if request.user.is_authenticated() else '',
+            'branches': Branch.objects.order_by("-up_id"),
+            'defaultbranch': ToasterSetting.objects.get(name = "DEFAULT_RELEASE").value,
         }
 
 
@@ -1816,7 +1819,7 @@ if toastermain.settings.MANAGED:
 
                 #  save the project
                 prj = Project.objects.create_project(name = request.POST['projectname'],
-                    branch = request.POST['projectversion'].split(" ")[0],
+                    branch = Branch.objects.get(pk = request.POST['projectversion'].split(" ")[0]),
                     short_description=request.POST['projectversion'].split(" ")[1:])
                 prj.user_id = request.user.pk
                 prj.save()
@@ -1919,6 +1922,26 @@ if toastermain.settings.MANAGED:
         except Exception as e:
             return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
+    def importlayer(request):
+        raise Exception("TODO: implement page #6595")
+
+    def layers(request):
+        raise Exception("TODO: implement page #6590")
+
+    def layerdetails(request, layerid):
+        raise Exception("TODO: implement page #6591")
+
+    def targets(request):
+        raise Exception("TODO: implement page #6592")
+
+    def machines(request):
+        raise Exception("TODO: implement page #6593")
+
+    def projectconf(request, pid):
+        raise Exception("TODO: implement page #6588")
+
+    def projectbuilds(request, pid):
+        raise Exception("TODO: implement page #6589")
 
 else:
     # these are pages that are NOT available in interactive mode
@@ -1940,3 +1963,26 @@ else:
     def xhr_projectedit(request, pid):
         raise Exception("page not available in interactive mode")
 
+    def importlayer(request):
+        raise Exception("page not available in interactive mode")
+
+    def layers(request):
+        raise Exception("page not available in interactive mode")
+
+    def layerdetails(request):
+        raise Exception("page not available in interactive mode")
+
+    def targets(request):
+        raise Exception("page not available in interactive mode")
+
+    def targetdetails(request):
+        raise Exception("page not available in interactive mode")
+
+    def machines(request):
+        raise Exception("page not available in interactive mode")
+
+    def projectconf(request):
+        raise Exception("page not available in interactive mode")
+
+    def projectbuilds(request):
+        raise Exception("page not available in interactive mode")

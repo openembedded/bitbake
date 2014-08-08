@@ -71,9 +71,28 @@ function postEditAjaxRequest(reqdata) {
         })
 }
 
+
+
+
 $(document).ready(function () {
     setEventHandlers();
+
+    /* Provide XHR calls for the "build" buttons.*/
+    $("button#build-all-button").click( function (evt) {
+        var ajax = $.ajax({
+            type:"POST",
+            url:"{% url 'xhr_projectbuild' project.id %}",
+            headers: { 'X-CSRFToken': $.cookie("csrftoken")},
+            success: function (data, textstatus) {
+                if (data.error != "ok") {
+                    alert("XHR fail: " + data.error );
+                }
+            },
+            error: function (jqXHR, textstatus, error) { alert("XHR errored:" + error + "(" + textstatus + ")"); },
+        })
+    });
 });
+
 
 </script>
 
@@ -97,23 +116,7 @@ $(document).ready(function () {
                         <input class="huge input-xxlarge" placeholder="Or enter the target you want to build" autocomplete="off" data-minlength="1" data-autocomplete="off" data-provide="typeahead" data-source="" type="text">
                         <button id="build-button" class="btn btn-large" disabled="">Build</button>
                     </div>
-                    <script>
-/* Provide XHR calls for the "build" buttons.*/
-$("button#build-all-button").click( function (evt) {
-    var ajax = $.ajax({
-            type:"POST",
-            url:"{% url 'xhr_projectbuild' project.id %}",
-            headers: { 'X-CSRFToken': $.cookie("csrftoken")},
-            success: function (data, textstatus) {
-                if (data.error != "ok") {
-                    alert("XHR fail: " + data.error );
-                }
-            },
-            error: function (jqXHR, textstatus, error) { alert("XHR errored:" + error + "(" + textstatus + ")"); },
-        })
-});
 
-                    </script>
                     <!--span class="help-inline">This target is not provided <br />by any of your added layers
                         <i class="icon-question-sign get-help get-help-red" title="Review your list of added layers to make sure one of them provides core-image-xyz. Clicking on a layer name will give you all the information Toaster has about the layer"></i>
                     </span>
@@ -255,7 +258,7 @@ $("button#build-all-button").click( function (evt) {
                             <button id="add-layer-dependencies" class="btn btn-info add-layer">Add layers</button>
                         </div>
 
-                        <p><a href="#">Import your layer</a> | <a href="#">View all layers</a></p>
+                        <p><a href="{% url 'importlayer' %}">Import your layer</a> | <a href="{% url 'layers'%}">View all layers</a></p>
                     </form>
 
                     <h4 class="air">
@@ -286,7 +289,7 @@ $("button#build-all-button").click( function (evt) {
                             <button id="add-target-button" class="btn" type="button">Add</button>
                         </div>
 
-                        <p><a href="#" class="link">View all targets</a></p>
+                        <p><a href="{% url 'targets' %}" class="link">View all targets</a></p>
                     </form>
                     <h4 class="air">
                         Added targets
@@ -328,10 +331,10 @@ $("button#build-all-button").click( function (evt) {
                         {{distro}}
                         <i title="" data-original-title="" class="icon-pencil"></i>
                     </p>
-                    <p class="localconf">
-                        <a href="#" class="link">Edit the <code>local.conf</code> file</a>
-                        <i data-original-title="The <code>local.conf</code> file is where other project configuration options are set. Pretty much any configuration option can be set in this file. Each option, like everything else in the build system, is a variable - value pair" class="icon-question-sign get-help heading-help" title=""></i>
-                    </p>
+					<p class="link-action">
+						<a href="{% url 'projectconf' project.id %}" class="link">Edit configuration variables</a>
+						<i class="icon-question-sign get-help heading-help" title="You can set other project configuration options here. Each option, like everything else in the build system, is a variable - value pair"></i>
+					</p>
                 </div>
             </div>
 
