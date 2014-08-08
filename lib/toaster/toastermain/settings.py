@@ -245,6 +245,8 @@ INSTALLED_APPS = (
     'bldcontrol',
 )
 
+SOUTH_TESTS_MIGRATE = False
+
 # if we run in managed mode, we need user support
 if MANAGED:
     INSTALLED_APPS = ('django.contrib.auth',
