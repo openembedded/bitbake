@@ -25,11 +25,12 @@ from django.views.decorators.cache import never_cache
 
 
 # Uncomment the next two lines to enable the admin:
-# from django.contrib import admin
-# admin.autodiscover()
+from django.contrib import admin
+admin.autodiscover()
+
 urlpatterns = patterns('',
+    # the api-s are not auto-discoverable
     url(r'^api/1.0/', include('bldviewer.api')),
-    url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/'))),
 
     # Examples:
     # url(r'^toaster/', include('toaster.foo.urls')),
@@ -37,10 +38,17 @@ urlpatterns = patterns('',
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    # Uncomment the next line to enable the admin:
-    # url(r'^admin/', include(admin.site.urls)),
+
+    # if no application is selected, we have the magic toastergui app here
+    url(r'^$', never_cache(RedirectView.as_view(url='/toastergui/'))),
 )
 
+import toastermain.settings
+if toastermain.settings.MANAGED:
+    urlpatterns = urlpatterns + [
+        # Uncomment the next line to enable the admin:
+        url(r'^admin/', include(admin.site.urls)),
+    ]
 # Automatically discover urls.py in various apps, beside our own
 # and map module directories to the patterns
 
