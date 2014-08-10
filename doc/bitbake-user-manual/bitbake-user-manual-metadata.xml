@@ -1572,11 +1572,11 @@
                 item runtime dependency which must have completed before that
                 task can be executed.
                 <literallayout class='monospaced'>
-     do_package_write[rdeptask] = "do_package"
+     do_package_qa[rdeptask] = "do_packagedata"
                 </literallayout>
-                In the previous example, the <filename>do_package</filename>
+                In the previous example, the <filename>do_packagedata</filename>
                 task of each item in <filename>RDEPENDS</filename> must have
-                completed before <filename>do_package_write</filename> can execute.
+                completed before <filename>do_package_qa</filename> can execute.
             </para>
         </section>
 
