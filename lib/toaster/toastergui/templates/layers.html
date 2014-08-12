@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% load projecttags %}
+{% load humanize %}
+{% block pagecontent %}
+                <div class="page-header">
+                    <h1>
+                        All layers
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with Yocto Project 1.7 'Dxxxx' that Toaster knows about. They include community-created layers suitable for use on top of OpenEmbedded Core and any layers you have imported"></i>
+                     </h1>
+                </div>
+                <!--div class="alert">
+                    <div class="input-append" style="margin-bottom:0px;">
+                        <input class="input-xxlarge" type="text" placeholder="Search layers" value="browser" />
+                        <a class="add-on btn">
+                            <i class="icon-remove"></i>
+                        </a>
+                        <button class="btn" type="button">Search</button>
+                        <a class="btn btn-link" href="#">Show all layers</a>
+                    </div>
+                </div-->
+                <div id="layer-added" class="alert alert-info lead" style="display:none;"></div>
+                <div id="layer-removed" class="alert alert-info lead" style="display:none;">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>1</strong> layer deleted from <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>
+                </div>
+
+
+{% include "basetable_top.html" %}
+    {% for lv in objects %}
+    <tr class="data">
+            <td class="layer">{{lv.layer.name}}</td>
+            <td class="description">{{lv.layer.summary}}</td>
+            <td class="source"><a href="{% url 'layerdetails' lv.pk %}">{{lv.layer_source.name}}</a></td>
+            <td class="git-repo"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.layer.layer_index_url}}</code></a></td>
+            <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.dirpath}}</code></a></td>
+            <td class="branch">{% if lv.branch %}{{lv.branch}}{% else %}{{lv.up_branch.name}}{% endif %}</td>
+            <td class="dependencies">{% for lvs in lv.dependencies.all %}{{lvs.layer.name}}<br/>{%endfor%}</td>
+            <td class="add-layers">
+                <button id="remove-layer-{{lv.pk}}" class="btn btn-danger btn-block remove-layer" title="1 layer deleted" style="display:none;">
+                    <i class="icon-trash"></i>
+                    Delete layer
+                </button>
+                <button id="add-layer-{{lv.pk}}" class="btn  btn-block add-layer" title="1 layer added">
+                    <i class="icon-plus"></i>
+                    Add layer
+                </button>
+            </td>
+     </tr>
+    {% endfor %}
+{% include "basetable_bottom.html" %}
+
+    <!-- Modals -->
+
+    <!-- 'Layer dependencies modal' -->
+    <div id="dependencies-message" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+            <h3>meta-acer dependencies</h3>
+        </div>
+        <div class="modal-body">
+            <p><strong>meta-acer</strong> depends on some layers that are not added to your project. Select the ones you want to add:</p>
+            <ul class="unstyled">
+                <li>
+                    <label class="checkbox">
+                        <input type="checkbox" checked="checked">
+                        meta-android
+                    </label>
+                </li>
+                <li>
+                    <label class="checkbox">
+                        <input type="checkbox" checked="checked">
+                        meta-oe
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button id="add-layer-dependencies" type="submit" class="btn btn-primary" data-dismiss="modal" >Add layers</button>
+            <button class="btn" data-dismiss="modal">Cancel</button>
+        </div>
+    </div>
+
+    <script src="assets/js/jquery-1.9.1.min.js" type='text/javascript'></script>
+    <script src="assets/js/jquery.tablesorter.min.js" type='text/javascript'></script>
+    <script src="assets/js/jquery-ui-1.10.3.custom.min.js"></script>
+    <script src="assets/js/bootstrap.min.js" type='text/javascript'></script>
+    <script src="assets/js/prettify.js" type='text/javascript'></script>
+    <script src="assets/js/jit.js" type='text/javascript'></script>
+    <script src="assets/js/main.js" type='text/javascript'></script>
+
+    <script>
+     $(document).ready(function() {
+
+        //show or hide selected columns on load
+        $("input:checkbox").each(function(){
+            var selectedType = $(this).val();
+            if($(this).is(":checked")){
+                $("."+selectedType).show();
+            }
+            else{
+                $("."+selectedType).hide();
+            }
+        });
+
+        // enable add layer button
+        $('#add-layer-with-deps').removeAttr('disabled');
+
+        //edit columns functionality (show / hide table columns)
+        $("input:checkbox").change();
+            $("input:checkbox").change(function(){
+                var selectedType = $(this).val();
+                    if($(this).is(":checked")){
+                        $("."+selectedType).show();
+                    }
+                    else{
+                        $("."+selectedType).hide();
+                    }
+            });
+
+        //turn edit columns dropdown into a multi-select menu
+        $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
+            e.stopPropagation();
+        });
+
+        //show tooltip with applied filter
+        $('#filtered').tooltip({container:'table', placement:'bottom', delay:{hide:1500}, html:true});
+
+        $('#filtered').click(function() {
+            $(this).tooltip('hide');
+        });
+
+        //show layer added tooltip
+        $("#remove-layer, #add-layer, #add-layer-with-deps2").tooltip({ trigger: 'manual' });
+
+        // add layer without dependencies
+        $("#add-layer").click(function(){
+            $('#layer-removed').hide();
+            $('#layer-added').html('<button type="button" class="close" data-dismiss="alert">&times;</button><strong>1</strong> layer added to <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>').fadeIn();
+            $('#add-layer').tooltip('show');
+            $("#add-layer").hide();
+            $(".add-layers .tooltip").delay(2000).fadeOut(function(){
+                $("#remove-layer").delay(300).fadeIn();
+            });
+        });
+
+        // add layer with dependencies
+        $(document).on("click", "#add-layer-dependencies", function() {
+            $('#layer-removed').hide();
+            $('#layer-added').html('<button type="button" class="close" data-dismiss="alert">&times;</button><strong>3</strong> layers added to <a href="project-with-targets.html">your project</a>: <a href="#">meta-acer</a> and its dependencies <a href="#">meta-android</a> and <a href="#">meta-oe</a>').delay(400).fadeIn(function(){
+                $('#add-layer-with-deps').tooltip('show');
+                $("#add-layer-with-deps, #add-layer-with-deps").hide();
+                $(".add-layers .tooltip").delay(2000).fadeOut(function(){
+                    $("#remove-layer-with-deps").delay(300).fadeIn();
+                });
+            });
+        });
+
+        // delete layer
+        $("#remove-layer").click(function(){
+            $('#layer-added').hide();
+            $('#layer-removed').show();
+            $('#remove-layer').tooltip('show');
+            $("#remove-layer").hide();
+            $(".add-layers .tooltip").delay(2000).fadeOut(function(){
+                $("#add-layer").delay(300).fadeIn();
+            });
+        });
+
+     });
+
+</script>
+
+{% endblock %}

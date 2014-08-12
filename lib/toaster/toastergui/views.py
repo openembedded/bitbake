@@ -1849,6 +1849,9 @@ if toastermain.settings.MANAGED:
         except User.DoesNotExist:
             puser = None
 
+        # we use implicit knowledge of the current user's project to filter layer information, e.g.
+        request.session['project'] = prj
+
         context = {
             "project" : prj,
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
@@ -1926,7 +1929,76 @@ if toastermain.settings.MANAGED:
         raise Exception("TODO: implement page #6595")
 
     def layers(request):
-        raise Exception("TODO: implement page #6590")
+        # "TODO: implement page #6590"
+        template = "layers.html"
+        # define here what parameters the view needs in the GET portion in order to
+        # be able to display something.  'count' and 'page' are mandatory for all views
+        # that use paginators.
+        mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'layer__name:-' };
+        retval = _verify_parameters( request.GET, mandatory_parameters )
+        if retval:
+            return _redirect_parameters( 'layers', request.GET, mandatory_parameters)
+
+        # boilerplate code that takes a request for an object type and returns a queryset
+        # for that object type. copypasta for all needed table searches
+        (filter_string, search_term, ordering_string) = _search_tuple(request, Layer_Version)
+
+        queryset_all = Layer_Version.objects.all()
+        if 'project' in request.session:
+            queryset_all = queryset_all.filter(up_branch = request.session['project'].branch)
+
+        queryset_with_search = _get_queryset(Layer_Version, queryset_all, None, search_term, ordering_string, '-layer__name')
+        queryset = _get_queryset(Layer_Version, queryset_all, filter_string, search_term, ordering_string, '-layer__name')
+
+        # retrieve the objects that will be displayed in the table; layers a paginator and gets a page range to display
+        layer_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
+
+
+        context = {
+            'objects' : layer_info,
+            'objectname' : "layers",
+            'default_orderby' : 'completed_on:-',
+
+            'tablecols' : [
+                {   'name': 'Layer',
+                    'orderfield': _get_toggle_order(request, "layer__name"),
+                    'ordericon' : _get_toggle_order_icon(request, "layer__name"),
+                },
+                {   'name': 'Description',
+                    'dclass': 'span4',
+                },
+                {   'name': 'Layer source',
+                    'qhelp': "Where the layer is coming from, for example, if it's part of the OpenEmbedded collection of layers or if it's a layer you have imported",
+                    'orderfield': _get_toggle_order(request, "layer_source__name"),
+                    'ordericon': _get_toggle_order_icon(request, "layer_source__name"),
+                    'filter': {
+                        'class': 'layer',
+                        'label': 'Show:',
+                        'options': map(lambda x: (x.name, 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
+                    }
+                },
+                {   'name': 'Git repository URL',
+                    'dclass': 'span6',
+                    'qhelp': "The Git repository for the layer source code",
+                },
+                {   'name': 'Subdirectory',
+                    'qhelp': "The layer directory within the Git repository",
+                },
+                {   'name': 'Branch, tag o commit',
+                    'qhelp': "The Git branch of the layer. For the layers from the OpenEmbedded source, the branch matches the Yocto Project version you selected for this project",
+                },
+                {   'name': 'Dependencies',
+                    'qhelp': "Other layers a layer depends upon",
+                },
+                {   'name': 'Add | Delete',
+                    'dclass': 'span2',
+                    'qhelp': "Add or delete layers to / from your project ",
+                },
+
+            ]
+        }
+
+        return render(request, template, context)
 
     def layerdetails(request, layerid):
         raise Exception("TODO: implement page #6591")
