@@ -56,7 +56,7 @@ class Local(FetchMethod):
         if path[0] != "/":
             filespath = data.getVar('FILESPATH', d, True)
             if filespath:
-                logger.debug(2, "Searching for %s in paths:    \n%s" % (path, "\n    ".join(filespath.split(":"))))
+                logger.debug(2, "Searching for %s in paths:\n    %s" % (path, "\n    ".join(filespath.split(":"))))
                 newpath = bb.utils.which(filespath, path)
             if not newpath:
                 filesdir = data.getVar('FILESDIR', d, True)
