@@ -1,5 +1,5 @@
 """
-Python Deamonizing helper
+Python Daemonizing helper
 
 Configurable daemon behaviors:
 
@@ -25,7 +25,7 @@ __version__ = "0.2"
 
 # Standard Python modules.
 import os                    # Miscellaneous OS interfaces.
-import sys                  # System-specific parameters and functions.
+import sys                   # System-specific parameters and functions.
 
 # Default daemon parameters.
 # File mode creation mask of the daemon.
@@ -128,7 +128,7 @@ def createDaemon(function, logfile):
     # of methods to accomplish this task.  Three are listed below.
     #
     # Try the system configuration variable, SC_OPEN_MAX, to obtain the maximum
-    # number of open file descriptors to close.  If it doesn't exists, use
+    # number of open file descriptors to close.  If it doesn't exist, use
     # the default value (configurable).
     #
     # try:
