@@ -97,7 +97,7 @@ class RunQueueScheduler(object):
     def __init__(self, runqueue, rqdata):
         """
         The default scheduler just returns the first buildable task (the
-        priority map is sorted by task numer)
+        priority map is sorted by task number)
         """
         self.rq = runqueue
         self.rqdata = rqdata
@@ -186,7 +186,7 @@ class RunQueueSchedulerCompletion(RunQueueSchedulerSpeed):
     """
     A scheduler optimised to complete .bb files are quickly as possible. The
     priority map is sorted by task weight, but then reordered so once a given
-    .bb file starts to build, its completed as quickly as possible. This works
+    .bb file starts to build, it's completed as quickly as possible. This works
     well where disk space is at a premium and classes like OE's rm_work are in
     force.
     """
@@ -795,7 +795,7 @@ class RunQueueData:
                 for st in self.cooker.configuration.invalidate_stamp.split(','):
                     invalidate_task(fn, "do_%s" % st, True)
 
-        # Interate over the task list and call into the siggen code
+        # Iterate over the task list and call into the siggen code
         dealtwith = set()
         todeal = set(range(len(self.runq_fnid)))
         while len(todeal) > 0:
@@ -967,11 +967,11 @@ class RunQueue:
 
         stampfile = bb.build.stampfile(taskname, self.rqdata.dataCache, fn)
 
-        # If the stamp is missing its not current
+        # If the stamp is missing, it's not current
         if not os.access(stampfile, os.F_OK):
             logger.debug(2, "Stampfile %s not available", stampfile)
             return False
-        # If its a 'nostamp' task, it's not current
+        # If it's a 'nostamp' task, it's not current
         taskdep = self.rqdata.dataCache.task_deps[fn]
         if 'nostamp' in taskdep and taskname in taskdep['nostamp']:
             logger.debug(2, "%s.%s is nostamp\n", fn, taskname)
@@ -1688,7 +1688,7 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
 
         process_endpoints(endpoints)
 
-        # Build a list of setscene tasks which as "unskippable"
+        # Build a list of setscene tasks which are "unskippable"
         # These are direct endpoints referenced by the build
         endpoints2 = {}
         sq_revdeps2 = []
