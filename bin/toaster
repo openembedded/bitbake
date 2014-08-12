@@ -65,10 +65,10 @@ function webserverStartAll()
         fi
 	if [ "x$TOASTER_MANAGED" == "x1" ]; then
 	        python $BBBASEDIR/lib/toaster/manage.py migrate bldcontrol || retval=1
-		python $BBBASEDIR/lib/toaster/manage.py checksettings  || retval=1
+		python $BBBASEDIR/lib/toaster/manage.py checksettings  --traceback || retval=1
 	fi
-	echo "Starting webserver"
         if [ $retval -eq 0 ]; then
+	    echo "Starting webserver"
             python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
             sleep 1
             if ! cat "${BUILDDIR}/.toastermain.pid" | xargs -I{} kill -0 {} ; then
@@ -144,7 +144,10 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
     }
     TOASTER_MANAGED=1
     export TOASTER_MANAGED=1
-    webserverStartAll || (echo "Fail to start the web server, stopping" 1>&2 && exit 1)
+    if ! webserverStartAll; then
+        echo "Failed to start the web server, stopping" 1>&2;
+        exit 1;
+    fi
     xdg-open http://0.0.0.0:8000/ >/dev/null 2>&1 &
     trap trap_ctrlc SIGINT
     echo "Running. Stop with Ctrl-C"
