@@ -2041,7 +2041,7 @@ class sceneQueueEvent(runQueueEvent):
 
 class runQueueTaskStarted(runQueueEvent):
     """
-    Event notifing a task was started
+    Event notifying a task was started
     """
     def __init__(self, task, stats, rq, noexec=False):
         runQueueEvent.__init__(self, task, stats, rq)
@@ -2049,7 +2049,7 @@ class runQueueTaskStarted(runQueueEvent):
 
 class sceneQueueTaskStarted(sceneQueueEvent):
     """
-    Event notifing a setscene task was started
+    Event notifying a setscene task was started
     """
     def __init__(self, task, stats, rq, noexec=False):
         sceneQueueEvent.__init__(self, task, stats, rq)
@@ -2057,7 +2057,7 @@ class sceneQueueTaskStarted(sceneQueueEvent):
 
 class runQueueTaskFailed(runQueueEvent):
     """
-    Event notifing a task failed
+    Event notifying a task failed
     """
     def __init__(self, task, stats, exitcode, rq):
         runQueueEvent.__init__(self, task, stats, rq)
@@ -2065,7 +2065,7 @@ class runQueueTaskFailed(runQueueEvent):
 
 class sceneQueueTaskFailed(sceneQueueEvent):
     """
-    Event notifing a setscene task failed
+    Event notifying a setscene task failed
     """
     def __init__(self, task, stats, exitcode, rq):
         sceneQueueEvent.__init__(self, task, stats, rq)
@@ -2081,17 +2081,17 @@ class sceneQueueComplete(sceneQueueEvent):
 
 class runQueueTaskCompleted(runQueueEvent):
     """
-    Event notifing a task completed
+    Event notifying a task completed
     """
 
 class sceneQueueTaskCompleted(sceneQueueEvent):
     """
-    Event notifing a setscene task completed
+    Event notifying a setscene task completed
     """
 
 class runQueueTaskSkipped(runQueueEvent):
     """
-    Event notifing a task was skipped
+    Event notifying a task was skipped
     """
     def __init__(self, task, stats, rq, reason):
         runQueueEvent.__init__(self, task, stats, rq)
