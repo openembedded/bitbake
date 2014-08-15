@@ -1308,8 +1308,8 @@
             BitBake allows installation of event handlers within
             recipe and class files.
             Events are triggered at certain points during operation,
-            such as the beginning of operation against a given
-            <filename>.bb</filename>, the start of a given task,
+            such as the beginning of an operation against a given recipe
+            (<filename>*.bb</filename> file), the start of a given task,
             task failure, task success, and so forth.
             The intent is to make it easy to do things like email
             notification on build failure.
@@ -1335,6 +1335,27 @@
             "<filename>bb.data</filename>".
             With the <filename>getName(e)</filename> method, one can get
             the name of the triggered event.
+        </para>
+
+        <para>
+            Because you probably are only interested in a subset of events,
+            you would likely use the <filename>[eventmask]</filename> flag
+            for your event handler to be sure that only certain events
+            trigger the handler.
+            Given the previous example, suppose you only wanted the
+            <filename>bb.build.TaskFailed</filename> event to trigger that
+            event handler.
+            Use the flag as follows:
+            <literallayout class='monospaced'>
+     addhandler myclass_eventhandler
+     myclass_eventhandler[eventmask] = "bb.build.TaskFailed"
+     python myclass_eventhandler() {
+         from bb.event import getName
+         from bb import data
+         print("The name of the Event is %s" % getName(e))
+         print("The file we run for is %s" % data.getVar('FILE', e.data, True))
+     }
+            </literallayout>
         </para>
 
         <para>
