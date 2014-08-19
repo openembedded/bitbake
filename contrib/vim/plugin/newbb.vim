@@ -53,7 +53,6 @@ fun! NewBBTemplate()
     put ='LICENSE = \"\"' 
     put ='SECTION = \"\"'
     put ='DEPENDS = \"\"'
-    put ='PR = \"r0\"'
     put =''
     put ='SRC_URI = \"\"'
 
