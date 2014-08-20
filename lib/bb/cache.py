@@ -225,7 +225,7 @@ class CoreRecipeInfo(RecipeInfoCommon):
         for package in self.packages_dynamic:
             cachedata.packages_dynamic[package].append(fn)
 
-        # Build hash of runtime depends and rececommends
+        # Build hash of runtime depends and recommends
         for package in self.packages + [self.pn]:
             cachedata.rundeps[fn][package] = list(self.rdepends) + self.rdepends_pkg[package]
             cachedata.runrecs[fn][package] = list(self.rrecommends) + self.rrecommends_pkg[package]
@@ -261,7 +261,7 @@ class Cache(object):
 
     def __init__(self, data, data_hash, caches_array):
         # Pass caches_array information into Cache Constructor
-        # It will be used in later for deciding whether we 
+        # It will be used later for deciding whether we 
         # need extra cache file dump/load support 
         self.caches_array = caches_array
         self.cachedir = data.getVar("CACHE", True)

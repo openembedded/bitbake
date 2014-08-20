@@ -52,10 +52,10 @@ def getMountedDev(path):
     parentDev = os.stat(path).st_dev
     currentDev = parentDev
     # When the current directory's device is different from the
-    # parrent's, then the current directory is a mount point
+    # parent's, then the current directory is a mount point
     while parentDev == currentDev:
         mountPoint = path
-        # Use dirname to get the parrent's directory
+        # Use dirname to get the parent's directory
         path = os.path.dirname(path)
         # Reach the "/"
         if path == mountPoint:
@@ -77,7 +77,7 @@ def getDiskData(BBDirs, configuration):
     """Prepare disk data for disk space monitor"""
 
     # Save the device IDs, need the ID to be unique (the dictionary's key is
-    # unique), so that when more than one directories are located in the same
+    # unique), so that when more than one directory is located on the same
     # device, we just monitor it once
     devDict = {}
     for pathSpaceInode in BBDirs.split():
@@ -187,11 +187,11 @@ class diskMonitor:
                 if self.spaceInterval and self.inodeInterval:
                     self.enableMonitor = True
                     # These are for saving the previous disk free space and inode, we
-                    # use them to avoid print too many warning messages
+                    # use them to avoid printing too many warning messages
                     self.preFreeS = {}
                     self.preFreeI = {}
-                    # This is for STOPTASKS and ABORT, to avoid print the message repeatly
-                    # during waiting the tasks to finish
+                    # This is for STOPTASKS and ABORT, to avoid printing the message
+                    # repeatedly while waiting for the tasks to finish
                     self.checked = {}
                     for k in self.devDict:
                         self.preFreeS[k] = 0

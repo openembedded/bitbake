@@ -264,7 +264,7 @@ def _print_trace(body, line):
 def better_compile(text, file, realfile, mode = "exec"):
     """
     A better compile method. This method
-    will print  the offending lines.
+    will print the offending lines.
     """
     try:
         return compile(text, file, mode)
@@ -530,7 +530,7 @@ def filter_environment(good_vars):
 def approved_variables():
     """
     Determine and return the list of whitelisted variables which are approved
-    to remain in the envrionment.
+    to remain in the environment.
     """
     if 'BB_PRESERVE_ENV' in os.environ:
         return os.environ.keys()

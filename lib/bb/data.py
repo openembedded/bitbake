@@ -6,7 +6,7 @@ BitBake 'Data' implementations
 Functions for interacting with the data structure used by the
 BitBake build tools.
 
-The expandData and update_data are the most expensive
+The expandKeys and update_data are the most expensive
 operations. At night the cookie monster came by and
 suggested 'give me cookies on setting the variables and
 things will work out'. Taking this suggestion into account
@@ -15,7 +15,7 @@ Analyse von Algorithmen' lecture and the cookie
 monster seems to be right. We will track setVar more carefully
 to have faster update_data and expandKeys operations.
 
-This is a treade-off between speed and memory again but
+This is a trade-off between speed and memory again but
 the speed is more critical here.
 """
 
@@ -35,7 +35,7 @@ the speed is more critical here.
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#Based on functions from the base bb module, Copyright 2003 Holger Schurig
+# Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import sys, os, re
 if sys.argv[0][-5:] == "pydoc":

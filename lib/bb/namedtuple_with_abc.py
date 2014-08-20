@@ -202,8 +202,8 @@ if __name__ == '__main__':
     print(rec5._replace(k=222)._my_custom_method())  # MyMixIn's
     print(rec5._replace(k=222).count(2))  # MyMixIn's
 
-    # None that behavior: the standard namedtuple methods cannot be
-    # overriden by a foreign mix-in -- even if the mix-in is declared
+    # Note that behavior: the standard namedtuple methods cannot be
+    # overridden by a foreign mix-in -- even if the mix-in is declared
     # as the leftmost base class (but, obviously, you can override them
     # in the defined class or its subclasses):
 

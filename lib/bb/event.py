@@ -598,7 +598,7 @@ class MetadataEvent(Event):
 
 class SanityCheck(Event):
     """
-    Event to runs sanity checks, either raise errors or generate events as return status.
+    Event to run sanity checks, either raise errors or generate events as return status.
     """
     def __init__(self, generateevents = True):
         Event.__init__(self)
@@ -606,7 +606,7 @@ class SanityCheck(Event):
 
 class SanityCheckPassed(Event):
     """
-    Event to indicate sanity check is passed
+    Event to indicate sanity check has passed
     """
 
 class SanityCheckFailed(Event):

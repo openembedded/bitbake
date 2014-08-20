@@ -23,7 +23,7 @@
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 #
-#Based on functions from the base bb module, Copyright 2003 Holger Schurig
+# Based on functions from the base bb module, Copyright 2003 Holger Schurig
 
 import os
 import sys
@@ -42,9 +42,8 @@ logger = logging.getLogger('BitBake.Build')
 
 NULL = open(os.devnull, 'r+')
 
-
-# When we execute a python function we'd like certain things
-# in all namespaces, hence we add them to __builtins__
+# When we execute a Python function, we'd like certain things
+# in all namespaces, hence we add them to __builtins__.
 # If we do not do this and use the exec globals, they will
 # not be available to subfunctions.
 __builtins__['bb'] = bb
@@ -143,7 +142,7 @@ class LogTee(object):
         self.outfile.flush()
 
 def exec_func(func, d, dirs = None):
-    """Execute an BB 'function'"""
+    """Execute a BB 'function'"""
 
     body = d.getVar(func)
     if not body:
@@ -417,7 +416,7 @@ def _exec_task(fn, task, d, quieterr):
     os.dup2(logfile.fileno(), oso[1])
     os.dup2(logfile.fileno(), ose[1])
 
-    # Ensure python logging goes to the logfile
+    # Ensure Python logging goes to the logfile
     handler = logging.StreamHandler(logfile)
     handler.setFormatter(logformatter)
     # Always enable full debug output into task logfiles
