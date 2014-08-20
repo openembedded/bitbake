@@ -139,6 +139,8 @@ class ProcessServer(Process, BaseImplServer):
                 raise
             except Exception:
                 logger.exception('Running idle function')
+                del self._idlefuns[function]
+                self.quit = True
 
         if nextsleep is not None:
             select.select(fds,[],[],nextsleep)
