@@ -87,6 +87,9 @@ class Command:
     def runAsyncCommand(self):
         try:
             if self.cooker.state in (bb.cooker.state.error, bb.cooker.state.shutdown, bb.cooker.state.forceshutdown):
+                # updateCache will trigger a shutdown of the parser
+                # and then raise BBHandledException triggering an exit
+                self.cooker.updateCache()
                 return False
             if self.currentAsyncCommand is not None:
                 (command, options) = self.currentAsyncCommand
