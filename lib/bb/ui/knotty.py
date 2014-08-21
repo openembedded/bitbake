@@ -508,6 +508,10 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             # ignore interrupted io
             if ioerror.args[0] == 4:
                 pass
+            sys.stderr.write(str(ioerror))
+            if not params.observe_only:
+                _, error = server.runCommand(["stateForceShutdown"])
+            main.shutdown = 2
         except KeyboardInterrupt:
             termfilter.clearFooter()
             if params.observe_only:
@@ -526,7 +530,11 @@ def main(server, eventHandler, params, tf = TerminalFilter):
                     logger.error("Unable to cleanly shutdown: %s" % error)
             main.shutdown = main.shutdown + 1
             pass
-
+        except Exception as e:
+            sys.stderr.write(str(e))
+            if not params.observe_only:
+                _, error = server.runCommand(["stateForceShutdown"])
+            main.shutdown = 2
     summary = ""
     if taskfailures:
         summary += pluralise("\nSummary: %s task failed:",
