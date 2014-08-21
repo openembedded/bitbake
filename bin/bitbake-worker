@@ -81,6 +81,11 @@ def workerlog_write(msg):
         lf.write(msg)
         lf.flush()
 
+def sigterm_handler(signum, frame):
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+    os.killpg(0, signal.SIGTERM)
+    sys.exit()
+
 def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdata, quieterrors=False):
     # We need to setup the environment BEFORE the fork, since
     # a fork() or exec*() activates PSEUDO...
@@ -132,7 +137,7 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
             global worker_pipe
             pipein.close()
 
-            signal.signal(signal.SIGTERM, signal.SIG_DFL)
+            signal.signal(signal.SIGTERM, sigterm_handler)
 
             # Save out the PID so that the event can include it the
             # events
