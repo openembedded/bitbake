@@ -38,13 +38,17 @@ from . import BitBakeBaseServer, BitBakeBaseServerConnection, BaseImplServer
 logger = logging.getLogger('BitBake')
 
 class ServerCommunicator():
-    def __init__(self, connection, event_handle):
+    def __init__(self, connection, event_handle, server):
         self.connection = connection
         self.event_handle = event_handle
+        self.server = server
 
     def runCommand(self, command):
         # @todo try/except
         self.connection.send(command)
+
+        if not self.server.is_alive():
+            raise SystemExit
 
         while True:
             # don't let the user ctrl-c while we're waiting for a response
@@ -160,7 +164,7 @@ class BitBakeProcessServerConnection(BitBakeBaseServerConnection):
         self.procserver = serverImpl
         self.ui_channel = ui_channel
         self.event_queue = event_queue
-        self.connection = ServerCommunicator(self.ui_channel, self.procserver.event_handle)
+        self.connection = ServerCommunicator(self.ui_channel, self.procserver.event_handle, self.procserver)
         self.events = self.event_queue
 
     def sigterm_terminate(self):
@@ -199,14 +203,20 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
 
     def waitEvent(self, timeout):
         if self.exit:
-            raise KeyboardInterrupt()
+            raise SystemExit
         try:
+            if not self.server.is_alive():
+                self.setexit()
+                return None
             return self.get(True, timeout)
         except Empty:
             return None
 
     def getEvent(self):
         try:
+            if not self.server.is_alive():
+                self.setexit()
+                return None
             return self.get(False)
         except Empty:
             return None
@@ -221,6 +231,7 @@ class BitBakeServer(BitBakeBaseServer):
         self.ui_channel, self.server_channel = Pipe()
         self.event_queue = ProcessEventQueue(0)
         self.serverImpl = ProcessServer(self.server_channel, self.event_queue, None)
+        self.event_queue.server = self.serverImpl
 
     def detach(self):
         self.serverImpl.start()
