@@ -1435,7 +1435,7 @@ class CookerCollectFiles(object):
             for ignored in ('SCCS', 'CVS', '.svn'):
                 if ignored in dirs:
                     dirs.remove(ignored)
-            found += [os.path.join(dir, f) for f in files if (f.endswith('.bb') or f.endswith('.bbappend'))]
+            found += [os.path.join(dir, f) for f in files if (f.endswith(['.bb', '.bbappend']))]
 
         return found
 
