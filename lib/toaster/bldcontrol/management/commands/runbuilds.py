@@ -43,7 +43,7 @@ class Command(NoArgsCommand):
 
             # set up the buid environment with the needed layers
             print "Build %s, Environment %s" % (br, bec.be)
-            bec.setLayers(br.brlayer_set.all())
+            bec.setLayers(br.brbitbake_set.all(), br.brlayer_set.all())
 
             # get the bb server running
             bbctrl = bec.getBBController()

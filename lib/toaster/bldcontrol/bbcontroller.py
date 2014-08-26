@@ -25,7 +25,7 @@ import sys
 import re
 from django.db import transaction
 from django.db.models import Q
-from bldcontrol.models import BuildEnvironment, BRLayer, BRVariable, BRTarget
+from bldcontrol.models import BuildEnvironment, BRLayer, BRVariable, BRTarget, BRBitbake
 import subprocess
 
 from toastermain import settings
@@ -123,8 +123,10 @@ class BuildEnvironmentController(object):
             self.connection must be none.
         """
 
-    def setLayers(self,ls):
-        """ Sets the layer variables in the config file, after validating local layer paths.
+    def setLayers(self, bbs, ls):
+        """ Checks-out bitbake executor and layers from git repositories.
+            Sets the layer variables in the config file, after validating local layer paths.
+            The bitbakes must be a 1-length list of BRBitbake
             The layer paths must be in a list of BRLayer object
 
             a word of attention: by convention, the first layer for any build will be poky!
@@ -230,15 +232,22 @@ class LocalhostBEController(BuildEnvironmentController):
         self.be.save()
         print "Stopped server"
 
-    def setLayers(self, layers):
+    def setLayers(self, bitbakes, layers):
         """ a word of attention: by convention, the first layer for any build will be poky! """
 
         assert self.be.sourcedir is not None
+        assert len(bitbakes) == 1
         # set layers in the layersource
 
         # 1. get a list of repos, and map dirpaths for each layer
         gitrepos = {}
+        gitrepos[bitbakes[0].giturl] = []
+        gitrepos[bitbakes[0].giturl].append( ("bitbake", bitbakes[0].dirpath, bitbakes[0].commit) )
+        
         for layer in layers:
+            # we don't process local URLs
+            if layer.giturl.startswith("file://"):
+                continue
             if not layer.giturl in gitrepos:
                 gitrepos[layer.giturl] = []
             gitrepos[layer.giturl].append( (layer.name, layer.dirpath, layer.commit))
@@ -250,7 +259,7 @@ class LocalhostBEController(BuildEnvironmentController):
 
         def _getgitdirectoryname(url):
             import re
-            components = re.split(r'[\.\/]', url)
+            components = re.split(r'[:\.\/]', url)
             return components[-2] if components[-1] == "git" else components[-1]
 
         layerlist = []
@@ -258,7 +267,7 @@ class LocalhostBEController(BuildEnvironmentController):
         # 2. checkout the repositories
         for giturl in gitrepos.keys():
             localdirname = os.path.join(self.be.sourcedir, _getgitdirectoryname(giturl))
-            print "DEBUG: giturl checking out in current directory", localdirname
+            print "DEBUG: giturl ", giturl ,"checking out in current directory", localdirname
 
             # make sure our directory is a git repository
             if os.path.exists(localdirname):
@@ -268,11 +277,14 @@ class LocalhostBEController(BuildEnvironmentController):
                 self._shellcmd("git clone \"%s\" \"%s\"" % (giturl, localdirname))
             # checkout the needed commit
             commit = gitrepos[giturl][0][2]
-            self._shellcmd("git fetch --all && git checkout \"%s\"" % commit , localdirname)
-            print "DEBUG: checked out commit ", commit, "to", localdirname
 
-            # if this is the first checkout, take the localdirname as poky dir
-            if self.pokydirname is None:
+            # branch magic name "HEAD" will inhibit checkout
+            if commit != "HEAD":
+                print "DEBUG: checking out commit ", commit, "to", localdirname
+                self._shellcmd("git fetch --all && git checkout \"%s\"" % commit , localdirname)
+
+            # take the localdirname as poky dir if we can find the oe-init-build-env
+            if self.pokydirname is None and os.path.exists(os.path.join(localdirname, "oe-init-build-env")):
                 print "DEBUG: selected poky dir name", localdirname
                 self.pokydirname = localdirname
 
@@ -282,7 +294,8 @@ class LocalhostBEController(BuildEnvironmentController):
                 if not os.path.exists(localdirpath):
                     raise BuildSetupException("Cannot find layer git path '%s' in checked out repository '%s:%s'. Aborting." % (localdirpath, giturl, commit))
 
-                layerlist.append(localdirpath)
+                if name != "bitbake":
+                    layerlist.append(localdirpath)
 
         print "DEBUG: current layer list ", layerlist
 
