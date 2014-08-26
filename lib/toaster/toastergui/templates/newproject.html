@@ -28,8 +28,8 @@
 								<i class="icon-question-sign get-help" title="This sets the branch for the Yocto Project core layers (meta, meta-yocto and meta-yocto-bsp), and for the layers you use from the OpenEmbedded Metadata Index"></i>
 							</label>
 							<select name="projectversion" id="projectversion">
-	{% for br in branches %}
-		<option value="{{br.id}}"{%if projectversion == br.id %} selected{%endif%}>{{br.name}} ({{br.short_description}})</option>
+	{% for release in releases %}
+		<option value="{{release.id}}"{%if projectversion == release.id %} selected{%endif%}>{{release.name}} ({{release.description}})</option>
 	{% endfor %}
 							</select>
 						</fieldset>

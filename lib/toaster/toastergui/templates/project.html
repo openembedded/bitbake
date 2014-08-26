@@ -269,7 +269,7 @@ $(document).ready(function () {
                     <ul class="unstyled configuration-list">
             {% for pl in project.projectlayer_set.all %}
                         <li>
-                            <a href="#">{{pl.name}} (<span class="layer-version">{{pl.giturl}}</span>)</a>
+                            <a href="#">{{pl.layercommit.layer.name}} (<span class="layer-version">{{pl.layercommit.layer.layer_index_url}}</span>)</a>
                 {% if pl.optional %}
                             <i title="" data-original-title="" class="icon-trash" id="del-layer-icon" x-data="{{pl.pk}}"></i>
                 {% endif %}
@@ -358,7 +358,7 @@ $(document).ready(function () {
                 </p>
                 <h3>Yocto Project version</h3>
                 <p class="lead">
-                    {{project.branch}} - {{project.short_description}}
+                    {{project.release}} - {{project.short_description}}
                     <i title="" data-original-title="" class="icon-pencil"></i>
                 </p>
             </div>

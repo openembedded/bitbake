@@ -1772,7 +1772,7 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth.decorators import login_required
 
     from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
-    from orm.models import Branch, LayerSource, ToasterSetting
+    from orm.models import Branch, LayerSource, ToasterSetting, Release
     from bldcontrol.models import BuildRequest
 
     import traceback
@@ -1792,7 +1792,7 @@ if toastermain.settings.MANAGED:
         context = {
             'email': request.user.email if request.user.is_authenticated() else '',
             'username': request.user.username if request.user.is_authenticated() else '',
-            'branches': Branch.objects.order_by("-up_id"),
+            'releases': Release.objects.order_by("id"),
             'defaultbranch': ToasterSetting.objects.get(name = "DEFAULT_RELEASE").value,
         }
 
@@ -1819,15 +1819,14 @@ if toastermain.settings.MANAGED:
 
                 #  save the project
                 prj = Project.objects.create_project(name = request.POST['projectname'],
-                    branch = Branch.objects.get(pk = request.POST['projectversion'].split(" ")[0]),
-                    short_description=request.POST['projectversion'].split(" ")[1:])
+                    release = Release.objects.get(pk = request.POST['projectversion']))
                 prj.user_id = request.user.pk
                 prj.save()
                 return redirect(reverse(project, args = (prj.pk,)))
 
             except (IntegrityError, BadParameterException) as e:
                 # fill in page with previously submitted values
-                map(lambda x: context.__setitem__(x, request.POST[x]), mandatory_fields)
+                map(lambda x: context.__setitem__(x, request.POST.get(x, "-- missing")), mandatory_fields)
                 if isinstance(e, IntegrityError) and "username" in str(e):
                     context['alert'] = "Your chosen username is already used"
                 else:
@@ -1917,7 +1916,7 @@ if toastermain.settings.MANAGED:
             # return all project settings
             return HttpResponse(json.dumps( {
                 "error": "ok",
-                "layers": map(lambda x: (x.name, x.giturl), prj.projectlayer_set.all()),
+                "layers": map(lambda x: (x.layercommit.layer.name, x.layercommit.layer.layer_index_url), prj.projectlayer_set.all()),
                 "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
                 "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
                 }), content_type = "application/json")
@@ -1945,7 +1944,7 @@ if toastermain.settings.MANAGED:
 
         queryset_all = Layer_Version.objects.all()
         if 'project' in request.session:
-            queryset_all = queryset_all.filter(up_branch = request.session['project'].branch)
+            queryset_all = queryset_all.filter(up_branch__in = Branch.objects.filter(name = request.session['project'].release.name))
 
         queryset_with_search = _get_queryset(Layer_Version, queryset_all, None, search_term, ordering_string, '-layer__name')
         queryset = _get_queryset(Layer_Version, queryset_all, filter_string, search_term, ordering_string, '-layer__name')
