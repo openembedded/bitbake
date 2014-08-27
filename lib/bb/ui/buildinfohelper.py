@@ -69,7 +69,7 @@ class ORMWrapper(object):
             from bldcontrol.models import BuildEnvironment, BuildRequest
             br, be = brbe.split(":")
             buildrequest = BuildRequest.objects.get(pk = br)
-            build.project = buildrequest.project
+            build.project_id = buildrequest.project_id
             build.save()
 
         return build
