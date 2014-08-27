@@ -12,9 +12,17 @@ import errno
 import signal
 
 # Users shouldn't be running this code directly
-if len(sys.argv) != 2 or sys.argv[1] != "decafbad":
+if len(sys.argv) != 2 or not sys.argv[1].startswith("decafbad"):
     print("bitbake-worker is meant for internal execution by bitbake itself, please don't use it standalone.")
     sys.exit(1)
+
+profiling = False
+if sys.argv[1] == "decafbadbad":
+    profiling = True
+    try:
+        import cProfile as profile
+    except:
+        import profile
 
 logger = logging.getLogger("BitBake")
 
@@ -134,6 +142,7 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
         bb.msg.fatal("RunQueue", "fork failed: %d (%s)" % (e.errno, e.strerror))
 
     if pid == 0:
+        def child():
             global worker_pipe
             pipein.close()
 
@@ -185,10 +194,20 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
                 os._exit(1)
             try:
                 if not cfg.dry_run:
-                    ret = bb.build.exec_task(fn, taskname, the_data, cfg.profile)
-                os._exit(ret)
+                    return bb.build.exec_task(fn, taskname, the_data, cfg.profile)
             except:
                 os._exit(1)
+        if not profiling:
+            os._exit(child())
+        else:
+            profname = "profile-%s.log" % (fn.replace("/", "-") + "-" + taskname)
+            prof = profile.Profile()
+            try: 
+                ret = profile.Profile.runcall(prof, child)
+            finally:
+                prof.dump_stats(profname)
+                bb.utils.process_profilelog(profname)
+                os._exit(ret)
     else:
         for key, value in envbackup.iteritems():
             if value is None:
@@ -363,7 +382,16 @@ class BitbakeWorker(object):
 
 try:
     worker = BitbakeWorker(sys.stdin)
-    worker.serve()
+    if not profiling:
+        worker.serve()
+    else:
+        profname = "profile-worker.log"
+        prof = profile.Profile()
+        try:
+            profile.Profile.runcall(prof, worker.serve)
+        finally:
+            prof.dump_stats(profname)
+            bb.utils.process_profilelog(profname)
 except BaseException as e:
     if not normalexit:
         import traceback
