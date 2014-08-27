@@ -123,7 +123,10 @@ class Hg(FetchMethod):
             else:
                 cmd = "%s pull" % (basecmd)
         elif command == "update":
-            cmd = "%s update --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" -C %s" % (basecmd, ud.user, ud.pswd, proto, " ".join(options))
+            if ud.user and ud.pswd:
+                cmd = "%s --config auth.default.prefix=* --config auth.default.username=%s --config auth.default.password=%s --config \"auth.default.schemes=%s\" update -C %s" % (basecmd, ud.user, ud.pswd, proto, " ".join(options))
+            else:
+                cmd = "%s update -C %s" % (basecmd, " ".join(options))
         else:
             raise FetchError("Invalid hg command %s" % command, ud.url)
 
