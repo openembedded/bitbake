@@ -120,6 +120,24 @@ class Build(models.Model):
     build_name = models.CharField(max_length=100)
     bitbake_version = models.CharField(max_length=50)
 
+    def completeper(self):
+        tf = Task.objects.filter(build = self)
+        tfc = tf.count()
+        if tfc > 0:
+            completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
+        else:
+            completeper = 0
+        return completeper
+
+    def eta(self):
+        from django.utils import timezone
+        eta = 0
+        completeper = self.completeper()
+        if self.completeper() > 0:
+            eta = timezone.now() + ((timezone.now() - self.started_on)*(100-completeper)/completeper)
+        return eta
+
+
     def get_sorted_target_list(self):
         tgts = Target.objects.filter(build_id = self.id).order_by( 'target' );
         return( tgts );

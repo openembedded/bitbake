@@ -224,17 +224,6 @@ def builds(request):
 
     # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
     build_mru = Build.objects.filter(completed_on__gte=(timezone.now()-timedelta(hours=24))).order_by("-started_on")[:3]
-    for b in [ x for x in build_mru if x.outcome == Build.IN_PROGRESS ]:
-        tf = Task.objects.filter(build = b)
-        tfc = tf.count()
-        if tfc > 0:
-            b.completeper = tf.exclude(order__isnull=True).count()*100/tf.count()
-        else:
-            b.completeper = 0
-
-        b.eta = 0
-        if b.completeper > 0:
-            b.eta = timezone.now() + ((timezone.now() - b.started_on)*(100-b.completeper)/b.completeper)
 
     # set up list of fstypes for each build
     fstypes_map = {};
@@ -1854,7 +1843,7 @@ if toastermain.settings.MANAGED:
         context = {
             "project" : prj,
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
-            "buildrequests" : map(lambda x: (x, {"machine" : x.brvariable_set.filter(name="MACHINE")[0]}), prj.buildrequest_set.order_by("-pk")),
+            "buildrequests" : map(lambda x: (x, {"machine" : x.brvariable_set.filter(name="MACHINE")[0]}), prj.buildrequest_set.filter(state__lt = BuildRequest.REQ_INPROGRESS).order_by("-pk")),
             "builds" : prj.build_set.all(),
             "puser": puser,
         }
