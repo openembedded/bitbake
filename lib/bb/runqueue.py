@@ -1844,6 +1844,10 @@ class RunQueueExecuteScenequeue(RunQueueExecute):
                 realtask = self.rqdata.runq_setscene[task]
                 realdep = self.rqdata.runq_setscene[dep]
                 logger.debug(2, "%s was unavailable and is a hard dependency of %s so skipping" % (self.rqdata.get_user_idstring(realtask), self.rqdata.get_user_idstring(realdep)))
+                self.scenequeue_updatecounters(dep, fail)
+                continue
+            if task not in self.sq_revdeps2[dep]:
+                # May already have been removed by the fail case above
                 continue
             self.sq_revdeps2[dep].remove(task)
             if len(self.sq_revdeps2[dep]) == 0:
