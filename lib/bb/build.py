@@ -227,7 +227,7 @@ def exec_func_python(func, d, runfile, cwd=None):
     code = _functionfmt.format(function=func, body=d.getVar(func, True))
     bb.utils.mkdirhier(os.path.dirname(runfile))
     with open(runfile, 'w') as script:
-        script.write(code)
+        bb.data.emit_func_python(func, script, d)
 
     if cwd:
         try:

@@ -281,6 +281,41 @@ def emit_func(func, o=sys.__stdout__, d = init()):
                newdeps |= set((d.getVarFlag(dep, "vardeps", True) or "").split())
         newdeps -= seen
 
+_functionfmt = """
+def {function}(d):
+{body}"""
+
+def emit_func_python(func, o=sys.__stdout__, d = init()):
+    """Emits all items in the data store in a format such that it can be sourced by a shell."""
+
+    def write_func(func, o, call = False):
+        body = d.getVar(func, True)
+        if not body.startswith("def"):
+            body = _functionfmt.format(function=func, body=body)
+
+        o.write(body.strip() + "\n\n")
+        if call:
+            o.write(func + "(d)" + "\n\n")
+
+    write_func(func, o, True)
+    pp = bb.codeparser.PythonParser(func, logger)
+    pp.parse_python(d.getVar(func, True))
+    newdeps = pp.execs
+    newdeps |= set((d.getVarFlag(func, "vardeps", True) or "").split())
+    seen = set()
+    while newdeps:
+        deps = newdeps
+        seen |= deps
+        newdeps = set()
+        for dep in deps:
+            if d.getVarFlag(dep, "func") and d.getVarFlag(dep, "python"):
+               write_func(dep, o)
+               pp = bb.codeparser.PythonParser(dep, logger)
+               pp.parse_python(d.getVar(dep, True))
+               newdeps |= pp.execs
+               newdeps |= set((d.getVarFlag(dep, "vardeps", True) or "").split())
+        newdeps -= seen
+
 def update_data(d):
     """Performs final steps upon the datastore, including application of overrides"""
     d.finalize(parent = True)
