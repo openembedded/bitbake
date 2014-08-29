@@ -211,10 +211,11 @@
                 <span class="divider-vertical"></span>
                 <span class="help-inline" style="padding-top:5px;">Show rows:</span>
                 <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
-  {% with "2 5 10 25 50 100" as list%}
-{% for i in list.split %}                    <option value="{{i}}">{{i}}</option>
-    {% endfor %}
-  {% endwith %}
+                  {% with "2 5 10 25 50 100" as list%}
+                    {% for i in list.split %}
+                        <option value="{{i}}">{{i}}</option>
+                    {% endfor %}
+                  {% endwith %}
                 </select>
            </div>
         </div>
