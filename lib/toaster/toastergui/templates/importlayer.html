@@ -1,0 +1,68 @@
+{% extends "baseprojectpage.html" %}
+{% load projecttags %}
+{% load humanize %}
+
+{% block localbreadcrumb %}
+<li>Layers</li>
+{% endblock %}
+
+{% block projectinfomain %}
+                <div class="page-header">
+                    <h1>Import layer</h1>
+                </div>
+                <form>
+        {% if project %}
+                    <span class="help-block" style="padding-left:19px;">The layer you are importing must be compatible with {{project.release.name}} ({{project.release.description}}), which is the release you are using in this project.</span>
+          {% endif %}
+                    <fieldset class="air">
+                        <legend>Layer repository information</legend>
+                        <label>
+                            Git repository URL
+                            <i class="icon-question-sign get-help" title="Fetch/clone URL of the repository. Currently, Toaster only supports Git repositories."></i>
+                        </label>
+                        <input id="repo" type="text" class="input-xxlarge" required>
+                        <label class="project-form">
+                            Repository subdirectory
+                            <span class="muted">(optional)</span>
+                            <i class="icon-question-sign get-help" title="Subdirectory within the repository where the layer is located, if not in the root (usually only used if the repository contains more than one layer)"></i>
+                        </label>
+                        <input type="text"  id="subdir">
+                        <label class="project-form">Branch, tag or commit</label>
+                        <input type="text" class="span4" id="layer-version" required>
+                        <label class="project-form">
+                            Layer name
+                            <i class="icon-question-sign get-help" title="Something like 'meta-mylayer'. Your layer name must be unique and can only include letters, numbers and dashes"></i>
+                        </label>
+                        <input id="layer-name" type="text" required>
+                    </fieldset>
+                    <fieldset class="air">
+                        <legend>
+                            Layer dependencies
+                            <span class="muted">(optional)</span>
+                            <i class="icon-question-sign get-help heading-help" title="Other layers this layer depends upon"></i>
+                        </legend>
+                        <ul class="unstyled configuration-list">
+                            <li>
+                                <a href="" class="layer-info" title="OpenEmbedded | daisy">openembedded-core (meta)</a>
+                                <i class="icon-trash"></i>
+                            </li>
+                        </ul>
+                        <div class="input-append">
+                            <input type="text" autocomplete="off" data-minLength="1" data-autocomplete="off"
+                            data-provide="typeahead"  data-source='
+                []
+                ' placeholder="Type a layer name" id="layer-dependency" class="input-xlarge">
+                            <a class="btn" type="button" id="add-layer-dependency" disabled>
+                                Add layer
+                            </a>
+                        </div>
+                        <span class="help-inline">You can only add layers Toaster knows about</span>
+                    </fieldset>
+                    <div class="form-actions">
+                        <a href="#dependencies-message" class="btn btn-primary btn-large" data-toggle="modal" data-target="#dependencies-message" disabled>Import and add to project</a>
+                        <a href="layer-details-just-imported.html" class="btn btn-large" disabled>Just import for the moment</a>
+                        <span class="help-inline" style="vertical-align: middle;">To import a layer, you need to enter a repository URL, a branch, tag or commit and a layer name</span>
+                    </div>
+                </form>
+
+{% endblock %}

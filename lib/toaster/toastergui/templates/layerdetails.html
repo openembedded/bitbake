@@ -1,0 +1,159 @@
+{% extends "baseprojectpage.html" %}
+{% load projecttags %}
+{% load humanize %}
+
+{% block localbreadcrumb %}
+<li>Layer Details</li>
+{% endblock %}
+
+{% block projectinfomain %}
+<div class="page-header">
+    <h1>Layer Details</h1>
+</div>
+
+ <div class="row-fluid span7 tabbable">
+       <ul class="nav nav-pills">
+       <li class="active">
+           <a data-toggle="tab" href="#information">Layer details</a>
+       </li>
+       <li>
+           <a data-toggle="tab" href="#targets">Targets (0)</a>
+       </li>
+       <li>
+           <a data-toggle="tab" href="#machines">Machines (0)</a>
+       </li>
+       <li>
+           <a data-toggle="tab" href="#classes">Classes (0)</a>
+       </li>
+       <li>
+           <a data-toggle="tab" href="#bbappends">bbappends (0)</a>
+       </li>
+       </ul>
+       <div class="tab-content">
+               <div name="information" id="information" class="tab-pane active">
+        <dl class="dl-horizontal">
+        <dt class="">
+            <i class="icon-question-sign get-help" title="Fetch/clone URL of the repository"></i>
+            Repository URL
+        </dt>
+        <dd>
+            <form id="change-repo-form" class="control-group">
+            <div class="input-append">
+            <input type="text" class="input-xlarge" id="type-repo" value="{{layerversion.layer.vcs_url}}">
+            <button id="apply-change-repo" class="btn" type="button">Change</button>
+            <!--a href="#" id="cancel-change-repo" class="btn btn-link">Cancel</a-->
+            </div>
+            <span class="help-block">Cloning this Git repository failed</span>
+            </form>
+        </dd>
+        <dt>
+            <i class="icon-question-sign get-help" title="Subdirectory within the repository where the layer is located, if not in the root (usually only used if the repository contains more than one layer)"></i>
+            Repository subdirectory
+        </dt>
+        <dd>
+            <span id="subdir">{{layerversion.dirpath}}</span>
+            <i id="change-subdir" class="icon-pencil"></i>
+            <i id="delete-subdir" class="icon-trash"></i>
+            <form id="change-subdir-form" style="display:none;">
+            <div class="input-append">
+            <input type="text" id="type-subdir" value="meta-acer">
+            <button id="apply-change-subdir" class="btn" type="button">Change</button>
+            <a href="#" id="cancel-change-subdir" class="btn btn-link">Cancel</a>
+            </div>
+            </form>
+        </dd>
+        <dt>Brach, tag or commit</dt>
+        <dd>
+            {{layerversion.up_branch.name}}
+            <i class="icon-pencil"></i>
+        </dd>
+        <dt>
+            <i class="icon-question-sign get-help" title="The Yocto Project versions with which this layer is compatible. Currently Toaster supports Yocto Project 1.6 and 1.7"></i>
+            Yocto Project compatibility
+        </dt>
+        <dd>
+            <i class="icon-pencil"></i>
+        </dd>
+        <dt>
+            <i class="icon-question-sign get-help" title="Other layers this layer depends upon"></i>
+            Layer dependencies
+        </dt>
+        <dd>
+            <ul class="unstyled">
+            {% for ld in layer.dependencies.all %}
+            <li>
+                <a href="#">openembedded core (meta)</a>
+                <i class="icon-trash"></i>
+            </li>
+            {% endfor %}
+            </ul>
+            <div class="input-append">
+            <input type="text" autocomplete="off" data-minLength="1" data-autocomplete="off"
+            data-provide="typeahead"  data-source='
+            '
+            placeholder="Type a layer name" id="layer-dependency">
+            <a class="btn" type="button" id="add-layer-dependency" disabled>
+            Add layer
+            </a>
+            </div>
+            <span class="help-block">You can only add layers Toaster knows about</span>
+        </dd>
+        </dl>
+        </div>
+        <div name="targets" id="targets" class="tab-pane">
+        <div class="alert alert-info">
+        <strong>There is no target data for {{layerversion.layer.name}} ... yet</strong> <br />
+        Toaster learns about layers as they are built. Once you have used {{layerversion.layer.name}} in a build, Toaster will show you
+        here the targets it provides.
+        </div>
+        </div>
+        <div name="machines" id="machines" class="tab-pane">
+        <div class="alert alert-info">
+        <strong>There is no machine data for {{layerversion.layer.name}} ... yet</strong> <br />
+        Toaster learns about layers as they are built. Once you have used {{layerversion.layer.name}} in a build, Toaster will show you
+        here the machines it provides.
+        </div>
+        </div>
+    </div>
+</div>
+<div class="row span4 well">
+<h2>About {{layerversion.layer.name}}</h2>
+<dl>
+
+    <dt>
+    Summary
+    <i class="icon-question-sign get-help" title="One-line description of the layer"></i>
+    </dt>
+    <dd>
+    <span >{{layerversion.layer.summary}}</span>
+    <i class="icon-pencil"></i>
+    </dd>
+    <!--form>
+    <textarea class="span12" rows="2"></textarea>
+    <button class="btn" type="button">Change</button>
+    <a href="#" class="btn btn-link">Cancel</a>
+    </form-->
+    <dt>
+    Description
+    </dt>
+    <dd>
+    <span >{{layerversion.layer.description}}</span>
+    <i class="icon-pencil"></i>
+    </dd>
+    <!--form>
+    <textarea class="span12" rows="6"></textarea>
+    <button class="btn" type="button">Change</button>
+    <a href="#" class="btn btn-link">Cancel</a>
+    </form-->
+    <dt>
+    Maintainer(s)
+    </dt>
+    <dd>
+    <span class="muted">Not set</span>
+    <i class="icon-pencil"></i>
+    </dd>
+</dl>
+</div>
+
+
+{% endblock %}

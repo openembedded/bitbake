@@ -1,0 +1,62 @@
+{% extends "baseprojectpage.html" %}
+{% load projecttags %}
+{% load humanize %}
+
+{% block localbreadcrumb %}
+<li>Project configuration</li>
+{% endblock %}
+
+{% block projectinfomain %}
+    <div class="page-header">
+        <h1>Configuration Variables</h1>
+    </div>
+
+    <div style="padding-left:19px;">
+
+        <dl class="dl-vertical">
+        {% for c in configvars %}
+            <dt>
+                {{c.name}}
+                <i class="icon-question-sign get-help" title="{{c.desc}}"></i>
+            </dt>
+            <dd class="lead">
+                <span id="distro">{{c.value}}</span>
+                <i class="icon-pencil" id="change-distro-icon"></i>
+                <form id="change-distro-form" style="display:none;">
+                    <div class="input-append">
+                        <input type="text" id="new-distro" value="poky tiny">
+                        <button id="apply-change-distro" class="btn" type="button">Save</button>
+                        <button id="cancel-change-distro" type="button" class="btn btn-link">Cancel</button>
+                    </div>
+                </form>
+            </dd>
+        {% endfor %}
+
+
+        </dl>
+        <form id="variable-form">
+            <fieldset style="padding-left:0px;">
+                <legend>Add variable</legend>
+                <label>
+                    Variable
+                    <i class="icon-question-sign get-help" title="Variable names are case sensitive, cannot have spaces, and can only include letters, numbers, underscores and dashes"></i>
+                </label>
+                <input id="variable" type="text" placeholder="Type variable name">
+                <label>Value</label>
+                <input id="value" type="text" placeholder="Type variable value">
+                <div style="display:block;margin-top:10px;">
+                    <a href="#" class="btn save" disabled>
+                        Add variable
+                    </a>
+                </div>
+            </fieldset>
+        </form>
+        <!--button id="add-variable" class="btn air">
+            <i class="icon-plus"></i>
+            Add variable
+        </button-->
+
+    </div>
+
+
+{% endblock %}

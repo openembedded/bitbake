@@ -110,22 +110,34 @@ $(document).ready(function () {
 
 
             <div class="well">
-                <!--div class="control-group error"-->
-                    <button id="build-all-button" class="btn btn-primary btn-large">Build all added targets</button>
-                    <div class="input-append build-form controls">
-                        <input class="huge input-xxlarge" placeholder="Or enter the target you want to build" autocomplete="off" data-minlength="1" data-autocomplete="off" data-provide="typeahead" data-source="" type="text">
-                        <button id="build-button" class="btn btn-large" disabled="">Build</button>
+                <form class="build-form">
+                    <div class="input-append input-prepend controls">
+                        <input type="text" class="huge span7" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1" data-autocomplete="off"
+                        data-provide="typeahead"  data-source='["core-image-base [meta | daisy]",
+                        "core-image-clutter [meta | daisy]",
+                        "core-image-directfb [meta | daisy]",
+                        "core-image-myimage [meta-imported-layer | 3e1dbabbf3&hellip;]",
+                        "core-image-anotherimage [meta-imported-layer | master]",
+                        "core-image-full-cmdline [meta | daisy]",
+                        "core-image-lsb [meta | daisy]",
+                        "core-image-lsb-dev [meta | daisy]",
+                        "core-image-lsb-sdk [meta| daisy]",
+                        "core-image-minimal [meta| daisy]"
+                        ]'>
+                        <a href="#" id="build-button" class="btn btn-large btn-primary" disabled>
+                            Build
+                            <i class="icon-question-sign get-help heading-help" style="margin-left: 5px;" title="Type the name of one or more targets you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a target name, like so: <code>core-image-minimal:do_build</code>"></i>
+                        </a>
                     </div>
-
-                    <!--span class="help-inline">This target is not provided <br />by any of your added layers
-                        <i class="icon-question-sign get-help get-help-red" title="Review your list of added layers to make sure one of them provides core-image-xyz. Clicking on a layer name will give you all the information Toaster has about the layer"></i>
-                    </span>
-                </div-->
-            </div>
-
-            <div id="meta-tizen-alert" class="alert alert-info lead air" style="display:none;">
-                 <button type="button" class="close" data-dismiss="alert">?</button>
-                You have added <strong>6</strong> layers: <a href="#">meta-tizen</a> and its dependencies (<a href="#">meta-efl</a>, <a href="#">meta-intel</a>, <a href="#">meta-multimedia</a>, <a href="#">meta-oe</a> and <a href="#">meta-ruby</a>).
+                    <p>
+                    <a href="all-targets.html" style="padding-right: 5px;">
+                        View all targets
+                    </a>
+                    |
+                    <a href="{% url 'projectbuilds' project.id%}" style="padding-left:5px;">
+                        View all project builds ({{project.build_set.count}})
+                    </a>
+                </form>
             </div>
 
 
@@ -145,11 +157,11 @@ $(document).ready(function () {
                 </span>
             </div>
             <div class="span2">
-	 {{br.0.get_state_display}}
+     {{br.0.get_state_display}}
             </div>
-	    <div class="span8">
+        <div class="span8">
 {% if br.state == br.REQ_FAILED%}
-	{% for bre in br.0.brerror_set.all %} {{bre.errmsg}} ({{bre.errtype}}) <br/><hr/><code>{{bre.traceback}}</code>{%endfor%}
+    {% for bre in br.0.brerror_set.all %} {{bre.errmsg}} ({{bre.errtype}}) <br/><hr/><code>{{bre.traceback}}</code>{%endfor%}
 {%endif%}
             </div>
 
@@ -224,14 +236,14 @@ $(document).ready(function () {
                         <div id="dependency-alert" class="alert alert-info" style="display:none;">
                             <p><strong>meta-tizen</strong> depends on the layers below. Check the ones you want to add: </p>
                             <ul class="unstyled">
-	{% for f in layer_dependency %}
+    {% for f in layer_dependency %}
                                 <li>
                                     <label class="checkbox">
                                         <input checked="checked" type="checkbox">
                                         meta-ruby
                                     </label>
                                 </li>
-	{% endfor %}
+    {% endfor %}
                             </ul>
                             <button id="add-layer-dependencies" class="btn btn-info add-layer">Add layers</button>
                         </div>
@@ -278,9 +290,9 @@ $(document).ready(function () {
             {% if target %}
                         <li>
                             <a href="#">{{target.target}}{% if target.task%} (target.task){%endif%}</a>
-			    {% if target.notprovided %}
+                {% if target.notprovided %}
                             <i title="" data-original-title="" id="msg1" class="icon-exclamation-sign get-help-yellow" data-title="<strong>Target may not be provided</strong>" data-content="From the layer information it currently has, Toaster thinks this target is not provided by any of your added layers. If a target is not provided by one of your added layers, the build will fail.<h5>What Toaster suggests</h5><p>The <a href='#'>meta-abc</a> and <a href='#'>meta-efg</a> layers provide core-image-notprovided. You could add one of them to your project.</p><button class='btn btn-block'>Add meta-abc</button><button class='btn btn-block'>Add meta-efg</button><button id='dismiss1' class='btn btn-block btn-info'>Stop showing this message</button>"></i>
-		            {% elif target.notknown %}
+                    {% elif target.notknown %}
                             <i title="" data-original-title="" id="msg2" class="icon-exclamation-sign get-help-yellow" data-title="<strong>Target may not be provided</strong>" data-content="From the layer information it currently has, Toaster thinks this target is not provided by any of your added layers. If a target is not provided by one of your added layers, the build will fail.<h5>What Toaster suggests</h5><p>Review your added layers to make sure one of them provides core-image-unknown. Clicking on a layer name will give you all the information Toaster has about the layer. </p> <button class='btn btn-block btn-info'>Stop showing this message</button>"></i>
                             {% endif %}
                             <i title="" data-original-title="" class="icon-trash" id="del-target-icon" x-data="{{target.pk}}"></i>
@@ -347,7 +359,7 @@ $(document).ready(function () {
                 </p>
                 <h3>Yocto Project version</h3>
                 <p class="lead">
-                    {{project.release}} - {{project.short_description}}
+                    {{project.release.name}} - {{project.release.description}}
                     <i title="" data-original-title="" class="icon-pencil"></i>
                 </p>
             </div>

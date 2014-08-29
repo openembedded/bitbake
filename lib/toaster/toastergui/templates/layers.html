@@ -33,7 +33,7 @@
 {% include "basetable_top.html" %}
     {% for lv in objects %}
     <tr class="data">
-            <td class="layer">{{lv.layer.name}}</td>
+            <td class="layer"><a href="{% url 'layerdetails' lv.id %}">{{lv.layer.name}}</a></td>
             <td class="description">{{lv.layer.summary}}</td>
             <td class="source"><a href="{% url 'layerdetails' lv.pk %}">{{lv.layer_source.name}}</a></td>
             <td class="git-repo"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.layer.layer_index_url}}</code></a></td>
