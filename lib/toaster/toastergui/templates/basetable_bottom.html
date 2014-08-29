@@ -26,7 +26,7 @@
                             <span class="help-inline" style="padding-top:5px;">Show rows:</span>
                             <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
   {% with "2 5 10 25 50 100" as list%}
-    {% for i in list.split %}<option{%if i == request.GET.count %} selected{%endif%}>{{i}}</option>
+    {% for i in list.split %}<option value="{{i}}">{{i}}</option>
     {% endfor %}
   {% endwith %}
                             </select>
@@ -56,6 +56,14 @@
     }
     }
 
+    // load cookie for number of entries to be displayed on page
+    pagesize = $.cookie('count');
+    if (!pagesize)
+        pagesize = 10;
+    $('.pagesize option').prop('selected', false)
+                         .filter('[value="' + pagesize + '"]')
+                         .attr('selected', true);
+
     $('.chbxtoggle').each(function () {
         showhideTableColumn($(this).attr('id'), $(this).is(':checked'))
     });
@@ -72,8 +80,9 @@
     $('.progress, .lead span').tooltip({container:'table', placement:'top'});
 
     $(".pagesize").change(function () {
-        console.log("page size change");
-        reload_params({"count":$(this).val()}); ;
+        reload_params({"count":$(this).val()});
+        // save cookie with pagesize
+        $.cookie("count", $(this).val(), { path : $(location).attr('pathname') });
     });
 });
 </script>

@@ -156,6 +156,13 @@
         showhideImmediateTableAction( clname, sh, orderkey );
     }
 
+    //
+    // saves a cookie with selected order field
+    //
+    function saveOrderCookie( orderfield ) {
+        $.cookie("orderby", orderfield, { path: $(location).attr('pathname') });
+    }
+
     </script>
 
 <!-- control header -->
@@ -205,7 +212,7 @@
                 <span class="help-inline" style="padding-top:5px;">Show rows:</span>
                 <select style="margin-top:5px;margin-bottom:0px;" class="pagesize">
   {% with "2 5 10 25 50 100" as list%}
-{% for i in list.split %}                    <option{%if i == request.GET.count %} selected{%endif%}>{{i}}</option>
+{% for i in list.split %}                    <option value="{{i}}">{{i}}</option>
     {% endfor %}
   {% endwith %}
                 </select>
@@ -221,7 +228,7 @@
         <tr>
             {% for tc in tablecols %}<th class="{{tc.dclass}} {{tc.clclass}}">
                 {%if tc.qhelp%}<i class="icon-question-sign get-help" title="{{tc.qhelp}}"></i>{%endif%}
-                {%if tc.orderfield%}<a {%if tc.ordericon%} class="sorted" {%endif%}href="javascript:reload_params({'page': 1, 'orderby' : '{{tc.orderfield}}' })" >{{tc.name}}</a>{%else%}<span class="muted">{{tc.name}}</span>{%endif%}
+                {%if tc.orderfield%}<a {%if tc.ordericon%} class="sorted" {%endif%}href="javascript:reload_params({'page': 1, 'orderby' : '{{tc.orderfield}}' })" onclick="saveOrderCookie('{{tc.orderfield}}')">{{tc.name}}</a>{%else%}<span class="muted">{{tc.name}}</span>{%endif%}
                 {%if tc.ordericon%} <i class="icon-caret-{{tc.ordericon}}"></i>{%endif%}
                 {%if tc.filter%}<div class="btn-group pull-right">
                     <a href="#filter_{{tc.filter.class}}" role="button" class="btn btn-mini {%if request.GET.filter%}{{tc.filter.options|filtered_icon:request.GET.filter}} {%endif%}" {%if request.GET.filter and tc.filter.options|filtered_tooltip:request.GET.filter %} title="<p>{{tc.filter.options|filtered_tooltip:request.GET.filter}}</p><p><a class='btn btn-small btn-primary' href=javascript:reload_params({'filter':''})>Show all {% if filter_search_display %}{{filter_search_display}}{% else %}{{objectname}}{% endif %}</a></p>" {%endif%} data-toggle="modal"> <i class="icon-filter filtered"></i> </a>
