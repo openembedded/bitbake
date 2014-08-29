@@ -507,7 +507,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
             termfilter.clearFooter()
             # ignore interrupted io
             if ioerror.args[0] == 4:
-                pass
+                continue
             sys.stderr.write(str(ioerror))
             if not params.observe_only:
                 _, error = server.runCommand(["stateForceShutdown"])
