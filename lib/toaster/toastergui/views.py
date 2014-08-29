@@ -1761,7 +1761,7 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth.decorators import login_required
 
     from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
-    from orm.models import Branch, LayerSource, ToasterSetting, Release
+    from orm.models import Branch, LayerSource, ToasterSetting, Release, Machine
     from bldcontrol.models import BuildRequest
 
     import traceback
@@ -1770,10 +1770,13 @@ if toastermain.settings.MANAGED:
 
     # the context processor that supplies data used across all the pages
     def managedcontextprocessor(request):
-        return {
+        ret = {
             "projects": Project.objects.all(),
             "MANAGED" : toastermain.settings.MANAGED
         }
+        if 'project' in request.session:
+            ret['project'] = request.session['project']
+        return ret
 
     # new project
     def newproject(request):
@@ -1922,7 +1925,7 @@ if toastermain.settings.MANAGED:
         # define here what parameters the view needs in the GET portion in order to
         # be able to display something.  'count' and 'page' are mandatory for all views
         # that use paginators.
-        mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'layer__name:-' };
+        mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'layer__name:+' };
         retval = _verify_parameters( request.GET, mandatory_parameters )
         if retval:
             return _redirect_parameters( 'layers', request.GET, mandatory_parameters)
@@ -1945,7 +1948,8 @@ if toastermain.settings.MANAGED:
         context = {
             'objects' : layer_info,
             'objectname' : "layers",
-            'default_orderby' : 'completed_on:-',
+            'default_orderby' : 'layer__name:+',
+            'total_count': queryset_with_search.count(),
 
             'tablecols' : [
                 {   'name': 'Layer',
@@ -1954,8 +1958,10 @@ if toastermain.settings.MANAGED:
                 },
                 {   'name': 'Description',
                     'dclass': 'span4',
+                    'clclass': 'description',
                 },
                 {   'name': 'Layer source',
+                    'clclass': 'source',
                     'qhelp': "Where the layer is coming from, for example, if it's part of the OpenEmbedded collection of layers or if it's a layer you have imported",
                     'orderfield': _get_toggle_order(request, "layer_source__name"),
                     'ordericon': _get_toggle_order_icon(request, "layer_source__name"),
@@ -1967,15 +1973,20 @@ if toastermain.settings.MANAGED:
                 },
                 {   'name': 'Git repository URL',
                     'dclass': 'span6',
+                    'clclass': 'git-repo', 'hidden': 1,
                     'qhelp': "The Git repository for the layer source code",
                 },
                 {   'name': 'Subdirectory',
+                    'clclass': 'git-subdir',
+                    'hidden': 1,
                     'qhelp': "The layer directory within the Git repository",
                 },
                 {   'name': 'Branch, tag o commit',
+                    'clclass': 'branch',
                     'qhelp': "The Git branch of the layer. For the layers from the OpenEmbedded source, the branch matches the Yocto Project version you selected for this project",
                 },
                 {   'name': 'Dependencies',
+                    'clclass': 'dependencies',
                     'qhelp': "Other layers a layer depends upon",
                 },
                 {   'name': 'Add | Delete',
@@ -1992,10 +2003,160 @@ if toastermain.settings.MANAGED:
         raise Exception("TODO: implement page #6591")
 
     def targets(request):
-        raise Exception("TODO: implement page #6592")
+        template = "targets.html"
+        # define here what parameters the view needs in the GET portion in order to
+        # be able to display something.  'count' and 'page' are mandatory for all views
+        # that use paginators.
+        mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'name:+' };
+        retval = _verify_parameters( request.GET, mandatory_parameters )
+        if retval:
+            return _redirect_parameters( 'targets', request.GET, mandatory_parameters)
+
+        # boilerplate code that takes a request for an object type and returns a queryset
+        # for that object type. copypasta for all needed table searches
+        (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
+
+        queryset_all = Recipe.objects.all()
+        if 'project' in request.session:
+            queryset_all = queryset_all.filter(Q(layer_version__up_branch__in = Branch.objects.filter(name = request.session['project'].release.name)) | Q(layer_version__build__in = request.session['project'].build_set.all()))
+
+        queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
+        queryset = _get_queryset(Recipe, queryset_all, filter_string, search_term, ordering_string, '-name')
+
+        # retrieve the objects that will be displayed in the table; targets a paginator and gets a page range to display
+        target_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
+
+
+        context = {
+            'objects' : target_info,
+            'objectname' : "targets",
+            'default_orderby' : 'name:+',
+            'total_count': queryset_with_search.count(),
+
+            'tablecols' : [
+                {   'name': 'Target',
+                    'orderfield': _get_toggle_order(request, "name"),
+                    'ordericon' : _get_toggle_order_icon(request, "name"),
+                },
+                {   'name': 'Target version',
+                    'dclass': 'span2',
+                },
+                {   'name': 'Description',
+                    'dclass': 'span5',
+                    'clclass': 'description',
+                },
+                {   'name': 'Recipe file',
+                    'clclass': 'recipe-file',
+                    'hidden': 1,
+                    'dclass': 'span5',
+                },
+                {   'name': 'Section',
+                    'clclass': 'target-section',
+                    'hidden': 1,
+                },
+                {   'name': 'License',
+                    'clclass': 'license',
+                    'hidden': 1,
+                },
+                {   'name': 'Layer',
+                    'clclass': 'layer',
+                },
+                {   'name': 'Layer source',
+                    'clclass': 'source',
+                    'qhelp': "Where the target is coming from, for example, if it's part of the OpenEmbedded collection of targets or if it's a target you have imported",
+                    'orderfield': _get_toggle_order(request, "layer_source__name"),
+                    'ordericon': _get_toggle_order_icon(request, "layer_source__name"),
+                    'filter': {
+                        'class': 'target',
+                        'label': 'Show:',
+                        'options': map(lambda x: (x.name, 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
+                    }
+                },
+                {   'name': 'Branch, tag or commit',
+                    'clclass': 'branch',
+                    'hidden': 1,
+                },
+                {   'name': 'Build',
+                    'dclass': 'span2',
+                    'qhelp': "Add or delete targets to / from your project ",
+                },
+
+            ]
+        }
+
+        return render(request, template, context)
 
     def machines(request):
-        raise Exception("TODO: implement page #6593")
+        template = "machines.html"
+        # define here what parameters the view needs in the GET portion in order to
+        # be able to display something.  'count' and 'page' are mandatory for all views
+        # that use paginators.
+        mandatory_parameters = { 'count': 10,  'page' : 1, 'orderby' : 'name:+' };
+        retval = _verify_parameters( request.GET, mandatory_parameters )
+        if retval:
+            return _redirect_parameters( 'machines', request.GET, mandatory_parameters)
+
+        # boilerplate code that takes a request for an object type and returns a queryset
+        # for that object type. copypasta for all needed table searches
+        (filter_string, search_term, ordering_string) = _search_tuple(request, Machine)
+
+        queryset_all = Machine.objects.all()
+#        if 'project' in request.session:
+#            queryset_all = queryset_all.filter(Q(layer_version__up_branch__in = Branch.objects.filter(name = request.session['project'].release.name)) | Q(layer_version__build__in = request.session['project'].build_set.all()))
+
+        queryset_with_search = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, '-name')
+        queryset = _get_queryset(Machine, queryset_all, filter_string, search_term, ordering_string, '-name')
+
+        # retrieve the objects that will be displayed in the table; machines a paginator and gets a page range to display
+        machine_info = _build_page_range(Paginator(queryset, request.GET.get('count', 10)),request.GET.get('page', 1))
+
+
+        context = {
+            'objects' : machine_info,
+            'objectname' : "machines",
+            'default_orderby' : 'name:+',
+            'total_count': queryset_with_search.count(),
+
+            'tablecols' : [
+                {   'name': 'Machine',
+                    'orderfield': _get_toggle_order(request, "name"),
+                    'ordericon' : _get_toggle_order_icon(request, "name"),
+                },
+                {   'name': 'Description',
+                    'dclass': 'span5',
+                    'clclass': 'description',
+                },
+                {   'name': 'Machine file',
+                    'clclass': 'machine-file',
+                    'hidden': 1,
+                },
+                {   'name': 'Layer',
+                    'clclass': 'layer',
+                },
+                {   'name': 'Layer source',
+                    'clclass': 'source',
+                    'qhelp': "Where the machine is coming from, for example, if it's part of the OpenEmbedded collection of machines or if it's a machine you have imported",
+                    'orderfield': _get_toggle_order(request, "layer_source__name"),
+                    'ordericon': _get_toggle_order_icon(request, "layer_source__name"),
+                    'filter': {
+                        'class': 'machine',
+                        'label': 'Show:',
+                        'options': map(lambda x: (x.name, 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
+                    }
+                },
+                {   'name': 'Branch, tag or commit',
+                    'clclass': 'branch',
+                    'hidden': 1,
+                },
+                {   'name': 'Select',
+                    'dclass': 'span2',
+                    'qhelp': "Add or delete machines to / from your project ",
+                },
+
+            ]
+        }
+
+        return render(request, template, context)
 
     def projectconf(request, pid):
         raise Exception("TODO: implement page #6588")

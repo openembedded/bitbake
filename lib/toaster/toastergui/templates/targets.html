@@ -1,0 +1,186 @@
+{% extends "baseprojectpage.html" %}
+{% load projecttags %}
+{% load humanize %}
+
+{% block localbreadcrumb %}
+<li>Targets</li>
+{% endblock %}
+
+{% block projectinfomain %}
+                <div class="page-header">
+                    <h1>
+                        All targets
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the targets compatible with Yocto Project 1.7 'Dxxxx' that Toaster knows about. They include community-created targets suitable for use on top of OpenEmbedded Core and any targets you have imported"></i>
+                     </h1>
+                </div>
+                <!--div class="alert">
+                    <div class="input-append" style="margin-bottom:0px;">
+                        <input class="input-xxlarge" type="text" placeholder="Search targets" value="browser" />
+                        <a class="add-on btn">
+                            <i class="icon-remove"></i>
+                        </a>
+                        <button class="btn" type="button">Search</button>
+                        <a class="btn btn-link" href="#">Show all targets</a>
+                    </div>
+                </div-->
+                <div id="target-added" class="alert alert-info lead" style="display:none;"></div>
+                <div id="target-removed" class="alert alert-info lead" style="display:none;">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>1</strong> target deleted from <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>
+                </div>
+
+
+{% include "basetable_top.html" %}
+    {% for o in objects %}
+    <tr class="data">
+	<td class="target">
+		{{o.name}} ({{o.id}}, {{o.up_id}})
+		<a target="_blank" href="{{o.get_layersource_view_url}}"><i class="icon-share get-info"></i></a>
+	</td>
+	<td class="version">{{o.version}}</td>
+	<td class="description">{{o.description}}</td>
+	<td class="recipe-file">
+		<code>{{o.file_path}}</code>
+		<a href="{{o.get_vcs_link_url}}" target="_blank"><i class="icon-share get-info"></i></a>
+	</td>
+	<td class="target-section">{{o.section}}</td>
+	<td class="license">{{o.license}}</td>
+	<td class="layer"><a href="#">{{o.layer_version.layer.name}}</a></td>
+	<td class="source">{{o.layer_source.name}}</td>
+	<td class="branch">{{o.layer_version.commit}}</td>
+	<td class="build">
+		<a id="build-target" href="project-with-targets.html?target=3g-router-image" class="btn btn-block" style="display:none;">
+			Build target
+		</a>
+		<a id="add-layer" href="#" class="btn btn-block nopop" title="1 layer added">
+			<i class="icon-plus"></i>
+			Add layer
+			<i class="icon-question-sign get-help" title="To build this target, you must first add the meta-embeddedgeeks layer to your project"></i>
+		</a>
+	</td>
+    </tr>
+    {% endfor %}
+{% include "basetable_bottom.html" %}
+
+    <!-- Modals -->
+
+    <!-- 'Layer dependencies modal' -->
+    <div id="dependencies-message" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+            <h3>meta-acer dependencies</h3>
+        </div>
+        <div class="modal-body">
+            <p><strong>meta-acer</strong> depends on some targets that are not added to your project. Select the ones you want to add:</p>
+            <ul class="unstyled">
+                <li>
+                    <label class="checkbox">
+                        <input type="checkbox" checked="checked">
+                        meta-android
+                    </label>
+                </li>
+                <li>
+                    <label class="checkbox">
+                        <input type="checkbox" checked="checked">
+                        meta-oe
+                    </label>
+                </li>
+            </ul>
+        </div>
+        <div class="modal-footer">
+            <button id="add-target-dependencies" type="submit" class="btn btn-primary" data-dismiss="modal" >Add targets</button>
+            <button class="btn" data-dismiss="modal">Cancel</button>
+        </div>
+    </div>
+
+    <script src="assets/js/jquery-1.9.1.min.js" type='text/javascript'></script>
+    <script src="assets/js/jquery.tablesorter.min.js" type='text/javascript'></script>
+    <script src="assets/js/jquery-ui-1.10.3.custom.min.js"></script>
+    <script src="assets/js/bootstrap.min.js" type='text/javascript'></script>
+    <script src="assets/js/prettify.js" type='text/javascript'></script>
+    <script src="assets/js/jit.js" type='text/javascript'></script>
+    <script src="assets/js/main.js" type='text/javascript'></script>
+
+    <script>
+     $(document).ready(function() {
+
+        //show or hide selected columns on load
+        $("input:checkbox").each(function(){
+            var selectedType = $(this).val();
+            if($(this).is(":checked")){
+                $("."+selectedType).show();
+            }
+            else{
+                $("."+selectedType).hide();
+            }
+        });
+
+        // enable add target button
+        $('#add-target-with-deps').removeAttr('disabled');
+
+        //edit columns functionality (show / hide table columns)
+        $("input:checkbox").change();
+            $("input:checkbox").change(function(){
+                var selectedType = $(this).val();
+                    if($(this).is(":checked")){
+                        $("."+selectedType).show();
+                    }
+                    else{
+                        $("."+selectedType).hide();
+                    }
+            });
+
+        //turn edit columns dropdown into a multi-select menu
+        $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
+            e.stopPropagation();
+        });
+
+        //show tooltip with applied filter
+        $('#filtered').tooltip({container:'table', placement:'bottom', delay:{hide:1500}, html:true});
+
+        $('#filtered').click(function() {
+            $(this).tooltip('hide');
+        });
+
+        //show target added tooltip
+        $("#remove-target, #add-target, #add-target-with-deps2").tooltip({ trigger: 'manual' });
+
+        // add target without dependencies
+        $("#add-target").click(function(){
+            $('#target-removed').hide();
+            $('#target-added').html('<button type="button" class="close" data-dismiss="alert">&times;</button><strong>1</strong> target added to <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>').fadeIn();
+            $('#add-target').tooltip('show');
+            $("#add-target").hide();
+            $(".add-targets .tooltip").delay(2000).fadeOut(function(){
+                $("#remove-target").delay(300).fadeIn();
+            });
+        });
+
+        // add target with dependencies
+        $(document).on("click", "#add-target-dependencies", function() {
+            $('#target-removed').hide();
+            $('#target-added').html('<button type="button" class="close" data-dismiss="alert">&times;</button><strong>3</strong> targets added to <a href="project-with-targets.html">your project</a>: <a href="#">meta-acer</a> and its dependencies <a href="#">meta-android</a> and <a href="#">meta-oe</a>').delay(400).fadeIn(function(){
+                $('#add-target-with-deps').tooltip('show');
+                $("#add-target-with-deps, #add-target-with-deps").hide();
+                $(".add-targets .tooltip").delay(2000).fadeOut(function(){
+                    $("#remove-target-with-deps").delay(300).fadeIn();
+                });
+            });
+        });
+
+        // delete target
+        $("#remove-target").click(function(){
+            $('#target-added').hide();
+            $('#target-removed').show();
+            $('#remove-target').tooltip('show');
+            $("#remove-target").hide();
+            $(".add-targets .tooltip").delay(2000).fadeOut(function(){
+                $("#add-target").delay(300).fadeIn();
+            });
+        });
+
+     });
+
+</script>
+
+{% endblock %}

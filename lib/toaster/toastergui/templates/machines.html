@@ -1,0 +1,63 @@
+{% extends "baseprojectpage.html" %}
+{% load projecttags %}
+{% load humanize %}
+
+{% block localbreadcrumb %}
+<li>Machines</li>
+{% endblock %}
+
+{% block projectinfomain %}
+                <div class="page-header">
+                    <h1>
+                        All machines
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the machines compatible with Yocto Project 1.7 'Dxxxx' that Toaster knows about. They include community-created targets suitable for use on top of OpenEmbedded Core and any targets you have imported"></i>
+                     </h1>
+                </div>
+                <!--div class="alert">
+                    <div class="input-append" style="margin-bottom:0px;">
+                        <input class="input-xxlarge" type="text" placeholder="Search targets" value="browser" />
+                        <a class="add-on btn">
+                            <i class="icon-remove"></i>
+                        </a>
+                        <button class="btn" type="button">Search</button>
+                        <a class="btn btn-link" href="#">Show all targets</a>
+                    </div>
+                </div-->
+                <div id="target-added" class="alert alert-info lead" style="display:none;"></div>
+                <div id="target-removed" class="alert alert-info lead" style="display:none;">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <strong>1</strong> target deleted from <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>
+                </div>
+
+
+{% include "basetable_top.html" %}
+    {% for o in objects %}
+    <tr class="data">
+	<td class="machine">
+		{{o.name}}
+		<a machine="_blank" href="http://layers.openembedded.org/layerindex/branch/master/machines/?q=3g-router-image"><i class="icon-share get-info"></i></a>
+	</td>
+	<td class="description">{{o.description}}</td>
+	<td class="machine-file">
+		<code>{{o.file_path}}</code>
+		<a href="http://github.com/embeddedgeeks/meta-embeddedgeeks/blob/master/machines-core/images/3g-router-image.bb" machine="_blank"><i class="icon-share get-info"></i></a>
+	</td>
+	<td class="layer"><a href="#">{{o.layer_version.layer.name}}</a></td>
+	<td class="source">{{o.layer_source.name}}</td>
+	<td class="branch">{{o.layer_version.commit}}</td>
+	<td class="build">
+		<a id="build-machine" href="project-with-machines.html?machine=3g-router-image" class="btn btn-block" style="display:none;">
+			Build machine
+		</a>
+		<a id="add-layer" href="#" class="btn btn-block nopop" title="1 layer added">
+			<i class="icon-plus"></i>
+			Add layer
+			<i class="icon-question-sign get-help" title="To build this machine, you must first add the meta-embeddedgeeks layer to your project"></i>
+		</a>
+	</td>
+    </tr>
+    {% endfor %}
+
+{% include "basetable_bottom.html" %}
+
+{% endblock %}

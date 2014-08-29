@@ -1,13 +1,22 @@
 {% extends "base.html" %}
+{% load projecttags %}
 {% load humanize %}
 {% block pagecontent %}
 
-<div class="row-fluid">
+
+ <div class="">
 <!-- Breadcrumbs -->
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
             <li><a href="{% url 'all-builds' %}">All builds</a></li>
-            <li><a href="{%url 'builddashboard' build.pk%}">{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})</a></li>
+            {% block parentbreadcrumb %}
+        {% if project %}
+            <li>
+                <a href="{%url 'project' project.id %}">{{project.name}}
+                </a>
+            </li>
+        {% endif %}
+            {% endblock %}
             {% block localbreadcrumb %}{% endblock %}
         </ul>
         <script>
@@ -17,12 +26,18 @@
             $('#breadcrumb > li:last > span').remove();
         });
         </script>
-    </div> <!--section-->
+    </div>
 
-        <!-- Begin container -->
-        {% block pagedetailinfomain %}{% endblock %}
-        <!-- End container -->
+    <div class="row-fluid">
 
-</div>
+        <!-- Begin right container -->
+        {% block projectinfomain %}{% endblock %}
+        <!-- End right container -->
+
+
+    </div>
+  </div>
+
 
 {% endblock %}
+

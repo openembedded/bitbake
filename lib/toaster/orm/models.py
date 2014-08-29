@@ -402,6 +402,18 @@ class Recipe(models.Model):
     bugtracker = models.URLField(blank=True)
     file_path = models.FilePathField(max_length=255)
 
+    def get_vcs_link_url(self):
+        if self.layer_version.layer.vcs_web_file_base_url is None:
+            return ""
+        return self.layer_version.layer.vcs_web_file_base_url.replace('%path%', self.file_path).replace('%branch%', self.layer_version.up_branch.name)
+
+    def get_layersource_view_url(self):
+        if self.layer_source is None:
+            return ""
+
+        url = self.layer_source.get_object_view(self.layer_version.up_branch, "recipes", self.name)
+        return url
+
     def __unicode__(self):
         return "Recipe " + self.name + ":" + self.version
 
@@ -508,6 +520,11 @@ class LayerIndexLayerSource(LayerSource):
         super(LayerIndexLayerSource, self).__init__(args, kwargs)
         self.sourcetype = LayerSource.TYPE_LAYERINDEX
 
+    def get_object_view(self, branch, objectype, upid):
+        if self != branch.layer_source:
+            raise Exception("Invalid branch specification")
+        return self.apiurl + "../branch/" + branch.name + "/" + objectype + "/?q=" + str(upid)
+
     def update(self):
         '''
             Fetches layer, recipe and machine information from remote repository
@@ -538,99 +555,79 @@ class LayerIndexLayerSource(LayerSource):
             return
 
         # update branches; only those that we already have names listed in the database
-        whitelist_branch_names = self.branchnames.split(",")
+        whitelist_branch_names = map(lambda x: x.name, Branch.objects.all())
 
         branches_info = _get_json_response(apilinks['branches']
             + "?filter=name:%s" % "OR".join(whitelist_branch_names))
         for bi in branches_info:
-            try:
-                b = Branch.objects.get(layer_source = self, name = bi['name'])
-                b.up_id = bi['id']
-                b.up_date = bi['updated']
-                b.name = bi['name']
-                b.bitbake_branch = bi['bitbake_branch']
-                b.short_description = bi['short_description']
-                b.save()
-            except Branch.DoesNotExist:
-                b = Branch.objects.create(
-                    layer_source = self,
-                    up_id = bi['id'],
-                    up_date = bi['updated'],
-                    name = bi['name'],
-                    bitbake_branch = bi['bitbake_branch'],
-                    short_description = bi['short_description']
-                )
+            b, created = Branch.objects.get_or_create(layer_source = self, name = bi['name'])
+            b.up_id = bi['id']
+            b.up_date = bi['updated']
+            b.name = bi['name']
+            b.bitbake_branch = bi['bitbake_branch']
+            b.short_description = bi['short_description']
+            b.save()
 
         # update layers
         layers_info = _get_json_response(apilinks['layerItems'])
         for li in layers_info:
-            try:
-                l = Layer.objects.get(layer_source = self,
-                    up_id = li['id'])
-                l.update(
-                    up_date = li['updated'],
-                    name = li['name'],
-                    vcs_url = li['vcs_url'],
-                    vcs_web_file_base_url = li['vcs_url'],
-                    summary = li['summary'],
-                    description = li['description'])
-            except Layer.DoesNotExist:
-                Layer.objects.create(layer_source = self,
-                    up_id = li['id'],
-                    up_date = li['updated'],
-                    name = li['name'],
-                    vcs_url = li['vcs_url'],
-                    vcs_web_file_base_url = li['vcs_url'],
-                    summary = li['summary'],
-                    description = li['description']
-                )
+            l, created = Layer.objects.get_or_create(layer_source = self, up_id = li['id'])
+            l.up_date = li['updated']
+            l.name = li['name']
+            l.vcs_url = li['vcs_url']
+            l.vcs_web_file_base_url = li['vcs_web_file_base_url']
+            l.summary = li['summary']
+            l.description = li['description']
+            l.save()
 
         # update layerbranches/layer_versions
         layerbranches_info = _get_json_response(apilinks['layerBranches']
                 + "?filter=branch:%s" % "OR".join(map(lambda x: str(x.up_id), Branch.objects.filter(layer_source = self)))
             )
         for lbi in layerbranches_info:
-            Layer_Version.objects.get_or_create(layer_source = self,
-                    up_id = lbi['id'],
-                    up_date = lbi['updated'],
-                    layer = Layer.objects.get(layer_source = self, up_id = lbi['layer']),
-                    up_branch = Branch.objects.get(layer_source = self, up_id = lbi['branch']),
-                    branch = lbi['actual_branch'],
-                    commit = lbi['vcs_last_rev'],
-                    dirpath = lbi['vcs_subdir'])
+            lv, created = Layer_Version.objects.get_or_create(layer_source = self, up_id = lbi['id'])
+
+            lv.up_date = lbi['updated']
+            lv.layer = Layer.objects.get(layer_source = self, up_id = lbi['layer'])
+            lv.up_branch = Branch.objects.get(layer_source = self, up_id = lbi['branch'])
+            lv.branch = lbi['actual_branch']
+            lv.commit = lbi['vcs_last_rev']
+            lv.dirpath = lbi['vcs_subdir']
+            lv.save()
+
 
         # update machines
         machines_info = _get_json_response(apilinks['machines']
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
         for mi in machines_info:
-            Machine.objects.get_or_create(layer_source = self,
-                    up_id = mi['id'],
-                    up_date = mi['updated'],
-                    layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch']),
-                    name = mi['name'],
-                    description = mi['description'])
+            mo, created = Machine.objects.get_or_create(layer_source = self, up_id = mi['id'])
+            mo.up_date = mi['updated']
+            mo.layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch'])
+            mo.name = mi['name']
+            mo.description = mi['description']
+            mo.save()
 
         # update recipes; paginate by layer version / layer branch
         recipes_info = _get_json_response(apilinks['recipes']
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
         for ri in recipes_info:
-            Recipe.objects.get_or_create(layer_source = self,
-                    up_id = ri['id'],
-                    up_date = ri['updated'],
-                    layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch']),
+            ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'])
 
-                    name = ri['pn'],
-                    version = ri['pv'],
-                    summary = ri['summary'],
-                    description = ri['description'],
-                    section = ri['section'],
-                    license = ri['license'],
-                    homepage = ri['homepage'],
-                    bugtracker = ri['bugtracker'],
-                    file_path = ri['filepath'] + ri['filename']
-                )
+            ro.up_date = ri['updated']
+            ro.layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch'])
+
+            ro.name = ri['pn']
+            ro.version = ri['pv']
+            ro.summary = ri['summary']
+            ro.description = ri['description']
+            ro.section = ri['section']
+            ro.license = ri['license']
+            ro.homepage = ri['homepage']
+            ro.bugtracker = ri['bugtracker']
+            ro.file_path = ri['filepath'] + ri['filename']
+            ro.save()
 
         pass
 

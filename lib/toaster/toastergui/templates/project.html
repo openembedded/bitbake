@@ -224,36 +224,14 @@ $(document).ready(function () {
                         <div id="dependency-alert" class="alert alert-info" style="display:none;">
                             <p><strong>meta-tizen</strong> depends on the layers below. Check the ones you want to add: </p>
                             <ul class="unstyled">
-                                <li>
-                                    <label class="checkbox">
-                                        <input checked="checked" type="checkbox">
-                                        meta-efl
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="checkbox">
-                                        <input checked="checked" type="checkbox">
-                                        meta-intel
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="checkbox">
-                                        <input checked="checked" type="checkbox">
-                                        meta-multimedia
-                                    </label>
-                                </li>
-                                <li>
-                                    <label class="checkbox">
-                                        <input checked="checked" type="checkbox">
-                                        meta-oe
-                                    </label>
-                                </li>
+	{% for f in layer_dependency %}
                                 <li>
                                     <label class="checkbox">
                                         <input checked="checked" type="checkbox">
                                         meta-ruby
                                     </label>
                                 </li>
+	{% endfor %}
                             </ul>
                             <button id="add-layer-dependencies" class="btn btn-info add-layer">Add layers</button>
                         </div>
@@ -315,27 +293,38 @@ $(document).ready(function () {
                 </div>
 
                 <div class="well well-transparent span4">
+
                     <h3>
-                        Set machine
-                        <i data-original-title="The machine is the hardware for which you want to build. You can only set one machine per project" class="icon-question-sign get-help heading-help" title=""></i>
+                        Project machine
+                        <i class="icon-question-sign get-help heading-help" title="The machine is the hardware for which you want to build. You can only set one machine per project"></i>
                     </h3>
-                    <p class="lead">
-                        {{machine}}
-                        <i title="" data-original-title="" class="icon-pencil"></i>
+                    <p class="lead" id="selected-machine"> {{machine}}
+                      <i id="change-machine" class="icon-pencil"></i>
                     </p>
-                    <h3>
-                        Set distro
-                        <i data-original-title="When you build an image using the Yocto Project and do not alter the distro, you are creating a Poky distribution" class="icon-question-sign get-help heading-help" title=""></i>
-                    </h3>
-                    <p class="lead">
-                        {{distro}}
-                        <i title="" data-original-title="" class="icon-pencil"></i>
+                    <form id="select-machine">
+                        <div class="alert alert-info">
+                            <strong>Machine changes have a big impact on build outcome.</strong>
+                            You cannot really compare the builds for the new machine with the previous ones.
+                        </div>
+                        <div class="input-append">
+                            <input type="text" id="machine" autocomplete="off" value="qemux86" data-provide="typeahead"
+                            data-minLength="1"
+                            data-autocomplete="off"
+                            data-source='[
+                            ]'>
+                            <button id="apply-change-machine" class="btn" type="button">Save</button>
+                            <a href="#" id="cancel-machine" class="btn btn-link">Cancel</a>
+                        </div>
+                        <p><a href="{% url 'machines' %}" class="link">View all machines</a></p>
+                    </form>
+                    <p class="link-action">
+                        <a href="{% url 'projectconf' project.id %}" class="link">Edit configuration variables</a>
+                        <i class="icon-question-sign get-help heading-help" title="You can set other project configuration options here. Each option, like everything else in the build system, is a variable - value pair"></i>
                     </p>
-					<p class="link-action">
-						<a href="{% url 'projectconf' project.id %}" class="link">Edit configuration variables</a>
-						<i class="icon-question-sign get-help heading-help" title="You can set other project configuration options here. Each option, like everything else in the build system, is a variable - value pair"></i>
-					</p>
+
                 </div>
+
+
             </div>
 
             <h2>Project details</h2>
