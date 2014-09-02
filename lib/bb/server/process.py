@@ -203,7 +203,7 @@ class ProcessEventQueue(multiprocessing.queues.Queue):
 
     def waitEvent(self, timeout):
         if self.exit:
-            raise SystemExit
+            sys.exit(1)
         try:
             if not self.server.is_alive():
                 self.setexit()
