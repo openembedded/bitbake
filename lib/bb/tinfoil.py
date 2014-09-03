@@ -25,12 +25,12 @@ import bb.cache
 import bb.cooker
 import bb.providers
 import bb.utils
-from bb.cooker import state, BBCooker
+from bb.cooker import state, BBCooker, CookerFeatures
 from bb.cookerdata import CookerConfiguration, ConfigParameters
 import bb.fetch2
 
 class Tinfoil:
-    def __init__(self, output=sys.stdout):
+    def __init__(self, output=sys.stdout, tracking=False):
         # Needed to avoid deprecation warnings with python 2.6
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -48,7 +48,10 @@ class Tinfoil:
         configparams = TinfoilConfigParameters(parse_only=True)
         self.config.setConfigParameters(configparams)
         self.config.setServerRegIdleCallback(self.register_idle_function)
-        self.cooker = BBCooker(self.config)
+        features = []
+        if tracking:
+            features.append(CookerFeatures.BASEDATASTORE_TRACKING)
+        self.cooker = BBCooker(self.config, features)
         self.config_data = self.cooker.data
         bb.providers.logger.setLevel(logging.ERROR)
         self.cooker_data = None
