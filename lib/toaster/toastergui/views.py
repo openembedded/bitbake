@@ -1774,8 +1774,8 @@ if toastermain.settings.MANAGED:
             "projects": Project.objects.all(),
             "MANAGED" : toastermain.settings.MANAGED
         }
-        if 'project' in request.session:
-            ret['project'] = request.session['project']
+        if 'project_id' in request.session:
+            ret['project'] = Project.objects.get(pk = request.session['project_id'])
         return ret
 
     # new project
@@ -1841,7 +1841,7 @@ if toastermain.settings.MANAGED:
             puser = None
 
         # we use implicit knowledge of the current user's project to filter layer information, e.g.
-        request.session['project'] = prj
+        request.session['project_id'] = prj.id
 
         context = {
             "project" : prj,
@@ -1937,8 +1937,8 @@ if toastermain.settings.MANAGED:
         (filter_string, search_term, ordering_string) = _search_tuple(request, Layer_Version)
 
         queryset_all = Layer_Version.objects.all()
-        if 'project' in request.session:
-            queryset_all = queryset_all.filter(up_branch__in = Branch.objects.filter(name = request.session['project'].release.name))
+        if 'project_id' in request.session:
+            queryset_all = queryset_all.filter(up_branch__in = Branch.objects.filter(name = Project.objects.get(pk = request.session['project_id']).release.name))
 
         queryset_with_search = _get_queryset(Layer_Version, queryset_all, None, search_term, ordering_string, '-layer__name')
         queryset = _get_queryset(Layer_Version, queryset_all, filter_string, search_term, ordering_string, '-layer__name')
@@ -2023,8 +2023,8 @@ if toastermain.settings.MANAGED:
         (filter_string, search_term, ordering_string) = _search_tuple(request, Recipe)
 
         queryset_all = Recipe.objects.all()
-        if 'project' in request.session:
-            queryset_all = queryset_all.filter(Q(layer_version__up_branch__in = Branch.objects.filter(name = request.session['project'].release.name)) | Q(layer_version__build__in = request.session['project'].build_set.all()))
+        if 'project_id' in request.session:
+            queryset_all = queryset_all.filter(Q(layer_version__up_branch__in = Branch.objects.filter(name = Project.objects.get(pk=request.session['project_id']).release.name)) | Q(layer_version__build__in = Project.objects.get(pk = request.session['project_id']).build_set.all()))
 
         queryset_with_search = _get_queryset(Recipe, queryset_all, None, search_term, ordering_string, '-name')
         queryset = _get_queryset(Recipe, queryset_all, filter_string, search_term, ordering_string, '-name')
@@ -2107,8 +2107,8 @@ if toastermain.settings.MANAGED:
         (filter_string, search_term, ordering_string) = _search_tuple(request, Machine)
 
         queryset_all = Machine.objects.all()
-#        if 'project' in request.session:
-#            queryset_all = queryset_all.filter(Q(layer_version__up_branch__in = Branch.objects.filter(name = request.session['project'].release.name)) | Q(layer_version__build__in = request.session['project'].build_set.all()))
+#        if 'project_id' in request.session:
+#            queryset_all = queryset_all.filter(Q(layer_version__up_branch__in = Branch.objects.filter(name = Project.objects.get(request.session['project_id']).release.name)) | Q(layer_version__build__in = Project.objects.get(request.session['project_id']).build_set.all()))
 
         queryset_with_search = _get_queryset(Machine, queryset_all, None, search_term, ordering_string, '-name')
         queryset = _get_queryset(Machine, queryset_all, filter_string, search_term, ordering_string, '-name')
