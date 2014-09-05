@@ -168,7 +168,7 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
             data.setVar("BUILDNAME", workerdata["buildname"])
             data.setVar("DATE", workerdata["date"])
             data.setVar("TIME", workerdata["time"])
-            bb.parse.siggen.set_taskdata(workerdata["hashes"], workerdata["hash_deps"], workerdata["sigchecksums"])
+            bb.parse.siggen.set_taskdata(workerdata["sigdata"])
             ret = 0
             try:
                 the_data = bb.cache.Cache.loadDataFull(fn, appends, data)
