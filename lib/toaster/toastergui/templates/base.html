@@ -61,18 +61,6 @@ function reload_params(params) {
 				{%if MANAGED %}
 					  <div class="btn-group pull-right">
 						  <a class="btn" href="{% url 'newproject' %}">New project</a>
-						  <button class="btn dropdown-toggle" data-toggle="dropdown">
-							  <i class="icon-caret-down"></i>
-						  </button>
-						  <ul class="dropdown-menu">
-{% for prj in projects %}
-								<li><a href="{% url 'project' prj.id %}">{{prj.name}}</a></li>
-{% endfor %}
-							  <li><hr/></li>
-							  <li><a href="#">Clone project</a></li>
-							  <li><a href="#">Export project</a></li>
-							  <li><a href="#">Import project</a></li>
-						  </ul>
 					  </div>
 				{%endif%}
             <a class="pull-right manual" target="_blank" href="http://www.yoctoproject.org/documentation/toaster-manual">

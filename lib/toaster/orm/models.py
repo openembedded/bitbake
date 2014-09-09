@@ -76,21 +76,25 @@ class Project(models.Model):
     def schedule_build(self):
         from bldcontrol.models import BuildRequest, BRTarget, BRLayer, BRVariable, BRBitbake
         br = BuildRequest.objects.create(project = self)
+        try:
 
-        BRBitbake.objects.create(req = br,
-            giturl = self.bitbake_version.giturl,
-            commit = self.bitbake_version.branch,
-            dirpath = self.bitbake_version.dirpath)
+            BRBitbake.objects.create(req = br,
+                giturl = self.bitbake_version.giturl,
+                commit = self.bitbake_version.branch,
+                dirpath = self.bitbake_version.dirpath)
 
-        for l in self.projectlayer_set.all():
-            BRLayer.objects.create(req = br, name = l.layercommit.layer.name, giturl = l.layercommit.layer.vcs_url, commit = l.layercommit.commit, dirpath = l.layercommit.dirpath)
-        for t in self.projecttarget_set.all():
-            BRTarget.objects.create(req = br, target = t.target, task = t.task)
-        for v in self.projectvariable_set.all():
-            BRVariable.objects.create(req = br, name = v.name, value = v.value)
+            for l in self.projectlayer_set.all():
+                BRLayer.objects.create(req = br, name = l.layercommit.layer.name, giturl = l.layercommit.layer.vcs_url, commit = l.layercommit.commit, dirpath = l.layercommit.dirpath)
+            for t in self.projecttarget_set.all():
+                BRTarget.objects.create(req = br, target = t.target, task = t.task)
+            for v in self.projectvariable_set.all():
+                BRVariable.objects.create(req = br, name = v.name, value = v.value)
 
-        br.state = BuildRequest.REQ_QUEUED
-        br.save()
+            br.state = BuildRequest.REQ_QUEUED
+            br.save()
+        except Exception as e:
+            br.delete()
+            raise e
         return br
 
 class Build(models.Model):
@@ -131,7 +135,7 @@ class Build(models.Model):
 
     def eta(self):
         from django.utils import timezone
-        eta = 0
+        eta = timezone.now()
         completeper = self.completeper()
         if self.completeper() > 0:
             eta = timezone.now() + ((timezone.now() - self.started_on)*(100-completeper)/completeper)
@@ -534,12 +538,16 @@ class LayerIndexLayerSource(LayerSource):
         def _get_json_response(apiurl = self.apiurl):
             import httplib, urlparse, json
             parsedurl = urlparse.urlparse(apiurl)
-            (host, port) = parsedurl.netloc.split(":")
+            try:
+                (host, port) = parsedurl.netloc.split(":")
+            except ValueError:
+                host = parsedurl.netloc
+                port = None
+
             if port is None:
                 port = 80
             else:
                 port = int(port)
-            #print "-- connect to: http://%s:%s%s?%s" % (host, port, parsedurl.path, parsedurl.query)
             conn = httplib.HTTPConnection(host, port)
             conn.request("GET", parsedurl.path + "?" + parsedurl.query)
             r = conn.getresponse()
@@ -550,8 +558,9 @@ class LayerIndexLayerSource(LayerSource):
         # verify we can get the basic api
         try:
             apilinks = _get_json_response()
-        except:
-            print "EE: could not connect to %s, skipping update" % self.apiurl
+        except Exception as e:
+            import traceback
+            print "EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e))
             return
 
         # update branches; only those that we already have names listed in the database
@@ -582,7 +591,7 @@ class LayerIndexLayerSource(LayerSource):
 
         # update layerbranches/layer_versions
         layerbranches_info = _get_json_response(apilinks['layerBranches']
-                + "?filter=branch:%s" % "OR".join(map(lambda x: str(x.up_id), Branch.objects.filter(layer_source = self)))
+                + "?filter=branch:%s" % "OR".join(map(lambda x: str(x.up_id), [i for i in Branch.objects.filter(layer_source = self) if i.up_id is not None] ))
             )
         for lbi in layerbranches_info:
             lv, created = Layer_Version.objects.get_or_create(layer_source = self,

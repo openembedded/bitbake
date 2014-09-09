@@ -12,7 +12,7 @@
             {% block parentbreadcrumb %}
         {% if project %}
             <li>
-                <a href="{%url 'project' project.id %}">{{project.name}}
+                <a href="{%url 'project' project.id %}"><span id="project_name">{{project.name}}</span>
                 </a>
             </li>
         {% endif %}
@@ -28,11 +28,11 @@
         </script>
     </div>
 
-    <div class="row-fluid">
+    <div>
 
-        <!-- Begin right container -->
+        <!-- Begin main page container -->
         {% block projectinfomain %}{% endblock %}
-        <!-- End right container -->
+        <!-- End main container -->
 
 
     </div>

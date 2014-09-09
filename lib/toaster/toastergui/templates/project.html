@@ -1,366 +1,354 @@
-{% extends "base.html" %}
+{% extends "baseprojectpage.html" %}
+<!--
+vim: expandtab tabstop=2
+-->
 {% load projecttags %}
 {% load humanize %}
-{% block pagecontent %}
-
-<script>
-
-var buildrequests = [];
-
-function targetInPage(targetname) {
-    return targetname in $("ul#target-list > li > a").map(function (i, x) {return x.text});
-}
-
-function setEventHandlers() {
-    $("i#del-target-icon").unbind().click(function (evt) {
-        console.log("del target", evt.target.attributes["x-data"].value);
-        postEditAjaxRequest({"targetDel": evt.target.attributes["x-data"].value});
-    });
-    $("button#add-target-button").unbind().click( function (evt) {
-        if ( $("input#target")[0].value.length == 0) {
-            alert("cannot add empty target");
-            return;
-        }
-        postEditAjaxRequest({"targetAdd" : $("input#target")[0].value});
-    });
-}
-
-function onEditPageUpdate(data) {
-    // update targets
-    var i; var orightml = "";
-
-    $("span#target-count").html(data.targets.length);
-    for (i = 0; i < data.targets.length; i++) {
-        if (! targetInPage(data.targets[i].target)) {
-            orightml += '<li><a href="#">'+data.targets[i].target;
-            if (data.targets[i].task != "" && data.targets[i].task !== null) {
-                orightml += " ("+data.targets[i].task+")";
-            }
-            orightml += '</a><i title="" data-original-title="" class="icon-trash" id="del-target-icon" x-data="'+data.targets[i].pk+'"></i></li>';
-        }
-    }
-
-    $("ul#target-list").html(orightml);
-
-    // update recent builds
-
-    setEventHandlers();
-}
-
-function onEditAjaxSuccess(data, textstatus) {
-    console.log("XHR returned:", data, "(" + textstatus + ")");
-    if (data.error != "ok") {
-        alert("error on request:\n" + data.error);
-        return;
-    }
-    onEditPageUpdate(data);
-}
-
-function onEditAjaxError(jqXHR, textstatus, error) {
-    alert("XHR errored:\n" + error + "\n(" + textstatus + ")");
-}
-
-function postEditAjaxRequest(reqdata) {
-    var ajax = $.ajax({
-            type:"POST",
-            data: $.param(reqdata),
-            url:"{% url 'xhr_projectedit' project.id%}",
-            headers: { 'X-CSRFToken': $.cookie("csrftoken")},
-            success: onEditAjaxSuccess,
-            error: onEditAjaxError,
-        })
-}
+{% load static %}
 
 
+{% block projectinfomain %}
+<script src="{% static "js/angular.min.js" %}"></script>
+<script src="{% static "js/angular-cookies.min.js" %}"></script>
+<script src="{% static "js/ui-bootstrap-tpls-0.11.0.js" %}"></script>
 
 
-$(document).ready(function () {
-    setEventHandlers();
-
-    /* Provide XHR calls for the "build" buttons.*/
-    $("button#build-all-button").click( function (evt) {
-        var ajax = $.ajax({
-            type:"POST",
-            url:"{% url 'xhr_projectbuild' project.id %}",
-            headers: { 'X-CSRFToken': $.cookie("csrftoken")},
-            success: function (data, textstatus) {
-                if (data.error != "ok") {
-                    alert("XHR fail: " + data.error );
-                }
-            },
-            error: function (jqXHR, textstatus, error) { alert("XHR errored:" + error + "(" + textstatus + ")"); },
-        })
-    });
-});
+<div id="main" role="main" ng-app="project" ng-controller="prjCtrl" class="top-padded">
 
 
-</script>
+  <!-- project name -->
+  <div class="page-header">
+    <h1>{[project.name]}</h1>
+  </div>
+
+  <!-- alerts section 1-->
+  <div ng-repeat="a in zone1alerts">
+    <div class="alert alert-dismissible lead" role="alert" ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+      <span ng-bind-html="a.text"></span>
+    </div>
+  </div>
+
+  <!-- custom templates for ng -->
+
+  <script type="text/ng-template" id="suggestion_details">
+    <a> {[match.model.name]} {[match.model.detail]} </a>
+  </script>
+
+  <!-- modal dialogs -->
+  <script type="text/ng-template" id="dependencies_modal">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+        <h3><span ng-bind="layerAddName"></span> dependencies</h3>
+    </div>
+    <div class="modal-body">
+        <p><strong>{[layerAddName]}</strong> depends on some layers that are not added to your project. Select the ones you want to add:</p>
+        <ul class="unstyled">
+            <li ng-repeat="ld in items">
+                <label class="checkbox">
+                    <input type="checkbox" ng-model="selectedItems[ld.id]"> {[ld.name]}
+                </label>
+            </li>
+        </ul>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="ok()">Add layers</button>
+        <button class="btn" ng-click="cancel()">Cancel</button>
+    </div>
+    </form>
+  </script>
 
 
-            <div class="page-header">
-                <h1>
-                    {{project.name}}
-                    {% if project.build_set.all.count == 0 %}
-                    <small>No builds yet</small>
-                    {% else %}
-                    <small><a href="#">{{project.build_set.all.count}} builds</a></small>
-                    {% endif %}
-                </h1>
+  <script type="text/ng-template" id="change_version_modal">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+        <h3>Changing release to {[releaseName]}</h3>
+      </div>
+      <div class="modal-body">
+        <p>The following project layers do not exist for {[releaseName]}:</p>
+        <ul>
+          <li ng-repeat="i in items"><span class="layer-info" data-toggle="tooltip" tooltip="{[i.detail]}">{[i.name]}</span></li>
+        </ul>
+        <p>If you change the release to {[releaseName]}, the above layers will be deleted from your project layers.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" ng-click="ok()">Change release and delete layers</button>
+        <button class="btn" ng-click="cancel()">Cancel</button>
+      </div>
+  </script>
+
+  <!-- build form -->
+  <div class="well">
+    <form class="build-form" ng-submit="targetNamedBuild()">
+      <div class="input-append input-prepend controls">
+        <input type="text" class="huge span7 " placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
+        <button type="submit" id="build-button" class="btn btn-large btn-primary" ng-disabled="!targetName.length">
+        Build
+        <i class="icon-question-sign get-help heading-help" style="margin-left: 5px;"  data-toggle="tooltip" title="Type the name of one or more targets you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a target name, like so: <code>core-image-minimal:do_build</code>"></i>
+        </button>
+      </div>
+      <p>
+        <a href="{% url 'targets' %}" style="padding-right: 5px;">
+          View all targets
+        </a>
+        {% if completedbuilds.count %}
+          | <a href="{% url 'projectbuilds' project.id %}">View all project builds ({{completedbuilds.count}})</a>
+        {% endif %}
+      </p>
+    </form>
+  </div>
+
+  <h2 class="air" ng-if="builds.length">Latest builds</h2>
+
+  <div class="alert" ng-repeat="b in builds" ng-class="{'queued':'alert-info', 'deleted':'alert-info', 'in progress': 'alert-info', 'In Progress':'alert-info', 'Succeeded':'alert-success', 'failed':'alert-error', 'Failed':'alert-error'}[b.status]">
+    <div class="row-fluid">
+        <switch ng-switch="b.status">
+          <case ng-switch-when="failed">
+            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="row-fluid">
+              <div class="air well" ng-repeat="e in b.errors">
+                {[e.type]}: <pre>{[e.msg]}</pre>
+              </div>
             </div>
-
-
-            <div class="well">
-                <form class="build-form">
-                    <div class="input-append input-prepend controls">
-                        <input type="text" class="huge span7" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1" data-autocomplete="off"
-                        data-provide="typeahead"  data-source='["core-image-base [meta | daisy]",
-                        "core-image-clutter [meta | daisy]",
-                        "core-image-directfb [meta | daisy]",
-                        "core-image-myimage [meta-imported-layer | 3e1dbabbf3&hellip;]",
-                        "core-image-anotherimage [meta-imported-layer | master]",
-                        "core-image-full-cmdline [meta | daisy]",
-                        "core-image-lsb [meta | daisy]",
-                        "core-image-lsb-dev [meta | daisy]",
-                        "core-image-lsb-sdk [meta| daisy]",
-                        "core-image-minimal [meta| daisy]"
-                        ]'>
-                        <a href="#" id="build-button" class="btn btn-large btn-primary" disabled>
-                            Build
-                            <i class="icon-question-sign get-help heading-help" style="margin-left: 5px;" title="Type the name of one or more targets you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a target name, like so: <code>core-image-minimal:do_build</code>"></i>
-                        </a>
-                    </div>
-                    <p>
-                    <a href="all-targets.html" style="padding-right: 5px;">
-                        View all targets
-                    </a>
-                    |
-                    <a href="{% url 'projectbuilds' project.id%}" style="padding-left:5px;">
-                        View all project builds ({{project.build_set.count}})
-                    </a>
-                </form>
+          </case>
+          <case ng-switch-when="queued">
+            <div class="lead span5"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="span4 lead" >Build queued
+              <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
             </div>
-
-
-
-
-
-        {% if builds|length > 0 or buildrequests|length > 0 %}
-            <h2 class="air">Recent Builds</h2>
-
-    <div id="scheduled-builds">
-          {% for br in buildrequests %}
-<div class="alert {% if br.0.state == br.0.REQ_FAILED%}alert-error{%else%}alert-info{%endif%}" id="build-request">
-        <div class="row-fluid">
-            <div class="lead span4">
-                <span>
-                {{br.0.brtarget_set.all.0.target}} {%if br.brtarget_set.all.count > 1%}(+ {{br.brtarget_set.all.count|add:"-1"}}){%endif%} {{br.1.machine.value}} (Created {{br.0.created}})
-                </span>
+            <button class="btn pull-right btn-info" ng-click="buildCancel(b.id)">Cancel</button>
+          </case>
+          <case ng-switch-when="created">
+            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="span6" >
+              <span class="lead">Creating build</span>
             </div>
-            <div class="span2">
-     {{br.0.get_state_display}}
+            <button class="btn pull-right btn-info" ng-click="buildCancel(b.id)">Cancel</button>
+          </case>
+          <case ng-switch-when="deleted">
+            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="span6" id="{[b.id]}-deleted" >
+              <span class="lead">Build deleted</span>
             </div>
-        <div class="span8">
-{% if br.state == br.REQ_FAILED%}
-    {% for bre in br.0.brerror_set.all %} {{bre.errmsg}} ({{bre.errtype}}) <br/><hr/><code>{{bre.traceback}}</code>{%endfor%}
-{%endif%}
+            <button class="btn pull-right btn-info" ng-click="builds.splice(builds.indexOf(b), 1)">Close</button>
+          </case>
+          <case ng-switch-when="in progress">
+            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="span4" >
             </div>
+            <div class="lead pull-right">Build starting shortly</div>
+          </case>
+          <case ng-switch-when="In Progress">
+            <div class="span4" >
+                <div class="progress" style="margin-top:5px;" data-toggle="tooltip" tooltip="{[b.completeper]}% of tasks complete">
+                    <div style="width: {[b.completeper]}%;" class="bar"></div>
+                </div>
+            </div>
+            <div class="lead pull-right">ETA: at {[b.eta]}</div>
+          </case>
+          <case ng-switch-default="">
+            <div class="lead span3"><a href="{[b.build_page_url]}"><span ng-repeat="t in b.targets">{[t.target]} </span>   </div></a>
+            <div class="span2 lead">
+             {[b.completed_on|date:'dd/MM/yy HH:mm']}
+            </div>
+            <div class="span2"><span>{[b.errors.len]}</span></div>
+            <div class="span2"><span>{[b.warnings.len]}</span></div>
+            <div> <span class="lead">Build time: {[b.build_time|date:"HH:mm"]}</span>
+                <button class="btn pull-right" ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.status]"
+                    ng-click="targetExistingBuild(b.targets)">Run again</button>
 
+            </div>
+          </case>
+        </switch>
+      <div class="lead pull-right">
+      </div>
+    </div>
+  </div>
+
+  <h2 class="air">Project configuration</h2>
+
+  <!-- alerts section 2 -->
+  <div ng-repeat="a in zone2alerts">
+    <div class="alert alert-dismissible lead" role="alert" ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+      <span ng-bind-html="a.text"></span>
+    </div>
+  </div>
+
+  <div class="row-fluid">
+
+    <!-- project layers -->
+    <div id="layer-container" class="well well-transparent span4">
+      <h3>
+        Project layers <span class="muted counter">({[layers.length]})</span>
+        <i class="icon-question-sign get-help heading-help" title="OpenEmbedded organises metadata into modules called 'layers'. Layers allow you to isolate different types of customizations from each other. <a href='http://www.yoctoproject.org/docs/current/dev-manual/dev-manual.html#understanding-and-creating-layers' target='_blank'>More on layers</a>"></i>
+      </h3>
+      <div class="alert" ng-if="!layers.length">
+        <b>You need to add some layers </b>
+        <p>
+        You can:
+          <ul>
+            <li> <a href="{% url 'layers'%}">View all layers available in Toaster</a>
+            <li> <a href="{% url 'importlayer' %}">Import a layer</a>
+            <li> <a href="https://www.yoctoproject.org/docs/1.6.1/dev-manual/dev-manual.html#understanding-and-creating-layers" target="_blank">Read about layers in the manual</a>
+          </ul>
+        Or type a layer name below.
+        </p>
+      </div>
+      <form class="input-append" ng-submit="layerAdd()">
+          <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" ng-model="layerAddName" typeahead="e.name for e in getSuggestions('layers', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" typeahead-on-select="onLayerSelect($item, $model, $label)" typeahead-editable="false" ng-class="{ 'has-error': layerAddName.$invalid }" />
+          <input type="submit" id="add-layer" class="btn" value="Add" ng-disabled="!layerAddName.length"/>
+          {% csrf_token %}
+      </form>
+      <p><a href="{% url 'layers' %}">View all layers</a> | <a href="{% url 'importlayer' %}">Import layer</a></p>
+      <ul class="unstyled configuration-list">
+          <li ng-repeat="l in layers">
+            <a href="{[l.layerdetailurl]}" target="_#" class="layer-info" data-toggle="tooltip" tooltip="{[l.branch.layersource]} | {[l.branch.name]}">{[l.name]} </a>
+            <i class="icon-trash" ng-click="layerDel(l.id)" tooltip="Delete"></i>
+          </li>
+      </ul>
+    </div>
+
+
+    <!-- project targets -->
+    <div id="target-container" class="well well-transparent span4">
+      <h3>
+        Targets
+        <i class="icon-question-sign get-help heading-help" title="What you build, often a recipe producing a root file system file (an image). Something like <code>core-image-minimal</code> or <code>core-image-sato</code>"></i>
+      </h3>
+        <form ng-submit="targetNamedBuild()" class="input-append">
+          <input type="text" class="input-xlarge" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1"  ng-model="targetName" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length">
+          <button type="submit" id="build-button" class="btn btn-primary" ng-disabled="!targetName.length">
+            Build </button>
+          {% csrf_token %}
+        </form>
+        <p><a href="{% url 'targets' %}">View all targets</a></p>
+        <div ng-if="frequenttargets.length">
+        <h4>
+            Most built targets
+        </h4>
+        <ul class="unstyled configuration-list">
+          <li ng-repeat="t in frequenttargets">
+            <label class="checkbox">
+              <input type="checkbox" ng-model="mostBuiltTargets[t]">{[t]}
+            </label>
+          </li>
+        </ul>
+        <button class="btn btn-large btn-primary" ng-disabled="selectedMostBuildTargets()">Build selected targets</button>
         </div>
+    </div>
+
+    <!-- project configuration -->
+    <div id="machine-distro" class="well well-transparent span4">
+      <h3>
+        Project machine
+        <i class="icon-question-sign get-help heading-help" title="The machine is the hardware for which you want to build. You can only set one machine per project"></i>
+      </h3>
+      <p class="lead" id="select-machine-opposite">
+        {[machine.name]}<i id="change-machine" class="icon-pencil" ng-click="toggle('#select-machine')" tooltip="Change"></i>
+      </p>
+      <div id="select-machine" style="display: none">
+        <div class="alert alert-info">
+          <strong>Machine changes have a big impact on build outcome.</strong>
+              You cannot really compare the builds for the new machine with the previous ones.
+        </div>
+        <form ng-submit="edit('#select-machine')" class="input-append">
+              <input type="text" id="machine" autocomplete="off" ng-model="machineName" typeahead="m.name for m in getSuggestions('machines', $viewValue)"/>
+              <input type="submit" id="apply-change-machine" class="btn" type="button" ng-disabled="machineName == machine.name || machineName.length == 0" value="Save"></input>
+              <input type="reset" id="cancel-machine" class="btn btn-link" ng-click="toggle('#select-machine')" value="Cancel"></input>
+              {% csrf_token %}
+        </form>
+        <p><a href="{% url 'machines' %}" class="link">View all machines</a></p>
+      </div>
+      <p class="link-action">
+            <a href="{% url 'projectconf' project.id %}" class="link">Edit configuration variables</a>
+            <i data-original-title="You can set other project configuration options here. Each option, like everything else in the build system, is a variable - value pair" class="icon-question-sign get-help heading-help" title=""></i>
+			</p>
+    </div>
+  </div>
+
+
+  <h2>Project details</h2>
+
+  <!-- alerts section 3 -->
+  <div ng-repeat="a in zone3alerts">
+    <div class="alert alert-dismissible lead" role="alert" ng-class="a.type"><button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">&times;</span></button>
+      <span ng-bind-html="a.text"></span>
+    </div>
+  </div>
+
+
+  <div id="project-details" class="well well-transparent">
+    <h3>Project name</h3>
+    <p class="lead" id="change-project-name-opposite">
+      <span >{[project.name]}</span>
+      <i class="icon-pencil" ng-click="toggle('#change-project-name')" tooltip="Change"></i>
+    </p>
+    <div id="change-project-name" style="display:none;">
+      <form ng-submit="edit('#change-project-name')" class="input-append">
+        <input type="text" class="input-xlarge" id="type-project-name" ng-model="projectName">
+        <input type="submit" class="btn" value="Save" ng-disabled="project.name == projectName"/>
+        <input type="reset" class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-name')">
+     </form>
+    </div>
+
+
+    <h3>
+      Release
+      <i class="icon-question-sign get-help heading-help" title="The version of the build system you want to use"></i>
+    </h3>
+    <p class="lead" id="change-project-version-opposite">
+      <span id="project-version">{[project.release.name]}</span>
+      <i id="change-version" class="icon-pencil" ng-click="toggle('#change-project-version')" tooltip="Change"></i>
+    </p>
+    <div class="div-inline" id="change-project-version" style="display:none;">
+      <form ng-submit="test('#change-project-version')" class="input-append">
+        <select id="select-version" ng-model="projectVersion">
+          <option ng-repeat="r in releases" value="{[r.id]}" ng-selected="r.id == project.release.id">{[r.name]}</option>
+        </select>
+        <input type="submit" class="btn" style="margin-left:5px;" value="Save" ng-disabled="project.release.id == projectVersion"/>
+        <input type="reset"  class="btn btn-link" value="Cancel" ng-click="toggle('#change-project-version')" ng-disabled="project.release.id == projectVersion"/>
+
+      </form>
+    </div>
+  </div>
+
+<!-- end main -->
 </div>
 
-          {% endfor %}
 
-    </div>
+<!-- load application logic !-->
+<script src="{% static "js/projectapp.js" %}"></script>
 
+<!-- dump initial data for use in the angular app -->
+<script>
+angular.element(document).ready(function() {
+  scope = angular.element("#main").scope();
+  scope.urls = {};
+  scope.urls.xhr_build = "{% url 'xhr_projectbuild' project.id %}";
+  scope.urls.xhr_edit = "{% url 'xhr_projectedit' project.id %}";
+  scope.urls.xhr_datatypeahead = "{% url 'xhr_datatypeahead' %}";
+  scope.urls.layers = "{% url 'layers' %}";
+  scope.urls.targets = "{% url 'targets' %}";
+  scope.urls.importlayer = "{% url 'importlayer'%}"
+  scope.project = {{prj|safe}};
+  scope.builds = {{builds|safe}};
+  scope.layers = {{layers|safe}};
+  scope.targets = {{targets|safe}};
+  scope.frequenttargets = {{freqtargets|safe}};
+  scope.machine = {{machine|safe}};
+  scope.releases = {{releases|safe}};
 
+  scope.zone1alerts = [];
+  scope.zone2alerts = [];
+  scope.zone3alerts = [];
 
-<!-- Lifted from build.html -->
-          {% for build in builds %}
-<div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
-        <div class="row-fluid">
-            <div class="lead span5">
-                {%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}
-    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-                <a href="{%url 'builddashboard' build.pk%}" class="{%if build.outcome == build.SUCCEEDED %}success{%else%}error{%endif%}">
-    {% endif %}
-                <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|naturaltime}})</span>
-    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-                </a>
-    {% endif %}
-            </div>
-    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-            <div class="span2 lead">
-    {% if  build.errors_no %}
-                <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}#errors" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
-    {% endif %}
-            </div>
-            <div class="span2 lead">
-    {% if  build.warnings_no %}
-                <i class="icon-warning-sign yellow"></i> <a href="{%url 'builddashboard' build.pk%}#warnings" class="warning">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>
-    {% endif %}
-            </div >
-            <div class="lead pull-right">
-                Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
-            </div>
-    {%endif%}{%if build.outcome == build.IN_PROGRESS %}
-            <div class="span4">
-                <div class="progress" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
-                    <div style="width: {{build.completeper}}%;" class="bar"></div>
-                </div>
-            </div>
-            <div class="lead pull-right">ETA: in {{build.eta|naturaltime}}</div>
-    {%endif%}
-        </div>
-    </div>
-          {% endfor %}
-<!-- end of lift-->
-        {%endif%}
+  scope.mostBuiltTargets = {};
 
-            <h2 class="air">Project configuration</h2>
+  scope.executeCommands();
+  scope.validateData();
 
-            <div class="row-fluid">
+  scope.$digest();
 
-                <div id="layer-container" class="well well-transparent span4">
-                    <h3>
-                        Add layers
-                        <i data-original-title="OpenEmbedded organises metadata into modules called 'layers'. Layers allow you to isolate different types of customizations from each other. <a href='http://www.yoctoproject.org/docs/1.6.1/dev-manual/dev-manual.html#understanding-and-creating-layers' target='_blank'>More on layers</a>" class="icon-question-sign get-help heading-help" title=""></i>
-                    </h3>
-                    <form style="margin-top:20px;">
-                        <div class="input-append">
-                            <input class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-provide="typeahead" data-source="" data-minlength="1" data-autocomplete="off" type="text">
-                            <button id="add-layer" class="btn" disabled="">Add</button>
-                        </div>
-                        <div id="import-alert" class="alert alert-info" style="display:none;">
-                            Toaster does not know about this layer. Please <a href="#">import it</a>
-                        </div>
-                        <div id="dependency-alert" class="alert alert-info" style="display:none;">
-                            <p><strong>meta-tizen</strong> depends on the layers below. Check the ones you want to add: </p>
-                            <ul class="unstyled">
-    {% for f in layer_dependency %}
-                                <li>
-                                    <label class="checkbox">
-                                        <input checked="checked" type="checkbox">
-                                        meta-ruby
-                                    </label>
-                                </li>
-    {% endfor %}
-                            </ul>
-                            <button id="add-layer-dependencies" class="btn btn-info add-layer">Add layers</button>
-                        </div>
+  });
+</script>
 
-                        <p><a href="{% url 'importlayer' %}">Import your layer</a> | <a href="{% url 'layers'%}">View all layers</a></p>
-                    </form>
-
-                    <h4 class="air">
-                        Added layers
-                        <span class="muted counter">{{project.projectlayer_set.count}}</span>
-                        <i data-original-title="Your added layers will be listed in this same order in your <code>bblayers.conf</code> file" class="icon-question-sign get-help heading-help" title=""></i>
-                    </h4>
-                    <ul class="unstyled configuration-list">
-            {% for pl in project.projectlayer_set.all %}
-                        <li>
-                            <a href="#">{{pl.layercommit.layer.name}} (<span class="layer-version">{{pl.layercommit.layer.layer_index_url}}</span>)</a>
-                {% if pl.optional %}
-                            <i title="" data-original-title="" class="icon-trash" id="del-layer-icon" x-data="{{pl.pk}}"></i>
-                {% endif %}
-                        </li>
-            {% endfor %}
-                    </ul>
-                </div>
-
-                <div id="target-container" class="well well-transparent span4">
-                    <h3>
-                        Add targets
-                        <i data-original-title="A target is what you want to build, usually an image recipe that produces a root file system" class="icon-question-sign get-help heading-help" title=""></i>
-                    </h3>
-                    <form style="margin-top:20px;">
-                        <div class="input-append">
-                            <input id="target" class="input-xlarge" autocomplete="off" placeholder="Type a target name" data-provide="typeahead" data-source="" data-minlength="1" data-autocomplete="off" type="text">
-                            <button id="add-target-button" class="btn" type="button">Add</button>
-                        </div>
-
-                        <p><a href="{% url 'targets' %}" class="link">View all targets</a></p>
-                    </form>
-                    <h4 class="air">
-                        Added targets
-                        <span id="target-count" class="muted counter">{{project.projecttarget_set.count}}</span>
-                    </h4>
-                    <ul class="unstyled configuration-list" id="target-list">
-        {% for target in project.projecttarget_set.all %}
-            {% if target %}
-                        <li>
-                            <a href="#">{{target.target}}{% if target.task%} (target.task){%endif%}</a>
-                {% if target.notprovided %}
-                            <i title="" data-original-title="" id="msg1" class="icon-exclamation-sign get-help-yellow" data-title="<strong>Target may not be provided</strong>" data-content="From the layer information it currently has, Toaster thinks this target is not provided by any of your added layers. If a target is not provided by one of your added layers, the build will fail.<h5>What Toaster suggests</h5><p>The <a href='#'>meta-abc</a> and <a href='#'>meta-efg</a> layers provide core-image-notprovided. You could add one of them to your project.</p><button class='btn btn-block'>Add meta-abc</button><button class='btn btn-block'>Add meta-efg</button><button id='dismiss1' class='btn btn-block btn-info'>Stop showing this message</button>"></i>
-                    {% elif target.notknown %}
-                            <i title="" data-original-title="" id="msg2" class="icon-exclamation-sign get-help-yellow" data-title="<strong>Target may not be provided</strong>" data-content="From the layer information it currently has, Toaster thinks this target is not provided by any of your added layers. If a target is not provided by one of your added layers, the build will fail.<h5>What Toaster suggests</h5><p>Review your added layers to make sure one of them provides core-image-unknown. Clicking on a layer name will give you all the information Toaster has about the layer. </p> <button class='btn btn-block btn-info'>Stop showing this message</button>"></i>
-                            {% endif %}
-                            <i title="" data-original-title="" class="icon-trash" id="del-target-icon" x-data="{{target.pk}}"></i>
-                        </li>
-            {% endif %}
-        {% endfor %}
-
-
-                    </ul>
-                </div>
-
-                <div class="well well-transparent span4">
-
-                    <h3>
-                        Project machine
-                        <i class="icon-question-sign get-help heading-help" title="The machine is the hardware for which you want to build. You can only set one machine per project"></i>
-                    </h3>
-                    <p class="lead" id="selected-machine"> {{machine}}
-                      <i id="change-machine" class="icon-pencil"></i>
-                    </p>
-                    <form id="select-machine">
-                        <div class="alert alert-info">
-                            <strong>Machine changes have a big impact on build outcome.</strong>
-                            You cannot really compare the builds for the new machine with the previous ones.
-                        </div>
-                        <div class="input-append">
-                            <input type="text" id="machine" autocomplete="off" value="qemux86" data-provide="typeahead"
-                            data-minLength="1"
-                            data-autocomplete="off"
-                            data-source='[
-                            ]'>
-                            <button id="apply-change-machine" class="btn" type="button">Save</button>
-                            <a href="#" id="cancel-machine" class="btn btn-link">Cancel</a>
-                        </div>
-                        <p><a href="{% url 'machines' %}" class="link">View all machines</a></p>
-                    </form>
-                    <p class="link-action">
-                        <a href="{% url 'projectconf' project.id %}" class="link">Edit configuration variables</a>
-                        <i class="icon-question-sign get-help heading-help" title="You can set other project configuration options here. Each option, like everything else in the build system, is a variable - value pair"></i>
-                    </p>
-
-                </div>
-
-
-            </div>
-
-            <h2>Project details</h2>
-
-            <div class="well well-transparent">
-                <h3>Project name</h3>
-                <p class="lead">
-                    {{project.name}}
-                    <i title="" data-original-title="" class="icon-pencil"></i>
-                </p>
-                <h3>Project owner</h3>
-                <p class="lead">
-                    {{puser.username}}
-                    <i title="" data-original-title="" class="icon-pencil"></i>
-                </p>
-                <h3>Owner's email</h3>
-                <p class="lead">
-            {{puser.email}}
-                    <i title="" data-original-title="" class="icon-pencil"></i>
-                </p>
-                <h3>Yocto Project version</h3>
-                <p class="lead">
-                    {{project.release.name}} - {{project.release.description}}
-                    <i title="" data-original-title="" class="icon-pencil"></i>
-                </p>
-            </div>
 {% endblock %}

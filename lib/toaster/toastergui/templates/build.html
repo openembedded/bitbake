@@ -127,6 +127,13 @@
               <a href="{%url "builddashboard" build.id%}#images">{{fstypes|get_dict_value:build.id}}</a>
               {% endif %}
             </td>
+   {% if MANAGED %}
+            <td class="project">
+            {% if build.project %}
+                <a href="{% url 'project' build.project.id %}">{{build.project.name}}</a>
+            {% endif %}
+            </td>
+   {% endif %}
         </tr>
 
         {% endfor %}

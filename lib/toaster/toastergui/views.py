@@ -387,6 +387,17 @@ def builds(request):
                 ]
             }
 
+    if toastermain.settings.MANAGED:
+        context['tablecols'].append(
+            {'name': 'Project', 'clclass': 'project',
+             'filter': {'class': 'project',
+                        'label': 'Project:',
+                        'options':  map(lambda x: (x.name,'',x.build_set.filter(outcome__lt=Build.IN_PROGRESS).count()), Project.objects.all()),
+
+                       }
+            })
+
+
     response = render(request, template, context)
     _save_parameters_cookies(response, pagesize, orderby, request)
     return response
@@ -1799,7 +1810,7 @@ if toastermain.settings.MANAGED:
     from django.contrib.auth.decorators import login_required
 
     from orm.models import Project, ProjectLayer, ProjectTarget, ProjectVariable
-    from orm.models import Branch, LayerSource, ToasterSetting, Release, Machine
+    from orm.models import Branch, LayerSource, ToasterSetting, Release, Machine, LayerVersionDependency
     from bldcontrol.models import BuildRequest
 
     import traceback
@@ -1831,7 +1842,7 @@ if toastermain.settings.MANAGED:
             # render new project page
             return render(request, template, context)
         elif request.method == "POST":
-            mandatory_fields = ['projectname', 'email', 'username', 'projectversion']
+            mandatory_fields = ['projectname', 'projectversion']
             try:
                 # make sure we have values for all mandatory_fields
                 if reduce( lambda x, y: x or y, map(lambda x: len(request.POST.get(x, '')) == 0, mandatory_fields)):
@@ -1840,9 +1851,9 @@ if toastermain.settings.MANAGED:
             ", ".join([x for x in mandatory_fields if len(request.POST.get(x, '')) == 0 ]))
 
                 if not request.user.is_authenticated():
-                    user = authenticate(username = request.POST['username'], password = 'nopass')
+                    user = authenticate(username = request.POST.get('username', '_anonuser'), password = 'nopass')
                     if user is None:
-                        user = User.objects.create_user(username = request.POST['username'], email = request.POST['email'], password = "nopass")
+                        user = User.objects.create_user(username = request.POST.get('username', '_anonuser'), email = request.POST.get('email', ''), password = "nopass")
 
                         user = authenticate(username = user.username, password = 'nopass')
                     login(request, user)
@@ -1852,7 +1863,7 @@ if toastermain.settings.MANAGED:
                     release = Release.objects.get(pk = request.POST['projectversion']))
                 prj.user_id = request.user.pk
                 prj.save()
-                return redirect(reverse(project, args = (prj.pk,)))
+                return redirect(reverse(project, args = (prj.pk,)) + "#/newproject")
 
             except (IntegrityError, BadParameterException) as e:
                 # fill in page with previously submitted values
@@ -1864,6 +1875,40 @@ if toastermain.settings.MANAGED:
                 return render(request, template, context)
 
         raise Exception("Invalid HTTP method for this page")
+
+
+    def _project_recent_build_list(prj):
+        # build requests not yet started
+        return (map(lambda x: {
+                "id":  x.pk,
+                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
+                "status": x.get_state_display(),
+            }, prj.buildrequest_set.filter(state__lt = BuildRequest.REQ_INPROGRESS).order_by("-pk")) +
+        # build requests started, but with no build yet
+            map(lambda x: {
+                "id":  x.pk,
+                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
+                "status": x.get_state_display(),
+            }, prj.buildrequest_set.filter(state = BuildRequest.REQ_INPROGRESS, build = None).order_by("-pk")) +
+        # build requests that failed
+            map(lambda x: {
+                "id":  x.pk,
+                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
+                "status": x.get_state_display(),
+                "errors": map(lambda y: {"type": y.errtype, "msg": y.errmsg, "tb": y.traceback}, x.brerror_set.all()),
+            }, prj.buildrequest_set.filter(state = BuildRequest.REQ_FAILED).order_by("-pk")) +
+        # and already made builds
+            map(lambda x: {
+                "id": x.pk,
+                "targets": map(lambda y: {"target": y.target }, x.target_set.all()),
+                "status": x.get_outcome_display(),
+                "completed_on" : x.completed_on.strftime('%s')+"000",
+                "build_time" : (x.completed_on - x.started_on).total_seconds(),
+                "build_page_url" : reverse('builddashboard', args=(x.pk,)),
+                "completeper": x.completeper(),
+                "eta": x.eta().ctime(),
+            }, prj.build_set.all()))
+
 
     # Shows the edit project page
     def project(request, pid):
@@ -1881,27 +1926,40 @@ if toastermain.settings.MANAGED:
         # we use implicit knowledge of the current user's project to filter layer information, e.g.
         request.session['project_id'] = prj.id
 
+        from collections import Counter
+        freqtargets = []
+        try:
+            freqtargets += map(lambda x: x.target, reduce(lambda x, y: x + y,   map(lambda x: list(x.target_set.all()), Build.objects.filter(project = prj, outcome__lt = Build.IN_PROGRESS))))
+            freqtargets += map(lambda x: x.target, reduce(lambda x, y: x + y,   map(lambda x: list(x.brtarget_set.all()), BuildRequest.objects.filter(project = prj, state__lte = BuildRequest.REQ_QUEUED))))
+        except TypeError:
+            pass
+        freqtargets = Counter(freqtargets)
+        freqtargets = sorted(freqtargets, key = lambda x: freqtargets[x])
+
         context = {
             "project" : prj,
+            "completedbuilds": Build.objects.filter(project = prj).exclude(outcome = Build.IN_PROGRESS),
+            "prj" : json.dumps({"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name}}),
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
-            "buildrequests" : map(lambda x: (x, {"machine" : x.brvariable_set.filter(name="MACHINE")[0]}), prj.buildrequest_set.filter(state__lt = BuildRequest.REQ_INPROGRESS).order_by("-pk")),
-            "builds" : prj.build_set.all(),
-            "puser": puser,
+            "builds" : json.dumps(_project_recent_build_list(prj)),
+            "layers" :  json.dumps(map(lambda x: {"id": x.layercommit.pk, "name" : x.layercommit.layer.name, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)), "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all())),
+            "targets" : json.dumps(map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all())),
+            "freqtargets": json.dumps(freqtargets),
+            "releases": json.dumps(map(lambda x: {"id": x.pk, "name": x.name}, Release.objects.all())),
         }
         try:
-            context["machine"] = prj.projectvariable_set.get(name="MACHINE").value
+            context["machine"] = json.dumps({"name": prj.projectvariable_set.get(name="MACHINE").value})
         except ProjectVariable.DoesNotExist:
-            context["machine"] = "-- not set yet"
-
+            context["machine"] = json.dumps(None)
         try:
             context["distro"] = prj.projectvariable_set.get(name="DISTRO").value
         except ProjectVariable.DoesNotExist:
             context["distro"] = "-- not set yet"
 
-
-        return render(request, template, context)
-
-    import json
+        response = render(request, template, context)
+        response['Cache-Control'] = "no-cache, must-revalidate, no-store"
+        response['Pragma'] = "no-cache"
+        return response
 
     def xhr_projectbuild(request, pid):
         try:
@@ -1909,14 +1967,28 @@ if toastermain.settings.MANAGED:
                 raise BadParameterException("invalid method")
             prj = Project.objects.get(id = pid)
 
-            if prj.projecttarget_set.count() == 0:
-                raise BadParameterException("no targets selected")
 
-            br = prj.schedule_build()
+            if 'buildCancel' in request.POST:
+                for i in request.POST['buildCancel'].strip().split(" "):
+                    br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_QUEUED)
+                    print "selected for delete", br.pk
+                    br.delete()
+                    print "selected for delete", br.pk
+
+            if 'targets' in request.POST:
+                ProjectTarget.objects.filter(project = prj).delete()
+                for t in request.POST['targets'].strip().split(" "):
+                    if ":" in t:
+                        target, task = t.split(":")
+                    else:
+                        target = t
+                        task = ""
+                    ProjectTarget.objects.create(project = prj, target = target, task = task)
+
+                br = prj.schedule_build()
+
             return HttpResponse(json.dumps({"error":"ok",
-                "brtarget" : map(lambda x: x.target, br.brtarget_set.all()),
-                "machine" : br.brvariable_set.get(name="MACHINE").value,
-
+                "builds" : _project_recent_build_list(prj),
             }), content_type = "application/json")
         except Exception as e:
             return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
@@ -1924,41 +1996,125 @@ if toastermain.settings.MANAGED:
     def xhr_projectedit(request, pid):
         try:
             prj = Project.objects.get(id = pid)
-            # add targets
-            if 'targetAdd' in request.POST:
-                for t in request.POST['targetAdd'].strip().split(" "):
-                    if ":" in t:
-                        target, task = t.split(":")
-                    else:
-                        target = t
-                        task = ""
-
-                    pt, created = ProjectTarget.objects.get_or_create(project = prj, target = target, task = task)
-            # remove targets
-            if 'targetDel' in request.POST:
-                for t in request.POST['targetDel'].strip().split(" "):
-                    pt = ProjectTarget.objects.get(pk = int(t)).delete()
-
             # add layers
+            if 'layerAdd' in request.POST:
+                for lc in Layer_Version.objects.filter(pk__in=request.POST['layerAdd'].split(",")):
+                    ProjectLayer.objects.get_or_create(project = prj, layercommit = lc)
 
             # remove layers
+            if 'layerDel' in request.POST:
+                for t in request.POST['layerDel'].strip().split(" "):
+                    pt = ProjectLayer.objects.get(project = prj, layercommit_id = int(t)).delete()
+
+            if 'projectName' in request.POST:
+                prj.name = request.POST['projectName']
+                prj.save();
+
+
+            if 'projectVersion' in request.POST:
+                prj.release = Release.objects.get(pk = request.POST['projectVersion'])
+                prj.save()
+                # we need to change the layers
+                for i in prj.projectlayer_set.all():
+                    # find and add a similarly-named layer from the same layer source on the new branch
+                    lv = Layer_Version.objects.filter(layer_source = i.layercommit.layer_source, layer__name = i.layercommit.layer.name, up_branch__in = Branch.objects.filter(name = prj.release.branch))
+                    if lv.count() == 1:
+                        ProjectLayer.objects.get_or_create(project = prj, layercommit = lv[0])
+                    # get rid of the old entry
+                    i.delete()
 
             # return all project settings
             return HttpResponse(json.dumps( {
                 "error": "ok",
-                "layers": map(lambda x: (x.layercommit.layer.name, x.layercommit.layer.layer_index_url), prj.projectlayer_set.all()),
-                "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
+                "layers" :  map(lambda x: {"id": x.layercommit.pk, "name" : x.layercommit.layer.name, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)), "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all()),
+                "builds" : _project_recent_build_list(prj),
                 "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
+                "prj": {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name}},
                 }), content_type = "application/json")
 
         except Exception as e:
             return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+
+
+    from django.views.decorators.csrf import csrf_exempt
+    @csrf_exempt
+    def xhr_datatypeahead(request):
+        try:
+            if request.GET['type'] == "layers":
+                queryset_all = Layer_Version.objects.all()
+                if 'project_id' in request.session:
+                    prj = Project.objects.get(pk = request.session['project_id'])
+                    queryset_all = queryset_all.filter(up_branch__in = Branch.objects.filter(name = prj.release.name)).exclude(pk__in = map(lambda x: x.layercommit_id, prj.projectlayer_set.all()))
+                queryset_all = queryset_all.filter(layer__name__icontains=request.GET.get('value',''))
+                return HttpResponse(json.dumps( { "error":"ok",
+                    "list" : map( lambda x: {"id": x.pk, "name": x.layer.name, "detail": "(" + x.layer.layer_source.name + (")" if x.up_branch == None else " | "+x.up_branch.name+")")},
+                            queryset_all[:8])
+                    }), content_type = "application/json")
+
+            if request.GET['type'] == "layerdeps":
+                queryset_all = LayerVersionDependency.objects.filter(layer_version_id = request.GET['value'])
+
+                if 'project_id' in request.session:
+                    prj = Project.objects.get(pk = request.session['project_id'])
+                    queryset_all = queryset_all.exclude(depends_on__in = map(lambda x: x.layercommit, prj.projectlayer_set.all()))
+
+                queryset_all.order_by("-up_id");
+
+                return HttpResponse(json.dumps( { "error":"ok",
+                    "list" : map(
+                        lambda x: {"id": x.pk, "name": x.layer.name, "detail": "(" + x.layer.layer_source.name + (")" if x.up_branch == None else " | "+x.up_branch.name+")")},
+                        map(lambda x: x.depends_on, queryset_all))
+                    }), content_type = "application/json")
+
+            if request.GET['type'] == "versionlayers":
+                if not 'project_id' in request.session:
+                    raise Exception("This call cannot makes no sense outside a project context")
+
+                retval = []
+                prj = Project.objects.get(pk = request.session['project_id'])
+                for i in prj.projectlayer_set.all():
+                    lv = Layer_Version.objects.filter(layer_source = i.layercommit.layer_source, layer__name = i.layercommit.layer.name, up_branch__in = Branch.objects.filter(name = Release.objects.get(pk=request.GET['value']).branch))
+                    if lv.count() != 1:
+                        retval.append(i)
+
+                return HttpResponse(json.dumps( {"error":"ok",
+                    "list": map(
+                        lambda x: {"id": x.layercommit.pk, "name": x.layercommit.layer.name, "detail": "(" + x.layercommit.layer.layer_source.name + (")" if x.layercommit.up_branch == None else " | "+x.layercommit.up_branch.name+")")},
+                        retval) }), content_type = "application/json")
+
+
+            if request.GET['type'] == "targets":
+                queryset_all = Recipe.objects.all()
+                if 'project_id' in request.session:
+                    queryset_all = queryset_all.filter(layer_version__layer__in = map(lambda x: x.layercommit.layer, ProjectLayer.objects.filter(project_id=request.session['project_id'])))
+                return HttpResponse(json.dumps({ "error":"ok",
+                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
+                        queryset_all.filter(name__istartswith=request.GET.get('value',''))[:8]),
+
+                    }), content_type = "application/json")
+
+            if request.GET['type'] == "machines":
+                queryset_all = Machine.objects.all()
+                if 'project_id' in request.session:
+                    queryset_all = queryset_all.filter(layer_version__layer__in = map(lambda x: x.layercommit.layer, ProjectLayer.objects.filter(project_id=request.session['project_id'])))
+                return HttpResponse(json.dumps({ "error":"ok",
+                    "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
+                        queryset_all.filter(name__istartswith=request.GET.get('value',''))[:8]),
+
+                    }), content_type = "application/json")
+
+            raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
+        except Exception as e:
+            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+
+
 
     def importlayer(request):
         template = "importlayer.html"
         context = {
         }
         return render(request, template, context)
+
 
     def layers(request):
         template = "layers.html"
@@ -2220,7 +2376,7 @@ if toastermain.settings.MANAGED:
         # boilerplate code that takes a request for an object type and returns a queryset
         # for that object type. copypasta for all needed table searches
         (filter_string, search_term, ordering_string) = _search_tuple(request, Build)
-        queryset_all = Build.objects.all.exclude(outcome = Build.IN_PROGRESS)
+        queryset_all = Build.objects.all().exclude(outcome = Build.IN_PROGRESS)
         queryset_with_search = _get_queryset(Build, queryset_all, None, search_term, ordering_string, '-completed_on')
         queryset = _get_queryset(Build, queryset_all, filter_string, search_term, ordering_string, '-completed_on')
 
@@ -2386,6 +2542,9 @@ else:
         raise Exception("page not available in interactive mode")
 
     def xhr_projectedit(request, pid):
+        raise Exception("page not available in interactive mode")
+
+    def xhr_datatypeahead(request):
         raise Exception("page not available in interactive mode")
 
     def importlayer(request):
