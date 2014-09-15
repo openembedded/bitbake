@@ -263,7 +263,7 @@ class VariableHistory(object):
                     flag = ''
                 o.write("#   %s %s:%s%s\n#     %s\"%s\"\n" % (event['op'], event['file'], event['line'], display_func, flag, re.sub('\n', '\n#     ', event['detail'])))
             if len(history) > 1:
-                o.write("# computed:\n")
+                o.write("# pre-expansion value:\n")
                 o.write('#   "%s"\n' % (commentVal))
         else:
             o.write("#\n# $%s\n#   [no history recorded]\n#\n" % var)
