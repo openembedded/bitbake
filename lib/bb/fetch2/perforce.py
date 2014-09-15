@@ -103,22 +103,19 @@ class Perforce(FetchMethod):
     def urldata_init(self, ud, d):
         (host, path, user, pswd, parm) = Perforce.doparse(ud.url, d)
 
-        # If a label is specified, we use that as our filename
-
-        if "label" in parm:
-            ud.localfile = "%s.tar.gz" % (parm["label"])
-            return
-
         base = path
         which = path.find('/...')
         if which != -1:
-            base = path[:which-1]
+            base = path[:which]
 
         base = self._strip_leading_slashes(base)
+        
+        if "label" in parm:
+            version = parm["label"]
+        else:
+            version = Perforce.getcset(d, path, host, user, pswd, parm)
 
-        cset = Perforce.getcset(d, path, host, user, pswd, parm)
-
-        ud.localfile = data.expand('%s+%s+%s.tar.gz' % (host, base.replace('/', '.'), cset), d)
+        ud.localfile = data.expand('%s+%s+%s.tar.gz' % (host, base.replace('/', '.'), version), d)
 
     def download(self, ud, d):
         """
