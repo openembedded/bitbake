@@ -193,8 +193,9 @@ def fork_off_task(cfg, data, workerdata, fn, task, taskname, appends, taskdepdat
                     logger.critical(str(exc))
                 os._exit(1)
             try:
-                if not cfg.dry_run:
-                    return bb.build.exec_task(fn, taskname, the_data, cfg.profile)
+                if cfg.dry_run:
+                    return 0
+                return bb.build.exec_task(fn, taskname, the_data, cfg.profile)
             except:
                 os._exit(1)
         if not profiling:
