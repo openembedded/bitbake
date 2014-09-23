@@ -41,7 +41,7 @@ from bb import ui
 from bb import server
 from bb import cookerdata
 
-__version__ = "1.23.2"
+__version__ = "1.24.0"
 logger = logging.getLogger("BitBake")
 
 # Python multiprocessing requires /dev/shm
