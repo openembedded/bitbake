@@ -585,15 +585,39 @@ class LayerIndexLayerSource(LayerSource):
                 + "?filter=branch:%s" % "OR".join(map(lambda x: str(x.up_id), Branch.objects.filter(layer_source = self)))
             )
         for lbi in layerbranches_info:
-            lv, created = Layer_Version.objects.get_or_create(layer_source = self, up_id = lbi['id'])
+            lv, created = Layer_Version.objects.get_or_create(layer_source = self,
+                    up_id = lbi['id'],
+                    layer=Layer.objects.get(layer_source = self, up_id = lbi['layer'])
+                )
 
             lv.up_date = lbi['updated']
-            lv.layer = Layer.objects.get(layer_source = self, up_id = lbi['layer'])
             lv.up_branch = Branch.objects.get(layer_source = self, up_id = lbi['branch'])
             lv.branch = lbi['actual_branch']
             lv.commit = lbi['vcs_last_rev']
             lv.dirpath = lbi['vcs_subdir']
             lv.save()
+
+        # update layer dependencies
+        layerdependencies_info = _get_json_response(apilinks['layerDependencies'])
+        dependlist = {}
+        for ldi in layerdependencies_info:
+            try:
+                lv = Layer_Version.objects.get(layer_source = self, up_id = ldi['layerbranch'])
+            except Layer_Version.DoesNotExist as e:
+                continue
+
+            if lv not in dependlist:
+                dependlist[lv] = []
+            try:
+                dependlist[lv].append(Layer_Version.objects.get(layer_source = self, layer__up_id = ldi['dependency'], up_branch = lv.up_branch))
+            except Layer_Version.DoesNotExist as e:
+                print "Cannot find layer version ", self, ldi['dependency'], lv.up_branch
+                raise e
+
+        for lv in dependlist:
+            LayerVersionDependency.objects.filter(layer_version = lv).delete()
+            for lvd in dependlist[lv]:
+                LayerVersionDependency.objects.get_or_create(layer_version = lv, depends_on = lvd)
 
 
         # update machines
@@ -601,9 +625,8 @@ class LayerIndexLayerSource(LayerSource):
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
         for mi in machines_info:
-            mo, created = Machine.objects.get_or_create(layer_source = self, up_id = mi['id'])
+            mo, created = Machine.objects.get_or_create(layer_source = self, up_id = mi['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch']))
             mo.up_date = mi['updated']
-            mo.layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch'])
             mo.name = mi['name']
             mo.description = mi['description']
             mo.save()
@@ -613,10 +636,9 @@ class LayerIndexLayerSource(LayerSource):
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
         for ri in recipes_info:
-            ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'])
+            ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch']))
 
             ro.up_date = ri['updated']
-            ro.layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch'])
 
             ro.name = ri['pn']
             ro.version = ri['pv']
