@@ -371,6 +371,10 @@ class BBCooker:
 
         self.handleCollections( self.data.getVar("BBFILE_COLLECTIONS", True) )
 
+    def updateConfigOpts(self,options):
+        for o in options:
+            setattr(self.configuration, o, options[o])
+
     def runCommands(self, server, data, abort):
         """
         Run any queued asynchronous command

@@ -284,6 +284,7 @@ def main(server, eventHandler, params, tf = TerminalFilter):
 
     if not params.observe_only:
         params.updateFromServer(server)
+        params.updateToServer(server)
         cmdline = params.parseActions()
         if not cmdline:
             print("Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.")

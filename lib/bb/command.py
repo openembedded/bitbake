@@ -271,6 +271,10 @@ class CommandsSync:
     # we always take and leave the cooker in state.initial
     setFeatures.readonly = True
 
+    def updateConfig(self, command, params):
+        options = params[0]
+        command.cooker.updateConfigOpts(options)
+
 class CommandsAsync:
     """
     A class of asynchronous commands

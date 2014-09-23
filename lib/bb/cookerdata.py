@@ -69,6 +69,17 @@ class ConfigParameters(object):
             if bbpkgs:
                 self.options.pkgs_to_build.extend(bbpkgs.split())
 
+    def updateToServer(self, server):
+        options = {}
+        for o in ["abort", "tryaltconfigs", "force", "invalidate_stamp", 
+                  "verbose", "debug", "dry_run", "dump_signatures", 
+                  "debug_domains", "extra_assume_provided", "profile"]:
+            options[o] = getattr(self.options, o)
+
+        ret, error = server.runCommand(["updateConfig", options])
+        if error:
+                raise Exception("Unable to update the server configuration with local parameters: %s" % error)
+
     def parseActions(self):
         # Parse any commandline into actions
         action = {'action':None, 'msg':None}
