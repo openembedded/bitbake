@@ -230,10 +230,7 @@ class SimpleSettingsDialog (CrumbsDialog, SettingsUIHelper):
         self.configuration.sstatemirror = ""
         for mirror in self.sstatemirrors_list:
             if mirror[1] != "" and mirror[2].startswith("file://"):
-                if mirror[1].endswith("\\1"):
-                    smirror = mirror[2] + " " + mirror[1] + " \\n "
-                else:
-                    smirror = mirror[2] + " " + mirror[1] + "\\1 \\n "
+                smirror = mirror[2] + " " + mirror[1] + " \\n "
                 self.configuration.sstatemirror += smirror
         self.configuration.bbthread = self.bb_spinner.get_value_as_int()
         self.configuration.pmake = self.pmake_spinner.get_value_as_int()
