@@ -38,8 +38,17 @@ singleton = None
 class PRServer(SimpleXMLRPCServer):
     def __init__(self, dbfile, logfile, interface, daemon=True):
         ''' constructor '''
-        SimpleXMLRPCServer.__init__(self, interface,
-                                    logRequests=False, allow_none=True)
+        import socket
+        try:
+            SimpleXMLRPCServer.__init__(self, interface,
+                                        logRequests=False, allow_none=True)
+        except socket.error:
+            ip=socket.gethostbyname(interface[0])
+            port=interface[1]
+            msg="PR Server unable to bind to %s:%s\n" % (ip, port)
+            sys.stderr.write(msg)
+            raise PRServiceConfigError
+
         self.dbfile=dbfile
         self.daemon=daemon
         self.logfile=logfile
