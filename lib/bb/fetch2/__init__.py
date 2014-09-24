@@ -1264,6 +1264,8 @@ class FetchMethod(object):
                     # items.  So, only do so for file:// entries.
                     if urldata.type == "file" and urldata.path.find("/") != -1:
                        destdir = urldata.path.rsplit("/", 1)[0]
+                       if urldata.parm.get('subdir') != None:
+                          destdir = urldata.parm.get('subdir') + "/" + destdir
                     else:
                        if urldata.parm.get('subdir') != None:
                           destdir = urldata.parm.get('subdir')

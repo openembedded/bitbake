@@ -444,6 +444,13 @@ class FetcherLocalTest(FetcherTest):
         tree = self.fetchUnpack(['file://dir/subdir/e'])
         self.assertEqual(tree, ['dir/subdir/e'])
 
+    def test_local_subdirparam(self):
+        tree = self.fetchUnpack(['file://a;subdir=bar'])
+        self.assertEqual(tree, ['bar/a'])
+
+    def test_local_deepsubdirparam(self):
+        tree = self.fetchUnpack(['file://dir/subdir/e;subdir=bar'])
+        self.assertEqual(tree, ['bar/dir/subdir/e'])
 
 class FetcherNetworkTest(FetcherTest):
 
