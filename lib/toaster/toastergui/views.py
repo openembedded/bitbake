@@ -742,7 +742,6 @@ class LazyEncoder(json.JSONEncoder):
         return super(LazyEncoder, self).default(obj)
 
 from toastergui.templatetags.projecttags import filtered_filesizeformat
-from django import template
 import os
 def _get_dir_entries(build_id, target_id, start):
     node_str = {
@@ -797,9 +796,7 @@ def _get_dir_entries(build_id, target_id, start):
                 # don't use resolved path from above, show immediate link-to
                 if o.sym_target_id != "" and o.sym_target_id != None:
                     entry['link_to'] = Target_File.objects.get(pk=o.sym_target_id).path
-            t = template.Template('{% load projecttags %} {{ size|filtered_filesizeformat }}')
-            c = template.Context({'size': o.size})
-            entry['size'] = str(t.render(c))
+            entry['size'] = filtered_filesizeformat(o.size)
             if entry['link_to'] != None:
                 entry['permission'] = node_str[o.inodetype] + o.permission
             else:
@@ -808,7 +805,10 @@ def _get_dir_entries(build_id, target_id, start):
             entry['group'] = o.group
             response.append(entry)
 
-        except:
+        except Exception as e:
+            print "Exception ", e
+            import traceback
+            traceback.print_exc(e)
             pass
 
     # sort by directories first, then by name
