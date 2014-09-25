@@ -239,11 +239,9 @@ class diskMonitor:
                 freeInode = st.f_favail
 
                 if minInode and freeInode < minInode:
-                    # Some fs formats' (e.g., btrfs) statvfs.f_files (inodes) is
-                    # zero, this is a feature of the fs, we disable the inode
-                    # checking for such a fs.
+                    # Some filesystems use dynamic inodes so can't run out
+                    # (e.g. btrfs). This is reported by the inode count being 0.
                     if st.f_files == 0:
-                        logger.info("Inode check for %s is unavaliable, will remove it from disk monitor" % path)
                         self.devDict[k][2] = None
                         continue
                     # Always show warning, the self.checked would always be False if the action is WARN
