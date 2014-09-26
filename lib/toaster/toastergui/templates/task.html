@@ -82,6 +82,9 @@
                             </td>
                             <td>
                                 <a href="{%url "task" match.build.pk match.pk%}">{{match.task_name}}</a>
+                                {% if task.get_description %}
+                                    <i class="icon-question-sign get-help hover-help" title="{{task.get_description}}"></i>
+                                {% endif %}
                             </td>
                             <td>
                                 <a href="{%url "task" match.build.pk match.pk%}">{{match.get_executed_display}}</a>
