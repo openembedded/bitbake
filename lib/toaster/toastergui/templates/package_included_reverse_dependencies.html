@@ -29,7 +29,7 @@
                                 <a href="{% url 'package_included_detail' build.id target.id reverse_dep.package_id %}">
                                     {{reverse_dep.package.name}}
                                 </a>
-                                <script>fmtAliasHelp("{{reverse_dep.name}}", "{{reverse_dep.alias}}", true)</script>
+                                <script>fmtAliasHelp("{{reverse_dep.package.name}}", "{{reverse_dep.alias}}", true)</script>
                             </td>
                             {% else %}
                             <td>
