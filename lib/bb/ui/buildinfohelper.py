@@ -69,6 +69,8 @@ class ORMWrapper(object):
             from bldcontrol.models import BuildEnvironment, BuildRequest
             br, be = brbe.split(":")
             buildrequest = BuildRequest.objects.get(pk = br)
+            buildrequest.build = build
+            buildrequest.save()
             build.project_id = buildrequest.project_id
             build.save()
 
@@ -939,7 +941,6 @@ class BuildInfoHelper(object):
         be.save()
         br = BuildRequest.objects.get(pk = br_id)
         br.state = BuildRequest.REQ_COMPLETED
-        br.build = self.internal_state['build']
         br.save()
 
 
