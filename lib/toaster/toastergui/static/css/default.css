@@ -59,7 +59,7 @@ td a { color: #333333; }
 td a:hover { color: #000000; text-decoration: underline; }
 
 /* Override default Twitter Bootstrap styles for tr.error */
-.table tbody tr.error > td { background-color: #FFFFFF; } /* override default Bootstrap behaviour */
+.table tbody tr.error > td { background-color: transparent; } /* override default Bootstrap behaviour */
 .table-hover tbody tr.error:hover > td { background-color: #F5F5F5;} /* override default Bootstrap behaviour */
 
 /* Right justify Bootstrap table columns for size fields */
