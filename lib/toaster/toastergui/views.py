@@ -2062,7 +2062,8 @@ if toastermain.settings.MANAGED:
 
                 return HttpResponse(json.dumps( { "error":"ok",
                     "list" : map(
-                        lambda x: {"id": x.pk, "name": x.layer.name, "detail": "(" + x.layer.layer_source.name + (")" if x.up_branch == None else " | "+x.up_branch.name+")")},
+                        lambda x: {"id": x.pk, "name": x.layer.name, "detail": "(" + x.layer.layer_source.name + (")" if x.up_branch == None else " | "+x.up_branch.name+")"),
+                                   "layerdetailurl" : reverse('layerdetails', args=(x.pk,))},
                         map(lambda x: x.depends_on, queryset_all))
                     }), content_type = "application/json")
 
@@ -2131,8 +2132,18 @@ if toastermain.settings.MANAGED:
         (filter_string, search_term, ordering_string) = _search_tuple(request, Layer_Version)
 
         queryset_all = Layer_Version.objects.all()
+        # mock an empty Project if we are outside project context
+        class _mockProject(object):
+            id = -1
+            class _mockManager(object):
+                def all(self):
+                    return []
+            projectlayer_set = _mockManager()
+        prj = _mockProject()
+
         if 'project_id' in request.session:
-            queryset_all = queryset_all.filter(up_branch__in = Branch.objects.filter(name = Project.objects.get(pk = request.session['project_id']).release.name))
+            prj = Project.objects.get(pk = request.session['project_id'])
+            queryset_all = queryset_all.filter(up_branch__in = Branch.objects.filter(name = prj.release.name))
 
         queryset_with_search = _get_queryset(Layer_Version, queryset_all, None, search_term, ordering_string, '-layer__name')
         queryset = _get_queryset(Layer_Version, queryset_all, filter_string, search_term, ordering_string, '-layer__name')
@@ -2142,6 +2153,8 @@ if toastermain.settings.MANAGED:
 
 
         context = {
+            'prj' : prj,
+            'projectlayerset' : json.dumps(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
             'objects' : layer_info,
             'objectname' : "layers",
             'default_orderby' : 'layer__name:+',
@@ -2164,7 +2177,7 @@ if toastermain.settings.MANAGED:
                     'filter': {
                         'class': 'layer',
                         'label': 'Show:',
-                        'options': map(lambda x: (x.name, 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
+                        'options': map(lambda x: (x.name + " layers", 'layer_source__pk:' + str(x.id), queryset_with_search.filter(layer_source__pk = x.id).count() ), LayerSource.objects.all()),
                     }
                 },
                 {   'name': 'Git repository URL',
@@ -2188,6 +2201,15 @@ if toastermain.settings.MANAGED:
                 {   'name': 'Add | Delete',
                     'dclass': 'span2',
                     'qhelp': "Add or delete layers to / from your project ",
+                    'filter': {
+                        'class': 'add-del-layers',
+                        'label': 'Show:',
+                        'options': [
+              ('Layers added to this project', "projectlayer__project:" + str(prj.id), queryset_with_search.filter(projectlayer__project = prj.id).count()),
+              ('Layers not added to this project', "projectlayer__project:NOT" + str(prj.id), queryset_with_search.exclude(projectlayer__project = prj.id).count()),
+                                   ]
+
+                    }
                 },
 
             ]

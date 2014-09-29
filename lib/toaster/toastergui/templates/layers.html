@@ -9,43 +9,63 @@
 {% block projectinfomain %}
                 <div class="page-header">
                     <h1>
-                        All layers
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with Yocto Project 1.7 'Dxxxx' that Toaster knows about. They include community-created layers suitable for use on top of OpenEmbedded Core and any layers you have imported"></i>
+  {% if request.GET.search and objects.paginator.count > 0  %}
+      {{objects.paginator.count}} layer{{objects.paginator.count|pluralize}} found
+  {%elif request.GET.search and objects.paginator.count == 0%}
+      No layer found
+  {%else%}
+      All layers
+  {%endif%}
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with " + {{project.release.name}} + " that Toaster knows about."></i>
                      </h1>
                 </div>
-                <!--div class="alert">
-                    <div class="input-append" style="margin-bottom:0px;">
-                        <input class="input-xxlarge" type="text" placeholder="Search layers" value="browser" />
-                        <a class="add-on btn">
-                            <i class="icon-remove"></i>
-                        </a>
-                        <button class="btn" type="button">Search</button>
-                        <a class="btn btn-link" href="#">Show all layers</a>
-                    </div>
-                </div-->
+
+  <div id="zone1alerts">
+
+  </div>
+
+
                 <div id="layer-added" class="alert alert-info lead" style="display:none;"></div>
-                <div id="layer-removed" class="alert alert-info lead" style="display:none;">
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    <strong>1</strong> layer deleted from <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>
-                </div>
 
 
-{% include "basetable_top.html" %}
+{% include "basetable_top_layers.html" %}
     {% for lv in objects %}
     <tr class="data">
             <td class="layer"><a href="{% url 'layerdetails' lv.id %}">{{lv.layer.name}}</a></td>
             <td class="description">{{lv.layer.summary}}</td>
             <td class="source"><a href="{% url 'layerdetails' lv.pk %}">{{lv.layer_source.name}}</a></td>
-            <td class="git-repo"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.layer.layer_index_url}}</code></a></td>
-            <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.dirpath}}</code></a></td>
+            <td class="git-repo"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.layer.vcs_url}}</code></a>
+            {% if lv.get_vcs_link_url %}
+            <a target="_blank" href="{{ lv.get_vcs_link_url }}"><i class="icon-share get-info"></i></a>
+        {% endif %}
+        </td>
+            <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.dirpath}}</code></a>
+              {% if lv.get_vcs_link_url %}
+            <a target="_blank" href="{{ lv.get_vcs_link_url_dirpath }}"><i class="icon-share get-info"></i></a>
+        {% endif %}
+        </td>
             <td class="branch">{% if lv.branch %}{{lv.branch}}{% else %}{{lv.up_branch.name}}{% endif %}</td>
-            <td class="dependencies">{% for lvs in lv.dependencies.all %}{{lvs.layer.name}}<br/>{%endfor%}</td>
-            <td class="add-layers">
-                <button id="remove-layer-{{lv.pk}}" class="btn btn-danger btn-block remove-layer" title="1 layer deleted" style="display:none;">
+            <td class="dependencies">
+        {% with lvds=lv.dependencies.all%}
+            {% if lvds.count %}
+                    <a class="btn"
+                        title="<a href='{% url "layerdetails" lv.pk %}'>{{lv.layer.name}}</a> dependencies"
+                        data-content="<ul class='unstyled'>
+                          {% for i in lvds%}
+                            <li><a href='{% url "layerdetails" i.depends_on.pk %}'>{{i.depends_on.layer.name}}</a></li>
+                          {% endfor %}
+                        </ul>">
+                        {{lvds.count}}
+                    </a>
+            {% endif %}
+        {% endwith %}
+            </td>
+            <td class="add-del-layers" value="{{lv.pk}}">
+                <button id="layer-del-{{lv.pk}}" class="btn btn-danger btn-block remove-layer" style="display:none;" onclick="layerDel({{lv.pk}}, '{{lv.layer.name}}', '{%url 'layerdetails' lv.pk%}')">
                     <i class="icon-trash"></i>
                     Delete layer
                 </button>
-                <button id="add-layer-{{lv.pk}}" class="btn  btn-block add-layer" title="1 layer added">
+                <button id="layer-add-{{lv.pk}}" class="btn btn-block" style="display:none;" onclick="layerAdd({{lv.pk}}, '{{lv.layer.name}}', '{%url 'layerdetails' lv.pk%}')" >
                     <i class="icon-plus"></i>
                     Add layer
                 </button>
@@ -57,113 +77,145 @@
     <!-- Modals -->
 
     <!-- 'Layer dependencies modal' -->
-    <div id="dependencies-message" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+    <div id="dependencies_modal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
+        <form id="dependencies_modal_form">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
-            <h3>meta-acer dependencies</h3>
+            <h3><span class="layer-name"></span> dependencies</h3>
         </div>
         <div class="modal-body">
-            <p><strong>meta-acer</strong> depends on some layers that are not added to your project. Select the ones you want to add:</p>
-            <ul class="unstyled">
-                <li>
-                    <label class="checkbox">
-                        <input type="checkbox" checked="checked">
-                        meta-android
-                    </label>
-                </li>
-                <li>
-                    <label class="checkbox">
-                        <input type="checkbox" checked="checked">
-                        meta-oe
-                    </label>
-                </li>
+            <p><strong class="layer-name"></strong> depends on some layers that are not added to your project. Select the ones you want to add:</p>
+            <ul class="unstyled" id="dependencies_list">
             </ul>
         </div>
         <div class="modal-footer">
-            <button id="add-layer-dependencies" type="submit" class="btn btn-primary" data-dismiss="modal" >Add layers</button>
-            <button class="btn" data-dismiss="modal">Cancel</button>
+            <button class="btn btn-primary" type="submit">Add layers</button>
+            <button class="btn" type="reset" data-dismiss="modal">Cancel</button>
         </div>
+        </form>
     </div>
 
-    <script>
-     $(document).ready(function() {
+<script>
 
-        //show or hide selected columns on load
-        $("input:checkbox").each(function(){
-            var selectedType = $(this).val();
-            if($(this).is(":checked")){
-                $("."+selectedType).show();
+function _makeXHREditCall(data, onsuccess, onfail) {
+    $.ajax( {
+        type: "POST",
+        url: "{% url 'xhr_projectedit' project.id %}",
+        data: data,
+        headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
+        success: function (_data) {
+            if (_data.error != "ok") {
+                alert(_data.error);
+            } else {
+                updateButtons(_data.layers.map(function (e) {return e.id}));
+                if (onsuccess != undefined) onsuccess(_data);
             }
-            else{
-                $("."+selectedType).hide();
+        },
+        error: function (_data) {
+            alert("Call failed");
+            console.log(_data);
+        }
+    });
+}
+
+
+function layerDel(layerId, layerName, layerURL) {
+    _makeXHREditCall({ 'layerDel': layerId }, function () {
+        show_alert("<strong>1</strong> layer deleted from <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
+    });
+}
+
+function show_alert(text, cls) {
+    $("#zone1alerts").html("<div class=\"alert alert-info\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>" + text + "</div>");
+}
+
+function show_dependencies_modal(layerId, layerName, layerURL, dependencies) {
+    // update layer name
+    $('.layer-name').text(layerName);
+    var deplistHtml = "";
+    for (var i = 0; i < dependencies.length; i++) {
+        deplistHtml += "<li><label class=\"checkbox\"><input name=\"dependencies\" value=\""
+        deplistHtml += dependencies[i].id;
+        deplistHtml +="\" type=\"checkbox\" checked=\"checked\"/>";
+        deplistHtml += dependencies[i].name;
+        deplistHtml += "</label></li>";
+    }
+    $('#dependencies_list').html(deplistHtml);
+
+    $("#dependencies_modal_form").submit(function (e) {
+        e.preventDefault();
+        var selected = [layerId];
+        $("input[name='dependencies']:checked").map(function () { selected.push(parseInt($(this).val()))});
+
+        _makeXHREditCall({ 'layerAdd': selected.join(",") }, function () {
+            var layer_link_list = "<a href='"+layerURL+"'>"+layerName+"</a>";
+            for (var i = 0; i < selected.length; i++) {
+                for (var j = 0; j < dependencies.length; i++) {
+                    if (dependencies[j].id == selected[i]) {
+                        layer_link_list+= ", <a href='"+dependencies[j].layerdetailurl+"'>"+dependencies[j].name+"</a>"
+                        break;
+                    }
+                }
             }
+
+            $('#dependencies_modal').modal('hide');
+            show_alert("<strong>"+selected.length+"</strong> layers added to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>:" + layer_link_list);
         });
+    });
+    $('#dependencies_modal').modal('show');
+}
 
-        // enable add layer button
-        $('#add-layer-with-deps').removeAttr('disabled');
 
-        //edit columns functionality (show / hide table columns)
-        $("input:checkbox").change();
-            $("input:checkbox").change(function(){
-                var selectedType = $(this).val();
-                    if($(this).is(":checked")){
-                        $("."+selectedType).show();
+function layerAdd(layerId, layerName, layerURL) {
+    $.ajax({
+        url: '{% url "xhr_datatypeahead" %}',
+        data: {'type': 'layerdeps','value':layerId},
+        success: function(_data) {
+                if (_data.error != "ok") {
+                    alert(_data.error);
+                } else {
+                    if (_data.list.length > 0) {
+                        show_dependencies_modal(layerId, layerName, layerURL, _data.list);
                     }
-                    else{
-                        $("."+selectedType).hide();
+                    else {
+                        _makeXHREditCall({ 'layerAdd': layerId }, function () {
+        show_alert("<strong>1</strong> layer added to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
+                        });
                     }
-            });
+                }
+            }
+    })
+}
 
-        //turn edit columns dropdown into a multi-select menu
-        $('.dropdown-menu input, .dropdown-menu label').click(function(e) {
-            e.stopPropagation();
-        });
+function button_set(id, state) {
+    if (state == "add")
+    {
+        $("#layer-add-" + id).show();
+        $("#layer-del-" + id).hide();
+    }
+    else if (state == "del")
+    {
+        $("#layer-add-" + id).hide();
+        $("#layer-del-" + id).show();
+    }
+};
 
-        //show tooltip with applied filter
-        $('#filtered').tooltip({container:'table', placement:'bottom', delay:{hide:1500}, html:true});
+function updateButtons(projectLayers) {
+    var displayedLayers = [];
+    $(".add-del-layers").map(function () { displayedLayers.push(parseInt($(this).attr('value')))});
+    for (var i=0; i < displayedLayers.length; i++) {
+        if (projectLayers.indexOf(displayedLayers[i]) > -1) {
+            button_set(displayedLayers[i], "del");
+        }
+        else {
+            button_set(displayedLayers[i], "add");
+        }
+    }
+}
 
-        $('#filtered').click(function() {
-            $(this).tooltip('hide');
-        });
-
-        //show layer added tooltip
-        $("#remove-layer, #add-layer, #add-layer-with-deps2").tooltip({ trigger: 'manual' });
-
-        // add layer without dependencies
-        $("#add-layer").click(function(){
-            $('#layer-removed').hide();
-            $('#layer-added').html('<button type="button" class="close" data-dismiss="alert">&times;</button><strong>1</strong> layer added to <a href="project-with-targets.html">your project</a>: <a href="#">meta-aarch64</a>').fadeIn();
-            $('#add-layer').tooltip('show');
-            $("#add-layer").hide();
-            $(".add-layers .tooltip").delay(2000).fadeOut(function(){
-                $("#remove-layer").delay(300).fadeIn();
-            });
-        });
-
-        // add layer with dependencies
-        $(document).on("click", "#add-layer-dependencies", function() {
-            $('#layer-removed').hide();
-            $('#layer-added').html('<button type="button" class="close" data-dismiss="alert">&times;</button><strong>3</strong> layers added to <a href="project-with-targets.html">your project</a>: <a href="#">meta-acer</a> and its dependencies <a href="#">meta-android</a> and <a href="#">meta-oe</a>').delay(400).fadeIn(function(){
-                $('#add-layer-with-deps').tooltip('show');
-                $("#add-layer-with-deps, #add-layer-with-deps").hide();
-                $(".add-layers .tooltip").delay(2000).fadeOut(function(){
-                    $("#remove-layer-with-deps").delay(300).fadeIn();
-                });
-            });
-        });
-
-        // delete layer
-        $("#remove-layer").click(function(){
-            $('#layer-added').hide();
-            $('#layer-removed').show();
-            $('#remove-layer').tooltip('show');
-            $("#remove-layer").hide();
-            $(".add-layers .tooltip").delay(2000).fadeOut(function(){
-                $("#add-layer").delay(300).fadeIn();
-            });
-        });
-
-     });
+$(document).ready(function (){
+    updateButtons({{projectlayerset}});
+});
 
 </script>
 

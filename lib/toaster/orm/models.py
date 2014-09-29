@@ -737,6 +737,15 @@ class Layer_Version(models.Model):
     dirpath = models.CharField(max_length=255, null = True, default = None)          # LayerBranch.vcs_subdir
     priority = models.IntegerField(default = 0)         # if -1, this is a default layer
 
+    def get_vcs_link_url(self, file_path="/"):
+        if self.layer.vcs_web_file_base_url is None:
+            return None
+        return self.layer.vcs_web_file_base_url.replace('%path%', file_path).replace('%branch%', self.up_branch.name)
+
+    def get_vcs_link_url_dirpath(self):
+        return self.get_vcs_link_url(self.dirpath)
+
+
     def __unicode__(self):
         return "LV " + str(self.layer) + " " + self.commit
 
