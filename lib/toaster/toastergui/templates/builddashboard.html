@@ -70,8 +70,8 @@
 
 {%if build.outcome == build.SUCCEEDED%}
 <!-- built images -->
+{% if hasImages %}
 <div class="row-fluid span10 pull-right">
-  {% if hasImages %}
 	<h2>Images</h2>
 	{% for target in targets %}
         {% if target.target.is_image %}
@@ -123,9 +123,8 @@
 	</div>
         {% endif %}
 	{% endfor %}
-
-  {% endif %}
 </div>
+{% endif %}
 
 {%else%}
 <!-- error dump -->
