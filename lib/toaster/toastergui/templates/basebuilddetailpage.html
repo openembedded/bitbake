@@ -7,7 +7,10 @@
     <div class="section">
         <ul class="breadcrumb" id="breadcrumb">
             <li><a href="{% url 'all-builds' %}">All builds</a></li>
-            <li><a href="{%url 'builddashboard' build.pk%}">{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|date:"d/m/y H:i"}})</a></li>
+      {% if MANAGED and build.project %}
+            <li><a href="{% url 'project' build.project.id %}">{{build.project.name}}</a></li>
+      {%endif%}
+            <li><a href="{%url 'builddashboard' build.pk%}">{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%}{%if not MANAGED %}{{build.machine}}{%endif%} ({{build.completed_on|date:"d/m/y H:i"}})</a></li>
             {% block localbreadcrumb %}{% endblock %}
         </ul>
         <script>
