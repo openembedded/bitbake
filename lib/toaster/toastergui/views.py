@@ -551,14 +551,14 @@ def recipe(request, build_id, recipe_id):
     if Recipe.objects.filter(pk=recipe_id).count() == 0 :
         return redirect(builds)
 
-    object = Recipe.objects.filter(pk=recipe_id)[0]
-    layer_version = Layer_Version.objects.filter(pk=object.layer_version_id)[0]
-    layer  = Layer.objects.filter(pk=layer_version.layer_id)[0]
+    object = Recipe.objects.get(pk=recipe_id)
+    layer_version = Layer_Version.objects.get(pk=object.layer_version_id)
+    layer  = Layer.objects.get(pk=layer_version.layer_id)
     tasks  = Task.objects.filter(recipe_id = recipe_id, build_id = build_id).exclude(order__isnull=True).exclude(task_name__endswith='_setscene').exclude(outcome=Task.OUTCOME_NA)
     packages = Package.objects.filter(recipe_id = recipe_id).filter(build_id = build_id).filter(size__gte=0)
 
     context = {
-            'build'   : Build.objects.filter(pk=build_id)[0],
+            'build'   : Build.objects.get(pk=build_id),
             'object'  : object,
             'layer_version' : layer_version,
             'layer'   : layer,
@@ -846,8 +846,8 @@ def dirinfo(request, build_id, target_id, file_path=None):
             if head != sep:
                 dir_list.insert(0, head)
 
-    context = { 'build': Build.objects.filter(pk=build_id)[0],
-                'target': Target.objects.filter(pk=target_id)[0],
+    context = { 'build': Build.objects.get(pk=build_id),
+                'target': Target.objects.get(pk=target_id),
                 'packages_sum': packages_sum['installed_size__sum'],
                 'objects': objects,
                 'dir_list': dir_list,
@@ -1092,7 +1092,7 @@ def tasks_common(request, build_id, variant, task_anchor):
                 'object_search_display': object_search_display,
                 'filter_search_display': filter_search_display,
                 'title': title_variant,
-                'build': Build.objects.filter(pk=build_id)[0],
+                'build': Build.objects.get(pk=build_id),
                 'objects': tasks,
                 'default_orderby' : orderby,
                 'search_term': search_term,
@@ -1159,7 +1159,7 @@ def recipes(request, build_id):
 
     context = {
         'objectname': 'recipes',
-        'build': Build.objects.filter(pk=build_id)[0],
+        'build': Build.objects.get(pk=build_id),
         'objects': recipes,
         'default_orderby' : 'name:+',
         'recipe_deps' : deps,
@@ -1249,15 +1249,15 @@ def configuration(request, build_id):
     template = 'configuration.html'
 
     variables = Variable.objects.filter(build=build_id)
-    BB_VERSION=variables.filter(variable_name='BB_VERSION')[0].variable_value
-    BUILD_SYS=variables.filter(variable_name='BUILD_SYS')[0].variable_value
-    NATIVELSBSTRING=variables.filter(variable_name='NATIVELSBSTRING')[0].variable_value
-    TARGET_SYS=variables.filter(variable_name='TARGET_SYS')[0].variable_value
-    MACHINE=variables.filter(variable_name='MACHINE')[0].variable_value
-    DISTRO=variables.filter(variable_name='DISTRO')[0].variable_value
-    DISTRO_VERSION=variables.filter(variable_name='DISTRO_VERSION')[0].variable_value
-    TUNE_FEATURES=variables.filter(variable_name='TUNE_FEATURES')[0].variable_value
-    TARGET_FPU=variables.filter(variable_name='TARGET_FPU')[0].variable_value
+    BB_VERSION=variables.get(variable_name='BB_VERSION').variable_value
+    BUILD_SYS=variables.get(variable_name='BUILD_SYS').variable_value
+    NATIVELSBSTRING=variables.get(variable_name='NATIVELSBSTRING').variable_value
+    TARGET_SYS=variables.get(variable_name='TARGET_SYS').variable_value
+    MACHINE=variables.get(variable_name='MACHINE').variable_value
+    DISTRO=variables.get(variable_name='DISTRO').variable_value
+    DISTRO_VERSION=variables.get(variable_name='DISTRO_VERSION').variable_value
+    TUNE_FEATURES=variables.get(variable_name='TUNE_FEATURES').variable_value
+    TARGET_FPU=variables.get(variable_name='TARGET_FPU').variable_value
 
     targets = Target.objects.filter(build=build_id)
 
@@ -1265,7 +1265,7 @@ def configuration(request, build_id):
                 'objectname': 'configuration',
                 'object_search_display':'variables',
                 'filter_search_display':'variables',
-                'build': Build.objects.filter(pk=build_id)[0],
+                'build': Build.objects.get(pk=build_id),
                 'BB_VERSION':BB_VERSION,
                 'BUILD_SYS':BUILD_SYS,
                 'NATIVELSBSTRING':NATIVELSBSTRING,
@@ -1310,14 +1310,14 @@ def configvars(request, build_id):
         file_filter += 'conf/distro/'
     if filter_string.find('/bitbake.conf') > 0:
         file_filter += '/bitbake.conf'
-    build_dir=re.sub("/tmp/log/.*","",Build.objects.filter(pk=build_id)[0].cooker_log_path)
+    build_dir=re.sub("/tmp/log/.*","",Build.objects.get(pk=build_id).cooker_log_path)
 
     context = {
                 'objectname': 'configvars',
                 'object_search_display':'BitBake variables',
                 'filter_search_display':'variables',
                 'file_filter': file_filter,
-                'build': Build.objects.filter(pk=build_id)[0],
+                'build': Build.objects.get(pk=build_id),
                 'objects' : variables,
                 'total_count':queryset_with_search.count(),
                 'default_orderby' : 'variable_name:+',
@@ -1383,7 +1383,7 @@ def bpackage(request, build_id):
 
     context = {
         'objectname': 'packages built',
-        'build': Build.objects.filter(pk=build_id)[0],
+        'build': Build.objects.get(pk=build_id),
         'objects' : packages,
         'default_orderby' : 'name:+',
         'tablecols':[
@@ -1466,13 +1466,13 @@ def bpackage(request, build_id):
 def bfile(request, build_id, package_id):
     template = 'bfile.html'
     files = Package_File.objects.filter(package = package_id)
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : files}
+    context = {'build': Build.objects.get(pk=build_id), 'objects' : files}
     return render(request, template, context)
 
 def tpackage(request, build_id, target_id):
     template = 'package.html'
     packages = map(lambda x: x.package, list(Target_Installed_Package.objects.filter(target=target_id)))
-    context = {'build': Build.objects.filter(pk=build_id)[0], 'objects' : packages}
+    context = {'build': Build.objects.get(pk=build_id), 'objects' : packages}
     return render(request, template, context)
 
 def layer(request):
@@ -1494,7 +1494,7 @@ def layer_versions_recipes(request, layerversion_id):
     recipes = Recipe.objects.filter(layer_version__id = layerversion_id)
 
     context = {'objects': recipes,
-            'layer_version' : Layer_Version.objects.filter( id = layerversion_id )[0]
+            'layer_version' : Layer_Version.objects.get( id = layerversion_id )
     }
 
     return render(request, template, context)
@@ -1625,10 +1625,10 @@ def package_built_detail(request, build_id, package_id):
     (filter_string, search_term, ordering_string) = _search_tuple(request, Package_File)
     paths = _get_queryset(Package_File, queryset, filter_string, search_term, ordering_string, 'path')
 
-    package = Package.objects.filter(pk=package_id)[0]
+    package = Package.objects.get(pk=package_id)
     package.fullpackagespec = _get_fullpackagespec(package)
     context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
+            'build' : Build.objects.get(pk=build_id),
             'package' : package,
             'dependency_count' : _get_package_dependency_count(package, -1, False),
             'objects' : paths,
@@ -1658,11 +1658,11 @@ def package_built_dependencies(request, build_id, package_id):
     if Build.objects.filter(pk=build_id).count() == 0 :
          return redirect(builds)
 
-    package = Package.objects.filter(pk=package_id)[0]
+    package = Package.objects.get(pk=package_id)
     package.fullpackagespec = _get_fullpackagespec(package)
     dependencies = _get_package_dependencies(package_id)
     context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
+            'build' : Build.objects.get(pk=build_id),
             'package' : package,
             'runtime_deps' : dependencies['runtime_deps'],
             'other_deps' :   dependencies['other_deps'],
@@ -1687,12 +1687,12 @@ def package_included_detail(request, build_id, target_id, package_id):
     queryset = Package_File.objects.filter(package_id__exact=package_id)
     paths = _get_queryset(Package_File, queryset, filter_string, search_term, ordering_string, 'path')
 
-    package = Package.objects.filter(pk=package_id)[0]
+    package = Package.objects.get(pk=package_id)
     package.fullpackagespec = _get_fullpackagespec(package)
     package.alias = _get_package_alias(package)
-    target = Target.objects.filter(pk=target_id)[0]
+    target = Target.objects.get(pk=target_id)
     context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
+            'build' : Build.objects.get(pk=build_id),
             'target'  : target,
             'package' : package,
             'reverse_count' : _get_package_reverse_dep_count(package, target_id),
@@ -1723,14 +1723,14 @@ def package_included_dependencies(request, build_id, target_id, package_id):
     if Build.objects.filter(pk=build_id).count() == 0 :
         return redirect(builds)
 
-    package = Package.objects.filter(pk=package_id)[0]
+    package = Package.objects.get(pk=package_id)
     package.fullpackagespec = _get_fullpackagespec(package)
     package.alias = _get_package_alias(package)
-    target = Target.objects.filter(pk=target_id)[0]
+    target = Target.objects.get(pk=target_id)
 
     dependencies = _get_package_dependencies(package_id, target_id)
     context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
+            'build' : Build.objects.get(pk=build_id),
             'package' : package,
             'target' : target,
             'runtime_deps' : dependencies['runtime_deps'],
@@ -1755,16 +1755,16 @@ def package_included_reverse_dependencies(request, build_id, target_id, package_
     queryset = Package_Dependency.objects.select_related('depends_on__name', 'depends_on__size').filter(depends_on=package_id, target_id=target_id, dep_type=Package_Dependency.TYPE_TRDEPENDS)
     objects = _get_queryset(Package_Dependency, queryset, filter_string, search_term, ordering_string, 'package__name')
 
-    package = Package.objects.filter(pk=package_id)[0]
+    package = Package.objects.get(pk=package_id)
     package.fullpackagespec = _get_fullpackagespec(package)
     package.alias = _get_package_alias(package)
-    target = Target.objects.filter(pk=target_id)[0]
+    target = Target.objects.get(pk=target_id)
     for o in objects:
         if o.package.version != '':
             o.package.version += '-' + o.package.revision
         o.alias = _get_package_alias(o.package)
     context = {
-            'build' : Build.objects.filter(pk=build_id)[0],
+            'build' : Build.objects.get(pk=build_id),
             'package' : package,
             'target' : target,
             'objects' : objects,
@@ -2153,7 +2153,6 @@ if toastermain.settings.MANAGED:
 
 
         context = {
-            'prj' : prj,
             'projectlayerset' : json.dumps(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
             'objects' : layer_info,
             'objectname' : "layers",
