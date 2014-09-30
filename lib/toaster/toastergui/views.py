@@ -1249,15 +1249,23 @@ def configuration(request, build_id):
     template = 'configuration.html'
 
     variables = Variable.objects.filter(build=build_id)
-    BB_VERSION=variables.get(variable_name='BB_VERSION').variable_value
-    BUILD_SYS=variables.get(variable_name='BUILD_SYS').variable_value
-    NATIVELSBSTRING=variables.get(variable_name='NATIVELSBSTRING').variable_value
-    TARGET_SYS=variables.get(variable_name='TARGET_SYS').variable_value
-    MACHINE=variables.get(variable_name='MACHINE').variable_value
-    DISTRO=variables.get(variable_name='DISTRO').variable_value
-    DISTRO_VERSION=variables.get(variable_name='DISTRO_VERSION').variable_value
-    TUNE_FEATURES=variables.get(variable_name='TUNE_FEATURES').variable_value
-    TARGET_FPU=variables.get(variable_name='TARGET_FPU').variable_value
+
+    def _get_variable_or_empty(variable_name):
+        from django.core.exceptions import ObjectDoesNotExist
+        try:
+            return variables.get(variable_name=variable_name).variable_value
+        except ObjectDoesNotExist:
+            return ''
+
+    BB_VERSION=_get_variable_or_empty(variable_name='BB_VERSION')
+    BUILD_SYS=_get_variable_or_empty(variable_name='BUILD_SYS')
+    NATIVELSBSTRING=_get_variable_or_empty(variable_name='NATIVELSBSTRING')
+    TARGET_SYS=_get_variable_or_empty(variable_name='TARGET_SYS')
+    MACHINE=_get_variable_or_empty(variable_name='MACHINE')
+    DISTRO=_get_variable_or_empty(variable_name='DISTRO')
+    DISTRO_VERSION=_get_variable_or_empty(variable_name='DISTRO_VERSION')
+    TUNE_FEATURES=_get_variable_or_empty(variable_name='TUNE_FEATURES')
+    TARGET_FPU=_get_variable_or_empty(variable_name='TARGET_FPU')
 
     targets = Target.objects.filter(build=build_id)
 
