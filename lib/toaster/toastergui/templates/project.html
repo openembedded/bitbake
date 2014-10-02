@@ -76,6 +76,14 @@ vim: expandtab tabstop=2
       </div>
   </script>
 
+  <script type="text/ng-template" id="target_display">
+      <div ng-switch on="t.task.length">
+        <div ng-switch-when="0">{[t.target]}</div>
+        <div ng-switch-default>{[t.target]}:{[t.task]}</div>
+      </div>
+  </script>
+
+
   <!-- build form -->
   <div class="well">
     <form class="build-form" ng-submit="targetNamedBuild()">
@@ -99,11 +107,11 @@ vim: expandtab tabstop=2
 
   <h2 class="air" ng-if="builds.length">Latest builds</h2>
 
-  <div class="alert" ng-repeat="b in builds" ng-class="{'queued':'alert-info', 'deleted':'alert-info', 'in progress': 'alert-info', 'In Progress':'alert-info', 'Succeeded':'alert-success', 'failed':'alert-error', 'Failed':'alert-error'}[b.status]">
+  <div class="alert" ng-repeat="b in builds" ng-class="{'queued':'alert-info', 'deleted':'alert-info', 'in progress': 'alert-info', 'failed':'alert-error', 'completed':{'In Progress':'alert-info', 'Succeeded':'alert-success', 'Failed':'alert-error'}[b.build[0].status]}[b.status]"  >
     <div class="row-fluid">
         <switch ng-switch="b.status">
           <case ng-switch-when="failed">
-            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
             <div class="row-fluid">
               <div class="air well" ng-repeat="e in b.errors">
                 {[e.type]}: <pre>{[e.msg]}</pre>
@@ -111,52 +119,50 @@ vim: expandtab tabstop=2
             </div>
           </case>
           <case ng-switch-when="queued">
-            <div class="lead span5"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="lead span5"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
             <div class="span4 lead" >Build queued
               <i title="This build will start as soon as a build server is available" class="icon-question-sign get-help get-help-blue heading-help" data-toggle="tooltip"></i>
             </div>
             <button class="btn pull-right btn-info" ng-click="buildCancel(b.id)">Cancel</button>
           </case>
           <case ng-switch-when="created">
-            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
             <div class="span6" >
               <span class="lead">Creating build</span>
             </div>
             <button class="btn pull-right btn-info" ng-click="buildCancel(b.id)">Cancel</button>
           </case>
           <case ng-switch-when="deleted">
-            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
             <div class="span6" id="{[b.id]}-deleted" >
               <span class="lead">Build deleted</span>
             </div>
             <button class="btn pull-right btn-info" ng-click="builds.splice(builds.indexOf(b), 1)">Close</button>
           </case>
           <case ng-switch-when="in progress">
-            <div class="lead span3"> <span ng-repeat="t in b.targets">{[t.target]} </span>   </div>
+            <div class="lead span3"> <span ng-repeat="t in b.targets" ng-include src="'target_display'"></span>   </div>
             <div class="span4" >
-            </div>
-            <div class="lead pull-right">Build starting shortly</div>
-          </case>
-          <case ng-switch-when="In Progress">
-            <div class="span4" >
-                <div class="progress" style="margin-top:5px;" data-toggle="tooltip" tooltip="{[b.completeper]}% of tasks complete">
-                    <div style="width: {[b.completeper]}%;" class="bar"></div>
+                <div class="progress" style="margin-top:5px;" data-toggle="tooltip" tooltip="{[b.build[0].completeper]}% of tasks complete">
+                    <div style="width: {[b.build[0].completeper]}%;" class="bar"></div>
                 </div>
             </div>
-            <div class="lead pull-right">ETA: at {[b.eta]}</div>
+            <div class="lead pull-right">ETA: at {[b.build[0].eta|date:"shortDate"]}</div>
           </case>
-          <case ng-switch-default="">
-            <div class="lead span3"><a href="{[b.build_page_url]}"><span ng-repeat="t in b.targets">{[t.target]} </span>   </div></a>
+          <case ng-switch-when="completed">
+            <div class="lead span3"><a href="{[b.build[0].build_page_url]}"><span ng-repeat="t in b.targets" ng-include src="'target_display'"></span></a></div>
             <div class="span2 lead">
-             {[b.completed_on|date:'dd/MM/yy HH:mm']}
+             {[b.build[0].completed_on|date:'dd/MM/yy HH:mm']}
             </div>
-            <div class="span2"><span>{[b.errors.len]}</span></div>
-            <div class="span2"><span>{[b.warnings.len]}</span></div>
-            <div> <span class="lead">Build time: {[b.build_time|date:"HH:mm"]}</span>
-                <button class="btn pull-right" ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.status]"
+            <div class="span2"><span><a href="{[b.build[0].build_page_url]}#errors" class="lead error" ng-if="b.build[0].errors">{[b.build[0].errors]}</a></span></div>
+            <div class="span2"><span><a href="{[b.build[0].build_page_url]}#warnings" class="lead warning" ng-if="b.build[0].warnings">{[b.build[0].warnings]}</a></span></div>
+            <div> <span class="lead">Build time: {[b.build[0].build_time|timediff]}</span>
+                <button class="btn pull-right" ng-class="{'Succeeded':  'btn-success', 'Failed': 'btn-danger'}[b.build[0].status]"
                     ng-click="targetExistingBuild(b.targets)">Run again</button>
 
             </div>
+          </case>
+          <case ng-switch-default="">
+          <div>FIXME!</div>
           </case>
         </switch>
       <div class="lead pull-right">

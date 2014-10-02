@@ -9,67 +9,66 @@
 {% block projectinfomain %}
                 <div class="page-header">
                     <h1>
-  {% if request.GET.search and objects.paginator.count > 0  %}
+  {% if request.GET.filter and objects.paginator.count >  0 or request.GET.search and objects.paginator.count >  0 %}
       {{objects.paginator.count}} layer{{objects.paginator.count|pluralize}} found
-  {%elif request.GET.search and objects.paginator.count == 0%}
-      No layer found
+  {% elif request.GET.filter and objects.paginator.count ==  0 or request.GET.search and objects.paginator.count == 0 %}
+      No layers found
   {%else%}
       All layers
   {%endif%}
-                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with " + {{project.release.name}} + " that Toaster knows about."></i>
+                        <i class="icon-question-sign get-help heading-help" title="This page lists all the layers compatible with {{project.release.name}} that Toaster knows about."></i>
                      </h1>
                 </div>
 
   <div id="zone1alerts">
-
   </div>
 
 
-                <div id="layer-added" class="alert alert-info lead" style="display:none;"></div>
-
-
 {% include "basetable_top_layers.html" %}
-    {% for lv in objects %}
+    {% for o in objects %}
     <tr class="data">
-            <td class="layer"><a href="{% url 'layerdetails' lv.id %}">{{lv.layer.name}}</a></td>
-            <td class="description">{{lv.layer.summary}}</td>
-            <td class="source"><a href="{% url 'layerdetails' lv.pk %}">{{lv.layer_source.name}}</a></td>
-            <td class="git-repo"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.layer.vcs_url}}</code></a>
-            {% if lv.get_vcs_link_url %}
-            <a target="_blank" href="{{ lv.get_vcs_link_url }}"><i class="icon-share get-info"></i></a>
+            <td class="layer"><a href="{% url 'layerdetails' o.id %}">{{o.layer.name}}</a></td>
+            <td class="description">{% if o.layer.summary %}{{o.layer.summary}}{%endif%}</td>
+            <td class="source"><a href="{% url 'layerdetails' o.pk %}">{{o.layer_source.name}}</a></td>
+            <td class="git-repo"><a href="{% url 'layerdetails' o.pk %}"><code>{{o.layer.vcs_url}}</code></a>
+            {% if o.get_vcs_link_url %}
+            <a target="_blank" href="{{ o.get_vcs_link_url }}"><i class="icon-share get-info"></i></a>
         {% endif %}
         </td>
-            <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.dirpath}}</code></a>
-                {% if lv.dirpath and lv.get_vcs_dirpath_link_url %}
-            <a target="_blank" href="{{ lv.get_vcs_dirpath_link_url }}"><i class="icon-share get-info"></i></a>
+            <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' o.pk %}"><code>{{o.dirpath}}</code></a>
+                {% if o.dirpath and o.get_vcs_dirpath_link_url %}
+            <a target="_blank" href="{{ o.get_vcs_dirpath_link_url }}"><i class="icon-share get-info"></i></a>
                 {% endif %}
         </td>
-            <td class="branch">{% if lv.branch %}{{lv.branch}}{% else %}{{lv.up_branch.name}}{% endif %}</td>
+            <td class="branch">{% if o.branch %}{{o.branch}}{% else %}{{o.up_branch.name}}{% endif %}</td>
             <td class="dependencies">
-        {% with lvds=lv.dependencies.all%}
-            {% if lvds.count %}
+        {% with ods=o.dependencies.all%}
+            {% if ods.count %}
                     <a class="btn"
-                        title="<a href='{% url "layerdetails" lv.pk %}'>{{lv.layer.name}}</a> dependencies"
+                        title="<a href='{% url "layerdetails" o.pk %}'>{{o.layer.name}}</a> dependencies"
                         data-content="<ul class='unstyled'>
-                          {% for i in lvds%}
+                          {% for i in ods%}
                             <li><a href='{% url "layerdetails" i.depends_on.pk %}'>{{i.depends_on.layer.name}}</a></li>
                           {% endfor %}
                         </ul>">
-                        {{lvds.count}}
+                        {{ods.count}}
                     </a>
             {% endif %}
         {% endwith %}
             </td>
-            <td class="add-del-layers" value="{{lv.pk}}">
-                <button id="layer-del-{{lv.pk}}" class="btn btn-danger btn-block remove-layer" style="display:none;" onclick="layerDel({{lv.pk}}, '{{lv.layer.name}}', '{%url 'layerdetails' lv.pk%}')">
+            {% if project %}
+            <td class="add-del-layers" value="{{o.pk}}">
+                <div id="layer-tooltip-{{o.pk}}" style="display: none; font-size: 11px; line-height: 1.3;" class="tooltip-inner">layer was modified</div>
+                <button id="layer-del-{{o.pk}}" class="btn btn-danger btn-block remove-layer layerbtn" style="display:none;" onclick="layerDel({{o.pk}}, '{{o.layer.name}}', '{%url 'layerdetails' o.pk%}')" >
                     <i class="icon-trash"></i>
                     Delete layer
                 </button>
-                <button id="layer-add-{{lv.pk}}" class="btn btn-block" style="display:none;" onclick="layerAdd({{lv.pk}}, '{{lv.layer.name}}', '{%url 'layerdetails' lv.pk%}')" >
+                <button id="layer-add-{{o.pk}}" class="btn btn-block layerbtn" style="display:none;" onclick="layerAdd({{o.pk}}, '{{o.layer.name}}', '{%url 'layerdetails' o.pk%}')" title="layer added">
                     <i class="icon-plus"></i>
                     Add layer
                 </button>
             </td>
+            {% endif %}
      </tr>
     {% endfor %}
 {% include "basetable_bottom.html" %}
@@ -78,7 +77,7 @@
 
     <!-- 'Layer dependencies modal' -->
     <div id="dependencies_modal" class="modal hide fade" tabindex="-1" role="dialog" aria-hidden="true">
-        <form id="dependencies_modal_form">
+        <form id="dependencies_modal_form" style="margin: 0px">
         <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
             <h3><span class="layer-name"></span> dependencies</h3>
@@ -95,7 +94,10 @@
         </form>
     </div>
 
+{% if project %}
 <script>
+
+var tooltipUpdateText;
 
 function _makeXHREditCall(data, onsuccess, onfail) {
     $.ajax( {
@@ -120,13 +122,14 @@ function _makeXHREditCall(data, onsuccess, onfail) {
 
 
 function layerDel(layerId, layerName, layerURL) {
+    tooltipUpdateText = "1 layer deleted";
     _makeXHREditCall({ 'layerDel': layerId }, function () {
-        show_alert("<strong>1</strong> layer deleted from <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
+        show_alert("You have deleted <strong>1</strong> layer from <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
     });
 }
 
 function show_alert(text, cls) {
-    $("#zone1alerts").html("<div class=\"alert alert-info\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>" + text + "</div>");
+    $("#zone1alerts").html("<div class=\"alert alert-info lead\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\">&times;</button>" + text + "</div>");
 }
 
 function show_dependencies_modal(layerId, layerName, layerURL, dependencies) {
@@ -142,25 +145,35 @@ function show_dependencies_modal(layerId, layerName, layerURL, dependencies) {
     }
     $('#dependencies_list').html(deplistHtml);
 
+    var selected = [layerId];
+    var layer_link_list = "<a href='"+layerURL+"'>"+layerName+"</a>";
+
     $("#dependencies_modal_form").submit(function (e) {
         e.preventDefault();
-        var selected = [layerId];
         $("input[name='dependencies']:checked").map(function () { selected.push(parseInt($(this).val()))});
+        if (selected.length > 1) {
+            tooltipUpdateText = "" + selected.length + " layers added";
+        } else {
+            tooltipUpdateText = "1 layer added";
+        }
 
-        _makeXHREditCall({ 'layerAdd': selected.join(",") }, function () {
-            var layer_link_list = "<a href='"+layerURL+"'>"+layerName+"</a>";
-            for (var i = 0; i < selected.length; i++) {
-                for (var j = 0; j < dependencies.length; i++) {
-                    if (dependencies[j].id == selected[i]) {
-                        layer_link_list+= ", <a href='"+dependencies[j].layerdetailurl+"'>"+dependencies[j].name+"</a>"
-                        break;
-                    }
+        for (var i = 0; i < selected.length; i++) {
+            for (var j = 0; j < dependencies.length; j++) {
+                if (dependencies[j].id == selected[i]) {
+                    layer_link_list+= ", <a href='"+dependencies[j].layerdetailurl+"'>"+dependencies[j].name+"</a>"
+                    break;
                 }
             }
+        }
 
-            $('#dependencies_modal').modal('hide');
-            show_alert("<strong>"+selected.length+"</strong> layers added to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>:" + layer_link_list);
+        $('#dependencies_modal').modal('hide');
+
+    {% if project %}
+        _makeXHREditCall({ 'layerAdd': selected.join(",") }, function () {
+            show_alert("You have added <strong>"+selected.length+"</strong> layers to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: " + layer_link_list);
         });
+    {% endif %}
+
     });
     $('#dependencies_modal').modal('show');
 }
@@ -178,8 +191,9 @@ function layerAdd(layerId, layerName, layerURL) {
                         show_dependencies_modal(layerId, layerName, layerURL, _data.list);
                     }
                     else {
+                        tooltipUpdateText = "1 layer added";
                         _makeXHREditCall({ 'layerAdd': layerId }, function () {
-        show_alert("<strong>1</strong> layer added to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
+        show_alert("You have added <strong>1</strong> layer to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
                         });
                     }
                 }
@@ -188,15 +202,31 @@ function layerAdd(layerId, layerName, layerURL) {
 }
 
 function button_set(id, state) {
+    var tohide, toshow;
     if (state == "add")
     {
-        $("#layer-add-" + id).show();
-        $("#layer-del-" + id).hide();
+        tohide = "#layer-del-";
+        toshow = "#layer-add-";
     }
     else if (state == "del")
     {
-        $("#layer-add-" + id).hide();
-        $("#layer-del-" + id).show();
+        tohide = "#layer-add-";
+        toshow = "#layer-del-";
+    }
+
+
+    var previouslyvisible = $(tohide + id).is(":visible");
+    if (previouslyvisible) {
+        $(tohide + id).fadeOut( function() {
+            $("#layer-tooltip-" + id).text(tooltipUpdateText);
+            $("#layer-tooltip-" + id).fadeIn().delay(2000).fadeOut(function(){
+                $(toshow + id).delay(300).fadeIn();
+            });
+        });
+    } else {
+        $(tohide + id).hide();
+        $("#layer-tooltip-" + id).hide();
+        $(toshow + id).show();
     }
 };
 
@@ -214,9 +244,11 @@ function updateButtons(projectLayers) {
 }
 
 $(document).ready(function (){
+    $('.layerbtn').tooltip({ trigger: 'manual' });
     updateButtons({{projectlayerset}});
 });
 
 </script>
+{%endif%}
 
 {% endblock %}

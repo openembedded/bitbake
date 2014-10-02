@@ -42,11 +42,34 @@ class BuildEnvironment(models.Model):
 
     def get_artifact_type(self, path):
         if self.betype == BuildEnvironment.TYPE_LOCAL:
-            import magic
-            m = magic.open(magic.MAGIC_MIME_TYPE)
-            m.load()
-            return m.file(path)
-        raise Exception("FIXME: not implemented")
+            try:
+                import magic
+
+                # fair warning: this is a mess; there are multiple competeing and incompatible
+                # magic modules floating around, so we try some of the most common combinations
+
+                try:    # we try ubuntu's python-magic 5.4
+                    m = magic.open(magic.MAGIC_MIME_TYPE)
+                    m.load()
+                    return m.file(path)
+                except AttributeError:
+                    pass
+
+                try:    # we try python-magic 0.4.6
+                    m = magic.Magic(magic.MAGIC_MIME)
+                    return m.from_file(path)
+                except AttributeError:
+                    pass
+
+                try:    # we try pip filemagic 1.6
+                    m = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
+                    return m.id_filename(path)
+                except AttributeError:
+                    pass
+
+                return "binary/octet-stream"
+            except ImportError:
+                return "binary/octet-stream"
 
     def get_artifact(self, path):
         if self.betype == BuildEnvironment.TYPE_LOCAL:

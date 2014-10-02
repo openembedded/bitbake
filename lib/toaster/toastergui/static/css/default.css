@@ -61,8 +61,8 @@ dd p { line-height: 20px; }
 
 /* Override default Twitter Boostrap styles for anchor tags inside tables */
 td a, td a > code { color: #333333; }
-td a > code { white-space: normal; }
-td a:hover { color: #000000; text-decoration: underline; }
+td code { white-space: normal; }
+td a:hover, td a > code:hover { color: #000000; text-decoration: underline; }
 
 /* Override default Twitter Bootstrap styles for tr.error */
 .table tbody tr.error > td { background-color: transparent; } /* override default Bootstrap behaviour */
