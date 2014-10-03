@@ -6,83 +6,11 @@
 
 {% block pagecontent %}
 <div class="row-fluid">
-  {% if not objects.paginator.count and not request.GET.filter and not request.GET.search %}
-    <!-- Empty - no data in database -->
-    <div class="hero-unit span12">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <div class="row-fluid">
-            <div class="span6">
-                <h1>This is Toaster</h1>
-                <p>A web interface to <a href="http://www.yoctoproject.org/tools-resources/projects/bitbake">BitBake</a>, the <a href="http://www.yoctoproject.org">Yocto Project</a> build system.</p>
-                <p class="hero-actions">
-                    <a class="btn btn-primary btn-large" href="https://www.yoctoproject.org/documentation/toaster-manual">Show me the manual</a>
-                    <a class="btn btn-large" href="https://wiki.yoctoproject.org/wiki/Contribute_to_Toaster">I want to contribute</a>
-                </p>
-            </div>
-            <div class="span5">
-                <a href="http://www.yoctoproject.org"><img src="{% static 'img/toaster.png' %}" class="thumbnail" alt="Yocto Project"/> </a>
-            </div>
-        </div>
-    </div>
-  {% endif %}
 
-  {%if mru.count > 0%}
-  <div class="page-header top-air">
-      <h1>
-          Recent Builds
-       </h1>
-  </div>
-  {% for build in mru %}
-    <div class="alert {%if build.outcome == build.SUCCEEDED%}alert-success{%elif build.outcome == build.FAILED%}alert-error{%else%}alert-info{%endif%}">
-        <div class="row-fluid">
-            <div class="lead span5">
-                {%if build.outcome == build.SUCCEEDED%}<i class="icon-ok-sign success"></i>{%elif build.outcome == build.FAILED%}<i class="icon-minus-sign error"></i>{%else%}{%endif%}
-    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-                <a href="{%url 'builddashboard' build.pk%}" class="{%if build.outcome == build.SUCCEEDED %}success{%else%}error{%endif%}">
-    {% endif %}
-                <span data-toggle="tooltip" {%if build.target_set.all.count > 1%}title="Targets: {%for target in build.target_set.all%}{{target.target}} {%endfor%}"{%endif%}>{{build.target_set.all.0.target}} {%if build.target_set.all.count > 1%}(+ {{build.target_set.all.count|add:"-1"}}){%endif%} {{build.machine}} ({{build.completed_on|naturaltime}})</span>
-    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-                </a>
-    {% endif %}
-            </div>
-    {%if build.outcome == build.SUCCEEDED or build.outcome == build.FAILED %}
-            <div class="span2 lead">
-    {% if  build.errors_no %}
-                <i class="icon-minus-sign red"></i> <a href="{%url 'builddashboard' build.pk%}#errors" class="error">{{build.errors_no}} error{{build.errors_no|pluralize}}</a>
-    {% endif %}
-            </div>
-            <div class="span2 lead">
-    {% if  build.warnings_no %}
-                <i class="icon-warning-sign yellow"></i> <a href="{%url 'builddashboard' build.pk%}#warnings" class="warning">{{build.warnings_no}} warning{{build.warnings_no|pluralize}}</a>
-    {% endif %}
-            </div>
-            <div class="lead pull-right">
-                Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
-            </div>
-    {%endif%}{%if build.outcome == build.IN_PROGRESS %}
-            <div class="span4">
-                <div class="progress" style="margin-top:5px;" data-toggle="tooltip" title="{{build.completeper}}% of tasks complete">
-                    <div style="width: {{build.completeper}}%;" class="bar"></div>
-                </div>
-            </div>
-            <div class="lead pull-right">ETA: in {{build.eta|naturaltime}}</div>
-    {%endif%}
-        </div>
-    </div>
+  {% include "mrb_section.html" %}
 
-  {% endfor %}{%endif%}
 
-  {% if not objects.paginator.count and not request.GET.filter and not request.GET.search %}
-    <!-- Empty - no data in database -->
-    {% if mru.count == 0 %}
-    <div class="page-header top-air">
-       <h1>All builds</h1>
-    </div>
-    <div class="alert alert-info lead">
-        Toaster has not recorded any builds yet. Go build something with <a href="http://www.yoctoproject.org/docs/current/yocto-project-qs/yocto-project-qs.html#test-run">Knotty</a> or <a href="https://www.yoctoproject.org/documentation/hob-manual">Hob</a>
-    </div>
-    {% endif %}
-  {% else %}
+  {% if 1 %}
   <div class="page-header top-air">
      <h1>
       {% if request.GET.filter and objects.paginator.count > 0 or request.GET.search and objects.paginator.count > 0 %}
@@ -108,7 +36,7 @@
 
 
   {% else %}
-  {% include "basetable_top.html" %}
+  {% include "basetable_top_buildprojects.html" %}
         <!-- Table data rows; the order needs to match the order of "tablecols" definitions; and the <td class value needs to match the tablecols clclass value for show/hide buttons to work -->
         {% for build in objects %}
         <tr class="data">

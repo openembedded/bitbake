@@ -24,6 +24,7 @@ import re
 from django import template
 from django.utils import timezone
 from django.template.defaultfilters import filesizeformat
+import json as JsonLib
 
 register = template.Library()
 
@@ -39,6 +40,16 @@ def sectohms(time):
         tdsec = 0
     hours = int(tdsec / 3600)
     return "%02d:%02d:%02d" % (hours, int((tdsec - (hours * 3600))/ 60), int(tdsec) % 60)
+
+
+@register.filter(name = 'mapselect')
+def mapselect(value, argument):
+    return map(lambda x: vars(x)[argument], value)
+
+
+@register.filter(name = "json")
+def json(value):
+    return JsonLib.dumps(value)
 
 @register.assignment_tag
 def query(qs, **kwargs):

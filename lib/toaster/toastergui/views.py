@@ -38,6 +38,51 @@ from datetime import timedelta
 from django.utils import formats
 import json
 
+
+# all new sessions should come through the landing page;
+# determine in which mode we are running in, and redirect appropriately
+def landing(request):
+    if toastermain.settings.MANAGED and Build.objects.count() == 0 and Project.objects.count() > 0:
+        return redirect(reverse('all-projects'), permanent = False)
+
+    if Build.objects.all().count() > 0:
+        return redirect(reverse('all-builds'), permanent = False)
+
+    return render(request, 'landing.html')
+
+def _project_recent_build_list(prj):
+        # build requests not yet started
+        return (map(lambda x: {
+                "id":  x.pk,
+                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
+                "status": x.get_state_display(),
+            }, prj.buildrequest_set.filter(state__lt = BuildRequest.REQ_INPROGRESS).order_by("-pk")) +
+        # build requests started, but with no build yet
+            map(lambda x: {
+                "id":  x.pk,
+                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
+                "status": x.get_state_display(),
+            }, prj.buildrequest_set.filter(state = BuildRequest.REQ_INPROGRESS, build = None).order_by("-pk")) +
+        # build requests that failed
+            map(lambda x: {
+                "id":  x.pk,
+                "targets" : map(lambda y: {"target": y.target }, x.brtarget_set.all()),
+                "status": x.get_state_display(),
+                "errors": map(lambda y: {"type": y.errtype, "msg": y.errmsg, "tb": y.traceback}, x.brerror_set.all()),
+            }, prj.buildrequest_set.filter(state = BuildRequest.REQ_FAILED).order_by("-pk")) +
+        # and already made builds
+            map(lambda x: {
+                "id": x.pk,
+                "targets": map(lambda y: {"target": y.target }, x.target_set.all()),
+                "status": x.get_outcome_display(),
+                "completed_on" : x.completed_on.strftime('%s')+"000",
+                "build_time" : (x.completed_on - x.started_on).total_seconds(),
+                "build_page_url" : reverse('builddashboard', args=(x.pk,)),
+                "completeper": x.completeper(),
+                "eta": x.eta().ctime(),
+            }, prj.build_set.all()))
+
+
 def _build_page_range(paginator, index = 1):
     try:
         page = paginator.page(index)
@@ -219,6 +264,8 @@ def _save_parameters_cookies(response, pagesize, orderby, request):
     response.set_cookie(key='orderby', value=html_parser.unescape(orderby), path=request.path)
     return response
 
+
+
 # shows the "all builds" page
 def builds(request):
     template = 'build.html'
@@ -242,7 +289,7 @@ def builds(request):
     build_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
 
     # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
-    build_mru = Build.objects.filter(completed_on__gte=(timezone.now()-timedelta(hours=24))).order_by("-started_on")[:3]
+    build_mru = Build.objects.order_by("-started_on")[:3]
 
     # set up list of fstypes for each build
     fstypes_map = {};
@@ -2553,6 +2600,84 @@ if toastermain.settings.MANAGED:
                 }
 
         return render(request, template, context)
+
+
+
+    def projects(request):
+        template="projects.html"
+
+        (pagesize, orderby) = _get_parameters_values(request, 10, 'updated:-')
+        mandatory_parameters = { 'count': pagesize,  'page' : 1, 'orderby' : orderby }
+        retval = _verify_parameters( request.GET, mandatory_parameters )
+        if retval:
+            return _redirect_parameters( 'all-projects', request.GET, mandatory_parameters)
+
+        queryset_all = Project.objects.all()
+
+        # boilerplate code that takes a request for an object type and returns a queryset
+        # for that object type. copypasta for all needed table searches
+        (filter_string, search_term, ordering_string) = _search_tuple(request, Project)
+        queryset_with_search = _get_queryset(Project, queryset_all, None, search_term, ordering_string, 'updated:-')
+        queryset = _get_queryset(Project, queryset_all, filter_string, search_term, ordering_string, 'updated:-')
+
+        # retrieve the objects that will be displayed in the table; projects a paginator and gets a page range to display
+        project_info = _build_page_range(Paginator(queryset, pagesize), request.GET.get('page', 1))
+
+        # build view-specific information; this is rendered specifically in the builds page, at the top of the page (i.e. Recent builds)
+        build_mru = Build.objects.order_by("-started_on")[:3]
+
+
+
+        context = {
+                'mru' : build_mru,
+
+                'objects' : project_info,
+                'objectname' : "projects",
+                'default_orderby' : 'id:-',
+                'search_term' : search_term,
+                'total_count' : queryset_with_search.count(),
+                'tablecols': [
+                    {'name': 'Project',
+                    'orderfield': _get_toggle_order(request, "name"),
+                    'ordericon':_get_toggle_order_icon(request, "name"),
+                    'orderkey' : 'name',
+                    },
+                    {'name': 'Release',
+                    'qhelp' : "The version of the build system used by the project",
+                    'orderfield': _get_toggle_order(request, "release__name"),
+                    'ordericon':_get_toggle_order_icon(request, "release__name"),
+                    'orderkey' : 'release__name',
+                    },
+                    {'name': 'Machine',
+                    'qhelp': "The hardware currently selected for the project",
+                    },
+                    {'name': 'Number of builds',
+                    'qhelp': "How many builds have been run for the project",
+                    },
+                    {'name': 'Last outcome', 'clclass': 'loutcome',
+                    'qhelp': "Tells you if the last project build completed successfully or failed",
+                    },
+                    {'name': 'Last target', 'clclass': 'ltarget',
+                    'qhelp': "The last project build target(s): one or more recipes or image recipes",
+                    },
+                    {'name': 'Last errors', 'clclass': 'lerrors',
+                    'qhelp': "How many errors were encountered during the last project build (if any)",
+                    },
+                    {'name': 'Last warnings', 'clclass': 'lwarnings',
+                    'qhelp': "How many warnigns were encountered during the last project build (if any)",
+                    },
+                    {'name': 'Last image files', 'clclass': 'limagefiles', 'hidden': 1,
+                    'qhelp': "The root file system types produced by the last project build",
+                    },
+                    {'name': 'Last updated', 'clclass': 'updated',
+                    'orderfield': _get_toggle_order(request, "updated"),
+                    'ordericon':_get_toggle_order_icon(request, "updated"),
+                    'orderkey' : 'updated',
+                    }
+                    ]
+            }
+        return render(request, template, context)
+
 else:
     # these are pages that are NOT available in interactive mode
     def managedcontextprocessor(request):
@@ -2598,4 +2723,7 @@ else:
         raise Exception("page not available in interactive mode")
 
     def projectbuilds(request):
+        raise Exception("page not available in interactive mode")
+
+    def projects(request):
         raise Exception("page not available in interactive mode")

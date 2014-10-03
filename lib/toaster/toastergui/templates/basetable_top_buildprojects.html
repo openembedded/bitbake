@@ -1,0 +1,16 @@
+{% extends "basetable_top.html" %}
+
+{%block custombuttons %}
+{% if MANAGED %}
+  <div class="btn-group builds-projects">
+    <button class="btn dropdown-toggle" data-toggle="dropdown">
+        <span class="selection">Show all builds</span>
+        <i class="icon-caret-down"></i>
+    </button>
+    <ul class="dropdown-menu">
+        <li><a href="{% url 'all-builds'%}">Show all builds</a></li>
+        <li><a href="{% url 'all-projects'%}">Show all projects</a></li>
+    </ul>
+  </div>
+{% endif %}
+{%endblock%}

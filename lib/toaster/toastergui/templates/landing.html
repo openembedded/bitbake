@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load projecttags %}
+{% load humanize %}
+
+{% block pagecontent %}
+
+  <div class="container-fluid">
+   <div class="row-fluid">
+    <!-- Empty - no data in database -->
+    <div class="hero-unit span12">
+     <button class="close" data-dismiss="alert" type="button">
+      ×
+     </button>
+     <div class="row-fluid">
+      <div class="span6">
+       <h1>
+        This is Toaster
+       </h1>
+       <p>
+        A web interface to
+        <a href="http://www.yoctoproject.org/tools-resources/projects/bitbake">
+         BitBake
+        </a>
+        , the
+        <a href="http://www.yoctoproject.org">
+         Yocto Project
+        </a>
+        build system.
+       </p>
+       <p class="hero-actions">
+        <a class="btn btn-primary btn-large" href="https://www.yoctoproject.org/documentation/toaster-manual">
+         Show me the manual
+        </a>
+        <a class="btn btn-large" href="https://wiki.yoctoproject.org/wiki/Contribute_to_Toaster">
+         I want to contribute
+        </a>
+       </p>
+      </div>
+      <div class="span5">
+       <a href="http://www.yoctoproject.org">
+        <img alt="Yocto Project" class="thumbnail" src="/static/img/toaster.png"/>
+       </a>
+      </div>
+     </div>
+    </div>
+    <!-- Empty - no data in database -->
+    <div class="page-header top-air">
+     <h1>
+      All builds
+     </h1>
+    </div>
+    <div class="alert alert-info lead">
+     Toaster has not recorded any builds yet. Go build something with
+     <a href="http://www.yoctoproject.org/docs/current/yocto-project-qs/yocto-project-qs.html#test-run">
+      Knotty
+     </a>
+     or
+     <a href="https://www.yoctoproject.org/documentation/hob-manual">
+      Hob
+     </a>
+    </div>
+   </div>
+
+{% endblock %}

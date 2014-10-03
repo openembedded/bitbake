@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% load static %}
+{% load projecttags %}
+{% load humanize %}
+
+{% block pagecontent %}
+
+
+  {% include "mrb_section.html" %}
+
+
+  <div class="page-header top-air">
+      <h1>
+         All projects
+       </h1>
+  </div>
+
+{% include "basetable_top_projectbuilds.html" %}
+  {% for o in objects %}
+    <tr class="data">
+      <td><a href="{% url 'project' o.id %}">{{o.name}}</a></td>
+      <td><a href="{% url 'project' o.id %}">{{o.release.name}}</a></td>
+      <td>{{o.get_current_machine_name}}</td>
+      <td>{{o.get_number_of_builds}}</td>
+      <td>{{o.get_last_outcome}}</td>
+      <td>{{o.get_last_target}}</td>
+      <td>{{o.get_last_errors}}</td>
+      <td>{{o.get_last_warnings}}</td>
+      <td>{{o.get_last_imgfiles}}</td>
+      <td>{{o.updated|date:"d/m/y H:i"}}</td>
+    </tr>
+  {% endfor %}
+{% include "basetable_bottom.html" %}
+
+{% endblock %}
