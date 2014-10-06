@@ -53,7 +53,7 @@ class Command(NoArgsCommand):
     def _get_suggested_builddir(self, be):
         if be.betype != BuildEnvironment.TYPE_LOCAL:
             return ""
-        return DN(self._find_first_path_for_file(self.guesspath, "bblayers.conf", 3))
+        return DN(self._find_first_path_for_file(DN(self.guesspath), "bblayers.conf", 4))
 
     def _import_layer_config(self, baselayerdir):
         filepath = os.path.join(baselayerdir, "meta/conf/toasterconf.json")
@@ -107,10 +107,35 @@ class Command(NoArgsCommand):
                     if layerinfo['local_path'].startswith("/"):
                         lo.local_path = layerinfo['local_path']
                     else:
-                        lo.local_path = self._reduce_canon_path(os.path.join(DN(filepath), layerinfo['local_path']))
-                    lo.layer_index_url = layerinfo['layer_index_url']
-                    if 'vcs_url' in layerinfo:
+                        lo.local_path = self._reduce_canon_path(os.path.join(DN(DN(DN(filepath))), layerinfo['local_path']))
+
+                    if not os.path.exists(lo.local_path):
+                        raise Exception("Local layer path %s must exists." % lo.local_path)
+
+                    if layerinfo['vcs_url'].startswith("remote:"):
+                        lo.vcs_url = None
+                        # we detect the remote name at runtime
+                        import subprocess
+                        (remote, remote_name) = layerinfo['vcs_url'].split(":", 1)
+                        cmd = subprocess.Popen("git remote -v", shell=True, cwd = lo.local_path, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
+                        (out,err) = cmd.communicate()
+                        if cmd.returncode != 0:
+                            raise Exception("Error while importing layer vcs_url: git error: %s" % err)
+                        for line in out.split("\n"):
+                            try:
+                                (name, path) = line.split("\t", 1)
+                                if name == remote_name:
+                                    lo.vcs_url = path.split(" ")[0]
+                                    break
+                            except ValueError:
+                                pass
+                        if lo.vcs_url == None:
+                            raise Exception("Error while looking for remote \"%s\" in \"s\"" % (remote_name, lo.local_path))
+                    else:
                         lo.vcs_url = layerinfo['vcs_url']
+
+                    if 'layer_index_url' in layerinfo:
+                        lo.layer_index_url = layerinfo['layer_index_url']
                     lo.save()
 
                     for branch in layerbranches:
@@ -132,7 +157,7 @@ class Command(NoArgsCommand):
 
             for dli in ri['defaultlayers']:
                 lsi, layername = dli.split(":")
-                layer, created = Layer.objects.get_or_create( 
+                layer, created = Layer.objects.get_or_create(
                         layer_source = LayerSource.objects.get(name = lsi),
                         name = layername
                     )
@@ -153,6 +178,18 @@ class Command(NoArgsCommand):
 
     def handle(self, **options):
         self.guesspath = DN(DN(DN(DN(DN(DN(DN(__file__)))))))
+        # refuse to start if we have no build environments
+        while BuildEnvironment.objects.count() == 0:
+            print(" !! No build environments found. Toaster needs at least one build environment in order to be able to run builds.\n" +
+                "You can manually define build environments in the database table bldcontrol_buildenvironment.\n" +
+                "Or Toaster can define a simple localhost-based build environment for you.")
+
+            i = raw_input(" --  Do you want to create a basic localhost build environment ? (Y/n) ");
+            if not len(i) or i.startswith("y") or i.startswith("Y"):
+                BuildEnvironment.objects.create(pk = 1, betype = 0)
+            else:
+                raise Exception("Toaster cannot start without build environments. Aborting.")
+
 
         # we make sure we have builddir and sourcedir for all defined build envionments
         for be in BuildEnvironment.objects.all():
