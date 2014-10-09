@@ -24,6 +24,28 @@ from django.db.models import F
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils import timezone
 
+
+from django.core import validators
+
+class GitURLValidator(validators.URLValidator):
+    import re
+    regex = re.compile(
+        r'^(?:ssh|git|http|ftp)s?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  # ...or ipv4
+        r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  # ...or ipv6
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+def GitURLField(**kwargs):
+    r = models.URLField(**kwargs)
+    for i in xrange(len(r.validators)):
+        if isinstance(r.validators[i], validators.URLValidator):
+            r.validators[i] = GitURLValidator()
+    return r
+
+
 class ToasterSetting(models.Model):
     name = models.CharField(max_length=63)
     helptext = models.TextField()
@@ -663,8 +685,9 @@ class LayerIndexLayerSource(LayerSource):
         pass
 
 class BitbakeVersion(models.Model):
+
     name = models.CharField(max_length=32, unique = True)
-    giturl = models.URLField()
+    giturl = GitURLField()
     branch = models.CharField(max_length=32)
     dirpath = models.CharField(max_length=255)
 
@@ -708,7 +731,7 @@ class Layer(models.Model):
     name = models.CharField(max_length=100)
     local_path = models.FilePathField(max_length=255, null = True, default = None)
     layer_index_url = models.URLField()
-    vcs_url = models.URLField(default = None, null = True)
+    vcs_url = GitURLField(default = None, null = True)
     vcs_web_file_base_url = models.URLField(null = True, default = None)
 
     summary = models.CharField(max_length=200, help_text='One-line description of the layer', null = True, default = None)
