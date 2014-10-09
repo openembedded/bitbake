@@ -18,7 +18,7 @@ class BitbakeVersionAdmin(admin.ModelAdmin):
         if isinstance(db_field, models.fields.URLField):
             return forms.fields.CharField()
         return super(BitbakeVersionAdmin, self).formfield_for_dbfield(db_field, **kwargs)
-            
+
 
 
 class ReleaseAdmin(admin.ModelAdmin):

@@ -51,6 +51,9 @@ class ToasterSetting(models.Model):
     helptext = models.TextField()
     value = models.CharField(max_length=255)
 
+    def __unicode__(self):
+        return "Setting %s" % self.name
+
 class ToasterSettingDefaultLayer(models.Model):
     layer_version = models.ForeignKey('Layer_Version')
 
@@ -347,7 +350,7 @@ class Package(models.Model):
     installed_name = models.CharField(max_length=100, default='')
     version = models.CharField(max_length=100, blank=True)
     revision = models.CharField(max_length=32, blank=True)
-    summary = models.CharField(max_length=200, blank=True)
+    summary = models.TextField(blank=True)
     description = models.TextField(blank=True)
     size = models.IntegerField(default=0)
     installed_size = models.IntegerField(default=0)
@@ -420,7 +423,7 @@ class Recipe(models.Model):
     name = models.CharField(max_length=100, blank=True)                 # pn
     version = models.CharField(max_length=100, blank=True)              # pv
     layer_version = models.ForeignKey('Layer_Version', related_name='recipe_layer_version')
-    summary = models.CharField(max_length=100, blank=True)
+    summary = models.TextField(blank=True)
     description = models.TextField(blank=True)
     section = models.CharField(max_length=100, blank=True)
     license = models.CharField(max_length=200, blank=True)
@@ -585,8 +588,8 @@ class LayerIndexLayerSource(LayerSource):
             print "EE: could not connect to %s, skipping update: %s\n%s" % (self.apiurl, e, traceback.format_exc(e))
             return
 
-        # update branches; only those that we already have names listed in the database
-        whitelist_branch_names = map(lambda x: x.name, Branch.objects.all())
+        # update branches; only those that we already have names listed in the Releases table
+        whitelist_branch_names = map(lambda x: x.branch, Release.objects.all())
 
         branches_info = _get_json_response(apilinks['branches']
             + "?filter=name:%s" % "OR".join(whitelist_branch_names))
@@ -667,7 +670,7 @@ class LayerIndexLayerSource(LayerSource):
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
         for ri in recipes_info:
-            ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = mi['layerbranch']))
+            ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = ri['layerbranch']))
 
             ro.up_date = ri['updated']
 
@@ -690,6 +693,9 @@ class BitbakeVersion(models.Model):
     giturl = GitURLField()
     branch = models.CharField(max_length=32)
     dirpath = models.CharField(max_length=255)
+
+    def __unicode__(self):
+        return "%s (%s)" % (self.name, self.branch)
 
 
 class Release(models.Model):
@@ -734,7 +740,7 @@ class Layer(models.Model):
     vcs_url = GitURLField(default = None, null = True)
     vcs_web_file_base_url = models.URLField(null = True, default = None)
 
-    summary = models.CharField(max_length=200, help_text='One-line description of the layer', null = True, default = None)
+    summary = models.TextField(help_text='One-line description of the layer', null = True, default = None)
     description = models.TextField(null = True, default = None)
 
     def __unicode__(self):
