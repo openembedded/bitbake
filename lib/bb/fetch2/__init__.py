@@ -543,7 +543,7 @@ def verify_checksum(ud, d):
 
     if ud.method.recommends_checksum(ud):
         # If strict checking enabled and neither sum defined, raise error
-        strict = d.getVar("BB_STRICT_CHECKSUM", "1") or "0"
+        strict = d.getVar("BB_STRICT_CHECKSUM", True) or "0"
         if (strict == "1") and not (ud.md5_expected or ud.sha256_expected):
             logger.error('No checksum specified for %s, please add at least one to the recipe:\n'
                              'SRC_URI[%s] = "%s"\nSRC_URI[%s] = "%s"' %
