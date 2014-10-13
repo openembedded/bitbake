@@ -83,8 +83,10 @@ function webserverStartAll()
 
 function addtoConfiguration()
 {
-        echo "#Created by toaster start script" > ${BUILDDIR}/conf/$2
-        echo $1 >> ${BUILDDIR}/conf/$2
+        file=$1
+        shift
+        echo "#Created by toaster start script" > ${BUILDDIR}/conf/$file
+        for var in "$@"; do echo $var >> ${BUILDDIR}/conf/$file; done
 }
 
 INSTOPSYSTEM=0
@@ -196,6 +198,7 @@ fi
 
 NOTOASTERUI=0
 WEBSERVER=1
+TOASTER_BRBE=""
 for param in $*; do
     case $param in
     noui )
@@ -204,6 +207,8 @@ for param in $*; do
     noweb )
             WEBSERVER=0
     ;;
+    brbe=* )
+            TOASTER_BRBE=$'\n'"TOASTER_BRBE=\""${param#*=}"\""
     esac
 done
 
@@ -228,7 +233,7 @@ fi
 case $CMD in
     start )
         start_success=1
-        addtoConfiguration "INHERIT+=\"toaster buildhistory\"" toaster.conf
+        addtoConfiguration toaster.conf "INHERIT+=\"toaster buildhistory\"" $TOASTER_BRBE
         if [ $WEBSERVER -gt 0 ] && ! webserverStartAll; then
             echo "Failed ${CMD}."
             return 4
@@ -248,10 +253,12 @@ case $CMD in
             # set fail safe stop system on terminal exit
             trap stop_system SIGHUP
             echo "Successful ${CMD}."
+            return 0
         else
             # failed start, do stop
             stop_system
             echo "Failed ${CMD}."
+            return 1
         fi
         # stop system on terminal exit
         set -o monitor

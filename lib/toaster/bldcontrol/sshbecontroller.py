@@ -77,10 +77,10 @@ class SSHBEController(BuildEnvironmentController):
         self._pathcreate(self.be.builddir)
         self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.pokydirname, self.be.builddir))
 
-    def startBBServer(self):
+    def startBBServer(self, brbe):
         assert self.pokydirname and self._pathexists(self.pokydirname)
         assert self.islayerset
-        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb && sleep 1\"" % (self.pokydirname, self.be.builddir, self.dburl))
+        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb brbe=%s\"" % (self.pokydirname, self.be.builddir, self.dburl, brbe))
         # FIXME unfortunate sleep 1 - we need to make sure that bbserver is started and the toaster ui is connected
         # but since they start async without any return, we just wait a bit
         print "Started server"

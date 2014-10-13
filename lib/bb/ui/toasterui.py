@@ -219,6 +219,7 @@ def main(server, eventHandler, params ):
             if isinstance(event, (bb.command.CommandCompleted,
                                   bb.command.CommandFailed,
                                   bb.command.CommandExit)):
+                errorcode = 0
                 if (isinstance(event, bb.command.CommandFailed)):
                     event.levelno = format.ERROR
                     event.msg = "Command Failed " + event.error
@@ -226,10 +227,10 @@ def main(server, eventHandler, params ):
                     event.lineno = 0
                     buildinfohelper.store_log_event(event)
                     errors += 1
+                    errorcode = 1
 
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
-                buildinfohelper.close()
-
+                buildinfohelper.close(errorcode)
 
                 # we start a new build info
                 if buildinfohelper.brbe is not None:

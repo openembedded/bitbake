@@ -74,14 +74,35 @@ class LocalhostBEController(BuildEnvironmentController):
         self._createdirpath(self.be.builddir)
         self._shellcmd("bash -c \"source %s/oe-init-build-env %s\"" % (self.pokydirname, self.be.builddir))
 
-    def startBBServer(self):
+    def startBBServer(self, brbe):
         assert self.pokydirname and os.path.exists(self.pokydirname)
         assert self.islayerset
-        print("DEBUG: executing ", "bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb && sleep 1\"" % (self.pokydirname, self.be.builddir, self.dburl))
-        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb && sleep 1\"" % (self.pokydirname, self.be.builddir, self.dburl))
-        # FIXME unfortunate sleep 1 - we need to make sure that bbserver is started and the toaster ui is connected
-        # but since they start async without any return, we just wait a bit
-        print "Started server"
+
+        try:
+            os.remove(os.path.join(self.be.builddir, "toaster_ui.log"))
+        except OSError as e:
+            import errno
+            if e.errno != errno.ENOENT:
+                raise
+
+        cmd = "bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb brbe=%s\"" % (self.pokydirname, self.be.builddir, self.dburl, brbe)
+        print("DEBUG: executing ", cmd)
+        print self._shellcmd(cmd)
+        def _toaster_ui_started(filepath):
+            if not os.path.exists(filepath):
+                return False
+            with open(filepath, "r") as f:
+                for line in f:
+                    if line.startswith("NOTE: ToasterUI waiting for events"):
+                        return True
+            return False
+
+        while not _toaster_ui_started(os.path.join(self.be.builddir, "toaster_ui.log")):
+            import time
+            print "DEBUG: Waiting server to start"
+            time.sleep(0.5)
+
+        print("DEBUG: Started server")
         assert self.be.sourcedir and os.path.exists(self.be.builddir)
         self.be.bbaddress = "localhost"
         self.be.bbport = "8200"
@@ -172,9 +193,13 @@ class LocalhostBEController(BuildEnvironmentController):
         conflines = open(bblayerconf, "r").readlines()
 
         bblayerconffile = open(bblayerconf, "w")
+        skip = 0
         for i in xrange(len(conflines)):
+            if skip > 0:
+                skip =- 1
+                continue
             if conflines[i].startswith("# line added by toaster"):
-                i += 2
+                skip = 1
             else:
                 bblayerconffile.write(conflines[i])
 

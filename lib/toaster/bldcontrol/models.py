@@ -59,7 +59,8 @@ class BuildRequest(models.Model):
     )
 
     project     = models.ForeignKey(Project)
-    build       = models.ForeignKey(Build, null = True)     # TODO: toasterui should set this when Build is created
+    build       = models.OneToOneField(Build, null = True)     # TODO: toasterui should set this when Build is created
+    environment = models.ForeignKey(BuildEnvironment, null = True)
     state       = models.IntegerField(choices = REQUEST_STATE, default = REQ_CREATED)
     created     = models.DateTimeField(auto_now_add = True)
     updated     = models.DateTimeField(auto_now = True)

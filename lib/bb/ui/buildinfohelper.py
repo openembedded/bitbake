@@ -933,14 +933,17 @@ class BuildInfoHelper(object):
                             self.internal_state['recipes'],
                             )
 
-    def _store_build_done(self):
+    def _store_build_done(self, errorcode):
         br_id, be_id = self.brbe.split(":")
         from bldcontrol.models import BuildEnvironment, BuildRequest
         be = BuildEnvironment.objects.get(pk = be_id)
         be.lock = BuildEnvironment.LOCK_LOCK
         be.save()
         br = BuildRequest.objects.get(pk = br_id)
-        br.state = BuildRequest.REQ_COMPLETED
+        if errorcode == 0:
+            br.state = BuildRequest.REQ_COMPLETED
+        else:
+            br.state = BuildRequest.REQ_FAILED
         br.save()
 
 
@@ -964,7 +967,7 @@ class BuildInfoHelper(object):
                 self.internal_state['backlog'].append(event)
             else:   # we're under Toaster control, post the errors to the build request
                 from bldcontrol.models import BuildRequest, BRError
-                br, be = brbe.split(":")
+                br, be = self.brbe.split(":")
                 buildrequest = BuildRequest.objects.get(pk = br)
                 brerror = BRError.objects.create(req = buildrequest, errtype="build", errmsg = event.msg)
 
@@ -992,9 +995,9 @@ class BuildInfoHelper(object):
         log_information['lineno'] = event.lineno
         self.orm_wrapper.create_logmessage(log_information)
 
-    def close(self):
+    def close(self, errorcode):
         if self.brbe is not None:
-            buildinfohelper._store_build_done()
+            self._store_build_done(errorcode)
 
         if 'backlog' in self.internal_state:
             for event in self.internal_state['backlog']:

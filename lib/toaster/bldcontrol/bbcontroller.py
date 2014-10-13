@@ -118,7 +118,7 @@ class BuildEnvironmentController(object):
         self.connection = None
 
 
-    def startBBServer(self):
+    def startBBServer(self, brbe):
         """ Starts a  BB server with Toaster toasterui set up to record the builds, an no controlling UI.
             After this method executes, self.be bbaddress/bbport MUST point to a running and free server,
             and the bbstate MUST be  updated to "started".
@@ -142,12 +142,12 @@ class BuildEnvironmentController(object):
         raise Exception("Must override setLayers")
 
 
-    def getBBController(self):
+    def getBBController(self, brbe):
         """ returns a BitbakeController to an already started server; this is the point where the server
             starts if needed; or reconnects to the server if we can
         """
         if not self.connection:
-            self.startBBServer()
+            self.startBBServer(brbe)
             self.be.lock = BuildEnvironment.LOCK_RUNNING
             self.be.save()
 

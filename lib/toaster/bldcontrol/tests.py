@@ -44,7 +44,7 @@ class BEControllerTests(object):
 
         # test start server and stop
         self.assertTrue(socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect_ex((hostname, 8200)), "Port already occupied")
-        bc.startBBServer()
+        bc.startBBServer("0:0")
         self.assertFalse(socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect_ex((hostname, 8200)), "Server not answering")
 
         bc.stopBBServer()
@@ -57,14 +57,8 @@ class BEControllerTests(object):
         bc = self._getBEController(obe)
         bc.setLayers(BITBAKE_LAYERS, POKY_LAYERS) # setting layers, skip any layer info
 
-        bbc = bc.getBBController()
+        bbc = bc.getBBController("%d:%d" % (-1, obe.pk))
         self.assertTrue(isinstance(bbc, BitbakeController))
-        # test set variable, use no build marker -1 for BR value
-        try:
-            bbc.setVariable("TOASTER_BRBE", "%d:%d" % (-1, obe.pk))
-        except Exception as e :
-            self.fail("setVariable raised %s", e)
-
         bc.stopBBServer()
 
         self._serverForceStop(bc)
