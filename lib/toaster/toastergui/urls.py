@@ -59,10 +59,13 @@ urlpatterns = patterns('toastergui.views',
         url(r'^build/(?P<build_id>\d+)/cpuusage$', 'cpuusage', name='cpuusage'),
         url(r'^build/(?P<build_id>\d+)/diskio$', 'diskio', name='diskio'),
 
-        # image information dir - not yet implemented
+        # image information dir
         url(r'^build/(?P<build_id>\d+)/target/(?P<target_id>\d+)/packagefile/(?P<packagefile_id>\d+)$',
              'image_information_dir', name='image_information_dir'),
 
+
+        # build download artifact
+        url(r'^build/(?P<build_id>\d+)/artifact/(?P<artifact_type>\w+)/id/(?P<artifact_id>\w+)', 'build_artifact', name="build_artifact"),
 
         # urls not linked from the dashboard
         url(r'^layerversions/(?P<layerversion_id>\d+)/recipes/.*$', 'layer_versions_recipes', name='layer_versions_recipes'),

@@ -2603,6 +2603,43 @@ if toastermain.settings.MANAGED:
 
 
 
+    def build_artifact(request, build_id, artifact_type, artifact_id):
+        try:
+            b = Build.objects.get(pk=build_id)
+            if b.buildrequest is None or b.buildrequest.environment is None:
+                raise Exception("Cannot download file")
+
+            file_name = None
+            fsock = None
+            content_type='application/force-download'
+            # Target_Image_File file_name
+            # Task logfile
+            if artifact_type == "tasklogfile":
+                file_name = Task.objects.get(build = b, pk = artifact_id).logfile
+
+            # Task path_to_sstate_obj
+            # Package_File path
+            # Recipe file_path
+            # VariableHistory file_name
+            # LogMessage pathname
+            if artifact_type == "logmessagefile":
+                file_name = LogMessage.objects.get(build = b, pk = artifact_id).pathname
+
+            if file_name is not None:
+                content_type = b.buildrequest.environment.get_artifact_type(file_name)
+                fsock = b.buildrequest.environment.get_artifact(file_name)
+                file_name = os.path.basename(file_name)
+
+            response = HttpResponse(fsock, content_type = content_type)
+
+            # returns a file from the environment
+            response['Content-Disposition'] = 'attachment; filename=' + file_name
+            return response
+        except:
+            raise
+
+
+
     def projects(request):
         template="projects.html"
 
@@ -2723,6 +2760,9 @@ else:
         raise Exception("page not available in interactive mode")
 
     def projectbuilds(request):
+        raise Exception("page not available in interactive mode")
+
+    def build_artifact(request, build_id, artifact_type, artifact_id):
         raise Exception("page not available in interactive mode")
 
     def projects(request):

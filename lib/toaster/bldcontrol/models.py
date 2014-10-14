@@ -40,6 +40,19 @@ class BuildEnvironment(models.Model):
     updated     = models.DateTimeField(auto_now = True)
 
 
+    def get_artifact_type(self, path):
+        if self.betype == BuildEnvironment.TYPE_LOCAL:
+            import magic
+            m = magic.open(magic.MAGIC_MIME_TYPE)
+            m.load()
+            return m.file(path)
+        raise Exception("FIXME: not implemented")
+
+    def get_artifact(self, path):
+        if self.betype == BuildEnvironment.TYPE_LOCAL:
+            return open(path, "r")
+        raise Exception("FIXME: not implemented")
+
 # a BuildRequest is a request that the scheduler will build using a BuildEnvironment
 # the build request queue is the table itself, ordered by state
 

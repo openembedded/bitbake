@@ -28,7 +28,11 @@
             <i class="icon-question-sign get-help" title="Path the task log file"></i> Log file
         </dt>
         <dd>
+	{% if MANAGED %}
+            <code><a href="{% url 'build_artifact' build.pk 'tasklogfile' task.pk %}" target="_blanc">{{task.logfile}}</a></code>
+	{% else %}
             <code>{{task.logfile}}</code>
+	{% endif %}
         </dd>
 	{% endif %}
         {# show stack trace for failed task #}

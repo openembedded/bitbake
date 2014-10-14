@@ -58,7 +58,11 @@
         <div class="span10">
           {% for error in logmessages %}{% if error.level == 2 %}
             <div class="alert alert-error">
+	    {% if MANAGED and error.pathname %}
+	      <pre><a href="{% url 'build_artifact' build.pk 'logmessagefile' error.pk %}" target="_blanc">{{error.message}}</pre>
+	    {% else %}
               <pre>{{error.message}}</pre>
+	    {% endif %}
             </div>
           {% endif %}{% endfor %}
         </div>
