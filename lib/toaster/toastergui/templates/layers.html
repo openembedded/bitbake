@@ -40,9 +40,9 @@
         {% endif %}
         </td>
             <td class="git-subdir" style="display: table-cell;"><a href="{% url 'layerdetails' lv.pk %}"><code>{{lv.dirpath}}</code></a>
-              {% if lv.get_vcs_link_url %}
-            <a target="_blank" href="{{ lv.get_vcs_link_url_dirpath }}"><i class="icon-share get-info"></i></a>
-        {% endif %}
+                {% if lv.dirpath and lv.get_vcs_dirpath_link_url %}
+            <a target="_blank" href="{{ lv.get_vcs_dirpath_link_url }}"><i class="icon-share get-info"></i></a>
+                {% endif %}
         </td>
             <td class="branch">{% if lv.branch %}{{lv.branch}}{% else %}{{lv.up_branch.name}}{% endif %}</td>
             <td class="dependencies">

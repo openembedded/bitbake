@@ -609,6 +609,8 @@ class LayerIndexLayerSource(LayerSource):
             l.up_date = li['updated']
             l.name = li['name']
             l.vcs_url = li['vcs_url']
+            l.vcs_web_url = li['vcs_web_url']
+            l.vcs_web_tree_base_url = li['vcs_web_tree_base_url']
             l.vcs_web_file_base_url = li['vcs_web_file_base_url']
             l.summary = li['summary']
             l.description = li['description']
@@ -738,6 +740,8 @@ class Layer(models.Model):
     local_path = models.FilePathField(max_length=255, null = True, default = None)
     layer_index_url = models.URLField()
     vcs_url = GitURLField(default = None, null = True)
+    vcs_web_url = models.URLField(null = True, default = None)
+    vcs_web_tree_base_url = models.URLField(null = True, default = None)
     vcs_web_file_base_url = models.URLField(null = True, default = None)
 
     summary = models.TextField(help_text='One-line description of the layer', null = True, default = None)
@@ -766,13 +770,54 @@ class Layer_Version(models.Model):
     dirpath = models.CharField(max_length=255, null = True, default = None)          # LayerBranch.vcs_subdir
     priority = models.IntegerField(default = 0)         # if -1, this is a default layer
 
-    def get_vcs_link_url(self, file_path="/"):
+    # code lifted, with adaptations, from the layerindex-web application https://git.yoctoproject.org/cgit/cgit.cgi/layerindex-web/
+    def _handle_url_path(self, base_url, path):
+        import re
+        if base_url:
+            if self.dirpath:
+                if path:
+                    extra_path = self.dirpath + '/' + path
+                    # Normalise out ../ in path for usage URL
+                    extra_path = posixpath.normpath(extra_path)
+                    # Minor workaround to handle case where subdirectory has been added between branches
+                    # (should probably support usage URL per branch to handle this... sigh...)
+                    if extra_path.startswith('../'):
+                        extra_path = extra_path[3:]
+                else:
+                    extra_path = self.dirpath
+            else:
+                extra_path = path
+            branchname = self.up_branch.name
+            url = base_url.replace('%branch%', branchname)
+
+            # If there's a % in the path (e.g. a wildcard bbappend) we need to encode it
+            if extra_path:
+                extra_path = extra_path.replace('%', '%25')
+
+            if '%path%' in base_url:
+                if extra_path:
+                    url = re.sub(r'\[([^\]]*%path%[^\]]*)\]', '\\1', url)
+                else:
+                    url = re.sub(r'\[([^\]]*%path%[^\]]*)\]', '', url)
+                return url.replace('%path%', extra_path)
+            else:
+                return url + extra_path
+        return None
+
+    def get_vcs_link_url(self):
+        if self.layer.vcs_web_url is None:
+            return None
+        return self.layer.vcs_web_url
+
+    def get_vcs_file_link_url(self, file_path=""):
         if self.layer.vcs_web_file_base_url is None:
             return None
-        return self.layer.vcs_web_file_base_url.replace('%path%', file_path).replace('%branch%', self.up_branch.name)
+        return self._handle_url_path(self.layer.vcs_web_file_base_url, file_path)
 
-    def get_vcs_link_url_dirpath(self):
-        return self.get_vcs_link_url(self.dirpath)
+    def get_vcs_dirpath_link_url(self):
+        if self.layer.vcs_web_tree_base_url is None:
+            return None
+        return self._handle_url_path(self.layer.vcs_web_tree_base_url, '')
 
 
     def __unicode__(self):
