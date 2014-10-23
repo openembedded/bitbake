@@ -74,6 +74,8 @@ function webserverStartAll()
             if ! cat "${BUILDDIR}/.toastermain.pid" | xargs -I{} kill -0 {} ; then
                 retval=1
                 rm "${BUILDDIR}/.toastermain.pid"
+	    else
+		echo "Webserver address:  0.0.0.0:8000"
             fi
         fi
         return $retval

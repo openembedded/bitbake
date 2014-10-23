@@ -372,7 +372,7 @@ def main():
             bb.event.ui_queue = []
             server_connection.terminate()
     else:
-        print("server address: %s, server port: %s" % (server.serverImpl.host, server.serverImpl.port))
+        print("Bitbake server address: %s, server port: %s" % (server.serverImpl.host, server.serverImpl.port))
         return 0
 
     return 1
