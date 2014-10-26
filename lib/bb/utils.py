@@ -522,7 +522,7 @@ def filter_environment(good_vars):
         os.unsetenv(key)
         del os.environ[key]
 
-    if len(removed_vars):
+    if removed_vars:
         logger.debug(1, "Removed the following variables from the environment: %s", ", ".join(removed_vars.keys()))
 
     return removed_vars
