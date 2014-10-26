@@ -1198,7 +1198,7 @@ class FetchMethod(object):
                      (file, urldata.parm.get('unpack')))
 
         dots = file.split(".")
-        if dots[-1] in ['gz', 'bz2', 'Z', 'xz']:
+        if dots[-1] in ['gz', 'bz2', 'Z', 'xz', 'lz']:
             efile = os.path.join(rootdir, os.path.basename('.'.join(dots[0:-1])))
         else:
             efile = file
@@ -1219,6 +1219,10 @@ class FetchMethod(object):
                 cmd = 'xz -dc %s | tar x --no-same-owner -f -' % file
             elif file.endswith('.xz'):
                 cmd = 'xz -dc %s > %s' % (file, efile)
+            elif file.endswith('.tar.lz'):
+                cmd = 'lzip -dc %s | tar x --no-same-owner -f -' % file
+            elif file.endswith('.lz'):
+                cmd = 'lzip -dc %s > %s' % (file, efile)
             elif file.endswith('.zip') or file.endswith('.jar'):
                 try:
                     dos = bb.utils.to_boolean(urldata.parm.get('dos'), False)
