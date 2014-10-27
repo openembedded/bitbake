@@ -19,6 +19,7 @@ class PRTable(object):
     def __init__(self, conn, table, nohist):
         self.conn = conn
         self.nohist = nohist
+        self.dirty = False
         if nohist:
             self.table = "%s_nohist" % table 
         else:
@@ -47,6 +48,11 @@ class PRTable(object):
         self.conn.commit()
         self._execute("BEGIN EXCLUSIVE TRANSACTION")
 
+    def sync_if_dirty(self):
+        if self.dirty:
+            self.sync()
+            self.dirty = False
+
     def _getValueHist(self, version, pkgarch, checksum):
         data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))
@@ -61,6 +67,8 @@ class PRTable(object):
                            (version,pkgarch, checksum,version, pkgarch))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
+
+            self.dirty = True
 
             data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                                (version, pkgarch, checksum))
@@ -88,6 +96,8 @@ class PRTable(object):
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
                 self.conn.rollback()
+
+            self.dirty = True
 
             data=self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                                (version, pkgarch, checksum))
@@ -118,6 +128,8 @@ class PRTable(object):
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
 
+            self.dirty = True
+
             data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=?;" % self.table,
                            (version, pkgarch, checksum))
             row = data.fetchone()
@@ -138,6 +150,8 @@ class PRTable(object):
                                (value,version,pkgarch,checksum,value))
             except sqlite3.IntegrityError as exc:
                 logger.error(str(exc))
+
+        self.dirty = True
 
         data = self._execute("SELECT value FROM %s WHERE version=? AND pkgarch=? AND checksum=? AND value>=?;" % self.table,
                             (version,pkgarch,checksum,value))
