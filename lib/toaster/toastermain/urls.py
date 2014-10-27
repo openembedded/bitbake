@@ -55,6 +55,10 @@ if toastermain.settings.MANAGED:
 import os
 currentdir = os.path.dirname(__file__)
 for t in os.walk(os.path.dirname(currentdir)):
+    #if we have a virtualenv skip it to avoid incorrect imports
+    if os.environ.has_key('VIRTUAL_ENV') and os.environ['VIRTUAL_ENV'] in t[0]:
+        continue
+
     if "urls.py" in t[2] and t[0] != currentdir:
         modulename = os.path.basename(t[0])
         urlpatterns.append( url(r'^' + modulename + '/', include ( modulename + '.urls')))
