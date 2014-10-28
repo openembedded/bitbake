@@ -979,14 +979,12 @@ class BuildInfoHelper(object):
 
         log_information = {}
         log_information['build'] = self.internal_state['build']
-        if event.levelno >= format.ERROR:
-            log_information['level'] = event.levelno
+        if event.levelno == format.ERROR:
+            log_information['level'] = LogMessage.ERROR
         elif event.levelno == format.WARNING:
             log_information['level'] = LogMessage.WARNING
-        elif event.levelno == format.INFO:
-            log_information['level'] = LogMessage.INFO
         else:
-            log_information['level'] = event.levelno
+            log_information['level'] = LogMessage.INFO
 
         log_information['message'] = event.msg
         log_information['pathname'] = event.pathname
