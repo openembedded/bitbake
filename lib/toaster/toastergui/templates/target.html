@@ -65,6 +65,7 @@
     {% include "basetable_top.html" %}
     {% for package in objects %}
     <tr>
+      {# order of the table data must match the columns defined in template's context tablecols  #}
         <td class="package_name">
             <a href="{% url 'package_included_detail' build.id target.id package.id %}">
             {{package.name}}
@@ -79,16 +80,17 @@
             {{package.version|filtered_packageversion:package.revision}}
             </a>
         </td>
-        <td class="size sizecol">
-            {{package.size|filtered_installedsize:package.installed_size|filtered_filesizeformat}}
-        </td>
-        <td class="size_over_total sizecol">
-            {{package|filter_sizeovertotal:packages_sum}}
-        </td>
         <td class="license">
             {{package.license}}
         </td>
-        <td class="depends">
+        <td class="size sizecol">
+            {{package.size|filtered_installedsize:package.installed_size|filtered_filesizeformat}}
+        </td>
+
+        <td class="size_over_total sizecol">
+            {{package|filter_sizeovertotal:packages_sum}}
+        </td>
+       <td class="depends">
             {% with deps=package.runtime_dependencies %}
             {% with deps_count=deps|length %}
             {% if deps_count > 0 %}
