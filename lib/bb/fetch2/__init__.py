@@ -620,11 +620,13 @@ def get_autorev(d):
 
 def get_srcrev(d):
     """
-    Return the version string for the current package
-    (usually to be used as PV)
+    Return the revsion string, usually for use in the version string (PV) of the current package
     Most packages usually only have one SCM so we just pass on the call.
     In the multi SCM case, we build a value based on SRCREV_FORMAT which must
     have been set.
+
+    The idea here is that we put the string "AUTOINC+" into return value if the revisions are not 
+    incremental, other code is then responsible for turning that into an increasing value (if needed)
     """
 
     scms = []
