@@ -231,14 +231,16 @@ def main(server, eventHandler, params ):
 
                 buildinfohelper.update_build_information(event, errors, warnings, taskfailures)
                 buildinfohelper.close(errorcode)
+                # mark the log output; controllers may kill the toasterUI after seeing this log
+                logger.info("ToasterUI build done")
 
                 # we start a new build info
                 if buildinfohelper.brbe is not None:
 
-                    print "we are under BuildEnvironment management - after the build, we exit"
+                    logger.debug(1, "ToasterUI under BuildEnvironment management - exiting after the build")
                     server.terminateServer()
                 else:
-                    print "prepared for new build"
+                    logger.debug(1, "ToasterUI prepared for new build")
                     errors = 0
                     warnings = 0
                     taskfailures = []

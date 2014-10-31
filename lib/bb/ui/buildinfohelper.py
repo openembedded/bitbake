@@ -67,13 +67,15 @@ class ORMWrapper(object):
 
         if brbe is not None:
             from bldcontrol.models import BuildEnvironment, BuildRequest
-            br, be = brbe.split(":")
-            buildrequest = BuildRequest.objects.get(pk = br)
-            buildrequest.build = build
-            buildrequest.save()
-            build.project_id = buildrequest.project_id
-            build.save()
-
+            try:
+                br, be = brbe.split(":")
+                buildrequest = BuildRequest.objects.get(pk = br)
+                buildrequest.build = build
+                buildrequest.save()
+                build.project_id = buildrequest.project_id
+                build.save()
+            except BuildRequest.DoesNotExist:
+                pass
         return build
 
     def create_target_objects(self, target_info):
@@ -146,6 +148,8 @@ class ORMWrapper(object):
         if 'start_time' in task_information.keys() and 'end_time' in task_information.keys():
             duration = task_information['end_time'] - task_information['start_time']
             task_object.elapsed_time = duration
+            del task_information['start_time']
+            del task_information['end_time']
 
         task_object.save()
         return task_object
@@ -320,8 +324,7 @@ class ORMWrapper(object):
                 searchname = pkgpnmap[p]['OPKGN']
 
             packagedict[p]['object'], created = Package.objects.get_or_create( build = build_obj, name = searchname )
-            if created:
-                # package was not build in the current build, but
+            if True:    # save the data anyway we can, not just if it was not created here; bug [YOCTO #6887]
                 # fill in everything we can from the runtime-reverse package data
                 try:
                     packagedict[p]['object'].recipe = recipes[pkgpnmap[p]['PN']]
@@ -717,6 +720,7 @@ class BuildInfoHelper(object):
             task_information['task_name'] = taskname
             task_information['cpu_usage'] = taskstats['cpu_usage']
             task_information['disk_io'] = taskstats['disk_io']
+            task_information['elapsed_time'] = taskstats['elapsed_time']
             task_obj = self.orm_wrapper.get_update_task_object(task_information, True)  # must exist
 
     def update_and_store_task(self, event):
