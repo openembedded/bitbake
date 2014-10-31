@@ -44,7 +44,7 @@
                 Build time: <a href="{% url 'buildtime' build.pk %}">{{ build.timespent|sectohms }}</a>
               </span>
           {% if build.project %}
-              <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%elif build.outcome == build.FAILED%}btn-danger{%else%}btn-info{%endif%} pull-right" onclick="scheduleBuild({{build.project.name|json}}, {{build.get_sorted_target_list|mapselect:'target'|json}})">Run again</a>
+              <a class="btn {%if build.outcome == build.SUCCEEDED%}btn-success{%elif build.outcome == build.FAILED%}btn-danger{%else%}btn-info{%endif%} pull-right" onclick="scheduleBuild({%url 'xhr_projectbuild' build.project.id as myurl %}{{myurl|json}}, {{build.project.name|json}}, {{build.get_sorted_target_list|mapselect:'target'|json}})">Run again</a>
           {% endif %}
             </div>
     {%endif%}
@@ -64,10 +64,10 @@
 
 <script>
 
-function _makeXHRBuildCall(data, onsuccess, onfail) {
+function _makeXHRBuildCall(url, data, onsuccess, onfail) {
     $.ajax( {
         type: "POST",
-        url: "{% url 'xhr_projectbuild' project.id %}",
+        url: url,
         data: data,
         headers: { 'X-CSRFToken' : $.cookie('csrftoken')},
         success: function (_data) {
@@ -86,9 +86,9 @@ function _makeXHRBuildCall(data, onsuccess, onfail) {
 }
 
 
-function scheduleBuild(projectName, buildlist) {
+function scheduleBuild(url, projectName, buildlist) {
   console.log("scheduleBuild");
-//  _makeXHRBuildCall({targets: buildlist.join(" ")}, function (_data) {
+//  _makeXHRBuildCall(url , {targets: buildlist.join(" ")}, function (_data) {
 
   $('#latest-builds').prepend('<div class="alert alert-info" style="padding-top:0px">' + '<span class="label label-info" style="font-weight: normal; margin-bottom: 5px; margin-left:-15px; padding-top:5px;">'+projectName+'</span><div class="row-fluid">' +
   '<div class="span4 lead">' + buildlist.join(" ") +
