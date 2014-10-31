@@ -182,6 +182,14 @@ function show_dependencies_modal(layerId, layerName, layerURL, dependencies) {
     $('#dependencies_modal').modal('show');
 }
 
+function updateLayerCountLabels (amount) {
+    /* Update the filter labels */
+    var countLabel = $("#layer_version__projectlayer__project\\:{{project.id}}_count");
+    countLabel.text(Number(countLabel.text())+amount);
+
+    var countLabelRemaining = $("#layer_version__projectlayer__project\\:NOT{{project.id}}_count");
+    countLabelRemaining.text(Number(countLabelRemaining.text())-amount);
+}
 
 var pressedButton = undefined;
 
@@ -194,6 +202,8 @@ function layerAdd(layerId, layerName, layerURL, pressedButtonId) {
                 if (_data.error != "ok") {
                     alert(_data.error);
                 } else {
+                    updateLayerCountLabels(_data.list.length+1);
+
                     if (_data.list.length > 0) {
                         show_dependencies_modal(layerId, layerName, layerURL, _data.list);
                     }

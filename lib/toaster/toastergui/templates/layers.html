@@ -120,10 +120,21 @@ function _makeXHREditCall(data, onsuccess, onfail) {
     });
 }
 
+function updateLayerCountLabels (amount) {
+    /* Update the filter labels */
+    var countLabel = $("#projectlayer__project\\:{{project.id}}_count");
+    countLabel.text(Number(countLabel.text())+amount);
+
+    var countLabelRemaining = $("#projectlayer__project\\:NOT{{project.id}}_count");
+    countLabelRemaining.text(Number(countLabelRemaining.text())-amount);
+}
+
 
 function layerDel(layerId, layerName, layerURL) {
     tooltipUpdateText = "1 layer deleted";
     _makeXHREditCall({ 'layerDel': layerId }, function () {
+        updateLayerCountLabels(-1);
+
         show_alert("You have deleted <strong>1</strong> layer from <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: <a href=\""+layerURL+"\">" + layerName +"</a>");
     });
 }
@@ -187,6 +198,8 @@ function layerAdd(layerId, layerName, layerURL) {
                 if (_data.error != "ok") {
                     alert(_data.error);
                 } else {
+                    updateLayerCountLabels(_data.list.length+1);
+
                     if (_data.list.length > 0) {
                         show_dependencies_modal(layerId, layerName, layerURL, _data.list);
                     }

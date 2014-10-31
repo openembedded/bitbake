@@ -18,10 +18,10 @@
             {% for option in f.options %}
                 {% if option.2 %}
                     <label class="radio">
-                        <input type="radio" name="filter" {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}} ({{option.2}})
+                        <input type="radio" name="filter" {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}} (<span id="{{option.1}}_count">{{option.2}}</span>)
                 {% else %}
                     <label class="radio muted">
-                        <input type="radio" name="filter" disabled {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}} ({{option.2}})
+                        <input type="radio" name="filter" disabled {%if request.GET.filter == option.1 %}checked{%endif%}  value="{{option.1}}"> {{option.0}} (<span id="{{option.1}}_count">{{option.2}}</span>)
                 {% endif %}
                 {% if option.3 %}<i class="icon-question-sign get-help" data-placement="right" title="{{option.3}}"></i>{% endif %}
                 </label>
