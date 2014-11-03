@@ -86,8 +86,12 @@ class LocalhostBEController(BuildEnvironmentController):
                 raise
 
         cmd = "bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb brbe=%s\"" % (self.pokydirname, self.be.builddir, self.dburl, brbe)
-        print("DEBUG: executing ", cmd)
-        print self._shellcmd(cmd)
+        port = "-1"
+        for i in self._shellcmd(cmd).split("\n"):
+            if i.startswith("Bitbake server address"):
+                port = i.split(" ")[-1]
+                print "Found bitbake server port ", port
+
         def _toaster_ui_started(filepath):
             if not os.path.exists(filepath):
                 return False
@@ -105,7 +109,7 @@ class LocalhostBEController(BuildEnvironmentController):
         print("DEBUG: Started server")
         assert self.be.sourcedir and os.path.exists(self.be.builddir)
         self.be.bbaddress = "localhost"
-        self.be.bbport = "8200"
+        self.be.bbport = port
         self.be.bbstate = BuildEnvironment.SERVER_STARTED
         self.be.save()
 
@@ -129,7 +133,7 @@ class LocalhostBEController(BuildEnvironmentController):
         gitrepos = {}
         gitrepos[bitbakes[0].giturl] = []
         gitrepos[bitbakes[0].giturl].append( ("bitbake", bitbakes[0].dirpath, bitbakes[0].commit) )
-        
+
         for layer in layers:
             # we don't process local URLs
             if layer.giturl.startswith("file://"):
@@ -141,7 +145,8 @@ class LocalhostBEController(BuildEnvironmentController):
             commitid = gitrepos[giturl][0][2]
             for e in gitrepos[giturl]:
                 if commitid != e[2]:
-                    raise BuildSetupException("More than one commit per git url, unsupported configuration")
+                    import pprint
+                    raise BuildSetupException("More than one commit per git url, unsupported configuration: \n%s" % pprint.pformat(gitrepos))
 
 
         layerlist = []
@@ -170,6 +175,11 @@ class LocalhostBEController(BuildEnvironmentController):
                 print "DEBUG: selected poky dir name", localdirname
                 self.pokydirname = localdirname
 
+                # make sure we have a working bitbake
+                if not os.path.exists(os.path.join(self.pokydirname, 'bitbake')):
+                    print "DEBUG: checking bitbake into the poky dirname %s " % self.pokydirname
+                    self._shellcmd("git clone -b \"%s\" \"%s\" \"%s\" " % (bitbakes[0].commit, bitbakes[0].giturl, os.path.join(self.pokydirname, 'bitbake')))
+
             # verify our repositories
             for name, dirpath, commit in gitrepos[giturl]:
                 localdirpath = os.path.join(localdirname, dirpath)
@@ -177,7 +187,7 @@ class LocalhostBEController(BuildEnvironmentController):
                     raise BuildSetupException("Cannot find layer git path '%s' in checked out repository '%s:%s'. Aborting." % (localdirpath, giturl, commit))
 
                 if name != "bitbake":
-                    layerlist.append(localdirpath)
+                    layerlist.append(localdirpath.rstrip("/"))
 
         print "DEBUG: current layer list ", layerlist
 
@@ -190,21 +200,7 @@ class LocalhostBEController(BuildEnvironmentController):
         if not os.path.exists(bblayerconf):
             raise BuildSetupException("BE is not consistent: bblayers.conf file missing at %s" % bblayerconf)
 
-        conflines = open(bblayerconf, "r").readlines()
-
-        bblayerconffile = open(bblayerconf, "w")
-        skip = 0
-        for i in xrange(len(conflines)):
-            if skip > 0:
-                skip =- 1
-                continue
-            if conflines[i].startswith("# line added by toaster"):
-                skip = 1
-            else:
-                bblayerconffile.write(conflines[i])
-
-        bblayerconffile.write("\n# line added by toaster build control\nBBLAYERS = \"" + " ".join(layerlist) + "\"")
-        bblayerconffile.close()
+        BuildEnvironmentController._updateBBLayers(bblayerconf, layerlist)
 
         self.islayerset = True
         return True

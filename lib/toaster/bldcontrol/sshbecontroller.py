@@ -80,13 +80,18 @@ class SSHBEController(BuildEnvironmentController):
     def startBBServer(self, brbe):
         assert self.pokydirname and self._pathexists(self.pokydirname)
         assert self.islayerset
-        print self._shellcmd("bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb brbe=%s\"" % (self.pokydirname, self.be.builddir, self.dburl, brbe))
-        # FIXME unfortunate sleep 1 - we need to make sure that bbserver is started and the toaster ui is connected
-        # but since they start async without any return, we just wait a bit
-        print "Started server"
+        cmd = self._shellcmd("bash -c \"source %s/oe-init-build-env %s && DATABASE_URL=%s source toaster start noweb brbe=%s\"" % (self.pokydirname, self.be.builddir, self.dburl, brbe))
+
+        port = "-1"
+        for i in cmd.split("\n"):
+            if i.startswith("Bitbake server address"):
+                port = i.split(" ")[-1]
+                print "Found bitbake server port ", port
+
+
         assert self.be.sourcedir and self._pathexists(self.be.builddir)
         self.be.bbaddress = self.be.address.split("@")[-1]
-        self.be.bbport = "8200"
+        self.be.bbport = port
         self.be.bbstate = BuildEnvironment.SERVER_STARTED
         self.be.save()
 
@@ -99,6 +104,19 @@ class SSHBEController(BuildEnvironmentController):
         self.be.save()
         print "Stopped server"
 
+
+    def _copyFile(self, filepath1, filepath2):
+        p = subprocess.Popen("scp '%s' '%s'" % (filepath1, filepath2), stdout=subprocess.PIPE, stderr = subprocess.PIPE, shell=True)
+        (out, err) = p.communicate()
+        if p.returncode:
+            raise ShellCmdException(err)
+
+    def pullFile(self, local_filename, remote_filename):
+        _copyFile(local_filename, "%s:%s" % (self.be.address, remote_filename))
+
+    def pushFile(self, local_filename, remote_filename):
+        _copyFile("%s:%s" % (self.be.address, remote_filename), local_filename)
+
     def setLayers(self, bitbakes, layers):
         """ a word of attention: by convention, the first layer for any build will be poky! """
 
@@ -110,7 +128,7 @@ class SSHBEController(BuildEnvironmentController):
         gitrepos = {}
         gitrepos[bitbakes[0].giturl] = []
         gitrepos[bitbakes[0].giturl].append( ("bitbake", bitbakes[0].dirpath, bitbakes[0].commit) )
-        
+
         for layer in layers:
             # we don't process local URLs
             if layer.giturl.startswith("file://"):
@@ -171,17 +189,15 @@ class SSHBEController(BuildEnvironmentController):
         if not self._pathexists(bblayerconf):
             raise BuildSetupException("BE is not consistent: bblayers.conf file missing at %s" % bblayerconf)
 
-        conflines = open(bblayerconf, "r").readlines()
+        import uuid
+        local_bblayerconf = "/tmp/" + uuid.uuid4() + "-bblayer.conf"
 
-        bblayerconffile = open(bblayerconf, "w")
-        for i in xrange(len(conflines)):
-            if conflines[i].startswith("# line added by toaster"):
-                i += 2
-            else:
-                bblayerconffile.write(conflines[i])
+        self.pullFile(bblayerconf, local_bblayerconf)
 
-        bblayerconffile.write("\n# line added by toaster build control\nBBLAYERS = \"" + " ".join(layerlist) + "\"")
-        bblayerconffile.close()
+        BuildEnvironmentController._updateBBLayers(local_bblayerconf, layerlist)
+        self.pushFile(local_bblayerconf, bblayerconf)
+
+        os.unlink(local_bblayerconf)
 
         self.islayerset = True
         return True

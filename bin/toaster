@@ -37,7 +37,7 @@ function webserverKillAll()
 			kill -SIGTERM -$(< ${pidfile}) 2>/dev/null
 			sleep 1;
 			# Kill processes if they are still running - may happen in interactive shells
-			ps fux | grep "python.*manage.py" | awk '{print $2}' | xargs kill
+			ps fux | grep "python.*manage.py runserver" | awk '{print $2}' | xargs kill
 		done;
 		rm  ${pidfile}
 		fi
@@ -69,13 +69,13 @@ function webserverStartAll()
 	fi
         if [ $retval -eq 0 ]; then
 	    echo "Starting webserver"
-            python $BBBASEDIR/lib/toaster/manage.py runserver 0.0.0.0:8000 </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
+            python $BBBASEDIR/lib/toaster/manage.py runserver "0.0.0.0:$WEB_PORT" </dev/null >${BUILDDIR}/toaster_web.log 2>&1 & echo $! >${BUILDDIR}/.toastermain.pid
             sleep 1
             if ! cat "${BUILDDIR}/.toastermain.pid" | xargs -I{} kill -0 {} ; then
                 retval=1
                 rm "${BUILDDIR}/.toastermain.pid"
 	    else
-		echo "Webserver address:  0.0.0.0:8000"
+		echo "Webserver address:  http://0.0.0.0:$WEB_PORT/"
             fi
         fi
         return $retval
@@ -103,7 +103,7 @@ function stop_system()
         kill $(< ${BUILDDIR}/.toasterui.pid ) 2>/dev/null
         rm ${BUILDDIR}/.toasterui.pid
     fi
-    BBSERVER=0.0.0.0:8200 bitbake -m
+    BBSERVER=0.0.0.0:-1 bitbake -m
     unset BBSERVER
     webserverKillAll
     # force stop any misbehaving bitbake server
@@ -126,8 +126,45 @@ function notify_chldexit() {
 }
 
 
+
+# Verify prerequisites
+
+if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (5,6)" | python 2>/dev/null | grep True >/dev/null; then
+    echo -e "This program needs Django 1.5 or 1.6. Please install with\n\npip install django==1.6"
+    return 2
+fi
+
+if ! echo "import south; print [0,8,4] ==  map(int,south.__version__.split(\".\"))" | python 2>/dev/null | grep True >/dev/null; then
+    echo -e "This program needs South 0.8.4. Please install with\n\npip install south==0.8.4"
+    return 2
+fi
+
+# read command line parameters
+
 BBBASEDIR=`dirname ${BASH_SOURCE}`/..
 RUNNING=0
+
+NOTOASTERUI=0
+WEBSERVER=1
+TOASTER_BRBE=""
+WEB_PORT="8000"
+
+for param in $*; do
+    case $param in
+    noui )
+            NOTOASTERUI=1
+    ;;
+    noweb )
+            WEBSERVER=0
+    ;;
+    brbe=* )
+            TOASTER_BRBE=$'\n'"TOASTER_BRBE=\""${param#*=}"\""
+    ;;
+    webport=*)
+            WEB_PORT="${param#*=}"
+    esac
+done
+
 
 if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; then
     # We are called as standalone. We refuse to run in a build environment - we need the interactive mode for that.
@@ -152,7 +189,7 @@ if [ -z "$ZSH_NAME" ] && [ `basename \"$0\"` = `basename \"$BASH_SOURCE\"` ]; th
         echo "Failed to start the web server, stopping" 1>&2;
         exit 1;
     fi
-    xdg-open http://0.0.0.0:8000/ >/dev/null 2>&1 &
+    xdg-open http://0.0.0.0:$WEB_PORT/ >/dev/null 2>&1 &
     trap trap_ctrlc SIGINT
     echo "Running. Stop with Ctrl-C"
     while [ $RUNNING -gt 0 ]; do
@@ -170,23 +207,6 @@ if [ -z "$BUILDDIR" ] || [ -z `which bitbake` ]; then
 fi
 
 
-
-# Verify prerequisites
-
-if ! echo "import django; print (1,) == django.VERSION[0:1] and django.VERSION[1:2][0] in (5,6)" | python 2>/dev/null | grep True >/dev/null; then
-    echo -e "This program needs Django 1.5 or 1.6. Please install with\n\npip install django==1.6"
-    return 2
-fi
-
-if ! echo "import south; print [0,8,4] ==  map(int,south.__version__.split(\".\"))" | python 2>/dev/null | grep True >/dev/null; then
-    echo -e "This program needs South 0.8.4. Please install with\n\npip install south==0.8.4"
-    return 2
-fi
-
-
-
-
-
 # Determine the action. If specified by arguments, fine, if not, toggle it
 if [ "x$1" == "xstart" ] || [ "x$1" == "xstop" ]; then
     CMD="$1"
@@ -198,22 +218,6 @@ else
     fi;
 fi
 
-NOTOASTERUI=0
-WEBSERVER=1
-TOASTER_BRBE=""
-for param in $*; do
-    case $param in
-    noui )
-            NOTOASTERUI=1
-    ;;
-    noweb )
-            WEBSERVER=0
-    ;;
-    brbe=* )
-            TOASTER_BRBE=$'\n'"TOASTER_BRBE=\""${param#*=}"\""
-    esac
-done
-
 echo "The system will $CMD."
 
 # Make sure it's safe to run by checking bitbake lock
@@ -223,10 +227,16 @@ if [ -e $BUILDDIR/bitbake.lock ]; then
     (flock -n 200 ) 200<$BUILDDIR/bitbake.lock || lock=0
 fi
 
-if [ ${CMD} == "start" ] && ( [ $lock -eq 0 ] || [ -e $BUILDDIR/.toastermain.pid ] ); then
-    echo "Error: bitbake lock state error. File locks show that the system is on." 2>&1
-    echo "If you see problems, stop and then start the system again." 2>&1
+if [ ${CMD} == "start" ] && [ $lock -eq 0 ]; then
+    echo "Error: bitbake lock state error. File locks show that the system is on." 1>&2
+    echo "Please wait for the current build to finish, stop and then start the system again." 1>&2
     return 3
+fi
+
+if [ ${CMD} == "start" ] && [ -e $BUILDDIR/.toastermain.pid ] && kill -0 `cat $BUILDDIR/.toastermain.pid`; then
+    echo "Error: bitbake appears to be dead, but the webserver is alive. Something fishy is going on." 1>&2
+    echo "Cleaning up the web server at to start a clean slate."
+    webserverKillAll
 fi
 
 
@@ -241,12 +251,12 @@ case $CMD in
             return 4
         fi
         unset BBSERVER
-        bitbake --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:8200
+        bitbake --postread conf/toaster.conf --server-only -t xmlrpc -B 0.0.0.0:0
         if [ $? -ne 0 ]; then
             start_success=0
             echo "Bitbake server start failed"
         else
-            export BBSERVER=0.0.0.0:8200
+            export BBSERVER=0.0.0.0:-1
             if [ $NOTOASTERUI == 0 ]; then        # we start the TOASTERUI only if not inhibited
                 bitbake --observe-only -u toasterui >${BUILDDIR}/toaster_ui.log 2>&1 & echo $! >${BUILDDIR}/.toasterui.pid
             fi

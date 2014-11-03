@@ -117,6 +117,25 @@ class BuildEnvironmentController(object):
         self.be = be
         self.connection = None
 
+    @staticmethod
+    def _updateBBLayers(bblayerconf, layerlist):
+        conflines = open(bblayerconf, "r").readlines()
+
+        bblayerconffile = open(bblayerconf, "w")
+        skip = 0
+        for i in xrange(len(conflines)):
+            if skip > 0:
+                skip =- 1
+                continue
+            if conflines[i].startswith("# line added by toaster"):
+                skip = 1
+            else:
+                bblayerconffile.write(conflines[i])
+
+        bblayerconffile.write("# line added by toaster build control\nBBLAYERS = \"" + " ".join(layerlist) + "\"")
+        bblayerconffile.close()
+
+
 
     def startBBServer(self, brbe):
         """ Starts a  BB server with Toaster toasterui set up to record the builds, an no controlling UI.
