@@ -295,9 +295,17 @@ def main(server, eventHandler, params ):
             main.shutdown = 1
             pass
         except Exception as e:
+            # print errors to log
             logger.error(e)
             import traceback
-            traceback.print_exc()
+            exception_data = traceback.format_exc()
+
+            # save them to database, if possible; if it fails, we already logged to console.
+            try:
+                buildinfohelper.store_log_error("%s\n%s" % (str(e), exception_data))
+            except Exception:
+                pass
+
             pass
 
     if interrupted:
