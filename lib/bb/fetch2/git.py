@@ -339,7 +339,10 @@ class Git(FetchMethod):
         """
         Compute the HEAD revision for the url
         """
-        search = "refs/heads/%s refs/tags/%s^{}" % (ud.unresolvedrev[name], ud.unresolvedrev[name])
+        if ud.unresolvedrev[name][:5] == "refs/":
+            search = "%s %s^{}" % (ud.unresolvedrev[name], ud.unresolvedrev[name])
+        else:
+            search = "refs/heads/%s refs/tags/%s^{}" % (ud.unresolvedrev[name], ud.unresolvedrev[name])
         output = self._lsremote(ud, d, search)
         return output.split()[0]
 
