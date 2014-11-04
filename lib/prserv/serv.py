@@ -76,11 +76,19 @@ class PRServer(SimpleXMLRPCServer):
         In addition, exception handling is done here.
 
         """
+        iter_count = 1
+        # With 60 iterations between syncs and a 0.5 second timeout between
+        # iterations, this will sync if dirty every ~30 seconds.
+        iterations_between_sync = 60
+
         while True:
             (request, client_address) = self.requestqueue.get()
             try:
                 self.finish_request(request, client_address)
                 self.shutdown_request(request)
+                iter_count = (iter_count + 1) % iterations_between_sync
+                if iter_count == 0:
+                    self.table.sync_if_dirty()
             except:
                 self.handle_error(request, client_address)
                 self.shutdown_request(request)
@@ -122,10 +130,6 @@ class PRServer(SimpleXMLRPCServer):
     def work_forever(self,):
         self.quit = False
         self.timeout = 0.5
-        iter_count = 1
-        # With 60 iterations between syncs and a 0.5 second timeout between
-        # iterations, this will sync if dirty every ~30 seconds.
-        iterations_between_sync = 60
 
         logger.info("Started PRServer with DBfile: %s, IP: %s, PORT: %s, PID: %s" %
                      (self.dbfile, self.host, self.port, str(os.getpid())))
@@ -133,9 +137,6 @@ class PRServer(SimpleXMLRPCServer):
         self.handlerthread.start()
         while not self.quit:
             self.handle_request()
-            iter_count = (iter_count + 1) % iterations_between_sync
-            if iter_count == 0:
-                self.table.sync_if_dirty()
 
         self.table.sync()
         logger.info("PRServer: stopping...")
