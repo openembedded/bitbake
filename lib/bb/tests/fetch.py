@@ -600,10 +600,45 @@ class FetchMethodTest(FetcherTest):
             : "3.82+dbg0.9",
     }
 
+    test_wget_uris = {
+        # packages with versions inside directory name
+        ("util-linux", "http://kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.24.2.tar.bz2", "", "")
+            : "2.24.2",
+        ("enchant", "http://www.abisource.com/downloads/enchant/1.6.0/enchant-1.6.0.tar.gz", "", "")
+            : "1.6.0",
+        ("cmake", "http://www.cmake.org/files/v2.8/cmake-2.8.12.1.tar.gz", "", "")
+            : "2.8.12.1",
+        # packages with versions only in current directory
+        ("eglic", "http://downloads.yoctoproject.org/releases/eglibc/eglibc-2.18-svnr23787.tar.bz2", "", "")
+            : "2.19",
+        ("gnu-config", "http://downloads.yoctoproject.org/releases/gnu-config/gnu-config-20120814.tar.bz2", "", "")
+            : "20120814",
+        # packages with "99" in the name of possible version
+        ("pulseaudio", "http://freedesktop.org/software/pulseaudio/releases/pulseaudio-4.0.tar.xz", "", "")
+            : "5.0",
+        ("xserver-xorg", "http://xorg.freedesktop.org/releases/individual/xserver/xorg-server-1.15.1.tar.bz2", "", "")
+            : "1.15.1",
+        # packages with valid REGEX_URI and REGEX
+        ("cups", "http://www.cups.org/software/1.7.2/cups-1.7.2-source.tar.bz2", "http://www.cups.org/software.php", "/software\.php\?VERSION=2\.0\.0&FILE=2\.0\.0/(?P<name>cups\-)(?P<pver>((\d+[\.\-_]*)+))\-source\.tar\.gz")
+            : "2.0.0",
+        ("db", "http://download.oracle.com/berkeley-db/db-5.3.21.tar.gz", "http://www.oracle.com/technetwork/products/berkeleydb/downloads/index-082944.html", "http://download.oracle.com/otn/berkeley-db/(?P<name>db-)(?P<pver>((\d+[\.\-_]*)+))\.tar\.gz")
+            : "6.1.19",
+    }
+
     def test_git_latest_versionstring(self):
         for k, v in self.test_git_uris.items():
             self.d.setVar("SRCREV", k[2])
             self.d.setVar("GITTAGREGEX", k[3])
+            ud = bb.fetch2.FetchData(k[1], self.d)
+            verstring = ud.method.latest_versionstring(ud, self.d)
+            print("Package %s, version: %s <= %s" % (k[0], v, verstring))
+            r = bb.utils.vercmp_string(v, verstring)
+            self.assertTrue(r == -1 or r == 0)
+
+    def test_wget_latest_versionstring(self):
+        for k, v in self.test_wget_uris.items():
+            self.d.setVar("REGEX_URI", k[2])
+            self.d.setVar("REGEX", k[3])
             ud = bb.fetch2.FetchData(k[1], self.d)
             verstring = ud.method.latest_versionstring(ud, self.d)
             print("Package %s, version: %s <= %s" % (k[0], v, verstring))
