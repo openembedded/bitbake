@@ -24,6 +24,10 @@
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+# Set to True to see the SQL queries in console
+SQL_DEBUG = False
+
+
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
@@ -276,11 +280,21 @@ LOGGING = {
             '()': 'django.utils.log.RequireDebugFalse'
         }
     },
+    'formatters': {
+        'datetime': {
+            'format': 'DB %(asctime)s %(message)s'
+        }
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'datetime',
         }
     },
     'loggers': {
@@ -291,6 +305,13 @@ LOGGING = {
         },
     }
 }
+
+if DEBUG and SQL_DEBUG:
+    LOGGING['loggers']['django.db.backends'] = {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        }
+
 
 # If we're using sqlite, we need to tweak the performance a bit
 from django.db.backends.signals import connection_created
