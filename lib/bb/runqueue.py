@@ -430,7 +430,7 @@ class RunQueueData:
             # Nothing to do
             return 0
 
-        logger.info("Preparing runqueue")
+        logger.info("Preparing RunQueue")
 
         # Step A - Work out a list of tasks to run
         #
