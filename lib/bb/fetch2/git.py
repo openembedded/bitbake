@@ -67,6 +67,7 @@ Supported SRC_URI options are:
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import os
+import re
 import bb
 from   bb    import data
 from   bb.fetch2 import FetchMethod
@@ -345,6 +346,43 @@ class Git(FetchMethod):
             search = "refs/heads/%s refs/tags/%s^{}" % (ud.unresolvedrev[name], ud.unresolvedrev[name])
         output = self._lsremote(ud, d, search)
         return output.split()[0]
+
+    def latest_versionstring(self, ud, d):
+        """
+        Compute the latest release name like "x.y.x" in "x.y.x+gitHASH"
+        by searching through the tags output of ls-remote, comparing
+        versions and returning the highest match.
+        """
+        verstring = ""
+        tagregex = re.compile(d.getVar('GITTAGREGEX', True) or "(?P<pver>([0-9][\.|_]?)+)")
+        try:
+            output = self._lsremote(ud, d, "refs/tags/*^{}")
+        except bb.fetch2.FetchError or bb.fetch2.NetworkAccess:
+            return ""
+
+        for line in output.split("\n"):
+            if not line:
+                break
+
+            line = line.split("/")[-1]
+            # Ignore non-released branches
+            m = re.search("(alpha|beta|rc|final)+", line)
+            if m:
+                continue
+
+            # search for version in the line
+            tag = tagregex.search(line)
+            if tag == None:
+                continue
+
+            tag = tag.group('pver')
+            tag = tag.replace("_", ".")
+
+            if verstring and bb.utils.vercmp(("0", tag, ""), ("0", verstring, "")) < 0:
+                continue
+            verstring = tag
+
+        return verstring
 
     def _build_revision(self, ud, d, name):
         return ud.revisions[name]
