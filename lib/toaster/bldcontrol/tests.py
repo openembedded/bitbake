@@ -130,7 +130,7 @@ class RunBuildsCommandTests(TestCase):
 
     def test_br_select(self):
         from orm.models import Project, Release, BitbakeVersion
-        p = Project.objects.create_project("test", Release.objects.get_or_create(name = "HEAD", bitbake_version = BitbakeVersion.objects.get_or_create(name="HEAD", branch="HEAD")[0])[0])
+        p = Project.objects.create_project("test", Release.objects.get_or_create(name = "HEAD", bitbake_version = BitbakeVersion.objects.get_or_create(name="HEAD", branch=Branch.objects.get_or_create(name="HEAD"))[0])[0])
         obr = BuildRequest.objects.create(state = BuildRequest.REQ_QUEUED, project = p)
         command = Command()
         br = command._selectBuildRequest()

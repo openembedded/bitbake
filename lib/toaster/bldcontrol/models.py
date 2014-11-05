@@ -62,6 +62,7 @@ class BuildRequest(models.Model):
     REQ_INPROGRESS = 2
     REQ_COMPLETED = 3
     REQ_FAILED = 4
+    REQ_DELETED = 5
 
     REQUEST_STATE = (
         (REQ_CREATED, "created"),
@@ -69,6 +70,7 @@ class BuildRequest(models.Model):
         (REQ_INPROGRESS, "in progress"),
         (REQ_COMPLETED, "completed"),
         (REQ_FAILED, "failed"),
+        (REQ_DELETED, "deleted"),
     )
 
     project     = models.ForeignKey(Project)

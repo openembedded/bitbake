@@ -150,16 +150,15 @@ class Command(NoArgsCommand):
             bvo = BitbakeVersion.objects.get(name = ri['bitbake'])
             assert bvo is not None
 
-            ro, created = Release.objects.get_or_create(name = ri['name'], bitbake_version = bvo)
+            ro, created = Release.objects.get_or_create(name = ri['name'], bitbake_version = bvo, branch = Branch.objects.get( layer_source__name = ri['layersource'], name=ri['branch']))
             ro.description = ri['description']
-            ro.branch = ri['branch']
+            ro.helptext = ri['helptext']
             ro.save()
 
             for dli in ri['defaultlayers']:
-                lsi, layername = dli.split(":")
                 layer, created = Layer.objects.get_or_create(
-                        layer_source = LayerSource.objects.get(name = lsi),
-                        name = layername
+                        layer_source = LayerSource.objects.get(name = ri['layersource']),
+                        name = dli
                     )
                 ReleaseDefaultLayer.objects.get_or_create( release = ro, layer = layer)
 

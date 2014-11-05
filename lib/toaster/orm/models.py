@@ -108,8 +108,16 @@ class Project(models.Model):
                 commit = self.bitbake_version.branch,
                 dirpath = self.bitbake_version.dirpath)
 
-            for l in self.projectlayer_set.all():
-                BRLayer.objects.create(req = br, name = l.layercommit.layer.name, giturl = l.layercommit.layer.vcs_url, commit = l.layercommit.commit, dirpath = l.layercommit.dirpath)
+            for l in self.projectlayer_set.all().order_by("pk"):
+                commit = l.layercommit.commit
+                print("ii Building layer ", l.layercommit.layer.name, " at commit ", commit)
+                if l.layercommit.up_branch:
+                    commit = l.layercommit.up_branch.name
+                    print("ii Building layer ", l.layercommit.layer.name, " at upbranch ", commit)
+                if l.layercommit.branch:
+                    commit = l.layercommit.branch
+                    print("ii Building layer ", l.layercommit.layer.name, " at actual_branch ", commit)
+                BRLayer.objects.create(req = br, name = l.layercommit.layer.name, giturl = l.layercommit.layer.vcs_url, commit = commit, dirpath = l.layercommit.dirpath)
             for t in self.projecttarget_set.all():
                 BRTarget.objects.create(req = br, target = t.target, task = t.task)
             for v in self.projectvariable_set.all():
@@ -414,7 +422,7 @@ class Package_File(models.Model):
     size = models.IntegerField()
 
 class Recipe(models.Model):
-    search_allowed_fields = ['name', 'version', 'file_path', 'section', 'license', 'layer_version__layer__name', 'layer_version__branch', 'layer_version__commit', 'layer_version__layer__local_path']
+    search_allowed_fields = ['name', 'version', 'file_path', 'section', 'description', 'license', 'layer_version__layer__name', 'layer_version__branch', 'layer_version__commit', 'layer_version__layer__local_path', 'layer_version__layer_source__name']
 
     layer_source = models.ForeignKey('LayerSource', default = None, null = True)  # from where did we get this recipe
     up_id = models.IntegerField(null = True, default = None)                    # id of entry in the source
@@ -445,6 +453,9 @@ class Recipe(models.Model):
 
     def __unicode__(self):
         return "Recipe " + self.name + ":" + self.version
+
+    class Meta:
+        unique_together = ("layer_version", "file_path")
 
 class Recipe_DependencyManager(models.Manager):
     use_for_related_fields = True
@@ -559,6 +570,7 @@ class LayerIndexLayerSource(LayerSource):
             Fetches layer, recipe and machine information from remote repository
         '''
         assert self.apiurl is not None
+        from django.db import IntegrityError
 
         def _get_json_response(apiurl = self.apiurl):
             import httplib, urlparse, json
@@ -589,7 +601,7 @@ class LayerIndexLayerSource(LayerSource):
             return
 
         # update branches; only those that we already have names listed in the Releases table
-        whitelist_branch_names = map(lambda x: x.branch, Release.objects.all())
+        whitelist_branch_names = map(lambda x: x.branch.name, Release.objects.all())
 
         branches_info = _get_json_response(apilinks['branches']
             + "?filter=name:%s" % "OR".join(whitelist_branch_names))
@@ -598,16 +610,15 @@ class LayerIndexLayerSource(LayerSource):
             b.up_id = bi['id']
             b.up_date = bi['updated']
             b.name = bi['name']
-            b.bitbake_branch = bi['bitbake_branch']
             b.short_description = bi['short_description']
             b.save()
 
         # update layers
         layers_info = _get_json_response(apilinks['layerItems'])
         for li in layers_info:
-            l, created = Layer.objects.get_or_create(layer_source = self, up_id = li['id'])
+            l, created = Layer.objects.get_or_create(layer_source = self, name = li['name'])
+            l.up_id = li['id']
             l.up_date = li['updated']
-            l.name = li['name']
             l.vcs_url = li['vcs_url']
             l.vcs_web_url = li['vcs_web_url']
             l.vcs_web_tree_base_url = li['vcs_web_tree_base_url']
@@ -672,21 +683,22 @@ class LayerIndexLayerSource(LayerSource):
                 + "?filter=layerbranch:%s" % "OR".join(map(lambda x: str(x.up_id), Layer_Version.objects.filter(layer_source = self)))
             )
         for ri in recipes_info:
-            ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = ri['layerbranch']))
-
-            ro.up_date = ri['updated']
-
-            ro.name = ri['pn']
-            ro.version = ri['pv']
-            ro.summary = ri['summary']
-            ro.description = ri['description']
-            ro.section = ri['section']
-            ro.license = ri['license']
-            ro.homepage = ri['homepage']
-            ro.bugtracker = ri['bugtracker']
-            ro.file_path = ri['filepath'] + ri['filename']
-            ro.save()
-
+            try:
+                ro, created = Recipe.objects.get_or_create(layer_source = self, up_id = ri['id'], layer_version = Layer_Version.objects.get(layer_source = self, up_id = ri['layerbranch']))
+                ro.up_date = ri['updated']
+                ro.name = ri['pn']
+                ro.version = ri['pv']
+                ro.summary = ri['summary']
+                ro.description = ri['description']
+                ro.section = ri['section']
+                ro.license = ri['license']
+                ro.homepage = ri['homepage']
+                ro.bugtracker = ri['bugtracker']
+                ro.file_path = ri['filepath'] + "/" + ri['filename']
+                ro.save()
+            except:
+                print "Duplicate Recipe, ignoring: ", vars(ro)
+                pass
         pass
 
 class BitbakeVersion(models.Model):
@@ -704,7 +716,8 @@ class Release(models.Model):
     name = models.CharField(max_length=32, unique = True)
     description = models.CharField(max_length=255)
     bitbake_version = models.ForeignKey(BitbakeVersion)
-    branch = models.CharField(max_length=32)
+    branch = models.ForeignKey('Branch')
+    helptext = models.TextField(null=True)
 
 
 class ReleaseDefaultLayer(models.Model):
@@ -719,7 +732,6 @@ class Branch(models.Model):
     up_date = models.DateTimeField(null = True, default = None)
 
     name = models.CharField(max_length=50)
-    bitbake_branch = models.CharField(max_length=50, blank=True)
     short_description = models.CharField(max_length=50, blank=True)
 
     class Meta:
@@ -756,7 +768,7 @@ class Layer(models.Model):
 
 # LayerCommit class is synced with layerindex.LayerBranch
 class Layer_Version(models.Model):
-    search_allowed_fields = ["layer__name", "layer__summary",]
+    search_allowed_fields = ["layer__name", "layer__summary", "layer__description", "layer__vcs_url", "dirpath", "up_branch__name", "commit", "branch"]
     build = models.ForeignKey(Build, related_name='layer_version_build', default = None, null = True)
     layer = models.ForeignKey(Layer, related_name='layer_version_layer')
 
@@ -840,6 +852,9 @@ class ProjectLayer(models.Model):
     project = models.ForeignKey(Project)
     layercommit = models.ForeignKey(Layer_Version, null=True)
     optional = models.BooleanField(default = True)
+
+    class Meta:
+        unique_together = (("project", "layercommit"),)
 
 class ProjectVariable(models.Model):
     project = models.ForeignKey(Project)
