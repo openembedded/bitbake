@@ -1,9 +1,8 @@
 from django.core.management.base import NoArgsCommand, CommandError
 from django.db import transaction
-from orm.models import LayerSource, ToasterSetting, Branch, Layer, Layer_Version
-from orm.models import BitbakeVersion, Release, ReleaseDefaultLayer
 from bldcontrol.bbcontroller import getBuildEnvironmentController, ShellCmdException
 from bldcontrol.models import BuildRequest, BuildEnvironment
+from orm.models import ToasterSetting
 import os
 
 def DN(path):
@@ -17,16 +16,6 @@ class Command(NoArgsCommand):
     args = ""
     help = "Verifies that the configured settings are valid and usable, or prompts the user to fix the settings."
 
-    def _reduce_canon_path(self, path):
-        components = []
-        for c in path.split("/"):
-            if c == "..":
-                del components[-1]
-            elif c == ".":
-                pass
-            else:
-                components.append(c)
-        return "/".join(components)
 
     def _find_first_path_for_file(self, startdirectory, filename, level = 0):
         if level < 0:
@@ -55,125 +44,6 @@ class Command(NoArgsCommand):
             return ""
         return DN(self._find_first_path_for_file(DN(self.guesspath), "bblayers.conf", 4))
 
-    def _import_layer_config(self, baselayerdir):
-        filepath = os.path.join(baselayerdir, "meta/conf/toasterconf.json")
-        if not os.path.exists(filepath) or not os.path.isfile(filepath):
-            raise Exception("Failed to find toaster config file %s ." % filepath)
-
-        import json, pprint
-        data = json.loads(open(filepath, "r").read())
-
-        # verify config file validity before updating settings
-        for i in ['bitbake', 'releases', 'defaultrelease', 'config', 'layersources']:
-            assert i in data
-
-        # import bitbake data
-        for bvi in data['bitbake']:
-            bvo, created = BitbakeVersion.objects.get_or_create(name=bvi['name'])
-            bvo.giturl = bvi['giturl']
-            bvo.branch = bvi['branch']
-            bvo.dirpath = bvi['dirpath']
-            bvo.save()
-
-        # set the layer sources
-        for lsi in data['layersources']:
-            assert 'sourcetype' in lsi
-            assert 'apiurl' in lsi
-            assert 'name' in lsi
-            assert 'branches' in lsi
-
-            if lsi['sourcetype'] == LayerSource.TYPE_LAYERINDEX or lsi['apiurl'].startswith("/"):
-                apiurl = lsi['apiurl']
-            else:
-                apiurl = self._reduce_canon_path(os.path.join(DN(filepath), lsi['apiurl']))
-
-            try:
-                ls = LayerSource.objects.get(sourcetype = lsi['sourcetype'], apiurl = apiurl)
-            except LayerSource.DoesNotExist:
-                ls = LayerSource.objects.create(
-                    name = lsi['name'],
-                    sourcetype = lsi['sourcetype'],
-                    apiurl = apiurl
-                )
-
-            layerbranches = []
-            for branchname in lsi['branches']:
-                bo, created = Branch.objects.get_or_create(layer_source = ls, name = branchname)
-                layerbranches.append(bo)
-
-            if 'layers' in lsi:
-                for layerinfo in lsi['layers']:
-                    lo, created = Layer.objects.get_or_create(layer_source = ls, name = layerinfo['name'])
-                    if layerinfo['local_path'].startswith("/"):
-                        lo.local_path = layerinfo['local_path']
-                    else:
-                        lo.local_path = self._reduce_canon_path(os.path.join(DN(DN(DN(filepath))), layerinfo['local_path']))
-
-                    if not os.path.exists(lo.local_path):
-                        raise Exception("Local layer path %s must exists." % lo.local_path)
-
-                    if layerinfo['vcs_url'].startswith("remote:"):
-                        lo.vcs_url = None
-                        # we detect the remote name at runtime
-                        import subprocess
-                        (remote, remote_name) = layerinfo['vcs_url'].split(":", 1)
-                        cmd = subprocess.Popen("git remote -v", shell=True, cwd = lo.local_path, stdout=subprocess.PIPE, stderr = subprocess.PIPE)
-                        (out,err) = cmd.communicate()
-                        if cmd.returncode != 0:
-                            raise Exception("Error while importing layer vcs_url: git error: %s" % err)
-                        for line in out.split("\n"):
-                            try:
-                                (name, path) = line.split("\t", 1)
-                                if name == remote_name:
-                                    lo.vcs_url = path.split(" ")[0]
-                                    break
-                            except ValueError:
-                                pass
-                        if lo.vcs_url == None:
-                            raise Exception("Error while looking for remote \"%s\" in \"s\"" % (remote_name, lo.local_path))
-                    else:
-                        lo.vcs_url = layerinfo['vcs_url']
-
-                    if 'layer_index_url' in layerinfo:
-                        lo.layer_index_url = layerinfo['layer_index_url']
-                    lo.save()
-
-                    for branch in layerbranches:
-                        lvo, created = Layer_Version.objects.get_or_create(layer_source = ls,
-                                up_branch = branch,
-                                commit = branch.name,
-                                layer = lo)
-                        lvo.dirpath = layerinfo['dirpath']
-                        lvo.save()
-        # set releases
-        for ri in data['releases']:
-            bvo = BitbakeVersion.objects.get(name = ri['bitbake'])
-            assert bvo is not None
-
-            ro, created = Release.objects.get_or_create(name = ri['name'], bitbake_version = bvo, branch = Branch.objects.get( layer_source__name = ri['layersource'], name=ri['branch']))
-            ro.description = ri['description']
-            ro.helptext = ri['helptext']
-            ro.save()
-
-            for dli in ri['defaultlayers']:
-                layer, created = Layer.objects.get_or_create(
-                        layer_source = LayerSource.objects.get(name = ri['layersource']),
-                        name = dli
-                    )
-                ReleaseDefaultLayer.objects.get_or_create( release = ro, layer = layer)
-
-        # set default release
-        if ToasterSetting.objects.filter(name = "DEFAULT_RELEASE").count() > 0:
-            ToasterSetting.objects.filter(name = "DEFAULT_RELEASE").update(value = data['defaultrelease'])
-        else:
-            ToasterSetting.objects.create(name = "DEFAULT_RELEASE", value = data['defaultrelease'])
-
-        # set default config variables
-        for configname in data['config']:
-            if ToasterSetting.objects.filter(name = "DEFCONF_" + configname).count() > 0:
-                ToasterSetting.objects.filter(name = "DEFCONF_" + configname).update(value = data['config'][configname])
-            else:
-                ToasterSetting.objects.create(name = "DEFCONF_" + configname, value = data['config'][configname])
 
     def handle(self, **options):
         self.guesspath = DN(DN(DN(DN(DN(DN(DN(__file__)))))))
@@ -197,6 +67,7 @@ class Command(NoArgsCommand):
                 print("Verifying the Build Environment type %s id %d." % (be.get_betype_display(), be.pk))
                 if len(be.sourcedir) == 0:
                     suggesteddir = self._get_suggested_sourcedir(be)
+                    homesourcedir = suggesteddir
                     be.sourcedir = raw_input(" -- Layer sources checkout directory may not be empty [guessed \"%s\"]:" % suggesteddir)
                     if len(be.sourcedir) == 0 and len(suggesteddir) > 0:
                         be.sourcedir = suggesteddir
@@ -218,17 +89,17 @@ class Command(NoArgsCommand):
                     is_changed = True
 
 
-
                 if is_changed:
                     print "Build configuration saved"
                     be.save()
 
                 if is_changed and be.betype == BuildEnvironment.TYPE_LOCAL:
-                    baselayerdir = DN(DN(self._find_first_path_for_file(be.sourcedir, "toasterconf.json", 3)))
+                    baselayerdir = DN(DN(self._find_first_path_for_file(homesourcedir, "toasterconf.json", 3)))
                     if baselayerdir:
                         i = raw_input(" -- Do you want to import basic layer configuration from \"%s\" ? (y/N):" % baselayerdir)
                         if len(i) and i.upper()[0] == 'Y':
-                            self._import_layer_config(baselayerdir)
+                            from loadconf import Command as LoadConfigCommand
+                            LoadConfigCommand()._import_layer_config(os.path.join(baselayerdir, "meta/conf/toasterconf.json"))
                             # we run lsupdates after config update
                             print "Updating information from the layer source, please wait."
                             from django.core.management import call_command
