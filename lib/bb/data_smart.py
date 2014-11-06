@@ -618,7 +618,7 @@ class DataSmart(MutableMapping):
         if value and flag == "_content" and local_var is not None and "_removeactive" in local_var:
             removes = [self.expand(r) for r in local_var["_removeactive"]]
             filtered = filter(lambda v: v not in removes,
-                              value.split(" "))
+                              value.split())
             value = " ".join(filtered)
             if expand:
                  # We need to ensure the expand cache has the correct value
