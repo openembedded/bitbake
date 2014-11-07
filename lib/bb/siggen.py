@@ -295,10 +295,9 @@ def dump_this_task(outfile, d):
     bb.parse.siggen.dump_sigtask(fn, task, outfile, "customfile")
 
 def clean_basepath(a):
+    b = a.rsplit("/", 2)[1] + a.rsplit("/", 2)[2]
     if a.startswith("virtual:"):
-        b = a.rsplit("/", 1)[1] + ":" + a.rsplit(":", 1)[0]
-    else:
-        b = a.rsplit("/", 1)[1]
+        b = b + ":" + a.rsplit(":", 1)[0]
     return b
 
 def clean_basepaths(a):
