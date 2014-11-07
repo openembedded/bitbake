@@ -499,4 +499,17 @@ def dump_sigfile(a):
     if 'taint' in a_data:
         output.append("Tainted (by forced/invalidated task): %s" % a_data['taint'])
 
+    data = a_data['basehash']
+    for dep in a_data['runtaskdeps']:
+        data = data + a_data['runtaskhashes'][dep]
+
+    for c in a_data['file_checksum_values']:
+        data = data + c[1]
+
+    if 'taint' in a_data:
+        data = data + a_data['taint']
+
+    h = hashlib.md5(data).hexdigest()
+    output.append("Computed Hash is %s" % h)
+
     return output
