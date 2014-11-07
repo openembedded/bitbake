@@ -1943,11 +1943,13 @@ if toastermain.settings.MANAGED:
                             "completed_on" : y.completed_on.strftime('%s')+"000",
                             "build_time" : (y.completed_on - y.started_on).total_seconds(),
                             "build_page_url" : reverse('builddashboard', args=(y.pk,)),
+                            'build_time_page_url': reverse('buildtime', args=(y.pk,)),
                             "errors": y.errors_no,
                             "warnings": y.warnings_no,
                             "completeper": y.completeper(),
-                            "eta": y.eta().ctime()}, Build.objects.filter(buildrequest = x)),
-            }, prj.buildrequest_set.order_by("-pk")[:5])
+                            "eta": y.eta().strftime('%s')+"000"}, Build.objects.filter(buildrequest = x)),
+            }, list(prj.buildrequest_set.filter(Q(state__lt=BuildRequest.REQ_COMPLETED) or Q(state=BuildRequest.REQ_DELETED)).order_by("-pk")) +
+                list(prj.buildrequest_set.filter(state__in=[BuildRequest.REQ_COMPLETED, BuildRequest.REQ_FAILED]).order_by("-pk")[:3]))
 
 
     # Shows the edit project page
@@ -1979,10 +1981,17 @@ if toastermain.settings.MANAGED:
         context = {
             "project" : prj,
             "completedbuilds": Build.objects.filter(project = prj).exclude(outcome = Build.IN_PROGRESS),
-            "prj" : json.dumps({"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name}}),
+            "prj" : json.dumps({"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}}),
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
             "builds" : json.dumps(_project_recent_build_list(prj)),
-            "layers" :  json.dumps(map(lambda x: {"id": x.layercommit.pk, "name" : x.layercommit.layer.name, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)), "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all())),
+            "layers" :  json.dumps(map(lambda x: {
+                        "id": x.layercommit.pk,
+                        "orderid": x.pk,
+                        "name" : x.layercommit.layer.name,
+                        "url": x.layercommit.layer.layer_index_url,
+                        "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)),
+                        "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}},
+                    prj.projectlayer_set.all().order_by("id"))),
             "targets" : json.dumps(map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all())),
             "freqtargets": json.dumps(freqtargets),
             "releases": json.dumps(map(lambda x: {"id": x.pk, "name": x.name}, Release.objects.all())),
@@ -2012,12 +2021,17 @@ if toastermain.settings.MANAGED:
                 for i in request.POST['buildCancel'].strip().split(" "):
                     try:
                         br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_QUEUED)
-                        print "selected for delete", br.pk
-                        br.delete()
-                        print "selected for delete", br.pk
+                        br.state = BuildRequest.REQ_DELETED
+                        br.save()
                     except BuildRequest.DoesNotExist:
                         pass
 
+            if 'buildDelete' in request.POST:
+                for i in request.POST['buildDelete'].strip().split(" "):
+                    try:
+                        br = BuildRequest.objects.select_for_update().get(project = prj, pk = i, state__lte = BuildRequest.REQ_DELETED).delete()
+                    except BuildRequest.DoesNotExist:
+                        pass
 
             if 'targets' in request.POST:
                 ProjectTarget.objects.filter(project = prj).delete()
@@ -2054,9 +2068,10 @@ if toastermain.settings.MANAGED:
                 prj.name = request.POST['projectName']
                 prj.save();
 
-
             if 'projectVersion' in request.POST:
                 prj.release = Release.objects.get(pk = request.POST['projectVersion'])
+                # we need to change the bitbake version
+                prj.bitbake_version = prj.release.bitbake_version
                 prj.save()
                 # we need to change the layers
                 for i in prj.projectlayer_set.all():
@@ -2067,13 +2082,19 @@ if toastermain.settings.MANAGED:
                     # get rid of the old entry
                     i.delete()
 
+            if 'machineName' in request.POST:
+                machinevar = prj.projectvariable_set.get(name="MACHINE")
+                machinevar.value=request.POST['machineName']
+                machinevar.save()
+
             # return all project settings
             return HttpResponse(json.dumps( {
                 "error": "ok",
-                "layers" :  map(lambda x: {"id": x.layercommit.pk, "name" : x.layercommit.layer.name, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)), "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all()),
+                "layers" :  map(lambda x: {"id": x.layercommit.pk, "orderid" : x.pk, "name" : x.layercommit.layer.name, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)), "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all().order_by("id")),
                 "builds" : _project_recent_build_list(prj),
                 "variables": map(lambda x: (x.name, x.value), prj.projectvariable_set.all()),
-                "prj": {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name}},
+                "machine": {"name": prj.projectvariable_set.get(name="MACHINE").value},
+                "prj": {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}},
                 }), content_type = "application/json")
 
         except Exception as e:

@@ -113,6 +113,9 @@ select { width: auto; }
 .top-air { margin-top: 40px;}
 .progress { margin-bottom: 0px; }
 .lead .badge { font-size: 18px; font-weight: normal; border-radius: 15px; padding: 9px; }
+.lead ol > li, .lead ul > li {
+    line-height: 35px;
+}
 .well > .lead, .alert .lead { margin-bottom: 0px; }
 .well-transparent { background-color: transparent; }
 .no-results { margin: 10px 0; }
@@ -191,3 +194,27 @@ dd > span { line-height: 20px; }
 .new-build form { margin: 5px 0 0; }
 .new-build .input-append { margin-bottom: 0; }
 #build-selected { margin-top: 15px; }
+
+
+.animate-repeat {
+  list-style:none;
+  box-sizing:border-box;
+}
+
+.animate-repeat.ng-move,
+.animate-repeat.ng-enter,
+.animate-repeat.ng-leave {
+  -webkit-transition:all linear 0.5s;
+  transition:all linear 0.5s;
+}
+
+.animate-repeat.ng-leave.ng-leave-active,
+.animate-repeat.ng-move,
+.animate-repeat.ng-enter {
+  opacity:0;
+}
+
+.animate-repeat.ng-leave,
+.animate-repeat.ng-enter.ng-enter-active {
+  opacity:1;
+}
