@@ -11,6 +11,8 @@ vim: expandtab tabstop=2
 <script src="{% static "js/angular.min.js" %}"></script>
 <script src="{% static "js/angular-animate.min.js" %}"></script>
 <script src="{% static "js/angular-cookies.min.js" %}"></script>
+<script src="{% static "js/angular-route.min.js" %}"></script>
+<script src="{% static "js/angular-sanitize.min.js" %}"></script>
 <script src="{% static "js/ui-bootstrap-tpls-0.11.0.js" %}"></script>
 
 
@@ -365,13 +367,13 @@ angular.element(document).ready(function() {
   scope.urls.layers = "{% url 'layers' %}";
   scope.urls.targets = "{% url 'targets' %}";
   scope.urls.importlayer = "{% url 'importlayer'%}"
-  scope.project = {{prj|safe}};
-  scope.builds = {{builds|safe}};
-  scope.layers = {{layers|safe}};
-  scope.targets = {{targets|safe}};
-  scope.frequenttargets = {{freqtargets|safe}};
-  scope.machine = {{machine|safe}};
-  scope.releases = {{releases|safe}};
+  scope.project = {{prj|json}};
+  scope.builds = {{builds|json}};
+  scope.layers = {{layers|json}};
+  scope.targets = {{targets|json}};
+  scope.frequenttargets = {{freqtargets|json}};
+  scope.machine = {{machine|json}};
+  scope.releases = {{releases|json}};
 
   var now = (new Date()).getTime();
   scope.todaydate = now - (now % 86400000);

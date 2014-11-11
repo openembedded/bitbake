@@ -36,6 +36,7 @@ from django.utils import timezone
 from django.utils.html import escape
 from datetime import timedelta
 from django.utils import formats
+from toastergui.templatetags.projecttags import json as jsonfilter
 import json
 
 
@@ -871,7 +872,7 @@ def _get_dir_entries(build_id, target_id, start):
     # sort by directories first, then by name
     rsorted = sorted(response, key=lambda entry :  entry['name'])
     rsorted = sorted(rsorted, key=lambda entry :  entry['isdir'], reverse=True)
-    return json.dumps(rsorted, cls=LazyEncoder)
+    return json.dumps(rsorted, cls=LazyEncoder).replace('</', '<\\/')
 
 def dirinfo(request, build_id, target_id, file_path=None):
     template = "dirinfo.html"
@@ -1981,25 +1982,25 @@ if toastermain.settings.MANAGED:
         context = {
             "project" : prj,
             "completedbuilds": Build.objects.filter(project = prj).exclude(outcome = Build.IN_PROGRESS),
-            "prj" : json.dumps({"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}}),
+            "prj" : {"name": prj.name, "release": { "id": prj.release.pk, "name": prj.release.name, "desc": prj.release.description}},
             #"buildrequests" : prj.buildrequest_set.filter(state=BuildRequest.REQ_QUEUED),
-            "builds" : json.dumps(_project_recent_build_list(prj)),
-            "layers" :  json.dumps(map(lambda x: {
+            "builds" : _project_recent_build_list(prj),
+            "layers" :  map(lambda x: {
                         "id": x.layercommit.pk,
                         "orderid": x.pk,
                         "name" : x.layercommit.layer.name,
                         "url": x.layercommit.layer.layer_index_url,
                         "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)),
                         "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}},
-                    prj.projectlayer_set.all().order_by("id"))),
-            "targets" : json.dumps(map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all())),
-            "freqtargets": json.dumps(freqtargets),
-            "releases": json.dumps(map(lambda x: {"id": x.pk, "name": x.name}, Release.objects.all())),
+                    prj.projectlayer_set.all().order_by("id")),
+            "targets" : map(lambda x: {"target" : x.target, "task" : x.task, "pk": x.pk}, prj.projecttarget_set.all()),
+            "freqtargets": freqtargets,
+            "releases": map(lambda x: {"id": x.pk, "name": x.name}, Release.objects.all()),
         }
         try:
-            context["machine"] = json.dumps({"name": prj.projectvariable_set.get(name="MACHINE").value})
+            context["machine"] = {"name": prj.projectvariable_set.get(name="MACHINE").value}
         except ProjectVariable.DoesNotExist:
-            context["machine"] = json.dumps(None)
+            context["machine"] = None
         try:
             context["distro"] = prj.projectvariable_set.get(name="DISTRO").value
         except ProjectVariable.DoesNotExist:
@@ -2035,7 +2036,8 @@ if toastermain.settings.MANAGED:
 
             if 'targets' in request.POST:
                 ProjectTarget.objects.filter(project = prj).delete()
-                for t in request.POST['targets'].strip().split(" "):
+                s = str(request.POST['targets'])
+                for t in s.translate(None, ";%|\"").split(" "):
                     if ":" in t:
                         target, task = t.split(":")
                     else:
@@ -2045,11 +2047,11 @@ if toastermain.settings.MANAGED:
 
                 br = prj.schedule_build()
 
-            return HttpResponse(json.dumps({"error":"ok",
+            return HttpResponse(jsonfilter({"error":"ok",
                 "builds" : _project_recent_build_list(prj),
             }), content_type = "application/json")
         except Exception as e:
-            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+            return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
     def xhr_projectedit(request, pid):
         try:
@@ -2088,7 +2090,7 @@ if toastermain.settings.MANAGED:
                 machinevar.save()
 
             # return all project settings
-            return HttpResponse(json.dumps( {
+            return HttpResponse(jsonfilter( {
                 "error": "ok",
                 "layers" :  map(lambda x: {"id": x.layercommit.pk, "orderid" : x.pk, "name" : x.layercommit.layer.name, "url": x.layercommit.layer.layer_index_url, "layerdetailurl": reverse("layerdetails", args=(x.layercommit.layer.pk,)), "branch" : { "name" : x.layercommit.up_branch.name, "layersource" : x.layercommit.up_branch.layer_source.name}}, prj.projectlayer_set.all().order_by("id")),
                 "builds" : _project_recent_build_list(prj),
@@ -2098,7 +2100,7 @@ if toastermain.settings.MANAGED:
                 }), content_type = "application/json")
 
         except Exception as e:
-            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+            return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
 
     from django.views.decorators.csrf import csrf_exempt
@@ -2112,7 +2114,7 @@ if toastermain.settings.MANAGED:
                     prj = Project.objects.get(pk = request.session['project_id'])
                     queryset_all = queryset_all.filter(up_branch__release = prj.release).exclude(pk__in = map(lambda x: x.layercommit_id, prj.projectlayer_set.all()))
                 queryset_all = queryset_all.filter(layer__name__icontains=request.GET.get('value',''))
-                return HttpResponse(json.dumps( { "error":"ok",
+                return HttpResponse(jsonfilter( { "error":"ok",
                     "list" : map( lambda x: {"id": x.pk, "name": x.layer.name, "detail": "(" + x.layer.layer_source.name + (")" if x.up_branch == None else " | "+x.up_branch.name+")")},
                             queryset_all[:8])
                     }), content_type = "application/json")
@@ -2127,7 +2129,7 @@ if toastermain.settings.MANAGED:
 
                 queryset_all.order_by("-up_id");
 
-                return HttpResponse(json.dumps( { "error":"ok",
+                return HttpResponse(jsonfilter( { "error":"ok",
                     "list" : map(
                         lambda x: {"id": x.pk, "name": x.layer.name, "detail": "(" + x.layer.layer_source.name + (")" if x.up_branch == None else " | "+x.up_branch.name+")"),
                                    "layerdetailurl" : reverse('layerdetails', args=(x.pk,))},
@@ -2146,7 +2148,7 @@ if toastermain.settings.MANAGED:
                     if lv.count() != 1:     # there is no layer_version with the new release id, and the same name
                         retval.append(i)
 
-                return HttpResponse(json.dumps( {"error":"ok",
+                return HttpResponse(jsonfilter( {"error":"ok",
                     "list": map(
                         lambda x: {"id": x.layercommit.pk, "name": x.layercommit.layer.name, "detail": "(" + x.layercommit.layer.layer_source.name + (")" if x.layercommit.up_branch == None else " | "+x.layercommit.up_branch.name+")")},
                         retval) }), content_type = "application/json")
@@ -2156,7 +2158,7 @@ if toastermain.settings.MANAGED:
                 queryset_all = Recipe.objects.all()
                 if 'project_id' in request.session:
                     queryset_all = queryset_all.filter(layer_version__layer__in = map(lambda x: x.layercommit.layer, ProjectLayer.objects.filter(project_id=request.session['project_id'])))
-                return HttpResponse(json.dumps({ "error":"ok",
+                return HttpResponse(jsonfilter({ "error":"ok",
                     "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
                         queryset_all.filter(name__icontains=request.GET.get('value',''))[:8]),
 
@@ -2166,7 +2168,7 @@ if toastermain.settings.MANAGED:
                 queryset_all = Machine.objects.all()
                 if 'project_id' in request.session:
                     queryset_all = queryset_all.filter(layer_version__layer__in = map(lambda x: x.layercommit.layer, ProjectLayer.objects.filter(project_id=request.session['project_id'])))
-                return HttpResponse(json.dumps({ "error":"ok",
+                return HttpResponse(jsonfilter({ "error":"ok",
                     "list" : map ( lambda x: {"id": x.pk, "name": x.name, "detail":"[" + x.layer_version.layer.name+ (" | " + x.layer_version.up_branch.name + "]" if x.layer_version.up_branch is not None else "]")},
                         queryset_all.filter(name__icontains=request.GET.get('value',''))[:8]),
 
@@ -2174,7 +2176,7 @@ if toastermain.settings.MANAGED:
 
             raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
         except Exception as e:
-            return HttpResponse(json.dumps({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
+            return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
 
 
@@ -2216,7 +2218,7 @@ if toastermain.settings.MANAGED:
 
 
         context = {
-            'projectlayerset' : json.dumps(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
+            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
             'objects' : layer_info,
             'objectname' : "layers",
             'default_orderby' : 'layer__name:+',
@@ -2309,7 +2311,7 @@ if toastermain.settings.MANAGED:
 
 
         context = {
-            'projectlayerset' : json.dumps(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
+            'projectlayerset' : jsonfilter(map(lambda x: x.layercommit.id, prj.projectlayer_set.all())),
             'objects' : target_info,
             'objectname' : "targets",
             'default_orderby' : 'name:+',
