@@ -88,15 +88,15 @@ vim: expandtab tabstop=2
   <!-- build form -->
   <div class="well">
     <form class="build-form" ng-submit="targetNamedBuild()">
-      <div class="input-append input-prepend controls">
-        <input type="text" class="huge span7 " placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
+      <div class="input-append controls">
+        <input type="text" class="huge span7" placeholder="Type the target(s) you want to build" autocomplete="off" ng-model="targetName" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length"/>
         <button type="submit" id="build-button" class="btn btn-large btn-primary" ng-disabled="!targetName.length">
         Build
-        <i class="icon-question-sign get-help heading-help" style="margin-left: 5px;"  data-toggle="tooltip" title="Type the name of one or more targets you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a target name, like so: <code>core-image-minimal:do_build</code>"></i>
         </button>
       </div>
+      <i class="icon-question-sign get-help get-help-blue" title="Type the name of one or more targets you want to build, separated by a space. You can also specify a task by appending a semicolon and a task name to a target name, like so: <code>core-image-minimal:do_build</code>"></i>
       <p>
-        <a href="{% url 'targets' %}" style="padding-right: 5px;">
+        <a href="{% url 'targets' %}">
           View all targets
         </a>
         {% if completedbuilds.count %}
@@ -167,7 +167,7 @@ vim: expandtab tabstop=2
 
 
           <case ng-switch-when="completed">
-            <div class="lead span3"><a href="{[b.build[0].build_page_url]}"><span ng-repeat="t in b.targets" ng-include src="'target_display'"></span></a></div>
+            <div class="lead span3"><a class="success" href="{[b.build[0].build_page_url]}"><span ng-repeat="t in b.targets" ng-include src="'target_display'"></span></a></div>
             <div class="span2 lead">
               <ngif ng-if="b.build[0].completed_on - todaydate > 0">
                  {[b.build[0].completed_on|date:'HH:mm']}
@@ -224,10 +224,12 @@ vim: expandtab tabstop=2
         Or type a layer name below.
         </p>
       </div>
-      <form class="input-append" ng-submit="layerAdd()">
+      <form ng-submit="layerAdd()">
+        <div class="input-append">
           <input type="text" class="input-xlarge" id="layer" autocomplete="off" placeholder="Type a layer name" data-minLength="1" ng-model="layerAddName" typeahead="e.name for e in getSuggestions('layers', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" typeahead-on-select="onLayerSelect($item, $model, $label)" typeahead-editable="false" ng-class="{ 'has-error': layerAddName.$invalid }" />
           <input type="submit" id="add-layer" class="btn" value="Add" ng-disabled="!layerAddName.length"/>
-          {% csrf_token %}
+        </div>
+        {% csrf_token %}
       </form>
       <p><a href="{% url 'layers' %}">View all layers</a> | <a href="{% url 'importlayer' %}">Import layer</a></p>
       <ul class="unstyled configuration-list">
@@ -245,15 +247,17 @@ vim: expandtab tabstop=2
         Targets
         <i class="icon-question-sign get-help heading-help" title="What you build, often a recipe producing a root file system file (an image). Something like <code>core-image-minimal</code> or <code>core-image-sato</code>"></i>
       </h3>
-        <form ng-submit="targetNamedBuild()" class="input-append">
-          <input type="text" class="input-xlarge" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1"  ng-model="targetName1" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length">
-          <button type="submit" id="build-button" class="btn btn-primary" ng-disabled="!targetName1.length">
-            Build </button>
+        <form ng-submit="targetNamedBuild()">
+          <div class="input-append">
+            <input type="text" class="input-xlarge" placeholder="Type the target(s) you want to build" autocomplete="off" data-minLength="1"  ng-model="targetName1" typeahead="e.name for e in getSuggestions('targets', $viewValue)|filter:$viewValue" typeahead-template-url="suggestion_details" ng-disabled="!layers.length">
+            <button type="submit" id="build-button" class="btn btn-primary" ng-disabled="!targetName1.length">
+              Build </button>
+          </div>
           {% csrf_token %}
         </form>
         <p><a href="{% url 'targets' %}">View all targets</a></p>
         <div ng-if="frequenttargets.length">
-        <h4>
+        <h4 class="air">
             Most built targets
         </h4>
         <ul class="unstyled configuration-list">
@@ -274,7 +278,8 @@ vim: expandtab tabstop=2
         <i class="icon-question-sign get-help heading-help" title="The machine is the hardware for which you want to build. You can only set one machine per project"></i>
       </h3>
       <p class="lead" id="select-machine-opposite">
-        {[machine.name]}<i id="change-machine" class="icon-pencil" ng-click="toggle('#select-machine')" tooltip="Change"></i>
+        <span>{[machine.name]}</span>
+        <i id="change-machine" class="icon-pencil" ng-click="toggle('#select-machine')" tooltip="Change"></i>
       </p>
       <div id="select-machine" style="display: none">
         <div class="alert alert-info">

@@ -15,6 +15,7 @@
 .get-help-yellow:hover { color: #B38942; cursor: pointer; }
 .get-help-red { color: #B94A48; font-size: 16px; padding-left: 2px; }
 .get-help-red:hover { color: #943A38; cursor: pointer; }
+.build-form .get-help { margin-left: 5px; }
 .manual { margin: 11px 15px;}
 .heading-help { font-size: 14px; }
 
@@ -157,6 +158,7 @@ input.huge { font-size: 17.5px; padding: 11px 19px; }
 .build-form .input-append { margin-bottom: 0px; }
 .build-form .btn-large { padding: 11px 35px; }
 .build-form p { font-size:17.5px ;margin:12px 0 0 10px;}
+#layer-container form, #target-container form { margin-bottom: 0px; }
 .btn-primary .icon-question-sign, .btn-danger .icon-question-sign { color: #fff; }
 .btn-primary .icon-question-sign:hover, .btn-danger .icon-question-sign:hover { color: #999; }
 a code { color: #0088CC; }

@@ -174,7 +174,7 @@ function show_dependencies_modal(layerId, layerName, layerURL, dependencies) {
 
     {% if project %}
         _makeXHREditCall({ 'layerAdd': selected.join(",") }, function onXHRSuccess() {
-            show_alert("You have added <strong>"+selected.length+"</strong> layer(s) to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>:" + layer_link_list);
+            show_alert("You have added <strong>"+selected.length+"</strong> layer(s) to <a href=\"{% url 'project' project.id%}\">{{project.name}}</a>: " + layer_link_list);
         });
     {% endif %}
 
