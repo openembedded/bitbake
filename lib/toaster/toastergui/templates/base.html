@@ -18,36 +18,11 @@
 </script>
 <script src="{% static 'js/prettify.js' %}">
 </script>
-<script src="{% static 'js/main.js' %}">
+<script src="{% static 'js/libtoaster.js' %}">
+</script>
 </script>
 <script>
-function reload_params(params) {
-    uri = window.location.href;
-    splitlist = uri.split("?");
-    url = splitlist[0], parameters=splitlist[1];
-    // deserialize the call parameters
-    if(parameters){
-        cparams = parameters.split("&");
-    }else{
-        cparams = []
-    }
-    nparams = {}
-    for (i = 0; i < cparams.length; i++) {
-        temp = cparams[i].split("=");
-        nparams[temp[0]] = temp[1];
-    }
-    // update parameter values
-    for (i in params) {
-        nparams[encodeURIComponent(i)] = encodeURIComponent(params[i]);
-    }
-    // serialize the structure
-    callparams = []
-    for (i in nparams) {
-        callparams.push(i+"="+nparams[i]);
-    }
-    window.location.href = url+"?"+callparams.join('&');
 
-}
 </script>
 
 {% block extraheadcontent %}
