@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="{% static 'css/font-awesome.min.css' %}" type='text/css'>
 <link rel="stylesheet" href="{% static 'css/prettify.css' %}" type='text/css'>
 <link rel="stylesheet" href="{% static 'css/default.css' %}" type='text/css'>
+<link rel="stylesheet" href="assets/css/jquery-ui-1.10.3.custom.min.css" type='text/css'>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 <script src="{% static 'js/jquery-2.0.3.min.js' %}">
@@ -20,7 +21,25 @@
 </script>
 <script src="{% static 'js/libtoaster.js' %}">
 </script>
+<script src="{% static 'js/base.js' %}"></script>
+{%if MANAGED %}
+<script>
+  $(document).ready(function () {
+    /* Vars needed for base.js */
+    var ctx = {};
+    ctx.xhrDataTypeaheadUrl = "{% url 'xhr_datatypeahead' %}";
+    ctx.projectBuildUrl = "{% url 'xhr_build' %}";
+    ctx.projectPageUrl = "{% url 'project' %}";
+    ctx.projectInfoUrl = "{% url 'xhr_projectinfo' %}";
+    {% if project %}
+      ctx.projectId = {{project.id}};
+    {% endif %}
+    ctx.currentUrl = "{{request.path|escapejs}}";
+
+    basePageInit(ctx);
+  });
 </script>
+{% endif %}
 <script>
 
 </script>
@@ -34,15 +53,55 @@
     <div class="navbar-inner">
             <a class="brand logo" href="#"><img src="{% static 'img/logo.png' %}" class="" alt="Yocto logo project"/></a>
             <a class="brand" href="/">Toaster</a>
-				{%if MANAGED %}
-					  <div class="btn-group pull-right">
-						  <a class="btn" href="{% url 'newproject' %}">New project</a>
-					  </div>
-				{%endif%}
             <a class="pull-right manual" target="_blank" href="http://www.yoctoproject.org/documentation/toaster-manual">
                 <i class="icon-book"></i>
                 Toaster manual
             </a>
+            {%if MANAGED %}
+            <div class="btn-group pull-right">
+              <a class="btn" href="{% url 'newproject' %}">New project</a>
+            </div>
+            <!-- New build popover -->
+            <div class="btn-group pull-right" id="new-build-button">
+              <button class="btn dropdown-toggle" data-toggle="dropdown" href="#">
+                New build
+                <i class="icon-caret-down"></i>
+              </button>
+              <ul class="dropdown-menu new-build multi-select">
+                <li>
+                  <h3>New build</h3>
+                  <h6>Project:</h6>
+                  <span id="project">
+                    <a class="lead" href="{% if project.id %}{% url 'project' project.id %}{% endif %}">{{project.name}}</a>
+                    <i class="icon-pencil"></i>
+                  </span>
+                  <form id="change-project-form" style="display:none;">
+                    <div class="input-append">
+                      <input type="text" class="input-medium" id="project-name-input" placeholder="Type a project name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead">
+                        <button id="save-project-button" class="btn" type="button">Save</button>
+                        <a href="#" id="cancel-change-project" class="btn btn-link">Cancel</a>
+                      </div>
+                      <a id="view-all-projects" href="{% url 'all-projects' %}">View all projects</a>
+                    </form>
+                  </li>
+                  <div class="alert" style="display:none">
+                    This project's configuration is incomplete,<br/>so you cannot run builds.<br/>
+                    <a href="{% if project.id %}{% url 'project' project.id %}{% endif %}">View project configuration</a>
+                  </div>
+                  <li id="targets-form">
+                    <h6>Target(s):</h6>
+                    <form>
+                      <input type="text" class="input-xlarge" id="build-target-input" placeholder="Type a target name" autocomplete="off" data-minLength="1" data-autocomplete="off" data-provide="typeahead" >
+                      <div>
+                        <a class="btn btn-primary" id="build-button" disabled="disabled" data-project-id="{{project.id}}">Build</a>
+                      </div>
+                    </form>
+                  </li>
+              </ul>
+            </div>
+
+            {%endif%}
+
     </div>
 </div>
 

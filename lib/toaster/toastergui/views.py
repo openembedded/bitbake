@@ -2015,10 +2015,20 @@ if toastermain.settings.MANAGED:
         response['Pragma'] = "no-cache"
         return response
 
+    # This is a wrapper for xhr_projectbuild which allows for a project id
+    # which only becomes known client side.
+    def xhr_build(request):
+        if request.POST.has_key("project_id"):
+            pid = request.POST['project_id']
+            return xhr_projectbuild(request, pid)
+        else:
+            raise BadParameterException("invalid project id")
+
     def xhr_projectbuild(request, pid):
         try:
             if request.method != "POST":
                 raise BadParameterException("invalid method")
+			request.session['project_id'] = pid
             prj = Project.objects.get(id = pid)
 
 
@@ -2057,6 +2067,8 @@ if toastermain.settings.MANAGED:
         except Exception as e:
             return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
+    # This is a wraper for xhr_projectedit which allows for a project id
+    # which only becomes known client side
     def xhr_projectinfo(request):
         if request.POST.has_key("project_id") == False:
             raise BadParameterException("invalid project id")
@@ -2121,8 +2133,12 @@ if toastermain.settings.MANAGED:
     def xhr_datatypeahead(request):
         try:
             prj = None
-            if 'project_id' in request.session:
+            if request.GET.has_key('project_id'):
+				prj = Project.objects.get(pk = request.GET['project_id'])
+            elif 'project_id' in request.session:
                 prj = Project.objects.get(pk = request.session['project_id'])
+			else:
+				raise Exception("No valid project selected")
 
             # returns layers for current project release that are not in the project set
             if request.GET['type'] == "layers":
@@ -2187,6 +2203,14 @@ if toastermain.settings.MANAGED:
                         queryset_all.filter(name__icontains=request.GET.get('value',''))[:8]),
 
                     }), content_type = "application/json")
+
+            if request.GET['type'] == "projects":
+                queryset_all = Project.objects.all()
+                ret = { "error": "ok",
+                       "list": map (lambda x: {"id":x.pk, "name": x.name},
+                                    queryset_all.filter(name__icontains=request.GET.get('value',''))[:8])}
+
+                return HttpResponse(jsonfilter(ret), content_type = "application/json")
 
             raise Exception("Unknown request! " + request.GET.get('type', "No parameter supplied"))
         except Exception as e:
@@ -2771,6 +2795,12 @@ else:
         raise Exception("page not available in interactive mode")
 
     def xhr_projectbuild(request, pid):
+        raise Exception("page not available in interactive mode")
+
+    def xhr_build(request, pid):
+        raise Exception("page not available in interactive mode")
+
+    def xhr_projectinfo(request, pid):
         raise Exception("page not available in interactive mode")
 
     def xhr_projectedit(request, pid):

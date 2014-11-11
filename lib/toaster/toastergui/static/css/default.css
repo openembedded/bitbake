@@ -131,6 +131,10 @@ select { width: auto; }
 /* make tables Chrome-happy (me, not so much) */
 #otable { table-layout: fixed; word-wrap: break-word; }
 
+/* styles for the new build button */
+.new-build .btn-primary { padding: 4px 30px; }
+#view-all-projects { display: block; }
+
 /* Configuration styles */
 .icon-trash { color: #B94A48; font-size: 16px; padding-left: 2px; }
 .icon-trash:hover { color: #943A38; text-decoration: none; cursor: pointer; }
