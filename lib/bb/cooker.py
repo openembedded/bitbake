@@ -240,7 +240,7 @@ class BBCooker:
             f.write(total)
 
         #add to history
-        loginfo = {"op":append, "file":default_file, "line":total.count("\n")}
+        loginfo = {"op":"append", "file":default_file, "line":total.count("\n")}
         self.data.appendVar(var, val, **loginfo)
 
     def saveConfigurationVar(self, var, val, default_file, op):
@@ -309,7 +309,7 @@ class BBCooker:
                 f.write(total)
 
             #add to history
-            loginfo = {"op":set, "file":default_file, "line":total.count("\n")}
+            loginfo = {"op":"set", "file":default_file, "line":total.count("\n")}
             self.data.setVar(var, val, **loginfo)
 
     def removeConfigurationVar(self, var):
