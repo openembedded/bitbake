@@ -178,7 +178,7 @@ class BufferedLogger(Logger):
 
 class PythonParser():
     getvars = (".getVar", ".appendVar", ".prependVar")
-    containsfuncs = ("bb.utils.contains", "base_contains", "oe.utils.contains", "bb.utils.contains_any")
+    containsfuncs = ("bb.utils.contains", "base_contains", "bb.utils.contains_any")
     execfuncs = ("bb.build.exec_func", "bb.build.exec_task")
 
     def warn(self, func, arg):
