@@ -236,7 +236,7 @@ def main(server, eventHandler, params):
         try:
             event = eventHandler.waitEvent(0.25)
             if gtkthread.quit.isSet():
-                _, error = server.runCommand(["stateStop"])
+                _, error = server.runCommand(["stateForceShutdown"])
                 if error:
                     print('Unable to cleanly stop: %s' % error)
                 break
