@@ -2057,8 +2057,11 @@ if toastermain.settings.MANAGED:
         except Exception as e:
             return HttpResponse(jsonfilter({"error":str(e) + "\n" + traceback.format_exc()}), content_type = "application/json")
 
+    def xhr_projectinfo(request):
+        if request.POST.has_key("project_id") == False:
+            raise BadParameterException("invalid project id")
 
-
+        return xhr_projectedit(request, request.POST['project_id'])
 
     def xhr_projectedit(request, pid):
         try:
