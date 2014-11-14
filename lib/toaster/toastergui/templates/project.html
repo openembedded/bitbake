@@ -281,7 +281,7 @@ vim: expandtab tabstop=2
       </h3>
       <p class="lead" id="select-machine-opposite">
         <span>{[machine.name]}</span>
-        <i id="change-machine" class="icon-pencil" ng-click="toggle('#select-machine')" tooltip="Change"></i>
+        <i id="change-machine" class="icon-pencil" ng-click="toggle('#select-machine')"></i>
       </p>
       <div id="select-machine" style="display: none">
         <div class="alert alert-info">
@@ -318,7 +318,7 @@ vim: expandtab tabstop=2
     <h3>Project name</h3>
     <p class="lead" id="change-project-name-opposite">
       <span >{[project.name]}</span>
-      <i class="icon-pencil" ng-click="toggle('#change-project-name')" tooltip="Change"></i>
+      <i class="icon-pencil" ng-click="toggle('#change-project-name')" ></i>
     </p>
     <div id="change-project-name" style="display:none;">
       <form ng-submit="edit('#change-project-name')" class="input-append">
@@ -335,7 +335,7 @@ vim: expandtab tabstop=2
     </h3>
     <p class="lead" id="change-project-version-opposite">
       <span id="project-version">{[project.release.name]}</span>
-      <i id="change-version" class="icon-pencil" ng-click="toggle('#change-project-version')" tooltip="Change"></i>
+      <i id="change-version" class="icon-pencil" ng-click="toggle('#change-project-version')" ></i>
     </p>
     <div class="div-inline" id="change-project-version" style="display:none;">
       <form ng-submit="test('#change-project-version')" class="input-append">
